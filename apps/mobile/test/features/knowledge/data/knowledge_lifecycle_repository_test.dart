@@ -127,6 +127,129 @@ void main() {
     });
   });
 
+  group('experiment closure', () {
+    test(
+      'links completed experiment conclusion back to target assumption',
+      () async {
+        await repo.upsertAssumption(
+          KnowledgeAssumption(
+            id: 'a-target',
+            statement: '60 DTE covered calls outperform 30 DTE',
+            confidence: 0.55,
+            scope: 'finance/options',
+            evidenceIds: const ['note-existing'],
+            status: AssumptionStatus.active,
+            declaredAt: at,
+            sync: meta(at),
+          ),
+        );
+        outbox.clearQueued();
+
+        final closedAt = DateTime.utc(2026, 1, 2);
+        final closure = await repo.completeExperiment(
+          experiment: KnowledgeExperiment(
+            id: 'e-closure',
+            hypothesis: '60 DTE covered calls outperform 30 DTE',
+            methodMd: 'Backtest 12 months',
+            metrics: const ['yield', 'drawdown'],
+            status: ExperimentStatus.running,
+            resultMd: '60 DTE had lower drawdown.',
+            conclusionMd: 'Keep testing 60 DTE with a smaller allocation.',
+            targetAssumptionId: 'a-target',
+            startedAt: at,
+            sync: meta(closedAt),
+          ),
+          sync: meta(closedAt),
+          assumptionStatus: AssumptionStatus.weakened,
+          assumptionConfidence: 0.42,
+        );
+
+        expect(closure.experiment.status, ExperimentStatus.done);
+        expect(closure.experiment.endedAt, closedAt);
+        expect(closure.evidenceNote, isNotNull);
+        expect(closure.targetAssumption, isNotNull);
+
+        final experiment = await repo.findExperiment(
+          ownerUserId: owner,
+          id: 'e-closure',
+        );
+        expect(experiment!.status, ExperimentStatus.done);
+        expect(experiment.conclusionMd, contains('smaller allocation'));
+
+        final noteId = experimentConclusionNoteId('e-closure');
+        final note = await repo.findNote(ownerUserId: owner, id: noteId);
+        expect(note, isNotNull);
+        expect(note!.bodyMd, contains('## Conclusion'));
+        expect(note.bodyMd, contains('smaller allocation'));
+
+        final assumption = await repo.findAssumption(
+          ownerUserId: owner,
+          id: 'a-target',
+        );
+        expect(assumption!.evidenceIds, containsAll(['note-existing', noteId]));
+        expect(assumption.status, AssumptionStatus.weakened);
+        expect(assumption.confidence, 0.42);
+        expect(assumption.lastVerifiedAt?.toUtc(), closedAt);
+        expect(
+          outbox.queued.map((e) => (e.table, e.rowId)),
+          containsAll([
+            ('knowledge_experiments', 'e-closure'),
+            ('knowledge_notes', noteId),
+            ('knowledge_assumptions', 'a-target'),
+          ]),
+        );
+      },
+    );
+
+    test('re-closing an experiment reuses the evidence note id', () async {
+      await repo.upsertAssumption(
+        KnowledgeAssumption(
+          id: 'a-target',
+          statement: 'The thesis is testable',
+          confidence: 0.7,
+          scope: '*',
+          evidenceIds: const [],
+          status: AssumptionStatus.active,
+          declaredAt: at,
+          sync: meta(at),
+        ),
+      );
+
+      KnowledgeExperiment experiment(String conclusion, DateTime when) {
+        return KnowledgeExperiment(
+          id: 'e-repeat',
+          hypothesis: 'The thesis is testable',
+          methodMd: '',
+          metrics: const [],
+          status: ExperimentStatus.running,
+          conclusionMd: conclusion,
+          targetAssumptionId: 'a-target',
+          startedAt: at,
+          sync: meta(when),
+        );
+      }
+
+      await repo.completeExperiment(
+        experiment: experiment('first conclusion', DateTime.utc(2026, 1, 2)),
+        sync: meta(DateTime.utc(2026, 1, 2)),
+      );
+      await repo.completeExperiment(
+        experiment: experiment('updated conclusion', DateTime.utc(2026, 1, 3)),
+        sync: meta(DateTime.utc(2026, 1, 3)),
+      );
+
+      final noteId = experimentConclusionNoteId('e-repeat');
+      final assumption = await repo.findAssumption(
+        ownerUserId: owner,
+        id: 'a-target',
+      );
+      expect(assumption!.evidenceIds.where((id) => id == noteId), hasLength(1));
+      final note = await repo.findNote(ownerUserId: owner, id: noteId);
+      expect(note!.bodyMd, contains('updated conclusion'));
+      expect(note.bodyMd, isNot(contains('first conclusion')));
+    });
+  });
+
   group('deleteEntry', () {
     test('soft-deletes a note and queues one sync pointer', () async {
       await repo.upsertNote(

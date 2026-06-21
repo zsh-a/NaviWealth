@@ -9070,6 +9070,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeWriterConfidenceLabel => '置信度';
 
   @override
+  String get knowledgeWriterStatusLabel => '状态';
+
+  @override
   String get knowledgeWriterNameLabel => '名称';
 
   @override

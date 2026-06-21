@@ -496,6 +496,14 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
   late final _metricsCtrl = TextEditingController(
     text: widget.initial?.metrics.join(', ') ?? '',
   );
+  late final _resultCtrl = TextEditingController(
+    text: widget.initial?.resultMd ?? '',
+  );
+  late final _conclusionCtrl = TextEditingController(
+    text: widget.initial?.conclusionMd ?? '',
+  );
+  late ExperimentStatus _status =
+      widget.initial?.status ?? ExperimentStatus.planned;
   late String? _targetAssumptionId = widget.initial?.targetAssumptionId;
   bool _saving = false;
 
@@ -512,6 +520,8 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
     _hypoCtrl.dispose();
     _methodCtrl.dispose();
     _metricsCtrl.dispose();
+    _resultCtrl.dispose();
+    _conclusionCtrl.dispose();
     super.dispose();
   }
 
@@ -528,27 +538,37 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
           .where((s) => s.isNotEmpty)
           .toList(growable: false);
       final existing = widget.initial;
-      await repo.upsertExperiment(
-        KnowledgeExperiment(
-          id: existing?.id ?? kKnowledgeUuid.v4(),
-          hypothesis: _hypoCtrl.text.trim(),
-          methodMd: _methodCtrl.text,
-          metrics: metrics,
-          status: existing?.status ?? ExperimentStatus.planned,
-          targetAssumptionId: _targetAssumptionId,
-          startedAt: existing?.startedAt ?? stamp.now,
-          endedAt: existing?.endedAt,
-          resultMd: existing?.resultMd,
-          conclusionMd: existing?.conclusionMd,
-          mergedIntoId: existing?.mergedIntoId,
-          sync: SyncMeta(
-            ownerUserId: stamp.ownerUserId,
-            updatedAt: stamp.now,
-            updatedByDevice: stamp.deviceId,
-            hlc: stamp.hlc,
-          ),
-        ),
+      final sync = SyncMeta(
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
       );
+      final result = _resultCtrl.text.trim();
+      final conclusion = _conclusionCtrl.text.trim();
+      final experiment = KnowledgeExperiment(
+        id: existing?.id ?? kKnowledgeUuid.v4(),
+        hypothesis: _hypoCtrl.text.trim(),
+        methodMd: _methodCtrl.text,
+        metrics: metrics,
+        status: _status,
+        targetAssumptionId: _targetAssumptionId,
+        startedAt: existing?.startedAt ?? stamp.now,
+        endedAt: _status == ExperimentStatus.done
+            ? (existing?.endedAt ?? stamp.now)
+            : existing?.endedAt,
+        resultMd: result.isEmpty ? null : result,
+        conclusionMd: conclusion.isEmpty ? null : conclusion,
+        mergedIntoId: existing?.mergedIntoId,
+        sync: sync,
+      );
+      if (_status == ExperimentStatus.done &&
+          _targetAssumptionId != null &&
+          conclusion.isNotEmpty) {
+        await repo.completeExperiment(experiment: experiment, sync: sync);
+      } else {
+        await repo.upsertExperiment(experiment);
+      }
       if (mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -587,6 +607,17 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
           KnowledgeWriterSection(
             title: l10n.knowledgeWriterPlanningSectionTitle,
             children: [
+              FSelect<ExperimentStatus>(
+                items: {for (final s in ExperimentStatus.values) s.wire: s},
+                control: FSelectControl<ExperimentStatus>.managed(
+                  initial: _status,
+                  onChange: (next) {
+                    if (next == null) return;
+                    setState(() => _status = next);
+                  },
+                ),
+                label: Text(l10n.knowledgeWriterStatusLabel),
+              ),
               MarkdownEditorWithPreview(
                 controller: _methodCtrl,
                 label: l10n.knowledgeWriterMethodMarkdownLabel,
@@ -598,6 +629,29 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
                 control: FTextFieldControl.managed(controller: _metricsCtrl),
                 label: Text(l10n.knowledgeWriterMetricsLabel),
                 hint: l10n.knowledgeExperimentMetricsHint,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterEvidenceSectionTitle,
+            collapsible: true,
+            initiallyExpanded:
+                _status == ExperimentStatus.done ||
+                _resultCtrl.text.isNotEmpty ||
+                _conclusionCtrl.text.isNotEmpty,
+            children: [
+              MarkdownEditorWithPreview(
+                controller: _resultCtrl,
+                label: l10n.knowledgeWriterResultMarkdownLabel,
+                minLines: 2,
+                maxLines: 5,
+              ),
+              MarkdownEditorWithPreview(
+                controller: _conclusionCtrl,
+                label: l10n.knowledgeWriterConclusionMarkdownLabel,
+                minLines: 2,
+                maxLines: 5,
               ),
             ],
           ),

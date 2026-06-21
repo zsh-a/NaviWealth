@@ -16266,6 +16266,12 @@ abstract class AppLocalizations {
   /// **'Confidence'**
   String get knowledgeWriterConfidenceLabel;
 
+  /// No description provided for @knowledgeWriterStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get knowledgeWriterStatusLabel;
+
   /// No description provided for @knowledgeWriterNameLabel.
   ///
   /// In en, this message translates to:

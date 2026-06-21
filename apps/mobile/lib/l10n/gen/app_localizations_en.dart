@@ -9512,6 +9512,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeWriterConfidenceLabel => 'Confidence';
 
   @override
+  String get knowledgeWriterStatusLabel => 'Status';
+
+  @override
   String get knowledgeWriterNameLabel => 'Name';
 
   @override

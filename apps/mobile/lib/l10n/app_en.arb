@@ -4984,6 +4984,7 @@
   "knowledgeWriterScopeOptionalLabel": "Scope tag (optional)",
   "knowledgeWriterEvidenceLabel": "Evidence IDs",
   "knowledgeWriterConfidenceLabel": "Confidence",
+  "knowledgeWriterStatusLabel": "Status",
   "knowledgeWriterNameLabel": "Name",
   "knowledgeWriterAliasesLabel": "Aliases",
   "knowledgeWriterSummaryMarkdownLabel": "Summary (Markdown)",

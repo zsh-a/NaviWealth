@@ -28,6 +28,21 @@ enum KnowledgeEntryKind {
   final String tableName;
 }
 
+String experimentConclusionNoteId(String experimentId) =>
+    'experiment_conclusion:$experimentId';
+
+class KnowledgeExperimentClosure {
+  const KnowledgeExperimentClosure({
+    required this.experiment,
+    this.evidenceNote,
+    this.targetAssumption,
+  });
+
+  final KnowledgeExperiment experiment;
+  final KnowledgeNote? evidenceNote;
+  final KnowledgeAssumption? targetAssumption;
+}
+
 class KnowledgeRepository {
   KnowledgeRepository({required AppDatabase db, required OutboxStore outbox})
     : _db = db,
@@ -145,24 +160,9 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   }
 
   Future<void> upsertNote(KnowledgeNote note) async {
-    final companion = KnowledgeNotesCompanion.insert(
-      id: note.id,
-      title: note.title,
-      bodyMd: note.bodyMd,
-      sourceUrl: Value(note.sourceUrl),
-      tagsJson: Value(encodeStringList(note.tags)),
-      projectTag: Value(note.projectTag),
-      createdAt: note.createdAt,
-      mergedIntoId: Value(note.mergedIntoId),
-      ownerUserId: note.sync.ownerUserId,
-      updatedAt: note.sync.updatedAt,
-      updatedByDevice: note.sync.updatedByDevice,
-      hlc: note.sync.hlc,
-      deletedAt: Value(note.sync.deletedAt),
-    );
     await _upsertAndEnqueue(
       _db.knowledgeNotes,
-      companion,
+      _noteCompanion(note),
       tableName: _notesTable,
       rowId: note.id,
     );
@@ -308,25 +308,9 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   }
 
   Future<void> upsertAssumption(KnowledgeAssumption a) async {
-    final companion = KnowledgeAssumptionsCompanion.insert(
-      id: a.id,
-      statement: a.statement,
-      confidence: Value(a.confidence),
-      scope: Value(a.scope),
-      evidenceIdsJson: Value(encodeStringList(a.evidenceIds)),
-      status: Value(a.status.wire),
-      lastVerifiedAt: Value(a.lastVerifiedAt),
-      declaredAt: a.declaredAt,
-      mergedIntoId: Value(a.mergedIntoId),
-      ownerUserId: a.sync.ownerUserId,
-      updatedAt: a.sync.updatedAt,
-      updatedByDevice: a.sync.updatedByDevice,
-      hlc: a.sync.hlc,
-      deletedAt: Value(a.sync.deletedAt),
-    );
     await _upsertAndEnqueue(
       _db.knowledgeAssumptions,
-      companion,
+      _assumptionCompanion(a),
       tableName: _assumptionsTable,
       rowId: a.id,
     );
@@ -534,29 +518,116 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   }
 
   Future<void> upsertExperiment(KnowledgeExperiment e) async {
-    final companion = KnowledgeExperimentsCompanion.insert(
-      id: e.id,
-      hypothesis: e.hypothesis,
-      methodMd: Value(e.methodMd),
-      metricsJson: Value(encodeStringList(e.metrics)),
-      status: Value(e.status.wire),
-      resultMd: Value(e.resultMd),
-      conclusionMd: Value(e.conclusionMd),
-      targetAssumptionId: Value(e.targetAssumptionId),
-      startedAt: e.startedAt,
-      endedAt: Value(e.endedAt),
-      mergedIntoId: Value(e.mergedIntoId),
-      ownerUserId: e.sync.ownerUserId,
-      updatedAt: e.sync.updatedAt,
-      updatedByDevice: e.sync.updatedByDevice,
-      hlc: e.sync.hlc,
-      deletedAt: Value(e.sync.deletedAt),
-    );
     await _upsertAndEnqueue(
       _db.knowledgeExperiments,
-      companion,
+      _experimentCompanion(e),
       tableName: _experimentsTable,
       rowId: e.id,
+    );
+  }
+
+  /// Complete an experiment and close the result loop back to its target
+  /// assumption.
+  ///
+  /// When the experiment has both a [KnowledgeExperiment.targetAssumptionId]
+  /// and a non-empty conclusion, this writes a stable conclusion note and
+  /// appends that note id to the target assumption's `evidenceIds`. Re-running
+  /// the closure updates the same note and keeps evidence ids de-duplicated.
+  Future<KnowledgeExperimentClosure> completeExperiment({
+    required KnowledgeExperiment experiment,
+    required SyncMeta sync,
+    AssumptionStatus? assumptionStatus,
+    double? assumptionConfidence,
+  }) async {
+    final completed = KnowledgeExperiment(
+      id: experiment.id,
+      hypothesis: experiment.hypothesis,
+      methodMd: experiment.methodMd,
+      metrics: experiment.metrics,
+      status: ExperimentStatus.done,
+      resultMd: experiment.resultMd,
+      conclusionMd: experiment.conclusionMd,
+      targetAssumptionId: experiment.targetAssumptionId,
+      startedAt: experiment.startedAt,
+      endedAt: experiment.endedAt ?? sync.updatedAt,
+      mergedIntoId: experiment.mergedIntoId,
+      sync: sync,
+    );
+
+    KnowledgeNote? evidenceNote;
+    KnowledgeAssumption? linkedAssumption;
+    final targetId = completed.targetAssumptionId;
+    final conclusion = completed.conclusionMd?.trim();
+    if (targetId != null &&
+        targetId.isNotEmpty &&
+        conclusion != null &&
+        conclusion.isNotEmpty) {
+      final target = await findAssumption(
+        ownerUserId: sync.ownerUserId,
+        id: targetId,
+      );
+      if (target != null && target.sync.deletedAt == null) {
+        final noteId = experimentConclusionNoteId(completed.id);
+        evidenceNote = KnowledgeNote(
+          id: noteId,
+          title: 'Experiment conclusion: ${completed.hypothesis}',
+          bodyMd: _experimentConclusionNoteBody(completed),
+          tags: const <String>['experiment', 'evidence'],
+          projectTag: target.scope.isEmpty ? null : target.scope,
+          createdAt: sync.updatedAt,
+          sync: sync,
+        );
+        linkedAssumption = KnowledgeAssumption(
+          id: target.id,
+          statement: target.statement,
+          confidence: assumptionConfidence ?? target.confidence,
+          scope: target.scope,
+          evidenceIds: <String>{
+            ...target.evidenceIds,
+            noteId,
+          }.toList(growable: false),
+          status: assumptionStatus ?? target.status,
+          declaredAt: target.declaredAt,
+          lastVerifiedAt: sync.updatedAt,
+          mergedIntoId: target.mergedIntoId,
+          sync: sync,
+        );
+      }
+    }
+
+    await _db.transaction(() async {
+      await _db
+          .into(_db.knowledgeExperiments)
+          .insert(
+            _experimentCompanion(completed),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(table: _experimentsTable, rowId: completed.id);
+
+      final note = evidenceNote;
+      if (note != null) {
+        await _db
+            .into(_db.knowledgeNotes)
+            .insert(_noteCompanion(note), mode: InsertMode.insertOrReplace);
+        await _outbox.enqueue(table: _notesTable, rowId: note.id);
+      }
+
+      final assumption = linkedAssumption;
+      if (assumption != null) {
+        await _db
+            .into(_db.knowledgeAssumptions)
+            .insert(
+              _assumptionCompanion(assumption),
+              mode: InsertMode.insertOrReplace,
+            );
+        await _outbox.enqueue(table: _assumptionsTable, rowId: assumption.id);
+      }
+    });
+
+    return KnowledgeExperimentClosure(
+      experiment: completed,
+      evidenceNote: evidenceNote,
+      targetAssumption: linkedAssumption,
     );
   }
 
@@ -1266,6 +1337,83 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       sync: meta.copyWith(deletedAt: meta.updatedAt),
     ),
   );
+
+  KnowledgeNotesCompanion _noteCompanion(KnowledgeNote note) {
+    return KnowledgeNotesCompanion.insert(
+      id: note.id,
+      title: note.title,
+      bodyMd: note.bodyMd,
+      sourceUrl: Value(note.sourceUrl),
+      tagsJson: Value(encodeStringList(note.tags)),
+      projectTag: Value(note.projectTag),
+      createdAt: note.createdAt,
+      mergedIntoId: Value(note.mergedIntoId),
+      ownerUserId: note.sync.ownerUserId,
+      updatedAt: note.sync.updatedAt,
+      updatedByDevice: note.sync.updatedByDevice,
+      hlc: note.sync.hlc,
+      deletedAt: Value(note.sync.deletedAt),
+    );
+  }
+
+  KnowledgeAssumptionsCompanion _assumptionCompanion(KnowledgeAssumption a) {
+    return KnowledgeAssumptionsCompanion.insert(
+      id: a.id,
+      statement: a.statement,
+      confidence: Value(a.confidence),
+      scope: Value(a.scope),
+      evidenceIdsJson: Value(encodeStringList(a.evidenceIds)),
+      status: Value(a.status.wire),
+      lastVerifiedAt: Value(a.lastVerifiedAt),
+      declaredAt: a.declaredAt,
+      mergedIntoId: Value(a.mergedIntoId),
+      ownerUserId: a.sync.ownerUserId,
+      updatedAt: a.sync.updatedAt,
+      updatedByDevice: a.sync.updatedByDevice,
+      hlc: a.sync.hlc,
+      deletedAt: Value(a.sync.deletedAt),
+    );
+  }
+
+  KnowledgeExperimentsCompanion _experimentCompanion(KnowledgeExperiment e) {
+    return KnowledgeExperimentsCompanion.insert(
+      id: e.id,
+      hypothesis: e.hypothesis,
+      methodMd: Value(e.methodMd),
+      metricsJson: Value(encodeStringList(e.metrics)),
+      status: Value(e.status.wire),
+      resultMd: Value(e.resultMd),
+      conclusionMd: Value(e.conclusionMd),
+      targetAssumptionId: Value(e.targetAssumptionId),
+      startedAt: e.startedAt,
+      endedAt: Value(e.endedAt),
+      mergedIntoId: Value(e.mergedIntoId),
+      ownerUserId: e.sync.ownerUserId,
+      updatedAt: e.sync.updatedAt,
+      updatedByDevice: e.sync.updatedByDevice,
+      hlc: e.sync.hlc,
+      deletedAt: Value(e.sync.deletedAt),
+    );
+  }
+
+  String _experimentConclusionNoteBody(KnowledgeExperiment e) {
+    final parts = <String>[
+      '## Hypothesis',
+      e.hypothesis,
+      if (e.methodMd.trim().isNotEmpty) ...['', '## Method', e.methodMd.trim()],
+      if (e.resultMd != null && e.resultMd!.trim().isNotEmpty) ...[
+        '',
+        '## Result',
+        e.resultMd!.trim(),
+      ],
+      if (e.conclusionMd != null && e.conclusionMd!.trim().isNotEmpty) ...[
+        '',
+        '## Conclusion',
+        e.conclusionMd!.trim(),
+      ],
+    ];
+    return parts.join('\n');
+  }
 
   // ---------- Row → model ----------
 

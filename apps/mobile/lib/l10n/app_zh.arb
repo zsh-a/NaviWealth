@@ -2816,6 +2816,7 @@
   "knowledgeWriterScopeOptionalLabel": "范围标签（可选）",
   "knowledgeWriterEvidenceLabel": "证据 ID",
   "knowledgeWriterConfidenceLabel": "置信度",
+  "knowledgeWriterStatusLabel": "状态",
   "knowledgeWriterNameLabel": "名称",
   "knowledgeWriterAliasesLabel": "别名",
   "knowledgeWriterSummaryMarkdownLabel": "摘要（Markdown）",
