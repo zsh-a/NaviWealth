@@ -71,7 +71,7 @@ void main() {
     );
     expect(result.isRejected, isTrue);
     expect(result.drafts, isEmpty);
-    expect(result.rejectedReason, contains('云端'));
+    expect(result.rejectedReason, contains('Vision'));
   });
 
   test('empty payload yields zero drafts without rejection', () {

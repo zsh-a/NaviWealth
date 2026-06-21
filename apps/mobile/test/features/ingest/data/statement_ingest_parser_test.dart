@@ -17,6 +17,12 @@ void main() {
         StatementProvider.bank,
       );
       expect(
+        detectStatementProvider(
+          'Date,Action,Symbol,Description,Fees & Comm,Amount',
+        ),
+        StatementProvider.broker,
+      );
+      expect(
         detectStatementProvider('date,description,amount'),
         StatementProvider.generic,
       );
@@ -60,6 +66,19 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single.description, '招商超市 · 快捷支付');
       expect(rows.single.amountMinor, -6680);
+    });
+
+    test('broker exports route to fee/tax-only parser', () {
+      final rows = parseStatementLedger(
+        'ClientAccountID,Asset Category,Currency,Symbol,Date/Time,Description,Amount\n'
+        'U123,Stocks,USD,AAPL,2026-05-10,Dividend,12.34\n'
+        'U123,Stocks,USD,AAPL,2026-05-10,Withholding Tax,-3.70\n',
+      );
+
+      expect(rows, hasLength(1));
+      expect(rows.single.description, contains('withholding tax'));
+      expect(rows.single.amountMinor, -370);
+      expect(rows.single.categoryHint, 'tax:withholding');
     });
   });
 }
