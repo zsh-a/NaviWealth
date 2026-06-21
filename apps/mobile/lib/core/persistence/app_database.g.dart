@@ -5610,6 +5610,1149 @@ class PricesCompanion extends UpdateCompanion<PriceRow> {
   }
 }
 
+class $CorporateActionsTable extends CorporateActions
+    with TableInfo<$CorporateActionsTable, CorporateActionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CorporateActionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($CorporateActionsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<String> assetId = GeneratedColumn<String>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _effectiveDateMeta = const VerificationMeta(
+    'effectiveDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> effectiveDate =
+      GeneratedColumn<DateTime>(
+        'effective_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta(
+    'transactionId',
+  );
+  @override
+  late final GeneratedColumn<String> transactionId = GeneratedColumn<String>(
+    'transaction_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> amountPerShare =
+      GeneratedColumn<String>(
+        'amount_per_share',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $CorporateActionsTable.$converteramountPerSharen,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> withholdingTax =
+      GeneratedColumn<String>(
+        'withholding_tax',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $CorporateActionsTable.$converterwithholdingTaxn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> bonusRatio =
+      GeneratedColumn<String>(
+        'bonus_ratio',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($CorporateActionsTable.$converterbonusRation);
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> splitRatio =
+      GeneratedColumn<String>(
+        'split_ratio',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($CorporateActionsTable.$convertersplitRation);
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  subscribedQuantity =
+      GeneratedColumn<String>(
+        'subscribed_quantity',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $CorporateActionsTable.$convertersubscribedQuantityn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> pricePerUnit =
+      GeneratedColumn<String>(
+        'price_per_unit',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($CorporateActionsTable.$converterpricePerUnitn);
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> fee =
+      GeneratedColumn<String>(
+        'fee',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($CorporateActionsTable.$converterfeen);
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    kind,
+    assetId,
+    effectiveDate,
+    transactionId,
+    accountId,
+    currency,
+    amountPerShare,
+    withholdingTax,
+    bonusRatio,
+    splitRatio,
+    subscribedQuantity,
+    pricePerUnit,
+    fee,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'corporate_actions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CorporateActionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
+    if (data.containsKey('effective_date')) {
+      context.handle(
+        _effectiveDateMeta,
+        effectiveDate.isAcceptableOrUnknown(
+          data['effective_date']!,
+          _effectiveDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_effectiveDateMeta);
+    }
+    if (data.containsKey('transaction_id')) {
+      context.handle(
+        _transactionIdMeta,
+        transactionId.isAcceptableOrUnknown(
+          data['transaction_id']!,
+          _transactionIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CorporateActionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CorporateActionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $CorporateActionsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}asset_id'],
+      )!,
+      effectiveDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}effective_date'],
+      )!,
+      transactionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_id'],
+      ),
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      ),
+      amountPerShare: $CorporateActionsTable.$converteramountPerSharen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}amount_per_share'],
+        ),
+      ),
+      withholdingTax: $CorporateActionsTable.$converterwithholdingTaxn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}withholding_tax'],
+        ),
+      ),
+      bonusRatio: $CorporateActionsTable.$converterbonusRation.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}bonus_ratio'],
+        ),
+      ),
+      splitRatio: $CorporateActionsTable.$convertersplitRation.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}split_ratio'],
+        ),
+      ),
+      subscribedQuantity: $CorporateActionsTable.$convertersubscribedQuantityn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}subscribed_quantity'],
+            ),
+          ),
+      pricePerUnit: $CorporateActionsTable.$converterpricePerUnitn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}price_per_unit'],
+        ),
+      ),
+      fee: $CorporateActionsTable.$converterfeen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}fee'],
+        ),
+      ),
+    );
+  }
+
+  @override
+  $CorporateActionsTable createAlias(String alias) {
+    return $CorporateActionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converteramountPerShare =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converteramountPerSharen =
+      NullAwareTypeConverter.wrap($converteramountPerShare);
+  static TypeConverter<Decimal, String> $converterwithholdingTax =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterwithholdingTaxn =
+      NullAwareTypeConverter.wrap($converterwithholdingTax);
+  static TypeConverter<Decimal, String> $converterbonusRatio =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterbonusRation =
+      NullAwareTypeConverter.wrap($converterbonusRatio);
+  static TypeConverter<Decimal, String> $convertersplitRatio =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertersplitRation =
+      NullAwareTypeConverter.wrap($convertersplitRatio);
+  static TypeConverter<Decimal, String> $convertersubscribedQuantity =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertersubscribedQuantityn =
+      NullAwareTypeConverter.wrap($convertersubscribedQuantity);
+  static TypeConverter<Decimal, String> $converterpricePerUnit =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterpricePerUnitn =
+      NullAwareTypeConverter.wrap($converterpricePerUnit);
+  static TypeConverter<Decimal, String> $converterfee =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterfeen =
+      NullAwareTypeConverter.wrap($converterfee);
+}
+
+class CorporateActionRow extends DataClass
+    implements Insertable<CorporateActionRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String kind;
+  final String assetId;
+  final DateTime effectiveDate;
+  final String? transactionId;
+  final String? accountId;
+  final String? currency;
+  final Decimal? amountPerShare;
+  final Decimal? withholdingTax;
+  final Decimal? bonusRatio;
+  final Decimal? splitRatio;
+  final Decimal? subscribedQuantity;
+  final Decimal? pricePerUnit;
+  final Decimal? fee;
+  const CorporateActionRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.kind,
+    required this.assetId,
+    required this.effectiveDate,
+    this.transactionId,
+    this.accountId,
+    this.currency,
+    this.amountPerShare,
+    this.withholdingTax,
+    this.bonusRatio,
+    this.splitRatio,
+    this.subscribedQuantity,
+    this.pricePerUnit,
+    this.fee,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $CorporateActionsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['kind'] = Variable<String>(kind);
+    map['asset_id'] = Variable<String>(assetId);
+    map['effective_date'] = Variable<DateTime>(effectiveDate);
+    if (!nullToAbsent || transactionId != null) {
+      map['transaction_id'] = Variable<String>(transactionId);
+    }
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    if (!nullToAbsent || currency != null) {
+      map['currency'] = Variable<String>(currency);
+    }
+    if (!nullToAbsent || amountPerShare != null) {
+      map['amount_per_share'] = Variable<String>(
+        $CorporateActionsTable.$converteramountPerSharen.toSql(amountPerShare),
+      );
+    }
+    if (!nullToAbsent || withholdingTax != null) {
+      map['withholding_tax'] = Variable<String>(
+        $CorporateActionsTable.$converterwithholdingTaxn.toSql(withholdingTax),
+      );
+    }
+    if (!nullToAbsent || bonusRatio != null) {
+      map['bonus_ratio'] = Variable<String>(
+        $CorporateActionsTable.$converterbonusRation.toSql(bonusRatio),
+      );
+    }
+    if (!nullToAbsent || splitRatio != null) {
+      map['split_ratio'] = Variable<String>(
+        $CorporateActionsTable.$convertersplitRation.toSql(splitRatio),
+      );
+    }
+    if (!nullToAbsent || subscribedQuantity != null) {
+      map['subscribed_quantity'] = Variable<String>(
+        $CorporateActionsTable.$convertersubscribedQuantityn.toSql(
+          subscribedQuantity,
+        ),
+      );
+    }
+    if (!nullToAbsent || pricePerUnit != null) {
+      map['price_per_unit'] = Variable<String>(
+        $CorporateActionsTable.$converterpricePerUnitn.toSql(pricePerUnit),
+      );
+    }
+    if (!nullToAbsent || fee != null) {
+      map['fee'] = Variable<String>(
+        $CorporateActionsTable.$converterfeen.toSql(fee),
+      );
+    }
+    return map;
+  }
+
+  CorporateActionsCompanion toCompanion(bool nullToAbsent) {
+    return CorporateActionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      kind: Value(kind),
+      assetId: Value(assetId),
+      effectiveDate: Value(effectiveDate),
+      transactionId: transactionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionId),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      currency: currency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currency),
+      amountPerShare: amountPerShare == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountPerShare),
+      withholdingTax: withholdingTax == null && nullToAbsent
+          ? const Value.absent()
+          : Value(withholdingTax),
+      bonusRatio: bonusRatio == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bonusRatio),
+      splitRatio: splitRatio == null && nullToAbsent
+          ? const Value.absent()
+          : Value(splitRatio),
+      subscribedQuantity: subscribedQuantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subscribedQuantity),
+      pricePerUnit: pricePerUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pricePerUnit),
+      fee: fee == null && nullToAbsent ? const Value.absent() : Value(fee),
+    );
+  }
+
+  factory CorporateActionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CorporateActionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      assetId: serializer.fromJson<String>(json['assetId']),
+      effectiveDate: serializer.fromJson<DateTime>(json['effectiveDate']),
+      transactionId: serializer.fromJson<String?>(json['transactionId']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
+      currency: serializer.fromJson<String?>(json['currency']),
+      amountPerShare: serializer.fromJson<Decimal?>(json['amountPerShare']),
+      withholdingTax: serializer.fromJson<Decimal?>(json['withholdingTax']),
+      bonusRatio: serializer.fromJson<Decimal?>(json['bonusRatio']),
+      splitRatio: serializer.fromJson<Decimal?>(json['splitRatio']),
+      subscribedQuantity: serializer.fromJson<Decimal?>(
+        json['subscribedQuantity'],
+      ),
+      pricePerUnit: serializer.fromJson<Decimal?>(json['pricePerUnit']),
+      fee: serializer.fromJson<Decimal?>(json['fee']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'kind': serializer.toJson<String>(kind),
+      'assetId': serializer.toJson<String>(assetId),
+      'effectiveDate': serializer.toJson<DateTime>(effectiveDate),
+      'transactionId': serializer.toJson<String?>(transactionId),
+      'accountId': serializer.toJson<String?>(accountId),
+      'currency': serializer.toJson<String?>(currency),
+      'amountPerShare': serializer.toJson<Decimal?>(amountPerShare),
+      'withholdingTax': serializer.toJson<Decimal?>(withholdingTax),
+      'bonusRatio': serializer.toJson<Decimal?>(bonusRatio),
+      'splitRatio': serializer.toJson<Decimal?>(splitRatio),
+      'subscribedQuantity': serializer.toJson<Decimal?>(subscribedQuantity),
+      'pricePerUnit': serializer.toJson<Decimal?>(pricePerUnit),
+      'fee': serializer.toJson<Decimal?>(fee),
+    };
+  }
+
+  CorporateActionRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? kind,
+    String? assetId,
+    DateTime? effectiveDate,
+    Value<String?> transactionId = const Value.absent(),
+    Value<String?> accountId = const Value.absent(),
+    Value<String?> currency = const Value.absent(),
+    Value<Decimal?> amountPerShare = const Value.absent(),
+    Value<Decimal?> withholdingTax = const Value.absent(),
+    Value<Decimal?> bonusRatio = const Value.absent(),
+    Value<Decimal?> splitRatio = const Value.absent(),
+    Value<Decimal?> subscribedQuantity = const Value.absent(),
+    Value<Decimal?> pricePerUnit = const Value.absent(),
+    Value<Decimal?> fee = const Value.absent(),
+  }) => CorporateActionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    assetId: assetId ?? this.assetId,
+    effectiveDate: effectiveDate ?? this.effectiveDate,
+    transactionId: transactionId.present
+        ? transactionId.value
+        : this.transactionId,
+    accountId: accountId.present ? accountId.value : this.accountId,
+    currency: currency.present ? currency.value : this.currency,
+    amountPerShare: amountPerShare.present
+        ? amountPerShare.value
+        : this.amountPerShare,
+    withholdingTax: withholdingTax.present
+        ? withholdingTax.value
+        : this.withholdingTax,
+    bonusRatio: bonusRatio.present ? bonusRatio.value : this.bonusRatio,
+    splitRatio: splitRatio.present ? splitRatio.value : this.splitRatio,
+    subscribedQuantity: subscribedQuantity.present
+        ? subscribedQuantity.value
+        : this.subscribedQuantity,
+    pricePerUnit: pricePerUnit.present ? pricePerUnit.value : this.pricePerUnit,
+    fee: fee.present ? fee.value : this.fee,
+  );
+  CorporateActionRow copyWithCompanion(CorporateActionsCompanion data) {
+    return CorporateActionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+      effectiveDate: data.effectiveDate.present
+          ? data.effectiveDate.value
+          : this.effectiveDate,
+      transactionId: data.transactionId.present
+          ? data.transactionId.value
+          : this.transactionId,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      amountPerShare: data.amountPerShare.present
+          ? data.amountPerShare.value
+          : this.amountPerShare,
+      withholdingTax: data.withholdingTax.present
+          ? data.withholdingTax.value
+          : this.withholdingTax,
+      bonusRatio: data.bonusRatio.present
+          ? data.bonusRatio.value
+          : this.bonusRatio,
+      splitRatio: data.splitRatio.present
+          ? data.splitRatio.value
+          : this.splitRatio,
+      subscribedQuantity: data.subscribedQuantity.present
+          ? data.subscribedQuantity.value
+          : this.subscribedQuantity,
+      pricePerUnit: data.pricePerUnit.present
+          ? data.pricePerUnit.value
+          : this.pricePerUnit,
+      fee: data.fee.present ? data.fee.value : this.fee,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorporateActionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('assetId: $assetId, ')
+          ..write('effectiveDate: $effectiveDate, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('accountId: $accountId, ')
+          ..write('currency: $currency, ')
+          ..write('amountPerShare: $amountPerShare, ')
+          ..write('withholdingTax: $withholdingTax, ')
+          ..write('bonusRatio: $bonusRatio, ')
+          ..write('splitRatio: $splitRatio, ')
+          ..write('subscribedQuantity: $subscribedQuantity, ')
+          ..write('pricePerUnit: $pricePerUnit, ')
+          ..write('fee: $fee')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    kind,
+    assetId,
+    effectiveDate,
+    transactionId,
+    accountId,
+    currency,
+    amountPerShare,
+    withholdingTax,
+    bonusRatio,
+    splitRatio,
+    subscribedQuantity,
+    pricePerUnit,
+    fee,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CorporateActionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.assetId == this.assetId &&
+          other.effectiveDate == this.effectiveDate &&
+          other.transactionId == this.transactionId &&
+          other.accountId == this.accountId &&
+          other.currency == this.currency &&
+          other.amountPerShare == this.amountPerShare &&
+          other.withholdingTax == this.withholdingTax &&
+          other.bonusRatio == this.bonusRatio &&
+          other.splitRatio == this.splitRatio &&
+          other.subscribedQuantity == this.subscribedQuantity &&
+          other.pricePerUnit == this.pricePerUnit &&
+          other.fee == this.fee);
+}
+
+class CorporateActionsCompanion extends UpdateCompanion<CorporateActionRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> kind;
+  final Value<String> assetId;
+  final Value<DateTime> effectiveDate;
+  final Value<String?> transactionId;
+  final Value<String?> accountId;
+  final Value<String?> currency;
+  final Value<Decimal?> amountPerShare;
+  final Value<Decimal?> withholdingTax;
+  final Value<Decimal?> bonusRatio;
+  final Value<Decimal?> splitRatio;
+  final Value<Decimal?> subscribedQuantity;
+  final Value<Decimal?> pricePerUnit;
+  final Value<Decimal?> fee;
+  final Value<int> rowid;
+  const CorporateActionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.effectiveDate = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.amountPerShare = const Value.absent(),
+    this.withholdingTax = const Value.absent(),
+    this.bonusRatio = const Value.absent(),
+    this.splitRatio = const Value.absent(),
+    this.subscribedQuantity = const Value.absent(),
+    this.pricePerUnit = const Value.absent(),
+    this.fee = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CorporateActionsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String kind,
+    required String assetId,
+    required DateTime effectiveDate,
+    this.transactionId = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.amountPerShare = const Value.absent(),
+    this.withholdingTax = const Value.absent(),
+    this.bonusRatio = const Value.absent(),
+    this.splitRatio = const Value.absent(),
+    this.subscribedQuantity = const Value.absent(),
+    this.pricePerUnit = const Value.absent(),
+    this.fee = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       kind = Value(kind),
+       assetId = Value(assetId),
+       effectiveDate = Value(effectiveDate);
+  static Insertable<CorporateActionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? kind,
+    Expression<String>? assetId,
+    Expression<DateTime>? effectiveDate,
+    Expression<String>? transactionId,
+    Expression<String>? accountId,
+    Expression<String>? currency,
+    Expression<String>? amountPerShare,
+    Expression<String>? withholdingTax,
+    Expression<String>? bonusRatio,
+    Expression<String>? splitRatio,
+    Expression<String>? subscribedQuantity,
+    Expression<String>? pricePerUnit,
+    Expression<String>? fee,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (assetId != null) 'asset_id': assetId,
+      if (effectiveDate != null) 'effective_date': effectiveDate,
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (accountId != null) 'account_id': accountId,
+      if (currency != null) 'currency': currency,
+      if (amountPerShare != null) 'amount_per_share': amountPerShare,
+      if (withholdingTax != null) 'withholding_tax': withholdingTax,
+      if (bonusRatio != null) 'bonus_ratio': bonusRatio,
+      if (splitRatio != null) 'split_ratio': splitRatio,
+      if (subscribedQuantity != null) 'subscribed_quantity': subscribedQuantity,
+      if (pricePerUnit != null) 'price_per_unit': pricePerUnit,
+      if (fee != null) 'fee': fee,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CorporateActionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? kind,
+    Value<String>? assetId,
+    Value<DateTime>? effectiveDate,
+    Value<String?>? transactionId,
+    Value<String?>? accountId,
+    Value<String?>? currency,
+    Value<Decimal?>? amountPerShare,
+    Value<Decimal?>? withholdingTax,
+    Value<Decimal?>? bonusRatio,
+    Value<Decimal?>? splitRatio,
+    Value<Decimal?>? subscribedQuantity,
+    Value<Decimal?>? pricePerUnit,
+    Value<Decimal?>? fee,
+    Value<int>? rowid,
+  }) {
+    return CorporateActionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      assetId: assetId ?? this.assetId,
+      effectiveDate: effectiveDate ?? this.effectiveDate,
+      transactionId: transactionId ?? this.transactionId,
+      accountId: accountId ?? this.accountId,
+      currency: currency ?? this.currency,
+      amountPerShare: amountPerShare ?? this.amountPerShare,
+      withholdingTax: withholdingTax ?? this.withholdingTax,
+      bonusRatio: bonusRatio ?? this.bonusRatio,
+      splitRatio: splitRatio ?? this.splitRatio,
+      subscribedQuantity: subscribedQuantity ?? this.subscribedQuantity,
+      pricePerUnit: pricePerUnit ?? this.pricePerUnit,
+      fee: fee ?? this.fee,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $CorporateActionsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (assetId.present) {
+      map['asset_id'] = Variable<String>(assetId.value);
+    }
+    if (effectiveDate.present) {
+      map['effective_date'] = Variable<DateTime>(effectiveDate.value);
+    }
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<String>(transactionId.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (amountPerShare.present) {
+      map['amount_per_share'] = Variable<String>(
+        $CorporateActionsTable.$converteramountPerSharen.toSql(
+          amountPerShare.value,
+        ),
+      );
+    }
+    if (withholdingTax.present) {
+      map['withholding_tax'] = Variable<String>(
+        $CorporateActionsTable.$converterwithholdingTaxn.toSql(
+          withholdingTax.value,
+        ),
+      );
+    }
+    if (bonusRatio.present) {
+      map['bonus_ratio'] = Variable<String>(
+        $CorporateActionsTable.$converterbonusRation.toSql(bonusRatio.value),
+      );
+    }
+    if (splitRatio.present) {
+      map['split_ratio'] = Variable<String>(
+        $CorporateActionsTable.$convertersplitRation.toSql(splitRatio.value),
+      );
+    }
+    if (subscribedQuantity.present) {
+      map['subscribed_quantity'] = Variable<String>(
+        $CorporateActionsTable.$convertersubscribedQuantityn.toSql(
+          subscribedQuantity.value,
+        ),
+      );
+    }
+    if (pricePerUnit.present) {
+      map['price_per_unit'] = Variable<String>(
+        $CorporateActionsTable.$converterpricePerUnitn.toSql(
+          pricePerUnit.value,
+        ),
+      );
+    }
+    if (fee.present) {
+      map['fee'] = Variable<String>(
+        $CorporateActionsTable.$converterfeen.toSql(fee.value),
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorporateActionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('assetId: $assetId, ')
+          ..write('effectiveDate: $effectiveDate, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('accountId: $accountId, ')
+          ..write('currency: $currency, ')
+          ..write('amountPerShare: $amountPerShare, ')
+          ..write('withholdingTax: $withholdingTax, ')
+          ..write('bonusRatio: $bonusRatio, ')
+          ..write('splitRatio: $splitRatio, ')
+          ..write('subscribedQuantity: $subscribedQuantity, ')
+          ..write('pricePerUnit: $pricePerUnit, ')
+          ..write('fee: $fee, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $WatchlistItemsTable extends WatchlistItems
     with TableInfo<$WatchlistItemsTable, WatchlistItemRow> {
   @override
@@ -27274,6 +28417,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $JournalEntriesTable journalEntries = $JournalEntriesTable(this);
   late final $PostingsTable postings = $PostingsTable(this);
   late final $PricesTable prices = $PricesTable(this);
+  late final $CorporateActionsTable corporateActions = $CorporateActionsTable(
+    this,
+  );
   late final $WatchlistItemsTable watchlistItems = $WatchlistItemsTable(this);
   late final $OptionsStrategyProfileTableTable optionsStrategyProfileTable =
       $OptionsStrategyProfileTableTable(this);
@@ -27330,6 +28476,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     journalEntries,
     postings,
     prices,
+    corporateActions,
     watchlistItems,
     optionsStrategyProfileTable,
     optionsTradeJournal,
@@ -29904,6 +31051,516 @@ typedef $$PricesTableProcessedTableManager =
       $$PricesTableUpdateCompanionBuilder,
       (PriceRow, BaseReferences<_$AppDatabase, $PricesTable, PriceRow>),
       PriceRow,
+      PrefetchHooks Function()
+    >;
+typedef $$CorporateActionsTableCreateCompanionBuilder =
+    CorporateActionsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String kind,
+      required String assetId,
+      required DateTime effectiveDate,
+      Value<String?> transactionId,
+      Value<String?> accountId,
+      Value<String?> currency,
+      Value<Decimal?> amountPerShare,
+      Value<Decimal?> withholdingTax,
+      Value<Decimal?> bonusRatio,
+      Value<Decimal?> splitRatio,
+      Value<Decimal?> subscribedQuantity,
+      Value<Decimal?> pricePerUnit,
+      Value<Decimal?> fee,
+      Value<int> rowid,
+    });
+typedef $$CorporateActionsTableUpdateCompanionBuilder =
+    CorporateActionsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> kind,
+      Value<String> assetId,
+      Value<DateTime> effectiveDate,
+      Value<String?> transactionId,
+      Value<String?> accountId,
+      Value<String?> currency,
+      Value<Decimal?> amountPerShare,
+      Value<Decimal?> withholdingTax,
+      Value<Decimal?> bonusRatio,
+      Value<Decimal?> splitRatio,
+      Value<Decimal?> subscribedQuantity,
+      Value<Decimal?> pricePerUnit,
+      Value<Decimal?> fee,
+      Value<int> rowid,
+    });
+
+class $$CorporateActionsTableFilterComposer
+    extends Composer<_$AppDatabase, $CorporateActionsTable> {
+  $$CorporateActionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get effectiveDate => $composableBuilder(
+    column: $table.effectiveDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get amountPerShare => $composableBuilder(
+    column: $table.amountPerShare,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get withholdingTax => $composableBuilder(
+    column: $table.withholdingTax,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get bonusRatio =>
+      $composableBuilder(
+        column: $table.bonusRatio,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get splitRatio =>
+      $composableBuilder(
+        column: $table.splitRatio,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get subscribedQuantity => $composableBuilder(
+    column: $table.subscribedQuantity,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get pricePerUnit =>
+      $composableBuilder(
+        column: $table.pricePerUnit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get fee =>
+      $composableBuilder(
+        column: $table.fee,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+}
+
+class $$CorporateActionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorporateActionsTable> {
+  $$CorporateActionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get effectiveDate => $composableBuilder(
+    column: $table.effectiveDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get amountPerShare => $composableBuilder(
+    column: $table.amountPerShare,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get withholdingTax => $composableBuilder(
+    column: $table.withholdingTax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bonusRatio => $composableBuilder(
+    column: $table.bonusRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get splitRatio => $composableBuilder(
+    column: $table.splitRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subscribedQuantity => $composableBuilder(
+    column: $table.subscribedQuantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pricePerUnit => $composableBuilder(
+    column: $table.pricePerUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fee => $composableBuilder(
+    column: $table.fee,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CorporateActionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorporateActionsTable> {
+  $$CorporateActionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get assetId =>
+      $composableBuilder(column: $table.assetId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get effectiveDate => $composableBuilder(
+    column: $table.effectiveDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get amountPerShare =>
+      $composableBuilder(
+        column: $table.amountPerShare,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get withholdingTax =>
+      $composableBuilder(
+        column: $table.withholdingTax,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get bonusRatio =>
+      $composableBuilder(
+        column: $table.bonusRatio,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get splitRatio =>
+      $composableBuilder(
+        column: $table.splitRatio,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get subscribedQuantity =>
+      $composableBuilder(
+        column: $table.subscribedQuantity,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get pricePerUnit =>
+      $composableBuilder(
+        column: $table.pricePerUnit,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get fee =>
+      $composableBuilder(column: $table.fee, builder: (column) => column);
+}
+
+class $$CorporateActionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CorporateActionsTable,
+          CorporateActionRow,
+          $$CorporateActionsTableFilterComposer,
+          $$CorporateActionsTableOrderingComposer,
+          $$CorporateActionsTableAnnotationComposer,
+          $$CorporateActionsTableCreateCompanionBuilder,
+          $$CorporateActionsTableUpdateCompanionBuilder,
+          (
+            CorporateActionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $CorporateActionsTable,
+              CorporateActionRow
+            >,
+          ),
+          CorporateActionRow,
+          PrefetchHooks Function()
+        > {
+  $$CorporateActionsTableTableManager(
+    _$AppDatabase db,
+    $CorporateActionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CorporateActionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CorporateActionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CorporateActionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> assetId = const Value.absent(),
+                Value<DateTime> effectiveDate = const Value.absent(),
+                Value<String?> transactionId = const Value.absent(),
+                Value<String?> accountId = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<Decimal?> amountPerShare = const Value.absent(),
+                Value<Decimal?> withholdingTax = const Value.absent(),
+                Value<Decimal?> bonusRatio = const Value.absent(),
+                Value<Decimal?> splitRatio = const Value.absent(),
+                Value<Decimal?> subscribedQuantity = const Value.absent(),
+                Value<Decimal?> pricePerUnit = const Value.absent(),
+                Value<Decimal?> fee = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CorporateActionsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                kind: kind,
+                assetId: assetId,
+                effectiveDate: effectiveDate,
+                transactionId: transactionId,
+                accountId: accountId,
+                currency: currency,
+                amountPerShare: amountPerShare,
+                withholdingTax: withholdingTax,
+                bonusRatio: bonusRatio,
+                splitRatio: splitRatio,
+                subscribedQuantity: subscribedQuantity,
+                pricePerUnit: pricePerUnit,
+                fee: fee,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String kind,
+                required String assetId,
+                required DateTime effectiveDate,
+                Value<String?> transactionId = const Value.absent(),
+                Value<String?> accountId = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<Decimal?> amountPerShare = const Value.absent(),
+                Value<Decimal?> withholdingTax = const Value.absent(),
+                Value<Decimal?> bonusRatio = const Value.absent(),
+                Value<Decimal?> splitRatio = const Value.absent(),
+                Value<Decimal?> subscribedQuantity = const Value.absent(),
+                Value<Decimal?> pricePerUnit = const Value.absent(),
+                Value<Decimal?> fee = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CorporateActionsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                kind: kind,
+                assetId: assetId,
+                effectiveDate: effectiveDate,
+                transactionId: transactionId,
+                accountId: accountId,
+                currency: currency,
+                amountPerShare: amountPerShare,
+                withholdingTax: withholdingTax,
+                bonusRatio: bonusRatio,
+                splitRatio: splitRatio,
+                subscribedQuantity: subscribedQuantity,
+                pricePerUnit: pricePerUnit,
+                fee: fee,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CorporateActionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CorporateActionsTable,
+      CorporateActionRow,
+      $$CorporateActionsTableFilterComposer,
+      $$CorporateActionsTableOrderingComposer,
+      $$CorporateActionsTableAnnotationComposer,
+      $$CorporateActionsTableCreateCompanionBuilder,
+      $$CorporateActionsTableUpdateCompanionBuilder,
+      (
+        CorporateActionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $CorporateActionsTable,
+          CorporateActionRow
+        >,
+      ),
+      CorporateActionRow,
       PrefetchHooks Function()
     >;
 typedef $$WatchlistItemsTableCreateCompanionBuilder =
@@ -40132,6 +41789,8 @@ class $AppDatabaseManager {
       $$PostingsTableTableManager(_db, _db.postings);
   $$PricesTableTableManager get prices =>
       $$PricesTableTableManager(_db, _db.prices);
+  $$CorporateActionsTableTableManager get corporateActions =>
+      $$CorporateActionsTableTableManager(_db, _db.corporateActions);
   $$WatchlistItemsTableTableManager get watchlistItems =>
       $$WatchlistItemsTableTableManager(_db, _db.watchlistItems);
   $$OptionsStrategyProfileTableTableTableManager

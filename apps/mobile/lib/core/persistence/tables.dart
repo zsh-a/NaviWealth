@@ -208,6 +208,39 @@ class Prices extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// User-recorded corporate action source-of-truth.
+///
+/// Journal entries and price observations remain the accounting
+/// materialisation, but this table preserves the business event itself so
+/// dividend forecasts, timelines, sync, and backup can read declared actions
+/// without reverse-engineering postings.
+@DataClassName('CorporateActionRow')
+class CorporateActions extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get kind => text()();
+  TextColumn get assetId => text()();
+  DateTimeColumn get effectiveDate => dateTime()();
+  TextColumn get transactionId => text().nullable()();
+  TextColumn get accountId => text().nullable()();
+  TextColumn get currency => text().withLength(min: 3, max: 8).nullable()();
+  TextColumn get amountPerShare =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get withholdingTax =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get bonusRatio =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get splitRatio =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get subscribedQuantity =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get pricePerUnit =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get fee => text().map(const DecimalConverter()).nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('WatchlistItemRow')
 class WatchlistItems extends Table with SyncableTable {
   TextColumn get id => text()();

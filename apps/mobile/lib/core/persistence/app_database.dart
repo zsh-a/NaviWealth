@@ -30,6 +30,7 @@ const String defaultDbFileName = 'naviwealth.db';
     JournalEntries,
     Postings,
     Prices,
+    CorporateActions,
     WatchlistItems,
     OptionsStrategyProfileTable,
     OptionsTradeJournal,
@@ -71,7 +72,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 26;
+  int get schemaVersion => 27;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -405,6 +406,13 @@ class AppDatabase extends _$AppDatabase {
           'ALTER TABLE chat_messages ADD COLUMN progress_json TEXT',
         );
       }
+      // v26 -> v27: persisted FinanceOS corporate actions. Ledger rows are
+      // the accounting materialisation; this table keeps the business event
+      // queryable for forecasts, timelines, sync, and backup.
+      if (from < 27) {
+        await m.createTable(corporateActions);
+        await _createCorporateActionIndexes(this);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -544,6 +552,7 @@ const List<String> _journalEntryIndexStmts = [
       'ON prices(unit, quote_currency, observed_on)',
   'CREATE INDEX IF NOT EXISTS idx_prices_owner_hlc '
       'ON prices(owner_user_id, hlc)',
+  ..._corporateActionIndexStmts,
   ..._watchlistIndexStmts,
   ..._recurringTransactionIndexStmts,
   ..._optionsIncomeIndexStmts,
@@ -574,8 +583,25 @@ const List<String> _watchlistIndexStmts = [
       'WHERE deleted_at IS NULL',
 ];
 
+const List<String> _corporateActionIndexStmts = [
+  'CREATE INDEX IF NOT EXISTS idx_corporate_actions_owner_hlc '
+      'ON corporate_actions(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_corporate_actions_owner_asset_date '
+      'ON corporate_actions(owner_user_id, asset_id, effective_date) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_corporate_actions_owner_date '
+      'ON corporate_actions(owner_user_id, effective_date) '
+      'WHERE deleted_at IS NULL',
+];
+
 Future<void> _createRecurringTransactionIndexes(AppDatabase db) async {
   for (final stmt in _recurringTransactionIndexStmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createCorporateActionIndexes(AppDatabase db) async {
+  for (final stmt in _corporateActionIndexStmts) {
     await db.customStatement(stmt);
   }
 }

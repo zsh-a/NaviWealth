@@ -147,6 +147,7 @@ Future<void> _submitCorporateAction(
 ) async {
   final l10n = AppLocalizations.of(context);
   final logger = ref.read(loggerProvider);
+  final actionRepo = await ref.read(corporateActionRepositoryProvider.future);
   final jeRepo = await ref.read(journalEntryRepositoryProvider.future);
   final priceRepo = await ref.read(priceRepositoryProvider.future);
   final uid = await ref.read(currentUserIdProvider)();
@@ -162,6 +163,7 @@ Future<void> _submitCorporateAction(
       preview,
       uid: uid,
       jeRepo: jeRepo,
+      recordAction: actionRepo.upsert,
       recordPrice:
           ({
             required String unit,
@@ -223,6 +225,7 @@ Future<void> _persistPreview(
   CorporateActionPreview preview, {
   required String uid,
   required JournalEntryRepository jeRepo,
+  required Future<void> Function(CorporateAction action) recordAction,
   required Future<void> Function({
     required String unit,
     required String quoteCurrency,
@@ -344,6 +347,7 @@ Future<void> _persistPreview(
         narration: 'Stock dividend',
       );
   }
+  await recordAction(action);
 }
 
 Future<void> _persistLotAdjustments(

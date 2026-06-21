@@ -136,7 +136,7 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
 /// cursor so the next sync re-pulls from `seq = 0`. v1 → v2 is one such bump
 /// (the v1 cursor was an HLC string, not an integer `seq`).
 const _kSyncApplierVersionKey = 'sync.applier_version';
-const _kSyncApplierVersion = '5';
+const _kSyncApplierVersion = '6';
 
 Future<bool> _ensureSyncApplierVersion(AppDatabase db) async {
   final row = await db

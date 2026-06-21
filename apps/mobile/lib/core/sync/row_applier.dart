@@ -26,6 +26,7 @@ const Set<String> kSyncableTables = {
   'journal_entries',
   'postings',
   'prices',
+  'corporate_actions',
   'watchlist_items',
   'options_strategy_profile',
   'approved_underlyings',

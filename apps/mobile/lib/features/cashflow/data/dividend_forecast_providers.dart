@@ -11,7 +11,8 @@ import 'dividend_center_providers.dart';
 
 final dividendForecastDeclaredActionsProvider =
     Provider.autoDispose<List<CorporateAction>>((ref) {
-      return const <CorporateAction>[];
+      return ref.watch(recordedCorporateActionsProvider).value ??
+          const <CorporateAction>[];
     });
 
 final dividendForecast12mProvider =
