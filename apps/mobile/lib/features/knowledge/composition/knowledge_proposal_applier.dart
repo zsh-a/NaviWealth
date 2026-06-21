@@ -19,11 +19,10 @@
 ///  - `knowledge_routine`      → `upsertRoutine`
 ///  - `knowledge_concept_link` → `linkConcepts` (§14.2 — bidirectional edge)
 ///
-/// Knowledge writes do **not** expose the 60s one-tap undo: `apply` returns
-/// no `appliedAt`, so the card never offers it. Merge stays reversible at
-/// the data layer (`mergedIntoId` + tombstone). [undo] is a safety net that
-/// throws if ever reached. Inbox kinds are intentionally not handled here —
-/// they flow through the Review-tab triage side-table, not chat-apply (§5).
+/// Successful applies return `appliedAt` plus structured [undoData], so the
+/// chat proposal card exposes the same 60s one-tap undo affordance FinanceOS
+/// already has. Inbox kinds are intentionally not handled here — they flow
+/// through the Review-tab triage side-table, not chat-apply (§5).
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +49,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
     required this.repo,
     required this.ownerUserId,
     required this.stamp,
-  });
+    DateTime Function()? now,
+  }) : _now = now ?? (() => DateTime.now().toUtc());
 
   final KnowledgeRepository repo;
   final String ownerUserId;
@@ -58,6 +58,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
   /// Mints one fresh [SyncMeta] per touched row (own HLC). Production
   /// wiring delegates to [MutationStamper.stamp]; tests inject a fake.
   final Future<SyncMeta> Function() stamp;
+  final DateTime Function() _now;
 
   @override
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
@@ -80,11 +81,12 @@ class KnowledgeProposalApplier implements ProposalApplier {
 
   @override
   Future<void> undo(ProposalApplyState state) async {
-    // Knowledge apply returns no `appliedAt`, so the card never surfaces
-    // the 60s undo. This is a safety net only.
-    throw ProposalApplyException(
-      'KnowledgeOS 暂不支持一键撤销；合并可在数据层经 mergedIntoId 恢复',
-    );
+    if (state.status != ProposalApplyStatus.applied) return;
+    final undoData = state.undoData;
+    if (undoData == null) {
+      throw ProposalApplyException('KnowledgeOS undo data missing');
+    }
+    await _runUndoData(undoData);
   }
 
   Future<ProposalApplyState> _applyCaptureUpgrade(
@@ -133,7 +135,14 @@ class KnowledgeProposalApplier implements ProposalApplier {
           ),
         );
       }
-      return state;
+      return existing == null
+          ? state
+          : state.copyWith(
+              undoData: _mergeUndoData(
+                state.undoData,
+                restore: [_snapshotNote(existing)],
+              ),
+            );
     }
 
     final meta = await stamp();
@@ -162,6 +171,10 @@ class KnowledgeProposalApplier implements ProposalApplier {
       status: ProposalApplyStatus.applied,
       appliedEntityId: note.id,
       appliedTable: 'knowledge_notes',
+      appliedAt: _now(),
+      undoData: existing == null
+          ? _undoData(delete: [_deleteRow('knowledge_notes', note.id)])
+          : _undoData(restore: [_snapshotNote(existing)]),
       shortLabel:
           '$action：${_short(note.title.isEmpty ? note.bodyMd : note.title)}',
     );
@@ -205,6 +218,10 @@ class KnowledgeProposalApplier implements ProposalApplier {
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 note');
         }
+        final restore = <Map<String, Object?>>[
+          _snapshotNote(primary),
+          for (final d in dups) _snapshotNote(d),
+        ];
         final survivor = await repo.mergeNotes(
           primary: primary,
           duplicates: dups,
@@ -216,6 +233,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
           status: ProposalApplyStatus.applied,
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_notes',
+          appliedAt: _now(),
+          undoData: _undoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.title}」',
         );
       case 'concept':
@@ -244,6 +263,11 @@ class KnowledgeProposalApplier implements ProposalApplier {
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 concept');
         }
+        final restore = <Map<String, Object?>>[
+          _snapshotConcept(primary),
+          for (final d in dups) _snapshotConcept(d),
+          ...await _conceptRepointSnapshots(primary, dups),
+        ];
         final survivor = await repo.mergeConcepts(
           primary: primary,
           duplicates: dups,
@@ -255,6 +279,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
           status: ProposalApplyStatus.applied,
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_concepts',
+          appliedAt: _now(),
+          undoData: _undoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.name}」',
         );
       case 'principle':
@@ -273,6 +299,11 @@ class KnowledgeProposalApplier implements ProposalApplier {
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 principle');
         }
+        final restore = <Map<String, Object?>>[
+          _snapshotPrinciple(primary),
+          for (final d in dups) _snapshotPrinciple(d),
+          ...await _principleRepointSnapshots(primary, dups),
+        ];
         final survivor = await repo.mergePrinciples(
           primary: primary,
           duplicates: dups,
@@ -282,6 +313,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
           status: ProposalApplyStatus.applied,
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_principles',
+          appliedAt: _now(),
+          undoData: _undoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
         );
       case 'assumption':
@@ -300,6 +333,11 @@ class KnowledgeProposalApplier implements ProposalApplier {
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 assumption');
         }
+        final restore = <Map<String, Object?>>[
+          _snapshotAssumption(primary),
+          for (final d in dups) _snapshotAssumption(d),
+          ...await _assumptionRepointSnapshots(primary, dups),
+        ];
         final survivor = await repo.mergeAssumptions(
           primary: primary,
           duplicates: dups,
@@ -309,6 +347,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
           status: ProposalApplyStatus.applied,
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_assumptions',
+          appliedAt: _now(),
+          undoData: _undoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
         );
       case 'decision':
@@ -327,6 +367,11 @@ class KnowledgeProposalApplier implements ProposalApplier {
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 decision');
         }
+        final restore = <Map<String, Object?>>[
+          _snapshotDecision(primary),
+          for (final d in dups) _snapshotDecision(d),
+          ...await _decisionRepointSnapshots(primary, dups),
+        ];
         final survivor = await repo.mergeDecisions(
           primary: primary,
           duplicates: dups,
@@ -336,6 +381,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
           status: ProposalApplyStatus.applied,
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_decisions',
+          appliedAt: _now(),
+          undoData: _undoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.question}」',
         );
       case 'experiment':
@@ -354,6 +401,10 @@ class KnowledgeProposalApplier implements ProposalApplier {
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 experiment');
         }
+        final restore = <Map<String, Object?>>[
+          _snapshotExperiment(primary),
+          for (final d in dups) _snapshotExperiment(d),
+        ];
         final survivor = await repo.mergeExperiments(
           primary: primary,
           duplicates: dups,
@@ -363,6 +414,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
           status: ProposalApplyStatus.applied,
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_experiments',
+          appliedAt: _now(),
+          undoData: _undoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.hypothesis}」',
         );
       default:
@@ -414,6 +467,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
       status: ProposalApplyStatus.applied,
       appliedEntityId: updatedA.id,
       appliedTable: 'knowledge_concepts',
+      appliedAt: _now(),
+      undoData: _undoData(restore: [_snapshotConcept(a), _snapshotConcept(b)]),
       shortLabel: '已关联「${a.name}」↔「${b.name}」',
     );
   }
@@ -451,10 +506,396 @@ class KnowledgeProposalApplier implements ProposalApplier {
       status: ProposalApplyStatus.applied,
       appliedEntityId: routine.id,
       appliedTable: 'knowledge_routines',
+      appliedAt: _now(),
+      undoData: _undoData(
+        delete: [_deleteRow('knowledge_routines', routine.id)],
+      ),
       shortLabel: '已建立 Routine：${summaryZh.isEmpty ? statement : summaryZh}',
     );
   }
+
+  Future<void> _runUndoData(Map<String, Object?> undoData) async {
+    for (final row in _mapList(undoData['delete'])) {
+      final table = row['table'] as String?;
+      final id = row['id'] as String?;
+      if (table == null || id == null) continue;
+      final meta = await stamp();
+      await repo.deleteEntry(
+        kind: _kindForTable(table),
+        id: id,
+        sync: meta.copyWith(deletedAt: meta.updatedAt),
+      );
+    }
+
+    for (final snapshot in _mapList(undoData['restore'])) {
+      await _restoreSnapshot(snapshot);
+    }
+  }
+
+  Future<void> _restoreSnapshot(Map<String, Object?> snapshot) async {
+    final table = snapshot['table'] as String?;
+    if (table == null) {
+      throw ProposalApplyException('KnowledgeOS undo snapshot missing table');
+    }
+    final meta = _restoreSync(snapshot, await stamp());
+    switch (table) {
+      case 'knowledge_notes':
+        await repo.upsertNote(_noteFromSnapshot(snapshot, meta));
+      case 'knowledge_principles':
+        await repo.upsertPrinciple(_principleFromSnapshot(snapshot, meta));
+      case 'knowledge_assumptions':
+        await repo.upsertAssumption(_assumptionFromSnapshot(snapshot, meta));
+      case 'knowledge_decisions':
+        await repo.upsertDecision(_decisionFromSnapshot(snapshot, meta));
+      case 'knowledge_concepts':
+        await repo.upsertConcept(_conceptFromSnapshot(snapshot, meta));
+      case 'knowledge_experiments':
+        await repo.upsertExperiment(_experimentFromSnapshot(snapshot, meta));
+      case 'knowledge_routines':
+        await repo.upsertRoutine(_routineFromSnapshot(snapshot, meta));
+      default:
+        throw ProposalApplyException('unknown knowledge undo table: $table');
+    }
+  }
+
+  Future<List<Map<String, Object?>>> _conceptRepointSnapshots(
+    KnowledgeConcept primary,
+    List<KnowledgeConcept> duplicates,
+  ) async {
+    final dupIds = duplicates.map((d) => d.id).toSet();
+    final concepts = await repo.listConcepts(
+      ownerUserId: primary.sync.ownerUserId,
+      limit: _allRows,
+    );
+    return [
+      for (final concept in concepts)
+        if (concept.id != primary.id &&
+            !dupIds.contains(concept.id) &&
+            concept.relatedConceptIds.any(dupIds.contains))
+          _snapshotConcept(concept),
+    ];
+  }
+
+  Future<List<Map<String, Object?>>> _principleRepointSnapshots(
+    KnowledgePrinciple primary,
+    List<KnowledgePrinciple> duplicates,
+  ) async {
+    final dupIds = duplicates.map((d) => d.id).toSet();
+    final decisions = await repo.listDecisions(
+      ownerUserId: primary.sync.ownerUserId,
+      limit: _allRows,
+    );
+    return [
+      for (final decision in decisions)
+        if (decision.principleIds.any(dupIds.contains))
+          _snapshotDecision(decision),
+    ];
+  }
+
+  Future<List<Map<String, Object?>>> _assumptionRepointSnapshots(
+    KnowledgeAssumption primary,
+    List<KnowledgeAssumption> duplicates,
+  ) async {
+    final dupIds = duplicates.map((d) => d.id).toSet();
+    final decisions = await repo.listDecisions(
+      ownerUserId: primary.sync.ownerUserId,
+      limit: _allRows,
+    );
+    final experiments = await repo.listExperiments(
+      ownerUserId: primary.sync.ownerUserId,
+      limit: _allRows,
+    );
+    return [
+      for (final decision in decisions)
+        if (decision.assumptionIds.any(dupIds.contains))
+          _snapshotDecision(decision),
+      for (final experiment in experiments)
+        if (dupIds.contains(experiment.targetAssumptionId))
+          _snapshotExperiment(experiment),
+    ];
+  }
+
+  Future<List<Map<String, Object?>>> _decisionRepointSnapshots(
+    KnowledgeDecision primary,
+    List<KnowledgeDecision> duplicates,
+  ) async {
+    final dupIds = duplicates.map((d) => d.id).toSet();
+    final decisions = await repo.listDecisions(
+      ownerUserId: primary.sync.ownerUserId,
+      limit: _allRows,
+    );
+    return [
+      for (final decision in decisions)
+        if (decision.id != primary.id &&
+            !dupIds.contains(decision.id) &&
+            dupIds.contains(decision.supersededByDecisionId))
+          _snapshotDecision(decision),
+    ];
+  }
 }
+
+const int _allRows = 100000;
+
+Map<String, Object?> _undoData({
+  List<Map<String, Object?>> restore = const [],
+  List<Map<String, Object?>> delete = const [],
+}) => <String, Object?>{
+  if (restore.isNotEmpty) 'restore': restore,
+  if (delete.isNotEmpty) 'delete': delete,
+};
+
+Map<String, Object?> _mergeUndoData(
+  Map<String, Object?>? base, {
+  List<Map<String, Object?>> restore = const [],
+  List<Map<String, Object?>> delete = const [],
+}) {
+  return _undoData(
+    restore: [..._mapList(base?['restore']), ...restore],
+    delete: [..._mapList(base?['delete']), ...delete],
+  );
+}
+
+Map<String, Object?> _deleteRow(String table, String id) => <String, Object?>{
+  'table': table,
+  'id': id,
+};
+
+Iterable<Map<String, Object?>> _mapList(Object? raw) sync* {
+  if (raw is! List) return;
+  for (final item in raw) {
+    if (item is Map) {
+      yield item.map((key, value) => MapEntry(key.toString(), value));
+    }
+  }
+}
+
+KnowledgeEntryKind _kindForTable(String table) => switch (table) {
+  'knowledge_notes' => KnowledgeEntryKind.note,
+  'knowledge_principles' => KnowledgeEntryKind.principle,
+  'knowledge_assumptions' => KnowledgeEntryKind.assumption,
+  'knowledge_decisions' => KnowledgeEntryKind.decision,
+  'knowledge_concepts' => KnowledgeEntryKind.concept,
+  'knowledge_experiments' => KnowledgeEntryKind.experiment,
+  'knowledge_routines' => KnowledgeEntryKind.routine,
+  _ => throw ProposalApplyException('unknown knowledge undo table: $table'),
+};
+
+Map<String, Object?> _snapshotBase(String table, String id, SyncMeta sync) =>
+    <String, Object?>{
+      'table': table,
+      'id': id,
+      if (sync.deletedAt != null)
+        'deleted_at': sync.deletedAt!.toUtc().toIso8601String(),
+    };
+
+Map<String, Object?> _snapshotNote(KnowledgeNote note) => <String, Object?>{
+  ..._snapshotBase('knowledge_notes', note.id, note.sync),
+  'title': note.title,
+  'body_md': note.bodyMd,
+  'source_url': note.sourceUrl,
+  'tags': note.tags,
+  'project_tag': note.projectTag,
+  'created_at': note.createdAt.toUtc().toIso8601String(),
+  'merged_into_id': note.mergedIntoId,
+};
+
+Map<String, Object?> _snapshotPrinciple(KnowledgePrinciple p) =>
+    <String, Object?>{
+      ..._snapshotBase('knowledge_principles', p.id, p.sync),
+      'statement': p.statement,
+      'rationale_md': p.rationaleMd,
+      'scope': p.scope,
+      'status': p.status.wire,
+      'declared_at': p.declaredAt.toUtc().toIso8601String(),
+      'merged_into_id': p.mergedIntoId,
+    };
+
+Map<String, Object?> _snapshotAssumption(KnowledgeAssumption a) =>
+    <String, Object?>{
+      ..._snapshotBase('knowledge_assumptions', a.id, a.sync),
+      'statement': a.statement,
+      'confidence': a.confidence,
+      'scope': a.scope,
+      'evidence_ids': a.evidenceIds,
+      'status': a.status.wire,
+      'declared_at': a.declaredAt.toUtc().toIso8601String(),
+      'last_verified_at': a.lastVerifiedAt?.toUtc().toIso8601String(),
+      'merged_into_id': a.mergedIntoId,
+    };
+
+Map<String, Object?> _snapshotDecision(KnowledgeDecision d) =>
+    <String, Object?>{
+      ..._snapshotBase('knowledge_decisions', d.id, d.sync),
+      'question': d.question,
+      'options': [for (final option in d.options) option.toJson()],
+      'selected_label': d.selectedLabel,
+      'rationale_md': d.rationaleMd,
+      'principle_ids': d.principleIds,
+      'assumption_ids': d.assumptionIds,
+      'expected_outcome': d.expectedOutcome,
+      'review_date': d.reviewDate?.toUtc().toIso8601String(),
+      'actual_outcome_md': d.actualOutcomeMd,
+      'status': d.status.wire,
+      'superseded_by_decision_id': d.supersededByDecisionId,
+      'context_snapshot': d.contextSnapshot,
+      'decided_at': d.decidedAt.toUtc().toIso8601String(),
+      'merged_into_id': d.mergedIntoId,
+    };
+
+Map<String, Object?> _snapshotConcept(KnowledgeConcept c) => <String, Object?>{
+  ..._snapshotBase('knowledge_concepts', c.id, c.sync),
+  'name': c.name,
+  'aliases': c.aliases,
+  'summary_md': c.summaryMd,
+  'related_concept_ids': c.relatedConceptIds,
+  'created_at': c.createdAt.toUtc().toIso8601String(),
+  'merged_into_id': c.mergedIntoId,
+};
+
+Map<String, Object?> _snapshotExperiment(KnowledgeExperiment e) =>
+    <String, Object?>{
+      ..._snapshotBase('knowledge_experiments', e.id, e.sync),
+      'hypothesis': e.hypothesis,
+      'method_md': e.methodMd,
+      'metrics': e.metrics,
+      'status': e.status.wire,
+      'result_md': e.resultMd,
+      'conclusion_md': e.conclusionMd,
+      'target_assumption_id': e.targetAssumptionId,
+      'started_at': e.startedAt.toUtc().toIso8601String(),
+      'ended_at': e.endedAt?.toUtc().toIso8601String(),
+      'merged_into_id': e.mergedIntoId,
+    };
+
+SyncMeta _restoreSync(Map<String, Object?> snapshot, SyncMeta meta) {
+  final deletedAt = _dateOrNull(snapshot['deleted_at']);
+  return meta.copyWith(deletedAt: deletedAt == null ? null : meta.updatedAt);
+}
+
+KnowledgeNote _noteFromSnapshot(Map<String, Object?> s, SyncMeta sync) =>
+    KnowledgeNote(
+      id: _string(s, 'id'),
+      title: _string(s, 'title'),
+      bodyMd: _string(s, 'body_md'),
+      sourceUrl: s['source_url'] as String?,
+      tags: _stringList(s['tags']),
+      projectTag: s['project_tag'] as String?,
+      createdAt: _date(s['created_at']),
+      mergedIntoId: s['merged_into_id'] as String?,
+      sync: sync,
+    );
+
+KnowledgePrinciple _principleFromSnapshot(
+  Map<String, Object?> s,
+  SyncMeta sync,
+) => KnowledgePrinciple(
+  id: _string(s, 'id'),
+  statement: _string(s, 'statement'),
+  rationaleMd: _string(s, 'rationale_md'),
+  scope: _string(s, 'scope'),
+  status: PrincipleStatus.parse(_string(s, 'status')),
+  declaredAt: _date(s['declared_at']),
+  mergedIntoId: s['merged_into_id'] as String?,
+  sync: sync,
+);
+
+KnowledgeAssumption _assumptionFromSnapshot(
+  Map<String, Object?> s,
+  SyncMeta sync,
+) => KnowledgeAssumption(
+  id: _string(s, 'id'),
+  statement: _string(s, 'statement'),
+  confidence: (s['confidence'] as num?)?.toDouble() ?? 0,
+  scope: _string(s, 'scope'),
+  evidenceIds: _stringList(s['evidence_ids']),
+  status: AssumptionStatus.parse(_string(s, 'status')),
+  declaredAt: _date(s['declared_at']),
+  lastVerifiedAt: _dateOrNull(s['last_verified_at']),
+  mergedIntoId: s['merged_into_id'] as String?,
+  sync: sync,
+);
+
+KnowledgeDecision _decisionFromSnapshot(
+  Map<String, Object?> s,
+  SyncMeta sync,
+) => KnowledgeDecision(
+  id: _string(s, 'id'),
+  question: _string(s, 'question'),
+  options: [
+    for (final raw in _mapList(s['options'])) DecisionOption.fromJson(raw),
+  ],
+  selectedLabel: _string(s, 'selected_label'),
+  rationaleMd: _string(s, 'rationale_md'),
+  principleIds: _stringList(s['principle_ids']),
+  assumptionIds: _stringList(s['assumption_ids']),
+  expectedOutcome: s['expected_outcome'] as String?,
+  reviewDate: _dateOrNull(s['review_date']),
+  actualOutcomeMd: s['actual_outcome_md'] as String?,
+  status: DecisionStatus.parse(_string(s, 'status')),
+  supersededByDecisionId: s['superseded_by_decision_id'] as String?,
+  contextSnapshot: _mapOrNull(s['context_snapshot']),
+  decidedAt: _date(s['decided_at']),
+  mergedIntoId: s['merged_into_id'] as String?,
+  sync: sync,
+);
+
+KnowledgeConcept _conceptFromSnapshot(Map<String, Object?> s, SyncMeta sync) =>
+    KnowledgeConcept(
+      id: _string(s, 'id'),
+      name: _string(s, 'name'),
+      aliases: _stringList(s['aliases']),
+      summaryMd: _string(s, 'summary_md'),
+      relatedConceptIds: _stringList(s['related_concept_ids']),
+      createdAt: _date(s['created_at']),
+      mergedIntoId: s['merged_into_id'] as String?,
+      sync: sync,
+    );
+
+KnowledgeExperiment _experimentFromSnapshot(
+  Map<String, Object?> s,
+  SyncMeta sync,
+) => KnowledgeExperiment(
+  id: _string(s, 'id'),
+  hypothesis: _string(s, 'hypothesis'),
+  methodMd: _string(s, 'method_md'),
+  metrics: _stringList(s['metrics']),
+  status: ExperimentStatus.parse(_string(s, 'status')),
+  resultMd: s['result_md'] as String?,
+  conclusionMd: s['conclusion_md'] as String?,
+  targetAssumptionId: s['target_assumption_id'] as String?,
+  startedAt: _date(s['started_at']),
+  endedAt: _dateOrNull(s['ended_at']),
+  mergedIntoId: s['merged_into_id'] as String?,
+  sync: sync,
+);
+
+KnowledgeRoutine _routineFromSnapshot(Map<String, Object?> s, SyncMeta sync) =>
+    KnowledgeRoutine(
+      id: _string(s, 'id'),
+      statement: _string(s, 'statement'),
+      intervalDays: (s['interval_days'] as num?)?.toInt() ?? 1,
+      lastDoneAt: _dateOrNull(s['last_done_at']),
+      nextDueAt: _date(s['next_due_at']),
+      scope: _string(s, 'scope'),
+      status: RoutineStatus.parse(_string(s, 'status')),
+      createdAt: _date(s['created_at']),
+      sync: sync,
+    );
+
+String _string(Map<String, Object?> map, String key) =>
+    (map[key] as String?) ?? '';
+
+List<String> _stringList(Object? raw) =>
+    raw is List ? raw.whereType<String>().toList(growable: false) : const [];
+
+Map<String, Object?>? _mapOrNull(Object? raw) => raw is Map
+    ? raw.map((key, value) => MapEntry(key.toString(), value))
+    : null;
+
+DateTime _date(Object? raw) => DateTime.parse(raw as String).toUtc();
+
+DateTime? _dateOrNull(Object? raw) =>
+    raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
 
 String _requireRoutineStatement(ReadyProposalPlan plan) {
   final statement = plan.get('statement');

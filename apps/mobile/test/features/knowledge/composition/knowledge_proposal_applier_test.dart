@@ -40,6 +40,7 @@ void main() {
       repo: repo,
       ownerUserId: _owner,
       stamp: stamp,
+      now: () => DateTime.utc(2026, 1, 2),
     );
   });
 
@@ -85,6 +86,8 @@ void main() {
         );
 
         expect(state.status, ProposalApplyStatus.applied);
+        expect(state.appliedAt, DateTime.utc(2026, 1, 2));
+        expect(state.undoData, isNotNull);
         expect(state.appliedTable, 'knowledge_routines');
         final routine = await repo.findRoutine(
           ownerUserId: _owner,
@@ -95,6 +98,15 @@ void main() {
 
         final tempNote = await repo.findNote(ownerUserId: _owner, id: 'n1');
         expect(tempNote!.sync.deletedAt, isNotNull);
+
+        await applier.undo(state);
+        final undoneRoutine = await repo.findRoutine(
+          ownerUserId: _owner,
+          id: state.appliedEntityId!,
+        );
+        expect(undoneRoutine!.sync.deletedAt, isNotNull);
+        final restoredNote = await repo.findNote(ownerUserId: _owner, id: 'n1');
+        expect(restoredNote!.sync.deletedAt, isNull);
       },
     );
 
@@ -113,6 +125,7 @@ void main() {
       );
 
       expect(state.status, ProposalApplyStatus.applied);
+      expect(state.appliedAt, DateTime.utc(2026, 1, 2));
       expect(state.appliedTable, 'knowledge_notes');
 
       final updated = await repo.findNote(ownerUserId: _owner, id: 'n1');
@@ -122,6 +135,11 @@ void main() {
         'scope:architecture',
       });
       expect(updated.bodyMd, 'Edge-first 是默认先部署到边缘节点的策略。');
+
+      await applier.undo(state);
+      final restored = await repo.findNote(ownerUserId: _owner, id: 'n1');
+      expect(restored!.tags, ['ops']);
+      expect(restored.bodyMd, '');
     });
 
     test('knowledge_merge (note) merges and tombstones', () async {
@@ -139,14 +157,23 @@ void main() {
       expect(state.status, ProposalApplyStatus.applied);
       expect(state.appliedEntityId, 'keep');
       expect(state.appliedTable, 'knowledge_notes');
-      // No appliedAt → no 60s undo offered.
-      expect(state.appliedAt, isNull);
+      expect(state.appliedAt, DateTime.utc(2026, 1, 2));
+      expect(state.undoData, isNotNull);
 
       final live = await repo.listNotes(ownerUserId: _owner);
       expect(live.map((n) => n.id), <String>['keep']);
       expect(live.single.tags.toSet(), {'hk', 'reminder'});
       final dup = await repo.findNote(ownerUserId: _owner, id: 'dup');
       expect(dup!.mergedIntoId, 'keep');
+
+      await applier.undo(state);
+      final restoredLive = await repo.listNotes(ownerUserId: _owner);
+      expect(restoredLive.map((n) => n.id).toSet(), {'keep', 'dup'});
+      final restoredKeep = await repo.findNote(ownerUserId: _owner, id: 'keep');
+      expect(restoredKeep!.tags, ['hk']);
+      final restoredDup = await repo.findNote(ownerUserId: _owner, id: 'dup');
+      expect(restoredDup!.sync.deletedAt, isNull);
+      expect(restoredDup.mergedIntoId, isNull);
     });
 
     test(
@@ -234,12 +261,25 @@ void main() {
           }),
         );
         expect(state.status, ProposalApplyStatus.applied);
+        expect(state.appliedAt, DateTime.utc(2026, 1, 2));
         expect(state.appliedTable, 'knowledge_concepts');
 
         final c1 = await repo.findConcept(ownerUserId: _owner, id: 'c1');
         final c2 = await repo.findConcept(ownerUserId: _owner, id: 'c2');
         expect(c1!.relatedConceptIds, contains('c2'));
         expect(c2!.relatedConceptIds, contains('c1'));
+
+        await applier.undo(state);
+        final restoredC1 = await repo.findConcept(
+          ownerUserId: _owner,
+          id: 'c1',
+        );
+        final restoredC2 = await repo.findConcept(
+          ownerUserId: _owner,
+          id: 'c2',
+        );
+        expect(restoredC1!.relatedConceptIds, isEmpty);
+        expect(restoredC2!.relatedConceptIds, isEmpty);
       },
     );
 
