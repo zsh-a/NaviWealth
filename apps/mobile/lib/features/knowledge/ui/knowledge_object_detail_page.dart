@@ -541,6 +541,12 @@ class _ConceptGraphPanel extends StatelessWidget {
             : 320.0;
         const height = 192.0;
         final center = Offset(width / 2, height / 2);
+        const centerNodeWidth =
+            AppSpacing.s64 + AppSpacing.s64 + AppSpacing.s32 + AppSpacing.s4;
+        const centerNodeHeight = AppSpacing.s48;
+        const relatedNodeWidth =
+            AppSpacing.s56 + AppSpacing.s56 + AppSpacing.s4;
+        const relatedNodeHeight = AppSpacing.s40 + AppSpacing.s2;
         final nodeCenters = _conceptGraphNodeCenters(
           center: center,
           count: shown.length,
@@ -575,18 +581,18 @@ class _ConceptGraphPanel extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    left: center.dx - 82,
-                    top: center.dy - 24,
-                    width: 164,
-                    height: 48,
+                    left: center.dx - centerNodeWidth / 2,
+                    top: center.dy - centerNodeHeight / 2,
+                    width: centerNodeWidth,
+                    height: centerNodeHeight,
                     child: _ConceptNodeChip(label: concept.name, active: true),
                   ),
                   for (var i = 0; i < shown.length; i++)
                     Positioned(
-                      left: nodeCenters[i].dx - 58,
-                      top: nodeCenters[i].dy - 21,
-                      width: 116,
-                      height: 42,
+                      left: nodeCenters[i].dx - relatedNodeWidth / 2,
+                      top: nodeCenters[i].dy - relatedNodeHeight / 2,
+                      width: relatedNodeWidth,
+                      height: relatedNodeHeight,
                       child: _ConceptNodeChip(
                         label: shown[i].name,
                         onPress: () => onConceptPress(shown[i]),
@@ -642,7 +648,7 @@ class _ConceptGraphPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1.2
+      ..strokeWidth = AppStroke.thin
       ..style = PaintingStyle.stroke;
     for (final node in related) {
       canvas.drawLine(center, node, paint);

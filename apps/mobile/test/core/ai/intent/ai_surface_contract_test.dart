@@ -69,7 +69,7 @@ void main() {
     );
     expect(
       directAiChatPageConstructions.toSet(),
-      <String>{'lib/app/router_builder.dart:200'},
+      <String>{'lib/app/router_builder.dart:206'},
       reason:
           'AiChatPage is allowed only as the read-only /settings/ai-history '
           'route. Trigger surfaces should use the bottom-sheet invocation path.',

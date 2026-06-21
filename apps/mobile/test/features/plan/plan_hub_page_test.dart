@@ -93,8 +93,9 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PlanHubPage), findsOneWidget);
-    expect(find.text(l10n.planHeroEmpty), findsOneWidget);
-    expect(find.text(l10n.planHeroSeePlan), findsOneWidget);
+    expect(find.text(l10n.commonLoadFailed), findsOneWidget);
+    expect(find.text('Bad state: fire failed'), findsOneWidget);
+    expect(find.text(l10n.commonRetry), findsOneWidget);
     expect(find.text(l10n.planStrategyToolsSectionTitle), findsOneWidget);
   });
 

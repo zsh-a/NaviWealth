@@ -539,7 +539,7 @@ void main() {
             "SELECT value FROM sync_meta WHERE key = 'sync.applier_version'",
           )
           .getSingle();
-      expect(version.read<String>('value'), '5');
+      expect(version.read<String>('value'), '6');
     });
 
     test('backfills historical local rows into the outbox', () async {

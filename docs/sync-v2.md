@@ -288,7 +288,7 @@ Current syncable table inventory is pinned by
 
 | Row family | Tables |
 |------------|--------|
-| `fin:` | `accounts`, `assets`, `liabilities`, `fx_rates`, `tags`, `budgets`, `goals`, `devices`, `amortization_entries`, `tag_links`, `categories`, `settings`, `users`, `journal_entries`, `postings`, `prices`, `watchlist_items`, `options_strategy_profile`, `approved_underlyings`, `options_trade_journal` |
+| `fin:` | `accounts`, `assets`, `liabilities`, `fx_rates`, `tags`, `budgets`, `goals`, `devices`, `amortization_entries`, `tag_links`, `categories`, `settings`, `users`, `journal_entries`, `postings`, `prices`, `corporate_actions`, `watchlist_items`, `options_strategy_profile`, `approved_underlyings`, `options_trade_journal` |
 | `health:` | `health_metrics` |
 | `know:` | `knowledge_notes`, `knowledge_principles`, `knowledge_assumptions`, `knowledge_decisions`, `knowledge_concepts`, `knowledge_experiments`, `knowledge_routines` |
 

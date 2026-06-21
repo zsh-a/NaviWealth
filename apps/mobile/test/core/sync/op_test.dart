@@ -32,6 +32,7 @@ void main() {
         'journal_entries',
         'postings',
         'prices',
+        'corporate_actions',
         'watchlist_items',
         // Options Income Planner P0 (`docs/options-income.md`).
         'options_strategy_profile',
