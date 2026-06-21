@@ -1,8 +1,11 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
@@ -13,6 +16,7 @@ import 'package:naviwealth/features/investment/domain/reporting/holding_report.d
 import 'package:naviwealth/features/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/investment/domain/returns/xirr_engine.dart';
 import 'package:naviwealth/features/investment/presentation/portfolio_hub_page.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
 
 Decimal _d(String value) => Decimal.parse(value);
@@ -69,6 +73,40 @@ Lot _lot({
 }
 
 void main() {
+  testWidgets('portfolio hub renders retryable error state', (tester) async {
+    final notifier = _FailingPortfolioHubNotifier();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [portfolioHubProvider.overrideWith(() => notifier)],
+        child: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: const PortfolioHubPage(),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Portfolio failed to load: Bad state: boom'), findsOne);
+    expect(find.text('Retry'), findsOne);
+    expect(find.text('No investment holdings yet.'), findsNothing);
+    expect(notifier.fetchCount, 1);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(notifier.fetchCount, 2);
+    await tester.pump(const Duration(milliseconds: 150));
+  });
+
   test('aggregates holdings by account, currency, and asset class', () {
     final l10n = AppLocalizationsEn();
     final state = PortfolioHubState(
@@ -188,4 +226,14 @@ void main() {
     expect(container.read(portfolioFxPnlProvider).marketPnLInBase, _d('20'));
     expect(container.read(portfolioFxPnlProvider).fxPnLInBase, _d('10'));
   });
+}
+
+class _FailingPortfolioHubNotifier extends PortfolioHubNotifier {
+  int fetchCount = 0;
+
+  @override
+  Future<PortfolioHubState> fetch() async {
+    fetchCount += 1;
+    throw StateError('boom');
+  }
 }

@@ -373,10 +373,12 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
       childPad: false,
       child: state.when(
         loading: () => const _PortfolioHubSkeleton(),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s24),
-            child: Text(l10n.portfolioHubLoadError('$error')),
+        error: (error, _) => AppEmptyState.error(
+          title: l10n.portfolioHubLoadError('$error'),
+          action: FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
+            child: Text(l10n.commonRetry),
           ),
         ),
         data: (data) => _PortfolioHubBody(
