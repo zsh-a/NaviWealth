@@ -425,6 +425,15 @@ class _MetricsRow extends StatelessWidget {
           ),
         ),
         _Metric(
+          label: l10n.incomePlannerMetricOptionPrice,
+          value: MoneyText(
+            amount: contract.mid.amount.toDouble(),
+            currencyCode: contract.mid.currency,
+            symbolStyle: MoneySymbolStyle.isoCode,
+            style: context.labelStyle,
+          ),
+        ),
+        _Metric(
           label: l10n.incomePlannerMetricAnnualized,
           value: Text(_pct(metrics.annualizedYield), style: context.labelStyle),
         ),

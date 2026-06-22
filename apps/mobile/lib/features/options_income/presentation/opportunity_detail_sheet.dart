@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../domain/values/money.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/options_opportunity.dart';
 import 'trade_journal_sheet.dart';
@@ -65,6 +66,23 @@ class _DetailBody extends StatelessWidget {
                   amount: opportunity.contract.strike.amount.toDouble(),
                   currencyCode: opportunity.contract.strike.currency,
                   symbolStyle: MoneySymbolStyle.isoCode,
+                  style: context.labelStyle,
+                ),
+              ),
+              (
+                l10n.incomePlannerMetricOptionPrice,
+                MoneyText(
+                  amount: opportunity.contract.mid.amount.toDouble(),
+                  currencyCode: opportunity.contract.mid.currency,
+                  symbolStyle: MoneySymbolStyle.isoCode,
+                  style: context.labelStyle,
+                ),
+              ),
+              (
+                l10n.incomePlannerMetricBidAsk,
+                Text(
+                  '${_moneyLabel(opportunity.contract.bid)} / '
+                  '${_moneyLabel(opportunity.contract.ask)}',
                   style: context.labelStyle,
                 ),
               ),
@@ -281,4 +299,8 @@ class _ScoreBreakdown extends StatelessWidget {
 String _pct(Decimal value) {
   final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);
   return '$pct%';
+}
+
+String _moneyLabel(Money money) {
+  return '${money.amount.toString()} ${money.currency}';
 }

@@ -2420,6 +2420,8 @@
   "incomePlannerMetricBreakeven": "盈亏平衡",
   "incomePlannerMetricDte": "到期天数",
   "incomePlannerMetricStrike": "行权价",
+  "incomePlannerMetricOptionPrice": "期权价",
+  "incomePlannerMetricBidAsk": "买/卖价",
   "incomePlannerMetricMargin": "安全边际",
   "incomePlannerCardDetailsCta": "详情",
   "incomePlannerDetailWhyGood": "为什么值得考虑",

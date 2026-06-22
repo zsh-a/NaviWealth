@@ -8194,6 +8194,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerMetricStrike => 'Strike';
 
   @override
+  String get incomePlannerMetricOptionPrice => 'Option price';
+
+  @override
+  String get incomePlannerMetricBidAsk => 'Bid / Ask';
+
+  @override
   String get incomePlannerMetricMargin => 'Cushion';
 
   @override

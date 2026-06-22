@@ -13968,6 +13968,18 @@ abstract class AppLocalizations {
   /// **'Strike'**
   String get incomePlannerMetricStrike;
 
+  /// Card/detail metric: option mid price
+  ///
+  /// In en, this message translates to:
+  /// **'Option price'**
+  String get incomePlannerMetricOptionPrice;
+
+  /// Detail metric: option bid and ask quote
+  ///
+  /// In en, this message translates to:
+  /// **'Bid / Ask'**
+  String get incomePlannerMetricBidAsk;
+
   /// Card metric: margin of safety / cushion
   ///
   /// In en, this message translates to:

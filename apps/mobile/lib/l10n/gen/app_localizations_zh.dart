@@ -7807,6 +7807,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerMetricStrike => '行权价';
 
   @override
+  String get incomePlannerMetricOptionPrice => '期权价';
+
+  @override
+  String get incomePlannerMetricBidAsk => '买/卖价';
+
+  @override
   String get incomePlannerMetricMargin => '安全边际';
 
   @override
