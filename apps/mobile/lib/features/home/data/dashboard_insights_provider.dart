@@ -15,7 +15,6 @@ import '../../ingest/data/ingest_queue_insight_provider.dart';
 import '../../rebalance/data/rebalance_drift_insight_provider.dart';
 import '../domain/dashboard_models.dart';
 import '../domain/insight_models.dart';
-import 'dashboard_providers.dart';
 import 'dismissed_insights_store.dart';
 import 'duplicate_charge_insight_provider.dart';
 import 'monthly_summary_insight_provider.dart';
@@ -227,14 +226,6 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
       );
     }
   });
-
-  final currencyMismatchInsight = summarizeCurrencyMismatchInsight(
-    mismatches: ref.watch(dashboardCurrencyMismatchesProvider),
-    baseCurrency: ref.watch(dashboardBaseCurrencyProvider),
-  );
-  if (currencyMismatchInsight != null) {
-    insights.add(currencyMismatchInsight);
-  }
 
   // §5.10.10 / S5a.1 — Layer 4 queue surfaces as a calm ambient card;
   // row tap deep-links to the review page (AppRoutes.activityIngest).

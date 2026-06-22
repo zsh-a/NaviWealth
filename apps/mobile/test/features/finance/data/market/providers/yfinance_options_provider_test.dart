@@ -70,6 +70,7 @@ CannedResponse _crumb(String token) => CannedResponse(
       clock: clock,
     ),
     session: session,
+    clock: clock,
   );
   return (provider, adapter);
 }
@@ -139,5 +140,46 @@ void main() {
         expect(chainCalls.last.headers['Cookie'], 'A1=fresh');
       },
     );
+
+    test('caps expiration fetches to the most relevant slices', () async {
+      final clock = FakeClock(DateTime.utc(2026, 4, 28, 12));
+      final (provider, adapter) = _makeProvider(clock);
+      final expirations = [
+        for (final dte in const [7, 14, 21, 28, 35, 42])
+          clock.now().add(Duration(days: dte)).millisecondsSinceEpoch ~/ 1000,
+      ];
+      final chain = {
+        'optionChain': {
+          'result': [
+            {
+              'quote': {'currency': 'USD', 'regularMarketPrice': 200.0},
+              'expirationDates': expirations,
+              'options': <Object>[],
+            },
+          ],
+          'error': null,
+        },
+      };
+      adapter
+        ..enqueueRaw('fc.yahoo.com', _setCookie('A1=tok1'))
+        ..enqueueRaw('getcrumb', _crumb('XCRUMB1'))
+        ..enqueueRaw('finance/options/AAPL', _json(chain))
+        ..enqueueRaw('finance/options/AAPL', _json(chain))
+        ..enqueueRaw('finance/options/AAPL', _json(chain));
+
+      await provider.fetchChain(
+        const OptionsChainRequest(underlying: 'AAPL', minDte: 0, maxDte: 60),
+      );
+
+      final chainCalls = adapter.calls
+          .where((c) => c.uri.path.contains('options/AAPL'))
+          .toList();
+      expect(chainCalls, hasLength(3));
+      expect(chainCalls.first.queryParameters['date'], isNull);
+      expect(chainCalls.skip(1).map((c) => c.queryParameters['date']), [
+        expirations[3],
+        expirations[4],
+      ]);
+    });
   });
 }

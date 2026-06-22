@@ -85,6 +85,7 @@ final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
   return YFinanceOptionsProvider(
     http: http,
     session: ref.watch(yahooCrumbSessionProvider),
+    clock: ref.watch(clockProvider),
   );
 });
 

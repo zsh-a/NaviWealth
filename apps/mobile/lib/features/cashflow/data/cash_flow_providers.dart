@@ -15,12 +15,17 @@ import '../domain/cash_flow_kind.dart';
 final cashFlowEventsProvider = StreamProvider.autoDispose<List<CashFlowEvent>>((
   ref,
 ) async* {
-  final entries = await ref.watch(
+  final entriesFuture = ref.watch(
     journalEntriesWithPostingsStreamProvider.future,
   );
-  final accounts = await ref.watch(allAccountsStreamProvider.future);
+  final accountsFuture = ref.watch(allAccountsStreamProvider.future);
   final converter = ref.watch(cashFlowCurrencyConverterProvider);
   final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
+
+  final entries = await entriesFuture;
+  final accounts = await accountsFuture;
+  if (!ref.mounted) return;
+
   final accountsById = {for (final account in accounts) account.id: account};
 
   final events = <CashFlowEvent>[];
@@ -46,8 +51,9 @@ final cashFlowEventsProvider = StreamProvider.autoDispose<List<CashFlowEvent>>((
 
 final cashFlowSummaryProvider = FutureProvider.autoDispose
     .family<CashFlowSummary, CashFlowSummaryRequest>((ref, request) async {
-      final events = await ref.watch(cashFlowEventsProvider.future);
+      final eventsFuture = ref.watch(cashFlowEventsProvider.future);
       final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
+      final events = await eventsFuture;
       return runInIsolate(
         () => aggregateCashFlow(
           events,

@@ -1,11 +1,10 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:naviwealth/core/sync/mutation_context.dart';
-import '../../../domain/values/money.dart';
 import '../data/providers.dart';
 import '../domain/options_strategy_profile.dart';
+import 'scan_inputs_bridge.dart';
 import 'scan_orchestrator.dart';
 
 /// Lifecycle states the Income Planner page renders.
@@ -37,16 +36,11 @@ class ScanController extends StateNotifier<ScanState> {
 
   final Ref _ref;
 
-  Future<ScanResult?> runScan({
-    required Money availableCash,
-    Map<String, int> holdingsBySymbol = const {},
-    Map<String, Decimal> exposureBySymbol = const {},
-    Set<String> upcomingEarningsSymbols = const {},
-    bool upcomingMacroEvent = false,
-  }) async {
+  Future<ScanResult?> runScan() async {
     if (state is ScanRunning) return null;
     state = ScanRunning(startedAt: DateTime.now().toUtc());
     try {
+      final sideInputs = await _ref.read(scanSideInputsProvider.future);
       final orchestrator = await _ref.read(scanOrchestratorProvider.future);
       final ownerUserId = await _ref.read(currentUserIdProvider)();
       final profile = _ref.read(optionsStrategyProfileProvider).value;
@@ -58,11 +52,11 @@ class ScanController extends StateNotifier<ScanState> {
         ownerUserId: ownerUserId,
         profile: profile,
         approved: approved,
-        holdingsBySymbol: holdingsBySymbol,
-        exposureBySymbol: exposureBySymbol,
-        availableCash: availableCash,
-        upcomingEarningsSymbols: upcomingEarningsSymbols,
-        upcomingMacroEvent: upcomingMacroEvent,
+        holdingsBySymbol: sideInputs.holdingsBySymbol,
+        exposureBySymbol: sideInputs.exposureBySymbol,
+        availableCash: sideInputs.availableCash,
+        upcomingEarningsSymbols: const {},
+        upcomingMacroEvent: false,
       );
       final result = await orchestrator.run(inputs);
       // Touch cached read providers so the UI rebinds without staleness.

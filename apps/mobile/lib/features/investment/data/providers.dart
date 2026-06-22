@@ -615,9 +615,12 @@ final devicePortfolioSnapshotProvider =
     );
 
 Future<Map<String, Object?>?> buildDevicePortfolioSnapshot(Ref ref) async {
-  final holdings = await ref.read(holdingsSnapshotProvider.future);
+  final holdingsFuture = ref.watch(holdingsSnapshotProvider.future);
+  final assetsFuture = ref.watch(allAssetsStreamProvider.future);
+
+  final holdings = await holdingsFuture;
   if (holdings.isEmpty) return null;
-  final assets = await ref.read(allAssetsStreamProvider.future);
+  final assets = await assetsFuture;
   final byId = {for (final asset in assets) asset.id: asset};
   final asOf = holdings.values.first.asOf.toUtc().toIso8601String();
   final baseCurrency = holdings.values.first.baseCurrency;

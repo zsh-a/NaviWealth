@@ -8,7 +8,6 @@ import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/scan_controller.dart';
-import '../application/scan_inputs_bridge.dart';
 import '../application/scan_orchestrator.dart' show ScanResult;
 import '../data/options_opportunity_cache_repository.dart';
 import '../data/providers.dart';
@@ -195,12 +194,7 @@ class _ConfiguredBody extends ConsumerWidget {
   Future<void> _runScan(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(scanControllerProvider.notifier);
-    final side = await ref.read(scanSideInputsProvider.future);
-    final result = await controller.runScan(
-      availableCash: side.availableCash,
-      holdingsBySymbol: side.holdingsBySymbol,
-      exposureBySymbol: side.exposureBySymbol,
-    );
+    final result = await controller.runScan();
     if (!context.mounted || result == null || result.opportunities.isNotEmpty) {
       return;
     }

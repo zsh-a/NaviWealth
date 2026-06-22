@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
+import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yahoo_crumb_session.dart';
 import 'package:naviwealth/features/options_income/domain/option_contract.dart';
@@ -19,11 +20,14 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
   YFinanceOptionsProvider({
     required MarketHttpClient http,
     required YahooCrumbSession session,
+    Clock clock = const SystemClock(),
   }) : _http = http,
-       _session = session;
+       _session = session,
+       _clock = clock;
 
   final MarketHttpClient _http;
   final YahooCrumbSession _session;
+  final Clock _clock;
 
   /// Per-symbol-per-expiration throttle. Maps "AAPL:2026-06-20" to its
   /// most recent successful response. The provider returns the cached
@@ -33,6 +37,8 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
   static const Duration _perKeyTtl = Duration(minutes: 5);
 
   static const _base = 'https://query1.finance.yahoo.com/v7/finance/options';
+  static const _requestTimeout = Duration(seconds: 10);
+  static const _maxExpirationSlices = 2;
 
   @override
   String get name => 'yfinance_options';
@@ -41,7 +47,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
   Future<OptionsChainSnapshot> fetchChain(OptionsChainRequest request) async {
     final upper = request.underlying.toUpperCase();
     final cached = _perKeyCache[upper];
-    final now = DateTime.now().toUtc();
+    final now = _clock.now().toUtc();
     if (cached != null && now.difference(cached.fetchedAt) < _perKeyTtl) {
       return _projection(cached, request);
     }
@@ -97,6 +103,9 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
           path: '$_base/${Uri.encodeComponent(symbol)}',
           method: 'GET',
           responseType: ResponseType.json,
+          connectTimeout: _requestTimeout,
+          sendTimeout: _requestTimeout,
+          receiveTimeout: _requestTimeout,
           queryParameters: {'date': ?expirationEpoch, 'crumb': ?_session.crumb},
           headers: headers,
         ),
@@ -190,7 +199,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
             currency: currency,
             expiration: expiration,
             underlyingPrice: underlyingMoney,
-            fetchedAt: DateTime.now().toUtc(),
+            fetchedAt: _clock.now().toUtc(),
           );
           if (c != null) contracts.add(c);
         }
@@ -202,7 +211,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
             currency: currency,
             expiration: expiration,
             underlyingPrice: underlyingMoney,
-            fetchedAt: DateTime.now().toUtc(),
+            fetchedAt: _clock.now().toUtc(),
           );
           if (c != null) contracts.add(c);
         }
@@ -313,7 +322,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     required DateTime asOf,
   }) {
     final today = DateTime.utc(asOf.year, asOf.month, asOf.day);
-    final picked = <int>[];
+    final candidates = <({int epoch, int dte})>[];
     for (final epoch in expirations) {
       final exp = DateTime.fromMillisecondsSinceEpoch(
         epoch * 1000,
@@ -325,9 +334,18 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
         exp.day,
       ).difference(today).inDays;
       if (dte < minDte || dte > maxDte) continue;
-      picked.add(epoch);
+      candidates.add((epoch: epoch, dte: dte));
     }
-    return picked;
+    final preferredDte = ((minDte + maxDte) / 2).round();
+    candidates.sort((a, b) {
+      final aDistance = (a.dte - preferredDte).abs();
+      final bDistance = (b.dte - preferredDte).abs();
+      if (aDistance != bDistance) return aDistance.compareTo(bDistance);
+      return a.dte.compareTo(b.dte);
+    });
+    final picked = candidates.take(_maxExpirationSlices).toList()
+      ..sort((a, b) => a.dte.compareTo(b.dte));
+    return [for (final c in picked) c.epoch];
   }
 
   OptionsChainSnapshot _projection(

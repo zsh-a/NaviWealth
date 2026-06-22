@@ -14,6 +14,8 @@ import '../domain/options_strategy_profile.dart';
 import '../domain/services/opportunity_scorer.dart';
 
 const _uuid = Uuid();
+const _scanBudget = Duration(seconds: 45);
+const _perUnderlyingFetchTimeout = Duration(seconds: 15);
 
 /// Snapshot of a holding the orchestrator needs for filtering. We keep a
 /// tiny shape rather than depending on [HoldingSnapshot] to keep the
@@ -99,6 +101,7 @@ class ScanOrchestrator {
   Future<ScanResult> run(ScanInputs inputs) async {
     final scanId = _uuid.v4();
     final now = DateTime.now().toUtc();
+    final deadline = now.add(_scanBudget);
     final allowedStrategies = inputs.profile.allowedStrategies;
     final universe = <ApprovedUnderlying>[];
     for (final ap in inputs.approved) {
@@ -118,14 +121,20 @@ class ScanOrchestrator {
     final errors = <String, String>{};
 
     for (final ap in universe) {
+      if (DateTime.now().toUtc().isAfter(deadline)) {
+        errors['scan'] = 'scan timed out after ${_scanBudget.inSeconds}s';
+        break;
+      }
       try {
-        final snapshot = await _chainProvider.fetchChain(
-          OptionsChainRequest(
-            underlying: ap.symbol,
-            minDte: inputs.profile.minDte,
-            maxDte: inputs.profile.maxDte,
-          ),
-        );
+        final snapshot = await _chainProvider
+            .fetchChain(
+              OptionsChainRequest(
+                underlying: ap.symbol,
+                minDte: inputs.profile.minDte,
+                maxDte: inputs.profile.maxDte,
+              ),
+            )
+            .timeout(_perUnderlyingFetchTimeout);
         final result = _scoreSnapshot(
           snapshot: snapshot,
           ap: ap,

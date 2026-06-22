@@ -17,6 +17,7 @@ import '../settings/ui/ai_privacy_onboarding.dart';
 import 'data/dashboard_insights_provider.dart';
 import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
+import 'domain/insight_models.dart';
 import 'ui/activity_timeline_preview.dart';
 import 'ui/ai_insight_feed.dart';
 import 'ui/allocation_summary.dart';
@@ -75,7 +76,10 @@ class HomePage extends ConsumerWidget {
                 // §5.10.5 — first-launch privacy onboarding sheet.
                 // Renders nothing once the user has confirmed.
                 const AiPrivacyOnboardingMount(),
-                const CurrencyMismatchNotice(),
+                CurrencyMismatchNotice(
+                  mismatches: snapshot.currencyMismatches,
+                  baseCurrency: snapshot.baseCurrency,
+                ),
                 Expanded(child: _DashboardBody(snapshot: snapshot)),
               ],
             ),
@@ -86,14 +90,46 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-class _DashboardBody extends ConsumerWidget {
+class _DashboardBody extends ConsumerStatefulWidget {
   const _DashboardBody({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final insights = ref.watch(dashboardInsightsProvider);
+  ConsumerState<_DashboardBody> createState() => _DashboardBodyState();
+}
+
+class _DashboardBodyState extends ConsumerState<_DashboardBody> {
+  ProviderSubscription<List<InsightItem>>? _insightsSubscription;
+  List<InsightItem> _insights = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _insightsSubscription = ref.listenManual<List<InsightItem>>(
+        dashboardInsightsProvider,
+        (_, next) {
+          if (!mounted) return;
+          setState(() {
+            _insights = next;
+          });
+        },
+        fireImmediately: true,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _insightsSubscription?.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final insights = _insights;
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -136,13 +172,13 @@ class _DashboardBody extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const HomeGreetingHeader(),
-                        _NetWorthHeader(snapshot: snapshot),
+                        _NetWorthHeader(snapshot: widget.snapshot),
                       ],
                     ),
                     primary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        AllocationSummary(snapshot: snapshot),
+                        AllocationSummary(snapshot: widget.snapshot),
                         const SizedBox(height: AppSpacing.s20),
                         const _CashFlowCardsGrid(),
                         const SizedBox(height: AppSpacing.s20),
@@ -168,13 +204,13 @@ class _DashboardBody extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const HomeGreetingHeader(),
-                        _NetWorthHeader(snapshot: snapshot),
+                        _NetWorthHeader(snapshot: widget.snapshot),
                         if (insights.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.s20),
                           AiInsightFeed(insights: insights),
                         ],
                         const SizedBox(height: AppSpacing.s20),
-                        AllocationSummary(snapshot: snapshot),
+                        AllocationSummary(snapshot: widget.snapshot),
                         const SizedBox(height: AppSpacing.s20),
                         const _CashFlowCardsGrid(),
                         const SizedBox(height: AppSpacing.s20),

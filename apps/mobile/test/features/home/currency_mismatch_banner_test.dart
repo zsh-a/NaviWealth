@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/ui/currency_mismatch_banner.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -11,18 +9,17 @@ Widget _wrap({
   required List<CurrencyMismatch> mismatches,
   String baseCurrency = 'CNY',
 }) {
-  return ProviderScope(
-    overrides: [
-      dashboardCurrencyMismatchesProvider.overrideWithValue(mismatches),
-      dashboardBaseCurrencyProvider.overrideWithValue(baseCurrency),
-    ],
-    child: MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en', 'US'),
-      home: FTheme(
-        data: FThemes.slate.light.desktop,
-        child: const Scaffold(body: CurrencyMismatchNotice()),
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en', 'US'),
+    home: FTheme(
+      data: FThemes.slate.light.desktop,
+      child: Scaffold(
+        body: CurrencyMismatchNotice(
+          mismatches: mismatches,
+          baseCurrency: baseCurrency,
+        ),
       ),
     ),
   );

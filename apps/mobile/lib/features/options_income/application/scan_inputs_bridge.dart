@@ -1,14 +1,16 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart' show innerJoin;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:naviwealth/core/logging/app_logger.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import '../../../domain/values/money.dart';
-import '../../accounts/data/account_balances_provider.dart';
 import '../../accounts/domain/account_balances.dart';
 import '../../finance/data/domain/asset.dart';
 import '../../finance/data/domain/enums.dart';
 import '../../finance/data/domain/manual_asset_metadata.dart';
-import '../../finance/data/repositories/providers.dart';
 import '../../investment/data/providers.dart';
 
 /// Bridge that derives the side inputs ScanController needs from the
@@ -30,6 +32,8 @@ class ScanSideInputs {
   final Money availableCash;
 }
 
+const _snapshotTimeout = Duration(seconds: 4);
+
 final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
   ref,
 ) async {
@@ -37,29 +41,88 @@ final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
   const baseCurrency = 'USD';
   // currentUserId is used implicitly downstream — touching the provider
   // keeps the bridge invalidating when the user switches.
-  await ref.watch(currentUserIdProvider)();
+  final currentUserId = ref.watch(currentUserIdProvider);
+  final snapshotFuture = ref.watch(devicePortfolioSnapshotProvider.future);
+  final dbFuture = ref.watch(appDatabaseProvider.future);
+
+  final ownerUserId = await currentUserId();
   Map<String, int> holdings;
   Map<String, Decimal> exposures;
   try {
-    final snapshot = await ref.watch(devicePortfolioSnapshotProvider.future);
+    final snapshot = await snapshotFuture.timeout(_snapshotTimeout);
     holdings = _extractShares(snapshot);
     exposures = _extractExposures(snapshot);
-  } catch (_) {
+  } catch (e, st) {
+    AppLogger.instance.w(
+      'options-income side inputs: portfolio snapshot unavailable',
+      error: e,
+      stackTrace: st,
+    );
     holdings = const {};
     exposures = const {};
   }
-  final manualAssets = await ref.watch(manualAssetsStreamProvider.future);
-  final balances = await ref.watch(accountBalancesByIdProvider.future);
+  Money availableCash;
+  try {
+    availableCash = await _optionsAvailableCashFromDb(
+      db: await dbFuture,
+      ownerUserId: ownerUserId,
+      currency: baseCurrency,
+    );
+  } catch (e, st) {
+    AppLogger.instance.w(
+      'options-income side inputs: cash balance read failed',
+      error: e,
+      stackTrace: st,
+    );
+    availableCash = Money.zero(baseCurrency);
+  }
   return ScanSideInputs(
     holdingsBySymbol: holdings,
     exposureBySymbol: exposures,
-    availableCash: optionsAvailableCashFromBalances(
-      manualAssets: manualAssets,
-      balancesByAccountId: balances,
-      currency: baseCurrency,
-    ),
+    availableCash: availableCash,
   );
 });
+
+Future<Money> _optionsAvailableCashFromDb({
+  required AppDatabase db,
+  required String ownerUserId,
+  String currency = 'USD',
+}) async {
+  final upper = currency.trim().toUpperCase();
+  final cashRows =
+      await (db.select(db.assets)
+            ..where((t) => t.ownerUserId.equals(ownerUserId))
+            ..where((t) => t.deletedAt.isNull())
+            ..where((t) => t.type.equalsValue(AssetType.cash))
+            ..where((t) => t.currency.equals(upper)))
+          .get();
+  final accountIds = <String>{};
+  for (final row in cashRows) {
+    final metadata = ManualAssetMetadata.decode(row.metadataJson);
+    if (metadata is CashMetadata) accountIds.add(metadata.accountId);
+  }
+  if (accountIds.isEmpty) return Money.zero(upper);
+
+  final rows =
+      await (db.select(db.postings).join([
+              innerJoin(
+                db.journalEntries,
+                db.journalEntries.id.equalsExp(db.postings.journalEntryId),
+              ),
+            ])
+            ..where(db.postings.ownerUserId.equals(ownerUserId))
+            ..where(db.postings.accountId.isIn(accountIds))
+            ..where(db.postings.unit.equals(upper))
+            ..where(db.postings.deletedAt.isNull())
+            ..where(db.journalEntries.deletedAt.isNull()))
+          .get();
+  var total = Decimal.zero;
+  for (final row in rows) {
+    total += row.readTable(db.postings).units;
+  }
+  if (total < Decimal.zero) total = Decimal.zero;
+  return Money(total, upper);
+}
 
 Map<String, int> _extractShares(Map<String, Object?>? snapshot) {
   if (snapshot == null) return const {};
