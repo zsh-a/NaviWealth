@@ -63,6 +63,11 @@ final securitiesAssetRepositoryProvider =
       );
     });
 
+final systemAccountsSeedProvider = FutureProvider<void>((ref) async {
+  final repo = await ref.watch(accountRepositoryProvider.future);
+  await repo.seedSystemAccounts();
+});
+
 /// Live stream of all non-archived, non-deleted accounts. UIs watch this
 /// for the account list / picker.
 ///
@@ -74,8 +79,8 @@ final securitiesAssetRepositoryProvider =
 final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {
+  await ref.watch(systemAccountsSeedProvider.future);
   final repo = await ref.watch(accountRepositoryProvider.future);
-  await repo.seedSystemAccounts();
   yield* repo.watchActive();
 });
 
@@ -85,8 +90,8 @@ final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
 final allAccountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {
+  await ref.watch(systemAccountsSeedProvider.future);
   final repo = await ref.watch(accountRepositoryProvider.future);
-  await repo.seedSystemAccounts();
   yield* repo.watchActiveIncludingSystem();
 });
 

@@ -55,6 +55,20 @@ TalkerDioLogger _marketDioLogger(Ref ref) => TalkerDioLogger(
   settings: const TalkerDioLoggerSettings(printResponseData: false),
 );
 
+const _marketRequestTimeout = Duration(seconds: 10);
+
+Dio _marketDio(Ref ref) {
+  final dio = Dio(
+    BaseOptions(
+      connectTimeout: _marketRequestTimeout,
+      sendTimeout: _marketRequestTimeout,
+      receiveTimeout: _marketRequestTimeout,
+    ),
+  );
+  dio.interceptors.add(_marketDioLogger(ref));
+  return dio;
+}
+
 /// Shared cookie + crumb session for Yahoo Finance. Yahoo started
 /// gating `query1`/`query2` endpoints behind a per-session crumb token
 /// in 2023; without it the API returns `401 Invalid Crumb`. The session
@@ -68,8 +82,6 @@ final yahooCrumbSessionProvider = Provider<YahooCrumbSession>((ref) {
 /// (`docs/options-income.md` §4.1). Built lazily because the Income Planner
 /// is mobile-only; pure-quote consumers don't pay the construction cost.
 final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
-  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'yfinance_options',
     rateLimiter: RateLimiter(
@@ -77,7 +89,7 @@ final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
       window: const Duration(minutes: 1),
       clock: ref.watch(clockProvider),
     ),
-    dio: dio,
+    dio: _marketDio(ref),
     retryPolicy: const RetryPolicy(),
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
@@ -90,8 +102,6 @@ final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
 });
 
 final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
-  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'yfinance',
     rateLimiter: RateLimiter(
@@ -99,7 +109,7 @@ final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
       window: const Duration(minutes: 1),
       clock: ref.watch(clockProvider),
     ),
-    dio: dio,
+    dio: _marketDio(ref),
     retryPolicy: const RetryPolicy(),
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
@@ -108,8 +118,6 @@ final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
 });
 
 final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
-  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'coingecko',
     // CoinGecko Demo API free tier ≈ 30 calls / minute.
@@ -118,7 +126,7 @@ final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
       window: const Duration(minutes: 1),
       clock: ref.watch(clockProvider),
     ),
-    dio: dio,
+    dio: _marketDio(ref),
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
   );
@@ -126,8 +134,6 @@ final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
 });
 
 final sinaProviderProvider = Provider<MarketProvider>((ref) {
-  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'sina',
     // Sina hq has no published quota; rate-limit conservatively.
@@ -136,7 +142,7 @@ final sinaProviderProvider = Provider<MarketProvider>((ref) {
       window: const Duration(minutes: 1),
       clock: ref.watch(clockProvider),
     ),
-    dio: dio,
+    dio: _marketDio(ref),
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
   );

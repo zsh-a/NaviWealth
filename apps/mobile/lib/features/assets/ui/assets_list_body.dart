@@ -69,10 +69,7 @@ class AssetsBody extends StatelessWidget {
     final loading =
         manualAsync.isLoading ||
         physicalAsync.isLoading ||
-        securitiesAsync.isLoading ||
-        holdingsAsync.isLoading ||
-        valuationsAsync.isLoading ||
-        accountsAsync.isLoading;
+        securitiesAsync.isLoading;
     return PageSkeletonShell<void>(
       skeleton: const AssetsListSkeleton(),
       isLoading: loading,
@@ -83,19 +80,13 @@ class AssetsBody extends StatelessWidget {
   Widget _resolveBody(BuildContext context) {
     if (manualAsync.isLoading ||
         physicalAsync.isLoading ||
-        securitiesAsync.isLoading ||
-        holdingsAsync.isLoading ||
-        valuationsAsync.isLoading ||
-        accountsAsync.isLoading) {
+        securitiesAsync.isLoading) {
       return const AssetsListSkeleton();
     }
     final loadError =
         _firstError(manualAsync) ??
         _firstError(physicalAsync) ??
-        _firstError(securitiesAsync) ??
-        _firstError(holdingsAsync) ??
-        _firstError(valuationsAsync) ??
-        _firstError(accountsAsync);
+        _firstError(securitiesAsync);
     if (loadError != null) {
       final l10n = AppLocalizations.of(context);
       return AppEmptyState.error(

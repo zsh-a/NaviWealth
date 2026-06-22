@@ -532,28 +532,23 @@ class AccountRepository {
   /// locale and keeps system rows out of the FX-mismatch banner on
   /// fresh installs that haven't yet pulled an FX rate table.
   Future<int> seedSystemAccounts({String currency = 'CNY'}) async {
+    final ownerUserId = await _stamper.currentUserId();
     var inserted = 0;
     for (final seed in _kSystemAccountTreeSeeds) {
-      final stamp = await _stamper.stamp();
-      final id = systemAccountIdForPath(
-        seed.path,
-        ownerUserId: stamp.ownerUserId,
-      );
+      final id = systemAccountIdForPath(seed.path, ownerUserId: ownerUserId);
       final existing = await (_db.select(
         _db.accounts,
       )..where((t) => t.id.equals(id))).getSingleOrNull();
       if (existing != null) continue;
 
+      final stamp = await _stamper.stamp();
       const type = AccountCategory.asset;
       final name = seed.isRoot
           ? systemAccountDisplayName(seed.category)
           : seed.name;
       final parentId = seed.parentPath == null
           ? null
-          : systemAccountIdForPath(
-              seed.parentPath!,
-              ownerUserId: stamp.ownerUserId,
-            );
+          : systemAccountIdForPath(seed.parentPath!, ownerUserId: ownerUserId);
       final companion = AccountsCompanion.insert(
         id: id,
         type: type,

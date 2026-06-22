@@ -135,63 +135,75 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       return;
     }
     setState(() => _busy = true);
-    final repo = await ref.read(accountRepositoryProvider.future);
-    if (!mounted) return;
+    dirty.busy = true;
+    try {
+      final repo = await ref.read(accountRepositoryProvider.future);
+      if (!mounted) return;
 
-    final institution = _emptyToNull(_institutionController.text);
-    final accountNumber = _emptyToNull(_accountNumberController.text);
-    final note = _emptyToNull(_noteController.text);
-    final archived = _archived;
-    final initial = _initial;
-    final parentId = _parentId;
-    final icon = _icon;
-    final color = _color;
+      final institution = _emptyToNull(_institutionController.text);
+      final accountNumber = _emptyToNull(_accountNumberController.text);
+      final note = _emptyToNull(_noteController.text);
+      final archived = _archived;
+      final initial = _initial;
+      final parentId = _parentId;
+      final icon = _icon;
+      final color = _color;
 
-    // The record is being persisted — the post-save pop must not prompt.
-    dirty.markPristine();
-    await submitOptimisticAndLeave(
-      leaveFallback: AppRoutes.wealthAccounts,
-      onBeforeLeave: Haptics.success,
-      tag: 'account',
-      failureMessage: (_) => l10n.commonSaveFailed,
-      retryLabel: l10n.commonRetry,
-      write: () async {
-        if (initial == null) {
-          await repo.create(
-            type: type,
-            name: name,
-            currency: currency,
-            category: category,
-            institution: institution,
-            accountNumber: accountNumber,
-            note: note,
-            parentId: parentId,
-            icon: icon,
-            color: color,
-          );
-        } else {
-          await repo.update(
-            initial.id,
-            name: name,
-            currency: currency,
-            category: category != initial.category ? category : null,
-            institution: institution ?? '',
-            clearInstitution: institution == null,
-            accountNumber: accountNumber ?? '',
-            clearAccountNumber: accountNumber == null,
-            note: note ?? '',
-            clearNote: note == null,
-            archived: archived,
-            parentId: parentId ?? '',
-            clearParentId: parentId == null,
-            icon: icon ?? '',
-            clearIcon: icon == null,
-            color: color ?? '',
-            clearColor: color == null,
-          );
-        }
-      },
-    );
+      // The record is being persisted — the post-save pop must not prompt.
+      dirty.markPristine();
+      await submitOptimisticAndLeave(
+        leaveFallback: AppRoutes.wealthAccounts,
+        onBeforeLeave: Haptics.success,
+        tag: 'account',
+        failureMessage: (_) => l10n.commonSaveFailed,
+        retryLabel: l10n.commonRetry,
+        write: () async {
+          if (initial == null) {
+            await repo.create(
+              type: type,
+              name: name,
+              currency: currency,
+              category: category,
+              institution: institution,
+              accountNumber: accountNumber,
+              note: note,
+              parentId: parentId,
+              icon: icon,
+              color: color,
+            );
+          } else {
+            await repo.update(
+              initial.id,
+              name: name,
+              currency: currency,
+              category: category != initial.category ? category : null,
+              institution: institution ?? '',
+              clearInstitution: institution == null,
+              accountNumber: accountNumber ?? '',
+              clearAccountNumber: accountNumber == null,
+              note: note ?? '',
+              clearNote: note == null,
+              archived: archived,
+              parentId: parentId ?? '',
+              clearParentId: parentId == null,
+              icon: icon ?? '',
+              clearIcon: icon == null,
+              color: color ?? '',
+              clearColor: color == null,
+            );
+          }
+        },
+      );
+    } on Object {
+      if (!mounted) return;
+      Haptics.error();
+      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
+    } finally {
+      if (mounted) {
+        dirty.busy = false;
+        setState(() => _busy = false);
+      }
+    }
   }
 
   Future<void> _delete() async {

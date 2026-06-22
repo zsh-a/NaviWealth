@@ -121,7 +121,7 @@ class BackupPage extends ConsumerWidget {
       final sw = Stopwatch()..start();
       final exporter = await ref.read(backupExportRunnerProvider.future);
       if (exporter == null) {
-        throw StateError('Backup requires an authenticated session.');
+        throw StateError('Backup service is not ready.');
       }
       logger.d('backup_ui: exporter resolved, calling exportBackup');
       final bytes = await exporter(passphrase: passphrase);
@@ -207,7 +207,7 @@ class BackupPage extends ConsumerWidget {
       final sw = Stopwatch()..start();
       final restore = await ref.read(backupRestoreRunnerProvider.future);
       if (restore == null) {
-        throw StateError('Backup requires an authenticated session.');
+        throw StateError('Backup service is not ready.');
       }
       logger.d('backup_ui: service resolved, pausing sync and restoring');
 

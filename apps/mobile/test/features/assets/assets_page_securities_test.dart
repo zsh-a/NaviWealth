@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,6 +73,7 @@ Widget _wrap({
   List<Asset> securities = const [],
   Map<String, HoldingSnapshot> holdings = const {},
   List<PhysicalAsset> physicalAssets = const [],
+  bool holdingsNeverCompletes = false,
 }) {
   // The page reaches for `GoRouter.of(context)` to resolve the
   // `?selected=` query — wrap with a router that serves the page at `/`
@@ -91,7 +94,12 @@ Widget _wrap({
       physicalAssetsListProvider.overrideWith(
         (_) => Stream.value(physicalAssets),
       ),
-      holdingsSnapshotProvider.overrideWith((_) async => holdings),
+      holdingsSnapshotProvider.overrideWith((_) {
+        if (holdingsNeverCompletes) {
+          return Completer<Map<String, HoldingSnapshot>>().future;
+        }
+        return Future.value(holdings);
+      }),
       dashboardManualAssetValuationsProvider.overrideWith(
         (_) => const AsyncValue.data(<ManualAssetValuation>[]),
       ),
@@ -145,6 +153,20 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.textContaining('AAPL'), findsWidgets);
+  });
+
+  testWidgets('renders asset rows while holding snapshot is still loading', (
+    tester,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final aapl = _security(symbol: 'AAPL', name: 'Apple Inc.');
+    await tester.pumpWidget(
+      _wrap(prefs: prefs, securities: [aapl], holdingsNeverCompletes: true),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
     expect(find.textContaining('AAPL'), findsWidgets);
   });
 }
