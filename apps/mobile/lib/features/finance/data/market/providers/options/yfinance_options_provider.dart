@@ -317,6 +317,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     required Decimal mid,
   }) {
     if (mid <= Decimal.zero) return Decimal.one;
+    if (bid <= Decimal.zero || ask <= Decimal.zero) return Decimal.one;
     final diff = ask - bid;
     final dec = (diff / mid).toDecimal(scaleOnInfinitePrecision: 6);
     if (dec < Decimal.zero) return Decimal.zero;

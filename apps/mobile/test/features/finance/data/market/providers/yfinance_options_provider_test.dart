@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
@@ -180,6 +181,56 @@ void main() {
         expirations[3],
         expirations[4],
       ]);
+    });
+
+    test('uses last price mid but penalizes empty bid ask spread', () async {
+      final clock = FakeClock(DateTime.utc(2026, 4, 28, 12));
+      final (provider, adapter) = _makeProvider(clock);
+      final expiration =
+          clock.now().add(const Duration(days: 30)).millisecondsSinceEpoch ~/
+          1000;
+      final chain = {
+        'optionChain': {
+          'result': [
+            {
+              'quote': {'currency': 'USD', 'regularMarketPrice': 200.0},
+              'expirationDates': [expiration],
+              'options': [
+                {
+                  'expirationDate': expiration,
+                  'calls': <Object>[],
+                  'puts': [
+                    {
+                      'contractSymbol': 'AAPL260528P00190000',
+                      'strike': 190.0,
+                      'bid': 0.0,
+                      'ask': 0.0,
+                      'lastPrice': 2.5,
+                      'volume': 50,
+                      'openInterest': 500,
+                      'impliedVolatility': 0.25,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          'error': null,
+        },
+      };
+      adapter
+        ..enqueueRaw('fc.yahoo.com', _setCookie('A1=tok1'))
+        ..enqueueRaw('getcrumb', _crumb('XCRUMB1'))
+        ..enqueueRaw('finance/options/AAPL', _json(chain));
+
+      final snapshot = await provider.fetchChain(
+        const OptionsChainRequest(underlying: 'AAPL', minDte: 0, maxDte: 60),
+      );
+
+      expect(snapshot.contracts, hasLength(1));
+      final contract = snapshot.contracts.single;
+      expect(contract.mid.amount, Decimal.parse('2.5'));
+      expect(contract.bidAskSpreadPct, Decimal.one);
     });
   });
 }

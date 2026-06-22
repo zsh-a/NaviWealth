@@ -133,7 +133,11 @@ class OpportunityScorer {
       reasons.add('open_interest_below_floor');
     }
     if (contract.volume < profile.minVolume) reasons.add('volume_below_floor');
-    if (contract.bidAskSpreadPct > profile.maxBidAskSpreadPct) {
+    final hasBidAskQuote =
+        contract.bid.amount > Decimal.zero &&
+        contract.ask.amount > Decimal.zero;
+    if (hasBidAskQuote &&
+        contract.bidAskSpreadPct > profile.maxBidAskSpreadPct) {
       reasons.add('bid_ask_spread_too_wide');
     }
     if (contract.dte < profile.minDte || contract.dte > profile.maxDte) {

@@ -189,7 +189,6 @@ class ScanOrchestrator {
         );
         final warning = _quoteQualityWarning(
           snapshot,
-          result.rejected,
           minOpenInterest: inputs.profile.minOpenInterest,
         );
         if (warning != null) {
@@ -383,17 +382,10 @@ String _formatReasonCounts(Iterable<RejectedCandidate> rejected) {
 String _pct(Decimal value) => '${(value * Decimal.fromInt(100)).toString()}%';
 
 String? _quoteQualityWarning(
-  OptionsChainSnapshot snapshot,
-  List<RejectedCandidate> rejected, {
+  OptionsChainSnapshot snapshot, {
   required int minOpenInterest,
 }) {
   if (snapshot.contracts.isEmpty) return null;
-  final reasonCounts = <String, int>{};
-  for (final candidate in rejected) {
-    for (final reason in candidate.reasons) {
-      reasonCounts.update(reason, (value) => value + 1, ifAbsent: () => 1);
-    }
-  }
   final total = snapshot.contracts.length;
   final oiBelowFloor = snapshot.contracts
       .where((contract) => contract.openInterest < minOpenInterest)

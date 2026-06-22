@@ -125,7 +125,13 @@ void main() {
 
     test('does not hard-filter an empty bid quote when mid is available', () {
       const scorer = OpportunityScorer();
-      final contract = _putContract(strike: 190, bid: 0, ask: 0, mid: 2.5);
+      final contract = _putContract(
+        strike: 190,
+        bid: 0,
+        ask: 0,
+        mid: 2.5,
+        spread: Decimal.one,
+      );
       final rejection = scorer.filter(
         contract: contract,
         strategy: OptionsStrategyKind.cashSecuredPut,
@@ -250,6 +256,7 @@ OptionContract _putContract({
   double bid = 1.5,
   double ask = 1.6,
   double? mid,
+  Decimal? spread,
   int dte = 30,
   int oi = 500,
   int volume = 50,
@@ -259,6 +266,7 @@ OptionContract _putContract({
   bid: bid,
   ask: ask,
   mid: mid,
+  spread: spread,
   dte: dte,
   oi: oi,
   volume: volume,
@@ -269,6 +277,7 @@ OptionContract _callContract({
   double bid = 1.5,
   double ask = 1.6,
   double? mid,
+  Decimal? spread,
   int dte = 30,
   int oi = 500,
   int volume = 50,
@@ -278,6 +287,7 @@ OptionContract _callContract({
   bid: bid,
   ask: ask,
   mid: mid,
+  spread: spread,
   dte: dte,
   oi: oi,
   volume: volume,
@@ -289,6 +299,7 @@ OptionContract _contract({
   required double bid,
   required double ask,
   required double? mid,
+  required Decimal? spread,
   required int dte,
   required int oi,
   required int volume,
@@ -298,9 +309,11 @@ OptionContract _contract({
   final askDec = Decimal.parse(ask.toString());
   final midDec = Decimal.parse((mid ?? ((bid + ask) / 2)).toStringAsFixed(4));
   final spreadDenominator = midDec <= Decimal.zero ? Decimal.one : midDec;
-  final spread = ((askDec - bidDec) / spreadDenominator).toDecimal(
-    scaleOnInfinitePrecision: 6,
-  );
+  final bidAskSpreadPct =
+      spread ??
+      ((askDec - bidDec) / spreadDenominator).toDecimal(
+        scaleOnInfinitePrecision: 6,
+      );
   return OptionContract(
     underlying: 'AAPL',
     market: AssetMarket.usStock,
@@ -319,7 +332,7 @@ OptionContract _contract({
     impliedVolatility: Decimal.parse('0.25'),
     delta: null,
     underlyingPrice: Money.parse('200', 'USD'),
-    bidAskSpreadPct: spread,
+    bidAskSpreadPct: bidAskSpreadPct,
     fetchedAt: DateTime.utc(2026, 5, 21),
   );
 }

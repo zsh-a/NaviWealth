@@ -13686,6 +13686,78 @@ abstract class AppLocalizations {
   /// **'Covered calls'**
   String get incomePlannerProfileAllowCall;
 
+  /// Section heading for advanced options scan filter fields
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced filters'**
+  String get incomePlannerProfileAdvancedFilters;
+
+  /// Minimum days-to-expiration filter label
+  ///
+  /// In en, this message translates to:
+  /// **'Min DTE'**
+  String get incomePlannerProfileMinDte;
+
+  /// Maximum days-to-expiration filter label
+  ///
+  /// In en, this message translates to:
+  /// **'Max DTE'**
+  String get incomePlannerProfileMaxDte;
+
+  /// Minimum annualized yield filter label
+  ///
+  /// In en, this message translates to:
+  /// **'Min annual yield'**
+  String get incomePlannerProfileMinYield;
+
+  /// Minimum open interest filter label
+  ///
+  /// In en, this message translates to:
+  /// **'Min open interest'**
+  String get incomePlannerProfileMinOpenInterest;
+
+  /// Minimum contract volume filter label
+  ///
+  /// In en, this message translates to:
+  /// **'Min volume'**
+  String get incomePlannerProfileMinVolume;
+
+  /// Maximum bid ask spread percentage filter label
+  ///
+  /// In en, this message translates to:
+  /// **'Max spread'**
+  String get incomePlannerProfileMaxSpread;
+
+  /// Maximum per-trade cash usage percentage filter label
+  ///
+  /// In en, this message translates to:
+  /// **'Max capital per trade'**
+  String get incomePlannerProfileMaxCapitalPerTrade;
+
+  /// Helper text for percentage fields in the strategy profile sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a percent, e.g. 12 means 12%.'**
+  String get incomePlannerProfilePercentHelper;
+
+  /// Validation error for invalid profile numeric fields
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number.'**
+  String get incomePlannerProfileValidationNumber;
+
+  /// Validation error for out-of-range profile numeric fields
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value from {min} to {max}.'**
+  String incomePlannerProfileValidationRange(int min, int max);
+
+  /// Validation error when max DTE is smaller than min DTE
+  ///
+  /// In en, this message translates to:
+  /// **'Max DTE must be greater than or equal to min DTE.'**
+  String get incomePlannerProfileValidationDteOrder;
+
   /// Profile sheet primary action
   ///
   /// In en, this message translates to:

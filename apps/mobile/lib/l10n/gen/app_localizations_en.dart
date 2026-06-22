@@ -8041,6 +8041,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerProfileAllowCall => 'Covered calls';
 
   @override
+  String get incomePlannerProfileAdvancedFilters => 'Advanced filters';
+
+  @override
+  String get incomePlannerProfileMinDte => 'Min DTE';
+
+  @override
+  String get incomePlannerProfileMaxDte => 'Max DTE';
+
+  @override
+  String get incomePlannerProfileMinYield => 'Min annual yield';
+
+  @override
+  String get incomePlannerProfileMinOpenInterest => 'Min open interest';
+
+  @override
+  String get incomePlannerProfileMinVolume => 'Min volume';
+
+  @override
+  String get incomePlannerProfileMaxSpread => 'Max spread';
+
+  @override
+  String get incomePlannerProfileMaxCapitalPerTrade => 'Max capital per trade';
+
+  @override
+  String get incomePlannerProfilePercentHelper =>
+      'Enter a percent, e.g. 12 means 12%.';
+
+  @override
+  String get incomePlannerProfileValidationNumber => 'Enter a valid number.';
+
+  @override
+  String incomePlannerProfileValidationRange(int min, int max) {
+    return 'Enter a value from $min to $max.';
+  }
+
+  @override
+  String get incomePlannerProfileValidationDteOrder =>
+      'Max DTE must be greater than or equal to min DTE.';
+
+  @override
   String get incomePlannerProfileSave => 'Save';
 
   @override

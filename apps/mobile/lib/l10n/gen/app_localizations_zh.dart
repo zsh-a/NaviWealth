@@ -7660,6 +7660,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerProfileAllowCall => '备兑看涨';
 
   @override
+  String get incomePlannerProfileAdvancedFilters => '高级筛选';
+
+  @override
+  String get incomePlannerProfileMinDte => '最小 DTE';
+
+  @override
+  String get incomePlannerProfileMaxDte => '最大 DTE';
+
+  @override
+  String get incomePlannerProfileMinYield => '最低年化收益';
+
+  @override
+  String get incomePlannerProfileMinOpenInterest => '最低未平仓量';
+
+  @override
+  String get incomePlannerProfileMinVolume => '最低成交量';
+
+  @override
+  String get incomePlannerProfileMaxSpread => '最大价差';
+
+  @override
+  String get incomePlannerProfileMaxCapitalPerTrade => '单笔最大资金占用';
+
+  @override
+  String get incomePlannerProfilePercentHelper => '输入百分数,例如 12 表示 12%。';
+
+  @override
+  String get incomePlannerProfileValidationNumber => '请输入有效数字。';
+
+  @override
+  String incomePlannerProfileValidationRange(int min, int max) {
+    return '请输入 $min 到 $max 之间的值。';
+  }
+
+  @override
+  String get incomePlannerProfileValidationDteOrder => '最大 DTE 必须大于或等于最小 DTE。';
+
+  @override
   String get incomePlannerProfileSave => '保存';
 
   @override
