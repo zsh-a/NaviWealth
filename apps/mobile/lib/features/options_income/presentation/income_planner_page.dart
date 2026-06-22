@@ -490,6 +490,19 @@ class _ScanEmptyResultCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (result.warnings.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                result.warnings.entries
+                    .take(2)
+                    .map((e) => '${e.key}: ${e.value}')
+                    .join('\n'),
+                style: context.captionStyle.copyWith(
+                  color: SemanticColors.of(context).warning,
+                  height: 1.35,
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.s12),
             Wrap(
               spacing: AppSpacing.s8,

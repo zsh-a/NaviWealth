@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
@@ -190,8 +191,16 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
             .whereType<Map<String, dynamic>>();
         final puts = ((expSlice['puts'] as List?) ?? const [])
             .whereType<Map<String, dynamic>>();
+        final callRows = calls.toList(growable: false);
+        final putRows = puts.toList(growable: false);
+        _logRawSliceDiagnostics(
+          symbol: symbol,
+          expiration: expiration,
+          calls: callRows,
+          puts: putRows,
+        );
         final underlyingMoney = Money.parse(underlyingPriceRaw, currency);
-        for (final raw in calls) {
+        for (final raw in callRows) {
           final c = _normalize(
             raw: raw,
             type: OptionType.call,
@@ -203,7 +212,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
           );
           if (c != null) contracts.add(c);
         }
-        for (final raw in puts) {
+        for (final raw in putRows) {
           final c = _normalize(
             raw: raw,
             type: OptionType.put,
@@ -375,6 +384,46 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
   Decimal _decimal(num value) => Decimal.parse(value.toString());
 
   num _safeNum(Object? value) => value is num ? value : 0;
+
+  void _logRawSliceDiagnostics({
+    required String symbol,
+    required DateTime expiration,
+    required List<Map<String, dynamic>> calls,
+    required List<Map<String, dynamic>> puts,
+  }) {
+    final rows = [...calls, ...puts];
+    final positiveBid = rows.where((r) => _safeNum(r['bid']) > 0).length;
+    final positiveAsk = rows.where((r) => _safeNum(r['ask']) > 0).length;
+    final positiveLast = rows.where((r) => _safeNum(r['lastPrice']) > 0).length;
+    final positiveOi = rows
+        .where((r) => _safeNum(r['openInterest']) > 0)
+        .length;
+    final positiveVolume = rows.where((r) => _safeNum(r['volume']) > 0).length;
+    final samples = rows.take(3).map(_rawSample).join(' | ');
+    AppLogger.instance.d(
+      'options-income yfinance: raw slice '
+      '$symbol exp=${expiration.toIso8601String().substring(0, 10)} '
+      'calls=${calls.length} puts=${puts.length} '
+      'positiveBid=$positiveBid/${rows.length} '
+      'positiveAsk=$positiveAsk/${rows.length} '
+      'positiveLast=$positiveLast/${rows.length} '
+      'positiveOI=$positiveOi/${rows.length} '
+      'positiveVolume=$positiveVolume/${rows.length} '
+      'samples=$samples',
+    );
+  }
+
+  String _rawSample(Map<String, dynamic> raw) {
+    return [
+      raw['contractSymbol'] ?? '?',
+      'strike=${raw['strike']}',
+      'bid=${raw['bid']}',
+      'ask=${raw['ask']}',
+      'last=${raw['lastPrice']}',
+      'oi=${raw['openInterest']}',
+      'vol=${raw['volume']}',
+    ].join(' ');
+  }
 }
 
 class _CachedChainPayload {

@@ -123,6 +123,31 @@ void main() {
       expect(opp.explanation.worstCase, contains('AAPL'));
     });
 
+    test('does not hard-filter an empty bid quote when mid is available', () {
+      const scorer = OpportunityScorer();
+      final contract = _putContract(strike: 190, bid: 0, ask: 0, mid: 2.5);
+      final rejection = scorer.filter(
+        contract: contract,
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: _profileBalanced(),
+        approved: _approved(symbol: 'AAPL'),
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'USD'),
+      );
+      expect(rejection, isNull);
+
+      final scored = scorer.scoreOne(
+        contract: contract,
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: _profileBalanced(),
+        approved: _approved(symbol: 'AAPL'),
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'USD'),
+      );
+      expect(scored, isNotNull);
+      expect(scored!.opportunity.metrics.premium.amount, Decimal.fromInt(250));
+    });
+
     test('annualized yield = static return × 365 / dte', () {
       const scorer = OpportunityScorer();
       final contract = _putContract(strike: 200, dte: 30, bid: 2.0, ask: 2.2);
@@ -224,6 +249,7 @@ OptionContract _putContract({
   required double strike,
   double bid = 1.5,
   double ask = 1.6,
+  double? mid,
   int dte = 30,
   int oi = 500,
   int volume = 50,
@@ -232,6 +258,7 @@ OptionContract _putContract({
   strike: strike,
   bid: bid,
   ask: ask,
+  mid: mid,
   dte: dte,
   oi: oi,
   volume: volume,
@@ -241,6 +268,7 @@ OptionContract _callContract({
   required double strike,
   double bid = 1.5,
   double ask = 1.6,
+  double? mid,
   int dte = 30,
   int oi = 500,
   int volume = 50,
@@ -249,6 +277,7 @@ OptionContract _callContract({
   strike: strike,
   bid: bid,
   ask: ask,
+  mid: mid,
   dte: dte,
   oi: oi,
   volume: volume,
@@ -259,6 +288,7 @@ OptionContract _contract({
   required double strike,
   required double bid,
   required double ask,
+  required double? mid,
   required int dte,
   required int oi,
   required int volume,
@@ -266,9 +296,9 @@ OptionContract _contract({
   final strikeDec = Decimal.parse(strike.toString());
   final bidDec = Decimal.parse(bid.toString());
   final askDec = Decimal.parse(ask.toString());
-  final midDec = Decimal.parse(((bid + ask) / 2).toStringAsFixed(4));
-  final mid = midDec <= Decimal.zero ? Decimal.one : midDec;
-  final spread = ((askDec - bidDec) / mid).toDecimal(
+  final midDec = Decimal.parse((mid ?? ((bid + ask) / 2)).toStringAsFixed(4));
+  final spreadDenominator = midDec <= Decimal.zero ? Decimal.one : midDec;
+  final spread = ((askDec - bidDec) / spreadDenominator).toDecimal(
     scaleOnInfinitePrecision: 6,
   );
   return OptionContract(

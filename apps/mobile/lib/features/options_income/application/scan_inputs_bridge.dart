@@ -37,6 +37,7 @@ const _snapshotTimeout = Duration(seconds: 4);
 final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
   ref,
 ) async {
+  final logger = AppLogger.instance;
   // Defaults to USD because yfinance options are US-only at MVP.
   const baseCurrency = 'USD';
   // currentUserId is used implicitly downstream — touching the provider
@@ -52,8 +53,12 @@ final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
     final snapshot = await snapshotFuture.timeout(_snapshotTimeout);
     holdings = _extractShares(snapshot);
     exposures = _extractExposures(snapshot);
+    logger.d(
+      'options-income side inputs: portfolio ok '
+      'holdings=${holdings.length} exposures=${exposures.length}',
+    );
   } catch (e, st) {
-    AppLogger.instance.w(
+    logger.w(
       'options-income side inputs: portfolio snapshot unavailable',
       error: e,
       stackTrace: st,
@@ -68,8 +73,12 @@ final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
       ownerUserId: ownerUserId,
       currency: baseCurrency,
     );
+    logger.d(
+      'options-income side inputs: cash ok '
+      '${availableCash.amount} ${availableCash.currency}',
+    );
   } catch (e, st) {
-    AppLogger.instance.w(
+    logger.w(
       'options-income side inputs: cash balance read failed',
       error: e,
       stackTrace: st,
@@ -101,7 +110,13 @@ Future<Money> _optionsAvailableCashFromDb({
     final metadata = ManualAssetMetadata.decode(row.metadataJson);
     if (metadata is CashMetadata) accountIds.add(metadata.accountId);
   }
-  if (accountIds.isEmpty) return Money.zero(upper);
+  if (accountIds.isEmpty) {
+    AppLogger.instance.d(
+      'options-income cash lookup: no linked cash accounts '
+      'cashAssets=${cashRows.length} currency=$upper',
+    );
+    return Money.zero(upper);
+  }
 
   final rows =
       await (db.select(db.postings).join([
@@ -121,6 +136,11 @@ Future<Money> _optionsAvailableCashFromDb({
     total += row.readTable(db.postings).units;
   }
   if (total < Decimal.zero) total = Decimal.zero;
+  AppLogger.instance.d(
+    'options-income cash lookup: cashAssets=${cashRows.length} '
+    'linkedAccounts=${accountIds.length} postings=${rows.length} '
+    'total=$total $upper',
+  );
   return Money(total, upper);
 }
 

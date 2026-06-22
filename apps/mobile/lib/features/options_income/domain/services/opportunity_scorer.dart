@@ -30,6 +30,7 @@ class OpportunityScorer {
     required int sharesOwned,
     required Money availableCash,
     Decimal? currentUnderlyingExposurePct,
+    bool ignoreOpenInterestFloor = false,
     bool hasUpcomingEarnings = false,
     bool hasUpcomingMacroEvent = false,
     DateTime? now,
@@ -43,6 +44,7 @@ class OpportunityScorer {
       approved: approved,
       sharesOwned: sharesOwned,
       availableCash: availableCash,
+      ignoreOpenInterestFloor: ignoreOpenInterestFloor,
       hasUpcomingEarnings: hasUpcomingEarnings,
       hasUpcomingMacroEvent: hasUpcomingMacroEvent,
     );
@@ -92,6 +94,7 @@ class OpportunityScorer {
     required int sharesOwned,
     required Money availableCash,
     Decimal? currentUnderlyingExposurePct,
+    bool ignoreOpenInterestFloor = false,
     bool hasUpcomingEarnings = false,
     bool hasUpcomingMacroEvent = false,
   }) {
@@ -102,6 +105,7 @@ class OpportunityScorer {
       approved: approved,
       sharesOwned: sharesOwned,
       availableCash: availableCash,
+      ignoreOpenInterestFloor: ignoreOpenInterestFloor,
       hasUpcomingEarnings: hasUpcomingEarnings,
       hasUpcomingMacroEvent: hasUpcomingMacroEvent,
     );
@@ -119,12 +123,13 @@ class OpportunityScorer {
     required ApprovedUnderlying? approved,
     required int sharesOwned,
     required Money availableCash,
+    required bool ignoreOpenInterestFloor,
     required bool hasUpcomingEarnings,
     required bool hasUpcomingMacroEvent,
   }) {
     final reasons = <String>[];
-    if (contract.bid.amount <= Decimal.zero) reasons.add('bid_not_positive');
-    if (contract.openInterest < profile.minOpenInterest) {
+    if (!ignoreOpenInterestFloor &&
+        contract.openInterest < profile.minOpenInterest) {
       reasons.add('open_interest_below_floor');
     }
     if (contract.volume < profile.minVolume) reasons.add('volume_below_floor');

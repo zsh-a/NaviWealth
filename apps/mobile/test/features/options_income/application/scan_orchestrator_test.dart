@@ -164,6 +164,79 @@ void main() {
       expect(result.errors, isEmpty);
     },
   );
+
+  test(
+    'treats missing open interest data as warning, not hard filter',
+    () async {
+      final chainProvider = _FakeOptionsChainProvider(
+        snapshots: {
+          'AAPL': _snapshot('AAPL', [_putContract('AAPL', strike: 190, oi: 0)]),
+        },
+      );
+      final orchestrator = ScanOrchestrator(
+        chainProvider: chainProvider,
+        scorer: const OpportunityScorer(),
+        cache: cache,
+      );
+
+      final result = await orchestrator.run(
+        ScanInputs(
+          ownerUserId: 'u1',
+          profile: _profile(),
+          approved: [_approved(symbol: 'AAPL')],
+          holdingsBySymbol: const {},
+          exposureBySymbol: const {},
+          availableCash: Money.parse('1000000', 'USD'),
+          upcomingEarningsSymbols: const {},
+          upcomingMacroEvent: false,
+        ),
+      );
+
+      expect(result.opportunities, hasLength(1));
+      expect(result.rejected, isEmpty);
+      expect(
+        result.warnings,
+        containsPair('AAPL', contains('open interest appears unavailable')),
+      );
+    },
+  );
+
+  test('keeps low open interest as hard filter when OI data exists', () async {
+    final chainProvider = _FakeOptionsChainProvider(
+      snapshots: {
+        'AAPL': _snapshot('AAPL', [
+          _putContract('AAPL', strike: 190, oi: 10),
+          _putContract('AAPL', strike: 180, oi: 500),
+        ]),
+      },
+    );
+    final orchestrator = ScanOrchestrator(
+      chainProvider: chainProvider,
+      scorer: const OpportunityScorer(),
+      cache: cache,
+    );
+
+    final result = await orchestrator.run(
+      ScanInputs(
+        ownerUserId: 'u1',
+        profile: _profile(),
+        approved: [_approved(symbol: 'AAPL')],
+        holdingsBySymbol: const {},
+        exposureBySymbol: const {},
+        availableCash: Money.parse('1000000', 'USD'),
+        upcomingEarningsSymbols: const {},
+        upcomingMacroEvent: false,
+      ),
+    );
+
+    expect(result.opportunities, hasLength(1));
+    expect(result.rejected, hasLength(1));
+    expect(
+      result.rejected.single.reasons,
+      contains('open_interest_below_floor'),
+    );
+    expect(result.warnings, isEmpty);
+  });
 }
 
 class _FakeOptionsChainProvider implements OptionsChainProvider {
@@ -227,17 +300,20 @@ OptionsChainSnapshot _snapshot(String symbol, List<OptionContract> contracts) =>
       fetchedAt: DateTime.utc(2026, 5, 21),
     );
 
-OptionContract _putContract(String underlying, {required double strike}) =>
-    _contract(
-      underlying: underlying,
-      type: OptionType.put,
-      strike: strike,
-      bid: 2.5,
-      ask: 2.6,
-      dte: 30,
-      oi: 500,
-      volume: 50,
-    );
+OptionContract _putContract(
+  String underlying, {
+  required double strike,
+  int oi = 500,
+}) => _contract(
+  underlying: underlying,
+  type: OptionType.put,
+  strike: strike,
+  bid: 2.5,
+  ask: 2.6,
+  dte: 30,
+  oi: oi,
+  volume: 50,
+);
 
 OptionContract _contract({
   required String underlying,
