@@ -37,9 +37,7 @@ class AccountFormPage extends ConsumerStatefulWidget {
 }
 
 class _AccountFormPageState extends ConsumerState<AccountFormPage>
-    with
-        OptimisticFormSubmit<AccountFormPage>,
-        FormDirtyGuard<AccountFormPage> {
+    with FormDirtyGuard<AccountFormPage> {
   @override
   String get leaveFallback => AppRoutes.wealthAccounts;
 
@@ -149,51 +147,44 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       final icon = _icon;
       final color = _color;
 
-      // The record is being persisted — the post-save pop must not prompt.
+      if (initial == null) {
+        await repo.create(
+          type: type,
+          name: name,
+          currency: currency,
+          category: category,
+          institution: institution,
+          accountNumber: accountNumber,
+          note: note,
+          parentId: parentId,
+          icon: icon,
+          color: color,
+        );
+      } else {
+        await repo.update(
+          initial.id,
+          name: name,
+          currency: currency,
+          category: category != initial.category ? category : null,
+          institution: institution ?? '',
+          clearInstitution: institution == null,
+          accountNumber: accountNumber ?? '',
+          clearAccountNumber: accountNumber == null,
+          note: note ?? '',
+          clearNote: note == null,
+          archived: archived,
+          parentId: parentId ?? '',
+          clearParentId: parentId == null,
+          icon: icon ?? '',
+          clearIcon: icon == null,
+          color: color ?? '',
+          clearColor: color == null,
+        );
+      }
+      if (!mounted) return;
       dirty.markPristine();
-      await submitOptimisticAndLeave(
-        leaveFallback: AppRoutes.wealthAccounts,
-        onBeforeLeave: Haptics.success,
-        tag: 'account',
-        failureMessage: (_) => l10n.commonSaveFailed,
-        retryLabel: l10n.commonRetry,
-        write: () async {
-          if (initial == null) {
-            await repo.create(
-              type: type,
-              name: name,
-              currency: currency,
-              category: category,
-              institution: institution,
-              accountNumber: accountNumber,
-              note: note,
-              parentId: parentId,
-              icon: icon,
-              color: color,
-            );
-          } else {
-            await repo.update(
-              initial.id,
-              name: name,
-              currency: currency,
-              category: category != initial.category ? category : null,
-              institution: institution ?? '',
-              clearInstitution: institution == null,
-              accountNumber: accountNumber ?? '',
-              clearAccountNumber: accountNumber == null,
-              note: note ?? '',
-              clearNote: note == null,
-              archived: archived,
-              parentId: parentId ?? '',
-              clearParentId: parentId == null,
-              icon: icon ?? '',
-              clearIcon: icon == null,
-              color: color ?? '',
-              clearColor: color == null,
-            );
-          }
-        },
-      );
+      Haptics.success();
+      popOrGo(context, fallback: AppRoutes.wealthAccounts);
     } on Object {
       if (!mounted) return;
       Haptics.error();

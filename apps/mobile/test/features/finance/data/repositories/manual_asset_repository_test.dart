@@ -27,6 +27,22 @@ class _IdentityFx implements FxRateSource {
   }
 }
 
+class _ThrowingJournalEntryRepository extends JournalEntryRepository {
+  _ThrowingJournalEntryRepository({
+    required super.db,
+    required super.outbox,
+    required super.stamper,
+  }) : super(fxRateSource: const _IdentityFx(), baseCurrency: 'CNY');
+
+  @override
+  Future<JournalEntryWithPostings> create({
+    required JournalEntryDraft entry,
+    required List<PostingDraft> postings,
+  }) async {
+    throw StateError('journal unavailable');
+  }
+}
+
 void main() {
   late AppDatabase db;
   late PriceRepository priceRepo;
@@ -85,6 +101,60 @@ void main() {
       expect(latest?.perUnit, Decimal.parse('100'));
     },
   );
+
+  test(
+    'createCash rolls back asset and price when journal write fails',
+    () async {
+      final failingRepo = ManualAssetRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+        priceRepo: priceRepo,
+        journalEntryRepo: _ThrowingJournalEntryRepository(
+          db: db,
+          outbox: InMemoryOutboxStore(),
+          stamper: makeStubStamper(),
+        ),
+      );
+
+      await expectLater(
+        failingRepo.createCash(
+          accountId: 'acc-cash',
+          currency: 'CNY',
+          balance: Decimal.parse('100'),
+        ),
+        throwsStateError,
+      );
+
+      expect(await db.select(db.assets).get(), isEmpty);
+      expect(await db.select(db.prices).get(), isEmpty);
+      expect(await db.select(db.journalEntries).get(), isEmpty);
+      expect(await db.select(db.postings).get(), isEmpty);
+    },
+  );
+
+  test('repairCashBalancePostings restores orphaned cash valuation', () async {
+    final assetOnlyRepo = ManualAssetRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+      priceRepo: priceRepo,
+    );
+    await assetOnlyRepo.createCash(
+      accountId: 'acc-cash',
+      currency: 'CNY',
+      balance: Decimal.parse('100'),
+    );
+    expect(await _accountPostings(db, 'acc-cash'), isEmpty);
+
+    final repaired = await repo.repairCashBalancePostings();
+
+    expect(repaired, 1);
+    final accountPostings = await _accountPostings(db, 'acc-cash');
+    expect(accountPostings, hasLength(1));
+    expect(accountPostings.single.unit, 'CNY');
+    expect(accountPostings.single.units, Decimal.parse('100'));
+  });
 
   test('cash valuation adjustments post only the balance delta', () async {
     final asset = await repo.createCash(

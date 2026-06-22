@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../domain/account_balances.dart';
 
 /// All non-zero per-unit balances, keyed by accountId. Drives the
@@ -13,6 +14,8 @@ import '../domain/account_balances.dart';
 /// (no `:`) before asset legs so the list order is stable.
 final accountBalancesByIdProvider =
     StreamProvider<Map<String, AccountBalances>>((ref) async* {
+      final manualRepo = await ref.watch(manualAssetRepositoryProvider.future);
+      await manualRepo.repairCashBalancePostings();
       final repo = await ref.watch(journalEntryRepositoryProvider.future);
       yield* repo.watchBalancesByUnit().map((byAccount) {
         return {

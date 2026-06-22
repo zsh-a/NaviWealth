@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/audit/event_log_writer.dart';
@@ -155,6 +157,75 @@ class ManualAssetRepository {
       accountId: accountId,
       initialValuation: balance,
     );
+  }
+
+  /// Repairs cash assets that have a latest valuation but whose linked
+  /// account ledger does not reflect that balance.
+  ///
+  /// This is defensive for older builds that wrote the asset/price rows
+  /// before the opening-balance journal. If the journal leg failed, the
+  /// dashboard could include the cash asset while the account list still
+  /// showed "-". The repair writes only the missing ledger delta.
+  Future<int> repairCashBalancePostings() async {
+    final jeRepo = _journalEntryRepo;
+    if (jeRepo == null) return 0;
+    final rows =
+        await (_db.select(_db.assets)
+              ..where((t) => t.type.equalsValue(AssetType.cash))
+              ..where((t) => t.deletedAt.isNull()))
+            .get();
+    var repaired = 0;
+    for (final row in rows) {
+      final meta = ManualAssetMetadata.decode(row.metadataJson);
+      if (meta is! CashMetadata) continue;
+      final valuation = await latestValuation(row.id);
+      if (valuation == null) continue;
+      if (valuation == Decimal.zero) continue;
+      final hasTaggedLedger = await _hasAssetTaggedPosting(
+        assetId: row.id,
+        accountId: meta.accountId,
+        currency: row.currency,
+      );
+      if (hasTaggedLedger) continue;
+      await _recordCashBalanceDelta(
+        assetId: row.id,
+        accountId: meta.accountId,
+        currency: row.currency,
+        delta: valuation,
+        observedOn: DateTime.now().toUtc(),
+        ownerUserId: row.ownerUserId,
+        narration: 'Repair cash balance',
+      );
+      repaired++;
+    }
+    return repaired;
+  }
+
+  Future<bool> _hasAssetTaggedPosting({
+    required String assetId,
+    required String accountId,
+    required String currency,
+  }) async {
+    final rows =
+        await (_db.select(_db.postings).join([
+                innerJoin(
+                  _db.journalEntries,
+                  _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
+                ),
+              ])
+              ..where(_db.postings.accountId.equals(accountId))
+              ..where(_db.postings.unit.equals(currency))
+              ..where(_db.postings.deletedAt.isNull())
+              ..where(_db.journalEntries.deletedAt.isNull()))
+            .get();
+    final tag = 'asset:$assetId';
+    for (final row in rows) {
+      final entry = row.readTable(_db.journalEntries);
+      final tags = (jsonDecode(entry.tagIdsJson) as List<dynamic>)
+          .cast<String>();
+      if (tags.contains(tag)) return true;
+    }
+    return false;
   }
 
   Future<Asset> createDeposit({
@@ -408,20 +479,20 @@ class ManualAssetRepository {
         stamp: stamp,
         after: fields,
       );
+      if (initialValuation > Decimal.zero ||
+          (type == AssetType.cash && initialValuation == Decimal.zero)) {
+        await _recordValuation(
+          assetId: id,
+          accountId: accountId,
+          currency: currency,
+          value: initialValuation,
+          observedOn: stamp.now,
+          ownerUserId: stamp.ownerUserId,
+          type: type,
+          previousValue: Decimal.zero,
+        );
+      }
     });
-    if (initialValuation > Decimal.zero ||
-        (type == AssetType.cash && initialValuation == Decimal.zero)) {
-      await _recordValuation(
-        assetId: id,
-        accountId: accountId,
-        currency: currency,
-        value: initialValuation,
-        observedOn: stamp.now,
-        ownerUserId: stamp.ownerUserId,
-        type: type,
-        previousValue: Decimal.zero,
-      );
-    }
     return (await findById(id))!;
   }
 
@@ -449,19 +520,16 @@ class ManualAssetRepository {
     final JournalEntryBuild build;
     if (type == AssetType.cash) {
       final delta = value - (previousValue ?? Decimal.zero);
-      if (delta == Decimal.zero) return;
-      build = JournalEntryBuilders.openingBalance(
-        date: observedOn,
+      await _recordCashBalanceDelta(
+        assetId: assetId,
         accountId: accountId,
-        openingBalanceAccountId: AccountRepository.systemAccountIdForPath(
-          'equity:openingBalance',
-          ownerUserId: ownerUserId,
-        ),
-        amount: delta,
         currency: currency,
+        delta: delta,
+        observedOn: observedOn,
+        ownerUserId: ownerUserId,
         narration: narration ?? 'Cash balance',
-        tagIds: ['asset:$assetId'],
       );
+      return;
     } else {
       final equityAccountId = AccountRepository.systemAccountIdForPath(
         'equity:adjustments',
@@ -478,6 +546,33 @@ class ManualAssetRepository {
         narration: narration,
       );
     }
+    await jeRepo.create(entry: build.entry, postings: build.postings);
+  }
+
+  Future<void> _recordCashBalanceDelta({
+    required String assetId,
+    required String accountId,
+    required String currency,
+    required Decimal delta,
+    required DateTime observedOn,
+    required String ownerUserId,
+    String? narration,
+  }) async {
+    if (delta == Decimal.zero) return;
+    final jeRepo = _journalEntryRepo;
+    if (jeRepo == null) return;
+    final build = JournalEntryBuilders.openingBalance(
+      date: observedOn,
+      accountId: accountId,
+      openingBalanceAccountId: AccountRepository.systemAccountIdForPath(
+        'equity:openingBalance',
+        ownerUserId: ownerUserId,
+      ),
+      amount: delta,
+      currency: currency,
+      narration: narration,
+      tagIds: ['asset:$assetId'],
+    );
     await jeRepo.create(entry: build.entry, postings: build.postings);
   }
 

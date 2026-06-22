@@ -15,6 +15,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
+import '../../core/logging/app_logger.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/account_l10n.dart';
@@ -141,7 +142,12 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       dirty.markPristine();
       Haptics.success();
       popOrGo(context, fallback: AppRoutes.wealth);
-    } on Object {
+    } on Object catch (error, stack) {
+      AppLogger.instance.e(
+        'cash balance save failed',
+        error: error,
+        stackTrace: stack,
+      );
       if (!mounted) return;
       Haptics.error();
       AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
