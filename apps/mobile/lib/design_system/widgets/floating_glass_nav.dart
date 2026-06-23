@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
@@ -57,29 +59,20 @@ class FloatingGlassNavBar extends StatelessWidget {
     final colors = theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
-    // 120fps-safe frosted glass surface.
-    //
-    // BackdropFilter + ImageFilter.blur triggers a GPU framebuffer readback
-    // every frame — impossible to sustain at 120fps (8.3 ms/frame). Instead
-    // we use a highly-opaque translucent fill + a subtle top-edge gradient
-    // highlight that approximates the frosted-glass depth cue without any
-    // per-frame GPU readback. The entire bar is wrapped in a RepaintBoundary
-    // so scroll-induced repaints in the content behind never cascade here.
-    //
-    // Light: near-opaque white tint (matches the old 0.94 alpha).
-    // Dark:  deep navy tint (matches the old 0.88 alpha).
+    // Unified frosted glass surface. Both themes use the same blur and a
+    // semi-transparent tint; only the tint colour changes with brightness.
     final glassColor = isDark
-        ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.overlay)
-        : ColorPalette.neutralGlass.withValues(alpha: AppOpacity.nearOpaque);
+        ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.emphasis)
+        : ColorPalette.neutral0.withValues(alpha: AppOpacity.strong);
     final borderColor = isDark
         ? ColorPalette.neutral0.withValues(alpha: AppOpacity.faint)
-        : ColorPalette.neutralGlassBorder.withValues(alpha: AppOpacity.strong);
+        : ColorPalette.neutral0.withValues(alpha: AppOpacity.emphasis);
 
     // Top-edge highlight gradient simulates light refracting through the
-    // frosted surface — the main visual cue that replaces the real blur.
+    // frosted surface.
     final highlightColor = isDark
         ? ColorPalette.neutral0.withValues(alpha: AppOpacity.faint)
-        : ColorPalette.neutral0.withValues(alpha: AppOpacity.softScrim);
+        : ColorPalette.neutral0.withValues(alpha: AppOpacity.medium);
     final highlightColorTransparent = highlightColor.withValues(
       alpha: AppOpacity.transparent,
     );
@@ -93,68 +86,71 @@ class FloatingGlassNavBar extends StatelessWidget {
           boxShadow: AppShadow.nav,
         ),
         clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            // Base frosted fill.
-            Positioned.fill(child: ColoredBox(color: glassColor)),
-            // Top-edge highlight band — refracted light simulation.
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [highlightColor, highlightColorTransparent],
-                    stops: const [0.0, 0.35],
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: AppBlur.nav, sigmaY: AppBlur.nav),
+          child: Stack(
+            children: [
+              // Base frosted fill.
+              Positioned.fill(child: ColoredBox(color: glassColor)),
+              // Top-edge highlight band — refracted light simulation.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [highlightColor, highlightColorTransparent],
+                      stops: const [0.0, 0.35],
+                    ),
                   ),
                 ),
               ),
-            ),
-            // Navigation content.
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s8,
-                vertical: AppSpacing.s6,
+              // Navigation content.
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s8,
+                  vertical: AppSpacing.s6,
+                ),
+                child: Row(
+                  children: [
+                    // Left tabs.
+                    for (var i = 0; i < _leftCount; i++)
+                      Expanded(
+                        child: _NavTabButton(
+                          tab: items[i],
+                          selected: i == selectedIndex,
+                          onTap: () => onIndexChanged(i),
+                          isDark: isDark,
+                        ),
+                      ),
+                    // Center action button (optional).
+                    if (onCenterAction != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s4,
+                        ),
+                        child: _CenterActionButton(
+                          icon: centerIcon,
+                          label: centerLabel,
+                          onTap: onCenterAction!,
+                          isDark: isDark,
+                        ),
+                      ),
+                    // Right tabs.
+                    for (var i = _leftCount; i < items.length; i++)
+                      Expanded(
+                        child: _NavTabButton(
+                          tab: items[i],
+                          selected: i == selectedIndex,
+                          onTap: () => onIndexChanged(i),
+                          isDark: isDark,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  // Left tabs.
-                  for (var i = 0; i < _leftCount; i++)
-                    Expanded(
-                      child: _NavTabButton(
-                        tab: items[i],
-                        selected: i == selectedIndex,
-                        onTap: () => onIndexChanged(i),
-                        isDark: isDark,
-                      ),
-                    ),
-                  // Center action button (optional).
-                  if (onCenterAction != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s4,
-                      ),
-                      child: _CenterActionButton(
-                        icon: centerIcon,
-                        label: centerLabel,
-                        onTap: onCenterAction!,
-                        isDark: isDark,
-                      ),
-                    ),
-                  // Right tabs.
-                  for (var i = _leftCount; i < items.length; i++)
-                    Expanded(
-                      child: _NavTabButton(
-                        tab: items[i],
-                        selected: i == selectedIndex,
-                        onTap: () => onIndexChanged(i),
-                        isDark: isDark,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

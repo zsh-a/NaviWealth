@@ -160,6 +160,7 @@ void main() {
         tester.getSize(find.byType(FloatingGlassNavBar)).height,
         kFloatingGlassNavBarHeight,
       );
+      expect(find.byType(BackdropFilter), findsOneWidget);
     });
   });
 }
