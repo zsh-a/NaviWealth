@@ -108,11 +108,10 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isDesktop = MasterDetailLayout.shouldUseMasterDetail(width);
-        // At desktop width the URL is the source of truth for the
-        // active session — the master-detail surface follows
-        // `?selected=`. Explicit selection wins; otherwise the
+        // `?selected=` is used by expand-from-sheet and by the desktop
+        // master-detail list. Explicit in-page selection wins; otherwise the
         // provider resolves the default thread.
-        final selectedFromQuery = isDesktop ? selectedQueryOf(context) : null;
+        final selectedFromQuery = selectedQueryOf(context);
         final activeId =
             _selectedSessionId ??
             selectedFromQuery ??

@@ -8,13 +8,13 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'ai_navigation.dart';
 
 class AiTransparencyIndicator extends ConsumerWidget {
   const AiTransparencyIndicator({super.key, required this.messageId});
@@ -37,8 +37,10 @@ class AiTransparencyIndicator extends ConsumerWidget {
       child: FTooltip(
         tipBuilder: (_, _) => Text(l10n.aiChatTransparencyOpenDetail),
         child: FTappable(
-          onPress: () =>
-              context.go(AppRoutes.settingsAiTransparencyDetail(messageId)),
+          onPress: () => pushFromAiSurface(
+            context,
+            AppRoutes.settingsAiTransparencyDetail(messageId),
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
             child: Row(

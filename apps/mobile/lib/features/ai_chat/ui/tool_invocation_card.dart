@@ -2,13 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/evidence_anchor.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
+import 'ai_navigation.dart';
 import 'tool_invocation_renderers.dart';
 
 /// Collapsible card surfacing one tool invocation. Header shows the
@@ -161,18 +161,18 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   void _navigate(BuildContext context, _Jump jump) {
     switch (jump.kind) {
       case _JumpKind.asset:
-        context.go(AppRoutes.wealthAsset(jump.id));
+        pushFromAiSurface(context, AppRoutes.wealthAsset(jump.id));
       case _JumpKind.account:
-        context.go(AppRoutes.wealthAccount(jump.id));
+        pushFromAiSurface(context, AppRoutes.wealthAccount(jump.id));
       case _JumpKind.liability:
-        context.go(AppRoutes.wealthLiability(jump.id));
+        pushFromAiSurface(context, AppRoutes.wealthLiability(jump.id));
       case _JumpKind.journalEntry:
-        context.go(AppRoutes.activityEntry(jump.id));
+        pushFromAiSurface(context, AppRoutes.activityEntry(jump.id));
       case _JumpKind.tradeJournal:
         // No per-entry detail page yet; Income Planner is the closest
         // surface that lists the same rows. The chip still carries the
         // id so a future detail route can swap in without reparsing.
-        context.go(AppRoutes.planIncome);
+        pushFromAiSurface(context, AppRoutes.planIncome);
     }
   }
 

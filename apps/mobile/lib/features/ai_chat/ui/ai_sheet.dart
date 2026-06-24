@@ -29,9 +29,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/current_user.dart';
@@ -41,6 +39,7 @@ import '../data/providers.dart';
 import '../state/ai_context.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
+import 'ai_navigation.dart';
 import 'chat_composer.dart';
 import 'chat_conversation_view.dart';
 import 'llm_profile_chip.dart';
@@ -536,8 +535,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
   void _expandToChat() {
     final sid = _sessionId;
     if (sid == null) return;
-    Navigator.of(context).pop();
-    context.go('${AppRoutes.settingsAiHistory}?selected=$sid');
+    popThenPushFromAiSurface(context, aiHistoryLocation(sid));
   }
 
   Widget _buildInvocation(BuildContext context) {
@@ -659,10 +657,10 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
               : () => _startNewConversation(userId),
           onExpand: activeId == null
               ? null
-              : () {
-                  Navigator.of(context).pop();
-                  context.go(AppRoutes.settingsAiHistory);
-                },
+              : () => popThenPushFromAiSurface(
+                  context,
+                  aiHistoryLocation(activeId),
+                ),
         ),
         const FDivider(),
         Expanded(
