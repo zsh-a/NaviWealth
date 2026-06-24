@@ -96,6 +96,7 @@ abstract final class AppRoutes {
   static const planFire = '/plan/fire';
   static const planRebalance = '/plan/rebalance';
   static const planIncome = '/plan/income';
+  static const planIncomeStats = '/plan/income/stats';
   static const planDca = '/plan/dca';
   static const planBudget = '/plan/budget';
   static const planWheel = '/plan/wheel';
@@ -221,6 +222,7 @@ abstract final class AppRouteNames {
   static const planFire = 'plan-fire';
   static const planRebalance = 'plan-rebalance';
   static const planIncome = 'plan-income';
+  static const planIncomeStats = 'plan-income-stats';
   static const planDca = 'plan-dca';
   static const planBudget = 'plan-budget';
   static const planWheel = 'plan-wheel';

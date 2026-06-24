@@ -14142,6 +14142,119 @@ abstract class AppLocalizations {
   /// **'Expired'**
   String get incomePlannerJournalStatusExpired;
 
+  /// CTA to open options trade statistics
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get incomePlannerStatsAction;
+
+  /// Title for the options trade statistics page
+  ///
+  /// In en, this message translates to:
+  /// **'Options review'**
+  String get incomePlannerStatsTitle;
+
+  /// Empty title for options trade stats
+  ///
+  /// In en, this message translates to:
+  /// **'No trades yet'**
+  String get incomePlannerStatsEmptyTitle;
+
+  /// Empty body for options trade stats
+  ///
+  /// In en, this message translates to:
+  /// **'Log option trades from Income Planner to review premium, realized P&L, and assignment discipline.'**
+  String get incomePlannerStatsEmptyBody;
+
+  /// Overview card title on options trade stats page
+  ///
+  /// In en, this message translates to:
+  /// **'Journal summary'**
+  String get incomePlannerStatsOverviewTitle;
+
+  /// Metric label: total option trades
+  ///
+  /// In en, this message translates to:
+  /// **'Trades'**
+  String get incomePlannerStatsTotalTrades;
+
+  /// Metric label: open option trades
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get incomePlannerStatsOpenTrades;
+
+  /// Metric label: assigned option trades
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get incomePlannerStatsAssignedTrades;
+
+  /// Metric label: expired option trades
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get incomePlannerStatsExpiredTrades;
+
+  /// Metric label: total premium received
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get incomePlannerStatsPremium;
+
+  /// Metric label: realized P&L with conservative tracking
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked P&L'**
+  String get incomePlannerStatsRealizedPnl;
+
+  /// Metric label: win rate
+  ///
+  /// In en, this message translates to:
+  /// **'Win rate'**
+  String get incomePlannerStatsWinRate;
+
+  /// Metric label: average holding days
+  ///
+  /// In en, this message translates to:
+  /// **'Avg days'**
+  String get incomePlannerStatsAvgHoldingDays;
+
+  /// Note explaining multi-currency stats are not merged
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts are shown separately because this journal contains {currencies}.'**
+  String incomePlannerStatsMultiCurrencyNote(String currencies);
+
+  /// Section title: strategy breakdown
+  ///
+  /// In en, this message translates to:
+  /// **'By strategy'**
+  String get incomePlannerStatsStrategySectionTitle;
+
+  /// Section title: underlying symbol breakdown
+  ///
+  /// In en, this message translates to:
+  /// **'By underlying'**
+  String get incomePlannerStatsSymbolSectionTitle;
+
+  /// Small stat line for strategy rows
+  ///
+  /// In en, this message translates to:
+  /// **'{total} trades · {open} open'**
+  String incomePlannerStatsTradeCount(int total, int open);
+
+  /// Small stat line for underlying rows
+  ///
+  /// In en, this message translates to:
+  /// **'{total} trades · {open} open · {assigned} assigned · {expired} expired'**
+  String incomePlannerStatsSymbolDetail(
+    int total,
+    int open,
+    int assigned,
+    int expired,
+  );
+
   /// Validation: missing symbol
   ///
   /// In en, this message translates to:

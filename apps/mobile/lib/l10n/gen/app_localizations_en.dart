@@ -8282,6 +8282,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerJournalStatusExpired => 'Expired';
 
   @override
+  String get incomePlannerStatsAction => 'Stats';
+
+  @override
+  String get incomePlannerStatsTitle => 'Options review';
+
+  @override
+  String get incomePlannerStatsEmptyTitle => 'No trades yet';
+
+  @override
+  String get incomePlannerStatsEmptyBody =>
+      'Log option trades from Income Planner to review premium, realized P&L, and assignment discipline.';
+
+  @override
+  String get incomePlannerStatsOverviewTitle => 'Journal summary';
+
+  @override
+  String get incomePlannerStatsTotalTrades => 'Trades';
+
+  @override
+  String get incomePlannerStatsOpenTrades => 'Open';
+
+  @override
+  String get incomePlannerStatsAssignedTrades => 'Assigned';
+
+  @override
+  String get incomePlannerStatsExpiredTrades => 'Expired';
+
+  @override
+  String get incomePlannerStatsPremium => 'Premium';
+
+  @override
+  String get incomePlannerStatsRealizedPnl => 'Tracked P&L';
+
+  @override
+  String get incomePlannerStatsWinRate => 'Win rate';
+
+  @override
+  String get incomePlannerStatsAvgHoldingDays => 'Avg days';
+
+  @override
+  String incomePlannerStatsMultiCurrencyNote(String currencies) {
+    return 'Amounts are shown separately because this journal contains $currencies.';
+  }
+
+  @override
+  String get incomePlannerStatsStrategySectionTitle => 'By strategy';
+
+  @override
+  String get incomePlannerStatsSymbolSectionTitle => 'By underlying';
+
+  @override
+  String incomePlannerStatsTradeCount(int total, int open) {
+    return '$total trades · $open open';
+  }
+
+  @override
+  String incomePlannerStatsSymbolDetail(
+    int total,
+    int open,
+    int assigned,
+    int expired,
+  ) {
+    return '$total trades · $open open · $assigned assigned · $expired expired';
+  }
+
+  @override
   String get incomePlannerSymbolRequired => 'Symbol is required';
 
   @override

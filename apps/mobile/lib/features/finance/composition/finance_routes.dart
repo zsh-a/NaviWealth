@@ -53,6 +53,8 @@ import '../../liabilities/ui/liability_detail_page.dart'
 import '../../liabilities/ui/liability_form_page.dart';
 import '../../options_income/presentation/income_planner_page.dart'
     deferred as income_planner_lib;
+import '../../options_income/presentation/options_trade_stats_page.dart'
+    deferred as options_stats_lib;
 import '../../options_income/presentation/wheel_lifecycle_page.dart';
 import '../../plan/ui/plan_hub_page.dart';
 import '../../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
@@ -346,6 +348,14 @@ StatefulShellRoute financeShellRoute() {
                 ),
               ),
               GoRoute(
+                path: 'income/stats',
+                name: AppRouteNames.planIncomeStats,
+                builder: (context, state) => DeferredRoute(
+                  load: options_stats_lib.loadLibrary,
+                  builder: (_) => options_stats_lib.OptionsTradeStatsPage(),
+                ),
+              ),
+              GoRoute(
                 path: 'dca',
                 name: AppRouteNames.planDca,
                 builder: (context, state) => DeferredRoute(
@@ -380,6 +390,7 @@ Future<void> preloadFinanceDeferredRoutesForTest() async {
   await Future.wait<void>(<Future<void>>[
     fire_lib.loadLibrary(),
     income_planner_lib.loadLibrary(),
+    options_stats_lib.loadLibrary(),
     liabilities_lib.loadLibrary(),
     liability_detail_lib.loadLibrary(),
     physical_detail_lib.loadLibrary(),

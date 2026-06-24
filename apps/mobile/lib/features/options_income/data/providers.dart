@@ -12,6 +12,7 @@ import '../application/scan_orchestrator.dart';
 import '../domain/approved_underlying.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
+import '../domain/options_trade_stats.dart';
 import '../domain/services/opportunity_scorer.dart';
 import '../domain/trade_journal_entry.dart';
 import '../domain/wheel_lifecycle.dart';
@@ -145,6 +146,12 @@ final tradeJournalEntriesProvider =
       final repo = await ref.watch(tradeJournalRepositoryProvider.future);
       final ownerUserId = await ref.watch(currentUserIdProvider)();
       yield* repo.watchActive(ownerUserId);
+    });
+
+final optionsTradeStatsProvider =
+    Provider.autoDispose<AsyncValue<OptionsTradeStats>>((ref) {
+      final entriesAsync = ref.watch(tradeJournalEntriesProvider);
+      return entriesAsync.whenData(buildOptionsTradeStats);
     });
 
 /// Per-underlying Wheel lifecycles derived from the live trade journal

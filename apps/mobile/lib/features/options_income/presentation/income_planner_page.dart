@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -780,10 +782,21 @@ class _TradeJournalSection extends ConsumerWidget {
       children: [
         SectionHeader(
           title: l10n.incomePlannerJournalSectionTitle,
-          trailing: FButton(
-            variant: FButtonVariant.outline,
-            onPress: () => showTradeJournalSheet(context),
-            child: Text(l10n.incomePlannerJournalAddCta),
+          trailing: Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => context.push(AppRoutes.planIncomeStats),
+                child: Text(l10n.incomePlannerStatsAction),
+              ),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => showTradeJournalSheet(context),
+                child: Text(l10n.incomePlannerJournalAddCta),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.s8),

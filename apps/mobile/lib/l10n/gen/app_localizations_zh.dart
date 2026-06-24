@@ -7894,6 +7894,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerJournalStatusExpired => '已到期';
 
   @override
+  String get incomePlannerStatsAction => '统计';
+
+  @override
+  String get incomePlannerStatsTitle => '期权复盘';
+
+  @override
+  String get incomePlannerStatsEmptyTitle => '暂无交易';
+
+  @override
+  String get incomePlannerStatsEmptyBody =>
+      '在 Income Planner 记录期权交易后，可在这里复盘权利金、已实现盈亏和行权纪律。';
+
+  @override
+  String get incomePlannerStatsOverviewTitle => '日记汇总';
+
+  @override
+  String get incomePlannerStatsTotalTrades => '交易';
+
+  @override
+  String get incomePlannerStatsOpenTrades => '未平仓';
+
+  @override
+  String get incomePlannerStatsAssignedTrades => '已行权';
+
+  @override
+  String get incomePlannerStatsExpiredTrades => '已到期';
+
+  @override
+  String get incomePlannerStatsPremium => '权利金';
+
+  @override
+  String get incomePlannerStatsRealizedPnl => '已跟踪盈亏';
+
+  @override
+  String get incomePlannerStatsWinRate => '胜率';
+
+  @override
+  String get incomePlannerStatsAvgHoldingDays => '平均天数';
+
+  @override
+  String incomePlannerStatsMultiCurrencyNote(String currencies) {
+    return '此日记包含 $currencies，金额按币种分别展示，不强行合并。';
+  }
+
+  @override
+  String get incomePlannerStatsStrategySectionTitle => '按策略';
+
+  @override
+  String get incomePlannerStatsSymbolSectionTitle => '按标的';
+
+  @override
+  String incomePlannerStatsTradeCount(int total, int open) {
+    return '$total 笔 · $open 笔未平仓';
+  }
+
+  @override
+  String incomePlannerStatsSymbolDetail(
+    int total,
+    int open,
+    int assigned,
+    int expired,
+  ) {
+    return '$total 笔 · $open 未平仓 · $assigned 行权 · $expired 到期';
+  }
+
+  @override
   String get incomePlannerSymbolRequired => '请输入代码';
 
   @override
