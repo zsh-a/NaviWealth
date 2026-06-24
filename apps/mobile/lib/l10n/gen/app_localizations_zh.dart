@@ -7904,7 +7904,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get incomePlannerStatsEmptyBody =>
-      '在 Income Planner 记录期权交易后，可在这里复盘权利金、已实现盈亏和行权纪律。';
+      '在 Income Planner 记录期权交易后，可在这里复盘权利金、已实现盈亏和行权情况。';
 
   @override
   String get incomePlannerStatsOverviewTitle => '日记汇总';
@@ -7928,7 +7928,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerStatsRealizedPnl => '已跟踪盈亏';
 
   @override
-  String get incomePlannerStatsWinRate => '胜率';
+  String get incomePlannerStatsWinRate => '盈利率';
 
   @override
   String get incomePlannerStatsAvgHoldingDays => '平均天数';

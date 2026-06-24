@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -16,6 +17,15 @@ class OptionsTradeStatsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    if (kIsWeb) {
+      return AppPageScaffold(
+        title: l10n.incomePlannerStatsTitle,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          child: Text(l10n.incomePlannerUnsupportedOnWeb),
+        ),
+      );
+    }
     final statsAsync = ref.watch(optionsTradeStatsProvider);
     return AppPageScaffold(
       title: l10n.incomePlannerStatsTitle,
