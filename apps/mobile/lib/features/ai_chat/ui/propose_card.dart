@@ -16,6 +16,7 @@ import '../../../core/ai/write/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/chat_repository.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
@@ -156,6 +157,13 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
 
   Future<void> _persist(ProposalApplyState newState) async {
     final repo = await ref.read(chatRepositoryProvider.future);
+    await _persistWithRepo(repo, newState);
+  }
+
+  Future<void> _persistWithRepo(
+    ChatRepository repo,
+    ProposalApplyState newState,
+  ) async {
     await repo.updateToolApplyState(
       sessionId: widget.sessionId,
       messageId: widget.message.id,
@@ -179,15 +187,19 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
             missing: plan.missing,
           );
 
-    await _persist(_applyState.copyWith(status: ProposalApplyStatus.applying));
+    final repo = await ref.read(chatRepositoryProvider.future);
+    await _persistWithRepo(
+      repo,
+      _applyState.copyWith(status: ProposalApplyStatus.applying),
+    );
     try {
       final applier = await ref.read(proposalApplierProvider.future);
       final result = await applier.apply(effective);
-      if (!mounted) return;
-      await _persist(result);
+      await _persistWithRepo(repo, result);
     } on ProposalApplyException catch (e) {
       Haptics.error();
-      await _persist(
+      await _persistWithRepo(
+        repo,
         _applyState.copyWith(
           status: ProposalApplyStatus.errored,
           errorMessage: e.message,
@@ -195,7 +207,8 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       );
     } catch (e) {
       Haptics.error();
-      await _persist(
+      await _persistWithRepo(
+        repo,
         _applyState.copyWith(
           status: ProposalApplyStatus.errored,
           errorMessage: e.toString(),
@@ -206,7 +219,12 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
 
   Future<void> _onConfirmBatch(BatchProposalPlan plan) async {
     Haptics.primaryPress();
-    await _persist(_applyState.copyWith(status: ProposalApplyStatus.applying));
+    final repo = await ref.read(chatRepositoryProvider.future);
+    final stack = ref.read(undoStackProvider);
+    await _persistWithRepo(
+      repo,
+      _applyState.copyWith(status: ProposalApplyStatus.applying),
+    );
     final appliedChildren = <ProposalApplyState>[];
     try {
       final applier = await ref.read(proposalApplierProvider.future);
@@ -219,12 +237,10 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         }
         appliedChildren.add(childState);
       }
-      if (!mounted) return;
       final appliedAt = DateTime.now().toUtc();
       final childrenJson = [
         for (final childState in appliedChildren) childState.toJson(),
       ];
-      final stack = ref.read(undoStackProvider);
       String? undoToken;
       Map<String, Object?> undoData = <String, Object?>{
         'proposal_id': plan.proposalId,
@@ -248,7 +264,8 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       } else {
         undoData = <String, Object?>{'children': childrenJson};
       }
-      await _persist(
+      await _persistWithRepo(
+        repo,
         ProposalApplyState(
           status: ProposalApplyStatus.applied,
           appliedTable: kBatchProposalAppliedTable,
@@ -261,7 +278,8 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     } on Object catch (e) {
       await _undoAppliedBatchChildren(appliedChildren);
       Haptics.error();
-      await _persist(
+      await _persistWithRepo(
+        repo,
         _applyState.copyWith(
           status: ProposalApplyStatus.errored,
           errorMessage: e is ProposalApplyException ? e.message : e.toString(),
@@ -278,6 +296,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     final l10n = AppLocalizations.of(context);
     final state = _applyState;
     if (state.status != ProposalApplyStatus.applied) return;
+    final repo = await ref.read(chatRepositoryProvider.future);
     try {
       final applier = await ref.read(proposalApplierProvider.future);
       if (state.appliedTable == kBatchProposalAppliedTable) {
@@ -285,17 +304,21 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       } else {
         await applier.undo(state);
       }
-      if (!mounted) return;
-      await _persist(state.copyWith(status: ProposalApplyStatus.undone));
+      await _persistWithRepo(
+        repo,
+        state.copyWith(status: ProposalApplyStatus.undone),
+      );
     } on ProposalApplyException catch (e) {
-      await _persist(
+      await _persistWithRepo(
+        repo,
         state.copyWith(
           status: ProposalApplyStatus.errored,
           errorMessage: l10n.aiChatProposalUndoFailure(e.message),
         ),
       );
     } catch (e) {
-      await _persist(
+      await _persistWithRepo(
+        repo,
         state.copyWith(
           status: ProposalApplyStatus.errored,
           errorMessage: l10n.aiChatProposalUndoFailure(e.toString()),
