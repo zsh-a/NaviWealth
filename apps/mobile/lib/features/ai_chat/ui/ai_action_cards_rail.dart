@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/composition/chat_rail_content.dart';
 import '../../../core/ai/composition/chat_rail_provider.dart';
+import '../../../core/async/deferred_provider_snapshot.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
@@ -19,8 +20,15 @@ class AiActionCardsRail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return DeferredProviderSnapshot<ChatRailContentSelector>(
+      provider: chatRailContentSelectorProvider,
+      initialValue: (_) => const <ChatRailContent>[],
+      builder: _buildRail,
+    );
+  }
+
+  Widget _buildRail(BuildContext context, ChatRailContentSelector selector) {
     final l10n = AppLocalizations.of(context);
-    final selector = ref.watch(chatRailContentSelectorProvider);
     final items = selector(l10n);
     if (items.isEmpty) return const SizedBox.shrink();
     return Padding(

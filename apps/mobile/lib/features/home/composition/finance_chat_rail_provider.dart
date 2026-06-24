@@ -6,7 +6,8 @@
 /// `features/home/` to read `dashboardInsightsProvider` + render its
 /// `InsightItem` model. The rail now reads a domain-neutral
 /// `List<ChatRailContent>` from `core/ai/composition/`, and domain packs
-/// provide their own projections through app composition.
+/// provide their own projections through app composition. The AI rail attaches
+/// to this selector after the first frame.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -5,7 +5,6 @@ import 'package:forui/forui.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../data/dashboard_insights_provider.dart';
 import '../data/dashboard_providers.dart';
 
 /// Wealth-status hero rendered above the Net Worth card.
@@ -23,7 +22,9 @@ import '../data/dashboard_providers.dart';
 /// Both lines are silent when the data is missing — the header
 /// gracefully degrades to just the greeting.
 class HomeGreetingHeader extends ConsumerWidget {
-  const HomeGreetingHeader({super.key});
+  const HomeGreetingHeader({this.insightCount = 0, super.key});
+
+  final int insightCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +33,6 @@ class HomeGreetingHeader extends ConsumerWidget {
     final greeting = _greeting(l10n, hour);
 
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
-    final insights = ref.watch(dashboardInsightsProvider);
     final pct = metricsAsync.value?.monthlyChangePct;
     final colors = context.theme.colors;
 
@@ -50,10 +50,10 @@ class HomeGreetingHeader extends ConsumerWidget {
         ),
       );
     }
-    if (insights.isNotEmpty) {
+    if (insightCount > 0) {
       statusFragments.add(
         _StatusFragment(
-          text: l10n.homeGreetingInsightsFragment(insights.length),
+          text: l10n.homeGreetingInsightsFragment(insightCount),
           color: colors.mutedForeground,
         ),
       );

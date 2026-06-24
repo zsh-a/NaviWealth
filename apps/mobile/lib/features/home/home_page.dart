@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
+import '../../core/async/deferred_provider_snapshot.dart';
 import '../../core/format/providers.dart';
 import '../../core/sync/providers.dart';
 import '../../core/sync/sync_status.dart';
@@ -90,46 +91,30 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-class _DashboardBody extends ConsumerStatefulWidget {
+class _DashboardBody extends StatelessWidget {
   const _DashboardBody({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  ConsumerState<_DashboardBody> createState() => _DashboardBodyState();
+  Widget build(BuildContext context) {
+    return DeferredProviderSnapshot<List<InsightItem>>(
+      provider: dashboardInsightsProvider,
+      initialValue: const <InsightItem>[],
+      builder: (context, insights) =>
+          _DashboardBodyContent(snapshot: snapshot, insights: insights),
+    );
+  }
 }
 
-class _DashboardBodyState extends ConsumerState<_DashboardBody> {
-  ProviderSubscription<List<InsightItem>>? _insightsSubscription;
-  List<InsightItem> _insights = const [];
+class _DashboardBodyContent extends ConsumerWidget {
+  const _DashboardBodyContent({required this.snapshot, required this.insights});
+
+  final DashboardSnapshot snapshot;
+  final List<InsightItem> insights;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _insightsSubscription = ref.listenManual<List<InsightItem>>(
-        dashboardInsightsProvider,
-        (_, next) {
-          if (!mounted) return;
-          setState(() {
-            _insights = next;
-          });
-        },
-        fireImmediately: true,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _insightsSubscription?.close();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final insights = _insights;
+  Widget build(BuildContext context, WidgetRef ref) {
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -171,14 +156,14 @@ class _DashboardBodyState extends ConsumerState<_DashboardBody> {
                     header: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const HomeGreetingHeader(),
-                        _NetWorthHeader(snapshot: widget.snapshot),
+                        HomeGreetingHeader(insightCount: insights.length),
+                        _NetWorthHeader(snapshot: snapshot),
                       ],
                     ),
                     primary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        AllocationSummary(snapshot: widget.snapshot),
+                        AllocationSummary(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s20),
                         const _CashFlowCardsGrid(),
                         const SizedBox(height: AppSpacing.s20),
@@ -203,14 +188,14 @@ class _DashboardBodyState extends ConsumerState<_DashboardBody> {
                     primary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const HomeGreetingHeader(),
-                        _NetWorthHeader(snapshot: widget.snapshot),
+                        HomeGreetingHeader(insightCount: insights.length),
+                        _NetWorthHeader(snapshot: snapshot),
                         if (insights.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.s20),
                           AiInsightFeed(insights: insights),
                         ],
                         const SizedBox(height: AppSpacing.s20),
-                        AllocationSummary(snapshot: widget.snapshot),
+                        AllocationSummary(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s20),
                         const _CashFlowCardsGrid(),
                         const SizedBox(height: AppSpacing.s20),

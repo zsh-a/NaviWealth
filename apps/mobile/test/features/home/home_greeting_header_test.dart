@@ -53,11 +53,12 @@ Widget _wrap({
       dashboardHeaderMetricsProvider.overrideWith(
         (ref) async => metricsAsync?.value ?? _metrics(),
       ),
-      dashboardInsightsProvider.overrideWithValue(insights),
       authControllerProvider.overrideWith(_FakeAuthController.new),
     ],
     child: MaterialApp.router(
-      routerConfig: _router(),
+      routerConfig: _router(
+        child: HomeGreetingHeader(insightCount: insights.length),
+      ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
@@ -132,6 +133,41 @@ void main() {
     await tester.pumpAndSettle();
 
     // Two fragments separated by middle dot.
+    expect(find.text('·'), findsOneWidget);
+  });
+
+  testWidgets('does not subscribe to source insights during header build', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dashboardHeaderMetricsProvider.overrideWith(
+            (ref) async => _metrics(monthlyPct: 0.01),
+          ),
+          dashboardInsightsProvider.overrideWith((ref) {
+            throw StateError('source insights should not be watched');
+          }),
+          authControllerProvider.overrideWith(_FakeAuthController.new),
+        ],
+        child: MaterialApp.router(
+          routerConfig: _router(
+            child: const HomeGreetingHeader(insightCount: 1),
+          ),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+          builder: (context, child) =>
+              FTheme(data: FThemes.slate.light.desktop, child: child!),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
     expect(find.text('·'), findsOneWidget);
   });
 }
