@@ -13,6 +13,8 @@
 // on: a given URL deterministically maps to a given page, and the bottom nav
 // keeps the URL up to date.
 
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -507,6 +509,43 @@ void main() {
         find.byType(FloatingGlassNavBar),
       );
       expect(updated.selectedIndex, 1);
+      await _drainTimers(tester);
+    });
+
+    testWidgets('bottom nav stays hidden when popping back to a sub-page', (
+      tester,
+    ) async {
+      final container = await _pumpAt(tester, initialLocation: AppRoutes.plan);
+      final router = container.read(appRouterProvider);
+      expect(find.byType(FloatingGlassNavBar), findsOneWidget);
+
+      unawaited(router.push<void>(AppRoutes.planIncome));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(router.canPop(), isTrue);
+      expect(find.byType(FloatingGlassNavBar), findsNothing);
+
+      unawaited(router.push<void>(AppRoutes.planIncomeStats));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(router.canPop(), isTrue);
+      expect(find.byType(FloatingGlassNavBar), findsNothing);
+
+      router.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(router.canPop(), isTrue);
+      expect(
+        find.byType(FloatingGlassNavBar),
+        findsNothing,
+        reason: 'Income Planner is still below the Plan tab root.',
+      );
+
+      router.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(_currentPath(container), AppRoutes.plan);
+      expect(find.byType(FloatingGlassNavBar), findsOneWidget);
       await _drainTimers(tester);
     });
   });

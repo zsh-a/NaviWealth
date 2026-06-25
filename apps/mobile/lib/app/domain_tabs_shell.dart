@@ -159,14 +159,14 @@ class _MobileLayout extends ConsumerWidget {
     final safeAreaBottom = MediaQuery.paddingOf(context).bottom;
 
     final router = GoRouter.of(context);
-    final routeListenable = router.routeInformationProvider;
 
-    // Two ValueListenableBuilders: route and sheet depth.
-    // Each only rebuilds when its own value changes.
-    return ValueListenableBuilder(
-      valueListenable: routeListenable,
-      builder: (context, _, _) {
-        final path = routeListenable.value.uri.path;
+    // The router delegate sees imperative `push()` routes inside a branch;
+    // routeInformationProvider can remain at the tab root for those pages.
+    // Keep sheet depth as its own listener so overlays don't rebuild routing.
+    return AnimatedBuilder(
+      animation: router.routerDelegate,
+      builder: (context, _) {
+        final path = _activePath(router);
         final onTabRoot = tabs.any((tab) => tab.routePath == path);
 
         return ValueListenableBuilder<int>(
@@ -245,6 +245,18 @@ class _MobileLayout extends ConsumerWidget {
       },
     );
   }
+}
+
+String _activePath(GoRouter router) {
+  final config = router.routerDelegate.currentConfiguration;
+  if (config.isEmpty) {
+    return router.routeInformationProvider.value.uri.path;
+  }
+  final last = config.last;
+  if (last is ImperativeRouteMatch) {
+    return last.matches.uri.path;
+  }
+  return config.uri.path;
 }
 
 class _TabletLayout extends StatelessWidget {
