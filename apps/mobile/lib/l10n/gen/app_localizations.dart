@@ -4290,6 +4290,24 @@ abstract class AppLocalizations {
   /// **'Trend line is flat — no historical valuation snapshots yet for the assets in this window.'**
   String get dashboardTrendFlatHint;
 
+  /// Label for the current net-worth metric above the dashboard trend chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get dashboardTrendMetricCurrent;
+
+  /// Label for the selected-range net-worth change metric above the dashboard trend chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get dashboardTrendMetricChange;
+
+  /// Label for the selected date range metric above the dashboard trend chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Range'**
+  String get dashboardTrendMetricRange;
+
   /// Label for the today's net-worth change cell on the dashboard header.
   ///
   /// In en, this message translates to:

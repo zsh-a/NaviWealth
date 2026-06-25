@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/intent/intent.dart';
+import '../../../core/format/formatters.dart';
+import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
@@ -64,6 +66,23 @@ class TrendCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
+                  Container(
+                    width: AppSpacing.s40,
+                    height: AppSpacing.s40,
+                    decoration: BoxDecoration(
+                      color: context.theme.colors.primary.withValues(
+                        alpha: AppOpacity.subtle,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      FLucideIcons.chartSpline,
+                      size: AppIconSizes.md,
+                      color: context.theme.colors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: Text(
                       l10n.dashboardTrendTitle,
@@ -96,7 +115,7 @@ class TrendCard extends ConsumerWidget {
                 ],
               ),
               const _RangeChips(),
-              const SizedBox(height: AppSpacing.s12),
+              const SizedBox(height: AppSpacing.s14),
               trendAsync.when(
                 loading: () => const _TrendSkeleton(),
                 error: (e, st) => _TrendError(error: e),
@@ -292,6 +311,8 @@ class _TrendChart extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _TrendSummary(trend: trend),
+            const SizedBox(height: AppSpacing.s16),
             if (fillAvailableHeight)
               Expanded(child: chart)
             else
@@ -299,6 +320,155 @@ class _TrendChart extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _TrendSummary extends ConsumerWidget {
+  const _TrendSummary({required this.trend});
+
+  final DashboardTrend trend;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (trend.points.length < 2) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final first = trend.points.first;
+    final last = trend.points.last;
+    final delta = last.netWorth.amount - first.netWorth.amount;
+    final firstValue = first.netWorth.amount.toDouble();
+    final ratio = firstValue.abs() <= 0
+        ? null
+        : delta.toDouble() / firstValue.abs();
+    final hidden = AmountPrivacyScope.isHiddenOf(context);
+    final current = hidden
+        ? AmountPrivacyScope.mask
+        : formatters.compactCurrency(
+            last.netWorth.amount,
+            code: trend.baseCurrency,
+          );
+    final rangeLabel = _formatDateRange(
+      formatters,
+      first.asOf.toLocal(),
+      last.asOf.toLocal(),
+    );
+    final colors = context.theme.colors;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.symmetric(
+          horizontal: BorderSide(
+            color: colors.border.withValues(alpha: AppOpacity.subtle),
+            width: AppStroke.hairline,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+        child: Row(
+          children: [
+            Expanded(
+              child: _TrendMetric(
+                label: l10n.dashboardTrendMetricCurrent,
+                child: Text(
+                  current,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TypographyTokens.numericBody.copyWith(
+                    color: colors.foreground,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: _TrendMetric(
+                label: l10n.dashboardTrendMetricChange,
+                child: Wrap(
+                  spacing: AppSpacing.s6,
+                  runSpacing: AppSpacing.s2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    DeltaText(
+                      value: delta.toDouble(),
+                      format: DeltaFormat.currency,
+                      currencyCode: trend.baseCurrency,
+                      fractionDigits: 0,
+                      showIcon: false,
+                      style: TypographyTokens.numericBody.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (ratio != null)
+                      Text(
+                        formatters.signedPercent(ratio, decimalDigits: 1),
+                        style: context.captionMediumStyle.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: _TrendMetric(
+                label: l10n.dashboardTrendMetricRange,
+                child: Text(
+                  rangeLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.mediumLabelStyle.copyWith(
+                    color: colors.foreground,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDateRange(
+    AppFormatters formatters,
+    DateTime start,
+    DateTime end,
+  ) {
+    final sameYear = start.year == end.year;
+    final startLabel = sameYear
+        ? formatters.monthDay(start)
+        : formatters.date(start);
+    final endLabel = sameYear ? formatters.monthDay(end) : formatters.date(end);
+    return '$startLabel - $endLabel';
+  }
+}
+
+class _TrendMetric extends StatelessWidget {
+  const _TrendMetric({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.microCaptionStyle.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        child,
+      ],
     );
   }
 }
@@ -316,14 +486,32 @@ class _LineChartBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final delta =
+        trend.points.last.netWorth.amount - trend.points.first.netWorth.amount;
+    final intent = delta.sign > 0
+        ? SeriesIntent.up
+        : delta.sign < 0
+        ? SeriesIntent.down
+        : SeriesIntent.primary;
+    final chartSeries = ChartSeries(
+      name: AppLocalizations.of(context).dashboardTrendTitle,
+      points: series.points,
+      intent: intent,
+      fillOpacity: 0.16,
+      strokeWidth: 2.75,
+    );
     return NwLineChart(
-      series: [series],
-      xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
-      yAxis: ValueAxis.currency(currencyCode: trend.baseCurrency, maxLabels: 3),
+      series: [chartSeries],
+      xAxis: TimeAxis(format: dateFmt, maxLabels: 4),
+      yAxis: ValueAxis.currency(
+        currencyCode: trend.baseCurrency,
+        maxLabels: 3,
+        showGrid: true,
+      ),
       filled: true,
       interpolation: ChartInterpolation.linear,
       heroDots: true,
-      showXAxis: false,
+      showXAxis: true,
       showTouchXAxisLabel: true,
       semanticLabel: AppLocalizations.of(context).dashboardTrendTitle,
     );

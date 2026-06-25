@@ -1347,6 +1347,12 @@
     }
   },
   "dashboardTrendFlatHint": "Trend line is flat — no historical valuation snapshots yet for the assets in this window.",
+  "dashboardTrendMetricCurrent": "Current",
+  "@dashboardTrendMetricCurrent": { "description": "Label for the current net-worth metric above the dashboard trend chart." },
+  "dashboardTrendMetricChange": "Change",
+  "@dashboardTrendMetricChange": { "description": "Label for the selected-range net-worth change metric above the dashboard trend chart." },
+  "dashboardTrendMetricRange": "Range",
+  "@dashboardTrendMetricRange": { "description": "Label for the selected date range metric above the dashboard trend chart." },
   "dashboardHeaderDeltaTodayLabel": "Today",
   "@dashboardHeaderDeltaTodayLabel": { "description": "Label for the today's net-worth change cell on the dashboard header." },
   "dashboardHeaderDeltaMonthLabel": "MTD",
