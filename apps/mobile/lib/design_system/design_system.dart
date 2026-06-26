@@ -62,6 +62,7 @@ export 'widgets/money_text.dart';
 export 'widgets/object_detail_scaffold.dart';
 export 'widgets/optional_hero.dart';
 export 'widgets/pressable_scale.dart';
+export 'widgets/required_label.dart';
 export 'widgets/responsive_two_column.dart';
 export 'widgets/section_header.dart';
 export 'widgets/segmented_row.dart';

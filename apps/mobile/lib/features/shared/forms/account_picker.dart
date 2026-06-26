@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../account_l10n.dart';
 
@@ -40,7 +41,7 @@ class AccountPicker extends StatelessWidget {
         value: effectiveValue,
         onChange: onChanged,
       ),
-      label: Text(label ?? l10n.formAccountPickerLabelDefault),
+      label: RequiredLabel(label ?? l10n.formAccountPickerLabelDefault),
       enabled: filtered.isNotEmpty,
       validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formAccountPickerRequired : null,

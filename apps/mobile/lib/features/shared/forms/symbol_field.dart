@@ -358,7 +358,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
             onChange: (v) => _onChanged(v.text),
           ),
           focusNode: _focusNode,
-          label: Text(effectiveLabel),
+          label: RequiredLabel(effectiveLabel),
           hint: effectiveHint,
           prefixBuilder: (ctx, style, variants) => const Padding(
             padding: EdgeInsetsDirectional.only(start: 12, end: 8),

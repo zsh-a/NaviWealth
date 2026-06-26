@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// ISO-4217 codes the app surfaces in the picker by default.
@@ -86,7 +87,7 @@ class CurrencyPicker extends StatelessWidget {
         initial: effectiveValue,
         onChange: enabled ? onChanged : (_) {},
       ),
-      label: Text(label ?? l10n.formCurrencyPickerLabelDefault),
+      label: RequiredLabel(label ?? l10n.formCurrencyPickerLabelDefault),
       enabled: enabled,
       validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formCurrencyPickerRequired : null,

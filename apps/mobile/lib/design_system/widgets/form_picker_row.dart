@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'required_label.dart';
 
 /// Form row for values chosen from a picker instead of typed directly.
 ///
@@ -17,6 +18,7 @@ class FormPickerRow extends StatefulWidget {
     this.leading,
     this.trailing,
     this.enabled = true,
+    this.required = false,
   });
 
   final String label;
@@ -25,6 +27,9 @@ class FormPickerRow extends StatefulWidget {
   final Widget? leading;
   final Widget? trailing;
   final bool enabled;
+
+  /// Whether to show a required-field asterisk next to the label.
+  final bool required;
 
   @override
   State<FormPickerRow> createState() => _FormPickerRowState();
@@ -71,7 +76,11 @@ class _FormPickerRowState extends State<FormPickerRow> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.label, style: context.captionStyle),
+                      RequiredLabel(
+                        widget.label,
+                        required: widget.required,
+                        style: context.captionStyle,
+                      ),
                       const SizedBox(height: AppSpacing.s2),
                       Text(
                         widget.value,

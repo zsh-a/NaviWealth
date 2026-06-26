@@ -139,7 +139,7 @@ class _DateFieldState extends State<DateField> {
           return null;
         },
       ),
-      label: Text(widget.label),
+      label: RequiredLabel(widget.label, required: widget.required),
       description: widget.helperText == null ? null : Text(widget.helperText!),
       enabled: widget.enabled,
       start: _calendarDay(firstDate),
@@ -207,7 +207,7 @@ class _DateTimeField extends StatelessWidget {
                 return null;
               },
             ),
-            label: Text(label),
+            label: RequiredLabel(label, required: required),
             description: description,
             enabled: enabled,
             start: _calendarDay(firstDate),
