@@ -83,32 +83,23 @@ class _CommitmentsBody extends ConsumerWidget {
           padding: shellTabContentPadding(context),
           children: [
             if (commitments.isNotEmpty) ...[
-              Text(l10n.executionCommitmentsSection, style: context.labelStyle),
+              ExecutionSectionHeader(
+                title: l10n.executionCommitmentsSection,
+                count: commitments.length,
+                icon: FLucideIcons.target,
+              ),
               const SizedBox(height: AppSpacing.s8),
               for (final commitment in commitments) ...[
-                SoftCard(
-                  padding: const EdgeInsets.all(AppSpacing.s12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(commitment.title, style: context.labelStyle),
-                      if (commitment.description.isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.s4),
-                        Text(
-                          commitment.description,
-                          style: context.captionStyle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                ExecutionCommitmentCard(commitment: commitment),
                 const SizedBox(height: AppSpacing.s8),
               ],
               const SizedBox(height: AppSpacing.s8),
             ],
-            Text(l10n.executionActionsSection, style: context.labelStyle),
+            ExecutionSectionHeader(
+              title: l10n.executionActionsSection,
+              count: actions.length,
+              icon: FLucideIcons.listTodo,
+            ),
             const SizedBox(height: AppSpacing.s8),
             for (final action in actions) ...[
               ExecutionActionCard(

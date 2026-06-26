@@ -34,16 +34,28 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _title.addListener(_onTitleChanged);
+  }
+
+  void _onTitleChanged() {
+    if (mounted && !_saving) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _title.removeListener(_onTitleChanged);
     _title.dispose();
     _note.dispose();
     super.dispose();
   }
 
+  bool get _canSave => !_saving && _title.text.trim().isNotEmpty;
+
   Future<void> _save() async {
-    if (_saving) return;
+    if (!_canSave) return;
     final title = _title.text.trim();
-    if (title.isEmpty) return;
     setState(() => _saving = true);
     try {
       final repo = await widget.ref.read(executionRepositoryProvider.future);
@@ -94,9 +106,11 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
               child: Text(l10n.commonCancel),
             ),
             const SizedBox(width: AppSpacing.s8),
-            FButton(
-              onPress: _saving ? null : _save,
-              child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
+            AppBusyButton(
+              label: l10n.commonSave,
+              busyLabel: l10n.commonSaving,
+              busy: _saving,
+              onPress: _canSave ? _save : null,
             ),
           ],
         ),

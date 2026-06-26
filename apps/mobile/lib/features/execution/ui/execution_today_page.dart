@@ -71,10 +71,17 @@ class _TodayList extends ConsumerWidget {
         return ListView.separated(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: shellTabContentPadding(context),
-          itemCount: actions.length,
+          itemCount: actions.length + 1,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
           itemBuilder: (context, index) {
-            final action = actions[index];
+            if (index == 0) {
+              return ExecutionSectionHeader(
+                title: l10n.executionActionsSection,
+                count: actions.length,
+                icon: FLucideIcons.listTodo,
+              );
+            }
+            final action = actions[index - 1];
             return ExecutionActionCard(
               action: action,
               onStart: () => updateExecutionActionStatus(
