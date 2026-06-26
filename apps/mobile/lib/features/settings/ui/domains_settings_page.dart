@@ -26,6 +26,7 @@ class DomainsSettingsPage extends ConsumerWidget {
     final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
     final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
     final knowledgeEnabled = optIns?.contains(DomainScope.knowledge) ?? false;
+    final executionEnabled = optIns?.contains(DomainScope.execution) ?? false;
     final l10n = AppLocalizations.of(context);
 
     return AppPageScaffold(
@@ -100,6 +101,34 @@ class DomainsSettingsPage extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.s16),
+          // ── ExecutionOS ──
+          SoftCard(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: Column(
+              children: [
+                InlineSwitchRow(
+                  icon: FLucideIcons.listTodo,
+                  label: 'ExecutionOS',
+                  subtitle: executionEnabled
+                      ? l10n.settingsDomainsExecutionEnabledSubtitle
+                      : l10n.settingsDomainsExecutionDisabledSubtitle,
+                  value: executionEnabled,
+                  onChanged: (v) =>
+                      _setDomainEnabled(context, ref, DomainScope.execution, v),
+                ),
+                if (executionEnabled) ...[
+                  const AppDivider(),
+                  InlineLinkRow(
+                    icon: FLucideIcons.sun,
+                    label: 'ExecutionOS · Today',
+                    subtitle: l10n.settingsDomainsExecutionTodaySubtitle,
+                    onTap: () => context.goNamed(AppRouteNames.executionToday),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -129,6 +158,7 @@ class DomainsSettingsPage extends ConsumerWidget {
       DomainScope.finance => 'FinanceOS',
       DomainScope.health => 'HealthOS',
       DomainScope.knowledge => 'KnowledgeOS',
+      DomainScope.execution => 'ExecutionOS',
     };
   }
 }

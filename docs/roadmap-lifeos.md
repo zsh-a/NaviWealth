@@ -3,12 +3,13 @@
 Status: active cross-domain roadmap.
 
 This document owns product and engineering sequencing that cuts across
-FinanceOS, HealthOS, and KnowledgeOS. Domain-specific behavior remains in
+FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS. Domain-specific behavior remains in
 the domain SSOTs:
 
 - FinanceOS: `roadmap-finance.md`
 - HealthOS: `healthos-domain.md`
 - KnowledgeOS: `knowledgeos-domain.md`
+- ExecutionOS: `executionos-domain.md`
 - Shell and registration seams: `lifeos-shell.md`
 - Hard boundaries and non-goals: `lifeos-architecture-northstar.md`
 
@@ -21,6 +22,7 @@ NaviWealth is now a local-first Personal LifeOS:
 | FinanceOS | Always on | Wealth, cashflow, FIRE, investment, options income |
 | HealthOS | User opt-in | Recovery signals, health trends, morning briefing |
 | KnowledgeOS | User opt-in | Decision memory, assumptions, routines, review work |
+| ExecutionOS | User opt-in | Personal actions, commitments, progress review |
 
 FinanceOS remains the seed domain, but the active roadmap is no longer
 Finance-only. New work should improve the shared LifeOS substrate or close

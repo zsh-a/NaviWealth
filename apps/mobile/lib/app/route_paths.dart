@@ -64,6 +64,11 @@ abstract final class AppRoutes {
   static const knowledgeDecisionDetail = '/knowledge/library/decision/:id';
   static const knowledgeObjectDetail = '/knowledge/library/object/:kind/:id';
 
+  // ── ExecutionOS — optional personal action / commitment loop.
+  static const executionToday = '/execution';
+  static const executionCommitments = '/execution/commitments';
+  static const executionReview = '/execution/review';
+
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = '/settings';
 
@@ -128,6 +133,7 @@ abstract final class AppRoutes {
   static const settingsDomains = '/settings/domains';
   static const settingsDomainsHealth = '/settings/domains/health';
   static const settingsDomainsKnowledge = '/settings/domains/knowledge';
+  static const settingsDomainsExecution = '/settings/domains/execution';
   // Target allocation editor is reachable via the rebalance Custom
   // chip; settings overview links to it through a deep link for
   // discoverability.
@@ -216,6 +222,11 @@ abstract final class AppRouteNames {
   static const knowledgeReview = 'knowledge-review';
   static const knowledgeDecisionDetail = 'knowledge-decision-detail';
   static const knowledgeObjectDetail = 'knowledge-object-detail';
+
+  // ── ExecutionOS — gated by opt-in. ─────────────────────────────────────
+  static const executionToday = 'execution-today';
+  static const executionCommitments = 'execution-commitments';
+  static const executionReview = 'execution-review';
 
   // ── Plan ────────────────────────────────────────────────────────────────
   static const plan = 'plan';

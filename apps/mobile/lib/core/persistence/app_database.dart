@@ -7,6 +7,7 @@ import 'connection.dart';
 import 'converters.dart';
 import 'domain_enums.dart';
 import 'event_log_tables.dart';
+import 'execution_tables.dart';
 import 'health_tables.dart';
 import 'knowledge_tables.dart';
 import 'local_only_tables.dart';
@@ -63,6 +64,10 @@ const String defaultDbFileName = 'naviwealth.db';
     KnowledgeConcepts,
     KnowledgeExperiments,
     KnowledgeRoutines,
+    // ExecutionOS Action Kernel: personal todos, commitments, progress.
+    ExecutionActions,
+    ExecutionCommitments,
+    ExecutionProgressEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -72,7 +77,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 27;
+  int get schemaVersion => 28;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -413,6 +418,16 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(corporateActions);
         await _createCorporateActionIndexes(this);
       }
+      // v27 -> v28: ExecutionOS Action Kernel. These three tables form the
+      // reusable personal todo / commitment / progress layer; Project and
+      // Milestone can later attach without changing the first-order action
+      // model.
+      if (from < 28) {
+        await m.createTable(executionActions);
+        await m.createTable(executionCommitments);
+        await m.createTable(executionProgressEntries);
+        await _createExecutionIndexes(this);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -529,6 +544,7 @@ Future<void> _createIndexes(AppDatabase db) async {
     ..._securitiesAssetIndexStmts,
     ..._journalEntryIndexStmts,
     ...knowledgeIndexStmts,
+    ...executionIndexStmts,
   ];
   for (final stmt in stmts) {
     await db.customStatement(stmt);
@@ -602,6 +618,12 @@ Future<void> _createRecurringTransactionIndexes(AppDatabase db) async {
 
 Future<void> _createCorporateActionIndexes(AppDatabase db) async {
   for (final stmt in _corporateActionIndexStmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createExecutionIndexes(AppDatabase db) async {
+  for (final stmt in executionIndexStmts) {
     await db.customStatement(stmt);
   }
 }

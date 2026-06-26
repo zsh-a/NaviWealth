@@ -17068,6 +17068,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Garmin sync failed. Try again.'**
   String get healthGarminErrorGeneric;
+
+  /// No description provided for @settingsDomainsExecutionEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today, commitments, progress, and personal todos.'**
+  String get settingsDomainsExecutionEnabledSubtitle;
+
+  /// No description provided for @settingsDomainsExecutionDisabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn decisions and plans into trackable actions.'**
+  String get settingsDomainsExecutionDisabledSubtitle;
+
+  /// No description provided for @settingsDomainsExecutionTodaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review today\'s actions, blockers, and progress.'**
+  String get settingsDomainsExecutionTodaySubtitle;
+
+  /// No description provided for @executionTabToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get executionTabToday;
+
+  /// No description provided for @executionTabCommitments.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitments'**
+  String get executionTabCommitments;
+
+  /// No description provided for @executionTabReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get executionTabReview;
+
+  /// No description provided for @executionCommandToday.
+  ///
+  /// In en, this message translates to:
+  /// **'ExecutionOS Today'**
+  String get executionCommandToday;
+
+  /// No description provided for @executionCommandCommitments.
+  ///
+  /// In en, this message translates to:
+  /// **'ExecutionOS Commitments'**
+  String get executionCommandCommitments;
+
+  /// No description provided for @executionCommandReview.
+  ///
+  /// In en, this message translates to:
+  /// **'ExecutionOS Review'**
+  String get executionCommandReview;
+
+  /// No description provided for @executionTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get executionTodayTitle;
+
+  /// No description provided for @executionCommitmentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitments'**
+  String get executionCommitmentsTitle;
+
+  /// No description provided for @executionReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get executionReviewTitle;
+
+  /// No description provided for @executionCreateActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Action'**
+  String get executionCreateActionTitle;
+
+  /// No description provided for @executionCreateCommitmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Commitment'**
+  String get executionCreateCommitmentTitle;
+
+  /// No description provided for @executionActionTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the next concrete action?'**
+  String get executionActionTitleHint;
+
+  /// No description provided for @executionActionNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional note'**
+  String get executionActionNoteHint;
+
+  /// No description provided for @executionCommitmentTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What are you committing to?'**
+  String get executionCommitmentTitleHint;
+
+  /// No description provided for @executionCommitmentDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional scope, why it matters, or target outcome'**
+  String get executionCommitmentDescriptionHint;
+
+  /// No description provided for @executionTodayEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No actions for today'**
+  String get executionTodayEmptyTitle;
+
+  /// No description provided for @executionTodayEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture the next concrete step when something needs follow-through.'**
+  String get executionTodayEmptyBody;
+
+  /// No description provided for @executionCommitmentsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No open actions'**
+  String get executionCommitmentsEmptyTitle;
+
+  /// No description provided for @executionCommitmentsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use actions for personal todos; group them into commitments later when the work grows.'**
+  String get executionCommitmentsEmptyBody;
+
+  /// No description provided for @executionReviewEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No progress yet'**
+  String get executionReviewEmptyTitle;
+
+  /// No description provided for @executionReviewEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion and blocker notes will appear here for review.'**
+  String get executionReviewEmptyBody;
+
+  /// No description provided for @executionCommitmentsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitments'**
+  String get executionCommitmentsSection;
+
+  /// No description provided for @executionActionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get executionActionsSection;
+
+  /// No description provided for @executionStatusTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'Todo'**
+  String get executionStatusTodo;
+
+  /// No description provided for @executionStatusDoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Doing'**
+  String get executionStatusDoing;
+
+  /// No description provided for @executionStatusBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get executionStatusBlocked;
+
+  /// No description provided for @executionStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get executionStatusDone;
+
+  /// No description provided for @executionStatusDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropped'**
+  String get executionStatusDropped;
+
+  /// No description provided for @executionPriorityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get executionPriorityHigh;
+
+  /// No description provided for @executionDueBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String executionDueBadge(String date);
+
+  /// No description provided for @executionActionStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get executionActionStart;
+
+  /// No description provided for @executionActionBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get executionActionBlock;
+
+  /// No description provided for @executionActionResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get executionActionResume;
+
+  /// No description provided for @executionActionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get executionActionDone;
+
+  /// No description provided for @executionProgressBlockedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked blocked.'**
+  String get executionProgressBlockedDefault;
+
+  /// No description provided for @executionProgressDoneDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked done.'**
+  String get executionProgressDoneDefault;
+
+  /// No description provided for @executionProgressKindBlocker.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocker'**
+  String get executionProgressKindBlocker;
+
+  /// No description provided for @executionProgressKindCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion'**
+  String get executionProgressKindCompletion;
+
+  /// No description provided for @executionProgressKindDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropped'**
+  String get executionProgressKindDropped;
+
+  /// No description provided for @executionProgressKindScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope Change'**
+  String get executionProgressKindScope;
+
+  /// No description provided for @executionProgressKindCheckin.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in'**
+  String get executionProgressKindCheckin;
 }
 
 class _AppLocalizationsDelegate

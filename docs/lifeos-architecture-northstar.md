@@ -11,6 +11,7 @@ NaviWealth is a Personal LifeOS with multiple opt-in domains:
 | FinanceOS | Seed domain: wealth, cashflow, portfolio, FIRE, options income | Always on |
 | HealthOS | Health signals, recovery, morning briefing | User opt-in |
 | KnowledgeOS | Decision memory, review, assumptions, routines | User opt-in |
+| ExecutionOS | Personal actions, commitments, and progress review | User opt-in |
 
 Future domains such as TimeOS or LivingOS require a separate ADR before code or planning starts.
 
@@ -104,6 +105,7 @@ Ownership rules:
 - Finance business access goes through Finance repositories.
 - Health business access goes through Health repositories.
 - Knowledge business access goes through Knowledge repositories.
+- Execution business access goes through Execution repositories.
 - Cross-domain infrastructure may touch only infrastructure-owned tables such as auth, sync, traces, events, memories, embeddings, and local-only side tables.
 - Direct DB access to another domain's business table is a boundary violation.
 
@@ -128,6 +130,7 @@ Prefixes:
 - `fin:`
 - `health:`
 - `know:`
+- `exec:`
 
 The backend remains schema-agnostic. Domain semantics stay on the client.
 
@@ -183,5 +186,6 @@ Before merging architecture-affecting code, answer:
 - `lifeos-shell.md`: current shell implementation and extension points.
 - `healthos-domain.md`: HealthOS domain behavior.
 - `knowledgeos-domain.md`: KnowledgeOS domain behavior.
+- `executionos-domain.md`: ExecutionOS domain behavior.
 - `roadmap-lifeos.md`: cross-domain roadmap and product sequencing.
 - `roadmap-finance.md`: FinanceOS roadmap and product sequencing.

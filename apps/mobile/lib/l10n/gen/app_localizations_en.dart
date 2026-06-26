@@ -9962,4 +9962,145 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthGarminErrorGeneric => 'Garmin sync failed. Try again.';
+
+  @override
+  String get settingsDomainsExecutionEnabledSubtitle =>
+      'Today, commitments, progress, and personal todos.';
+
+  @override
+  String get settingsDomainsExecutionDisabledSubtitle =>
+      'Turn decisions and plans into trackable actions.';
+
+  @override
+  String get settingsDomainsExecutionTodaySubtitle =>
+      'Review today\'s actions, blockers, and progress.';
+
+  @override
+  String get executionTabToday => 'Today';
+
+  @override
+  String get executionTabCommitments => 'Commitments';
+
+  @override
+  String get executionTabReview => 'Review';
+
+  @override
+  String get executionCommandToday => 'ExecutionOS Today';
+
+  @override
+  String get executionCommandCommitments => 'ExecutionOS Commitments';
+
+  @override
+  String get executionCommandReview => 'ExecutionOS Review';
+
+  @override
+  String get executionTodayTitle => 'Today';
+
+  @override
+  String get executionCommitmentsTitle => 'Commitments';
+
+  @override
+  String get executionReviewTitle => 'Review';
+
+  @override
+  String get executionCreateActionTitle => 'New Action';
+
+  @override
+  String get executionCreateCommitmentTitle => 'New Commitment';
+
+  @override
+  String get executionActionTitleHint => 'What is the next concrete action?';
+
+  @override
+  String get executionActionNoteHint => 'Optional note';
+
+  @override
+  String get executionCommitmentTitleHint => 'What are you committing to?';
+
+  @override
+  String get executionCommitmentDescriptionHint =>
+      'Optional scope, why it matters, or target outcome';
+
+  @override
+  String get executionTodayEmptyTitle => 'No actions for today';
+
+  @override
+  String get executionTodayEmptyBody =>
+      'Capture the next concrete step when something needs follow-through.';
+
+  @override
+  String get executionCommitmentsEmptyTitle => 'No open actions';
+
+  @override
+  String get executionCommitmentsEmptyBody =>
+      'Use actions for personal todos; group them into commitments later when the work grows.';
+
+  @override
+  String get executionReviewEmptyTitle => 'No progress yet';
+
+  @override
+  String get executionReviewEmptyBody =>
+      'Completion and blocker notes will appear here for review.';
+
+  @override
+  String get executionCommitmentsSection => 'Commitments';
+
+  @override
+  String get executionActionsSection => 'Actions';
+
+  @override
+  String get executionStatusTodo => 'Todo';
+
+  @override
+  String get executionStatusDoing => 'Doing';
+
+  @override
+  String get executionStatusBlocked => 'Blocked';
+
+  @override
+  String get executionStatusDone => 'Done';
+
+  @override
+  String get executionStatusDropped => 'Dropped';
+
+  @override
+  String get executionPriorityHigh => 'High';
+
+  @override
+  String executionDueBadge(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get executionActionStart => 'Start';
+
+  @override
+  String get executionActionBlock => 'Block';
+
+  @override
+  String get executionActionResume => 'Resume';
+
+  @override
+  String get executionActionDone => 'Done';
+
+  @override
+  String get executionProgressBlockedDefault => 'Marked blocked.';
+
+  @override
+  String get executionProgressDoneDefault => 'Marked done.';
+
+  @override
+  String get executionProgressKindBlocker => 'Blocker';
+
+  @override
+  String get executionProgressKindCompletion => 'Completion';
+
+  @override
+  String get executionProgressKindDropped => 'Dropped';
+
+  @override
+  String get executionProgressKindScope => 'Scope Change';
+
+  @override
+  String get executionProgressKindCheckin => 'Check-in';
 }

@@ -9502,4 +9502,139 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthGarminErrorGeneric => 'Garmin 同步失败，请重试。';
+
+  @override
+  String get settingsDomainsExecutionEnabledSubtitle => 'Today、承诺、进展与个人 todo';
+
+  @override
+  String get settingsDomainsExecutionDisabledSubtitle => '把决策与计划转成可追踪的行动';
+
+  @override
+  String get settingsDomainsExecutionTodaySubtitle => '查看今天的行动、阻塞与进展';
+
+  @override
+  String get executionTabToday => '今天';
+
+  @override
+  String get executionTabCommitments => '承诺';
+
+  @override
+  String get executionTabReview => '复盘';
+
+  @override
+  String get executionCommandToday => 'ExecutionOS 今天';
+
+  @override
+  String get executionCommandCommitments => 'ExecutionOS 承诺';
+
+  @override
+  String get executionCommandReview => 'ExecutionOS 复盘';
+
+  @override
+  String get executionTodayTitle => '今天';
+
+  @override
+  String get executionCommitmentsTitle => '承诺';
+
+  @override
+  String get executionReviewTitle => '复盘';
+
+  @override
+  String get executionCreateActionTitle => '新建 Action';
+
+  @override
+  String get executionCreateCommitmentTitle => '新建 Commitment';
+
+  @override
+  String get executionActionTitleHint => '下一步具体要做什么？';
+
+  @override
+  String get executionActionNoteHint => '可选备注';
+
+  @override
+  String get executionCommitmentTitleHint => '你承诺推进什么？';
+
+  @override
+  String get executionCommitmentDescriptionHint => '可选范围、原因或目标结果';
+
+  @override
+  String get executionTodayEmptyTitle => '今天没有行动';
+
+  @override
+  String get executionTodayEmptyBody => '需要跟进的事情先捕获成一个具体下一步。';
+
+  @override
+  String get executionCommitmentsEmptyTitle => '没有未完成行动';
+
+  @override
+  String get executionCommitmentsEmptyBody =>
+      '个人 todo 先用 Action；事情变大后再归入 Commitment。';
+
+  @override
+  String get executionReviewEmptyTitle => '还没有进展记录';
+
+  @override
+  String get executionReviewEmptyBody => '完成与阻塞记录会出现在这里，方便复盘。';
+
+  @override
+  String get executionCommitmentsSection => '承诺';
+
+  @override
+  String get executionActionsSection => '行动';
+
+  @override
+  String get executionStatusTodo => '待办';
+
+  @override
+  String get executionStatusDoing => '进行中';
+
+  @override
+  String get executionStatusBlocked => '阻塞';
+
+  @override
+  String get executionStatusDone => '完成';
+
+  @override
+  String get executionStatusDropped => '放弃';
+
+  @override
+  String get executionPriorityHigh => '高优先级';
+
+  @override
+  String executionDueBadge(String date) {
+    return '截止 $date';
+  }
+
+  @override
+  String get executionActionStart => '开始';
+
+  @override
+  String get executionActionBlock => '阻塞';
+
+  @override
+  String get executionActionResume => '恢复';
+
+  @override
+  String get executionActionDone => '完成';
+
+  @override
+  String get executionProgressBlockedDefault => '已标记为阻塞。';
+
+  @override
+  String get executionProgressDoneDefault => '已标记为完成。';
+
+  @override
+  String get executionProgressKindBlocker => '阻塞';
+
+  @override
+  String get executionProgressKindCompletion => '完成';
+
+  @override
+  String get executionProgressKindDropped => '放弃';
+
+  @override
+  String get executionProgressKindScope => '范围变化';
+
+  @override
+  String get executionProgressKindCheckin => '进展记录';
 }

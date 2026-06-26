@@ -41,6 +41,10 @@ const Set<String> kSyncableTables = {
   'knowledge_concepts',
   'knowledge_experiments',
   'knowledge_routines',
+  // ExecutionOS Action Kernel.
+  'execution_actions',
+  'execution_commitments',
+  'execution_progress_entries',
 };
 
 /// Primary-key column for the tables whose PK is not `id`.

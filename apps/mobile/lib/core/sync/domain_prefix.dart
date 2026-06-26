@@ -21,12 +21,16 @@ const String kHealthDomainPrefix = 'health:';
 /// KnowledgeOS rows (`docs/knowledgeos-domain.md` §2, §11).
 const String kKnowledgeDomainPrefix = 'know:';
 
+/// ExecutionOS rows: personal actions, commitments, and progress.
+const String kExecutionDomainPrefix = 'exec:';
+
 /// All prefixes the applier is willing to accept inbound. Adding a
 /// prefix here is a Phase D milestone, not a hotfix.
 const Set<String> kSyncDomainPrefixes = <String>{
   kFinanceDomainPrefix,
   kHealthDomainPrefix,
   kKnowledgeDomainPrefix,
+  kExecutionDomainPrefix,
 };
 
 /// Add the FinanceOS prefix to a Drift table name. Every Finance
@@ -50,9 +54,17 @@ const Set<String> kKnowledgeTables = <String>{
 /// HealthOS rows that sync through the generic row-state store.
 const Set<String> kHealthTables = <String>{'health_metrics'};
 
+/// ExecutionOS local table names.
+const Set<String> kExecutionTables = <String>{
+  'execution_actions',
+  'execution_commitments',
+  'execution_progress_entries',
+};
+
 /// The LifeOS domain prefix an outbound row should carry, by local table
 /// name.
 String domainPrefixForTable(String localTable) {
+  if (kExecutionTables.contains(localTable)) return kExecutionDomainPrefix;
   if (kKnowledgeTables.contains(localTable)) return kKnowledgeDomainPrefix;
   if (kHealthTables.contains(localTable)) return kHealthDomainPrefix;
   return kFinanceDomainPrefix;

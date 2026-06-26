@@ -19,6 +19,7 @@ Domain business behavior belongs in the domain SSOT:
 - FinanceOS: `docs/roadmap-finance.md` and finance feature docs.
 - HealthOS: `docs/healthos-domain.md`.
 - KnowledgeOS: `docs/knowledgeos-domain.md`.
+- ExecutionOS: `docs/executionos-domain.md`.
 
 ## Current Shape
 
@@ -58,6 +59,7 @@ features/<domain>/
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | none |
 | HealthOS | `health` | Today, Trend, Plan | `kHealthDeviceTools` | Morning Briefing |
 | KnowledgeOS | `knowledge` | Inbox, Library, Review | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage, Routine Due |
+| ExecutionOS | `execution` | Today, Commitments, Review | none | none |
 
 Finance is always active. Health and Knowledge are enabled through `domainOptInsProvider`.
 
@@ -241,6 +243,7 @@ Row-family prefixes:
 | FinanceOS | `fin:` |
 | HealthOS | `health:` |
 | KnowledgeOS | `know:` |
+| ExecutionOS | `exec:` |
 
 Rules:
 

@@ -16,6 +16,9 @@ import '../core/ai/agents/agent.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../features/execution/composition/execution_command_palette.dart';
+import '../features/execution/composition/execution_domain_shell.dart';
+import '../features/execution/composition/execution_routes.dart';
 import '../features/finance/composition/finance_bootstrap.dart';
 import '../features/finance/composition/finance_command_palette.dart';
 import '../features/finance/composition/finance_intents.dart';
@@ -106,6 +109,18 @@ final DomainPack kKnowledgePack = DomainPack(
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
 );
 
+const DomainPack kExecutionPack = DomainPack(
+  scope: DomainScope.execution,
+  shellSpecBuilder: executionDomainShell,
+  shellRouteBuilder: executionShellRoute,
+  tabPaths: [
+    AppRoutes.executionToday,
+    AppRoutes.executionCommitments,
+    AppRoutes.executionReview,
+  ],
+  commandPaletteEntriesBuilder: executionCommandPaletteEntries,
+);
+
 /// Production inventory. `bootstrap.dart` overrides
 /// [domainPackRegistryProvider] with this list. Tests can override
 /// with a subset for reduced-matrix scenarios.
@@ -113,6 +128,7 @@ final List<DomainPack> kAllDomainPacks = <DomainPack>[
   kFinancePack,
   kHealthPack,
   kKnowledgePack,
+  kExecutionPack,
 ];
 
 List<Agent> _healthAgents(Ref ref) => <Agent>[
