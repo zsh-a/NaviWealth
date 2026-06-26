@@ -135,6 +135,7 @@ extension SideEffectScopeWire on SideEffectScope {
 const String kDomainFinance = 'finance';
 const String kDomainHealth = 'health';
 const String kDomainKnowledge = 'knowledge';
+const String kDomainExecution = 'execution';
 
 /// Default for legacy intents/traces/tools. Reading code outside
 /// `core/ai/contracts/` should reference this constant rather than

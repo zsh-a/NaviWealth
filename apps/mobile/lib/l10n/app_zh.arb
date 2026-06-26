@@ -2992,5 +2992,10 @@
   "executionProgressKindCompletion": "完成",
   "executionProgressKindDropped": "放弃",
   "executionProgressKindScope": "范围变化",
-  "executionProgressKindCheckin": "进展记录"
+  "executionProgressKindCheckin": "进展记录",
+  "executionProposalActionLabel": "Action",
+  "executionProposalRowAction": "行动",
+  "executionProposalRowPriority": "优先级",
+  "executionProposalRowDue": "截止",
+  "executionProposalRowSource": "来源"
 }

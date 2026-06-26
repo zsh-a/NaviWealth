@@ -9637,4 +9637,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionProgressKindCheckin => '进展记录';
+
+  @override
+  String get executionProposalActionLabel => 'Action';
+
+  @override
+  String get executionProposalRowAction => '行动';
+
+  @override
+  String get executionProposalRowPriority => '优先级';
+
+  @override
+  String get executionProposalRowDue => '截止';
+
+  @override
+  String get executionProposalRowSource => '来源';
 }

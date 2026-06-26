@@ -59,7 +59,7 @@ features/<domain>/
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | none |
 | HealthOS | `health` | Today, Trend, Plan | `kHealthDeviceTools` | Morning Briefing |
 | KnowledgeOS | `knowledge` | Inbox, Library, Review | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage, Routine Due |
-| ExecutionOS | `execution` | Today, Commitments, Review | none | none |
+| ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | none |
 
 Finance is always active. Health and Knowledge are enabled through `domainOptInsProvider`.
 

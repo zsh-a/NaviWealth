@@ -18,7 +18,12 @@ import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../features/execution/composition/execution_command_palette.dart';
 import '../features/execution/composition/execution_domain_shell.dart';
+import '../features/execution/composition/execution_proposal_applier.dart'
+    as execution_proposals;
+import '../features/execution/composition/execution_proposal_kinds.dart'
+    show kExecutionProposalKinds;
 import '../features/execution/composition/execution_routes.dart';
+import '../features/execution_ai_tools.dart';
 import '../features/finance/composition/finance_bootstrap.dart';
 import '../features/finance/composition/finance_command_palette.dart';
 import '../features/finance/composition/finance_intents.dart';
@@ -109,8 +114,13 @@ final DomainPack kKnowledgePack = DomainPack(
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
 );
 
-const DomainPack kExecutionPack = DomainPack(
+final DomainPack kExecutionPack = DomainPack(
   scope: DomainScope.execution,
+  deviceTools: kExecutionDeviceTools,
+  toolDescriptors: kExecutionToolDescriptors,
+  proposalKinds: kExecutionProposalKinds,
+  proposalApplierRouteBuilder: _executionProposalApplierRoute,
+  systemPromptBlock: kExecutionSystemPromptBlock,
   shellSpecBuilder: executionDomainShell,
   shellRouteBuilder: executionShellRoute,
   tabPaths: [
@@ -159,5 +169,16 @@ Future<ProposalApplierRoute> _knowledgeProposalApplierRoute(Ref ref) async {
     applier: applier,
     kinds: knowledge_proposals.kKnowledgeProposalAppliedKinds,
     tablePrefixes: const {knowledge_proposals.kKnowledgeTablePrefix},
+  );
+}
+
+Future<ProposalApplierRoute> _executionProposalApplierRoute(Ref ref) async {
+  final applier = await ref.watch(
+    execution_proposals.executionProposalApplierProvider.future,
+  );
+  return ProposalApplierRoute(
+    applier: applier,
+    kinds: execution_proposals.kExecutionProposalAppliedKinds,
+    tablePrefixes: const {execution_proposals.kExecutionTablePrefix},
   );
 }

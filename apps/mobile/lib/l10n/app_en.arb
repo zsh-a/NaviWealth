@@ -5257,5 +5257,10 @@
   "executionProgressKindCompletion": "Completion",
   "executionProgressKindDropped": "Dropped",
   "executionProgressKindScope": "Scope Change",
-  "executionProgressKindCheckin": "Check-in"
+  "executionProgressKindCheckin": "Check-in",
+  "executionProposalActionLabel": "Action",
+  "executionProposalRowAction": "Action",
+  "executionProposalRowPriority": "Priority",
+  "executionProposalRowDue": "Due",
+  "executionProposalRowSource": "Source"
 }

@@ -17332,6 +17332,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check-in'**
   String get executionProgressKindCheckin;
+
+  /// No description provided for @executionProposalActionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get executionProposalActionLabel;
+
+  /// No description provided for @executionProposalRowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get executionProposalRowAction;
+
+  /// No description provided for @executionProposalRowPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get executionProposalRowPriority;
+
+  /// No description provided for @executionProposalRowDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get executionProposalRowDue;
+
+  /// No description provided for @executionProposalRowSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get executionProposalRowSource;
 }
 
 class _AppLocalizationsDelegate

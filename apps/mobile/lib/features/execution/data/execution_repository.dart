@@ -221,6 +221,28 @@ class ExecutionRepository {
     return q.watch().map((rows) => rows.map(_commitmentFromRow).toList());
   }
 
+  Future<List<ExecutionCommitment>> listActiveCommitments({
+    required String ownerUserId,
+    int limit = 100,
+  }) async {
+    final q = _db.select(_db.executionCommitments)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where(
+        (t) => t.status.isIn(<String>[
+          ExecutionCommitmentStatus.active.wire,
+          ExecutionCommitmentStatus.paused.wire,
+        ]),
+      )
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_commitmentFromRow).toList();
+  }
+
   Future<void> upsertCommitment(ExecutionCommitment commitment) {
     return _upsertAndEnqueue(
       _db.executionCommitments,
@@ -242,6 +264,21 @@ class ExecutionRepository {
       ])
       ..limit(limit);
     return q.watch().map((rows) => rows.map(_progressFromRow).toList());
+  }
+
+  Future<List<ExecutionProgressEntry>> listRecentProgress({
+    required String ownerUserId,
+    int limit = 100,
+  }) async {
+    final q = _db.select(_db.executionProgressEntries)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_progressFromRow).toList();
   }
 
   Future<void> upsertProgress(ExecutionProgressEntry progress) {

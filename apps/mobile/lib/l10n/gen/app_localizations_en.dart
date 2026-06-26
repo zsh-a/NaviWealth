@@ -10103,4 +10103,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProgressKindCheckin => 'Check-in';
+
+  @override
+  String get executionProposalActionLabel => 'Action';
+
+  @override
+  String get executionProposalRowAction => 'Action';
+
+  @override
+  String get executionProposalRowPriority => 'Priority';
+
+  @override
+  String get executionProposalRowDue => 'Due';
+
+  @override
+  String get executionProposalRowSource => 'Source';
 }

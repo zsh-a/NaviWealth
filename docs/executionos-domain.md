@@ -34,7 +34,10 @@ Contributions:
 - Shell: `features/execution/composition/execution_domain_shell.dart`.
 - Routes: `features/execution/composition/execution_routes.dart`.
 - Tabs: Today, Commitments, Review.
+- Tools: `features/execution_ai_tools.dart`.
 - Command palette: `features/execution/composition/execution_command_palette.dart`.
+- Proposal kinds: `features/execution/composition/execution_proposal_kinds.dart`.
+- Proposal applier: `features/execution/composition/execution_proposal_applier.dart`.
 
 ExecutionOS is active only when the user enables it in Settings.
 
@@ -96,3 +99,26 @@ sourceLabelSnapshot
 ```
 
 It must not import sibling domain business entities.
+
+## AI Tools
+
+Tool barrel: `features/execution_ai_tools.dart`.
+
+Read tools:
+
+- `list_open_actions`
+- `list_blocked_actions`
+- `summarize_execution_progress`
+
+Proposal tools:
+
+- `propose_action`
+
+Rules:
+
+- `propose_action` returns a `ProposalEnvelope`; it does not directly write
+  `execution_actions`.
+- Confirmed `execution_action` proposals route through
+  `ExecutionProposalApplier`.
+- AI should keep suggested actions concrete, next-step sized, and tied to
+  source references when they came from another domain.

@@ -212,11 +212,14 @@ void main() {
         'get_subscription_changes',
         'get_transfer_links',
         'get_wheel_lifecycle',
+        'list_blocked_actions',
         'list_due_reviews',
         'list_due_routines',
+        'list_open_actions',
         'list_open_assumptions',
         'list_payment_accounts',
         'propose_account_create',
+        'propose_action',
         'propose_asset_valuation',
         'propose_capture',
         'propose_concept_link',
@@ -242,6 +245,7 @@ void main() {
         'search_knowledge',
         'search_notes',
         'simulate_fire_plan',
+        'summarize_execution_progress',
         'summarize_topic_evolution',
       ]);
     });
