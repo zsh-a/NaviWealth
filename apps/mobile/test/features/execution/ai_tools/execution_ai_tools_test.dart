@@ -12,6 +12,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/execution/ai_tools/list_open_actions_tool.dart';
+import 'package:naviwealth/features/execution/ai_tools/propose_action_status_update_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_action_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_commitment_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_progress_tool.dart';
@@ -21,6 +22,7 @@ import 'package:naviwealth/features/execution/composition/execution_proposal_app
 import 'package:naviwealth/features/execution/data/execution_repository.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
+import 'package:naviwealth/features/execution_ai_tools.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -191,6 +193,42 @@ void main() {
     expect(payload['action_id'], 'act-ai');
   });
 
+  test(
+    'propose_action_status_update returns a ready proposal envelope',
+    () async {
+      final out = await _withRef(
+        container,
+        (ref) => const ProposeActionStatusUpdateTool()
+            .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+              'action_id': 'act-ai',
+              'status': 'done',
+              'progress_note': 'Finished from chat follow-up.',
+              'reason': '用户明确说这个行动已经完成',
+            }),
+      );
+
+      final proposal = out! as Map<Object?, Object?>;
+      expect(proposal['kind'], 'execution_action_status_update');
+      expect(proposal['status'], 'ready');
+      final payload = proposal['payload']! as Map<Object?, Object?>;
+      expect(payload['action_id'], 'act-ai');
+      expect(payload['status'], 'done');
+      expect(payload['progress_note'], 'Finished from chat follow-up.');
+    },
+  );
+
+  test(
+    'execution prompt routes existing action status changes to proposals',
+    () {
+      expect(kExecutionSystemPromptBlock, contains('list_open_actions'));
+      expect(
+        kExecutionSystemPromptBlock,
+        contains('propose_action_status_update'),
+      );
+      expect(kExecutionSystemPromptBlock, contains('不会直接写入'));
+    },
+  );
+
   test('execution proposal applier creates an action', () async {
     final proposal = await _withRef(
       container,
@@ -218,6 +256,59 @@ void main() {
     expect(action!.title, 'Book Zone 2 workout');
     expect(action.projectId, 'proj-health');
     expect(state.appliedTable, 'execution_actions');
+  });
+
+  test('execution proposal applier updates and undoes action status', () async {
+    final repo = await container.read(executionRepositoryProvider.future);
+    await repo.upsertAction(
+      ExecutionAction(
+        id: 'a-status',
+        title: 'Close AI status loop',
+        status: ExecutionActionStatus.doing,
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(30),
+      ),
+    );
+
+    final plan = _readyPlan(
+      await _withRef(
+        container,
+        (ref) => const ProposeActionStatusUpdateTool()
+            .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+              'action_id': 'a-status',
+              'status': 'done',
+              'progress_note': 'Completed through confirmed AI proposal.',
+              'reason': '用户要求标记完成',
+            }),
+      ),
+    );
+    final state = await _applyReadyPlan(container, plan);
+
+    final done = await repo.findAction(ownerUserId: _userId, id: 'a-status');
+    final progress = await repo.listRecentProgress(ownerUserId: _userId);
+    expect(done!.status, ExecutionActionStatus.done);
+    expect(done.completedAt, isNotNull);
+    expect(progress.single.note, 'Completed through confirmed AI proposal.');
+    expect(progress.single.kind, ExecutionProgressKind.completion);
+    expect(state.appliedTable, 'execution_actions');
+    expect(state.undoData?['previous_status'], 'doing');
+
+    await _withRef(container, (ref) async {
+      final applier = await ref.read(executionProposalApplierProvider.future);
+      await applier.undo(state);
+    });
+
+    final restored = await repo.findAction(
+      ownerUserId: _userId,
+      id: 'a-status',
+    );
+    final tombstonedProgress = await repo.findProgress(
+      ownerUserId: _userId,
+      id: progress.single.id,
+    );
+    expect(restored!.status, ExecutionActionStatus.doing);
+    expect(restored.completedAt, isNull);
+    expect(tombstonedProgress!.sync.deletedAt, isNotNull);
   });
 
   test(

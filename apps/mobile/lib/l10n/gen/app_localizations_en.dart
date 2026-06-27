@@ -10080,6 +10080,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionOverviewFocus => 'Focus';
 
   @override
+  String get executionOverviewBacklog => 'Backlog';
+
+  @override
   String get executionOverviewBlocked => 'Blocked';
 
   @override
@@ -10112,6 +10115,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Switch filters or capture a new action when something needs follow-through.';
 
   @override
+  String executionDeleteConfirmTitle(Object item) {
+    return 'Delete $item?';
+  }
+
+  @override
+  String get executionDeleteConfirmBody =>
+      'This removes it from ExecutionOS and syncs the deletion.';
+
+  @override
   String get executionCommitmentsEmptyTitle => 'No open actions';
 
   @override
@@ -10119,11 +10131,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use actions for personal todos; group larger work into projects or commitments.';
 
   @override
+  String get executionCommitmentsClosedEmptyTitle => 'No closed commitments';
+
+  @override
+  String get executionCommitmentsClosedEmptyBody =>
+      'Completed and archived projects or commitments will appear here.';
+
+  @override
   String get executionReviewEmptyTitle => 'No progress yet';
 
   @override
   String get executionReviewEmptyBody =>
       'Completion and blocker notes will appear here for review.';
+
+  @override
+  String get executionClosedActionsSection => 'Recent closed actions';
 
   @override
   String get executionProjectsSection => 'Projects';
@@ -10239,14 +10261,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionActionDone => 'Done';
 
   @override
+  String get executionActionDrop => 'Drop';
+
+  @override
   String get executionActionStatusUpdateFailed =>
       'Couldn\'t update action status.';
+
+  @override
+  String get executionLifecyclePause => 'Pause';
+
+  @override
+  String get executionLifecycleResume => 'Resume';
+
+  @override
+  String get executionLifecycleComplete => 'Complete';
+
+  @override
+  String get executionLifecycleActiveView => 'Active';
+
+  @override
+  String get executionLifecycleClosedView => 'Closed';
+
+  @override
+  String get executionProjectStatusUpdateFailed =>
+      'Couldn\'t update project status.';
+
+  @override
+  String get executionCommitmentStatusUpdateFailed =>
+      'Couldn\'t update commitment status.';
 
   @override
   String get executionProgressBlockedDefault => 'Marked blocked.';
 
   @override
   String get executionProgressDoneDefault => 'Marked done.';
+
+  @override
+  String get executionProgressDroppedDefault => 'Marked dropped.';
 
   @override
   String get executionProgressKindField => 'Progress type';
@@ -10277,7 +10328,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProgressKindCheckin => 'Check-in';
 
   @override
+  String get executionProgressSyncActionStatus => 'Update linked action';
+
+  @override
+  String executionProgressSyncActionStatusBody(Object status) {
+    return 'Also move the action to $status.';
+  }
+
+  @override
   String get executionProposalActionLabel => 'Action';
+
+  @override
+  String get executionProposalActionStatusLabel => 'Action Status';
 
   @override
   String get executionProposalProjectLabel => 'Project';

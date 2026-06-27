@@ -64,7 +64,8 @@ class ExecutionRepository {
               ExecutionActionStatus.doing.wire,
               ExecutionActionStatus.blocked.wire,
             ]) &
-            (t.scheduledFor.isNull() |
+            (t.status.equals(ExecutionActionStatus.doing.wire) |
+                t.status.equals(ExecutionActionStatus.blocked.wire) |
                 t.scheduledFor.isSmallerThanValue(endOfToday) |
                 t.dueAt.isSmallerThanValue(endOfToday) |
                 t.priority.equals(ExecutionPriority.high.wire)),
@@ -106,6 +107,27 @@ class ExecutionRepository {
     return q.watch().map((rows) => rows.map(_projectFromRow).toList());
   }
 
+  Stream<List<ExecutionProject>> watchClosedProjects({
+    required String ownerUserId,
+    int limit = 100,
+  }) {
+    final q = _db.select(_db.executionProjects)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where(
+        (t) => t.status.isIn(<String>[
+          ExecutionProjectStatus.completed.wire,
+          ExecutionProjectStatus.archived.wire,
+        ]),
+      )
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_projectFromRow).toList());
+  }
+
   Future<List<ExecutionProject>> listActiveProjects({
     required String ownerUserId,
     int limit = 100,
@@ -137,6 +159,37 @@ class ExecutionRepository {
     );
   }
 
+  Future<void> softDeleteProject({
+    required ExecutionProject project,
+    required SyncMeta sync,
+  }) {
+    final tombstone = sync.copyWith(deletedAt: sync.updatedAt);
+    return upsertProject(
+      ExecutionProject(
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        status: project.status,
+        horizon: project.horizon,
+        targetDate: project.targetDate,
+        source: project.source,
+        createdAt: project.createdAt,
+        completedAt: project.completedAt,
+        sync: tombstone,
+      ),
+    );
+  }
+
+  Future<void> updateProjectStatus({
+    required ExecutionProject project,
+    required ExecutionProjectStatus status,
+    required SyncMeta sync,
+  }) {
+    return upsertProject(
+      _projectWithStatus(project, status: status, sync: sync),
+    );
+  }
+
   Future<ExecutionProject?> findProject({
     required String ownerUserId,
     required String id,
@@ -147,6 +200,21 @@ class ExecutionRepository {
             ))
             .getSingleOrNull();
     return row == null ? null : _projectFromRow(row);
+  }
+
+  Future<List<ExecutionProject>> listProjectsByIds({
+    required String ownerUserId,
+    required Set<String> ids,
+  }) async {
+    if (ids.isEmpty) return const <ExecutionProject>[];
+    final q = _db.select(_db.executionProjects)
+      ..where(
+        (t) =>
+            t.ownerUserId.equals(ownerUserId) &
+            t.id.isIn(ids.toList(growable: false)),
+      );
+    final rows = await q.get();
+    return rows.map(_projectFromRow).toList(growable: false);
   }
 
   Stream<List<ExecutionAction>> watchOpenActions({
@@ -172,6 +240,27 @@ class ExecutionRepository {
           expression: t.priority.equals(ExecutionPriority.high.wire),
           mode: OrderingMode.desc,
         ),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+  }
+
+  Stream<List<ExecutionAction>> watchClosedActions({
+    required String ownerUserId,
+    int limit = 100,
+  }) {
+    final q = _db.select(_db.executionActions)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where(
+        (t) => t.status.isIn(<String>[
+          ExecutionActionStatus.done.wire,
+          ExecutionActionStatus.dropped.wire,
+        ]),
+      )
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
@@ -212,6 +301,21 @@ class ExecutionRepository {
     return row == null ? null : _actionFromRow(row);
   }
 
+  Future<List<ExecutionAction>> listActionsByIds({
+    required String ownerUserId,
+    required Set<String> ids,
+  }) async {
+    if (ids.isEmpty) return const <ExecutionAction>[];
+    final q = _db.select(_db.executionActions)
+      ..where(
+        (t) =>
+            t.ownerUserId.equals(ownerUserId) &
+            t.id.isIn(ids.toList(growable: false)),
+      );
+    final rows = await q.get();
+    return rows.map(_actionFromRow).toList(growable: false);
+  }
+
   Future<void> upsertAction(ExecutionAction action) {
     return _upsertAndEnqueue(
       _db.executionActions,
@@ -221,6 +325,13 @@ class ExecutionRepository {
     );
   }
 
+  Future<void> softDeleteAction({
+    required ExecutionAction action,
+    required SyncMeta sync,
+  }) {
+    return upsertAction(action.copyWith(sync: _tombstone(sync)));
+  }
+
   Future<void> updateActionStatus({
     required ExecutionAction action,
     required ExecutionActionStatus status,
@@ -228,28 +339,7 @@ class ExecutionRepository {
     String? progressId,
     String? progressNote,
   }) async {
-    final completedAt = switch (status) {
-      ExecutionActionStatus.done ||
-      ExecutionActionStatus.dropped => sync.updatedAt,
-      ExecutionActionStatus.todo ||
-      ExecutionActionStatus.doing ||
-      ExecutionActionStatus.blocked => null,
-    };
-    final updated = ExecutionAction(
-      id: action.id,
-      title: action.title,
-      note: action.note,
-      status: status,
-      priority: action.priority,
-      dueAt: action.dueAt,
-      scheduledFor: action.scheduledFor,
-      projectId: action.projectId,
-      commitmentId: action.commitmentId,
-      source: action.source,
-      createdAt: action.createdAt,
-      completedAt: completedAt,
-      sync: sync,
-    );
+    final updated = _actionWithStatus(action, status: status, sync: sync);
     await _db.transaction(() async {
       await _db
           .into(_db.executionActions)
@@ -281,6 +371,38 @@ class ExecutionRepository {
     });
   }
 
+  Future<void> recordProgress(
+    ExecutionProgressEntry progress, {
+    ExecutionAction? linkedAction,
+    ExecutionActionStatus? linkedActionStatus,
+  }) async {
+    final updatedAction = linkedAction == null || linkedActionStatus == null
+        ? null
+        : _actionWithStatus(
+            linkedAction,
+            status: linkedActionStatus,
+            sync: progress.sync,
+          );
+    await _db.transaction(() async {
+      await _db
+          .into(_db.executionProgressEntries)
+          .insert(
+            _progressCompanion(progress),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(table: _progressTable, rowId: progress.id);
+      if (updatedAction != null) {
+        await _db
+            .into(_db.executionActions)
+            .insert(
+              _actionCompanion(updatedAction),
+              mode: InsertMode.insertOrReplace,
+            );
+        await _outbox.enqueue(table: _actionsTable, rowId: updatedAction.id);
+      }
+    });
+  }
+
   Stream<List<ExecutionCommitment>> watchActiveCommitments({
     required String ownerUserId,
     int limit = 100,
@@ -296,6 +418,27 @@ class ExecutionRepository {
       )
       ..orderBy([
         (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_commitmentFromRow).toList());
+  }
+
+  Stream<List<ExecutionCommitment>> watchClosedCommitments({
+    required String ownerUserId,
+    int limit = 100,
+  }) {
+    final q = _db.select(_db.executionCommitments)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where(
+        (t) => t.status.isIn(<String>[
+          ExecutionCommitmentStatus.completed.wire,
+          ExecutionCommitmentStatus.archived.wire,
+        ]),
+      )
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
@@ -333,6 +476,38 @@ class ExecutionRepository {
     );
   }
 
+  Future<void> softDeleteCommitment({
+    required ExecutionCommitment commitment,
+    required SyncMeta sync,
+  }) {
+    final tombstone = _tombstone(sync);
+    return upsertCommitment(
+      ExecutionCommitment(
+        id: commitment.id,
+        title: commitment.title,
+        description: commitment.description,
+        status: commitment.status,
+        horizon: commitment.horizon,
+        targetDate: commitment.targetDate,
+        projectId: commitment.projectId,
+        source: commitment.source,
+        createdAt: commitment.createdAt,
+        completedAt: commitment.completedAt,
+        sync: tombstone,
+      ),
+    );
+  }
+
+  Future<void> updateCommitmentStatus({
+    required ExecutionCommitment commitment,
+    required ExecutionCommitmentStatus status,
+    required SyncMeta sync,
+  }) {
+    return upsertCommitment(
+      _commitmentWithStatus(commitment, status: status, sync: sync),
+    );
+  }
+
   Future<ExecutionCommitment?> findCommitment({
     required String ownerUserId,
     required String id,
@@ -343,6 +518,21 @@ class ExecutionRepository {
             ))
             .getSingleOrNull();
     return row == null ? null : _commitmentFromRow(row);
+  }
+
+  Future<List<ExecutionCommitment>> listCommitmentsByIds({
+    required String ownerUserId,
+    required Set<String> ids,
+  }) async {
+    if (ids.isEmpty) return const <ExecutionCommitment>[];
+    final q = _db.select(_db.executionCommitments)
+      ..where(
+        (t) =>
+            t.ownerUserId.equals(ownerUserId) &
+            t.id.isIn(ids.toList(growable: false)),
+      );
+    final rows = await q.get();
+    return rows.map(_commitmentFromRow).toList(growable: false);
   }
 
   Stream<List<ExecutionProgressEntry>> watchRecentProgress({
@@ -380,6 +570,93 @@ class ExecutionRepository {
       _progressCompanion(progress),
       tableName: _progressTable,
       rowId: progress.id,
+    );
+  }
+
+  Future<void> softDeleteProgress({
+    required ExecutionProgressEntry progress,
+    required SyncMeta sync,
+  }) {
+    final tombstone = _tombstone(sync);
+    return upsertProgress(
+      ExecutionProgressEntry(
+        id: progress.id,
+        actionId: progress.actionId,
+        projectId: progress.projectId,
+        commitmentId: progress.commitmentId,
+        kind: progress.kind,
+        note: progress.note,
+        createdAt: progress.createdAt,
+        sync: tombstone,
+      ),
+    );
+  }
+
+  SyncMeta _tombstone(SyncMeta sync) {
+    return sync.copyWith(deletedAt: sync.updatedAt);
+  }
+
+  ExecutionAction _actionWithStatus(
+    ExecutionAction action, {
+    required ExecutionActionStatus status,
+    required SyncMeta sync,
+  }) {
+    final completedAt = switch (status) {
+      ExecutionActionStatus.done ||
+      ExecutionActionStatus.dropped => sync.updatedAt,
+      ExecutionActionStatus.todo ||
+      ExecutionActionStatus.doing ||
+      ExecutionActionStatus.blocked => null,
+    };
+    return ExecutionAction(
+      id: action.id,
+      title: action.title,
+      note: action.note,
+      status: status,
+      priority: action.priority,
+      dueAt: action.dueAt,
+      scheduledFor: action.scheduledFor,
+      projectId: action.projectId,
+      commitmentId: action.commitmentId,
+      source: action.source,
+      createdAt: action.createdAt,
+      completedAt: completedAt,
+      sync: sync,
+    );
+  }
+
+  ExecutionProject _projectWithStatus(
+    ExecutionProject project, {
+    required ExecutionProjectStatus status,
+    required SyncMeta sync,
+  }) {
+    final completedAt = switch (status) {
+      ExecutionProjectStatus.completed ||
+      ExecutionProjectStatus.archived => sync.updatedAt,
+      ExecutionProjectStatus.active || ExecutionProjectStatus.paused => null,
+    };
+    return project.copyWith(
+      status: status,
+      completedAt: completedAt,
+      sync: sync,
+    );
+  }
+
+  ExecutionCommitment _commitmentWithStatus(
+    ExecutionCommitment commitment, {
+    required ExecutionCommitmentStatus status,
+    required SyncMeta sync,
+  }) {
+    final completedAt = switch (status) {
+      ExecutionCommitmentStatus.completed ||
+      ExecutionCommitmentStatus.archived => sync.updatedAt,
+      ExecutionCommitmentStatus.active ||
+      ExecutionCommitmentStatus.paused => null,
+    };
+    return commitment.copyWith(
+      status: status,
+      completedAt: completedAt,
+      sync: sync,
     );
   }
 

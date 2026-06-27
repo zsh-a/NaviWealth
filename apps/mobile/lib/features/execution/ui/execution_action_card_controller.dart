@@ -12,16 +12,20 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     super.key,
     required this.action,
     required this.onEdit,
+    required this.onRecordProgress,
     required this.blockedProgressNote,
     required this.doneProgressNote,
+    required this.droppedProgressNote,
     this.projectLabel,
     this.commitmentLabel,
   });
 
   final ExecutionAction action;
   final VoidCallback onEdit;
+  final VoidCallback onRecordProgress;
   final String blockedProgressNote;
   final String doneProgressNote;
+  final String droppedProgressNote;
   final String? projectLabel;
   final String? commitmentLabel;
 
@@ -69,6 +73,7 @@ class _ExecutionActionCardControllerState
       projectLabel: widget.projectLabel,
       commitmentLabel: widget.commitmentLabel,
       onEdit: _busy ? () {} : widget.onEdit,
+      onRecordProgress: _busy ? () {} : widget.onRecordProgress,
       onStart: () => _changeStatus(ExecutionActionStatus.doing),
       onBlock: () => _changeStatus(
         ExecutionActionStatus.blocked,
@@ -78,6 +83,10 @@ class _ExecutionActionCardControllerState
       onDone: () => _changeStatus(
         ExecutionActionStatus.done,
         progressNote: widget.doneProgressNote,
+      ),
+      onDrop: () => _changeStatus(
+        ExecutionActionStatus.dropped,
+        progressNote: widget.droppedProgressNote,
       ),
     );
   }

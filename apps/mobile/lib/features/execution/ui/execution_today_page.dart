@@ -10,6 +10,7 @@ import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
+import 'execution_progress_sheet.dart';
 import 'execution_widgets.dart';
 
 class ExecutionTodayPage extends ConsumerWidget {
@@ -34,6 +35,7 @@ class ExecutionTodayPage extends ConsumerWidget {
           ref.invalidate(executionProjectsProvider);
           ref.invalidate(executionCommitmentsProvider);
           ref.invalidate(executionRecentProgressProvider);
+          ref.invalidate(executionActionRelationsProvider);
           await ref.read(executionTodayActionsProvider.future);
         },
         child: _TodayList(),
@@ -58,6 +60,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
     final projectsAsync = ref.watch(executionProjectsProvider);
     final commitmentsAsync = ref.watch(executionCommitmentsProvider);
     final progressAsync = ref.watch(executionRecentProgressProvider);
+    final relations = ref.watch(executionActionRelationsProvider).value;
     return actionsAsync.when(
       loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => ExecutionStateView(
@@ -128,21 +131,28 @@ class _TodayListState extends ConsumerState<_TodayList> {
               for (final action in visibleActions) ...[
                 ExecutionActionCardController(
                   action: action,
-                  projectLabel: executionProjectRelationLabel(
-                    projects,
-                    action.projectId,
-                  ),
-                  commitmentLabel: executionCommitmentRelationLabel(
-                    commitments,
-                    action.commitmentId,
-                  ),
+                  projectLabel:
+                      relations?.projectLabel(action.projectId) ??
+                      executionProjectRelationLabel(projects, action.projectId),
+                  commitmentLabel:
+                      relations?.commitmentLabel(action.commitmentId) ??
+                      executionCommitmentRelationLabel(
+                        commitments,
+                        action.commitmentId,
+                      ),
                   onEdit: () => showExecutionActionSheet(
+                    context: context,
+                    ref: ref,
+                    action: action,
+                  ),
+                  onRecordProgress: () => showExecutionProgressSheet(
                     context: context,
                     ref: ref,
                     action: action,
                   ),
                   blockedProgressNote: l10n.executionProgressBlockedDefault,
                   doneProgressNote: l10n.executionProgressDoneDefault,
+                  droppedProgressNote: l10n.executionProgressDroppedDefault,
                 ),
                 const SizedBox(height: AppSpacing.s8),
               ],

@@ -2986,6 +2986,7 @@
   "executionCommitmentTitleHint": "你承诺推进什么？",
   "executionCommitmentDescriptionHint": "可选范围、原因或目标结果",
   "executionOverviewFocus": "焦点",
+  "executionOverviewBacklog": "待排期",
   "executionOverviewBlocked": "阻塞",
   "executionOverviewHigh": "高优先",
   "executionOverviewDue": "到期",
@@ -2996,10 +2997,20 @@
   "executionTodayEmptyBody": "需要跟进的事情先捕获成一个具体下一步。",
   "executionTodayFilteredEmptyTitle": "没有匹配行动",
   "executionTodayFilteredEmptyBody": "切换筛选；有需要跟进的事情再捕获为 Action。",
+  "executionDeleteConfirmTitle": "删除「{item}」？",
+  "@executionDeleteConfirmTitle": {
+    "placeholders": {
+      "item": {}
+    }
+  },
+  "executionDeleteConfirmBody": "这会从 ExecutionOS 移除该项目，并同步删除记录。",
   "executionCommitmentsEmptyTitle": "没有未完成行动",
   "executionCommitmentsEmptyBody": "个人 todo 先用 Action；事情变大后再归入 Project 或 Commitment。",
+  "executionCommitmentsClosedEmptyTitle": "没有已关闭承诺",
+  "executionCommitmentsClosedEmptyBody": "已完成或已归档的 Project 与 Commitment 会出现在这里。",
   "executionReviewEmptyTitle": "还没有进展记录",
   "executionReviewEmptyBody": "完成与阻塞记录会出现在这里，方便复盘。",
+  "executionClosedActionsSection": "最近已关闭行动",
   "executionProjectsSection": "项目",
   "executionCommitmentsSection": "承诺",
   "executionActionsSection": "行动",
@@ -3036,9 +3047,18 @@
   "executionActionBlock": "阻塞",
   "executionActionResume": "恢复",
   "executionActionDone": "完成",
+  "executionActionDrop": "放弃",
   "executionActionStatusUpdateFailed": "更新行动状态失败。",
+  "executionLifecyclePause": "暂停",
+  "executionLifecycleResume": "恢复",
+  "executionLifecycleComplete": "完成",
+  "executionLifecycleActiveView": "进行中",
+  "executionLifecycleClosedView": "已关闭",
+  "executionProjectStatusUpdateFailed": "更新项目状态失败。",
+  "executionCommitmentStatusUpdateFailed": "更新承诺状态失败。",
   "executionProgressBlockedDefault": "已标记为阻塞。",
   "executionProgressDoneDefault": "已标记为完成。",
+  "executionProgressDroppedDefault": "已标记为放弃。",
   "executionProgressKindField": "进展类型",
   "executionProgressNoteField": "进展记录",
   "executionProgressNoteHint": "记录变化、阻塞或已完成的事情。",
@@ -3048,7 +3068,15 @@
   "executionProgressKindDropped": "放弃",
   "executionProgressKindScope": "范围变化",
   "executionProgressKindCheckin": "进展记录",
+  "executionProgressSyncActionStatus": "同步更新关联行动",
+  "executionProgressSyncActionStatusBody": "同时把行动状态改为「{status}」。",
+  "@executionProgressSyncActionStatusBody": {
+    "placeholders": {
+      "status": {}
+    }
+  },
   "executionProposalActionLabel": "Action",
+  "executionProposalActionStatusLabel": "行动状态",
   "executionProposalProjectLabel": "Project",
   "executionProposalCommitmentLabel": "Commitment",
   "executionProposalProgressLabel": "进展",

@@ -13,6 +13,13 @@ const List<ProposalKindMeta> kExecutionProposalKinds = [
     previewRows: _actionRows,
   ),
   ProposalKindMeta(
+    kind: 'execution_action_status_update',
+    icon: FLucideIcons.listChecks,
+    label: _actionStatusLabel,
+    toolName: 'propose_action_status_update',
+    previewRows: _actionStatusRows,
+  ),
+  ProposalKindMeta(
     kind: 'execution_project',
     icon: FLucideIcons.folder,
     label: _projectLabel,
@@ -39,6 +46,8 @@ Set<String> get kExecutionProposalAppliedKinds =>
     kExecutionProposalKinds.map((m) => m.kind).toSet();
 
 String _actionLabel(AppLocalizations l10n) => l10n.executionProposalActionLabel;
+String _actionStatusLabel(AppLocalizations l10n) =>
+    l10n.executionProposalActionStatusLabel;
 String _projectLabel(AppLocalizations l10n) =>
     l10n.executionProposalProjectLabel;
 String _commitmentLabel(AppLocalizations l10n) =>
@@ -66,6 +75,25 @@ List<ProposalKindRow> _actionRows(
       ProposalKindRow(
         l10n.executionProposalRowSource,
         plan.get('source_label')!,
+      ),
+  ];
+}
+
+List<ProposalKindRow> _actionStatusRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  return <ProposalKindRow>[
+    ProposalKindRow(
+      l10n.executionProposalRowAction,
+      plan.get('action_id') ?? '—',
+    ),
+    ProposalKindRow(l10n.executionStatusField, plan.get('status') ?? '—'),
+    if (plan.get('progress_note') != null)
+      ProposalKindRow(
+        l10n.executionProposalRowProgress,
+        plan.get('progress_note')!,
       ),
   ];
 }

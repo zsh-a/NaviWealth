@@ -82,7 +82,7 @@ boundary.
 |---|---|
 | Today | Today's open actions, blockers, and high-priority follow-through |
 | Commitments | Active projects, commitments, and open actions |
-| Review | Recent progress, blockers, and completion notes |
+| Review | Recent progress, blockers, completion notes, and recently closed actions |
 
 Key files:
 
@@ -117,6 +117,7 @@ Read tools:
 Proposal tools:
 
 - `propose_action`
+- `propose_action_status_update`
 - `propose_project`
 - `propose_commitment`
 - `propose_progress`
@@ -132,3 +133,6 @@ Rules:
 - `list_open_actions` and `summarize_execution_progress` should include
   relation titles where available so AI can attach proposals to the right
   Project or Commitment without guessing from ids.
+- Existing Action status changes must use `propose_action_status_update`
+  after identifying the target Action. Do not create a duplicate Action just
+  to represent completion, blocking, resuming, or dropping an existing one.

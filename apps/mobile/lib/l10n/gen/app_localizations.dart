@@ -17291,6 +17291,12 @@ abstract class AppLocalizations {
   /// **'Focus'**
   String get executionOverviewFocus;
 
+  /// No description provided for @executionOverviewBacklog.
+  ///
+  /// In en, this message translates to:
+  /// **'Backlog'**
+  String get executionOverviewBacklog;
+
   /// No description provided for @executionOverviewBlocked.
   ///
   /// In en, this message translates to:
@@ -17351,6 +17357,18 @@ abstract class AppLocalizations {
   /// **'Switch filters or capture a new action when something needs follow-through.'**
   String get executionTodayFilteredEmptyBody;
 
+  /// No description provided for @executionDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {item}?'**
+  String executionDeleteConfirmTitle(Object item);
+
+  /// No description provided for @executionDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes it from ExecutionOS and syncs the deletion.'**
+  String get executionDeleteConfirmBody;
+
   /// No description provided for @executionCommitmentsEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -17363,6 +17381,18 @@ abstract class AppLocalizations {
   /// **'Use actions for personal todos; group larger work into projects or commitments.'**
   String get executionCommitmentsEmptyBody;
 
+  /// No description provided for @executionCommitmentsClosedEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No closed commitments'**
+  String get executionCommitmentsClosedEmptyTitle;
+
+  /// No description provided for @executionCommitmentsClosedEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed and archived projects or commitments will appear here.'**
+  String get executionCommitmentsClosedEmptyBody;
+
   /// No description provided for @executionReviewEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -17374,6 +17404,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Completion and blocker notes will appear here for review.'**
   String get executionReviewEmptyBody;
+
+  /// No description provided for @executionClosedActionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent closed actions'**
+  String get executionClosedActionsSection;
 
   /// No description provided for @executionProjectsSection.
   ///
@@ -17591,11 +17627,59 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get executionActionDone;
 
+  /// No description provided for @executionActionDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop'**
+  String get executionActionDrop;
+
   /// No description provided for @executionActionStatusUpdateFailed.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t update action status.'**
   String get executionActionStatusUpdateFailed;
+
+  /// No description provided for @executionLifecyclePause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get executionLifecyclePause;
+
+  /// No description provided for @executionLifecycleResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get executionLifecycleResume;
+
+  /// No description provided for @executionLifecycleComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get executionLifecycleComplete;
+
+  /// No description provided for @executionLifecycleActiveView.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get executionLifecycleActiveView;
+
+  /// No description provided for @executionLifecycleClosedView.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get executionLifecycleClosedView;
+
+  /// No description provided for @executionProjectStatusUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update project status.'**
+  String get executionProjectStatusUpdateFailed;
+
+  /// No description provided for @executionCommitmentStatusUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update commitment status.'**
+  String get executionCommitmentStatusUpdateFailed;
 
   /// No description provided for @executionProgressBlockedDefault.
   ///
@@ -17608,6 +17692,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marked done.'**
   String get executionProgressDoneDefault;
+
+  /// No description provided for @executionProgressDroppedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked dropped.'**
+  String get executionProgressDroppedDefault;
 
   /// No description provided for @executionProgressKindField.
   ///
@@ -17663,11 +17753,29 @@ abstract class AppLocalizations {
   /// **'Check-in'**
   String get executionProgressKindCheckin;
 
+  /// No description provided for @executionProgressSyncActionStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Update linked action'**
+  String get executionProgressSyncActionStatus;
+
+  /// No description provided for @executionProgressSyncActionStatusBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Also move the action to {status}.'**
+  String executionProgressSyncActionStatusBody(Object status);
+
   /// No description provided for @executionProposalActionLabel.
   ///
   /// In en, this message translates to:
   /// **'Action'**
   String get executionProposalActionLabel;
+
+  /// No description provided for @executionProposalActionStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Action Status'**
+  String get executionProposalActionStatusLabel;
 
   /// No description provided for @executionProposalProjectLabel.
   ///
