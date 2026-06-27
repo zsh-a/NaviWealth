@@ -137,6 +137,18 @@ class ExecutionRepository {
     );
   }
 
+  Future<ExecutionProject?> findProject({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.executionProjects)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
+    return row == null ? null : _projectFromRow(row);
+  }
+
   Stream<List<ExecutionAction>> watchOpenActions({
     required String ownerUserId,
     int limit = 200,
@@ -216,11 +228,25 @@ class ExecutionRepository {
     String? progressId,
     String? progressNote,
   }) async {
-    final completedAt = status == ExecutionActionStatus.done
-        ? sync.updatedAt
-        : action.completedAt;
-    final updated = action.copyWith(
+    final completedAt = switch (status) {
+      ExecutionActionStatus.done ||
+      ExecutionActionStatus.dropped => sync.updatedAt,
+      ExecutionActionStatus.todo ||
+      ExecutionActionStatus.doing ||
+      ExecutionActionStatus.blocked => null,
+    };
+    final updated = ExecutionAction(
+      id: action.id,
+      title: action.title,
+      note: action.note,
       status: status,
+      priority: action.priority,
+      dueAt: action.dueAt,
+      scheduledFor: action.scheduledFor,
+      projectId: action.projectId,
+      commitmentId: action.commitmentId,
+      source: action.source,
+      createdAt: action.createdAt,
       completedAt: completedAt,
       sync: sync,
     );
@@ -307,6 +333,18 @@ class ExecutionRepository {
     );
   }
 
+  Future<ExecutionCommitment?> findCommitment({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.executionCommitments)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
+    return row == null ? null : _commitmentFromRow(row);
+  }
+
   Stream<List<ExecutionProgressEntry>> watchRecentProgress({
     required String ownerUserId,
     int limit = 100,
@@ -343,6 +381,18 @@ class ExecutionRepository {
       tableName: _progressTable,
       rowId: progress.id,
     );
+  }
+
+  Future<ExecutionProgressEntry?> findProgress({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.executionProgressEntries)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
+    return row == null ? null : _progressFromRow(row);
   }
 
   ExecutionProjectsCompanion _projectCompanion(ExecutionProject project) {

@@ -9549,6 +9549,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCreateCommitmentTitle => '新建 Commitment';
 
   @override
+  String get executionCreateProgressTitle => '新建进展';
+
+  @override
+  String get executionEditActionTitle => '编辑 Action';
+
+  @override
+  String get executionEditProjectTitle => '编辑 Project';
+
+  @override
+  String get executionEditCommitmentTitle => '编辑 Commitment';
+
+  @override
+  String get executionActionField => '行动';
+
+  @override
+  String get executionProjectField => '项目';
+
+  @override
+  String get executionCommitmentField => '承诺';
+
+  @override
+  String get executionStatusField => '状态';
+
+  @override
+  String get executionPriorityField => '优先级';
+
+  @override
+  String get executionHorizonField => '周期';
+
+  @override
+  String get executionTargetDateField => '目标日期';
+
+  @override
+  String get executionScheduledForField => '计划执行';
+
+  @override
+  String get executionDueAtField => '截止';
+
+  @override
+  String get executionDescriptionField => '说明';
+
+  @override
+  String get executionTitleRequired => '请填写标题';
+
+  @override
   String get executionActionTitleHint => '下一步具体要做什么？';
 
   @override
@@ -9567,10 +9612,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCommitmentDescriptionHint => '可选范围、原因或目标结果';
 
   @override
+  String get executionOverviewFocus => '焦点';
+
+  @override
+  String get executionOverviewBlocked => '阻塞';
+
+  @override
+  String get executionOverviewHigh => '高优先';
+
+  @override
+  String get executionOverviewDue => '到期';
+
+  @override
+  String get executionOverviewProjects => '项目';
+
+  @override
+  String get executionOverviewCommitments => '承诺';
+
+  @override
+  String get executionOverviewProgress7d => '7 日进展';
+
+  @override
   String get executionTodayEmptyTitle => '今天没有行动';
 
   @override
   String get executionTodayEmptyBody => '需要跟进的事情先捕获成一个具体下一步。';
+
+  @override
+  String get executionTodayFilteredEmptyTitle => '没有匹配行动';
+
+  @override
+  String get executionTodayFilteredEmptyBody => '切换筛选；有需要跟进的事情再捕获为 Action。';
 
   @override
   String get executionCommitmentsEmptyTitle => '没有未完成行动';
@@ -9622,12 +9694,68 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionStatusDropped => '放弃';
 
   @override
+  String get executionPriorityLow => '低';
+
+  @override
+  String get executionPriorityNormal => '普通';
+
+  @override
   String get executionPriorityHigh => '高优先级';
+
+  @override
+  String get executionHorizonWeek => '本周';
+
+  @override
+  String get executionHorizonMonth => '本月';
+
+  @override
+  String get executionHorizonQuarter => '本季度';
+
+  @override
+  String get executionHorizonOpen => '开放';
 
   @override
   String executionDueBadge(String date) {
     return '截止 $date';
   }
+
+  @override
+  String executionTargetBadge(String date) {
+    return '目标 $date';
+  }
+
+  @override
+  String get executionNoAction => '不关联行动';
+
+  @override
+  String get executionUnknownAction => '未知行动';
+
+  @override
+  String get executionNoActionsAvailable => '暂无可关联的未完成行动';
+
+  @override
+  String get executionNoProject => '不关联项目';
+
+  @override
+  String get executionUnknownProject => '未知项目';
+
+  @override
+  String get executionNoProjectsAvailable => '暂无可关联的活跃项目';
+
+  @override
+  String get executionNoCommitment => '不关联承诺';
+
+  @override
+  String get executionUnknownCommitment => '未知承诺';
+
+  @override
+  String get executionNoCommitmentsAvailable => '暂无可关联的活跃承诺';
+
+  @override
+  String get executionPickerSearchHint => '按标题或备注搜索';
+
+  @override
+  String get executionPickerSearchEmpty => '没有匹配项';
 
   @override
   String get executionActionStart => '开始';
@@ -9642,10 +9770,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionActionDone => '完成';
 
   @override
+  String get executionActionStatusUpdateFailed => '更新行动状态失败。';
+
+  @override
   String get executionProgressBlockedDefault => '已标记为阻塞。';
 
   @override
   String get executionProgressDoneDefault => '已标记为完成。';
+
+  @override
+  String get executionProgressKindField => '进展类型';
+
+  @override
+  String get executionProgressNoteField => '进展记录';
+
+  @override
+  String get executionProgressNoteHint => '记录变化、阻塞或已完成的事情。';
+
+  @override
+  String get executionProgressNoteRequired => '请填写进展记录';
 
   @override
   String get executionProgressKindBlocker => '阻塞';
@@ -9666,6 +9809,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProposalActionLabel => 'Action';
 
   @override
+  String get executionProposalProjectLabel => 'Project';
+
+  @override
+  String get executionProposalCommitmentLabel => 'Commitment';
+
+  @override
+  String get executionProposalProgressLabel => '进展';
+
+  @override
   String get executionProposalRowAction => '行动';
 
   @override
@@ -9673,6 +9825,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionProposalRowProject => '项目';
+
+  @override
+  String get executionProposalRowCommitment => '承诺';
+
+  @override
+  String get executionProposalRowProgress => '进展';
 
   @override
   String get executionProposalRowDue => '截止';

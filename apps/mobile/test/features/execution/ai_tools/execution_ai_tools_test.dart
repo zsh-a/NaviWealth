@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
@@ -12,6 +13,10 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/execution/ai_tools/list_open_actions_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_action_tool.dart';
+import 'package:naviwealth/features/execution/ai_tools/propose_commitment_tool.dart';
+import 'package:naviwealth/features/execution/ai_tools/propose_progress_tool.dart';
+import 'package:naviwealth/features/execution/ai_tools/propose_project_tool.dart';
+import 'package:naviwealth/features/execution/ai_tools/summarize_execution_progress_tool.dart';
 import 'package:naviwealth/features/execution/composition/execution_proposal_applier.dart';
 import 'package:naviwealth/features/execution/data/execution_repository.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
@@ -28,6 +33,22 @@ Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   final probe = FutureProvider<T>((ref) => body(ref));
   c.listen(probe, (_, _) {});
   return c.read(probe.future);
+}
+
+ReadyProposalPlan _readyPlan(Object? proposal) {
+  final plan = ProposalPlan.tryParse(proposal);
+  expect(plan, isA<ReadyProposalPlan>());
+  return plan! as ReadyProposalPlan;
+}
+
+Future<ProposalApplyState> _applyReadyPlan(
+  ProviderContainer container,
+  ReadyProposalPlan plan,
+) {
+  return _withRef(container, (ref) async {
+    final applier = await ref.read(executionProposalApplierProvider.future);
+    return applier.apply(plan);
+  });
 }
 
 SyncMeta _sync(int tick) {
@@ -107,6 +128,69 @@ void main() {
     expect(payload['source_row_family'], 'fin:budgets');
   });
 
+  test('propose_project returns a ready proposal envelope', () async {
+    final out = await _withRef(
+      container,
+      (ref) => const ProposeProjectTool()
+          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+            'title': 'Ship ExecutionOS prod-basic',
+            'description': 'Close MVP gaps before broader dogfooding.',
+            'horizon': 'month',
+            'target_date': '2026-06-30T00:00:00Z',
+            'reason': 'ExecutionOS needs a bounded delivery container',
+          }),
+    );
+
+    final proposal = out! as Map<Object?, Object?>;
+    expect(proposal['kind'], 'execution_project');
+    expect(proposal['status'], 'ready');
+    final payload = proposal['payload']! as Map<Object?, Object?>;
+    expect(payload['title'], 'Ship ExecutionOS prod-basic');
+    expect(payload['horizon'], 'month');
+    expect(payload['target_date'], '2026-06-30T00:00:00.000Z');
+  });
+
+  test('propose_commitment returns a ready proposal envelope', () async {
+    final out = await _withRef(
+      container,
+      (ref) => const ProposeCommitmentTool()
+          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+            'title': 'Weekly execution review',
+            'project_id': 'proj-execution',
+            'reason': 'A recurring review keeps progress visible',
+          }),
+    );
+
+    final proposal = out! as Map<Object?, Object?>;
+    expect(proposal['kind'], 'execution_commitment');
+    expect(proposal['status'], 'ready');
+    final payload = proposal['payload']! as Map<Object?, Object?>;
+    expect(payload['title'], 'Weekly execution review');
+    expect(payload['project_id'], 'proj-execution');
+    expect(payload['horizon'], 'open');
+  });
+
+  test('propose_progress returns a ready proposal envelope', () async {
+    final out = await _withRef(
+      container,
+      (ref) => const ProposeProgressTool()
+          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+            'note': 'Blocked on final proposal coverage.',
+            'kind': 'blocker',
+            'action_id': 'act-ai',
+            'reason': 'The blocker should be visible in review',
+          }),
+    );
+
+    final proposal = out! as Map<Object?, Object?>;
+    expect(proposal['kind'], 'execution_progress');
+    expect(proposal['status'], 'ready');
+    final payload = proposal['payload']! as Map<Object?, Object?>;
+    expect(payload['note'], 'Blocked on final proposal coverage.');
+    expect(payload['kind'], 'blocker');
+    expect(payload['action_id'], 'act-ai');
+  });
+
   test('execution proposal applier creates an action', () async {
     final proposal = await _withRef(
       container,
@@ -136,12 +220,115 @@ void main() {
     expect(state.appliedTable, 'execution_actions');
   });
 
+  test(
+    'execution proposal applier creates project commitment and progress',
+    () async {
+      final projectPlan = _readyPlan(
+        await _withRef(
+          container,
+          (ref) => const ProposeProjectTool()
+              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+                'title': 'Close ExecutionOS MVP gaps',
+                'horizon': 'month',
+                'reason': 'The work is larger than one action',
+              }),
+        ),
+      );
+      final projectState = await _applyReadyPlan(container, projectPlan);
+
+      final repo = await container.read(executionRepositoryProvider.future);
+      final project = await repo.findProject(
+        ownerUserId: _userId,
+        id: projectState.appliedEntityId!,
+      );
+      expect(project, isNotNull);
+      expect(project!.title, 'Close ExecutionOS MVP gaps');
+      expect(project.horizon, ExecutionHorizon.month);
+      expect(projectState.appliedTable, 'execution_projects');
+
+      final commitmentPlan = _readyPlan(
+        await _withRef(
+          container,
+          (ref) => const ProposeCommitmentTool()
+              .invoke(DeviceToolContext(ref: ref, session: _session()), {
+                'title': 'Review execution every Friday',
+                'project_id': project.id,
+                'reason': 'Weekly review keeps the system useful',
+              }),
+        ),
+      );
+      final commitmentState = await _applyReadyPlan(container, commitmentPlan);
+      final commitment = await repo.findCommitment(
+        ownerUserId: _userId,
+        id: commitmentState.appliedEntityId!,
+      );
+      expect(commitment, isNotNull);
+      expect(commitment!.title, 'Review execution every Friday');
+      expect(commitment.projectId, project.id);
+      expect(commitmentState.appliedTable, 'execution_commitments');
+
+      final progressPlan = _readyPlan(
+        await _withRef(
+          container,
+          (ref) => const ProposeProgressTool()
+              .invoke(DeviceToolContext(ref: ref, session: _session()), {
+                'note': 'Proposal flow now covers all ExecutionOS entities.',
+                'kind': 'completion',
+                'project_id': project.id,
+                'commitment_id': commitment.id,
+                'reason': 'Review should show the completed system improvement',
+              }),
+        ),
+      );
+      final progressState = await _applyReadyPlan(container, progressPlan);
+      final progress = await repo.findProgress(
+        ownerUserId: _userId,
+        id: progressState.appliedEntityId!,
+      );
+      expect(progress, isNotNull);
+      expect(progress!.kind, ExecutionProgressKind.completion);
+      expect(progress.projectId, project.id);
+      expect(progress.commitmentId, commitment.id);
+      expect(progressState.appliedTable, 'execution_progress_entries');
+
+      await _withRef(container, (ref) async {
+        final applier = await ref.read(executionProposalApplierProvider.future);
+        await applier.undo(progressState);
+      });
+      final tombstonedProgress = await repo.findProgress(
+        ownerUserId: _userId,
+        id: progressState.appliedEntityId!,
+      );
+      expect(tombstonedProgress, isNotNull);
+      expect(tombstonedProgress!.sync.deletedAt, isNotNull);
+    },
+  );
+
   test('list_open_actions reads repository-backed actions', () async {
     final repo = ExecutionRepository(db: db, outbox: outbox);
+    await repo.upsertProject(
+      ExecutionProject(
+        id: 'proj-ai',
+        title: 'AI execution context',
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(8),
+      ),
+    );
+    await repo.upsertCommitment(
+      ExecutionCommitment(
+        id: 'commit-ai',
+        title: 'Weekly execution review',
+        projectId: 'proj-ai',
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(9),
+      ),
+    );
     await repo.upsertAction(
       ExecutionAction(
         id: 'a1',
         title: 'Triage inbox actions',
+        projectId: 'proj-ai',
+        commitmentId: 'commit-ai',
         createdAt: DateTime.utc(2026, 6, 1),
         sync: _sync(10),
       ),
@@ -157,6 +344,65 @@ void main() {
 
     final actions = (out! as Map)['actions'] as List;
     expect(actions, hasLength(1));
-    expect((actions.single as Map)['title'], 'Triage inbox actions');
+    final action = actions.single as Map;
+    expect(action['title'], 'Triage inbox actions');
+    expect(action['project_title'], 'AI execution context');
+    expect(action['commitment_title'], 'Weekly execution review');
+  });
+
+  test('summarize_execution_progress includes active rollup context', () async {
+    final repo = ExecutionRepository(db: db, outbox: outbox);
+    await repo.upsertProject(
+      ExecutionProject(
+        id: 'proj-context',
+        title: 'ExecutionOS prod-basic',
+        description: 'Make execution useful day to day.',
+        horizon: ExecutionHorizon.month,
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(20),
+      ),
+    );
+    await repo.upsertCommitment(
+      ExecutionCommitment(
+        id: 'commit-context',
+        title: 'Friday review',
+        projectId: 'proj-context',
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(21),
+      ),
+    );
+    await repo.upsertProgress(
+      ExecutionProgressEntry(
+        id: 'progress-context',
+        projectId: 'proj-context',
+        commitmentId: 'commit-context',
+        kind: ExecutionProgressKind.checkin,
+        note: 'Context is now visible to AI.',
+        createdAt: DateTime.utc(2026, 6, 2),
+        sync: _sync(22),
+      ),
+    );
+
+    final out = await _withRef(
+      container,
+      (ref) => const SummarizeExecutionProgressTool().invoke(
+        DeviceToolContext(ref: ref, session: _session()),
+        const {'limit': 5},
+      ),
+    );
+
+    final summary = out! as Map;
+    expect(summary['active_project_count'], 1);
+    expect(summary['active_commitment_count'], 1);
+    final projects = summary['active_projects'] as List;
+    final commitments = summary['active_commitments'] as List;
+    final progress = summary['recent_progress'] as List;
+    expect((projects.single as Map)['title'], 'ExecutionOS prod-basic');
+    expect(
+      (commitments.single as Map)['project_title'],
+      'ExecutionOS prod-basic',
+    );
+    expect((progress.single as Map)['project_title'], 'ExecutionOS prod-basic');
+    expect((progress.single as Map)['commitment_title'], 'Friday review');
   });
 }

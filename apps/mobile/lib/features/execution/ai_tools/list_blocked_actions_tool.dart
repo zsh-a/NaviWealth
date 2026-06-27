@@ -3,6 +3,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
+import '_read_support.dart';
 
 class ListBlockedActionsTool implements DeviceTool {
   const ListBlockedActionsTool();
@@ -36,6 +37,10 @@ class ListBlockedActionsTool implements DeviceTool {
       ownerUserId: ownerUserId,
       limit: 200,
     );
+    final projects = await repo.listActiveProjects(ownerUserId: ownerUserId);
+    final commitments = await repo.listActiveCommitments(
+      ownerUserId: ownerUserId,
+    );
     final blocked = actions
         .where((a) => a.status == ExecutionActionStatus.blocked)
         .take(limit)
@@ -47,6 +52,12 @@ class ListBlockedActionsTool implements DeviceTool {
             'priority': a.priority.wire,
             'due_at': a.dueAt?.toUtc().toIso8601String(),
             'project_id': a.projectId,
+            'project_title': executionProjectTitle(projects, a.projectId),
+            'commitment_id': a.commitmentId,
+            'commitment_title': executionCommitmentTitle(
+              commitments,
+              a.commitmentId,
+            ),
             'source_label': a.source.labelSnapshot,
           },
         )

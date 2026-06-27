@@ -9,6 +9,9 @@ import '../core/ai/runtime/device/tools/registered_device_tool.dart';
 import 'execution/ai_tools/list_blocked_actions_tool.dart';
 import 'execution/ai_tools/list_open_actions_tool.dart';
 import 'execution/ai_tools/propose_action_tool.dart';
+import 'execution/ai_tools/propose_commitment_tool.dart';
+import 'execution/ai_tools/propose_progress_tool.dart';
+import 'execution/ai_tools/propose_project_tool.dart';
 import 'execution/ai_tools/summarize_execution_progress_tool.dart';
 
 const DeviceToolRegistrationBuilder _executionTool =
@@ -24,6 +27,9 @@ final List<RegisteredDeviceTool> kExecutionToolRegistrations =
         tier: BudgetTier.standard,
       ),
       _executionTool.propose(const ProposeActionTool()),
+      _executionTool.propose(const ProposeProjectTool()),
+      _executionTool.propose(const ProposeCommitmentTool()),
+      _executionTool.propose(const ProposeProgressTool()),
     ];
 
 final List<DeviceTool> kExecutionDeviceTools = registeredDeviceTools(
@@ -36,7 +42,7 @@ final Map<String, ToolDescriptor> kExecutionToolDescriptors =
 const String kExecutionSystemPromptBlock =
     '[ExecutionOS 域]\n'
     '- Action 是个人 todo / next action；Project 是有边界的交付容器；Commitment 是较长期承诺；ProgressEntry 是进展记录。\n'
-    '- 查询当前待办用 list_open_actions；定位阻塞用 list_blocked_actions；复盘执行状态用 summarize_execution_progress。\n'
-    '- 当 FinanceOS / HealthOS / KnowledgeOS 的洞察需要转成具体下一步时，调用 propose_action。'
-    'propose_action 只返回待确认 proposal，不会直接写入。用户确认后才创建 Action。\n'
+    '- 查询当前待办用 list_open_actions；定位阻塞用 list_blocked_actions；复盘执行状态与 active Project / Commitment 上下文用 summarize_execution_progress。\n'
+    '- 当 FinanceOS / HealthOS / KnowledgeOS 的洞察需要落地为执行对象时，按粒度调用 propose_action / propose_project / propose_commitment / propose_progress。'
+    '所有 propose_* 只返回待确认 proposal，不会直接写入。用户确认后才创建或记录。\n'
     '- 不要把 ExecutionOS 当团队项目管理工具；保持建议具体、可执行、下一步导向。';

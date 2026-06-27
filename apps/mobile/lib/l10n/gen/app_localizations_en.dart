@@ -10012,6 +10012,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionCreateCommitmentTitle => 'New Commitment';
 
   @override
+  String get executionCreateProgressTitle => 'New Progress';
+
+  @override
+  String get executionEditActionTitle => 'Edit Action';
+
+  @override
+  String get executionEditProjectTitle => 'Edit Project';
+
+  @override
+  String get executionEditCommitmentTitle => 'Edit Commitment';
+
+  @override
+  String get executionActionField => 'Action';
+
+  @override
+  String get executionProjectField => 'Project';
+
+  @override
+  String get executionCommitmentField => 'Commitment';
+
+  @override
+  String get executionStatusField => 'Status';
+
+  @override
+  String get executionPriorityField => 'Priority';
+
+  @override
+  String get executionHorizonField => 'Horizon';
+
+  @override
+  String get executionTargetDateField => 'Target date';
+
+  @override
+  String get executionScheduledForField => 'Scheduled';
+
+  @override
+  String get executionDueAtField => 'Due';
+
+  @override
+  String get executionDescriptionField => 'Description';
+
+  @override
+  String get executionTitleRequired => 'Add a title';
+
+  @override
   String get executionActionTitleHint => 'What is the next concrete action?';
 
   @override
@@ -10032,11 +10077,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Optional scope, why it matters, or target outcome';
 
   @override
+  String get executionOverviewFocus => 'Focus';
+
+  @override
+  String get executionOverviewBlocked => 'Blocked';
+
+  @override
+  String get executionOverviewHigh => 'High';
+
+  @override
+  String get executionOverviewDue => 'Due';
+
+  @override
+  String get executionOverviewProjects => 'Projects';
+
+  @override
+  String get executionOverviewCommitments => 'Commitments';
+
+  @override
+  String get executionOverviewProgress7d => '7d progress';
+
+  @override
   String get executionTodayEmptyTitle => 'No actions for today';
 
   @override
   String get executionTodayEmptyBody =>
       'Capture the next concrete step when something needs follow-through.';
+
+  @override
+  String get executionTodayFilteredEmptyTitle => 'No matching actions';
+
+  @override
+  String get executionTodayFilteredEmptyBody =>
+      'Switch filters or capture a new action when something needs follow-through.';
 
   @override
   String get executionCommitmentsEmptyTitle => 'No open actions';
@@ -10089,12 +10162,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionStatusDropped => 'Dropped';
 
   @override
+  String get executionPriorityLow => 'Low';
+
+  @override
+  String get executionPriorityNormal => 'Normal';
+
+  @override
   String get executionPriorityHigh => 'High';
+
+  @override
+  String get executionHorizonWeek => 'Week';
+
+  @override
+  String get executionHorizonMonth => 'Month';
+
+  @override
+  String get executionHorizonQuarter => 'Quarter';
+
+  @override
+  String get executionHorizonOpen => 'Open';
 
   @override
   String executionDueBadge(String date) {
     return 'Due $date';
   }
+
+  @override
+  String executionTargetBadge(String date) {
+    return 'Target $date';
+  }
+
+  @override
+  String get executionNoAction => 'No action';
+
+  @override
+  String get executionUnknownAction => 'Unknown action';
+
+  @override
+  String get executionNoActionsAvailable => 'No open actions available';
+
+  @override
+  String get executionNoProject => 'No project';
+
+  @override
+  String get executionUnknownProject => 'Unknown project';
+
+  @override
+  String get executionNoProjectsAvailable => 'No active projects available';
+
+  @override
+  String get executionNoCommitment => 'No commitment';
+
+  @override
+  String get executionUnknownCommitment => 'Unknown commitment';
+
+  @override
+  String get executionNoCommitmentsAvailable =>
+      'No active commitments available';
+
+  @override
+  String get executionPickerSearchHint => 'Search by title or note';
+
+  @override
+  String get executionPickerSearchEmpty => 'No matching items';
 
   @override
   String get executionActionStart => 'Start';
@@ -10109,10 +10239,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionActionDone => 'Done';
 
   @override
+  String get executionActionStatusUpdateFailed =>
+      'Couldn\'t update action status.';
+
+  @override
   String get executionProgressBlockedDefault => 'Marked blocked.';
 
   @override
   String get executionProgressDoneDefault => 'Marked done.';
+
+  @override
+  String get executionProgressKindField => 'Progress type';
+
+  @override
+  String get executionProgressNoteField => 'Progress note';
+
+  @override
+  String get executionProgressNoteHint =>
+      'What changed, what is blocked, or what got done?';
+
+  @override
+  String get executionProgressNoteRequired => 'Add a progress note';
 
   @override
   String get executionProgressKindBlocker => 'Blocker';
@@ -10133,6 +10280,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProposalActionLabel => 'Action';
 
   @override
+  String get executionProposalProjectLabel => 'Project';
+
+  @override
+  String get executionProposalCommitmentLabel => 'Commitment';
+
+  @override
+  String get executionProposalProgressLabel => 'Progress';
+
+  @override
   String get executionProposalRowAction => 'Action';
 
   @override
@@ -10140,6 +10296,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProposalRowProject => 'Project';
+
+  @override
+  String get executionProposalRowCommitment => 'Commitment';
+
+  @override
+  String get executionProposalRowProgress => 'Progress';
 
   @override
   String get executionProposalRowDue => 'Due';

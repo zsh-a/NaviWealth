@@ -117,12 +117,18 @@ Read tools:
 Proposal tools:
 
 - `propose_action`
+- `propose_project`
+- `propose_commitment`
+- `propose_progress`
 
 Rules:
 
-- `propose_action` returns a `ProposalEnvelope`; it does not directly write
-  `execution_actions`.
-- Confirmed `execution_action` proposals route through
+- `propose_*` tools return `ProposalEnvelope`s; they do not directly write
+  ExecutionOS tables.
+- Confirmed `execution_*` proposals route through
   `ExecutionProposalApplier`.
 - AI should keep suggested actions concrete, next-step sized, and tied to
   source references when they came from another domain.
+- `list_open_actions` and `summarize_execution_progress` should include
+  relation titles where available so AI can attach proposals to the right
+  Project or Commitment without guessing from ids.

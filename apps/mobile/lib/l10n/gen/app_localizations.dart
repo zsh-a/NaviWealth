@@ -17159,6 +17159,96 @@ abstract class AppLocalizations {
   /// **'New Commitment'**
   String get executionCreateCommitmentTitle;
 
+  /// No description provided for @executionCreateProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Progress'**
+  String get executionCreateProgressTitle;
+
+  /// No description provided for @executionEditActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Action'**
+  String get executionEditActionTitle;
+
+  /// No description provided for @executionEditProjectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Project'**
+  String get executionEditProjectTitle;
+
+  /// No description provided for @executionEditCommitmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Commitment'**
+  String get executionEditCommitmentTitle;
+
+  /// No description provided for @executionActionField.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get executionActionField;
+
+  /// No description provided for @executionProjectField.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get executionProjectField;
+
+  /// No description provided for @executionCommitmentField.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment'**
+  String get executionCommitmentField;
+
+  /// No description provided for @executionStatusField.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get executionStatusField;
+
+  /// No description provided for @executionPriorityField.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get executionPriorityField;
+
+  /// No description provided for @executionHorizonField.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizon'**
+  String get executionHorizonField;
+
+  /// No description provided for @executionTargetDateField.
+  ///
+  /// In en, this message translates to:
+  /// **'Target date'**
+  String get executionTargetDateField;
+
+  /// No description provided for @executionScheduledForField.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get executionScheduledForField;
+
+  /// No description provided for @executionDueAtField.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get executionDueAtField;
+
+  /// No description provided for @executionDescriptionField.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get executionDescriptionField;
+
+  /// No description provided for @executionTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a title'**
+  String get executionTitleRequired;
+
   /// No description provided for @executionActionTitleHint.
   ///
   /// In en, this message translates to:
@@ -17195,6 +17285,48 @@ abstract class AppLocalizations {
   /// **'Optional scope, why it matters, or target outcome'**
   String get executionCommitmentDescriptionHint;
 
+  /// No description provided for @executionOverviewFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get executionOverviewFocus;
+
+  /// No description provided for @executionOverviewBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get executionOverviewBlocked;
+
+  /// No description provided for @executionOverviewHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get executionOverviewHigh;
+
+  /// No description provided for @executionOverviewDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get executionOverviewDue;
+
+  /// No description provided for @executionOverviewProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get executionOverviewProjects;
+
+  /// No description provided for @executionOverviewCommitments.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitments'**
+  String get executionOverviewCommitments;
+
+  /// No description provided for @executionOverviewProgress7d.
+  ///
+  /// In en, this message translates to:
+  /// **'7d progress'**
+  String get executionOverviewProgress7d;
+
   /// No description provided for @executionTodayEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -17206,6 +17338,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Capture the next concrete step when something needs follow-through.'**
   String get executionTodayEmptyBody;
+
+  /// No description provided for @executionTodayFilteredEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching actions'**
+  String get executionTodayFilteredEmptyTitle;
+
+  /// No description provided for @executionTodayFilteredEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch filters or capture a new action when something needs follow-through.'**
+  String get executionTodayFilteredEmptyBody;
 
   /// No description provided for @executionCommitmentsEmptyTitle.
   ///
@@ -17303,17 +17447,125 @@ abstract class AppLocalizations {
   /// **'Dropped'**
   String get executionStatusDropped;
 
+  /// No description provided for @executionPriorityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get executionPriorityLow;
+
+  /// No description provided for @executionPriorityNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get executionPriorityNormal;
+
   /// No description provided for @executionPriorityHigh.
   ///
   /// In en, this message translates to:
   /// **'High'**
   String get executionPriorityHigh;
 
+  /// No description provided for @executionHorizonWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get executionHorizonWeek;
+
+  /// No description provided for @executionHorizonMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get executionHorizonMonth;
+
+  /// No description provided for @executionHorizonQuarter.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarter'**
+  String get executionHorizonQuarter;
+
+  /// No description provided for @executionHorizonOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get executionHorizonOpen;
+
   /// No description provided for @executionDueBadge.
   ///
   /// In en, this message translates to:
   /// **'Due {date}'**
   String executionDueBadge(String date);
+
+  /// No description provided for @executionTargetBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {date}'**
+  String executionTargetBadge(String date);
+
+  /// No description provided for @executionNoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'No action'**
+  String get executionNoAction;
+
+  /// No description provided for @executionUnknownAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown action'**
+  String get executionUnknownAction;
+
+  /// No description provided for @executionNoActionsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No open actions available'**
+  String get executionNoActionsAvailable;
+
+  /// No description provided for @executionNoProject.
+  ///
+  /// In en, this message translates to:
+  /// **'No project'**
+  String get executionNoProject;
+
+  /// No description provided for @executionUnknownProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown project'**
+  String get executionUnknownProject;
+
+  /// No description provided for @executionNoProjectsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No active projects available'**
+  String get executionNoProjectsAvailable;
+
+  /// No description provided for @executionNoCommitment.
+  ///
+  /// In en, this message translates to:
+  /// **'No commitment'**
+  String get executionNoCommitment;
+
+  /// No description provided for @executionUnknownCommitment.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown commitment'**
+  String get executionUnknownCommitment;
+
+  /// No description provided for @executionNoCommitmentsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No active commitments available'**
+  String get executionNoCommitmentsAvailable;
+
+  /// No description provided for @executionPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by title or note'**
+  String get executionPickerSearchHint;
+
+  /// No description provided for @executionPickerSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching items'**
+  String get executionPickerSearchEmpty;
 
   /// No description provided for @executionActionStart.
   ///
@@ -17339,6 +17591,12 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get executionActionDone;
 
+  /// No description provided for @executionActionStatusUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update action status.'**
+  String get executionActionStatusUpdateFailed;
+
   /// No description provided for @executionProgressBlockedDefault.
   ///
   /// In en, this message translates to:
@@ -17350,6 +17608,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marked done.'**
   String get executionProgressDoneDefault;
+
+  /// No description provided for @executionProgressKindField.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress type'**
+  String get executionProgressKindField;
+
+  /// No description provided for @executionProgressNoteField.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress note'**
+  String get executionProgressNoteField;
+
+  /// No description provided for @executionProgressNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What changed, what is blocked, or what got done?'**
+  String get executionProgressNoteHint;
+
+  /// No description provided for @executionProgressNoteRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a progress note'**
+  String get executionProgressNoteRequired;
 
   /// No description provided for @executionProgressKindBlocker.
   ///
@@ -17387,6 +17669,24 @@ abstract class AppLocalizations {
   /// **'Action'**
   String get executionProposalActionLabel;
 
+  /// No description provided for @executionProposalProjectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get executionProposalProjectLabel;
+
+  /// No description provided for @executionProposalCommitmentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment'**
+  String get executionProposalCommitmentLabel;
+
+  /// No description provided for @executionProposalProgressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get executionProposalProgressLabel;
+
   /// No description provided for @executionProposalRowAction.
   ///
   /// In en, this message translates to:
@@ -17404,6 +17704,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Project'**
   String get executionProposalRowProject;
+
+  /// No description provided for @executionProposalRowCommitment.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment'**
+  String get executionProposalRowCommitment;
+
+  /// No description provided for @executionProposalRowProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get executionProposalRowProgress;
 
   /// No description provided for @executionProposalRowDue.
   ///

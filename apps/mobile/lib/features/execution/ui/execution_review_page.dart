@@ -7,6 +7,8 @@ import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../domain/execution_models.dart';
+import 'execution_progress_sheet.dart';
 import 'execution_widgets.dart';
 
 class ExecutionReviewPage extends ConsumerWidget {
@@ -17,6 +19,13 @@ class ExecutionReviewPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.executionReviewTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
+          semanticsLabel: l10n.executionCreateProgressTitle,
+          onPress: () => showExecutionProgressSheet(context: context, ref: ref),
+        ),
+      ],
       child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(executionRecentProgressProvider);
@@ -33,6 +42,15 @@ class _ReviewBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final progressAsync = ref.watch(executionRecentProgressProvider);
+    final actions =
+        ref.watch(executionOpenActionsProvider).value ??
+        const <ExecutionAction>[];
+    final projects =
+        ref.watch(executionProjectsProvider).value ??
+        const <ExecutionProject>[];
+    final commitments =
+        ref.watch(executionCommitmentsProvider).value ??
+        const <ExecutionCommitment>[];
     return progressAsync.when(
       loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => ExecutionStateView(
@@ -50,6 +68,11 @@ class _ReviewBody extends ConsumerWidget {
                 icon: FLucideIcons.clipboardCheck,
                 title: l10n.executionReviewEmptyTitle,
                 message: l10n.executionReviewEmptyBody,
+                action: FButton(
+                  onPress: () =>
+                      showExecutionProgressSheet(context: context, ref: ref),
+                  child: Text(l10n.executionCreateProgressTitle),
+                ),
               ),
             ],
           );
@@ -67,10 +90,43 @@ class _ReviewBody extends ConsumerWidget {
                 icon: FLucideIcons.clipboardCheck,
               );
             }
-            return ExecutionProgressCard(entry: entries[index - 1]);
+            final entry = entries[index - 1];
+            return ExecutionProgressCard(
+              entry: entry,
+              actionLabel: _actionLabel(actions, entry.actionId),
+              projectLabel: _projectLabel(projects, entry.projectId),
+              commitmentLabel: _commitmentLabel(
+                commitments,
+                entry.commitmentId,
+              ),
+            );
           },
         );
       },
     );
   }
+}
+
+String? _actionLabel(List<ExecutionAction> actions, String? id) {
+  if (id == null || id.isEmpty) return null;
+  for (final action in actions) {
+    if (action.id == id) return action.title;
+  }
+  return id;
+}
+
+String? _projectLabel(List<ExecutionProject> projects, String? id) {
+  if (id == null || id.isEmpty) return null;
+  for (final project in projects) {
+    if (project.id == id) return project.title;
+  }
+  return id;
+}
+
+String? _commitmentLabel(List<ExecutionCommitment> commitments, String? id) {
+  if (id == null || id.isEmpty) return null;
+  for (final commitment in commitments) {
+    if (commitment.id == id) return commitment.title;
+  }
+  return id;
 }

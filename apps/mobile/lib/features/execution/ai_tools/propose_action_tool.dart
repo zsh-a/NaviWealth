@@ -54,44 +54,28 @@ class ProposeActionTool implements DeviceTool {
     }
     final priorityRaw = (input['priority'] as String?)?.trim() ?? 'normal';
     final priority = ExecutionPriority.parse(priorityRaw);
-    final dueAt = _parseIso(input['due_at']);
-    final scheduledFor = _parseIso(input['scheduled_for']);
+    final dueAt = optionalIsoDate(input['due_at']);
+    final scheduledFor = optionalIsoDate(input['scheduled_for']);
     final note = (input['note'] as String?)?.trim() ?? '';
     final summary = '建议新建 Action:"${shortText(title)}" — $reason';
+    final payload = <String, Object?>{
+      'title': title,
+      if (note.isNotEmpty) 'note': note,
+      'priority': priority.wire,
+      if (dueAt != null) 'due_at': dueAt.toUtc().toIso8601String(),
+      if (scheduledFor != null)
+        'scheduled_for': scheduledFor.toUtc().toIso8601String(),
+    };
+    addOptionalString(payload, 'project_id', input['project_id']);
+    addOptionalString(payload, 'commitment_id', input['commitment_id']);
+    addSourceRefPayload(payload, input);
+    payload['reason'] = reason;
 
     return proposalEnvelope(
       kind: 'execution_action',
       summaryZh: summary,
-      payload: <String, Object?>{
-        'title': title,
-        if (note.isNotEmpty) 'note': note,
-        'priority': priority.wire,
-        if (dueAt != null) 'due_at': dueAt.toUtc().toIso8601String(),
-        if (scheduledFor != null)
-          'scheduled_for': scheduledFor.toUtc().toIso8601String(),
-        if (_string(input['project_id']) != null)
-          'project_id': _string(input['project_id']),
-        if (_string(input['commitment_id']) != null)
-          'commitment_id': _string(input['commitment_id']),
-        if (_string(input['source_domain']) != null)
-          'source_domain': _string(input['source_domain']),
-        if (_string(input['source_row_family']) != null)
-          'source_row_family': _string(input['source_row_family']),
-        if (_string(input['source_row_id']) != null)
-          'source_row_id': _string(input['source_row_id']),
-        if (_string(input['source_label']) != null)
-          'source_label': _string(input['source_label']),
-        'reason': reason,
-      },
+      payload: payload,
       note: '用户确认后创建 ExecutionOS Action；AI 不直接写入执行系统。',
     );
   }
-}
-
-DateTime? _parseIso(Object? raw) =>
-    raw is String && raw.trim().isNotEmpty ? DateTime.tryParse(raw) : null;
-
-String? _string(Object? raw) {
-  final value = raw is String ? raw.trim() : '';
-  return value.isEmpty ? null : value;
 }

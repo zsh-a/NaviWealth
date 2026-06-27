@@ -12,12 +12,39 @@ const List<ProposalKindMeta> kExecutionProposalKinds = [
     toolName: 'propose_action',
     previewRows: _actionRows,
   ),
+  ProposalKindMeta(
+    kind: 'execution_project',
+    icon: FLucideIcons.folder,
+    label: _projectLabel,
+    toolName: 'propose_project',
+    previewRows: _projectRows,
+  ),
+  ProposalKindMeta(
+    kind: 'execution_commitment',
+    icon: FLucideIcons.target,
+    label: _commitmentLabel,
+    toolName: 'propose_commitment',
+    previewRows: _commitmentRows,
+  ),
+  ProposalKindMeta(
+    kind: 'execution_progress',
+    icon: FLucideIcons.clipboardCheck,
+    label: _progressLabel,
+    toolName: 'propose_progress',
+    previewRows: _progressRows,
+  ),
 ];
 
 Set<String> get kExecutionProposalAppliedKinds =>
     kExecutionProposalKinds.map((m) => m.kind).toSet();
 
 String _actionLabel(AppLocalizations l10n) => l10n.executionProposalActionLabel;
+String _projectLabel(AppLocalizations l10n) =>
+    l10n.executionProposalProjectLabel;
+String _commitmentLabel(AppLocalizations l10n) =>
+    l10n.executionProposalCommitmentLabel;
+String _progressLabel(AppLocalizations l10n) =>
+    l10n.executionProposalProgressLabel;
 
 List<ProposalKindRow> _actionRows(
   AppLocalizations l10n,
@@ -35,6 +62,77 @@ List<ProposalKindRow> _actionRows(
       ),
     if (plan.get('due_at') != null)
       ProposalKindRow(l10n.executionProposalRowDue, plan.get('due_at')!),
+    if (plan.get('source_label') != null)
+      ProposalKindRow(
+        l10n.executionProposalRowSource,
+        plan.get('source_label')!,
+      ),
+  ];
+}
+
+List<ProposalKindRow> _projectRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  return <ProposalKindRow>[
+    ProposalKindRow(l10n.executionProposalRowProject, plan.get('title') ?? '—'),
+    ..._sharedRollupRows(l10n, plan),
+  ];
+}
+
+List<ProposalKindRow> _commitmentRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  return <ProposalKindRow>[
+    ProposalKindRow(
+      l10n.executionProposalRowCommitment,
+      plan.get('title') ?? '—',
+    ),
+    ..._sharedRollupRows(l10n, plan),
+  ];
+}
+
+List<ProposalKindRow> _progressRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  return <ProposalKindRow>[
+    ProposalKindRow(l10n.executionProposalRowProgress, plan.get('note') ?? '—'),
+    if (plan.get('kind') != null)
+      ProposalKindRow(l10n.executionProgressKindField, plan.get('kind')!),
+    if (plan.get('action_id') != null)
+      ProposalKindRow(l10n.executionProposalRowAction, plan.get('action_id')!),
+    if (plan.get('project_id') != null)
+      ProposalKindRow(
+        l10n.executionProposalRowProject,
+        plan.get('project_id')!,
+      ),
+    if (plan.get('commitment_id') != null)
+      ProposalKindRow(
+        l10n.executionProposalRowCommitment,
+        plan.get('commitment_id')!,
+      ),
+  ];
+}
+
+List<ProposalKindRow> _sharedRollupRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+) {
+  return <ProposalKindRow>[
+    if (plan.get('horizon') != null)
+      ProposalKindRow(l10n.executionHorizonField, plan.get('horizon')!),
+    if (plan.get('target_date') != null)
+      ProposalKindRow(l10n.executionTargetDateField, plan.get('target_date')!),
+    if (plan.get('project_id') != null)
+      ProposalKindRow(
+        l10n.executionProposalRowProject,
+        plan.get('project_id')!,
+      ),
     if (plan.get('source_label') != null)
       ProposalKindRow(
         l10n.executionProposalRowSource,

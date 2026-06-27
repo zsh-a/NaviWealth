@@ -7,7 +7,7 @@ import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
-import '../domain/execution_models.dart';
+import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_commitment_sheet.dart';
 import 'execution_project_sheet.dart';
@@ -44,6 +44,7 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
           ref.invalidate(executionProjectsProvider);
           ref.invalidate(executionOpenActionsProvider);
           ref.invalidate(executionCommitmentsProvider);
+          ref.invalidate(executionRecentProgressProvider);
           await ref.read(executionOpenActionsProvider.future);
         },
         child: _CommitmentsBody(),
@@ -99,7 +100,19 @@ class _CommitmentsBody extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.s8),
               for (final project in projects) ...[
-                ExecutionProjectCard(project: project),
+                ExecutionProjectCard(
+                  project: project,
+                  onCreateAction: () => showExecutionActionSheet(
+                    context: context,
+                    ref: ref,
+                    initialProjectId: project.id,
+                  ),
+                  onEdit: () => showExecutionProjectSheet(
+                    context: context,
+                    ref: ref,
+                    project: project,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.s8),
               ],
               const SizedBox(height: AppSpacing.s8),
@@ -112,7 +125,20 @@ class _CommitmentsBody extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.s8),
               for (final commitment in commitments) ...[
-                ExecutionCommitmentCard(commitment: commitment),
+                ExecutionCommitmentCard(
+                  commitment: commitment,
+                  onCreateAction: () => showExecutionActionSheet(
+                    context: context,
+                    ref: ref,
+                    initialProjectId: commitment.projectId,
+                    initialCommitmentId: commitment.id,
+                  ),
+                  onEdit: () => showExecutionCommitmentSheet(
+                    context: context,
+                    ref: ref,
+                    commitment: commitment,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.s8),
               ],
               const SizedBox(height: AppSpacing.s8),
@@ -124,30 +150,23 @@ class _CommitmentsBody extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s8),
             for (final action in actions) ...[
-              ExecutionActionCard(
+              ExecutionActionCardController(
                 action: action,
-                onStart: () => updateExecutionActionStatus(
+                projectLabel: executionProjectRelationLabel(
+                  projects,
+                  action.projectId,
+                ),
+                commitmentLabel: executionCommitmentRelationLabel(
+                  commitments,
+                  action.commitmentId,
+                ),
+                onEdit: () => showExecutionActionSheet(
+                  context: context,
                   ref: ref,
                   action: action,
-                  status: ExecutionActionStatus.doing,
                 ),
-                onBlock: () => updateExecutionActionStatus(
-                  ref: ref,
-                  action: action,
-                  status: ExecutionActionStatus.blocked,
-                  progressNote: l10n.executionProgressBlockedDefault,
-                ),
-                onResume: () => updateExecutionActionStatus(
-                  ref: ref,
-                  action: action,
-                  status: ExecutionActionStatus.doing,
-                ),
-                onDone: () => updateExecutionActionStatus(
-                  ref: ref,
-                  action: action,
-                  status: ExecutionActionStatus.done,
-                  progressNote: l10n.executionProgressDoneDefault,
-                ),
+                blockedProgressNote: l10n.executionProgressBlockedDefault,
+                doneProgressNote: l10n.executionProgressDoneDefault,
               ),
               const SizedBox(height: AppSpacing.s8),
             ],

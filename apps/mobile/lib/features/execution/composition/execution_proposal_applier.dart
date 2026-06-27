@@ -30,6 +30,9 @@ class ExecutionProposalApplier implements ProposalApplier {
     try {
       return switch (plan.kind) {
         'execution_action' => await _applyAction(plan),
+        'execution_project' => await _applyProject(plan),
+        'execution_commitment' => await _applyCommitment(plan),
+        'execution_progress' => await _applyProgress(plan),
         _ => throw ProposalApplyException(
           'unknown execution proposal kind: ${plan.kind}',
         ),
@@ -44,27 +47,88 @@ class ExecutionProposalApplier implements ProposalApplier {
   @override
   Future<void> undo(ProposalApplyState state) async {
     if (state.status != ProposalApplyStatus.applied) return;
-    final actionId = state.appliedEntityId;
-    if (actionId == null || state.appliedTable != 'execution_actions') {
+    final rowId = state.appliedEntityId;
+    final table = state.appliedTable;
+    if (rowId == null || table == null) {
       throw ProposalApplyException('ExecutionOS undo data missing');
     }
     final repo = await ref.read(executionRepositoryProvider.future);
-    final existing = await repo.findAction(
-      ownerUserId: ownerUserId,
-      id: actionId,
-    );
-    if (existing == null) return;
     final meta = await stamp();
-    await repo.upsertAction(
-      existing.copyWith(sync: meta.copyWith(deletedAt: meta.updatedAt)),
-    );
+    final tombstone = meta.copyWith(deletedAt: meta.updatedAt);
+    switch (table) {
+      case 'execution_actions':
+        final existing = await repo.findAction(
+          ownerUserId: ownerUserId,
+          id: rowId,
+        );
+        if (existing == null) return;
+        await repo.upsertAction(existing.copyWith(sync: tombstone));
+      case 'execution_projects':
+        final existing = await repo.findProject(
+          ownerUserId: ownerUserId,
+          id: rowId,
+        );
+        if (existing == null) return;
+        await repo.upsertProject(
+          ExecutionProject(
+            id: existing.id,
+            title: existing.title,
+            description: existing.description,
+            status: existing.status,
+            horizon: existing.horizon,
+            targetDate: existing.targetDate,
+            source: existing.source,
+            createdAt: existing.createdAt,
+            completedAt: existing.completedAt,
+            sync: tombstone,
+          ),
+        );
+      case 'execution_commitments':
+        final existing = await repo.findCommitment(
+          ownerUserId: ownerUserId,
+          id: rowId,
+        );
+        if (existing == null) return;
+        await repo.upsertCommitment(
+          ExecutionCommitment(
+            id: existing.id,
+            title: existing.title,
+            description: existing.description,
+            status: existing.status,
+            horizon: existing.horizon,
+            targetDate: existing.targetDate,
+            projectId: existing.projectId,
+            source: existing.source,
+            createdAt: existing.createdAt,
+            completedAt: existing.completedAt,
+            sync: tombstone,
+          ),
+        );
+      case 'execution_progress_entries':
+        final existing = await repo.findProgress(
+          ownerUserId: ownerUserId,
+          id: rowId,
+        );
+        if (existing == null) return;
+        await repo.upsertProgress(
+          ExecutionProgressEntry(
+            id: existing.id,
+            actionId: existing.actionId,
+            projectId: existing.projectId,
+            commitmentId: existing.commitmentId,
+            kind: existing.kind,
+            note: existing.note,
+            createdAt: existing.createdAt,
+            sync: tombstone,
+          ),
+        );
+      default:
+        throw ProposalApplyException('unknown execution undo table: $table');
+    }
   }
 
   Future<ProposalApplyState> _applyAction(ReadyProposalPlan plan) async {
-    final title = plan.get('title');
-    if (title == null) {
-      throw ProposalApplyException('execution_action 缺少 title');
-    }
+    final title = _require(plan, 'title');
     final meta = await stamp();
     final repo = await ref.read(executionRepositoryProvider.future);
     final action = ExecutionAction(
@@ -76,12 +140,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       scheduledFor: _parseOptionalUtc(plan.get('scheduled_for')),
       projectId: plan.get('project_id'),
       commitmentId: plan.get('commitment_id'),
-      source: ExecutionSourceRef(
-        domain: plan.get('source_domain'),
-        rowFamily: plan.get('source_row_family'),
-        rowId: plan.get('source_row_id'),
-        labelSnapshot: plan.get('source_label'),
-      ),
+      source: _sourceRef(plan),
       createdAt: meta.updatedAt,
       sync: meta,
     );
@@ -94,6 +153,96 @@ class ExecutionProposalApplier implements ProposalApplier {
       shortLabel: '已创建 Action：${action.title}',
     );
   }
+
+  Future<ProposalApplyState> _applyProject(ReadyProposalPlan plan) async {
+    final title = _require(plan, 'title');
+    final meta = await stamp();
+    final repo = await ref.read(executionRepositoryProvider.future);
+    final project = ExecutionProject(
+      id: kExecutionUuid.v4(),
+      title: title,
+      description: plan.get('description') ?? '',
+      horizon: ExecutionHorizon.parse(plan.get('horizon') ?? 'open'),
+      targetDate: _parseOptionalUtc(plan.get('target_date')),
+      source: _sourceRef(plan),
+      createdAt: meta.updatedAt,
+      sync: meta,
+    );
+    await repo.upsertProject(project);
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: project.id,
+      appliedTable: 'execution_projects',
+      appliedAt: _now(),
+      shortLabel: '已创建 Project：${project.title}',
+    );
+  }
+
+  Future<ProposalApplyState> _applyCommitment(ReadyProposalPlan plan) async {
+    final title = _require(plan, 'title');
+    final meta = await stamp();
+    final repo = await ref.read(executionRepositoryProvider.future);
+    final commitment = ExecutionCommitment(
+      id: kExecutionUuid.v4(),
+      title: title,
+      description: plan.get('description') ?? '',
+      horizon: ExecutionHorizon.parse(plan.get('horizon') ?? 'open'),
+      targetDate: _parseOptionalUtc(plan.get('target_date')),
+      projectId: plan.get('project_id'),
+      source: _sourceRef(plan),
+      createdAt: meta.updatedAt,
+      sync: meta,
+    );
+    await repo.upsertCommitment(commitment);
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: commitment.id,
+      appliedTable: 'execution_commitments',
+      appliedAt: _now(),
+      shortLabel: '已创建 Commitment：${commitment.title}',
+    );
+  }
+
+  Future<ProposalApplyState> _applyProgress(ReadyProposalPlan plan) async {
+    final note = _require(plan, 'note');
+    final meta = await stamp();
+    final repo = await ref.read(executionRepositoryProvider.future);
+    final progress = ExecutionProgressEntry(
+      id: kExecutionUuid.v4(),
+      actionId: plan.get('action_id'),
+      projectId: plan.get('project_id'),
+      commitmentId: plan.get('commitment_id'),
+      kind: ExecutionProgressKind.parse(plan.get('kind') ?? 'checkin'),
+      note: note,
+      createdAt: meta.updatedAt,
+      sync: meta,
+    );
+    await repo.upsertProgress(progress);
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: progress.id,
+      appliedTable: 'execution_progress_entries',
+      appliedAt: _now(),
+      shortLabel: '已记录 ExecutionOS 进展',
+    );
+  }
+}
+
+String _require(ReadyProposalPlan plan, String key) {
+  final value = plan.get(key);
+  if (value == null) {
+    throw ProposalApplyException('${plan.kind} 缺少 $key');
+  }
+  return value;
+}
+
+ExecutionSourceRef _sourceRef(ReadyProposalPlan plan) {
+  return ExecutionSourceRef(
+    domain: plan.get('source_domain'),
+    rowFamily: plan.get('source_row_family'),
+    rowId: plan.get('source_row_id'),
+    labelSnapshot: plan.get('source_label'),
+  );
 }
 
 DateTime? _parseOptionalUtc(String? value) {

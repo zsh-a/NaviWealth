@@ -3,6 +3,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
+import '_read_support.dart';
 
 class SummarizeExecutionProgressTool implements DeviceTool {
   const SummarizeExecutionProgressTool();
@@ -49,13 +50,29 @@ class SummarizeExecutionProgressTool implements DeviceTool {
           .length,
       'active_project_count': projects.length,
       'active_commitment_count': commitments.length,
+      'active_projects': projects
+          .map(executionProjectJson)
+          .take(20)
+          .toList(growable: false),
+      'active_commitments': commitments
+          .map(
+            (commitment) =>
+                executionCommitmentJson(commitment, projects: projects),
+          )
+          .take(20)
+          .toList(growable: false),
       'recent_progress': progress
           .map(
             (p) => <String, Object?>{
               'id': p.id,
               'action_id': p.actionId,
               'project_id': p.projectId,
+              'project_title': executionProjectTitle(projects, p.projectId),
               'commitment_id': p.commitmentId,
+              'commitment_title': executionCommitmentTitle(
+                commitments,
+                p.commitmentId,
+              ),
               'kind': p.kind.wire,
               'note': p.note,
               'created_at': p.createdAt.toUtc().toIso8601String(),

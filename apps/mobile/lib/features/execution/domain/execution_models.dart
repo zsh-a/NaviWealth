@@ -270,3 +270,50 @@ class ExecutionProgressEntry {
   final DateTime createdAt;
   final SyncMeta sync;
 }
+
+class ExecutionOverviewSnapshot {
+  const ExecutionOverviewSnapshot({
+    required this.todayCount,
+    required this.blockedCount,
+    required this.highPriorityCount,
+    required this.dueCount,
+    required this.activeProjectCount,
+    required this.activeCommitmentCount,
+    required this.recentProgressCount,
+  });
+
+  final int todayCount;
+  final int blockedCount;
+  final int highPriorityCount;
+  final int dueCount;
+  final int activeProjectCount;
+  final int activeCommitmentCount;
+  final int recentProgressCount;
+
+  factory ExecutionOverviewSnapshot.fromLists({
+    required List<ExecutionAction> todayActions,
+    required List<ExecutionAction> openActions,
+    required List<ExecutionProject> projects,
+    required List<ExecutionCommitment> commitments,
+    required List<ExecutionProgressEntry> recentProgress,
+    required DateTime now,
+  }) {
+    final open = openActions.where((action) => action.isOpen).toList();
+    final recentSince = now.toLocal().subtract(const Duration(days: 7));
+    return ExecutionOverviewSnapshot(
+      todayCount: todayActions.length,
+      blockedCount: open
+          .where((action) => action.status == ExecutionActionStatus.blocked)
+          .length,
+      highPriorityCount: open
+          .where((action) => action.priority == ExecutionPriority.high)
+          .length,
+      dueCount: open.where((action) => action.isDue(now)).length,
+      activeProjectCount: projects.length,
+      activeCommitmentCount: commitments.length,
+      recentProgressCount: recentProgress
+          .where((entry) => !entry.createdAt.toLocal().isBefore(recentSince))
+          .length,
+    );
+  }
+}

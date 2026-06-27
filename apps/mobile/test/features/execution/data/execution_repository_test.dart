@@ -101,6 +101,32 @@ void main() {
   });
 
   test(
+    'updateActionStatus clears completedAt when action is reopened',
+    () async {
+      final action = _action(id: 'a1', title: 'Reopenable action');
+      await repo.upsertAction(action);
+
+      await repo.updateActionStatus(
+        action: action,
+        status: ExecutionActionStatus.done,
+        sync: _sync(1),
+      );
+      final done = await repo.findAction(ownerUserId: _userId, id: 'a1');
+      expect(done!.completedAt, isNotNull);
+
+      await repo.updateActionStatus(
+        action: done,
+        status: ExecutionActionStatus.doing,
+        sync: _sync(2),
+      );
+
+      final reopened = await repo.findAction(ownerUserId: _userId, id: 'a1');
+      expect(reopened!.status, ExecutionActionStatus.doing);
+      expect(reopened.completedAt, isNull);
+    },
+  );
+
+  test(
     'upsertProject stores active project and enqueues sync pointer',
     () async {
       await repo.upsertProject(
@@ -141,5 +167,30 @@ void main() {
     expect(rows, hasLength(1));
     expect(rows.single.title, 'Ship execution loop');
     expect(outbox.queued.last, (table: 'execution_commitments', rowId: 'c1'));
+  });
+
+  test('upsertProgress stores manual review entry and enqueues sync', () async {
+    await repo.upsertProgress(
+      ExecutionProgressEntry(
+        id: 'p-review',
+        projectId: 'proj-1',
+        commitmentId: 'c1',
+        kind: ExecutionProgressKind.checkin,
+        note: 'Weekly review captured manually.',
+        createdAt: DateTime.utc(2026, 6, 2),
+        sync: _sync(4),
+      ),
+    );
+
+    final rows = await repo.listRecentProgress(ownerUserId: _userId);
+
+    expect(rows, hasLength(1));
+    expect(rows.single.kind, ExecutionProgressKind.checkin);
+    expect(rows.single.projectId, 'proj-1');
+    expect(rows.single.commitmentId, 'c1');
+    expect(outbox.queued.last, (
+      table: 'execution_progress_entries',
+      rowId: 'p-review',
+    ));
   });
 }
