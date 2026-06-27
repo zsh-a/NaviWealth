@@ -237,6 +237,10 @@ void main() {
             'title': 'Book Zone 2 workout',
             'project_id': 'proj-health',
             'reason': 'HealthOS recovery is good enough',
+            'source_domain': 'finance',
+            'source_row_family': 'fin:cashflow',
+            'source_row_id': 'cashflow-2026-06',
+            'source_label': 'June cashflow plan',
           }),
     );
     final plan = ProposalPlan.tryParse(proposal);
@@ -255,8 +259,47 @@ void main() {
     expect(action, isNotNull);
     expect(action!.title, 'Book Zone 2 workout');
     expect(action.projectId, 'proj-health');
+    expect(action.source.domain, 'finance');
+    expect(action.source.rowFamily, 'fin:cashflow');
+    expect(action.source.rowId, 'cashflow-2026-06');
+    expect(action.source.labelSnapshot, 'June cashflow plan');
     expect(state.appliedTable, 'execution_actions');
   });
+
+  test(
+    'execution proposal applier preserves Health source refs on commitments',
+    () async {
+      final plan = _readyPlan(
+        await _withRef(
+          container,
+          (ref) => const ProposeCommitmentTool()
+              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
+                'title': 'Protect recovery before hard workouts',
+                'reason': 'HealthOS trend flagged recovery risk',
+                'source_domain': 'health',
+                'source_row_family': 'health:health_metrics',
+                'source_row_id': 'sleep-short-1',
+                'source_label': 'Short sleep trend',
+              }),
+        ),
+      );
+
+      final state = await _applyReadyPlan(container, plan);
+      final repo = await container.read(executionRepositoryProvider.future);
+      final commitment = await repo.findCommitment(
+        ownerUserId: _userId,
+        id: state.appliedEntityId!,
+      );
+
+      expect(commitment, isNotNull);
+      expect(commitment!.title, 'Protect recovery before hard workouts');
+      expect(commitment.source.domain, 'health');
+      expect(commitment.source.rowFamily, 'health:health_metrics');
+      expect(commitment.source.rowId, 'sleep-short-1');
+      expect(commitment.source.labelSnapshot, 'Short sleep trend');
+      expect(state.appliedTable, 'execution_commitments');
+    },
+  );
 
   test('execution proposal applier updates and undoes action status', () async {
     final repo = await container.read(executionRepositoryProvider.future);

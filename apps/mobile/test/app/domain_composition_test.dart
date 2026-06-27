@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/composition/composite_proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/device_tools_provider.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/composition/system_prompt_blocks.dart';
 import 'package:naviwealth/core/ai/composition/tool_descriptor_lookup.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
@@ -21,7 +24,10 @@ import 'package:naviwealth/core/command_palette/command_palette_entry.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/shell/domain_shell.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
 
@@ -258,6 +264,68 @@ void main() {
 
     expect(c.read(_domainSeamProvider), 42);
   });
+
+  test(
+    'production four-domain packs derive active tools prompts shells and agents',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          ...lifeOsDomainCompositionOverrides(),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(auth.domainOptInsProvider.future);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.knowledge, true);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.execution, true);
+
+      expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
+      expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
+        DomainScope.finance,
+        DomainScope.health,
+        DomainScope.knowledge,
+        DomainScope.execution,
+      ]);
+
+      expect(
+        c.read(deviceToolsProvider).map((tool) => tool.name),
+        containsAll(<String>['propose_action', 'summarize_execution_progress']),
+      );
+      expect(c.read(systemPromptBlocksProvider), [
+        kFinancePack.systemPromptBlock,
+        kHealthPack.systemPromptBlock,
+        kKnowledgePack.systemPromptBlock,
+        kExecutionPack.systemPromptBlock,
+      ]);
+      expect(c.read(activeDomainShellsProvider).map((shell) => shell.scope), [
+        DomainScope.finance,
+        DomainScope.health,
+        DomainScope.knowledge,
+        DomainScope.execution,
+      ]);
+      expect(
+        c.read(agentRegistryProvider).map((agent) => agent.id),
+        containsAll(<String>[
+          'morning_briefing',
+          'knowledge_review',
+          'execution_review',
+        ]),
+      );
+    },
+  );
 }
 
 class _FakeTool implements DeviceTool {

@@ -150,6 +150,21 @@ class ExecutionRepository {
     return rows.map(_projectFromRow).toList();
   }
 
+  Stream<List<ExecutionProject>> watchProjectsForMemoryIndex({
+    required String ownerUserId,
+    int limit = 500,
+  }) {
+    final q = _db.select(_db.executionProjects)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_projectFromRow).toList());
+  }
+
   Future<void> upsertProject(ExecutionProject project) {
     return _upsertAndEnqueue(
       _db.executionProjects,
@@ -287,6 +302,21 @@ class ExecutionRepository {
       ..limit(limit);
     final rows = await q.get();
     return rows.map(_actionFromRow).toList();
+  }
+
+  Stream<List<ExecutionAction>> watchActionsForMemoryIndex({
+    required String ownerUserId,
+    int limit = 500,
+  }) {
+    final q = _db.select(_db.executionActions)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
   }
 
   Future<ExecutionAction?> findAction({
@@ -465,6 +495,21 @@ class ExecutionRepository {
       ..limit(limit);
     final rows = await q.get();
     return rows.map(_commitmentFromRow).toList();
+  }
+
+  Stream<List<ExecutionCommitment>> watchCommitmentsForMemoryIndex({
+    required String ownerUserId,
+    int limit = 500,
+  }) {
+    final q = _db.select(_db.executionCommitments)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_commitmentFromRow).toList());
   }
 
   Future<void> upsertCommitment(ExecutionCommitment commitment) {
