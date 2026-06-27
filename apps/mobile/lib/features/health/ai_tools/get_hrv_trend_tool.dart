@@ -1,5 +1,5 @@
 /// `get_hrv_trend` — HealthOS device tool
-/// (`docs/healthos-domain.md` §4, D-2.4).
+/// (`docs/domains/healthos-domain.md` §4, D-2.4).
 ///
 /// Read-only AI surface over the `hrv_daily` rows. Returns the
 /// chronological series + a first-half / second-half delta that the

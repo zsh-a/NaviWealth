@@ -1,5 +1,5 @@
 /// `knowledge_inbox_triage` — async inbox triage agent
-/// (`docs/knowledgeos-domain.md` §5 异步 triage flow + §7).
+/// (`docs/domains/knowledgeos-domain.md` §5 异步 triage flow + §7).
 ///
 /// Scans `knowledge_notes` for entries the agent hasn't proposed against
 /// yet (no row in `knowledge_inbox_triage`) and emits up to three

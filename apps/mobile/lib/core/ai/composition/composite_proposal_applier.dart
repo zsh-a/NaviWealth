@@ -1,5 +1,5 @@
 /// Routes a confirmed [ReadyProposalPlan] to the owning domain's
-/// [ProposalApplier] (`docs/lifeos-shell.md` §4, `docs/knowledgeos-domain.md`
+/// [ProposalApplier] (`docs/architecture/lifeos-shell.md` §4, `docs/domains/knowledgeos-domain.md`
 /// §15.6).
 ///
 /// The chat surface has exactly one `proposalApplierProvider`, but a

@@ -1,5 +1,5 @@
 /// Context pack assembled by [ContextBuilder] for an LLM turn
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Named `context_pack_memory.dart` to avoid colliding with the older
 /// [ContextPack] in `task_context.dart` (legacy chat-prompt envelope —

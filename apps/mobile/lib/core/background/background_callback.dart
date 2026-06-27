@@ -1,4 +1,4 @@
-/// Top-level workmanager dispatcher (`docs/lifeos-shell.md` §7.3,
+/// Top-level workmanager dispatcher (`docs/architecture/lifeos-shell.md` §7.3,
 /// D-2.5b).
 ///
 /// Must be a top-level function with the `vm:entry-point` pragma so

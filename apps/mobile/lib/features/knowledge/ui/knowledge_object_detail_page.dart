@@ -1,5 +1,5 @@
 /// KnowledgeOS read-only detail page for the non-Decision typed objects
-/// (`docs/knowledgeos-domain.md` §3 — Note / Concept / Experiment /
+/// (`docs/domains/knowledgeos-domain.md` §3 — Note / Concept / Experiment /
 /// Principle / Assumption / Routine).
 ///
 /// Decision has its own editable page; these objects share one read view

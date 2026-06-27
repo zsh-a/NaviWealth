@@ -32,7 +32,7 @@ class SyncCycleResult {
   bool get success => errors.isEmpty;
 }
 
-/// Coordinates the row-state sync cycle (`docs/sync-v2.md` §7.3).
+/// Coordinates the row-state sync cycle (`docs/sync/sync-v2.md` §7.3).
 ///
 /// One cycle drains both directions: it reads the dirty-row set, pushes each
 /// row's current state and pulls peers' newer rows in a single `POST /sync`,

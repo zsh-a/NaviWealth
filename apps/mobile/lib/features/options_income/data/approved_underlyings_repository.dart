@@ -9,7 +9,7 @@ import '../../../domain/values/asset_market.dart';
 import '../domain/approved_underlying.dart';
 
 /// CRUD surface for `approved_underlyings`. Hard architectural rule (see
-/// `docs/options-income.md` §1.2): the scanner reads from this list only.
+/// `docs/domains/options-income.md` §1.2): the scanner reads from this list only.
 class ApprovedUnderlyingsRepository {
   ApprovedUnderlyingsRepository({
     required AppDatabase db,

@@ -5,7 +5,7 @@
 // completes the read-model coverage alongside the asset / liability tests.
 //
 // The live price resolver is replaced with a fixed-price fake so the test
-// is deterministic and never reaches the network (docs/testing-strategy.md
+// is deterministic and never reaches the network (docs/development/testing-strategy.md
 // §4, §7 P1 item "securities trades").
 
 import 'package:decimal/decimal.dart';

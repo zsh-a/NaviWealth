@@ -1,13 +1,13 @@
-/// Wire types and client interface for sync v2 (`docs/sync-v2.md`).
+/// Wire types and client interface for sync v2 (`docs/sync/sync-v2.md`).
 ///
 /// v2 syncs the *current state* of each row, not a stream of ops. One
 /// `POST /sync` does push and pull in a single round trip.
 library;
 
-/// Sync wire-protocol version this client speaks (`docs/sync-v2.md` §5).
+/// Sync wire-protocol version this client speaks (`docs/sync/sync-v2.md` §5).
 const int kSyncProtocolVersion = 2;
 
-/// Hard ceiling on rows per `POST /sync` request (`docs/sync-v2.md` §5.1).
+/// Hard ceiling on rows per `POST /sync` request (`docs/sync/sync-v2.md` §5.1).
 const int kSyncMaxChanges = 500;
 
 /// A single row as it travels on the wire, both directions.
@@ -91,7 +91,7 @@ class RowAck {
       RowAck(table: json['table'] as String, id: json['id'] as String);
 }
 
-/// `POST /sync` response (`docs/sync-v2.md` §5.1).
+/// `POST /sync` response (`docs/sync/sync-v2.md` §5.1).
 class SyncResponse {
   const SyncResponse({
     required this.seq,

@@ -1,5 +1,5 @@
 /// KnowledgeOS Decision detail page
-/// (`docs/knowledgeos-domain.md` §3 + §9 — Decision 7-state lifecycle
+/// (`docs/domains/knowledgeos-domain.md` §3 + §9 — Decision 7-state lifecycle
 /// and `supersededByDecisionId` chain).
 ///
 /// Read view + a lifecycle editor (header ✎): status changes, actual-outcome

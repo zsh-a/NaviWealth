@@ -25,7 +25,7 @@
 #
 # Prerequisites checked at run time; missing tools print install hints.
 #
-# Docs: docs/lifeos-shell.md §6.6 (D-1.7c).
+# Docs: docs/architecture/lifeos-shell.md §6.6 (D-1.7c).
 
 set -euo pipefail
 

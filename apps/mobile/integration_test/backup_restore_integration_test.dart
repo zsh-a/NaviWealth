@@ -1,4 +1,4 @@
-// On-device integration test (docs/testing-strategy.md section 6).
+// On-device integration test (docs/development/testing-strategy.md section 6).
 //
 // This covers Task #11 beyond the headless flow test: the app is booted with
 // a real file-backed AppDatabase, Backup & Restore is driven through the real

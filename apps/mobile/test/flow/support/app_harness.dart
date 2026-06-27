@@ -1,4 +1,4 @@
-// Flow-test harness (Task-oriented testing — see docs/testing-strategy.md §4).
+// Flow-test harness (Task-oriented testing — see docs/development/testing-strategy.md §4).
 //
 // Flow tests exercise a *user task* across multiple screens, asserted
 // through Page Objects (support/page_objects.dart) rather than raw
@@ -11,7 +11,7 @@
 // reusing the proven override set from test/widget_test.dart. It runs
 // under `flutter test` (no device/emulator). The on-device
 // `integration_test/` layer that exercises SQLCipher + a real Drift
-// connection is the documented next step (docs/testing-strategy.md §6).
+// connection is the documented next step (docs/development/testing-strategy.md §6).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

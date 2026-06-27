@@ -1,5 +1,5 @@
 /// `get_recent_sleep_summary` — HealthOS device tool
-/// (`docs/healthos-domain.md` §4, D-2.4).
+/// (`docs/domains/healthos-domain.md` §4, D-2.4).
 ///
 /// Read-only AI surface over the `sleep_session` rows of
 /// `health_metrics`. Returns the last N days of sleep sessions plus a

@@ -6,11 +6,11 @@
 > as the stable link for older references, but new planning should start from
 > the split roadmap below:
 >
-> - Cross-domain LifeOS sequencing: [`roadmap-lifeos.md`](./roadmap-lifeos.md)
-> - FinanceOS domain sequencing: [`roadmap-finance.md`](./roadmap-finance.md)
-> - HealthOS SSOT: [`healthos-domain.md`](./healthos-domain.md)
-> - KnowledgeOS SSOT: [`knowledgeos-domain.md`](./knowledgeos-domain.md)
-> - Shell and extension seams: [`lifeos-shell.md`](./lifeos-shell.md)
+> - Cross-domain LifeOS sequencing: [`roadmap-lifeos.md`](../../roadmap/roadmap-lifeos.md)
+> - FinanceOS domain sequencing: [`roadmap-finance.md`](../../roadmap/roadmap-finance.md)
+> - HealthOS SSOT: [`healthos-domain.md`](../../domains/healthos-domain.md)
+> - KnowledgeOS SSOT: [`knowledgeos-domain.md`](../../domains/knowledgeos-domain.md)
+> - Shell and extension seams: [`lifeos-shell.md`](../../architecture/lifeos-shell.md)
 >
 > The historical FinanceOS plan follows below for traceability. If a section
 > conflicts with the split roadmaps or the domain SSOTs, treat the newer split
@@ -19,8 +19,8 @@
 # Historical FinanceOS Plan（v0.5.x → v0.7.x）
 
 > 下方内容是 2026-05-24 前后的 FinanceOS 历史调度快照。它不再是唯一开发计划入口。
-> 当前跨域计划由 [`roadmap-lifeos.md`](./roadmap-lifeos.md) 负责,FinanceOS 域计划由
-> [`roadmap-finance.md`](./roadmap-finance.md) 负责。若历史段落仍写着"当前唯一"
+> 当前跨域计划由 [`roadmap-lifeos.md`](../../roadmap/roadmap-lifeos.md) 负责,FinanceOS 域计划由
+> [`roadmap-finance.md`](../../roadmap/roadmap-finance.md) 负责。若历史段落仍写着"当前唯一"
 > 或"唯一存在的域",以本文件顶部索引和各 SSOT 为准。
 >
 > 各执行轨道的**任务级细节**仍在原 detail 文档里;本文档只做**统一调度 + 优先级 + 触发条件 + 反目标**。
@@ -29,8 +29,8 @@
 > - 短期任务细节 → [`roadmap-phase1.md`](./roadmap-phase1.md)
 > - 中期任务细节 → [`roadmap-midterm-execution.md`](./roadmap-midterm-execution.md)
 > - FIRE OS 引擎 → [`roadmap-fire-os.md`](./roadmap-fire-os.md)
-> - Options Income → [`options-income.md`](./options-income.md)
-> - AI 运行时设计 → [`ai-architecture.md`](./ai-architecture.md)
+> - Options Income → [`options-income.md`](../../domains/options-income.md)
+> - AI 运行时设计 → [`ai-architecture.md`](../../ai/ai-architecture.md)
 > - 旧的 [`roadmap.md`](./roadmap.md) 内容被本文档统一调度,作为历史参考保留。
 
 ---
@@ -117,7 +117,7 @@
 - ✅ **State machine 落地** (2026-05-24): `wheel_lifecycle.dart`,9 个 stage(between / cashWaiting / shortPut / putExpired / putAssigned / sharesHeld / shortCall / callExpired / callCalled)+ `buildWheelLifecycle` pure function 从 trade journal 派生。10 个测试覆盖完整状态转换。
 - ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
 - ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `features/options_income/ai_tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。通过 FinanceOS tool barrel / `DomainPack` 注册到生产 device tool catalog。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
-- 详: [options-income P4](./options-income.md)
+- 详: [options-income P4](../../domains/options-income.md)
 
 ### 3.4 AI Copilot M1: user profile + evidence
 
@@ -178,8 +178,8 @@
 | 轨道 | 触发条件 | 落地度 | 设计参考 |
 |---|---|---|---|
 | **FIRE OS Phase 6 sync** | 出现 ≥1 例用户报告的跨端 FIRE plan 不一致 | ❌ **未启动**(`features/fire/data/*_preferences.dart` 显式注释 "Phase 6 will migrate to a `fire_plans` table",当前 FIRE plan 留在 SharedPreferences 不走 sync) | [roadmap-fire-os.md Phase 6](./roadmap-fire-os.md),memory `fire_os_design.md` |
-| **Sync v2 切换** | v1 polling 在生产中出现可测量的延迟痛点(>10s 中位数);**或**多设备用户达到 ≥3 个 | ✅ **已全量切换**(触发前完成):`apps/backend/src/sync/store.rs` 是 v2 row-state 通用 store,`apps/mobile/lib/core/sync/sync_engine.dart` 是 v2 cycle(单 `POST /sync` push+pull),v1 OpLog 代码已全部下线(grep 不到任何 `/sync/push` / `/sync/pull` / `oplog`)。CLAUDE.md 也已标 v2 active。**§5 这条等同于历史档案,不再触发**| [sync-v2.md](./sync-v2.md) |
-| **Sync v2 E2EE** | v2 切换完成 ≥1 个月稳定后 | ❌ **未启动**(`core/sync/` 下无 encrypt / E2EE / libsodium 代码)。v2 已切换日期可作为窗口起点;若 ≥1 月生产稳定,可触发 | [sync-v2.md](./sync-v2.md) §安全 |
+| **Sync v2 切换** | v1 polling 在生产中出现可测量的延迟痛点(>10s 中位数);**或**多设备用户达到 ≥3 个 | ✅ **已全量切换**(触发前完成):`apps/backend/src/sync/store.rs` 是 v2 row-state 通用 store,`apps/mobile/lib/core/sync/sync_engine.dart` 是 v2 cycle(单 `POST /sync` push+pull),v1 OpLog 代码已全部下线(grep 不到任何 `/sync/push` / `/sync/pull` / `oplog`)。CLAUDE.md 也已标 v2 active。**§5 这条等同于历史档案,不再触发**| [sync-v2.md](../../sync/sync-v2.md) |
+| **Sync v2 E2EE** | v2 切换完成 ≥1 个月稳定后 | ❌ **未启动**(`core/sync/` 下无 encrypt / E2EE / libsodium 代码)。v2 已切换日期可作为窗口起点;若 ≥1 月生产稳定,可触发 | [sync-v2.md](../../sync/sync-v2.md) §安全 |
 | **Memory Layer 深度使用** | 至少出现 1 个具名 Finance caller(例如 AI Copilot 需要长期偏好检索) | 🟡 **运行时/索引器已落地,Finance 深度使用未触发**:`core/ai/local/memory/` 已有 MemoryRuntime + ContextBuilder,Health/Knowledge/Options Income 已有生产 indexer 和 `build_context` / `query_memory` 工具;待触发的是 Finance 主路径长期偏好/决策记忆的明确 caller | 北极星 §2.6 |
 | **数据导入生态(支付宝/微信/券商对账单)** | 用户实际反馈现有手工录入瓶颈 | ⚠️ **基础设施已就绪,provider-specific 解析器未做**:`features/ingest/` 已有 `csv_ingest_parser`(CJK 表头别名)/ `ingest_pipeline` / `ingest_dedup` / `ingest_draft_store` / provider Vision (`vision_ingest_client`) / `share_intent_service` / 隐私门 / Review 页 + 9 个 ingest test 文件。**待触发的是 alipay/wechat/券商对账单**的命名解析器层 | [roadmap.md Phase 3](./roadmap.md) |
 | **i18n 扩展(ja/zh-Hant/ko)** | 出现非中文用户群 | ❌ **未启动**(`lib/l10n/` 只有 `app_en.arb` + `app_zh.arb`) | [roadmap.md Phase 3](./roadmap.md) |

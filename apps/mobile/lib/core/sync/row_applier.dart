@@ -6,7 +6,7 @@ import '../logging/app_logger.dart';
 import 'domain_prefix.dart';
 import 'sync_api_client.dart';
 
-/// The closed set of tables that participate in sync (`docs/sync-v2.md` §7.1).
+/// The closed set of tables that participate in sync (`docs/sync/sync-v2.md` §7.1).
 /// Adding a value is a data-model change only — the server's row store is
 /// schema-agnostic.
 const Set<String> kSyncableTables = {
@@ -32,7 +32,7 @@ const Set<String> kSyncableTables = {
   'approved_underlyings',
   'options_trade_journal',
   'health_metrics',
-  // KnowledgeOS (`docs/knowledgeos-domain.md` §9). All seven tables ride
+  // KnowledgeOS (`docs/domains/knowledgeos-domain.md` §9). All seven tables ride
   // the row-state protocol with the `know:` row family prefix.
   'knowledge_notes',
   'knowledge_principles',
@@ -55,7 +55,7 @@ const Map<String, String> kSyncPkOverrides = {
 };
 
 /// Applies pulled row-states to the local Drift tables with per-row LWW
-/// (`docs/sync-v2.md` §7.3).
+/// (`docs/sync/sync-v2.md` §7.3).
 ///
 /// Schema-agnostic: column shapes are read from Drift's runtime metadata,
 /// so a new syncable table needs no applier change. This mirrors the

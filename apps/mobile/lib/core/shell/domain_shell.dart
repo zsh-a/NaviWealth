@@ -1,10 +1,10 @@
-/// Multi-domain IA shell seam (`docs/lifeos-shell.md` §3, D-1.8).
+/// Multi-domain IA shell seam (`docs/architecture/lifeos-shell.md` §3, D-1.8).
 ///
 /// Each active LifeOS domain declares a [DomainShellSpec] (label, icon,
 /// root tabs) and the app shell renders them. FinanceOS is always
-/// present; HealthOS and KnowledgeOS appear when their domain opt-ins
-/// are enabled. The dock/switcher becomes visible once two or more
-/// specs are active.
+/// present; HealthOS, KnowledgeOS, and ExecutionOS appear when their
+/// domain opt-ins are enabled. The dock/switcher becomes visible once
+/// two or more specs are active.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -53,7 +53,7 @@ class DomainShellSpec {
   final DomainScope scope;
 
   /// Display name in the dock / switcher ("FinanceOS", "HealthOS",
-  /// "KnowledgeOS").
+  /// "KnowledgeOS", "ExecutionOS").
   final String label;
 
   /// Icon shown in the dock / switcher.
@@ -98,6 +98,7 @@ final domainDockVisibleProvider = Provider<bool>(
 ///     financeDomainShell(l10n),
 ///     if (opts.contains(DomainScope.health)) healthDomainShell(l10n),
 ///     if (opts.contains(DomainScope.knowledge)) knowledgeDomainShell(l10n),
+///     if (opts.contains(DomainScope.execution)) executionDomainShell(l10n),
 ///   ];
 /// });
 /// ```

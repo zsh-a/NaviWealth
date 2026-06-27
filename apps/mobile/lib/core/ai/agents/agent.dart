@@ -1,4 +1,4 @@
-/// Cross-domain agent contract (`docs/lifeos-shell.md` §7.3, D-2.5).
+/// Cross-domain agent contract (`docs/architecture/lifeos-shell.md` §7.3, D-2.5).
 ///
 /// An [Agent] is an autonomous, scheduled piece of work that runs
 /// without the user pressing a button — typically a daily briefing

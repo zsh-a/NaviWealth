@@ -1,5 +1,5 @@
 /// FinanceOS implementation of the chat trace preparer seam
-/// (`docs/lifeos-shell.md` §4, D-1.6b).
+/// (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// Builds the per-chat-turn [ContextPack] + seed [AiTrace] from Finance
 /// signals (header metrics, expense anomaly, deposit maturity, FIRE

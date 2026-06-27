@@ -1,5 +1,5 @@
 /// Append-only dirty-pointer log of locally-authored mutations
-/// (`docs/sync-v2.md` §7.1).
+/// (`docs/sync/sync-v2.md` §7.1).
 ///
 /// One entry per mutation. The sync engine reads only the `(table, rowId)`
 /// set out of it and pushes each row's *current* state — there is no op

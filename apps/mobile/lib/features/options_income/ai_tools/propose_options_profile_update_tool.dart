@@ -4,7 +4,7 @@ import 'package:naviwealth/features/options_income/data/providers.dart';
 import 'package:naviwealth/features/options_income/domain/options_strategy_profile.dart';
 
 /// `propose_options_profile_update` — propose changes to the options
-/// strategy profile (`docs/options-income.md` §8.2).
+/// strategy profile (`docs/domains/options-income.md` §8.2).
 ///
 /// Returns a `ProposalEnvelope`-shaped JSON. Never writes directly.
 class ProposeOptionsProfileUpdateTool implements DeviceTool {

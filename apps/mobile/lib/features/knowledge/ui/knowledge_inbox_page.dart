@@ -1,4 +1,4 @@
-/// KnowledgeOS Inbox tab (`docs/knowledgeos-domain.md` §5).
+/// KnowledgeOS Inbox tab (`docs/domains/knowledgeos-domain.md` §5).
 ///
 /// Renders captured Notes. The Inbox action now supports Auto capture
 /// plus explicit type selection: quick Notes remain one tap away, while

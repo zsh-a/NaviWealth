@@ -1,11 +1,11 @@
-/// HealthOS Plan surface (`docs/healthos-domain.md` §5, D-2.7).
+/// HealthOS Plan surface (`docs/domains/healthos-domain.md` §5, D-2.7).
 ///
 /// Plan page = surface the existing `get_recovery_signal` shape for humans
 /// as concrete same-day training/recovery actions. Verdict + score + inputs
 /// (HRV / sleep / RHR / VO₂max) drive multiple suggestion rows keyed off the
 /// verdict. No autonomous schedule modification — §10 反目标.
 ///
-/// Chrome matches the rest of LifeOS (`docs/lifeos-shell.md` §3):
+/// Chrome matches the rest of LifeOS (`docs/architecture/lifeos-shell.md` §3):
 /// `FScaffold` + `FHeader.nested`, `SoftCard` surfaces and
 /// `context.theme` tokens rather than Material `Scaffold` / `Theme.of`.
 library;

@@ -1,5 +1,5 @@
 /// Shared helpers across KnowledgeOS device tools
-/// (`docs/knowledgeos-domain.md` §4).
+/// (`docs/domains/knowledgeos-domain.md` §4).
 ///
 /// Keeps each tool file focused on schema + payload shaping instead of
 /// re-deriving the proposal-envelope shape, the `bad_request` / `not_found`

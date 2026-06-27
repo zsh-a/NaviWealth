@@ -1,5 +1,5 @@
 /// Discriminator for rows in the `health_metrics` table
-/// (`docs/healthos-domain.md` §1 + §3, D-2.1).
+/// (`docs/domains/healthos-domain.md` §1 + §3, D-2.1).
 ///
 /// Stored as a free-text column on the Drift side so a new kind can
 /// land without a schema bump; the enum here is the canonical client

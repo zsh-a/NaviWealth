@@ -1,5 +1,5 @@
 /// `get_recovery_signal` — HealthOS device tool
-/// (`docs/healthos-domain.md` §4, D-2.4).
+/// (`docs/domains/healthos-domain.md` §4, D-2.4).
 ///
 /// Delegates to [RecoveryScorer] for the scoring math.
 library;

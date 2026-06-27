@@ -24,7 +24,7 @@ import 'opportunity_detail_sheet.dart';
 import 'strategy_profile_sheet.dart';
 import 'trade_journal_sheet.dart';
 
-/// Top-level Income Planner page (`docs/options-income.md` §9).
+/// Top-level Income Planner page (`docs/domains/options-income.md` §9).
 class IncomePlannerPage extends ConsumerWidget {
   const IncomePlannerPage({super.key});
 

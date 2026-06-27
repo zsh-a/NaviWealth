@@ -1,5 +1,5 @@
-/// KnowledgeOS device-tool aggregator (`docs/lifeos-shell.md` §7.1 +
-/// `docs/knowledgeos-domain.md` §4).
+/// KnowledgeOS device-tool aggregator (`docs/architecture/lifeos-shell.md` §7.1 +
+/// `docs/domains/knowledgeos-domain.md` §4).
 ///
 /// Mirrors `health_ai_tools.dart`. Bootstrap concatenates this list
 /// into the cross-domain `deviceToolsProvider` only when the user has
@@ -34,7 +34,7 @@ import 'knowledge/ai_tools/summarize_topic_evolution_tool.dart';
 /// The `queue_inbox_*` trio additionally persists its envelope into
 /// the local-only `knowledge_inbox_triage` side-table so the Review
 /// tab "AI 建议" card can render it without a second round-trip
-/// (`docs/knowledgeos-domain.md` §5 异步 triage flow).
+/// (`docs/domains/knowledgeos-domain.md` §5 异步 triage flow).
 const DeviceToolRegistrationBuilder _knowledgeTool =
     DeviceToolRegistrationBuilder(kDomainKnowledge);
 

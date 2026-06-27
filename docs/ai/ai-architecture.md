@@ -25,10 +25,10 @@
 > - `AiTrace.usedCloud`（持久化但零读取的 wire fossil）
 > - 3 个 l10n orphan keys
 >
-> 累计净删约 4 400 行（四轮）。详见 [`docs/ai-boundary-audit.md`](./ai-boundary-audit.md)。
+> 累计净删约 4 400 行（四轮）。详见 [`ai-boundary-audit.md`](../archive/audits/ai-boundary-audit.md)。
 >
 > 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/`、`lib/features/ingest/`（Flutter）。
-> 运行时事件契约见 [`docs/ai-protocol.md`](./ai-protocol.md)。
+> 运行时事件契约见 [`ai-protocol.md`](./ai-protocol.md)。
 
 ---
 
@@ -68,7 +68,7 @@ ChatRepository
 - provider 客户端统一翻译为 provider-neutral `LlmStreamEvent`（含 `tool_use`），
   由 active `LlmProfile.provider` 决定走哪个 client。
 - 事件词表（`TextEvent` / `ToolCall*` / `SpanEvent` / `DoneEvent` …）见
-  [`docs/ai-protocol.md`](./ai-protocol.md)——repository/UI 仍用旧事件词表，故 chat 历史 /
+  [`ai-protocol.md`](./ai-protocol.md)——repository/UI 仍用旧事件词表，故 chat 历史 /
   流式渲染 / 取消 / trace 捕获无需重写，只是事件改为进程内 Dart stream。
 
 ### 2.2 凭证（`lib/core/ai/llm_credentials/`）

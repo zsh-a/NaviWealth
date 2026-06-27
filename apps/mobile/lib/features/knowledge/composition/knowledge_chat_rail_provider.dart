@@ -1,5 +1,5 @@
 /// KnowledgeOS contribution to the cross-domain chat rail
-/// (`docs/lifeos-shell.md` §4 + `docs/knowledgeos-domain.md` §6).
+/// (`docs/architecture/lifeos-shell.md` §4 + `docs/domains/knowledgeos-domain.md` §6).
 ///
 /// Builds a list of Recall chip suggestions surfaced inside the AI
 /// chat rail when the Knowledge domain is opt-in. Each chip points at

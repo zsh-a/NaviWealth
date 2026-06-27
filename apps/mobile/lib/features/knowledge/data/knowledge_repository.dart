@@ -1,4 +1,4 @@
-/// KnowledgeOS read / write API (`docs/knowledgeos-domain.md` §3 + §9).
+/// KnowledgeOS read / write API (`docs/domains/knowledgeos-domain.md` §3 + §9).
 ///
 /// Thin Drift wrapper over the six `knowledge_*` tables. Mirrors
 /// `HealthMetricRepository`: the caller stamps sync metadata via the
@@ -736,7 +736,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return rows.map(_conceptFromRow).toList();
   }
 
-  /// Merge [duplicates] into [primary] (`docs/knowledgeos-domain.md`
+  /// Merge [duplicates] into [primary] (`docs/domains/knowledgeos-domain.md`
   /// §15.3). Unions tags onto the survivor, optionally overrides its
   /// title/body, then tombstones each duplicate stamped with
   /// `mergedIntoId = primary.id`. [stamp] mints one fresh [SyncMeta] per
@@ -906,7 +906,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   }
 
   /// Create a bidirectional `[[concept]]` soft link between [a] and [b]
-  /// (`docs/knowledgeos-domain.md` §14.2 — the `propose_concept_link` apply
+  /// (`docs/domains/knowledgeos-domain.md` §14.2 — the `propose_concept_link` apply
   /// path). Each concept gains the other's id in `relatedConceptIds`
   /// (idempotent — re-linking is a no-op set union). [stamp] mints one
   /// fresh [SyncMeta] per touched concept; one transaction. Returns the two

@@ -1,4 +1,4 @@
-/// Agent runner (`docs/lifeos-shell.md` §7.3, D-2.5).
+/// Agent runner (`docs/architecture/lifeos-shell.md` §7.3, D-2.5).
 ///
 /// Drives one or more [Agent]s. Two entry points:
 ///

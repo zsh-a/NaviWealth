@@ -1,4 +1,4 @@
-/// Inventory of LifeOS domains (`docs/lifeos-shell.md` §4).
+/// Inventory of LifeOS domains (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// One entry per domain — adding a new LifeOS domain means landing
 /// its tool barrel + shell spec + routes + agents under

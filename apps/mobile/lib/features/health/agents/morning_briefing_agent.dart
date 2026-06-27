@@ -1,5 +1,5 @@
 /// `morning_briefing` — first cross-domain autonomous agent
-/// (`docs/healthos-domain.md` §8, `docs/lifeos-shell.md` §7.3, D-2.5 +
+/// (`docs/domains/healthos-domain.md` §8, `docs/architecture/lifeos-shell.md` §7.3, D-2.5 +
 /// D-2.5b).
 ///
 /// Reads the last 24h of Finance + Health events from the cross-domain

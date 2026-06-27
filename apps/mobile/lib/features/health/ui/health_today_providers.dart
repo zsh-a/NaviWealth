@@ -1,4 +1,4 @@
-/// Today-page state plumbing (`docs/healthos-domain.md` §5, D-2.7).
+/// Today-page state plumbing (`docs/domains/healthos-domain.md` §5, D-2.7).
 ///
 /// Each provider exposes a single signal the Today UI renders as a card.
 /// Kept in `features/health/ui/` rather than `data/providers.dart`

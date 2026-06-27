@@ -1,4 +1,4 @@
-/// User-facing Memory Runtime (`docs/lifeos-shell.md` §6, D-1.7b).
+/// User-facing Memory Runtime (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Composes [Embedder] + [MemoryStore] + [EventStore]. Per-feature
 /// extractors call [remember] / [recordEvent]; the agent's

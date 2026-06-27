@@ -1,5 +1,5 @@
 /// KnowledgeOS Review tab "AI 建议" card
-/// (`docs/knowledgeos-domain.md` §5 异步 triage flow + §14.2 P0).
+/// (`docs/domains/knowledgeos-domain.md` §5 异步 triage flow + §14.2 P0).
 ///
 /// Renders pending [InboxProposal] envelopes produced by
 /// [InboxTriageAgent] grouped by note. Each envelope gets ✓ / ✗

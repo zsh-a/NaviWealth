@@ -1,4 +1,4 @@
-/// HealthOS read / write API (`docs/healthos-domain.md` §3, D-2.1).
+/// HealthOS read / write API (`docs/domains/healthos-domain.md` §3, D-2.1).
 ///
 /// Thin Drift wrapper over the `health_metrics` table. The caller is
 /// responsible for stamping sync metadata via the cross-domain

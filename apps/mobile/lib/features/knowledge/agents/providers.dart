@@ -1,4 +1,4 @@
-/// KnowledgeOS agent providers (`docs/knowledgeos-domain.md` §7).
+/// KnowledgeOS agent providers (`docs/domains/knowledgeos-domain.md` §7).
 ///
 /// Bootstrap consumes [knowledgeAgentsProvider] and concatenates the
 /// list into the global `agentRegistryProvider` when the user has

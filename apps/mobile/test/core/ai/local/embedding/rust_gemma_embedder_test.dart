@@ -1,5 +1,5 @@
 /// Integration tests for the Rust EmbeddingGemma binding via
-/// `flutter_rust_bridge` (D-1.7c per `docs/lifeos-shell.md` §6.6).
+/// `flutter_rust_bridge` (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6).
 ///
 /// These tests skip when the host doesn't have a built
 /// `liblifeos_native.dylib`. Build it with:

@@ -1,5 +1,5 @@
 /// `propose_capture` — unified capture-classification device tool
-/// (`docs/knowledgeos-domain.md` §4 + §14.2 P1).
+/// (`docs/domains/knowledgeos-domain.md` §4 + §14.2 P1).
 ///
 /// Given a freeform text the user just captured (or an existing note's
 /// body), classify it into one of 7 KnowledgeOS kinds and return a

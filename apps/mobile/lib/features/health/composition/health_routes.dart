@@ -1,4 +1,4 @@
-/// HealthOS routing tree (`docs/lifeos-shell.md` §3 + `docs/healthos-domain.md`
+/// HealthOS routing tree (`docs/architecture/lifeos-shell.md` §3 + `docs/domains/healthos-domain.md`
 /// §5, D-2.3b).
 ///
 /// Mirrors `features/finance/composition/finance_routes.dart`. Self-

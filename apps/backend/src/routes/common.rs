@@ -6,7 +6,7 @@ pub const SUPPORTED_PROTOCOL_VERSION: &str = "2";
 
 /// Enforce `Sync-Protocol-Version: 2` on sync-domain endpoints. A missing
 /// header is allowed (back-compat with `/health`); only an explicit mismatch
-/// triggers 426 — see docs/sync-v2.md §5.
+/// triggers 426 — see docs/sync/sync-v2.md §5.
 pub fn check_protocol_version(headers: &Headers) -> Result<(), AppError> {
     if let Ok(Some(v)) = headers.get("Sync-Protocol-Version") {
         if v != SUPPORTED_PROTOCOL_VERSION {

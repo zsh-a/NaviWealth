@@ -1,5 +1,5 @@
 // Flow / Task test: "View net worth" — the canonical first journey of the
-// test spine (docs/testing-strategy.md §3). This is the seed example of
+// test spine (docs/development/testing-strategy.md §3). This is the seed example of
 // the flow layer: it boots the real app shell and drives a multi-screen
 // user task through Page Objects, not raw widget finders.
 //

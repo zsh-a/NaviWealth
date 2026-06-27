@@ -1,5 +1,5 @@
 /// FinanceOS implementation of [ProposalApplier]
-/// (`docs/lifeos-shell.md` §4, D-1.6b).
+/// (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// Dispatches a confirmed [ReadyProposalPlan] to the matching Finance
 /// repository write, and reverses it again on undo. The chat UI in

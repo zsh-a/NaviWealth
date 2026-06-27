@@ -1,5 +1,5 @@
 //! EmbeddingGemma-300M (ONNX INT8) embedder, exposed to Dart via
-//! `flutter_rust_bridge` (D-1.7c per `docs/lifeos-shell.md` §6.6).
+//! `flutter_rust_bridge` (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6).
 //!
 //! Public surface is intentionally small (per `lifeos-shell.md` §10):
 //!

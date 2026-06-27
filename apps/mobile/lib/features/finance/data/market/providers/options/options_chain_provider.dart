@@ -7,7 +7,7 @@ import 'package:naviwealth/features/options_income/domain/option_contract.dart';
 ///   * the result is denominated in normalized contracts ready for the
 ///     scorer, not raw provider DTOs.
 ///
-/// See `docs/options-income.md` §4 for the rollout / TOS notes.
+/// See `docs/domains/options-income.md` §4 for the rollout / TOS notes.
 abstract class OptionsChainProvider {
   String get name;
 

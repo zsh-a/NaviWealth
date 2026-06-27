@@ -14,7 +14,7 @@ pub struct Claims {
     pub jti: String,
     pub iat: i64,
     pub exp: i64,
-    /// LifeOS domains the caller is opted into (`docs/lifeos-shell.md`
+    /// LifeOS domains the caller is opted into (`docs/architecture/lifeos-shell.md`
     /// §5, D-1.5). FinanceOS is the seed domain so legacy tokens emitted
     /// before this claim landed decode as `["finance"]`.
     #[serde(default = "default_domains")]

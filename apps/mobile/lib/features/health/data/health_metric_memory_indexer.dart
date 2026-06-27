@@ -1,5 +1,5 @@
 /// Second production caller of the Memory Runtime
-/// (`docs/lifeos-shell.md` §6.7, `docs/healthos-domain.md` §7, D-2.4b).
+/// (`docs/architecture/lifeos-shell.md` §6.7, `docs/domains/healthos-domain.md` §7, D-2.4b).
 ///
 /// For each `health_metrics` row this indexer emits:
 ///

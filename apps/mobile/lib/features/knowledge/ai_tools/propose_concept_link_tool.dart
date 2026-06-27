@@ -1,5 +1,5 @@
 /// `propose_concept_link` — KnowledgeOS device write tool
-/// (`docs/knowledgeos-domain.md` §4).
+/// (`docs/domains/knowledgeos-domain.md` §4).
 ///
 /// **Write semantics**: returns a proposal envelope; the user must
 /// confirm in the UI before the link lands. Matches the cross-domain

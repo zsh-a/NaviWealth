@@ -53,7 +53,7 @@ abstract final class AppRoutes {
   static const healthTrend = '/health/trend';
   static const healthPlan = '/health/plan';
 
-  // ── KnowledgeOS (`docs/knowledgeos-domain.md` §5) — gated by domain
+  // ── KnowledgeOS (`docs/domains/knowledgeos-domain.md` §5) — gated by domain
   // opt-in. 3 tabs: Inbox / Library / Review.
   static const knowledgeInbox = '/knowledge';
   static const knowledgeLibrary = '/knowledge/library';

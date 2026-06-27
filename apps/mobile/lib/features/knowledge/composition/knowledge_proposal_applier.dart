@@ -1,5 +1,5 @@
 /// KnowledgeOS implementation of [ProposalApplier]
-/// (`docs/knowledgeos-domain.md` §15.6).
+/// (`docs/domains/knowledgeos-domain.md` §15.6).
 ///
 /// Dispatches confirmed KnowledgeOS `propose_*` plans from the chat
 /// propose-card to the matching `KnowledgeRepository` write. The

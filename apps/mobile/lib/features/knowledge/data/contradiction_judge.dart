@@ -1,4 +1,4 @@
-/// Contradiction-judge seam (`docs/knowledgeos-domain.md` §7 + §14.2
+/// Contradiction-judge seam (`docs/domains/knowledgeos-domain.md` §7 + §14.2
 /// "ContradictionAgent cosine + LLM judge 路径").
 ///
 /// The [ContradictionAgent]'s check-2 (principle ↔ recent-memory drift)

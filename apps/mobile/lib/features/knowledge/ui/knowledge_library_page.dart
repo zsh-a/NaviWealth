@@ -1,4 +1,4 @@
-/// KnowledgeOS Library tab (`docs/knowledgeos-domain.md` §5).
+/// KnowledgeOS Library tab (`docs/domains/knowledgeos-domain.md` §5).
 ///
 /// Library segments for the KnowledgeOS object families. Decisions surface a
 /// status badge per the 7-state lifecycle in §9. Forui-only — Forui + Flutter

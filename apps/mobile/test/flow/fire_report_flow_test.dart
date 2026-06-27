@@ -1,5 +1,5 @@
 // Flow / Task test: "Generate FIRE report" — Task #10 in
-// docs/testing-strategy.md.
+// docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers FIRE from the Plan hub, and lands
 // on the FIRE report surface. The first-run state is intentional: it proves

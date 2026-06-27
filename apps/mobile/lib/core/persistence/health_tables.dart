@@ -1,10 +1,10 @@
-/// HealthOS Drift tables (`docs/healthos-domain.md` §3, D-2.1).
+/// HealthOS Drift tables (`docs/domains/healthos-domain.md` §3, D-2.1).
 ///
 /// Lives in `core/persistence/` alongside the Finance tables because
 /// Drift currently requires every table to be passed to a single
 /// `@DriftDatabase(tables: [...])` annotation. The schema row family
 /// for sync uses the `health:` prefix introduced in D-1.4
-/// (`docs/lifeos-shell.md` §8).
+/// (`docs/architecture/lifeos-shell.md` §8).
 library;
 
 import 'package:drift/drift.dart';
@@ -12,11 +12,11 @@ import 'package:drift/drift.dart';
 import 'tables.dart' show SyncableTable;
 
 /// All HealthOS measurements live in one wide-flat table keyed by
-/// [kind]. This matches `docs/healthos-domain.md` §3: a sleep
+/// [kind]. This matches `docs/domains/healthos-domain.md` §3: a sleep
 /// session, an HRV daily reading, and a steps daily reading are all
 /// rows here, distinguished by the [kind] discriminator.
 ///
-/// Sync row_kind: `health:health_metrics` (see `docs/lifeos-shell.md`
+/// Sync row_kind: `health:health_metrics` (see `docs/architecture/lifeos-shell.md`
 /// §8 row family namespace, D-1.4).
 @DataClassName('HealthMetricRow')
 class HealthMetrics extends Table with SyncableTable {

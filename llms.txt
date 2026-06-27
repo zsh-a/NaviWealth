@@ -1,0 +1,38 @@
+# NaviWealth
+
+> Local-first Personal LifeOS. FinanceOS is always on; HealthOS, KnowledgeOS,
+> and ExecutionOS are opt-in domains. Mobile app is Flutter. Backend is
+> Cloudflare Workers in Rust. Sync is v2 row-state LWW. AI is device-only with
+> user-owned LLM profiles; there is no backend AI relay.
+
+## Essential Docs
+
+- [Documentation Index](docs/index.md): Human and AI entry point for the docs tree.
+- [Agent Guide](AGENTS.md): Build commands, architecture rules, and coding conventions for AI agents.
+- [Architecture Northstar](docs/architecture/lifeos-architecture-northstar.md): Hard boundaries and non-goals.
+- [LifeOS Shell](docs/architecture/lifeos-shell.md): Domain registration, routing, AI, memory, sync, persistence seams.
+- [Device AI Architecture](docs/ai/ai-architecture.md): Device-only runtime design.
+- [AI Runtime Event Contract](docs/ai/ai-protocol.md): Stream event and tool contract.
+- [Sync v2 Protocol](docs/sync/sync-v2.md): Active row-state sync protocol.
+- [Testing Strategy](docs/development/testing-strategy.md): Test pyramid, task spine, CI gate expectations.
+
+## Domain Docs
+
+- [HealthOS](docs/domains/healthos-domain.md): Health domain behavior, data, AI tools, agents.
+- [KnowledgeOS](docs/domains/knowledgeos-domain.md): Knowledge domain behavior, proposals, memory, agents.
+- [ExecutionOS](docs/domains/executionos-domain.md): Execution domain behavior, actions, commitments, progress.
+- [FinanceOS Roadmap](docs/roadmap/roadmap-finance.md): Finance domain sequencing.
+
+## Current Code Roots
+
+- `apps/mobile/lib/app/domain_packs.dart`: Production domain inventory.
+- `apps/mobile/lib/core/auth/domain_scope.dart`: Domain opt-in enum and wire values.
+- `apps/mobile/lib/core/sync/domain_prefix.dart`: Sync row-family prefixes.
+- `apps/mobile/lib/core/ai/`: AI contracts, runtime, agents, memory, composition.
+- `apps/mobile/lib/features/`: Domain and finance feature code.
+- `apps/backend/src/sync/`: Backend generic row-state sync store.
+
+## Archive Note
+
+Documents under `docs/archive/` are historical. They explain past migrations,
+audits, and superseded plans, but they are not current authority.

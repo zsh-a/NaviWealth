@@ -1,4 +1,4 @@
-/// Hybrid memory scorer (`docs/lifeos-shell.md` §6, D-1.7b).
+/// Hybrid memory scorer (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Combines five orthogonal signals into one final ranking score.
 /// Weights come from the user's brief in the LifeOS Memory design

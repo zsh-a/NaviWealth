@@ -1,5 +1,5 @@
 /// Install-directory conventions for embedder model bundles
-/// (D-1.7c per `docs/lifeos-shell.md` §6.6).
+/// (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6).
 ///
 /// Bundles live under `<app_support>/embedders/<bundle.id>/`. App
 /// Support is the right home: it survives app updates, doesn't sync

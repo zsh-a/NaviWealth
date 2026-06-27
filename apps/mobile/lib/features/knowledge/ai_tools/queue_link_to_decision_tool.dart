@@ -1,5 +1,5 @@
 /// `queue_link_to_decision` — InboxTriageAgent write tool
-/// (`docs/knowledgeos-domain.md` §4 + §7).
+/// (`docs/domains/knowledgeos-domain.md` §4 + §7).
 ///
 /// Suggests existing Decision(s) that the inbox Note should be linked
 /// to (e.g. "this looks like supporting evidence for your covered-call

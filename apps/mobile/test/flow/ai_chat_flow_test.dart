@@ -1,4 +1,4 @@
-// Flow / Task test: "Ask the AI" - Task #6 in docs/testing-strategy.md.
+// Flow / Task test: "Ask the AI" - Task #6 in docs/development/testing-strategy.md.
 //
 // This boots the real app shell, opens the shell-level AI sheet, sends a
 // question through the visible composer, and renders the resulting user /

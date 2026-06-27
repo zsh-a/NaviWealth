@@ -1,5 +1,5 @@
 /// Shared MemoryRecord builder for the KnowledgeOS agents
-/// (`docs/knowledgeos-domain.md` §7).
+/// (`docs/domains/knowledgeos-domain.md` §7).
 ///
 /// Every agent (Review / Assumption / Contradiction / RoutineDue) emits one
 /// day-keyed memory per run with identical id / scope / timestamp

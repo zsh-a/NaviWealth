@@ -1,5 +1,5 @@
 /// Riverpod wiring for the Memory Runtime
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Domain-neutral — never imports `features/`. Feature-specific
 /// extractors live next to the feature's data layer and are aggregated

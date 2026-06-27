@@ -1,5 +1,5 @@
 /// KnowledgeOS Decision lifecycle editor
-/// (`docs/knowledgeos-domain.md` §3 + §9 — the 7-state lifecycle and the
+/// (`docs/domains/knowledgeos-domain.md` §3 + §9 — the 7-state lifecycle and the
 /// `supersededByDecisionId` "认知演化" chain).
 ///
 /// The detail page is otherwise read-only; this sheet is the single write

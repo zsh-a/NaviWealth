@@ -1,6 +1,6 @@
 # NaviWealth
 
-**Personal LifeOS** — 本地优先、多域生活操作系统。FinanceOS（种子域）+ HealthOS + KnowledgeOS，用户按需启用。
+**Personal LifeOS** — 本地优先、多域生活操作系统。FinanceOS（种子域）始终开启；HealthOS、KnowledgeOS、ExecutionOS 用户按需启用。
 
 跨端：iOS / Android / Web。设备端 AI（用户自带 LLM key）+ 云同步（Cloudflare Workers + Rust + D1）。
 
@@ -13,6 +13,7 @@
 | FinanceOS | 始终开启 | 资产、现金流、FIRE、投资、期权收入 | `fin:` |
 | HealthOS | 用户启用 | 睡眠、HRV、恢复信号、晨间简报 | `health:` |
 | KnowledgeOS | 用户启用 | 决策记忆、原则、假设、例程、知识回顾 | `know:` |
+| ExecutionOS | 用户启用 | 行动、项目、承诺、进展复盘 | `exec:` |
 
 每个域通过 `DomainPack` 注册，贡献：AI 工具、系统提示、Shell 路由、Agent、命令面板条目和标签页路径。新增域只需一个 `DomainPack` 条目。
 
@@ -31,6 +32,7 @@ naviwealth/
 │   │   │   │   ├── finance/    FinanceOS 组合与数据
 │   │   │   │   ├── health/     HealthOS 数据、UI、AI 工具、Agent
 │   │   │   │   ├── knowledge/  KnowledgeOS 数据、UI、AI 工具、Agent
+│   │   │   │   ├── execution/  ExecutionOS 数据、UI、AI 工具、Agent
 │   │   │   │   └── <slices>/   accounts / assets / cashflow / investment 等
 │   │   │   ├── design_system/  设计令牌、主题、图表、可复用组件
 │   │   │   └── l10n/           中英文 ARB
@@ -38,7 +40,9 @@ naviwealth/
 │   │       └── lifeos_native/  Rust 嵌入运行时（EmbeddingGemma via flutter_rust_bridge）
 │   └── backend/             Cloudflare Workers + Rust + D1
 ├── tool/                    版本工具、git hooks、证券目录构建、CI lint gates
-├── docs/                    架构、域 SSOT、路线图、协议、兼容矩阵
+├── docs/                    MkDocs 文档源：架构、域 SSOT、AI、同步、开发、归档
+├── mkdocs.yml               文档站导航与构建配置
+├── llms.txt                 LLM 友好的文档入口
 └── .github/
     ├── workflows/
     │   ├── mobile.yml          analyze + test / golden / build web / Pages 部署
@@ -67,7 +71,7 @@ naviwealth/
 
 ## 本地开发
 
-完整步骤见 [`docs/local-development.md`](docs/local-development.md)。
+完整步骤见 [`docs/index.md`](docs/index.md) 和 [`docs/development/local-development.md`](docs/development/local-development.md)。
 
 ### Flutter
 
@@ -115,7 +119,7 @@ GitHub Actions（`Settings → Secrets and variables → Actions`）：
 
 ## 架构边界
 
-详细架构见 [`CLAUDE.md`](CLAUDE.md)。关键约束：
+详细架构见 [`docs/index.md`](docs/index.md)、[`CLAUDE.md`](CLAUDE.md) 和 [`llms.txt`](llms.txt)。关键约束：
 
 - `core/` 保持域中立，不导入 `features/<domain>/`
 - 域业务代码在 `features/<domain>/` 下，域之间不互相导入
@@ -128,14 +132,15 @@ GitHub Actions（`Settings → Secrets and variables → Actions`）：
 
 | 文档 | 用途 |
 |---|---|
-| [`docs/lifeos-architecture-northstar.md`](docs/lifeos-architecture-northstar.md) | 架构边界与非目标 |
-| [`docs/lifeos-shell.md`](docs/lifeos-shell.md) | 跨域 Shell SSOT |
-| [`docs/lifeos-decision-2026-05-24.md`](docs/lifeos-decision-2026-05-24.md) | Phase D ADR |
-| [`docs/healthos-domain.md`](docs/healthos-domain.md) | HealthOS 域行为 |
-| [`docs/knowledgeos-domain.md`](docs/knowledgeos-domain.md) | KnowledgeOS 域行为 |
-| [`docs/ai-architecture.md`](docs/ai-architecture.md) | 设备端 AI 运行时设计 |
-| [`docs/sync-v2.md`](docs/sync-v2.md) | 同步协议 v2 |
-| [`docs/roadmap-lifeos.md`](docs/roadmap-lifeos.md) | 跨域路线图 |
+| [`docs/architecture/lifeos-architecture-northstar.md`](docs/architecture/lifeos-architecture-northstar.md) | 架构边界与非目标 |
+| [`docs/architecture/lifeos-shell.md`](docs/architecture/lifeos-shell.md) | 跨域 Shell SSOT |
+| [`docs/decisions/lifeos-decision-2026-05-24.md`](docs/decisions/lifeos-decision-2026-05-24.md) | Phase D ADR |
+| [`docs/domains/healthos-domain.md`](docs/domains/healthos-domain.md) | HealthOS 域行为 |
+| [`docs/domains/knowledgeos-domain.md`](docs/domains/knowledgeos-domain.md) | KnowledgeOS 域行为 |
+| [`docs/domains/executionos-domain.md`](docs/domains/executionos-domain.md) | ExecutionOS 域行为 |
+| [`docs/ai/ai-architecture.md`](docs/ai/ai-architecture.md) | 设备端 AI 运行时设计 |
+| [`docs/sync/sync-v2.md`](docs/sync/sync-v2.md) | 同步协议 v2 |
+| [`docs/roadmap/roadmap-lifeos.md`](docs/roadmap/roadmap-lifeos.md) | 跨域路线图 |
 
 ---
 
@@ -187,4 +192,4 @@ GitHub Actions（`Settings → Secrets and variables → Actions`）：
 1. 从 `main` 拉分支：`feature/<short-description>`。
 2. 提交并推送，CI 通过后开 PR。
 
-`main` 的保护规则与必需检查见 [`docs/branch-protection.md`](docs/branch-protection.md)。
+`main` 的保护规则与必需检查见 [`docs/operations/branch-protection.md`](docs/operations/branch-protection.md)。

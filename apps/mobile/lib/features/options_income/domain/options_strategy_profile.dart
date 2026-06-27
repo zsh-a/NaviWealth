@@ -7,7 +7,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 ///
 /// Maps to the `options_strategy_profile` synced Drift table (one row per
 /// `ownerUserId`). The profile drives every hard filter and soft score in
-/// the scanner — see `docs/options-income.md` §7. The `mode` field acts as
+/// the scanner — see `docs/domains/options-income.md` §7. The `mode` field acts as
 /// a preset that pre-fills the delta / DTE / yield ranges; advanced users
 /// can later override individual fields without changing the mode label.
 class OptionsStrategyProfile {

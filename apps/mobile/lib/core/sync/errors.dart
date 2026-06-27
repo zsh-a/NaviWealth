@@ -1,4 +1,4 @@
-/// Error envelope returned by the backend (`docs/sync-v2.md` §5).
+/// Error envelope returned by the backend (`docs/sync/sync-v2.md` §5).
 class SyncErrorBody {
   const SyncErrorBody({required this.code, this.message});
   final String code;

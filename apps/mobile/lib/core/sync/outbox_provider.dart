@@ -1,4 +1,4 @@
-/// Cross-domain sync outbox provider (`docs/lifeos-shell.md` §8).
+/// Cross-domain sync outbox provider (`docs/architecture/lifeos-shell.md` §8).
 ///
 /// Every domain repository (Finance / Health / future domains) writes
 /// to the same `op_outbox` table that the [SyncEngine] drains on push.

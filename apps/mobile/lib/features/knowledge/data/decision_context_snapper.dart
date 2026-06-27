@@ -1,5 +1,5 @@
 /// Auto-capture for `KnowledgeDecision.contextSnapshot`
-/// (`docs/knowledgeos-domain.md` §3 + §9 — "为什么当时做错可解释").
+/// (`docs/domains/knowledgeos-domain.md` §3 + §9 — "为什么当时做错可解释").
 ///
 /// Reads the last 7 days of cross-domain events via [MemoryRuntime]
 /// and packs the top finance / health rows into a compact JSON map

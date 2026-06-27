@@ -1,5 +1,5 @@
 /// KnowledgeOS Decision → Memory indexer
-/// (`docs/knowledgeos-domain.md` §3 — "写一份,索引两次").
+/// (`docs/domains/knowledgeos-domain.md` §3 — "写一份,索引两次").
 ///
 /// Subscribes to the decisions stream when the Knowledge domain is
 /// opt-in and mirrors each row into Memory as `kind='episodic'` so

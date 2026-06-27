@@ -1,5 +1,5 @@
 /// KnowledgeOS Routine creation sheet
-/// (`docs/knowledgeos-domain.md` §3 + §9).
+/// (`docs/domains/knowledgeos-domain.md` §3 + §9).
 ///
 /// Form intentionally minimal — Routine carries less editorial weight
 /// than Decision / Assumption, so 3 fields beat 6:

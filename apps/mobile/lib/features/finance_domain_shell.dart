@@ -1,9 +1,10 @@
-/// FinanceOS `DomainShellSpec` registration (`docs/lifeos-shell.md`
+/// FinanceOS `DomainShellSpec` registration (`docs/architecture/lifeos-shell.md`
 /// §3, D-1.8).
 ///
 /// FinanceOS is the seed domain, so this spec is always present and
 /// captures the 4-tab IA (Today / Activity / Wealth / Plan). Optional
-/// domains such as HealthOS and KnowledgeOS register their own specs;
+/// domains such as HealthOS, KnowledgeOS, and ExecutionOS register their own
+/// specs;
 /// bootstrap merges active specs through [activeDomainShellsProvider].
 library;
 

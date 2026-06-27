@@ -1,5 +1,5 @@
 /// Composition root for Memory Runtime indexers
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// `core/ai/local/memory/providers.dart` stays domain-neutral
 /// (northstar §2.1: `core/` must not import `features/`). This file

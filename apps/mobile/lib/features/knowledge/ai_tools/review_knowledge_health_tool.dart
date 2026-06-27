@@ -1,5 +1,5 @@
 /// `review_knowledge_health` — KnowledgeOS "give me suggestions" read tool
-/// (`docs/knowledgeos-domain.md` §15.3).
+/// (`docs/domains/knowledgeos-domain.md` §15.3).
 ///
 /// The pull counterpart to the five background agents: one call aggregates
 /// everything the user should act on right now —

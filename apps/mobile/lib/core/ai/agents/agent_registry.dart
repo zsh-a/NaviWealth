@@ -1,4 +1,4 @@
-/// Cross-domain agent registry (`docs/lifeos-shell.md` §7.3, D-2.5).
+/// Cross-domain agent registry (`docs/architecture/lifeos-shell.md` §7.3, D-2.5).
 ///
 /// Each domain registers its agents through this seam. `bootstrap.dart`
 /// overrides the provider with the union of every domain's agents,

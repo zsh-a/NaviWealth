@@ -418,7 +418,9 @@ void main() {
 
     test('Phase 1 roadmap testing status matches current contracts', () {
       final repoRoot = appRoot.parent.parent;
-      final roadmap = File('${repoRoot.path}/docs/roadmap-phase1.md');
+      final roadmap = File(
+        '${repoRoot.path}/docs/archive/roadmaps/roadmap-phase1.md',
+      );
 
       expect(roadmap.existsSync(), isTrue);
       final text = roadmap.readAsStringSync();
@@ -431,7 +433,9 @@ void main() {
 
     test('testing strategy documents current flow and E2E coverage', () {
       final repoRoot = appRoot.parent.parent;
-      final strategy = File('${repoRoot.path}/docs/testing-strategy.md');
+      final strategy = File(
+        '${repoRoot.path}/docs/development/testing-strategy.md',
+      );
 
       expect(strategy.existsSync(), isTrue);
       final text = strategy.readAsStringSync();
@@ -445,8 +449,10 @@ void main() {
 
     test('roadmap activity feed status matches current implementation', () {
       final repoRoot = appRoot.parent.parent;
-      final roadmap = File('${repoRoot.path}/docs/roadmap.md');
-      final phase1 = File('${repoRoot.path}/docs/roadmap-phase1.md');
+      final roadmap = File('${repoRoot.path}/docs/archive/roadmaps/roadmap.md');
+      final phase1 = File(
+        '${repoRoot.path}/docs/archive/roadmaps/roadmap-phase1.md',
+      );
       final activityRepositoryTest = File(
         '${appRoot.path}/test/features/finance/data/repositories/journal_entry_repository_test.dart',
       );
@@ -484,7 +490,9 @@ void main() {
       'roadmap IA status does not reference retired feature placeholders',
       () {
         final repoRoot = appRoot.parent.parent;
-        final roadmap = File('${repoRoot.path}/docs/roadmap.md');
+        final roadmap = File(
+          '${repoRoot.path}/docs/archive/roadmaps/roadmap.md',
+        );
 
         expect(roadmap.existsSync(), isTrue);
         final text = roadmap.readAsStringSync();
@@ -501,12 +509,16 @@ void main() {
 
     test('roadmaps keep AI planning on device-only architecture', () {
       final repoRoot = appRoot.parent.parent;
-      final roadmap = File('${repoRoot.path}/docs/roadmap.md');
-      final phase1 = File('${repoRoot.path}/docs/roadmap-phase1.md');
-      final midterm = File(
-        '${repoRoot.path}/docs/roadmap-midterm-execution.md',
+      final roadmap = File('${repoRoot.path}/docs/archive/roadmaps/roadmap.md');
+      final phase1 = File(
+        '${repoRoot.path}/docs/archive/roadmaps/roadmap-phase1.md',
       );
-      final next = File('${repoRoot.path}/docs/roadmap-next.md');
+      final midterm = File(
+        '${repoRoot.path}/docs/archive/roadmaps/roadmap-midterm-execution.md',
+      );
+      final next = File(
+        '${repoRoot.path}/docs/archive/roadmaps/roadmap-next.md',
+      );
       final backendAiDir = Directory('${repoRoot.path}/apps/backend/src/ai');
       final holdingsTool = File(
         '${appRoot.path}/lib/features/investment/ai_tools/get_holdings_tool.dart',
@@ -609,7 +621,7 @@ void main() {
 
     test('AI architecture docs use current Vision ingest naming', () {
       final repoRoot = appRoot.parent.parent;
-      final architecture = File('${repoRoot.path}/docs/ai-architecture.md');
+      final architecture = File('${repoRoot.path}/docs/ai/ai-architecture.md');
 
       expect(architecture.existsSync(), isTrue);
       final text = architecture.readAsStringSync();

@@ -1,5 +1,5 @@
 /// On-demand OS switcher for the multi-domain shell
-/// (`docs/lifeos-shell.md` §3, dogfood Option B follow-up).
+/// (`docs/architecture/lifeos-shell.md` §3, dogfood Option B follow-up).
 ///
 /// Mobile exposes a compact current-domain chip above the bottom navigation;
 /// long-press on the bottom navigation remains a fallback. This file owns

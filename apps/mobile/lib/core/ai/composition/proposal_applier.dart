@@ -1,5 +1,5 @@
 /// Cross-domain seam for the chat propose-card apply path
-/// (`docs/lifeos-shell.md` §4, D-1.6b).
+/// (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// The chat surface accepts confirmed `propose_*` plans and dispatches
 /// them to a domain-owned [ProposalApplier] for the actual repository

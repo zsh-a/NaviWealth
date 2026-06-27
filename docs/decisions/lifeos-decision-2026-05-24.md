@@ -7,7 +7,7 @@
 
 ## Context
 
-NaviWealth 自 v0.5.x 起,FinanceOS 域已稳定 ship(34 个 device tool / FIRE OS Phase 0–5 / Income Planner P0–P4 / sync v2 row-state / IA contract 锁定)。`roadmap-next.md` §3 / §4 列出的下一程 / 中期工作虽未关完,但已不构成"必须做"的强信号——剩余 §3.2/§3.6 收尾、§4 M-2 UI wire-up 都属于已立项功能的最后一公里。
+NaviWealth 自 v0.5.x 起,FinanceOS 域已稳定 ship(34 个 device tool / FIRE OS Phase 0–5 / Income Planner P0–P4 / sync v2 row-state / IA contract 锁定)。历史 [`roadmap-next.md`](../archive/roadmaps/roadmap-next.md) §3 / §4 列出的下一程 / 中期工作虽未关完,但已不构成"必须做"的强信号——剩余 §3.2/§3.6 收尾、§4 M-2 UI wire-up 都属于已立项功能的最后一公里。
 
 战略上面临的真问题不是"FinanceOS 还能加什么功能",而是:
 
@@ -68,4 +68,4 @@ Solo 维护成本 ≈ 域数 × shell 抖动。HealthOS 是第一次让 shell �
 - 架构边界: `lifeos-architecture-northstar.md` (§4 已更新为"已启动")
 - 跨域 shell SSOT: `lifeos-shell.md`
 - HealthOS 域 SSOT: `healthos-domain.md`
-- Finance 域路线 + Phase D 状态指针: `roadmap-next.md` §10
+- Finance 域路线 + Phase D 状态指针: `../archive/roadmaps/roadmap-next.md` §10

@@ -1,5 +1,5 @@
 /// `list_due_reviews` — KnowledgeOS device tool
-/// (`docs/knowledgeos-domain.md` §4).
+/// (`docs/domains/knowledgeos-domain.md` §4).
 ///
 /// Weekly Review 主面板。Returns decisions whose `review_date <= as_of`
 /// and status is still pending verification.

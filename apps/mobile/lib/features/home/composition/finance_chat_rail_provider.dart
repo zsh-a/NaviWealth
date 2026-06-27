@@ -1,5 +1,5 @@
 /// Finance-domain contribution to the chat rail
-/// (`docs/lifeos-shell.md` §4).
+/// (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// The chat rail used to be wired directly in
 /// `features/ai_chat/ui/ai_action_cards_rail.dart` and reached into

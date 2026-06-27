@@ -1,5 +1,5 @@
 /// Bundle of every FinanceOS provider override plugged into LifeOS shell
-/// composition seams (`docs/lifeos-shell.md` §4).
+/// composition seams (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// `kFinancePack` exposes [financeCompositionOverrides] through its
 /// `providerOverridesBuilder`, keeping Finance-specific AI seams out of

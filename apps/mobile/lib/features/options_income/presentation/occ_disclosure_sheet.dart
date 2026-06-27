@@ -11,7 +11,7 @@ import '../domain/options_strategy_profile.dart';
 const String _kOccOddUrl =
     'https://www.theocc.com/company-information/documents-and-archives/options-disclosure-document';
 
-/// First-run OCC ODD disclosure (`docs/options-income.md` §11.2).
+/// First-run OCC ODD disclosure (`docs/domains/options-income.md` §11.2).
 ///
 /// On accept the user's [OptionsStrategyProfile] is upserted with
 /// `riskDisclosureAckAt = now`. The page gates the scanner UI behind a

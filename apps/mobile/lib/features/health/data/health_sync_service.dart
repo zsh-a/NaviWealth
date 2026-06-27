@@ -1,4 +1,4 @@
-/// HealthOS platform → local DB sync (`docs/healthos-domain.md` §2,
+/// HealthOS platform → local DB sync (`docs/domains/healthos-domain.md` §2,
 /// D-2.2).
 ///
 /// Reads from a [HealthPlatformAdapter], maps each raw reading into the

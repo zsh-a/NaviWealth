@@ -1,4 +1,4 @@
-// Flow / Task test: "Export" — Task #12 in docs/testing-strategy.md.
+// Flow / Task test: "Export" — Task #12 in docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers Backup & Restore through global
 // Settings, enters an export passphrase, and proves the UI hands encrypted

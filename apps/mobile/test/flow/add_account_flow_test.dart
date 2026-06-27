@@ -1,4 +1,4 @@
-// Flow / Task test: "Add account" — Task #2 in docs/testing-strategy.md.
+// Flow / Task test: "Add account" — Task #2 in docs/development/testing-strategy.md.
 //
 // This uses the real AccountRepository against an in-memory Drift database
 // while keeping unrelated market/asset providers deterministic. The task

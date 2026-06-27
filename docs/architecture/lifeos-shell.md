@@ -16,10 +16,10 @@ The shell owns cross-domain infrastructure:
 
 Domain business behavior belongs in the domain SSOT:
 
-- FinanceOS: `docs/roadmap-finance.md` and finance feature docs.
-- HealthOS: `docs/healthos-domain.md`.
-- KnowledgeOS: `docs/knowledgeos-domain.md`.
-- ExecutionOS: `docs/executionos-domain.md`.
+- FinanceOS: `../roadmap/roadmap-finance.md` and finance feature docs.
+- HealthOS: `../domains/healthos-domain.md`.
+- KnowledgeOS: `../domains/knowledgeos-domain.md`.
+- ExecutionOS: `../domains/executionos-domain.md`.
 
 ## Current Shape
 
@@ -57,11 +57,12 @@ features/<domain>/
 | Domain | Scope | Shell tabs | Tools | Agents |
 |---|---|---|---|---|
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | none |
-| HealthOS | `health` | Today, Trend, Plan | `kHealthDeviceTools` | Morning Briefing |
+| HealthOS | `health` | Today, Trend, Plan | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
 | KnowledgeOS | `knowledge` | Inbox, Library, Review | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage, Routine Due |
-| ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | none |
+| ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | Review |
 
-Finance is always active. Health and Knowledge are enabled through `domainOptInsProvider`.
+Finance is always active. Health, Knowledge, and Execution are enabled through
+`domainOptInsProvider`.
 
 ## Adding Or Changing A Domain
 
@@ -136,6 +137,7 @@ Domain exports:
 - Finance: `features/finance_ai_tools.dart`.
 - Health: `features/health_ai_tools.dart`.
 - Knowledge: `features/knowledge_ai_tools.dart`.
+- Execution: `features/execution_ai_tools.dart`.
 
 Rules:
 
@@ -170,8 +172,9 @@ Core framework:
 
 Current domain agents:
 
-- Health: Morning Briefing.
+- Health: Morning Briefing, Recovery Alert, Weekly Summary.
 - Knowledge: Review, Assumption, Contradiction, Inbox Triage, Routine Due.
+- Execution: Review.
 
 Rules:
 
@@ -260,6 +263,7 @@ Location:
 - `core/persistence/tables.dart`
 - `core/persistence/health_tables.dart`
 - `core/persistence/knowledge_tables.dart`
+- `core/persistence/execution_tables.dart`
 - `core/persistence/local_only_tables.dart`
 
 Rules:
@@ -275,7 +279,7 @@ Location:
 
 - `core/background/`
 - `core/notifications/`
-- Health and Knowledge agent providers.
+- Health, Knowledge, and Execution agent providers.
 
 Rules:
 

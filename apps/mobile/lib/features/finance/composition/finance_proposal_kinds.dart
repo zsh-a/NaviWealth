@@ -1,5 +1,5 @@
 /// FinanceOS contributions to [proposalKindRegistryProvider]
-/// (`docs/lifeos-shell.md` §4).
+/// (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// Every Finance `propose_*` tool registers its kind metadata here:
 /// icon + label + editable fields shown in the inline edit sheet +

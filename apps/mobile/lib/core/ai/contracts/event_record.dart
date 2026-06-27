@@ -1,4 +1,4 @@
-/// Cross-domain event log entry (`docs/lifeos-shell.md` §6, D-1.7b).
+/// Cross-domain event log entry (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Events are durable, append-only(ish) records of "something
 /// happened": a trade opened, a sleep night ended, a file was saved.

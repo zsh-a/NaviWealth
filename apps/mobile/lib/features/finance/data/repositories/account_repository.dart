@@ -146,7 +146,7 @@ class AccountRepository {
   ///
   /// Sync semantics: the write marks the row dirty; the sync engine pushes
   /// the row's whole current state and peers apply row-level LWW
-  /// (`docs/sync-v2.md` §6).
+  /// (`docs/sync/sync-v2.md` §6).
   Future<Account> update(
     String id, {
     String? name,

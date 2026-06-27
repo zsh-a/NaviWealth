@@ -1,4 +1,4 @@
-/// HealthOS Trend surface (`docs/healthos-domain.md` §5, D-2.7).
+/// HealthOS Trend surface (`docs/domains/healthos-domain.md` §5, D-2.7).
 ///
 /// Three line charts (HRV / sleep hours / workout minutes) over the
 /// last 30 days. Each chart pulls from a dedicated provider that maps

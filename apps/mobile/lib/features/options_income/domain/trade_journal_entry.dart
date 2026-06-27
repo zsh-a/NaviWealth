@@ -7,7 +7,7 @@ import 'options_strategy_profile.dart';
 ///
 /// Created from a successful sell, mutated when the position closes (or is
 /// assigned / expires). The entry is synced — every device sees the same
-/// journal — per `docs/options-income.md` §6.2.
+/// journal — per `docs/domains/options-income.md` §6.2.
 class TradeJournalEntry {
   const TradeJournalEntry({
     required this.id,

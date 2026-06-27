@@ -1,4 +1,4 @@
-// Page Objects for flow tests (docs/testing-strategy.md §4).
+// Page Objects for flow tests (docs/development/testing-strategy.md §4).
 //
 // A Page Object wraps "how to find and operate a screen" behind an
 // intention-revealing API (`shell.openTab('Wealth')`), so flow Tasks read

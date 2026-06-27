@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Boundary lint: the cross-domain shell contracts (`core/ai/contracts/`
 # + `core/sync/`) stay free of any finance / health / time / domain-
-# specific terminology (`docs/lifeos-shell.md` §11 + northstar §2.5).
+# specific terminology (`docs/architecture/lifeos-shell.md` §11 + northstar §2.5).
 #
 # The contracts ship the *shape* every domain uses; a domain word
 # leaking into them creates an asymmetry that the next domain has to

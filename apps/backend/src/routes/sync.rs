@@ -1,4 +1,4 @@
-//! `POST /sync` — the single sync endpoint (docs/sync-v2.md §5.1).
+//! `POST /sync` — the single sync endpoint (docs/sync/sync-v2.md §5.1).
 //!
 //! One round trip does push and pull: the client uploads its dirty rows and
 //! its cursor, the server applies them (LWW) and returns everything newer
@@ -208,7 +208,7 @@ async fn sync_inner(
 
     // Apply the caller's changes first, then pull — so a row the caller just
     // pushed and a peer's newer version of it resolve before the response is
-    // built (docs/sync-v2.md §5.1).
+    // built (docs/sync/sync-v2.md §5.1).
     let pushed = store::apply_changes(&db, user_id, device_id, &allowed_changes).await?;
     let mut page = store::pull(&db, user_id, device_id, body.since, PULL_LIMIT).await?;
 

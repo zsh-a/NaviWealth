@@ -1,5 +1,5 @@
 /// `recall_decision` — KnowledgeOS device tool
-/// (`docs/knowledgeos-domain.md` §4).
+/// (`docs/domains/knowledgeos-domain.md` §4).
 ///
 /// "我之前为什么决定 X" 主路径。Returns decisions matching a free-form
 /// query, optionally narrowed by topic/time. Pure read — Drift only.

@@ -7,11 +7,11 @@ FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS. Domain-specific behavior rema
 the domain SSOTs:
 
 - FinanceOS: `roadmap-finance.md`
-- HealthOS: `healthos-domain.md`
-- KnowledgeOS: `knowledgeos-domain.md`
-- ExecutionOS: `executionos-domain.md`
-- Shell and registration seams: `lifeos-shell.md`
-- Hard boundaries and non-goals: `lifeos-architecture-northstar.md`
+- HealthOS: `../domains/healthos-domain.md`
+- KnowledgeOS: `../domains/knowledgeos-domain.md`
+- ExecutionOS: `../domains/executionos-domain.md`
+- Shell and registration seams: `../architecture/lifeos-shell.md`
+- Hard boundaries and non-goals: `../architecture/lifeos-architecture-northstar.md`
 
 ## Current Product Shape
 
@@ -32,7 +32,7 @@ one domain's real user workflow; do not add untriggered domains.
 
 ### 1. Multi-Domain Foundation Convergence
 
-Make the current three-domain system coherent before adding new domains.
+Make the current four-domain system coherent before adding new domains.
 
 - Keep `DomainPack` as the single domain inventory.
 - Keep domain opt-in behavior centralized through `activeDomainPacksProvider`.

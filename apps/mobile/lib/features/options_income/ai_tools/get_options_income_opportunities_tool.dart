@@ -7,7 +7,7 @@ import 'package:naviwealth/features/options_income/domain/options_strategy_profi
 
 /// `get_options_income_opportunities` — read-only cache surface.
 ///
-/// **Critical contract** (`docs/options-income.md` §8): this tool MUST
+/// **Critical contract** (`docs/domains/options-income.md` §8): this tool MUST
 /// NOT trigger a live scan. It reads the most recent cached batch only.
 /// If the cache is stale (>24h) or empty, the tool returns guidance text
 /// asking the user to refresh in the Income Planner UI.

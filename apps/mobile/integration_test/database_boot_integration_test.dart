@@ -1,4 +1,4 @@
-// On-device integration test (docs/testing-strategy.md §6).
+// On-device integration test (docs/development/testing-strategy.md §6).
 //
 // Every headless test (test/ + test/integration/) uses NativeDatabase.memory
 // via makeTestDatabase(), which bypasses the production connection: real

@@ -4,8 +4,8 @@
 Task spine, the CI gate design, and the burn-down roadmap. Read this
 before adding a new test *layer* or changing a CI test gate.
 
-Related: `docs/sync-protocol-tests.md` (sync case matrix), `docs/sync-e2e-manual.md`
-(manual multi-device checklist), `docs/web-compat-matrix.md` (browser support),
+Related: `docs/sync/sync-protocol-tests.md` (sync case matrix), `docs/sync/sync-e2e-manual.md`
+(manual multi-device checklist), `docs/development/web-compat-matrix.md` (browser support),
 `docs/visual-baseline/README.md` (golden contract).
 
 ---
@@ -180,7 +180,7 @@ of layout refactors.
 multi-device convergence with deterministic time. The current blocking bundle
 also includes `test/e2e/finance_ledger_e2e_test.dart`, so protocol behavior and
 Finance ledger convergence are proven together. `sync_e2e_test.dart` carries
-the P1-G E2E-1..5 markers; `docs/sync-protocol-tests.md` remains the broader
+the P1-G E2E-1..5 markers; `docs/sync/sync-protocol-tests.md` remains the broader
 case matrix. This is the canonical Task #5 coverage.
 
 ### AI exploratory + semantic (~1%, nightly, non-blocking)

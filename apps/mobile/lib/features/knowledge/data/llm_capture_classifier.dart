@@ -1,4 +1,4 @@
-/// LLM-driven capture classifier (`docs/knowledgeos-domain.md` §4 + §14).
+/// LLM-driven capture classifier (`docs/domains/knowledgeos-domain.md` §4 + §14).
 ///
 /// Same shape as [LlmBriefingSynthesizer] from HealthOS: wrap the user's
 /// configured [DeviceLlmClient], compose a tight system prompt that

@@ -1,4 +1,4 @@
-//! Generic row-state store for sync v2 (docs/sync-v2.md).
+//! Generic row-state store for sync v2 (docs/sync/sync-v2.md).
 //!
 //! The server is schema-agnostic: every business row lives in `sync_rows` as
 //! an opaque JSON `payload` keyed by `(user_id, table_name, row_id)`. Conflict
@@ -29,7 +29,7 @@ pub struct RowChange {
     #[serde(default)]
     pub payload: Option<Value>,
     /// Opaque, lexicographically-ordered LWW token the client assigns; the
-    /// server never interprets it (docs/sync-v2.md §4).
+    /// server never interprets it (docs/sync/sync-v2.md §4).
     pub version: String,
     #[serde(default)]
     pub deleted: bool,
@@ -77,7 +77,7 @@ fn d1_err(e: impl std::fmt::Display) -> AppError {
 }
 
 /// `incoming` beats `stored` under last-writer-wins. `device_id` only breaks
-/// the exact-version tie so the order is total (docs/sync-v2.md §4.2).
+/// the exact-version tie so the order is total (docs/sync/sync-v2.md §4.2).
 fn lww_wins(incoming_version: &str, incoming_device: &str, stored: Option<&MetaRow>) -> bool {
     match stored {
         None => true,

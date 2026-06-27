@@ -1,5 +1,5 @@
 /// KnowledgeOS object → Memory indexers for the five non-Decision
-/// types (`docs/knowledgeos-domain.md` §3 — "写一份,索引两次").
+/// types (`docs/domains/knowledgeos-domain.md` §3 — "写一份,索引两次").
 ///
 /// Decision has its own file because its payload / status semantics
 /// are richer; the five types here share the same "subscribe-and-
@@ -51,7 +51,7 @@ const String kKnowledgeDecisionMemorySource = 'know:decisions';
 const String kKnowledgeRoutineMemorySource = 'know:routines';
 
 /// Every KnowledgeOS Memory source keyed by a short type token
-/// (`docs/knowledgeos-domain.md` §15.3). Iterated by the dedupe /
+/// (`docs/domains/knowledgeos-domain.md` §15.3). Iterated by the dedupe /
 /// cross-type search tools. Add a new type's source above and here.
 const Map<String, String> kKnowledgeMemorySources = <String, String>{
   'note': kKnowledgeNoteMemorySource,
@@ -92,7 +92,7 @@ Future<void> _forgetMissingSourceIds(
 }
 
 /// Shared subscribe-then-reindex plumbing for every KnowledgeOS indexer
-/// provider, Decision included (`docs/knowledgeos-domain.md` §3).
+/// provider, Decision included (`docs/domains/knowledgeos-domain.md` §3).
 ///
 /// Each indexer used to repeat ~15 lines of identical Riverpod
 /// boilerplate: opt-in gate → resolve repo/userId/runtime → re-entrance

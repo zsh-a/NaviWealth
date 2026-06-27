@@ -1,4 +1,4 @@
-/// KnowledgeOS Review tab (`docs/knowledgeos-domain.md` §5).
+/// KnowledgeOS Review tab (`docs/domains/knowledgeos-domain.md` §5).
 ///
 /// 3 cards: due Routines (next_due_at within 7d), due Decisions
 /// (review_date passed) and stale Assumptions (active && > 90d

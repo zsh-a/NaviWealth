@@ -7,11 +7,11 @@ void main() {
     final root = _repoRoot();
     final markdownFiles = <File>[
       File('${root.path}/README.md'),
-      File('${root.path}/docs/ai-architecture.md'),
-      File('${root.path}/docs/lifeos-architecture-northstar.md'),
-      File('${root.path}/docs/lifeos-shell.md'),
-      File('${root.path}/docs/web-compat-matrix.md'),
-      File('${root.path}/docs/web-routing.md'),
+      File('${root.path}/docs/ai/ai-architecture.md'),
+      File('${root.path}/docs/architecture/lifeos-architecture-northstar.md'),
+      File('${root.path}/docs/architecture/lifeos-shell.md'),
+      File('${root.path}/docs/development/web-compat-matrix.md'),
+      File('${root.path}/docs/development/web-routing.md'),
     ];
 
     final legacyTopLevelRoute = RegExp(

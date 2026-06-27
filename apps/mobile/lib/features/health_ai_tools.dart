@@ -1,4 +1,4 @@
-/// HealthOS device-tool aggregator (`docs/lifeos-shell.md` §7.1, D-2.4).
+/// HealthOS device-tool aggregator (`docs/architecture/lifeos-shell.md` §7.1, D-2.4).
 ///
 /// Mirrors `finance_ai_tools.dart`. Bootstrap concatenates this list
 /// into the cross-domain `deviceToolsProvider` only when the user has

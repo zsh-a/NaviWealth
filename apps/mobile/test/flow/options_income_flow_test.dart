@@ -1,5 +1,5 @@
 // Flow / Task test: "Plan options income" — Task #9 in
-// docs/testing-strategy.md.
+// docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers Income strategy from the Plan hub,
 // and lands on the Income Planner setup surface. The first-run state is

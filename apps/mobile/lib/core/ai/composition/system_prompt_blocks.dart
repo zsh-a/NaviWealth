@@ -1,5 +1,5 @@
 /// Domain-aware system prompt composition seam
-/// (`docs/lifeos-shell.md` §4).
+/// (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// Each active LifeOS domain contributes one string block, appended
 /// verbatim onto [kDeviceSystemPromptBase] by [composeDeviceSystemPrompt].

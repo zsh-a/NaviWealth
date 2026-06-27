@@ -1,5 +1,5 @@
 /// `build_context` — kind-classified context pack from the Memory
-/// Runtime (`docs/lifeos-shell.md` §6, D-1.7b).
+/// Runtime (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Returns a structured `{user_preferences, applicable_rules,
 /// related_decisions, recent_events, related_events}` instead of flat

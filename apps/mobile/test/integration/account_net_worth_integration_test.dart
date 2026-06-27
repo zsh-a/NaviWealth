@@ -1,6 +1,6 @@
 // Integration test (real Drift): account persistence + the dashboard
 // net-worth read model. This is the seed of the "Integration (real chain)"
-// layer in docs/testing-strategy.md §4 — it runs the production provider
+// layer in docs/development/testing-strategy.md §4 — it runs the production provider
 // graph (repository → Drift → stream providers → DashboardAggregator)
 // against a real in-memory database, faking only auth + the HLC stamper.
 //

@@ -1,15 +1,16 @@
 # NaviWealth Agent Guide
 
-NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain; HealthOS and KnowledgeOS are opt-in domains registered through the LifeOS shell. The app targets iOS, Android, and Web. Device AI is native-only; Web has no AI runtime and no Health integration.
+NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain; HealthOS, KnowledgeOS, and ExecutionOS are opt-in domains registered through the LifeOS shell. The app targets iOS, Android, and Web. Device AI is native-only; Web has no AI runtime and no Health integration.
 
 Read these before changing architecture or cross-domain code:
 
-- `docs/lifeos-architecture-northstar.md`: boundaries and non-goals.
-- `docs/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
-- `docs/lifeos-decision-2026-05-24.md`: ADR that started Phase D and selected HealthOS as the second domain.
-- Roadmaps and domain SSOTs as needed: `docs/roadmap-lifeos.md`,
-  `docs/roadmap-finance.md`, `docs/healthos-domain.md`,
-  `docs/knowledgeos-domain.md`.
+- `docs/architecture/lifeos-architecture-northstar.md`: boundaries and non-goals.
+- `docs/architecture/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
+- `docs/decisions/lifeos-decision-2026-05-24.md`: ADR that started Phase D and selected HealthOS as the second domain.
+- Roadmaps and domain SSOTs as needed: `docs/index.md`,
+  `docs/roadmap/roadmap-lifeos.md`, `docs/roadmap/roadmap-finance.md`,
+  `docs/domains/healthos-domain.md`, `docs/domains/knowledgeos-domain.md`,
+  `docs/domains/executionos-domain.md`.
 
 ## Current Domains
 
@@ -18,6 +19,7 @@ Read these before changing architecture or cross-domain code:
 | FinanceOS | Always on | `features/finance/`, finance feature slices, `features/finance_ai_tools.dart` | `fin:` |
 | HealthOS | User opt-in | `features/health/`, `features/health_ai_tools.dart` | `health:` |
 | KnowledgeOS | User opt-in | `features/knowledge/`, `features/knowledge_ai_tools.dart` | `know:` |
+| ExecutionOS | User opt-in | `features/execution/`, `features/execution_ai_tools.dart` | `exec:` |
 
 The production domain inventory is `apps/mobile/lib/app/domain_packs.dart`. Each domain contributes a `DomainPack`: tools, prompt block, shell route, shell spec, agents, command palette entries, and tab paths. Add a new domain by adding a real domain package and one registry entry; do not scatter one-off branching through bootstrap.
 
@@ -30,6 +32,7 @@ The production domain inventory is `apps/mobile/lib/app/domain_packs.dart`. Each
 | Backend | `apps/backend/` | Rust, Cloudflare Workers, D1 |
 | Securities catalog build | `tool/asset_catalog/` | Python |
 | Project docs | `docs/` | Markdown |
+| Docs site config | `mkdocs.yml` | MkDocs |
 | CI/CD | `.github/workflows/` | GitHub Actions |
 
 Mobile layout:
@@ -51,6 +54,7 @@ apps/mobile/lib/
     finance/            Finance composition and data root
     health/             HealthOS data, UI, AI tools, agents
     knowledge/          KnowledgeOS data, UI, AI tools, agents
+    execution/          ExecutionOS data, UI, AI tools, agents
     <finance slices>/   accounts, assets, cashflow, investment, options, etc.
   l10n/                 ARB files and generated localizations
 ```
@@ -213,6 +217,7 @@ Project lint gates:
   - Finance: `fin:<table>`
   - Health: `health:<table>`
   - Knowledge: `know:<table>`
+  - Execution: `exec:<table>`
 - Local-only derived data, memory embeddings, and triage side tables do not sync unless explicitly designed to do so.
 
 ## AI Runtime
@@ -223,7 +228,7 @@ Project lint gates:
 - Tool registry aggregation: `deviceToolsProvider` in `bootstrap.dart`, based on active `DomainPack`s.
 - Prompt aggregation: `systemPromptBlocksProvider`, also based on active `DomainPack`s.
 - Agents: `core/ai/agents/` framework; domain agents live under `features/<domain>/agents/` and are registered through `DomainPack.agentBuilder`.
-- Proposal application is a cross-domain seam. Finance and Knowledge proposals are composed in `features/knowledge/composition/knowledge_bootstrap.dart`.
+- Proposal application is a cross-domain seam. Active domain proposal routes are contributed by each `DomainPack` and composed in `apps/mobile/lib/app/domain_composition.dart`.
 
 ## Environment
 
@@ -242,19 +247,20 @@ Project lint gates:
 
 | Doc | Use |
 |---|---|
-| `docs/lifeos-architecture-northstar.md` | Architecture boundaries and non-goals |
-| `docs/lifeos-shell.md` | Cross-domain shell SSOT |
-| `docs/lifeos-decision-2026-05-24.md` | Phase D ADR |
-| `docs/healthos-domain.md` | HealthOS scope, data, AI tools, agents |
-| `docs/knowledgeos-domain.md` | KnowledgeOS scope, data, AI tools, agents |
-| `docs/ai-architecture.md` | Device AI runtime design |
-| `docs/ai-protocol.md` | AI event/tool protocol |
-| `docs/sync-v2.md` | Active sync protocol |
-| `docs/sync-protocol.md` | Historical v1 protocol only |
-| `docs/options-income.md` | Options income engine |
-| `docs/market-data-providers.md` | Market data providers |
-| `docs/local-development.md` | Local setup |
-| `docs/testing-strategy.md` | Test strategy |
+| `docs/architecture/lifeos-architecture-northstar.md` | Architecture boundaries and non-goals |
+| `docs/architecture/lifeos-shell.md` | Cross-domain shell SSOT |
+| `docs/decisions/lifeos-decision-2026-05-24.md` | Phase D ADR |
+| `docs/domains/healthos-domain.md` | HealthOS scope, data, AI tools, agents |
+| `docs/domains/knowledgeos-domain.md` | KnowledgeOS scope, data, AI tools, agents |
+| `docs/domains/executionos-domain.md` | ExecutionOS scope, actions, commitments, progress |
+| `docs/ai/ai-architecture.md` | Device AI runtime design |
+| `docs/ai/ai-protocol.md` | AI event/tool protocol |
+| `docs/sync/sync-v2.md` | Active sync protocol |
+| `docs/archive/sync-protocol.md` | Historical v1 protocol only |
+| `docs/domains/options-income.md` | Options income engine |
+| `docs/domains/market-data-providers.md` | Market data providers |
+| `docs/development/local-development.md` | Local setup |
+| `docs/development/testing-strategy.md` | Test strategy |
 | `apps/mobile/README.md` | Mobile engineering baseline |
 | `apps/mobile/design_tokens/README.md` | Design tokens |
 | `apps/mobile/web_smoke/README.md` | Playwright smoke tests |

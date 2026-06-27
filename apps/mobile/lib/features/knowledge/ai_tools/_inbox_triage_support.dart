@@ -1,5 +1,5 @@
 /// Shared helpers for the `queue_inbox_*` tool trio
-/// (`docs/knowledgeos-domain.md` §4 + §7).
+/// (`docs/domains/knowledgeos-domain.md` §4 + §7).
 ///
 /// Each tool's `invoke` produces a [ProposalEnvelope] map *and* persists
 /// the same envelope into the local `knowledge_inbox_triage` side-table

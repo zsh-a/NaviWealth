@@ -1,5 +1,5 @@
 /// `summarize_topic_evolution` — KnowledgeOS device tool
-/// (`docs/knowledgeos-domain.md` §4).
+/// (`docs/domains/knowledgeos-domain.md` §4).
 ///
 /// 回答 "我对 X 的看法这半年怎么变了"。Walks notes + decisions matching
 /// `concept_or_topic` and returns a chronologically-ordered timeline of

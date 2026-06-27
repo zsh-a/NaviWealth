@@ -1,5 +1,5 @@
 /// `list_due_routines` — KnowledgeOS device tool
-/// (`docs/knowledgeos-domain.md` §4 + §7).
+/// (`docs/domains/knowledgeos-domain.md` §4 + §7).
 ///
 /// Returns active routines whose `next_due_at <= as_of`, including those
 /// already overdue. Used by Morning Briefing / Review tab / RoutineDueAgent.

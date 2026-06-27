@@ -6,7 +6,7 @@ import '../logging/app_logger.dart';
 import 'sync_engine.dart';
 
 /// Drives the SyncEngine on the cadences specified in
-/// `docs/sync-v2.md` §7.4:
+/// `docs/sync/sync-v2.md` §7.4:
 ///   - App resumed → immediate sync
 ///   - Foreground → 30 s polling timer
 ///   - Manual "Sync now" → call [triggerNow]

@@ -1,5 +1,5 @@
 /// `knowledge_review` — weekly review agent
-/// (`docs/knowledgeos-domain.md` §5 + §7).
+/// (`docs/domains/knowledgeos-domain.md` §5 + §7).
 ///
 /// Runs Sunday 09:00 local. Surfaces "what needs review this week" —
 /// both Decisions whose `review_date` has passed **and** active

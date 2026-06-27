@@ -8,7 +8,7 @@
 //
 // Real browser history (`window.history.back/forward`) is platform glue we
 // can't drive from a widget test — those flows are covered by the manual
-// checklist in apps/mobile/docs/web-routing.md and live cross-browser runs in
+// checklist in apps/mobile/docs/development/web-routing.md and live cross-browser runs in
 // FIR-40. What we *can* assert here is the router contract those flows rely
 // on: a given URL deterministically maps to a given page, and the bottom nav
 // keeps the URL up to date.

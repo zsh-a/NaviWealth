@@ -6,7 +6,7 @@ import '../../../domain/values/asset_market.dart';
 /// An underlying symbol the user has explicitly approved for options income
 /// strategies.
 ///
-/// Hard architectural rule (`docs/options-income.md` §1.2): sell put / covered
+/// Hard architectural rule (`docs/domains/options-income.md` §1.2): sell put / covered
 /// call candidates are only ever generated against symbols on this list.
 /// LLMs cannot bypass it — the scoring engine drops any candidate whose
 /// underlying is missing or has the matching strategy disabled.

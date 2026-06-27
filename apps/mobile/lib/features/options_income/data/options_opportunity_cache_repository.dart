@@ -13,7 +13,7 @@ import '../domain/options_strategy_profile.dart';
 
 /// Local-only cache repository for [OptionsOpportunity]s.
 ///
-/// Behaviour rules (`docs/options-income.md` §6.2):
+/// Behaviour rules (`docs/domains/options-income.md` §6.2):
 ///   * Single batch retained per scan id; the latest batch is the canonical
 ///     read source.
 ///   * On `replaceBatch`, batches older than 1 week are vacuumed.

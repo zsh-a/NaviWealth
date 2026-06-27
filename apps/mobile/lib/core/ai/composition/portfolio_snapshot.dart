@@ -1,5 +1,5 @@
 /// Cross-domain seam for the portfolio snapshot the chat surface
-/// ships alongside each turn (`docs/lifeos-shell.md` §4, D-1.6b).
+/// ships alongside each turn (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// `ChatRepository` accepts an optional closure that returns a
 /// JSON-shaped snapshot of the user's current portfolio. The shape

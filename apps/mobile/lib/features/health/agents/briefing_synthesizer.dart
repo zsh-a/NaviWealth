@@ -1,4 +1,4 @@
-/// Morning Briefing synthesis seam (`docs/healthos-domain.md` §8,
+/// Morning Briefing synthesis seam (`docs/domains/healthos-domain.md` §8,
 /// D-2.5 + D-2.5b).
 ///
 /// Two implementations:

@@ -1,4 +1,4 @@
-/// Capture target type (`docs/knowledgeos-domain.md` §3 + §14.2 P1).
+/// Capture target type (`docs/domains/knowledgeos-domain.md` §3 + §14.2 P1).
 ///
 /// Tiny enum lifted out of `capture_classifier.dart` so both the
 /// classifier and the `propose_capture` AI tool depend on the same

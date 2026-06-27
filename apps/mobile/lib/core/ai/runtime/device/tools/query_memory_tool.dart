@@ -1,5 +1,5 @@
 /// `query_memory` — flat hybrid-ranked Memory Runtime search
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Kept for back-compat with the descriptor catalog + LLM prompts that
 /// already know the name. For richer kind-classified output prefer
