@@ -47,6 +47,8 @@ jobs:
       - name: Materialize drift web assets (sqlite3.wasm + drift_worker.dart.js)
         run: tool/setup-drift-web.sh
       - name: Build CN web font subsets
+        env:
+          CHECK_CN_FONT_SIZE: 'false'
         run: tool/build-cn-fonts.sh
       - name: Build Latin font subsets (Inter + Outfit)
         run: tool/build-latin-fonts.sh

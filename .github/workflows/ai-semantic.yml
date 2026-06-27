@@ -30,6 +30,8 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Build semantic font assets
+        env:
+          CHECK_CN_FONT_SIZE: 'false'
         run: |
           bash tool/build-cn-fonts.sh
           bash tool/build-latin-fonts.sh

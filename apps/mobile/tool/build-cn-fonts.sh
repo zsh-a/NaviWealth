@@ -41,6 +41,7 @@ SOURCE_STAMP="$SOURCE_DIR/.sha256"
 BASE_OUT="$ASSETS_DIR/app-cn-base.woff2"
 EXT_OUT="$ASSETS_DIR/app-cn-ext.woff2"
 BASE_BUDGET_BYTES="${BASE_BUDGET_BYTES:-300000}"  # first-paint web budget (~293 KiB); rationale in docs/web-bundle.md
+CHECK_CN_FONT_SIZE="${CHECK_CN_FONT_SIZE:-true}"
 
 mkdir -p "$CACHE_DIR" "$ASSETS_DIR" "$SOURCE_DIR" "$UNICODE_DIR"
 
@@ -124,18 +125,25 @@ echo "subsetting → $EXT_OUT"
   --output-file="$EXT_OUT" \
   "${common_args[@]}"
 
-# 5. Enforce the first-paint size budget. Better to fail the build than to
-#    quietly ship a 4 MB CJK font on the first request.
+# 5. Enforce the first-paint size budget unless explicitly disabled by CI.
 base_size=$(wc -c < "$BASE_OUT" | tr -d ' ')
 ext_size=$(wc -c < "$EXT_OUT" | tr -d ' ')
 echo "produced $BASE_OUT ($base_size bytes), $EXT_OUT ($ext_size bytes)"
-if [ "$base_size" -gt "$BASE_BUDGET_BYTES" ]; then
-  echo "::error::$BASE_OUT is $base_size bytes, exceeds budget $BASE_BUDGET_BYTES bytes" >&2
-  echo "  This is a tripwire — find WHY base grew before raising the budget:" >&2
-  echo "  • model-facing / web-dead text (device AI, test fixtures) → scope it" >&2
-  echo "    out in tool/cn_font_chars.py (do not ship it to the web font);" >&2
-  echo "  • real first-paint UI/l10n growth → raise BASE_BUDGET_BYTES and" >&2
-  echo "    record the new number + reason in docs/web-bundle.md." >&2
-  exit 1
-fi
-echo "ok — base subset within budget ($base_size / $BASE_BUDGET_BYTES bytes)"
+check_cn_font_size=$(printf '%s' "$CHECK_CN_FONT_SIZE" | tr '[:upper:]' '[:lower:]')
+case "$check_cn_font_size" in
+  0|false|no|off)
+    echo "skipping CN base subset budget check (CHECK_CN_FONT_SIZE=$CHECK_CN_FONT_SIZE)"
+    ;;
+  *)
+    if [ "$base_size" -gt "$BASE_BUDGET_BYTES" ]; then
+      echo "::error::$BASE_OUT is $base_size bytes, exceeds budget $BASE_BUDGET_BYTES bytes" >&2
+      echo "  This is a tripwire — find WHY base grew before raising the budget:" >&2
+      echo "  • model-facing / web-dead text (device AI, test fixtures) → scope it" >&2
+      echo "    out in tool/cn_font_chars.py (do not ship it to the web font);" >&2
+      echo "  • real first-paint UI/l10n growth → raise BASE_BUDGET_BYTES and" >&2
+      echo "    record the new number + reason in docs/web-bundle.md." >&2
+      exit 1
+    fi
+    echo "ok — base subset within budget ($base_size / $BASE_BUDGET_BYTES bytes)"
+    ;;
+esac

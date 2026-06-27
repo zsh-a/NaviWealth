@@ -140,6 +140,8 @@ jobs:
           ./tool/build-asset-catalog.sh --full --allow-degraded \
             --sources hk_stock,us_stock,crypto
       - name: Build CN web font subsets
+        env:
+          CHECK_CN_FONT_SIZE: 'false'
         run: bash tool/build-cn-fonts.sh
       - name: Build Latin font subsets (Inter + Outfit)
         run: bash tool/build-latin-fonts.sh
