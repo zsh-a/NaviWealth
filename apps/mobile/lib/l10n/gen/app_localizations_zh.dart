@@ -1234,6 +1234,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeNetWorthTitle => '净资产';
 
   @override
+  String get homeQuickAddAccount => '添加账户';
+
+  @override
+  String get homeQuickRecordEntry => '记一笔';
+
+  @override
+  String get homeQuickImport => '导入';
+
+  @override
   String get financePrivacyHideAmountsTooltip => '隐藏金额';
 
   @override

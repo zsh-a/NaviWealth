@@ -1276,6 +1276,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNetWorthTitle => 'Net Worth';
 
   @override
+  String get homeQuickAddAccount => 'Add account';
+
+  @override
+  String get homeQuickRecordEntry => 'Record entry';
+
+  @override
+  String get homeQuickImport => 'Import';
+
+  @override
   String get financePrivacyHideAmountsTooltip => 'Hide amounts';
 
   @override

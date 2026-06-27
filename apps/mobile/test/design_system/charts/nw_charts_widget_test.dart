@@ -362,6 +362,29 @@ void main() {
 
       await gesture.up();
     });
+
+    testWidgets('showYAxis: false removes the left axis gutter', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NwLineChart(
+            showYAxis: false,
+            showTouchXAxisLabel: true,
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: [ChartPoint(x: 0, y: 0), ChartPoint(x: 1, y: 1)],
+              ),
+            ],
+          ),
+        ),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      final leftTitles = chart.data.titlesData.leftTitles.sideTitles;
+      expect(leftTitles.showTitles, isFalse);
+      expect(leftTitles.reservedSize, 0);
+    });
   });
 
   group('NwAreaChart', () {

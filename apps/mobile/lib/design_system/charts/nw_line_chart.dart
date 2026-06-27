@@ -45,6 +45,7 @@ class NwLineChart extends StatefulWidget {
     this.curveSmoothness = 0.28,
     this.heroDots = false,
     this.showXAxis = true,
+    this.showYAxis = true,
     this.showTouchXAxisLabel = false,
     this.minimal = false,
   });
@@ -89,6 +90,9 @@ class NwLineChart extends StatefulWidget {
 
   /// Whether to render the bottom X-axis labels in the resting chart.
   final bool showXAxis;
+
+  /// Whether to render the left Y-axis labels in the resting chart.
+  final bool showYAxis;
 
   /// Whether a compact X value label should appear near the crosshair while
   /// the user drags across the chart.
@@ -442,7 +446,7 @@ class _NwLineChartState extends State<NwLineChart> {
   }
 
   _ChartPlotInsets get _plotInsets => _ChartPlotInsets(
-    left: widget.minimal ? 0 : _kLeftTitleReservedSize,
+    left: widget.minimal || !widget.showYAxis ? 0 : _kLeftTitleReservedSize,
     bottom: !widget.minimal && widget.showXAxis ? _kBottomTitleReservedSize : 0,
   );
 
@@ -497,8 +501,8 @@ class _NwLineChartState extends State<NwLineChart> {
       ),
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: _kLeftTitleReservedSize,
+          showTitles: widget.showYAxis,
+          reservedSize: widget.showYAxis ? _kLeftTitleReservedSize : 0,
           interval: yInterval,
           getTitlesWidget: (value, meta) {
             // Skip labels that would overlap on short charts.

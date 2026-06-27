@@ -2288,6 +2288,24 @@ abstract class AppLocalizations {
   /// **'Net Worth'**
   String get homeNetWorthTitle;
 
+  /// Home quick action label that opens the new account flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add account'**
+  String get homeQuickAddAccount;
+
+  /// Home quick action label that opens the new expense or journal entry flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Record entry'**
+  String get homeQuickRecordEntry;
+
+  /// Home quick action label that opens the activity ingest flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get homeQuickImport;
+
   /// Tooltip for the Finance home privacy button when tapping will hide exact monetary amounts.
   ///
   /// In en, this message translates to:

@@ -10,6 +10,7 @@ import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../data/dashboard_insights_provider.dart';
 import '../data/dismissed_insights_store.dart';
 import '../domain/insight_models.dart';
+import 'home_section.dart';
 import 'insight_feed_strings.dart';
 
 /// Vertical feed of AI-generated insights — the calm-finance replacement
@@ -31,33 +32,20 @@ class AiInsightFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     if (insights.isEmpty) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.s4,
-            bottom: AppSpacing.s8,
-            top: AppSpacing.s4,
-          ),
-          child: Text(
-            l10n.dashboardAiInsightsTitle,
-            style: context.mutedLabelStyle,
-          ),
-        ),
-        StaggeredColumn(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < insights.length; i++)
-              Padding(
-                padding: EdgeInsets.only(
-                  bottom: i == insights.length - 1 ? 0 : AppSpacing.s8,
-                ),
-                child: _InsightCard(item: insights[i]),
+    return HomeSection(
+      title: l10n.dashboardAiInsightsTitle,
+      child: StaggeredColumn(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < insights.length; i++)
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: i == insights.length - 1 ? 0 : AppSpacing.s8,
               ),
-          ],
-        ),
-      ],
+              child: _InsightCard(item: insights[i]),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -151,9 +139,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
       ],
     );
 
-    return SoftCard(
-      borderless: true,
-      level: SoftCardLevel.raised,
+    return HomeSurface(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
         vertical: AppSpacing.s12,

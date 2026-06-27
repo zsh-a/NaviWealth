@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/async/deferred_provider_snapshot.dart';
 import '../../core/format/providers.dart';
 import '../../core/sync/providers.dart';
@@ -24,6 +26,7 @@ import 'ui/ai_insight_feed.dart';
 import 'ui/allocation_summary.dart';
 import 'ui/currency_mismatch_banner.dart';
 import 'ui/home_greeting_header.dart';
+import 'ui/home_section.dart';
 import 'ui/trend_card.dart';
 
 final _valuationStatusTickerProvider = StreamProvider.autoDispose<DateTime>((
@@ -158,6 +161,8 @@ class _DashboardBodyContent extends ConsumerWidget {
                       children: [
                         HomeGreetingHeader(insightCount: insights.length),
                         _NetWorthHeader(snapshot: snapshot),
+                        const SizedBox(height: AppSpacing.s12),
+                        const _HomeQuickActions(),
                       ],
                     ),
                     primary: Column(
@@ -190,6 +195,8 @@ class _DashboardBodyContent extends ConsumerWidget {
                       children: [
                         HomeGreetingHeader(insightCount: insights.length),
                         _NetWorthHeader(snapshot: snapshot),
+                        const SizedBox(height: AppSpacing.s12),
+                        const _HomeQuickActions(),
                         if (insights.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.s20),
                           AiInsightFeed(insights: insights),
@@ -210,6 +217,108 @@ class _DashboardBodyContent extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _HomeQuickActions extends StatelessWidget {
+  const _HomeQuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return HomeSurface(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s8,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _HomeQuickAction(
+              icon: FLucideIcons.walletCards,
+              label: l10n.homeQuickAddAccount,
+              onPress: () => context.push(AppRoutes.wealthAccountNew),
+            ),
+          ),
+          _QuickActionDivider(color: colors.border),
+          Expanded(
+            child: _HomeQuickAction(
+              icon: FLucideIcons.receiptText,
+              label: l10n.homeQuickRecordEntry,
+              onPress: () => context.push(AppRoutes.expenseNew),
+            ),
+          ),
+          _QuickActionDivider(color: colors.border),
+          Expanded(
+            child: _HomeQuickAction(
+              icon: FLucideIcons.upload,
+              label: l10n.homeQuickImport,
+              onPress: () => context.push(AppRoutes.activityIngest),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeQuickAction extends StatelessWidget {
+  const _HomeQuickAction({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s4,
+          vertical: AppSpacing.s8,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+            const SizedBox(width: AppSpacing.s6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.captionLabelStyle.copyWith(
+                  color: colors.foreground,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionDivider extends StatelessWidget {
+  const _QuickActionDivider({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppStroke.hairline,
+      height: AppSpacing.s24,
+      color: color.withValues(alpha: AppOpacity.faint),
     );
   }
 }
