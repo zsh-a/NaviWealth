@@ -25,6 +25,18 @@ String executionStatusLabel(
   };
 }
 
+String executionProjectStatusLabel(
+  AppLocalizations l10n,
+  ExecutionProjectStatus status,
+) {
+  return switch (status) {
+    ExecutionProjectStatus.active => l10n.executionProjectStatusActive,
+    ExecutionProjectStatus.paused => l10n.executionProjectStatusPaused,
+    ExecutionProjectStatus.completed => l10n.executionProjectStatusCompleted,
+    ExecutionProjectStatus.archived => l10n.executionProjectStatusArchived,
+  };
+}
+
 class ExecutionStateView extends StatelessWidget {
   const ExecutionStateView({
     super.key,
@@ -247,6 +259,81 @@ class ExecutionCommitmentCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ExecutionProjectCard extends StatelessWidget {
+  const ExecutionProjectCard({super.key, required this.project});
+
+  final ExecutionProject project;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      level: SoftCardLevel.raised,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIconTile(
+            icon: FLucideIcons.folder,
+            color: colors.primary,
+            size: 34,
+            iconSize: AppIconSizes.sm,
+            backgroundOpacity: AppOpacity.whisper,
+            foregroundOpacity: 1,
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  project.title,
+                  style: context.rowTitleStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (project.description.trim().isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    project.description.trim(),
+                    style: context.bodyCaptionStyle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.s10),
+                Wrap(
+                  spacing: AppSpacing.s6,
+                  runSpacing: AppSpacing.s6,
+                  children: [
+                    AppBadge(
+                      label: executionProjectStatusLabel(l10n, project.status),
+                      tone: project.status == ExecutionProjectStatus.paused
+                          ? AppBadgeTone.warning
+                          : AppBadgeTone.info,
+                      size: AppBadgeSize.compact,
+                    ),
+                    if (project.targetDate != null)
+                      AppBadge(
+                        label: l10n.executionDueBadge(
+                          executionDate(context, project.targetDate!),
+                        ),
+                        tone: AppBadgeTone.info,
+                        size: AppBadgeSize.compact,
+                        icon: FLucideIcons.calendarDays,
+                      ),
+                  ],
+                ),
               ],
             ),
           ),

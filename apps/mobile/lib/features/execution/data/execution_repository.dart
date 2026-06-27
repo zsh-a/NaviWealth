@@ -14,6 +14,7 @@ import '../../../core/sync/sync_meta.dart';
 import '../domain/execution_models.dart';
 
 enum ExecutionEntryKind {
+  project('execution_projects'),
   action('execution_actions'),
   commitment('execution_commitments'),
   progressEntry('execution_progress_entries');
@@ -30,6 +31,7 @@ class ExecutionRepository {
   final AppDatabase _db;
   final OutboxStore _outbox;
 
+  static const String _projectsTable = 'execution_projects';
   static const String _actionsTable = 'execution_actions';
   static const String _commitmentsTable = 'execution_commitments';
   static const String _progressTable = 'execution_progress_entries';
@@ -81,6 +83,58 @@ class ExecutionRepository {
       ])
       ..limit(limit);
     return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+  }
+
+  Stream<List<ExecutionProject>> watchActiveProjects({
+    required String ownerUserId,
+    int limit = 100,
+  }) {
+    final q = _db.select(_db.executionProjects)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where(
+        (t) => t.status.isIn(<String>[
+          ExecutionProjectStatus.active.wire,
+          ExecutionProjectStatus.paused.wire,
+        ]),
+      )
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_projectFromRow).toList());
+  }
+
+  Future<List<ExecutionProject>> listActiveProjects({
+    required String ownerUserId,
+    int limit = 100,
+  }) async {
+    final q = _db.select(_db.executionProjects)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where(
+        (t) => t.status.isIn(<String>[
+          ExecutionProjectStatus.active.wire,
+          ExecutionProjectStatus.paused.wire,
+        ]),
+      )
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_projectFromRow).toList();
+  }
+
+  Future<void> upsertProject(ExecutionProject project) {
+    return _upsertAndEnqueue(
+      _db.executionProjects,
+      _projectCompanion(project),
+      tableName: _projectsTable,
+      rowId: project.id,
+    );
   }
 
   Stream<List<ExecutionAction>> watchOpenActions({
@@ -181,6 +235,7 @@ class ExecutionRepository {
         final progress = ExecutionProgressEntry(
           id: progressId,
           actionId: action.id,
+          projectId: action.projectId,
           commitmentId: action.commitmentId,
           kind: switch (status) {
             ExecutionActionStatus.blocked => ExecutionProgressKind.blocker,
@@ -290,6 +345,28 @@ class ExecutionRepository {
     );
   }
 
+  ExecutionProjectsCompanion _projectCompanion(ExecutionProject project) {
+    return ExecutionProjectsCompanion.insert(
+      id: project.id,
+      title: project.title,
+      description: Value(project.description),
+      status: Value(project.status.wire),
+      horizon: Value(project.horizon.wire),
+      targetDate: Value(project.targetDate),
+      sourceDomain: Value(project.source.domain),
+      sourceRowFamily: Value(project.source.rowFamily),
+      sourceRowId: Value(project.source.rowId),
+      sourceLabelSnapshot: Value(project.source.labelSnapshot),
+      createdAt: project.createdAt,
+      completedAt: Value(project.completedAt),
+      ownerUserId: project.sync.ownerUserId,
+      updatedAt: project.sync.updatedAt,
+      updatedByDevice: project.sync.updatedByDevice,
+      hlc: project.sync.hlc,
+      deletedAt: Value(project.sync.deletedAt),
+    );
+  }
+
   ExecutionActionsCompanion _actionCompanion(ExecutionAction action) {
     return ExecutionActionsCompanion.insert(
       id: action.id,
@@ -299,6 +376,7 @@ class ExecutionRepository {
       priority: Value(action.priority.wire),
       dueAt: Value(action.dueAt),
       scheduledFor: Value(action.scheduledFor),
+      projectId: Value(action.projectId),
       commitmentId: Value(action.commitmentId),
       sourceDomain: Value(action.source.domain),
       sourceRowFamily: Value(action.source.rowFamily),
@@ -324,6 +402,7 @@ class ExecutionRepository {
       status: Value(commitment.status.wire),
       horizon: Value(commitment.horizon.wire),
       targetDate: Value(commitment.targetDate),
+      projectId: Value(commitment.projectId),
       sourceDomain: Value(commitment.source.domain),
       sourceRowFamily: Value(commitment.source.rowFamily),
       sourceRowId: Value(commitment.source.rowId),
@@ -344,6 +423,7 @@ class ExecutionRepository {
     return ExecutionProgressEntriesCompanion.insert(
       id: progress.id,
       actionId: Value(progress.actionId),
+      projectId: Value(progress.projectId),
       commitmentId: Value(progress.commitmentId),
       kind: Value(progress.kind.wire),
       note: progress.note,
@@ -365,7 +445,34 @@ class ExecutionRepository {
       priority: ExecutionPriority.parse(r.priority),
       dueAt: r.dueAt,
       scheduledFor: r.scheduledFor,
+      projectId: r.projectId,
       commitmentId: r.commitmentId,
+      source: ExecutionSourceRef(
+        domain: r.sourceDomain,
+        rowFamily: r.sourceRowFamily,
+        rowId: r.sourceRowId,
+        labelSnapshot: r.sourceLabelSnapshot,
+      ),
+      createdAt: r.createdAt,
+      completedAt: r.completedAt,
+      sync: _syncFromRow(
+        ownerUserId: r.ownerUserId,
+        updatedAt: r.updatedAt,
+        updatedByDevice: r.updatedByDevice,
+        hlc: r.hlc,
+        deletedAt: r.deletedAt,
+      ),
+    );
+  }
+
+  ExecutionProject _projectFromRow(ExecutionProjectRow r) {
+    return ExecutionProject(
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      status: ExecutionProjectStatus.parse(r.status),
+      horizon: ExecutionHorizon.parse(r.horizon),
+      targetDate: r.targetDate,
       source: ExecutionSourceRef(
         domain: r.sourceDomain,
         rowFamily: r.sourceRowFamily,
@@ -392,6 +499,7 @@ class ExecutionRepository {
       status: ExecutionCommitmentStatus.parse(r.status),
       horizon: ExecutionHorizon.parse(r.horizon),
       targetDate: r.targetDate,
+      projectId: r.projectId,
       source: ExecutionSourceRef(
         domain: r.sourceDomain,
         rowFamily: r.sourceRowFamily,
@@ -414,6 +522,7 @@ class ExecutionRepository {
     return ExecutionProgressEntry(
       id: r.id,
       actionId: r.actionId,
+      projectId: r.projectId,
       commitmentId: r.commitmentId,
       kind: ExecutionProgressKind.parse(r.kind),
       note: r.note,

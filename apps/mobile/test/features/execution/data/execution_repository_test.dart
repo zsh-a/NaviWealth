@@ -31,11 +31,13 @@ ExecutionAction _action({
   required String id,
   required String title,
   ExecutionActionStatus status = ExecutionActionStatus.todo,
+  String? projectId,
 }) {
   return ExecutionAction(
     id: id,
     title: title,
     status: status,
+    projectId: projectId,
     createdAt: DateTime.utc(2026, 6, 1),
     sync: _sync(0),
   );
@@ -68,7 +70,11 @@ void main() {
   });
 
   test('updateActionStatus can complete action and record progress', () async {
-    final action = _action(id: 'a1', title: 'Book recovery workout');
+    final action = _action(
+      id: 'a1',
+      title: 'Book recovery workout',
+      projectId: 'proj-1',
+    );
     await repo.upsertAction(action);
     outbox.clearQueued();
 
@@ -86,12 +92,38 @@ void main() {
     expect(open, isEmpty);
     expect(progress, hasLength(1));
     expect(progress.single.kind, ExecutionProgressKind.completion);
+    expect(progress.single.projectId, 'proj-1');
     expect(progress.single.note, 'Finished after HealthOS review.');
     expect(outbox.queued, [
       (table: 'execution_actions', rowId: 'a1'),
       (table: 'execution_progress_entries', rowId: 'p1'),
     ]);
   });
+
+  test(
+    'upsertProject stores active project and enqueues sync pointer',
+    () async {
+      await repo.upsertProject(
+        ExecutionProject(
+          id: 'proj-1',
+          title: 'Launch execution dashboard',
+          description: 'Group actions and progress under one delivery thread.',
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: _sync(3),
+        ),
+      );
+
+      final rows = await repo.watchActiveProjects(ownerUserId: _userId).first;
+
+      expect(rows, hasLength(1));
+      expect(rows.single.title, 'Launch execution dashboard');
+      expect(rows.single.status, ExecutionProjectStatus.active);
+      expect(outbox.queued.last, (
+        table: 'execution_projects',
+        rowId: 'proj-1',
+      ));
+    },
+  );
 
   test('upsertCommitment stores active commitment', () async {
     await repo.upsertCommitment(

@@ -8,6 +8,7 @@ focused on personal commitments, next actions, and progress review.
 Included:
 
 - Personal todos as lightweight Actions.
+- Projects for bounded delivery work that contains actions and commitments.
 - Commitments for work that needs a longer-running promise.
 - Progress entries for check-ins, blockers, scope changes, and completion.
 - Today, Commitments, and Review shell tabs.
@@ -20,8 +21,9 @@ Excluded:
 - Kanban-first workflows, gantt charts, dependency graphs, or timesheets.
 - Automatic AI writes to user commitments or actions without confirmation.
 
-Core rule: Action is the reusable todo primitive. Project and milestone
-concepts can be added later only when a current workflow needs them.
+Core rule: Action is the reusable todo primitive. Project is a lightweight
+roll-up, not a separate task system. Milestones can be added later only when a
+current workflow needs them.
 
 ## Shell Registration
 
@@ -45,6 +47,7 @@ ExecutionOS is active only when the user enables it in Settings.
 
 | Object | Purpose | Storage |
 |---|---|---|
+| Project | Bounded delivery container for actions / commitments | `execution_projects` |
 | Action | Personal todo / next concrete step | `execution_actions` |
 | Commitment | Longer-running promise or focus area | `execution_commitments` |
 | ProgressEntry | Check-in, blocker, scope change, completion note | `execution_progress_entries` |
@@ -65,6 +68,7 @@ Tables:
 
 Synced tables use `SyncableTable` and the `exec:` row-family prefix:
 
+- `exec:execution_projects`
 - `exec:execution_actions`
 - `exec:execution_commitments`
 - `exec:execution_progress_entries`
@@ -77,7 +81,7 @@ boundary.
 | Tab | Purpose |
 |---|---|
 | Today | Today's open actions, blockers, and high-priority follow-through |
-| Commitments | Active commitments plus open actions |
+| Commitments | Active projects, commitments, and open actions |
 | Review | Recent progress, blockers, and completion notes |
 
 Key files:

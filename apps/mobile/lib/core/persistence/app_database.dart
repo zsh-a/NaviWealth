@@ -64,7 +64,9 @@ const String defaultDbFileName = 'naviwealth.db';
     KnowledgeConcepts,
     KnowledgeExperiments,
     KnowledgeRoutines,
-    // ExecutionOS Action Kernel: personal todos, commitments, progress.
+    // ExecutionOS Action Kernel: projects, personal todos, commitments,
+    // progress.
+    ExecutionProjects,
     ExecutionActions,
     ExecutionCommitments,
     ExecutionProgressEntries,
@@ -77,7 +79,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 28;
+  int get schemaVersion => 29;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -423,9 +425,36 @@ class AppDatabase extends _$AppDatabase {
       // Milestone can later attach without changing the first-order action
       // model.
       if (from < 28) {
+        await m.createTable(executionProjects);
         await m.createTable(executionActions);
         await m.createTable(executionCommitments);
         await m.createTable(executionProgressEntries);
+        await _createExecutionIndexes(this);
+      }
+      // v28 -> v29: lightweight projects for ExecutionOS. Actions,
+      // commitments, and progress entries keep their first-order shape and
+      // gain an optional `project_id` roll-up rather than forking into a
+      // separate project-task model.
+      if (from >= 28 && from < 29) {
+        await m.createTable(executionProjects);
+        await _addColumnIfMissing(
+          this,
+          table: 'execution_actions',
+          column: 'project_id',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'execution_commitments',
+          column: 'project_id',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'execution_progress_entries',
+          column: 'project_id',
+          definition: 'TEXT',
+        );
         await _createExecutionIndexes(this);
       }
     },

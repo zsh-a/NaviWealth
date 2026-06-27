@@ -17147,6 +17147,12 @@ abstract class AppLocalizations {
   /// **'New Action'**
   String get executionCreateActionTitle;
 
+  /// No description provided for @executionCreateProjectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Project'**
+  String get executionCreateProjectTitle;
+
   /// No description provided for @executionCreateCommitmentTitle.
   ///
   /// In en, this message translates to:
@@ -17164,6 +17170,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Optional note'**
   String get executionActionNoteHint;
+
+  /// No description provided for @executionProjectTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What project are you driving?'**
+  String get executionProjectTitleHint;
+
+  /// No description provided for @executionProjectDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional outcome, scope, or finish line'**
+  String get executionProjectDescriptionHint;
 
   /// No description provided for @executionCommitmentTitleHint.
   ///
@@ -17198,7 +17216,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Use actions for personal todos; group them into commitments later when the work grows.'**
+  /// **'Use actions for personal todos; group larger work into projects or commitments.'**
   String get executionCommitmentsEmptyBody;
 
   /// No description provided for @executionReviewEmptyTitle.
@@ -17213,6 +17231,12 @@ abstract class AppLocalizations {
   /// **'Completion and blocker notes will appear here for review.'**
   String get executionReviewEmptyBody;
 
+  /// No description provided for @executionProjectsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get executionProjectsSection;
+
   /// No description provided for @executionCommitmentsSection.
   ///
   /// In en, this message translates to:
@@ -17224,6 +17248,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Actions'**
   String get executionActionsSection;
+
+  /// No description provided for @executionProjectStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get executionProjectStatusActive;
+
+  /// No description provided for @executionProjectStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get executionProjectStatusPaused;
+
+  /// No description provided for @executionProjectStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get executionProjectStatusCompleted;
+
+  /// No description provided for @executionProjectStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get executionProjectStatusArchived;
 
   /// No description provided for @executionStatusTodo.
   ///
@@ -17350,6 +17398,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Priority'**
   String get executionProposalRowPriority;
+
+  /// No description provided for @executionProposalRowProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get executionProposalRowProject;
 
   /// No description provided for @executionProposalRowDue.
   ///

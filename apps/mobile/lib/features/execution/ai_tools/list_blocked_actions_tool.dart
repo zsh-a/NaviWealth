@@ -46,6 +46,7 @@ class ListBlockedActionsTool implements DeviceTool {
             'note': a.note,
             'priority': a.priority.wire,
             'due_at': a.dueAt?.toUtc().toIso8601String(),
+            'project_id': a.projectId,
             'source_label': a.source.labelSnapshot,
           },
         )

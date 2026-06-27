@@ -10006,6 +10006,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionCreateActionTitle => 'New Action';
 
   @override
+  String get executionCreateProjectTitle => 'New Project';
+
+  @override
   String get executionCreateCommitmentTitle => 'New Commitment';
 
   @override
@@ -10013,6 +10016,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionActionNoteHint => 'Optional note';
+
+  @override
+  String get executionProjectTitleHint => 'What project are you driving?';
+
+  @override
+  String get executionProjectDescriptionHint =>
+      'Optional outcome, scope, or finish line';
 
   @override
   String get executionCommitmentTitleHint => 'What are you committing to?';
@@ -10033,7 +10043,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionCommitmentsEmptyBody =>
-      'Use actions for personal todos; group them into commitments later when the work grows.';
+      'Use actions for personal todos; group larger work into projects or commitments.';
 
   @override
   String get executionReviewEmptyTitle => 'No progress yet';
@@ -10043,10 +10053,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Completion and blocker notes will appear here for review.';
 
   @override
+  String get executionProjectsSection => 'Projects';
+
+  @override
   String get executionCommitmentsSection => 'Commitments';
 
   @override
   String get executionActionsSection => 'Actions';
+
+  @override
+  String get executionProjectStatusActive => 'Active';
+
+  @override
+  String get executionProjectStatusPaused => 'Paused';
+
+  @override
+  String get executionProjectStatusCompleted => 'Completed';
+
+  @override
+  String get executionProjectStatusArchived => 'Archived';
 
   @override
   String get executionStatusTodo => 'Todo';
@@ -10112,6 +10137,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProposalRowPriority => 'Priority';
+
+  @override
+  String get executionProposalRowProject => 'Project';
 
   @override
   String get executionProposalRowDue => 'Due';

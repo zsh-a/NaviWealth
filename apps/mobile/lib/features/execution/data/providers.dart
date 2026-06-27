@@ -39,6 +39,13 @@ final executionOpenActionsProvider =
       yield* repository.watchOpenActions(ownerUserId: ownerUserId);
     });
 
+final executionProjectsProvider =
+    StreamProvider.autoDispose<List<ExecutionProject>>((ref) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchActiveProjects(ownerUserId: ownerUserId);
+    });
+
 final executionCommitmentsProvider =
     StreamProvider.autoDispose<List<ExecutionCommitment>>((ref) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);

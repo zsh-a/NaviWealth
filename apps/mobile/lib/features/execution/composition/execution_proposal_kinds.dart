@@ -28,6 +28,11 @@ List<ProposalKindRow> _actionRows(
     ProposalKindRow(l10n.executionProposalRowAction, plan.get('title') ?? '—'),
     if (plan.get('priority') != null)
       ProposalKindRow(l10n.executionProposalRowPriority, plan.get('priority')!),
+    if (plan.get('project_id') != null)
+      ProposalKindRow(
+        l10n.executionProposalRowProject,
+        plan.get('project_id')!,
+      ),
     if (plan.get('due_at') != null)
       ProposalKindRow(l10n.executionProposalRowDue, plan.get('due_at')!),
     if (plan.get('source_label') != null)

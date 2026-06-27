@@ -113,6 +113,7 @@ void main() {
       (ref) => const ProposeActionTool()
           .invoke(DeviceToolContext(ref: ref, session: _session()), const {
             'title': 'Book Zone 2 workout',
+            'project_id': 'proj-health',
             'reason': 'HealthOS recovery is good enough',
           }),
     );
@@ -131,6 +132,7 @@ void main() {
     );
     expect(action, isNotNull);
     expect(action!.title, 'Book Zone 2 workout');
+    expect(action.projectId, 'proj-health');
     expect(state.appliedTable, 'execution_actions');
   });
 

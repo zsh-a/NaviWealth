@@ -40,6 +40,8 @@ void main() {
       expect(domainPrefixForTable('health_metrics'), 'health:');
       expect(domainPrefixForTable('knowledge_notes'), 'know:');
       expect(domainPrefixForTable('knowledge_routines'), 'know:');
+      expect(domainPrefixForTable('execution_projects'), 'exec:');
+      expect(domainPrefixForTable('execution_actions'), 'exec:');
       expect(domainPrefixForTable('accounts'), 'fin:');
       expect(domainPrefixForTable('options_trade_journal'), 'fin:');
     });
@@ -47,6 +49,7 @@ void main() {
     test('prefixTable tags each domain correctly', () {
       expect(prefixTable('health_metrics'), 'health:health_metrics');
       expect(prefixTable('knowledge_decisions'), 'know:knowledge_decisions');
+      expect(prefixTable('execution_projects'), 'exec:execution_projects');
       expect(prefixTable('accounts'), 'fin:accounts');
     });
 

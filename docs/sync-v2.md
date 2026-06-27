@@ -291,6 +291,7 @@ Current syncable table inventory is pinned by
 | `fin:` | `accounts`, `assets`, `liabilities`, `fx_rates`, `tags`, `budgets`, `goals`, `devices`, `amortization_entries`, `tag_links`, `categories`, `settings`, `users`, `journal_entries`, `postings`, `prices`, `corporate_actions`, `watchlist_items`, `options_strategy_profile`, `approved_underlyings`, `options_trade_journal` |
 | `health:` | `health_metrics` |
 | `know:` | `knowledge_notes`, `knowledge_principles`, `knowledge_assumptions`, `knowledge_decisions`, `knowledge_concepts`, `knowledge_experiments`, `knowledge_routines` |
+| `exec:` | `execution_projects`, `execution_actions`, `execution_commitments`, `execution_progress_entries` |
 
 Locally-dirty rows are tracked in a lightweight **dirty-pointer log**, the
 `op_outbox` table — exactly four columns: `(op_id, table_name, row_id,

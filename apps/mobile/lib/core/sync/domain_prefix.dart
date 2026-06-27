@@ -21,7 +21,7 @@ const String kHealthDomainPrefix = 'health:';
 /// KnowledgeOS rows (`docs/knowledgeos-domain.md` §2, §11).
 const String kKnowledgeDomainPrefix = 'know:';
 
-/// ExecutionOS rows: personal actions, commitments, and progress.
+/// ExecutionOS rows: projects, personal actions, commitments, and progress.
 const String kExecutionDomainPrefix = 'exec:';
 
 /// All prefixes the applier is willing to accept inbound. Adding a
@@ -56,6 +56,7 @@ const Set<String> kHealthTables = <String>{'health_metrics'};
 
 /// ExecutionOS local table names.
 const Set<String> kExecutionTables = <String>{
+  'execution_projects',
   'execution_actions',
   'execution_commitments',
   'execution_progress_entries',

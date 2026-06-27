@@ -42,6 +42,7 @@ const Set<String> kSyncableTables = {
   'knowledge_experiments',
   'knowledge_routines',
   // ExecutionOS Action Kernel.
+  'execution_projects',
   'execution_actions',
   'execution_commitments',
   'execution_progress_entries',

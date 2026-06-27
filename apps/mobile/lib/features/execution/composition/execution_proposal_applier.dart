@@ -74,6 +74,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       priority: ExecutionPriority.parse(plan.get('priority') ?? 'normal'),
       dueAt: _parseOptionalUtc(plan.get('due_at')),
       scheduledFor: _parseOptionalUtc(plan.get('scheduled_for')),
+      projectId: plan.get('project_id'),
       commitmentId: plan.get('commitment_id'),
       source: ExecutionSourceRef(
         domain: plan.get('source_domain'),

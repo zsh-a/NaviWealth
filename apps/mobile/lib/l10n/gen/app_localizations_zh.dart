@@ -9543,6 +9543,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCreateActionTitle => '新建 Action';
 
   @override
+  String get executionCreateProjectTitle => '新建 Project';
+
+  @override
   String get executionCreateCommitmentTitle => '新建 Commitment';
 
   @override
@@ -9550,6 +9553,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionActionNoteHint => '可选备注';
+
+  @override
+  String get executionProjectTitleHint => '你正在推进哪个项目？';
+
+  @override
+  String get executionProjectDescriptionHint => '可选结果、范围或完成标准';
 
   @override
   String get executionCommitmentTitleHint => '你承诺推进什么？';
@@ -9568,7 +9577,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionCommitmentsEmptyBody =>
-      '个人 todo 先用 Action；事情变大后再归入 Commitment。';
+      '个人 todo 先用 Action；事情变大后再归入 Project 或 Commitment。';
 
   @override
   String get executionReviewEmptyTitle => '还没有进展记录';
@@ -9577,10 +9586,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionReviewEmptyBody => '完成与阻塞记录会出现在这里，方便复盘。';
 
   @override
+  String get executionProjectsSection => '项目';
+
+  @override
   String get executionCommitmentsSection => '承诺';
 
   @override
   String get executionActionsSection => '行动';
+
+  @override
+  String get executionProjectStatusActive => '活跃';
+
+  @override
+  String get executionProjectStatusPaused => '暂停';
+
+  @override
+  String get executionProjectStatusCompleted => '完成';
+
+  @override
+  String get executionProjectStatusArchived => '归档';
 
   @override
   String get executionStatusTodo => '待办';
@@ -9646,6 +9670,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionProposalRowPriority => '优先级';
+
+  @override
+  String get executionProposalRowProject => '项目';
 
   @override
   String get executionProposalRowDue => '截止';

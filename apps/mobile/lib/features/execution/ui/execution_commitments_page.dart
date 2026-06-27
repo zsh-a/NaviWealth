@@ -10,6 +10,7 @@ import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_action_sheet.dart';
 import 'execution_commitment_sheet.dart';
+import 'execution_project_sheet.dart';
 import 'execution_widgets.dart';
 
 class ExecutionCommitmentsPage extends ConsumerWidget {
@@ -21,6 +22,11 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.executionCommitmentsTitle,
       actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.folder),
+          semanticsLabel: l10n.executionCreateProjectTitle,
+          onPress: () => showExecutionProjectSheet(context: context, ref: ref),
+        ),
         FHeaderAction(
           icon: const Icon(FLucideIcons.target),
           semanticsLabel: l10n.executionCreateCommitmentTitle,
@@ -35,6 +41,7 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
       ],
       child: RefreshIndicator(
         onRefresh: () async {
+          ref.invalidate(executionProjectsProvider);
           ref.invalidate(executionOpenActionsProvider);
           ref.invalidate(executionCommitmentsProvider);
           await ref.read(executionOpenActionsProvider.future);
@@ -49,6 +56,7 @@ class _CommitmentsBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final projectsAsync = ref.watch(executionProjectsProvider);
     final actionsAsync = ref.watch(executionOpenActionsProvider);
     final commitmentsAsync = ref.watch(executionCommitmentsProvider);
     return actionsAsync.when(
@@ -59,8 +67,9 @@ class _CommitmentsBody extends ConsumerWidget {
         message: '$e',
       ),
       data: (actions) {
+        final projects = projectsAsync.value ?? const [];
         final commitments = commitmentsAsync.value ?? const [];
-        if (actions.isEmpty && commitments.isEmpty) {
+        if (projects.isEmpty && actions.isEmpty && commitments.isEmpty) {
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: shellTabContentPadding(context),
@@ -82,6 +91,19 @@ class _CommitmentsBody extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: shellTabContentPadding(context),
           children: [
+            if (projects.isNotEmpty) ...[
+              ExecutionSectionHeader(
+                title: l10n.executionProjectsSection,
+                count: projects.length,
+                icon: FLucideIcons.folder,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              for (final project in projects) ...[
+                ExecutionProjectCard(project: project),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              const SizedBox(height: AppSpacing.s8),
+            ],
             if (commitments.isNotEmpty) ...[
               ExecutionSectionHeader(
                 title: l10n.executionCommitmentsSection,

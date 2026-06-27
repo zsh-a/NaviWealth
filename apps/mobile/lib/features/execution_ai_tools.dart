@@ -35,7 +35,7 @@ final Map<String, ToolDescriptor> kExecutionToolDescriptors =
 
 const String kExecutionSystemPromptBlock =
     '[ExecutionOS 域]\n'
-    '- Action 是个人 todo / next action；Commitment 是较长期承诺；ProgressEntry 是进展记录。\n'
+    '- Action 是个人 todo / next action；Project 是有边界的交付容器；Commitment 是较长期承诺；ProgressEntry 是进展记录。\n'
     '- 查询当前待办用 list_open_actions；定位阻塞用 list_blocked_actions；复盘执行状态用 summarize_execution_progress。\n'
     '- 当 FinanceOS / HealthOS / KnowledgeOS 的洞察需要转成具体下一步时，调用 propose_action。'
     'propose_action 只返回待确认 proposal，不会直接写入。用户确认后才创建 Action。\n'

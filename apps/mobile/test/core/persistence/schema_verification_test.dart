@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 27', () {
-      expect(db.schemaVersion, 27);
+    test('is 29', () {
+      expect(db.schemaVersion, 29);
     });
   });
 
@@ -161,6 +161,48 @@ void main() {
         );
       });
     }
+  });
+
+  group('ExecutionOS tables exist', () {
+    for (final table in [
+      'execution_projects',
+      'execution_actions',
+      'execution_commitments',
+      'execution_progress_entries',
+    ]) {
+      test('$table has sync columns', () async {
+        final result = await db.customSelect('PRAGMA table_info($table)').get();
+        final columns = result.map((r) => r.read<String>('name')).toSet();
+        expect(
+          columns,
+          containsAll(['id', 'owner_user_id', 'deleted_at', 'hlc']),
+          reason: '$table must have SyncableTable columns',
+        );
+      });
+    }
+
+    test('execution roll-up columns are present', () async {
+      final actionColumns =
+          (await db.customSelect('PRAGMA table_info(execution_actions)').get())
+              .map((r) => r.read<String>('name'))
+              .toSet();
+      final commitmentColumns =
+          (await db
+                  .customSelect('PRAGMA table_info(execution_commitments)')
+                  .get())
+              .map((r) => r.read<String>('name'))
+              .toSet();
+      final progressColumns =
+          (await db
+                  .customSelect('PRAGMA table_info(execution_progress_entries)')
+                  .get())
+              .map((r) => r.read<String>('name'))
+              .toSet();
+
+      expect(actionColumns, contains('project_id'));
+      expect(commitmentColumns, contains('project_id'));
+      expect(progressColumns, contains('project_id'));
+    });
   });
 
   group('AI infrastructure tables exist', () {

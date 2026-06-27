@@ -51,6 +51,23 @@ enum ExecutionCommitmentStatus {
   }
 }
 
+enum ExecutionProjectStatus {
+  active('active'),
+  paused('paused'),
+  completed('completed'),
+  archived('archived');
+
+  const ExecutionProjectStatus(this.wire);
+  final String wire;
+
+  static ExecutionProjectStatus parse(String value) {
+    return ExecutionProjectStatus.values.firstWhere(
+      (s) => s.wire == value,
+      orElse: () => ExecutionProjectStatus.active,
+    );
+  }
+}
+
 enum ExecutionHorizon {
   week('week'),
   month('month'),
@@ -114,6 +131,7 @@ class ExecutionAction {
     this.priority = ExecutionPriority.normal,
     this.dueAt,
     this.scheduledFor,
+    this.projectId,
     this.commitmentId,
     this.source = const ExecutionSourceRef(),
     required this.createdAt,
@@ -128,6 +146,7 @@ class ExecutionAction {
   final ExecutionPriority priority;
   final DateTime? dueAt;
   final DateTime? scheduledFor;
+  final String? projectId;
   final String? commitmentId;
   final ExecutionSourceRef source;
   final DateTime createdAt;
@@ -152,6 +171,7 @@ class ExecutionAction {
     ExecutionPriority? priority,
     DateTime? dueAt,
     DateTime? scheduledFor,
+    String? projectId,
     String? commitmentId,
     ExecutionSourceRef? source,
     DateTime? completedAt,
@@ -165,6 +185,7 @@ class ExecutionAction {
       priority: priority ?? this.priority,
       dueAt: dueAt ?? this.dueAt,
       scheduledFor: scheduledFor ?? this.scheduledFor,
+      projectId: projectId ?? this.projectId,
       commitmentId: commitmentId ?? this.commitmentId,
       source: source ?? this.source,
       createdAt: createdAt,
@@ -172,6 +193,32 @@ class ExecutionAction {
       sync: sync,
     );
   }
+}
+
+class ExecutionProject {
+  const ExecutionProject({
+    required this.id,
+    required this.title,
+    this.description = '',
+    this.status = ExecutionProjectStatus.active,
+    this.horizon = ExecutionHorizon.open,
+    this.targetDate,
+    this.source = const ExecutionSourceRef(),
+    required this.createdAt,
+    this.completedAt,
+    required this.sync,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final ExecutionProjectStatus status;
+  final ExecutionHorizon horizon;
+  final DateTime? targetDate;
+  final ExecutionSourceRef source;
+  final DateTime createdAt;
+  final DateTime? completedAt;
+  final SyncMeta sync;
 }
 
 class ExecutionCommitment {
@@ -182,6 +229,7 @@ class ExecutionCommitment {
     this.status = ExecutionCommitmentStatus.active,
     this.horizon = ExecutionHorizon.open,
     this.targetDate,
+    this.projectId,
     this.source = const ExecutionSourceRef(),
     required this.createdAt,
     this.completedAt,
@@ -194,6 +242,7 @@ class ExecutionCommitment {
   final ExecutionCommitmentStatus status;
   final ExecutionHorizon horizon;
   final DateTime? targetDate;
+  final String? projectId;
   final ExecutionSourceRef source;
   final DateTime createdAt;
   final DateTime? completedAt;
@@ -204,6 +253,7 @@ class ExecutionProgressEntry {
   const ExecutionProgressEntry({
     required this.id,
     this.actionId,
+    this.projectId,
     this.commitmentId,
     required this.kind,
     required this.note,
@@ -213,6 +263,7 @@ class ExecutionProgressEntry {
 
   final String id;
   final String? actionId;
+  final String? projectId;
   final String? commitmentId;
   final ExecutionProgressKind kind;
   final String note;

@@ -28407,12 +28407,12 @@ class KnowledgeRoutinesCompanion extends UpdateCompanion<KnowledgeRoutineRow> {
   }
 }
 
-class $ExecutionActionsTable extends ExecutionActions
-    with TableInfo<$ExecutionActionsTable, ExecutionActionRow> {
+class $ExecutionProjectsTable extends ExecutionProjects
+    with TableInfo<$ExecutionProjectsTable, ExecutionProjectRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ExecutionActionsTable(this.attachedDatabase, [this._alias]);
+  $ExecutionProjectsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
     'ownerUserId',
   );
@@ -28454,1113 +28454,7 @@ class $ExecutionActionsTable extends ExecutionActions
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<Hlc>($ExecutionActionsTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _titleMeta = const VerificationMeta('title');
-  @override
-  late final GeneratedColumn<String> title = GeneratedColumn<String>(
-    'title',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(''),
-  );
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-    'status',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('todo'),
-  );
-  static const VerificationMeta _priorityMeta = const VerificationMeta(
-    'priority',
-  );
-  @override
-  late final GeneratedColumn<String> priority = GeneratedColumn<String>(
-    'priority',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('normal'),
-  );
-  static const VerificationMeta _dueAtMeta = const VerificationMeta('dueAt');
-  @override
-  late final GeneratedColumn<DateTime> dueAt = GeneratedColumn<DateTime>(
-    'due_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _scheduledForMeta = const VerificationMeta(
-    'scheduledFor',
-  );
-  @override
-  late final GeneratedColumn<DateTime> scheduledFor = GeneratedColumn<DateTime>(
-    'scheduled_for',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _commitmentIdMeta = const VerificationMeta(
-    'commitmentId',
-  );
-  @override
-  late final GeneratedColumn<String> commitmentId = GeneratedColumn<String>(
-    'commitment_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _sourceDomainMeta = const VerificationMeta(
-    'sourceDomain',
-  );
-  @override
-  late final GeneratedColumn<String> sourceDomain = GeneratedColumn<String>(
-    'source_domain',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _sourceRowFamilyMeta = const VerificationMeta(
-    'sourceRowFamily',
-  );
-  @override
-  late final GeneratedColumn<String> sourceRowFamily = GeneratedColumn<String>(
-    'source_row_family',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _sourceRowIdMeta = const VerificationMeta(
-    'sourceRowId',
-  );
-  @override
-  late final GeneratedColumn<String> sourceRowId = GeneratedColumn<String>(
-    'source_row_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _sourceLabelSnapshotMeta =
-      const VerificationMeta('sourceLabelSnapshot');
-  @override
-  late final GeneratedColumn<String> sourceLabelSnapshot =
-      GeneratedColumn<String>(
-        'source_label_snapshot',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _completedAtMeta = const VerificationMeta(
-    'completedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
-    'completed_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    title,
-    note,
-    status,
-    priority,
-    dueAt,
-    scheduledFor,
-    commitmentId,
-    sourceDomain,
-    sourceRowFamily,
-    sourceRowId,
-    sourceLabelSnapshot,
-    createdAt,
-    completedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'execution_actions';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<ExecutionActionRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('title')) {
-      context.handle(
-        _titleMeta,
-        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_titleMeta);
-    }
-    if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
-    }
-    if (data.containsKey('status')) {
-      context.handle(
-        _statusMeta,
-        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
-      );
-    }
-    if (data.containsKey('priority')) {
-      context.handle(
-        _priorityMeta,
-        priority.isAcceptableOrUnknown(data['priority']!, _priorityMeta),
-      );
-    }
-    if (data.containsKey('due_at')) {
-      context.handle(
-        _dueAtMeta,
-        dueAt.isAcceptableOrUnknown(data['due_at']!, _dueAtMeta),
-      );
-    }
-    if (data.containsKey('scheduled_for')) {
-      context.handle(
-        _scheduledForMeta,
-        scheduledFor.isAcceptableOrUnknown(
-          data['scheduled_for']!,
-          _scheduledForMeta,
-        ),
-      );
-    }
-    if (data.containsKey('commitment_id')) {
-      context.handle(
-        _commitmentIdMeta,
-        commitmentId.isAcceptableOrUnknown(
-          data['commitment_id']!,
-          _commitmentIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('source_domain')) {
-      context.handle(
-        _sourceDomainMeta,
-        sourceDomain.isAcceptableOrUnknown(
-          data['source_domain']!,
-          _sourceDomainMeta,
-        ),
-      );
-    }
-    if (data.containsKey('source_row_family')) {
-      context.handle(
-        _sourceRowFamilyMeta,
-        sourceRowFamily.isAcceptableOrUnknown(
-          data['source_row_family']!,
-          _sourceRowFamilyMeta,
-        ),
-      );
-    }
-    if (data.containsKey('source_row_id')) {
-      context.handle(
-        _sourceRowIdMeta,
-        sourceRowId.isAcceptableOrUnknown(
-          data['source_row_id']!,
-          _sourceRowIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('source_label_snapshot')) {
-      context.handle(
-        _sourceLabelSnapshotMeta,
-        sourceLabelSnapshot.isAcceptableOrUnknown(
-          data['source_label_snapshot']!,
-          _sourceLabelSnapshotMeta,
-        ),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('completed_at')) {
-      context.handle(
-        _completedAtMeta,
-        completedAt.isAcceptableOrUnknown(
-          data['completed_at']!,
-          _completedAtMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  ExecutionActionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ExecutionActionRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $ExecutionActionsTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      title: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}title'],
-      )!,
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}status'],
-      )!,
-      priority: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}priority'],
-      )!,
-      dueAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}due_at'],
-      ),
-      scheduledFor: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}scheduled_for'],
-      ),
-      commitmentId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}commitment_id'],
-      ),
-      sourceDomain: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source_domain'],
-      ),
-      sourceRowFamily: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source_row_family'],
-      ),
-      sourceRowId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source_row_id'],
-      ),
-      sourceLabelSnapshot: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source_label_snapshot'],
-      ),
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-      completedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}completed_at'],
-      ),
-    );
-  }
-
-  @override
-  $ExecutionActionsTable createAlias(String alias) {
-    return $ExecutionActionsTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-}
-
-class ExecutionActionRow extends DataClass
-    implements Insertable<ExecutionActionRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String title;
-  final String note;
-  final String status;
-  final String priority;
-  final DateTime? dueAt;
-  final DateTime? scheduledFor;
-  final String? commitmentId;
-  final String? sourceDomain;
-  final String? sourceRowFamily;
-  final String? sourceRowId;
-  final String? sourceLabelSnapshot;
-  final DateTime createdAt;
-  final DateTime? completedAt;
-  const ExecutionActionRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.title,
-    required this.note,
-    required this.status,
-    required this.priority,
-    this.dueAt,
-    this.scheduledFor,
-    this.commitmentId,
-    this.sourceDomain,
-    this.sourceRowFamily,
-    this.sourceRowId,
-    this.sourceLabelSnapshot,
-    required this.createdAt,
-    this.completedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $ExecutionActionsTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['title'] = Variable<String>(title);
-    map['note'] = Variable<String>(note);
-    map['status'] = Variable<String>(status);
-    map['priority'] = Variable<String>(priority);
-    if (!nullToAbsent || dueAt != null) {
-      map['due_at'] = Variable<DateTime>(dueAt);
-    }
-    if (!nullToAbsent || scheduledFor != null) {
-      map['scheduled_for'] = Variable<DateTime>(scheduledFor);
-    }
-    if (!nullToAbsent || commitmentId != null) {
-      map['commitment_id'] = Variable<String>(commitmentId);
-    }
-    if (!nullToAbsent || sourceDomain != null) {
-      map['source_domain'] = Variable<String>(sourceDomain);
-    }
-    if (!nullToAbsent || sourceRowFamily != null) {
-      map['source_row_family'] = Variable<String>(sourceRowFamily);
-    }
-    if (!nullToAbsent || sourceRowId != null) {
-      map['source_row_id'] = Variable<String>(sourceRowId);
-    }
-    if (!nullToAbsent || sourceLabelSnapshot != null) {
-      map['source_label_snapshot'] = Variable<String>(sourceLabelSnapshot);
-    }
-    map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || completedAt != null) {
-      map['completed_at'] = Variable<DateTime>(completedAt);
-    }
-    return map;
-  }
-
-  ExecutionActionsCompanion toCompanion(bool nullToAbsent) {
-    return ExecutionActionsCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      title: Value(title),
-      note: Value(note),
-      status: Value(status),
-      priority: Value(priority),
-      dueAt: dueAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dueAt),
-      scheduledFor: scheduledFor == null && nullToAbsent
-          ? const Value.absent()
-          : Value(scheduledFor),
-      commitmentId: commitmentId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(commitmentId),
-      sourceDomain: sourceDomain == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sourceDomain),
-      sourceRowFamily: sourceRowFamily == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sourceRowFamily),
-      sourceRowId: sourceRowId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sourceRowId),
-      sourceLabelSnapshot: sourceLabelSnapshot == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sourceLabelSnapshot),
-      createdAt: Value(createdAt),
-      completedAt: completedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(completedAt),
-    );
-  }
-
-  factory ExecutionActionRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ExecutionActionRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      title: serializer.fromJson<String>(json['title']),
-      note: serializer.fromJson<String>(json['note']),
-      status: serializer.fromJson<String>(json['status']),
-      priority: serializer.fromJson<String>(json['priority']),
-      dueAt: serializer.fromJson<DateTime?>(json['dueAt']),
-      scheduledFor: serializer.fromJson<DateTime?>(json['scheduledFor']),
-      commitmentId: serializer.fromJson<String?>(json['commitmentId']),
-      sourceDomain: serializer.fromJson<String?>(json['sourceDomain']),
-      sourceRowFamily: serializer.fromJson<String?>(json['sourceRowFamily']),
-      sourceRowId: serializer.fromJson<String?>(json['sourceRowId']),
-      sourceLabelSnapshot: serializer.fromJson<String?>(
-        json['sourceLabelSnapshot'],
-      ),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'title': serializer.toJson<String>(title),
-      'note': serializer.toJson<String>(note),
-      'status': serializer.toJson<String>(status),
-      'priority': serializer.toJson<String>(priority),
-      'dueAt': serializer.toJson<DateTime?>(dueAt),
-      'scheduledFor': serializer.toJson<DateTime?>(scheduledFor),
-      'commitmentId': serializer.toJson<String?>(commitmentId),
-      'sourceDomain': serializer.toJson<String?>(sourceDomain),
-      'sourceRowFamily': serializer.toJson<String?>(sourceRowFamily),
-      'sourceRowId': serializer.toJson<String?>(sourceRowId),
-      'sourceLabelSnapshot': serializer.toJson<String?>(sourceLabelSnapshot),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'completedAt': serializer.toJson<DateTime?>(completedAt),
-    };
-  }
-
-  ExecutionActionRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? title,
-    String? note,
-    String? status,
-    String? priority,
-    Value<DateTime?> dueAt = const Value.absent(),
-    Value<DateTime?> scheduledFor = const Value.absent(),
-    Value<String?> commitmentId = const Value.absent(),
-    Value<String?> sourceDomain = const Value.absent(),
-    Value<String?> sourceRowFamily = const Value.absent(),
-    Value<String?> sourceRowId = const Value.absent(),
-    Value<String?> sourceLabelSnapshot = const Value.absent(),
-    DateTime? createdAt,
-    Value<DateTime?> completedAt = const Value.absent(),
-  }) => ExecutionActionRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    title: title ?? this.title,
-    note: note ?? this.note,
-    status: status ?? this.status,
-    priority: priority ?? this.priority,
-    dueAt: dueAt.present ? dueAt.value : this.dueAt,
-    scheduledFor: scheduledFor.present ? scheduledFor.value : this.scheduledFor,
-    commitmentId: commitmentId.present ? commitmentId.value : this.commitmentId,
-    sourceDomain: sourceDomain.present ? sourceDomain.value : this.sourceDomain,
-    sourceRowFamily: sourceRowFamily.present
-        ? sourceRowFamily.value
-        : this.sourceRowFamily,
-    sourceRowId: sourceRowId.present ? sourceRowId.value : this.sourceRowId,
-    sourceLabelSnapshot: sourceLabelSnapshot.present
-        ? sourceLabelSnapshot.value
-        : this.sourceLabelSnapshot,
-    createdAt: createdAt ?? this.createdAt,
-    completedAt: completedAt.present ? completedAt.value : this.completedAt,
-  );
-  ExecutionActionRow copyWithCompanion(ExecutionActionsCompanion data) {
-    return ExecutionActionRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      title: data.title.present ? data.title.value : this.title,
-      note: data.note.present ? data.note.value : this.note,
-      status: data.status.present ? data.status.value : this.status,
-      priority: data.priority.present ? data.priority.value : this.priority,
-      dueAt: data.dueAt.present ? data.dueAt.value : this.dueAt,
-      scheduledFor: data.scheduledFor.present
-          ? data.scheduledFor.value
-          : this.scheduledFor,
-      commitmentId: data.commitmentId.present
-          ? data.commitmentId.value
-          : this.commitmentId,
-      sourceDomain: data.sourceDomain.present
-          ? data.sourceDomain.value
-          : this.sourceDomain,
-      sourceRowFamily: data.sourceRowFamily.present
-          ? data.sourceRowFamily.value
-          : this.sourceRowFamily,
-      sourceRowId: data.sourceRowId.present
-          ? data.sourceRowId.value
-          : this.sourceRowId,
-      sourceLabelSnapshot: data.sourceLabelSnapshot.present
-          ? data.sourceLabelSnapshot.value
-          : this.sourceLabelSnapshot,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      completedAt: data.completedAt.present
-          ? data.completedAt.value
-          : this.completedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ExecutionActionRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('title: $title, ')
-          ..write('note: $note, ')
-          ..write('status: $status, ')
-          ..write('priority: $priority, ')
-          ..write('dueAt: $dueAt, ')
-          ..write('scheduledFor: $scheduledFor, ')
-          ..write('commitmentId: $commitmentId, ')
-          ..write('sourceDomain: $sourceDomain, ')
-          ..write('sourceRowFamily: $sourceRowFamily, ')
-          ..write('sourceRowId: $sourceRowId, ')
-          ..write('sourceLabelSnapshot: $sourceLabelSnapshot, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('completedAt: $completedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    title,
-    note,
-    status,
-    priority,
-    dueAt,
-    scheduledFor,
-    commitmentId,
-    sourceDomain,
-    sourceRowFamily,
-    sourceRowId,
-    sourceLabelSnapshot,
-    createdAt,
-    completedAt,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ExecutionActionRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.title == this.title &&
-          other.note == this.note &&
-          other.status == this.status &&
-          other.priority == this.priority &&
-          other.dueAt == this.dueAt &&
-          other.scheduledFor == this.scheduledFor &&
-          other.commitmentId == this.commitmentId &&
-          other.sourceDomain == this.sourceDomain &&
-          other.sourceRowFamily == this.sourceRowFamily &&
-          other.sourceRowId == this.sourceRowId &&
-          other.sourceLabelSnapshot == this.sourceLabelSnapshot &&
-          other.createdAt == this.createdAt &&
-          other.completedAt == this.completedAt);
-}
-
-class ExecutionActionsCompanion extends UpdateCompanion<ExecutionActionRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> title;
-  final Value<String> note;
-  final Value<String> status;
-  final Value<String> priority;
-  final Value<DateTime?> dueAt;
-  final Value<DateTime?> scheduledFor;
-  final Value<String?> commitmentId;
-  final Value<String?> sourceDomain;
-  final Value<String?> sourceRowFamily;
-  final Value<String?> sourceRowId;
-  final Value<String?> sourceLabelSnapshot;
-  final Value<DateTime> createdAt;
-  final Value<DateTime?> completedAt;
-  final Value<int> rowid;
-  const ExecutionActionsCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.title = const Value.absent(),
-    this.note = const Value.absent(),
-    this.status = const Value.absent(),
-    this.priority = const Value.absent(),
-    this.dueAt = const Value.absent(),
-    this.scheduledFor = const Value.absent(),
-    this.commitmentId = const Value.absent(),
-    this.sourceDomain = const Value.absent(),
-    this.sourceRowFamily = const Value.absent(),
-    this.sourceRowId = const Value.absent(),
-    this.sourceLabelSnapshot = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.completedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  ExecutionActionsCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String title,
-    this.note = const Value.absent(),
-    this.status = const Value.absent(),
-    this.priority = const Value.absent(),
-    this.dueAt = const Value.absent(),
-    this.scheduledFor = const Value.absent(),
-    this.commitmentId = const Value.absent(),
-    this.sourceDomain = const Value.absent(),
-    this.sourceRowFamily = const Value.absent(),
-    this.sourceRowId = const Value.absent(),
-    this.sourceLabelSnapshot = const Value.absent(),
-    required DateTime createdAt,
-    this.completedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       title = Value(title),
-       createdAt = Value(createdAt);
-  static Insertable<ExecutionActionRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? title,
-    Expression<String>? note,
-    Expression<String>? status,
-    Expression<String>? priority,
-    Expression<DateTime>? dueAt,
-    Expression<DateTime>? scheduledFor,
-    Expression<String>? commitmentId,
-    Expression<String>? sourceDomain,
-    Expression<String>? sourceRowFamily,
-    Expression<String>? sourceRowId,
-    Expression<String>? sourceLabelSnapshot,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? completedAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (title != null) 'title': title,
-      if (note != null) 'note': note,
-      if (status != null) 'status': status,
-      if (priority != null) 'priority': priority,
-      if (dueAt != null) 'due_at': dueAt,
-      if (scheduledFor != null) 'scheduled_for': scheduledFor,
-      if (commitmentId != null) 'commitment_id': commitmentId,
-      if (sourceDomain != null) 'source_domain': sourceDomain,
-      if (sourceRowFamily != null) 'source_row_family': sourceRowFamily,
-      if (sourceRowId != null) 'source_row_id': sourceRowId,
-      if (sourceLabelSnapshot != null)
-        'source_label_snapshot': sourceLabelSnapshot,
-      if (createdAt != null) 'created_at': createdAt,
-      if (completedAt != null) 'completed_at': completedAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  ExecutionActionsCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? title,
-    Value<String>? note,
-    Value<String>? status,
-    Value<String>? priority,
-    Value<DateTime?>? dueAt,
-    Value<DateTime?>? scheduledFor,
-    Value<String?>? commitmentId,
-    Value<String?>? sourceDomain,
-    Value<String?>? sourceRowFamily,
-    Value<String?>? sourceRowId,
-    Value<String?>? sourceLabelSnapshot,
-    Value<DateTime>? createdAt,
-    Value<DateTime?>? completedAt,
-    Value<int>? rowid,
-  }) {
-    return ExecutionActionsCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      title: title ?? this.title,
-      note: note ?? this.note,
-      status: status ?? this.status,
-      priority: priority ?? this.priority,
-      dueAt: dueAt ?? this.dueAt,
-      scheduledFor: scheduledFor ?? this.scheduledFor,
-      commitmentId: commitmentId ?? this.commitmentId,
-      sourceDomain: sourceDomain ?? this.sourceDomain,
-      sourceRowFamily: sourceRowFamily ?? this.sourceRowFamily,
-      sourceRowId: sourceRowId ?? this.sourceRowId,
-      sourceLabelSnapshot: sourceLabelSnapshot ?? this.sourceLabelSnapshot,
-      createdAt: createdAt ?? this.createdAt,
-      completedAt: completedAt ?? this.completedAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $ExecutionActionsTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (title.present) {
-      map['title'] = Variable<String>(title.value);
-    }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (priority.present) {
-      map['priority'] = Variable<String>(priority.value);
-    }
-    if (dueAt.present) {
-      map['due_at'] = Variable<DateTime>(dueAt.value);
-    }
-    if (scheduledFor.present) {
-      map['scheduled_for'] = Variable<DateTime>(scheduledFor.value);
-    }
-    if (commitmentId.present) {
-      map['commitment_id'] = Variable<String>(commitmentId.value);
-    }
-    if (sourceDomain.present) {
-      map['source_domain'] = Variable<String>(sourceDomain.value);
-    }
-    if (sourceRowFamily.present) {
-      map['source_row_family'] = Variable<String>(sourceRowFamily.value);
-    }
-    if (sourceRowId.present) {
-      map['source_row_id'] = Variable<String>(sourceRowId.value);
-    }
-    if (sourceLabelSnapshot.present) {
-      map['source_label_snapshot'] = Variable<String>(
-        sourceLabelSnapshot.value,
-      );
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (completedAt.present) {
-      map['completed_at'] = Variable<DateTime>(completedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ExecutionActionsCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('title: $title, ')
-          ..write('note: $note, ')
-          ..write('status: $status, ')
-          ..write('priority: $priority, ')
-          ..write('dueAt: $dueAt, ')
-          ..write('scheduledFor: $scheduledFor, ')
-          ..write('commitmentId: $commitmentId, ')
-          ..write('sourceDomain: $sourceDomain, ')
-          ..write('sourceRowFamily: $sourceRowFamily, ')
-          ..write('sourceRowId: $sourceRowId, ')
-          ..write('sourceLabelSnapshot: $sourceLabelSnapshot, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('completedAt: $completedAt, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $ExecutionCommitmentsTable extends ExecutionCommitments
-    with TableInfo<$ExecutionCommitmentsTable, ExecutionCommitmentRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ExecutionCommitmentsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($ExecutionCommitmentsTable.$converterhlc);
+      ).withConverter<Hlc>($ExecutionProjectsTable.$converterhlc);
   static const VerificationMeta _deletedAtMeta = const VerificationMeta(
     'deletedAt',
   );
@@ -29725,10 +28619,10 @@ class $ExecutionCommitmentsTable extends ExecutionCommitments
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'execution_commitments';
+  static const String $name = 'execution_projects';
   @override
   VerificationContext validateIntegrity(
-    Insertable<ExecutionCommitmentRow> instance, {
+    Insertable<ExecutionProjectRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -29868,6 +28762,2188 @@ class $ExecutionCommitmentsTable extends ExecutionCommitments
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
+  ExecutionProjectRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExecutionProjectRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $ExecutionProjectsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      horizon: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}horizon'],
+      )!,
+      targetDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}target_date'],
+      ),
+      sourceDomain: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_domain'],
+      ),
+      sourceRowFamily: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_row_family'],
+      ),
+      sourceRowId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_row_id'],
+      ),
+      sourceLabelSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_label_snapshot'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      ),
+    );
+  }
+
+  @override
+  $ExecutionProjectsTable createAlias(String alias) {
+    return $ExecutionProjectsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class ExecutionProjectRow extends DataClass
+    implements Insertable<ExecutionProjectRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String title;
+  final String description;
+  final String status;
+  final String horizon;
+  final DateTime? targetDate;
+  final String? sourceDomain;
+  final String? sourceRowFamily;
+  final String? sourceRowId;
+  final String? sourceLabelSnapshot;
+  final DateTime createdAt;
+  final DateTime? completedAt;
+  const ExecutionProjectRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.status,
+    required this.horizon,
+    this.targetDate,
+    this.sourceDomain,
+    this.sourceRowFamily,
+    this.sourceRowId,
+    this.sourceLabelSnapshot,
+    required this.createdAt,
+    this.completedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $ExecutionProjectsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['title'] = Variable<String>(title);
+    map['description'] = Variable<String>(description);
+    map['status'] = Variable<String>(status);
+    map['horizon'] = Variable<String>(horizon);
+    if (!nullToAbsent || targetDate != null) {
+      map['target_date'] = Variable<DateTime>(targetDate);
+    }
+    if (!nullToAbsent || sourceDomain != null) {
+      map['source_domain'] = Variable<String>(sourceDomain);
+    }
+    if (!nullToAbsent || sourceRowFamily != null) {
+      map['source_row_family'] = Variable<String>(sourceRowFamily);
+    }
+    if (!nullToAbsent || sourceRowId != null) {
+      map['source_row_id'] = Variable<String>(sourceRowId);
+    }
+    if (!nullToAbsent || sourceLabelSnapshot != null) {
+      map['source_label_snapshot'] = Variable<String>(sourceLabelSnapshot);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
+    }
+    return map;
+  }
+
+  ExecutionProjectsCompanion toCompanion(bool nullToAbsent) {
+    return ExecutionProjectsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      title: Value(title),
+      description: Value(description),
+      status: Value(status),
+      horizon: Value(horizon),
+      targetDate: targetDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetDate),
+      sourceDomain: sourceDomain == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceDomain),
+      sourceRowFamily: sourceRowFamily == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceRowFamily),
+      sourceRowId: sourceRowId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceRowId),
+      sourceLabelSnapshot: sourceLabelSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceLabelSnapshot),
+      createdAt: Value(createdAt),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+    );
+  }
+
+  factory ExecutionProjectRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExecutionProjectRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      description: serializer.fromJson<String>(json['description']),
+      status: serializer.fromJson<String>(json['status']),
+      horizon: serializer.fromJson<String>(json['horizon']),
+      targetDate: serializer.fromJson<DateTime?>(json['targetDate']),
+      sourceDomain: serializer.fromJson<String?>(json['sourceDomain']),
+      sourceRowFamily: serializer.fromJson<String?>(json['sourceRowFamily']),
+      sourceRowId: serializer.fromJson<String?>(json['sourceRowId']),
+      sourceLabelSnapshot: serializer.fromJson<String?>(
+        json['sourceLabelSnapshot'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'title': serializer.toJson<String>(title),
+      'description': serializer.toJson<String>(description),
+      'status': serializer.toJson<String>(status),
+      'horizon': serializer.toJson<String>(horizon),
+      'targetDate': serializer.toJson<DateTime?>(targetDate),
+      'sourceDomain': serializer.toJson<String?>(sourceDomain),
+      'sourceRowFamily': serializer.toJson<String?>(sourceRowFamily),
+      'sourceRowId': serializer.toJson<String?>(sourceRowId),
+      'sourceLabelSnapshot': serializer.toJson<String?>(sourceLabelSnapshot),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
+    };
+  }
+
+  ExecutionProjectRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? title,
+    String? description,
+    String? status,
+    String? horizon,
+    Value<DateTime?> targetDate = const Value.absent(),
+    Value<String?> sourceDomain = const Value.absent(),
+    Value<String?> sourceRowFamily = const Value.absent(),
+    Value<String?> sourceRowId = const Value.absent(),
+    Value<String?> sourceLabelSnapshot = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> completedAt = const Value.absent(),
+  }) => ExecutionProjectRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    title: title ?? this.title,
+    description: description ?? this.description,
+    status: status ?? this.status,
+    horizon: horizon ?? this.horizon,
+    targetDate: targetDate.present ? targetDate.value : this.targetDate,
+    sourceDomain: sourceDomain.present ? sourceDomain.value : this.sourceDomain,
+    sourceRowFamily: sourceRowFamily.present
+        ? sourceRowFamily.value
+        : this.sourceRowFamily,
+    sourceRowId: sourceRowId.present ? sourceRowId.value : this.sourceRowId,
+    sourceLabelSnapshot: sourceLabelSnapshot.present
+        ? sourceLabelSnapshot.value
+        : this.sourceLabelSnapshot,
+    createdAt: createdAt ?? this.createdAt,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+  );
+  ExecutionProjectRow copyWithCompanion(ExecutionProjectsCompanion data) {
+    return ExecutionProjectRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      status: data.status.present ? data.status.value : this.status,
+      horizon: data.horizon.present ? data.horizon.value : this.horizon,
+      targetDate: data.targetDate.present
+          ? data.targetDate.value
+          : this.targetDate,
+      sourceDomain: data.sourceDomain.present
+          ? data.sourceDomain.value
+          : this.sourceDomain,
+      sourceRowFamily: data.sourceRowFamily.present
+          ? data.sourceRowFamily.value
+          : this.sourceRowFamily,
+      sourceRowId: data.sourceRowId.present
+          ? data.sourceRowId.value
+          : this.sourceRowId,
+      sourceLabelSnapshot: data.sourceLabelSnapshot.present
+          ? data.sourceLabelSnapshot.value
+          : this.sourceLabelSnapshot,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExecutionProjectRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('description: $description, ')
+          ..write('status: $status, ')
+          ..write('horizon: $horizon, ')
+          ..write('targetDate: $targetDate, ')
+          ..write('sourceDomain: $sourceDomain, ')
+          ..write('sourceRowFamily: $sourceRowFamily, ')
+          ..write('sourceRowId: $sourceRowId, ')
+          ..write('sourceLabelSnapshot: $sourceLabelSnapshot, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('completedAt: $completedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    title,
+    description,
+    status,
+    horizon,
+    targetDate,
+    sourceDomain,
+    sourceRowFamily,
+    sourceRowId,
+    sourceLabelSnapshot,
+    createdAt,
+    completedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExecutionProjectRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.description == this.description &&
+          other.status == this.status &&
+          other.horizon == this.horizon &&
+          other.targetDate == this.targetDate &&
+          other.sourceDomain == this.sourceDomain &&
+          other.sourceRowFamily == this.sourceRowFamily &&
+          other.sourceRowId == this.sourceRowId &&
+          other.sourceLabelSnapshot == this.sourceLabelSnapshot &&
+          other.createdAt == this.createdAt &&
+          other.completedAt == this.completedAt);
+}
+
+class ExecutionProjectsCompanion extends UpdateCompanion<ExecutionProjectRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> title;
+  final Value<String> description;
+  final Value<String> status;
+  final Value<String> horizon;
+  final Value<DateTime?> targetDate;
+  final Value<String?> sourceDomain;
+  final Value<String?> sourceRowFamily;
+  final Value<String?> sourceRowId;
+  final Value<String?> sourceLabelSnapshot;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> completedAt;
+  final Value<int> rowid;
+  const ExecutionProjectsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.description = const Value.absent(),
+    this.status = const Value.absent(),
+    this.horizon = const Value.absent(),
+    this.targetDate = const Value.absent(),
+    this.sourceDomain = const Value.absent(),
+    this.sourceRowFamily = const Value.absent(),
+    this.sourceRowId = const Value.absent(),
+    this.sourceLabelSnapshot = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExecutionProjectsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String title,
+    this.description = const Value.absent(),
+    this.status = const Value.absent(),
+    this.horizon = const Value.absent(),
+    this.targetDate = const Value.absent(),
+    this.sourceDomain = const Value.absent(),
+    this.sourceRowFamily = const Value.absent(),
+    this.sourceRowId = const Value.absent(),
+    this.sourceLabelSnapshot = const Value.absent(),
+    required DateTime createdAt,
+    this.completedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       title = Value(title),
+       createdAt = Value(createdAt);
+  static Insertable<ExecutionProjectRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? title,
+    Expression<String>? description,
+    Expression<String>? status,
+    Expression<String>? horizon,
+    Expression<DateTime>? targetDate,
+    Expression<String>? sourceDomain,
+    Expression<String>? sourceRowFamily,
+    Expression<String>? sourceRowId,
+    Expression<String>? sourceLabelSnapshot,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? completedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (description != null) 'description': description,
+      if (status != null) 'status': status,
+      if (horizon != null) 'horizon': horizon,
+      if (targetDate != null) 'target_date': targetDate,
+      if (sourceDomain != null) 'source_domain': sourceDomain,
+      if (sourceRowFamily != null) 'source_row_family': sourceRowFamily,
+      if (sourceRowId != null) 'source_row_id': sourceRowId,
+      if (sourceLabelSnapshot != null)
+        'source_label_snapshot': sourceLabelSnapshot,
+      if (createdAt != null) 'created_at': createdAt,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExecutionProjectsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? title,
+    Value<String>? description,
+    Value<String>? status,
+    Value<String>? horizon,
+    Value<DateTime?>? targetDate,
+    Value<String?>? sourceDomain,
+    Value<String?>? sourceRowFamily,
+    Value<String?>? sourceRowId,
+    Value<String?>? sourceLabelSnapshot,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? completedAt,
+    Value<int>? rowid,
+  }) {
+    return ExecutionProjectsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      horizon: horizon ?? this.horizon,
+      targetDate: targetDate ?? this.targetDate,
+      sourceDomain: sourceDomain ?? this.sourceDomain,
+      sourceRowFamily: sourceRowFamily ?? this.sourceRowFamily,
+      sourceRowId: sourceRowId ?? this.sourceRowId,
+      sourceLabelSnapshot: sourceLabelSnapshot ?? this.sourceLabelSnapshot,
+      createdAt: createdAt ?? this.createdAt,
+      completedAt: completedAt ?? this.completedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $ExecutionProjectsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (horizon.present) {
+      map['horizon'] = Variable<String>(horizon.value);
+    }
+    if (targetDate.present) {
+      map['target_date'] = Variable<DateTime>(targetDate.value);
+    }
+    if (sourceDomain.present) {
+      map['source_domain'] = Variable<String>(sourceDomain.value);
+    }
+    if (sourceRowFamily.present) {
+      map['source_row_family'] = Variable<String>(sourceRowFamily.value);
+    }
+    if (sourceRowId.present) {
+      map['source_row_id'] = Variable<String>(sourceRowId.value);
+    }
+    if (sourceLabelSnapshot.present) {
+      map['source_label_snapshot'] = Variable<String>(
+        sourceLabelSnapshot.value,
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExecutionProjectsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('description: $description, ')
+          ..write('status: $status, ')
+          ..write('horizon: $horizon, ')
+          ..write('targetDate: $targetDate, ')
+          ..write('sourceDomain: $sourceDomain, ')
+          ..write('sourceRowFamily: $sourceRowFamily, ')
+          ..write('sourceRowId: $sourceRowId, ')
+          ..write('sourceLabelSnapshot: $sourceLabelSnapshot, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExecutionActionsTable extends ExecutionActions
+    with TableInfo<$ExecutionActionsTable, ExecutionActionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExecutionActionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($ExecutionActionsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('todo'),
+  );
+  static const VerificationMeta _priorityMeta = const VerificationMeta(
+    'priority',
+  );
+  @override
+  late final GeneratedColumn<String> priority = GeneratedColumn<String>(
+    'priority',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('normal'),
+  );
+  static const VerificationMeta _dueAtMeta = const VerificationMeta('dueAt');
+  @override
+  late final GeneratedColumn<DateTime> dueAt = GeneratedColumn<DateTime>(
+    'due_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scheduledForMeta = const VerificationMeta(
+    'scheduledFor',
+  );
+  @override
+  late final GeneratedColumn<DateTime> scheduledFor = GeneratedColumn<DateTime>(
+    'scheduled_for',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<String> projectId = GeneratedColumn<String>(
+    'project_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _commitmentIdMeta = const VerificationMeta(
+    'commitmentId',
+  );
+  @override
+  late final GeneratedColumn<String> commitmentId = GeneratedColumn<String>(
+    'commitment_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceDomainMeta = const VerificationMeta(
+    'sourceDomain',
+  );
+  @override
+  late final GeneratedColumn<String> sourceDomain = GeneratedColumn<String>(
+    'source_domain',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceRowFamilyMeta = const VerificationMeta(
+    'sourceRowFamily',
+  );
+  @override
+  late final GeneratedColumn<String> sourceRowFamily = GeneratedColumn<String>(
+    'source_row_family',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceRowIdMeta = const VerificationMeta(
+    'sourceRowId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceRowId = GeneratedColumn<String>(
+    'source_row_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceLabelSnapshotMeta =
+      const VerificationMeta('sourceLabelSnapshot');
+  @override
+  late final GeneratedColumn<String> sourceLabelSnapshot =
+      GeneratedColumn<String>(
+        'source_label_snapshot',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    title,
+    note,
+    status,
+    priority,
+    dueAt,
+    scheduledFor,
+    projectId,
+    commitmentId,
+    sourceDomain,
+    sourceRowFamily,
+    sourceRowId,
+    sourceLabelSnapshot,
+    createdAt,
+    completedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'execution_actions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExecutionActionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('priority')) {
+      context.handle(
+        _priorityMeta,
+        priority.isAcceptableOrUnknown(data['priority']!, _priorityMeta),
+      );
+    }
+    if (data.containsKey('due_at')) {
+      context.handle(
+        _dueAtMeta,
+        dueAt.isAcceptableOrUnknown(data['due_at']!, _dueAtMeta),
+      );
+    }
+    if (data.containsKey('scheduled_for')) {
+      context.handle(
+        _scheduledForMeta,
+        scheduledFor.isAcceptableOrUnknown(
+          data['scheduled_for']!,
+          _scheduledForMeta,
+        ),
+      );
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    }
+    if (data.containsKey('commitment_id')) {
+      context.handle(
+        _commitmentIdMeta,
+        commitmentId.isAcceptableOrUnknown(
+          data['commitment_id']!,
+          _commitmentIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_domain')) {
+      context.handle(
+        _sourceDomainMeta,
+        sourceDomain.isAcceptableOrUnknown(
+          data['source_domain']!,
+          _sourceDomainMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_row_family')) {
+      context.handle(
+        _sourceRowFamilyMeta,
+        sourceRowFamily.isAcceptableOrUnknown(
+          data['source_row_family']!,
+          _sourceRowFamilyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_row_id')) {
+      context.handle(
+        _sourceRowIdMeta,
+        sourceRowId.isAcceptableOrUnknown(
+          data['source_row_id']!,
+          _sourceRowIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_label_snapshot')) {
+      context.handle(
+        _sourceLabelSnapshotMeta,
+        sourceLabelSnapshot.isAcceptableOrUnknown(
+          data['source_label_snapshot']!,
+          _sourceLabelSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ExecutionActionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExecutionActionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $ExecutionActionsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      priority: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}priority'],
+      )!,
+      dueAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}due_at'],
+      ),
+      scheduledFor: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}scheduled_for'],
+      ),
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}project_id'],
+      ),
+      commitmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}commitment_id'],
+      ),
+      sourceDomain: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_domain'],
+      ),
+      sourceRowFamily: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_row_family'],
+      ),
+      sourceRowId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_row_id'],
+      ),
+      sourceLabelSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_label_snapshot'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      ),
+    );
+  }
+
+  @override
+  $ExecutionActionsTable createAlias(String alias) {
+    return $ExecutionActionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class ExecutionActionRow extends DataClass
+    implements Insertable<ExecutionActionRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String title;
+  final String note;
+  final String status;
+  final String priority;
+  final DateTime? dueAt;
+  final DateTime? scheduledFor;
+  final String? projectId;
+  final String? commitmentId;
+  final String? sourceDomain;
+  final String? sourceRowFamily;
+  final String? sourceRowId;
+  final String? sourceLabelSnapshot;
+  final DateTime createdAt;
+  final DateTime? completedAt;
+  const ExecutionActionRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.title,
+    required this.note,
+    required this.status,
+    required this.priority,
+    this.dueAt,
+    this.scheduledFor,
+    this.projectId,
+    this.commitmentId,
+    this.sourceDomain,
+    this.sourceRowFamily,
+    this.sourceRowId,
+    this.sourceLabelSnapshot,
+    required this.createdAt,
+    this.completedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $ExecutionActionsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['title'] = Variable<String>(title);
+    map['note'] = Variable<String>(note);
+    map['status'] = Variable<String>(status);
+    map['priority'] = Variable<String>(priority);
+    if (!nullToAbsent || dueAt != null) {
+      map['due_at'] = Variable<DateTime>(dueAt);
+    }
+    if (!nullToAbsent || scheduledFor != null) {
+      map['scheduled_for'] = Variable<DateTime>(scheduledFor);
+    }
+    if (!nullToAbsent || projectId != null) {
+      map['project_id'] = Variable<String>(projectId);
+    }
+    if (!nullToAbsent || commitmentId != null) {
+      map['commitment_id'] = Variable<String>(commitmentId);
+    }
+    if (!nullToAbsent || sourceDomain != null) {
+      map['source_domain'] = Variable<String>(sourceDomain);
+    }
+    if (!nullToAbsent || sourceRowFamily != null) {
+      map['source_row_family'] = Variable<String>(sourceRowFamily);
+    }
+    if (!nullToAbsent || sourceRowId != null) {
+      map['source_row_id'] = Variable<String>(sourceRowId);
+    }
+    if (!nullToAbsent || sourceLabelSnapshot != null) {
+      map['source_label_snapshot'] = Variable<String>(sourceLabelSnapshot);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
+    }
+    return map;
+  }
+
+  ExecutionActionsCompanion toCompanion(bool nullToAbsent) {
+    return ExecutionActionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      title: Value(title),
+      note: Value(note),
+      status: Value(status),
+      priority: Value(priority),
+      dueAt: dueAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueAt),
+      scheduledFor: scheduledFor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledFor),
+      projectId: projectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(projectId),
+      commitmentId: commitmentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(commitmentId),
+      sourceDomain: sourceDomain == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceDomain),
+      sourceRowFamily: sourceRowFamily == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceRowFamily),
+      sourceRowId: sourceRowId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceRowId),
+      sourceLabelSnapshot: sourceLabelSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceLabelSnapshot),
+      createdAt: Value(createdAt),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+    );
+  }
+
+  factory ExecutionActionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExecutionActionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      note: serializer.fromJson<String>(json['note']),
+      status: serializer.fromJson<String>(json['status']),
+      priority: serializer.fromJson<String>(json['priority']),
+      dueAt: serializer.fromJson<DateTime?>(json['dueAt']),
+      scheduledFor: serializer.fromJson<DateTime?>(json['scheduledFor']),
+      projectId: serializer.fromJson<String?>(json['projectId']),
+      commitmentId: serializer.fromJson<String?>(json['commitmentId']),
+      sourceDomain: serializer.fromJson<String?>(json['sourceDomain']),
+      sourceRowFamily: serializer.fromJson<String?>(json['sourceRowFamily']),
+      sourceRowId: serializer.fromJson<String?>(json['sourceRowId']),
+      sourceLabelSnapshot: serializer.fromJson<String?>(
+        json['sourceLabelSnapshot'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'title': serializer.toJson<String>(title),
+      'note': serializer.toJson<String>(note),
+      'status': serializer.toJson<String>(status),
+      'priority': serializer.toJson<String>(priority),
+      'dueAt': serializer.toJson<DateTime?>(dueAt),
+      'scheduledFor': serializer.toJson<DateTime?>(scheduledFor),
+      'projectId': serializer.toJson<String?>(projectId),
+      'commitmentId': serializer.toJson<String?>(commitmentId),
+      'sourceDomain': serializer.toJson<String?>(sourceDomain),
+      'sourceRowFamily': serializer.toJson<String?>(sourceRowFamily),
+      'sourceRowId': serializer.toJson<String?>(sourceRowId),
+      'sourceLabelSnapshot': serializer.toJson<String?>(sourceLabelSnapshot),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
+    };
+  }
+
+  ExecutionActionRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? title,
+    String? note,
+    String? status,
+    String? priority,
+    Value<DateTime?> dueAt = const Value.absent(),
+    Value<DateTime?> scheduledFor = const Value.absent(),
+    Value<String?> projectId = const Value.absent(),
+    Value<String?> commitmentId = const Value.absent(),
+    Value<String?> sourceDomain = const Value.absent(),
+    Value<String?> sourceRowFamily = const Value.absent(),
+    Value<String?> sourceRowId = const Value.absent(),
+    Value<String?> sourceLabelSnapshot = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> completedAt = const Value.absent(),
+  }) => ExecutionActionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    title: title ?? this.title,
+    note: note ?? this.note,
+    status: status ?? this.status,
+    priority: priority ?? this.priority,
+    dueAt: dueAt.present ? dueAt.value : this.dueAt,
+    scheduledFor: scheduledFor.present ? scheduledFor.value : this.scheduledFor,
+    projectId: projectId.present ? projectId.value : this.projectId,
+    commitmentId: commitmentId.present ? commitmentId.value : this.commitmentId,
+    sourceDomain: sourceDomain.present ? sourceDomain.value : this.sourceDomain,
+    sourceRowFamily: sourceRowFamily.present
+        ? sourceRowFamily.value
+        : this.sourceRowFamily,
+    sourceRowId: sourceRowId.present ? sourceRowId.value : this.sourceRowId,
+    sourceLabelSnapshot: sourceLabelSnapshot.present
+        ? sourceLabelSnapshot.value
+        : this.sourceLabelSnapshot,
+    createdAt: createdAt ?? this.createdAt,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+  );
+  ExecutionActionRow copyWithCompanion(ExecutionActionsCompanion data) {
+    return ExecutionActionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      note: data.note.present ? data.note.value : this.note,
+      status: data.status.present ? data.status.value : this.status,
+      priority: data.priority.present ? data.priority.value : this.priority,
+      dueAt: data.dueAt.present ? data.dueAt.value : this.dueAt,
+      scheduledFor: data.scheduledFor.present
+          ? data.scheduledFor.value
+          : this.scheduledFor,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      commitmentId: data.commitmentId.present
+          ? data.commitmentId.value
+          : this.commitmentId,
+      sourceDomain: data.sourceDomain.present
+          ? data.sourceDomain.value
+          : this.sourceDomain,
+      sourceRowFamily: data.sourceRowFamily.present
+          ? data.sourceRowFamily.value
+          : this.sourceRowFamily,
+      sourceRowId: data.sourceRowId.present
+          ? data.sourceRowId.value
+          : this.sourceRowId,
+      sourceLabelSnapshot: data.sourceLabelSnapshot.present
+          ? data.sourceLabelSnapshot.value
+          : this.sourceLabelSnapshot,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExecutionActionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('note: $note, ')
+          ..write('status: $status, ')
+          ..write('priority: $priority, ')
+          ..write('dueAt: $dueAt, ')
+          ..write('scheduledFor: $scheduledFor, ')
+          ..write('projectId: $projectId, ')
+          ..write('commitmentId: $commitmentId, ')
+          ..write('sourceDomain: $sourceDomain, ')
+          ..write('sourceRowFamily: $sourceRowFamily, ')
+          ..write('sourceRowId: $sourceRowId, ')
+          ..write('sourceLabelSnapshot: $sourceLabelSnapshot, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('completedAt: $completedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    title,
+    note,
+    status,
+    priority,
+    dueAt,
+    scheduledFor,
+    projectId,
+    commitmentId,
+    sourceDomain,
+    sourceRowFamily,
+    sourceRowId,
+    sourceLabelSnapshot,
+    createdAt,
+    completedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExecutionActionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.note == this.note &&
+          other.status == this.status &&
+          other.priority == this.priority &&
+          other.dueAt == this.dueAt &&
+          other.scheduledFor == this.scheduledFor &&
+          other.projectId == this.projectId &&
+          other.commitmentId == this.commitmentId &&
+          other.sourceDomain == this.sourceDomain &&
+          other.sourceRowFamily == this.sourceRowFamily &&
+          other.sourceRowId == this.sourceRowId &&
+          other.sourceLabelSnapshot == this.sourceLabelSnapshot &&
+          other.createdAt == this.createdAt &&
+          other.completedAt == this.completedAt);
+}
+
+class ExecutionActionsCompanion extends UpdateCompanion<ExecutionActionRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> title;
+  final Value<String> note;
+  final Value<String> status;
+  final Value<String> priority;
+  final Value<DateTime?> dueAt;
+  final Value<DateTime?> scheduledFor;
+  final Value<String?> projectId;
+  final Value<String?> commitmentId;
+  final Value<String?> sourceDomain;
+  final Value<String?> sourceRowFamily;
+  final Value<String?> sourceRowId;
+  final Value<String?> sourceLabelSnapshot;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> completedAt;
+  final Value<int> rowid;
+  const ExecutionActionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.note = const Value.absent(),
+    this.status = const Value.absent(),
+    this.priority = const Value.absent(),
+    this.dueAt = const Value.absent(),
+    this.scheduledFor = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.commitmentId = const Value.absent(),
+    this.sourceDomain = const Value.absent(),
+    this.sourceRowFamily = const Value.absent(),
+    this.sourceRowId = const Value.absent(),
+    this.sourceLabelSnapshot = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExecutionActionsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String title,
+    this.note = const Value.absent(),
+    this.status = const Value.absent(),
+    this.priority = const Value.absent(),
+    this.dueAt = const Value.absent(),
+    this.scheduledFor = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.commitmentId = const Value.absent(),
+    this.sourceDomain = const Value.absent(),
+    this.sourceRowFamily = const Value.absent(),
+    this.sourceRowId = const Value.absent(),
+    this.sourceLabelSnapshot = const Value.absent(),
+    required DateTime createdAt,
+    this.completedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       title = Value(title),
+       createdAt = Value(createdAt);
+  static Insertable<ExecutionActionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? title,
+    Expression<String>? note,
+    Expression<String>? status,
+    Expression<String>? priority,
+    Expression<DateTime>? dueAt,
+    Expression<DateTime>? scheduledFor,
+    Expression<String>? projectId,
+    Expression<String>? commitmentId,
+    Expression<String>? sourceDomain,
+    Expression<String>? sourceRowFamily,
+    Expression<String>? sourceRowId,
+    Expression<String>? sourceLabelSnapshot,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? completedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (note != null) 'note': note,
+      if (status != null) 'status': status,
+      if (priority != null) 'priority': priority,
+      if (dueAt != null) 'due_at': dueAt,
+      if (scheduledFor != null) 'scheduled_for': scheduledFor,
+      if (projectId != null) 'project_id': projectId,
+      if (commitmentId != null) 'commitment_id': commitmentId,
+      if (sourceDomain != null) 'source_domain': sourceDomain,
+      if (sourceRowFamily != null) 'source_row_family': sourceRowFamily,
+      if (sourceRowId != null) 'source_row_id': sourceRowId,
+      if (sourceLabelSnapshot != null)
+        'source_label_snapshot': sourceLabelSnapshot,
+      if (createdAt != null) 'created_at': createdAt,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExecutionActionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? title,
+    Value<String>? note,
+    Value<String>? status,
+    Value<String>? priority,
+    Value<DateTime?>? dueAt,
+    Value<DateTime?>? scheduledFor,
+    Value<String?>? projectId,
+    Value<String?>? commitmentId,
+    Value<String?>? sourceDomain,
+    Value<String?>? sourceRowFamily,
+    Value<String?>? sourceRowId,
+    Value<String?>? sourceLabelSnapshot,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? completedAt,
+    Value<int>? rowid,
+  }) {
+    return ExecutionActionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      title: title ?? this.title,
+      note: note ?? this.note,
+      status: status ?? this.status,
+      priority: priority ?? this.priority,
+      dueAt: dueAt ?? this.dueAt,
+      scheduledFor: scheduledFor ?? this.scheduledFor,
+      projectId: projectId ?? this.projectId,
+      commitmentId: commitmentId ?? this.commitmentId,
+      sourceDomain: sourceDomain ?? this.sourceDomain,
+      sourceRowFamily: sourceRowFamily ?? this.sourceRowFamily,
+      sourceRowId: sourceRowId ?? this.sourceRowId,
+      sourceLabelSnapshot: sourceLabelSnapshot ?? this.sourceLabelSnapshot,
+      createdAt: createdAt ?? this.createdAt,
+      completedAt: completedAt ?? this.completedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $ExecutionActionsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (priority.present) {
+      map['priority'] = Variable<String>(priority.value);
+    }
+    if (dueAt.present) {
+      map['due_at'] = Variable<DateTime>(dueAt.value);
+    }
+    if (scheduledFor.present) {
+      map['scheduled_for'] = Variable<DateTime>(scheduledFor.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<String>(projectId.value);
+    }
+    if (commitmentId.present) {
+      map['commitment_id'] = Variable<String>(commitmentId.value);
+    }
+    if (sourceDomain.present) {
+      map['source_domain'] = Variable<String>(sourceDomain.value);
+    }
+    if (sourceRowFamily.present) {
+      map['source_row_family'] = Variable<String>(sourceRowFamily.value);
+    }
+    if (sourceRowId.present) {
+      map['source_row_id'] = Variable<String>(sourceRowId.value);
+    }
+    if (sourceLabelSnapshot.present) {
+      map['source_label_snapshot'] = Variable<String>(
+        sourceLabelSnapshot.value,
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExecutionActionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('note: $note, ')
+          ..write('status: $status, ')
+          ..write('priority: $priority, ')
+          ..write('dueAt: $dueAt, ')
+          ..write('scheduledFor: $scheduledFor, ')
+          ..write('projectId: $projectId, ')
+          ..write('commitmentId: $commitmentId, ')
+          ..write('sourceDomain: $sourceDomain, ')
+          ..write('sourceRowFamily: $sourceRowFamily, ')
+          ..write('sourceRowId: $sourceRowId, ')
+          ..write('sourceLabelSnapshot: $sourceLabelSnapshot, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExecutionCommitmentsTable extends ExecutionCommitments
+    with TableInfo<$ExecutionCommitmentsTable, ExecutionCommitmentRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExecutionCommitmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($ExecutionCommitmentsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('active'),
+  );
+  static const VerificationMeta _horizonMeta = const VerificationMeta(
+    'horizon',
+  );
+  @override
+  late final GeneratedColumn<String> horizon = GeneratedColumn<String>(
+    'horizon',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('open'),
+  );
+  static const VerificationMeta _targetDateMeta = const VerificationMeta(
+    'targetDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> targetDate = GeneratedColumn<DateTime>(
+    'target_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<String> projectId = GeneratedColumn<String>(
+    'project_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceDomainMeta = const VerificationMeta(
+    'sourceDomain',
+  );
+  @override
+  late final GeneratedColumn<String> sourceDomain = GeneratedColumn<String>(
+    'source_domain',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceRowFamilyMeta = const VerificationMeta(
+    'sourceRowFamily',
+  );
+  @override
+  late final GeneratedColumn<String> sourceRowFamily = GeneratedColumn<String>(
+    'source_row_family',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceRowIdMeta = const VerificationMeta(
+    'sourceRowId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceRowId = GeneratedColumn<String>(
+    'source_row_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceLabelSnapshotMeta =
+      const VerificationMeta('sourceLabelSnapshot');
+  @override
+  late final GeneratedColumn<String> sourceLabelSnapshot =
+      GeneratedColumn<String>(
+        'source_label_snapshot',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    title,
+    description,
+    status,
+    horizon,
+    targetDate,
+    projectId,
+    sourceDomain,
+    sourceRowFamily,
+    sourceRowId,
+    sourceLabelSnapshot,
+    createdAt,
+    completedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'execution_commitments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExecutionCommitmentRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('horizon')) {
+      context.handle(
+        _horizonMeta,
+        horizon.isAcceptableOrUnknown(data['horizon']!, _horizonMeta),
+      );
+    }
+    if (data.containsKey('target_date')) {
+      context.handle(
+        _targetDateMeta,
+        targetDate.isAcceptableOrUnknown(data['target_date']!, _targetDateMeta),
+      );
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    }
+    if (data.containsKey('source_domain')) {
+      context.handle(
+        _sourceDomainMeta,
+        sourceDomain.isAcceptableOrUnknown(
+          data['source_domain']!,
+          _sourceDomainMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_row_family')) {
+      context.handle(
+        _sourceRowFamilyMeta,
+        sourceRowFamily.isAcceptableOrUnknown(
+          data['source_row_family']!,
+          _sourceRowFamilyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_row_id')) {
+      context.handle(
+        _sourceRowIdMeta,
+        sourceRowId.isAcceptableOrUnknown(
+          data['source_row_id']!,
+          _sourceRowIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_label_snapshot')) {
+      context.handle(
+        _sourceLabelSnapshotMeta,
+        sourceLabelSnapshot.isAcceptableOrUnknown(
+          data['source_label_snapshot']!,
+          _sourceLabelSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
   ExecutionCommitmentRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ExecutionCommitmentRow(
@@ -29916,6 +30992,10 @@ class $ExecutionCommitmentsTable extends ExecutionCommitments
       targetDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}target_date'],
+      ),
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}project_id'],
       ),
       sourceDomain: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -29981,6 +31061,7 @@ class ExecutionCommitmentRow extends DataClass
   final String status;
   final String horizon;
   final DateTime? targetDate;
+  final String? projectId;
   final String? sourceDomain;
   final String? sourceRowFamily;
   final String? sourceRowId;
@@ -29999,6 +31080,7 @@ class ExecutionCommitmentRow extends DataClass
     required this.status,
     required this.horizon,
     this.targetDate,
+    this.projectId,
     this.sourceDomain,
     this.sourceRowFamily,
     this.sourceRowId,
@@ -30027,6 +31109,9 @@ class ExecutionCommitmentRow extends DataClass
     map['horizon'] = Variable<String>(horizon);
     if (!nullToAbsent || targetDate != null) {
       map['target_date'] = Variable<DateTime>(targetDate);
+    }
+    if (!nullToAbsent || projectId != null) {
+      map['project_id'] = Variable<String>(projectId);
     }
     if (!nullToAbsent || sourceDomain != null) {
       map['source_domain'] = Variable<String>(sourceDomain);
@@ -30064,6 +31149,9 @@ class ExecutionCommitmentRow extends DataClass
       targetDate: targetDate == null && nullToAbsent
           ? const Value.absent()
           : Value(targetDate),
+      projectId: projectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(projectId),
       sourceDomain: sourceDomain == null && nullToAbsent
           ? const Value.absent()
           : Value(sourceDomain),
@@ -30100,6 +31188,7 @@ class ExecutionCommitmentRow extends DataClass
       status: serializer.fromJson<String>(json['status']),
       horizon: serializer.fromJson<String>(json['horizon']),
       targetDate: serializer.fromJson<DateTime?>(json['targetDate']),
+      projectId: serializer.fromJson<String?>(json['projectId']),
       sourceDomain: serializer.fromJson<String?>(json['sourceDomain']),
       sourceRowFamily: serializer.fromJson<String?>(json['sourceRowFamily']),
       sourceRowId: serializer.fromJson<String?>(json['sourceRowId']),
@@ -30125,6 +31214,7 @@ class ExecutionCommitmentRow extends DataClass
       'status': serializer.toJson<String>(status),
       'horizon': serializer.toJson<String>(horizon),
       'targetDate': serializer.toJson<DateTime?>(targetDate),
+      'projectId': serializer.toJson<String?>(projectId),
       'sourceDomain': serializer.toJson<String?>(sourceDomain),
       'sourceRowFamily': serializer.toJson<String?>(sourceRowFamily),
       'sourceRowId': serializer.toJson<String?>(sourceRowId),
@@ -30146,6 +31236,7 @@ class ExecutionCommitmentRow extends DataClass
     String? status,
     String? horizon,
     Value<DateTime?> targetDate = const Value.absent(),
+    Value<String?> projectId = const Value.absent(),
     Value<String?> sourceDomain = const Value.absent(),
     Value<String?> sourceRowFamily = const Value.absent(),
     Value<String?> sourceRowId = const Value.absent(),
@@ -30164,6 +31255,7 @@ class ExecutionCommitmentRow extends DataClass
     status: status ?? this.status,
     horizon: horizon ?? this.horizon,
     targetDate: targetDate.present ? targetDate.value : this.targetDate,
+    projectId: projectId.present ? projectId.value : this.projectId,
     sourceDomain: sourceDomain.present ? sourceDomain.value : this.sourceDomain,
     sourceRowFamily: sourceRowFamily.present
         ? sourceRowFamily.value
@@ -30196,6 +31288,7 @@ class ExecutionCommitmentRow extends DataClass
       targetDate: data.targetDate.present
           ? data.targetDate.value
           : this.targetDate,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
       sourceDomain: data.sourceDomain.present
           ? data.sourceDomain.value
           : this.sourceDomain,
@@ -30229,6 +31322,7 @@ class ExecutionCommitmentRow extends DataClass
           ..write('status: $status, ')
           ..write('horizon: $horizon, ')
           ..write('targetDate: $targetDate, ')
+          ..write('projectId: $projectId, ')
           ..write('sourceDomain: $sourceDomain, ')
           ..write('sourceRowFamily: $sourceRowFamily, ')
           ..write('sourceRowId: $sourceRowId, ')
@@ -30252,6 +31346,7 @@ class ExecutionCommitmentRow extends DataClass
     status,
     horizon,
     targetDate,
+    projectId,
     sourceDomain,
     sourceRowFamily,
     sourceRowId,
@@ -30274,6 +31369,7 @@ class ExecutionCommitmentRow extends DataClass
           other.status == this.status &&
           other.horizon == this.horizon &&
           other.targetDate == this.targetDate &&
+          other.projectId == this.projectId &&
           other.sourceDomain == this.sourceDomain &&
           other.sourceRowFamily == this.sourceRowFamily &&
           other.sourceRowId == this.sourceRowId &&
@@ -30295,6 +31391,7 @@ class ExecutionCommitmentsCompanion
   final Value<String> status;
   final Value<String> horizon;
   final Value<DateTime?> targetDate;
+  final Value<String?> projectId;
   final Value<String?> sourceDomain;
   final Value<String?> sourceRowFamily;
   final Value<String?> sourceRowId;
@@ -30314,6 +31411,7 @@ class ExecutionCommitmentsCompanion
     this.status = const Value.absent(),
     this.horizon = const Value.absent(),
     this.targetDate = const Value.absent(),
+    this.projectId = const Value.absent(),
     this.sourceDomain = const Value.absent(),
     this.sourceRowFamily = const Value.absent(),
     this.sourceRowId = const Value.absent(),
@@ -30334,6 +31432,7 @@ class ExecutionCommitmentsCompanion
     this.status = const Value.absent(),
     this.horizon = const Value.absent(),
     this.targetDate = const Value.absent(),
+    this.projectId = const Value.absent(),
     this.sourceDomain = const Value.absent(),
     this.sourceRowFamily = const Value.absent(),
     this.sourceRowId = const Value.absent(),
@@ -30360,6 +31459,7 @@ class ExecutionCommitmentsCompanion
     Expression<String>? status,
     Expression<String>? horizon,
     Expression<DateTime>? targetDate,
+    Expression<String>? projectId,
     Expression<String>? sourceDomain,
     Expression<String>? sourceRowFamily,
     Expression<String>? sourceRowId,
@@ -30380,6 +31480,7 @@ class ExecutionCommitmentsCompanion
       if (status != null) 'status': status,
       if (horizon != null) 'horizon': horizon,
       if (targetDate != null) 'target_date': targetDate,
+      if (projectId != null) 'project_id': projectId,
       if (sourceDomain != null) 'source_domain': sourceDomain,
       if (sourceRowFamily != null) 'source_row_family': sourceRowFamily,
       if (sourceRowId != null) 'source_row_id': sourceRowId,
@@ -30403,6 +31504,7 @@ class ExecutionCommitmentsCompanion
     Value<String>? status,
     Value<String>? horizon,
     Value<DateTime?>? targetDate,
+    Value<String?>? projectId,
     Value<String?>? sourceDomain,
     Value<String?>? sourceRowFamily,
     Value<String?>? sourceRowId,
@@ -30423,6 +31525,7 @@ class ExecutionCommitmentsCompanion
       status: status ?? this.status,
       horizon: horizon ?? this.horizon,
       targetDate: targetDate ?? this.targetDate,
+      projectId: projectId ?? this.projectId,
       sourceDomain: sourceDomain ?? this.sourceDomain,
       sourceRowFamily: sourceRowFamily ?? this.sourceRowFamily,
       sourceRowId: sourceRowId ?? this.sourceRowId,
@@ -30471,6 +31574,9 @@ class ExecutionCommitmentsCompanion
     if (targetDate.present) {
       map['target_date'] = Variable<DateTime>(targetDate.value);
     }
+    if (projectId.present) {
+      map['project_id'] = Variable<String>(projectId.value);
+    }
     if (sourceDomain.present) {
       map['source_domain'] = Variable<String>(sourceDomain.value);
     }
@@ -30511,6 +31617,7 @@ class ExecutionCommitmentsCompanion
           ..write('status: $status, ')
           ..write('horizon: $horizon, ')
           ..write('targetDate: $targetDate, ')
+          ..write('projectId: $projectId, ')
           ..write('sourceDomain: $sourceDomain, ')
           ..write('sourceRowFamily: $sourceRowFamily, ')
           ..write('sourceRowId: $sourceRowId, ')
@@ -30602,6 +31709,17 @@ class $ExecutionProgressEntriesTable extends ExecutionProgressEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<String> projectId = GeneratedColumn<String>(
+    'project_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _commitmentIdMeta = const VerificationMeta(
     'commitmentId',
   );
@@ -30652,6 +31770,7 @@ class $ExecutionProgressEntriesTable extends ExecutionProgressEntries
     deletedAt,
     id,
     actionId,
+    projectId,
     commitmentId,
     kind,
     note,
@@ -30714,6 +31833,12 @@ class $ExecutionProgressEntriesTable extends ExecutionProgressEntries
       context.handle(
         _actionIdMeta,
         actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
       );
     }
     if (data.containsKey('commitment_id')) {
@@ -30789,6 +31914,10 @@ class $ExecutionProgressEntriesTable extends ExecutionProgressEntries
         DriftSqlType.string,
         data['${effectivePrefix}action_id'],
       ),
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}project_id'],
+      ),
       commitmentId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}commitment_id'],
@@ -30841,6 +31970,7 @@ class ExecutionProgressEntryRow extends DataClass
   final DateTime? deletedAt;
   final String id;
   final String? actionId;
+  final String? projectId;
   final String? commitmentId;
   final String kind;
   final String note;
@@ -30853,6 +31983,7 @@ class ExecutionProgressEntryRow extends DataClass
     this.deletedAt,
     required this.id,
     this.actionId,
+    this.projectId,
     this.commitmentId,
     required this.kind,
     required this.note,
@@ -30876,6 +32007,9 @@ class ExecutionProgressEntryRow extends DataClass
     if (!nullToAbsent || actionId != null) {
       map['action_id'] = Variable<String>(actionId);
     }
+    if (!nullToAbsent || projectId != null) {
+      map['project_id'] = Variable<String>(projectId);
+    }
     if (!nullToAbsent || commitmentId != null) {
       map['commitment_id'] = Variable<String>(commitmentId);
     }
@@ -30898,6 +32032,9 @@ class ExecutionProgressEntryRow extends DataClass
       actionId: actionId == null && nullToAbsent
           ? const Value.absent()
           : Value(actionId),
+      projectId: projectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(projectId),
       commitmentId: commitmentId == null && nullToAbsent
           ? const Value.absent()
           : Value(commitmentId),
@@ -30920,6 +32057,7 @@ class ExecutionProgressEntryRow extends DataClass
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
       actionId: serializer.fromJson<String?>(json['actionId']),
+      projectId: serializer.fromJson<String?>(json['projectId']),
       commitmentId: serializer.fromJson<String?>(json['commitmentId']),
       kind: serializer.fromJson<String>(json['kind']),
       note: serializer.fromJson<String>(json['note']),
@@ -30937,6 +32075,7 @@ class ExecutionProgressEntryRow extends DataClass
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
       'actionId': serializer.toJson<String?>(actionId),
+      'projectId': serializer.toJson<String?>(projectId),
       'commitmentId': serializer.toJson<String?>(commitmentId),
       'kind': serializer.toJson<String>(kind),
       'note': serializer.toJson<String>(note),
@@ -30952,6 +32091,7 @@ class ExecutionProgressEntryRow extends DataClass
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
     Value<String?> actionId = const Value.absent(),
+    Value<String?> projectId = const Value.absent(),
     Value<String?> commitmentId = const Value.absent(),
     String? kind,
     String? note,
@@ -30964,6 +32104,7 @@ class ExecutionProgressEntryRow extends DataClass
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
     actionId: actionId.present ? actionId.value : this.actionId,
+    projectId: projectId.present ? projectId.value : this.projectId,
     commitmentId: commitmentId.present ? commitmentId.value : this.commitmentId,
     kind: kind ?? this.kind,
     note: note ?? this.note,
@@ -30984,6 +32125,7 @@ class ExecutionProgressEntryRow extends DataClass
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       id: data.id.present ? data.id.value : this.id,
       actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
       commitmentId: data.commitmentId.present
           ? data.commitmentId.value
           : this.commitmentId,
@@ -31003,6 +32145,7 @@ class ExecutionProgressEntryRow extends DataClass
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('actionId: $actionId, ')
+          ..write('projectId: $projectId, ')
           ..write('commitmentId: $commitmentId, ')
           ..write('kind: $kind, ')
           ..write('note: $note, ')
@@ -31020,6 +32163,7 @@ class ExecutionProgressEntryRow extends DataClass
     deletedAt,
     id,
     actionId,
+    projectId,
     commitmentId,
     kind,
     note,
@@ -31036,6 +32180,7 @@ class ExecutionProgressEntryRow extends DataClass
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
           other.actionId == this.actionId &&
+          other.projectId == this.projectId &&
           other.commitmentId == this.commitmentId &&
           other.kind == this.kind &&
           other.note == this.note &&
@@ -31051,6 +32196,7 @@ class ExecutionProgressEntriesCompanion
   final Value<DateTime?> deletedAt;
   final Value<String> id;
   final Value<String?> actionId;
+  final Value<String?> projectId;
   final Value<String?> commitmentId;
   final Value<String> kind;
   final Value<String> note;
@@ -31064,6 +32210,7 @@ class ExecutionProgressEntriesCompanion
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
     this.actionId = const Value.absent(),
+    this.projectId = const Value.absent(),
     this.commitmentId = const Value.absent(),
     this.kind = const Value.absent(),
     this.note = const Value.absent(),
@@ -31078,6 +32225,7 @@ class ExecutionProgressEntriesCompanion
     this.deletedAt = const Value.absent(),
     required String id,
     this.actionId = const Value.absent(),
+    this.projectId = const Value.absent(),
     this.commitmentId = const Value.absent(),
     this.kind = const Value.absent(),
     required String note,
@@ -31098,6 +32246,7 @@ class ExecutionProgressEntriesCompanion
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
     Expression<String>? actionId,
+    Expression<String>? projectId,
     Expression<String>? commitmentId,
     Expression<String>? kind,
     Expression<String>? note,
@@ -31112,6 +32261,7 @@ class ExecutionProgressEntriesCompanion
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
       if (actionId != null) 'action_id': actionId,
+      if (projectId != null) 'project_id': projectId,
       if (commitmentId != null) 'commitment_id': commitmentId,
       if (kind != null) 'kind': kind,
       if (note != null) 'note': note,
@@ -31128,6 +32278,7 @@ class ExecutionProgressEntriesCompanion
     Value<DateTime?>? deletedAt,
     Value<String>? id,
     Value<String?>? actionId,
+    Value<String?>? projectId,
     Value<String?>? commitmentId,
     Value<String>? kind,
     Value<String>? note,
@@ -31142,6 +32293,7 @@ class ExecutionProgressEntriesCompanion
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
       actionId: actionId ?? this.actionId,
+      projectId: projectId ?? this.projectId,
       commitmentId: commitmentId ?? this.commitmentId,
       kind: kind ?? this.kind,
       note: note ?? this.note,
@@ -31176,6 +32328,9 @@ class ExecutionProgressEntriesCompanion
     if (actionId.present) {
       map['action_id'] = Variable<String>(actionId.value);
     }
+    if (projectId.present) {
+      map['project_id'] = Variable<String>(projectId.value);
+    }
     if (commitmentId.present) {
       map['commitment_id'] = Variable<String>(commitmentId.value);
     }
@@ -31204,6 +32359,7 @@ class ExecutionProgressEntriesCompanion
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('actionId: $actionId, ')
+          ..write('projectId: $projectId, ')
           ..write('commitmentId: $commitmentId, ')
           ..write('kind: $kind, ')
           ..write('note: $note, ')
@@ -31271,6 +32427,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $KnowledgeExperimentsTable(this);
   late final $KnowledgeRoutinesTable knowledgeRoutines =
       $KnowledgeRoutinesTable(this);
+  late final $ExecutionProjectsTable executionProjects =
+      $ExecutionProjectsTable(this);
   late final $ExecutionActionsTable executionActions = $ExecutionActionsTable(
     this,
   );
@@ -31320,6 +32478,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     knowledgeConcepts,
     knowledgeExperiments,
     knowledgeRoutines,
+    executionProjects,
     executionActions,
     executionCommitments,
     executionProgressEntries,
@@ -44588,6 +45747,466 @@ typedef $$KnowledgeRoutinesTableProcessedTableManager =
       KnowledgeRoutineRow,
       PrefetchHooks Function()
     >;
+typedef $$ExecutionProjectsTableCreateCompanionBuilder =
+    ExecutionProjectsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String title,
+      Value<String> description,
+      Value<String> status,
+      Value<String> horizon,
+      Value<DateTime?> targetDate,
+      Value<String?> sourceDomain,
+      Value<String?> sourceRowFamily,
+      Value<String?> sourceRowId,
+      Value<String?> sourceLabelSnapshot,
+      required DateTime createdAt,
+      Value<DateTime?> completedAt,
+      Value<int> rowid,
+    });
+typedef $$ExecutionProjectsTableUpdateCompanionBuilder =
+    ExecutionProjectsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> title,
+      Value<String> description,
+      Value<String> status,
+      Value<String> horizon,
+      Value<DateTime?> targetDate,
+      Value<String?> sourceDomain,
+      Value<String?> sourceRowFamily,
+      Value<String?> sourceRowId,
+      Value<String?> sourceLabelSnapshot,
+      Value<DateTime> createdAt,
+      Value<DateTime?> completedAt,
+      Value<int> rowid,
+    });
+
+class $$ExecutionProjectsTableFilterComposer
+    extends Composer<_$AppDatabase, $ExecutionProjectsTable> {
+  $$ExecutionProjectsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get horizon => $composableBuilder(
+    column: $table.horizon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get targetDate => $composableBuilder(
+    column: $table.targetDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceDomain => $composableBuilder(
+    column: $table.sourceDomain,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceRowFamily => $composableBuilder(
+    column: $table.sourceRowFamily,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceRowId => $composableBuilder(
+    column: $table.sourceRowId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceLabelSnapshot => $composableBuilder(
+    column: $table.sourceLabelSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExecutionProjectsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExecutionProjectsTable> {
+  $$ExecutionProjectsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get horizon => $composableBuilder(
+    column: $table.horizon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get targetDate => $composableBuilder(
+    column: $table.targetDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceDomain => $composableBuilder(
+    column: $table.sourceDomain,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceRowFamily => $composableBuilder(
+    column: $table.sourceRowFamily,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceRowId => $composableBuilder(
+    column: $table.sourceRowId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceLabelSnapshot => $composableBuilder(
+    column: $table.sourceLabelSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExecutionProjectsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExecutionProjectsTable> {
+  $$ExecutionProjectsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get horizon =>
+      $composableBuilder(column: $table.horizon, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get targetDate => $composableBuilder(
+    column: $table.targetDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceDomain => $composableBuilder(
+    column: $table.sourceDomain,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceRowFamily => $composableBuilder(
+    column: $table.sourceRowFamily,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceRowId => $composableBuilder(
+    column: $table.sourceRowId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceLabelSnapshot => $composableBuilder(
+    column: $table.sourceLabelSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$ExecutionProjectsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExecutionProjectsTable,
+          ExecutionProjectRow,
+          $$ExecutionProjectsTableFilterComposer,
+          $$ExecutionProjectsTableOrderingComposer,
+          $$ExecutionProjectsTableAnnotationComposer,
+          $$ExecutionProjectsTableCreateCompanionBuilder,
+          $$ExecutionProjectsTableUpdateCompanionBuilder,
+          (
+            ExecutionProjectRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ExecutionProjectsTable,
+              ExecutionProjectRow
+            >,
+          ),
+          ExecutionProjectRow,
+          PrefetchHooks Function()
+        > {
+  $$ExecutionProjectsTableTableManager(
+    _$AppDatabase db,
+    $ExecutionProjectsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExecutionProjectsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExecutionProjectsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExecutionProjectsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> description = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> horizon = const Value.absent(),
+                Value<DateTime?> targetDate = const Value.absent(),
+                Value<String?> sourceDomain = const Value.absent(),
+                Value<String?> sourceRowFamily = const Value.absent(),
+                Value<String?> sourceRowId = const Value.absent(),
+                Value<String?> sourceLabelSnapshot = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExecutionProjectsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                title: title,
+                description: description,
+                status: status,
+                horizon: horizon,
+                targetDate: targetDate,
+                sourceDomain: sourceDomain,
+                sourceRowFamily: sourceRowFamily,
+                sourceRowId: sourceRowId,
+                sourceLabelSnapshot: sourceLabelSnapshot,
+                createdAt: createdAt,
+                completedAt: completedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String title,
+                Value<String> description = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> horizon = const Value.absent(),
+                Value<DateTime?> targetDate = const Value.absent(),
+                Value<String?> sourceDomain = const Value.absent(),
+                Value<String?> sourceRowFamily = const Value.absent(),
+                Value<String?> sourceRowId = const Value.absent(),
+                Value<String?> sourceLabelSnapshot = const Value.absent(),
+                required DateTime createdAt,
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExecutionProjectsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                title: title,
+                description: description,
+                status: status,
+                horizon: horizon,
+                targetDate: targetDate,
+                sourceDomain: sourceDomain,
+                sourceRowFamily: sourceRowFamily,
+                sourceRowId: sourceRowId,
+                sourceLabelSnapshot: sourceLabelSnapshot,
+                createdAt: createdAt,
+                completedAt: completedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExecutionProjectsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExecutionProjectsTable,
+      ExecutionProjectRow,
+      $$ExecutionProjectsTableFilterComposer,
+      $$ExecutionProjectsTableOrderingComposer,
+      $$ExecutionProjectsTableAnnotationComposer,
+      $$ExecutionProjectsTableCreateCompanionBuilder,
+      $$ExecutionProjectsTableUpdateCompanionBuilder,
+      (
+        ExecutionProjectRow,
+        BaseReferences<
+          _$AppDatabase,
+          $ExecutionProjectsTable,
+          ExecutionProjectRow
+        >,
+      ),
+      ExecutionProjectRow,
+      PrefetchHooks Function()
+    >;
 typedef $$ExecutionActionsTableCreateCompanionBuilder =
     ExecutionActionsCompanion Function({
       required String ownerUserId,
@@ -44602,6 +46221,7 @@ typedef $$ExecutionActionsTableCreateCompanionBuilder =
       Value<String> priority,
       Value<DateTime?> dueAt,
       Value<DateTime?> scheduledFor,
+      Value<String?> projectId,
       Value<String?> commitmentId,
       Value<String?> sourceDomain,
       Value<String?> sourceRowFamily,
@@ -44625,6 +46245,7 @@ typedef $$ExecutionActionsTableUpdateCompanionBuilder =
       Value<String> priority,
       Value<DateTime?> dueAt,
       Value<DateTime?> scheduledFor,
+      Value<String?> projectId,
       Value<String?> commitmentId,
       Value<String?> sourceDomain,
       Value<String?> sourceRowFamily,
@@ -44702,6 +46323,11 @@ class $$ExecutionActionsTableFilterComposer
 
   ColumnFilters<DateTime> get scheduledFor => $composableBuilder(
     column: $table.scheduledFor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get projectId => $composableBuilder(
+    column: $table.projectId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -44810,6 +46436,11 @@ class $$ExecutionActionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get commitmentId => $composableBuilder(
     column: $table.commitmentId,
     builder: (column) => ColumnOrderings(column),
@@ -44897,6 +46528,9 @@ class $$ExecutionActionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
+
   GeneratedColumn<String> get commitmentId => $composableBuilder(
     column: $table.commitmentId,
     builder: (column) => column,
@@ -44980,6 +46614,7 @@ class $$ExecutionActionsTableTableManager
                 Value<String> priority = const Value.absent(),
                 Value<DateTime?> dueAt = const Value.absent(),
                 Value<DateTime?> scheduledFor = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
                 Value<String?> commitmentId = const Value.absent(),
                 Value<String?> sourceDomain = const Value.absent(),
                 Value<String?> sourceRowFamily = const Value.absent(),
@@ -45001,6 +46636,7 @@ class $$ExecutionActionsTableTableManager
                 priority: priority,
                 dueAt: dueAt,
                 scheduledFor: scheduledFor,
+                projectId: projectId,
                 commitmentId: commitmentId,
                 sourceDomain: sourceDomain,
                 sourceRowFamily: sourceRowFamily,
@@ -45024,6 +46660,7 @@ class $$ExecutionActionsTableTableManager
                 Value<String> priority = const Value.absent(),
                 Value<DateTime?> dueAt = const Value.absent(),
                 Value<DateTime?> scheduledFor = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
                 Value<String?> commitmentId = const Value.absent(),
                 Value<String?> sourceDomain = const Value.absent(),
                 Value<String?> sourceRowFamily = const Value.absent(),
@@ -45045,6 +46682,7 @@ class $$ExecutionActionsTableTableManager
                 priority: priority,
                 dueAt: dueAt,
                 scheduledFor: scheduledFor,
+                projectId: projectId,
                 commitmentId: commitmentId,
                 sourceDomain: sourceDomain,
                 sourceRowFamily: sourceRowFamily,
@@ -45096,6 +46734,7 @@ typedef $$ExecutionCommitmentsTableCreateCompanionBuilder =
       Value<String> status,
       Value<String> horizon,
       Value<DateTime?> targetDate,
+      Value<String?> projectId,
       Value<String?> sourceDomain,
       Value<String?> sourceRowFamily,
       Value<String?> sourceRowId,
@@ -45117,6 +46756,7 @@ typedef $$ExecutionCommitmentsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<String> horizon,
       Value<DateTime?> targetDate,
+      Value<String?> projectId,
       Value<String?> sourceDomain,
       Value<String?> sourceRowFamily,
       Value<String?> sourceRowId,
@@ -45188,6 +46828,11 @@ class $$ExecutionCommitmentsTableFilterComposer
 
   ColumnFilters<DateTime> get targetDate => $composableBuilder(
     column: $table.targetDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get projectId => $composableBuilder(
+    column: $table.projectId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -45286,6 +46931,11 @@ class $$ExecutionCommitmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get sourceDomain => $composableBuilder(
     column: $table.sourceDomain,
     builder: (column) => ColumnOrderings(column),
@@ -45366,6 +47016,9 @@ class $$ExecutionCommitmentsTableAnnotationComposer
     column: $table.targetDate,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
 
   GeneratedColumn<String> get sourceDomain => $composableBuilder(
     column: $table.sourceDomain,
@@ -45450,6 +47103,7 @@ class $$ExecutionCommitmentsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String> horizon = const Value.absent(),
                 Value<DateTime?> targetDate = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
                 Value<String?> sourceDomain = const Value.absent(),
                 Value<String?> sourceRowFamily = const Value.absent(),
                 Value<String?> sourceRowId = const Value.absent(),
@@ -45469,6 +47123,7 @@ class $$ExecutionCommitmentsTableTableManager
                 status: status,
                 horizon: horizon,
                 targetDate: targetDate,
+                projectId: projectId,
                 sourceDomain: sourceDomain,
                 sourceRowFamily: sourceRowFamily,
                 sourceRowId: sourceRowId,
@@ -45490,6 +47145,7 @@ class $$ExecutionCommitmentsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String> horizon = const Value.absent(),
                 Value<DateTime?> targetDate = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
                 Value<String?> sourceDomain = const Value.absent(),
                 Value<String?> sourceRowFamily = const Value.absent(),
                 Value<String?> sourceRowId = const Value.absent(),
@@ -45509,6 +47165,7 @@ class $$ExecutionCommitmentsTableTableManager
                 status: status,
                 horizon: horizon,
                 targetDate: targetDate,
+                projectId: projectId,
                 sourceDomain: sourceDomain,
                 sourceRowFamily: sourceRowFamily,
                 sourceRowId: sourceRowId,
@@ -45555,6 +47212,7 @@ typedef $$ExecutionProgressEntriesTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       required String id,
       Value<String?> actionId,
+      Value<String?> projectId,
       Value<String?> commitmentId,
       Value<String> kind,
       required String note,
@@ -45570,6 +47228,7 @@ typedef $$ExecutionProgressEntriesTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<String> id,
       Value<String?> actionId,
+      Value<String?> projectId,
       Value<String?> commitmentId,
       Value<String> kind,
       Value<String> note,
@@ -45619,6 +47278,11 @@ class $$ExecutionProgressEntriesTableFilterComposer
 
   ColumnFilters<String> get actionId => $composableBuilder(
     column: $table.actionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get projectId => $composableBuilder(
+    column: $table.projectId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -45687,6 +47351,11 @@ class $$ExecutionProgressEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get commitmentId => $composableBuilder(
     column: $table.commitmentId,
     builder: (column) => ColumnOrderings(column),
@@ -45741,6 +47410,9 @@ class $$ExecutionProgressEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get actionId =>
       $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<String> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
 
   GeneratedColumn<String> get commitmentId => $composableBuilder(
     column: $table.commitmentId,
@@ -45810,6 +47482,7 @@ class $$ExecutionProgressEntriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String?> actionId = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
                 Value<String?> commitmentId = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String> note = const Value.absent(),
@@ -45823,6 +47496,7 @@ class $$ExecutionProgressEntriesTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 actionId: actionId,
+                projectId: projectId,
                 commitmentId: commitmentId,
                 kind: kind,
                 note: note,
@@ -45838,6 +47512,7 @@ class $$ExecutionProgressEntriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
                 Value<String?> actionId = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
                 Value<String?> commitmentId = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 required String note,
@@ -45851,6 +47526,7 @@ class $$ExecutionProgressEntriesTableTableManager
                 deletedAt: deletedAt,
                 id: id,
                 actionId: actionId,
+                projectId: projectId,
                 commitmentId: commitmentId,
                 kind: kind,
                 note: note,
@@ -45967,6 +47643,8 @@ class $AppDatabaseManager {
       $$KnowledgeExperimentsTableTableManager(_db, _db.knowledgeExperiments);
   $$KnowledgeRoutinesTableTableManager get knowledgeRoutines =>
       $$KnowledgeRoutinesTableTableManager(_db, _db.knowledgeRoutines);
+  $$ExecutionProjectsTableTableManager get executionProjects =>
+      $$ExecutionProjectsTableTableManager(_db, _db.executionProjects);
   $$ExecutionActionsTableTableManager get executionActions =>
       $$ExecutionActionsTableTableManager(_db, _db.executionActions);
   $$ExecutionCommitmentsTableTableManager get executionCommitments =>

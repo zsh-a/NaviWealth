@@ -50,6 +50,12 @@ void main() {
         'knowledge_concepts',
         'knowledge_experiments',
         'knowledge_routines',
+        // ExecutionOS (`docs/executionos-domain.md`) — project/action kernel
+        // under the `exec:` row family.
+        'execution_projects',
+        'execution_actions',
+        'execution_commitments',
+        'execution_progress_entries',
       };
       expect(kSyncableTables, expected);
     });

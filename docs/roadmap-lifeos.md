@@ -22,7 +22,7 @@ NaviWealth is now a local-first Personal LifeOS:
 | FinanceOS | Always on | Wealth, cashflow, FIRE, investment, options income |
 | HealthOS | User opt-in | Recovery signals, health trends, morning briefing |
 | KnowledgeOS | User opt-in | Decision memory, assumptions, routines, review work |
-| ExecutionOS | User opt-in | Personal actions, commitments, progress review |
+| ExecutionOS | User opt-in | Personal actions, projects, commitments, progress review |
 
 FinanceOS remains the seed domain, but the active roadmap is no longer
 Finance-only. New work should improve the shared LifeOS substrate or close

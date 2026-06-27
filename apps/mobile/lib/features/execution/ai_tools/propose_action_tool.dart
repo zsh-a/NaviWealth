@@ -28,6 +28,7 @@ class ProposeActionTool implements DeviceTool {
       },
       'due_at': {'type': 'string', 'description': '可选 ISO8601 截止时间。'},
       'scheduled_for': {'type': 'string', 'description': '可选 ISO8601 计划执行日。'},
+      'project_id': {'type': 'string', 'description': '可选 Project id。'},
       'commitment_id': {'type': 'string', 'description': '可选 Commitment id。'},
       'source_domain': {'type': 'string', 'description': '可选来源域。'},
       'source_row_family': {
@@ -68,6 +69,8 @@ class ProposeActionTool implements DeviceTool {
         if (dueAt != null) 'due_at': dueAt.toUtc().toIso8601String(),
         if (scheduledFor != null)
           'scheduled_for': scheduledFor.toUtc().toIso8601String(),
+        if (_string(input['project_id']) != null)
+          'project_id': _string(input['project_id']),
         if (_string(input['commitment_id']) != null)
           'commitment_id': _string(input['commitment_id']),
         if (_string(input['source_domain']) != null)

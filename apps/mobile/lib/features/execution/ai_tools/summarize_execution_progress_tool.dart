@@ -12,7 +12,7 @@ class SummarizeExecutionProgressTool implements DeviceTool {
 
   @override
   String get description =>
-      '汇总近期 ExecutionOS 进展:open actions 数量、blocked 数量、active commitments 数量、'
+      '汇总近期 ExecutionOS 进展:open actions 数量、blocked 数量、active projects/commitments 数量、'
       '最近 progress entries。用于周复盘和执行状态总结。';
 
   @override
@@ -34,6 +34,7 @@ class SummarizeExecutionProgressTool implements DeviceTool {
         ? (input['limit'] as num).toInt().clamp(1, 100)
         : 20;
     final actions = await repo.listOpenActions(ownerUserId: ownerUserId);
+    final projects = await repo.listActiveProjects(ownerUserId: ownerUserId);
     final commitments = await repo.listActiveCommitments(
       ownerUserId: ownerUserId,
     );
@@ -46,12 +47,14 @@ class SummarizeExecutionProgressTool implements DeviceTool {
       'blocked_action_count': actions
           .where((a) => a.status == ExecutionActionStatus.blocked)
           .length,
+      'active_project_count': projects.length,
       'active_commitment_count': commitments.length,
       'recent_progress': progress
           .map(
             (p) => <String, Object?>{
               'id': p.id,
               'action_id': p.actionId,
+              'project_id': p.projectId,
               'commitment_id': p.commitmentId,
               'kind': p.kind.wire,
               'note': p.note,

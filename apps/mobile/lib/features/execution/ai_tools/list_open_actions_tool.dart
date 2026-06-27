@@ -51,6 +51,7 @@ Map<String, Object?> _actionJson(ExecutionAction a) => <String, Object?>{
   'priority': a.priority.wire,
   'due_at': a.dueAt?.toUtc().toIso8601String(),
   'scheduled_for': a.scheduledFor?.toUtc().toIso8601String(),
+  'project_id': a.projectId,
   'commitment_id': a.commitmentId,
   'source_domain': a.source.domain,
   'source_row_family': a.source.rowFamily,
