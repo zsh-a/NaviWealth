@@ -22,6 +22,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../fire/data/fire_plan_preferences.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_plan.dart';
+import 'settings_page_frame.dart';
 
 class FireStressSettingsPage extends ConsumerWidget {
   const FireStressSettingsPage({super.key});
@@ -32,39 +33,15 @@ class FireStressSettingsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsStressTestTitle,
       childPad: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = Breakpoints.isMobile(constraints.maxWidth)
-              ? const EdgeInsets.all(AppSpacing.s16)
-              : const EdgeInsets.all(AppSpacing.s24);
-          return ListView(
-            padding: padding,
-            children: const [
-              _Hint(),
-              SizedBox(height: AppSpacing.s12),
-              SoftCard(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
-                child: FireStressSettings(),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _Hint extends StatelessWidget {
-  const _Hint();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-      child: Text(
-        l10n.settingsStressTestHint,
-        style: context.captionStyle.copyWith(height: 1.45),
+      child: SettingsPageFrame(
+        children: [
+          SettingsHintText(l10n.settingsStressTestHint),
+          const SizedBox(height: AppSpacing.s12),
+          const SoftCard(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: FireStressSettings(),
+          ),
+        ],
       ),
     );
   }
@@ -97,7 +74,7 @@ class FireStressSettings extends ConsumerWidget {
           max: 0.60,
           onChanged: (v) => update(risk.copyWith(marketDrawdownPct: v)),
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         _PercentSlider(
           label: l10n.settingsStressTestExpenseShockLabel,
           subtitle: l10n.settingsStressTestExpenseShockSubtitle,
@@ -105,7 +82,7 @@ class FireStressSettings extends ConsumerWidget {
           max: 0.50,
           onChanged: (v) => update(risk.copyWith(expenseShockPct: v)),
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         _PercentSlider(
           label: l10n.settingsStressTestFxShockLabel,
           subtitle: l10n.settingsStressTestFxShockSubtitle,
@@ -113,37 +90,16 @@ class FireStressSettings extends ConsumerWidget {
           max: 0.30,
           onChanged: (v) => update(risk.copyWith(fxShockPct: v)),
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         _LumpSumField(
           value: risk.oneOffShockAmount,
           baseCurrency: baseCurrency,
           onChanged: (v) => update(risk.copyWith(oneOffShockAmount: v)),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s14,
-            AppSpacing.s4,
-            AppSpacing.s14,
-            AppSpacing.s8,
-          ),
-          child: Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: FTappable(
-              onPress: () => update(const FireRiskSettings()),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s6,
-                  vertical: AppSpacing.s4,
-                ),
-                child: Text(
-                  l10n.settingsStressTestResetDefaults,
-                  style: context.captionLabelStyle.copyWith(
-                    color: context.theme.colors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
+        SettingsFooterAction(
+          icon: FLucideIcons.rotateCcw,
+          label: l10n.settingsStressTestResetDefaults,
+          onPress: () => update(const FireRiskSettings()),
         ),
       ],
     );

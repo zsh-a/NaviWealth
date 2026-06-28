@@ -24,6 +24,7 @@ import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart'
     show kDefaultDeviceModel;
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'settings_page_frame.dart';
 
 class AiLlmCredentialsPage extends ConsumerStatefulWidget {
   const AiLlmCredentialsPage({super.key});
@@ -153,10 +154,20 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   }
 
   Future<void> _delete(LlmProfile profile) async {
+    final l10n = AppLocalizations.of(context);
+    final confirm = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.aiLlmDeleteTitle),
+      body: Text(l10n.aiLlmDeleteBody(profile.displayName)),
+      confirmLabel: l10n.commonDelete,
+      cancelLabel: l10n.commonCancel,
+      destructive: true,
+    );
+    if (confirm != true) return;
     await ref.read(llmCredentialsProvider.notifier).removeProfile(profile.id);
     if (!mounted) return;
     if (_editingId == profile.id) _closeEditor();
-    _toast(ToastKind.success, AppLocalizations.of(context).aiLlmRemoved);
+    _toast(ToastKind.success, l10n.aiLlmRemoved);
   }
 
   void _toast(ToastKind kind, String msg) =>
@@ -181,13 +192,8 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       childPad: false,
       resizeToAvoidBottomInset: false,
       child: !supported
-          ? ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16,
-                AppSpacing.s8,
-                AppSpacing.s16,
-                AppSpacing.s24,
-              ),
+          ? SettingsPageFrame(
+              topPadding: AppSpacing.s8,
               children: [_unsupportedCard(context)],
             )
           : editing
@@ -207,13 +213,8 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                 includeEditorActions: false,
               ),
             )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16,
-                AppSpacing.s8,
-                AppSpacing.s16,
-                AppSpacing.s24,
-              ),
+          : SettingsPageFrame(
+              topPadding: AppSpacing.s8,
               children: _supportedBody(
                 context,
                 asyncCreds: asyncCreds,

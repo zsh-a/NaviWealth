@@ -17,6 +17,7 @@ import '../../health/data/health_sync_service.dart';
 import '../../health/data/morning_briefing_preferences.dart';
 import '../../health/data/providers.dart' as health_data;
 import 'inline_setting_row.dart';
+import 'settings_page_frame.dart';
 
 class HealthDomainSettingsPage extends ConsumerWidget {
   const HealthDomainSettingsPage({super.key});
@@ -28,13 +29,7 @@ class HealthDomainSettingsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: 'HealthOS',
       childPad: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
-        ),
+      child: SettingsPageFrame(
         children: [
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),

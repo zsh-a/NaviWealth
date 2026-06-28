@@ -14,6 +14,8 @@ import 'package:forui/forui.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'inline_setting_row.dart';
+import 'settings_page_frame.dart';
 
 class AiPrivacyPage extends ConsumerWidget {
   const AiPrivacyPage({super.key});
@@ -26,13 +28,8 @@ class AiPrivacyPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.aiPrivacyTitle,
       childPad: false,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s8,
-          AppSpacing.s16,
-          AppSpacing.s24,
-        ),
+      child: SettingsPageFrame(
+        topPadding: AppSpacing.s8,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
@@ -50,7 +47,7 @@ class AiPrivacyPage extends ConsumerWidget {
                   description: l10n.aiPrivacyModeAmountsAllowedDescription,
                   onSelect: controller.setMode,
                 ),
-                const FDivider(),
+                const AppGradientDivider(),
                 _ModeRow(
                   mode: AiPrivacyMode.amountsBucketed,
                   selected: settings.mode,
@@ -58,7 +55,7 @@ class AiPrivacyPage extends ConsumerWidget {
                   description: l10n.aiPrivacyModeAmountsBucketedDescription,
                   onSelect: controller.setMode,
                 ),
-                const FDivider(),
+                const AppGradientDivider(),
                 _ModeRow(
                   mode: AiPrivacyMode.amountsLocal,
                   selected: settings.mode,
@@ -71,35 +68,13 @@ class AiPrivacyPage extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s16),
           SoftCard(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s16,
-              vertical: AppSpacing.s12,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        l10n.aiPrivacyMaskAccountsLabel,
-                        style: context.labelStyle,
-                      ),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        l10n.aiPrivacyMaskAccountsDescription,
-                        style: context.captionStyle,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                FSwitch(
-                  value: settings.maskAccountNames,
-                  onChange: controller.setMaskAccountNames,
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: InlineSwitchRow(
+              icon: FLucideIcons.eyeOff,
+              label: l10n.aiPrivacyMaskAccountsLabel,
+              subtitle: l10n.aiPrivacyMaskAccountsDescription,
+              value: settings.maskAccountNames,
+              onChanged: controller.setMaskAccountNames,
             ),
           ),
         ],

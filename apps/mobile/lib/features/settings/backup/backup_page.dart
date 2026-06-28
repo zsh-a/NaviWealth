@@ -11,6 +11,7 @@ import '../../../core/logging/app_logger.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/inline_setting_row.dart';
+import '../ui/settings_page_frame.dart';
 import 'file_saver.dart';
 
 typedef BackupFileSaver =
@@ -55,13 +56,8 @@ class BackupPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsDataTitle,
       childPad: false,
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
-          bottom:
-              const EdgeInsets.all(AppSpacing.s16).bottom +
-              64 +
-              MediaQuery.paddingOf(context).bottom,
-        ),
+      child: SettingsPageFrame(
+        bottomPadding: AppSpacing.s64,
         children: [
           if (kIsWeb) ...[
             AppStatusBanner(
@@ -73,21 +69,22 @@ class BackupPage extends ConsumerWidget {
           ],
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-            child: InlineLinkRow(
-              icon: FLucideIcons.upload,
-              label: l10n.backupExportTitle,
-              subtitle: l10n.backupExportSubtitle,
-              onTap: () => _exportBackup(context, ref),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          SoftCard(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-            child: InlineLinkRow(
-              icon: FLucideIcons.download,
-              label: l10n.backupImportTitle,
-              subtitle: l10n.backupImportSubtitle,
-              onTap: () => _importBackup(context, ref),
+            child: Column(
+              children: [
+                InlineLinkRow(
+                  icon: FLucideIcons.upload,
+                  label: l10n.backupExportTitle,
+                  subtitle: l10n.backupExportSubtitle,
+                  onTap: () => _exportBackup(context, ref),
+                ),
+                const AppGradientDivider(),
+                InlineLinkRow(
+                  icon: FLucideIcons.download,
+                  label: l10n.backupImportTitle,
+                  subtitle: l10n.backupImportSubtitle,
+                  onTap: () => _importBackup(context, ref),
+                ),
+              ],
             ),
           ),
         ],

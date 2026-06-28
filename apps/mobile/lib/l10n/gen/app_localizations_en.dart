@@ -5645,6 +5645,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogsCopiedToast => 'Logs copied';
 
   @override
+  String get settingsLogsClearTitle => 'Clear logs?';
+
+  @override
+  String get settingsLogsClearBody =>
+      'This removes the in-memory diagnostic log history from this device.';
+
+  @override
+  String get settingsLogsClearAction => 'Clear logs';
+
+  @override
   String get settingsPerfTitle => 'Performance';
 
   @override
@@ -7684,6 +7694,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLlmRemoved => 'Removed from this device';
+
+  @override
+  String get aiLlmDeleteTitle => 'Delete provider?';
+
+  @override
+  String aiLlmDeleteBody(String name) {
+    return 'This removes $name and its stored API key from this device.';
+  }
 
   @override
   String get aiLlmEmpty =>

@@ -261,6 +261,7 @@ class InlineSwitchRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
     this.subtitle,
   });
 
@@ -268,6 +269,7 @@ class InlineSwitchRow extends StatelessWidget {
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final bool enabled;
   final String? subtitle;
 
   @override
@@ -308,6 +310,7 @@ class InlineSwitchRow extends StatelessWidget {
           ),
           FSwitch(
             value: value,
+            enabled: enabled,
             onChange: (v) {
               Haptics.selection();
               onChanged(v);

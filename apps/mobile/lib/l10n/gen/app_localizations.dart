@@ -9639,6 +9639,24 @@ abstract class AppLocalizations {
   /// **'Logs copied'**
   String get settingsLogsCopiedToast;
 
+  /// Confirmation title before clearing diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs?'**
+  String get settingsLogsClearTitle;
+
+  /// Confirmation body before clearing diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the in-memory diagnostic log history from this device.'**
+  String get settingsLogsClearBody;
+
+  /// Destructive action label for clearing diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs'**
+  String get settingsLogsClearAction;
+
   /// Settings developer diagnostics: performance page title
   ///
   /// In en, this message translates to:
@@ -13073,6 +13091,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Removed from this device'**
   String get aiLlmRemoved;
+
+  /// Confirmation title before deleting an LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'Delete provider?'**
+  String get aiLlmDeleteTitle;
+
+  /// Confirmation body before deleting an LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'This removes {name} and its stored API key from this device.'**
+  String aiLlmDeleteBody(String name);
 
   /// Empty state on the LLM credentials page
   ///

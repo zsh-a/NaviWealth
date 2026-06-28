@@ -13,6 +13,7 @@ import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'inline_setting_row.dart';
+import 'settings_page_frame.dart';
 
 class KnowledgeDomainSettingsPage extends ConsumerWidget {
   const KnowledgeDomainSettingsPage({super.key});
@@ -24,13 +25,7 @@ class KnowledgeDomainSettingsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: 'KnowledgeOS',
       childPad: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
-        ),
+      child: SettingsPageFrame(
         children: [
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),

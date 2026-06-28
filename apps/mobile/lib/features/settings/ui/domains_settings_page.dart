@@ -10,6 +10,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'finance_domain_settings_section.dart';
 import 'inline_setting_row.dart';
+import 'settings_page_frame.dart';
 
 /// `/settings/domains` — LifeOS domain management.
 ///
@@ -28,56 +29,41 @@ class DomainsSettingsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsDomainsTitle,
       childPad: false,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      child: SettingsPageFrame(
         children: [
-          AdaptiveContentFrame(
-            maxWidth: AdaptiveMaxWidth.narrow,
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s16,
-              AppSpacing.s16,
-              AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
-            ),
-            primary: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const FinanceDomainSettingsSection(),
-                const SizedBox(height: AppSpacing.s16),
-                _DomainToggleCard(
-                  icon: FLucideIcons.heartPulse,
-                  label: 'HealthOS',
-                  subtitle: healthEnabled
-                      ? l10n.settingsDomainsHealthEnabledSubtitle
-                      : l10n.settingsDomainsHealthDisabledSubtitle,
-                  value: healthEnabled,
-                  onChanged: (v) =>
-                      _setDomainEnabled(context, ref, DomainScope.health, v),
-                ),
-                const SizedBox(height: AppSpacing.s16),
-                _DomainToggleCard(
-                  icon: FLucideIcons.brain,
-                  label: 'KnowledgeOS',
-                  subtitle: knowledgeEnabled
-                      ? l10n.settingsDomainsKnowledgeEnabledSubtitle
-                      : l10n.settingsDomainsKnowledgeDisabledSubtitle,
-                  value: knowledgeEnabled,
-                  onChanged: (v) =>
-                      _setDomainEnabled(context, ref, DomainScope.knowledge, v),
-                ),
-                const SizedBox(height: AppSpacing.s16),
-                _DomainToggleCard(
-                  icon: FLucideIcons.listTodo,
-                  label: 'ExecutionOS',
-                  subtitle: executionEnabled
-                      ? l10n.settingsDomainsExecutionEnabledSubtitle
-                      : l10n.settingsDomainsExecutionDisabledSubtitle,
-                  value: executionEnabled,
-                  onChanged: (v) =>
-                      _setDomainEnabled(context, ref, DomainScope.execution, v),
-                ),
-              ],
-            ),
+          const FinanceDomainSettingsSection(),
+          const SizedBox(height: AppSpacing.s16),
+          _DomainToggleCard(
+            icon: FLucideIcons.heartPulse,
+            label: 'HealthOS',
+            subtitle: healthEnabled
+                ? l10n.settingsDomainsHealthEnabledSubtitle
+                : l10n.settingsDomainsHealthDisabledSubtitle,
+            value: healthEnabled,
+            onChanged: (v) =>
+                _setDomainEnabled(context, ref, DomainScope.health, v),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          _DomainToggleCard(
+            icon: FLucideIcons.brain,
+            label: 'KnowledgeOS',
+            subtitle: knowledgeEnabled
+                ? l10n.settingsDomainsKnowledgeEnabledSubtitle
+                : l10n.settingsDomainsKnowledgeDisabledSubtitle,
+            value: knowledgeEnabled,
+            onChanged: (v) =>
+                _setDomainEnabled(context, ref, DomainScope.knowledge, v),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          _DomainToggleCard(
+            icon: FLucideIcons.listTodo,
+            label: 'ExecutionOS',
+            subtitle: executionEnabled
+                ? l10n.settingsDomainsExecutionEnabledSubtitle
+                : l10n.settingsDomainsExecutionDisabledSubtitle,
+            value: executionEnabled,
+            onChanged: (v) =>
+                _setDomainEnabled(context, ref, DomainScope.execution, v),
           ),
         ],
       ),

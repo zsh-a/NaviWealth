@@ -5381,6 +5381,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLogsCopiedToast => '日志已复制';
 
   @override
+  String get settingsLogsClearTitle => '清空日志？';
+
+  @override
+  String get settingsLogsClearBody => '这会从当前设备移除内存中的诊断日志历史。';
+
+  @override
+  String get settingsLogsClearAction => '清空日志';
+
+  @override
   String get settingsPerfTitle => '性能';
 
   @override
@@ -7317,6 +7326,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiLlmRemoved => '已从设备移除';
+
+  @override
+  String get aiLlmDeleteTitle => '删除 Provider？';
+
+  @override
+  String aiLlmDeleteBody(String name) {
+    return '这会从此设备移除 $name 及其已保存的 API Key。';
+  }
 
   @override
   String get aiLlmEmpty => '还没有 Provider。添加一个 API Key 即可让 AI 在本机直连运行。';
