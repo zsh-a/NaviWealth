@@ -60,7 +60,7 @@ jobs:
     name: prepare font assets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build generated font assets
         env:
           CHECK_CN_FONT_SIZE: 'false'
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare-font-assets
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -135,7 +135,7 @@ jobs:
       matrix:
         shard: [0, 1, 2, 3]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -167,7 +167,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-shards
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           pattern: mobile-coverage-shard-*
@@ -201,7 +201,7 @@ jobs:
     needs: analyze-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -234,7 +234,7 @@ jobs:
     needs: analyze-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -269,7 +269,7 @@ jobs:
       group: pages-deploy-prod
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
       - name: Download mobile web artifact
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
