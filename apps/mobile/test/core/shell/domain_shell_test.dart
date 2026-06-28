@@ -5,12 +5,12 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 
 DomainShellSpec _spec(DomainScope scope) => DomainShellSpec(
-      scope: scope,
-      label: scope.wire,
-      icon: const IconData(0xe000),
-      selectedIcon: const IconData(0xe001),
-      tabs: const <DomainShellTab>[],
-    );
+  scope: scope,
+  label: scope.wire,
+  icon: const IconData(0xe000),
+  selectedIcon: const IconData(0xe001),
+  tabs: const <DomainShellTab>[],
+);
 
 void main() {
   group('D-1.8 multi-domain shell seam', () {

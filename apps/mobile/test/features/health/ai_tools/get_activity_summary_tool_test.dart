@@ -21,11 +21,7 @@ HealthMetric _metric({
     ownerUserId: 'u',
     updatedAt: day,
     updatedByDevice: 'dev',
-    hlc: Hlc(
-      wallMillis: day.millisecondsSinceEpoch,
-      counter: 0,
-      nodeId: 'dev',
-    ),
+    hlc: Hlc(wallMillis: day.millisecondsSinceEpoch, counter: 0, nodeId: 'dev'),
     deletedAt: null,
   ),
 );
@@ -131,12 +127,12 @@ void main() {
       );
       final days = out['days'] as List;
       expect(days, hasLength(2));
-      final first = days.firstWhere((d) => (d as Map)['date'] == '2026-05-25')
-          as Map;
+      final first =
+          days.firstWhere((d) => (d as Map)['date'] == '2026-05-25') as Map;
       expect(first['steps'], 10000);
       expect(first['active_kcal'], isNull);
-      final second = days.firstWhere((d) => (d as Map)['date'] == '2026-05-26')
-          as Map;
+      final second =
+          days.firstWhere((d) => (d as Map)['date'] == '2026-05-26') as Map;
       expect(second['steps'], isNull);
       expect(second['active_kcal'], 300);
       final summary = out['summary'] as Map<String, Object?>;
@@ -144,8 +140,7 @@ void main() {
       expect(summary['kcal_day_count'], 1);
     });
 
-    test('multiple readings on the same day pick the latest by capturedAt',
-        () {
+    test('multiple readings on the same day pick the latest by capturedAt', () {
       final base = DateTime.utc(2026, 5, 25, 8);
       final laterSameDay = DateTime.utc(2026, 5, 25, 23, 59);
       final out = GetActivitySummaryTool.shape(
@@ -207,7 +202,8 @@ void main() {
             kind: HealthMetricKind.workoutSession,
             value: 20 * 60,
             unit: 's',
-            payloadJson: '{"activity_type":"cycling","total_distance_meters":8000}',
+            payloadJson:
+                '{"activity_type":"cycling","total_distance_meters":8000}',
             sync: SyncMeta(
               ownerUserId: 'u',
               updatedAt: d1,
@@ -250,19 +246,20 @@ void main() {
         );
         final days = out['days'] as List;
         expect(days, hasLength(2));
-        final dayOne = days.firstWhere(
-          (d) => (d as Map)['date'] == '2026-05-25',
-        ) as Map;
+        final dayOne =
+            days.firstWhere((d) => (d as Map)['date'] == '2026-05-25') as Map;
         expect(dayOne['workout_count'], 2);
         expect(dayOne['workout_minutes'], 50.0);
         expect(dayOne['workout_distance_km'], 13.0);
-        final dayTwo = days.firstWhere(
-          (d) => (d as Map)['date'] == '2026-05-26',
-        ) as Map;
+        final dayTwo =
+            days.firstWhere((d) => (d as Map)['date'] == '2026-05-26') as Map;
         expect(dayTwo['workout_count'], 1);
         expect(dayTwo['workout_minutes'], 60.0);
-        expect(dayTwo['workout_distance_km'], isNull,
-            reason: 'strength training has no distance payload');
+        expect(
+          dayTwo['workout_distance_km'],
+          isNull,
+          reason: 'strength training has no distance payload',
+        );
 
         final summary = out['summary'] as Map<String, Object?>;
         expect(summary['workout_count'], 3);
@@ -304,8 +301,7 @@ void main() {
   test('tool advertises the contract', () {
     const tool = GetActivitySummaryTool();
     expect(tool.name, 'get_activity_summary');
-    final props =
-        (tool.inputSchema['properties'] as Map)['days_back'] as Map;
+    final props = (tool.inputSchema['properties'] as Map)['days_back'] as Map;
     expect(props['default'], 7);
     expect(props['maximum'], 90);
   });

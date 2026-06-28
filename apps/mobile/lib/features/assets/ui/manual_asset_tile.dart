@@ -58,7 +58,7 @@ class ManualAssetTile extends StatelessWidget {
                         enabled: heroEnabled,
                         child: Text(
                           asset.name ?? asset.symbol,
-                          style: context.theme.typography.md,
+                          style: context.theme.typography.body.md,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

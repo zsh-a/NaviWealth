@@ -125,7 +125,7 @@ class _ProgressHeaderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.fireProgressTitle, style: context.theme.typography.md),
+          Text(l10n.fireProgressTitle, style: context.theme.typography.body.md),
           const SizedBox(height: AppSpacing.s12),
           Center(
             child: FireProgressGauge(
@@ -140,7 +140,7 @@ class _ProgressHeaderCard extends StatelessWidget {
             child: AnimatedMoneyText(
               amount: current,
               currencyCode: view.baseCurrency,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -149,7 +149,7 @@ class _ProgressHeaderCard extends StatelessWidget {
             child: AnimatedMoneyText(
               amount: target,
               currencyCode: view.baseCurrency,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -158,7 +158,7 @@ class _ProgressHeaderCard extends StatelessWidget {
             child: AnimatedMoneyText(
               amount: gap > 0 ? gap : 0,
               currencyCode: view.baseCurrency,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
           ),
         ],
@@ -184,7 +184,7 @@ class _CountdownCard extends StatelessWidget {
     final body = months == null
         ? Text(
             l10n.fireCountdownUnreachable,
-            style: context.theme.typography.sm,
+            style: context.theme.typography.body.sm,
           )
         : months == 0
         ? Column(
@@ -192,7 +192,7 @@ class _CountdownCard extends StatelessWidget {
             children: [
               Text(
                 l10n.fireCountdownReachedTitle,
-                style: context.theme.typography.xl,
+                style: context.theme.typography.body.xl,
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(
@@ -206,7 +206,7 @@ class _CountdownCard extends StatelessWidget {
             children: [
               Text(
                 _formatYearsMonths(l10n, months),
-                style: context.theme.typography.xl,
+                style: context.theme.typography.body.xl,
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(
@@ -223,7 +223,7 @@ class _CountdownCard extends StatelessWidget {
         children: [
           Text(
             l10n.fireCountdownTitle(referenceLabel),
-            style: context.theme.typography.md,
+            style: context.theme.typography.body.md,
           ),
           const SizedBox(height: AppSpacing.s8),
           body,
@@ -254,7 +254,10 @@ class _ProjectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.fireProjectionTitle, style: context.theme.typography.md),
+          Text(
+            l10n.fireProjectionTitle,
+            style: context.theme.typography.body.md,
+          ),
           const SizedBox(height: AppSpacing.s4),
           Text(l10n.fireProjectionSubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
@@ -327,7 +330,7 @@ class _ScenariosTable extends StatelessWidget {
               alignment: AlignmentDirectional.centerStart,
               child: Text(
                 l10n.fireScenariosTableTitle,
-                style: context.theme.typography.md,
+                style: context.theme.typography.body.md,
               ),
             ),
           ),
@@ -346,7 +349,7 @@ class _ScenariosTable extends StatelessWidget {
                       ? l10n.fireCountdownUnreachableShort
                       : _formatYearsMonths(l10n, scenario.monthsToTarget!),
                   textAlign: TextAlign.end,
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                 ),
               ),
             ),
@@ -392,7 +395,7 @@ class _SafeWithdrawalCard extends StatelessWidget {
         children: [
           Text(
             l10n.fireSafeWithdrawalTitle,
-            style: context.theme.typography.md,
+            style: context.theme.typography.body.md,
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(l10n.fireSafeWithdrawalSubtitle, style: context.captionStyle),
@@ -442,7 +445,10 @@ class _SensitivityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.fireSensitivityTitle, style: context.theme.typography.md),
+          Text(
+            l10n.fireSensitivityTitle,
+            style: context.theme.typography.body.md,
+          ),
           const SizedBox(height: AppSpacing.s4),
           Text(l10n.fireSensitivitySubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
@@ -484,7 +490,7 @@ class _LabelValueRow extends StatelessWidget {
       children: [
         Expanded(child: Text(label, style: context.bodyCaptionStyle)),
         const SizedBox(width: AppSpacing.s8),
-        child ?? Text(value!, style: context.theme.typography.sm),
+        child ?? Text(value!, style: context.theme.typography.body.sm),
       ],
     );
   }
@@ -518,7 +524,7 @@ class _LegendDot extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.s4),
-        Text(label, style: context.theme.typography.xs),
+        Text(label, style: context.theme.typography.body.xs),
       ],
     );
   }

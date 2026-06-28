@@ -31,7 +31,8 @@ class AssetDetailMetricRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(label, style: context.bodyCaptionStyle),
-        trailing ?? Text(value ?? '\u2014', style: context.theme.typography.sm),
+        trailing ??
+            Text(value ?? '\u2014', style: context.theme.typography.body.sm),
       ],
     );
   }

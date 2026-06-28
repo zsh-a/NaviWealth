@@ -73,11 +73,15 @@ class GetStressTrendTool implements DeviceTool {
     required DateTime now,
   }) {
     final fromInstant = now.subtract(Duration(days: windowDays));
-    final inWindow = rows
-        .where((m) =>
-            !m.capturedAt.isBefore(fromInstant) && !m.capturedAt.isAfter(now))
-        .toList()
-      ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
+    final inWindow =
+        rows
+            .where(
+              (m) =>
+                  !m.capturedAt.isBefore(fromInstant) &&
+                  !m.capturedAt.isAfter(now),
+            )
+            .toList()
+          ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
 
     final points = <Map<String, Object?>>[];
     for (final m in inWindow) {
@@ -120,7 +124,8 @@ class GetStressTrendTool implements DeviceTool {
       if (points.isEmpty)
         'note': 'No stress data yet. Connect a Garmin device in HealthOS.',
       if (points.isNotEmpty && points.length < 4)
-        'note': 'Fewer than 4 samples in window — trend (delta_pct) is not '
+        'note':
+            'Fewer than 4 samples in window — trend (delta_pct) is not '
             'meaningful. Collect 1-2 weeks of data first.',
     };
   }

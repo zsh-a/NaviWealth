@@ -109,8 +109,8 @@ class _DateFieldState extends State<DateField> {
       );
     }
     return FDateField.calendar(
-      control: FDateFieldControl.lifted(
-        date: _value == null ? null : _calendarDay(_value!),
+      selectionControl: FDateSelectionControl.managedSingle(
+        initial: _value == null ? null : _calendarDay(_value!),
         onChange: (date) {
           if (date == null) {
             _setValue(null);
@@ -132,21 +132,25 @@ class _DateFieldState extends State<DateField> {
                 : date,
           );
         },
-        validator: (date) {
-          if (widget.required && date == null) {
-            return l10n.formDateFieldRequired;
-          }
-          return null;
-        },
       ),
       label: RequiredLabel(widget.label, required: widget.required),
       description: widget.helperText == null ? null : Text(widget.helperText!),
       enabled: widget.enabled,
-      start: _calendarDay(firstDate),
-      end: _calendarDay(lastDate),
-      today: _calendarDay(today),
+      calendar: FDateFieldGridCalendarProperties(
+        control: FGridCalendarControl(
+          start: _calendarDay(firstDate),
+          end: _calendarDay(lastDate),
+          today: _calendarDay(today),
+        ),
+      ),
       clearable: !widget.required,
       format: (context, value, format) => _format(_value ?? value),
+      validator: (date) {
+        if (widget.required && date == null) {
+          return l10n.formDateFieldRequired;
+        }
+        return null;
+      },
     );
   }
 
@@ -191,8 +195,8 @@ class _DateTimeField extends StatelessWidget {
         Expanded(
           flex: 3,
           child: FDateField.calendar(
-            control: FDateFieldControl.lifted(
-              date: dateValue,
+            selectionControl: FDateSelectionControl.managedSingle(
+              initial: dateValue,
               onChange: (date) {
                 if (date == null) {
                   onChanged(null);
@@ -200,21 +204,25 @@ class _DateTimeField extends StatelessWidget {
                 }
                 onChanged(_combine(date, timeValue ?? FTime.now()));
               },
-              validator: (date) {
-                if (required && date == null) {
-                  return l10n.formDateFieldRequired;
-                }
-                return null;
-              },
             ),
             label: RequiredLabel(label, required: required),
             description: description,
             enabled: enabled,
-            start: _calendarDay(firstDate),
-            end: _calendarDay(lastDate),
-            today: _calendarDay(DateTime.now()),
+            calendar: FDateFieldGridCalendarProperties(
+              control: FGridCalendarControl(
+                start: _calendarDay(firstDate),
+                end: _calendarDay(lastDate),
+                today: _calendarDay(DateTime.now()),
+              ),
+            ),
             clearable: !required,
             format: (context, value, format) => formatDate(value),
+            validator: (date) {
+              if (required && date == null) {
+                return l10n.formDateFieldRequired;
+              }
+              return null;
+            },
           ),
         ),
         const SizedBox(width: AppSpacing.s12),

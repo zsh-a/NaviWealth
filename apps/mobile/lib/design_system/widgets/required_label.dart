@@ -14,12 +14,7 @@ import 'package:forui/forui.dart';
 /// )
 /// ```
 class RequiredLabel extends StatelessWidget {
-  const RequiredLabel(
-    this.text, {
-    super.key,
-    this.required = true,
-    this.style,
-  });
+  const RequiredLabel(this.text, {super.key, this.required = true, this.style});
 
   /// The label text.
   final String text;

@@ -46,7 +46,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.fireOsReviewTitle, style: context.theme.typography.md),
+          Text(l10n.fireOsReviewTitle, style: context.theme.typography.body.md),
           const SizedBox(height: AppSpacing.s4),
           Text(l10n.fireOsReviewSubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
@@ -227,8 +227,8 @@ class _DiffPanel extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                   ),
           ),
-          Text(wrLine, style: context.theme.typography.xs),
-          Text(nwLine, style: context.theme.typography.xs),
+          Text(wrLine, style: context.theme.typography.body.xs),
+          Text(nwLine, style: context.theme.typography.body.xs),
         ],
       ),
     );
@@ -310,7 +310,7 @@ class _FindingRow extends StatelessWidget {
         Expanded(
           child: Text(
             _findingText(l10n, finding),
-            style: context.theme.typography.xs,
+            style: context.theme.typography.body.xs,
           ),
         ),
       ],

@@ -282,7 +282,7 @@ class _GuidanceText extends StatelessWidget {
         Expanded(
           child: Text(
             message,
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               color: colors.foreground,
             ),
           ),
@@ -304,7 +304,7 @@ class _ContinueInChatLink extends StatelessWidget {
       onPress: onTap,
       child: Text(
         label,
-        style: context.theme.typography.sm.copyWith(
+        style: context.theme.typography.body.sm.copyWith(
           color: colors.primary,
           decoration: TextDecoration.underline,
           decorationColor: colors.primary,
@@ -423,7 +423,7 @@ class _ResultRow extends StatelessWidget {
         Expanded(
           child: Text(
             row.label,
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               color: colors.foreground,
             ),
             maxLines: 1,

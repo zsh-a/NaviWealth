@@ -111,7 +111,7 @@ class _ExecutionTradeRow extends StatelessWidget {
               children: [
                 Text(
                   '$directionLabel ${_tradeTargetLabel(l10n, trade)}',
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

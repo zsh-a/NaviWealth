@@ -69,7 +69,10 @@ class AssetPnLCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.assetDetailPnLTitle, style: context.theme.typography.sm),
+            Text(
+              l10n.assetDetailPnLTitle,
+              style: context.theme.typography.body.sm,
+            ),
             const SizedBox(height: AppSpacing.s12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -86,7 +89,7 @@ class AssetPnLCard extends ConsumerWidget {
                       DeltaText(
                         value: unrealizedAsset?.toDouble(),
                         currencyCode: asset.currency,
-                        style: context.theme.typography.md,
+                        style: context.theme.typography.body.md,
                       ),
                     ],
                   ),
@@ -154,7 +157,7 @@ class _DailyChangeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (!hasPosition || !hasHistory) {
-      return Text('\u2014', style: context.theme.typography.sm);
+      return Text('\u2014', style: context.theme.typography.body.sm);
     }
     if (isLoading && value == null) {
       return const SizedBox(

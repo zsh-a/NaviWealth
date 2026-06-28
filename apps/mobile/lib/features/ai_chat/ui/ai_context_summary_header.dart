@@ -88,7 +88,7 @@ class _InfoLine extends StatelessWidget {
         Expanded(
           child: Text(
             fact.text,
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               color: colors.foreground,
               height: 1.4,
             ),

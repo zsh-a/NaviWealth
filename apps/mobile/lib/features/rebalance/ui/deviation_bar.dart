@@ -40,7 +40,9 @@ class DeviationBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(label, style: context.theme.typography.sm)),
+              Expanded(
+                child: Text(label, style: context.theme.typography.body.sm),
+              ),
               Text(
                 '${(actualWeight * 100).toStringAsFixed(1)}%',
                 style: context.labelStyle,

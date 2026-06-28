@@ -111,7 +111,7 @@ class _FireSummaryCard extends ConsumerWidget {
         children: [
           Text(l10n.planHubTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
-          Text(l10n.planHeroEmpty, style: context.theme.typography.md),
+          Text(l10n.planHeroEmpty, style: context.theme.typography.body.md),
           const SizedBox(height: AppSpacing.s16),
           FButton(
             variant: FButtonVariant.primary,

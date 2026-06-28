@@ -59,7 +59,10 @@ class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.fireOsBucketsTitle, style: context.theme.typography.md),
+              Text(
+                l10n.fireOsBucketsTitle,
+                style: context.theme.typography.body.md,
+              ),
               const SizedBox(height: AppSpacing.s4),
               Text(l10n.fireOsBucketsSubtitle, style: context.captionStyle),
               const SizedBox(height: AppSpacing.s12),
@@ -279,7 +282,7 @@ class _BucketAssetList extends StatelessWidget {
                   Expanded(
                     child: Text(
                       itemsById[id]?.name ?? id,
-                      style: context.theme.typography.xs,
+                      style: context.theme.typography.body.xs,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -336,7 +339,7 @@ class _UnmappedSection extends StatelessWidget {
                   Expanded(
                     child: Text(
                       u.name,
-                      style: context.theme.typography.xs,
+                      style: context.theme.typography.body.xs,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

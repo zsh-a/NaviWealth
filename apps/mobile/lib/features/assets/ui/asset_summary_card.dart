@@ -19,10 +19,10 @@ class AssetSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(asset.symbol, style: context.theme.typography.md),
+            Text(asset.symbol, style: context.theme.typography.body.md),
             if (asset.name != null) ...[
               const SizedBox(height: AppSpacing.s4),
-              Text(asset.name!, style: context.theme.typography.sm),
+              Text(asset.name!, style: context.theme.typography.body.sm),
             ],
             const SizedBox(height: AppSpacing.s8),
             Text(

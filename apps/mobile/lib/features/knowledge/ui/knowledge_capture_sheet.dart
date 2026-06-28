@@ -628,7 +628,7 @@ class _SavedCapturePreview extends StatelessWidget {
               _CaptureSharedTextLine(
                 text: knowledgeExcerpt(title),
                 promoted: promoted,
-                style: typography.sm,
+                style: typography.body.sm,
                 maxLines: 2,
               ),
               const SizedBox(height: AppSpacing.s8),
@@ -1003,7 +1003,7 @@ class _DiffRow extends StatelessWidget {
           ),
           child: Text(
             knowledgeExcerpt(after),
-            style: typography.sm.copyWith(color: colors.foreground),
+            style: typography.body.sm.copyWith(color: colors.foreground),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),

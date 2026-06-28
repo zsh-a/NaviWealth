@@ -412,7 +412,7 @@ class _SwitchRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: context.theme.typography.sm)),
+          Expanded(child: Text(label, style: context.theme.typography.body.sm)),
           const SizedBox(width: AppSpacing.s12),
           FSwitch(value: value, onChange: onChanged),
         ],

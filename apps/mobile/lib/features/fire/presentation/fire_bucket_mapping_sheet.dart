@@ -170,7 +170,7 @@ class _MappingRow extends StatelessWidget {
         children: [
           Text(
             item.name,
-            style: context.theme.typography.sm,
+            style: context.theme.typography.body.sm,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

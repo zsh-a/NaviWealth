@@ -197,7 +197,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
             children: [
               Text(
                 l10n.manualSecuritySelectMatchTitle,
-                style: innerCtx.theme.typography.lg,
+                style: innerCtx.theme.typography.body.lg,
               ),
               const SizedBox(height: AppSpacing.s12),
               for (final hit in hits)

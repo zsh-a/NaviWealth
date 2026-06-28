@@ -460,7 +460,9 @@ class KnowledgeSelectableRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: enabled ? typography.sm : context.bodyCaptionStyle,
+                    style: enabled
+                        ? typography.body.sm
+                        : context.bodyCaptionStyle,
                     maxLines: maxLines,
                     overflow: TextOverflow.ellipsis,
                   ),

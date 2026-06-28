@@ -68,7 +68,7 @@ class PostingsPreview extends StatelessWidget {
           if (title != null && title!.isNotEmpty) ...[
             Text(
               title!,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: AppSpacing.s8),
@@ -116,7 +116,7 @@ class _PostingRow extends StatelessWidget {
             children: [
               Text(
                 accountLabel,
-                style: context.theme.typography.sm,
+                style: context.theme.typography.body.sm,
                 overflow: TextOverflow.ellipsis,
               ),
               if (cost != null)
@@ -138,7 +138,7 @@ class _PostingRow extends StatelessWidget {
           amount: posting.units,
           unit: posting.unit,
           formatters: formatters,
-          style: context.theme.typography.sm,
+          style: context.theme.typography.body.sm,
         ),
       ],
     );
@@ -171,14 +171,14 @@ class _UnitBalanceRow extends StatelessWidget {
           Expanded(
             child: Text(
               'Σ $unit',
-              style: context.theme.typography.xs2.copyWith(color: tone),
+              style: context.theme.typography.body.xs2.copyWith(color: tone),
             ),
           ),
           SignedMoneyText(
             amount: total,
             unit: unit,
             formatters: formatters,
-            style: context.theme.typography.xs2,
+            style: context.theme.typography.body.xs2,
             color: tone,
           ),
         ],

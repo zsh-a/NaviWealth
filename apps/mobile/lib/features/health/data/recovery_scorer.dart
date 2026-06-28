@@ -80,21 +80,24 @@ class RecoveryScorer {
 
     final inputs = <String, Object?>{
       'latest_hrv_ms': hrvRecent == null ? null : _round(hrvRecent),
-      'avg_sleep_hours':
-          sleepHoursRecent == null ? null : _round(sleepHoursRecent),
+      'avg_sleep_hours': sleepHoursRecent == null
+          ? null
+          : _round(sleepHoursRecent),
       'latest_rhr_bpm': rhrRecent == null ? null : _round(rhrRecent),
       'latest_vo2_max': vo2Recent == null ? null : _round(vo2Recent),
       'latest_body_battery': bbRecent == null ? null : _round(bbRecent),
       'latest_stress': stressRecent == null ? null : _round(stressRecent),
     };
 
-    final haveBaseline = hrvBaselineN >= 5 ||
+    final haveBaseline =
+        hrvBaselineN >= 5 ||
         sleepBaselineN >= 5 ||
         rhrBaselineN >= 5 ||
         vo2BaselineN >= 5 ||
         bbBaselineN >= 5 ||
         stressBaselineN >= 5;
-    final haveRecent = hrvRecent != null ||
+    final haveRecent =
+        hrvRecent != null ||
         sleepHoursRecent != null ||
         rhrRecent != null ||
         vo2Recent != null ||
@@ -151,14 +154,10 @@ class RecoveryScorer {
     final verdict = rounded < 40
         ? 'strained'
         : rounded < 70
-            ? 'balanced'
-            : 'rested';
+        ? 'balanced'
+        : 'rested';
 
-    return RecoveryResult(
-      score: rounded,
-      verdict: verdict,
-      inputs: inputs,
-    );
+    return RecoveryResult(score: rounded, verdict: verdict, inputs: inputs);
   }
 
   // ---------------------------------------------------------------------------

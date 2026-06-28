@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('FRB generated bindings expose the Garmin health bridge', () {
+    final agentRuntimeFacade = File(
+      'lib/src/rust/api/agent_runtime.dart',
+    ).readAsStringSync();
     final dartFacade = File('lib/src/rust/api/health.dart').readAsStringSync();
     final dartBindings = File(
       'lib/src/rust/frb_generated.dart',
@@ -18,6 +21,13 @@ void main() {
       'native/lifeos_native/src/frb_generated.rs',
     ).readAsStringSync();
 
+    for (final symbol in _agentRuntimeFacadeSymbols) {
+      expect(
+        agentRuntimeFacade,
+        contains(symbol),
+        reason: 'Agent runtime facade: $symbol',
+      );
+    }
     for (final symbol in _dartFacadeSymbols) {
       expect(dartFacade, contains(symbol), reason: 'Dart facade: $symbol');
     }
@@ -52,7 +62,22 @@ const _dartFacadeSymbols = <String>[
   'GarminSyncProgress',
 ];
 
+const _agentRuntimeFacadeSymbols = <String>[
+  'agentRuntimeProtocolVersion',
+  'agentRuntimeCatalogVersion',
+  'agentRuntimeCatalogSummary',
+  'agentRuntimeValidateRunRequest',
+  'agentRuntimeValidateTrace',
+  'agentRuntimeValidateToolSpec',
+];
+
 const _dartGeneratedApiSymbols = <String>[
+  'crateApiAgentRuntimeAgentRuntimeProtocolVersion',
+  'crateApiAgentRuntimeAgentRuntimeCatalogVersion',
+  'crateApiAgentRuntimeAgentRuntimeCatalogSummary',
+  'crateApiAgentRuntimeAgentRuntimeValidateRunRequest',
+  'crateApiAgentRuntimeAgentRuntimeValidateTrace',
+  'crateApiAgentRuntimeAgentRuntimeValidateToolSpec',
   'crateApiHealthGarminInit',
   'crateApiHealthGarminAuthenticate',
   'crateApiHealthGarminSubmitMfa',
@@ -73,6 +98,12 @@ const _dartCodecSymbols = <String>[
 ];
 
 const _rustGeneratedSymbols = <String>[
+  'wire__crate__api__agent_runtime__agent_runtime_protocol_version_impl',
+  'wire__crate__api__agent_runtime__agent_runtime_catalog_version_impl',
+  'wire__crate__api__agent_runtime__agent_runtime_catalog_summary_impl',
+  'wire__crate__api__agent_runtime__agent_runtime_validate_run_request_impl',
+  'wire__crate__api__agent_runtime__agent_runtime_validate_trace_impl',
+  'wire__crate__api__agent_runtime__agent_runtime_validate_tool_spec_impl',
   'wire__crate__api__health__garmin_init_impl',
   'wire__crate__api__health__garmin_authenticate_impl',
   'wire__crate__api__health__garmin_submit_mfa_impl',

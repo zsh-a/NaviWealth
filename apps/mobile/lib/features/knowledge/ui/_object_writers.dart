@@ -312,7 +312,7 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
               Text(
                 '${l10n.knowledgeWriterConfidenceLabel}: '
                 '${_confidence.toStringAsFixed(2)}',
-                style: typography.sm,
+                style: typography.body.sm,
               ),
               FSlider(
                 control: FSliderControl.liftedContinuous(

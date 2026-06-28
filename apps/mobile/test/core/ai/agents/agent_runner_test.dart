@@ -94,8 +94,10 @@ void main() {
   test('runOnce captures throws as failed result', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
-    final agent =
-        _StubAgent(id: 'boom', throws: StateError('upstream offline'));
+    final agent = _StubAgent(
+      id: 'boom',
+      throws: StateError('upstream offline'),
+    );
     final result = await runner.runOnce(agent, _context(rt, now));
     expect(result.status, AgentRunStatus.failed);
     expect(result.error, contains('upstream offline'));
@@ -153,12 +155,8 @@ void main() {
       schedule: const AgentSchedule(interval: Duration(hours: 1)),
     );
 
-    await runner.tick(
-      agents: [hourly],
-      context: _context(rt, now),
-    );
-    final tooSoon =
-        await runner.tick(
+    await runner.tick(agents: [hourly], context: _context(rt, now));
+    final tooSoon = await runner.tick(
       agents: [hourly],
       context: _context(rt, now.add(const Duration(minutes: 30))),
     );

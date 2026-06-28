@@ -98,7 +98,7 @@ class _CashFlowTrendCard extends ConsumerWidget {
           children: [
             Text(
               l10n.analyticsCashFlowTrendTitle,
-              style: context.theme.typography.md,
+              style: context.theme.typography.body.md,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
@@ -239,7 +239,7 @@ class _FireProgressCard extends ConsumerWidget {
           children: [
             Text(
               l10n.analyticsFireProgressTitle,
-              style: context.theme.typography.md,
+              style: context.theme.typography.body.md,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
@@ -364,7 +364,7 @@ class _MetricReadout extends StatelessWidget {
         children: [
           Text(label, style: context.microLabelStyle),
           const SizedBox(height: AppSpacing.s2),
-          Text(value, style: context.theme.typography.sm),
+          Text(value, style: context.theme.typography.body.sm),
         ],
       ),
     );
@@ -492,7 +492,7 @@ class _AnalyticsOverviewGrid extends ConsumerWidget {
               amount: s.netWorth.amount.toDouble(),
               currencyCode: s.baseCurrency,
               compact: true,
-              style: context.theme.typography.lg,
+              style: context.theme.typography.body.lg,
             ),
           ),
         ),
@@ -515,7 +515,7 @@ class _AnalyticsOverviewGrid extends ConsumerWidget {
                     amount: metrics.monthlyChange.amount,
                     unit: metrics.baseCurrency,
                     formatters: formatters,
-                    style: context.theme.typography.lg,
+                    style: context.theme.typography.body.lg,
                   ),
                   if (pct != null)
                     Text(
@@ -541,7 +541,7 @@ class _AnalyticsOverviewGrid extends ConsumerWidget {
                 amount: summary.totalInBase.amount,
                 unit: summary.baseCurrency,
                 formatters: formatters,
-                style: context.theme.typography.lg,
+                style: context.theme.typography.body.lg,
               );
             },
           ),
@@ -556,7 +556,7 @@ class _AnalyticsOverviewGrid extends ConsumerWidget {
               if (!state.isConfigured) {
                 return Text(
                   l10n.analyticsOverviewFireNotConfigured,
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                 );
               }
               final months = state.fireEtaMonths;
@@ -564,7 +564,7 @@ class _AnalyticsOverviewGrid extends ConsumerWidget {
                 months == null
                     ? l10n.analyticsOverviewUnavailable
                     : l10n.analyticsOverviewFireEtaMonths(months),
-                style: context.theme.typography.lg,
+                style: context.theme.typography.body.lg,
               );
             },
           ),
@@ -622,7 +622,7 @@ class _OverviewSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       AppLocalizations.of(context).analyticsOverviewUnavailable,
-      style: context.theme.typography.lg,
+      style: context.theme.typography.body.lg,
     );
   }
 }
@@ -634,7 +634,7 @@ class _OverviewUnavailable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       AppLocalizations.of(context).analyticsOverviewUnavailable,
-      style: context.theme.typography.lg,
+      style: context.theme.typography.body.lg,
     );
   }
 }

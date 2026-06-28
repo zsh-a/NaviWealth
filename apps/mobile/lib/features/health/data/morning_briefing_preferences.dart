@@ -22,7 +22,9 @@ const int kDefaultMorningBriefingHourLocal = 7;
 
 final morningBriefingHourProvider =
     StateNotifierProvider<MorningBriefingHourController, int>((ref) {
-      return MorningBriefingHourController(ref.watch(sharedPreferencesProvider));
+      return MorningBriefingHourController(
+        ref.watch(sharedPreferencesProvider),
+      );
     });
 
 class MorningBriefingHourController extends StateNotifier<int> {

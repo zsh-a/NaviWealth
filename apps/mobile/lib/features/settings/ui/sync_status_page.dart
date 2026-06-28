@@ -680,7 +680,9 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final valueStyle =
-        (monospace ? context.theme.typography.xs : context.theme.typography.sm)
+        (monospace
+                ? context.theme.typography.body.xs
+                : context.theme.typography.body.sm)
             .copyWith(
               color: context.theme.colors.foreground,
               fontFeatures: monospace

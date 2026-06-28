@@ -49,39 +49,40 @@ void main() {
       expect(out['note'], isNotNull);
     });
 
-    test('aggregates sessions in the window with seconds → hours conversion',
-        () {
-      final rows = [
-        _sleep(
-          id: 'a',
-          startedAt: now.subtract(const Duration(days: 1)),
-          durationSeconds: 28800, // 8h
-          sourceDevice: 'Apple Watch',
-        ),
-        _sleep(
-          id: 'b',
-          startedAt: now.subtract(const Duration(days: 2)),
-          durationSeconds: 25200, // 7h
-        ),
-      ];
-      final out = GetRecentSleepSummaryTool.shape(
-        rows,
-        daysBack: 7,
-        now: now,
-      );
-      final sessions =
-          (out['sessions'] as List).cast<Map<String, Object?>>();
-      expect(sessions, hasLength(2));
-      expect(sessions.first['duration_hours'], 8.0);
-      expect(sessions.first['source_device'], 'Apple Watch');
-      expect(sessions.last['duration_hours'], 7.0);
+    test(
+      'aggregates sessions in the window with seconds → hours conversion',
+      () {
+        final rows = [
+          _sleep(
+            id: 'a',
+            startedAt: now.subtract(const Duration(days: 1)),
+            durationSeconds: 28800, // 8h
+            sourceDevice: 'Apple Watch',
+          ),
+          _sleep(
+            id: 'b',
+            startedAt: now.subtract(const Duration(days: 2)),
+            durationSeconds: 25200, // 7h
+          ),
+        ];
+        final out = GetRecentSleepSummaryTool.shape(
+          rows,
+          daysBack: 7,
+          now: now,
+        );
+        final sessions = (out['sessions'] as List).cast<Map<String, Object?>>();
+        expect(sessions, hasLength(2));
+        expect(sessions.first['duration_hours'], 8.0);
+        expect(sessions.first['source_device'], 'Apple Watch');
+        expect(sessions.last['duration_hours'], 7.0);
 
-      final summary = out['summary'] as Map<String, Object?>;
-      expect(summary['session_count'], 2);
-      expect(summary['total_hours'], 15.0);
-      expect(summary['average_hours'], 7.5);
-      expect(out['note'], isNull);
-    });
+        final summary = out['summary'] as Map<String, Object?>;
+        expect(summary['session_count'], 2);
+        expect(summary['total_hours'], 15.0);
+        expect(summary['average_hours'], 7.5);
+        expect(out['note'], isNull);
+      },
+    );
 
     test('drops sessions outside the requested window', () {
       final rows = [
@@ -96,11 +97,7 @@ void main() {
           durationSeconds: 28800,
         ),
       ];
-      final out = GetRecentSleepSummaryTool.shape(
-        rows,
-        daysBack: 7,
-        now: now,
-      );
+      final out = GetRecentSleepSummaryTool.shape(rows, daysBack: 7, now: now);
       final sessions = out['sessions'] as List;
       expect(sessions, hasLength(1));
       expect((sessions.single as Map)['duration_hours'], 8.0);
@@ -121,13 +118,8 @@ void main() {
           unit: 'h',
         ),
       ];
-      final out = GetRecentSleepSummaryTool.shape(
-        rows,
-        daysBack: 7,
-        now: now,
-      );
-      final sessions =
-          (out['sessions'] as List).cast<Map<String, Object?>>();
+      final out = GetRecentSleepSummaryTool.shape(rows, daysBack: 7, now: now);
+      final sessions = (out['sessions'] as List).cast<Map<String, Object?>>();
       expect(sessions.first['duration_hours'], 8.0); // 480 min = 8 h
       expect(sessions.last['duration_hours'], 6.5);
     });
@@ -148,8 +140,7 @@ void main() {
   test('tool advertises the contract', () {
     const tool = GetRecentSleepSummaryTool();
     expect(tool.name, 'get_recent_sleep_summary');
-    final props =
-        (tool.inputSchema['properties'] as Map)['days_back'] as Map;
+    final props = (tool.inputSchema['properties'] as Map)['days_back'] as Map;
     expect(props['default'], 7);
     expect(props['maximum'], 90);
   });

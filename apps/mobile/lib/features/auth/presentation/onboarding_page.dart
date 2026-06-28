@@ -167,7 +167,7 @@ class _ModeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: context.theme.typography.md),
+                Text(title, style: context.theme.typography.body.md),
                 const SizedBox(height: AppSpacing.s2),
                 Text(description, style: context.bodyCaptionStyle),
               ],

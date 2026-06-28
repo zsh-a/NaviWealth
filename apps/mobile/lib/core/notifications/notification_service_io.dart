@@ -28,7 +28,7 @@ class _LocalNotificationService implements NotificationService {
       requestSoundPermission: false,
     );
     await _plugin.initialize(
-      const InitializationSettings(
+      settings: const InitializationSettings(
         android: androidInit,
         iOS: darwinInit,
       ),
@@ -125,13 +125,19 @@ class _LocalNotificationService implements NotificationService {
         presentSound: false,
       ),
     );
-    await _plugin.show(id, title, body, details, payload: payload);
+    await _plugin.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: details,
+      payload: payload,
+    );
   }
 
   @override
   Future<void> cancel(int id) async {
     if (!await isAvailable()) return;
     await _ensureInitialized();
-    await _plugin.cancel(id);
+    await _plugin.cancel(id: id);
   }
 }

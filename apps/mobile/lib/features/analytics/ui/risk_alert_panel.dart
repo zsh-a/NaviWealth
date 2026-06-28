@@ -51,7 +51,7 @@ class _AlertList extends StatelessWidget {
               color: context.theme.colors.destructive,
             ),
             const SizedBox(width: AppSpacing.s8),
-            Text(l10n.riskAlertTitle, style: context.theme.typography.md),
+            Text(l10n.riskAlertTitle, style: context.theme.typography.body.md),
             const SizedBox(width: AppSpacing.s8),
             AppBadge(
               label: '${alerts.length}',
@@ -91,7 +91,10 @@ class _AlertRow extends ConsumerWidget {
     final dimensionLabel = _dimensionLabel(l10n, alert.dimension);
 
     return FTile(
-      title: Text(_alertTitle(l10n, alert), style: context.theme.typography.sm),
+      title: Text(
+        _alertTitle(l10n, alert),
+        style: context.theme.typography.body.sm,
+      ),
       prefix: Container(
         width: 14,
         height: 14,

@@ -115,7 +115,7 @@ class _BriefingCard extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.s12),
               child: Text(
                 r.summary,
-                style: typography.sm.copyWith(height: 1.45),
+                style: typography.body.sm.copyWith(height: 1.45),
                 maxLines: 8,
                 overflow: TextOverflow.ellipsis,
               ),

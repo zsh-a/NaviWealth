@@ -20,11 +20,7 @@ HealthMetric _m({
     ownerUserId: 'u',
     updatedAt: at,
     updatedByDevice: 'dev',
-    hlc: Hlc(
-      wallMillis: at.millisecondsSinceEpoch,
-      counter: 0,
-      nodeId: 'dev',
-    ),
+    hlc: Hlc(wallMillis: at.millisecondsSinceEpoch, counter: 0, nodeId: 'dev'),
     deletedAt: null,
   ),
 );
@@ -70,48 +66,58 @@ void main() {
       // Baseline: 10 days each, recent: improved.
       final hrv = <HealthMetric>[];
       for (var i = 8; i <= 27; i++) {
-        hrv.add(_m(
-          kind: HealthMetricKind.hrvDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 50,
-          unit: 'ms',
-        ));
+        hrv.add(
+          _m(
+            kind: HealthMetricKind.hrvDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 50,
+            unit: 'ms',
+          ),
+        );
       }
       for (var i = 1; i <= 5; i++) {
-        hrv.add(_m(
-          kind: HealthMetricKind.hrvDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 65, // +30% over baseline
-          unit: 'ms',
-        ));
+        hrv.add(
+          _m(
+            kind: HealthMetricKind.hrvDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 65, // +30% over baseline
+            unit: 'ms',
+          ),
+        );
       }
 
       final rhr = <HealthMetric>[];
       for (var i = 8; i <= 27; i++) {
-        rhr.add(_m(
-          kind: HealthMetricKind.rhrDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 60,
-          unit: 'bpm',
-        ));
+        rhr.add(
+          _m(
+            kind: HealthMetricKind.rhrDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 60,
+            unit: 'bpm',
+          ),
+        );
       }
       for (var i = 1; i <= 5; i++) {
-        rhr.add(_m(
-          kind: HealthMetricKind.rhrDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 55, // -8% under baseline
-          unit: 'bpm',
-        ));
+        rhr.add(
+          _m(
+            kind: HealthMetricKind.rhrDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 55, // -8% under baseline
+            unit: 'bpm',
+          ),
+        );
       }
 
       final sleep = <HealthMetric>[];
       for (var i = 1; i <= 5; i++) {
-        sleep.add(_m(
-          kind: HealthMetricKind.sleepSession,
-          at: now.subtract(Duration(days: i, hours: 1)),
-          value: 8 * 3600.0, // 8h
-          unit: 's',
-        ));
+        sleep.add(
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 8 * 3600.0, // 8h
+            unit: 's',
+          ),
+        );
       }
 
       final out = GetRecoverySignalTool.shape(
@@ -131,46 +137,56 @@ void main() {
     test('strained verdict when HRV ↓ + RHR ↑ + sleep short', () {
       final hrv = <HealthMetric>[];
       for (var i = 8; i <= 27; i++) {
-        hrv.add(_m(
-          kind: HealthMetricKind.hrvDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 50,
-          unit: 'ms',
-        ));
+        hrv.add(
+          _m(
+            kind: HealthMetricKind.hrvDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 50,
+            unit: 'ms',
+          ),
+        );
       }
       for (var i = 1; i <= 5; i++) {
-        hrv.add(_m(
-          kind: HealthMetricKind.hrvDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 35, // -30% under baseline
-          unit: 'ms',
-        ));
+        hrv.add(
+          _m(
+            kind: HealthMetricKind.hrvDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 35, // -30% under baseline
+            unit: 'ms',
+          ),
+        );
       }
       final rhr = <HealthMetric>[];
       for (var i = 8; i <= 27; i++) {
-        rhr.add(_m(
-          kind: HealthMetricKind.rhrDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 60,
-          unit: 'bpm',
-        ));
+        rhr.add(
+          _m(
+            kind: HealthMetricKind.rhrDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 60,
+            unit: 'bpm',
+          ),
+        );
       }
       for (var i = 1; i <= 5; i++) {
-        rhr.add(_m(
-          kind: HealthMetricKind.rhrDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 68, // +13% over baseline
-          unit: 'bpm',
-        ));
+        rhr.add(
+          _m(
+            kind: HealthMetricKind.rhrDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 68, // +13% over baseline
+            unit: 'bpm',
+          ),
+        );
       }
       final sleep = <HealthMetric>[];
       for (var i = 1; i <= 5; i++) {
-        sleep.add(_m(
-          kind: HealthMetricKind.sleepSession,
-          at: now.subtract(Duration(days: i, hours: 1)),
-          value: 5.5 * 3600.0, // 5.5h
-          unit: 's',
-        ));
+        sleep.add(
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 5.5 * 3600.0, // 5.5h
+            unit: 's',
+          ),
+        );
       }
       final out = GetRecoverySignalTool.shape(
         hrv: hrv,
@@ -186,38 +202,46 @@ void main() {
       // HRV slightly up, sleep neutral 7h, RHR flat.
       final hrv = <HealthMetric>[];
       for (var i = 8; i <= 27; i++) {
-        hrv.add(_m(
-          kind: HealthMetricKind.hrvDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 50,
-          unit: 'ms',
-        ));
+        hrv.add(
+          _m(
+            kind: HealthMetricKind.hrvDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 50,
+            unit: 'ms',
+          ),
+        );
       }
       for (var i = 1; i <= 5; i++) {
-        hrv.add(_m(
-          kind: HealthMetricKind.hrvDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 52, // +4%
-          unit: 'ms',
-        ));
+        hrv.add(
+          _m(
+            kind: HealthMetricKind.hrvDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 52, // +4%
+            unit: 'ms',
+          ),
+        );
       }
       final rhr = <HealthMetric>[];
       for (var i = 1; i <= 27; i++) {
-        rhr.add(_m(
-          kind: HealthMetricKind.rhrDaily,
-          at: now.subtract(Duration(days: i)),
-          value: 60,
-          unit: 'bpm',
-        ));
+        rhr.add(
+          _m(
+            kind: HealthMetricKind.rhrDaily,
+            at: now.subtract(Duration(days: i)),
+            value: 60,
+            unit: 'bpm',
+          ),
+        );
       }
       final sleep = <HealthMetric>[];
       for (var i = 1; i <= 5; i++) {
-        sleep.add(_m(
-          kind: HealthMetricKind.sleepSession,
-          at: now.subtract(Duration(days: i, hours: 1)),
-          value: 7 * 3600.0,
-          unit: 's',
-        ));
+        sleep.add(
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 7 * 3600.0,
+            unit: 's',
+          ),
+        );
       }
       final out = GetRecoverySignalTool.shape(
         hrv: hrv,
@@ -245,21 +269,25 @@ void main() {
       final vo2 = <HealthMetric>[];
       // baseline: 7 days at 40 ml/kg/min (8..14 days ago)
       for (var i = 8; i <= 14; i++) {
-        vo2.add(_m(
-          kind: HealthMetricKind.vo2Max,
-          at: now.subtract(Duration(days: i)),
-          value: 40,
-          unit: 'ml_kg_min',
-        ));
+        vo2.add(
+          _m(
+            kind: HealthMetricKind.vo2Max,
+            at: now.subtract(Duration(days: i)),
+            value: 40,
+            unit: 'ml_kg_min',
+          ),
+        );
       }
       // recent: 7 days at 48 ml/kg/min (+20%)
       for (var i = 1; i <= 7; i++) {
-        vo2.add(_m(
-          kind: HealthMetricKind.vo2Max,
-          at: now.subtract(Duration(days: i)),
-          value: 48,
-          unit: 'ml_kg_min',
-        ));
+        vo2.add(
+          _m(
+            kind: HealthMetricKind.vo2Max,
+            at: now.subtract(Duration(days: i)),
+            value: 48,
+            unit: 'ml_kg_min',
+          ),
+        );
       }
 
       final out = GetRecoverySignalTool.shape(

@@ -136,7 +136,7 @@ class _JournalEntryRow extends StatelessWidget {
                     Expanded(
                       child: Text(
                         entry.entry.narration,
-                        style: context.theme.typography.sm,
+                        style: context.theme.typography.body.sm,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

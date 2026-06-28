@@ -36,7 +36,10 @@ class FireStressTestsCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.fireOsStressTitle, style: context.theme.typography.md),
+            Text(
+              l10n.fireOsStressTitle,
+              style: context.theme.typography.body.md,
+            ),
             const SizedBox(height: AppSpacing.s4),
             Text(l10n.fireOsStressSubtitle, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s12),

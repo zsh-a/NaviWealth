@@ -130,4 +130,3 @@ final chatMessagesStreamProvider =
       final repo = await ref.watch(chatRepositoryProvider.future);
       yield* repo.watchMessages(sessionId);
     });
-

@@ -32,7 +32,7 @@ void main() {
       libFiles.where((file) => !file.path.endsWith('/text_style_presets.dart')),
       RegExp(r'(?:context\.theme\.)?typography\.xs\.copyWith\('),
       'Use context.captionStyle / captionLabelStyle / microCaptionStyle as '
-      'the base for xs text instead of rebuilding typography.xs.copyWith.',
+      'the base for xs text instead of rebuilding typography.body.xs.copyWith.',
     );
 
     _expectNoMatches(

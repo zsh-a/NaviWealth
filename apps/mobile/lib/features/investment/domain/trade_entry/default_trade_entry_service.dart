@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart' show AssetType;
+import 'package:naviwealth/features/finance/data/domain/enums.dart'
+    show AssetType;
 import 'package:uuid/uuid.dart';
 
 import '../../../../domain/entities/historical_bar.dart';

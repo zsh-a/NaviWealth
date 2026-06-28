@@ -163,7 +163,8 @@ GoRoute _settingsRoute() {
       GoRoute(
         path: 'notifications',
         name: AppRouteNames.notifications,
-        builder: (context, state) => _backSafe(const NotificationSettingsPage()),
+        builder: (context, state) =>
+            _backSafe(const NotificationSettingsPage()),
       ),
       GoRoute(
         path: 'logs',

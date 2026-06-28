@@ -33,7 +33,7 @@ class PhysicalAssetCard extends StatelessWidget {
                 children: [
                   Text(
                     asset.name,
-                    style: context.theme.typography.md,
+                    style: context.theme.typography.body.md,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -51,7 +51,7 @@ class PhysicalAssetCard extends StatelessWidget {
             MoneyText(
               amount: asset.currentValuation.toDouble(),
               currencyCode: asset.currency,
-              style: context.theme.typography.md,
+              style: context.theme.typography.body.md,
             ),
           ],
         ),

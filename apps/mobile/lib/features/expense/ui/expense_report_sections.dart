@@ -35,7 +35,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
           children: [
             Text(
               l10n.expenseReportCategoryShare,
-              style: context.theme.typography.md,
+              style: context.theme.typography.body.md,
             ),
             const SizedBox(height: AppSpacing.s12),
             if (report.byCategory.isEmpty)
@@ -109,7 +109,7 @@ class ExpenseTrendCard extends StatelessWidget {
           children: [
             Text(
               l10n.expenseReportMonthlyTrend,
-              style: context.theme.typography.md,
+              style: context.theme.typography.body.md,
             ),
             const SizedBox(height: AppSpacing.s12),
             LayoutBuilder(
@@ -183,7 +183,7 @@ class ExpenseCategoryListCard extends StatelessWidget {
               ),
               child: Text(
                 l10n.expenseReportCategoryDetail,
-                style: context.theme.typography.md,
+                style: context.theme.typography.body.md,
               ),
             ),
             for (final breakdown in report.byCategory)
@@ -348,7 +348,7 @@ class _LegendRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: context.theme.typography.sm,
+                    style: context.theme.typography.body.sm,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -93,11 +93,7 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
     final hrvLine = _summariseHrv(inputs.healthEvents);
     final financeLine = _summariseFinance(inputs.financeEvents);
 
-    final parts = <String>[
-      ?sleepLine,
-      ?hrvLine,
-      ?financeLine,
-    ];
+    final parts = <String>[?sleepLine, ?hrvLine, ?financeLine];
     if (parts.isEmpty) return BriefingOutput.empty();
     return BriefingOutput(
       summary: parts.join(' · '),
@@ -129,8 +125,8 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
     final tag = latest.entities.contains('short_sleep')
         ? ' (short)'
         : latest.entities.contains('long_sleep')
-            ? ' (long)'
-            : '';
+        ? ' (long)'
+        : '';
     return 'Slept ${rounded}h$tag';
   }
 

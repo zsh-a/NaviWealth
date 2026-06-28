@@ -96,7 +96,7 @@ class _DeferredError extends StatelessWidget {
               const SizedBox(height: AppSpacing.s12),
               Text(
                 l10n.deferredLoadFailedTitle,
-                style: context.theme.typography.md,
+                style: context.theme.typography.body.md,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.s4),

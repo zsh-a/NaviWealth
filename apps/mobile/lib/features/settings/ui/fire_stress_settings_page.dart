@@ -191,7 +191,7 @@ class _PercentSliderState extends State<_PercentSlider> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.label, style: context.theme.typography.sm),
+                    Text(widget.label, style: context.theme.typography.body.sm),
                     const SizedBox(height: AppSpacing.s2),
                     Text(widget.subtitle, style: context.captionStyle),
                   ],
@@ -299,7 +299,7 @@ class _LumpSumFieldState extends State<_LumpSumField> {
         children: [
           Text(
             l10n.settingsStressTestLumpSumLabel,
-            style: context.theme.typography.sm,
+            style: context.theme.typography.body.sm,
           ),
           const SizedBox(height: AppSpacing.s2),
           Text(

@@ -570,7 +570,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                 _loginRequired
                     ? l10n.aiChatLoginRequired
                     : l10n.commonLoadError(_errorDetail!),
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: context.theme.colors.destructive,
                 ),
               ),

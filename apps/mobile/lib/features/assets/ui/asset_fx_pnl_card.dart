@@ -49,7 +49,7 @@ class AssetFxPnlCard extends ConsumerWidget {
           children: [
             Text(
               l10n.assetDetailFxPnlTitle,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
             const SizedBox(height: AppSpacing.s12),
             AssetDetailMetricRow(

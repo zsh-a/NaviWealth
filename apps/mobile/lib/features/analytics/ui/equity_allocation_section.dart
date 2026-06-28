@@ -170,7 +170,7 @@ class _TotalsRow extends StatelessWidget {
         AnimatedMoneyText(
           amount: totalValueInBase.toDouble(),
           currencyCode: baseCurrency,
-          style: context.theme.typography.lg,
+          style: context.theme.typography.body.lg,
         ),
       ],
     );
@@ -199,7 +199,7 @@ class _BucketRow extends StatelessWidget {
     return FTile(
       title: Text(
         localizeBucketLabel(l10n, bucket),
-        style: context.theme.typography.md,
+        style: context.theme.typography.body.md,
       ),
       prefix: Container(
         width: 14,
@@ -219,7 +219,7 @@ class _BucketRow extends StatelessWidget {
             AnimatedMoneyText(
               amount: bucket.totalValueInBase.toDouble(),
               currencyCode: baseCurrency,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
               minDeltaThreshold: 0.01,
             ),
             Text(

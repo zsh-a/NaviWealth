@@ -231,7 +231,7 @@ class ExpenseGroupedList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     group.label,
-                    style: context.theme.typography.sm,
+                    style: context.theme.typography.body.sm,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

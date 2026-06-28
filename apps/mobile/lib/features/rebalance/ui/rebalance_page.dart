@@ -106,7 +106,10 @@ class _SchemeSelector extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.rebalanceSchemeTitle, style: context.theme.typography.sm),
+            Text(
+              l10n.rebalanceSchemeTitle,
+              style: context.theme.typography.body.sm,
+            ),
             const SizedBox(height: AppSpacing.s8),
             Wrap(
               spacing: AppSpacing.s8,
@@ -208,7 +211,7 @@ class _DriftOverview extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceDriftTitle,
-                    style: context.theme.typography.sm,
+                    style: context.theme.typography.body.sm,
                   ),
                 ),
                 if (plan.isBalanced)
@@ -276,7 +279,10 @@ class _TradeList extends StatelessWidget {
                 color: context.theme.colors.primary,
               ),
               const SizedBox(height: AppSpacing.s8),
-              Text(l10n.rebalanceBalanced, style: context.theme.typography.sm),
+              Text(
+                l10n.rebalanceBalanced,
+                style: context.theme.typography.body.sm,
+              ),
             ],
           ),
         ),
@@ -289,7 +295,10 @@ class _TradeList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.rebalanceTradeTitle, style: context.theme.typography.sm),
+            Text(
+              l10n.rebalanceTradeTitle,
+              style: context.theme.typography.body.sm,
+            ),
             const SizedBox(height: AppSpacing.s8),
             for (final trade in plan.trades) _TradeRow(trade: trade),
             const FDivider(),
@@ -305,7 +314,7 @@ class _TradeList extends StatelessWidget {
                   amount: plan.estimatedFees.amount.toDouble(),
                   currencyCode: plan.estimatedFees.currency,
                   compact: true,
-                  style: context.theme.typography.xs,
+                  style: context.theme.typography.body.xs,
                 ),
               ],
             ),
@@ -322,7 +331,7 @@ class _TradeList extends StatelessWidget {
                   amount: plan.estimatedTaxes.amount.toDouble(),
                   currencyCode: plan.estimatedTaxes.currency,
                   compact: true,
-                  style: context.theme.typography.xs,
+                  style: context.theme.typography.body.xs,
                 ),
               ],
             ),
@@ -445,7 +454,7 @@ class _TradeRow extends StatelessWidget {
               children: [
                 Text(
                   '$directionLabel $label',
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                 ),
                 if (trade.isAssetTarget)
                   Text(
@@ -488,7 +497,7 @@ class _SettingsSheet extends ConsumerWidget {
       children: [
         Text(
           l10n.rebalanceWarningThreshold,
-          style: context.theme.typography.sm,
+          style: context.theme.typography.body.sm,
         ),
         FSlider(
           control: FSliderControl.managedContinuous(
@@ -503,7 +512,7 @@ class _SettingsSheet extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s8),
         Text(
           l10n.rebalanceCriticalThreshold,
-          style: context.theme.typography.sm,
+          style: context.theme.typography.body.sm,
         ),
         FSlider(
           control: FSliderControl.managedContinuous(

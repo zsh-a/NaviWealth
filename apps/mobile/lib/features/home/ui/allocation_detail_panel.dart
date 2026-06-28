@@ -185,7 +185,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                 Expanded(
                   child: Text(
                     l10n.dashboardAllocationTitle,
-                    style: context.theme.typography.lg,
+                    style: context.theme.typography.body.lg,
                   ),
                 ),
                 FButton.icon(

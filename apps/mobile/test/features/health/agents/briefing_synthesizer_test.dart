@@ -35,37 +35,33 @@ EventRecord _sleepEvent({
   importance: 0.5,
 );
 
-EventRecord _hrvEvent({
-  required DateTime when,
-  required double valueMs,
-}) => EventRecord(
-  id: 'hrv-${when.toIso8601String()}',
-  type: kEventHrvRecorded,
-  timestamp: when,
-  source: kHealthSource,
-  ownerUserId: 'u-test',
-  title: 'hrv',
-  summary: 'hrv',
-  payload: <String, Object?>{'value': valueMs, 'unit': 'ms'},
-  entities: const <String>{},
-  importance: 0.55,
-);
+EventRecord _hrvEvent({required DateTime when, required double valueMs}) =>
+    EventRecord(
+      id: 'hrv-${when.toIso8601String()}',
+      type: kEventHrvRecorded,
+      timestamp: when,
+      source: kHealthSource,
+      ownerUserId: 'u-test',
+      title: 'hrv',
+      summary: 'hrv',
+      payload: <String, Object?>{'value': valueMs, 'unit': 'ms'},
+      entities: const <String>{},
+      importance: 0.55,
+    );
 
-EventRecord _financeEvent({
-  required DateTime when,
-  required String type,
-}) => EventRecord(
-  id: 'fin-$type-${when.toIso8601String()}',
-  type: type,
-  timestamp: when,
-  source: 'options_trade_journal',
-  ownerUserId: 'u-test',
-  title: type,
-  summary: type,
-  payload: const <String, Object?>{},
-  entities: const <String>{},
-  importance: 0.5,
-);
+EventRecord _financeEvent({required DateTime when, required String type}) =>
+    EventRecord(
+      id: 'fin-$type-${when.toIso8601String()}',
+      type: type,
+      timestamp: when,
+      source: 'options_trade_journal',
+      ownerUserId: 'u-test',
+      title: type,
+      summary: type,
+      payload: const <String, Object?>{},
+      entities: const <String>{},
+      importance: 0.5,
+    );
 
 class _FakeLlmConfig implements DeviceLlmConfig {
   const _FakeLlmConfig();
@@ -143,7 +139,10 @@ void main() {
           ],
         ),
       );
-      expect(out.summary, 'Slept 7.5h · HRV 48ms · Finance: 2 trade opened, 1 dividend received');
+      expect(
+        out.summary,
+        'Slept 7.5h · HRV 48ms · Finance: 2 trade opened, 1 dividend received',
+      );
       expect(out.sleepLine, 'Slept 7.5h');
       expect(out.hrvLine, 'HRV 48ms');
       expect(out.financeLine, 'Finance: 2 trade opened, 1 dividend received');

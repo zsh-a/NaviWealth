@@ -100,7 +100,8 @@ class AgentRunner {
       source: kAgentRunEventSource,
       ownerUserId: ownerUserId,
       title: '${agent.name} · ${result.status.name}',
-      summary: result.summary ??
+      summary:
+          result.summary ??
           (result.status == AgentRunStatus.failed
               ? (result.error ?? 'agent failed')
               : '${agent.name} ${result.status.name}'),

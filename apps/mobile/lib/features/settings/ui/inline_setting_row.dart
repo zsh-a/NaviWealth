@@ -104,7 +104,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                   children: [
                     Text(
                       widget.label,
-                      style: context.theme.typography.sm,
+                      style: context.theme.typography.body.sm,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -237,7 +237,7 @@ class _OptionRow<T> extends StatelessWidget {
                 label,
                 style: isSelected
                     ? context.labelStyle.copyWith(color: accentColor)
-                    : context.theme.typography.sm.copyWith(
+                    : context.theme.typography.body.sm.copyWith(
                         color: colors.foreground,
                       ),
                 maxLines: 1,
@@ -291,7 +291,7 @@ class InlineSwitchRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -386,7 +386,7 @@ class InlineLinkRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: context.theme.typography.sm,
+                    style: context.theme.typography.body.sm,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

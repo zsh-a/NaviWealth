@@ -63,7 +63,7 @@ class SecurityAssetTile extends StatelessWidget {
                         enabled: heroEnabled,
                         child: Text(
                           title,
-                          style: context.theme.typography.md,
+                          style: context.theme.typography.body.md,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

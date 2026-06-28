@@ -516,7 +516,7 @@ class _AboutTile extends ConsumerWidget {
               children: [
                 Text(
                   l10n.settingsAboutTitle,
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(subtitle, style: context.captionStyle),

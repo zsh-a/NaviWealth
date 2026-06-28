@@ -42,7 +42,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
         children: [
           Text(
             l10n.analyticsBucketSheetTitle(localizeBucketLabel(l10n, bucket)),
-            style: context.theme.typography.lg,
+            style: context.theme.typography.body.lg,
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
@@ -71,7 +71,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                       AnimatedMoneyText(
                         amount: h.marketValueInBase.toDouble(),
                         currencyCode: baseCurrency,
-                        style: context.theme.typography.sm,
+                        style: context.theme.typography.body.sm,
                         minDeltaThreshold: 0.01,
                       ),
                       Text(

@@ -13,7 +13,7 @@ class AssetSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s8, bottom: AppSpacing.s8),
-      child: Text(title, style: context.theme.typography.md),
+      child: Text(title, style: context.theme.typography.body.md),
     );
   }
 }

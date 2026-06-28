@@ -94,6 +94,10 @@ class DecisionOption {
   }
 
   static List<String> _stringList(Object? v) => v is List
-      ? v.whereType<String>().map((s) => s.trim()).where((s) => s.isNotEmpty).toList()
+      ? v
+            .whereType<String>()
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList()
       : const <String>[];
 }

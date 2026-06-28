@@ -827,7 +827,7 @@ Widget _buildDecisionTile(
       KnowledgeHighlightedText(
         text: d.selectedLabel,
         query: query,
-        style: typography.sm.copyWith(color: colors.primary),
+        style: typography.body.sm.copyWith(color: colors.primary),
       ),
     if (d.rationaleMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s4),

@@ -197,7 +197,7 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
             width: AppControlWidths.settingsShortLabel,
             child: Text(
               widget.label,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

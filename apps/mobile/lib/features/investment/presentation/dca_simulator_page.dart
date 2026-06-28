@@ -567,7 +567,7 @@ class _FreshnessChip extends StatelessWidget {
           horizontal: AppSpacing.s10,
           vertical: AppSpacing.s6,
         ),
-        child: Text(label, style: context.theme.typography.xs),
+        child: Text(label, style: context.theme.typography.body.xs),
       ),
     );
   }

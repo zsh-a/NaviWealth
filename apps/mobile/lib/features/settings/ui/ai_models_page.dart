@@ -77,7 +77,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
             const SizedBox(width: AppSpacing.s8),
             Text(
               l10n.settingsAiModelsActiveRuntimeLoading,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
           ],
         ),
@@ -307,7 +307,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
             const SizedBox(width: AppSpacing.s8),
             Text(
               l10n.settingsAiModelsCheckingRuntime,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
           ],
         ),
@@ -423,7 +423,7 @@ class _Hint extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Text(
         l10n.settingsAiModelsHint,
-        style: context.theme.typography.sm,
+        style: context.theme.typography.body.sm,
       ),
     );
   }
@@ -676,7 +676,7 @@ class _FileRow extends StatelessWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               file.error!,
-              style: context.theme.typography.xs2.copyWith(
+              style: context.theme.typography.body.xs2.copyWith(
                 color: semantic.danger,
               ),
             ),
@@ -735,13 +735,13 @@ class _StatusChip extends StatelessWidget {
         children: [
           Text(
             text,
-            style: context.theme.typography.xs2.copyWith(color: color),
+            style: context.theme.typography.body.xs2.copyWith(color: color),
           ),
           if (progress != null) ...[
             const SizedBox(width: AppSpacing.s6),
             Text(
               '${(progress! * 100).toStringAsFixed(0)}%',
-              style: context.theme.typography.xs2.copyWith(color: color),
+              style: context.theme.typography.body.xs2.copyWith(color: color),
             ),
           ],
         ],

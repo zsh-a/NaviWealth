@@ -88,7 +88,7 @@ class AllocationCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             l10n.dashboardAllocationTitle,
-                            style: context.theme.typography.md,
+                            style: context.theme.typography.body.md,
                           ),
                         ),
                         FTooltip(
@@ -783,7 +783,7 @@ class _LegendRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: context.theme.typography.sm),
+                      Text(label, style: context.theme.typography.body.sm),
                       if (pctText != null)
                         Text(pctText, style: context.captionStyle),
                     ],
@@ -855,7 +855,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                   Expanded(
                     child: Text(
                       AssetCategoryVisuals.label(l10n, allocation.category),
-                      style: context.theme.typography.lg,
+                      style: context.theme.typography.body.lg,
                     ),
                   ),
                   MoneyText(

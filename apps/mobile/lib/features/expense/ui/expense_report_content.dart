@@ -140,18 +140,13 @@ class _ExpenseReportRangeSheet extends StatefulWidget {
 }
 
 class _ExpenseReportRangeSheetState extends State<_ExpenseReportRangeSheet> {
-  late final FCalendarController<(DateTime, DateTime)?> _controller;
+  late final FDateSelectionController<(DateTime, DateTime)?> _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = FCalendarController.range(
+    _controller = FDateSelectionController.range(
       initial: (_utcDay(widget.initialFrom), _utcDay(widget.initialTo)),
-      selectable: (date) {
-        final day = _utcDay(date);
-        return !day.isBefore(_utcDay(widget.firstDate)) &&
-            !day.isAfter(_utcDay(widget.lastDate));
-      },
     );
   }
 
@@ -212,16 +207,23 @@ class _ExpenseReportRangeSheetState extends State<_ExpenseReportRangeSheet> {
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.s8),
                   child: Center(
-                    child: FCalendar(
-                      control: FCalendarControl.managedRange(
+                    child: FCalendar.grid(
+                      selectionControl: FDateSelectionControl.managedRange(
                         controller: _controller,
                       ),
-                      start: _utcDay(widget.firstDate),
-                      end: _utcDay(
-                        widget.lastDate.add(const Duration(days: 1)),
+                      control: FGridCalendarControl(
+                        selectable: (date) {
+                          final day = _utcDay(date);
+                          return !day.isBefore(_utcDay(widget.firstDate)) &&
+                              !day.isAfter(_utcDay(widget.lastDate));
+                        },
+                        start: _utcDay(widget.firstDate),
+                        end: _utcDay(
+                          widget.lastDate.add(const Duration(days: 1)),
+                        ),
+                        today: _utcDay(DateTime.now()),
+                        initial: _utcDay(widget.initialTo),
                       ),
-                      today: _utcDay(DateTime.now()),
-                      initialMonth: _utcDay(widget.initialTo),
                     ),
                   ),
                 ),
@@ -259,7 +261,7 @@ class _SummaryCard extends StatelessWidget {
           children: [
             Text(
               l10n.expenseReportTotalExpenses,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
@@ -267,7 +269,7 @@ class _SummaryCard extends StatelessWidget {
                 report.total.amount,
                 code: report.baseCurrency,
               ),
-              style: context.theme.typography.xl.copyWith(
+              style: context.theme.typography.body.xl.copyWith(
                 fontFeatures: TypographyTokens.tabularFigures,
               ),
             ),
@@ -341,7 +343,7 @@ class _Metric extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.md.copyWith(
+          style: context.theme.typography.body.md.copyWith(
             fontFeatures: TypographyTokens.tabularFigures,
           ),
         ),

@@ -130,6 +130,8 @@ class AskUserTool implements DeviceTool {
             .toList()
       : const <String>[];
 
-  static Map<String, Object?> _bad(String msg) =>
-      <String, Object?>{'error': msg, 'code': 'bad_request'};
+  static Map<String, Object?> _bad(String msg) => <String, Object?>{
+    'error': msg,
+    'code': 'bad_request',
+  };
 }

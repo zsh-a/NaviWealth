@@ -93,7 +93,7 @@ class _DomainRow extends StatelessWidget {
                 style:
                     (selected
                             ? context.labelStyle
-                            : context.theme.typography.sm.copyWith(
+                            : context.theme.typography.body.sm.copyWith(
                                 fontWeight: FontWeight.w400,
                               ))
                         .copyWith(color: iconColor),

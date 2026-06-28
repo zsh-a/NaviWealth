@@ -173,7 +173,7 @@ class _UserBubble extends ConsumerWidget {
                       ),
                       child: SelectableText(
                         message.content,
-                        style: typography.sm.copyWith(
+                        style: typography.body.sm.copyWith(
                           height: 1.5,
                           color: colors.primaryForeground,
                         ),
@@ -676,14 +676,14 @@ class _AssistantBody extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           Text(
             l10n.aiChatThinking,
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               color: textColor.withValues(alpha: AppOpacity.strong),
             ),
           ),
         ],
       );
     }
-    final base = context.theme.typography.sm.copyWith(
+    final base = context.theme.typography.body.sm.copyWith(
       color: textColor,
       height: 1.5,
     );

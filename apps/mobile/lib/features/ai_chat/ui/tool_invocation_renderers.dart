@@ -246,7 +246,7 @@ class _HoldingsTable extends StatelessWidget {
               child: MoneyText(
                 amount: row.costBasis,
                 currencyCode: row.currency,
-                style: context.theme.typography.xs,
+                style: context.theme.typography.body.xs,
                 color: context.theme.colors.foreground,
               ),
             ),
@@ -842,7 +842,7 @@ class _RiskAlertList extends StatelessWidget {
                   alert.subject.isEmpty
                       ? AppLocalizations.of(context).aiToolRiskAlertTitle
                       : alert.subject,
-                  style: context.theme.typography.xs2.copyWith(color: fg),
+                  style: context.theme.typography.body.xs2.copyWith(color: fg),
                 ),
                 Text(
                   alert.message,
@@ -858,7 +858,7 @@ class _RiskAlertList extends StatelessWidget {
                 NumberFormat.percentPattern().format(
                   alert.share!.clamp(0.0, 1.0),
                 ),
-                style: context.theme.typography.xs2.copyWith(
+                style: context.theme.typography.body.xs2.copyWith(
                   color: fg,
                   fontFeatures: TypographyTokens.tabularFigures,
                 ),
@@ -1085,7 +1085,7 @@ class _AllocBlock extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 sorted[i].key,
-                                style: context.theme.typography.xs,
+                                style: context.theme.typography.body.xs,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -1256,7 +1256,7 @@ class RecurringPatternsView extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Text(
             '${fmt.format(medianMinor.abs() / 100.0)} $currency',
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -1476,7 +1476,7 @@ class RefundLinksView extends StatelessWidget {
                     Expanded(
                       child: Text(
                         refund,
-                        style: context.theme.typography.sm.copyWith(
+                        style: context.theme.typography.body.sm.copyWith(
                           fontFamily: 'monospace',
                           color: context.theme.colors.primary,
                         ),
@@ -1491,7 +1491,7 @@ class RefundLinksView extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Text(
             '${fmt.format(amountMinor.abs() / 100.0)} $currency',
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),

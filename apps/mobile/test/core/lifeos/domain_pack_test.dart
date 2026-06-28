@@ -71,10 +71,9 @@ void main() {
       );
       addTearDown(c.dispose);
       await c.read(auth.domainOptInsProvider.future);
-      expect(
-        c.read(activeDomainPacksProvider).map((p) => p.scope),
-        [DomainScope.finance],
-      );
+      expect(c.read(activeDomainPacksProvider).map((p) => p.scope), [
+        DomainScope.finance,
+      ]);
     });
 
     test('opt-in registers the domain', () async {
@@ -89,28 +88,24 @@ void main() {
       await c
           .read(auth.domainOptInsProvider.notifier)
           .setEnabled(DomainScope.health, true);
-      expect(
-        c.read(activeDomainPacksProvider).map((p) => p.scope),
-        [DomainScope.finance, DomainScope.health],
-      );
+      expect(c.read(activeDomainPacksProvider).map((p) => p.scope), [
+        DomainScope.finance,
+        DomainScope.health,
+      ]);
     });
 
     test('opted-in domain whose pack is not registered is ignored', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
-      final c = _container(
-        db: db,
-        registry: const [_financePack, _healthPack],
-      );
+      final c = _container(db: db, registry: const [_financePack, _healthPack]);
       addTearDown(c.dispose);
       await c.read(auth.domainOptInsProvider.future);
       await c
           .read(auth.domainOptInsProvider.notifier)
           .setEnabled(DomainScope.knowledge, true);
-      expect(
-        c.read(activeDomainPacksProvider).map((p) => p.scope),
-        [DomainScope.finance],
-      );
+      expect(c.read(activeDomainPacksProvider).map((p) => p.scope), [
+        DomainScope.finance,
+      ]);
     });
 
     test('preserves registry order', () async {
@@ -129,10 +124,11 @@ void main() {
       await c
           .read(auth.domainOptInsProvider.notifier)
           .setEnabled(DomainScope.knowledge, true);
-      expect(
-        c.read(activeDomainPacksProvider).map((p) => p.scope),
-        [DomainScope.knowledge, DomainScope.health, DomainScope.finance],
-      );
+      expect(c.read(activeDomainPacksProvider).map((p) => p.scope), [
+        DomainScope.knowledge,
+        DomainScope.health,
+        DomainScope.finance,
+      ]);
     });
   });
 }

@@ -59,7 +59,10 @@ class _LiabilityDetailBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s12),
         _LiabilitySummaryCard(summary: summary),
         const SizedBox(height: AppSpacing.s16),
-        Text(l10n.liabilityScheduleHeading, style: context.theme.typography.md),
+        Text(
+          l10n.liabilityScheduleHeading,
+          style: context.theme.typography.body.md,
+        ),
         const SizedBox(height: AppSpacing.s8),
         scheduleAsync.when(
           loading: () => const Padding(
@@ -103,7 +106,7 @@ class _LiabilityHeaderCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l.name, style: context.theme.typography.lg),
+            Text(l.name, style: context.theme.typography.body.lg),
             const SizedBox(height: AppSpacing.s8),
             Align(
               alignment: Alignment.centerLeft,
@@ -131,12 +134,12 @@ class _LiabilityHeaderCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s12),
             Text(
               formatters.currency(l.principal, code: l.currency),
-              style: context.theme.typography.xl,
+              style: context.theme.typography.body.xl,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
               formatters.percent(l.interestRate.toDouble()),
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
           ],
         ),
@@ -221,7 +224,7 @@ class _SummaryRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: context.bodyCaptionStyle),
-          Text(value, style: context.theme.typography.sm),
+          Text(value, style: context.theme.typography.body.sm),
         ],
       ),
     );
@@ -313,7 +316,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = context.theme.typography.xs2;
+    final style = context.theme.typography.body.xs2;
     const actionColumnWidth = AppSpacing.s40 * 3;
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -378,7 +381,7 @@ class _AmortizationDataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = context.theme.typography.xs;
+    final textStyle = context.theme.typography.body.xs;
     const actionColumnWidth = AppSpacing.s40 * 3;
     return Padding(
       padding: const EdgeInsets.symmetric(

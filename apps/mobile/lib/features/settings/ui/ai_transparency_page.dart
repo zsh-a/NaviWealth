@@ -508,7 +508,7 @@ class _UndoRow extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   summary,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: colors.foreground,
                   ),
                   maxLines: 1,

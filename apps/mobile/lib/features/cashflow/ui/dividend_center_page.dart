@@ -277,7 +277,7 @@ class _RankRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     name,
-                    style: context.theme.typography.sm,
+                    style: context.theme.typography.body.sm,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -306,7 +306,7 @@ class _RankRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: color == null
             ? null
-            : context.theme.typography.sm.copyWith(color: color),
+            : context.theme.typography.body.sm.copyWith(color: color),
       ),
     );
     return Padding(
@@ -317,7 +317,7 @@ class _RankRow extends StatelessWidget {
             flex: 3,
             child: Text(
               name,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -402,7 +402,7 @@ class _TimelineRow extends StatelessWidget {
           children: [
             Text(
               date,
-              style: context.theme.typography.sm.copyWith(color: muted),
+              style: context.theme.typography.body.sm.copyWith(color: muted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -426,7 +426,7 @@ class _TimelineRow extends StatelessWidget {
                 textAlign: TextAlign.end,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: context.theme.typography.sm.copyWith(color: muted),
+                style: context.theme.typography.body.sm.copyWith(color: muted),
               ),
             ),
           ],
@@ -499,7 +499,7 @@ class _ForecastText extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: context.theme.typography.sm),
+        Text(title, style: context.theme.typography.body.sm),
         if (value != null) ...[
           const SizedBox(height: AppSpacing.s4),
           Text(value!, style: context.strongTitleStyle),

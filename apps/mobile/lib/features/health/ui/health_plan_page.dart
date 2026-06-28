@@ -107,7 +107,7 @@ class _ActionPlanCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: AppSpacing.s4),
                     child: Text(
                       action.text,
-                      style: typography.sm,
+                      style: typography.body.sm,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -398,7 +398,7 @@ class _SuggestionTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: colors.foreground,
                   ),
                 ),
@@ -463,7 +463,7 @@ class _BootstrapErrorPane extends StatelessWidget {
             Text(
               l10n.commonLoadError(error.toString()),
               textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
+              style: context.theme.typography.body.sm.copyWith(
                 color: context.theme.colors.foreground,
               ),
             ),
@@ -501,7 +501,7 @@ class _LoginRequired extends StatelessWidget {
             const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.aiChatLoginRequired,
-              style: context.theme.typography.md.copyWith(
+              style: context.theme.typography.body.md.copyWith(
                 color: context.theme.colors.foreground,
               ),
             ),

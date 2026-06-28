@@ -411,7 +411,7 @@ class _SubLegRow extends ConsumerWidget {
               leg.units.toDouble(),
               decimalDigits: _balanceQuantityDigits(leg.units),
             ),
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               fontFeatures: TypographyTokens.tabularFigures,
             ),
           ),

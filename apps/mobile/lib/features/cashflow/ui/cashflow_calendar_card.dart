@@ -157,7 +157,7 @@ class _CashflowCalendarError extends StatelessWidget {
         height: AppChartHeights.compact,
         child: Text(
           AppLocalizations.of(context).homeCashFlowCardError,
-          style: context.theme.typography.sm.copyWith(
+          style: context.theme.typography.body.sm.copyWith(
             color: context.theme.colors.destructive,
           ),
         ),

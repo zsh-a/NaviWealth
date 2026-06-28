@@ -77,7 +77,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                           children: [
                             TextSpan(
                               text: friendlyName,
-                              style: context.theme.typography.sm.copyWith(
+                              style: context.theme.typography.body.sm.copyWith(
                                 color: context.theme.colors.foreground,
                               ),
                             ),
@@ -211,7 +211,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   ),
                   child: Text(
                     l10n.aiChatToolShowRawJson,
-                    style: context.theme.typography.xs2.copyWith(
+                    style: context.theme.typography.body.xs2.copyWith(
                       color: context.theme.colors.primary,
                     ),
                   ),
@@ -229,7 +229,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   ),
                   child: Text(
                     l10n.aiChatToolShowCompactView,
-                    style: context.theme.typography.xs2.copyWith(
+                    style: context.theme.typography.body.xs2.copyWith(
                       color: context.theme.colors.primary,
                     ),
                   ),

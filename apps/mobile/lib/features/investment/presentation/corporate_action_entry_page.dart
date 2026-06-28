@@ -309,7 +309,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             // Event type selector.
             Text(
               l10n.corpActionEventTypeTitle,
-              style: context.theme.typography.md,
+              style: context.theme.typography.body.md,
             ),
             const SizedBox(height: AppSpacing.s8),
             _TypeSelector(
@@ -326,7 +326,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 padding: const EdgeInsets.all(AppSpacing.s12),
                 child: Text(
                   _previewError!,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: context.theme.colors.destructive,
                   ),
                 ),
@@ -556,7 +556,7 @@ class _PreviewCard extends StatelessWidget {
         children: [
           Text(
             l10n.corpActionPreviewHeading,
-            style: context.theme.typography.md,
+            style: context.theme.typography.body.md,
           ),
           const SizedBox(height: AppSpacing.s12),
           if (dividend != null) ...[

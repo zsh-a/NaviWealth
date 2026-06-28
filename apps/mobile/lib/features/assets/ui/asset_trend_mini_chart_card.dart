@@ -30,7 +30,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
             children: [
               Text(
                 l10n.assetDetailTrend30d,
-                style: context.theme.typography.sm,
+                style: context.theme.typography.body.sm,
               ),
               const SizedBox(height: AppSpacing.s8),
               Text(l10n.assetDetailNoMarketLinked, style: context.captionStyle),
@@ -54,7 +54,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     l10n.assetDetailTrend30d,
-                    style: context.theme.typography.sm,
+                    style: context.theme.typography.body.sm,
                   ),
                 ),
                 if (historyAsync.value?.isStale == true)
@@ -103,7 +103,7 @@ class _ChartBody extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.assetDetailTrendLoadError('${history.error}'),
-            style: context.theme.typography.xs,
+            style: context.theme.typography.body.xs,
             textAlign: TextAlign.center,
           ),
         ),

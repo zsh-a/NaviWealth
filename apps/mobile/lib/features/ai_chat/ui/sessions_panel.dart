@@ -612,7 +612,7 @@ class _ActionRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.s12),
               Text(
                 label,
-                style: context.theme.typography.md.copyWith(color: fg),
+                style: context.theme.typography.body.md.copyWith(color: fg),
               ),
             ],
           ),

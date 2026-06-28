@@ -317,7 +317,7 @@ class _AccountFilterRow extends StatelessWidget {
             Expanded(
               child: Text(
                 localizedAccountName(AppLocalizations.of(context), account),
-                style: context.theme.typography.sm,
+                style: context.theme.typography.body.sm,
               ),
             ),
             FCheckbox(value: selected, onChange: (_) => onToggle()),

@@ -522,7 +522,10 @@ class _IconPickerSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.accountFormIconHeading, style: context.theme.typography.xs),
+        Text(
+          l10n.accountFormIconHeading,
+          style: context.theme.typography.body.xs,
+        ),
         const SizedBox(height: AppSpacing.s4),
         SizedBox(
           height: AppSpacing.s56,
@@ -622,7 +625,10 @@ class _ColorPickerSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.accountFormColorHeading, style: context.theme.typography.xs),
+        Text(
+          l10n.accountFormColorHeading,
+          style: context.theme.typography.body.xs,
+        ),
         const SizedBox(height: AppSpacing.s4),
         Wrap(
           spacing: AppSpacing.s8,

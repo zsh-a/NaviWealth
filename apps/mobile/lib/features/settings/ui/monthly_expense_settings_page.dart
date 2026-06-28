@@ -162,7 +162,7 @@ class _WindowSliderState extends State<_WindowSlider> {
                   children: [
                     Text(
                       l10n.settingsMonthlyExpenseWindowLabel,
-                      style: context.theme.typography.sm,
+                      style: context.theme.typography.body.sm,
                     ),
                     const SizedBox(height: AppSpacing.s2),
                     Text(
@@ -275,7 +275,7 @@ class _OverrideFieldState extends State<_OverrideField> {
         children: [
           Text(
             l10n.settingsMonthlyExpenseOverrideLabel,
-            style: context.theme.typography.sm,
+            style: context.theme.typography.body.sm,
           ),
           const SizedBox(height: AppSpacing.s2),
           Text(

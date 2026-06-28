@@ -40,8 +40,11 @@ void main() {
         // outline-style by design; the active-tab cue comes from color,
         // not a filled variant.
         expect(tab.icon, isNotNull, reason: 'tab ${tab.label} icon');
-        expect(tab.selectedIcon, isNotNull,
-            reason: 'tab ${tab.label} selectedIcon');
+        expect(
+          tab.selectedIcon,
+          isNotNull,
+          reason: 'tab ${tab.label} selectedIcon',
+        );
       }
     });
   });

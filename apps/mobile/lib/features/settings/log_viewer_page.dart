@@ -154,7 +154,7 @@ class _LogTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.s4),
-            Text(log.message ?? '', style: context.theme.typography.xs),
+            Text(log.message ?? '', style: context.theme.typography.body.xs),
             if (log.error != null) ...[
               const SizedBox(height: AppSpacing.s4),
               Text(

@@ -85,7 +85,10 @@ class _Body extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.fireOsSimulationsTitle, style: context.theme.typography.md),
+        Text(
+          l10n.fireOsSimulationsTitle,
+          style: context.theme.typography.body.md,
+        ),
         const SizedBox(height: AppSpacing.s4),
         Text(l10n.fireOsSimulationsSubtitle, style: context.captionStyle),
         const SizedBox(height: AppSpacing.s12),

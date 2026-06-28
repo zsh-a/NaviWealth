@@ -24,14 +24,18 @@ void main() {
     });
 
     test('finance is the seed domain — cannot be opted out', () {
-      final opts = DomainOptIns.financeOnly
-          .withScope(DomainScope.finance, enabled: false);
+      final opts = DomainOptIns.financeOnly.withScope(
+        DomainScope.finance,
+        enabled: false,
+      );
       expect(opts.contains(DomainScope.finance), isTrue);
     });
 
     test('withScope adds and removes secondary domains', () {
-      final on = DomainOptIns.financeOnly
-          .withScope(DomainScope.health, enabled: true);
+      final on = DomainOptIns.financeOnly.withScope(
+        DomainScope.health,
+        enabled: true,
+      );
       expect(on.contains(DomainScope.health), isTrue);
       expect(on.toWire(), <String>['finance', 'health']);
 

@@ -52,7 +52,7 @@ class AssetHoldingCard extends ConsumerWidget {
               children: [
                 Text(
                   l10n.assetDetailHoldingsTitle,
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 AssetDetailMetricRow(
@@ -78,7 +78,7 @@ class AssetHoldingCard extends ConsumerWidget {
                     child: AnimatedMoneyText(
                       amount: marketValueAsset?.toDouble(),
                       currencyCode: asset.currency,
-                      style: context.theme.typography.md,
+                      style: context.theme.typography.body.md,
                     ),
                   ),
                 ),

@@ -125,7 +125,7 @@ class _SymbolFieldState extends ConsumerState<SymbolField> {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
         child: Text(
           l10n.tradeEntryCatalogLoadError('$e'),
-          style: context.theme.typography.sm,
+          style: context.theme.typography.body.sm,
         ),
       ),
       data: (search) => SymbolFieldBody(
@@ -481,7 +481,7 @@ class _ReadOnlySummary extends StatelessWidget {
       ),
       subtitle: Text(
         subtitleParts.join(' · '),
-        style: context.theme.typography.xs,
+        style: context.theme.typography.body.xs,
       ),
     );
   }
@@ -525,7 +525,7 @@ class _HitTile extends StatelessWidget {
       subtitle: display == null
           ? null
           : Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),
-      suffix: Text(hit.currency, style: context.theme.typography.xs),
+      suffix: Text(hit.currency, style: context.theme.typography.body.xs),
       onPress: onTap,
     );
   }

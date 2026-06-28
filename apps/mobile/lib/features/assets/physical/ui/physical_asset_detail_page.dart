@@ -98,7 +98,7 @@ class _DetailBody extends ConsumerWidget {
               children: [
                 Text(
                   l10n.physicalAssetDetailValuationTitle,
-                  style: context.theme.typography.md,
+                  style: context.theme.typography.body.md,
                 ),
                 const SizedBox(height: AppSpacing.s8),
                 AnimatedMoneyText(
@@ -146,7 +146,7 @@ class _DetailBody extends ConsumerWidget {
               children: [
                 Text(
                   l10n.physicalAssetDetailHistoryTitle,
-                  style: context.theme.typography.md,
+                  style: context.theme.typography.body.md,
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 historyAsync.whenOrLoading(
@@ -272,7 +272,7 @@ class _FactsCard extends StatelessWidget {
                       flex: 2,
                       child: Text(
                         value,
-                        style: context.theme.typography.sm,
+                        style: context.theme.typography.body.sm,
                         textAlign: TextAlign.end,
                       ),
                     ),
@@ -314,10 +314,10 @@ class _HistoryRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: context.theme.typography.xs),
+                Text(label, style: context.theme.typography.body.xs),
                 Text(
                   formatters.date(point.asOf),
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                 ),
                 if (point.note != null && point.note!.isNotEmpty)
                   Text(point.note!, style: context.captionStyle),
@@ -327,7 +327,7 @@ class _HistoryRow extends StatelessWidget {
           MoneyText(
             amount: point.value.toDouble(),
             currencyCode: currency,
-            style: context.theme.typography.sm,
+            style: context.theme.typography.body.sm,
           ),
         ],
       ),

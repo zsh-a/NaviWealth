@@ -1029,7 +1029,7 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
                 children: [
                   Text(
                     widget.routine.statement,
-                    style: typography.sm,
+                    style: typography.body.sm,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1253,7 +1253,7 @@ class _DueDecisionRowState extends ConsumerState<_DueDecisionRow> {
             Expanded(
               child: Text(
                 widget.decision.question,
-                style: typography.sm,
+                style: typography.body.sm,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1562,7 +1562,7 @@ class _StaleAssumptionRowState extends ConsumerState<_StaleAssumptionRow> {
                   widget.assumption.daysSinceVerify(widget.now),
                   widget.assumption.confidence.toStringAsFixed(2),
                 ),
-                style: typography.sm,
+                style: typography.body.sm,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),

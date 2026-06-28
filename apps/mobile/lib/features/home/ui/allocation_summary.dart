@@ -175,7 +175,7 @@ class _SegmentLegendRow extends StatelessWidget {
         Expanded(
           child: Text(
             segment.label,
-            style: context.theme.typography.sm,
+            style: context.theme.typography.body.sm,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

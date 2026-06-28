@@ -30,10 +30,8 @@ class WeeklySummaryAgent implements Agent {
   String get name => 'Weekly Summary';
 
   @override
-  AgentSchedule get schedule => const AgentSchedule(
-        interval: Duration(days: 7),
-        preferredHourLocal: 20,
-      );
+  AgentSchedule get schedule =>
+      const AgentSchedule(interval: Duration(days: 7), preferredHourLocal: 20);
 
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {

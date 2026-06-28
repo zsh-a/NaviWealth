@@ -30,7 +30,7 @@ class BenchmarkComparisonCard extends ConsumerWidget {
           children: [
             Text(
               l10n.benchmarkComparisonTitle,
-              style: context.theme.typography.md,
+              style: context.theme.typography.body.md,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(

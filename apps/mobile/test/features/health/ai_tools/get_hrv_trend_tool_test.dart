@@ -19,11 +19,7 @@ HealthMetric _hrv({
     ownerUserId: 'u',
     updatedAt: day,
     updatedByDevice: 'dev',
-    hlc: Hlc(
-      wallMillis: day.millisecondsSinceEpoch,
-      counter: 0,
-      nodeId: 'dev',
-    ),
+    hlc: Hlc(wallMillis: day.millisecondsSinceEpoch, counter: 0, nodeId: 'dev'),
     deletedAt: null,
   ),
 );
@@ -50,11 +46,7 @@ void main() {
         _hrv(id: 'd1', day: now.subtract(const Duration(days: 2)), ms: 50),
         _hrv(id: 'd0', day: now.subtract(const Duration(days: 3)), ms: 45),
       ];
-      final out = GetHrvTrendTool.shape(
-        rows,
-        windowDays: 30,
-        now: now,
-      );
+      final out = GetHrvTrendTool.shape(rows, windowDays: 30, now: now);
       expect((out['points'] as List), hasLength(3));
       final summary = out['summary'] as Map<String, Object?>;
       expect(summary['latest_ms'], 55);
@@ -71,25 +63,25 @@ void main() {
       final secondHalfVals = [50.0, 52.0, 54.0, 56.0];
       final rows = <HealthMetric>[];
       for (var i = 0; i < firstHalfDays.length; i++) {
-        rows.add(_hrv(
-          id: 'f$i',
-          day: now.subtract(Duration(days: firstHalfDays[i])),
-          ms: firstHalfVals[i],
-        ));
+        rows.add(
+          _hrv(
+            id: 'f$i',
+            day: now.subtract(Duration(days: firstHalfDays[i])),
+            ms: firstHalfVals[i],
+          ),
+        );
       }
       for (var i = 0; i < secondHalfDays.length; i++) {
-        rows.add(_hrv(
-          id: 's$i',
-          day: now.subtract(Duration(days: secondHalfDays[i])),
-          ms: secondHalfVals[i],
-        ));
+        rows.add(
+          _hrv(
+            id: 's$i',
+            day: now.subtract(Duration(days: secondHalfDays[i])),
+            ms: secondHalfVals[i],
+          ),
+        );
       }
 
-      final out = GetHrvTrendTool.shape(
-        rows,
-        windowDays: 30,
-        now: now,
-      );
+      final out = GetHrvTrendTool.shape(rows, windowDays: 30, now: now);
       final summary = out['summary'] as Map<String, Object?>;
       expect(summary['first_half_average_ms'], 43);
       expect(summary['second_half_average_ms'], 53);
@@ -105,11 +97,7 @@ void main() {
         _hrv(id: 'in', day: now.subtract(const Duration(days: 5)), ms: 50),
         _hrv(id: 'far', day: now.subtract(const Duration(days: 45)), ms: 40),
       ];
-      final out = GetHrvTrendTool.shape(
-        rows,
-        windowDays: 30,
-        now: now,
-      );
+      final out = GetHrvTrendTool.shape(rows, windowDays: 30, now: now);
       expect((out['points'] as List), hasLength(1));
     });
   });

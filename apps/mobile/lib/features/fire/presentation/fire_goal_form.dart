@@ -126,7 +126,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
               l10n.fireGoalFieldInflation(
                 (_inflation * 100).toStringAsFixed(1),
               ),
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
             FSlider(
               control: FSliderControl.managedContinuous(
@@ -148,7 +148,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
             Text(
               '${l10n.fireOsPlanFormSwrLabel} · '
               '${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
             FSlider(
               control: FSliderControl.managedContinuous(
@@ -182,7 +182,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
             const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.fireOsPlanFormLifestyleLabel,
-              style: context.theme.typography.sm,
+              style: context.theme.typography.body.sm,
             ),
             const SizedBox(height: AppSpacing.s8),
             Wrap(

@@ -120,14 +120,14 @@ class _LiabilityListTile extends StatelessWidget {
         suffix: remaining != null
             ? Text(
                 formatters.currency(remaining, code: liability.currency),
-                style: context.theme.typography.md,
+                style: context.theme.typography.body.md,
               )
             : Text(
                 formatters.currency(
                   liability.principal,
                   code: liability.currency,
                 ),
-                style: context.theme.typography.md,
+                style: context.theme.typography.body.md,
               ),
         onPress: () => context.push(AppRoutes.wealthLiability(liability.id)),
       ),

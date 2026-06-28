@@ -598,7 +598,7 @@ class _AllocationRow extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.s8),
                 Expanded(
-                  child: Text(label, style: context.theme.typography.sm),
+                  child: Text(label, style: context.theme.typography.body.sm),
                 ),
                 SizedBox(
                   width: AppControlWidths.detailLabel,

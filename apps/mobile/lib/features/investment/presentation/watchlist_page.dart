@@ -273,13 +273,13 @@ class _WatchlistRow extends StatelessWidget {
               else if (quote == null)
                 Text(
                   l10n.watchlistPriceUnavailable,
-                  style: context.theme.typography.lg,
+                  style: context.theme.typography.body.lg,
                 )
               else
                 MoneyText(
                   amount: quote.price.toDouble(),
                   currencyCode: quote.currency,
-                  style: context.theme.typography.lg,
+                  style: context.theme.typography.body.lg,
                 ),
             ],
           ),
@@ -363,7 +363,7 @@ class _RuleChip extends StatelessWidget {
           horizontal: AppSpacing.s10,
           vertical: AppSpacing.s6,
         ),
-        child: Text(label, style: context.theme.typography.xs),
+        child: Text(label, style: context.theme.typography.body.xs),
       ),
     );
   }

@@ -169,7 +169,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           const SizedBox(height: AppSpacing.s16),
                           Text(
                             l10n.appTitle,
-                            style: context.theme.typography.lg,
+                            style: context.theme.typography.body.lg,
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: AppSpacing.s8),
@@ -177,7 +177,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             _mode == _AuthMode.signIn
                                 ? l10n.authLoginTitle
                                 : l10n.authRegisterTitle,
-                            style: context.theme.typography.md,
+                            style: context.theme.typography.body.md,
                             textAlign: TextAlign.center,
                           ),
                           if (isUpgrade) ...[

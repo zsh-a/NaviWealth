@@ -592,7 +592,7 @@ class _BatchCollapsedView extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: context.theme.colors.foreground,
                   ),
                   maxLines: 2,
@@ -1020,7 +1020,7 @@ class _CollapsedView extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: context.theme.colors.foreground,
                   ),
                   maxLines: 2,
@@ -1162,7 +1162,7 @@ class _ClarificationView extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s6),
               Text(
                 plan.reason,
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: context.theme.colors.foreground,
                 ),
               ),

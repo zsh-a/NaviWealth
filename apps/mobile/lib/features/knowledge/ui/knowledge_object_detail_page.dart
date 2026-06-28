@@ -779,7 +779,7 @@ List<Widget> _experimentSections(
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailMetricsTitle,
-        children: [Text(e.metrics.join(' · '), style: typography.sm)],
+        children: [Text(e.metrics.join(' · '), style: typography.body.sm)],
       ),
     ],
     if (e.resultMd != null && e.resultMd!.isNotEmpty) ...[
@@ -1152,7 +1152,7 @@ class _RelatedObjectLink extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: typography.sm,
+                  style: typography.body.sm,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),

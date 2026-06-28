@@ -88,7 +88,7 @@ class _HeroBody extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.fireOsHeroTitle,
-                      style: context.theme.typography.md,
+                      style: context.theme.typography.body.md,
                     ),
                     const SizedBox(height: AppSpacing.s4),
                     Text(l10n.fireOsHeroSubtitle, style: context.captionStyle),
@@ -343,7 +343,7 @@ class _ActionRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: context.theme.typography.sm),
+              Text(title, style: context.theme.typography.body.sm),
               if (detail != null) ...[
                 const SizedBox(height: AppSpacing.s2),
                 Text(detail, style: context.captionStyle),

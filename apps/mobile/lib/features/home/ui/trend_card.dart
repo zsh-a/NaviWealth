@@ -232,18 +232,13 @@ class _TrendRangeSheet extends StatefulWidget {
 }
 
 class _TrendRangeSheetState extends State<_TrendRangeSheet> {
-  late final FCalendarController<(DateTime, DateTime)?> _controller;
+  late final FDateSelectionController<(DateTime, DateTime)?> _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = FCalendarController.range(
+    _controller = FDateSelectionController.range(
       initial: (_utcDay(widget.initialFrom), _utcDay(widget.initialTo)),
-      selectable: (date) {
-        final day = _utcDay(date);
-        return !day.isBefore(_utcDay(widget.firstDate)) &&
-            !day.isAfter(_utcDay(widget.lastDate));
-      },
     );
   }
 
@@ -299,14 +294,21 @@ class _TrendRangeSheetState extends State<_TrendRangeSheet> {
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.s8),
               child: Center(
-                child: FCalendar(
-                  control: FCalendarControl.managedRange(
+                child: FCalendar.grid(
+                  selectionControl: FDateSelectionControl.managedRange(
                     controller: _controller,
                   ),
-                  start: _utcDay(widget.firstDate),
-                  end: _utcDay(widget.lastDate.add(const Duration(days: 1))),
-                  today: _utcDay(DateTime.now()),
-                  initialMonth: _utcDay(widget.initialTo),
+                  control: FGridCalendarControl(
+                    selectable: (date) {
+                      final day = _utcDay(date);
+                      return !day.isBefore(_utcDay(widget.firstDate)) &&
+                          !day.isAfter(_utcDay(widget.lastDate));
+                    },
+                    start: _utcDay(widget.firstDate),
+                    end: _utcDay(widget.lastDate.add(const Duration(days: 1))),
+                    today: _utcDay(DateTime.now()),
+                    initial: _utcDay(widget.initialTo),
+                  ),
                 ),
               ),
             ),

@@ -54,7 +54,7 @@ class _DetailBody extends StatelessWidget {
             color: colors.destructive,
             child: Text(
               exp.worstCase,
-              style: context.theme.typography.sm.copyWith(height: 1.4),
+              style: context.theme.typography.body.sm.copyWith(height: 1.4),
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -222,7 +222,7 @@ class _Bullets extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
             child: Text(
               '• $line',
-              style: context.theme.typography.sm.copyWith(height: 1.45),
+              style: context.theme.typography.body.sm.copyWith(height: 1.45),
             ),
           ),
       ],
@@ -250,7 +250,7 @@ class _LabeledLine extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: context.theme.typography.sm.copyWith(height: 1.4),
+            style: context.theme.typography.body.sm.copyWith(height: 1.4),
           ),
         ),
       ],

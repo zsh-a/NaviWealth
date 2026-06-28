@@ -118,7 +118,7 @@ class _AnnualizedSummary extends StatelessWidget {
         Expanded(
           child: Text(
             l10n.benchmarkPortfolioAnnualizedLabel,
-            style: context.theme.typography.sm,
+            style: context.theme.typography.body.sm,
           ),
         ),
         Text(
@@ -158,7 +158,7 @@ class _ExcessRow extends StatelessWidget {
               children: [
                 Text(
                   benchmarkLabel(l10n, series.index),
-                  style: context.theme.typography.sm,
+                  style: context.theme.typography.body.sm,
                 ),
                 Text(
                   l10n.benchmarkAnnualizedSubtitle(

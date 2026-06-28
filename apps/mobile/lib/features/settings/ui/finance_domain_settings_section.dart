@@ -93,7 +93,7 @@ class _FinanceHeaderRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('FinanceOS', style: context.theme.typography.sm),
+                Text('FinanceOS', style: context.theme.typography.body.sm),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   l10n.settingsDomainsFinanceSubtitle,
@@ -173,7 +173,7 @@ class _RiskAppetiteRow extends ConsumerWidget {
               const SizedBox(width: AppSpacing.s12),
               Text(
                 l10n.settingsRiskAppetiteLabel,
-                style: context.theme.typography.sm,
+                style: context.theme.typography.body.sm,
               ),
             ],
           ),

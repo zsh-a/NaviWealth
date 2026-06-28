@@ -571,7 +571,7 @@ class _SummaryMetric extends StatelessWidget {
             Text(label, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s4),
             if (amount == null)
-              Text(value ?? '—', style: context.theme.typography.lg)
+              Text(value ?? '—', style: context.theme.typography.body.lg)
             else
               AnimatedMoneyText(
                 amount: amount,
@@ -608,7 +608,10 @@ class _EngineExposureSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.portfolioHubEnginesTitle, style: context.theme.typography.lg),
+        Text(
+          l10n.portfolioHubEnginesTitle,
+          style: context.theme.typography.body.lg,
+        ),
         const SizedBox(height: AppSpacing.s10),
         LayoutBuilder(
           builder: (context, constraints) {

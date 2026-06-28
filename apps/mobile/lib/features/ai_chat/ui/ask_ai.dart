@@ -60,7 +60,8 @@ Future<void> askAi(
       object: object,
       context: attrs,
       domain: domain,
-      capabilities: capabilities ??
+      capabilities:
+          capabilities ??
           const <AiCapability>{
             AiCapability.chat,
             AiCapability.proposal,
