@@ -17477,6 +17477,30 @@ abstract class AppLocalizations {
   /// **'Actions'**
   String get executionActionsSection;
 
+  /// No description provided for @executionRelatedActionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Related actions'**
+  String get executionRelatedActionsSection;
+
+  /// No description provided for @executionTimelineSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get executionTimelineSection;
+
+  /// No description provided for @executionDetailMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Item not found'**
+  String get executionDetailMissingTitle;
+
+  /// No description provided for @executionDetailMissingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted or is no longer available on this device.'**
+  String get executionDetailMissingBody;
+
   /// No description provided for @executionProjectStatusActive.
   ///
   /// In en, this message translates to:

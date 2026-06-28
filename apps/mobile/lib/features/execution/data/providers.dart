@@ -46,6 +46,20 @@ final executionClosedActionsProvider =
       yield* repository.watchClosedActions(ownerUserId: ownerUserId);
     });
 
+final executionActionByIdProvider = FutureProvider.autoDispose
+    .family<ExecutionAction?, String>((ref, id) async {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      return repository.findAction(ownerUserId: ownerUserId, id: id);
+    });
+
+final executionActionDetailProvider = StreamProvider.autoDispose
+    .family<ExecutionAction?, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchActionById(ownerUserId: ownerUserId, id: id);
+    });
+
 final executionProjectsProvider =
     StreamProvider.autoDispose<List<ExecutionProject>>((ref) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
@@ -88,11 +102,48 @@ final executionCommitmentByIdProvider = FutureProvider.autoDispose
       return repository.findCommitment(ownerUserId: ownerUserId, id: id);
     });
 
+final executionCommitmentDetailProvider = StreamProvider.autoDispose
+    .family<ExecutionCommitment?, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchCommitmentById(ownerUserId: ownerUserId, id: id);
+    });
+
+final executionActionsForCommitmentProvider = StreamProvider.autoDispose
+    .family<List<ExecutionAction>, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchActionsForCommitment(
+        ownerUserId: ownerUserId,
+        commitmentId: id,
+      );
+    });
+
 final executionRecentProgressProvider =
     StreamProvider.autoDispose<List<ExecutionProgressEntry>>((ref) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
       final repository = await ref.watch(executionRepositoryProvider.future);
       yield* repository.watchRecentProgress(ownerUserId: ownerUserId);
+    });
+
+final executionProgressForActionProvider = StreamProvider.autoDispose
+    .family<List<ExecutionProgressEntry>, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchProgressForAction(
+        ownerUserId: ownerUserId,
+        actionId: id,
+      );
+    });
+
+final executionProgressForCommitmentProvider = StreamProvider.autoDispose
+    .family<List<ExecutionProgressEntry>, String>((ref, id) async* {
+      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+      final repository = await ref.watch(executionRepositoryProvider.future);
+      yield* repository.watchProgressForCommitment(
+        ownerUserId: ownerUserId,
+        commitmentId: id,
+      );
     });
 
 class ExecutionRelations {

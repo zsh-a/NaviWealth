@@ -85,6 +85,7 @@ class ExecutionCommitmentCardController extends ConsumerStatefulWidget {
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
+    this.onOpen,
   });
 
   final ExecutionCommitment commitment;
@@ -93,6 +94,7 @@ class ExecutionCommitmentCardController extends ConsumerStatefulWidget {
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
+  final VoidCallback? onOpen;
 
   @override
   ConsumerState<ExecutionCommitmentCardController> createState() =>
@@ -135,6 +137,7 @@ class _ExecutionCommitmentCardControllerState
       openActionCount: widget.openActionCount,
       blockedActionCount: widget.blockedActionCount,
       busy: _busy,
+      onOpen: widget.onOpen,
       onCreateAction: _busy ? () {} : widget.onCreateAction,
       onEdit: _busy ? () {} : widget.onEdit,
       onRecordProgress: _busy ? () {} : widget.onRecordProgress,

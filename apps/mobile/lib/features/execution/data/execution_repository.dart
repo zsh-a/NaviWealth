@@ -282,6 +282,39 @@ class ExecutionRepository {
     return q.watch().map((rows) => rows.map(_actionFromRow).toList());
   }
 
+  Stream<List<ExecutionAction>> watchActionsForCommitment({
+    required String ownerUserId,
+    required String commitmentId,
+    int limit = 200,
+  }) {
+    final q = _db.select(_db.executionActions)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.commitmentId.equals(commitmentId))
+      ..orderBy([
+        (t) => OrderingTerm(
+          expression: t.status.isIn(<String>[
+            ExecutionActionStatus.todo.wire,
+            ExecutionActionStatus.doing.wire,
+            ExecutionActionStatus.blocked.wire,
+          ]),
+          mode: OrderingMode.desc,
+        ),
+        (t) => OrderingTerm(
+          expression: t.status.equals(ExecutionActionStatus.blocked.wire),
+          mode: OrderingMode.desc,
+        ),
+        (t) => OrderingTerm(
+          expression: t.priority.equals(ExecutionPriority.high.wire),
+          mode: OrderingMode.desc,
+        ),
+        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+  }
+
   Future<List<ExecutionAction>> listOpenActions({
     required String ownerUserId,
     int limit = 200,
@@ -329,6 +362,19 @@ class ExecutionRepository {
             ))
             .getSingleOrNull();
     return row == null ? null : _actionFromRow(row);
+  }
+
+  Stream<ExecutionAction?> watchActionById({
+    required String ownerUserId,
+    required String id,
+  }) {
+    final q = _db.select(_db.executionActions)
+      ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId))
+      ..limit(1);
+    return q.watchSingleOrNull().map(
+      (row) =>
+          row == null || row.deletedAt != null ? null : _actionFromRow(row),
+    );
   }
 
   Future<List<ExecutionAction>> listActionsByIds({
@@ -565,6 +611,19 @@ class ExecutionRepository {
     return row == null ? null : _commitmentFromRow(row);
   }
 
+  Stream<ExecutionCommitment?> watchCommitmentById({
+    required String ownerUserId,
+    required String id,
+  }) {
+    final q = _db.select(_db.executionCommitments)
+      ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId))
+      ..limit(1);
+    return q.watchSingleOrNull().map(
+      (row) =>
+          row == null || row.deletedAt != null ? null : _commitmentFromRow(row),
+    );
+  }
+
   Future<List<ExecutionCommitment>> listCommitmentsByIds({
     required String ownerUserId,
     required Set<String> ids,
@@ -587,6 +646,38 @@ class ExecutionRepository {
     final q = _db.select(_db.executionProgressEntries)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_progressFromRow).toList());
+  }
+
+  Stream<List<ExecutionProgressEntry>> watchProgressForAction({
+    required String ownerUserId,
+    required String actionId,
+    int limit = 100,
+  }) {
+    final q = _db.select(_db.executionProgressEntries)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.actionId.equals(actionId))
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return q.watch().map((rows) => rows.map(_progressFromRow).toList());
+  }
+
+  Stream<List<ExecutionProgressEntry>> watchProgressForCommitment({
+    required String ownerUserId,
+    required String commitmentId,
+    int limit = 100,
+  }) {
+    final q = _db.select(_db.executionProgressEntries)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.commitmentId.equals(commitmentId))
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])

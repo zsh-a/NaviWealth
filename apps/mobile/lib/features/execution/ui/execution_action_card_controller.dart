@@ -18,6 +18,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     required this.droppedProgressNote,
     this.projectLabel,
     this.commitmentLabel,
+    this.onOpen,
   });
 
   final ExecutionAction action;
@@ -28,6 +29,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
   final String droppedProgressNote;
   final String? projectLabel;
   final String? commitmentLabel;
+  final VoidCallback? onOpen;
 
   @override
   ConsumerState<ExecutionActionCardController> createState() =>
@@ -72,6 +74,7 @@ class _ExecutionActionCardControllerState
       busy: _busy,
       projectLabel: widget.projectLabel,
       commitmentLabel: widget.commitmentLabel,
+      onOpen: widget.onOpen,
       onEdit: _busy ? () {} : widget.onEdit,
       onRecordProgress: _busy ? () {} : widget.onRecordProgress,
       onStart: () => _changeStatus(ExecutionActionStatus.doing),

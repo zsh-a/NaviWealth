@@ -9714,6 +9714,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionActionsSection => '行动';
 
   @override
+  String get executionRelatedActionsSection => '关联行动';
+
+  @override
+  String get executionTimelineSection => '时间线';
+
+  @override
+  String get executionDetailMissingTitle => '未找到项目';
+
+  @override
+  String get executionDetailMissingBody => '它可能已被删除，或暂时不在当前设备上。';
+
+  @override
   String get executionProjectStatusActive => '活跃';
 
   @override

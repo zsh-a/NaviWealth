@@ -10184,6 +10184,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionActionsSection => 'Actions';
 
   @override
+  String get executionRelatedActionsSection => 'Related actions';
+
+  @override
+  String get executionTimelineSection => 'Timeline';
+
+  @override
+  String get executionDetailMissingTitle => 'Item not found';
+
+  @override
+  String get executionDetailMissingBody =>
+      'It may have been deleted or is no longer available on this device.';
+
+  @override
   String get executionProjectStatusActive => 'Active';
 
   @override
