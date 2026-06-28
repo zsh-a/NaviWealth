@@ -128,8 +128,8 @@ Known limitation:
 
 ## Current Refactor State
 
-The `agent-cli` implementation is still mostly in one large file. The first
-safe split has been committed:
+The original handoff noted that `agent-cli` was still mostly in one large file.
+The first safe split had been committed:
 
 ```text
 crates/agent-cli/src/main.rs   5898 lines
@@ -157,6 +157,42 @@ Moved into `config.rs`:
 
 No behavior changes were intended in that refactor.
 
+Continuation update on 2026-06-28:
+
+```text
+crates/agent-cli/src/main.rs          2857 lines
+crates/agent-cli/src/catalog.rs        293 lines
+crates/agent-cli/src/tools.rs          659 lines
+crates/agent-cli/src/proposal.rs       260 lines
+crates/agent-cli/src/eval.rs           853 lines
+crates/agent-cli/src/debug_bundle.rs   567 lines
+crates/agent-cli/src/server.rs         386 lines
+crates/agent-cli/src/tui.rs            292 lines
+```
+
+Moved in this continuation:
+
+- `catalog.rs`: catalog summary, catalog reading, prompt manifest helpers,
+  catalog dry-run registry, and traced dry-run tool calls.
+- `tools.rs`: `ToolOverrides`, CLI `AgentServices`, process JSONL tool host,
+  MCP stdio tool source, HTTP JSON tool source, external tool manifests, mock
+  tool parsing, and builtin tool specs.
+- `proposal.rs`: proposal decision/action response types, approval parsing,
+  apply/undo state transitions, proposal action tool routing, and proposal
+  trace append helpers.
+- `eval.rs`: eval case/report structs, eval run/create flow, golden trace
+  normalization, prompt/proposal expectations, scoring hook execution, and the
+  dev score hook.
+- `debug_bundle.rs`: debug bundle export, manifest/replay config/state snapshot
+  structs, redaction helpers, trace/tool-call asset extraction, and local bundle
+  JSON helpers.
+- `server.rs`: HTTP route handlers and runtime stdio JSONL server surface.
+- `tui.rs`: ratatui state loading, render helpers, terminal event loop, and
+  one-shot render support.
+
+The split is still intended to be behavior-preserving. The continuation changes
+are in the worktree and have not been committed in this session.
+
 ## Last Verified Commands
 
 Before the config split commit, the runtime had passed:
@@ -182,10 +218,18 @@ One full `catalog_cli` run briefly failed because
 start before its timeout. The same test passed immediately when rerun alone,
 so treat that as an HTTP server startup timing flake unless it reproduces.
 
+After the continuation module splits, these were run and passed:
+
+```text
+rtk cargo fmt --all
+rtk cargo test -p agent-cli --test catalog_cli
+rtk cargo test --workspace
+```
+
 ## Recommended Next Steps
 
-Continue splitting `crates/agent-cli/src/main.rs` in small behavior-preserving
-commits. Suggested order:
+The original suggested extraction order has now been implemented in the
+continuation worktree:
 
 1. `catalog.rs`
    - `CatalogSummary`
@@ -215,12 +259,13 @@ commits. Suggested order:
 7. `tui.rs`
    - ratatui state and rendering helpers
 
-Keep each split mechanical:
+Remaining useful cleanup:
 
-- Move code first, keep names and behavior unchanged.
-- Prefer `pub(crate)` only where needed.
-- Run a focused test plus `rtk cargo test --workspace`.
-- Commit immediately after each successful split.
+- Review whether `main.rs` should also split command-template, replay/session,
+  and metrics helpers; these were outside the original suggested list.
+- Run `rtk git diff --check` before committing.
+- Commit the continuation split intentionally, excluding unrelated untracked
+  files.
 
 ## Useful Commands
 
@@ -276,4 +321,3 @@ Current notable crates:
 - `futures`
 - `blake3`
 - `toml`
-
