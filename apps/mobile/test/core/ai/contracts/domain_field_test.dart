@@ -90,11 +90,14 @@ void main() {
       expect(lookup('get_recovery_signal').domain, kDomainHealth);
       expect(lookup('recall_decision').domain, kDomainKnowledge);
       expect(lookup('queue_inbox_classification').domain, kDomainKnowledge);
+      expect(lookup('list_open_actions').domain, kDomainExecution);
+      expect(lookup('propose_action').domain, kDomainExecution);
       const validDomains = <String>{
         kDomainFinance,
         kDomainShell,
         kDomainHealth,
         kDomainKnowledge,
+        kDomainExecution,
       };
       for (final t in productionToolDescriptors.values) {
         expect(

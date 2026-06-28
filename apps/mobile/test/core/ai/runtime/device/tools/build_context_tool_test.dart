@@ -19,6 +19,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import '../../../../../core/persistence/test_database.dart';
 
 const _kOwner = 'u1';
+final _fixtureNow = DateTime.utc(2026, 5, 24);
 
 Future<MemoryRuntime> _newRuntime() async {
   final db = makeTestDatabase();
@@ -26,6 +27,7 @@ Future<MemoryRuntime> _newRuntime() async {
     embedder: StubEmbedder(),
     memoryStore: SqliteMemoryStore(db: db),
     eventStore: SqliteEventStore(db: db),
+    clock: () => _fixtureNow,
   );
 }
 

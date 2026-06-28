@@ -468,7 +468,7 @@ class _LineChartBody extends StatelessWidget {
       points: series.points,
       intent: intent,
       fillOpacity: 0.16,
-      strokeWidth: 2.75,
+      strokeWidth: AppStroke.accent,
     );
     return NwLineChart(
       series: [chartSeries],

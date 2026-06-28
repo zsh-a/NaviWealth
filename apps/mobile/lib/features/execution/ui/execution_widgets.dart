@@ -496,8 +496,8 @@ class ExecutionActionCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.s8),
               if (busy)
                 const SizedBox(
-                  width: 32,
-                  height: 32,
+                  width: AppIconSizes.xl,
+                  height: AppIconSizes.xl,
                   child: Center(
                     child: FCircularProgress(
                       size: FCircularProgressSizeVariant.xs,
@@ -621,8 +621,8 @@ class ExecutionCommitmentCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           if (busy)
             const SizedBox(
-              width: 32,
-              height: 32,
+              width: AppIconSizes.xl,
+              height: AppIconSizes.xl,
               child: Center(
                 child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
               ),
@@ -777,8 +777,8 @@ class ExecutionProjectCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           if (busy)
             const SizedBox(
-              width: 32,
-              height: 32,
+              width: AppIconSizes.xl,
+              height: AppIconSizes.xl,
               child: Center(
                 child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
               ),

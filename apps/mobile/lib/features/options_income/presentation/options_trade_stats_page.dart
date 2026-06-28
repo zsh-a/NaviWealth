@@ -264,7 +264,7 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 136,
+      width: AppControlWidths.statsTile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -292,7 +292,7 @@ class _MoneyColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return SizedBox(
-      width: 112,
+      width: AppControlWidths.scenarioSuffix,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
