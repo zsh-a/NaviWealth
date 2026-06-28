@@ -75,7 +75,7 @@ void main() {
     },
   );
 
-  testWidgets('MoneyText hides exact value inside AmountPrivacyScope', (
+  testWidgets('MoneyText renders a privacy placeholder when hidden', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -87,7 +87,8 @@ void main() {
       ),
     );
 
-    expect(find.text(AmountPrivacyScope.mask), findsOneWidget);
+    expect(find.byType(AmountPrivacyPlaceholder), findsOneWidget);
+    expect(find.text(AmountPrivacyScope.mask), findsNothing);
     expect(find.textContaining('12,345'), findsNothing);
   });
 
@@ -106,7 +107,7 @@ void main() {
     expect(find.text(r'+$1,234.5'), findsOneWidget);
   });
 
-  testWidgets('SignedMoneyText hides exact value inside AmountPrivacyScope', (
+  testWidgets('SignedMoneyText renders a neutral privacy placeholder', (
     tester,
   ) async {
     final formatters = AppFormatters(locale: const Locale('en', 'US'));
@@ -123,7 +124,8 @@ void main() {
       ),
     );
 
-    expect(find.text(AmountPrivacyScope.mask), findsOneWidget);
+    expect(find.byType(AmountPrivacyPlaceholder), findsOneWidget);
+    expect(find.text(AmountPrivacyScope.mask), findsNothing);
     expect(find.text(r'+$1,234.5'), findsNothing);
   });
 

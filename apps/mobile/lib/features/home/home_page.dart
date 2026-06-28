@@ -414,11 +414,9 @@ class _NetWorthHeader extends ConsumerWidget {
           MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.3,
             child: Semantics(
-              label:
-                  '${l10n.homeNetWorthTitle} ${_privacyAwareCurrency(
-                    hidden: amountsHidden,
-                    value: formatters.currency(snapshot.netWorth.amount, code: snapshot.baseCurrency),
-                  )}',
+              label: amountsHidden
+                  ? '${l10n.homeNetWorthTitle} ${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}'
+                  : '${l10n.homeNetWorthTitle} ${formatters.currency(snapshot.netWorth.amount, code: snapshot.baseCurrency)}',
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: AlignmentDirectional.centerStart,
@@ -445,21 +443,19 @@ class _NetWorthHeader extends ConsumerWidget {
             child: hasData
                 ? Wrap(
                     spacing: AppSpacing.s6,
+                    runSpacing: AppSpacing.s4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(
-                        '${l10n.dashboardNetWorthAssetsLabel} '
-                        '${_privacyAwareCurrency(
-                          hidden: amountsHidden,
-                          value: formatters.currency(snapshot.totalAssets.amount, code: snapshot.baseCurrency),
-                        )}',
+                      _NetWorthBreakdownItem(
+                        label: l10n.dashboardNetWorthAssetsLabel,
+                        amount: snapshot.totalAssets.amount.toDouble(),
+                        currencyCode: snapshot.baseCurrency,
                       ),
                       const Text('·'),
-                      Text(
-                        '${l10n.dashboardNetWorthLiabilitiesLabel} '
-                        '${_privacyAwareCurrency(
-                          hidden: amountsHidden,
-                          value: formatters.currency(snapshot.totalLiabilities.amount, code: snapshot.baseCurrency),
-                        )}',
+                      _NetWorthBreakdownItem(
+                        label: l10n.dashboardNetWorthLiabilitiesLabel,
+                        amount: snapshot.totalLiabilities.amount.toDouble(),
+                        currencyCode: snapshot.baseCurrency,
                       ),
                     ],
                   )
@@ -472,8 +468,35 @@ class _NetWorthHeader extends ConsumerWidget {
   }
 }
 
-String _privacyAwareCurrency({required bool hidden, required String value}) {
-  return hidden ? AmountPrivacyScope.mask : value;
+class _NetWorthBreakdownItem extends StatelessWidget {
+  const _NetWorthBreakdownItem({
+    required this.label,
+    required this.amount,
+    required this.currencyCode,
+  });
+
+  final String label;
+  final double amount;
+  final String currencyCode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(label),
+        const SizedBox(width: AppSpacing.s4),
+        MoneyText(
+          amount: amount,
+          currencyCode: currencyCode,
+          compact: true,
+          fractionDigits: 0,
+          style: context.captionStyle,
+        ),
+      ],
+    );
+  }
 }
 
 class _ValuationStatusLine extends ConsumerWidget {

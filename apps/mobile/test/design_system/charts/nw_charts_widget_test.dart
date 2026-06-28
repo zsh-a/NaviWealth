@@ -410,6 +410,34 @@ void main() {
       expect(leftTitles.showTitles, isFalse);
       expect(leftTitles.reservedSize, 0);
     });
+
+    testWidgets('hides value axis labels in amount privacy mode', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const AmountPrivacyScope(
+            hidden: true,
+            child: NwLineChart(
+              showYAxis: true,
+              yAxis: ValueAxis(maxLabels: 3, showGrid: true),
+              series: [
+                ChartSeries(
+                  name: 'private',
+                  points: [ChartPoint(x: 0, y: 10), ChartPoint(x: 1, y: 20)],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      final leftTitles = chart.data.titlesData.leftTitles.sideTitles;
+      expect(leftTitles.showTitles, isFalse);
+      expect(leftTitles.reservedSize, 0);
+      expect(find.text(AmountPrivacyScope.mask), findsNothing);
+    });
   });
 
   group('NwAreaChart', () {

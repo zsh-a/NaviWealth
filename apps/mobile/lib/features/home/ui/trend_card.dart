@@ -452,12 +452,6 @@ class _TrendSummary extends ConsumerWidget {
         ? null
         : delta.toDouble() / firstValue.abs();
     final hidden = AmountPrivacyScope.isHiddenOf(context);
-    final current = hidden
-        ? AmountPrivacyScope.mask
-        : formatters.compactCurrency(
-            last.netWorth.amount,
-            code: trend.baseCurrency,
-          );
     final rangeLabel = _formatDateRange(
       formatters,
       first.asOf.toLocal(),
@@ -481,14 +475,23 @@ class _TrendSummary extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.s2),
-              Text(
-                current,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TypographyTokens.numericTitleStrong.copyWith(
-                  color: colors.foreground,
+              if (hidden)
+                AmountPrivacyPlaceholder(
+                  density: AmountPrivacyPlaceholderDensity.title,
+                  style: TypographyTokens.numericTitleStrong,
+                )
+              else
+                Text(
+                  formatters.compactCurrency(
+                    last.netWorth.amount,
+                    code: trend.baseCurrency,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TypographyTokens.numericTitleStrong.copyWith(
+                    color: colors.foreground,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -511,7 +514,7 @@ class _TrendSummary extends ConsumerWidget {
                     showIcon: false,
                     style: TypographyTokens.numericBodyStrong,
                   ),
-                  if (ratio != null)
+                  if (ratio != null && !hidden)
                     Text(
                       formatters.signedPercent(ratio, decimalDigits: 1),
                       style: context.captionMediumStyle.copyWith(
