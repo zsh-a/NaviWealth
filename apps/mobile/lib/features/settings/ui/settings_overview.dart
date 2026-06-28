@@ -325,11 +325,6 @@ class _AccountSection extends ConsumerWidget {
           icon: FLucideIcons.logOut,
           label: l10n.settingsSignOutTitle,
           subtitle: l10n.settingsSignOutSubtitle,
-          trailing: Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.h18,
-            color: context.theme.colors.mutedForeground,
-          ),
           onTap: () => _showSwitchToLocalSheet(context, ref),
         ),
       ],

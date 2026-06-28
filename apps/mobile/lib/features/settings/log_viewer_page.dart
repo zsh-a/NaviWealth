@@ -51,6 +51,21 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     );
   }
 
+  Future<void> _clearAll(BuildContext context, Talker talker) async {
+    final l10n = AppLocalizations.of(context);
+    final confirm = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.settingsLogsClearTitle),
+      body: Text(l10n.settingsLogsClearBody),
+      confirmLabel: l10n.settingsLogsClearAction,
+      cancelLabel: l10n.commonCancel,
+      destructive: true,
+    );
+    if (confirm != true) return;
+    talker.cleanHistory();
+    if (mounted) setState(() {});
+  }
+
   /// Flatten the in-memory history to a copyable text block. Order
   /// matches what the user sees on screen.
   static String _serialize(Talker talker) {
@@ -79,10 +94,7 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
         ),
         FHeaderAction(
           icon: const Icon(FLucideIcons.trash2),
-          onPress: () {
-            talker.cleanHistory();
-            setState(() {});
-          },
+          onPress: () => _clearAll(context, talker),
         ),
       ],
       childPad: false,

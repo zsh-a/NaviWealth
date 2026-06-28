@@ -17,6 +17,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../activity/data/activity_feed_provider.dart';
 import '../../activity/ui/activity_entry_detail_page.dart';
 import '../../shared/account_l10n.dart';
+import 'home_section.dart';
 
 /// Last `kHomeActivityPreviewCount` journal entries, rendered iOS Wallet
 /// style: rounded icon + double-line label + right-aligned amount.
@@ -44,9 +45,7 @@ class ActivityTimelinePreview extends ConsumerWidget {
         if (page.entries.isEmpty) return const SizedBox.shrink();
         final entries = page.entries.take(kHomeActivityPreviewCount).toList();
         return _ActivityPreviewSection(
-          child: SoftCard(
-            borderless: true,
-            tinted: false,
+          child: HomeSurface(
             child: Column(
               children: [
                 for (var i = 0; i < entries.length; i++) ...[
@@ -85,43 +84,11 @@ class _ActivityPreviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.s4,
-            top: AppSpacing.s4,
-            bottom: AppSpacing.s8,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.dashboardActivityPreviewTitle,
-                  style: context.mutedLabelStyle,
-                ),
-              ),
-              FTappable(
-                onPress: () => context.go(AppRoutes.activity),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s4,
-                    vertical: AppSpacing.s2,
-                  ),
-                  child: Text(
-                    l10n.dashboardActivityPreviewViewAll,
-                    style: context.captionLabelStyle.copyWith(
-                      color: context.theme.colors.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        child,
-      ],
+    return HomeSection(
+      title: l10n.dashboardActivityPreviewTitle,
+      actionLabel: l10n.dashboardActivityPreviewViewAll,
+      onAction: () => context.go(AppRoutes.activity),
+      child: child,
     );
   }
 }
@@ -131,9 +98,7 @@ class _ActivityPreviewSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SoftCard(
-      borderless: true,
-      tinted: false,
+    return const HomeSurface(
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
         vertical: AppSpacing.s12,
@@ -185,9 +150,7 @@ class _ActivityPreviewError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      borderless: true,
-      tinted: false,
+    return HomeSurface(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
         vertical: AppSpacing.s12,

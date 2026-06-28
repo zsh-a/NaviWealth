@@ -68,6 +68,8 @@ abstract final class AppRoutes {
   static const executionToday = '/execution';
   static const executionCommitments = '/execution/commitments';
   static const executionReview = '/execution/review';
+  static const executionActionDetail = '/execution/action/:id';
+  static const executionCommitmentDetail = '/execution/commitments/:id';
 
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = '/settings';
@@ -165,6 +167,12 @@ abstract final class AppRoutes {
 
   static String tradeForAsset(String id) =>
       '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
+
+  static String executionAction(String id) =>
+      '/execution/action/${Uri.encodeComponent(id)}';
+
+  static String executionCommitment(String id) =>
+      '/execution/commitments/${Uri.encodeComponent(id)}';
 }
 
 /// Canonical GoRouter route names. Used by tests and named navigation
@@ -227,6 +235,8 @@ abstract final class AppRouteNames {
   static const executionToday = 'execution-today';
   static const executionCommitments = 'execution-commitments';
   static const executionReview = 'execution-review';
+  static const executionActionDetail = 'execution-action-detail';
+  static const executionCommitmentDetail = 'execution-commitment-detail';
 
   // ── Plan ────────────────────────────────────────────────────────────────
   static const plan = 'plan';

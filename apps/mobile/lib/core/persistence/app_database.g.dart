@@ -22720,7 +22720,7 @@ class KnowledgeNoteRow extends DataClass
   final String? projectTag;
   final DateTime createdAt;
 
-  /// Dedupe pointer (`docs/knowledgeos-domain.md` §15.3). When this note
+  /// Dedupe pointer (`docs/domains/knowledgeos-domain.md` §15.3). When this note
   /// is merged into another note via `propose_merge`, it is soft-deleted
   /// (`deletedAt` set) AND stamped with the surviving note's id here, so
   /// a future un-merge / audit can find where the content went. NULL for

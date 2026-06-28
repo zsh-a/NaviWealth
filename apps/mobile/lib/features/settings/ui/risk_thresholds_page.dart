@@ -18,6 +18,7 @@ import 'package:forui/forui.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
+import 'settings_page_frame.dart';
 
 class RiskThresholdsPage extends ConsumerWidget {
   const RiskThresholdsPage({super.key});
@@ -28,39 +29,15 @@ class RiskThresholdsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsRiskThresholdsTitle,
       childPad: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = Breakpoints.isMobile(constraints.maxWidth)
-              ? const EdgeInsets.all(AppSpacing.s16)
-              : const EdgeInsets.all(AppSpacing.s24);
-          return ListView(
-            padding: padding,
-            children: const [
-              _Hint(),
-              SizedBox(height: AppSpacing.s12),
-              SoftCard(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
-                child: RiskThresholdSettings(),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _Hint extends StatelessWidget {
-  const _Hint();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-      child: Text(
-        l10n.settingsRiskThresholdsHint,
-        style: context.captionStyle.copyWith(height: 1.45),
+      child: SettingsPageFrame(
+        children: [
+          SettingsHintText(l10n.settingsRiskThresholdsHint),
+          const SizedBox(height: AppSpacing.s12),
+          const SoftCard(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: RiskThresholdSettings(),
+          ),
+        ],
       ),
     );
   }
@@ -88,7 +65,7 @@ class RiskThresholdSettings extends ConsumerWidget {
           onChanged: (v) =>
               ref.read(concentrationThresholdsProvider.notifier).updateAsset(v),
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         _ThresholdSlider(
           icon: FLucideIcons.layoutGrid,
           label: l10n.settingsRiskSectorLabel,
@@ -97,7 +74,7 @@ class RiskThresholdSettings extends ConsumerWidget {
               .read(concentrationThresholdsProvider.notifier)
               .updateSector(v),
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         _ThresholdSlider(
           icon: FLucideIcons.globe,
           label: l10n.settingsRiskRegionLabel,
@@ -106,7 +83,7 @@ class RiskThresholdSettings extends ConsumerWidget {
               .read(concentrationThresholdsProvider.notifier)
               .updateRegion(v),
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         _ThresholdSlider(
           icon: FLucideIcons.arrowLeftRight,
           label: l10n.settingsRiskCurrencyLabel,
@@ -115,33 +92,12 @@ class RiskThresholdSettings extends ConsumerWidget {
               .read(concentrationThresholdsProvider.notifier)
               .updateCurrency(v),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s14,
-            AppSpacing.s4,
-            AppSpacing.s14,
-            AppSpacing.s8,
-          ),
-          child: Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: FTappable(
-              onPress: () => ref
-                  .read(concentrationThresholdsProvider.notifier)
-                  .resetToDefaults(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s6,
-                  vertical: AppSpacing.s4,
-                ),
-                child: Text(
-                  l10n.settingsRiskResetDefaults,
-                  style: context.captionLabelStyle.copyWith(
-                    color: context.theme.colors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
+        SettingsFooterAction(
+          icon: FLucideIcons.rotateCcw,
+          label: l10n.settingsRiskResetDefaults,
+          onPress: () => ref
+              .read(concentrationThresholdsProvider.notifier)
+              .resetToDefaults(),
         ),
       ],
     );

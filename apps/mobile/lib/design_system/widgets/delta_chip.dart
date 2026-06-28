@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../theme/market_colors.dart';
 import '../tokens/dimens_tokens.dart';
+import 'amount_privacy_scope.dart';
 import 'delta_text.dart';
 
 /// Pill-shaped variant of [DeltaText] — same direction-aware coloring but
@@ -31,9 +33,13 @@ class DeltaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final market = MarketColors.of(context);
+    final hidden = value != null && AmountPrivacyScope.isHiddenOf(context);
+    final colors = context.theme.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: market.containerForDelta(value),
+        color: hidden
+            ? colors.muted.withValues(alpha: AppOpacity.subtle)
+            : market.containerForDelta(value),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Padding(
@@ -44,7 +50,9 @@ class DeltaChip extends StatelessWidget {
           currencyCode: currencyCode,
           fractionDigits: fractionDigits,
           style: (style ?? const TextStyle()).copyWith(
-            color: market.onContainerForDelta(value),
+            color: hidden
+                ? colors.mutedForeground
+                : market.onContainerForDelta(value),
           ),
         ),
       ),

@@ -68,6 +68,7 @@ apps/mobile/lib/features/investment/presentation/dca_simulator_page.dart	return 
 apps/mobile/lib/features/options_income/domain/services/opportunity_scorer.dart	final hundred = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/options_income/presentation/income_planner_page.dart	final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/options_income/presentation/opportunity_detail_sheet.dart	final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/options_income/presentation/strategy_profile_sheet.dart	var fixed = value.toStringAsFixed(2);	percent-display
 apps/mobile/lib/features/plan/ui/plan_hub_page.dart	: (monthsToTarget / 12).toStringAsFixed(monthsToTarget < 24 ? 1 : 0);	duration-display
 apps/mobile/lib/features/plan/ui/plan_hub_page.dart	final progressPct = (progress * 100).clamp(0, 100).toStringAsFixed(0);	percent-display
 apps/mobile/lib/features/rebalance/ui/deviation_bar.dart	'${(actualWeight * 100).toStringAsFixed(1)}%',	percent-display

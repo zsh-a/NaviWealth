@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -89,6 +90,10 @@ class _OverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final primary = stats.primaryCurrency;
+    final formatters = AppFormatters(
+      locale: Localizations.localeOf(context),
+      baseCurrency: primary?.currency ?? 'CNY',
+    );
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
@@ -119,24 +124,32 @@ class _OverviewCard extends StatelessWidget {
               if (primary != null) ...[
                 _Metric(
                   label: l10n.incomePlannerStatsPremium,
-                  value: _money(primary.totalPremium, primary.currency),
+                  value: _money(
+                    primary.totalPremium,
+                    primary.currency,
+                    formatters,
+                  ),
                 ),
                 _Metric(
                   label: l10n.incomePlannerStatsRealizedPnl,
                   value: _signedMoney(
                     primary.trackedRealizedPnl,
                     primary.currency,
+                    formatters,
                   ),
                 ),
                 _Metric(
                   label: l10n.incomePlannerStatsWinRate,
-                  value: _pct(primary.winRate),
+                  value: _pct(primary.winRate, formatters),
                 ),
                 _Metric(
                   label: l10n.incomePlannerStatsAvgHoldingDays,
                   value: primary.averageHoldingDays == null
                       ? '—'
-                      : primary.averageHoldingDays!.toStringAsFixed(1),
+                      : formatters.number(
+                          primary.averageHoldingDays!,
+                          decimalDigits: 1,
+                        ),
                 ),
               ],
             ],
@@ -251,7 +264,7 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 136,
+      width: AppControlWidths.statsTile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -277,15 +290,18 @@ class _MoneyColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return SizedBox(
-      width: 112,
+      width: AppControlWidths.scenarioSuffix,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(label, style: context.captionStyle, textAlign: TextAlign.end),
           const SizedBox(height: AppSpacing.s2),
           Text(
-            values.isEmpty ? '—' : _moneyMap(values, signed: signed),
+            values.isEmpty
+                ? '—'
+                : _moneyMap(values, formatters, signed: signed),
             style: context.labelStyle,
             textAlign: TextAlign.end,
             maxLines: 2,
@@ -301,28 +317,31 @@ String _strategyLabel(AppLocalizations l10n, OptionsStrategyKind strategy) {
   return optionsStrategyKindShortLabel(l10n, strategy);
 }
 
-String _moneyMap(Map<String, Decimal> values, {bool signed = false}) {
+String _moneyMap(
+  Map<String, Decimal> values,
+  AppFormatters formatters, {
+  bool signed = false,
+}) {
   final entries = values.entries.toList()
     ..sort((a, b) => a.key.compareTo(b.key));
   return entries
       .map(
         (entry) => signed
-            ? _signedMoney(entry.value, entry.key)
-            : _money(entry.value, entry.key),
+            ? _signedMoney(entry.value, entry.key, formatters)
+            : _money(entry.value, entry.key, formatters),
       )
       .join(' · ');
 }
 
-String _money(Decimal amount, String currency) {
-  return '$currency ${amount.toStringAsFixed(2)}';
+String _money(Decimal amount, String currency, AppFormatters formatters) {
+  return formatters.currency(amount, code: currency);
 }
 
-String _signedMoney(Decimal amount, String currency) {
-  final sign = amount > Decimal.zero ? '+' : '';
-  return '$sign${_money(amount, currency)}';
+String _signedMoney(Decimal amount, String currency, AppFormatters formatters) {
+  return formatters.signedMoney(amount, unit: currency);
 }
 
-String _pct(double? value) {
+String _pct(double? value, AppFormatters formatters) {
   if (value == null) return '—';
-  return '${(value * 100).toStringAsFixed(1)}%';
+  return formatters.percent(value, decimalDigits: 1);
 }

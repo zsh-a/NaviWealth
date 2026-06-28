@@ -6,6 +6,7 @@ import '../theme/market_color_mode.dart';
 import '../theme/market_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import 'amount_privacy_placeholder.dart';
 import 'amount_privacy_scope.dart';
 import 'money_text.dart';
 
@@ -83,12 +84,20 @@ class DeltaText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final market = MarketColors.of(context);
-    final tone = market.forDelta(value);
-    final effectiveStyle = (style ?? TypographyTokens.numericBody).copyWith(
-      color: tone,
+    final hidden = value != null && AmountPrivacyScope.isHiddenOf(context);
+    final baseStyle = (style ?? TypographyTokens.numericBody).copyWith(
       fontFeatures: TypographyTokens.tabularFigures,
     );
+    if (hidden) {
+      return AmountPrivacyPlaceholder(
+        style: baseStyle,
+        density: _placeholderDensity(baseStyle),
+        semanticsLabel: AmountPrivacyScope.hiddenSemanticsLabelOf(context),
+      );
+    }
+    final market = MarketColors.of(context);
+    final tone = market.forDelta(value);
+    final effectiveStyle = baseStyle.copyWith(color: tone);
 
     return Semantics(
       container: true,
@@ -127,8 +136,7 @@ class DeltaText extends StatelessWidget {
 
   String _spokenLabel(BuildContext context) {
     if (value == null) return '—';
-    if (format == DeltaFormat.currency &&
-        AmountPrivacyScope.isHiddenOf(context)) {
+    if (AmountPrivacyScope.isHiddenOf(context)) {
       return AmountPrivacyScope.hiddenSemanticsLabelOf(context);
     }
     final direction = value! > 0
@@ -166,5 +174,13 @@ class DeltaText extends StatelessWidget {
   IconData _iconFor(num? v, MarketColorMode _) {
     if (v == null || v == 0) return FLucideIcons.minus;
     return v > 0 ? FLucideIcons.chevronUp : FLucideIcons.chevronDown;
+  }
+
+  AmountPrivacyPlaceholderDensity _placeholderDensity(TextStyle style) {
+    final fontSize =
+        style.fontSize ?? TypographyTokens.numericBody.fontSize ?? 14;
+    if (fontSize >= 18) return AmountPrivacyPlaceholderDensity.title;
+    if (fontSize <= 12) return AmountPrivacyPlaceholderDensity.caption;
+    return AmountPrivacyPlaceholderDensity.body;
   }
 }

@@ -1234,6 +1234,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeNetWorthTitle => '净资产';
 
   @override
+  String get homeQuickAddAccount => '添加账户';
+
+  @override
+  String get homeQuickRecordEntry => '记一笔';
+
+  @override
+  String get homeQuickImport => '导入';
+
+  @override
   String get financePrivacyHideAmountsTooltip => '隐藏金额';
 
   @override
@@ -5182,7 +5191,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS 开关与设置';
+      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS 开关';
 
   @override
   String get settingsDomainsFinanceSubtitle =>
@@ -5370,6 +5379,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsLogsCopiedToast => '日志已复制';
+
+  @override
+  String get settingsLogsClearTitle => '清空日志？';
+
+  @override
+  String get settingsLogsClearBody => '这会从当前设备移除内存中的诊断日志历史。';
+
+  @override
+  String get settingsLogsClearAction => '清空日志';
 
   @override
   String get settingsPerfTitle => '性能';
@@ -7308,6 +7326,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiLlmRemoved => '已从设备移除';
+
+  @override
+  String get aiLlmDeleteTitle => '删除 Provider？';
+
+  @override
+  String aiLlmDeleteBody(String name) {
+    return '这会从此设备移除 $name 及其已保存的 API Key。';
+  }
 
   @override
   String get aiLlmEmpty => '还没有 Provider。添加一个 API Key 即可让 AI 在本机直连运行。';
@@ -9686,6 +9712,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionActionsSection => '行动';
+
+  @override
+  String get executionRelatedActionsSection => '关联行动';
+
+  @override
+  String get executionTimelineSection => '时间线';
+
+  @override
+  String get executionDetailMissingTitle => '未找到项目';
+
+  @override
+  String get executionDetailMissingBody => '它可能已被删除，或暂时不在当前设备上。';
 
   @override
   String get executionProjectStatusActive => '活跃';

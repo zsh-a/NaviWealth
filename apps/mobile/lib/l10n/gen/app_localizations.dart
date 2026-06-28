@@ -2288,6 +2288,24 @@ abstract class AppLocalizations {
   /// **'Net Worth'**
   String get homeNetWorthTitle;
 
+  /// Home quick action label that opens the new account flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add account'**
+  String get homeQuickAddAccount;
+
+  /// Home quick action label that opens the new expense or journal entry flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Record entry'**
+  String get homeQuickRecordEntry;
+
+  /// Home quick action label that opens the activity ingest flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get homeQuickImport;
+
   /// Tooltip for the Finance home privacy button when tapping will hide exact monetary amounts.
   ///
   /// In en, this message translates to:
@@ -9264,7 +9282,7 @@ abstract class AppLocalizations {
   /// Settings tile subtitle for LifeOS domain management
   ///
   /// In en, this message translates to:
-  /// **'FinanceOS / HealthOS / KnowledgeOS toggles and settings'**
+  /// **'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles'**
   String get settingsDomainsSubtitle;
 
   /// Subtitle for the always-on FinanceOS card in domain settings
@@ -9620,6 +9638,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logs copied'**
   String get settingsLogsCopiedToast;
+
+  /// Confirmation title before clearing diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs?'**
+  String get settingsLogsClearTitle;
+
+  /// Confirmation body before clearing diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the in-memory diagnostic log history from this device.'**
+  String get settingsLogsClearBody;
+
+  /// Destructive action label for clearing diagnostic logs
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs'**
+  String get settingsLogsClearAction;
 
   /// Settings developer diagnostics: performance page title
   ///
@@ -13055,6 +13091,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Removed from this device'**
   String get aiLlmRemoved;
+
+  /// Confirmation title before deleting an LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'Delete provider?'**
+  String get aiLlmDeleteTitle;
+
+  /// Confirmation body before deleting an LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'This removes {name} and its stored API key from this device.'**
+  String aiLlmDeleteBody(String name);
 
   /// Empty state on the LLM credentials page
   ///
@@ -17428,6 +17476,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Actions'**
   String get executionActionsSection;
+
+  /// No description provided for @executionRelatedActionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Related actions'**
+  String get executionRelatedActionsSection;
+
+  /// No description provided for @executionTimelineSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get executionTimelineSection;
+
+  /// No description provided for @executionDetailMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Item not found'**
+  String get executionDetailMissingTitle;
+
+  /// No description provided for @executionDetailMissingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted or is no longer available on this device.'**
+  String get executionDetailMissingBody;
 
   /// No description provided for @executionProjectStatusActive.
   ///

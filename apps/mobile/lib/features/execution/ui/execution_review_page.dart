@@ -2,7 +2,9 @@ import 'package:flutter/material.dart' show RefreshIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -131,6 +133,7 @@ class _ReviewBody extends ConsumerWidget {
               commitmentLabel:
                   relations?.commitmentLabel(action.commitmentId) ??
                   _fallbackRelationLabel(action.commitmentId),
+              onOpen: () => context.push(AppRoutes.executionAction(action.id)),
               onEdit: () => showExecutionActionSheet(
                 context: context,
                 ref: ref,

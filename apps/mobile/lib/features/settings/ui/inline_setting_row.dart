@@ -261,6 +261,7 @@ class InlineSwitchRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
     this.subtitle,
   });
 
@@ -268,6 +269,7 @@ class InlineSwitchRow extends StatelessWidget {
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final bool enabled;
   final String? subtitle;
 
   @override
@@ -287,17 +289,28 @@ class InlineSwitchRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label, style: context.theme.typography.sm),
+                Text(
+                  label,
+                  style: context.theme.typography.sm,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (subtitle != null)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.s2),
-                    child: Text(subtitle!, style: context.captionStyle),
+                    child: Text(
+                      subtitle!,
+                      style: context.captionStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
             ),
           ),
           FSwitch(
             value: value,
+            enabled: enabled,
             onChange: (v) {
               Haptics.selection();
               onChanged(v);
@@ -371,11 +384,21 @@ class InlineLinkRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(label, style: context.theme.typography.sm),
+                  Text(
+                    label,
+                    style: context.theme.typography.sm,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.s2),
-                      child: Text(subtitle!, style: context.captionStyle),
+                      child: Text(
+                        subtitle!,
+                        style: context.captionStyle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
               ),

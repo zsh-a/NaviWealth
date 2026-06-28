@@ -23,6 +23,7 @@ import '../../../core/ai/local/embedding/model_install_state.dart';
 import '../../../core/ai/local/embedding/model_manifest.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'settings_page_frame.dart';
 
 class AiModelsPage extends ConsumerWidget {
   const AiModelsPage({super.key});
@@ -35,29 +36,21 @@ class AiModelsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsAiModelsTitle,
       childPad: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = Breakpoints.isMobile(constraints.maxWidth)
-              ? const EdgeInsets.all(AppSpacing.s16)
-              : const EdgeInsets.all(AppSpacing.s24);
-          return ListView(
-            padding: padding,
-            children: [
-              _RuntimeDiagnosticsCard(resolution: resolution),
-              const SizedBox(height: AppSpacing.s12),
-              const _ActiveEmbedderCard(),
-              const SizedBox(height: AppSpacing.s12),
-              const _Hint(),
-              const SizedBox(height: AppSpacing.s16),
-              for (final bundle in bundles) ...[
-                _BundleCard(bundle: bundle),
-                const SizedBox(height: AppSpacing.s12),
-              ],
-              const SizedBox(height: AppSpacing.s16),
-              const _Footnote(),
-            ],
-          );
-        },
+      child: SettingsPageFrame(
+        children: [
+          _RuntimeDiagnosticsCard(resolution: resolution),
+          const SizedBox(height: AppSpacing.s12),
+          const _ActiveEmbedderCard(),
+          const SizedBox(height: AppSpacing.s12),
+          const _Hint(),
+          const SizedBox(height: AppSpacing.s16),
+          for (final bundle in bundles) ...[
+            _BundleCard(bundle: bundle),
+            const SizedBox(height: AppSpacing.s12),
+          ],
+          const SizedBox(height: AppSpacing.s16),
+          const _Footnote(),
+        ],
       ),
     );
   }
@@ -530,37 +523,17 @@ class _BundleBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final semantic = SemanticColors.of(context);
-    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final file in state.files) _FileRow(file: file),
         const SizedBox(height: AppSpacing.s12),
-        Row(
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (state.isInstalled)
-              _StatusChip(
-                text: l10n.settingsAiModelsStatusInstalled,
-                color: semantic.success,
-              )
-            else if (state.isInstalling)
-              _StatusChip(
-                text: l10n.settingsAiModelsStatusDownloading,
-                color: colors.primary,
-                progress: state.aggregateProgress,
-              )
-            else if (state.files.any((f) => f.status == ModelFileStatus.failed))
-              _StatusChip(
-                text: l10n.settingsAiModelsStatusFailed,
-                color: semantic.danger,
-              )
-            else
-              _StatusChip(
-                text: l10n.settingsAiModelsStatusNotInstalled,
-                color: colors.mutedForeground,
-              ),
-            const Spacer(),
+            _BundleStatusChip(state: state),
             if (state.isInstalling)
               FButton(
                 onPress: onCancel,
@@ -571,9 +544,7 @@ class _BundleBody extends StatelessWidget {
               FButton(
                 onPress: () async {
                   final confirm = await _confirmDelete(context);
-                  if (confirm == true) {
-                    await onDelete();
-                  }
+                  if (confirm == true) await onDelete();
                 },
                 variant: FButtonVariant.outline,
                 child: Text(l10n.settingsAiModelsDelete),
@@ -606,6 +577,42 @@ class _BundleBody extends StatelessWidget {
       confirmLabel: l10n.settingsAiModelsDelete,
       cancelLabel: l10n.settingsAiModelsCancel,
       destructive: true,
+    );
+  }
+}
+
+class _BundleStatusChip extends StatelessWidget {
+  const _BundleStatusChip({required this.state});
+
+  final ModelBundleState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
+    if (state.isInstalled) {
+      return _StatusChip(
+        text: l10n.settingsAiModelsStatusInstalled,
+        color: semantic.success,
+      );
+    }
+    if (state.isInstalling) {
+      return _StatusChip(
+        text: l10n.settingsAiModelsStatusDownloading,
+        color: colors.primary,
+        progress: state.aggregateProgress,
+      );
+    }
+    if (state.files.any((f) => f.status == ModelFileStatus.failed)) {
+      return _StatusChip(
+        text: l10n.settingsAiModelsStatusFailed,
+        color: semantic.danger,
+      );
+    }
+    return _StatusChip(
+      text: l10n.settingsAiModelsStatusNotInstalled,
+      color: colors.mutedForeground,
     );
   }
 }

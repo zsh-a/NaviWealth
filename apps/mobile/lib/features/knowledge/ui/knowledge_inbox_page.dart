@@ -88,13 +88,13 @@ class _InboxBody extends ConsumerWidget {
   }
 }
 
-/// The agent entry: a tappable ask/capture pill + three quick-action
-/// chips. Each routes through `askAi` conversation mode, which (on the
-/// knowledge route) opens the device agent loop scoped to KnowledgeOS
-/// tools + prompt with the composer seeded. The user sends; the agent
-/// then chains the right tools:
+/// The agent entry: a compact ask/capture target + icon quick actions.
+/// Each routes through `askAi` conversation mode, which (on the knowledge
+/// route) opens the device agent loop scoped to KnowledgeOS tools + prompt
+/// with the composer seeded. The user sends; the agent then chains the
+/// right tools:
 ///
-///  - pill     → empty composer (type a capture or a question freeform)
+///  - prompt   → empty composer (type a capture or a question freeform)
 ///  - 查重     → seeds dedupe (agent → find_similar_knowledge → propose_merge)
 ///  - 本周建议 → seeds suggest (agent → review_knowledge_health → propose_*)
 ///  - 搜知识   → seeds cross-type search (agent → search_knowledge)
@@ -108,36 +108,101 @@ class _AiAssistantBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final actions = [
+      DomainAiPromptAction(
+        label: l10n.knowledgeAiDedupeAction,
+        icon: FLucideIcons.gitMerge,
+        onPress: () =>
+            askAi(context, ref, prefill: l10n.knowledgeAiDedupePrompt),
+      ),
+      DomainAiPromptAction(
+        label: l10n.knowledgeAiWeeklyAction,
+        icon: FLucideIcons.lightbulb,
+        onPress: () =>
+            askAi(context, ref, prefill: l10n.knowledgeAiWeeklyPrompt),
+      ),
+      DomainAiPromptAction(
+        label: l10n.knowledgeAiSearchAction,
+        icon: FLucideIcons.search,
+        onPress: () =>
+            askAi(context, ref, prefill: l10n.knowledgeAiSearchPrompt),
+      ),
+    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
-        AppSpacing.s12,
+        AppSpacing.s8,
         AppSpacing.s16,
         AppSpacing.s4,
       ),
-      child: DomainAiPromptBar(
-        hint: l10n.knowledgeAiPromptHint,
-        onPress: () => askAi(context, ref, prefill: ''),
-        actions: [
-          DomainAiPromptAction(
-            label: l10n.knowledgeAiDedupeAction,
-            icon: FLucideIcons.gitMerge,
-            onPress: () =>
-                askAi(context, ref, prefill: l10n.knowledgeAiDedupePrompt),
-          ),
-          DomainAiPromptAction(
-            label: l10n.knowledgeAiWeeklyAction,
-            icon: FLucideIcons.lightbulb,
-            onPress: () =>
-                askAi(context, ref, prefill: l10n.knowledgeAiWeeklyPrompt),
-          ),
-          DomainAiPromptAction(
-            label: l10n.knowledgeAiSearchAction,
-            icon: FLucideIcons.search,
-            onPress: () =>
-                askAi(context, ref, prefill: l10n.knowledgeAiSearchPrompt),
-          ),
-        ],
+      child: KnowledgePromptSurface(
+        child: Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: l10n.knowledgeAiPromptHint,
+                child: FTappable(
+                  onPress: () => askAi(context, ref, prefill: ''),
+                  child: SizedBox(
+                    height: AppSpacing.s40,
+                    child: Row(
+                      children: [
+                        Icon(
+                          FLucideIcons.sparkles,
+                          size: AppIconSizes.sm,
+                          color: colors.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        Expanded(
+                          child: Text(
+                            l10n.knowledgeAiPromptHint,
+                            style: context.bodyCaptionStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s6),
+            for (final action in actions) ...[
+              _AiShortcutButton(action: action),
+              if (action != actions.last) const SizedBox(width: AppSpacing.s4),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AiShortcutButton extends StatelessWidget {
+  const _AiShortcutButton({required this.action});
+
+  final DomainAiPromptAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return AppIconButton(
+      icon: action.icon,
+      tooltip: action.label,
+      onPress: action.onPress,
+      size: AppSpacing.s40,
+      iconSize: AppIconSizes.sm,
+      iconColor: colors.primary,
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: AppOpacity.faint),
+          width: AppStroke.hairline,
+        ),
       ),
     );
   }

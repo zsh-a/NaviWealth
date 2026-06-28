@@ -35,6 +35,7 @@ ExecutionAction _action({
   DateTime? dueAt,
   DateTime? scheduledFor,
   String? projectId,
+  String? commitmentId,
 }) {
   return ExecutionAction(
     id: id,
@@ -44,6 +45,7 @@ ExecutionAction _action({
     dueAt: dueAt,
     scheduledFor: scheduledFor,
     projectId: projectId,
+    commitmentId: commitmentId,
     createdAt: DateTime.utc(2026, 6, 1),
     sync: _sync(0),
   );
@@ -555,6 +557,74 @@ void main() {
       rowId: 'p-review',
     ));
   });
+
+  test(
+    'detail watchers resolve commitment actions and scoped progress',
+    () async {
+      await repo.upsertCommitment(
+        ExecutionCommitment(
+          id: 'c-detail',
+          title: 'Ship detail view',
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: _sync(2),
+        ),
+      );
+      final linked = _action(
+        id: 'a-linked',
+        title: 'Open linked action',
+        commitmentId: 'c-detail',
+      );
+      final other = _action(
+        id: 'a-other',
+        title: 'Unrelated action',
+        commitmentId: 'c-other',
+      );
+      await repo.upsertAction(linked);
+      await repo.upsertAction(other);
+      await repo.upsertProgress(
+        ExecutionProgressEntry(
+          id: 'p-linked',
+          actionId: linked.id,
+          commitmentId: 'c-detail',
+          kind: ExecutionProgressKind.checkin,
+          note: 'Detail progress',
+          createdAt: DateTime.utc(2026, 6, 2),
+          sync: _sync(3),
+        ),
+      );
+      await repo.upsertProgress(
+        ExecutionProgressEntry(
+          id: 'p-other',
+          actionId: other.id,
+          commitmentId: 'c-other',
+          kind: ExecutionProgressKind.checkin,
+          note: 'Other progress',
+          createdAt: DateTime.utc(2026, 6, 2),
+          sync: _sync(4),
+        ),
+      );
+
+      final actions = await repo
+          .watchActionsForCommitment(
+            ownerUserId: _userId,
+            commitmentId: 'c-detail',
+          )
+          .first;
+      final actionProgress = await repo
+          .watchProgressForAction(ownerUserId: _userId, actionId: linked.id)
+          .first;
+      final commitmentProgress = await repo
+          .watchProgressForCommitment(
+            ownerUserId: _userId,
+            commitmentId: 'c-detail',
+          )
+          .first;
+
+      expect(actions.map((action) => action.id), ['a-linked']);
+      expect(actionProgress.map((entry) => entry.id), ['p-linked']);
+      expect(commitmentProgress.map((entry) => entry.id), ['p-linked']);
+    },
+  );
 
   test('recordProgress can update linked action status atomically', () async {
     final action = _action(id: 'a1', title: 'Finish execution review');

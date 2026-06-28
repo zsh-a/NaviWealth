@@ -374,6 +374,7 @@ class ExecutionActionCard extends StatelessWidget {
     this.busy = false,
     this.projectLabel,
     this.commitmentLabel,
+    this.onOpen,
   });
 
   final ExecutionAction action;
@@ -387,6 +388,7 @@ class ExecutionActionCard extends StatelessWidget {
   final bool busy;
   final String? projectLabel;
   final String? commitmentLabel;
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -411,93 +413,106 @@ class ExecutionActionCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppIconTile(
-                icon: _statusIcon(action.status),
-                color: statusColor,
-                size: 34,
-                iconSize: AppIconSizes.sm,
-                backgroundOpacity: AppOpacity.whisper,
-                foregroundOpacity: 1,
-              ),
-              const SizedBox(width: AppSpacing.s12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      action.title,
-                      style: context.rowTitleStyle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (action.note.trim().isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        action.note.trim(),
-                        style: context.captionStyle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                child: _CardOpenRegion(
+                  onOpen: onOpen,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppIconTile(
+                        icon: _statusIcon(action.status),
+                        color: statusColor,
+                        size: 34,
+                        iconSize: AppIconSizes.sm,
+                        backgroundOpacity: AppOpacity.whisper,
+                        foregroundOpacity: 1,
+                      ),
+                      const SizedBox(width: AppSpacing.s12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              action.title,
+                              style: context.rowTitleStyle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (action.note.trim().isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.s4),
+                              Text(
+                                action.note.trim(),
+                                style: context.captionStyle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                            const SizedBox(height: AppSpacing.s10),
+                            Wrap(
+                              spacing: AppSpacing.s6,
+                              runSpacing: AppSpacing.s6,
+                              children: [
+                                AppBadge(
+                                  label: executionStatusLabel(
+                                    l10n,
+                                    action.status,
+                                  ),
+                                  tone: statusTone,
+                                  size: AppBadgeSize.compact,
+                                ),
+                                if (action.priority == ExecutionPriority.high)
+                                  AppBadge(
+                                    label: l10n.executionPriorityHigh,
+                                    tone: AppBadgeTone.warning,
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.flag,
+                                  ),
+                                if (action.dueAt != null)
+                                  AppBadge(
+                                    label: l10n.executionDueBadge(
+                                      executionDate(context, action.dueAt!),
+                                    ),
+                                    tone: AppBadgeTone.info,
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.calendarDays,
+                                  ),
+                                if (projectLabel != null)
+                                  AppBadge(
+                                    label:
+                                        '${l10n.executionProjectField}: '
+                                        '$projectLabel',
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.folder,
+                                  ),
+                                if (commitmentLabel != null)
+                                  AppBadge(
+                                    label:
+                                        '${l10n.executionCommitmentField}: '
+                                        '$commitmentLabel',
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.target,
+                                  ),
+                                if (action.source.labelSnapshot != null &&
+                                    action.source.labelSnapshot!.isNotEmpty)
+                                  AppBadge(
+                                    label: action.source.labelSnapshot!,
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.link,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                    const SizedBox(height: AppSpacing.s10),
-                    Wrap(
-                      spacing: AppSpacing.s6,
-                      runSpacing: AppSpacing.s6,
-                      children: [
-                        AppBadge(
-                          label: executionStatusLabel(l10n, action.status),
-                          tone: statusTone,
-                          size: AppBadgeSize.compact,
-                        ),
-                        if (action.priority == ExecutionPriority.high)
-                          AppBadge(
-                            label: l10n.executionPriorityHigh,
-                            tone: AppBadgeTone.warning,
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.flag,
-                          ),
-                        if (action.dueAt != null)
-                          AppBadge(
-                            label: l10n.executionDueBadge(
-                              executionDate(context, action.dueAt!),
-                            ),
-                            tone: AppBadgeTone.info,
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.calendarDays,
-                          ),
-                        if (projectLabel != null)
-                          AppBadge(
-                            label:
-                                '${l10n.executionProjectField}: '
-                                '$projectLabel',
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.folder,
-                          ),
-                        if (commitmentLabel != null)
-                          AppBadge(
-                            label:
-                                '${l10n.executionCommitmentField}: '
-                                '$commitmentLabel',
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.target,
-                          ),
-                        if (action.source.labelSnapshot != null &&
-                            action.source.labelSnapshot!.isNotEmpty)
-                          AppBadge(
-                            label: action.source.labelSnapshot!,
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.link,
-                          ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
               if (busy)
                 const SizedBox(
-                  width: 32,
-                  height: 32,
+                  width: AppIconSizes.xl,
+                  height: AppIconSizes.xl,
                   child: Center(
                     child: FCircularProgress(
                       size: FCircularProgressSizeVariant.xs,
@@ -567,6 +582,22 @@ class ExecutionSectionHeader extends StatelessWidget {
   }
 }
 
+class _CardOpenRegion extends StatelessWidget {
+  const _CardOpenRegion({required this.child, this.onOpen});
+
+  final Widget child;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (onOpen == null) return child;
+    return Semantics(
+      button: true,
+      child: FTappable(onPress: onOpen, child: child),
+    );
+  }
+}
+
 class ExecutionCommitmentCard extends StatelessWidget {
   const ExecutionCommitmentCard({
     super.key,
@@ -580,6 +611,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
     this.openActionCount,
     this.blockedActionCount,
     this.busy = false,
+    this.onOpen,
   });
 
   final ExecutionCommitment commitment;
@@ -592,6 +624,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
   final int? openActionCount;
   final int? blockedActionCount;
   final bool busy;
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -602,27 +635,37 @@ class ExecutionCommitmentCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconTile(
-            icon: FLucideIcons.target,
-            color: colors.primary,
-            size: 34,
-            iconSize: AppIconSizes.sm,
-            backgroundOpacity: AppOpacity.whisper,
-            foregroundOpacity: 1,
-          ),
-          const SizedBox(width: AppSpacing.s12),
           Expanded(
-            child: _CommitmentBody(
-              commitment: commitment,
-              openActionCount: openActionCount,
-              blockedActionCount: blockedActionCount,
+            child: _CardOpenRegion(
+              onOpen: onOpen,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppIconTile(
+                    icon: FLucideIcons.target,
+                    color: colors.primary,
+                    size: 34,
+                    iconSize: AppIconSizes.sm,
+                    backgroundOpacity: AppOpacity.whisper,
+                    foregroundOpacity: 1,
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: _CommitmentBody(
+                      commitment: commitment,
+                      openActionCount: openActionCount,
+                      blockedActionCount: blockedActionCount,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
           if (busy)
             const SizedBox(
-              width: 32,
-              height: 32,
+              width: AppIconSizes.xl,
+              height: AppIconSizes.xl,
               child: Center(
                 child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
               ),
@@ -777,8 +820,8 @@ class ExecutionProjectCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           if (busy)
             const SizedBox(
-              width: 32,
-              height: 32,
+              width: AppIconSizes.xl,
+              height: AppIconSizes.xl,
               child: Center(
                 child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
               ),

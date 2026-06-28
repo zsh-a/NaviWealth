@@ -1276,6 +1276,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNetWorthTitle => 'Net Worth';
 
   @override
+  String get homeQuickAddAccount => 'Add account';
+
+  @override
+  String get homeQuickRecordEntry => 'Record entry';
+
+  @override
+  String get homeQuickImport => 'Import';
+
+  @override
   String get financePrivacyHideAmountsTooltip => 'Hide amounts';
 
   @override
@@ -5429,7 +5438,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS toggles and settings';
+      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles';
 
   @override
   String get settingsDomainsFinanceSubtitle =>
@@ -5634,6 +5643,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLogsCopiedToast => 'Logs copied';
+
+  @override
+  String get settingsLogsClearTitle => 'Clear logs?';
+
+  @override
+  String get settingsLogsClearBody =>
+      'This removes the in-memory diagnostic log history from this device.';
+
+  @override
+  String get settingsLogsClearAction => 'Clear logs';
 
   @override
   String get settingsPerfTitle => 'Performance';
@@ -7675,6 +7694,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLlmRemoved => 'Removed from this device';
+
+  @override
+  String get aiLlmDeleteTitle => 'Delete provider?';
+
+  @override
+  String aiLlmDeleteBody(String name) {
+    return 'This removes $name and its stored API key from this device.';
+  }
 
   @override
   String get aiLlmEmpty =>
@@ -10155,6 +10182,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionActionsSection => 'Actions';
+
+  @override
+  String get executionRelatedActionsSection => 'Related actions';
+
+  @override
+  String get executionTimelineSection => 'Timeline';
+
+  @override
+  String get executionDetailMissingTitle => 'Item not found';
+
+  @override
+  String get executionDetailMissingBody =>
+      'It may have been deleted or is no longer available on this device.';
 
   @override
   String get executionProjectStatusActive => 'Active';

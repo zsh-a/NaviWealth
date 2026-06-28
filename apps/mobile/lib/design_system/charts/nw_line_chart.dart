@@ -8,6 +8,7 @@ import 'package:forui/forui.dart';
 import '../theme/market_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import '../widgets/amount_privacy_placeholder.dart';
 import '../widgets/amount_privacy_scope.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
@@ -44,7 +45,9 @@ class NwLineChart extends StatefulWidget {
     this.curved,
     this.curveSmoothness = 0.28,
     this.heroDots = false,
+    this.showDots,
     this.showXAxis = true,
+    this.showYAxis = true,
     this.showTouchXAxisLabel = false,
     this.minimal = false,
   });
@@ -87,8 +90,16 @@ class NwLineChart extends StatefulWidget {
   /// Intended for hero / showcase charts only.
   final bool heroDots;
 
+  /// Whether to render resting data-point dots. `null` keeps the historical
+  /// auto-density behavior (dots only for short series). Set to `false` for
+  /// dense analytical lines where touch crosshair feedback is enough.
+  final bool? showDots;
+
   /// Whether to render the bottom X-axis labels in the resting chart.
   final bool showXAxis;
+
+  /// Whether to render the left Y-axis labels in the resting chart.
+  final bool showYAxis;
 
   /// Whether a compact X value label should appear near the crosshair while
   /// the user drags across the chart.
@@ -343,7 +354,7 @@ class _NwLineChartState extends State<NwLineChart> {
       dashArray: effectiveDash,
       barWidth: s.strokeWidth ?? defaultStroke,
       dotData: FlDotData(
-        show: s.points.length <= 60,
+        show: widget.showDots ?? s.points.length <= 60,
         getDotPainter: widget.heroDots && ordinal == 0
             ? (spot, percent, barData, index) {
                 if (index != s.points.length - 1) {
@@ -442,7 +453,7 @@ class _NwLineChartState extends State<NwLineChart> {
   }
 
   _ChartPlotInsets get _plotInsets => _ChartPlotInsets(
-    left: widget.minimal ? 0 : _kLeftTitleReservedSize,
+    left: widget.minimal || !widget.showYAxis ? 0 : _kLeftTitleReservedSize,
     bottom: !widget.minimal && widget.showXAxis ? _kBottomTitleReservedSize : 0,
   );
 
@@ -497,8 +508,10 @@ class _NwLineChartState extends State<NwLineChart> {
       ),
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: _kLeftTitleReservedSize,
+          showTitles: widget.showYAxis && !hideAmounts,
+          reservedSize: widget.showYAxis && !hideAmounts
+              ? _kLeftTitleReservedSize
+              : 0,
           interval: yInterval,
           getTitlesWidget: (value, meta) {
             // Skip labels that would overlap on short charts.
@@ -513,9 +526,7 @@ class _NwLineChartState extends State<NwLineChart> {
             return Padding(
               padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: Text(
-                hideAmounts
-                    ? AmountPrivacyScope.mask
-                    : widget.yAxis.formatValue(value),
+                widget.yAxis.formatValue(value),
                 style: labelStyle,
                 maxLines: 1,
                 softWrap: false,
@@ -913,6 +924,7 @@ class _ChartTooltip extends StatelessWidget {
                   const SizedBox(height: AppSpacing.s4),
                   for (var i = 0; i < processed.length; i++)
                     _buildSeriesRow(
+                      context,
                       i,
                       processed[i],
                       safeIndex,
@@ -929,6 +941,7 @@ class _ChartTooltip extends StatelessWidget {
   }
 
   Widget _buildSeriesRow(
+    BuildContext context,
     int seriesIndex,
     ChartSeries s,
     int safeIndex,
@@ -937,9 +950,6 @@ class _ChartTooltip extends StatelessWidget {
   ) {
     if (safeIndex >= s.points.length) return const SizedBox.shrink();
     final p = s.points[safeIndex];
-    final valueStr = hideAmounts
-        ? AmountPrivacyScope.mask
-        : yAxis.formatValue(p.y);
     final delta = touchStartPoint != null ? p.y - touchStartPoint!.y : 0.0;
 
     return Padding(
@@ -947,10 +957,32 @@ class _ChartTooltip extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              '${s.name}  $valueStr',
-              style: TypographyTokens.numericCaption.copyWith(color: onSurface),
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    s.name,
+                    style: TypographyTokens.numericCaption.copyWith(
+                      color: onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s6),
+                if (hideAmounts)
+                  AmountPrivacyPlaceholder(
+                    density: AmountPrivacyPlaceholderDensity.compact,
+                    style: TypographyTokens.numericCaption,
+                  )
+                else
+                  Text(
+                    yAxis.formatValue(p.y),
+                    style: TypographyTokens.numericCaption.copyWith(
+                      color: onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
             ),
           ),
           if (touchStartPoint != null) ...[
@@ -1058,13 +1090,28 @@ class _DeltaBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final market = MarketColors.of(context);
+    if (hideAmounts) {
+      final colors = context.theme.colors;
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s6,
+          vertical: AppSpacing.s4,
+        ),
+        decoration: BoxDecoration(
+          color: colors.muted.withValues(alpha: AppOpacity.subtle),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
+        ),
+        child: AmountPrivacyPlaceholder(
+          density: AmountPrivacyPlaceholderDensity.compact,
+          style: TypographyTokens.numericCaption.copyWith(fontSize: 10),
+        ),
+      );
+    }
     final positive = value >= 0;
     final color = market.forDelta(value);
     final bg = color.withValues(alpha: AppOpacity.accentContainer);
     final sign = positive ? '+' : '';
-    final label = hideAmounts
-        ? AmountPrivacyScope.mask
-        : '$sign${yAxis.formatValue(value)}';
+    final label = '$sign${yAxis.formatValue(value)}';
 
     return Container(
       padding: const EdgeInsets.symmetric(
