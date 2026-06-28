@@ -1,0 +1,15 @@
+{
+  "scanned_runs": 2,
+  "abandoned_count": 1,
+  "recovered_runs": [
+    {
+      "run_id": "run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000",
+      "agent_id": "execution_review",
+      "previous_status": "running",
+      "new_status": "abandoned",
+      "started_at": "2026-06-28T09:10:00Z",
+      "abandoned_at": "2026-06-28T09:12:31Z",
+      "reason": "running run exceeded recovery timeout of 60000ms"
+    }
+  ]
+}

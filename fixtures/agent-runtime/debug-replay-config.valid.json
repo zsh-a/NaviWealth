@@ -1,0 +1,43 @@
+{
+  "protocol_version": "agent.v1",
+  "runtime_version": "0.1.0",
+  "run_id": "run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000",
+  "agent_id": "execution_review",
+  "replay_mode": "trace_execute",
+  "source_store": "/private/tmp/agent-runtime-store",
+  "source_trace": "/private/tmp/agent-runtime-store/traces/run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000.trace.json",
+  "catalog": "fixtures/agent-runtime/catalog.valid.json",
+  "timeout_seconds": 60,
+  "assets": {
+    "run_request": "run_request.json",
+    "trace": "trace.json",
+    "events": "events.jsonl",
+    "tool_calls": "tool_calls.jsonl",
+    "state_snapshot": "state_snapshot.json",
+    "prompt_manifest": "prompt_manifest.json"
+  },
+  "replay_command": [
+    "agent",
+    "replay",
+    "trace.json",
+    "--execute",
+    "--store",
+    "/private/tmp/agent-runtime-store",
+    "--timeout-seconds",
+    "60",
+    "--catalog",
+    "fixtures/agent-runtime/catalog.valid.json"
+  ],
+  "run_request": {
+    "protocol_version": "agent.v1",
+    "run_id": "run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000",
+    "input": {
+      "message": "hello runtime"
+    },
+    "trigger": "replay",
+    "metadata": {
+      "source": "debug_bundle",
+      "reconstructed_from": "run_record"
+    }
+  }
+}

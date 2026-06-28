@@ -1,0 +1,23 @@
+{
+  "bundle_version": "debug_bundle.v1",
+  "protocol_version": "agent.v1",
+  "runtime_version": "0.1.0",
+  "run_id": "run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000",
+  "agent_id": "execution_review",
+  "agent_version": "0.1.0",
+  "created_at": "2026-06-28T09:12:31Z",
+  "files": {
+    "manifest": "manifest.json",
+    "run_record": "run_record.json",
+    "run_request": "run_request.json",
+    "run_result": "run_result.json",
+    "replay_config": "replay_config.json",
+    "trace": "trace.json",
+    "events": "events.jsonl",
+    "tool_calls": "tool_calls.jsonl",
+    "agent_spec": "agent_spec.json",
+    "prompt_manifest": "prompt_manifest.json",
+    "state_snapshot": "state_snapshot.json",
+    "redactions": "redactions.json"
+  }
+}

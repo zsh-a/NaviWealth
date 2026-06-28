@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/catalog.schema.json",
+  "title": "AgentRuntimeCatalog",
+  "type": "object",
+  "required": [
+    "protocol_version",
+    "catalog_version",
+    "generated_at",
+    "active_domains",
+    "agents",
+    "tools",
+    "proposal_kinds",
+    "prompt_blocks"
+  ],
+  "properties": {
+    "protocol_version": { "const": "agent.v1" },
+    "catalog_version": { "const": "agent_catalog.v1" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "active_domains": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent_spec" }
+    },
+    "tools": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tool_spec" }
+    },
+    "proposal_kinds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/proposal_kind" }
+    },
+    "prompt_blocks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prompt_block" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "agent_spec": {
+      "type": "object",
+      "required": ["protocol_version", "id", "name", "version", "schedule"],
+      "properties": {
+        "protocol_version": { "const": "agent.v1" },
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "schedule": { "$ref": "#/$defs/schedule" },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "metadata": {
+          "type": "object",
+          "default": {}
+        }
+      },
+      "additionalProperties": true
+    },
+    "schedule": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "manual" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "every_seconds"],
+          "properties": {
+            "type": { "const": "interval" },
+            "every_seconds": { "type": "integer", "minimum": 1 },
+            "preferred_hour_local": {
+              "type": ["integer", "null"],
+              "minimum": 0,
+              "maximum": 23
+            },
+            "jitter_seconds": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "tool_spec": {
+      "type": "object",
+      "required": ["name", "description", "input_schema", "risk"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "input_schema": { "type": "object" },
+        "output_schema": { "type": ["object", "null"] },
+        "risk": {
+          "type": "string",
+          "enum": ["read_only", "low", "medium", "high"]
+        },
+        "metadata": {
+          "type": "object",
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "proposal_kind": {
+      "type": "object",
+      "required": ["kind", "tool_name"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "tool_name": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "prompt_block": {
+      "type": "object",
+      "required": ["index", "text"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

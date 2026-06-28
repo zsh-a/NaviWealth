@@ -1,0 +1,21 @@
+id: catalog_dry_run_tool_call_sequence
+agent_id: execution_review
+catalog: ../../fixtures/agent-runtime/catalog.valid.json
+input:
+  message: eval tool call fixture
+  tool_call:
+    name: echo
+    input:
+      value: 7
+expect:
+  status: completed
+  agent_id: execution_review
+  output_mode: catalog_dry_run
+  trace_events:
+    - run_started
+    - catalog_dry_run.agent_selected
+    - tool_call_started
+    - tool_call_finished
+    - run_finished
+  tool_calls:
+    - echo

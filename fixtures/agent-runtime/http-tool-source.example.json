@@ -1,0 +1,30 @@
+{
+  "version": "tool_source.v1",
+  "sources": [
+    {
+      "id": "http-dev",
+      "protocol": "http_json",
+      "endpoint": "http://127.0.0.1:8766/tools/call",
+      "headers": {
+        "x-agent-runtime-source": "http-dev"
+      },
+      "tools": [
+        {
+          "name": "http_echo",
+          "description": "Echo through an HTTP JSON tool endpoint.",
+          "input_schema": {
+            "type": "object"
+          },
+          "output_schema": {
+            "type": "object"
+          },
+          "risk": "read_only",
+          "metadata": {
+            "source": "http-dev",
+            "protocol": "http_json"
+          }
+        }
+      ]
+    }
+  ]
+}

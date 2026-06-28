@@ -1,0 +1,28 @@
+{
+  "version": "tool_source.v1",
+  "sources": [
+    {
+      "id": "mcp-dev",
+      "protocol": "mcp_stdio",
+      "command": "target/debug/agent",
+      "args": ["dev-mcp-server"],
+      "tools": [
+        {
+          "name": "mcp_echo",
+          "description": "Echo through a dev MCP server.",
+          "input_schema": {
+            "type": "object"
+          },
+          "output_schema": {
+            "type": "object"
+          },
+          "risk": "read_only",
+          "metadata": {
+            "source": "mcp-dev",
+            "protocol": "mcp_stdio"
+          }
+        }
+      ]
+    }
+  ]
+}

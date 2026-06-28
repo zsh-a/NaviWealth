@@ -1,0 +1,24 @@
+id: catalog_dry_run_basic
+agent_id: execution_review
+catalog: ../../fixtures/agent-runtime/catalog.valid.json
+golden_trace: golden/catalog_dry_run.trace.json
+input:
+  message: eval fixture
+expect:
+  status: completed
+  agent_id: execution_review
+  output_mode: catalog_dry_run
+  trace_events:
+    - run_started
+    - catalog_dry_run.agent_selected
+    - run_finished
+  prompt_manifest:
+    id: execution_review_prompt
+    version: execution_review.prompt.v1
+    agent_version: 0.1.0
+    model_family: openai
+    provider: openai_compatible
+    model: gpt-5-mini
+    tool_schema_version: tool_schema.v1
+    block_hashes:
+      - blake3:d838ad239f1e6a938780f02c79833321e8fbf2d5d13800030ed4edc40e687796

@@ -1,0 +1,12 @@
+{
+  "protocol_version": "agent.v1",
+  "run_id": "run_018f0000-0000-7000-8000-000000000000",
+  "agent_id": "echo_agent",
+  "status": "completed",
+  "started_at": "2026-06-28T09:12:31Z",
+  "finished_at": "2026-06-28T09:12:32Z",
+  "summary": "echoed input",
+  "output": {
+    "message": "hello runtime"
+  }
+}

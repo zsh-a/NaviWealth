@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/trace.schema.json",
+  "title": "AgentTrace",
+  "type": "object",
+  "required": [
+    "protocol_version",
+    "runtime_version",
+    "run_id",
+    "agent_id",
+    "agent_version",
+    "started_at",
+    "finished_at",
+    "events"
+  ],
+  "properties": {
+    "protocol_version": { "const": "agent.v1" },
+    "runtime_version": { "type": "string" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "agent_id": { "type": "string", "minLength": 1 },
+    "agent_version": { "type": "string" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "input": { "type": "object", "default": {} },
+    "output": { "type": "object", "default": {} },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "occurred_at"],
+        "properties": {
+          "kind": { "type": "string" },
+          "occurred_at": { "type": "string", "format": "date-time" },
+          "payload": { "type": "object", "default": {} }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

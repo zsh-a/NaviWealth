@@ -1,0 +1,65 @@
+{
+  "protocol_version": "agent.v1",
+  "input": {
+    "message": "eval fixture"
+  },
+  "events": [
+    {
+      "kind": "run_started",
+      "payload": {
+        "trigger": "manual",
+        "agent_id": "execution_review"
+      }
+    },
+    {
+      "kind": "catalog_dry_run.agent_selected",
+      "payload": {
+        "agent_id": "execution_review",
+        "agent_version": "0.1.0",
+        "source": "agent_catalog.v1"
+      }
+    },
+    {
+      "kind": "run_finished",
+      "payload": {
+        "status": "completed"
+      }
+    }
+  ],
+  "agent_id": "execution_review",
+  "agent_version": "0.1.0",
+  "output": {
+    "mode": "catalog_dry_run",
+    "agent": {
+      "protocol_version": "agent.v1",
+      "id": "execution_review",
+      "name": "Execution Review",
+      "version": "0.1.0",
+      "schedule": {
+        "type": "interval",
+        "every_seconds": 86400,
+        "preferred_hour_local": 9,
+        "jitter_seconds": 300
+      },
+      "capabilities": [
+        "scheduled_agent"
+      ],
+      "metadata": {
+        "domain": "execution",
+        "dart_type": "ExecutionReviewAgent",
+        "prompt_id": "execution_review_prompt",
+        "prompt_version": "execution_review.prompt.v1",
+        "model_family": "openai",
+        "provider": "openai_compatible",
+        "model": "gpt-5-mini",
+        "tool_schema_version": "tool_schema.v1"
+      }
+    },
+    "input": {
+      "message": "eval fixture"
+    },
+    "tool_result": null,
+    "proposal": null,
+    "note": "Catalog dry-run validates Rust runtime lifecycle only; Flutter business logic is not executed."
+  }
+}

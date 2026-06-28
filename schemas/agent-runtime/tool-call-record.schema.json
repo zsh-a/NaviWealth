@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/tool-call-record.schema.json",
+  "title": "ToolCallRecord",
+  "type": "object",
+  "required": [
+    "tool_call_id",
+    "tool_name",
+    "input_hash",
+    "duration_ms",
+    "status"
+  ],
+  "properties": {
+    "tool_call_id": { "type": "string", "pattern": "^tool_" },
+    "tool_name": { "type": "string", "minLength": 1 },
+    "input_hash": {
+      "type": "string",
+      "pattern": "^blake3:[a-f0-9]{64}$"
+    },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed"]
+    },
+    "input": { "type": "object" },
+    "output": {},
+    "error": { "type": "object" }
+  },
+  "additionalProperties": false
+}

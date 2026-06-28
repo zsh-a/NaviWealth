@@ -1,0 +1,26 @@
+{
+  "version": "tool_source.v1",
+  "sources": [
+    {
+      "id": "local-dev",
+      "command": "target/debug/agent",
+      "args": ["dev-tool-host"],
+      "tools": [
+        {
+          "name": "sourced_echo",
+          "description": "Echo through a configured tool source.",
+          "input_schema": {
+            "type": "object"
+          },
+          "output_schema": {
+            "type": "object"
+          },
+          "risk": "read_only",
+          "metadata": {
+            "source": "local-dev"
+          }
+        }
+      ]
+    }
+  ]
+}

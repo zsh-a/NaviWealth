@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/hook-event.schema.json",
+  "title": "HookEvent",
+  "type": "object",
+  "required": [
+    "protocol_version",
+    "hook_event",
+    "hook_kind",
+    "hook_name",
+    "status",
+    "started_at",
+    "finished_at",
+    "duration_ms"
+  ],
+  "properties": {
+    "protocol_version": { "const": "agent.v1" },
+    "hook_event": {
+      "type": "string",
+      "enum": [
+        "SessionStart",
+        "SessionStop",
+        "RunStart",
+        "RunStop",
+        "BeforeAgentStep",
+        "AfterAgentStep",
+        "SubagentStart",
+        "SubagentStop",
+        "BeforeToolCall",
+        "AfterToolCall",
+        "BeforeProposalCreate",
+        "AfterProposalDecision",
+        "BeforeStateSave",
+        "AfterStateSave",
+        "BeforeCompact",
+        "AfterCompact"
+      ]
+    },
+    "hook_kind": {
+      "type": "string",
+      "enum": ["native_rust", "process", "server"]
+    },
+    "hook_name": { "type": "string", "minLength": 1 },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "run_id": { "type": "string", "pattern": "^run_" },
+    "agent_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed"]
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "input": {},
+    "output": {},
+    "error": { "type": "object" }
+  },
+  "additionalProperties": false
+}

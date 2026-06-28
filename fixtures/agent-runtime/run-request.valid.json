@@ -1,0 +1,8 @@
+{
+  "protocol_version": "agent.v1",
+  "input": {
+    "message": "hello runtime"
+  },
+  "trigger": "manual",
+  "metadata": {}
+}

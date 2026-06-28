@@ -1,0 +1,7 @@
+{
+  "message": "hello runtime",
+  "tool_input": {
+    "source": "fixture",
+    "value": 42
+  }
+}

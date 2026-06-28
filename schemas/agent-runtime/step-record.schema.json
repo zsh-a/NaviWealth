@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/step-record.schema.json",
+  "title": "StepRecord",
+  "type": "object",
+  "required": ["protocol_version", "step_id", "thread_id", "kind", "created_at"],
+  "properties": {
+    "protocol_version": { "const": "agent.v1" },
+    "step_id": { "type": "string", "pattern": "^step_" },
+    "thread_id": { "type": "string", "pattern": "^thread_" },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "agent_run",
+        "llm_round",
+        "tool_call",
+        "proposal",
+        "approval",
+        "state_update",
+        "note"
+      ]
+    },
+    "run_id": { "type": ["string", "null"], "pattern": "^run_" },
+    "summary": { "type": ["string", "null"] },
+    "payload": { "type": "object", "default": {} },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

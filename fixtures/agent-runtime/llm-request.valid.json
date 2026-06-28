@@ -1,0 +1,18 @@
+{
+  "protocol_version": "agent.v1",
+  "provider": "mock",
+  "model": "mock-model",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Summarize today's plan.",
+      "metadata": {}
+    }
+  ],
+  "temperature": 0,
+  "max_output_tokens": 128,
+  "tools": [],
+  "metadata": {
+    "prompt_version": "mock.v1"
+  }
+}

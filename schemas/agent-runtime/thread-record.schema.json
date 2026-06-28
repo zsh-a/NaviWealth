@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/thread-record.schema.json",
+  "title": "ThreadRecord",
+  "type": "object",
+  "required": ["protocol_version", "thread_id", "session_id", "created_at"],
+  "properties": {
+    "protocol_version": { "const": "agent.v1" },
+    "thread_id": { "type": "string", "pattern": "^thread_" },
+    "session_id": { "type": "string", "pattern": "^session_" },
+    "parent_thread_id": { "type": ["string", "null"], "pattern": "^thread_" },
+    "title": { "type": ["string", "null"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object", "default": {} }
+  },
+  "additionalProperties": false
+}

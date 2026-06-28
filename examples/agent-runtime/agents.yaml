@@ -1,0 +1,13 @@
+agents:
+  - protocol_version: agent.v1
+    id: echo_agent
+    name: Echo Agent
+    description: Minimal built-in agent used to verify run, trace, and replay.
+    version: 0.1.0
+    runner: echo
+    schedule:
+      type: manual
+    capabilities:
+      - debug.echo
+    metadata:
+      prompt_version: echo.v1

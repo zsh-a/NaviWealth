@@ -1,0 +1,13 @@
+{
+  "tool_call_id": "tool_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000",
+  "tool_name": "echo_external",
+  "input_hash": "blake3:4dfc5c2ebe900b8d7ef7282c149989cd5f14139af63bc1c1379fa2005649b3b5",
+  "duration_ms": 12,
+  "status": "completed",
+  "input": {
+    "value": 7
+  },
+  "output": {
+    "value": 7
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "protocol_version": "agent.v1",
+  "id": "execution_review_prompt",
+  "version": "execution_review.prompt.v1",
+  "agent_id": "execution_review",
+  "agent_version": "0.1.0",
+  "catalog_version": "agent_catalog.v1",
+  "generated_at": "2026-06-28T09:12:31Z",
+  "model_family": "openai",
+  "provider": "openai_compatible",
+  "model": "gpt-5-mini",
+  "tool_schema_version": "tool_schema.v1",
+  "active_domains": ["finance"],
+  "blocks": [
+    {
+      "index": 0,
+      "source": "catalog.prompt_blocks[0]",
+      "content_hash": "blake3:d838ad239f1e6a938780f02c79833321e8fbf2d5d13800030ed4edc40e687796",
+      "text": "Finance prompt block"
+    }
+  ]
+}

@@ -1,0 +1,865 @@
+openapi: 3.1.0
+info:
+  title: Agent Runtime API
+  version: 0.1.0
+  description: Minimal HTTP surface for the schema-first Rust agent runtime.
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      responses:
+        "200":
+          description: Runtime process is alive.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    const: ok
+                additionalProperties: false
+  /catalog/summary:
+    get:
+      operationId: catalogSummary
+      responses:
+        "200":
+          description: Summary of the active agent catalog.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogSummary"
+  /metrics/summary:
+    get:
+      operationId: metricsSummary
+      responses:
+        "200":
+          description: Store-backed runtime metrics summary.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeMetricsSummary"
+        "500":
+          description: Metrics collection failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /tools:
+    get:
+      operationId: listTools
+      responses:
+        "200":
+          description: Active tools visible to the runtime.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../schemas/agent-runtime/tool-spec.schema.json"
+  /runs:
+    get:
+      operationId: listRuns
+      parameters:
+        - name: agent_id
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Persisted run records, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentRunRecord"
+        "500":
+          description: Run listing failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /runs/{run_id}:
+    get:
+      operationId: inspectRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^run_"
+      responses:
+        "200":
+          description: Persisted run record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentRunRecord"
+        "404":
+          description: Run was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /runs/{run_id}/trace:
+    get:
+      operationId: inspectRunTrace
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^run_"
+      responses:
+        "200":
+          description: Persisted run trace.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/agent-runtime/trace.schema.json"
+        "404":
+          description: Trace was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /runs/{run_id}/events:
+    get:
+      operationId: streamRunTraceEvents
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^run_"
+      responses:
+        "200":
+          description: Server-sent event stream of persisted trace events.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Each SSE data frame is a TraceEvent JSON object.
+        "404":
+          description: Trace was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /runs/{run_id}/replay:
+    post:
+      operationId: replayRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^run_"
+      responses:
+        "200":
+          description: Live replay result generated from the persisted trace.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayExecutionResponse"
+        "500":
+          description: Replay failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /tools/{tool_name}/call:
+    post:
+      operationId: callTool
+      parameters:
+        - name: tool_name
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  type: object
+                  default: {}
+              additionalProperties: false
+      responses:
+        "200":
+          description: Tool call output envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolCallResponse"
+        "500":
+          description: Tool call failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /proposals:
+    get:
+      operationId: listProposals
+      parameters:
+        - name: run_id
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Persisted proposal envelopes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../schemas/agent-runtime/proposal-envelope.schema.json"
+    post:
+      operationId: createProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalCreateRequest"
+      responses:
+        "200":
+          description: Created proposal envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/agent-runtime/proposal-envelope.schema.json"
+        "500":
+          description: Proposal creation failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /proposals/{proposal_id}:
+    get:
+      operationId: inspectProposal
+      parameters:
+        - name: proposal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Proposal envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/agent-runtime/proposal-envelope.schema.json"
+        "404":
+          description: Proposal was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /proposals/{proposal_id}/decision:
+    post:
+      operationId: decideProposal
+      parameters:
+        - name: proposal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalDecisionRequest"
+      responses:
+        "200":
+          description: Approval decision and updated proposal envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalDecisionResponse"
+        "500":
+          description: Proposal decision failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /proposals/{proposal_id}/apply:
+    post:
+      operationId: applyProposal
+      parameters:
+        - name: proposal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Proposal apply result and updated proposal envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalActionResponse"
+        "500":
+          description: Proposal apply failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /proposals/{proposal_id}/undo:
+    post:
+      operationId: undoProposal
+      parameters:
+        - name: proposal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Proposal undo result and updated proposal envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalActionResponse"
+        "500":
+          description: Proposal undo failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /sessions:
+    get:
+      operationId: listSessions
+      responses:
+        "200":
+          description: Persisted debugging sessions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../schemas/agent-runtime/session-record.schema.json"
+    post:
+      operationId: createSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionCreateRequest"
+      responses:
+        "200":
+          description: Created session and root thread.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionCreateResponse"
+        "500":
+          description: Session creation failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /sessions/{session_id}:
+    get:
+      operationId: showSession
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^session_"
+      responses:
+        "200":
+          description: Session, threads, and recorded steps.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionShowResponse"
+        "404":
+          description: Session was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /sessions/{session_id}/fork:
+    post:
+      operationId: forkSessionThread
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^session_"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThreadForkRequest"
+      responses:
+        "200":
+          description: Created child thread.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadForkResponse"
+        "500":
+          description: Thread fork failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /agents/{agent_id}/run:
+    post:
+      operationId: runAgent
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  type: object
+                  default: {}
+                session_id:
+                  type: string
+                  pattern: "^session_"
+                thread_id:
+                  type: string
+                  pattern: "^thread_"
+              additionalProperties: false
+      responses:
+        "200":
+          description: Completed runtime invocation envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentRunResponse"
+        "500":
+          description: Runtime invocation failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    CatalogSummary:
+      type: object
+      required:
+        - protocol_version
+        - catalog_version
+        - generated_at
+        - active_domains
+        - agent_count
+        - tool_count
+        - proposal_kind_count
+        - prompt_block_count
+      properties:
+        protocol_version:
+          const: agent.v1
+        catalog_version:
+          const: agent_catalog.v1
+        generated_at:
+          type: string
+          format: date-time
+        active_domains:
+          type: array
+          items:
+            type: string
+        agent_count:
+          type: integer
+          minimum: 0
+        tool_count:
+          type: integer
+          minimum: 0
+        proposal_kind_count:
+          type: integer
+          minimum: 0
+        prompt_block_count:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+    AgentRunResponse:
+      type: object
+      required: [result, trace]
+      properties:
+        result:
+          $ref: "../schemas/agent-runtime/run-result.schema.json"
+        trace:
+          $ref: "../schemas/agent-runtime/trace.schema.json"
+      additionalProperties: false
+    AgentRunRecord:
+      type: object
+      required:
+        - protocol_version
+        - run_id
+        - agent_id
+        - status
+        - scope
+        - started_at
+        - input
+        - output
+      properties:
+        protocol_version:
+          const: agent.v1
+        run_id:
+          type: string
+          pattern: "^run_"
+        idempotency_key:
+          type: string
+          pattern: "^idem_[a-f0-9]{64}$"
+          description: Stable retry identity derived from agent, scope, trigger, and scheduled_for.
+        agent_id:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          enum:
+            - running
+            - completed
+            - skipped
+            - failed
+            - cancelled
+            - timed_out
+            - abandoned
+        scope:
+          type: object
+          required: [type]
+          properties:
+            type:
+              type: string
+              enum: [global, user, tenant]
+            id:
+              type: string
+          additionalProperties: false
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: ["string", "null"]
+          format: date-time
+        input:
+          type: object
+        output:
+          type: object
+        error:
+          type: ["object", "null"]
+        metadata:
+          type: object
+          default: {}
+      additionalProperties: false
+    ReplayExecutionResponse:
+      type: object
+      required:
+        - mode
+        - source_run_id
+        - replay_run_id
+        - agent_id
+        - result
+        - trace
+        - output_matches
+      properties:
+        mode:
+          type: string
+          enum: [view, deterministic, live]
+        source_run_id:
+          type: string
+          pattern: "^run_"
+        replay_run_id:
+          type: string
+          pattern: "^run_"
+        agent_id:
+          type: string
+          minLength: 1
+        result:
+          $ref: "../schemas/agent-runtime/run-result.schema.json"
+        trace:
+          $ref: "../schemas/agent-runtime/trace.schema.json"
+        output_matches:
+          type: boolean
+      additionalProperties: false
+    ToolCallResponse:
+      type: object
+      required: [tool, output]
+      properties:
+        tool:
+          type: string
+          minLength: 1
+        output:
+          type: object
+      additionalProperties: false
+    RuntimeMetricsSummary:
+      type: object
+      required:
+        - protocol_version
+        - runtime_version
+        - generated_at
+        - store_root
+        - run_count
+        - runs_by_status
+        - successful_run_count
+        - skipped_run_count
+        - failed_run_count
+        - timeout_count
+        - total_run_latency_ms
+        - tool_call_count
+        - failed_tool_call_count
+        - total_tool_call_latency_ms
+        - replay_count
+        - proposal_count
+        - proposals_by_status
+        - proposal_created_count
+        - proposal_approved_count
+        - proposal_denied_count
+        - proposal_applied_count
+        - llm_total_tokens
+      properties:
+        protocol_version:
+          const: agent.v1
+        runtime_version:
+          type: string
+          minLength: 1
+        generated_at:
+          type: string
+          format: date-time
+        store_root:
+          type: string
+          minLength: 1
+        run_count:
+          type: integer
+          minimum: 0
+        runs_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        successful_run_count:
+          type: integer
+          minimum: 0
+        skipped_run_count:
+          type: integer
+          minimum: 0
+        failed_run_count:
+          type: integer
+          minimum: 0
+        timeout_count:
+          type: integer
+          minimum: 0
+        total_run_latency_ms:
+          type: integer
+          minimum: 0
+        average_run_latency_ms:
+          type: ["number", "null"]
+        tool_call_count:
+          type: integer
+          minimum: 0
+        failed_tool_call_count:
+          type: integer
+          minimum: 0
+        total_tool_call_latency_ms:
+          type: integer
+          minimum: 0
+        average_tool_call_latency_ms:
+          type: ["number", "null"]
+        replay_count:
+          type: integer
+          minimum: 0
+        proposal_count:
+          type: integer
+          minimum: 0
+        proposals_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        proposal_created_count:
+          type: integer
+          minimum: 0
+        proposal_approved_count:
+          type: integer
+          minimum: 0
+        proposal_denied_count:
+          type: integer
+          minimum: 0
+        proposal_applied_count:
+          type: integer
+          minimum: 0
+        llm_total_tokens:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+    HookEvent:
+      $ref: "../schemas/agent-runtime/hook-event.schema.json"
+    PromptManifest:
+      $ref: "../schemas/agent-runtime/prompt-manifest.schema.json"
+    ProposalCreateRequest:
+      type: object
+      required: [run_id, agent_id, kind, summary]
+      properties:
+        run_id:
+          type: string
+          minLength: 1
+        agent_id:
+          type: string
+          minLength: 1
+        kind:
+          type: string
+          minLength: 1
+        summary:
+          type: string
+          minLength: 1
+        payload:
+          type: object
+          default: {}
+      additionalProperties: false
+    ProposalDecisionRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approve, approved, deny, denied]
+        comment:
+          type: string
+      additionalProperties: false
+    ProposalDecisionResponse:
+      type: object
+      required: [decision, proposal]
+      properties:
+        decision:
+          $ref: "../schemas/agent-runtime/approval-decision.schema.json"
+        proposal:
+          $ref: "../schemas/agent-runtime/proposal-envelope.schema.json"
+      additionalProperties: false
+    ProposalActionResponse:
+      type: object
+      required: [action, tool, tool_output, proposal]
+      properties:
+        action:
+          type: string
+          enum: [apply, undo]
+        tool:
+          type: string
+          minLength: 1
+        tool_output:
+          type: object
+        proposal:
+          $ref: "../schemas/agent-runtime/proposal-envelope.schema.json"
+      additionalProperties: false
+    SessionCreateRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        metadata:
+          type: object
+          default: {}
+      additionalProperties: false
+    SessionCreateResponse:
+      type: object
+      required: [session, thread]
+      properties:
+        session:
+          $ref: "../schemas/agent-runtime/session-record.schema.json"
+        thread:
+          $ref: "../schemas/agent-runtime/thread-record.schema.json"
+      additionalProperties: false
+    ThreadWithSteps:
+      type: object
+      required: [thread, steps]
+      properties:
+        thread:
+          $ref: "../schemas/agent-runtime/thread-record.schema.json"
+        steps:
+          type: array
+          items:
+            $ref: "../schemas/agent-runtime/step-record.schema.json"
+      additionalProperties: false
+    SessionShowResponse:
+      type: object
+      required: [session, threads]
+      properties:
+        session:
+          $ref: "../schemas/agent-runtime/session-record.schema.json"
+        threads:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThreadWithSteps"
+      additionalProperties: false
+    ThreadForkRequest:
+      type: object
+      required: [parent_thread_id]
+      properties:
+        parent_thread_id:
+          type: string
+          pattern: "^thread_"
+        title:
+          type: string
+        metadata:
+          type: object
+          default: {}
+      additionalProperties: false
+    ThreadForkResponse:
+      type: object
+      required: [session_id, parent_thread_id, thread]
+      properties:
+        session_id:
+          type: string
+          pattern: "^session_"
+        parent_thread_id:
+          type: string
+          pattern: "^thread_"
+        thread:
+          $ref: "../schemas/agent-runtime/thread-record.schema.json"
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+      additionalProperties: false

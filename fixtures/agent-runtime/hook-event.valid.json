@@ -1,0 +1,20 @@
+{
+  "protocol_version": "agent.v1",
+  "hook_event": "AfterAgentStep",
+  "hook_kind": "process",
+  "hook_name": "eval.scoring_hook",
+  "command": ["agent", "dev-score-hook"],
+  "run_id": "run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000",
+  "agent_id": "execution_review",
+  "status": "completed",
+  "started_at": "2026-06-28T10:00:00Z",
+  "finished_at": "2026-06-28T10:00:01Z",
+  "duration_ms": 1000,
+  "input": {
+    "eval_id": "catalog_dry_run"
+  },
+  "output": {
+    "passed": true,
+    "score": 1.0
+  }
+}

@@ -1,0 +1,25 @@
+id: catalog_dry_run_proposal_expectation
+agent_id: execution_review
+catalog: ../../fixtures/agent-runtime/catalog.valid.json
+input:
+  message: eval proposal fixture
+  proposal:
+    kind: fake
+    summary: Eval fake proposal
+    payload:
+      value: 19
+expect:
+  status: completed
+  agent_id: execution_review
+  output_mode: catalog_dry_run
+  trace_events:
+    - run_started
+    - catalog_dry_run.agent_selected
+    - proposal_created
+    - run_finished
+  proposals:
+    min_count: 1
+    kinds:
+      - fake
+    statuses:
+      - pending_approval

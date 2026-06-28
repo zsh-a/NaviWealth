@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/run-request.schema.json",
+  "title": "RunRequest",
+  "type": "object",
+  "required": ["protocol_version"],
+  "properties": {
+    "protocol_version": { "const": "agent.v1" },
+    "run_id": { "type": "string" },
+    "input": { "type": "object", "default": {} },
+    "user": {
+      "type": ["object", "null"],
+      "required": ["user_id"],
+      "properties": {
+        "user_id": { "type": "string", "minLength": 1 },
+        "metadata": { "type": "object", "default": {} }
+      },
+      "additionalProperties": false
+    },
+    "trigger": {
+      "type": "string",
+      "enum": ["manual", "scheduled", "replay"],
+      "default": "manual"
+    },
+    "metadata": { "type": "object", "default": {} }
+  },
+  "additionalProperties": false
+}

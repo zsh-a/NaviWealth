@@ -1,0 +1,58 @@
+{
+  "protocol_version": "agent.v1",
+  "catalog_version": "agent_catalog.v1",
+  "generated_at": "2026-06-28T09:12:31Z",
+  "active_domains": ["finance"],
+  "agents": [
+    {
+      "protocol_version": "agent.v1",
+      "id": "execution_review",
+      "name": "Execution Review",
+      "version": "0.1.0",
+      "schedule": {
+        "type": "interval",
+        "every_seconds": 86400,
+        "preferred_hour_local": 9,
+        "jitter_seconds": 300
+      },
+      "capabilities": ["scheduled_agent"],
+      "metadata": {
+        "domain": "execution",
+        "dart_type": "ExecutionReviewAgent",
+        "prompt_id": "execution_review_prompt",
+        "prompt_version": "execution_review.prompt.v1",
+        "model_family": "openai",
+        "provider": "openai_compatible",
+        "model": "gpt-5-mini",
+        "tool_schema_version": "tool_schema.v1"
+      }
+    }
+  ],
+  "tools": [
+    {
+      "name": "propose_fake",
+      "description": "Propose fake data",
+      "input_schema": {
+        "type": "object"
+      },
+      "risk": "medium",
+      "metadata": {
+        "access": "propose",
+        "requires_confirmation": "one_tap",
+        "domain": "finance"
+      }
+    }
+  ],
+  "proposal_kinds": [
+    {
+      "kind": "fake",
+      "tool_name": "propose_fake"
+    }
+  ],
+  "prompt_blocks": [
+    {
+      "index": 0,
+      "text": "Finance prompt block"
+    }
+  ]
+}
