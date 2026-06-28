@@ -49,6 +49,10 @@ enum ExecutionCommitmentStatus {
       orElse: () => ExecutionCommitmentStatus.active,
     );
   }
+
+  bool get isOpen =>
+      this == ExecutionCommitmentStatus.active ||
+      this == ExecutionCommitmentStatus.paused;
 }
 
 enum ExecutionProjectStatus {
@@ -66,6 +70,10 @@ enum ExecutionProjectStatus {
       orElse: () => ExecutionProjectStatus.active,
     );
   }
+
+  bool get isOpen =>
+      this == ExecutionProjectStatus.active ||
+      this == ExecutionProjectStatus.paused;
 }
 
 enum ExecutionHorizon {
@@ -158,6 +166,12 @@ class ExecutionAction {
       status == ExecutionActionStatus.doing ||
       status == ExecutionActionStatus.blocked;
 
+  bool get isBacklog =>
+      status == ExecutionActionStatus.todo &&
+      priority != ExecutionPriority.high &&
+      scheduledFor == null &&
+      dueAt == null;
+
   bool isDue(DateTime now) {
     final due = dueAt;
     if (due == null) return false;
@@ -169,12 +183,12 @@ class ExecutionAction {
     String? note,
     ExecutionActionStatus? status,
     ExecutionPriority? priority,
-    DateTime? dueAt,
-    DateTime? scheduledFor,
-    String? projectId,
-    String? commitmentId,
+    Object? dueAt = _sentinel,
+    Object? scheduledFor = _sentinel,
+    Object? projectId = _sentinel,
+    Object? commitmentId = _sentinel,
     ExecutionSourceRef? source,
-    DateTime? completedAt,
+    Object? completedAt = _sentinel,
     required SyncMeta sync,
   }) {
     return ExecutionAction(
@@ -183,13 +197,19 @@ class ExecutionAction {
       note: note ?? this.note,
       status: status ?? this.status,
       priority: priority ?? this.priority,
-      dueAt: dueAt ?? this.dueAt,
-      scheduledFor: scheduledFor ?? this.scheduledFor,
-      projectId: projectId ?? this.projectId,
-      commitmentId: commitmentId ?? this.commitmentId,
+      dueAt: dueAt == _sentinel ? this.dueAt : dueAt as DateTime?,
+      scheduledFor: scheduledFor == _sentinel
+          ? this.scheduledFor
+          : scheduledFor as DateTime?,
+      projectId: projectId == _sentinel ? this.projectId : projectId as String?,
+      commitmentId: commitmentId == _sentinel
+          ? this.commitmentId
+          : commitmentId as String?,
       source: source ?? this.source,
       createdAt: createdAt,
-      completedAt: completedAt ?? this.completedAt,
+      completedAt: completedAt == _sentinel
+          ? this.completedAt
+          : completedAt as DateTime?,
       sync: sync,
     );
   }
@@ -219,6 +239,34 @@ class ExecutionProject {
   final DateTime createdAt;
   final DateTime? completedAt;
   final SyncMeta sync;
+
+  ExecutionProject copyWith({
+    String? title,
+    String? description,
+    ExecutionProjectStatus? status,
+    ExecutionHorizon? horizon,
+    Object? targetDate = _sentinel,
+    ExecutionSourceRef? source,
+    Object? completedAt = _sentinel,
+    required SyncMeta sync,
+  }) {
+    return ExecutionProject(
+      id: id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      horizon: horizon ?? this.horizon,
+      targetDate: targetDate == _sentinel
+          ? this.targetDate
+          : targetDate as DateTime?,
+      source: source ?? this.source,
+      createdAt: createdAt,
+      completedAt: completedAt == _sentinel
+          ? this.completedAt
+          : completedAt as DateTime?,
+      sync: sync,
+    );
+  }
 }
 
 class ExecutionCommitment {
@@ -247,6 +295,36 @@ class ExecutionCommitment {
   final DateTime createdAt;
   final DateTime? completedAt;
   final SyncMeta sync;
+
+  ExecutionCommitment copyWith({
+    String? title,
+    String? description,
+    ExecutionCommitmentStatus? status,
+    ExecutionHorizon? horizon,
+    Object? targetDate = _sentinel,
+    Object? projectId = _sentinel,
+    ExecutionSourceRef? source,
+    Object? completedAt = _sentinel,
+    required SyncMeta sync,
+  }) {
+    return ExecutionCommitment(
+      id: id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      horizon: horizon ?? this.horizon,
+      targetDate: targetDate == _sentinel
+          ? this.targetDate
+          : targetDate as DateTime?,
+      projectId: projectId == _sentinel ? this.projectId : projectId as String?,
+      source: source ?? this.source,
+      createdAt: createdAt,
+      completedAt: completedAt == _sentinel
+          ? this.completedAt
+          : completedAt as DateTime?,
+      sync: sync,
+    );
+  }
 }
 
 class ExecutionProgressEntry {
@@ -275,6 +353,7 @@ class ExecutionOverviewSnapshot {
   const ExecutionOverviewSnapshot({
     required this.todayCount,
     required this.blockedCount,
+    required this.backlogCount,
     required this.highPriorityCount,
     required this.dueCount,
     required this.activeProjectCount,
@@ -284,6 +363,7 @@ class ExecutionOverviewSnapshot {
 
   final int todayCount;
   final int blockedCount;
+  final int backlogCount;
   final int highPriorityCount;
   final int dueCount;
   final int activeProjectCount;
@@ -305,6 +385,7 @@ class ExecutionOverviewSnapshot {
       blockedCount: open
           .where((action) => action.status == ExecutionActionStatus.blocked)
           .length,
+      backlogCount: open.where((action) => action.isBacklog).length,
       highPriorityCount: open
           .where((action) => action.priority == ExecutionPriority.high)
           .length,
@@ -317,3 +398,7 @@ class ExecutionOverviewSnapshot {
     );
   }
 }
+
+/// Marker used so `copyWith` can distinguish omitted nullable fields from
+/// fields explicitly cleared to null.
+const Object _sentinel = Object();

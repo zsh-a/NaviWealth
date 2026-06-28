@@ -1,5 +1,5 @@
 // Flow / Task test: "Import CSV / statement" — Task #4 in
-// docs/testing-strategy.md.
+// docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers the ingest review queue from
 // Activity, pastes a small CSV statement, and proves the pipeline stages rows

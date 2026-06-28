@@ -1,5 +1,5 @@
 /// `search_notes` — KnowledgeOS device tool
-/// (`docs/knowledgeos-domain.md` §4).
+/// (`docs/domains/knowledgeos-domain.md` §4).
 ///
 /// Semantic + full-text hybrid via `MemoryRuntime.recall(source='know:notes')`,
 /// with the substring scan kept as a fallback for two cases:

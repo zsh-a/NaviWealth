@@ -1,5 +1,5 @@
 /// `find_similar_knowledge` — KnowledgeOS dedupe / cross-type read tool
-/// (`docs/knowledgeos-domain.md` §15.3).
+/// (`docs/domains/knowledgeos-domain.md` §15.3).
 ///
 /// Given free text, returns the most similar existing KnowledgeOS entries
 /// across the requested types. Similarity = EmbeddingGemma cosine

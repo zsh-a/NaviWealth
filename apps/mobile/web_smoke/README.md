@@ -1,6 +1,6 @@
 # `web_smoke` — Cross-Browser Smoke for the Flutter Web Build
 
-Automated companion to [`docs/web-compat-matrix.md`](../../../docs/web-compat-matrix.md) (FIR-40). Runs Playwright against the production-shaped Flutter web bundle on **Chromium, WebKit, and Firefox**, asserting things that have silently regressed before:
+Automated companion to [`docs/development/web-compat-matrix.md`](../../../docs/development/web-compat-matrix.md) (FIR-40). Runs Playwright against the production-shaped Flutter web bundle on **Chromium, WebKit, and Firefox**, asserting things that have silently regressed before:
 
 - Drift opens a persistent storage backend (and on Firefox, that backend is not OPFS).
 - `PathUrlStrategy` routes resolve as direct hits and after reload.

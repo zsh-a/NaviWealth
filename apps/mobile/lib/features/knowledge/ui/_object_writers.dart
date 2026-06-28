@@ -1,5 +1,5 @@
 /// KnowledgeOS Library writers — Principle / Assumption / Concept /
-/// Experiment (`docs/knowledgeos-domain.md` §3 + §9).
+/// Experiment (`docs/domains/knowledgeos-domain.md` §3 + §9).
 ///
 /// Decision has its own sheet in `_decision_writer.dart` because it
 /// owns options / picker UI. The four types here share a single

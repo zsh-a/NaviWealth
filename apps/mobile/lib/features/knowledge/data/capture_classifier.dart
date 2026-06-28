@@ -1,5 +1,5 @@
 /// Capture classifier interface + pure-Dart heuristic
-/// (`docs/knowledgeos-domain.md` §3 + §4 + §14.2 P1).
+/// (`docs/domains/knowledgeos-domain.md` §3 + §4 + §14.2 P1).
 ///
 /// Two-step layering matches the InboxTriageAgent pattern:
 ///

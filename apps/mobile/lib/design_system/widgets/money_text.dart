@@ -7,6 +7,7 @@ import '../../core/format/formatters.dart';
 import '../../domain/values/money.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/typography_tokens.dart';
+import 'amount_privacy_placeholder.dart';
 import 'amount_privacy_scope.dart';
 
 /// How much horizontal space the symbol should take.
@@ -82,6 +83,7 @@ class MoneyText extends StatelessWidget {
       }
     });
   }
+
   const MoneyText({
     super.key,
     required this.amount,
@@ -147,14 +149,15 @@ class MoneyText extends StatelessWidget {
       fontFeatures: TypographyTokens.tabularFigures,
     );
     if (amount != null && AmountPrivacyScope.isHiddenOf(context)) {
-      return Text(
-        AmountPrivacyScope.mask,
+      return AmountPrivacyPlaceholder(
+        density: compact
+            ? AmountPrivacyPlaceholderDensity.compact
+            : _placeholderDensity(effectiveStyle),
         style: effectiveStyle,
         textAlign: textAlign,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         semanticsLabel:
-            semanticsLabel ?? AmountPrivacyScope.hiddenSemanticsLabelOf(context),
+            semanticsLabel ??
+            AmountPrivacyScope.hiddenSemanticsLabelOf(context),
       );
     }
     final formatted = _format(context);
@@ -177,7 +180,8 @@ class MoneyText extends StatelessWidget {
 
   String _format(BuildContext context) {
     if (amount == null) return _emptyForSymbol();
-    final loc = locale ?? Localizations.maybeLocaleOf(context)?.toString() ?? '';
+    final loc =
+        locale ?? Localizations.maybeLocaleOf(context)?.toString() ?? '';
     final value = amount!;
 
     final formatter = _cachedFormat(
@@ -207,6 +211,15 @@ class MoneyText extends StatelessWidget {
   }
 
   String _defaultGlyphFor(String code) => AppFormatters.currencyGlyph(code);
+
+  AmountPrivacyPlaceholderDensity _placeholderDensity(TextStyle style) {
+    final fontSize =
+        style.fontSize ?? TypographyTokens.numericBody.fontSize ?? 14;
+    if (fontSize >= 28) return AmountPrivacyPlaceholderDensity.display;
+    if (fontSize >= 18) return AmountPrivacyPlaceholderDensity.title;
+    if (fontSize <= 12) return AmountPrivacyPlaceholderDensity.caption;
+    return AmountPrivacyPlaceholderDensity.body;
+  }
 }
 
 /// Signed ledger amount text with shared unit formatting and semantic
@@ -242,9 +255,7 @@ class SignedMoneyText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hidden = amount != null && AmountPrivacyScope.isHiddenOf(context);
-    final formatted = hidden
-        ? AmountPrivacyScope.mask
-        : amount == null
+    final formatted = amount == null
         ? '—'
         : formatters.signedMoney(
             amount!,
@@ -256,6 +267,16 @@ class SignedMoneyText extends StatelessWidget {
       color: effectiveColor,
       fontFeatures: TypographyTokens.tabularFigures,
     );
+    if (hidden) {
+      return AmountPrivacyPlaceholder(
+        style: effectiveStyle.copyWith(color: null),
+        textAlign: textAlign,
+        density: _placeholderDensity(effectiveStyle),
+        semanticsLabel:
+            semanticsLabel ??
+            AmountPrivacyScope.hiddenSemanticsLabelOf(context),
+      );
+    }
     return Text(
       formatted,
       style: effectiveStyle,
@@ -277,6 +298,14 @@ class SignedMoneyText extends StatelessWidget {
     }
     final semantic = SemanticColors.of(context);
     return value > Decimal.zero ? semantic.success : semantic.danger;
+  }
+
+  AmountPrivacyPlaceholderDensity _placeholderDensity(TextStyle style) {
+    final fontSize =
+        style.fontSize ?? TypographyTokens.numericBody.fontSize ?? 14;
+    if (fontSize >= 18) return AmountPrivacyPlaceholderDensity.title;
+    if (fontSize <= 12) return AmountPrivacyPlaceholderDensity.caption;
+    return AmountPrivacyPlaceholderDensity.body;
   }
 }
 

@@ -1,4 +1,4 @@
-/// FinanceOS device-tool aggregator (`docs/lifeos-shell.md` §7.1, D-1.2).
+/// FinanceOS device-tool aggregator (`docs/architecture/lifeos-shell.md` §7.1, D-1.2).
 ///
 /// Each Finance feature owns its `ai_tools/` subdir; this barrel
 /// collects them so `domain_packs.dart` can register the full list with
@@ -125,7 +125,7 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
     const ProposeLiabilityPaymentTool(),
     tier: BudgetTier.standard,
   ),
-  // Options Income (`docs/options-income.md` §8 + Wheel lifecycle).
+  // Options Income (`docs/domains/options-income.md` §8 + Wheel lifecycle).
   _financeTool.read(
     const GetOptionsIncomeOpportunitiesTool(),
     risk: RiskLevel.suggest,

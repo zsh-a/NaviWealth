@@ -34,14 +34,14 @@ void main() {
         'prices',
         'corporate_actions',
         'watchlist_items',
-        // Options Income Planner P0 (`docs/options-income.md`).
+        // Options Income Planner P0 (`docs/domains/options-income.md`).
         'options_strategy_profile',
         'approved_underlyings',
         // Options Income Planner P3 — trade journal.
         'options_trade_journal',
-        // HealthOS (`docs/healthos-domain.md` §6.1).
+        // HealthOS (`docs/domains/healthos-domain.md` §6.1).
         'health_metrics',
-        // KnowledgeOS (`docs/knowledgeos-domain.md` §9) — all seven tables
+        // KnowledgeOS (`docs/domains/knowledgeos-domain.md` §9) — all seven tables
         // ride the row-state protocol under the `know:` row family.
         'knowledge_notes',
         'knowledge_principles',
@@ -50,7 +50,7 @@ void main() {
         'knowledge_concepts',
         'knowledge_experiments',
         'knowledge_routines',
-        // ExecutionOS (`docs/executionos-domain.md`) — project/action kernel
+        // ExecutionOS (`docs/domains/executionos-domain.md`) — project/action kernel
         // under the `exec:` row family.
         'execution_projects',
         'execution_actions',

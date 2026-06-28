@@ -9,6 +9,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
+import 'execution_delete_confirm.dart';
 import 'execution_sheet_footer.dart';
 import 'execution_widgets.dart';
 
@@ -86,6 +87,26 @@ class _ExecutionProjectFormState extends State<_ExecutionProjectForm> {
       final repo = await widget.ref.read(executionRepositoryProvider.future);
       final sync = await stampExecutionSync(widget.ref);
       await repo.upsertProject(_buildProject(sync, title));
+      widget.dirty.markPristine();
+      if (mounted) Navigator.of(context).pop(true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    final project = widget.project;
+    if (_saving || project == null) return;
+    final confirmed = await confirmExecutionDelete(
+      context: context,
+      item: project.title,
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      final repo = await widget.ref.read(executionRepositoryProvider.future);
+      final sync = await stampExecutionSync(widget.ref);
+      await repo.softDeleteProject(project: project, sync: sync);
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop(true);
     } finally {
@@ -203,6 +224,16 @@ class _ExecutionProjectFormState extends State<_ExecutionProjectForm> {
               maxLines: 5,
               textInputAction: TextInputAction.newline,
             ),
+            if (isEditing) ...[
+              const SizedBox(height: AppSpacing.s16),
+              const AppDivider(),
+              const SizedBox(height: AppSpacing.s12),
+              FButton(
+                variant: FButtonVariant.destructive,
+                onPress: _saving ? null : _delete,
+                child: Text(l10n.commonDelete),
+              ),
+            ],
           ],
         ),
       ),

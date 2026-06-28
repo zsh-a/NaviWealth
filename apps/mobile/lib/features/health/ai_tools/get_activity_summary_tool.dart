@@ -1,5 +1,5 @@
 /// `get_activity_summary` — HealthOS device tool
-/// (`docs/healthos-domain.md` §4, D-2.4).
+/// (`docs/domains/healthos-domain.md` §4, D-2.4).
 ///
 /// Read-only AI surface that joins `steps_daily` + `active_energy_daily`
 /// per calendar day. Returns per-day records plus totals / averages

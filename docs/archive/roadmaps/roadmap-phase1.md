@@ -29,8 +29,8 @@
 项目阈值、web build 体积、三端 happy path 验收和 0.3.0 tag。
 
 **结论**:Phase 1 收尾完成。下一程的重心应该转到
-[`roadmap-lifeos.md`](./roadmap-lifeos.md) 和
-[`roadmap-finance.md`](./roadmap-finance.md);历史 FinanceOS 调度仍可在
+[`roadmap-lifeos.md`](../../roadmap/roadmap-lifeos.md) 和
+[`roadmap-finance.md`](../../roadmap/roadmap-finance.md);历史 FinanceOS 调度仍可在
 [`roadmap-next.md`](./roadmap-next.md) 查阅。
 
 ---
@@ -309,7 +309,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 ### 验收
 - `flutter test --exclude-tags=golden` 中稳定运行 sync E2E 与 finance ledger
   E2E；当前测试基础设施 contract 会守住这两个文件。
-- 在 `docs/sync-protocol-tests.md` 中继续标记新增 case 的自动覆盖状态。
+- 在 `docs/sync/sync-protocol-tests.md` 中继续标记新增 case 的自动覆盖状态。
 
 ---
 

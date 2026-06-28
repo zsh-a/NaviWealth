@@ -1,5 +1,5 @@
 /// `knowledge_contradiction` — value-alignment / fact-conflict agent
-/// (`docs/knowledgeos-domain.md` §7).
+/// (`docs/domains/knowledgeos-domain.md` §7).
 ///
 /// Looks at every Decision authored in the last cadence window and
 /// compares each against the user's active Principles + referenced

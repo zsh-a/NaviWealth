@@ -1,4 +1,4 @@
-/// KnowledgeOS domain models (`docs/knowledgeos-domain.md` §3).
+/// KnowledgeOS domain models (`docs/domains/knowledgeos-domain.md` §3).
 ///
 /// Plain Dart records over Drift rows — no freezed yet, since the
 /// shape is still being shaken out by dogfood. Convert to freezed only

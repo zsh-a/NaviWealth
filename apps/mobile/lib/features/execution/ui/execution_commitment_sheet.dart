@@ -9,6 +9,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
+import 'execution_delete_confirm.dart';
 import 'execution_relation_picker.dart';
 import 'execution_sheet_footer.dart';
 import 'execution_widgets.dart';
@@ -100,6 +101,26 @@ class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
     }
   }
 
+  Future<void> _delete() async {
+    final commitment = widget.commitment;
+    if (_saving || commitment == null) return;
+    final confirmed = await confirmExecutionDelete(
+      context: context,
+      item: commitment.title,
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      final repo = await widget.ref.read(executionRepositoryProvider.future);
+      final sync = await stampExecutionSync(widget.ref);
+      await repo.softDeleteCommitment(commitment: commitment, sync: sync);
+      widget.dirty.markPristine();
+      if (mounted) Navigator.of(context).pop(true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   ExecutionCommitment _buildCommitment(SyncMeta sync, String title) {
     final existing = widget.commitment;
     return ExecutionCommitment(
@@ -137,6 +158,9 @@ class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
     final projects =
         widget.ref.watch(executionProjectsProvider).value ??
         const <ExecutionProject>[];
+    final selectedProject = _projectId == null || _projectId!.isEmpty
+        ? null
+        : widget.ref.watch(executionProjectByIdProvider(_projectId!)).value;
     final isEditing = widget.commitment != null;
 
     return AppSheet(
@@ -209,7 +233,9 @@ class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
             const SizedBox(height: AppSpacing.s12),
             FormPickerRow(
               label: l10n.executionProjectField,
-              value: executionProjectPickerLabel(l10n, projects, _projectId),
+              value:
+                  selectedProject?.title ??
+                  executionProjectPickerLabel(l10n, projects, _projectId),
               leading: const Icon(FLucideIcons.folder),
               enabled: !_saving,
               onPress: () async {
@@ -234,6 +260,16 @@ class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
               maxLines: 5,
               textInputAction: TextInputAction.newline,
             ),
+            if (isEditing) ...[
+              const SizedBox(height: AppSpacing.s16),
+              const AppDivider(),
+              const SizedBox(height: AppSpacing.s12),
+              FButton(
+                variant: FButtonVariant.destructive,
+                onPress: _saving ? null : _delete,
+                child: Text(l10n.commonDelete),
+              ),
+            ],
           ],
         ),
       ),

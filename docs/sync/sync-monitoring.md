@@ -1,6 +1,8 @@
 # Sync Monitoring Baseline
 
-What the sync API should look like in production, where to watch it, and what should page someone. Companion to [`sync-protocol.md`](./sync-protocol.md) (contract) and [`sync-e2e-manual.md`](./sync-e2e-manual.md) (manual flows).
+What the sync API should look like in production, where to watch it, and what
+should page someone. Companion to [`sync-v2.md`](./sync-v2.md) (active
+contract) and [`sync-e2e-manual.md`](./sync-e2e-manual.md) (manual flows).
 
 ## Where the data comes from
 
@@ -90,6 +92,6 @@ awk '/\[SYNC\]/ {for (i=1;i<=NF;i++) if ($i ~ /^dur_ms=/) {sub("dur_ms=","",$i);
 ## References
 
 - `apps/backend/src/routes/sync.rs::log_request` — emitter of the `[SYNC] …` line. Bump its tag if format changes.
-- `docs/sync-protocol.md` §1 (D1 50 ms budget), §5.5 (rate limits).
-- `docs/sync-e2e-manual.md` — what to run when a metric goes red.
-- `docs/sync-protocol-tests.md` §I — error-code semantics mapped to severities above.
+- [`sync-v2.md`](./sync-v2.md) — active sync contract and limits.
+- [`sync-e2e-manual.md`](./sync-e2e-manual.md) — what to run when a metric goes red.
+- [`sync-protocol-tests.md`](./sync-protocol-tests.md) §I — error-code semantics mapped to severities above.

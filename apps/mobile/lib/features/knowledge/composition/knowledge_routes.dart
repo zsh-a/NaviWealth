@@ -1,5 +1,5 @@
 /// KnowledgeOS routing tree
-/// (`docs/lifeos-shell.md` §3 + `docs/knowledgeos-domain.md` §5).
+/// (`docs/architecture/lifeos-shell.md` §3 + `docs/domains/knowledgeos-domain.md` §5).
 ///
 /// Mirrors `features/health/composition/health_routes.dart`. 3
 /// branches (Inbox / Library / Review) backed by [DomainTabsShell].

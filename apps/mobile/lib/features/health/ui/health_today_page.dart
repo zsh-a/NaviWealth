@@ -1,11 +1,11 @@
-/// HealthOS Today surface (`docs/healthos-domain.md` §8, D-2.5b
+/// HealthOS Today surface (`docs/domains/healthos-domain.md` §8, D-2.5b
 /// follow-up).
 ///
 /// Renders HealthKit/Garmin sync status, recovery, key metrics, weekly
 /// summary, and the latest Morning Briefing. Trend and Plan now have MVP
 /// surfaces; Today stays the dense operational entry point.
 ///
-/// Chrome matches the rest of LifeOS (`docs/lifeos-shell.md` §3): the
+/// Chrome matches the rest of LifeOS (`docs/architecture/lifeos-shell.md` §3): the
 /// ForUI `FScaffold` + `FHeader.nested` shell, `SoftCard` surfaces and
 /// `context.theme` tokens — never Material `Scaffold` / `Theme.of` —
 /// so HealthOS reads as the same app as Finance / Knowledge.

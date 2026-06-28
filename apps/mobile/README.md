@@ -1,6 +1,6 @@
 # NaviWealth Mobile (Flutter)
 
-跨端三平台 App（iOS / Android / Web），Personal LifeOS 的客户端。本 README 覆盖工程基线；功能架构详见仓库根目录的 [`CLAUDE.md`](../../CLAUDE.md)。
+跨端三平台 App（iOS / Android / Web），Personal LifeOS 的客户端。本 README 覆盖工程基线；功能架构详见仓库根目录的 [`docs/index.md`](../../docs/index.md) 和 [`CLAUDE.md`](../../CLAUDE.md)。
 
 ## 运行
 
@@ -29,13 +29,13 @@ tool/build-cn-fonts.sh     # app-cn-base.woff2 + app-cn-ext.woff2（CN 字体子
 lib/
 ├── app/                   启动、路由、域注册（DomainPack）、组合根、Shell chrome
 │   ├── bootstrap.dart     Provider overrides 和 Shell 组合
-│   ├── domain_packs.dart  生产域清单（Finance / Health / Knowledge）
-│   ├── router_builder.go  外层 dock Shell + 域路由
-│   └── app_dock_shell.go  多域导航 chrome
+│   ├── domain_packs.dart  生产域清单（Finance / Health / Knowledge / Execution）
+│   ├── router_builder.dart 外层 dock Shell + 域路由
+│   └── app_dock_shell.dart 多域导航 chrome
 ├── core/                  跨域基础设施（域中立）
 │   ├── ai/                运行时契约、设备端 agent loop、本地记忆、嵌入、组合接缝
 │   ├── auth/              JWT / session / 域启用（DomainScope）
-│   ├── persistence/       Drift adapter 和共享表（含 health / knowledge 表声明）
+│   ├── persistence/       Drift adapter 和共享表（含 health / knowledge / execution 表声明）
 │   ├── shell/             多域 IA 原语（DomainShell spec）
 │   ├── sync/              Sync v2 行状态客户端和同步信封类型
 │   ├── lifeos/            DomainPack 注册契约
@@ -49,6 +49,7 @@ lib/
 │   ├── finance/           FinanceOS 组合根、数据、域模型
 │   ├── health/            HealthOS 数据、UI、AI 工具、Agent（用户启用）
 │   ├── knowledge/         KnowledgeOS 数据、UI、AI 工具、Agent（用户启用）
+│   ├── execution/         ExecutionOS 数据、UI、AI 工具、Agent（用户启用）
 │   ├── ai_chat/           跨域 AI 对话 UI
 │   ├── accounts/          账户管理
 │   ├── assets/            资产总览
@@ -75,9 +76,10 @@ NaviWealth 是 Personal LifeOS，通过 `DomainPack` 注册多域：
 
 | 域 | 启用方式 | Shell 标签页 | AI 工具 | Agent |
 |---|---|---|---|---|
-| FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | 8+ 设备工具 | — |
-| HealthOS | 用户启用 | Today / Trend / Plan | 5 设备工具 | Morning Briefing |
+| FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | 35 设备工具 | — |
+| HealthOS | 用户启用 | Today / Trend / Plan | 7 设备工具 | Morning Briefing / Recovery Alert / Weekly Summary |
 | KnowledgeOS | 用户启用 | Inbox / Library / Review | 16 设备工具 | Review / Assumption / Contradiction / Inbox Triage / Routine Due |
+| ExecutionOS | 用户启用 | Today / Commitments / Review | 8 设备工具 | Review |
 
 域启用状态通过 `domainOptInsProvider` 管理，所有工具、提示、Shell spec、Agent 和命令面板条目从 active packs 派生。
 
@@ -111,7 +113,7 @@ AI 仅在设备端运行，无后端中继：
 
 使用 **Path URL strategy**（`/accounts` 而非 `/#/accounts`）。`bootstrap()` 调用 `usePathUrlStrategy()`；部署到 Cloudflare Pages 时需把未匹配路径 fallback 到 `index.html`，否则刷新子路由会 404。
 
-`web/index.html` 的 `<base href="$FLUTTER_BASE_HREF">` 由 `flutter build web --base-href=...` 在构建时替换，默认 `/`。手动验证清单见 [`../../docs/web-routing.md`](../../docs/web-routing.md)。
+`web/index.html` 的 `<base href="$FLUTTER_BASE_HREF">` 由 `flutter build web --base-href=...` 在构建时替换，默认 `/`。手动验证清单见 [`../../docs/development/web-routing.md`](../../docs/development/web-routing.md)。
 
 ## Web PWA / 离线 Shell
 

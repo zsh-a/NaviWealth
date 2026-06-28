@@ -1,5 +1,5 @@
 /// Manifest of model assets the embedder needs at runtime
-/// (D-1.7c per `docs/lifeos-shell.md` §6.6).
+/// (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6).
 ///
 /// Each [ModelBundle] is a logical group of files that get
 /// downloaded together via the in-app installer (Settings →

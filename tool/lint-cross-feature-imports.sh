@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Boundary lint: `features/<A>/` may not import `features/<B>/`
-# (`docs/lifeos-shell.md` §4 + northstar §2.4, D-1.6 + D-1.6b).
+# (`docs/architecture/lifeos-shell.md` §4 + northstar §2.4, D-1.6 + D-1.6b).
 #
 # Scope today: only `features/ai_chat/` is enforced — Phase D-1.6
 # targets the chat-context composition root. The rest of the

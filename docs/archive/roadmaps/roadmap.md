@@ -7,14 +7,14 @@
 >
 > ⚠️ **AI 架构提示**：云端 AI relay 已删除，AI 改为 **device-only**。
 > 本文中 AI 相关排期按端侧 runtime、DomainPack 工具聚合与本地 proposal
-> applier 维护；具体架构以 [`docs/ai-architecture.md`](./ai-architecture.md)
+> applier 维护；具体架构以 [`docs/ai/ai-architecture.md`](../../ai/ai-architecture.md)
 > 为准。
-> FIRE OS 演进计划见 [`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)。
+> FIRE OS 演进计划见 [`docs/archive/roadmaps/roadmap-fire-os.md`](./roadmap-fire-os.md)。
 >
 > ⚠️ **历史档案**：本文保留 2026-05-10 的判断用于追溯，不再作为当前
 > 任务排期或代码事实来源。当前计划入口是
 > [`roadmap-next.md`](./roadmap-next.md)，跨域架构以
-> [`lifeos-shell.md`](./lifeos-shell.md) 和各 domain SSOT 为准。
+> [`lifeos-shell.md`](../../architecture/lifeos-shell.md) 和各 domain SSOT 为准。
 
 ---
 
@@ -26,7 +26,7 @@
 | 核心域 | 资产 / 账户 / 投资 / 负债 / 支出 / FIRE / 再平衡 / 分析 / AI 助手 已上线 |
 | 同步 | Sync Protocol v1.0 已冻结（轮询 30s，HLC + OpLog + 行级 LWW） |
 | 后端 | Cloudflare Workers + D1，路由极简（health/auth/me/sync；AI 路由已删除） |
-| 测试 | 400+ 个 `*_test.dart`；flow/e2e/golden/contract 层已落地，当前事实以 [`docs/testing-strategy.md`](./testing-strategy.md) 为准 |
+| 测试 | 400+ 个 `*_test.dart`；flow/e2e/golden/contract 层已落地，当前事实以 [`docs/development/testing-strategy.md`](../../development/testing-strategy.md) 为准 |
 | 国际化 | en + zh；设计稿提及 ja 尚未支持 |
 | 安全 | 原生端 SQLCipher；Web 端为 sqlite3 WASM（弱于原生）；JWT HS256 单用户 |
 
@@ -75,13 +75,13 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 ### 1.5 Web 端体验补齐
 - 备份/恢复：`file_saver_stub.dart` / `file_saver_web.dart` 还是 stub，需走 File System Access API（Chromium）+ 下载兜底。
 - 安全：Web 端 sqlite3 WASM 没有 SQLCipher 等价方案；至少加上"敏感字段（密码/TOTP）应用层加密"或显式提示用户 Web 端不存敏感凭证。
-- 路径策略：核对 `docs/web-routing.md` 检查清单，确保所有 deep link 都能直达。
+- 路径策略：核对 `docs/development/web-routing.md` 检查清单，确保所有 deep link 都能直达。
 
 ### 1.6 测试空白补齐
 - 本节原始测试空白判断已过期：当前 `apps/mobile/test` 有 400+ 个
   `*_test.dart`，`plan`、`activity`、`home` 已有直接测试，flow/e2e/golden/
   contract 层也已落地；`me`、`more`、`portfolio` 不再是当前 feature 目录。
-- 后续测试优先级以 [`docs/testing-strategy.md`](./testing-strategy.md) 和
+- 后续测试优先级以 [`docs/development/testing-strategy.md`](../../development/testing-strategy.md) 和
   `apps/mobile/test/testing_infrastructure_contract_test.dart` 为准，重点是
   扩展高价值业务 bundle、保持零已知失败、以及让新增风险面进入 contract。
 - Sync E2E 已落地在 `apps/mobile/test/e2e/`：`sync_e2e_test.dart`
@@ -96,7 +96,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 目标：把 NaviWealth 从"看 + 记"升级到"规划 + 决策"。
 范围：6 个工作流并行，分 3 个月度里程碑串联（M1 = 月 1 末，M2 = 月 3 末，M3 = 月 6 末）。每个工作流独立可发，避免大爆炸 release。
 
-> **任务级执行计划**：见 [`docs/roadmap-midterm-execution.md`](./roadmap-midterm-execution.md) — 每条 ticket 含 size / depends / 文件 / DoD。本节仅描述方向与里程碑。
+> **任务级执行计划**：见 [`docs/archive/roadmaps/roadmap-midterm-execution.md`](./roadmap-midterm-execution.md) — 每条 ticket 含 size / depends / 文件 / DoD。本节仅描述方向与里程碑。
 
 ### 2.0 总览（节奏与里程碑）
 
@@ -130,7 +130,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
   - Drift 表：`budgets`（period, category_id, amount_minor, currency, rollover_policy）、`recurring_transactions`（rrule, next_run_at, template_posting_json）。
   - Domain：`BudgetPeriod`、`BudgetProgress`（实绩 vs 预算）；与 `expense_categories` 复用分类系统。
   - UI：月度预算编辑页 + 单卡片进度（先不接 dashboard）。
-  - 同步：新增 oplog entity 类型，复用现有 LWW；走 `docs/sync-protocol.md` 添加表流程。
+  - 同步：新增 oplog entity 类型，复用现有 LWW；走 `docs/archive/sync-protocol.md` 添加表流程。
 - **M2（月 3）— 计划交易 + 告警**
   - 计划交易调度器（基于 RFC 5545 RRULE 子集：FREQ=MONTHLY/WEEKLY/DAILY、INTERVAL、BYMONTHDAY）。运行时机：进入 budget/home 页面时拉取 due-list；不做后台 push（v1 同步协议不支持，留待 §3.1）。
   - 实时进度条 + 超支预警（dashboard 卡片）。预警阈值默认 80%/100%，可在分类粒度覆写。
@@ -138,7 +138,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 - **M3（月 6）— 现金流瀑布 + FIRE 联动**
   - 现金流瀑布图（季度/年度）：起始余额 → 收入 → 各分类支出 → 终值，使用 `design_system/charts`。
   - FIRE 模块从计划交易池拉取定期收支，作为蒙特卡洛输入的确定性骨架。
-  - FIRE 侧演进与桶/状态/AI 工具设计见 [`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)（Phase 2 对齐本里程碑）。
+  - FIRE 侧演进与桶/状态/AI 工具设计见 [`docs/archive/roadmaps/roadmap-fire-os.md`](./roadmap-fire-os.md)（Phase 2 对齐本里程碑）。
 
 **验收**：
 - 一个家庭月度预算（≥ 12 个分类）从录入到 dashboard 显示进度全程 < 60s 操作。
@@ -273,7 +273,7 @@ session 已具备，但**无用户画像、无批量提案、无回滚**。
 
 ### 2.6 可观测性与运营
 
-**现状**：`core/logging/crash_reporter.dart` 已有 Sentry 集成 scaffolding（默认不启用，opt-in）；`docs/sync-monitoring.md` 有后端基线但告警通道未配。
+**现状**：`core/logging/crash_reporter.dart` 已有 Sentry 集成 scaffolding（默认不启用，opt-in）；`docs/sync/sync-monitoring.md` 有后端基线但告警通道未配。
 
 **阶段拆分**：
 - **M1（月 1）— 崩溃上报 opt-in 上线**
@@ -302,7 +302,7 @@ session 已具备，但**无用户画像、无批量提案、无回滚**。
 ## 3. 长期（6–12 个月+）— 平台化与差异化
 
 ### 3.1 同步协议 v2（解冻）
-当前 v1 是轮询 + 行级 LWW，文档 `docs/sync-protocol.md` 已明确以下为 out-of-scope：
+当前 v1 是轮询 + 行级 LWW，文档 `docs/archive/sync-protocol.md` 已明确以下为 out-of-scope：
 - 端到端加密；
 - WebSocket / SSE 实时推送；
 - 字段级 LWW（目前是行级）。
@@ -397,7 +397,7 @@ session 已具备，但**无用户画像、无批量提案、无回滚**。
 
 ## 附：与现有文档的关系
 
-- 本文档是**方向**；具体实现细节看 `docs/sync-protocol.md`、`docs/web-routing.md`、`docs/visual-baseline/`、`apps/mobile/README.md`。
-- 子路线图：`docs/roadmap-phase1.md`（短期）、`docs/roadmap-midterm-execution.md`（中期任务级）、`docs/roadmap-fire-os.md`（FIRE OS 演进）。
-- AI 架构与运行时以 `docs/ai-architecture.md` + `docs/ai-protocol.md` 为准（device-only）。
+- 本文档是**方向**；具体实现细节看 `docs/archive/sync-protocol.md`、`docs/development/web-routing.md`、`docs/visual-baseline/`、`apps/mobile/README.md`。
+- 子路线图：`docs/archive/roadmaps/roadmap-phase1.md`（短期）、`docs/archive/roadmaps/roadmap-midterm-execution.md`（中期任务级）、`docs/archive/roadmaps/roadmap-fire-os.md`（FIRE OS 演进）。
+- AI 架构与运行时以 `docs/ai/ai-architecture.md` + `docs/ai/ai-protocol.md` 为准（device-only）。
 - 路线图调整请提交 PR 同时更新本文件顶部的"文档版本"。

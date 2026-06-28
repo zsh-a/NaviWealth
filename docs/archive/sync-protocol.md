@@ -11,7 +11,7 @@ new minor version (`Sync-Protocol-Version` header) and migration notes.
 
 Companion documents:
 
-- [`sync-protocol-tests.md`](./sync-protocol-tests.md) — protocol-level test
+- [`sync-protocol-tests.md`](../sync/sync-protocol-tests.md) — protocol-level test
   case catalogue used by both client and server suites.
 
 ---

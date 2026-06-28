@@ -1,5 +1,5 @@
 /// First production caller of the Memory Runtime
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// For each [TradeJournalEntry] this indexer emits **two** kinds of
 /// records:

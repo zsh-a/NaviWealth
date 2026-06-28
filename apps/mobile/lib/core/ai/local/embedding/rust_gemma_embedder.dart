@@ -1,6 +1,6 @@
 /// Production [Embedder] backed by the Rust `lifeos_native` crate,
 /// generated bindings via `flutter_rust_bridge` + native build via
-/// cargokit (D-1.7c per `docs/lifeos-shell.md` §6.6).
+/// cargokit (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6).
 ///
 /// EmbeddingGemma-300M (ONNX INT8) → 768-d unit vector; fingerprint
 /// `'embeddinggemma-300m-onnx-int8-d768'`. Drop-in for [StubEmbedder]:

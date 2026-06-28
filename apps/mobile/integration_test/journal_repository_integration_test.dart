@@ -1,4 +1,4 @@
-// On-device integration test (docs/testing-strategy.md section 6).
+// On-device integration test (docs/development/testing-strategy.md section 6).
 //
 // This covers a high-value repository write through the production
 // file-backed AppDatabase connection. Headless repository tests use

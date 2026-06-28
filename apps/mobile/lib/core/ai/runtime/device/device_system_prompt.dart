@@ -5,7 +5,7 @@
 /// base block below carries only cross-domain invariants (read rules,
 /// generic write protocol, currency / clarification conventions), and
 /// each active LifeOS domain contributes its own block via the
-/// `systemPromptBlocksProvider` composition seam (`docs/lifeos-shell.md`
+/// `systemPromptBlocksProvider` composition seam (`docs/architecture/lifeos-shell.md`
 /// §4). [composeDeviceSystemPrompt] assembles the final prompt.
 library;
 

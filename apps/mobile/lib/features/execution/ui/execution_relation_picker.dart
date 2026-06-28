@@ -49,6 +49,56 @@ String executionCommitmentPickerLabel(
   return l10n.executionUnknownCommitment;
 }
 
+ExecutionCommitment? executionCommitmentById(
+  List<ExecutionCommitment> commitments,
+  String? commitmentId,
+) {
+  if (commitmentId == null || commitmentId.isEmpty) return null;
+  for (final commitment in commitments) {
+    if (commitment.id == commitmentId) return commitment;
+  }
+  return null;
+}
+
+({String? projectId, String? commitmentId}) executionRelationAfterProjectPick({
+  required List<ExecutionCommitment> commitments,
+  required String? currentCommitmentId,
+  required String pickedProjectId,
+}) {
+  final nextProjectId = pickedProjectId == kExecutionPickerNone
+      ? null
+      : pickedProjectId;
+  final commitment = executionCommitmentById(commitments, currentCommitmentId);
+  final commitmentProjectId = commitment?.projectId;
+  final clearsCommitment =
+      commitmentProjectId != null &&
+      commitmentProjectId.isNotEmpty &&
+      commitmentProjectId != nextProjectId;
+  return (
+    projectId: nextProjectId,
+    commitmentId: clearsCommitment ? null : currentCommitmentId,
+  );
+}
+
+({String? projectId, String? commitmentId})
+executionRelationAfterCommitmentPick({
+  required List<ExecutionCommitment> commitments,
+  required String? currentProjectId,
+  required String pickedCommitmentId,
+}) {
+  if (pickedCommitmentId == kExecutionPickerNone) {
+    return (projectId: currentProjectId, commitmentId: null);
+  }
+  final commitment = executionCommitmentById(commitments, pickedCommitmentId);
+  final commitmentProjectId = commitment?.projectId;
+  return (
+    projectId: commitmentProjectId == null || commitmentProjectId.isEmpty
+        ? currentProjectId
+        : commitmentProjectId,
+    commitmentId: pickedCommitmentId,
+  );
+}
+
 Future<String?> showExecutionActionPicker({
   required BuildContext context,
   required List<ExecutionAction> actions,

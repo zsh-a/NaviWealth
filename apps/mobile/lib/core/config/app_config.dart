@@ -29,7 +29,7 @@ class AppConfig {
   bool get hasSentryDsn => sentryDsn.isNotEmpty;
 
   /// Path to a directory containing the EmbeddingGemma ONNX model +
-  /// tokenizer JSON files (D-1.7c per `docs/lifeos-shell.md` §6.6).
+  /// tokenizer JSON files (D-1.7c per `docs/architecture/lifeos-shell.md` §6.6).
   /// See `apps/mobile/native/lifeos_native/README.md` for the exact
   /// file list. Empty = use [StubEmbedder] default.
   ///

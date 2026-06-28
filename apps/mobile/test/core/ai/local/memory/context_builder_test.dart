@@ -11,6 +11,7 @@ import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import '../../../../core/persistence/test_database.dart';
 
 const _kOwner = 'u1';
+final _fixtureNow = DateTime.utc(2026, 5, 24);
 
 MemoryRecord _mem({
   required String id,
@@ -43,7 +44,7 @@ ContextBuilder _builder({DateTime Function()? clock}) {
     embedder: StubEmbedder(),
     memoryStore: SqliteMemoryStore(db: db),
     eventStore: SqliteEventStore(db: db),
-    clock: clock,
+    clock: clock ?? () => _fixtureNow,
   );
   return ContextBuilder(runtime: runtime);
 }

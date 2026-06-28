@@ -1,5 +1,5 @@
 /// Cross-platform local-notification surface for autonomous agents
-/// (`docs/lifeos-shell.md` §7.3, D-2.5b).
+/// (`docs/architecture/lifeos-shell.md` §7.3, D-2.5b).
 ///
 /// Narrow on purpose: agents fire a one-shot notification when their
 /// run finishes. No scheduling here — [BackgroundScheduler] handles

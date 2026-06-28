@@ -19,6 +19,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../expense/data/expense_report_providers.dart';
 import '../../home/data/dashboard_providers.dart';
+import 'settings_page_frame.dart';
 
 class MonthlyExpenseSettingsPage extends ConsumerWidget {
   const MonthlyExpenseSettingsPage({super.key});
@@ -29,39 +30,15 @@ class MonthlyExpenseSettingsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsMonthlyExpenseLabel,
       childPad: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = Breakpoints.isMobile(constraints.maxWidth)
-              ? const EdgeInsets.all(AppSpacing.s16)
-              : const EdgeInsets.all(AppSpacing.s24);
-          return ListView(
-            padding: padding,
-            children: const [
-              _Hint(),
-              SizedBox(height: AppSpacing.s12),
-              SoftCard(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
-                child: MonthlyExpenseSettings(),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _Hint extends StatelessWidget {
-  const _Hint();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-      child: Text(
-        l10n.settingsMonthlyExpenseHint,
-        style: context.captionStyle.copyWith(height: 1.45),
+      child: SettingsPageFrame(
+        children: [
+          SettingsHintText(l10n.settingsMonthlyExpenseHint),
+          const SizedBox(height: AppSpacing.s12),
+          const SoftCard(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: MonthlyExpenseSettings(),
+          ),
+        ],
       ),
     );
   }
@@ -84,42 +61,21 @@ class MonthlyExpenseSettings extends ConsumerWidget {
           windowMonths: prefs.windowMonths,
           onChanged: controller.setWindow,
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         _OverrideField(
           value: prefs.override,
           baseCurrency: baseCurrency,
           onChanged: controller.setOverride,
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s14,
-            AppSpacing.s4,
-            AppSpacing.s14,
-            AppSpacing.s8,
-          ),
-          child: Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: FTappable(
-              onPress: () {
-                controller.useAuto();
-                controller.setWindow(
-                  MonthlyExpensePreferencesController.defaultWindow,
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s6,
-                  vertical: AppSpacing.s4,
-                ),
-                child: Text(
-                  l10n.settingsMonthlyExpenseResetDefaults,
-                  style: context.captionLabelStyle.copyWith(
-                    color: context.theme.colors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
+        SettingsFooterAction(
+          icon: FLucideIcons.rotateCcw,
+          label: l10n.settingsMonthlyExpenseResetDefaults,
+          onPress: () {
+            controller.useAuto();
+            controller.setWindow(
+              MonthlyExpensePreferencesController.defaultWindow,
+            );
+          },
         ),
       ],
     );

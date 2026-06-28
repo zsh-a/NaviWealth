@@ -7,6 +7,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../domain/dashboard_models.dart';
 import 'allocation_detail_panel.dart';
 import 'asset_category_visuals.dart';
+import 'home_section.dart';
 
 /// Compact allocation surface for the home cockpit.
 ///
@@ -85,68 +86,29 @@ class AllocationSummary extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.s4,
-            top: AppSpacing.s4,
-            bottom: AppSpacing.s8,
-          ),
-          child: Text(
-            l10n.dashboardAllocationSummaryTitle,
-            style: context.mutedLabelStyle,
-          ),
-        ),
-        SoftCard(
-          borderless: true,
-          level: SoftCardLevel.raised,
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s16,
-            AppSpacing.s16,
-            AppSpacing.s16,
-            AppSpacing.s8,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _StackedBar(segments: barSegments),
-              const SizedBox(height: AppSpacing.s14),
-              for (var i = 0; i < segments.length; i++) ...[
-                _SegmentLegendRow(
-                  segment: segments[i],
-                  baseCurrency: snapshot.baseCurrency,
-                ),
-                if (i < segments.length - 1)
-                  const SizedBox(height: AppSpacing.s8),
-              ],
-              const SizedBox(height: AppSpacing.s4),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FTappable(
-                  onPress: () => showAllocationDetailPanel(
-                    context: context,
-                    snapshot: snapshot,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s4,
-                      vertical: AppSpacing.s4,
-                    ),
-                    child: Text(
-                      l10n.dashboardAllocationViewBreakdown,
-                      style: context.captionLabelStyle.copyWith(
-                        color: context.theme.colors.primary,
-                      ),
-                    ),
-                  ),
-                ),
+    return HomeSection(
+      title: l10n.dashboardAllocationSummaryTitle,
+      actionLabel: l10n.dashboardAllocationViewBreakdown,
+      onAction: () =>
+          showAllocationDetailPanel(context: context, snapshot: snapshot),
+      child: HomeSurface(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _StackedBar(segments: barSegments),
+            const SizedBox(height: AppSpacing.s14),
+            for (var i = 0; i < segments.length; i++) ...[
+              _SegmentLegendRow(
+                segment: segments[i],
+                baseCurrency: snapshot.baseCurrency,
               ),
+              if (i < segments.length - 1)
+                const SizedBox(height: AppSpacing.s8),
             ],
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

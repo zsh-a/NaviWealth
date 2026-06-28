@@ -9,7 +9,7 @@ import 'sync_api_client.dart';
 /// Dio-backed implementation of [SyncApiClient].
 ///
 /// Translates Dio errors into [SyncException]s with the [SyncErrorKind] the
-/// engine reacts to. The mapping mirrors `docs/sync-v2.md` §5.
+/// engine reacts to. The mapping mirrors `docs/sync/sync-v2.md` §5.
 class DioSyncApiClient implements SyncApiClient {
   DioSyncApiClient({required Dio dio, required this.tokenProvider})
     : _dio = dio;

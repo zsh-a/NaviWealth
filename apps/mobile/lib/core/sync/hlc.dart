@@ -10,7 +10,7 @@
 /// separator and zero-padded hex counter make it sort lexicographically the
 /// same as the `(wallMillis, counter, nodeId)` tuple — which is why sync v2
 /// uses this string directly as the opaque, ordered `version` token
-/// (`docs/sync-v2.md` §4.1).
+/// (`docs/sync/sync-v2.md` §4.1).
 class Hlc implements Comparable<Hlc> {
   const Hlc({
     required this.wallMillis,

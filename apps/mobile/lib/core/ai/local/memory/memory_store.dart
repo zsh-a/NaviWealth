@@ -1,5 +1,5 @@
 /// Drift-backed [MemoryStore] for the Memory Runtime
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Storage layout (DDL in `core/persistence/local_only_tables.dart`):
 ///

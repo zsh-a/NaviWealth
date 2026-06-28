@@ -1,5 +1,5 @@
 // Flow / Task test: "Encrypted backup / restore" — Task #11 in
-// docs/testing-strategy.md.
+// docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers Backup & Restore through global
 // Settings, selects a backup through the injected file-picker seam, confirms

@@ -2,7 +2,7 @@
 ///
 /// `StubEmbedder` is the deterministic hash-based pseudo-embedder used by
 /// tests and dev builds. A real on-device embedder (EmbeddingGemma-300M
-/// via Rust FFI + fastembed/ort — see `docs/lifeos-shell.md` §10) drops
+/// via Rust FFI + fastembed/ort — see `docs/architecture/lifeos-shell.md` §10) drops
 /// in behind the same interface; the [Embedder.fingerprint] discipline
 /// below lets the persistent vector store invalidate rows produced by
 /// a different model.

@@ -1,5 +1,5 @@
 /// KnowledgeOS `DomainShellSpec` registration
-/// (`docs/lifeos-shell.md` §3 + `docs/knowledgeos-domain.md` §5).
+/// (`docs/architecture/lifeos-shell.md` §3 + `docs/domains/knowledgeos-domain.md` §5).
 ///
 /// Mirrors `features/health/composition/health_domain_shell.dart`.
 /// 3 tabs: Inbox / Library / Review. Labels come from l10n so domain

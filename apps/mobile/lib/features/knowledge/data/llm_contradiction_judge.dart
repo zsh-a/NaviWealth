@@ -1,4 +1,4 @@
-/// LLM-backed contradiction judge (`docs/knowledgeos-domain.md` §7 +
+/// LLM-backed contradiction judge (`docs/domains/knowledgeos-domain.md` §7 +
 /// §14.2 "ContradictionAgent cosine + LLM judge 路径").
 ///
 /// Same shape as [LlmInboxTriageClassifier]: wrap the user's configured

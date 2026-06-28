@@ -1,4 +1,4 @@
-/// Inbox-triage classifier seam (`docs/knowledgeos-domain.md` §7 + §14.2).
+/// Inbox-triage classifier seam (`docs/domains/knowledgeos-domain.md` §7 + §14.2).
 ///
 /// The [InboxTriageAgent] delegates "what should we propose for this
 /// note" to an [InboxTriageClassifier]. Two implementations exist,

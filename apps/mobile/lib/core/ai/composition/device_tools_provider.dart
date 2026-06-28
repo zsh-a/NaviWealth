@@ -1,5 +1,5 @@
 /// Cross-domain AI device tool registration
-/// (`docs/lifeos-shell.md` §7.1, D-1.2).
+/// (`docs/architecture/lifeos-shell.md` §7.1, D-1.2).
 ///
 /// Phase D-1.2: the device tool registry is built as a composition
 /// root. Shell ships only the runtime + Memory Layer tools

@@ -129,7 +129,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         },
       ),
       // LifeOS domain inventory + active-domain aggregators
-      // (`docs/lifeos-shell.md` §4): tools, prompt blocks, agents, shell
+      // (`docs/architecture/lifeos-shell.md` §4): tools, prompt blocks, agents, shell
       // specs, domain provider seams, and the registry all derive from
       // the DomainPack list.
       ...lifeOsDomainCompositionOverrides(),

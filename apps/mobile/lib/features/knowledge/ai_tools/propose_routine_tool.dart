@@ -1,5 +1,5 @@
 /// `propose_routine` — KnowledgeOS device write tool
-/// (`docs/knowledgeos-domain.md` §4 + §7).
+/// (`docs/domains/knowledgeos-domain.md` §4 + §7).
 ///
 /// **Write semantics**: returns a proposal envelope; the user must
 /// confirm in the UI before the row lands. Matches the cross-domain

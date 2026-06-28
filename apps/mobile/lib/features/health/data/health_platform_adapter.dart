@@ -1,5 +1,5 @@
 /// Platform-independent HealthOS adapter contract
-/// (`docs/healthos-domain.md` §2, D-2.2).
+/// (`docs/domains/healthos-domain.md` §2, D-2.2).
 ///
 /// Wraps HealthKit (iOS) / Health Connect (Android) reads behind a
 /// narrow seam so [HealthSyncService] stays platform-agnostic and

@@ -739,6 +739,30 @@ class KnowledgeSection extends StatelessWidget {
   }
 }
 
+/// Compact single-row surface for KnowledgeOS prompt/assistant controls.
+///
+/// Keeps KnowledgeOS card chrome centralized while still allowing dense,
+/// toolbar-like surfaces that do not fit the section title/body shape.
+class KnowledgePromptSurface extends StatelessWidget {
+  const KnowledgePromptSurface({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      borderRadius: AppRadius.sm,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s10,
+        AppSpacing.s6,
+        AppSpacing.s6,
+        AppSpacing.s6,
+      ),
+      child: child,
+    );
+  }
+}
+
 /// Edit/Preview toggle for a Markdown text field.
 ///
 /// Use anywhere a user authors free-form markdown that the rest of the

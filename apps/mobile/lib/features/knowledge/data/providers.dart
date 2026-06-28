@@ -1,4 +1,4 @@
-/// KnowledgeOS Riverpod wiring (`docs/knowledgeos-domain.md` §3).
+/// KnowledgeOS Riverpod wiring (`docs/domains/knowledgeos-domain.md` §3).
 library;
 
 import 'dart:ui' show Locale, PlatformDispatcher;

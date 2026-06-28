@@ -1,7 +1,7 @@
 /// Cross-domain shell chrome — the domain switcher + the global Search /
 /// Settings actions that every domain surfaces the same way.
 ///
-/// `docs/lifeos-shell.md` §1 splits the UI into a cross-domain shell layer
+/// `docs/architecture/lifeos-shell.md` §1 splits the UI into a cross-domain shell layer
 /// (search / settings / domain switch — domain-agnostic, always reachable)
 /// and a per-domain tab layer. Before this file those global actions were
 /// scattered: Search was a Finance-only middle slot in the bottom nav,

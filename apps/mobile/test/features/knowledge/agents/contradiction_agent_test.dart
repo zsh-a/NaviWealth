@@ -1,5 +1,5 @@
 /// Unit-tests for [ContradictionAgent] + its [ContradictionJudge] seam
-/// (`docs/knowledgeos-domain.md` §7 + §14.2 "ContradictionAgent cosine +
+/// (`docs/domains/knowledgeos-domain.md` §7 + §14.2 "ContradictionAgent cosine +
 /// LLM judge 路径").
 ///
 /// Covers:

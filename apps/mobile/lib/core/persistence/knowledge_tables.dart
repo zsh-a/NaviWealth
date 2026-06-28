@@ -1,4 +1,4 @@
-/// KnowledgeOS Drift tables (`docs/knowledgeos-domain.md` §3 + §9).
+/// KnowledgeOS Drift tables (`docs/domains/knowledgeos-domain.md` §3 + §9).
 ///
 /// Six tables — Notes / Principles / Assumptions / Decisions / Concepts /
 /// Experiments. Memory is *not* a separate table here: per §3 it reuses
@@ -6,7 +6,7 @@
 ///
 /// All tables wear [SyncableTable] and carry the `know:` row family
 /// prefix on the wire (see `core/sync/domain_prefix.dart` and
-/// `docs/lifeos-shell.md` §8). The local table names stay unprefixed —
+/// `docs/architecture/lifeos-shell.md` §8). The local table names stay unprefixed —
 /// the prefix is applied at the sync boundary only.
 library;
 
@@ -26,7 +26,7 @@ class KnowledgeNotes extends Table with SyncableTable {
   TextColumn get projectTag => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
-  /// Dedupe pointer (`docs/knowledgeos-domain.md` §15.3). When this note
+  /// Dedupe pointer (`docs/domains/knowledgeos-domain.md` §15.3). When this note
   /// is merged into another note via `propose_merge`, it is soft-deleted
   /// (`deletedAt` set) AND stamped with the surviving note's id here, so
   /// a future un-merge / audit can find where the content went. NULL for

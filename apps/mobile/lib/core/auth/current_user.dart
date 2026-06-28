@@ -36,7 +36,7 @@ final currentUserIdProvider = Provider<Future<String> Function()>((ref) {
 /// [kLocalOnlyUserId] in local-only mode, or `null` before auth settles.
 ///
 /// The on-device AI is account-less (device-only runtime, the user's own
-/// key — see `docs/ai-architecture.md`): chat history is partitioned by
+/// key — see `docs/ai/ai-architecture.md`): chat history is partitioned by
 /// this id in *both* modes, so local-only users must NOT be sent to a
 /// login wall. Surfaces that previously gated on [authSessionProvider]
 /// (which is null in local-only mode) should watch this instead.

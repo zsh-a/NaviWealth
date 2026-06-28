@@ -4,7 +4,7 @@ import 'package:naviwealth/features/options_income/domain/options_strategy_profi
 import 'package:naviwealth/features/options_income/domain/trade_journal_entry.dart';
 
 /// `propose_options_journal_entry` — propose a new entry on the options
-/// trade journal (`docs/options-income.md` §8.2).
+/// trade journal (`docs/domains/options-income.md` §8.2).
 ///
 /// Never writes directly. The front-end's confirm-and-apply pipeline
 /// reads the returned ProposalEnvelope, shows the user a diff, and then

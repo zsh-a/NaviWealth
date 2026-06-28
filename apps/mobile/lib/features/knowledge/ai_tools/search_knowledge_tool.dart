@@ -1,5 +1,5 @@
 /// `search_knowledge` — KnowledgeOS cross-type semantic search
-/// (`docs/knowledgeos-domain.md` §15.3).
+/// (`docs/domains/knowledgeos-domain.md` §15.3).
 ///
 /// Where `search_notes` only sees notes and `recall_decision` only sees
 /// decisions, this searches **every** KnowledgeOS type at once — the

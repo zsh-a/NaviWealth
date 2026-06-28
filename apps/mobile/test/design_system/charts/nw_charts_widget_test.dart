@@ -68,6 +68,31 @@ void main() {
       expect(find.byType(LineChart), findsOneWidget);
     });
 
+    testWidgets('can hide resting data-point dots for dense trend charts', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          NwLineChart(
+            showDots: false,
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: List.generate(
+                  10,
+                  (i) => ChartPoint(x: i.toDouble(), y: i.toDouble()),
+                ),
+              ),
+            ],
+            xAxis: const TimeAxis(format: AxisDateFormat.yearOnly),
+          ),
+        ),
+      );
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.first.dotData.show, isFalse);
+    });
+
     testWidgets('auto-downsamples when series exceeds default target', (
       tester,
     ) async {
@@ -361,6 +386,57 @@ void main() {
       expect(tester.getCenter(label.last).dx, closeTo(expectedCenterX, 8));
 
       await gesture.up();
+    });
+
+    testWidgets('showYAxis: false removes the left axis gutter', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NwLineChart(
+            showYAxis: false,
+            showTouchXAxisLabel: true,
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: [ChartPoint(x: 0, y: 0), ChartPoint(x: 1, y: 1)],
+              ),
+            ],
+          ),
+        ),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      final leftTitles = chart.data.titlesData.leftTitles.sideTitles;
+      expect(leftTitles.showTitles, isFalse);
+      expect(leftTitles.reservedSize, 0);
+    });
+
+    testWidgets('hides value axis labels in amount privacy mode', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const AmountPrivacyScope(
+            hidden: true,
+            child: NwLineChart(
+              showYAxis: true,
+              yAxis: ValueAxis(maxLabels: 3, showGrid: true),
+              series: [
+                ChartSeries(
+                  name: 'private',
+                  points: [ChartPoint(x: 0, y: 10), ChartPoint(x: 1, y: 20)],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      final leftTitles = chart.data.titlesData.leftTitles.sideTitles;
+      expect(leftTitles.showTitles, isFalse);
+      expect(leftTitles.reservedSize, 0);
+      expect(find.text(AmountPrivacyScope.mask), findsNothing);
     });
   });
 

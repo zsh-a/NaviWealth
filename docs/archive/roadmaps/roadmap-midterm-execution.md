@@ -1,6 +1,6 @@
 # NaviWealth 中期执行计划（M1 → M3，6 个月）
 
-> 文档版本：2026-05-10 · 关联：`docs/roadmap.md` §2
+> 文档版本：2026-05-10 · 关联：`docs/archive/roadmaps/roadmap.md` §2
 > 这是 §2 中期规划的**任务级展开**。颗粒度目标：拿到任意一张 ticket，工程师当天能开 PR。
 > 高层节奏与里程碑请看 roadmap §2.0。
 
@@ -36,7 +36,7 @@
 |---|---|---|---|---|---|
 | MT-2.1.M1.1 | P0 | M | Drift 表 `budgets` + `budget_progress_view` | — | `data/db/tables.dart`, `data/db/converters.dart` |
 | MT-2.1.M1.2 | P0 | M | Drift 表 `recurring_transactions`（不调度，先存） | — | 同上 |
-| MT-2.1.M1.3 | P0 | M | Sync 协议接入：oplog entity 类型登记 + 后端 materialise | MT-2.1.M1.1, MT-2.1.M1.2 | `apps/backend/src/sync/`, `apps/backend/migrations/0006_*.sql`, `docs/sync-protocol.md` |
+| MT-2.1.M1.3 | P0 | M | Sync 协议接入：oplog entity 类型登记 + 后端 materialise | MT-2.1.M1.1, MT-2.1.M1.2 | `apps/backend/src/sync/`, `apps/backend/migrations/0006_*.sql`, `docs/archive/sync-protocol.md` |
 | MT-2.1.M1.4 | P0 | M | Domain 层：`BudgetPeriod`、`BudgetProgress`、`BudgetRepository` | MT-2.1.M1.1 | `features/budget/domain/`, `features/budget/data/` |
 | MT-2.1.M1.5 | P1 | M | UI：月度预算编辑页（按 expense 分类，单卡片进度） | MT-2.1.M1.4 | `features/budget/ui/budget_editor_page.dart` |
 | MT-2.1.M1.6 | P1 | S | 路由 + 入口：从 settings / more 进入 | MT-2.1.M1.5 | `app/router.dart`, `features/settings/` |
@@ -193,7 +193,7 @@ deleted_at_hlc TEXT;
 | MT-2.4.M2.3 | P0 | M | investments 列表页接入 | — | `features/investment/presentation/` |
 | MT-2.4.M2.4 | P0 | M | 详情子路由 deep link（不破坏 web routing 检查清单） | MT-2.4.M2.1, .2, .3 | `app/router.dart` |
 | MT-2.4.M2.5 | P1 | M | 列偏好持久化（宽度 / 排序） | MT-2.4.M2.* | `app/shell_preferences.dart` |
-| MT-2.4.M2.6 | P0 | S | web routing 检查清单 100% 通过 | MT-2.4.M2.4 | `docs/web-routing.md`, `web_smoke/` |
+| MT-2.4.M2.6 | P0 | S | web routing 检查清单 100% 通过 | MT-2.4.M2.4 | `docs/development/web-routing.md`, `web_smoke/` |
 
 ### M3 — 快捷键发现性
 
@@ -284,7 +284,7 @@ deleted_at_hlc TEXT;
 | MT-X.2 | P0 | S | RRULE 子集规范 ADR | MT-2.1.M2.1 |
 | MT-X.3 | P0 | S | Money 显示 lint script + CI 接入 | MT-2.3.M1.3 |
 | MT-X.4 | P1 | S | E2E sync harness 在 `test/e2e/` 落地最小骨架 | MT-2.1.M1.7, MT-2.5.M2.6 |
-| MT-X.5 | P1 | S | `docs/sync-protocol.md` 升级为 v1.1（追加新表，仍兼容 v1.0 客户端） | MT-2.1.M1.3 |
+| MT-X.5 | P1 | S | `docs/archive/sync-protocol.md` 升级为 v1.1（追加新表，仍兼容 v1.0 客户端） | MT-2.1.M1.3 |
 
 ---
 

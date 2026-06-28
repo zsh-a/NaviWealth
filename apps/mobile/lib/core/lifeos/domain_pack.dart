@@ -1,4 +1,4 @@
-/// LifeOS cross-domain registration seam (`docs/lifeos-shell.md` §4).
+/// LifeOS cross-domain registration seam (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// Each LifeOS domain (Finance / Health / Knowledge / future) declares
 /// itself once as a [DomainPack] and registers into

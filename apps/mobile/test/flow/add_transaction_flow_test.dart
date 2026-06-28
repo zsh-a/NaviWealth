@@ -1,4 +1,4 @@
-// Flow / Task test: "Add transaction" — Task #3 in docs/testing-strategy.md.
+// Flow / Task test: "Add transaction" — Task #3 in docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers the Activity quick-add menu, and
 // records an expense through the real in-memory journal repository. The task

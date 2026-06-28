@@ -4,7 +4,7 @@
 // the strongest signal that repository → Drift → amortization schedule →
 // LiabilitySummary → DashboardAggregator is wired end to end.
 //
-// See docs/testing-strategy.md §4 "Integration (real chain)".
+// See docs/development/testing-strategy.md §4 "Integration (real chain)".
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';

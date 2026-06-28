@@ -1,5 +1,5 @@
 /// `knowledge_assumption` — monthly assumption agent
-/// (`docs/knowledgeos-domain.md` §7).
+/// (`docs/domains/knowledgeos-domain.md` §7).
 ///
 /// Fires monthly (or sooner if a cross-domain event tickles it; the
 /// MVP keeps the cadence interval-based — event-driven invalidation

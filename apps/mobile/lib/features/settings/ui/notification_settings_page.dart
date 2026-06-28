@@ -8,6 +8,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../health/data/morning_briefing_preferences.dart';
 import 'inline_setting_row.dart';
+import 'settings_page_frame.dart';
 
 final _notificationPermissionSnapshotProvider =
     FutureProvider.autoDispose<_NotificationPermissionSnapshot>((ref) async {
@@ -41,13 +42,7 @@ class NotificationSettingsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsNotificationsTitle,
       childPad: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
-        ),
+      child: SettingsPageFrame(
         children: [
           const _NotificationPermissionBanner(),
           const SizedBox(height: AppSpacing.s16),
@@ -64,7 +59,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                       .read(notificationsEnabledProvider.notifier)
                       .setEnabled(next),
                 ),
-                const AppDivider(),
+                const AppGradientDivider(),
                 InlineSwitchRow(
                   icon: FLucideIcons.sunrise,
                   label: l10n.settingsNotificationsHealthBriefingTitle,
@@ -74,6 +69,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                         )
                       : l10n.settingsNotificationsHealthBriefingBlockedSubtitle,
                   value: notificationsEnabled && briefingEnabled,
+                  enabled: notificationsEnabled,
                   onChanged: (next) => ref
                       .read(healthBriefingNotificationsEnabledProvider.notifier)
                       .setEnabled(next),

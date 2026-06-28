@@ -3,11 +3,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child, {MarketColorMode? mode}) {
   return MaterialApp(
     theme: AppTheme.light(),
     localizationsDelegates: const [
+      ...AppLocalizations.localizationsDelegates,
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
@@ -81,6 +83,24 @@ void main() {
       tester.widget<Icon>(find.byType(Icon)).icon,
       FLucideIcons.chevronDown,
     );
+  });
+
+  testWidgets('DeltaText hides value and direction inside AmountPrivacyScope', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const AmountPrivacyScope(
+          hidden: true,
+          child: DeltaText(value: -3.4, format: DeltaFormat.percent),
+        ),
+      ),
+    );
+
+    expect(find.byType(AmountPrivacyPlaceholder), findsOneWidget);
+    expect(find.byType(Icon), findsNothing);
+    expect(find.textContaining('3.40%'), findsNothing);
+    expect(find.text(AmountPrivacyScope.mask), findsNothing);
   });
 
   testWidgets('DeltaText.percentFromRatio renders 2.34% for 0.0234', (

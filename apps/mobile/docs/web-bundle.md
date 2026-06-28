@@ -167,7 +167,7 @@ Raised from the original ~250 KiB on 2026-05-17 after the device-AI wave.
 That work added a few hundred hanzi, but ~90% were finance vocabulary the UI
 already needed; the genuinely new tail was LLM-prompt / tool-schema /
 regression-fixture text that does **not** paint on web (the device AI
-runtime is `!kIsWeb`-gated — see `docs/ai-architecture.md` §4.6). Two
+runtime is `!kIsWeb`-gated — see `docs/ai/ai-architecture.md` §4.6). Two
 changes landed together:
 
 1. `tool/cn_font_chars.py` now scopes `core/ai/runtime/device/**` and

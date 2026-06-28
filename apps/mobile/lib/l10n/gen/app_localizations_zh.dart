@@ -1234,6 +1234,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeNetWorthTitle => '净资产';
 
   @override
+  String get homeQuickAddAccount => '添加账户';
+
+  @override
+  String get homeQuickRecordEntry => '记一笔';
+
+  @override
+  String get homeQuickImport => '导入';
+
+  @override
   String get financePrivacyHideAmountsTooltip => '隐藏金额';
 
   @override
@@ -5182,7 +5191,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS 开关与设置';
+      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS 开关';
 
   @override
   String get settingsDomainsFinanceSubtitle =>
@@ -5370,6 +5379,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsLogsCopiedToast => '日志已复制';
+
+  @override
+  String get settingsLogsClearTitle => '清空日志？';
+
+  @override
+  String get settingsLogsClearBody => '这会从当前设备移除内存中的诊断日志历史。';
+
+  @override
+  String get settingsLogsClearAction => '清空日志';
 
   @override
   String get settingsPerfTitle => '性能';
@@ -7308,6 +7326,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiLlmRemoved => '已从设备移除';
+
+  @override
+  String get aiLlmDeleteTitle => '删除 Provider？';
+
+  @override
+  String aiLlmDeleteBody(String name) {
+    return '这会从此设备移除 $name 及其已保存的 API Key。';
+  }
 
   @override
   String get aiLlmEmpty => '还没有 Provider。添加一个 API Key 即可让 AI 在本机直连运行。';
@@ -9615,6 +9641,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionOverviewFocus => '焦点';
 
   @override
+  String get executionOverviewBacklog => '待排期';
+
+  @override
   String get executionOverviewBlocked => '阻塞';
 
   @override
@@ -9645,6 +9674,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionTodayFilteredEmptyBody => '切换筛选；有需要跟进的事情再捕获为 Action。';
 
   @override
+  String executionDeleteConfirmTitle(Object item) {
+    return '删除「$item」？';
+  }
+
+  @override
+  String get executionDeleteConfirmBody => '这会从 ExecutionOS 移除该项目，并同步删除记录。';
+
+  @override
   String get executionCommitmentsEmptyTitle => '没有未完成行动';
 
   @override
@@ -9652,10 +9689,20 @@ class AppLocalizationsZh extends AppLocalizations {
       '个人 todo 先用 Action；事情变大后再归入 Project 或 Commitment。';
 
   @override
+  String get executionCommitmentsClosedEmptyTitle => '没有已关闭承诺';
+
+  @override
+  String get executionCommitmentsClosedEmptyBody =>
+      '已完成或已归档的 Project 与 Commitment 会出现在这里。';
+
+  @override
   String get executionReviewEmptyTitle => '还没有进展记录';
 
   @override
   String get executionReviewEmptyBody => '完成与阻塞记录会出现在这里，方便复盘。';
+
+  @override
+  String get executionClosedActionsSection => '最近已关闭行动';
 
   @override
   String get executionProjectsSection => '项目';
@@ -9665,6 +9712,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionActionsSection => '行动';
+
+  @override
+  String get executionRelatedActionsSection => '关联行动';
+
+  @override
+  String get executionTimelineSection => '时间线';
+
+  @override
+  String get executionDetailMissingTitle => '未找到项目';
+
+  @override
+  String get executionDetailMissingBody => '它可能已被删除，或暂时不在当前设备上。';
 
   @override
   String get executionProjectStatusActive => '活跃';
@@ -9770,13 +9829,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionActionDone => '完成';
 
   @override
+  String get executionActionDrop => '放弃';
+
+  @override
   String get executionActionStatusUpdateFailed => '更新行动状态失败。';
+
+  @override
+  String get executionLifecyclePause => '暂停';
+
+  @override
+  String get executionLifecycleResume => '恢复';
+
+  @override
+  String get executionLifecycleComplete => '完成';
+
+  @override
+  String get executionLifecycleActiveView => '进行中';
+
+  @override
+  String get executionLifecycleClosedView => '已关闭';
+
+  @override
+  String get executionProjectStatusUpdateFailed => '更新项目状态失败。';
+
+  @override
+  String get executionCommitmentStatusUpdateFailed => '更新承诺状态失败。';
 
   @override
   String get executionProgressBlockedDefault => '已标记为阻塞。';
 
   @override
   String get executionProgressDoneDefault => '已标记为完成。';
+
+  @override
+  String get executionProgressDroppedDefault => '已标记为放弃。';
 
   @override
   String get executionProgressKindField => '进展类型';
@@ -9806,7 +9892,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProgressKindCheckin => '进展记录';
 
   @override
+  String get executionProgressSyncActionStatus => '同步更新关联行动';
+
+  @override
+  String executionProgressSyncActionStatusBody(Object status) {
+    return '同时把行动状态改为「$status」。';
+  }
+
+  @override
   String get executionProposalActionLabel => 'Action';
+
+  @override
+  String get executionProposalActionStatusLabel => '行动状态';
 
   @override
   String get executionProposalProjectLabel => 'Project';

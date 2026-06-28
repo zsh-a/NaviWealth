@@ -62,7 +62,7 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   if (client == null) return null;
   // §4.6.3 — registry membership is the device allow-list. The list
   // itself is built by the cross-domain composition root
-  // ([deviceToolsProvider], `docs/lifeos-shell.md` §7.1 D-1.2): each
+  // ([deviceToolsProvider], `docs/architecture/lifeos-shell.md` §7.1 D-1.2): each
   // active LifeOS domain registers its own tools via a Riverpod
   // override in `bootstrap.dart`. Tools not yet ported simply aren't
   // advertised, so the model never calls them.

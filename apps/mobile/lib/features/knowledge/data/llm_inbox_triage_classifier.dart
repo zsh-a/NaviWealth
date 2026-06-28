@@ -1,4 +1,4 @@
-/// LLM-backed inbox-triage classifier (`docs/knowledgeos-domain.md`
+/// LLM-backed inbox-triage classifier (`docs/domains/knowledgeos-domain.md`
 /// §7 + §14.2 "InboxTriageAgent LLM round-trip 替换 heuristic").
 ///
 /// Same shape as [LlmCaptureClassifier]: wrap the user's configured

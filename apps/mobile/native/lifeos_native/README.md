@@ -3,7 +3,7 @@
 Native primitives for the Flutter app. Today: EmbeddingGemma-300M
 sentence embedder via `fastembed-rs` + ONNX Runtime, with
 auto-generated Dart bindings via `flutter_rust_bridge` (D-1.7c per
-`docs/lifeos-shell.md` §6.6).
+`docs/architecture/lifeos-shell.md` §6.6).
 
 Scope is intentionally minimal per `lifeos-shell.md` §10: one Rust
 crate, public API is one opaque struct + four methods + two free

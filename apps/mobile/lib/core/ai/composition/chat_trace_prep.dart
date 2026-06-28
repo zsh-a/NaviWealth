@@ -1,5 +1,5 @@
 /// Cross-domain seam for the per-chat-turn ContextPack + AiTrace seed
-/// (`docs/lifeos-shell.md` §4, D-1.6b).
+/// (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// `ChatRepository` consults [chatTracePrepProvider] before sending each
 /// turn so it can stamp the wire context + transparency trace from

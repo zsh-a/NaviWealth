@@ -1,5 +1,5 @@
 /// Drift-backed [EventStore] for the cross-domain event log
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// `events` is append-mostly. Writers idempotently upsert by id so
 /// indexers can replay the source stream without duplicating rows.

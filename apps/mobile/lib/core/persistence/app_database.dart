@@ -55,7 +55,7 @@ const String defaultDbFileName = 'naviwealth.db';
     SecuritiesCatalogMeta,
     // HealthOS (D-2.1): single wide-flat table keyed by `kind`.
     HealthMetrics,
-    // KnowledgeOS (`docs/knowledgeos-domain.md` §9): six typed tables —
+    // KnowledgeOS (`docs/domains/knowledgeos-domain.md` §9): six typed tables —
     // Memory itself reuses the cross-domain `memories` table per §3.
     KnowledgeNotes,
     KnowledgePrinciples,
@@ -200,14 +200,14 @@ class AppDatabase extends _$AppDatabase {
       }
       // v10 -> v11: Options Income Planner P0 — synced user-stance tables.
       // The opportunity cache stays local-only and is created on demand by
-      // the scanner; see docs/options-income.md §6.2.
+      // the scanner; see docs/domains/options-income.md §6.2.
       if (from < 11) {
         await m.createTable(optionsStrategyProfileTable);
         await m.createTable(approvedUnderlyings);
         await _createOptionsIncomeIndexes(this);
       }
       // v11 -> v12: Options Income Planner P1 — local-only opportunity
-      // cache table populated by the scanner (`docs/options-income.md`
+      // cache table populated by the scanner (`docs/domains/options-income.md`
       // §6.2). Never enters the sync OpLog.
       if (from < 12) {
         await _createOptionsOpportunityCache(this);
@@ -218,7 +218,7 @@ class AppDatabase extends _$AppDatabase {
         await _createOptionsTradeJournalIndexes(this);
       }
       // v13 → v14: sync v2 cleanup. Drop the dead `sync_errors` table and
-      // rebuild `op_outbox` as a pure dirty-pointer log (`docs/sync-v2.md`
+      // rebuild `op_outbox` as a pure dirty-pointer log (`docs/sync/sync-v2.md`
       // §7.1). SyncBackfill (version bumped) re-enqueues every local row,
       // so dropping the old outbox loses no pending change.
       if (from < 14) {
@@ -242,12 +242,12 @@ class AppDatabase extends _$AppDatabase {
         );
       }
       // v15 → v16: Memory Layer persistent vector store
-      // (`docs/lifeos-shell.md` §6, D-1.7). Local-only — derived from
+      // (`docs/architecture/lifeos-shell.md` §6, D-1.7). Local-only — derived from
       // domain rows, re-indexable, never enters sync.
       if (from < 16) {
         await _createMemoryDocuments(this);
       }
-      // v16 → v17: Memory Runtime split (`docs/lifeos-shell.md` §6,
+      // v16 → v17: Memory Runtime split (`docs/architecture/lifeos-shell.md` §6,
       // D-1.7b). memory_documents → memories (typed) + memory_embeddings
       // (vectors keyed by memory_id) + events (cross-domain event log).
       // The v16 table held derived data only, so dropping it is safe —
@@ -256,7 +256,7 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('DROP TABLE IF EXISTS memory_documents');
         await _createMemoryRuntime(this);
       }
-      // v17 → v18: HealthOS domain skeleton (`docs/healthos-domain.md`
+      // v17 → v18: HealthOS domain skeleton (`docs/domains/healthos-domain.md`
       // §3, D-2.1). Single flat `health_metrics` table keyed by `kind`.
       // No data yet — adapters land in D-2.2; the table is just the
       // sync target and AI tool read surface.
@@ -272,7 +272,7 @@ class AppDatabase extends _$AppDatabase {
         );
       }
       // v18 → v19: KnowledgeOS domain skeleton
-      // (`docs/knowledgeos-domain.md` §9). Six typed tables — Memory
+      // (`docs/domains/knowledgeos-domain.md` §9). Six typed tables — Memory
       // itself reuses the cross-domain `memories` table per §3, so no
       // new Memory schema. Gated at runtime by the Knowledge opt-in;
       // creating the tables unconditionally is fine because they stay
@@ -290,14 +290,14 @@ class AppDatabase extends _$AppDatabase {
         }
       }
       // v19 → v20: KnowledgeOS inbox triage side-table
-      // (`docs/knowledgeos-domain.md` §7 + §5 异步 triage flow).
+      // (`docs/domains/knowledgeos-domain.md` §7 + §5 异步 triage flow).
       // Local-only, never-sync — InboxTriageAgent uses it to skip
       // already-proposed notes and the Review tab reads pending
       // envelopes from it.
       if (from < 20) {
         await _createKnowledgeInboxTriage(this);
       }
-      // v20 → v21: KnowledgeOS routines (`docs/knowledgeos-domain.md`
+      // v20 → v21: KnowledgeOS routines (`docs/domains/knowledgeos-domain.md`
       // §3 + §9). Recurring user-defined reminders ("港卡每 6 个月做一次
       //活跃交易") — a typed row that records cadence + last-done state
       // so RoutineDueAgent can advance `next_due_at` reliably.
@@ -313,7 +313,7 @@ class AppDatabase extends _$AppDatabase {
           'WHERE deleted_at IS NULL',
         );
       }
-      // v21 → v22: KnowledgeOS dedupe pointer (`docs/knowledgeos-domain.md`
+      // v21 → v22: KnowledgeOS dedupe pointer (`docs/domains/knowledgeos-domain.md`
       // §15.3). `merged_into_id` on Notes + Concepts records where a
       // soft-deleted duplicate's content went after `propose_merge`.
       // Additive nullable columns — no rewrite of existing rows.

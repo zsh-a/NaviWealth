@@ -1,5 +1,5 @@
 /// User preference: preferred local-time hour for the daily Morning
-/// Briefing agent (`docs/healthos-domain.md` §8, D-2.5b follow-up).
+/// Briefing agent (`docs/domains/healthos-domain.md` §8, D-2.5b follow-up).
 ///
 /// Persisted as a 0–23 integer in [SharedPreferences]. The agent reads
 /// this via the `morningBriefingAgentProvider` override in

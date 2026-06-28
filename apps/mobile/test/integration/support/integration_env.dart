@@ -1,4 +1,4 @@
-// Integration-test environment (docs/testing-strategy.md §4 "Integration").
+// Integration-test environment (docs/development/testing-strategy.md §4 "Integration").
 //
 // Unlike flow tests (which stub the data layer to deterministic streams),
 // an integration env wires a *real* in-memory Drift database into the

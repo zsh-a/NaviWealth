@@ -1,4 +1,4 @@
-/// KnowledgeOS Inbox triage store (`docs/knowledgeos-domain.md` §5 + §7).
+/// KnowledgeOS Inbox triage store (`docs/domains/knowledgeos-domain.md` §5 + §7).
 ///
 /// Wraps the local-only `knowledge_inbox_triage` side-table — one row
 /// per Note that the [InboxTriageAgent] has looked at, with the

@@ -1,5 +1,5 @@
 /// Cross-domain registry of `propose_*` kinds rendered by the chat
-/// propose-card pipeline (`docs/lifeos-shell.md` §4).
+/// propose-card pipeline (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// Each domain contributes a [ProposalKindMeta] for every kind it
 /// emits — presentation (icon / label) plus the per-kind edit field

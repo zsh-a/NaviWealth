@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Boundary lint: `core/ai/runtime/` is the shell-only AI runtime
-# (`docs/lifeos-shell.md` §7.1, D-1.2). It must not import from
+# (`docs/architecture/lifeos-shell.md` §7.1, D-1.2). It must not import from
 # `features/<domain>/`.
 #
 # Phase D-1.2 ships the DomainPack composition root + `deviceToolsProvider`

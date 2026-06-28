@@ -260,7 +260,7 @@ class WatchlistItems extends Table with SyncableTable {
 
 /// Options Income Planner — user's strategy stance. One row per user
 /// (singleton, keyed by `owner_user_id`, matching the `settings` table
-/// pattern). See `docs/options-income.md` §6.2.
+/// pattern). See `docs/domains/options-income.md` §6.2.
 @DataClassName('OptionsStrategyProfileRow')
 class OptionsStrategyProfileTable extends Table with SyncableTable {
   TextColumn get userId => text()();
@@ -296,7 +296,7 @@ class OptionsStrategyProfileTable extends Table with SyncableTable {
 }
 
 /// Options Income Planner — trade journal entries (synced). One row per
-/// open / closed position the user records. See `docs/options-income.md`
+/// open / closed position the user records. See `docs/domains/options-income.md`
 /// §6.2 and §1.1 ("Trade Journal").
 @DataClassName('OptionsTradeJournalRow')
 class OptionsTradeJournal extends Table with SyncableTable {
@@ -329,7 +329,7 @@ class OptionsTradeJournal extends Table with SyncableTable {
 
 /// Options Income Planner — symbols the user has explicitly approved for
 /// sell-put / covered-call candidate generation. See
-/// `docs/options-income.md` §6.2.
+/// `docs/domains/options-income.md` §6.2.
 @DataClassName('ApprovedUnderlyingRow')
 class ApprovedUnderlyings extends Table with SyncableTable {
   TextColumn get id => text()();

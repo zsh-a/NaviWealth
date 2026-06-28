@@ -1,5 +1,5 @@
 /// `knowledge_routine_due` — daily routine reminder agent
-/// (`docs/knowledgeos-domain.md` §7).
+/// (`docs/domains/knowledgeos-domain.md` §7).
 ///
 /// Fires once a day around 08:00 local. Lists active routines whose
 /// `nextDueAt <= now + 7d` (this-week window) and emits a single episodic

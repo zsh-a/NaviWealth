@@ -1,4 +1,4 @@
-/// Inventory of LifeOS domains (`docs/lifeos-shell.md` §4).
+/// Inventory of LifeOS domains (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// One entry per domain — adding a new LifeOS domain means landing
 /// its tool barrel + shell spec + routes + agents under
@@ -16,6 +16,8 @@ import '../core/ai/agents/agent.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../features/execution/agents/providers.dart'
+    as execution_agent_providers;
 import '../features/execution/composition/execution_command_palette.dart';
 import '../features/execution/composition/execution_domain_shell.dart';
 import '../features/execution/composition/execution_proposal_applier.dart'
@@ -128,6 +130,7 @@ final DomainPack kExecutionPack = DomainPack(
     AppRoutes.executionCommitments,
     AppRoutes.executionReview,
   ],
+  agentBuilder: _executionAgents,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
 );
 
@@ -149,6 +152,9 @@ List<Agent> _healthAgents(Ref ref) => <Agent>[
 
 List<Agent> _knowledgeAgents(Ref ref) =>
     ref.watch(knowledge_agent_providers.knowledgeAgentsProvider);
+
+List<Agent> _executionAgents(Ref ref) =>
+    ref.watch(execution_agent_providers.executionAgentsProvider);
 
 Future<ProposalApplierRoute> _financeProposalApplierRoute(Ref ref) async {
   final applier = await ref.watch(

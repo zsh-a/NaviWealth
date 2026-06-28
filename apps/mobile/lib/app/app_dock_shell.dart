@@ -12,7 +12,7 @@ import '../features/ingest/data/share_intent_service.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
 
-/// Outer multi-domain shell (`docs/lifeos-shell.md` §3 Option B, D-2.3b).
+/// Outer multi-domain shell (`docs/architecture/lifeos-shell.md` §3 Option B, D-2.3b).
 ///
 /// Lives one layer above each domain's `StatefulShellRoute`:
 ///

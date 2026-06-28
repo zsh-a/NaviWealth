@@ -7,7 +7,7 @@ for the active row-state sync protocol.
 The historical v1 OpLog test catalogue has been removed from this file. v1
 concepts such as `op_type`, `fields_diff`, `/sync/push`, `/sync/pull`,
 server HLC restamping, `clock_skew_too_large`, and per-table materialisers
-belong only in [`sync-protocol.md`](./sync-protocol.md), which is kept as
+belong only in [`sync-protocol.md`](../archive/sync-protocol.md), which is kept as
 deleted-history reference.
 
 Each case lists **setup -> action -> expected outcome**. Test names follow

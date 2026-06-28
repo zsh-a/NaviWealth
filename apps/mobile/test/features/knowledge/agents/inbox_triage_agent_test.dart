@@ -1,5 +1,5 @@
 /// Unit-tests for [InboxTriageAgent] + its [InboxTriageClassifier] seam
-/// (`docs/knowledgeos-domain.md` §7 + §14.2).
+/// (`docs/domains/knowledgeos-domain.md` §7 + §14.2).
 ///
 /// Two layers are covered:
 ///

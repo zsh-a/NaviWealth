@@ -1,5 +1,5 @@
 /// Unified KnowledgeOS Capture sheet
-/// (`docs/knowledgeos-domain.md` §3 + §5 + §14).
+/// (`docs/domains/knowledgeos-domain.md` §3 + §5 + §14).
 ///
 /// One sheet, one textarea, one Save. Replaces the old Inbox-only
 /// `_NewNoteSheet`. Default Auto mode lands as a `KnowledgeNote` first —

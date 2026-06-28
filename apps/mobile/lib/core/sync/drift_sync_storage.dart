@@ -41,7 +41,7 @@ class DriftOutboxStore implements OutboxStore {
 }
 
 /// Reads `op_outbox` as the set of locally-dirty rows and serialises each
-/// row's current state for push (`docs/sync-v2.md` §7.3).
+/// row's current state for push (`docs/sync/sync-v2.md` §7.3).
 class DriftPendingRows implements PendingRows {
   DriftPendingRows(this._db);
   final AppDatabase _db;

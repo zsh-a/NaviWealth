@@ -56,26 +56,42 @@ defaults:
     working-directory: apps/mobile
 
 jobs:
-  analyze-and-test:
-    name: analyze + test (coverage)
+  prepare-font-assets:
+    name: prepare font assets
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build generated font assets
+        env:
+          CHECK_CN_FONT_SIZE: 'false'
+        # These files are gitignored build artifacts. Build them once per
+        # workflow and fan them out to all jobs that render UI or web bundles.
+        run: |
+          tool/build-cn-fonts.sh
+          tool/build-latin-fonts.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-font-assets
+          path: apps/mobile/assets/fonts/*.woff2
+          if-no-files-found: error
+          retention-days: 1
+
+  static-checks:
+    name: static checks
+    runs-on: ubuntu-latest
+    needs: prepare-font-assets
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: mobile-font-assets
+          path: apps/mobile/assets/fonts
       - run: flutter --version
       - run: flutter pub get
-      - name: Build test font assets
-        env:
-          CHECK_CN_FONT_SIZE: 'false'
-        # These files are gitignored build artifacts. The UI baseline gate
-        # verifies they are present and non-empty so tests don't silently
-        # fall back to Flutter's default test font.
-        run: |
-          tool/build-cn-fonts.sh
-          tool/build-latin-fonts.sh
       - run: flutter analyze --fatal-infos
       - name: Verify generated code is up to date
         run: |
@@ -109,12 +125,58 @@ jobs:
           ./tool/lint-cross-feature-imports.sh
           ./tool/lint-row-family-prefix.sh
           ./tool/lint-domain-neutral-contracts.sh
+
+  test-shards:
+    name: test shard ${{ matrix.shard }} / 3
+    runs-on: ubuntu-latest
+    needs: prepare-font-assets
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: mobile-font-assets
+          path: apps/mobile/assets/fonts
+      - run: flutter --version
+      - run: flutter pub get
       - name: Run tests
-        run: flutter test --coverage --reporter=expanded --exclude-tags=golden
+        run: >
+          flutter test
+          --coverage
+          --coverage-path=coverage/lcov-${{ matrix.shard }}.info
+          --reporter=expanded
+          --exclude-tags=golden
+          --total-shards=4
+          --shard-index=${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage-shard-${{ matrix.shard }}
+          path: apps/mobile/coverage/lcov-${{ matrix.shard }}.info
+          if-no-files-found: error
+          retention-days: 1
+
+  coverage:
+    name: coverage upload
+    runs-on: ubuntu-latest
+    needs: test-shards
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: mobile-coverage-shard-*
+          merge-multiple: true
+          path: apps/mobile/coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
-          files: apps/mobile/coverage/lcov.info
+          files: apps/mobile/coverage/lcov-0.info,apps/mobile/coverage/lcov-1.info,apps/mobile/coverage/lcov-2.info,apps/mobile/coverage/lcov-3.info
           flags: mobile
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
@@ -122,26 +184,33 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mobile-coverage
-          path: apps/mobile/coverage/lcov.info
+          path: apps/mobile/coverage/lcov-*.info
           if-no-files-found: error
+
+  analyze-and-test:
+    name: analyze + test (coverage)
+    runs-on: ubuntu-latest
+    needs: [static-checks, test-shards, coverage]
+    steps:
+      - working-directory: ${{ github.workspace }}
+        run: echo "static checks, test shards, and coverage upload passed"
 
   golden-regression:
     name: golden regression (mobile)
     runs-on: ubuntu-latest
     needs: analyze-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: mobile-font-assets
+          path: apps/mobile/assets/fonts
       - run: flutter pub get
-      - name: Build golden font assets
-        env:
-          CHECK_CN_FONT_SIZE: 'false'
-        run: |
-          tool/build-cn-fonts.sh
-          tool/build-latin-fonts.sh
       - name: Run mobile golden suite (FIR-113)
         # The visual baseline is locked to Linux rasterisation. Devs on
         # macOS / Windows skip the comparison via flutter_test_config.dart;
@@ -163,23 +232,20 @@ jobs:
     name: build web
     runs-on: ubuntu-latest
     needs: analyze-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: mobile-font-assets
+          path: apps/mobile/assets/fonts
       - run: flutter pub get
       - name: Materialize drift web assets (sqlite3.wasm + drift_worker.dart.js)
         run: tool/setup-drift-web.sh
-      - name: Build CN web font subsets (app-cn-base.woff2 + app-cn-ext.woff2)
-        env:
-          CHECK_CN_FONT_SIZE: 'false'
-        run: tool/build-cn-fonts.sh
-      - name: Build Latin font subsets (Inter + Outfit, FIR-104)
-        # Fails the build if the combined Inter + Outfit subset exceeds
-        # the 200 KB budget.
-        run: tool/build-latin-fonts.sh
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}
@@ -213,6 +279,7 @@ jobs:
           path: apps/mobile/build/web
       - name: Skip Cloudflare Pages deploy
         if: env.HAS_CLOUDFLARE_API_TOKEN != 'true'
+        working-directory: ${{ github.workspace }}
         run: echo "::notice::CLOUDFLARE_API_TOKEN not set in GitHub Secrets — skipping Pages deploy."
       - name: Deploy to Cloudflare Pages
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'

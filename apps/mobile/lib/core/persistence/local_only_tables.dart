@@ -2,12 +2,12 @@
 ///
 /// - `options_opportunity_cache` — scoring engine output. Each device
 ///   computes its own opportunities from its own chain pull
-///   (`docs/options-income.md` §6.2).
+///   (`docs/domains/options-income.md` §6.2).
 /// - `recurring_pattern_observations` — device analytical read-model history
 ///   for subscription price-change comparison. Derived from local expenses,
 ///   re-materializable, never synced.
 /// - `memories` + `memory_embeddings` + `events` — Memory Runtime
-///   (`docs/lifeos-shell.md` §6, D-1.7b). Typed records with
+///   (`docs/architecture/lifeos-shell.md` §6, D-1.7b). Typed records with
 ///   lifecycle, vectors in a side table so embedder swap doesn't have
 ///   to rewrite memory rows.
 ///
@@ -237,7 +237,7 @@ const List<String> memoryRuntimeDdl = [
 
 // ----------------------------------------------------------------------
 // KnowledgeOS inbox triage side-table
-// (`docs/knowledgeos-domain.md` §7 + §5 异步 triage flow)
+// (`docs/domains/knowledgeos-domain.md` §7 + §5 异步 triage flow)
 // ----------------------------------------------------------------------
 //
 // One row per Note that the InboxTriageAgent has looked at. Holds the

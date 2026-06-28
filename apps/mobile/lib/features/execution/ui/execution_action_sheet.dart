@@ -9,6 +9,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
+import 'execution_delete_confirm.dart';
 import 'execution_relation_picker.dart';
 import 'execution_sheet_footer.dart';
 import 'execution_widgets.dart';
@@ -113,6 +114,26 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
     }
   }
 
+  Future<void> _delete() async {
+    final action = widget.action;
+    if (_saving || action == null) return;
+    final confirmed = await confirmExecutionDelete(
+      context: context,
+      item: action.title,
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      final repo = await widget.ref.read(executionRepositoryProvider.future);
+      final sync = await stampExecutionSync(widget.ref);
+      await repo.softDeleteAction(action: action, sync: sync);
+      widget.dirty.markPristine();
+      if (mounted) Navigator.of(context).pop(true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   ExecutionAction _buildAction(SyncMeta sync, String title) {
     final existing = widget.action;
     return ExecutionAction(
@@ -155,6 +176,14 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
     final commitments =
         widget.ref.watch(executionCommitmentsProvider).value ??
         const <ExecutionCommitment>[];
+    final selectedProject = _projectId == null || _projectId!.isEmpty
+        ? null
+        : widget.ref.watch(executionProjectByIdProvider(_projectId!)).value;
+    final selectedCommitment = _commitmentId == null || _commitmentId!.isEmpty
+        ? null
+        : widget.ref
+              .watch(executionCommitmentByIdProvider(_commitmentId!))
+              .value;
     final isEditing = widget.action != null;
 
     return AppSheet(
@@ -246,7 +275,9 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
             const SizedBox(height: AppSpacing.s12),
             FormPickerRow(
               label: l10n.executionProjectField,
-              value: executionProjectPickerLabel(l10n, projects, _projectId),
+              value:
+                  selectedProject?.title ??
+                  executionProjectPickerLabel(l10n, projects, _projectId),
               leading: const Icon(FLucideIcons.folder),
               enabled: !_saving,
               onPress: () async {
@@ -257,7 +288,13 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
                 );
                 if (picked == null) return;
                 setState(() {
-                  _projectId = picked == kExecutionPickerNone ? null : picked;
+                  final next = executionRelationAfterProjectPick(
+                    commitments: commitments,
+                    currentCommitmentId: _commitmentId,
+                    pickedProjectId: picked,
+                  );
+                  _projectId = next.projectId;
+                  _commitmentId = next.commitmentId;
                 });
                 _markDirty();
               },
@@ -265,11 +302,13 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
             const SizedBox(height: AppSpacing.s12),
             FormPickerRow(
               label: l10n.executionCommitmentField,
-              value: executionCommitmentPickerLabel(
-                l10n,
-                commitments,
-                _commitmentId,
-              ),
+              value:
+                  selectedCommitment?.title ??
+                  executionCommitmentPickerLabel(
+                    l10n,
+                    commitments,
+                    _commitmentId,
+                  ),
               leading: const Icon(FLucideIcons.target),
               enabled: !_saving,
               onPress: () async {
@@ -280,9 +319,13 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
                 );
                 if (picked == null) return;
                 setState(() {
-                  _commitmentId = picked == kExecutionPickerNone
-                      ? null
-                      : picked;
+                  final next = executionRelationAfterCommitmentPick(
+                    commitments: commitments,
+                    currentProjectId: _projectId,
+                    pickedCommitmentId: picked,
+                  );
+                  _projectId = next.projectId;
+                  _commitmentId = next.commitmentId;
                 });
                 _markDirty();
               },
@@ -296,6 +339,16 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
               maxLines: 5,
               textInputAction: TextInputAction.newline,
             ),
+            if (isEditing) ...[
+              const SizedBox(height: AppSpacing.s16),
+              const AppDivider(),
+              const SizedBox(height: AppSpacing.s12),
+              FButton(
+                variant: FButtonVariant.destructive,
+                onPress: _saving ? null : _delete,
+                child: Text(l10n.commonDelete),
+              ),
+            ],
           ],
         ),
       ),

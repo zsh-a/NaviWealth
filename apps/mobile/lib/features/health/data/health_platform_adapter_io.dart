@@ -1,5 +1,5 @@
 /// Native (iOS / Android) implementation of [HealthPlatformAdapter]
-/// backed by `package:health` (`docs/healthos-domain.md` §2, D-2.2).
+/// backed by `package:health` (`docs/domains/healthos-domain.md` §2, D-2.2).
 ///
 /// HealthKit / Health Connect type mapping:
 ///

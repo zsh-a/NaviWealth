@@ -1,4 +1,4 @@
-/// LifeOS per-user domain opt-in (`docs/lifeos-shell.md` §5).
+/// LifeOS per-user domain opt-in (`docs/architecture/lifeos-shell.md` §5).
 ///
 /// FinanceOS is the seed domain and always on. Additional domains ship
 /// behind an explicit per-user opt-in so a user can enable LifeOS areas
@@ -11,7 +11,7 @@
 library;
 
 /// Active LifeOS domains. New domains are added here only after their
-/// trigger conditions fire (`docs/lifeos-architecture-northstar.md` §4).
+/// trigger conditions fire (`docs/architecture/lifeos-architecture-northstar.md` §4).
 /// Until then the enum stays small on purpose — phantom values would
 /// invite premature UI / sync wiring.
 enum DomainScope {

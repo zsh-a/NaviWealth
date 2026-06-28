@@ -1,5 +1,5 @@
 /// `propose_merge` — KnowledgeOS dedupe write tool
-/// (`docs/knowledgeos-domain.md` §15.3).
+/// (`docs/domains/knowledgeos-domain.md` §15.3).
 ///
 /// **Write semantics**: returns a proposal envelope; the user confirms in
 /// the UI (one-tap, with the merge diff rendered in the card) before any

@@ -1,5 +1,5 @@
 /// Cross-domain seam for the AI chat header summary chip + the
-/// empty-state suggestion tiles (`docs/lifeos-shell.md` §4, D-1.6b).
+/// empty-state suggestion tiles (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// The chip renders a rolling pulse of facts about whatever life
 /// signals the active domain considers worth surfacing. Finance currently

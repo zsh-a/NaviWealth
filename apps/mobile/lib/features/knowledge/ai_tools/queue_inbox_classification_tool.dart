@@ -1,5 +1,5 @@
 /// `queue_inbox_classification` — InboxTriageAgent write tool
-/// (`docs/knowledgeos-domain.md` §4 + §7).
+/// (`docs/domains/knowledgeos-domain.md` §4 + §7).
 ///
 /// Suggests how an inbox note should be re-categorised: stay as a
 /// plain note, upgrade to a Decision draft, or extract as a Concept.

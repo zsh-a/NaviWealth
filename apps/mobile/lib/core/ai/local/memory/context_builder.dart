@@ -1,4 +1,4 @@
-/// Context Builder (`docs/lifeos-shell.md` §6, D-1.7b).
+/// Context Builder (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// Assembles a [ContextPackMemory] for one agent turn by drawing from
 /// the four memory kinds + the recent event log. The pack is the

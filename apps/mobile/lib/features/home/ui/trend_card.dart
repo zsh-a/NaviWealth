@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -13,6 +13,7 @@ import '../data/dashboard_providers.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
 import 'dashboard_chart_fullscreen.dart';
+import 'home_section.dart';
 
 /// Net-worth trend card: time-range chips + line chart.
 ///
@@ -57,69 +58,53 @@ class TrendCard extends ConsumerWidget {
                 ),
           orElse: () => const SizedBox.shrink(),
         ),
-        child: SoftCard(
-          level: SoftCardLevel.raised,
-          padding: const EdgeInsets.all(AppSpacing.s20),
-          borderRadius: AppRadius.xlg,
+        child: HomeSurface(
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: AppSpacing.s40,
-                    height: AppSpacing.s40,
-                    decoration: BoxDecoration(
-                      color: context.theme.colors.primary.withValues(
-                        alpha: AppOpacity.subtle,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      FLucideIcons.chartSpline,
-                      size: AppIconSizes.md,
-                      color: context.theme.colors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: Text(
-                      l10n.dashboardTrendTitle,
-                      style: context.theme.typography.md,
-                    ),
-                  ),
-                  trendAsync.maybeWhen(
-                    data: (trend) => FTooltip(
-                      tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
-                      child: FButton.icon(
-                        variant: FButtonVariant.ghost,
-                        onPress: trend.isEmpty
-                            ? null
-                            : () => showDashboardChartFullscreen(
-                                context: context,
-                                title: l10n.dashboardTrendTitle,
-                                child: const _TrendFullscreenContent(),
-                              ),
-                        child: const Icon(
-                          FLucideIcons.maximize,
-                          size: AppIconSizes.md,
-                        ),
+              HomeCardHeader(
+                title: l10n.dashboardTrendTitle,
+                trailing: trendAsync.maybeWhen(
+                  data: (trend) => FTooltip(
+                    tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: trend.isEmpty
+                          ? null
+                          : () => showDashboardChartFullscreen(
+                              context: context,
+                              title: l10n.dashboardTrendTitle,
+                              child: const _TrendFullscreenContent(),
+                            ),
+                      child: const Icon(
+                        FLucideIcons.maximize,
+                        size: AppIconSizes.md,
                       ),
                     ),
-                    orElse: () => const SizedBox(
-                      width: AppSpacing.s48,
-                      height: AppSpacing.s48,
-                    ),
                   ),
-                ],
+                  orElse: () => const SizedBox(
+                    width: AppSpacing.s48,
+                    height: AppSpacing.s48,
+                  ),
+                ),
               ),
+              trendAsync.maybeWhen(
+                data: (trend) => trend.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.s6),
+                        child: _TrendSummary(trend: trend),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: AppSpacing.s12),
               const _RangeChips(),
-              const SizedBox(height: AppSpacing.s14),
+              const SizedBox(height: AppSpacing.s12),
               trendAsync.when(
                 loading: () => const _TrendSkeleton(),
                 error: (e, st) => _TrendError(error: e),
-                data: (trend) => _TrendChart(trend: trend),
+                data: (trend) => _TrendChart(trend: trend, showSummary: false),
               ),
             ],
           ),
@@ -144,8 +129,12 @@ class _TrendFullscreenContent extends ConsumerWidget {
           child: trendAsync.when(
             loading: () => const _TrendSkeleton(),
             error: (e, st) => _TrendError(error: e),
-            data: (trend) =>
-                _TrendChart(trend: trend, fillAvailableHeight: true),
+            data: (trend) => _TrendChart(
+              trend: trend,
+              fillAvailableHeight: true,
+              showSummary: false,
+              showYAxis: true,
+            ),
           ),
         ),
       ],
@@ -187,16 +176,19 @@ class _RangeChips extends ConsumerWidget {
     final initialStart =
         ref.read(dashboardCustomRangeProvider)?.from ??
         now.subtract(const Duration(days: 365));
-    final picked = await showDateRangePicker(
+    final picked = await showAppFormSheet<({DateTime from, DateTime to})>(
       context: context,
-      initialDateRange: DateTimeRange(start: initialStart, end: initialEnd),
-      firstDate: DateTime(now.year - 10),
-      lastDate: now,
+      builder: (_) => _TrendRangeSheet(
+        initialFrom: initialStart,
+        initialTo: initialEnd,
+        firstDate: DateTime(now.year - 10),
+        lastDate: now,
+      ),
     );
     if (picked == null) return;
     ref.read(dashboardCustomRangeProvider.notifier).state = (
-      from: picked.start,
-      to: picked.end,
+      from: picked.from,
+      to: picked.to,
     );
     ref.read(dashboardSelectedRangeProvider.notifier).state =
         DashboardRangePreset.custom;
@@ -222,11 +214,124 @@ class _RangeChips extends ConsumerWidget {
   }
 }
 
+class _TrendRangeSheet extends StatefulWidget {
+  const _TrendRangeSheet({
+    required this.initialFrom,
+    required this.initialTo,
+    required this.firstDate,
+    required this.lastDate,
+  });
+
+  final DateTime initialFrom;
+  final DateTime initialTo;
+  final DateTime firstDate;
+  final DateTime lastDate;
+
+  @override
+  State<_TrendRangeSheet> createState() => _TrendRangeSheetState();
+}
+
+class _TrendRangeSheetState extends State<_TrendRangeSheet> {
+  late final FCalendarController<(DateTime, DateTime)?> _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = FCalendarController.range(
+      initial: (_utcDay(widget.initialFrom), _utcDay(widget.initialTo)),
+      selectable: (date) {
+        final day = _utcDay(date);
+        return !day.isBefore(_utcDay(widget.firstDate)) &&
+            !day.isAfter(_utcDay(widget.lastDate));
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final formatter = AppFormatters(locale: Localizations.localeOf(context));
+    return ValueListenableBuilder<(DateTime, DateTime)?>(
+      valueListenable: _controller,
+      builder: (context, selected, _) {
+        return AppSheet(
+          title: l10n.dashboardRangeCustom,
+          subtitle: selected == null
+              ? null
+              : '${formatter.date(selected.$1)} - ${formatter.date(selected.$2)}',
+          footer: Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).maybePop(),
+                  child: Text(l10n.commonCancel),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: FButton(
+                  onPress: selected == null
+                      ? null
+                      : () => Navigator.of(
+                          context,
+                        ).pop((from: selected.$1, to: selected.$2)),
+                  child: Text(l10n.commonConfirm),
+                ),
+              ),
+            ],
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.muted.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s8),
+              child: Center(
+                child: FCalendar(
+                  control: FCalendarControl.managedRange(
+                    controller: _controller,
+                  ),
+                  start: _utcDay(widget.firstDate),
+                  end: _utcDay(widget.lastDate.add(const Duration(days: 1))),
+                  today: _utcDay(DateTime.now()),
+                  initialMonth: _utcDay(widget.initialTo),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+DateTime _utcDay(DateTime date) =>
+    DateTime.utc(date.year, date.month, date.day);
+
 class _TrendChart extends StatelessWidget {
-  const _TrendChart({required this.trend, this.fillAvailableHeight = false});
+  const _TrendChart({
+    required this.trend,
+    this.fillAvailableHeight = false,
+    this.showSummary = true,
+    this.showYAxis = false,
+  });
 
   final DashboardTrend trend;
   final bool fillAvailableHeight;
+  final bool showSummary;
+  final bool showYAxis;
 
   @override
   Widget build(BuildContext context) {
@@ -271,6 +376,7 @@ class _TrendChart extends StatelessWidget {
             series: [flatSeries],
             minimal: true,
             interpolation: ChartInterpolation.linear,
+            showDots: false,
             semanticLabel: AppLocalizations.of(context).dashboardTrendTitle,
           );
           return Column(
@@ -307,12 +413,15 @@ class _TrendChart extends StatelessWidget {
           series: series,
           trend: trend,
           dateFmt: dateFmt,
+          showYAxis: showYAxis,
         );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _TrendSummary(trend: trend),
-            const SizedBox(height: AppSpacing.s16),
+            if (showSummary) ...[
+              _TrendSummary(trend: trend),
+              const SizedBox(height: AppSpacing.s16),
+            ],
             if (fillAvailableHeight)
               Expanded(child: chart)
             else
@@ -343,12 +452,6 @@ class _TrendSummary extends ConsumerWidget {
         ? null
         : delta.toDouble() / firstValue.abs();
     final hidden = AmountPrivacyScope.isHiddenOf(context);
-    final current = hidden
-        ? AmountPrivacyScope.mask
-        : formatters.compactCurrency(
-            last.netWorth.amount,
-            code: trend.baseCurrency,
-          );
     final rangeLabel = _formatDateRange(
       formatters,
       first.asOf.toLocal(),
@@ -356,80 +459,84 @@ class _TrendSummary extends ConsumerWidget {
     );
     final colors = context.theme.colors;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.symmetric(
-          horizontal: BorderSide(
-            color: colors.border.withValues(alpha: AppOpacity.subtle),
-            width: AppStroke.hairline,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.dashboardTrendMetricCurrent,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.microCaptionStyle.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              if (hidden)
+                AmountPrivacyPlaceholder(
+                  density: AmountPrivacyPlaceholderDensity.title,
+                  style: TypographyTokens.numericTitleStrong,
+                )
+              else
+                Text(
+                  formatters.compactCurrency(
+                    last.netWorth.amount,
+                    code: trend.baseCurrency,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TypographyTokens.numericTitleStrong.copyWith(
+                    color: colors.foreground,
+                  ),
+                ),
+            ],
           ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
-        child: Row(
-          children: [
-            Expanded(
-              child: _TrendMetric(
-                label: l10n.dashboardTrendMetricCurrent,
-                child: Text(
-                  current,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TypographyTokens.numericBody.copyWith(
-                    color: colors.foreground,
-                    fontWeight: FontWeight.w600,
+        const SizedBox(width: AppSpacing.s16),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: AppSpacing.s6,
+                runSpacing: AppSpacing.s2,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  DeltaText(
+                    value: delta.toDouble(),
+                    format: DeltaFormat.currency,
+                    currencyCode: trend.baseCurrency,
+                    fractionDigits: 0,
+                    showIcon: false,
+                    style: TypographyTokens.numericBodyStrong,
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: _TrendMetric(
-                label: l10n.dashboardTrendMetricChange,
-                child: Wrap(
-                  spacing: AppSpacing.s6,
-                  runSpacing: AppSpacing.s2,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    DeltaText(
-                      value: delta.toDouble(),
-                      format: DeltaFormat.currency,
-                      currencyCode: trend.baseCurrency,
-                      fractionDigits: 0,
-                      showIcon: false,
-                      style: TypographyTokens.numericBody.copyWith(
-                        fontWeight: FontWeight.w600,
+                  if (ratio != null && !hidden)
+                    Text(
+                      formatters.signedPercent(ratio, decimalDigits: 1),
+                      style: context.captionMediumStyle.copyWith(
+                        color: colors.mutedForeground,
                       ),
                     ),
-                    if (ratio != null)
-                      Text(
-                        formatters.signedPercent(ratio, decimalDigits: 1),
-                        style: context.captionMediumStyle.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                  ],
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                rangeLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: context.microCaptionStyle.copyWith(
+                  color: colors.mutedForeground,
                 ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: _TrendMetric(
-                label: l10n.dashboardTrendMetricRange,
-                child: Text(
-                  rangeLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.mediumLabelStyle.copyWith(
-                    color: colors.foreground,
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -447,58 +554,27 @@ class _TrendSummary extends ConsumerWidget {
   }
 }
 
-class _TrendMetric extends StatelessWidget {
-  const _TrendMetric({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.microCaptionStyle.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s4),
-        child,
-      ],
-    );
-  }
-}
-
 class _LineChartBody extends StatelessWidget {
   const _LineChartBody({
     required this.series,
     required this.trend,
     required this.dateFmt,
+    required this.showYAxis,
   });
 
   final ChartSeries series;
   final DashboardTrend trend;
   final AxisDateFormat dateFmt;
+  final bool showYAxis;
 
   @override
   Widget build(BuildContext context) {
-    final delta =
-        trend.points.last.netWorth.amount - trend.points.first.netWorth.amount;
-    final intent = delta.sign > 0
-        ? SeriesIntent.up
-        : delta.sign < 0
-        ? SeriesIntent.down
-        : SeriesIntent.primary;
     final chartSeries = ChartSeries(
       name: AppLocalizations.of(context).dashboardTrendTitle,
       points: series.points,
-      intent: intent,
-      fillOpacity: 0.16,
-      strokeWidth: 2.75,
+      intent: SeriesIntent.primary,
+      fillOpacity: AppOpacity.subtle,
+      strokeWidth: AppStroke.medium,
     );
     return NwLineChart(
       series: [chartSeries],
@@ -510,8 +586,10 @@ class _LineChartBody extends StatelessWidget {
       ),
       filled: true,
       interpolation: ChartInterpolation.linear,
-      heroDots: true,
+      showDots: false,
+      heroDots: false,
       showXAxis: true,
+      showYAxis: showYAxis,
       showTouchXAxisLabel: true,
       semanticLabel: AppLocalizations.of(context).dashboardTrendTitle,
     );

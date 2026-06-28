@@ -3,7 +3,7 @@
 > Contract between client (Flutter, all platforms) and server (Cloudflare
 > Workers + Rust + D1).
 >
-> **Supersedes [`sync-protocol.md`](./sync-protocol.md) (v1, OpLog).** v2 is a
+> **Supersedes [`sync-protocol.md`](../archive/sync-protocol.md) (v1, OpLog).** v2 is a
 > clean break — there is no on-wire compatibility with v1. The v1 doc is kept
 > as deleted-history reference only.
 
@@ -426,4 +426,4 @@ Phase 2 is deferred; Phase 1 (this doc, polling + D1) ships first.
 - `apps/backend/src/sync/store.rs` — generic row store + LWW
 - `apps/backend/migrations/0002_sync_schema.sql` — `sync_rows` schema
 - `apps/mobile/lib/core/sync/` — client engine, version stamper, applier
-- `docs/sync-protocol.md` — v1 (superseded, history only)
+- `docs/archive/sync-protocol.md` — v1 (superseded, history only)

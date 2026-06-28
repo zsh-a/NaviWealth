@@ -33,23 +33,23 @@ class FinanceDomainSettingsSection extends ConsumerWidget {
       child: Column(
         children: [
           const _FinanceHeaderRow(),
-          const AppDivider(),
+          const AppGradientDivider(),
           const _NumbersAndMoneyRows(),
-          const AppDivider(),
+          const AppGradientDivider(),
           const _RiskAppetiteRow(),
-          const AppDivider(),
+          const AppGradientDivider(),
           _TargetAllocationLink(
             onTap: () => showTargetAllocationEditorSheet(context: context),
           ),
-          const AppDivider(),
+          const AppGradientDivider(),
           _MonthlyExpenseLink(
             onTap: () => context.goNamed(AppRouteNames.monthlyExpense),
           ),
-          const AppDivider(),
+          const AppGradientDivider(),
           _RiskThresholdsLink(
             onTap: () => context.goNamed(AppRouteNames.riskThresholds),
           ),
-          const AppDivider(),
+          const AppGradientDivider(),
           _StressTestLink(
             onTap: () => context.goNamed(AppRouteNames.stressTest),
           ),
@@ -133,7 +133,7 @@ class _NumbersAndMoneyRows extends ConsumerWidget {
           onChanged: (picked) =>
               ref.read(baseCurrencyProvider.notifier).set(picked),
         ),
-        const AppDivider(),
+        const AppGradientDivider(),
         InlineLinkRow(
           icon: FLucideIcons.refreshCw,
           label: l10n.settingsFxRatesTitle,

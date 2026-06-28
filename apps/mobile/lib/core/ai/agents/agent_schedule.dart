@@ -1,4 +1,4 @@
-/// Agent scheduling primitives (`docs/lifeos-shell.md` §7.3, D-2.5).
+/// Agent scheduling primitives (`docs/architecture/lifeos-shell.md` §7.3, D-2.5).
 ///
 /// MVP keeps this pure-Dart: an interval ("every 24h") + an optional
 /// preferred hour ("around 07:00 local") + bookkeeping for the last

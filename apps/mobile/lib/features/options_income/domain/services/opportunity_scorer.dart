@@ -13,7 +13,7 @@ import '../options_strategy_profile.dart';
 /// Form: nilpotent, no IO, replayable. Mirrors the shape of the FIRE engine
 /// in `lib/features/fire/domain/`. Hard filters reject; the soft score is a
 /// weighted linear combination of normalised sub-scores per
-/// `docs/options-income.md` §7.
+/// `docs/domains/options-income.md` §7.
 class OpportunityScorer {
   const OpportunityScorer({this.weights = const ScoringWeights()});
 

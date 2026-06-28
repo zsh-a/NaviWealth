@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
+import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_widgets.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -24,11 +25,12 @@ void main() {
       id: 'due',
       dueAt: now.subtract(const Duration(days: 1)),
     );
+    final backlog = _action(id: 'backlog');
     final done = _action(id: 'done', status: ExecutionActionStatus.done);
 
     final snapshot = ExecutionOverviewSnapshot.fromLists(
       todayActions: [blocked, due],
-      openActions: [blocked, high, due, done],
+      openActions: [blocked, high, due, backlog, done],
       projects: [
         ExecutionProject(
           id: 'proj-1',
@@ -66,6 +68,7 @@ void main() {
 
     expect(snapshot.todayCount, 2);
     expect(snapshot.blockedCount, 1);
+    expect(snapshot.backlogCount, 1);
     expect(snapshot.highPriorityCount, 1);
     expect(snapshot.dueCount, 1);
     expect(snapshot.activeProjectCount, 1);
@@ -85,7 +88,8 @@ void main() {
       id: 'due',
       dueAt: now.subtract(const Duration(days: 1)),
     );
-    final open = [today, blocked, high, due];
+    final backlog = _action(id: 'backlog');
+    final open = [today, blocked, high, due, backlog];
 
     expect(
       filteredExecutionActions(
@@ -104,6 +108,15 @@ void main() {
         now: now,
       ),
       [blocked],
+    );
+    expect(
+      filteredExecutionActions(
+        filter: ExecutionTodayFilter.backlog,
+        todayActions: [today],
+        openActions: open,
+        now: now,
+      ),
+      [today, backlog],
     );
     expect(
       filteredExecutionActions(
@@ -151,11 +164,47 @@ void main() {
     expect(executionProjectRelationLabel(const [], null), isNull);
   });
 
+  test('execution relation map preserves labels outside active lists', () {
+    final relations = ExecutionRelations(
+      actions: const {},
+      projects: {
+        'proj-done': ExecutionProject(
+          id: 'proj-done',
+          title: 'Completed execution migration',
+          status: ExecutionProjectStatus.completed,
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: _sync(),
+        ),
+      },
+      commitments: {
+        'commit-archived': ExecutionCommitment(
+          id: 'commit-archived',
+          title: 'Archived weekly promise',
+          status: ExecutionCommitmentStatus.archived,
+          createdAt: DateTime.utc(2026, 6, 1),
+          sync: _sync(),
+        ),
+      },
+    );
+
+    expect(
+      relations.projectLabel('proj-done'),
+      'Completed execution migration',
+    );
+    expect(
+      relations.commitmentLabel('commit-archived'),
+      'Archived weekly promise',
+    );
+    expect(relations.projectLabel('missing-project'), 'missing-project');
+    expect(relations.commitmentLabel(null), isNull);
+  });
+
   testWidgets('overview strip exposes tappable action filters', (tester) async {
     var selected = ExecutionTodayFilter.focus;
     const snapshot = ExecutionOverviewSnapshot(
       todayCount: 3,
       blockedCount: 1,
+      backlogCount: 2,
       highPriorityCount: 2,
       dueCount: 1,
       activeProjectCount: 4,
@@ -178,6 +227,7 @@ void main() {
     );
 
     expect(find.text('Focus'), findsOneWidget);
+    expect(find.text('Backlog'), findsOneWidget);
     expect(find.text('Blocked'), findsOneWidget);
     expect(find.text('7d progress'), findsOneWidget);
 
@@ -185,6 +235,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(selected, ExecutionTodayFilter.blocked);
+
+    await tester.tap(find.text('Backlog'));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(selected, ExecutionTodayFilter.backlog);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));
@@ -196,6 +251,8 @@ void main() {
     var blocked = false;
     var resumed = false;
     var done = false;
+    var dropped = false;
+    var progressed = false;
 
     await tester.pumpWidget(
       _wrap(
@@ -212,6 +269,8 @@ void main() {
           onBlock: () => blocked = true,
           onResume: () => resumed = true,
           onDone: () => done = true,
+          onDrop: () => dropped = true,
+          onRecordProgress: () => progressed = true,
         ),
       ),
     );
@@ -223,11 +282,15 @@ void main() {
 
     await tester.tap(find.byIcon(FLucideIcons.pencil));
     await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.play));
     await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.pause));
     await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.check));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byIcon(FLucideIcons.archive));
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(edited, isTrue);
@@ -235,6 +298,8 @@ void main() {
     expect(blocked, isTrue);
     expect(resumed, isFalse);
     expect(done, isTrue);
+    expect(dropped, isTrue);
+    expect(progressed, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));
@@ -253,12 +318,15 @@ void main() {
           onBlock: () {},
           onResume: () {},
           onDone: () {},
+          onDrop: () {},
+          onRecordProgress: () {},
         ),
       ),
     );
 
     expect(find.byType(FCircularProgress), findsOneWidget);
     expect(find.byIcon(FLucideIcons.pencil), findsNothing);
+    expect(find.byIcon(FLucideIcons.messageSquareText), findsNothing);
 
     expect(edited, isFalse);
 
@@ -266,11 +334,57 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   });
 
+  testWidgets(
+    'closed action card exposes resume without block or done actions',
+    (tester) async {
+      var resumed = false;
+      var blocked = false;
+      var done = false;
+      var dropped = false;
+
+      await tester.pumpWidget(
+        _wrap(
+          ExecutionActionCard(
+            action: _action(status: ExecutionActionStatus.done),
+            onEdit: () {},
+            onStart: () {},
+            onBlock: () => blocked = true,
+            onResume: () => resumed = true,
+            onDone: () => done = true,
+            onDrop: () => dropped = true,
+            onRecordProgress: () {},
+          ),
+        ),
+      );
+
+      expect(find.text('Done'), findsOneWidget);
+      expect(find.byIcon(FLucideIcons.rotateCcw), findsOneWidget);
+      expect(find.byIcon(FLucideIcons.pause), findsNothing);
+      expect(find.byIcon(FLucideIcons.check), findsNothing);
+      expect(find.byIcon(FLucideIcons.archive), findsNothing);
+
+      await tester.tap(find.byIcon(FLucideIcons.rotateCcw));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(resumed, isTrue);
+      expect(blocked, isFalse);
+      expect(done, isFalse);
+      expect(dropped, isFalse);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 200));
+    },
+  );
+
   testWidgets('project card renders lifecycle fields and edit action', (
     tester,
   ) async {
     var created = false;
     var edited = false;
+    var paused = false;
+    var resumed = false;
+    var completed = false;
+    var progressed = false;
 
     await tester.pumpWidget(
       _wrap(
@@ -284,8 +398,14 @@ void main() {
             createdAt: DateTime.utc(2026, 6, 1),
             sync: _sync(),
           ),
+          openActionCount: 3,
+          blockedActionCount: 1,
           onCreateAction: () => created = true,
           onEdit: () => edited = true,
+          onPause: () => paused = true,
+          onResume: () => resumed = true,
+          onComplete: () => completed = true,
+          onRecordProgress: () => progressed = true,
         ),
       ),
     );
@@ -293,7 +413,15 @@ void main() {
     expect(find.text('Ship execution loop'), findsOneWidget);
     expect(find.text('Active'), findsOneWidget);
     expect(find.text('Quarter'), findsOneWidget);
+    expect(find.text('Actions: 3'), findsOneWidget);
+    expect(find.text('Blocked: 1'), findsOneWidget);
 
+    await tester.tap(find.byIcon(FLucideIcons.pause));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byIcon(FLucideIcons.check));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.plus));
     await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.pencil));
@@ -301,6 +429,56 @@ void main() {
 
     expect(created, isTrue);
     expect(edited, isTrue);
+    expect(paused, isTrue);
+    expect(resumed, isFalse);
+    expect(completed, isTrue);
+    expect(progressed, isTrue);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 200));
+  });
+
+  testWidgets('closed project card exposes resume without close actions', (
+    tester,
+  ) async {
+    var paused = false;
+    var resumed = false;
+    var completed = false;
+
+    await tester.pumpWidget(
+      _wrap(
+        ExecutionProjectCard(
+          project: ExecutionProject(
+            id: 'proj-closed',
+            title: 'Closed project',
+            status: ExecutionProjectStatus.completed,
+            createdAt: DateTime.utc(2026, 6, 1),
+            completedAt: DateTime.utc(2026, 6, 2),
+            sync: _sync(),
+          ),
+          onCreateAction: () {},
+          onEdit: () {},
+          onPause: () => paused = true,
+          onResume: () => resumed = true,
+          onComplete: () => completed = true,
+          onRecordProgress: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Closed project'), findsOneWidget);
+    expect(find.text('Completed'), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.play), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.pause), findsNothing);
+    expect(find.byIcon(FLucideIcons.check), findsNothing);
+    expect(find.byIcon(FLucideIcons.plus), findsNothing);
+
+    await tester.tap(find.byIcon(FLucideIcons.play));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(resumed, isTrue);
+    expect(paused, isFalse);
+    expect(completed, isFalse);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));
@@ -311,6 +489,10 @@ void main() {
   ) async {
     var created = false;
     var edited = false;
+    var paused = false;
+    var resumed = false;
+    var completed = false;
+    var progressed = false;
 
     await tester.pumpWidget(
       _wrap(
@@ -325,8 +507,14 @@ void main() {
             createdAt: DateTime.utc(2026, 6, 1),
             sync: _sync(),
           ),
+          openActionCount: 2,
+          blockedActionCount: 0,
           onCreateAction: () => created = true,
           onEdit: () => edited = true,
+          onPause: () => paused = true,
+          onResume: () => resumed = true,
+          onComplete: () => completed = true,
+          onRecordProgress: () => progressed = true,
         ),
       ),
     );
@@ -334,7 +522,15 @@ void main() {
     expect(find.text('Weekly review'), findsOneWidget);
     expect(find.text('Paused'), findsOneWidget);
     expect(find.text('Week'), findsOneWidget);
+    expect(find.text('Actions: 2'), findsOneWidget);
+    expect(find.text('Blocked: 0'), findsNothing);
 
+    await tester.tap(find.byIcon(FLucideIcons.play));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byIcon(FLucideIcons.check));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.plus));
     await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.pencil));
@@ -342,12 +538,18 @@ void main() {
 
     expect(created, isTrue);
     expect(edited, isTrue);
+    expect(paused, isFalse);
+    expect(resumed, isTrue);
+    expect(completed, isTrue);
+    expect(progressed, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));
   });
 
   testWidgets('progress card renders relation context badges', (tester) async {
+    var deleted = false;
+
     await tester.pumpWidget(
       _wrap(
         ExecutionProgressCard(
@@ -364,6 +566,7 @@ void main() {
           actionLabel: 'Review budget delta',
           projectLabel: 'Execution polish',
           commitmentLabel: 'Weekly review',
+          onDelete: () => deleted = true,
         ),
       ),
     );
@@ -373,6 +576,11 @@ void main() {
     expect(find.text('Action: Review budget delta'), findsOneWidget);
     expect(find.text('Project: Execution polish'), findsOneWidget);
     expect(find.text('Commitment: Weekly review'), findsOneWidget);
+
+    await tester.tap(find.byIcon(FLucideIcons.trash2));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(deleted, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));

@@ -82,7 +82,7 @@ String executionProgressKindLabel(
   };
 }
 
-enum ExecutionTodayFilter { focus, blocked, high, due }
+enum ExecutionTodayFilter { focus, backlog, blocked, high, due }
 
 String executionTodayFilterLabel(
   AppLocalizations l10n,
@@ -90,6 +90,7 @@ String executionTodayFilterLabel(
 ) {
   return switch (filter) {
     ExecutionTodayFilter.focus => l10n.executionOverviewFocus,
+    ExecutionTodayFilter.backlog => l10n.executionOverviewBacklog,
     ExecutionTodayFilter.blocked => l10n.executionOverviewBlocked,
     ExecutionTodayFilter.high => l10n.executionOverviewHigh,
     ExecutionTodayFilter.due => l10n.executionOverviewDue,
@@ -99,6 +100,7 @@ String executionTodayFilterLabel(
 IconData executionTodayFilterIcon(ExecutionTodayFilter filter) {
   return switch (filter) {
     ExecutionTodayFilter.focus => FLucideIcons.sun,
+    ExecutionTodayFilter.backlog => FLucideIcons.inbox,
     ExecutionTodayFilter.blocked => FLucideIcons.octagonAlert,
     ExecutionTodayFilter.high => FLucideIcons.flag,
     ExecutionTodayFilter.due => FLucideIcons.calendarClock,
@@ -114,6 +116,8 @@ List<ExecutionAction> filteredExecutionActions({
   final open = openActions.where((action) => action.isOpen);
   return switch (filter) {
     ExecutionTodayFilter.focus => todayActions,
+    ExecutionTodayFilter.backlog =>
+      open.where((action) => action.isBacklog).toList(growable: false),
     ExecutionTodayFilter.blocked =>
       open
           .where((action) => action.status == ExecutionActionStatus.blocked)
@@ -180,6 +184,13 @@ class ExecutionOverviewStrip extends StatelessWidget {
         icon: FLucideIcons.octagonAlert,
         color: semantic.danger,
         filter: ExecutionTodayFilter.blocked,
+      ),
+      _OverviewTileData(
+        label: l10n.executionOverviewBacklog,
+        value: snapshot.backlogCount,
+        icon: FLucideIcons.inbox,
+        color: colors.primary,
+        filter: ExecutionTodayFilter.backlog,
       ),
       _OverviewTileData(
         label: l10n.executionOverviewHigh,
@@ -358,9 +369,12 @@ class ExecutionActionCard extends StatelessWidget {
     required this.onBlock,
     required this.onResume,
     required this.onDone,
+    required this.onDrop,
+    required this.onRecordProgress,
     this.busy = false,
     this.projectLabel,
     this.commitmentLabel,
+    this.onOpen,
   });
 
   final ExecutionAction action;
@@ -369,9 +383,12 @@ class ExecutionActionCard extends StatelessWidget {
   final VoidCallback onBlock;
   final VoidCallback onResume;
   final VoidCallback onDone;
+  final VoidCallback onDrop;
+  final VoidCallback onRecordProgress;
   final bool busy;
   final String? projectLabel;
   final String? commitmentLabel;
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -379,7 +396,14 @@ class ExecutionActionCard extends StatelessWidget {
     final statusTone = _statusTone(action.status);
     final statusColor = _statusColor(context, action.status);
     final canStart = action.status == ExecutionActionStatus.todo;
-    final canResume = action.status == ExecutionActionStatus.blocked;
+    final canResume =
+        action.status == ExecutionActionStatus.blocked ||
+        action.status == ExecutionActionStatus.done ||
+        action.status == ExecutionActionStatus.dropped;
+    final canBlock =
+        action.status == ExecutionActionStatus.todo ||
+        action.status == ExecutionActionStatus.doing;
+    final canDone = action.isOpen;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s14),
       level: SoftCardLevel.raised,
@@ -389,93 +413,106 @@ class ExecutionActionCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppIconTile(
-                icon: _statusIcon(action.status),
-                color: statusColor,
-                size: 34,
-                iconSize: AppIconSizes.sm,
-                backgroundOpacity: AppOpacity.whisper,
-                foregroundOpacity: 1,
-              ),
-              const SizedBox(width: AppSpacing.s12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      action.title,
-                      style: context.rowTitleStyle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (action.note.trim().isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        action.note.trim(),
-                        style: context.captionStyle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                child: _CardOpenRegion(
+                  onOpen: onOpen,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppIconTile(
+                        icon: _statusIcon(action.status),
+                        color: statusColor,
+                        size: 34,
+                        iconSize: AppIconSizes.sm,
+                        backgroundOpacity: AppOpacity.whisper,
+                        foregroundOpacity: 1,
+                      ),
+                      const SizedBox(width: AppSpacing.s12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              action.title,
+                              style: context.rowTitleStyle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (action.note.trim().isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.s4),
+                              Text(
+                                action.note.trim(),
+                                style: context.captionStyle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                            const SizedBox(height: AppSpacing.s10),
+                            Wrap(
+                              spacing: AppSpacing.s6,
+                              runSpacing: AppSpacing.s6,
+                              children: [
+                                AppBadge(
+                                  label: executionStatusLabel(
+                                    l10n,
+                                    action.status,
+                                  ),
+                                  tone: statusTone,
+                                  size: AppBadgeSize.compact,
+                                ),
+                                if (action.priority == ExecutionPriority.high)
+                                  AppBadge(
+                                    label: l10n.executionPriorityHigh,
+                                    tone: AppBadgeTone.warning,
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.flag,
+                                  ),
+                                if (action.dueAt != null)
+                                  AppBadge(
+                                    label: l10n.executionDueBadge(
+                                      executionDate(context, action.dueAt!),
+                                    ),
+                                    tone: AppBadgeTone.info,
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.calendarDays,
+                                  ),
+                                if (projectLabel != null)
+                                  AppBadge(
+                                    label:
+                                        '${l10n.executionProjectField}: '
+                                        '$projectLabel',
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.folder,
+                                  ),
+                                if (commitmentLabel != null)
+                                  AppBadge(
+                                    label:
+                                        '${l10n.executionCommitmentField}: '
+                                        '$commitmentLabel',
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.target,
+                                  ),
+                                if (action.source.labelSnapshot != null &&
+                                    action.source.labelSnapshot!.isNotEmpty)
+                                  AppBadge(
+                                    label: action.source.labelSnapshot!,
+                                    size: AppBadgeSize.compact,
+                                    icon: FLucideIcons.link,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                    const SizedBox(height: AppSpacing.s10),
-                    Wrap(
-                      spacing: AppSpacing.s6,
-                      runSpacing: AppSpacing.s6,
-                      children: [
-                        AppBadge(
-                          label: executionStatusLabel(l10n, action.status),
-                          tone: statusTone,
-                          size: AppBadgeSize.compact,
-                        ),
-                        if (action.priority == ExecutionPriority.high)
-                          AppBadge(
-                            label: l10n.executionPriorityHigh,
-                            tone: AppBadgeTone.warning,
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.flag,
-                          ),
-                        if (action.dueAt != null)
-                          AppBadge(
-                            label: l10n.executionDueBadge(
-                              executionDate(context, action.dueAt!),
-                            ),
-                            tone: AppBadgeTone.info,
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.calendarDays,
-                          ),
-                        if (projectLabel != null)
-                          AppBadge(
-                            label:
-                                '${l10n.executionProjectField}: '
-                                '$projectLabel',
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.folder,
-                          ),
-                        if (commitmentLabel != null)
-                          AppBadge(
-                            label:
-                                '${l10n.executionCommitmentField}: '
-                                '$commitmentLabel',
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.target,
-                          ),
-                        if (action.source.labelSnapshot != null &&
-                            action.source.labelSnapshot!.isNotEmpty)
-                          AppBadge(
-                            label: action.source.labelSnapshot!,
-                            size: AppBadgeSize.compact,
-                            icon: FLucideIcons.link,
-                          ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
               if (busy)
                 const SizedBox(
-                  width: 32,
-                  height: 32,
+                  width: AppIconSizes.xl,
+                  height: AppIconSizes.xl,
                   child: Center(
                     child: FCircularProgress(
                       size: FCircularProgressSizeVariant.xs,
@@ -486,11 +523,15 @@ class ExecutionActionCard extends StatelessWidget {
                 _ActionQuickButtons(
                   canStart: canStart,
                   canResume: canResume,
+                  canBlock: canBlock,
+                  canDone: canDone,
                   onEdit: onEdit,
                   onStart: onStart,
                   onBlock: onBlock,
                   onResume: onResume,
                   onDone: onDone,
+                  onDrop: onDrop,
+                  onRecordProgress: onRecordProgress,
                 ),
             ],
           ),
@@ -541,17 +582,49 @@ class ExecutionSectionHeader extends StatelessWidget {
   }
 }
 
+class _CardOpenRegion extends StatelessWidget {
+  const _CardOpenRegion({required this.child, this.onOpen});
+
+  final Widget child;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (onOpen == null) return child;
+    return Semantics(
+      button: true,
+      child: FTappable(onPress: onOpen, child: child),
+    );
+  }
+}
+
 class ExecutionCommitmentCard extends StatelessWidget {
   const ExecutionCommitmentCard({
     super.key,
     required this.commitment,
     required this.onEdit,
     required this.onCreateAction,
+    required this.onPause,
+    required this.onResume,
+    required this.onComplete,
+    required this.onRecordProgress,
+    this.openActionCount,
+    this.blockedActionCount,
+    this.busy = false,
+    this.onOpen,
   });
 
   final ExecutionCommitment commitment;
   final VoidCallback onEdit;
   final VoidCallback onCreateAction;
+  final VoidCallback onPause;
+  final VoidCallback onResume;
+  final VoidCallback onComplete;
+  final VoidCallback onRecordProgress;
+  final int? openActionCount;
+  final int? blockedActionCount;
+  final bool busy;
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -562,37 +635,60 @@ class ExecutionCommitmentCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconTile(
-            icon: FLucideIcons.target,
-            color: colors.primary,
-            size: 34,
-            iconSize: AppIconSizes.sm,
-            backgroundOpacity: AppOpacity.whisper,
-            foregroundOpacity: 1,
+          Expanded(
+            child: _CardOpenRegion(
+              onOpen: onOpen,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppIconTile(
+                    icon: FLucideIcons.target,
+                    color: colors.primary,
+                    size: 34,
+                    iconSize: AppIconSizes.sm,
+                    backgroundOpacity: AppOpacity.whisper,
+                    foregroundOpacity: 1,
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: _CommitmentBody(
+                      commitment: commitment,
+                      openActionCount: openActionCount,
+                      blockedActionCount: blockedActionCount,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(child: _CommitmentBody(commitment: commitment)),
           const SizedBox(width: AppSpacing.s8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppIconButton(
-                icon: FLucideIcons.plus,
-                tooltip: l10n.executionCreateActionTitle,
-                onPress: onCreateAction,
-                size: 32,
-                iconSize: AppIconSizes.xs,
+          if (busy)
+            const SizedBox(
+              width: AppIconSizes.xl,
+              height: AppIconSizes.xl,
+              child: Center(
+                child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
               ),
-              const SizedBox(width: AppSpacing.s4),
-              AppIconButton(
-                icon: FLucideIcons.pencil,
-                tooltip: l10n.executionEditCommitmentTitle,
-                onPress: onEdit,
-                size: 32,
-                iconSize: AppIconSizes.xs,
-              ),
-            ],
-          ),
+            )
+          else
+            _LifecycleQuickButtons(
+              canPause: commitment.status == ExecutionCommitmentStatus.active,
+              canResume:
+                  commitment.status == ExecutionCommitmentStatus.paused ||
+                  commitment.status == ExecutionCommitmentStatus.completed ||
+                  commitment.status == ExecutionCommitmentStatus.archived,
+              canComplete:
+                  commitment.status == ExecutionCommitmentStatus.active ||
+                  commitment.status == ExecutionCommitmentStatus.paused,
+              canCreateAction: commitment.status.isOpen,
+              editTooltip: l10n.executionEditCommitmentTitle,
+              onPause: onPause,
+              onResume: onResume,
+              onComplete: onComplete,
+              onRecordProgress: onRecordProgress,
+              onCreateAction: onCreateAction,
+              onEdit: onEdit,
+            ),
         ],
       ),
     );
@@ -600,9 +696,15 @@ class ExecutionCommitmentCard extends StatelessWidget {
 }
 
 class _CommitmentBody extends StatelessWidget {
-  const _CommitmentBody({required this.commitment});
+  const _CommitmentBody({
+    required this.commitment,
+    required this.openActionCount,
+    required this.blockedActionCount,
+  });
 
   final ExecutionCommitment commitment;
+  final int? openActionCount;
+  final int? blockedActionCount;
 
   @override
   Widget build(BuildContext context) {
@@ -651,6 +753,11 @@ class _CommitmentBody extends StatelessWidget {
                 size: AppBadgeSize.compact,
                 icon: FLucideIcons.calendarDays,
               ),
+            ..._rollupBadges(
+              l10n,
+              openActionCount: openActionCount,
+              blockedActionCount: blockedActionCount,
+            ),
           ],
         ),
       ],
@@ -664,11 +771,25 @@ class ExecutionProjectCard extends StatelessWidget {
     required this.project,
     required this.onEdit,
     required this.onCreateAction,
+    required this.onPause,
+    required this.onResume,
+    required this.onComplete,
+    required this.onRecordProgress,
+    this.openActionCount,
+    this.blockedActionCount,
+    this.busy = false,
   });
 
   final ExecutionProject project;
   final VoidCallback onEdit;
   final VoidCallback onCreateAction;
+  final VoidCallback onPause;
+  final VoidCallback onResume;
+  final VoidCallback onComplete;
+  final VoidCallback onRecordProgress;
+  final int? openActionCount;
+  final int? blockedActionCount;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -689,28 +810,41 @@ class ExecutionProjectCard extends StatelessWidget {
             foregroundOpacity: 1,
           ),
           const SizedBox(width: AppSpacing.s12),
-          Expanded(child: _ProjectBody(project: project)),
-          const SizedBox(width: AppSpacing.s8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppIconButton(
-                icon: FLucideIcons.plus,
-                tooltip: l10n.executionCreateActionTitle,
-                onPress: onCreateAction,
-                size: 32,
-                iconSize: AppIconSizes.xs,
-              ),
-              const SizedBox(width: AppSpacing.s4),
-              AppIconButton(
-                icon: FLucideIcons.pencil,
-                tooltip: l10n.executionEditProjectTitle,
-                onPress: onEdit,
-                size: 32,
-                iconSize: AppIconSizes.xs,
-              ),
-            ],
+          Expanded(
+            child: _ProjectBody(
+              project: project,
+              openActionCount: openActionCount,
+              blockedActionCount: blockedActionCount,
+            ),
           ),
+          const SizedBox(width: AppSpacing.s8),
+          if (busy)
+            const SizedBox(
+              width: AppIconSizes.xl,
+              height: AppIconSizes.xl,
+              child: Center(
+                child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
+              ),
+            )
+          else
+            _LifecycleQuickButtons(
+              canPause: project.status == ExecutionProjectStatus.active,
+              canResume:
+                  project.status == ExecutionProjectStatus.paused ||
+                  project.status == ExecutionProjectStatus.completed ||
+                  project.status == ExecutionProjectStatus.archived,
+              canComplete:
+                  project.status == ExecutionProjectStatus.active ||
+                  project.status == ExecutionProjectStatus.paused,
+              canCreateAction: project.status.isOpen,
+              editTooltip: l10n.executionEditProjectTitle,
+              onPause: onPause,
+              onResume: onResume,
+              onComplete: onComplete,
+              onRecordProgress: onRecordProgress,
+              onCreateAction: onCreateAction,
+              onEdit: onEdit,
+            ),
         ],
       ),
     );
@@ -718,9 +852,15 @@ class ExecutionProjectCard extends StatelessWidget {
 }
 
 class _ProjectBody extends StatelessWidget {
-  const _ProjectBody({required this.project});
+  const _ProjectBody({
+    required this.project,
+    required this.openActionCount,
+    required this.blockedActionCount,
+  });
 
   final ExecutionProject project;
+  final int? openActionCount;
+  final int? blockedActionCount;
 
   @override
   Widget build(BuildContext context) {
@@ -769,7 +909,128 @@ class _ProjectBody extends StatelessWidget {
                 size: AppBadgeSize.compact,
                 icon: FLucideIcons.calendarDays,
               ),
+            ..._rollupBadges(
+              l10n,
+              openActionCount: openActionCount,
+              blockedActionCount: blockedActionCount,
+            ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+List<Widget> _rollupBadges(
+  AppLocalizations l10n, {
+  required int? openActionCount,
+  required int? blockedActionCount,
+}) {
+  return <Widget>[
+    if (openActionCount != null)
+      AppBadge(
+        label: '${l10n.executionActionsSection}: $openActionCount',
+        size: AppBadgeSize.compact,
+        icon: FLucideIcons.listTodo,
+      ),
+    if (blockedActionCount != null && blockedActionCount > 0)
+      AppBadge(
+        label: '${l10n.executionOverviewBlocked}: $blockedActionCount',
+        tone: AppBadgeTone.error,
+        size: AppBadgeSize.compact,
+        icon: FLucideIcons.octagonAlert,
+      ),
+  ];
+}
+
+class _LifecycleQuickButtons extends StatelessWidget {
+  const _LifecycleQuickButtons({
+    required this.canPause,
+    required this.canResume,
+    required this.canComplete,
+    required this.canCreateAction,
+    required this.editTooltip,
+    required this.onPause,
+    required this.onResume,
+    required this.onComplete,
+    required this.onRecordProgress,
+    required this.onCreateAction,
+    required this.onEdit,
+  });
+
+  final bool canPause;
+  final bool canResume;
+  final bool canComplete;
+  final bool canCreateAction;
+  final String editTooltip;
+  final VoidCallback onPause;
+  final VoidCallback onResume;
+  final VoidCallback onComplete;
+  final VoidCallback onRecordProgress;
+  final VoidCallback onCreateAction;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    return Wrap(
+      spacing: AppSpacing.s2,
+      runSpacing: AppSpacing.s2,
+      alignment: WrapAlignment.end,
+      children: [
+        if (canResume)
+          AppIconButton(
+            icon: FLucideIcons.play,
+            tooltip: l10n.executionLifecycleResume,
+            onPress: onResume,
+            size: 32,
+            iconSize: AppIconSizes.xs,
+          )
+        else if (canPause)
+          AppIconButton(
+            icon: FLucideIcons.pause,
+            tooltip: l10n.executionLifecyclePause,
+            onPress: onPause,
+            size: 32,
+            iconSize: AppIconSizes.xs,
+          ),
+        if (canComplete)
+          AppIconButton(
+            icon: FLucideIcons.check,
+            tooltip: l10n.executionLifecycleComplete,
+            onPress: onComplete,
+            size: 32,
+            iconSize: AppIconSizes.xs,
+            iconColor: semantic.success,
+            decoration: BoxDecoration(
+              color: semantic.success.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+            ),
+          ),
+        AppIconButton(
+          icon: FLucideIcons.messageSquareText,
+          tooltip: l10n.executionCreateProgressTitle,
+          onPress: onRecordProgress,
+          size: 32,
+          iconSize: AppIconSizes.xs,
+        ),
+        if (canCreateAction)
+          AppIconButton(
+            icon: FLucideIcons.plus,
+            tooltip: l10n.executionCreateActionTitle,
+            onPress: onCreateAction,
+            size: 32,
+            iconSize: AppIconSizes.xs,
+          ),
+        AppIconButton(
+          icon: FLucideIcons.pencil,
+          tooltip: editTooltip,
+          onPress: onEdit,
+          size: 32,
+          iconSize: AppIconSizes.xs,
+          iconColor: colors.mutedForeground,
         ),
       ],
     );
@@ -783,17 +1044,20 @@ class ExecutionProgressCard extends StatelessWidget {
     this.actionLabel,
     this.projectLabel,
     this.commitmentLabel,
+    this.onDelete,
   });
 
   final ExecutionProgressEntry entry;
   final String? actionLabel;
   final String? projectLabel;
   final String? commitmentLabel;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final color = _progressColor(context, entry.kind);
+    final semantic = SemanticColors.of(context);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s14),
       child: Row(
@@ -871,6 +1135,17 @@ class ExecutionProgressCard extends StatelessWidget {
               ],
             ),
           ),
+          if (onDelete != null) ...[
+            const SizedBox(width: AppSpacing.s8),
+            AppIconButton(
+              icon: FLucideIcons.trash2,
+              tooltip: l10n.commonDelete,
+              onPress: onDelete,
+              size: 32,
+              iconSize: AppIconSizes.xs,
+              iconColor: semantic.danger,
+            ),
+          ],
         ],
       ),
     );
@@ -881,20 +1156,28 @@ class _ActionQuickButtons extends StatelessWidget {
   const _ActionQuickButtons({
     required this.canStart,
     required this.canResume,
+    required this.canBlock,
+    required this.canDone,
     required this.onEdit,
     required this.onStart,
     required this.onBlock,
     required this.onResume,
     required this.onDone,
+    required this.onDrop,
+    required this.onRecordProgress,
   });
 
   final bool canStart;
   final bool canResume;
+  final bool canBlock;
+  final bool canDone;
   final VoidCallback onEdit;
   final VoidCallback onStart;
   final VoidCallback onBlock;
   final VoidCallback onResume;
   final VoidCallback onDone;
+  final VoidCallback onDrop;
+  final VoidCallback onRecordProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -912,6 +1195,13 @@ class _ActionQuickButtons extends StatelessWidget {
           size: 32,
           iconSize: AppIconSizes.xs,
         ),
+        AppIconButton(
+          icon: FLucideIcons.messageSquareText,
+          tooltip: l10n.executionCreateProgressTitle,
+          onPress: onRecordProgress,
+          size: 32,
+          iconSize: AppIconSizes.xs,
+        ),
         if (canStart)
           AppIconButton(
             icon: FLucideIcons.play,
@@ -920,27 +1210,44 @@ class _ActionQuickButtons extends StatelessWidget {
             size: 32,
             iconSize: AppIconSizes.xs,
           ),
-        AppIconButton(
-          icon: canResume ? FLucideIcons.rotateCcw : FLucideIcons.pause,
-          tooltip: canResume
-              ? l10n.executionActionResume
-              : l10n.executionActionBlock,
-          onPress: canResume ? onResume : onBlock,
-          size: 32,
-          iconSize: AppIconSizes.xs,
-        ),
-        AppIconButton(
-          icon: FLucideIcons.check,
-          tooltip: l10n.executionActionDone,
-          onPress: onDone,
-          size: 32,
-          iconSize: AppIconSizes.xs,
-          iconColor: colors.primary,
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.full),
+        if (canResume)
+          AppIconButton(
+            icon: FLucideIcons.rotateCcw,
+            tooltip: l10n.executionActionResume,
+            onPress: onResume,
+            size: 32,
+            iconSize: AppIconSizes.xs,
+          )
+        else if (canBlock)
+          AppIconButton(
+            icon: FLucideIcons.pause,
+            tooltip: l10n.executionActionBlock,
+            onPress: onBlock,
+            size: 32,
+            iconSize: AppIconSizes.xs,
           ),
-        ),
+        if (canDone)
+          AppIconButton(
+            icon: FLucideIcons.check,
+            tooltip: l10n.executionActionDone,
+            onPress: onDone,
+            size: 32,
+            iconSize: AppIconSizes.xs,
+            iconColor: colors.primary,
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+            ),
+          ),
+        if (canDone)
+          AppIconButton(
+            icon: FLucideIcons.archive,
+            tooltip: l10n.executionActionDrop,
+            onPress: onDrop,
+            size: 32,
+            iconSize: AppIconSizes.xs,
+            iconColor: colors.mutedForeground,
+          ),
       ],
     );
   }

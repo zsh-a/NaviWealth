@@ -1,6 +1,6 @@
 import 'package:naviwealth/core/sync/hlc.dart';
 
-/// Persists the SyncEngine's two pieces of state (`docs/sync-v2.md` §7.5).
+/// Persists the SyncEngine's two pieces of state (`docs/sync/sync-v2.md` §7.5).
 ///
 /// `seq` — the pull cursor. The next sync sends `since = seq`. A monotonic
 /// integer the server assigns; `0` before the first sync.

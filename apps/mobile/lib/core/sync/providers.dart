@@ -47,7 +47,7 @@ final syncApiClientProvider = Provider<SyncApiClient>((ref) {
 });
 
 /// Generic, schema-driven applier for pulled row-states. One class covers
-/// every syncable table (`docs/sync-v2.md` §7.3).
+/// every syncable table (`docs/sync/sync-v2.md` §7.3).
 final syncRowApplierProvider = Provider<RowApplier?>((ref) {
   final db = ref.watch(appDatabaseProvider).value;
   if (db == null) return null;

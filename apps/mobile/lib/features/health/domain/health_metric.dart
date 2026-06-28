@@ -1,4 +1,4 @@
-/// HealthOS domain entity (`docs/healthos-domain.md` §1, D-2.1).
+/// HealthOS domain entity (`docs/domains/healthos-domain.md` §1, D-2.1).
 ///
 /// One row in the `health_metrics` table: a single measurement keyed
 /// by [kind] + [capturedAt]. See [HealthMetricKind] for the canonical

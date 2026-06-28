@@ -1,5 +1,5 @@
 // Flow / Task test: "Run portfolio analysis" — Task #7 in
-// docs/testing-strategy.md.
+// docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers Holdings from the Wealth hub, and
 // lands on the Portfolio analysis surface. The first-run state is intentional:

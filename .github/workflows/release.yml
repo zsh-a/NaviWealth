@@ -169,6 +169,21 @@ jobs:
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
             "build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.apk"
+      - name: Generate release notes
+        working-directory: ${{ github.workspace }}
+        env:
+          RELEASE_TAG: ${{ needs.meta.outputs.release_tag }}
+          SEMVER: ${{ needs.meta.outputs.semver }}
+          BUILD_NUMBER: ${{ steps.build.outputs.number }}
+          API_URL: ${{ steps.api-url.outputs.url }}
+          RELEASE_NOTES: ${{ runner.temp }}/release-notes.md
+        run: |
+          bash tool/generate-release-notes.sh \
+            "$RELEASE_TAG" \
+            "$SEMVER" \
+            "$BUILD_NUMBER" \
+            "$API_URL" \
+            "$RELEASE_NOTES"
       - name: Check Pages deploy credentials
         id: pages-deploy-gate
         env:
@@ -193,7 +208,9 @@ jobs:
         with:
           tag_name: ${{ needs.meta.outputs.release_tag }}
           name: v${{ needs.meta.outputs.semver }} (build ${{ steps.build.outputs.number }})
-          generate_release_notes: true
+          body_path: ${{ runner.temp }}/release-notes.md
+          make_latest: true
+          fail_on_unmatched_files: true
           files: |
             apps/mobile/build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.apk
 

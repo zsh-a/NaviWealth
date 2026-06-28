@@ -1,4 +1,4 @@
-// Flow / Task test: "Rebalance" — Task #8 in docs/testing-strategy.md.
+// Flow / Task test: "Rebalance" — Task #8 in docs/development/testing-strategy.md.
 //
 // This boots the real app shell, discovers Rebalance from the Plan hub, and
 // lands on the rebalance execution surface. The first-run empty state is

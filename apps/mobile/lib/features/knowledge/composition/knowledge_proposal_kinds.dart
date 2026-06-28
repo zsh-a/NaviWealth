@@ -1,5 +1,5 @@
 /// KnowledgeOS contributions to [proposalKindRegistryProvider]
-/// (`docs/lifeos-shell.md` §4, `docs/knowledgeos-domain.md` §15.6).
+/// (`docs/architecture/lifeos-shell.md` §4, `docs/domains/knowledgeos-domain.md` §15.6).
 ///
 /// Presentation metadata for the KnowledgeOS `propose_*` kinds the chat
 /// propose-card renders. Adding a kind = one entry here + one branch in

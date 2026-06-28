@@ -67,7 +67,7 @@ final approvedUnderlyingsProvider =
     });
 
 /// Override hook for tests — production wiring uses [ScoringWeights]'
-/// defaults from `docs/options-income.md` §7.2.
+/// defaults from `docs/domains/options-income.md` §7.2.
 final optionsScoringWeightsProvider = Provider<ScoringWeights>((ref) {
   return const ScoringWeights();
 });

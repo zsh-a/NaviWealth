@@ -74,7 +74,7 @@ class ShareIntentService {
   }
 
   Future<void> _handle(List<SharedMediaFile> files) async {
-    // Two-rail dispatch (`docs/knowledgeos-domain.md` §5 quick capture
+    // Two-rail dispatch (`docs/domains/knowledgeos-domain.md` §5 quick capture
     // pipeline). text/url shares hit the Knowledge Inbox when the
     // user opted into the Knowledge domain; image/file shares always
     // go to the Finance ingest pipeline (receipt OCR / parser path).

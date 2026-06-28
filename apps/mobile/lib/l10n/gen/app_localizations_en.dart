@@ -1276,6 +1276,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNetWorthTitle => 'Net Worth';
 
   @override
+  String get homeQuickAddAccount => 'Add account';
+
+  @override
+  String get homeQuickRecordEntry => 'Record entry';
+
+  @override
+  String get homeQuickImport => 'Import';
+
+  @override
   String get financePrivacyHideAmountsTooltip => 'Hide amounts';
 
   @override
@@ -5429,7 +5438,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS toggles and settings';
+      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles';
 
   @override
   String get settingsDomainsFinanceSubtitle =>
@@ -5634,6 +5643,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLogsCopiedToast => 'Logs copied';
+
+  @override
+  String get settingsLogsClearTitle => 'Clear logs?';
+
+  @override
+  String get settingsLogsClearBody =>
+      'This removes the in-memory diagnostic log history from this device.';
+
+  @override
+  String get settingsLogsClearAction => 'Clear logs';
 
   @override
   String get settingsPerfTitle => 'Performance';
@@ -7675,6 +7694,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLlmRemoved => 'Removed from this device';
+
+  @override
+  String get aiLlmDeleteTitle => 'Delete provider?';
+
+  @override
+  String aiLlmDeleteBody(String name) {
+    return 'This removes $name and its stored API key from this device.';
+  }
 
   @override
   String get aiLlmEmpty =>
@@ -10080,6 +10107,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionOverviewFocus => 'Focus';
 
   @override
+  String get executionOverviewBacklog => 'Backlog';
+
+  @override
   String get executionOverviewBlocked => 'Blocked';
 
   @override
@@ -10112,11 +10142,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Switch filters or capture a new action when something needs follow-through.';
 
   @override
+  String executionDeleteConfirmTitle(Object item) {
+    return 'Delete $item?';
+  }
+
+  @override
+  String get executionDeleteConfirmBody =>
+      'This removes it from ExecutionOS and syncs the deletion.';
+
+  @override
   String get executionCommitmentsEmptyTitle => 'No open actions';
 
   @override
   String get executionCommitmentsEmptyBody =>
       'Use actions for personal todos; group larger work into projects or commitments.';
+
+  @override
+  String get executionCommitmentsClosedEmptyTitle => 'No closed commitments';
+
+  @override
+  String get executionCommitmentsClosedEmptyBody =>
+      'Completed and archived projects or commitments will appear here.';
 
   @override
   String get executionReviewEmptyTitle => 'No progress yet';
@@ -10126,6 +10172,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Completion and blocker notes will appear here for review.';
 
   @override
+  String get executionClosedActionsSection => 'Recent closed actions';
+
+  @override
   String get executionProjectsSection => 'Projects';
 
   @override
@@ -10133,6 +10182,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionActionsSection => 'Actions';
+
+  @override
+  String get executionRelatedActionsSection => 'Related actions';
+
+  @override
+  String get executionTimelineSection => 'Timeline';
+
+  @override
+  String get executionDetailMissingTitle => 'Item not found';
+
+  @override
+  String get executionDetailMissingBody =>
+      'It may have been deleted or is no longer available on this device.';
 
   @override
   String get executionProjectStatusActive => 'Active';
@@ -10239,14 +10301,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionActionDone => 'Done';
 
   @override
+  String get executionActionDrop => 'Drop';
+
+  @override
   String get executionActionStatusUpdateFailed =>
       'Couldn\'t update action status.';
+
+  @override
+  String get executionLifecyclePause => 'Pause';
+
+  @override
+  String get executionLifecycleResume => 'Resume';
+
+  @override
+  String get executionLifecycleComplete => 'Complete';
+
+  @override
+  String get executionLifecycleActiveView => 'Active';
+
+  @override
+  String get executionLifecycleClosedView => 'Closed';
+
+  @override
+  String get executionProjectStatusUpdateFailed =>
+      'Couldn\'t update project status.';
+
+  @override
+  String get executionCommitmentStatusUpdateFailed =>
+      'Couldn\'t update commitment status.';
 
   @override
   String get executionProgressBlockedDefault => 'Marked blocked.';
 
   @override
   String get executionProgressDoneDefault => 'Marked done.';
+
+  @override
+  String get executionProgressDroppedDefault => 'Marked dropped.';
 
   @override
   String get executionProgressKindField => 'Progress type';
@@ -10277,7 +10368,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProgressKindCheckin => 'Check-in';
 
   @override
+  String get executionProgressSyncActionStatus => 'Update linked action';
+
+  @override
+  String executionProgressSyncActionStatusBody(Object status) {
+    return 'Also move the action to $status.';
+  }
+
+  @override
   String get executionProposalActionLabel => 'Action';
+
+  @override
+  String get executionProposalActionStatusLabel => 'Action Status';
 
   @override
   String get executionProposalProjectLabel => 'Project';

@@ -1,5 +1,5 @@
 /// Cross-platform background-task scheduler for autonomous agents
-/// (`docs/lifeos-shell.md` §7.3, D-2.5b).
+/// (`docs/architecture/lifeos-shell.md` §7.3, D-2.5b).
 ///
 /// Narrow surface: register / cancel HealthOS background tasks. The actual
 /// platform driver (Android WorkManager, iOS BGTaskScheduler) sits in

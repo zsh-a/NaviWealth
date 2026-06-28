@@ -1,5 +1,5 @@
 /// `list_open_assumptions` — KnowledgeOS device tool
-/// (`docs/knowledgeos-domain.md` §4).
+/// (`docs/domains/knowledgeos-domain.md` §4).
 ///
 /// Feeds the AssumptionAgent and Review tab. Returns active (non-falsified
 /// non-retired) assumptions with days-since-last-verify so the model can

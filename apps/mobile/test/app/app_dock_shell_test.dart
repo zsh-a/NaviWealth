@@ -1,5 +1,5 @@
-// D-2.3b dock UI rendering tests. See `docs/lifeos-shell.md` §3 +
-// `docs/healthos-domain.md` §0.
+// D-2.3b dock UI rendering tests. See `docs/architecture/lifeos-shell.md` §3 +
+// `docs/domains/healthos-domain.md` §0.
 //
 // Two invariants:
 //   1. Finance-only (default): no switcher UI surfaces at all;

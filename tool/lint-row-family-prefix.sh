@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Boundary lint: every `RowChange` emitted by the sync engine must
-# carry a LifeOS domain prefix (`docs/lifeos-shell.md` §8, D-1.4).
+# carry a LifeOS domain prefix (`docs/architecture/lifeos-shell.md` §8, D-1.4).
 #
 # The shape today: `core/sync/sync_engine.dart::_toRowChange` calls
 # `prefixFinanceTable(table)` so all outbound rows start with `fin:`.

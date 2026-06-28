@@ -12,7 +12,7 @@
 >   `_buildAnalyticalUploads` 链（保留 `AnalyticalUpload` class，6 个 device tool 仍作输出 shape 用）
 >
 > 累计 stats（四轮合计）：~4 400 行净删除，约 55 个文件触及。
-> 当前架构 SSOT 见 `docs/ai-architecture.md`。
+> 当前架构 SSOT 见 `docs/ai/ai-architecture.md`。
 >
 > **2026-06-19 复核**：当前代码中已无 `RuntimeRegistry`、`AiRouter`、
 > `ChatSyncGate`、`pendingFreshnessHintProvider`、`FreshnessHint`、`markStaleReadModel`
@@ -348,7 +348,7 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
 
 ## 7. 审计反目标（什么本次**不**做）
 
-- 不重写 `docs/ai-architecture.md`。审计落地后那篇文档的 §4.1–§4.5 "兼容 / 历史"
+- 不重写 `docs/ai/ai-architecture.md`。审计落地后那篇文档的 §4.1–§4.5 "兼容 / 历史"
   段落里大半应该可以删，但属于第二阶段。
 - 不设计 LifeOS 北极星文档。
 - 不动 `intent/` / `visual/` / `write/` / `llm_credentials/` / `local/skills/`。

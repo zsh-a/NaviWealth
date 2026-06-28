@@ -1,5 +1,5 @@
 /// Composition root for Memory Runtime indexers
-/// (`docs/lifeos-shell.md` §6, D-1.7b).
+/// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
 /// `core/ai/local/memory/providers.dart` stays domain-neutral
 /// (northstar §2.1: `core/` must not import `features/`). This file
@@ -12,6 +12,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/execution/data/execution_memory_indexer.dart';
 import '../features/health/data/health_metric_memory_indexer.dart';
 import '../features/knowledge/data/knowledge_decision_memory_indexer.dart';
 import '../features/knowledge/data/knowledge_object_memory_indexers.dart';
@@ -27,6 +28,7 @@ import '../features/options_income/data/trade_journal_memory_indexer.dart';
 /// subscribing, so reading it here is cheap.
 final memoryLayerBootstrapProvider = Provider<void>((ref) {
   ref.watch(tradeJournalMemoryIndexerProvider);
+  ref.watch(executionMemoryIndexerProvider);
   ref.watch(healthMetricMemoryIndexerProvider);
   ref.watch(knowledgeDecisionMemoryIndexerProvider);
   // KnowledgeOS non-Decision indexers (§3 "写一份,索引两次").

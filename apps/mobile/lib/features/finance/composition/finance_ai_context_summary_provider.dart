@@ -1,5 +1,5 @@
 /// FinanceOS implementation of [aiContextSummaryProvider]
-/// (`docs/lifeos-shell.md` §4, D-1.6b).
+/// (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// Watches Finance dashboard / anomaly / maturity providers and
 /// returns a closure that turns the captured numbers into a list of

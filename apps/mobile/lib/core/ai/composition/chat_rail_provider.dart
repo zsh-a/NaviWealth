@@ -14,7 +14,7 @@ typedef ChatRailContentSelector =
     List<ChatRailContent> Function(AppLocalizations l10n);
 
 /// Cross-domain rail content the AI chat surface renders
-/// (`docs/lifeos-shell.md` §4).
+/// (`docs/architecture/lifeos-shell.md` §4).
 ///
 /// Default: a selector that always returns an empty list — the shell-
 /// only build (no domain registered) renders an empty rail rather than

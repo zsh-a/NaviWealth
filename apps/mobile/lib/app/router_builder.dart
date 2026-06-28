@@ -61,7 +61,7 @@ Future<void> preloadDeferredRoutesForTest({List<DomainPack>? packs}) async {
 /// Builds the app's [GoRouter].
 ///
 /// IA structure (D-2.3b, Plan B multi-domain shell — see
-/// `docs/lifeos-shell.md` §3):
+/// `docs/architecture/lifeos-shell.md` §3):
 ///
 /// - Outer [ShellRoute] mounts [AppDockShell]: share-intent lifecycle,
 ///   AI route-context sync, root system-back handling, and the domain

@@ -75,6 +75,7 @@ jobs:
           workspaces: apps/backend
       - name: Skip Cloudflare deploy
         if: env.HAS_CLOUDFLARE_API_TOKEN != 'true'
+        working-directory: ${{ github.workspace }}
         run: echo "::notice::CLOUDFLARE_API_TOKEN not set in GitHub Secrets — skipping backend deploy."
       - run: cargo install -q worker-build
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
@@ -117,6 +118,7 @@ jobs:
           workspaces: apps/backend
       - name: Skip Cloudflare preview deploy
         if: env.HAS_CLOUDFLARE_API_TOKEN != 'true'
+        working-directory: ${{ github.workspace }}
         run: echo "::notice::CLOUDFLARE_API_TOKEN not set in GitHub Secrets — skipping backend preview deploy."
       - run: cargo install -q worker-build
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'

@@ -1,5 +1,5 @@
 /// KnowledgeOS Decision creation sheet
-/// (`docs/knowledgeos-domain.md` §1 + §3 + §9).
+/// (`docs/domains/knowledgeos-domain.md` §1 + §3 + §9).
 ///
 /// Decision is the highest-priority KnowledgeOS affordance per §1 —
 /// this sheet is the user's primary write path. Field set mirrors the

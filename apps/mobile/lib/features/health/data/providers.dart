@@ -1,4 +1,4 @@
-/// HealthOS Riverpod wiring (`docs/healthos-domain.md` §3, D-2.1 +
+/// HealthOS Riverpod wiring (`docs/domains/healthos-domain.md` §3, D-2.1 +
 /// D-2.2).
 library;
 

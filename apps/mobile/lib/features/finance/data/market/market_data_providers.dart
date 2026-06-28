@@ -79,7 +79,7 @@ final yahooCrumbSessionProvider = Provider<YahooCrumbSession>((ref) {
 
 /// Options chain provider. Reuses the same [MarketHttpClient]/[RateLimiter]
 /// as [yfinanceProviderProvider] so quote + chain calls share one budget
-/// (`docs/options-income.md` §4.1). Built lazily because the Income Planner
+/// (`docs/domains/options-income.md` §4.1). Built lazily because the Income Planner
 /// is mobile-only; pure-quote consumers don't pay the construction cost.
 final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
   final http = MarketHttpClient(

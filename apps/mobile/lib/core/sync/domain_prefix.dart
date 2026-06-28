@@ -1,4 +1,4 @@
-/// Sync v2 row-family namespace (`docs/lifeos-shell.md` §8, D-1.4).
+/// Sync v2 row-family namespace (`docs/architecture/lifeos-shell.md` §8, D-1.4).
 ///
 /// Every row crossing the sync wire is tagged with a LifeOS domain
 /// prefix so the active-domain set is observable in `sync_rows` and
@@ -18,7 +18,7 @@ const String kFinanceDomainPrefix = 'fin:';
 /// controlled by `kSyncableTables` and the outbound table-prefix router.
 const String kHealthDomainPrefix = 'health:';
 
-/// KnowledgeOS rows (`docs/knowledgeos-domain.md` §2, §11).
+/// KnowledgeOS rows (`docs/domains/knowledgeos-domain.md` §2, §11).
 const String kKnowledgeDomainPrefix = 'know:';
 
 /// ExecutionOS rows: projects, personal actions, commitments, and progress.
@@ -38,7 +38,7 @@ const Set<String> kSyncDomainPrefixes = <String>{
 String prefixFinanceTable(String localTable) =>
     '$kFinanceDomainPrefix$localTable';
 
-/// KnowledgeOS local table names (`docs/knowledgeos-domain.md` §9). Kept
+/// KnowledgeOS local table names (`docs/domains/knowledgeos-domain.md` §9). Kept
 /// explicit rather than sniffing the `knowledge_` name prefix so adding a
 /// table is a deliberate edit that lands next to the prefix decision.
 const Set<String> kKnowledgeTables = <String>{

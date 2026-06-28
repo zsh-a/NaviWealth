@@ -1,5 +1,5 @@
 /// FinanceOS implementation of the portfolio snapshot seam
-/// (`docs/lifeos-shell.md` §4, D-1.6b).
+/// (`docs/architecture/lifeos-shell.md` §4, D-1.6b).
 ///
 /// Wraps `devicePortfolioSnapshotProvider` (the existing investment-
 /// domain snapshot builder) as a `PortfolioSnapshotReader` closure.

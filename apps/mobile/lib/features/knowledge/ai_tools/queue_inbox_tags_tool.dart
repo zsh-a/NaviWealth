@@ -1,5 +1,5 @@
 /// `queue_inbox_tags` — InboxTriageAgent write tool
-/// (`docs/knowledgeos-domain.md` §4 + §7).
+/// (`docs/domains/knowledgeos-domain.md` §4 + §7).
 ///
 /// Suggests tag list + optional `project_tag` for a Note. Returns a
 /// ProposalEnvelope; the Review tab applies tags via

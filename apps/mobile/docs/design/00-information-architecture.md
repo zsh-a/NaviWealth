@@ -59,7 +59,7 @@ Plan       /plan
 | Search / Command | 底栏中槽（现有 `commandIndex = 2`） | 侧栏底部固定 | 跳转 / 命令 / AI 触发 |
 | Settings | Today 顶栏右上 avatar/⚙（唯一入口） | 侧栏底部固定 | 偏好 / 数据源 / AI 隐私 / sync |
 
-**AI 不做 tab**：继续以命令面板（Layer 1）+ 行内胶囊（Layer 2）+ `/settings/ai-history`（只读历史）三种形态存在，详见 [`docs/ai-architecture.md`](../../../docs/ai-architecture.md) §5。
+**AI 不做 tab**：继续以命令面板（Layer 1）+ 行内胶囊（Layer 2）+ `/settings/ai-history`（只读历史）三种形态存在，详见 [`docs/ai/ai-architecture.md`](../../../docs/ai/ai-architecture.md) §5。
 
 ---
 

@@ -1,4 +1,4 @@
-/// FinanceOS routing tree (`docs/lifeos-shell.md` §3, D-2.3b).
+/// FinanceOS routing tree (`docs/architecture/lifeos-shell.md` §3, D-2.3b).
 ///
 /// Self-contained: every route (including deferred-as imports) lives in
 /// this file so adding / removing domains is a single-file change in

@@ -2,7 +2,7 @@
 # NaviWealth FIRE OS 计划文档
 
 > 文档版本：2026-05-20
-> 关联：[`docs/roadmap.md`](./roadmap.md)、[`docs/ai-architecture.md`](./ai-architecture.md)、[`apps/mobile/docs/design/07-fire.md`](../apps/mobile/docs/design/07-fire.md)
+> 关联：[`docs/archive/roadmaps/roadmap.md`](./roadmap.md)、[`docs/ai/ai-architecture.md`](../../ai/ai-architecture.md)、[`apps/mobile/docs/design/07-fire.md`](../../../apps/mobile/docs/design/07-fire.md)
 > 定位：把 NaviWealth 从“资产/账本工具”升级为“财务自由状态操作系统”。
 >
 > 状态（2026-05-20）：Phase 0–5 全部落地；Phase 6（同步）按 §7.1 + 风险表的约束**主动延后**，见 §8 末尾的 FIRE-OS-6.1 决策注。
@@ -398,7 +398,7 @@ fire_bucket_rules (
 
 同步接入需要：
 
-- 更新 `docs/sync-protocol.md` 表枚举。
+- 更新 `docs/archive/sync-protocol.md` 表枚举。
 - 新增 backend D1 migrations。
 - 新增 Flutter Drift tables。
 - 新增 op applier。
@@ -519,7 +519,7 @@ fire_bucket_rules (
 | ID | 任务 | 主要文件 |
 |----|------|----------|
 | FIRE-OS-6.1 | 决策：复用 `goals` 还是新增 `fire_plans` | design note |
-| FIRE-OS-6.2 | Sync Protocol v1.1 草案 | `docs/sync-protocol.md` |
+| FIRE-OS-6.2 | Sync Protocol v1.1 草案 | `docs/archive/sync-protocol.md` |
 | FIRE-OS-6.3 | Flutter Drift 表和 migration | `core/persistence/` |
 | FIRE-OS-6.4 | Backend D1 migration + materialise | `apps/backend/migrations/`, `apps/backend/src/sync/` |
 | FIRE-OS-6.5 | 双设备 LWW 测试 | mobile + backend tests |
@@ -647,8 +647,8 @@ risk_settings{}` 的多字段聚合体。挤进 KV 会把 schema 演化挪到 JS
 > 三档年化投影成 `FireDashboardView`（FV-of-annuity + 4% 规则 + ±20% 敏感度）。
 > `FireGoal` 当前存 SharedPreferences（`fire_goal_preferences.dart`，FIR-73）。
 > **目标**: 演进为持续回答「我的资产/现金流/风险是否还撑得起想要的自由生活」的系统。
-> 协议依赖 [`docs/ai-architecture.md`](./ai-architecture.md)（device-only runtime）与
-> [`docs/sync-protocol.md`](./sync-protocol.md)（v1.0 frozen，本计划不改协议）。
+> 协议依赖 [`docs/ai/ai-architecture.md`](../../ai/ai-architecture.md)（device-only runtime）与
+> [`docs/archive/sync-protocol.md`](../sync-protocol.md)（v1.0 frozen，本计划不改协议）。
 
 ---
 
