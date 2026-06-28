@@ -136,14 +136,7 @@ class _AiAssistantBar extends ConsumerWidget {
         AppSpacing.s16,
         AppSpacing.s4,
       ),
-      child: SoftCard(
-        borderRadius: AppRadius.sm,
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.s10,
-          AppSpacing.s6,
-          AppSpacing.s6,
-          AppSpacing.s6,
-        ),
+      child: KnowledgePromptSurface(
         child: Row(
           children: [
             Expanded(
