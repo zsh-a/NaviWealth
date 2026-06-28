@@ -75,7 +75,7 @@ jobs:
           echo "AI_VISION_AGENT_WEBHOOK_URL is not configured; deterministic semantic surrogate was the nightly signal."
       - name: Download semantic vision artifacts
         if: env.AI_VISION_AGENT_WEBHOOK_URL != ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ai-semantic-vision-artifacts
           path: ai-semantic-vision-artifacts
