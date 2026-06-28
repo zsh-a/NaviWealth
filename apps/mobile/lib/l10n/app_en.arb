@@ -2899,7 +2899,7 @@
   "@settingsDomainsSection": { "description": "Settings section header for LifeOS domain opt-in management" },
   "settingsDomainsTitle": "Domain management",
   "@settingsDomainsTitle": { "description": "Settings tile and page title for LifeOS domain management" },
-  "settingsDomainsSubtitle": "FinanceOS / HealthOS / KnowledgeOS toggles and settings",
+  "settingsDomainsSubtitle": "FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles",
   "@settingsDomainsSubtitle": { "description": "Settings tile subtitle for LifeOS domain management" },
   "settingsDomainsFinanceSubtitle": "Always-on finance domain: currency, FX rates, risk posture, allocation, and FIRE planning assumptions",
   "@settingsDomainsFinanceSubtitle": { "description": "Subtitle for the always-on FinanceOS card in domain settings" },

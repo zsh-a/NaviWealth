@@ -5438,7 +5438,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS toggles and settings';
+      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles';
 
   @override
   String get settingsDomainsFinanceSubtitle =>

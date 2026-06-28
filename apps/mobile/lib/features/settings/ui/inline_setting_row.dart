@@ -287,11 +287,21 @@ class InlineSwitchRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label, style: context.theme.typography.sm),
+                Text(
+                  label,
+                  style: context.theme.typography.sm,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (subtitle != null)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.s2),
-                    child: Text(subtitle!, style: context.captionStyle),
+                    child: Text(
+                      subtitle!,
+                      style: context.captionStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
             ),
@@ -371,11 +381,21 @@ class InlineLinkRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(label, style: context.theme.typography.sm),
+                  Text(
+                    label,
+                    style: context.theme.typography.sm,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.s2),
-                      child: Text(subtitle!, style: context.captionStyle),
+                      child: Text(
+                        subtitle!,
+                        style: context.captionStyle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
               ),

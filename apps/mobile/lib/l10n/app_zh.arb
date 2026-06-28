@@ -1617,7 +1617,7 @@
   "settingsDataSection": "数据",
   "settingsDomainsSection": "LifeOS 域",
   "settingsDomainsTitle": "域管理",
-  "settingsDomainsSubtitle": "FinanceOS / HealthOS / KnowledgeOS 开关与设置",
+  "settingsDomainsSubtitle": "FinanceOS / HealthOS / KnowledgeOS / ExecutionOS 开关",
   "settingsDomainsFinanceSubtitle": "常驻财务域：货币、汇率、风险偏好、资产配置与 FIRE 规划假设",
   "settingsDomainsFinanceAlwaysOnBadge": "常开",
   "settingsDomainsDisabledToast": "{domain} 已关闭。你可以随时在这里重新启用。",

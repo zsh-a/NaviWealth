@@ -5191,7 +5191,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDomainsSubtitle =>
-      'FinanceOS / HealthOS / KnowledgeOS 开关与设置';
+      'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS 开关';
 
   @override
   String get settingsDomainsFinanceSubtitle =>

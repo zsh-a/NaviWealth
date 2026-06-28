@@ -9282,7 +9282,7 @@ abstract class AppLocalizations {
   /// Settings tile subtitle for LifeOS domain management
   ///
   /// In en, this message translates to:
-  /// **'FinanceOS / HealthOS / KnowledgeOS toggles and settings'**
+  /// **'FinanceOS / HealthOS / KnowledgeOS / ExecutionOS toggles'**
   String get settingsDomainsSubtitle;
 
   /// Subtitle for the always-on FinanceOS card in domain settings
