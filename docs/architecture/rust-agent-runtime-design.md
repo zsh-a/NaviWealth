@@ -1689,3 +1689,385 @@ CI gate：
 - TypeScript DTO round-trip
 - deterministic eval
 - CLI smoke test
+
+## 31. 借鉴 OpenCode / Codex 的设计
+
+OpenCode 和 Codex 都不是单一 CLI，而是围绕 agent runtime 构建多入口、多协议、多调试形态。Rust agent runtime 应吸收其中经过验证的设计，但保持自身的业务无关边界。
+
+### 31.1 Server-first Runtime
+
+Runtime 不应该只暴露命令行。应提供 headless server，CLI、TUI、SDK、IDE、后端 worker 都通过同一套 runtime API 交互。
+
+推荐命令：
+
+```bash
+agent serve
+agent serve --stdio
+agent serve --host 127.0.0.1 --port 8765
+```
+
+推荐传输：
+
+```text
+stdio JSONL:
+  本地 CLI/TUI、外部进程集成、编辑器插件。
+
+HTTP + OpenAPI:
+  后端服务、SDK、Web UI、远程调试。
+
+WebSocket:
+  TUI/Web/IDE 实时订阅 run events、trace stream、approval prompts。
+
+Unix socket:
+  本机 daemon 模式。
+```
+
+架构关系：
+
+```text
+agent tui
+agent run
+agent sdk
+agent web
+backend worker
+    |
+    v
+agent serve
+    |
+    v
+AgentRunner / Registry / Store / ToolRegistry / TraceSink
+```
+
+TUI 和 CLI 不应该复制 runner 逻辑，只是 runtime server 的客户端。
+
+### 31.2 API Schema 与 SDK 生成
+
+Server API 必须 schema-first。
+
+建议：
+
+- HTTP API 使用 OpenAPI 3.1。
+- 本地 stdio/WebSocket 使用 JSON-RPC 2.0 风格 envelope 或 JSONL command envelope。
+- TypeScript / Dart SDK 从 OpenAPI 或 JSON Schema 生成。
+- Rust server 侧仍使用 `serde` + 边界校验。
+
+JSON-RPC 风格消息：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req_01HY...",
+  "method": "agent.run",
+  "params": {
+    "agent_id": "knowledge_inbox_triage",
+    "input": {}
+  }
+}
+```
+
+事件流：
+
+```json
+{
+  "type": "agent.run.event",
+  "run_id": "run_01HY...",
+  "event": {
+    "kind": "tool_call_started",
+    "tool_call_id": "tool_01HY..."
+  }
+}
+```
+
+### 31.3 TUI 作为 Server Client
+
+TUI 应支持连接本地或远程 runtime：
+
+```bash
+agent tui
+agent tui --connect http://127.0.0.1:8765
+agent run inbox_triage --attach http://127.0.0.1:8765
+```
+
+好处：
+
+- 复用常驻 runtime，减少外部 tool / MCP / indexer 冷启动。
+- 多个客户端可以观察同一个 run。
+- Web UI、TUI、IDE 看到同一份 session/trace。
+- 后端 worker 的运行也可以被 attach 观察。
+
+### 31.4 Session / Thread / Run / Step 模型
+
+为了支持 fork、resume、replay 和多客户端调试，需要比单个 `run_id` 更完整的数据模型。
+
+推荐层级：
+
+```text
+Session:
+  一组相关任务或调试上下文。
+
+Thread:
+  Session 内的一条分支，可从历史 thread fork。
+
+Run:
+  一次 agent 执行。
+
+Step:
+  一次模型轮次、tool call、proposal、state update 或 approval。
+```
+
+基本命令：
+
+```bash
+agent session list
+agent session show <session-id>
+agent session fork <session-id>
+agent run <agent-id> --session <session-id>
+agent replay <run-id> --fork
+```
+
+Fork 应复制上下文引用和 replay config，但生成新的 thread id。这样可以用同一个问题对比不同 prompt、model、tool output 或 agent version。
+
+### 31.5 Primary Agent 与 Subagent
+
+借鉴 OpenCode 和 Codex 的 agent 分层，runtime 应区分 primary agent 与 subagent。
+
+```yaml
+id: code_search
+name: Code Search
+mode: subagent
+hidden: true
+model: fast
+max_steps: 20
+```
+
+模式：
+
+```text
+primary:
+  用户可直接选择和交互，保留主任务上下文。
+
+subagent:
+  专门做检索、验证、日志分析、总结等局部任务。
+
+all:
+  既可直接运行，也可被其他 agent 调用。
+```
+
+Subagent 的主要价值：
+
+- 避免主上下文被长日志、检索结果、工具噪声污染。
+- 让复杂任务拆成可观测的小任务。
+- 让 TUI 展示子任务树。
+- 让 eval 能分别评估主 agent 和子 agent。
+
+Trace 中应记录：
+
+```text
+parent_run_id
+subagent_run_id
+subagent_id
+input_summary
+output_summary
+```
+
+### 31.6 Commands / Workflow 模板
+
+借鉴 OpenCode slash commands，runtime 应支持文件化命令。命令不是 agent 本身，而是可复用 workflow prompt。
+
+目录：
+
+```text
+.agent-runtime/
+  commands/
+    triage.md
+    weekly-review.md
+    repair.md
+```
+
+示例：
+
+```markdown
+---
+description: Run inbox triage against a fixture
+agent: knowledge_inbox_triage
+model: fast
+---
+
+Run triage for $ARGUMENTS and summarize proposals.
+```
+
+CLI：
+
+```bash
+agent cmd triage ./fixtures/inbox-small.json
+agent tui
+# TUI 中显示 /triage
+```
+
+命令用途：
+
+- 把常用 workflow 版本化。
+- 让团队共享调试入口。
+- 让一次成功的 replay 沉淀为可重复命令。
+- 作为 eval case 的前置模板。
+
+### 31.7 Hooks 与事件扩展点
+
+不需要在 MVP 实现完整插件系统，但应先稳定 hook event schema。
+
+推荐事件：
+
+```text
+SessionStart
+SessionStop
+RunStart
+RunStop
+BeforeAgentStep
+AfterAgentStep
+SubagentStart
+SubagentStop
+BeforeToolCall
+AfterToolCall
+BeforeProposalCreate
+AfterProposalDecision
+BeforeStateSave
+AfterStateSave
+BeforeCompact
+AfterCompact
+```
+
+Hook 形态：
+
+```text
+native Rust hook:
+  Rust trait，适合 embedded runtime。
+
+process hook:
+  通过 stdin/stdout JSON 调用外部脚本。
+
+server hook:
+  HTTP callback，适合远程集成。
+```
+
+Hook 输入输出必须 schema 化。即使暂不实现，也要让 trace event 和 server API 预留这些事件名，避免后续破坏协议。
+
+### 31.8 MCP 与 LSP 作为能力来源
+
+ToolRegistry 应支持多种 tool source。
+
+```text
+BuiltinToolSource:
+  Rust 内置 tool。
+
+ProcessToolSource:
+  外部进程 tool。
+
+McpToolSource:
+  MCP server 暴露的 tools/resources/prompts。
+
+HttpToolSource:
+  HTTP tool endpoint。
+
+LspSource:
+  代码场景下的 symbol、diagnostics、references、definition 能力。
+```
+
+配置示例：
+
+```yaml
+tools:
+  mcp:
+    filesystem:
+      command: npx
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+  lsp:
+    rust:
+      command: rust-analyzer
+      extensions: ["rs"]
+```
+
+工具启用应支持两级：
+
+```text
+global tools:
+  runtime 可用的工具全集。
+
+per-agent tools:
+  某个 agent 实际可见的工具子集。
+```
+
+### 31.9 Record、Replay 与 Eval 互相转换
+
+借鉴 Codex 的 record/replay 思路，一次成功的交互式运行应该可以沉淀成可复用资产。
+
+转换路径：
+
+```text
+TUI run
+  -> trace
+  -> debug bundle
+  -> deterministic replay
+  -> eval case
+  -> command template
+```
+
+CLI：
+
+```bash
+agent record --agent inbox_triage
+agent replay traces/run_123.json --mode deterministic
+agent eval create --from-run run_123 --out evals/inbox_triage_basic.yaml
+agent cmd create --from-run run_123 --out .agent-runtime/commands/triage.md
+```
+
+这样 agent 改进循环可以变成：
+
+```text
+observe trace
+  -> identify failure
+  -> repair prompt/tool/agent
+  -> rerun eval
+  -> update golden when intentional
+```
+
+### 31.10 AGENTS.md / Project Instructions 分层
+
+Codex 的项目说明文件模式值得借鉴。Runtime 可以支持项目级 instructions，并按照目录层级覆盖。
+
+建议文件：
+
+```text
+AGENTS.md
+.agent-runtime/instructions.md
+features/knowledge/AGENTS.md
+```
+
+加载规则：
+
+```text
+global instructions
+  < project AGENTS.md
+  < nearest directory AGENTS.md
+  < agent manifest instructions
+  < command frontmatter/body
+  < run request instructions
+```
+
+每次 run 应记录实际使用的 instruction stack，方便 replay 和 debug。
+
+### 31.11 可借鉴设计的落地优先级
+
+优先落地：
+
+1. `agent serve` headless runtime。
+2. TUI/CLI 作为 server client。
+3. Session / Thread / Run / Step 数据模型。
+4. Primary / Subagent 模式。
+5. Markdown commands。
+6. Hook event schema。
+7. MCP tool source。
+8. OpenAPI / JSON-RPC schema generation。
+9. Replay -> Eval / Command 生成。
+10. Project instructions 分层。
+
+这些能力能让 runtime 从“可执行库”演进为“可独立运行、可调试、可集成、可长期演进的 agent platform”。
