@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -176,16 +176,19 @@ class _RangeChips extends ConsumerWidget {
     final initialStart =
         ref.read(dashboardCustomRangeProvider)?.from ??
         now.subtract(const Duration(days: 365));
-    final picked = await showDateRangePicker(
+    final picked = await showAppFormSheet<({DateTime from, DateTime to})>(
       context: context,
-      initialDateRange: DateTimeRange(start: initialStart, end: initialEnd),
-      firstDate: DateTime(now.year - 10),
-      lastDate: now,
+      builder: (_) => _TrendRangeSheet(
+        initialFrom: initialStart,
+        initialTo: initialEnd,
+        firstDate: DateTime(now.year - 10),
+        lastDate: now,
+      ),
     );
     if (picked == null) return;
     ref.read(dashboardCustomRangeProvider.notifier).state = (
-      from: picked.start,
-      to: picked.end,
+      from: picked.from,
+      to: picked.to,
     );
     ref.read(dashboardSelectedRangeProvider.notifier).state =
         DashboardRangePreset.custom;
@@ -210,6 +213,112 @@ class _RangeChips extends ConsumerWidget {
     }
   }
 }
+
+class _TrendRangeSheet extends StatefulWidget {
+  const _TrendRangeSheet({
+    required this.initialFrom,
+    required this.initialTo,
+    required this.firstDate,
+    required this.lastDate,
+  });
+
+  final DateTime initialFrom;
+  final DateTime initialTo;
+  final DateTime firstDate;
+  final DateTime lastDate;
+
+  @override
+  State<_TrendRangeSheet> createState() => _TrendRangeSheetState();
+}
+
+class _TrendRangeSheetState extends State<_TrendRangeSheet> {
+  late final FCalendarController<(DateTime, DateTime)?> _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = FCalendarController.range(
+      initial: (_utcDay(widget.initialFrom), _utcDay(widget.initialTo)),
+      selectable: (date) {
+        final day = _utcDay(date);
+        return !day.isBefore(_utcDay(widget.firstDate)) &&
+            !day.isAfter(_utcDay(widget.lastDate));
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final formatter = AppFormatters(locale: Localizations.localeOf(context));
+    return ValueListenableBuilder<(DateTime, DateTime)?>(
+      valueListenable: _controller,
+      builder: (context, selected, _) {
+        return AppSheet(
+          title: l10n.dashboardRangeCustom,
+          subtitle: selected == null
+              ? null
+              : '${formatter.date(selected.$1)} - ${formatter.date(selected.$2)}',
+          footer: Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).maybePop(),
+                  child: Text(l10n.commonCancel),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: FButton(
+                  onPress: selected == null
+                      ? null
+                      : () => Navigator.of(
+                          context,
+                        ).pop((from: selected.$1, to: selected.$2)),
+                  child: Text(l10n.commonConfirm),
+                ),
+              ),
+            ],
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.muted.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s8),
+              child: Center(
+                child: FCalendar(
+                  control: FCalendarControl.managedRange(
+                    controller: _controller,
+                  ),
+                  start: _utcDay(widget.firstDate),
+                  end: _utcDay(widget.lastDate.add(const Duration(days: 1))),
+                  today: _utcDay(DateTime.now()),
+                  initialMonth: _utcDay(widget.initialTo),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+DateTime _utcDay(DateTime date) =>
+    DateTime.utc(date.year, date.month, date.day);
 
 class _TrendChart extends StatelessWidget {
   const _TrendChart({
@@ -267,6 +376,7 @@ class _TrendChart extends StatelessWidget {
             series: [flatSeries],
             minimal: true,
             interpolation: ChartInterpolation.linear,
+            showDots: false,
             semanticLabel: AppLocalizations.of(context).dashboardTrendTitle,
           );
           return Column(
@@ -456,19 +566,12 @@ class _LineChartBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final delta =
-        trend.points.last.netWorth.amount - trend.points.first.netWorth.amount;
-    final intent = delta.sign > 0
-        ? SeriesIntent.up
-        : delta.sign < 0
-        ? SeriesIntent.down
-        : SeriesIntent.primary;
     final chartSeries = ChartSeries(
       name: AppLocalizations.of(context).dashboardTrendTitle,
       points: series.points,
-      intent: intent,
-      fillOpacity: 0.16,
-      strokeWidth: AppStroke.accent,
+      intent: SeriesIntent.primary,
+      fillOpacity: AppOpacity.subtle,
+      strokeWidth: AppStroke.medium,
     );
     return NwLineChart(
       series: [chartSeries],
@@ -480,7 +583,8 @@ class _LineChartBody extends StatelessWidget {
       ),
       filled: true,
       interpolation: ChartInterpolation.linear,
-      heroDots: true,
+      showDots: false,
+      heroDots: false,
       showXAxis: true,
       showYAxis: showYAxis,
       showTouchXAxisLabel: true,

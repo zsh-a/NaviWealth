@@ -44,6 +44,7 @@ class NwLineChart extends StatefulWidget {
     this.curved,
     this.curveSmoothness = 0.28,
     this.heroDots = false,
+    this.showDots,
     this.showXAxis = true,
     this.showYAxis = true,
     this.showTouchXAxisLabel = false,
@@ -87,6 +88,11 @@ class NwLineChart extends StatefulWidget {
   /// Draw a larger highlighted dot at the last data point of each series.
   /// Intended for hero / showcase charts only.
   final bool heroDots;
+
+  /// Whether to render resting data-point dots. `null` keeps the historical
+  /// auto-density behavior (dots only for short series). Set to `false` for
+  /// dense analytical lines where touch crosshair feedback is enough.
+  final bool? showDots;
 
   /// Whether to render the bottom X-axis labels in the resting chart.
   final bool showXAxis;
@@ -347,7 +353,7 @@ class _NwLineChartState extends State<NwLineChart> {
       dashArray: effectiveDash,
       barWidth: s.strokeWidth ?? defaultStroke,
       dotData: FlDotData(
-        show: s.points.length <= 60,
+        show: widget.showDots ?? s.points.length <= 60,
         getDotPainter: widget.heroDots && ordinal == 0
             ? (spot, percent, barData, index) {
                 if (index != s.points.length - 1) {

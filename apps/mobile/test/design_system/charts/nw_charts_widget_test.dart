@@ -68,6 +68,31 @@ void main() {
       expect(find.byType(LineChart), findsOneWidget);
     });
 
+    testWidgets('can hide resting data-point dots for dense trend charts', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          NwLineChart(
+            showDots: false,
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: List.generate(
+                  10,
+                  (i) => ChartPoint(x: i.toDouble(), y: i.toDouble()),
+                ),
+              ),
+            ],
+            xAxis: const TimeAxis(format: AxisDateFormat.yearOnly),
+          ),
+        ),
+      );
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.first.dotData.show, isFalse);
+    });
+
     testWidgets('auto-downsamples when series exceeds default target', (
       tester,
     ) async {
