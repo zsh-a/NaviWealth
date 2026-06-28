@@ -296,31 +296,50 @@ class DividendForecastService {
     final breakdown = <String, Decimal>{};
     final assetStrategies = <String, String>{};
     var confidence = DividendForecastConfidence.high;
+    final holdingAssetIds = {
+      for (final holding in holdingList) holding.assetId,
+    };
+    final historyByAsset = <String, List<CashDividend>>{};
+    for (final dividend in history) {
+      if (!holdingAssetIds.contains(dividend.assetId)) continue;
+      historyByAsset
+          .putIfAbsent(dividend.assetId, () => <CashDividend>[])
+          .add(dividend);
+    }
+    final declaredByAsset = <String, List<CorporateAction>>{};
+    for (final action in declared) {
+      if (!holdingAssetIds.contains(action.assetId)) continue;
+      declaredByAsset
+          .putIfAbsent(action.assetId, () => <CorporateAction>[])
+          .add(action);
+    }
 
     for (final holding in holdingList) {
-      final assetHistory = history.where((d) => d.assetId == holding.assetId);
-      final assetDeclared = declared.where((a) => a.assetId == holding.assetId);
+      final assetHistory =
+          historyByAsset[holding.assetId] ?? const <CashDividend>[];
+      final assetDeclared =
+          declaredByAsset[holding.assetId] ?? const <CorporateAction>[];
       final single = [holding];
-      final chosen = _firstUsable([
-        declaredStrategy.forecast(
+      final chosen = _firstUsable(() sync* {
+        yield declaredStrategy.forecast(
           holdings: single,
           history: assetHistory,
           declared: assetDeclared,
           horizonEnd: horizonEnd,
-        ),
-        dpsStrategy.forecast(
+        );
+        yield dpsStrategy.forecast(
           holdings: single,
           history: assetHistory,
           declared: assetDeclared,
           horizonEnd: horizonEnd,
-        ),
-        ttmStrategy.forecast(
+        );
+        yield ttmStrategy.forecast(
           holdings: single,
           history: assetHistory,
           declared: assetDeclared,
           horizonEnd: horizonEnd,
-        ),
-      ]);
+        );
+      }());
       if (chosen == null) continue;
       for (final entry in chosen.perAsset.entries) {
         _addToSchedule(schedule, entry.key, entry.value);
@@ -345,7 +364,7 @@ class DividendForecastService {
     );
   }
 
-  ProjectedDividend? _firstUsable(List<ProjectedDividend> candidates) {
+  ProjectedDividend? _firstUsable(Iterable<ProjectedDividend> candidates) {
     for (final candidate in candidates) {
       if (candidate.total > Decimal.zero) return candidate;
     }
