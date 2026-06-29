@@ -243,6 +243,41 @@ void main() {
   );
 
   test(
+    'AgentRuntimeNativeStepRunner dispatches native tool-plan continuations',
+    () async {
+      final dispatcher = _RecordingDispatcher();
+      final bridge = _ToolPlanBridge();
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.runUntilTerminal(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+        maxToolSteps: 2,
+      );
+
+      expect(result['status'], 'completed');
+      expect(result['output'], containsPair('mode', 'frb_tool_loop'));
+      expect(dispatcher.calls.map((call) => call.name), <String>[
+        'read_first',
+        'read_second',
+      ]);
+      expect(bridge.continuations, hasLength(2));
+      expect(
+        bridge.continuations.first.toolResponse,
+        containsPair('id', 'call_1'),
+      );
+      expect(
+        bridge.continuations.last.toolResponse,
+        containsPair('id', 'call_2'),
+      );
+    },
+  );
+
+  test(
     'AgentRuntimeNativeStepRunner fails when tool-call budget is exhausted',
     () async {
       final dispatcher = _RecordingDispatcher();
@@ -580,6 +615,79 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
       'tool_call': previousStep['tool_call'],
       'output': <String, Object?>{
         'mode': 'fake_continue',
+        'tool_result': toolResponse['result'],
+      },
+    };
+  }
+}
+
+class _ToolPlanBridge extends _FakeBridge {
+  _ToolPlanBridge()
+    : super(
+        step: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_1',
+          'agent_id': 'execution_review',
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_1',
+            'name': 'read_first',
+            'input': <String, Object?>{'id': 'first'},
+          },
+          'continuation': <String, Object?>{
+            'tool_plan': <Object?>[
+              <String, Object?>{
+                'name': 'read_second',
+                'input': <String, Object?>{'id': 'second'},
+              },
+            ],
+            'tool_results': <Object?>[],
+          },
+        },
+      );
+
+  @override
+  Future<Map<String, Object?>> continueRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> previousStep,
+    required Map<String, Object?> toolResponse,
+    required String agentId,
+  }) async {
+    continuations.add(_Continuation(previousStep, toolResponse));
+    final continuation = previousStep['continuation'];
+    if (continuation is Map<String, Object?>) {
+      final plan = continuation['tool_plan'];
+      if (plan is List<Object?> && plan.isNotEmpty) {
+        final nextTool = plan.first! as Map<String, Object?>;
+        return <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': previousStep['run_id'],
+          'agent_id': agentId,
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_2',
+            'name': nextTool['name'],
+            'input': nextTool['input'],
+          },
+          'continuation': <String, Object?>{
+            'tool_plan': const <Object?>[],
+            'tool_results': <Object?>[
+              <String, Object?>{
+                'tool_call': previousStep['tool_call'],
+                'tool_response': toolResponse,
+              },
+            ],
+          },
+        };
+      }
+    }
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': previousStep['run_id'],
+      'agent_id': agentId,
+      'status': 'completed',
+      'output': <String, Object?>{
+        'mode': 'frb_tool_loop',
         'tool_result': toolResponse['result'],
       },
     };

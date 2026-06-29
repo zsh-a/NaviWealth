@@ -150,6 +150,11 @@ Current bridge capabilities:
   `agentRuntimeStartProfileTurnStep`: Rust completes the active-profile LLM
   request and starts the first native runtime step, then Dart resumes bounded
   tool dispatch from that initial step.
+- Provide native-planned FRB tool continuation: Rust can seed a `tool_plan`
+  from run input or LLM response metadata, return the first
+  `tool_call_requested` step, consume each Dart tool response through
+  `agentRuntimeContinueRunStep`, and either request the next catalog tool or
+  return a terminal `frb_tool_loop` output.
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
   display the terminal native step status.
@@ -176,12 +181,13 @@ Known limitation:
 - The embedded FRB path currently covers deterministic native step contracts
   bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
   active-profile LLM request bridge, profile-backed native LLM completion, and
-  native profile-turn first-step execution, plus explicit
-  confirmed-proposal/profile-turn providers and a user-facing runtime check /
-  guarded confirmed-proposal apply surface in the AI provider settings page,
-  plus the HealthOS Morning Briefing production-agent path. The remaining
-  production work is the full native continuation runner and then migrating a
-  tool-using production agent onto that fuller loop.
+  native profile-turn first-step execution, native-planned `tool_plan`
+  continuation, plus explicit confirmed-proposal/profile-turn providers and a
+  user-facing runtime check / guarded confirmed-proposal apply surface in the
+  AI provider settings page, plus the HealthOS Morning Briefing
+  production-agent path. The remaining production work is richer Rust-side
+  agent policy/state/trace ownership beyond the current tool-plan contract and
+  migrating a tool-using production agent onto that fuller loop.
 
 ## Current Refactor State
 

@@ -13,7 +13,7 @@ use agent_llm::{
 };
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{Map, Value, json};
 
 #[derive(Debug, Serialize)]
 struct CatalogSummary {
@@ -178,33 +178,17 @@ pub fn agent_runtime_start_run_step(
         .ok_or_else(|| anyhow::anyhow!("agent '{agent_id}' is not present in the catalog"))?;
     let run_id = request.run_id.clone().unwrap_or_else(RunId::new_v7);
 
-    let response = match parse_requested_tool_call(&request.input)? {
-        Some(tool_call) => {
-            let tool = catalog
-                .tools
-                .iter()
-                .find(|tool| tool.name == tool_call.name)
-                .ok_or_else(|| {
-                    anyhow::anyhow!(
-                        "tool '{}' requested by agent '{}' is not present in the catalog",
-                        tool_call.name,
-                        agent.id
-                    )
-                })?;
-            json!({
-                "protocol_version": protocol_version(),
-                "run_id": run_id,
-                "agent_id": agent.id,
-                "agent_version": agent.version,
-                "status": "tool_call_requested",
-                "tool_call": {
-                    "tool_call_id": ToolCallId::new_v7(),
-                    "name": tool.name,
-                    "input": tool_call.input,
-                    "risk": tool.risk,
-                    "metadata": tool.metadata,
-                }
-            })
+    let response = match parse_initial_tool_request(&request.input)? {
+        Some(tool_request) => {
+            let continuation = tool_request.continuation();
+            build_tool_call_requested_step(
+                &catalog,
+                &agent.id,
+                &agent.version,
+                serde_json::to_value(&run_id)?,
+                tool_request.first,
+                continuation,
+            )?
         }
         None => {
             json!({
@@ -245,6 +229,11 @@ pub fn agent_runtime_continue_run_step(
         .get("tool_call")
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
+    let mut tool_results = continuation_tool_results(&previous_step)?;
+    tool_results.push(json!({
+        "tool_call": tool_call.clone(),
+        "tool_response": tool_response.clone(),
+    }));
 
     let response = match tool_response.get("error") {
         Some(error) => json!({
@@ -257,19 +246,37 @@ pub fn agent_runtime_continue_run_step(
             "tool_response": tool_response,
             "error": error,
         }),
-        None => json!({
-            "protocol_version": protocol_version(),
-            "run_id": run_id,
-            "agent_id": agent.id,
-            "agent_version": agent.version,
-            "status": "completed",
-            "output": {
-                "mode": "frb_tool_step",
-                "tool_call": tool_call,
-                "tool_result": tool_response.get("result").cloned().unwrap_or(Value::Null),
-                "tool_response": tool_response,
+        None => match next_tool_request_from_continuation(&previous_step, tool_results.clone())? {
+            Some(next) => {
+                let continuation = next.continuation();
+                build_tool_call_requested_step(
+                    &catalog,
+                    &agent.id,
+                    &agent.version,
+                    run_id,
+                    next.first,
+                    continuation,
+                )?
             }
-        }),
+            None => json!({
+                "protocol_version": protocol_version(),
+                "run_id": run_id,
+                "agent_id": agent.id,
+                "agent_version": agent.version,
+                "status": "completed",
+                "output": {
+                    "mode": if tool_results.len() > 1 {
+                        "frb_tool_loop"
+                    } else {
+                        "frb_tool_step"
+                    },
+                    "tool_call": tool_call,
+                    "tool_result": tool_response.get("result").cloned().unwrap_or(Value::Null),
+                    "tool_response": tool_response,
+                    "tool_results": tool_results,
+                }
+            }),
+        },
     };
     Ok(serde_json::to_string(&response)?)
 }
@@ -315,21 +322,162 @@ where
     Ok(serde_json::to_string(&value)?)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 struct RequestedToolCall {
     name: String,
     #[serde(default)]
     input: Value,
 }
 
-fn parse_requested_tool_call(input: &Value) -> Result<Option<RequestedToolCall>> {
+#[derive(Debug)]
+struct ToolRequestState {
+    first: RequestedToolCall,
+    remaining: Vec<Value>,
+    tool_results: Vec<Value>,
+    llm_response: Option<Value>,
+}
+
+impl ToolRequestState {
+    fn continuation(&self) -> Option<Value> {
+        if self.remaining.is_empty() && self.tool_results.is_empty() && self.llm_response.is_none()
+        {
+            return None;
+        }
+        let mut object = Map::new();
+        object.insert("tool_plan".to_owned(), Value::Array(self.remaining.clone()));
+        object.insert(
+            "tool_results".to_owned(),
+            Value::Array(self.tool_results.clone()),
+        );
+        if let Some(llm_response) = &self.llm_response {
+            object.insert("llm_response".to_owned(), llm_response.clone());
+        }
+        Some(Value::Object(object))
+    }
+}
+
+fn parse_initial_tool_request(input: &Value) -> Result<Option<ToolRequestState>> {
+    if let Some(tool_plan) = input.get("tool_plan") {
+        let plan = tool_plan
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("tool_plan must be an array"))?;
+        if plan.is_empty() {
+            return Ok(None);
+        }
+        let first = serde_json::from_value(plan[0].clone())?;
+        return Ok(Some(ToolRequestState {
+            first,
+            remaining: plan[1..].to_vec(),
+            tool_results: Vec::new(),
+            llm_response: input.get("llm_response").cloned(),
+        }));
+    }
+
     let Some(tool_call) = input.get("tool_call") else {
         return Ok(None);
     };
-    Ok(Some(serde_json::from_value(tool_call.clone())?))
+    Ok(Some(ToolRequestState {
+        first: serde_json::from_value(tool_call.clone())?,
+        remaining: Vec::new(),
+        tool_results: Vec::new(),
+        llm_response: input.get("llm_response").cloned(),
+    }))
+}
+
+fn next_tool_request_from_continuation(
+    previous_step: &Value,
+    tool_results: Vec<Value>,
+) -> Result<Option<ToolRequestState>> {
+    let Some(continuation) = previous_step.get("continuation") else {
+        return Ok(None);
+    };
+    let plan = continuation
+        .get("tool_plan")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    if plan.is_empty() {
+        return Ok(None);
+    }
+    let first = serde_json::from_value(plan[0].clone())?;
+    Ok(Some(ToolRequestState {
+        first,
+        remaining: plan[1..].to_vec(),
+        tool_results,
+        llm_response: continuation.get("llm_response").cloned(),
+    }))
+}
+
+fn continuation_tool_results(previous_step: &Value) -> Result<Vec<Value>> {
+    let Some(continuation) = previous_step.get("continuation") else {
+        return Ok(Vec::new());
+    };
+    let Some(results) = continuation.get("tool_results") else {
+        return Ok(Vec::new());
+    };
+    results
+        .as_array()
+        .cloned()
+        .ok_or_else(|| anyhow::anyhow!("continuation.tool_results must be an array"))
+}
+
+fn build_tool_call_requested_step(
+    catalog: &AgentRuntimeCatalog,
+    agent_id: &str,
+    agent_version: &str,
+    run_id: Value,
+    tool_call: RequestedToolCall,
+    continuation: Option<Value>,
+) -> Result<Value> {
+    let tool = catalog
+        .tools
+        .iter()
+        .find(|tool| tool.name == tool_call.name)
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "tool '{}' requested by agent '{}' is not present in the catalog",
+                tool_call.name,
+                agent_id
+            )
+        })?;
+    let mut step = json!({
+        "protocol_version": protocol_version(),
+        "run_id": run_id,
+        "agent_id": agent_id,
+        "agent_version": agent_version,
+        "status": "tool_call_requested",
+        "tool_call": {
+            "tool_call_id": ToolCallId::new_v7(),
+            "name": tool.name,
+            "input": tool_call.input,
+            "risk": tool.risk,
+            "metadata": tool.metadata,
+        }
+    });
+    if let Some(continuation) = continuation {
+        step.as_object_mut()
+            .expect("step is an object")
+            .insert("continuation".to_owned(), continuation);
+    }
+    Ok(step)
 }
 
 fn runtime_input_from_llm_response(response: &LlmResponse) -> Result<Value> {
+    if let Some(tool_plan) = response
+        .metadata
+        .get("tool_plan")
+        .or_else(|| response.metadata.get("tool_calls"))
+    {
+        let plan = tool_plan
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("LLM metadata tool plan must be an array"))?;
+        if !plan.is_empty() {
+            return Ok(json!({
+                "tool_plan": plan,
+                "llm_response": response,
+            }));
+        }
+    }
     if let Some(tool_call) = response.metadata.get("tool_call") {
         return Ok(json!({
             "tool_call": tool_call,

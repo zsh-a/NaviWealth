@@ -120,6 +120,11 @@ Implemented:
   `agentRuntimeStartProfileTurnStep`, which completes the active-profile LLM
   request in Rust and starts the first native runtime step before Dart resumes
   bounded tool dispatch
+- Native-planned FRB tool continuation: `agentRuntimeStartRunStep` can seed a
+  `tool_plan` from run input or LLM response metadata, and
+  `agentRuntimeContinueRunStep` consumes each Dart tool response before either
+  requesting the next catalog tool or returning a terminal `frb_tool_loop`
+  output
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status
@@ -134,15 +139,15 @@ Implemented:
 
 Deferred:
 
-- complete embedded Rust runner loop over FRB beyond the native profile-turn
-  first step, promoting the remaining Dart continuation seam into a fuller
-  native runner as the Rust runtime grows
+- complete embedded Rust runner loop beyond the current native-planned
+  `tool_plan` continuation contract, promoting richer agent policy/state/trace
+  ownership into Rust while Dart keeps executing device tools
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
   (`NativeCallable.isolateLocal`) on the local latest toolchain.
-- migrate a tool-using production agent once the native runner owns more of the
-  continuation loop
+- migrate a tool-using production agent onto the native-planned continuation
+  loop
 
 ## Commands
 

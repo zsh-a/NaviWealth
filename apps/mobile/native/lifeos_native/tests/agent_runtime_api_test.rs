@@ -201,6 +201,37 @@ fn start_run_step_requests_catalog_tool_call() {
 }
 
 #[test]
+fn start_run_step_seeds_native_tool_plan_continuation() {
+    let step_json = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {
+            "tool_plan": [
+              {"name": "propose_fake", "input": {"value": 1}},
+              {"name": "propose_fake", "input": {"value": 2}}
+            ],
+            "llm_response": {"content": "use two tools"}
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("start step should seed tool plan continuation");
+    let step: Value = serde_json::from_str(&step_json).expect("step should be json");
+
+    assert_eq!(step["status"], "tool_call_requested");
+    assert_eq!(step["tool_call"]["input"]["value"], 1);
+    assert_eq!(step["continuation"]["tool_plan"][0]["input"]["value"], 2);
+    assert_eq!(
+        step["continuation"]["llm_response"]["content"],
+        "use two tools"
+    );
+}
+
+#[test]
 fn continue_run_step_completes_with_tool_result() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
@@ -234,6 +265,97 @@ fn continue_run_step_completes_with_tool_result() {
     assert_eq!(next["output"]["mode"], "frb_tool_step");
     assert_eq!(next["output"]["tool_result"]["accepted"], true);
     assert_eq!(next["output"]["tool_call"]["name"], "propose_fake");
+}
+
+#[test]
+fn continue_run_step_requests_next_native_tool_plan_item() {
+    let step_json = r#"{
+      "protocol_version": "agent.v1",
+      "run_id": "run_018f0000-0000-7000-8000-000000000000",
+      "agent_id": "execution_review",
+      "agent_version": "1.0.0",
+      "status": "tool_call_requested",
+      "tool_call": {
+        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+        "name": "propose_fake",
+        "input": {"value": 1}
+      },
+      "continuation": {
+        "tool_plan": [
+          {"name": "propose_fake", "input": {"value": 2}}
+        ],
+        "tool_results": [],
+        "llm_response": {"content": "use two tools"}
+      }
+    }"#;
+    let next_json = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        step_json.to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_018f0000-0000-7000-8000-000000000000",
+          "result": {"accepted": true, "value": 1}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("continue step should request next planned tool");
+    let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
+
+    assert_eq!(next["status"], "tool_call_requested");
+    assert_eq!(next["tool_call"]["name"], "propose_fake");
+    assert_eq!(next["tool_call"]["input"]["value"], 2);
+    assert_eq!(
+        next["continuation"]["tool_plan"].as_array().unwrap().len(),
+        0
+    );
+    assert_eq!(
+        next["continuation"]["tool_results"][0]["tool_response"]["result"]["value"],
+        1
+    );
+}
+
+#[test]
+fn continue_run_step_completes_native_tool_plan_after_last_item() {
+    let step_json = r#"{
+      "protocol_version": "agent.v1",
+      "run_id": "run_018f0000-0000-7000-8000-000000000000",
+      "agent_id": "execution_review",
+      "agent_version": "1.0.0",
+      "status": "tool_call_requested",
+      "tool_call": {
+        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000001",
+        "name": "propose_fake",
+        "input": {"value": 2}
+      },
+      "continuation": {
+        "tool_plan": [],
+        "tool_results": [
+          {
+            "tool_call": {"name": "propose_fake", "input": {"value": 1}},
+            "tool_response": {"result": {"accepted": true, "value": 1}}
+          }
+        ]
+      }
+    }"#;
+    let next_json = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        step_json.to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_018f0000-0000-7000-8000-000000000001",
+          "result": {"accepted": true, "value": 2}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("continue step should complete the native tool plan");
+    let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
+
+    assert_eq!(next["status"], "completed");
+    assert_eq!(next["output"]["mode"], "frb_tool_loop");
+    assert_eq!(next["output"]["tool_results"].as_array().unwrap().len(), 2);
+    assert_eq!(next["output"]["tool_result"]["value"], 2);
 }
 
 #[test]
