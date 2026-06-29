@@ -300,6 +300,37 @@ void main() {
       expect(snapshot.openActions, isEmpty);
       expect(fallback.calls, 1);
     });
+
+    test(
+      'ignores trace recording failures after a successful FRB read',
+      () async {
+        final fallback = _FallbackReader(
+          const ExecutionReviewSnapshot(
+            openActions: <ExecutionReviewAction>[],
+            activeProjects: <ExecutionReviewRef>[],
+            activeCommitments: <ExecutionReviewRef>[],
+            recentProgress: <ExecutionReviewProgress>[],
+            activeProjectCount: 0,
+            activeCommitmentCount: 0,
+          ),
+        );
+        final reader = FrbExecutionReviewReader(
+          stepRunner: AgentRuntimeNativeStepRunner(
+            bridge: _ToolPlanBridge(),
+            toolHost: AgentRuntimeToolHost(dispatcher: _ExecutionDispatcher()),
+          ),
+          catalog: _catalog(),
+          fallback: fallback,
+          recordTrace: (_) async => throw StateError('trace store unavailable'),
+        );
+
+        final snapshot = await reader.read(_context());
+
+        expect(snapshot.openActions.single.id, 'action_1');
+        expect(snapshot.activeProjectCount, 1);
+        expect(fallback.calls, 0);
+      },
+    );
   });
 }
 
