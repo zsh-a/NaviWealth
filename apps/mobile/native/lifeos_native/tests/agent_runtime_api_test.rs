@@ -157,6 +157,16 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
     .to_string();
     assert!(mismatched_step_index.contains("step_index"));
 
+    let mismatched_run_state_status = agent_runtime_validate_trace(
+        include_str!(
+            "../../../../../fixtures/agent-runtime/trace.invalid.mismatched-step-run-state-status.json"
+        )
+        .to_owned(),
+    )
+    .expect_err("mismatched run_state status should fail native validation")
+    .to_string();
+    assert!(mismatched_run_state_status.contains("status"));
+
     let mismatched_terminal_status = agent_runtime_validate_trace(
         include_str!(
             "../../../../../fixtures/agent-runtime/trace.invalid.mismatched-step-terminal-status.json"

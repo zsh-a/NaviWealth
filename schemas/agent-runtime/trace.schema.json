@@ -166,6 +166,99 @@
                       "additionalProperties": true
                     }
                   },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": { "status": { "const": "tool_call_requested" } },
+                        "required": ["status"]
+                      },
+                      "then": {
+                        "properties": {
+                          "run_state": {
+                            "properties": { "status": { "const": "tool_call_requested" } }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": { "status": { "const": "completed" } },
+                        "required": ["status"]
+                      },
+                      "then": {
+                        "properties": {
+                          "run_state": {
+                            "properties": { "status": { "const": "completed" } }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": { "status": { "const": "failed" } },
+                        "required": ["status"]
+                      },
+                      "then": {
+                        "properties": {
+                          "run_state": {
+                            "properties": { "status": { "const": "failed" } }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": { "status": { "const": "cancelled" } },
+                        "required": ["status"]
+                      },
+                      "then": {
+                        "properties": {
+                          "run_state": {
+                            "properties": { "status": { "const": "cancelled" } }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": { "status": { "const": "policy_denied" } },
+                        "required": ["status"]
+                      },
+                      "then": {
+                        "properties": {
+                          "run_state": {
+                            "properties": { "status": { "const": "policy_denied" } }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": { "status": { "const": "closed_early" } },
+                        "required": ["status"]
+                      },
+                      "then": {
+                        "properties": {
+                          "run_state": {
+                            "properties": { "status": { "const": "closed_early" } }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": { "status": { "const": "timed_out" } },
+                        "required": ["status"]
+                      },
+                      "then": {
+                        "properties": {
+                          "run_state": {
+                            "properties": { "status": { "const": "timed_out" } }
+                          }
+                        }
+                      }
+                    }
+                  ],
                   "additionalProperties": true
                 }
               }

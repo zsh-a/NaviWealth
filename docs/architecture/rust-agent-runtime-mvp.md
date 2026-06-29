@@ -136,6 +136,9 @@ Implemented:
   `agent_runtime_step.run_state.status` / `terminal_reason` consistency, so
   terminal state semantics are shared across CLI fixtures, native validation,
   and Flutter-synthesised trace events
+- `trace.schema.json` and the native FRB validator both require
+  `agent_runtime_step.payload.status` to match `payload.run_state.status`,
+  keeping the outer step state and embedded run-state summary from drifting
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`

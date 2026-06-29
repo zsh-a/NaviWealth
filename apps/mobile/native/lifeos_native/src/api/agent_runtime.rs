@@ -415,6 +415,14 @@ fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Result<()> {
             .and_then(Value::as_object)
             .ok_or_else(|| anyhow::anyhow!("agent_runtime_step payload.run_state is required"))?;
         require_step_status(run_state, "status")?;
+        require_matching_string(
+            run_state,
+            "status",
+            payload
+                .get("status")
+                .and_then(Value::as_str)
+                .unwrap_or_default(),
+        )?;
         require_nullable_non_negative_integer(run_state, "step_index")?;
         require_matching_nullable_integer(run_state, "step_index", payload, "step_index")?;
         require_non_negative_integer(run_state, "remaining_tool_count")?;
