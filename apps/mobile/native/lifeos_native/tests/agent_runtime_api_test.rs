@@ -128,6 +128,44 @@ fn catalog_summary_rejects_malformed_agent_spec() {
 }
 
 #[test]
+fn catalog_summary_rejects_malformed_agent_schedule() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["agents"][0]["schedule"] = json!({
+        "type": "interval",
+        "every_seconds": 0
+    });
+
+    let interval_err =
+        agent_runtime_catalog_summary(catalog.to_string()).expect_err("zero interval should fail");
+    assert!(
+        interval_err
+            .to_string()
+            .contains("catalog.agents[0].schedule.every_seconds")
+    );
+
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["agents"][0]["schedule"] = json!({
+        "type": "interval",
+        "every_seconds": 3600,
+        "preferred_hour_local": 24
+    });
+
+    let hour_err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("out-of-range preferred hour should fail");
+    assert!(
+        hour_err
+            .to_string()
+            .contains("catalog.agents[0].schedule.preferred_hour_local")
+    );
+}
+
+#[test]
 fn catalog_summary_rejects_malformed_proposal_kind() {
     let mut catalog: Value = serde_json::from_str(include_str!(
         "../../../../../fixtures/agent-runtime/catalog.valid.json"

@@ -4,8 +4,8 @@
 //! DTOs live in `agent-core`; Dart passes JSON strings across the bridge.
 
 use agent_core::{
-    AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunId, RunRequest, ToolCallId,
-    ToolSpec, catalog_version, protocol_version,
+    AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunId, RunRequest, ScheduleSpec,
+    ToolCallId, ToolSpec, catalog_version, protocol_version,
 };
 use agent_llm::{
     AnthropicProvider, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
@@ -886,6 +886,26 @@ fn require_agent_spec_contract(agent: &AgentSpec, label: &str) -> Result<()> {
     }
     if agent.version.trim().is_empty() {
         anyhow::bail!("{label}.version must be a non-empty string");
+    }
+    require_schedule_spec_contract(&agent.schedule, &format!("{label}.schedule"))?;
+    Ok(())
+}
+
+fn require_schedule_spec_contract(schedule: &ScheduleSpec, label: &str) -> Result<()> {
+    match schedule {
+        ScheduleSpec::Manual => {}
+        ScheduleSpec::Interval {
+            every_seconds,
+            preferred_hour_local,
+            jitter_seconds: _,
+        } => {
+            if *every_seconds == 0 {
+                anyhow::bail!("{label}.every_seconds must be greater than zero");
+            }
+            if matches!(preferred_hour_local, Some(hour) if *hour > 23) {
+                anyhow::bail!("{label}.preferred_hour_local must be between 0 and 23");
+            }
+        }
     }
     Ok(())
 }
