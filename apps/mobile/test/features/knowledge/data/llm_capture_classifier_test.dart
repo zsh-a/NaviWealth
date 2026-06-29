@@ -10,6 +10,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
@@ -321,4 +322,140 @@ Sure, here's the classification:
       expect(fake.calls, 0);
     });
   });
+
+  group('FrbCaptureClassifier', () {
+    test(
+      'parses a clean routine JSON envelope from profile completion',
+      () async {
+        final bridge = _FakeLlmBridge(
+          responseText: '''
+{
+  "kind": "routine",
+  "confidence": 0.92,
+  "reason_zh": "用户表达周期事项",
+  "statement": "港卡做一次活跃交易",
+  "interval_days": 180,
+  "scope": "finance/cards/hk"
+}''',
+        );
+        final c = FrbCaptureClassifier(llmBridge: bridge);
+
+        final r = await c.classify(text: '港卡每 6 个月做一次活跃交易，否则会休眠。');
+
+        expect(bridge.calls, 1);
+        expect(bridge.lastMessages.first['role'], 'system');
+        expect(bridge.lastMessages.last['role'], 'user');
+        expect(bridge.lastMetadata['surface'], 'knowledge_capture');
+        expect(r.kind, CaptureKind.routine);
+        expect(r.intervalDays, 180);
+        expect(r.scope, 'finance/cards/hk');
+        expect(r.statement, '港卡做一次活跃交易');
+      },
+    );
+
+    test(
+      'low-confidence upgrade is downgraded while preserving polish',
+      () async {
+        final bridge = _FakeLlmBridge(
+          responseText: '''
+{"kind":"routine","confidence":0.3,"reason_zh":"勉强像","interval_days":180,
+ "polished_title":"清理后的标题","polished_body":"清理后的正文"}''',
+        );
+        final c = FrbCaptureClassifier(llmBridge: bridge);
+
+        final r = await c.classify(text: '可能要定期 xxx');
+
+        expect(r.kind, CaptureKind.note);
+        expect(r.reasonZh, contains('置信度'));
+        expect(r.hasPolish, isTrue);
+        expect(r.polishedTitle, '清理后的标题');
+        expect(r.polishedBody, '清理后的正文');
+      },
+    );
+
+    test('falls back to heuristic when FRB completion throws', () async {
+      final c = FrbCaptureClassifier(
+        llmBridge: _FakeLlmBridge(error: StateError('native unavailable')),
+      );
+
+      final r = await c.classify(text: '每周做一次 review');
+
+      expect(r.kind, CaptureKind.routine);
+      expect(r.intervalDays, 7);
+    });
+  });
+}
+
+class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+  _FakeLlmBridge({this.responseText, this.error});
+
+  final String? responseText;
+  final Object? error;
+  var calls = 0;
+  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
+  Map<String, Object?> lastMetadata = const <String, Object?>{};
+
+  @override
+  Map<String, Object?> buildRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
+    return <String, Object?>{
+      'messages': messages,
+      'metadata': metadata,
+      'max_output_tokens': maxOutputTokens,
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> completeMock({
+    required List<Map<String, Object?>> messages,
+    required String responseText,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return <String, Object?>{'content': responseText};
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    calls += 1;
+    lastMessages = messages;
+    lastMetadata = metadata;
+    final e = error;
+    if (e != null) throw e;
+    return <String, Object?>{
+      'provider': 'mock',
+      'model': 'test-model',
+      'content': responseText ?? '',
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> validateRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return buildRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
+  }
 }

@@ -161,6 +161,10 @@ Implemented:
   completion through `FrbContradictionJudge`, using
   `AgentRuntimeLlmBridge.completeProfile` for the principle/memory verdict
   while preserving the existing confidence gate and heuristic fallback
+- KnowledgeOS Capture classifier now prefers a FRB profile-backed LLM
+  completion through `FrbCaptureClassifier`, so both the Capture sheet and
+  `propose_capture` tool use the same FRB-backed taxonomy/polish seam while
+  preserving the existing heuristic fallback
 - First tool-using production agent migration onto the native-planned
   continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`

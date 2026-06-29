@@ -189,6 +189,10 @@ Current bridge capabilities:
   integration: Contradiction Judge now prefers `FrbContradictionJudge`, which
   calls `AgentRuntimeLlmBridge.completeProfile` for the principle/memory
   verdict while preserving the existing confidence gate and heuristic fallback.
+- Provide an additional KnowledgeOS FRB profile-backed LLM classifier
+  integration: Capture classifier now prefers `FrbCaptureClassifier`, so both
+  the Capture sheet and `propose_capture` tool use the same FRB-backed
+  taxonomy/polish seam while preserving the existing heuristic fallback.
 - Provide the first tool-using production agent integration on the
   native-planned continuation loop: HealthOS Recovery Alert now uses
   `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB

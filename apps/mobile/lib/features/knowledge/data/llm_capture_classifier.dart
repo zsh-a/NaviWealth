@@ -1,11 +1,11 @@
 /// LLM-driven capture classifier (`docs/domains/knowledgeos-domain.md` §4 + §14).
 ///
-/// Same shape as [LlmBriefingSynthesizer] from HealthOS: wrap the user's
-/// configured [DeviceLlmClient], compose a tight system prompt that
-/// emits structured JSON, parse, validate, return. On *any* failure
-/// (no network, provider error, timeout, malformed JSON, schema
-/// mismatch) it degrades silently to the heuristic baseline so the
-/// Capture sheet never blocks on AI.
+/// [FrbCaptureClassifier] is the production path: it sends the same prompt
+/// through the FRB profile-backed LLM bridge. [LlmCaptureClassifier] remains as
+/// the legacy direct-Dart LLM implementation and shares the parser/fallback
+/// semantics. On *any* failure (no network, provider error, timeout, malformed
+/// JSON, schema mismatch) both degrade silently to the heuristic baseline so
+/// the Capture sheet never blocks on AI.
 ///
 /// Why JSON-in-text instead of `tools` + forced tool_use:
 /// `AnthropicRequest` exposes a `tools` array but not `tool_choice`
@@ -19,6 +19,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../../../core/logging/app_logger.dart';
@@ -185,7 +186,7 @@ class LlmCaptureClassifier implements CaptureClassifier {
         return fallback.classify(text: text);
       }
 
-      final parsed = _parseClassification(json);
+      final parsed = _parseCaptureClassification(json);
       if (parsed == null) {
         logger?.w(
           '$_kLogTag JSON parse rejected (missing kind/reason/unknown kind), '
@@ -277,75 +278,6 @@ class LlmCaptureClassifier implements CaptureClassifier {
     return null;
   }
 
-  static CaptureClassification? _parseClassification(
-    Map<String, Object?> json,
-  ) {
-    final kindRaw = (json['kind'] as String?)?.trim();
-    if (kindRaw == null || kindRaw.isEmpty) return null;
-    final kind = CaptureKind.parse(kindRaw);
-    // If the LLM returned a string outside the enum, [CaptureKind.parse]
-    // falls back to `note` — but we should *not* treat that as a "note
-    // signal" because the model intended something else. Distinguish
-    // explicit `note` from unknown by comparing strings.
-    if (kind == CaptureKind.note && kindRaw != 'note') return null;
-
-    final confidence = _coerceDouble(json['confidence']) ?? 0.0;
-    final reason = (json['reason_zh'] as String?)?.trim() ?? '';
-    if (reason.isEmpty) return null;
-
-    // Polish fields parsed up front because they're orthogonal to the
-    // upgrade decision — even a low-confidence downgrade still carries
-    // the rewrite through so the user can accept just the polish.
-    final polishedTitle = _nullIfEmpty(
-      (json['polished_title'] as String?)?.trim(),
-    );
-    final polishedBody = _nullIfEmpty(
-      (json['polished_body'] as String?)?.trim(),
-    );
-
-    // Enforce the prompt's "≥0.6 confidence to upgrade" rule defensively
-    // — protects the user even if the model bypasses it.
-    if (kind != CaptureKind.note && confidence < 0.6) {
-      return CaptureClassification(
-        kind: CaptureKind.note,
-        confidence: confidence,
-        reasonZh:
-            'LLM 给出 $kindRaw 但置信度仅 ${confidence.toStringAsFixed(2)},保留为 Note',
-        polishedTitle: polishedTitle,
-        polishedBody: polishedBody,
-      );
-    }
-
-    int? intervalDays = _coerceInt(json['interval_days']);
-    if (kind == CaptureKind.routine) {
-      // Routine without an interval is unusable for RoutineDueAgent;
-      // require it (LLM should set it; fall back to 180 if it didn't).
-      intervalDays ??= 180;
-      if (intervalDays < 1) intervalDays = 1;
-      if (intervalDays > 3650) intervalDays = 3650;
-    }
-
-    final statementRaw = _nullIfEmpty((json['statement'] as String?)?.trim());
-    final scopeRawTrimmed = (json['scope'] as String?)?.trim();
-    final scope =
-        (scopeRawTrimmed == null ||
-            scopeRawTrimmed.isEmpty ||
-            scopeRawTrimmed == '*')
-        ? null
-        : scopeRawTrimmed;
-
-    return CaptureClassification(
-      kind: kind,
-      confidence: confidence.clamp(0.0, 1.0),
-      reasonZh: reason,
-      intervalDays: intervalDays,
-      statement: statementRaw,
-      scope: scope,
-      polishedTitle: polishedTitle,
-      polishedBody: polishedBody,
-    );
-  }
-
   static String? _nullIfEmpty(String? s) => (s == null || s.isEmpty) ? null : s;
 
   static double? _coerceDouble(Object? v) {
@@ -360,4 +292,168 @@ class LlmCaptureClassifier implements CaptureClassifier {
     if (v is String) return int.tryParse(v);
     return null;
   }
+}
+
+class FrbCaptureClassifier implements CaptureClassifier {
+  const FrbCaptureClassifier({
+    required this.llmBridge,
+    this.fallback = const HeuristicCaptureClassifier(),
+    this.maxTokens = 8192,
+    this.requestTimeout = const Duration(seconds: 45),
+    this.logger,
+  });
+
+  final AgentRuntimeLlmBridge llmBridge;
+  final CaptureClassifier fallback;
+  final int maxTokens;
+  final Duration requestTimeout;
+  final AppLogger? logger;
+
+  @override
+  Future<CaptureClassification> classify({required String text}) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      logger?.d('$_kLogTag empty input, deferring to fallback');
+      return fallback.classify(text: text);
+    }
+
+    final preview = LlmCaptureClassifier._preview(trimmed);
+    logger?.i(
+      '$_kLogTag frb start text_len=${trimmed.length} preview="$preview"',
+    );
+
+    final stopwatch = Stopwatch()..start();
+    try {
+      final response = await llmBridge
+          .completeProfile(
+            messages: <Map<String, Object?>>[
+              const <String, Object?>{
+                'role': 'system',
+                'content': LlmCaptureClassifier._system,
+              },
+              <String, Object?>{'role': 'user', 'content': trimmed},
+            ],
+            maxOutputTokens: maxTokens,
+            metadata: const <String, Object?>{
+              'surface': 'knowledge_capture',
+              'agent_id': 'knowledge_capture',
+            },
+          )
+          .timeout(requestTimeout);
+      logger?.i(
+        '$_kLogTag frb response ${stopwatch.elapsedMilliseconds}ms '
+        'provider=${response['provider'] ?? "(unknown)"}',
+      );
+
+      final body = response['content'];
+      if (body is! String || body.trim().isEmpty) {
+        logger?.w('$_kLogTag FRB response missing content, falling back');
+        return fallback.classify(text: text);
+      }
+
+      final json = LlmCaptureClassifier._extractJsonObject(body);
+      if (json == null) {
+        logger?.w(
+          '$_kLogTag FRB JSON extract failed, falling back. '
+          'body preview="${LlmCaptureClassifier._preview(body)}"',
+        );
+        return fallback.classify(text: text);
+      }
+
+      final parsed = _parseCaptureClassification(json);
+      if (parsed == null) {
+        logger?.w(
+          '$_kLogTag FRB JSON parse rejected, falling back. '
+          'keys=${json.keys.toList()}',
+        );
+        return fallback.classify(text: text);
+      }
+
+      logger?.i(
+        '$_kLogTag frb parsed kind=${parsed.kind.wire} '
+        'confidence=${parsed.confidence.toStringAsFixed(2)} '
+        'isUpgrade=${parsed.isUpgrade} hasPolish=${parsed.hasPolish} '
+        'interval=${parsed.intervalDays} scope=${parsed.scope}',
+      );
+      return parsed;
+    } on Object catch (err, st) {
+      logger?.w(
+        '$_kLogTag frb exception after ${stopwatch.elapsedMilliseconds}ms '
+        '(${err.runtimeType}: $err), falling back to heuristic',
+        error: err,
+        stackTrace: st,
+      );
+      return fallback.classify(text: text);
+    }
+  }
+}
+
+CaptureClassification? _parseCaptureClassification(Map<String, Object?> json) {
+  final kindRaw = (json['kind'] as String?)?.trim();
+  if (kindRaw == null || kindRaw.isEmpty) return null;
+  final kind = CaptureKind.parse(kindRaw);
+  // If the LLM returned a string outside the enum, [CaptureKind.parse]
+  // falls back to `note` — but we should *not* treat that as a "note
+  // signal" because the model intended something else. Distinguish
+  // explicit `note` from unknown by comparing strings.
+  if (kind == CaptureKind.note && kindRaw != 'note') return null;
+
+  final confidence =
+      LlmCaptureClassifier._coerceDouble(json['confidence']) ?? 0.0;
+  final reason = (json['reason_zh'] as String?)?.trim() ?? '';
+  if (reason.isEmpty) return null;
+
+  // Polish fields parsed up front because they're orthogonal to the
+  // upgrade decision — even a low-confidence downgrade still carries
+  // the rewrite through so the user can accept just the polish.
+  final polishedTitle = LlmCaptureClassifier._nullIfEmpty(
+    (json['polished_title'] as String?)?.trim(),
+  );
+  final polishedBody = LlmCaptureClassifier._nullIfEmpty(
+    (json['polished_body'] as String?)?.trim(),
+  );
+
+  // Enforce the prompt's "≥0.6 confidence to upgrade" rule defensively
+  // — protects the user even if the model bypasses it.
+  if (kind != CaptureKind.note && confidence < 0.6) {
+    return CaptureClassification(
+      kind: CaptureKind.note,
+      confidence: confidence,
+      reasonZh:
+          'LLM 给出 $kindRaw 但置信度仅 ${confidence.toStringAsFixed(2)},保留为 Note',
+      polishedTitle: polishedTitle,
+      polishedBody: polishedBody,
+    );
+  }
+
+  int? intervalDays = LlmCaptureClassifier._coerceInt(json['interval_days']);
+  if (kind == CaptureKind.routine) {
+    // Routine without an interval is unusable for RoutineDueAgent;
+    // require it (LLM should set it; fall back to 180 if it didn't).
+    intervalDays ??= 180;
+    if (intervalDays < 1) intervalDays = 1;
+    if (intervalDays > 3650) intervalDays = 3650;
+  }
+
+  final statementRaw = LlmCaptureClassifier._nullIfEmpty(
+    (json['statement'] as String?)?.trim(),
+  );
+  final scopeRawTrimmed = (json['scope'] as String?)?.trim();
+  final scope =
+      (scopeRawTrimmed == null ||
+          scopeRawTrimmed.isEmpty ||
+          scopeRawTrimmed == '*')
+      ? null
+      : scopeRawTrimmed;
+
+  return CaptureClassification(
+    kind: kind,
+    confidence: confidence.clamp(0.0, 1.0),
+    reasonZh: reason,
+    intervalDays: intervalDays,
+    statement: statementRaw,
+    scope: scope,
+    polishedTitle: polishedTitle,
+    polishedBody: polishedBody,
+  );
 }
