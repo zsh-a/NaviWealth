@@ -432,6 +432,16 @@ fn continue_run_step_fails_with_tool_error() {
     assert_eq!(next["status"], "failed");
     assert_eq!(next["error"]["message"], "tool failed");
     assert_eq!(next["tool_call"]["name"], "propose_fake");
+    assert_eq!(next["tool_results"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        next["tool_results"][0]["tool_response"]["error"]["message"],
+        "tool failed"
+    );
+    assert_eq!(next["run_state"]["status"], "failed");
+    assert_eq!(next["run_state"]["terminal_reason"], "stream_error");
+    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["trace_event"]["status"], "failed");
+    assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
 fn spawn_openai_compatible_server() -> (String, thread::JoinHandle<()>) {

@@ -313,6 +313,7 @@ pub fn agent_runtime_continue_run_step(
             "status": "failed",
             "tool_call": tool_call,
             "tool_response": tool_response,
+            "tool_results": tool_results,
             "error": error,
         }),
         None => match next_tool_request_from_continuation(&previous_step, tool_results.clone())? {
@@ -589,8 +590,13 @@ fn attach_run_state(step: &mut Value) {
         .and_then(|value| value.get("tool_results"))
         .and_then(Value::as_array)
         .map(Vec::len);
+    let root_result_count = object
+        .get("tool_results")
+        .and_then(Value::as_array)
+        .map(Vec::len);
     let tool_result_count = continuation_result_count
         .or(output_result_count)
+        .or(root_result_count)
         .unwrap_or(0);
     let status = object.get("status").cloned().unwrap_or(Value::Null);
     let state = json!({
