@@ -1,0 +1,28 @@
+{
+  "protocol_version": "agent.v1",
+  "runtime_version": "0.1.0",
+  "run_id": "run_018f0000-0000-7000-8000-000000000000",
+  "agent_id": "echo_agent",
+  "agent_version": "0.1.0",
+  "started_at": "2026-06-28T09:12:31Z",
+  "finished_at": "2026-06-28T09:12:32Z",
+  "events": [
+    {
+      "kind": "agent_runtime_step",
+      "occurred_at": "2026-06-28T09:12:31Z",
+      "payload": {
+        "run_id": "run_018f0000-0000-7000-8000-000000000000",
+        "agent_id": "echo_agent",
+        "status": "completed",
+        "step_index": 0,
+        "tool_name": "echo",
+        "run_state": {
+          "status": "completed",
+          "step_index": 0,
+          "remaining_tool_count": 0,
+          "tool_result_count": 1
+        }
+      }
+    }
+  ]
+}

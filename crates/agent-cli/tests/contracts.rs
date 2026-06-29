@@ -24,6 +24,10 @@ fn committed_fixtures_match_json_schemas() {
         "schemas/agent-runtime/trace.schema.json",
         "fixtures/agent-runtime/trace.invalid.missing-step-run-state.json",
     );
+    assert_invalid(
+        "schemas/agent-runtime/trace.schema.json",
+        "fixtures/agent-runtime/trace.invalid.missing-step-terminal-reason.json",
+    );
     assert_valid(
         "schemas/agent-runtime/catalog.schema.json",
         "fixtures/agent-runtime/catalog.valid.json",
