@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_llm_stream_bridge.dart';
@@ -77,7 +79,7 @@ void main() {
         )
         .toList();
 
-    expect(events, hasLength(9));
+    expect(events, hasLength(10));
     expect((events[0] as ThinkingDeltaEvent).text, 'reason');
     expect((events[1] as TextEvent).text, 'Hello ');
     expect((events[2] as ToolCallStartEvent).name, 'read_task');
@@ -88,7 +90,11 @@ void main() {
     expect(toolCall.input, <String, Object?>{'id': 'task_1'});
     expect((events[6] as TextEvent).text, 'from FRB');
     expect((events[7] as UsageEvent).usage.total, 7);
-    expect((events[8] as DoneEvent).stopReason, 'end_turn');
+    final span = events[8] as SpanEvent;
+    expect(span.kind, AiSpanKind.llm);
+    expect(span.status, AiSpanStatus.ok);
+    expect(span.tokens?.total, 7);
+    expect((events[9] as DoneEvent).stopReason, 'end_turn');
     final request = streamBridge.requests.single;
     expect(request['messages'], <Object?>[
       <String, Object?>{'role': 'user', 'content': 'Hello'},
@@ -158,6 +164,15 @@ void main() {
       'title': 'Task title',
     });
     expect(events.whereType<TextEvent>().single.text, 'Task title');
+    expect(events.whereType<ProgressEvent>(), hasLength(1));
+    final spans = events.whereType<SpanEvent>().toList();
+    expect(spans.map((span) => span.kind), <AiSpanKind>[
+      AiSpanKind.llm,
+      AiSpanKind.tool,
+      AiSpanKind.llm,
+    ]);
+    expect(spans[1].parentId, 'r1');
+    expect(spans[1].status, AiSpanStatus.ok);
     final done = events.last as DoneEvent;
     expect(done.stopReason, 'end_turn');
     expect(done.rounds, 2);
@@ -216,9 +231,44 @@ void main() {
         )
         .toList();
 
+    expect(events, hasLength(3));
+    expect((events[0] as SpanEvent).status, AiSpanStatus.error);
+    expect((events[1] as ErrorEvent).code, 'provider_http_401');
+    expect((events[1] as ErrorEvent).message, 'bad key');
+    expect((events[2] as DoneEvent).stopReason, 'error');
+  });
+
+  test('emits a cancelled span when the turn token is cancelled', () async {
+    late CancelToken cancelToken;
+    Stream<String> hangingStream() async* {
+      yield '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}';
+      cancelToken.cancel('user cancelled');
+      yield '{"kind":"delta","content":"late","metadata":{"stream":true}}';
+    }
+
+    final streamBridge = _streamBridgeStreams(
+      _FakeLlmBridge(),
+      eventBatches: <Stream<String>>[hangingStream()],
+    );
+    final runner = FrbChatRunner(
+      llmBridge: _FakeLlmBridge(),
+      streamBridge: streamBridge,
+    );
+    cancelToken = CancelToken();
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Hello'),
+          ],
+          cancelToken: cancelToken,
+        )
+        .toList();
+
     expect(events, hasLength(2));
-    expect((events[0] as ErrorEvent).code, 'provider_http_401');
-    expect((events[0] as ErrorEvent).message, 'bad key');
+    final span = events[0] as SpanEvent;
+    expect(span.status, AiSpanStatus.cancelled);
+    expect(span.errorCode, 'cancelled');
     expect((events[1] as DoneEvent).stopReason, 'error');
   });
 
@@ -278,12 +328,27 @@ _RecordingStreamBridge _streamBridge(
   _FakeLlmBridge bridge, {
   required List<String> events,
 }) {
-  return _streamBridgeBatches(bridge, eventBatches: <List<String>>[events]);
+  return _streamBridgeStreams(
+    bridge,
+    eventBatches: <Stream<String>>[Stream<String>.fromIterable(events)],
+  );
 }
 
 _RecordingStreamBridge _streamBridgeBatches(
   _FakeLlmBridge bridge, {
   required List<List<String>> eventBatches,
+}) {
+  return _streamBridgeStreams(
+    bridge,
+    eventBatches: [
+      for (final batch in eventBatches) Stream<String>.fromIterable(batch),
+    ],
+  );
+}
+
+_RecordingStreamBridge _streamBridgeStreams(
+  _FakeLlmBridge bridge, {
+  required List<Stream<String>> eventBatches,
 }) {
   return _RecordingStreamBridge(llmBridge: bridge, eventBatches: eventBatches);
 }
@@ -291,7 +356,7 @@ _RecordingStreamBridge _streamBridgeBatches(
 class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
   factory _RecordingStreamBridge({
     required _FakeLlmBridge llmBridge,
-    required List<List<String>> eventBatches,
+    required List<Stream<String>> eventBatches,
   }) {
     final requests = <Map<String, Object?>>[];
     var requestIndex = 0;
@@ -305,7 +370,7 @@ class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
 
   _RecordingStreamBridge._({
     required _FakeLlmBridge llmBridge,
-    required List<List<String>> eventBatches,
+    required List<Stream<String>> eventBatches,
     required this.requests,
     required int Function() nextRequestIndex,
   }) : super(
@@ -317,7 +382,7 @@ class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
            final batchIndex = index >= eventBatches.length
                ? eventBatches.length - 1
                : index;
-           return Stream<String>.fromIterable(eventBatches[batchIndex]);
+           return eventBatches[batchIndex];
          },
        );
 

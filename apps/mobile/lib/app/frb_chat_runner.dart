@@ -6,17 +6,20 @@
 /// follow-up LLM rounds, matching the existing device loop contract.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
 import '../core/ai/contracts/contracts.dart';
+import '../core/ai/progress/long_task_progress.dart';
 import '../core/ai/runtime/ai_runtime.dart';
 import '../features/ai_chat/data/ai_chat_api_client.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
 
 const String kFrbChatRunnerAgentId = 'ai_chat';
+const String _kFrbStreamCancelledKind = '__frb_stream_cancelled';
 
 typedef FrbChatToolLineHandler = Future<String> Function(String line);
 
@@ -117,26 +120,57 @@ class FrbChatRunner implements DeviceChatRunner {
     var roundsUsed = 0;
     for (var round = 1; round <= _maxToolRounds; round++) {
       roundsUsed = round;
-      final state = _FrbStreamRoundState();
+      final roundId = 'r$round';
+      final roundStart = DateTime.now().toUtc();
+      final state = _FrbStreamRoundState(
+        inputMessageCount: conversation.length,
+      );
       var finished = false;
-      await for (final event in streamBridge.streamProfile(
-        messages: conversation,
-        tools: _tools,
-        metadata: <String, Object?>{
-          'agent_id': _agentId,
-          'surface': 'ai_chat',
-          'requested_model': ?model,
-          'portfolio_snapshot': ?portfolioSnapshot,
-          'context_pack': ?contextPack?.toJson(),
-          'streaming': true,
-          'round': round,
-        },
-      )) {
+      final stream = _cancelableFrbStream(
+        streamBridge.streamProfile(
+          messages: conversation,
+          tools: _tools,
+          metadata: <String, Object?>{
+            'agent_id': _agentId,
+            'surface': 'ai_chat',
+            'requested_model': ?model,
+            'portfolio_snapshot': ?portfolioSnapshot,
+            'context_pack': ?contextPack?.toJson(),
+            'streaming': true,
+            'round': round,
+          },
+        ),
+        cancelToken,
+      );
+      await for (final event in stream) {
         if (cancelToken?.isCancelled == true) {
+          yield _llmSpan(
+            round: round,
+            roundId: roundId,
+            startedAt: roundStart,
+            state: state,
+            requestedModel: model,
+            status: AiSpanStatus.cancelled,
+            errorCode: 'cancelled',
+            errorMessage: 'FRB chat stream cancelled',
+          );
           yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
           return;
         }
         switch (_string(event['kind'])) {
+          case _kFrbStreamCancelledKind:
+            yield _llmSpan(
+              round: round,
+              roundId: roundId,
+              startedAt: roundStart,
+              state: state,
+              requestedModel: model,
+              status: AiSpanStatus.cancelled,
+              errorCode: 'cancelled',
+              errorMessage: 'FRB chat stream cancelled',
+            );
+            yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+            return;
           case 'started':
             break;
           case 'delta':
@@ -185,6 +219,20 @@ class FrbChatRunner implements DeviceChatRunner {
             finished = true;
           case 'error':
             final metadata = _object(event['metadata']);
+            yield _llmSpan(
+              round: round,
+              roundId: roundId,
+              startedAt: roundStart,
+              state: state,
+              requestedModel: model,
+              status: AiSpanStatus.error,
+              errorCode: _string(metadata['code']).isEmpty
+                  ? 'frb_chat_error'
+                  : _string(metadata['code']),
+              errorMessage: _string(metadata['message']).isEmpty
+                  ? 'frb_chat_error'
+                  : _string(metadata['message']),
+            );
             yield ErrorEvent(
               _string(metadata['message']).isEmpty
                   ? 'frb_chat_error'
@@ -196,6 +244,17 @@ class FrbChatRunner implements DeviceChatRunner {
             yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
             return;
           default:
+            yield _llmSpan(
+              round: round,
+              roundId: roundId,
+              startedAt: roundStart,
+              state: state,
+              requestedModel: model,
+              status: AiSpanStatus.error,
+              errorCode: 'frb_chat_event_unknown',
+              errorMessage:
+                  'unknown FRB LLM stream event kind: ${event['kind']}',
+            );
             yield ErrorEvent(
               'unknown FRB LLM stream event kind: ${event['kind']}',
               code: 'frb_chat_event_unknown',
@@ -206,6 +265,16 @@ class FrbChatRunner implements DeviceChatRunner {
       }
 
       if (!finished) {
+        yield _llmSpan(
+          round: round,
+          roundId: roundId,
+          startedAt: roundStart,
+          state: state,
+          requestedModel: model,
+          status: AiSpanStatus.error,
+          errorCode: 'frb_chat_stream_incomplete',
+          errorMessage: 'FRB LLM stream ended without a finished event',
+        );
         yield const ErrorEvent(
           'FRB LLM stream ended without a finished event',
           code: 'frb_chat_stream_incomplete',
@@ -214,6 +283,14 @@ class FrbChatRunner implements DeviceChatRunner {
         return;
       }
 
+      yield _llmSpan(
+        round: round,
+        roundId: roundId,
+        startedAt: roundStart,
+        state: state,
+        requestedModel: model,
+        status: AiSpanStatus.ok,
+      );
       final stopReason = state.stopReason;
       final toolCalls = state.toolCalls;
       if (stopReason != 'tool_use' || toolCalls.isEmpty) {
@@ -246,7 +323,29 @@ class FrbChatRunner implements DeviceChatRunner {
           yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
           return;
         }
+        final toolStart = DateTime.now().toUtc();
+        yield ProgressEvent(
+          LongTaskProgress(
+            id: 'tool:${call.id}',
+            label: 'tool',
+            detail: call.name,
+            startedAt: toolStart,
+          ),
+        );
         final result = await _runToolCall(handler, call);
+        yield SpanEvent(
+          id: 'tool:${call.id}',
+          parentId: roundId,
+          kind: AiSpanKind.tool,
+          name: 'tool:${call.name}',
+          startedAt: toolStart,
+          endedAt: DateTime.now().toUtc(),
+          status: result.isError ? AiSpanStatus.error : AiSpanStatus.ok,
+          errorCode: result.errorCode,
+          input: call.input,
+          output: result.output,
+          attributes: <String, Object?>{'round': round, 'tool_use_id': call.id},
+        );
         yield ToolResultEvent(
           id: call.id,
           name: call.name,
@@ -266,6 +365,95 @@ class FrbChatRunner implements DeviceChatRunner {
     );
     yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
   }
+}
+
+Stream<Map<String, Object?>> _cancelableFrbStream(
+  Stream<Map<String, Object?>> source,
+  CancelToken? cancelToken,
+) async* {
+  if (cancelToken == null) {
+    yield* source;
+    return;
+  }
+
+  final iterator = StreamIterator<Map<String, Object?>>(source);
+  final cancellation = _waitForCancel(
+    cancelToken,
+  ).then((_) => const _FrbStreamOutcome.cancelled());
+  try {
+    while (true) {
+      if (cancelToken.isCancelled) {
+        yield const <String, Object?>{'kind': _kFrbStreamCancelledKind};
+        return;
+      }
+      final outcome = await Future.any<_FrbStreamOutcome>([
+        iterator.moveNext().then(
+          (hasNext) => hasNext
+              ? _FrbStreamOutcome.event(iterator.current)
+              : const _FrbStreamOutcome.done(),
+        ),
+        cancellation,
+      ]);
+      if (outcome.cancelled) {
+        yield const <String, Object?>{'kind': _kFrbStreamCancelledKind};
+        return;
+      }
+      if (outcome.done) return;
+      yield outcome.event!;
+    }
+  } finally {
+    await iterator.cancel();
+  }
+}
+
+Future<void> _waitForCancel(CancelToken cancelToken) async {
+  await cancelToken.whenCancel;
+}
+
+class _FrbStreamOutcome {
+  const _FrbStreamOutcome.event(this.event) : done = false, cancelled = false;
+
+  const _FrbStreamOutcome.done() : event = null, done = true, cancelled = false;
+
+  const _FrbStreamOutcome.cancelled()
+    : event = null,
+      done = false,
+      cancelled = true;
+
+  final Map<String, Object?>? event;
+  final bool done;
+  final bool cancelled;
+}
+
+SpanEvent _llmSpan({
+  required int round,
+  required String roundId,
+  required DateTime startedAt,
+  required _FrbStreamRoundState state,
+  required String? requestedModel,
+  required AiSpanStatus status,
+  String? errorCode,
+  String? errorMessage,
+}) {
+  final response = state.response;
+  final responseModel = _string(response['model']);
+  return SpanEvent(
+    id: roundId,
+    parentId: kTurnSpanId,
+    kind: AiSpanKind.llm,
+    name: 'llm:round-$round',
+    startedAt: startedAt,
+    endedAt: DateTime.now().toUtc(),
+    status: status,
+    errorCode: errorCode,
+    errorMessage: errorMessage,
+    tokens: _spanTokensFromUsage(state.usage),
+    model: responseModel.isNotEmpty ? responseModel : requestedModel,
+    stopReason: state.stopReason,
+    input: <String, Object?>{'messages': state.inputMessageCount},
+    output: state.text.isEmpty ? null : _clip(state.text),
+    attributes: <String, Object?>{'round': round, 'runtime': 'frb'},
+  );
 }
 
 Future<_FrbToolResult> _runToolCall(
@@ -311,6 +499,9 @@ Future<_FrbToolResult> _runToolCall(
 }
 
 class _FrbStreamRoundState {
+  _FrbStreamRoundState({required this.inputMessageCount});
+
+  final int inputMessageCount;
   final StringBuffer _text = StringBuffer();
   final StringBuffer _thinking = StringBuffer();
   final StringBuffer _thinkingSignature = StringBuffer();
@@ -319,6 +510,12 @@ class _FrbStreamRoundState {
   Map<String, Object?> _response = const <String, Object?>{};
 
   bool get emittedText => _text.isNotEmpty;
+
+  String get text => _text.toString();
+
+  Map<String, Object?> get response => _response;
+
+  TokenUsage? get usage => _usageFromResponse(_response);
 
   String get stopReason => _chatStopReason(_string(_response['finish_reason']));
 
@@ -424,6 +621,13 @@ class _FrbToolResult {
   final Object? output;
   final bool isError;
 
+  String? get errorCode {
+    if (!isError) return null;
+    final object = _object(output);
+    final code = _string(object['code']);
+    return code.isEmpty ? 'frb_chat_tool_error' : code;
+  }
+
   Map<String, Object?> toToolResultBlock() => <String, Object?>{
     'type': 'tool_result',
     'tool_use_id': id,
@@ -440,6 +644,16 @@ TokenUsage? _usageFromResponse(Map<String, Object?> response) {
     output: _int(usage['output_tokens'] ?? usage['output']),
     cacheRead: _int(usage['cache_read_tokens'] ?? usage['cache_read']),
     cacheWrite: _int(usage['cache_write_tokens'] ?? usage['cache_write']),
+  );
+}
+
+SpanTokens? _spanTokensFromUsage(TokenUsage? usage) {
+  if (usage == null) return null;
+  return SpanTokens(
+    input: usage.input,
+    output: usage.output,
+    cacheRead: usage.cacheRead,
+    cacheWrite: usage.cacheWrite,
   );
 }
 
@@ -480,4 +694,9 @@ int _int(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return 0;
+}
+
+String _clip(String value, [int max = 500]) {
+  if (value.length <= max) return value;
+  return '${value.substring(0, max)}...';
 }
