@@ -2943,6 +2943,42 @@
     "description": "Inline status shown after the FRB-backed native runtime step completes.",
     "placeholders": { "status": { "type": "String", "example": "completed" } }
   },
+  "aiLlmRuntimeProposalTitle": "Ready proposal · {kind}",
+  "@aiLlmRuntimeProposalTitle": {
+    "description": "Header for a ready proposal returned by the FRB-backed runtime check.",
+    "placeholders": { "kind": { "type": "String", "example": "expense" } }
+  },
+  "aiLlmRuntimeProposalWarning": "Warning: {warning}",
+  "@aiLlmRuntimeProposalWarning": {
+    "description": "Warning row for a ready proposal returned by the FRB-backed runtime check.",
+    "placeholders": { "warning": { "type": "String", "example": "Currency was inferred" } }
+  },
+  "aiLlmRuntimeProposalApply": "Apply proposal",
+  "@aiLlmRuntimeProposalApply": { "description": "Button and confirm action label for applying a ready proposal returned by the FRB-backed runtime check" },
+  "aiLlmRuntimeProposalApplying": "Applying…",
+  "@aiLlmRuntimeProposalApplying": { "description": "Button label while applying a ready proposal returned by the FRB-backed runtime check" },
+  "aiLlmRuntimeProposalConfirmTitle": "Apply this proposal?",
+  "@aiLlmRuntimeProposalConfirmTitle": { "description": "Confirm dialog title before applying a ready proposal returned by the FRB-backed runtime check" },
+  "aiLlmRuntimeProposalConfirmBody": "{summary}\n\nThis writes through the same local proposal applier used by AI chat.",
+  "@aiLlmRuntimeProposalConfirmBody": {
+    "description": "Confirm dialog body before applying a ready proposal returned by the FRB-backed runtime check.",
+    "placeholders": { "summary": { "type": "String", "example": "Record lunch expense" } }
+  },
+  "aiLlmRuntimeProposalApplied": "Proposal apply finished: {status}",
+  "@aiLlmRuntimeProposalApplied": {
+    "description": "Toast shown after a ready proposal returned by the FRB-backed runtime check is applied.",
+    "placeholders": { "status": { "type": "String", "example": "applied" } }
+  },
+  "aiLlmRuntimeProposalStatus": "Proposal apply: {status}",
+  "@aiLlmRuntimeProposalStatus": {
+    "description": "Inline status shown after applying a ready proposal returned by the FRB-backed runtime check.",
+    "placeholders": { "status": { "type": "String", "example": "applied" } }
+  },
+  "aiLlmRuntimeProposalFailed": "Proposal apply failed: {error}",
+  "@aiLlmRuntimeProposalFailed": {
+    "description": "Status text and toast shown when applying a ready proposal returned by the FRB-backed runtime check fails.",
+    "placeholders": { "error": { "type": "String", "example": "no applier registered" } }
+  },
   "settingsBadgeAuto": "Auto",
   "@settingsBadgeAuto": { "description": "Compact trailing pill on a settings link row indicating the value is auto-tuned by another preference (e.g. risk appetite). Renders uppercase." },
   "settingsBadgeCustom": "Custom",

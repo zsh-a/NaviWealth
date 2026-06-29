@@ -5499,6 +5499,45 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String aiLlmRuntimeProposalTitle(String kind) {
+    return 'Ready proposal · $kind';
+  }
+
+  @override
+  String aiLlmRuntimeProposalWarning(String warning) {
+    return 'Warning: $warning';
+  }
+
+  @override
+  String get aiLlmRuntimeProposalApply => 'Apply proposal';
+
+  @override
+  String get aiLlmRuntimeProposalApplying => 'Applying…';
+
+  @override
+  String get aiLlmRuntimeProposalConfirmTitle => 'Apply this proposal?';
+
+  @override
+  String aiLlmRuntimeProposalConfirmBody(String summary) {
+    return '$summary\n\nThis writes through the same local proposal applier used by AI chat.';
+  }
+
+  @override
+  String aiLlmRuntimeProposalApplied(String status) {
+    return 'Proposal apply finished: $status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalStatus(String status) {
+    return 'Proposal apply: $status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalFailed(String error) {
+    return 'Proposal apply failed: $error';
+  }
+
+  @override
   String get settingsBadgeAuto => 'Auto';
 
   @override

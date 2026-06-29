@@ -17,7 +17,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../app/agent_runtime_proposal_bridge.dart';
 import '../../../app/agent_runtime_runner.dart';
+import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
@@ -48,8 +50,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   bool _saving = false;
   bool _probing = false;
   bool _runtimeChecking = false;
+  bool _proposalApplying = false;
   LlmProbeResult? _probeResult;
   AgentRuntimeProfileTurnResult? _runtimeResult;
+  Map<String, Object?>? _proposalApplyResult;
   Object? _runtimeError;
 
   @override
@@ -185,6 +189,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     setState(() {
       _runtimeChecking = true;
       _runtimeResult = null;
+      _proposalApplyResult = null;
       _runtimeError = null;
     });
     try {
@@ -216,6 +221,50 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         _runtimeError = error;
       });
       _toast(ToastKind.error, l10n.aiLlmRuntimeCheckFailed('$error'));
+    }
+  }
+
+  Future<void> _applyRuntimeProposal() async {
+    final l10n = AppLocalizations.of(context);
+    final step = _runtimeResult?.step;
+    if (step == null) return;
+    final plan = agentRuntimeTerminalReadyProposal(step);
+    if (plan == null) return;
+
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.aiLlmRuntimeProposalConfirmTitle),
+      body: Text(l10n.aiLlmRuntimeProposalConfirmBody(plan.summaryZh)),
+      confirmLabel: l10n.aiLlmRuntimeProposalApply,
+      cancelLabel: l10n.commonCancel,
+      destructive: false,
+    );
+    if (confirmed != true) return;
+
+    setState(() {
+      _proposalApplying = true;
+      _proposalApplyResult = null;
+    });
+    try {
+      final bridge = await ref.read(agentRuntimeProposalBridgeProvider.future);
+      final result = await bridge.applyTerminalReadyProposal(step);
+      if (!mounted) return;
+      setState(() {
+        _proposalApplying = false;
+        _proposalApplyResult = result;
+      });
+      final status = result['status']?.toString() ?? 'unknown';
+      _toast(ToastKind.success, l10n.aiLlmRuntimeProposalApplied(status));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _proposalApplying = false;
+        _proposalApplyResult = <String, Object?>{
+          'status': 'errored',
+          'error': '$error',
+        };
+      });
+      _toast(ToastKind.error, l10n.aiLlmRuntimeProposalFailed('$error'));
     }
   }
 
@@ -330,6 +379,9 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final available = runtimeRunner != null;
     final status = _runtimeResult?.step['status']?.toString();
     final response = _runtimeResult?.llmResponse['content']?.toString();
+    final proposal = _runtimeResult == null
+        ? null
+        : agentRuntimeTerminalReadyProposal(_runtimeResult!.step);
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -378,6 +430,81 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
               style: context.bodyCaptionStyle,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (proposal != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            _runtimeProposalCard(context, proposal),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _runtimeProposalCard(BuildContext context, ReadyProposalPlan plan) {
+    final l10n = AppLocalizations.of(context);
+    final applyStatus = _proposalApplyResult?['status']?.toString();
+    final error = _proposalApplyResult?['error']?.toString();
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: context.theme.colors.muted,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: context.theme.colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                FLucideIcons.fileCheck2,
+                size: AppIconSizes.h18,
+                color: context.theme.colors.foreground,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  l10n.aiLlmRuntimeProposalTitle(plan.kind),
+                  style: context.captionLabelStyle,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s6),
+          Text(plan.summaryZh, style: context.bodyCaptionStyle),
+          if (plan.warnings.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            for (final warning in plan.warnings)
+              Text(
+                l10n.aiLlmRuntimeProposalWarning(warning),
+                style: context.captionStyle.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+          ],
+          const SizedBox(height: AppSpacing.s10),
+          FButton(
+            variant: FButtonVariant.primary,
+            onPress: _proposalApplying ? null : _applyRuntimeProposal,
+            prefix: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
+            child: Text(
+              _proposalApplying
+                  ? l10n.aiLlmRuntimeProposalApplying
+                  : l10n.aiLlmRuntimeProposalApply,
+            ),
+          ),
+          if (applyStatus != null) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              error == null
+                  ? l10n.aiLlmRuntimeProposalStatus(applyStatus)
+                  : l10n.aiLlmRuntimeProposalFailed(error),
+              style: context.captionStyle.copyWith(
+                color: error == null
+                    ? context.theme.colors.primary
+                    : context.theme.colors.destructive,
+              ),
             ),
           ],
         ],

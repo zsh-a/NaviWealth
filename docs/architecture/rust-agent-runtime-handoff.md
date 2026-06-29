@@ -149,6 +149,10 @@ Current bridge capabilities:
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
   display the terminal native step status.
+- Provide a guarded confirmed-proposal surface on that runtime check: if the
+  terminal FRB step carries a ready proposal, Settings shows the summary and
+  warnings, then applies through `AgentRuntimeProposalBridge` only after
+  explicit user confirmation.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -165,9 +169,9 @@ Known limitation:
   bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
   active-profile LLM request bridge, profile-backed native LLM completion, and
   explicit confirmed-proposal/profile-turn providers, plus a user-facing
-  runtime check in the AI provider settings page. The remaining production work
-  is the full native runner and wiring confirmed proposal execution into a
-  concrete user-facing surface.
+  runtime check and guarded confirmed-proposal apply surface in the AI provider
+  settings page. The remaining production work is the full native runner and
+  first production agent migration onto it.
 
 ## Current Refactor State
 

@@ -98,12 +98,7 @@ class AgentRuntimeProposalBridge {
   final ProposalApplier _applier;
 
   ReadyProposalPlan? terminalReadyProposal(Map<String, Object?> step) {
-    if (!_isTerminalStep(step)) return null;
-    for (final candidate in _proposalCandidates(step)) {
-      final plan = ProposalPlan.tryParse(candidate);
-      if (plan is ReadyProposalPlan) return plan;
-    }
-    return null;
+    return agentRuntimeTerminalReadyProposal(step);
   }
 
   Future<Map<String, Object?>> applyTerminalReadyProposal(
@@ -158,6 +153,17 @@ class AgentRuntimeConfirmedProposalRunner {
     final apply = await _proposalBridge.applyTerminalReadyProposal(step);
     return <String, Object?>{'step': step, 'proposal_apply': apply};
   }
+}
+
+ReadyProposalPlan? agentRuntimeTerminalReadyProposal(
+  Map<String, Object?> step,
+) {
+  if (!_isTerminalStep(step)) return null;
+  for (final candidate in _proposalCandidates(step)) {
+    final plan = ProposalPlan.tryParse(candidate);
+    if (plan is ReadyProposalPlan) return plan;
+  }
+  return null;
 }
 
 bool _isTerminalStep(Map<String, Object?> step) {

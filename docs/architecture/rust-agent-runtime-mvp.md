@@ -119,13 +119,16 @@ Implemented:
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status
+- A guarded confirmed-proposal surface on that runtime check: if the terminal
+  FRB step carries a ready proposal, Settings shows the summary/warnings and
+  applies it through `AgentRuntimeProposalBridge` only after explicit user
+  confirmation
 
 Deferred:
 
 - complete embedded Rust runner loop over FRB beyond deterministic step
   contracts, promoting the current Dart composition seam into a fuller native
-  runner as the Rust runtime grows, and wiring confirmed proposal execution
-  into a concrete user-facing surface
+  runner as the Rust runtime grows
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`

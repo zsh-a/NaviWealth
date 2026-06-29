@@ -9375,6 +9375,60 @@ abstract class AppLocalizations {
   /// **'Native step: {status}'**
   String aiLlmRuntimeCheckStatus(String status);
 
+  /// Header for a ready proposal returned by the FRB-backed runtime check.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready proposal · {kind}'**
+  String aiLlmRuntimeProposalTitle(String kind);
+
+  /// Warning row for a ready proposal returned by the FRB-backed runtime check.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning: {warning}'**
+  String aiLlmRuntimeProposalWarning(String warning);
+
+  /// Button and confirm action label for applying a ready proposal returned by the FRB-backed runtime check
+  ///
+  /// In en, this message translates to:
+  /// **'Apply proposal'**
+  String get aiLlmRuntimeProposalApply;
+
+  /// Button label while applying a ready proposal returned by the FRB-backed runtime check
+  ///
+  /// In en, this message translates to:
+  /// **'Applying…'**
+  String get aiLlmRuntimeProposalApplying;
+
+  /// Confirm dialog title before applying a ready proposal returned by the FRB-backed runtime check
+  ///
+  /// In en, this message translates to:
+  /// **'Apply this proposal?'**
+  String get aiLlmRuntimeProposalConfirmTitle;
+
+  /// Confirm dialog body before applying a ready proposal returned by the FRB-backed runtime check.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary}\n\nThis writes through the same local proposal applier used by AI chat.'**
+  String aiLlmRuntimeProposalConfirmBody(String summary);
+
+  /// Toast shown after a ready proposal returned by the FRB-backed runtime check is applied.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposal apply finished: {status}'**
+  String aiLlmRuntimeProposalApplied(String status);
+
+  /// Inline status shown after applying a ready proposal returned by the FRB-backed runtime check.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposal apply: {status}'**
+  String aiLlmRuntimeProposalStatus(String status);
+
+  /// Status text and toast shown when applying a ready proposal returned by the FRB-backed runtime check fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposal apply failed: {error}'**
+  String aiLlmRuntimeProposalFailed(String error);
+
   /// Compact trailing pill on a settings link row indicating the value is auto-tuned by another preference (e.g. risk appetite). Renders uppercase.
   ///
   /// In en, this message translates to:

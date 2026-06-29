@@ -5251,6 +5251,45 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String aiLlmRuntimeProposalTitle(String kind) {
+    return '待确认提案 · $kind';
+  }
+
+  @override
+  String aiLlmRuntimeProposalWarning(String warning) {
+    return '警告：$warning';
+  }
+
+  @override
+  String get aiLlmRuntimeProposalApply => '应用提案';
+
+  @override
+  String get aiLlmRuntimeProposalApplying => '应用中…';
+
+  @override
+  String get aiLlmRuntimeProposalConfirmTitle => '应用这个提案？';
+
+  @override
+  String aiLlmRuntimeProposalConfirmBody(String summary) {
+    return '$summary\n\n这会通过 AI Chat 相同的本地 proposal applier 写入。';
+  }
+
+  @override
+  String aiLlmRuntimeProposalApplied(String status) {
+    return '提案应用完成：$status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalStatus(String status) {
+    return '提案应用：$status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalFailed(String error) {
+    return '提案应用失败：$error';
+  }
+
+  @override
   String get settingsBadgeAuto => '自动';
 
   @override
