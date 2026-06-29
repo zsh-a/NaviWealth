@@ -15,6 +15,7 @@ ALLOWLIST_REGEX='apps/mobile/lib/core/ai/runtime/'
 
 PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityProbe|DeviceVisionIngestClient|LlmBriefingSynthesizer\(client:|DeviceLlmClient|DeviceLlmRuntime|runtime/device/(anthropic|openai)/.*_client\.dart'
 FEATURE_FRB_BRIDGE_PATTERN="app/agent_runtime_llm_bridge.dart|agentRuntimeLlmBridgeProvider"
+RAW_DEVICE_UNAVAILABLE_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_unavailable['\"]"
 
 violations="$(
   grep -rnE --include='*.dart' "$PATTERN" "$LIB" \
@@ -43,6 +44,20 @@ if [[ -n "$feature_bridge_violations" ]]; then
   echo >&2
   echo "Features should own a small domain seam and let app/bootstrap.dart" >&2
   echo "inject an FRB-backed adapter from AgentRuntimeLlmBridge." >&2
+  exit 1
+fi
+
+raw_device_unavailable_trace_violations="$(
+  grep -rnE --include='*.dart' "$RAW_DEVICE_UNAVAILABLE_TRACE_PATTERN" "$LIB" \
+    || true
+)"
+
+if [[ -n "$raw_device_unavailable_trace_violations" ]]; then
+  echo "✖ raw device_unavailable trace routing reason used in production:" >&2
+  echo "$raw_device_unavailable_trace_violations" >&2
+  echo >&2
+  echo "Use kDeviceUnavailableRoutingReason from core/ai/contracts/ai_trace.dart" >&2
+  echo "so FRB/device trace labels stay centralized." >&2
   exit 1
 fi
 
