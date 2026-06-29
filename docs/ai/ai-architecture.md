@@ -82,11 +82,11 @@ ChatRepository
 - `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner` 是当前生产业务 agent 的首选入口：
   它们把 active `LlmProfile` 映射为 provider-neutral native request，经 FRB 调 native
   runtime，并把 native tool plan / proposal result 回接到 Dart host。
-- `DeviceAgentLoop`（`runtime/device/device_agent_loop.dart`）= 交互式 chat 的 Dart streaming loop：
-  prompt 组装 / provider 调用 / tool dispatch / proposal 全在端侧，对 provider 无感。
-- Dart provider 客户端统一翻译为 provider-neutral `LlmStreamEvent`（含 `tool_use`），
-  由 active `LlmProfile.provider` 决定走哪个 client；这是 chat 事件协议兼容层，不是新业务
-  LLM 入口的默认选择。
+- `DeviceAgentLoop`（`runtime/device/device_agent_loop.dart`）= legacy direct-Dart streaming
+  loop / provider-adapter test seam。生产 interactive chat 由 `FrbChatRunner` 承接；旧 loop
+  只保留协议兼容与低层 provider focused tests。
+- Dart provider 客户端仍统一翻译为 provider-neutral `LlmStreamEvent`（含 `tool_use`），
+  但只属于低层 provider 实现 / focused tests，不是生产业务 LLM 入口的默认选择。
 - 事件词表（`TextEvent` / `ToolCall*` / `SpanEvent` / `DoneEvent` …）见
   [`ai-protocol.md`](./ai-protocol.md)——repository/UI 仍用旧事件词表，故 chat 历史 /
   流式渲染 / 取消 / trace 捕获无需重写，只是事件改为进程内 Dart stream。
@@ -330,6 +330,7 @@ FIRE/Rebalance 迁 `/plan/{fire,rebalance}`，Portfolio Analytics 迁
 contracts/   intent · privacy_budget · task_context(route/intent/signals) ·
              base_context · context_pack · scoped_disclosure(DisclosurePurpose only) ·
              tool_descriptor(no allowed_runtimes/read_model_layer) ·
+             tool_schema(provider-neutral DeviceToolSchema) ·
              proposal_envelope(3 subclasses, no CloudProposal) ·
              ai_span · ai_trace(no usedCloud/usedRawLedger/disclosures/staleReadModelNames) ·
              privacy_mode_provider(no amountAnonymization) ·

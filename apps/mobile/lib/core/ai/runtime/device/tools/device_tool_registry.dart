@@ -22,7 +22,7 @@ import '../../../composition/tool_descriptor_lookup.dart';
 import '../../../contracts/intent.dart' show RiskLevel;
 import '../../../contracts/privacy_budget.dart' show BudgetTier;
 import '../../../contracts/tool_descriptor.dart';
-import '../anthropic/anthropic_wire.dart';
+import '../../../contracts/tool_schema.dart';
 import '../device_tool_dispatcher.dart';
 import '../device_tool_session.dart';
 import 'ask_user_tool.dart';
@@ -89,12 +89,12 @@ class DeviceToolRegistry {
 
   Iterable<String> get names => _tools.keys;
 
-  /// Tool schemas fed to [AnthropicRequest.tools]. Sorted by name for
+  /// Tool schemas advertised to the native/profile runtime. Sorted by name for
   /// stable prompts / golden tests, like the backend `schemas()`.
-  List<AnthropicToolSchema> schemas() {
+  List<DeviceToolSchema> schemas() {
     final out = [
       for (final t in _tools.values)
-        AnthropicToolSchema(
+        DeviceToolSchema(
           name: t.name,
           description: t.description,
           inputSchema: t.inputSchema,

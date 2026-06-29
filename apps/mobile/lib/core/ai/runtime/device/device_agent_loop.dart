@@ -21,6 +21,7 @@ import 'package:dio/dio.dart';
 import '../../contracts/chat_events.dart';
 import '../../contracts/contracts.dart'
     show AiSpanKind, AiSpanStatus, SpanTokens, kTurnSpanId;
+import '../../contracts/tool_schema.dart';
 import '../../progress/long_task_progress.dart';
 import 'anthropic/anthropic_wire.dart';
 import 'device_session.dart';
@@ -60,7 +61,7 @@ class DeviceAgentLoop {
   final LlmStreamFn _streamFn;
   final String model;
   final DeviceToolDispatcher dispatcher;
-  final List<AnthropicToolSchema> toolSchemas;
+  final List<DeviceToolSchema> toolSchemas;
   final TurnBudget budget;
 
   /// Drive one user turn to completion. The returned stream is finite —

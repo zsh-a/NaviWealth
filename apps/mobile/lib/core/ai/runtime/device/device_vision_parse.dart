@@ -9,6 +9,7 @@
 /// tests.
 library;
 
+import '../../contracts/tool_schema.dart';
 import 'anthropic/anthropic_wire.dart';
 
 /// The single tool the model is forced (by the system prompt) to call.
@@ -19,7 +20,7 @@ const String kVisionEmitTool = 'emit_parsed_transactions';
 const int kVisionMaxParsedDrafts = 200;
 
 /// JSON Schema for [kVisionEmitTool]. Verbatim from `parse_tool_schema`.
-AnthropicToolSchema visionParseToolSchema() => const AnthropicToolSchema(
+DeviceToolSchema visionParseToolSchema() => const DeviceToolSchema(
   name: kVisionEmitTool,
   description:
       'Emit every transaction found in the document. Call exactly '
