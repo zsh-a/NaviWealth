@@ -1315,7 +1315,14 @@ The Flutter runner now provides the former parity gap:
   use routing reason `frb_native_tool_plan`
 - native `run_state` summaries on FRB steps (`step_index`,
   `remaining_tool_count`, `tool_result_count`, `terminal_reason`), surfaced as
-  scalar trace attributes by Flutter
+  scalar trace attributes by Flutter. `run_state` is mirrored into the native
+  `trace_event` payload, and Flutter prefers `trace_event.run_state` over the
+  legacy root-level `step.run_state` when deriving terminal reason and
+  `native_*` attributes. The recorder also surfaces terminal native
+  `trace_event` metadata as `native_trace_event_kind`,
+  `native_trace_event_status`, and `native_trace_event_tool_name`. Dart-created
+  budget-exhausted terminal steps synthesize the same `trace_event.run_state`
+  shape so closed-early traces follow the FRB contract.
 
 The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been
 removed; the remaining `DeviceLlmClient` surface is limited to low-level
