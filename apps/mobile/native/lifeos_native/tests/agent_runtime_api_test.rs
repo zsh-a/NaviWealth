@@ -584,6 +584,31 @@ fn validates_llm_response_usage_totals() {
 }
 
 #[test]
+fn normalizes_llm_response_tool_metadata() {
+    let response_json = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "tool_call",
+          "metadata": {
+            "tool_plan": [
+              {"name": "propose_fake"}
+            ],
+            "tool_call": {"name": "read_context"}
+          }
+        }"#
+        .to_owned(),
+    )
+    .expect("LLM response tool metadata should normalize");
+    let response: Value = serde_json::from_str(&response_json).expect("response should be json");
+
+    assert_eq!(response["metadata"]["tool_plan"][0]["input"], json!({}));
+    assert_eq!(response["metadata"]["tool_call"]["input"], json!({}));
+}
+
+#[test]
 fn validate_llm_contracts_reject_mismatched_protocol_version() {
     let request_err = agent_runtime_validate_llm_request(
         r#"{
@@ -655,6 +680,59 @@ fn validate_llm_response_rejects_malformed_metadata_field() {
     )
     .expect_err("non-object response metadata should fail");
     assert!(metadata_err.to_string().contains("metadata"));
+}
+
+#[test]
+fn validate_llm_response_rejects_malformed_tool_metadata() {
+    let plan_err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "tool_call",
+          "metadata": {
+            "tool_plan": {"name": "propose_fake"}
+          }
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-array response tool_plan should fail");
+    assert!(plan_err.to_string().contains("metadata.tool_plan"));
+
+    let item_err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "tool_call",
+          "metadata": {
+            "tool_plan": [
+              {"name": "propose_fake", "input": "bad"}
+            ]
+          }
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object response tool_plan input should fail");
+    assert!(item_err.to_string().contains("metadata.tool_plan[0].input"));
+
+    let call_err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "tool_call",
+          "metadata": {
+            "tool_call": {"name": "read_context", "input": []}
+          }
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object response tool_call input should fail");
+    assert!(call_err.to_string().contains("metadata.tool_call.input"));
 }
 
 #[test]

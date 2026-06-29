@@ -935,6 +935,7 @@ fn normalize_llm_response_contract(response: &mut LlmResponse) -> Result<()> {
     } else if !response.metadata.is_object() {
         anyhow::bail!("LLM response metadata must be a JSON object");
     }
+    normalize_llm_response_tool_metadata(&mut response.metadata)?;
     if let Some(usage) = &response.usage {
         let expected_total = usage
             .input_tokens
@@ -945,6 +946,36 @@ fn normalize_llm_response_contract(response: &mut LlmResponse) -> Result<()> {
                 "LLM response usage.total_tokens must equal input_tokens + output_tokens"
             );
         }
+    }
+    Ok(())
+}
+
+fn normalize_llm_response_tool_metadata(metadata: &mut Value) -> Result<()> {
+    let object = metadata
+        .as_object_mut()
+        .ok_or_else(|| anyhow::anyhow!("LLM response metadata must be a JSON object"))?;
+    for key in ["tool_plan", "tool_calls"] {
+        if let Some(tool_plan) = object.get_mut(key) {
+            let plan = tool_plan
+                .as_array()
+                .ok_or_else(|| anyhow::anyhow!("LLM response metadata.{key} must be an array"))?;
+            let normalized = plan
+                .iter()
+                .enumerate()
+                .map(|(index, value)| {
+                    let requested = parse_requested_tool_call(
+                        value,
+                        &format!("LLM response metadata.{key}[{index}]"),
+                    )?;
+                    Ok(serde_json::to_value(requested)?)
+                })
+                .collect::<Result<Vec<_>>>()?;
+            *tool_plan = Value::Array(normalized);
+        }
+    }
+    if let Some(tool_call) = object.get_mut("tool_call") {
+        let requested = parse_requested_tool_call(tool_call, "LLM response metadata.tool_call")?;
+        *tool_call = serde_json::to_value(requested)?;
     }
     Ok(())
 }

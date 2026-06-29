@@ -98,8 +98,10 @@ Implemented:
   native runtime protocol, and LLM requests validate non-empty provider/model,
   at least one message, non-negative temperature, positive max output tokens,
   JSON-object request/message metadata, and tool specs; LLM responses validate
-  non-empty provider/model, JSON-object metadata, and internally consistent
-  usage token totals
+  non-empty provider/model, JSON-object metadata, syntactic
+  `metadata.tool_plan` / `metadata.tool_calls` / `metadata.tool_call`
+  requests with JSON-object inputs, and internally consistent usage token
+  totals
 - Dart-side `AgentRuntimeLlmBridge` that maps the active on-device
   `LlmProfile` into the provider-neutral `agent-llm` request shape for FRB
 - FRB-facing profile-backed LLM completion via
