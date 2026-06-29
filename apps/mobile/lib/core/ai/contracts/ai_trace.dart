@@ -42,6 +42,19 @@ const String kFrbNativeToolPlanRoutingReason = 'frb_native_tool_plan';
 /// server" property as chat turns.
 const String kDeviceVisionDirectRoutingReason = 'device_vision_direct';
 
+/// True when [routingReason] used a user-owned provider credential directly
+/// from the device/FRB runtime and therefore should disclose "no NaviWealth
+/// server" on transparency surfaces.
+bool isDirectProviderRoutingReason(String routingReason) {
+  return switch (routingReason) {
+    kDeviceLlmDirectRoutingReason ||
+    kFrbAgentRuntimeProfileRoutingReason ||
+    kFrbChatRoutingReason ||
+    kDeviceVisionDirectRoutingReason => true,
+    _ => false,
+  };
+}
+
 /// Where the turn was executed.
 ///
 /// **Live producers**:

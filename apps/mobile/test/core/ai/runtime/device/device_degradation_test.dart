@@ -70,6 +70,10 @@ Future<List<AiChatEvent>> _run(RuntimeRoutingAiChatApiClient c) => c
 void main() {
   group('formatAiTraceBadge — device-direct text (W-D6)', () {
     test('device + device_llm_direct → "未经我方服务器"', () {
+      expect(
+        isDirectProviderRoutingReason(kDeviceLlmDirectRoutingReason),
+        true,
+      );
       final s = formatAiTraceBadge(
         _trace(
           backend: Backend.device,
@@ -81,6 +85,10 @@ void main() {
     });
 
     test('device + frb_agent_runtime_profile → "未经我方服务器"', () {
+      expect(
+        isDirectProviderRoutingReason(kFrbAgentRuntimeProfileRoutingReason),
+        true,
+      );
       final s = formatAiTraceBadge(
         _trace(
           backend: Backend.device,
@@ -92,6 +100,7 @@ void main() {
     });
 
     test('device + frb_chat → "未经我方服务器"', () {
+      expect(isDirectProviderRoutingReason(kFrbChatRoutingReason), true);
       final s = formatAiTraceBadge(
         _trace(backend: Backend.device, routingReason: kFrbChatRoutingReason),
       );
@@ -100,6 +109,7 @@ void main() {
     });
 
     test('device without that reason stays "全部本地处理"', () {
+      expect(isDirectProviderRoutingReason('capability_classify'), false);
       final s = formatAiTraceBadge(_trace(backend: Backend.device));
       expect(s, contains('全部本地处理'));
       expect(s, isNot(contains('未经我方服务器')));
