@@ -36,6 +36,10 @@ const String kFrbChatRoutingReason = 'frb_chat';
 /// terminal run-state summary for this trace.
 const String kFrbNativeToolPlanRoutingReason = 'frb_native_tool_plan';
 
+/// The requested device/FRB runtime was not usable for this turn. This remains
+/// a device-local failure path, not a cloud fallback.
+const String kDeviceUnavailableRoutingReason = 'device_unavailable';
+
 /// §5.10.10 — device Vision ingest used the user's own key and called the
 /// provider directly from the device runtime. This is not the deleted cloud
 /// relay; the transparency surface should disclose the same "no NaviWealth
@@ -150,8 +154,9 @@ class AiTrace {
   /// (see [kDeviceLlmDirectRoutingReason]), `frb_agent_runtime_profile`
   /// (see [kFrbAgentRuntimeProfileRoutingReason]), `frb_chat`
   /// (see [kFrbChatRoutingReason]), `frb_native_tool_plan` (see
-  /// [kFrbNativeToolPlanRoutingReason]), `device_vision_direct` (see
-  /// [kDeviceVisionDirectRoutingReason]), or `device_unavailable`.
+  /// [kFrbNativeToolPlanRoutingReason]), `device_unavailable` (see
+  /// [kDeviceUnavailableRoutingReason]), or `device_vision_direct` (see
+  /// [kDeviceVisionDirectRoutingReason]).
   /// Free-form for now.
   final String routingReason;
 

@@ -95,7 +95,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(
       budgetTier: pack.budget.tier,
       routingReason: deviceUsable
           ? kFrbChatRoutingReason
-          : 'device_unavailable',
+          : kDeviceUnavailableRoutingReason,
       totalDurationMs: 0,
     );
 

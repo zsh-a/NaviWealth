@@ -115,6 +115,21 @@ void main() {
       expect(s, isNot(contains('未经我方服务器')));
     });
 
+    test('device_unavailable is not disclosed as provider direct routing', () {
+      expect(
+        isDirectProviderRoutingReason(kDeviceUnavailableRoutingReason),
+        false,
+      );
+      final s = formatAiTraceBadge(
+        _trace(
+          backend: Backend.device,
+          routingReason: kDeviceUnavailableRoutingReason,
+        ),
+      );
+      expect(s, contains('全部本地处理'));
+      expect(s, isNot(contains('未经我方服务器')));
+    });
+
     test('legacy cloud trace is shown as device model inference', () {
       expect(
         formatAiTraceBadge(_trace(backend: Backend.cloud)),
