@@ -956,6 +956,52 @@ async fn start_profile_turn_step_completes_llm_and_starts_native_step() {
     );
 }
 
+#[tokio::test]
+async fn start_profile_turn_step_normalizes_null_run_metadata() {
+    let turn_json = agent_runtime_start_profile_turn_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "ping"}],
+          "metadata": {"mock_response": "native turn response"}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+        "null".to_owned(),
+    )
+    .await
+    .expect("null run metadata should normalize");
+    let turn: Value = serde_json::from_str(&turn_json).expect("turn should be json");
+
+    assert_eq!(
+        turn["step"]["output"]["llm_response"]["content"],
+        "native turn response"
+    );
+}
+
+#[tokio::test]
+async fn start_profile_turn_step_rejects_non_object_run_metadata() {
+    let err = agent_runtime_start_profile_turn_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "ping"}],
+          "metadata": {"mock_response": "native turn response"}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+        "[]".to_owned(),
+    )
+    .await
+    .expect_err("non-object run metadata should fail");
+
+    assert!(err.to_string().contains("run metadata"));
+}
+
 #[test]
 fn start_run_step_requests_catalog_tool_call() {
     let step_json = agent_runtime_start_run_step(

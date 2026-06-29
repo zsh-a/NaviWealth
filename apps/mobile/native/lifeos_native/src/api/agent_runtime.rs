@@ -136,11 +136,7 @@ pub async fn agent_runtime_start_profile_turn_step(
 ) -> Result<String> {
     let llm_request: LlmRequest = serde_json::from_str(&llm_request_json)?;
     let llm_response = complete_profile_llm_response(llm_request).await?;
-    let mut metadata = if run_metadata_json.trim().is_empty() {
-        json!({})
-    } else {
-        serde_json::from_str::<Value>(&run_metadata_json)?
-    };
+    let mut metadata = profile_turn_run_metadata(&run_metadata_json)?;
     if let Some(object) = metadata.as_object_mut() {
         object.insert(
             "llm_response".to_owned(),
@@ -166,6 +162,20 @@ pub async fn agent_runtime_start_profile_turn_step(
         "step": step,
     });
     Ok(serde_json::to_string(&output)?)
+}
+
+fn profile_turn_run_metadata(run_metadata_json: &str) -> Result<Value> {
+    if run_metadata_json.trim().is_empty() {
+        return Ok(json!({}));
+    }
+    let metadata = serde_json::from_str::<Value>(run_metadata_json)?;
+    if metadata.is_null() {
+        return Ok(json!({}));
+    }
+    if !metadata.is_object() {
+        anyhow::bail!("run metadata must be a JSON object");
+    }
+    Ok(metadata)
 }
 
 async fn complete_profile_llm_response(mut request: LlmRequest) -> Result<LlmResponse> {

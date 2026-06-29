@@ -135,8 +135,9 @@ Implemented:
   LLM response and terminal native step
 - FRB-facing native profile-turn step via
   `agentRuntimeStartProfileTurnStep`, which completes the active-profile LLM
-  request in Rust and starts the first native runtime step before Dart resumes
-  bounded tool dispatch
+  request in Rust, normalizes `null` run metadata to an object, rejects
+  non-object run metadata, and starts the first native runtime step before Dart
+  resumes bounded tool dispatch
 - Native-planned FRB tool continuation: `agentRuntimeStartRunStep` can seed a
   `tool_plan` from run input or LLM response metadata, and
   `agentRuntimeContinueRunStep` consumes each Dart tool response before either
