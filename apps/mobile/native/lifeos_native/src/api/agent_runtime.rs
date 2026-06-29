@@ -793,6 +793,11 @@ fn require_catalog_contract(catalog: &AgentRuntimeCatalog) -> Result<()> {
             catalog.catalog_version
         );
     }
+    for (index, active_domain) in catalog.active_domains.iter().enumerate() {
+        if active_domain.trim().is_empty() {
+            anyhow::bail!("catalog.active_domains[{index}] must be a non-empty string");
+        }
+    }
     let mut agent_ids = HashSet::new();
     let mut tool_names = HashSet::new();
     let mut proposal_kinds = HashSet::new();

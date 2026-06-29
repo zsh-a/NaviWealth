@@ -54,6 +54,20 @@ fn catalog_summary_rejects_mismatched_catalog_contract() {
 }
 
 #[test]
+fn catalog_summary_rejects_empty_active_domain() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["active_domains"] = json!(["finance", " "]);
+
+    let err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("empty active domain should fail");
+
+    assert!(err.to_string().contains("catalog.active_domains[1]"));
+}
+
+#[test]
 fn validates_tool_spec_contract() {
     let normalized = agent_runtime_validate_tool_spec(
         r#"{
