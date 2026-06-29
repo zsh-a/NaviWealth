@@ -85,6 +85,32 @@ class AgentRuntimeTraceRecorder {
     return trace;
   }
 
+  Future<AiTrace> recordProfileCompletion({
+    required String agentId,
+    required Map<String, Object?>? llmResponse,
+    DateTime? startedAt,
+    DateTime? finishedAt,
+    String? requestId,
+    String domain = kDefaultDomain,
+    String surface = 'agent_runtime',
+    Object? error,
+  }) async {
+    final started = (startedAt ?? DateTime.now().toUtc()).toUtc();
+    final finished = (finishedAt ?? DateTime.now().toUtc()).toUtc();
+    final trace = _buildProfileCompletionTrace(
+      agentId: agentId,
+      llmResponse: llmResponse,
+      startedAt: started,
+      finishedAt: finished.isBefore(started) ? started : finished,
+      requestId: requestId ?? _requestId(agentId: agentId),
+      domain: domain,
+      surface: surface,
+      error: error,
+    );
+    await _appendTrace(trace);
+    return trace;
+  }
+
   AiTrace _buildTrace({
     required String agentId,
     required Map<String, Object?>? llmResponse,
@@ -217,6 +243,63 @@ class AgentRuntimeTraceRecorder {
       terminalReason: _terminalReason(step, stepRun),
     );
   }
+
+  AiTrace _buildProfileCompletionTrace({
+    required String agentId,
+    required Map<String, Object?>? llmResponse,
+    required DateTime startedAt,
+    required DateTime finishedAt,
+    required String requestId,
+    required String domain,
+    required String surface,
+    Object? error,
+  }) {
+    final hasError = error != null;
+    final seed = AiTrace(
+      requestId: requestId,
+      startedAtIso: startedAt.toIso8601String(),
+      intent: IntentHint(
+        capability: Capability.analyze,
+        risk: RiskLevel.info,
+        label: 'agent_runtime_profile_completion',
+        domain: domain,
+      ),
+      backend: Backend.device,
+      budgetTier: BudgetTier.standard,
+      routingReason: kFrbAgentRuntimeProfileRoutingReason,
+      totalDurationMs: 0,
+    );
+    final builder = AiTraceBuilder.fromSeed(seed, capturePayloads: false)
+      ..addTurnAttributes(<String, Object?>{
+        'runtime': 'frb_agent_runtime',
+        'surface': surface,
+        'agent_id': agentId,
+        'terminal_status': hasError ? 'failed' : 'completed',
+      });
+    builder.addSpan(
+      id: 'llm:profile',
+      parentId: kTurnSpanId,
+      kind: AiSpanKind.llm,
+      name: 'llm:profile',
+      startedAt: startedAt,
+      endedAt: finishedAt,
+      status: hasError ? AiSpanStatus.error : AiSpanStatus.ok,
+      errorCode: hasError ? error.runtimeType.toString() : null,
+      errorMessage: hasError ? error.toString() : null,
+      model: _string(llmResponse?['model']),
+      stopReason: _string(llmResponse?['finish_reason']),
+      tokens: _tokens(llmResponse?['usage']),
+      attributes: <String, Object?>{
+        'provider': _string(llmResponse?['provider']),
+      },
+    );
+    return builder.finalize(
+      finishedAt: finishedAt,
+      terminalReason: hasError
+          ? TerminalReason.streamError
+          : TerminalReason.done,
+    );
+  }
 }
 
 TerminalReason _terminalReason(
@@ -296,4 +379,17 @@ int? _int(Object? value) {
   if (value is num) return value.toInt();
   if (value is String) return int.tryParse(value);
   return null;
+}
+
+SpanTokens? _tokens(Object? value) {
+  final usage = _object(value);
+  if (usage == null) return null;
+  return SpanTokens(
+    input: _int(usage['input_tokens']) ?? _int(usage['input']) ?? 0,
+    output: _int(usage['output_tokens']) ?? _int(usage['output']) ?? 0,
+    cacheRead:
+        _int(usage['cache_read_tokens']) ?? _int(usage['cache_read']) ?? 0,
+    cacheWrite:
+        _int(usage['cache_write_tokens']) ?? _int(usage['cache_write']) ?? 0,
+  );
 }

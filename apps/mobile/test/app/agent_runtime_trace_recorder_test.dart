@@ -343,6 +343,73 @@ void main() {
       expect(spans.last.attributes, containsPair('response_id', 'call_2'));
     },
   );
+
+  test('records profile completions without native steps', () async {
+    final traces = <AiTrace>[];
+    final recorder = AgentRuntimeTraceRecorder(
+      appendTrace: (trace) async => traces.add(trace),
+    );
+
+    final trace = await recorder.recordProfileCompletion(
+      agentId: 'knowledge_inbox_triage',
+      domain: kDomainKnowledge,
+      surface: 'knowledge_inbox_triage',
+      startedAt: DateTime.utc(2026, 6, 29, 8),
+      finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
+      requestId: 'profile_completion_1',
+      llmResponse: const <String, Object?>{
+        'provider': 'openai',
+        'model': 'gpt-test',
+        'finish_reason': 'stop',
+        'usage': <String, Object?>{'input_tokens': 11, 'output_tokens': 7},
+      },
+    );
+
+    expect(traces.single, same(trace));
+    expect(trace.requestId, 'profile_completion_1');
+    expect(trace.routingReason, kFrbAgentRuntimeProfileRoutingReason);
+    expect(trace.intent.label, 'agent_runtime_profile_completion');
+    expect(trace.intent.domain, kDomainKnowledge);
+    expect(trace.terminalReason, TerminalReason.done);
+    expect(trace.spans.map((span) => span.name), <String>[
+      'turn',
+      'llm:profile',
+    ]);
+    expect(trace.llmSpans.single.model, 'gpt-test');
+    expect(trace.llmSpans.single.tokens?.input, 11);
+    expect(trace.llmSpans.single.tokens?.output, 7);
+    expect(
+      trace.spans.first.attributes,
+      containsPair('surface', 'knowledge_inbox_triage'),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('terminal_status', 'completed'),
+    );
+  });
+
+  test('records errored profile completions', () async {
+    final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+
+    final trace = await recorder.recordProfileCompletion(
+      agentId: 'knowledge_contradiction',
+      domain: kDomainKnowledge,
+      surface: 'knowledge_contradiction',
+      startedAt: DateTime.utc(2026, 6, 29, 8),
+      finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
+      llmResponse: null,
+      error: StateError('native unavailable'),
+    );
+
+    expect(trace.terminalReason, TerminalReason.streamError);
+    expect(trace.spans.first.status, AiSpanStatus.error);
+    expect(trace.llmSpans.single.status, AiSpanStatus.error);
+    expect(trace.llmSpans.single.errorCode, 'StateError');
+    expect(
+      trace.spans.first.attributes,
+      containsPair('terminal_status', 'failed'),
+    );
+  });
 }
 
 AgentRuntimeProfileTurnResult _result({

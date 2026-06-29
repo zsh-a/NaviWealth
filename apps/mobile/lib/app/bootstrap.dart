@@ -150,7 +150,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
         return llmBridge == null
             ? null
-            : FrbKnowledgeLlmProfileClient(llmBridge: llmBridge);
+            : FrbKnowledgeLlmProfileClient(
+                llmBridge: llmBridge,
+                recordTrace: ref
+                    .read(agentRuntimeTraceRecorderProvider)
+                    .recordProfileCompletion,
+              );
       }),
       ingestLlmProfileClientProvider.overrideWith((ref) {
         final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
@@ -565,11 +570,27 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
   }
 }
 
+typedef FrbProfileCompletionTraceRecorder =
+    Future<Object?> Function({
+      required String agentId,
+      required Map<String, Object?>? llmResponse,
+      DateTime? startedAt,
+      DateTime? finishedAt,
+      String? requestId,
+      String domain,
+      String surface,
+      Object? error,
+    });
+
 class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
-  const FrbKnowledgeLlmProfileClient({required AgentRuntimeLlmBridge llmBridge})
-    : _llmBridge = llmBridge;
+  const FrbKnowledgeLlmProfileClient({
+    required AgentRuntimeLlmBridge llmBridge,
+    FrbProfileCompletionTraceRecorder? recordTrace,
+  }) : _llmBridge = llmBridge,
+       _recordTrace = recordTrace;
 
   final AgentRuntimeLlmBridge _llmBridge;
+  final FrbProfileCompletionTraceRecorder? _recordTrace;
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -578,15 +599,46 @@ class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return _llmBridge.completeProfile(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
+  }) async {
+    final startedAt = DateTime.now().toUtc();
+    final agentId = _metadataString(metadata, 'agent_id') ?? 'knowledge_llm';
+    final surface = _metadataString(metadata, 'surface') ?? agentId;
+    try {
+      final response = await _llmBridge.completeProfile(
+        messages: messages,
+        tools: tools,
+        temperature: temperature,
+        maxOutputTokens: maxOutputTokens,
+        metadata: metadata,
+      );
+      await _recordTrace?.call(
+        agentId: agentId,
+        llmResponse: response,
+        startedAt: startedAt,
+        finishedAt: DateTime.now().toUtc(),
+        domain: 'knowledge',
+        surface: surface,
+      );
+      return response;
+    } on Object catch (error) {
+      await _recordTrace?.call(
+        agentId: agentId,
+        llmResponse: null,
+        startedAt: startedAt,
+        finishedAt: DateTime.now().toUtc(),
+        domain: 'knowledge',
+        surface: surface,
+        error: error,
+      );
+      rethrow;
+    }
   }
+}
+
+String? _metadataString(Map<String, Object?> metadata, String key) {
+  final value = metadata[key];
+  if (value is String && value.trim().isNotEmpty) return value.trim();
+  return null;
 }
 
 class FrbIngestLlmProfileClient implements IngestLlmProfileClient {

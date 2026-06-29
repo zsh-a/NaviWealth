@@ -190,6 +190,11 @@ Implemented:
   completion through `FrbCaptureClassifier`, so both the Capture sheet and
   `propose_capture` tool use the same FRB-backed taxonomy/polish seam while
   preserving the existing heuristic fallback
+- KnowledgeOS FRB profile completions now record local `AiTrace` spans through
+  the app-level `AgentRuntimeTraceRecorder`, so Inbox Triage / Contradiction /
+  Capture classifier calls get the same local transparency trail as native
+  tool-plan runs without leaking app-level FRB types into KnowledgeOS feature
+  code
 - Finance Activity entry insight now uses the FRB profile-backed LLM bridge
   via `AgentRuntimeLlmBridge.completeProfile` for its concise explanation,
   preserving the existing localized heuristic fallback
