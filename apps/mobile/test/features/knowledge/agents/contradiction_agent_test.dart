@@ -11,12 +11,9 @@
 /// - the cosine floor filters off-topic candidates before the judge;
 /// - empty recall → the agent skips;
 /// - the heuristic fallback + no-LLM provider parity;
-/// - [LlmContradictionJudge] in isolation (parse / fallback paths).
+/// - [FrbContradictionJudge] in isolation (parse / fallback paths).
 library;
 
-import 'dart:async';
-
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
@@ -25,9 +22,6 @@ import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart'
     show memoryRuntimeProvider;
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -150,43 +144,6 @@ class _ThrowingJudge implements ContradictionJudge {
     required String principleStatement,
     required String memoryText,
   }) async => throw StateError('boom');
-}
-
-/// Canned-completion fake (same shape as the inbox-triage test fake).
-class _FakeConfig implements DeviceLlmConfig {
-  const _FakeConfig();
-  @override
-  String get model => 'test-model';
-}
-
-class _FakeDeviceLlmClient implements DeviceLlmClient {
-  _FakeDeviceLlmClient({this.responseText, this.error});
-
-  final String? responseText;
-  final Object? error;
-
-  @override
-  DeviceLlmConfig get config => const _FakeConfig();
-
-  @override
-  Stream<LlmStreamEvent> streamMessages(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) => throw UnimplementedError();
-
-  @override
-  Future<AnthropicCompletion> complete(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async {
-    if (error != null) throw error!;
-    return AnthropicCompletion(
-      content: <Object?>[
-        if (responseText != null)
-          <String, Object?>{'type': 'text', 'text': responseText},
-      ],
-    );
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -483,68 +440,6 @@ void main() {
     });
 
     test(
-      'LlmContradictionJudge falls back to heuristic on malformed JSON',
-      () async {
-        final judge = LlmContradictionJudge(
-          client: _FakeDeviceLlmClient(responseText: 'not json'),
-        );
-        final v = await judge.judge(
-          principleStatement: '长期持有',
-          memoryText: '该决定违反了长期持有',
-        );
-        expect(v.isContradiction, isTrue); // heuristic caught the marker
-      },
-    );
-
-    test('LlmContradictionJudge falls back when the client throws', () async {
-      final judge = LlmContradictionJudge(
-        client: _FakeDeviceLlmClient(error: StateError('boom')),
-      );
-      final v = await judge.judge(
-        principleStatement: '长期持有',
-        memoryText: '复盘了长期持有,无异常', // no marker -> heuristic says none
-      );
-      expect(v.isContradiction, isFalse);
-    });
-
-    test(
-      'LlmContradictionJudge parses a genuine-contradiction verdict',
-      () async {
-        final judge = LlmContradictionJudge(
-          client: _FakeDeviceLlmClient(
-            responseText:
-                '{"is_contradiction": true, "confidence": 0.9, '
-                '"reason_zh": "方向相反"}',
-          ),
-        );
-        final v = await judge.judge(
-          principleStatement: '长期持有',
-          memoryText: '决定开始高频波段',
-        );
-        expect(v.isContradiction, isTrue);
-        expect(v.reasonZh, '方向相反');
-      },
-    );
-
-    test(
-      'LlmContradictionJudge drops a low-confidence positive verdict',
-      () async {
-        final judge = LlmContradictionJudge(
-          client: _FakeDeviceLlmClient(
-            responseText:
-                '{"is_contradiction": true, "confidence": 0.3, '
-                '"reason_zh": "不确定"}',
-          ),
-        );
-        final v = await judge.judge(
-          principleStatement: '长期持有',
-          memoryText: '一些无关内容', // no marker so fallback also says none
-        );
-        expect(v.isContradiction, isFalse);
-      },
-    );
-
-    test(
       'FrbContradictionJudge parses a genuine contradiction verdict',
       () async {
         final bridge = _FakeLlmBridge(
@@ -569,6 +464,22 @@ void main() {
     );
 
     test(
+      'FrbContradictionJudge falls back to heuristic on malformed JSON',
+      () async {
+        final judge = FrbContradictionJudge(
+          llmBridge: _FakeLlmBridge(responseText: 'not json'),
+        );
+
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '该决定违反了长期持有',
+        );
+
+        expect(v.isContradiction, isTrue); // heuristic caught the marker
+      },
+    );
+
+    test(
       'FrbContradictionJudge falls back when FRB completion throws',
       () async {
         final judge = FrbContradictionJudge(
@@ -582,6 +493,26 @@ void main() {
 
         expect(v.isContradiction, isTrue);
         expect(v.reasonZh, contains('违反'));
+      },
+    );
+
+    test(
+      'FrbContradictionJudge drops a low-confidence positive verdict',
+      () async {
+        final judge = FrbContradictionJudge(
+          llmBridge: _FakeLlmBridge(
+            responseText:
+                '{"is_contradiction": true, "confidence": 0.3, '
+                '"reason_zh": "不确定"}',
+          ),
+        );
+
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '一些无关内容',
+        );
+
+        expect(v.isContradiction, isFalse);
       },
     );
   });
