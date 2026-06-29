@@ -150,6 +150,40 @@ void main() {
       expect(snapshot.recoveryScore, 70);
       expect(fallback.calls, 1);
     });
+
+    test(
+      'ignores trace recording failures after a successful FRB read',
+      () async {
+        final fallback = _FallbackReader(
+          const WeeklySummarySnapshot(
+            hasHealthData: true,
+            recoveryScore: 70,
+            recoveryVerdict: 'balanced',
+            avgSleepHours: 7,
+            totalSteps: 1000,
+            workoutCount: 0,
+            workoutMinutes: 0,
+          ),
+        );
+        final reader = FrbWeeklySummaryReader(
+          stepRunner: AgentRuntimeNativeStepRunner(
+            bridge: _ToolPlanBridge(),
+            toolHost: AgentRuntimeToolHost(
+              dispatcher: _WeeklySummaryDispatcher(),
+            ),
+          ),
+          catalog: _catalog(),
+          fallback: fallback,
+          recordTrace: (_) async => throw StateError('trace store unavailable'),
+        );
+
+        final snapshot = await reader.read(_context());
+
+        expect(snapshot.recoveryScore, 82);
+        expect(snapshot.totalSteps, 42000);
+        expect(fallback.calls, 0);
+      },
+    );
   });
 
   test('writes weekly summary memory from reader snapshot', () async {
