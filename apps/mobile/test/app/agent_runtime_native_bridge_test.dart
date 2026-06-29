@@ -30,6 +30,18 @@ void main() {
       });
 
       expect(summary, containsPair('agent_count', 0));
+      final step = await bridge.startRunStep(
+        catalog: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'catalog_version': 'agent_catalog.v1',
+        },
+        request: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'input': <String, Object?>{},
+        },
+        agentId: 'execution_review',
+      );
+      expect(step, containsPair('status', 'completed'));
       expect(initCalls, ['/tmp/liblifeos_native.dylib']);
       expect(
         api.catalogPayloads.single,
@@ -105,6 +117,20 @@ class _FakeNativeApi implements AgentRuntimeNativeApi {
   Future<String> validateTrace({required String traceJson}) async {
     return traceJson;
   }
+
+  @override
+  Future<String> startRunStep({
+    required String catalogJson,
+    required String requestJson,
+    required String agentId,
+  }) async {
+    final request = jsonDecode(requestJson) as Map<String, Object?>;
+    return jsonEncode(<String, Object?>{
+      'protocol_version': 'agent.v1',
+      'agent_id': agentId,
+      'status': request['input'] == null ? 'failed' : 'completed',
+    });
+  }
 }
 
 class _FakeBridge implements AgentRuntimeNativeBridge {
@@ -144,5 +170,18 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
   @override
   Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
     return trace;
+  }
+
+  @override
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'agent_id': agentId,
+      'status': 'completed',
+    };
   }
 }

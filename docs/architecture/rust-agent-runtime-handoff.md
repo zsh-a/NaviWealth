@@ -116,15 +116,20 @@ Current bridge capabilities:
 - Provide a Dart JSONL tool-host adapter compatible with Rust CLI process
   tool calls.
 - Provide a headless Dart tool host entrypoint for local development.
-- Provide FRB/native validation and summary functions for agent runtime wire
-  contracts.
+- Provide FRB/native validation, summary, and first-step run functions for
+  agent runtime wire contracts.
+
+Production Flutter integration is FRB-first: Flutter calls the native Rust
+bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
+tool hosts remain for CLI smoke tests, external tool adapters, and debugging;
+they are not the primary mobile runtime path.
 
 Known limitation:
 
 - Data-backed Flutter tools may still be blocked in standalone Dart VM
-  contexts by sqlite3/Drift environment setup. Use the headless host for
-  protocol and tool-host smoke tests first, then resolve the sqlite3 runtime
-  path before expecting production data-backed tools to run out of process.
+  contexts by sqlite3/Drift environment setup. Treat that as a dev/process-host
+  limitation, not the production mobile path. The production path should
+  advance through FRB embedded runtime steps and Dart-side device tool dispatch.
 
 ## Current Refactor State
 

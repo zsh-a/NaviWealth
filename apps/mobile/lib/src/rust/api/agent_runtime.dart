@@ -6,9 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `normalize_json`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CatalogSummary`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`
+// These functions are ignored because they are not marked as `pub`: `normalize_json`, `parse_requested_tool_call`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CatalogSummary`, `RequestedToolCall`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`
 
 Future<String> agentRuntimeProtocolVersion() =>
     RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeProtocolVersion();
@@ -35,3 +35,13 @@ Future<String> agentRuntimeValidateToolSpec({required String toolJson}) =>
     RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeValidateToolSpec(
       toolJson: toolJson,
     );
+
+Future<String> agentRuntimeStartRunStep({
+  required String catalogJson,
+  required String requestJson,
+  required String agentId,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStartRunStep(
+  catalogJson: catalogJson,
+  requestJson: requestJson,
+  agentId: agentId,
+);

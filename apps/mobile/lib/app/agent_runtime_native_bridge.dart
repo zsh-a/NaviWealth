@@ -48,6 +48,11 @@ abstract interface class AgentRuntimeNativeApi {
   Future<String> validateRunRequest({required String requestJson});
   Future<String> validateTrace({required String traceJson});
   Future<String> validateToolSpec({required String toolJson});
+  Future<String> startRunStep({
+    required String catalogJson,
+    required String requestJson,
+    required String agentId,
+  });
 }
 
 class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
@@ -78,6 +83,19 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
   Future<String> validateToolSpec({required String toolJson}) {
     return rust.agentRuntimeValidateToolSpec(toolJson: toolJson);
   }
+
+  @override
+  Future<String> startRunStep({
+    required String catalogJson,
+    required String requestJson,
+    required String agentId,
+  }) {
+    return rust.agentRuntimeStartRunStep(
+      catalogJson: catalogJson,
+      requestJson: requestJson,
+      agentId: agentId,
+    );
+  }
 }
 
 abstract interface class AgentRuntimeNativeBridge {
@@ -87,6 +105,11 @@ abstract interface class AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> validateRunRequest(Map<String, Object?> request);
   Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace);
   Future<Map<String, Object?>> validateToolSpec(Map<String, Object?> tool);
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  });
 }
 
 class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
@@ -149,6 +172,21 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   ) async {
     await _ensureInitialized();
     final json = await _api.validateToolSpec(toolJson: jsonEncode(tool));
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    await _ensureInitialized();
+    final json = await _api.startRunStep(
+      catalogJson: jsonEncode(catalog),
+      requestJson: jsonEncode(request),
+      agentId: agentId,
+    );
     return _decodeObject(json);
   }
 

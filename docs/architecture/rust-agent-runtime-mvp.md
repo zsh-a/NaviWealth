@@ -83,10 +83,15 @@ Implemented:
   `apps/mobile/lib/src/rust/api/agent_runtime.dart`
 - Dart-side app provider wiring via `agentRuntimeNativeBridgeProvider` and
   `agentRuntimeNativeCatalogSummaryProvider`
+- FRB-first native run-step contract via `agentRuntimeStartRunStep`, which
+  validates the active catalog/run request and returns either a completed
+  dry-run step or a `tool_call_requested` step for Dart-side device dispatch
 
 Deferred:
 
-- standalone app-backed production process entry for data-backed tools. The
+- complete embedded Rust runner loop over FRB, including continuation after
+  Dart-side tool results and production proposal application round-trip
+- standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
   (`NativeCallable.isolateLocal`) on the local latest toolchain.
@@ -610,7 +615,20 @@ implementations backed by `reqwest` with rustls TLS. Wire contracts are under
 `schemas/agent-runtime/llm-request.schema.json` and
 `schemas/agent-runtime/llm-response.schema.json`.
 
-Flutter has a library-level adapter for the same protocol:
+Flutter production integration is FRB-first. The bridge starts with
+`agentRuntimeStartRunStep`: Dart passes the active `agent_catalog.v1`, a
+`RunRequest`, and an agent id to the native Rust bridge. Rust validates the
+contract and returns a JSON step:
+
+- `completed` for a dry-run request without a tool call
+- `tool_call_requested` when the request asks for a catalog tool
+
+Dart remains responsible for executing device tools through
+`DeviceToolDispatcher` and will feed tool results back through future FRB
+continuation APIs. This keeps Rust responsible for runtime/protocol/trace
+contracts while Drift/Riverpod access stays in Flutter.
+
+Flutter also has a library-level JSONL adapter for process-host smoke tests:
 
 ```dart
 final host = AgentRuntimeToolHost(dispatcher: driftDispatcher);

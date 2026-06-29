@@ -1,5 +1,5 @@
 use lifeos_native::api::agent_runtime::{
-    agent_runtime_catalog_summary, agent_runtime_protocol_version,
+    agent_runtime_catalog_summary, agent_runtime_protocol_version, agent_runtime_start_run_step,
     agent_runtime_validate_run_request, agent_runtime_validate_trace,
 };
 use serde_json::Value;
@@ -49,4 +49,32 @@ fn normalizes_trace_contract() {
     assert_eq!(trace["protocol_version"], "agent.v1");
     assert_eq!(trace["run_id"], "run_018f0000-0000-7000-8000-000000000000");
     assert_eq!(trace["events"][0]["kind"], "run_started");
+}
+
+#[test]
+fn start_run_step_requests_catalog_tool_call() {
+    let step_json = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {
+            "tool_call": {
+              "name": "propose_fake",
+              "input": {"value": 7}
+            }
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("start step should validate catalog and request");
+    let step: Value = serde_json::from_str(&step_json).expect("step should be json");
+
+    assert_eq!(step["protocol_version"], "agent.v1");
+    assert_eq!(step["agent_id"], "execution_review");
+    assert_eq!(step["status"], "tool_call_requested");
+    assert_eq!(step["tool_call"]["name"], "propose_fake");
+    assert_eq!(step["tool_call"]["input"]["value"], 7);
 }
