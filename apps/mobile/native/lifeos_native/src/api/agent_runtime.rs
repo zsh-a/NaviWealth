@@ -451,6 +451,7 @@ fn require_previous_tool_call_catalog_tool(
         .filter(|value| !value.is_empty())
         .ok_or_else(|| anyhow::anyhow!("previous step tool_call.name is required"))?;
     if catalog.tools.iter().any(|tool| tool.name == name) {
+        require_tool_call_input_object(tool_call, "previous step tool_call")?;
         return Ok(());
     }
     anyhow::bail!("tool '{name}' requested by agent '{agent_id}' is not present in the catalog");
@@ -1201,10 +1202,19 @@ fn parse_requested_tool_call(value: &Value, label: &str) -> Result<RequestedTool
         .filter(|value| !value.is_empty())
         .ok_or_else(|| anyhow::anyhow!("{label}.name is required"))?
         .to_owned();
-    Ok(RequestedToolCall {
-        name,
-        input: object.get("input").cloned().unwrap_or(Value::Null),
-    })
+    let input = match object.get("input") {
+        Some(input) if input.is_object() => input.clone(),
+        Some(_) => anyhow::bail!("{label}.input must be an object"),
+        None => json!({}),
+    };
+    Ok(RequestedToolCall { name, input })
+}
+
+fn require_tool_call_input_object(tool_call: &Value, label: &str) -> Result<()> {
+    if matches!(tool_call.get("input"), Some(input) if !input.is_object()) {
+        anyhow::bail!("{label}.input must be an object");
+    }
+    Ok(())
 }
 
 fn continuation_tool_results(
