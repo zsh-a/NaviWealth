@@ -1305,6 +1305,9 @@ The Flutter runner now provides the former parity gap:
   by Dart trace recording so Rust owns step sequencing even while Dart executes
   local tools; Flutter now preserves those events in
   `AgentRuntimeNativeStepRunResult.nativeTraceEvents`
+- native `run_state` summaries on FRB steps (`step_index`,
+  `remaining_tool_count`, `tool_result_count`), surfaced as scalar trace
+  attributes by Flutter
 
 The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been
 removed; the remaining `DeviceLlmClient` surface is limited to low-level

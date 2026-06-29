@@ -85,6 +85,12 @@ void main() {
         terminalStep: <String, Object?>{
           'run_id': 'run_2',
           'status': 'completed',
+          'run_state': <String, Object?>{
+            'status': 'completed',
+            'step_index': 4,
+            'remaining_tool_count': 0,
+            'tool_result_count': 1,
+          },
         },
         dispatchedToolCount: 1,
         nativeTraceEvents: <Map<String, Object?>>[
@@ -132,6 +138,15 @@ void main() {
       trace.spans.first.attributes,
       containsPair('native_trace_event_count', 1),
     );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('native_tool_result_count', 1),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('native_remaining_tool_count', 0),
+    );
+    expect(trace.spans.first.attributes, containsPair('native_step_index', 4));
   });
 }
 

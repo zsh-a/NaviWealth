@@ -112,6 +112,7 @@ class AgentRuntimeTraceRecorder {
       routingReason: routingReason,
       totalDurationMs: 0,
     );
+    final nativeRunState = _object(step['run_state']);
     final builder = AiTraceBuilder.fromSeed(seed, capturePayloads: false)
       ..addTurnAttributes(<String, Object?>{
         'runtime': 'frb_agent_runtime',
@@ -121,6 +122,11 @@ class AgentRuntimeTraceRecorder {
         'dispatched_tool_count': stepRun.dispatchedToolCount,
         'budget_exhausted': stepRun.budgetExhausted,
         'native_trace_event_count': stepRun.nativeTraceEvents.length,
+        'native_step_index': ?_int(nativeRunState?['step_index']),
+        'native_remaining_tool_count': ?_int(
+          nativeRunState?['remaining_tool_count'],
+        ),
+        'native_tool_result_count': ?_int(nativeRunState?['tool_result_count']),
       });
 
     final parentId = llmResponse == null ? kTurnSpanId : 'llm:profile';

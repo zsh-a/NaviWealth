@@ -262,7 +262,7 @@ pub fn agent_runtime_start_run_step(
             })
         }
     };
-    attach_trace_event(&mut response);
+    attach_runtime_metadata(&mut response);
     Ok(serde_json::to_string(&response)?)
 }
 
@@ -348,7 +348,7 @@ pub fn agent_runtime_continue_run_step(
             }),
         },
     };
-    attach_trace_event(&mut response);
+    attach_runtime_metadata(&mut response);
     Ok(serde_json::to_string(&response)?)
 }
 
@@ -552,7 +552,7 @@ fn build_tool_call_requested_step(
             .expect("step is an object")
             .insert("continuation".to_owned(), continuation);
     }
-    attach_trace_event(&mut step);
+    attach_runtime_metadata(&mut step);
     Ok(step)
 }
 
@@ -563,6 +563,42 @@ fn tool_call_step_index(continuation: &Option<Value>) -> u64 {
         .and_then(Value::as_u64)
         .map(|next| next.saturating_sub(1))
         .unwrap_or(0)
+}
+
+fn attach_runtime_metadata(step: &mut Value) {
+    attach_run_state(step);
+    attach_trace_event(step);
+}
+
+fn attach_run_state(step: &mut Value) {
+    let Some(object) = step.as_object_mut() else {
+        return;
+    };
+    let continuation = object.get("continuation");
+    let remaining_tool_count = continuation
+        .and_then(|value| value.get("tool_plan"))
+        .and_then(Value::as_array)
+        .map(Vec::len)
+        .unwrap_or(0);
+    let continuation_result_count = continuation
+        .and_then(|value| value.get("tool_results"))
+        .and_then(Value::as_array)
+        .map(Vec::len);
+    let output_result_count = object
+        .get("output")
+        .and_then(|value| value.get("tool_results"))
+        .and_then(Value::as_array)
+        .map(Vec::len);
+    let tool_result_count = continuation_result_count
+        .or(output_result_count)
+        .unwrap_or(0);
+    let state = json!({
+        "status": object.get("status").cloned().unwrap_or(Value::Null),
+        "step_index": object.get("step_index").cloned().unwrap_or(Value::Null),
+        "remaining_tool_count": remaining_tool_count,
+        "tool_result_count": tool_result_count,
+    });
+    object.insert("run_state".to_owned(), state);
 }
 
 fn attach_trace_event(step: &mut Value) {
@@ -684,6 +720,8 @@ mod tests {
         assert_eq!(first["trace_event"]["kind"], "agent_runtime_step");
         assert_eq!(first["trace_event"]["step_index"], 0);
         assert_eq!(first["trace_event"]["tool_name"], "read_first");
+        assert_eq!(first["run_state"]["remaining_tool_count"], 1);
+        assert_eq!(first["run_state"]["tool_result_count"], 0);
 
         let second: Value = serde_json::from_str(
             &agent_runtime_continue_run_step(
@@ -700,6 +738,8 @@ mod tests {
         assert_eq!(second["tool_call"]["name"], "read_second");
         assert_eq!(second["trace_event"]["step_index"], 1);
         assert_eq!(second["trace_event"]["tool_name"], "read_second");
+        assert_eq!(second["run_state"]["remaining_tool_count"], 0);
+        assert_eq!(second["run_state"]["tool_result_count"], 1);
 
         let terminal: Value = serde_json::from_str(
             &agent_runtime_continue_run_step(
@@ -716,5 +756,7 @@ mod tests {
         assert_eq!(terminal["trace_event"]["step_index"], 2);
         assert_eq!(terminal["trace_event"]["tool_name"], Value::Null);
         assert_eq!(terminal["output"]["mode"], "frb_tool_loop");
+        assert_eq!(terminal["run_state"]["remaining_tool_count"], 0);
+        assert_eq!(terminal["run_state"]["tool_result_count"], 2);
     }
 }
