@@ -141,7 +141,8 @@ Implemented:
   in the same local `AiTraceStore`
 - Production profile-turn trace persistence: HealthOS `FrbBriefingSynthesizer`
   records successful Morning Briefing FRB profile turns through
-  `AgentRuntimeTraceRecorder.recordProfileTurn`
+  `AgentRuntimeTraceRecorder.recordProfileTurn` with routing reason
+  `frb_agent_runtime_profile`
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status

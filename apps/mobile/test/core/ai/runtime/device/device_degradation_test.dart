@@ -80,6 +80,17 @@ void main() {
       expect(s, contains('未经我方服务器'));
     });
 
+    test('device + frb_agent_runtime_profile → "未经我方服务器"', () {
+      final s = formatAiTraceBadge(
+        _trace(
+          backend: Backend.device,
+          routingReason: kFrbAgentRuntimeProfileRoutingReason,
+        ),
+      );
+      expect(s, contains('端侧直连模型'));
+      expect(s, contains('未经我方服务器'));
+    });
+
     test('device without that reason stays "全部本地处理"', () {
       final s = formatAiTraceBadge(_trace(backend: Backend.device));
       expect(s, contains('全部本地处理'));

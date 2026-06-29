@@ -96,7 +96,7 @@ class AgentRuntimeTraceRecorder {
     required String domain,
     required String surface,
     String label = 'agent_runtime_profile_turn',
-    String routingReason = kDeviceLlmDirectRoutingReason,
+    String routingReason = kFrbAgentRuntimeProfileRoutingReason,
   }) {
     final seed = AiTrace(
       requestId: requestId,

@@ -22,7 +22,7 @@ void main() {
     expect(traces.single, same(trace));
     expect(trace.requestId, 'agent-runtime:execution_review:run_1');
     expect(trace.backend, Backend.device);
-    expect(trace.routingReason, kDeviceLlmDirectRoutingReason);
+    expect(trace.routingReason, kFrbAgentRuntimeProfileRoutingReason);
     expect(trace.intent.domain, kDomainExecution);
     expect(trace.terminalReason, TerminalReason.done);
     expect(trace.spans.map((span) => span.name), <String>[

@@ -19,6 +19,12 @@ import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 /// path so the transparency badge can say "未经我方服务器".
 const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 
+/// FRB/native agent runtime handled a profile turn on device using the user's
+/// own provider credentials. Distinct from the legacy Dart direct-client label
+/// so trace dashboards can separate FRB runtime traffic from older device LLM
+/// paths while preserving the same "no NaviWealth server" disclosure.
+const String kFrbAgentRuntimeProfileRoutingReason = 'frb_agent_runtime_profile';
+
 /// §5.10.10 — device Vision ingest used the user's own key and called the
 /// provider directly from the device runtime. This is not the deleted cloud
 /// relay; the transparency surface should disclose the same "no NaviWealth
@@ -117,7 +123,8 @@ class AiTrace {
   final BudgetTier budgetTier;
 
   /// Short label for which runtime handled the turn — `device_llm_direct`
-  /// (see [kDeviceLlmDirectRoutingReason]), `device_vision_direct`
+  /// (see [kDeviceLlmDirectRoutingReason]), `frb_agent_runtime_profile`
+  /// (see [kFrbAgentRuntimeProfileRoutingReason]), `device_vision_direct`
   /// (see [kDeviceVisionDirectRoutingReason]), or `device_unavailable`.
   /// Free-form for now.
   final String routingReason;
