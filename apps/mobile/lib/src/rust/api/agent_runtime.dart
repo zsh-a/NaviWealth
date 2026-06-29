@@ -36,6 +36,25 @@ Future<String> agentRuntimeValidateToolSpec({required String toolJson}) =>
       toolJson: toolJson,
     );
 
+Future<String> agentRuntimeValidateLlmRequest({required String requestJson}) =>
+    RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeValidateLlmRequest(
+      requestJson: requestJson,
+    );
+
+Future<String> agentRuntimeValidateLlmResponse({
+  required String responseJson,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeValidateLlmResponse(
+  responseJson: responseJson,
+);
+
+Future<String> agentRuntimeCompleteMockLlm({
+  required String requestJson,
+  required String responseText,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeCompleteMockLlm(
+  requestJson: requestJson,
+  responseText: responseText,
+);
+
 Future<String> agentRuntimeStartRunStep({
   required String catalogJson,
   required String requestJson,

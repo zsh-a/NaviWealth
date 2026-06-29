@@ -33,6 +33,26 @@ void main() {
       });
 
       expect(summary, containsPair('agent_count', 0));
+      final llmRequest = await bridge.validateLlmRequest(
+        const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'provider': 'mock',
+          'model': 'mock-model',
+          'messages': <Object?>[
+            <String, Object?>{'role': 'user', 'content': 'hello'},
+          ],
+        },
+      );
+      expect(llmRequest, containsPair('provider', 'mock'));
+      final llmResponse = await bridge.completeMockLlm(
+        request: llmRequest,
+        responseText: 'mock answer',
+      );
+      expect(llmResponse, containsPair('content', 'mock answer'));
+      expect(
+        await bridge.validateLlmResponse(llmResponse),
+        containsPair('finish_reason', 'stop'),
+      );
       final step = await bridge.startRunStep(
         catalog: const <String, Object?>{
           'protocol_version': 'agent.v1',
@@ -304,8 +324,34 @@ class _FakeNativeApi implements AgentRuntimeNativeApi {
   }
 
   @override
+  Future<String> validateLlmRequest({required String requestJson}) async {
+    return requestJson;
+  }
+
+  @override
+  Future<String> validateLlmResponse({required String responseJson}) async {
+    return responseJson;
+  }
+
+  @override
   Future<String> validateTrace({required String traceJson}) async {
     return traceJson;
+  }
+
+  @override
+  Future<String> completeMockLlm({
+    required String requestJson,
+    required String responseText,
+  }) async {
+    final request = jsonDecode(requestJson) as Map<String, Object?>;
+    return jsonEncode(<String, Object?>{
+      'protocol_version': 'agent.v1',
+      'provider': request['provider'],
+      'model': request['model'],
+      'content': responseText,
+      'finish_reason': 'stop',
+      'metadata': <String, Object?>{'mock': true},
+    });
   }
 
   @override
@@ -390,8 +436,37 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
+  Future<Map<String, Object?>> validateLlmRequest(
+    Map<String, Object?> request,
+  ) async {
+    return request;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateLlmResponse(
+    Map<String, Object?> response,
+  ) async {
+    return response;
+  }
+
+  @override
   Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
     return trace;
+  }
+
+  @override
+  Future<Map<String, Object?>> completeMockLlm({
+    required Map<String, Object?> request,
+    required String responseText,
+  }) async {
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'provider': request['provider'],
+      'model': request['model'],
+      'content': responseText,
+      'finish_reason': 'stop',
+      'metadata': <String, Object?>{'mock': true},
+    };
   }
 
   @override

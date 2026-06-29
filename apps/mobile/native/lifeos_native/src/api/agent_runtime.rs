@@ -4,12 +4,13 @@
 //! DTOs live in `agent-core`; Dart passes JSON strings across the bridge.
 
 use agent_core::{
-    catalog_version, protocol_version, AgentRuntimeCatalog, AgentTrace, RunId, RunRequest,
-    ToolCallId, ToolSpec,
+    AgentRuntimeCatalog, AgentTrace, RunId, RunRequest, ToolCallId, ToolSpec, catalog_version,
+    protocol_version,
 };
+use agent_llm::{LlmProvider, LlmRequest, LlmResponse, MockLlmProvider};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 #[derive(Debug, Serialize)]
 struct CatalogSummary {
@@ -57,6 +58,27 @@ pub fn agent_runtime_validate_trace(trace_json: String) -> Result<String> {
 
 pub fn agent_runtime_validate_tool_spec(tool_json: String) -> Result<String> {
     normalize_json::<ToolSpec>(&tool_json)
+}
+
+pub fn agent_runtime_validate_llm_request(request_json: String) -> Result<String> {
+    normalize_json::<LlmRequest>(&request_json)
+}
+
+pub fn agent_runtime_validate_llm_response(response_json: String) -> Result<String> {
+    normalize_json::<LlmResponse>(&response_json)
+}
+
+pub async fn agent_runtime_complete_mock_llm(
+    request_json: String,
+    response_text: String,
+) -> Result<String> {
+    let request: LlmRequest = serde_json::from_str(&request_json)?;
+    let provider = MockLlmProvider::new("mock", request.model.clone(), response_text);
+    let response = provider
+        .complete(request)
+        .await
+        .map_err(|e| anyhow::anyhow!(e.record.message.clone()))?;
+    Ok(serde_json::to_string(&response)?)
 }
 
 pub fn agent_runtime_start_run_step(

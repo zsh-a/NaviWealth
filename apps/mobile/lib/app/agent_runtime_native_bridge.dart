@@ -57,6 +57,12 @@ abstract interface class AgentRuntimeNativeApi {
   Future<String> validateRunRequest({required String requestJson});
   Future<String> validateTrace({required String traceJson});
   Future<String> validateToolSpec({required String toolJson});
+  Future<String> validateLlmRequest({required String requestJson});
+  Future<String> validateLlmResponse({required String responseJson});
+  Future<String> completeMockLlm({
+    required String requestJson,
+    required String responseText,
+  });
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -100,6 +106,27 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
   }
 
   @override
+  Future<String> validateLlmRequest({required String requestJson}) {
+    return rust.agentRuntimeValidateLlmRequest(requestJson: requestJson);
+  }
+
+  @override
+  Future<String> validateLlmResponse({required String responseJson}) {
+    return rust.agentRuntimeValidateLlmResponse(responseJson: responseJson);
+  }
+
+  @override
+  Future<String> completeMockLlm({
+    required String requestJson,
+    required String responseText,
+  }) {
+    return rust.agentRuntimeCompleteMockLlm(
+      requestJson: requestJson,
+      responseText: responseText,
+    );
+  }
+
+  @override
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -135,6 +162,14 @@ abstract interface class AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> validateRunRequest(Map<String, Object?> request);
   Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace);
   Future<Map<String, Object?>> validateToolSpec(Map<String, Object?> tool);
+  Future<Map<String, Object?>> validateLlmRequest(Map<String, Object?> request);
+  Future<Map<String, Object?>> validateLlmResponse(
+    Map<String, Object?> response,
+  );
+  Future<Map<String, Object?>> completeMockLlm({
+    required Map<String, Object?> request,
+    required String responseText,
+  });
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
@@ -208,6 +243,41 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   ) async {
     await _ensureInitialized();
     final json = await _api.validateToolSpec(toolJson: jsonEncode(tool));
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> validateLlmRequest(
+    Map<String, Object?> request,
+  ) async {
+    await _ensureInitialized();
+    final json = await _api.validateLlmRequest(
+      requestJson: jsonEncode(request),
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> validateLlmResponse(
+    Map<String, Object?> response,
+  ) async {
+    await _ensureInitialized();
+    final json = await _api.validateLlmResponse(
+      responseJson: jsonEncode(response),
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> completeMockLlm({
+    required Map<String, Object?> request,
+    required String responseText,
+  }) async {
+    await _ensureInitialized();
+    final json = await _api.completeMockLlm(
+      requestJson: jsonEncode(request),
+      responseText: responseText,
+    );
     return _decodeObject(json);
   }
 

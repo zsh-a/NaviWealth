@@ -315,8 +315,36 @@ class _TerminalBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
+  Future<Map<String, Object?>> validateLlmRequest(
+    Map<String, Object?> request,
+  ) async {
+    return request;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateLlmResponse(
+    Map<String, Object?> response,
+  ) async {
+    return response;
+  }
+
+  @override
   Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
     return trace;
+  }
+
+  @override
+  Future<Map<String, Object?>> completeMockLlm({
+    required Map<String, Object?> request,
+    required String responseText,
+  }) async {
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'provider': request['provider'],
+      'model': request['model'],
+      'content': responseText,
+      'finish_reason': 'stop',
+    };
   }
 
   @override

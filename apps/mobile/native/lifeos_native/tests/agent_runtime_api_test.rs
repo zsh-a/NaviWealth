@@ -1,6 +1,8 @@
 use lifeos_native::api::agent_runtime::{
-    agent_runtime_catalog_summary, agent_runtime_continue_run_step, agent_runtime_protocol_version,
-    agent_runtime_start_run_step, agent_runtime_validate_run_request, agent_runtime_validate_trace,
+    agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
+    agent_runtime_continue_run_step, agent_runtime_protocol_version, agent_runtime_start_run_step,
+    agent_runtime_validate_llm_request, agent_runtime_validate_llm_response,
+    agent_runtime_validate_run_request, agent_runtime_validate_trace,
 };
 use serde_json::Value;
 
@@ -49,6 +51,44 @@ fn normalizes_trace_contract() {
     assert_eq!(trace["protocol_version"], "agent.v1");
     assert_eq!(trace["run_id"], "run_018f0000-0000-7000-8000-000000000000");
     assert_eq!(trace["events"][0]["kind"], "run_started");
+}
+
+#[test]
+fn normalizes_llm_contracts() {
+    let request_json = agent_runtime_validate_llm_request(
+        include_str!("../../../../../fixtures/agent-runtime/llm-request.valid.json").to_owned(),
+    )
+    .expect("llm request should validate");
+    let request: Value = serde_json::from_str(&request_json).expect("request should be json");
+    assert_eq!(request["protocol_version"], "agent.v1");
+    assert_eq!(request["provider"], "mock");
+    assert_eq!(request["messages"][0]["role"], "user");
+
+    let response_json = agent_runtime_validate_llm_response(
+        include_str!("../../../../../fixtures/agent-runtime/llm-response.valid.json").to_owned(),
+    )
+    .expect("llm response should validate");
+    let response: Value = serde_json::from_str(&response_json).expect("response should be json");
+    assert_eq!(response["protocol_version"], "agent.v1");
+    assert_eq!(response["finish_reason"], "stop");
+}
+
+#[tokio::test]
+async fn complete_mock_llm_returns_provider_response() {
+    let response_json = agent_runtime_complete_mock_llm(
+        include_str!("../../../../../fixtures/agent-runtime/llm-request.valid.json").to_owned(),
+        "native mock response".to_owned(),
+    )
+    .await
+    .expect("mock llm should complete");
+    let response: Value = serde_json::from_str(&response_json).expect("response should be json");
+
+    assert_eq!(response["protocol_version"], "agent.v1");
+    assert_eq!(response["provider"], "mock");
+    assert_eq!(response["model"], "mock-model");
+    assert_eq!(response["content"], "native mock response");
+    assert_eq!(response["finish_reason"], "stop");
+    assert_eq!(response["metadata"]["mock"], true);
 }
 
 #[test]

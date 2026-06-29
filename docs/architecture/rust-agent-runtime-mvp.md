@@ -83,6 +83,9 @@ Implemented:
   `apps/mobile/lib/src/rust/api/agent_runtime.dart`
 - Dart-side app provider wiring via `agentRuntimeNativeBridgeProvider` and
   `agentRuntimeNativeCatalogSummaryProvider`
+- FRB-facing LLM request/response contract validation and deterministic mock
+  LLM completion via `agentRuntimeValidateLlmRequest`,
+  `agentRuntimeValidateLlmResponse`, and `agentRuntimeCompleteMockLlm`
 - FRB-first native run-step contract via `agentRuntimeStartRunStep`, which
   validates the active catalog/run request and returns either a completed
   dry-run step or a `tool_call_requested` step for Dart-side device dispatch
@@ -108,8 +111,9 @@ Implemented:
 Deferred:
 
 - complete embedded Rust runner loop over FRB beyond deterministic step
-  contracts, including production LLM/tool continuation and wiring the confirmed
-  proposal provider into a concrete user-facing surface
+  contracts, including device-profile-backed LLM providers, production
+  LLM/tool continuation, and wiring the confirmed proposal provider into a
+  concrete user-facing surface
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
