@@ -13,11 +13,11 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/logging/app_logger.dart';
 import '../domain/knowledge_models.dart';
 import 'inbox_triage_classifier.dart';
 import 'inbox_triage_repository.dart';
+import 'knowledge_llm_client.dart';
 
 /// Grep the Talker history for `[inbox-triage-llm]` to trace one
 /// triage() call end-to-end.
@@ -135,14 +135,14 @@ double? _coerceDouble(Object? v) {
 
 class FrbInboxTriageClassifier implements InboxTriageClassifier {
   const FrbInboxTriageClassifier({
-    required this.llmBridge,
+    required this.llmClient,
     this.fallback = const HeuristicInboxTriageClassifier(),
     this.maxTokens = 8192,
     this.requestTimeout = const Duration(seconds: 8),
     this.logger,
   });
 
-  final AgentRuntimeLlmBridge llmBridge;
+  final KnowledgeLlmProfileClient llmClient;
   final InboxTriageClassifier fallback;
   final int maxTokens;
   final Duration requestTimeout;
@@ -160,7 +160,7 @@ class FrbInboxTriageClassifier implements InboxTriageClassifier {
 
     final stopwatch = Stopwatch()..start();
     try {
-      final response = await llmBridge
+      final response = await llmClient
           .completeProfile(
             messages: <Map<String, Object?>>[
               const <String, Object?>{

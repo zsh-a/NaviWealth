@@ -14,9 +14,9 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/logging/app_logger.dart';
 import 'contradiction_judge.dart';
+import 'knowledge_llm_client.dart';
 
 /// Grep the Talker history for `[contradiction-llm]` to trace one
 /// judge() call end-to-end.
@@ -110,14 +110,14 @@ double? _coerceDouble(Object? v) {
 
 class FrbContradictionJudge implements ContradictionJudge {
   const FrbContradictionJudge({
-    required this.llmBridge,
+    required this.llmClient,
     this.fallback = const HeuristicContradictionJudge(),
     this.maxTokens = 4096,
     this.requestTimeout = const Duration(seconds: 8),
     this.logger,
   });
 
-  final AgentRuntimeLlmBridge llmBridge;
+  final KnowledgeLlmProfileClient llmClient;
   final ContradictionJudge fallback;
   final int maxTokens;
   final Duration requestTimeout;
@@ -136,7 +136,7 @@ class FrbContradictionJudge implements ContradictionJudge {
 
     final stopwatch = Stopwatch()..start();
     try {
-      final response = await llmBridge
+      final response = await llmClient
           .completeProfile(
             messages: <Map<String, Object?>>[
               const <String, Object?>{

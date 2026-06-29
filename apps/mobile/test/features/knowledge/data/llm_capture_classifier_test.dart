@@ -6,8 +6,8 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/features/knowledge/data/capture_kind.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/llm_capture_classifier.dart';
 
 void main() {
@@ -26,7 +26,7 @@ void main() {
   "scope": "finance/cards/hk"
 }''',
         );
-        final c = FrbCaptureClassifier(llmBridge: bridge);
+        final c = FrbCaptureClassifier(llmClient: bridge);
 
         final r = await c.classify(text: '港卡每 6 个月做一次活跃交易，否则会休眠。');
 
@@ -49,7 +49,7 @@ void main() {
 {"kind":"routine","confidence":0.3,"reason_zh":"勉强像","interval_days":180,
  "polished_title":"清理后的标题","polished_body":"清理后的正文"}''',
         );
-        final c = FrbCaptureClassifier(llmBridge: bridge);
+        final c = FrbCaptureClassifier(llmClient: bridge);
 
         final r = await c.classify(text: '可能要定期 xxx');
 
@@ -72,7 +72,7 @@ void main() {
   "scope": "*"
 }''',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '我应该升级到 QQQ + BOXX 动态对冲，还是保持现状?');
 
@@ -97,7 +97,7 @@ Sure, here's the classification:
 ```
 ''',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: 'edge-first: prefer fast iteration.');
 
@@ -110,7 +110,7 @@ Sure, here's the classification:
         responseText:
             '{"kind":"routine","confidence":0.9,"reason_zh":"x","interval_days":99999}',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '每天提醒');
 
@@ -129,7 +129,7 @@ Sure, here's the classification:
   "polished_body": "清理后的正文。"
 }''',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '清晨..想到的，一句，  乱七八糟');
 
@@ -145,7 +145,7 @@ Sure, here's the classification:
 {"kind":"note","confidence":0.5,"reason_zh":"无结构",
  "polished_title":"","polished_body":"   "}''',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '今天读了一本书');
 
@@ -158,7 +158,7 @@ Sure, here's the classification:
       final bridge = _FakeLlmBridge(
         responseText: 'I think this is a routine, but no JSON.',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '港卡每 6 个月活跃一次');
 
@@ -171,7 +171,7 @@ Sure, here's the classification:
       final bridge = _FakeLlmBridge(
         responseText: '{"confidence":0.9,"reason_zh":"x"}',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '每年报税');
 
@@ -183,7 +183,7 @@ Sure, here's the classification:
       final bridge = _FakeLlmBridge(
         responseText: '{"kind":"strategy","confidence":0.9,"reason_zh":"x"}',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '每年做一次体检');
 
@@ -195,7 +195,7 @@ Sure, here's the classification:
       final bridge = _FakeLlmBridge(
         responseText: '{"kind":"routine","confidence":1,"reason_zh":"x"}',
       );
-      final c = FrbCaptureClassifier(llmBridge: bridge);
+      final c = FrbCaptureClassifier(llmClient: bridge);
 
       final r = await c.classify(text: '   ');
 
@@ -205,7 +205,7 @@ Sure, here's the classification:
 
     test('falls back to heuristic when FRB completion throws', () async {
       final c = FrbCaptureClassifier(
-        llmBridge: _FakeLlmBridge(error: StateError('native unavailable')),
+        llmClient: _FakeLlmBridge(error: StateError('native unavailable')),
       );
 
       final r = await c.classify(text: '每周做一次 review');
@@ -216,7 +216,7 @@ Sure, here's the classification:
   });
 }
 
-class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+class _FakeLlmBridge implements KnowledgeLlmProfileClient {
   _FakeLlmBridge({this.responseText, this.error});
 
   final String? responseText;
@@ -224,33 +224,6 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
   var calls = 0;
   List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
   Map<String, Object?> lastMetadata = const <String, Object?>{};
-
-  @override
-  Map<String, Object?> buildRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return <String, Object?>{
-      'messages': messages,
-      'metadata': metadata,
-      'max_output_tokens': maxOutputTokens,
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMock({
-    required List<Map<String, Object?>> messages,
-    required String responseText,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return <String, Object?>{'content': responseText};
-  }
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -270,22 +243,5 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
       'model': 'test-model',
       'content': responseText ?? '',
     };
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return buildRequest(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
   }
 }

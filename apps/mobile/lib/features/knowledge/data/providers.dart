@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/ai/llm_credentials/providers.dart'
     show llmCredentialsProvider;
 import '../../../core/ai/local/memory/providers.dart'
@@ -23,6 +22,7 @@ import 'capture_classifier.dart';
 import 'contradiction_judge.dart';
 import 'inbox_triage_classifier.dart';
 import 'inbox_triage_repository.dart';
+import 'knowledge_llm_client.dart';
 import 'knowledge_repository.dart';
 import 'knowledge_search_service.dart';
 import 'llm_capture_classifier.dart';
@@ -97,15 +97,15 @@ final inboxTriageClassifierProvider = FutureProvider<InboxTriageClassifier>((
   ref,
 ) async {
   final logger = ref.watch(loggerProvider);
-  final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
-  if (llmBridge == null) {
+  final llmClient = ref.watch(knowledgeLlmProfileClientProvider);
+  if (llmClient == null) {
     logger.i(
       '[inbox-triage] classifier=heuristic — ${_diagnoseLlmUnavailable(ref)}',
     );
     return const HeuristicInboxTriageClassifier();
   }
   logger.i('[inbox-triage] classifier=frb-llm');
-  return FrbInboxTriageClassifier(llmBridge: llmBridge, logger: logger);
+  return FrbInboxTriageClassifier(llmClient: llmClient, logger: logger);
 });
 
 /// Contradiction-judge seam (§14.2 "ContradictionAgent cosine + LLM
@@ -121,15 +121,15 @@ final contradictionJudgeProvider = FutureProvider<ContradictionJudge>((
   ref,
 ) async {
   final logger = ref.watch(loggerProvider);
-  final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
-  if (llmBridge == null) {
+  final llmClient = ref.watch(knowledgeLlmProfileClientProvider);
+  if (llmClient == null) {
     logger.i(
       '[contradiction] judge=heuristic — ${_diagnoseLlmUnavailable(ref)}',
     );
     return const HeuristicContradictionJudge();
   }
   logger.i('[contradiction] judge=frb-llm');
-  return FrbContradictionJudge(llmBridge: llmBridge, logger: logger);
+  return FrbContradictionJudge(llmClient: llmClient, logger: logger);
 });
 
 /// Capture classifier seam. Returns the FRB profile-backed LLM classifier when
@@ -147,8 +147,8 @@ final contradictionJudgeProvider = FutureProvider<ContradictionJudge>((
 /// LLM is actually engaged.
 final captureClassifierProvider = Provider<CaptureClassifier>((ref) {
   final logger = ref.watch(loggerProvider);
-  final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
-  if (llmBridge == null) {
+  final llmClient = ref.watch(knowledgeLlmProfileClientProvider);
+  if (llmClient == null) {
     // Drill into the gate chain so the log line tells the user which of
     // the 4 possible reasons fired (web platform / credentials still
     // loading / no active profile / active profile has empty key).
@@ -157,7 +157,7 @@ final captureClassifierProvider = Provider<CaptureClassifier>((ref) {
     return const HeuristicCaptureClassifier();
   }
   logger.i('[capture] classifier=frb-llm');
-  return FrbCaptureClassifier(llmBridge: llmBridge, logger: logger);
+  return FrbCaptureClassifier(llmClient: llmClient, logger: logger);
 });
 
 String _diagnoseLlmUnavailable(Ref ref) {

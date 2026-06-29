@@ -16,7 +16,6 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -28,6 +27,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
 import 'package:naviwealth/features/knowledge/data/contradiction_judge.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/llm_contradiction_judge.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
@@ -447,7 +447,7 @@ void main() {
               '{"is_contradiction": true, "confidence": 0.9, '
               '"reason_zh": "方向相反"}',
         );
-        final judge = FrbContradictionJudge(llmBridge: bridge);
+        final judge = FrbContradictionJudge(llmClient: bridge);
 
         final v = await judge.judge(
           principleStatement: '长期持有',
@@ -467,7 +467,7 @@ void main() {
       'FrbContradictionJudge falls back to heuristic on malformed JSON',
       () async {
         final judge = FrbContradictionJudge(
-          llmBridge: _FakeLlmBridge(responseText: 'not json'),
+          llmClient: _FakeLlmBridge(responseText: 'not json'),
         );
 
         final v = await judge.judge(
@@ -483,7 +483,7 @@ void main() {
       'FrbContradictionJudge falls back when FRB completion throws',
       () async {
         final judge = FrbContradictionJudge(
-          llmBridge: _FakeLlmBridge(error: StateError('native unavailable')),
+          llmClient: _FakeLlmBridge(error: StateError('native unavailable')),
         );
 
         final v = await judge.judge(
@@ -500,7 +500,7 @@ void main() {
       'FrbContradictionJudge drops a low-confidence positive verdict',
       () async {
         final judge = FrbContradictionJudge(
-          llmBridge: _FakeLlmBridge(
+          llmClient: _FakeLlmBridge(
             responseText:
                 '{"is_contradiction": true, "confidence": 0.3, '
                 '"reason_zh": "不确定"}',
@@ -518,7 +518,7 @@ void main() {
   });
 }
 
-class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+class _FakeLlmBridge implements KnowledgeLlmProfileClient {
   _FakeLlmBridge({this.responseText, this.error});
 
   final String? responseText;
@@ -526,33 +526,6 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
   var calls = 0;
   List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
   Map<String, Object?> lastMetadata = const <String, Object?>{};
-
-  @override
-  Map<String, Object?> buildRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return <String, Object?>{
-      'messages': messages,
-      'metadata': metadata,
-      'max_output_tokens': maxOutputTokens,
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMock({
-    required List<Map<String, Object?>> messages,
-    required String responseText,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return <String, Object?>{'content': responseText};
-  }
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -572,22 +545,5 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
       'model': 'test-model',
       'content': responseText ?? '',
     };
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return buildRequest(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
   }
 }

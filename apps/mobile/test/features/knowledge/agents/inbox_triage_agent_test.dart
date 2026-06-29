@@ -15,7 +15,6 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
@@ -25,6 +24,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';
 import 'package:naviwealth/features/knowledge/data/inbox_triage_classifier.dart';
 import 'package:naviwealth/features/knowledge/data/inbox_triage_repository.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/llm_inbox_triage_classifier.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
@@ -97,7 +97,7 @@ void main() {
                        "reason_zh":"与该决策相关"}
 }''',
       );
-      final c = FrbInboxTriageClassifier(llmBridge: bridge);
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
       final note = _note(id: 'n1', title: 'QQQ vs BOXX', body: '该不该升级对冲?');
 
       final out = await c.triage(note, [
@@ -123,7 +123,7 @@ void main() {
 
     test('falls back to heuristic when FRB completion fails', () async {
       final bridge = _FakeLlmBridge(error: StateError('native unavailable'));
-      final c = FrbInboxTriageClassifier(llmBridge: bridge);
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
 
       final out = await c.triage(
         _note(id: 'n1', title: 'edge-first', body: 'short def'),
@@ -144,7 +144,7 @@ void main() {
   "link_to_decision": null
 }''',
       );
-      final c = FrbInboxTriageClassifier(llmBridge: bridge);
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
 
       final out = await c.triage(
         _note(id: 'n1', title: 't', body: 'b'),
@@ -159,7 +159,7 @@ void main() {
         responseText:
             '{"classification":null,"tags":null,"link_to_decision":null}',
       );
-      final c = FrbInboxTriageClassifier(llmBridge: bridge);
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
 
       final out = await c.triage(
         _note(id: 'n1', title: 'X', body: 'short'),
@@ -178,7 +178,7 @@ void main() {
  "tags":{"tags":["fire"],"confidence":0.9,"reason_zh":"x"},
  "link_to_decision":{"decision_ids":["ghost"],"confidence":0.9,"reason_zh":"x"}}''',
         );
-        final c = FrbInboxTriageClassifier(llmBridge: bridge);
+        final c = FrbInboxTriageClassifier(llmClient: bridge);
 
         final out = await c.triage(
           _note(id: 'n1', title: 't', body: 'b', tags: const ['existing']),
@@ -334,7 +334,7 @@ void main() {
       );
       final fallbackAgent = InboxTriageAgent(
         classifier: FrbInboxTriageClassifier(
-          llmBridge: _FakeLlmBridge(error: StateError('native unavailable')),
+          llmClient: _FakeLlmBridge(error: StateError('native unavailable')),
         ),
       );
       await runAgent(c2, fallbackAgent);
@@ -417,7 +417,7 @@ void main() {
   });
 }
 
-class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+class _FakeLlmBridge implements KnowledgeLlmProfileClient {
   _FakeLlmBridge({this.responseText, this.error});
 
   final String? responseText;
@@ -425,33 +425,6 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
   var calls = 0;
   List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
   Map<String, Object?> lastMetadata = const <String, Object?>{};
-
-  @override
-  Map<String, Object?> buildRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return <String, Object?>{
-      'messages': messages,
-      'metadata': metadata,
-      'max_output_tokens': maxOutputTokens,
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMock({
-    required List<Map<String, Object?>> messages,
-    required String responseText,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return <String, Object?>{'content': responseText};
-  }
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -471,22 +444,5 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
       'model': 'test-model',
       'content': responseText ?? '',
     };
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return buildRequest(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
   }
 }

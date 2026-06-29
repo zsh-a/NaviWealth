@@ -12,11 +12,11 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/logging/app_logger.dart';
 import '../domain/knowledge_text.dart';
 import 'capture_classifier.dart';
 import 'capture_kind.dart';
+import 'knowledge_llm_client.dart';
 
 /// Log channel used by every checkpoint in this file. Grep the talker
 /// history for `[capture-llm]` to trace one classify() call end-to-end.
@@ -136,14 +136,14 @@ int? _coerceInt(Object? v) {
 
 class FrbCaptureClassifier implements CaptureClassifier {
   const FrbCaptureClassifier({
-    required this.llmBridge,
+    required this.llmClient,
     this.fallback = const HeuristicCaptureClassifier(),
     this.maxTokens = 8192,
     this.requestTimeout = const Duration(seconds: 45),
     this.logger,
   });
 
-  final AgentRuntimeLlmBridge llmBridge;
+  final KnowledgeLlmProfileClient llmClient;
   final CaptureClassifier fallback;
   final int maxTokens;
   final Duration requestTimeout;
@@ -164,7 +164,7 @@ class FrbCaptureClassifier implements CaptureClassifier {
 
     final stopwatch = Stopwatch()..start();
     try {
-      final response = await llmBridge
+      final response = await llmClient
           .completeProfile(
             messages: <Map<String, Object?>>[
               const <String, Object?>{

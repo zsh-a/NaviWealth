@@ -47,6 +47,7 @@ import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import '../features/knowledge/agents/review_agent.dart';
 import '../features/knowledge/agents/routine_due_agent.dart';
+import '../features/knowledge/data/knowledge_llm_client.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_llm_bridge.dart';
@@ -143,6 +144,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         return llmBridge == null
             ? null
             : FrbActivityEntryInsightClient(llmBridge: llmBridge);
+      }),
+      knowledgeLlmProfileClientProvider.overrideWith((ref) {
+        final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+        return llmBridge == null
+            ? null
+            : FrbKnowledgeLlmProfileClient(llmBridge: llmBridge);
       }),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
@@ -548,6 +555,30 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
     );
     final body = response['content'];
     return body is String ? body : null;
+  }
+}
+
+class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
+  const FrbKnowledgeLlmProfileClient({required AgentRuntimeLlmBridge llmBridge})
+    : _llmBridge = llmBridge;
+
+  final AgentRuntimeLlmBridge _llmBridge;
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
+    return _llmBridge.completeProfile(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
   }
 }
 
