@@ -76,7 +76,8 @@ Implemented:
 - file-store trace persistence and debug bundle export for local reproduction
 - minimal OpenAPI 3.1 contract at `openapi/agent-runtime-api.yaml`
 - CLI JSON Schema validation gate via `agent validate`
-- ratatui/crossterm terminal UI via `agent tui`
+- ratatui/crossterm terminal UI via `agent tui`, including a command bar for
+  interactive `run`, `tool`, trace load, run inspect, refresh, and help
 - FRB-facing native JSON contract bridge in
   `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs`
 - generated FRB bindings for the native agent-runtime bridge under
@@ -374,12 +375,27 @@ rtk cargo run -p agent-cli -- inspect run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000 \
   --store /private/tmp/agent-runtime-store
 ```
 
-Open the terminal UI for catalog, trace, and file-store inspection:
+Open the terminal UI for catalog, trace, file-store inspection, and
+interactive local run debugging:
 
 ```bash
 rtk cargo run -p agent-cli -- tui \
   --catalog fixtures/agent-runtime/catalog.valid.json \
   --trace fixtures/agent-runtime/trace.valid.json
+```
+
+The TUI has a Claude Code-style command bar. Press `:` to type a command, or
+use shortcuts such as `r` for `run `, `t` for `tool `, `p` for `replay `, and
+`R` to refresh. Supported commands in the first interactive slice:
+
+```text
+run <agent_id> [json]      Run an agent and load the resulting trace panel.
+tool <name> [json]         Call a tool through the active CLI tool services.
+replay <trace_path>        Load a trace file into the trace panel.
+inspect <run_id>           Show a persisted run record summary.
+refresh                    Reload catalog, trace, and recent runs.
+clear                      Clear the debug output panel.
+help                       Show the command list.
 ```
 
 For CI and smoke tests, render one frame with ratatui's test backend:

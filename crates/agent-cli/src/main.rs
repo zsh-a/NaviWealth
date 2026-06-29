@@ -1,16 +1,12 @@
 use std::time::Duration;
 
-use agent_core::{
-    AgentProposalStore, AgentRunStore, AgentSessionStore, PROTOCOL_VERSION, RunId, SessionId,
-    ThreadId,
-};
+use agent_core::{AgentRunStore, RunId};
 use agent_runtime::{ExecutionPolicy, recover_stale_runs};
-use agent_store::{FileProposalStore, FileRunStore, FileSessionStore};
+use agent_store::{FileProposalStore, FileRunStore};
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand};
 use miette::{IntoDiagnostic, Result, miette};
 use serde::Serialize;
-use serde_json::json;
 
 mod catalog;
 mod catalog_cli;
@@ -37,7 +33,6 @@ mod tools;
 mod trace_store;
 mod tui;
 
-use catalog::read_catalog;
 use catalog_cli::{CatalogCommand, run_catalog_command};
 use command_template::{CommandRunOptions, create_command_from_run, run_command_template};
 use config::{
@@ -59,7 +54,7 @@ use session_cli::{SessionCommand, run_session_command};
 use tool_cli::{ToolCommand, run_tool_command};
 use tools::tool_overrides;
 use trace_store::read_json;
-use tui::run_tui;
+use tui::{TuiOptions, run_tui};
 
 const DEFAULT_REGISTRY: &str = "examples/agent-runtime/agents.yaml";
 const DEFAULT_STORE: &str = ".agent-runtime/store";
@@ -218,12 +213,26 @@ enum Command {
         port: u16,
     },
     Tui {
+        #[arg(long, default_value = DEFAULT_REGISTRY)]
+        registry: Utf8PathBuf,
         #[arg(long)]
         catalog: Option<Utf8PathBuf>,
         #[arg(long)]
         trace: Option<Utf8PathBuf>,
         #[arg(long, default_value = DEFAULT_STORE)]
         store: Utf8PathBuf,
+        #[arg(long, num_args = 1.., value_name = "COMMAND")]
+        tool_host: Vec<String>,
+        #[arg(long, value_name = "NAME=JSON_OR_@PATH")]
+        mock_tool: Vec<String>,
+        #[arg(long)]
+        tool_source: Vec<Utf8PathBuf>,
+        #[arg(long, default_value_t = DEFAULT_TIMEOUT_SECONDS)]
+        timeout_seconds: u64,
+        #[arg(long, default_value_t = 0)]
+        max_retries: u32,
+        #[arg(long, default_value_t = 0)]
+        retry_backoff_ms: u64,
         #[arg(long)]
         once: bool,
     },
@@ -672,14 +681,43 @@ async fn main() -> Result<()> {
             }
         }
         Command::Tui {
+            registry,
             catalog,
             trace,
             store,
+            tool_host,
+            mock_tool,
+            tool_source,
+            timeout_seconds,
+            max_retries,
+            retry_backoff_ms,
             once,
         } => {
             let catalog = catalog.or_else(|| config.runtime.catalog.clone());
+            let registry =
+                configured_path(registry, DEFAULT_REGISTRY, config.runtime.registry.as_ref());
             let store = configured_path(store, DEFAULT_STORE, config.runtime.store.as_ref());
-            run_tui(catalog, trace, store, once).await?;
+            let tool_source = configured_paths(tool_source, config.runtime.tool_sources.as_ref());
+            let timeout_seconds = configured_u64(
+                timeout_seconds,
+                DEFAULT_TIMEOUT_SECONDS,
+                config.runtime.timeout_seconds,
+            );
+            let max_retries = configured_u32(max_retries, 0, config.runtime.max_retries);
+            let retry_backoff_ms =
+                configured_u64(retry_backoff_ms, 0, config.runtime.retry_backoff_ms);
+            run_tui(TuiOptions {
+                catalog_path: catalog,
+                trace_path: trace,
+                store_path: store,
+                registry_path: registry,
+                tool_overrides: tool_overrides(tool_host, mock_tool, tool_source).await?,
+                timeout_seconds,
+                max_retries,
+                retry_backoff_ms,
+                once,
+            })
+            .await?;
         }
         Command::Eval {
             eval_path,
