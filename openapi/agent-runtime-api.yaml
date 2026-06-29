@@ -152,7 +152,7 @@ paths:
             text/event-stream:
               schema:
                 type: string
-                description: Each SSE data frame is a TraceEvent JSON object.
+                description: Each SSE data frame is a TraceEvent JSON object from trace.schema.json; agent_runtime_step frames include payload.run_state.
         "404":
           description: Trace was not found.
           content:

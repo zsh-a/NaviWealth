@@ -212,7 +212,7 @@ fn openapi_contract_documents_http_server_routes() {
     assert_eq!(
         openapi["paths"]["/runs/{run_id}/events"]["get"]["responses"]["200"]["content"]["text/event-stream"]
             ["schema"]["description"],
-        "Each SSE data frame is a TraceEvent JSON object."
+        "Each SSE data frame is a TraceEvent JSON object from trace.schema.json; agent_runtime_step frames include payload.run_state."
     );
     assert_eq!(
         openapi["paths"]["/runs/{run_id}/replay"]["post"]["responses"]["200"]["content"]["application/json"]

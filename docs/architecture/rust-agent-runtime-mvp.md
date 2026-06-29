@@ -884,7 +884,11 @@ POST /agents/{agent_id}/run
 frame is one persisted `TraceEvent` JSON object from the run trace. This is the
 server-side counterpart to debug bundle `events.jsonl`; it gives TUI/Web/IDE
 clients a stable event-stream contract today and can be extended to live tailing
-when the runner keeps per-run sinks open.
+when the runner keeps per-run sinks open. Frames follow
+`schemas/agent-runtime/trace.schema.json`; `agent_runtime_step` frames include
+`payload.run_state` so native step status, remaining tool count, tool result
+count, and terminal reason are available to stream consumers without inspecting
+mobile-specific FRB envelopes.
 
 `agent metrics summary --store <path>` and `GET /metrics/summary` build metrics
 from the same persisted run records, trace events, and proposal files. The MVP
