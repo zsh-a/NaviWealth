@@ -6,7 +6,7 @@ use lifeos_native::api::agent_runtime::{
     agent_runtime_validate_llm_response, agent_runtime_validate_run_request,
     agent_runtime_validate_trace,
 };
-use serde_json::Value;
+use serde_json::{Value, json};
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::thread;
@@ -413,6 +413,90 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
     assert_eq!(step["run_state"]["remaining_tool_count"], 1);
     assert_eq!(step["run_state"]["tool_result_count"], 0);
     assert!(step["run_state"]["terminal_reason"].is_null());
+}
+
+#[test]
+fn native_step_trace_events_validate_as_agent_trace_payloads() {
+    let first_json = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000123",
+          "input": {
+            "tool_call": {
+              "name": "propose_fake",
+              "input": {"value": 7}
+            }
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("start step should validate catalog and request");
+    let first: Value = serde_json::from_str(&first_json).expect("first step should be json");
+
+    let terminal_json = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        first.to_string(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_018f0000-0000-7000-8000-000000000000",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("continue step should accept tool result");
+    let terminal: Value =
+        serde_json::from_str(&terminal_json).expect("terminal step should be json");
+
+    let trace = json!({
+        "protocol_version": "agent.v1",
+        "runtime_version": "0.1.0",
+        "run_id": "run_018f0000-0000-7000-8000-000000000123",
+        "agent_id": "execution_review",
+        "agent_version": "0.1.0",
+        "started_at": "2026-06-28T09:12:31Z",
+        "finished_at": "2026-06-28T09:12:32Z",
+        "input": {"tool_call": {"name": "propose_fake", "input": {"value": 7}}},
+        "output": terminal["output"].clone(),
+        "events": [
+            {
+                "kind": "run_started",
+                "occurred_at": "2026-06-28T09:12:31Z",
+                "payload": {"agent_id": "execution_review"}
+            },
+            {
+                "kind": "agent_runtime_step",
+                "occurred_at": "2026-06-28T09:12:31Z",
+                "payload": first["trace_event"].clone()
+            },
+            {
+                "kind": "agent_runtime_step",
+                "occurred_at": "2026-06-28T09:12:32Z",
+                "payload": terminal["trace_event"].clone()
+            }
+        ]
+    });
+
+    let normalized = agent_runtime_validate_trace(trace.to_string())
+        .expect("native step trace events should satisfy AgentTrace contract");
+    let normalized: Value = serde_json::from_str(&normalized).expect("trace should be json");
+    assert_eq!(
+        normalized["events"][1]["payload"]["status"],
+        "tool_call_requested"
+    );
+    assert_eq!(
+        normalized["events"][1]["payload"]["run_state"]["terminal_reason"],
+        Value::Null
+    );
+    assert_eq!(normalized["events"][2]["payload"]["status"], "completed");
+    assert_eq!(
+        normalized["events"][2]["payload"]["run_state"]["terminal_reason"],
+        "done"
+    );
 }
 
 #[test]
