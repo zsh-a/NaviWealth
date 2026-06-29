@@ -296,6 +296,7 @@ pub fn agent_runtime_continue_run_step(
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
     require_previous_tool_call_catalog_tool(&catalog, &agent.id, &tool_call)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
+    require_continuation_next_step_index(&previous_step)?;
     let mut tool_results = continuation_tool_results(&previous_step)?;
     let tool_terminal_status = tool_response_terminal_status(&tool_response);
     if tool_terminal_status != Some("closed_early") {
@@ -407,6 +408,28 @@ fn require_matching_tool_response_id(tool_call: &Value, tool_response: &Value) -
         ),
         None => anyhow::bail!("tool response id must be a string when present"),
     }
+}
+
+fn require_continuation_next_step_index(previous_step: &Value) -> Result<()> {
+    let Some(continuation) = previous_step.get("continuation") else {
+        return Ok(());
+    };
+    let Some(next_step_index) = continuation.get("next_step_index") else {
+        return Ok(());
+    };
+    let Some(previous_step_index) = previous_step.get("step_index").and_then(Value::as_u64) else {
+        return Ok(());
+    };
+    let next_step_index = next_step_index.as_u64().ok_or_else(|| {
+        anyhow::anyhow!("continuation.next_step_index must be a non-negative integer")
+    })?;
+    let expected = previous_step_index + 1;
+    if next_step_index != expected {
+        anyhow::bail!(
+            "continuation.next_step_index {next_step_index} must equal previous step_index + 1 ({expected})"
+        );
+    }
+    Ok(())
 }
 
 fn tool_response_terminal_status(tool_response: &Value) -> Option<&'static str> {
