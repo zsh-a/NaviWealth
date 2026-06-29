@@ -112,7 +112,8 @@ class AgentRuntimeTraceRecorder {
       routingReason: routingReason,
       totalDurationMs: 0,
     );
-    final nativeRunState = _nativeRunState(step);
+    final nativeTraceEvent = _nativeTraceEvent(step, stepRun);
+    final nativeRunState = _nativeRunState(step, stepRun);
     final builder = AiTraceBuilder.fromSeed(seed, capturePayloads: false)
       ..addTurnAttributes(<String, Object?>{
         'runtime': 'frb_agent_runtime',
@@ -122,6 +123,11 @@ class AgentRuntimeTraceRecorder {
         'dispatched_tool_count': stepRun.dispatchedToolCount,
         'budget_exhausted': stepRun.budgetExhausted,
         'native_trace_event_count': stepRun.nativeTraceEvents.length,
+        'native_trace_event_kind': ?_string(nativeTraceEvent?['kind']),
+        'native_trace_event_status': ?_string(nativeTraceEvent?['status']),
+        'native_trace_event_tool_name': ?_string(
+          nativeTraceEvent?['tool_name'],
+        ),
         'native_step_index': ?_int(nativeRunState?['step_index']),
         'native_terminal_reason': ?_string(nativeRunState?['terminal_reason']),
         'native_remaining_tool_count': ?_int(
@@ -194,7 +200,9 @@ TerminalReason _terminalReason(
   AgentRuntimeNativeStepRunResult stepRun,
 ) {
   if (stepRun.budgetExhausted) return TerminalReason.closedEarly;
-  final nativeReason = _string(_nativeRunState(step)?['terminal_reason']);
+  final nativeReason = _string(
+    _nativeRunState(step, stepRun)?['terminal_reason'],
+  );
   if (nativeReason != null) {
     return TerminalReasonWire.parse(nativeReason);
   }
@@ -229,8 +237,21 @@ Map<String, Object?>? _object(Object? value) {
   return null;
 }
 
-Map<String, Object?>? _nativeRunState(Map<String, Object?> step) {
-  return _object(_object(step['trace_event'])?['run_state']) ??
+Map<String, Object?>? _nativeTraceEvent(
+  Map<String, Object?> step,
+  AgentRuntimeNativeStepRunResult stepRun,
+) {
+  return _object(step['trace_event']) ??
+      (stepRun.nativeTraceEvents.isEmpty
+          ? null
+          : stepRun.nativeTraceEvents.last);
+}
+
+Map<String, Object?>? _nativeRunState(
+  Map<String, Object?> step,
+  AgentRuntimeNativeStepRunResult stepRun,
+) {
+  return _object(_nativeTraceEvent(step, stepRun)?['run_state']) ??
       _object(step['run_state']);
 }
 

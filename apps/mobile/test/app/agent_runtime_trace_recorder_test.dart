@@ -113,6 +113,8 @@ void main() {
             'status': 'failed',
             'trace_event': <String, Object?>{
               'kind': 'agent_runtime_step',
+              'status': 'failed',
+              'tool_name': 'read_task',
               'run_state': <String, Object?>{
                 'status': 'failed',
                 'step_index': 2,
@@ -138,6 +140,18 @@ void main() {
       expect(
         trace.spans.first.attributes,
         containsPair('native_terminal_reason', 'stream_error'),
+      );
+      expect(
+        trace.spans.first.attributes,
+        containsPair('native_trace_event_kind', 'agent_runtime_step'),
+      );
+      expect(
+        trace.spans.first.attributes,
+        containsPair('native_trace_event_status', 'failed'),
+      );
+      expect(
+        trace.spans.first.attributes,
+        containsPair('native_trace_event_tool_name', 'read_task'),
       );
     },
   );
@@ -168,7 +182,12 @@ void main() {
         },
         dispatchedToolCount: 1,
         nativeTraceEvents: <Map<String, Object?>>[
-          <String, Object?>{'kind': 'agent_runtime_step', 'step_index': 3},
+          <String, Object?>{
+            'kind': 'agent_runtime_step',
+            'status': 'completed',
+            'step_index': 3,
+            'tool_name': 'list_due_routines',
+          },
         ],
         steps: <Map<String, Object?>>[
           <String, Object?>{
@@ -211,6 +230,14 @@ void main() {
     expect(
       trace.spans.first.attributes,
       containsPair('native_trace_event_count', 1),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('native_trace_event_status', 'completed'),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('native_trace_event_tool_name', 'list_due_routines'),
     );
     expect(
       trace.spans.first.attributes,
