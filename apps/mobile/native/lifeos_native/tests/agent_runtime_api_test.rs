@@ -381,6 +381,29 @@ fn start_run_step_requests_catalog_tool_call() {
 }
 
 #[test]
+fn start_run_step_rejects_empty_tool_call_name() {
+    let err = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {
+            "tool_call": {
+              "name": "",
+              "input": {"value": 7}
+            }
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("empty tool call name should fail");
+
+    assert!(err.to_string().contains("tool_call.name"));
+}
+
+#[test]
 fn start_run_step_seeds_native_tool_plan_continuation() {
     let step_json = agent_runtime_start_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
@@ -413,6 +436,28 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
     assert_eq!(step["run_state"]["remaining_tool_count"], 1);
     assert_eq!(step["run_state"]["tool_result_count"], 0);
     assert!(step["run_state"]["terminal_reason"].is_null());
+}
+
+#[test]
+fn start_run_step_rejects_non_object_tool_plan_item() {
+    let err = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {
+            "tool_plan": [
+              "bad"
+            ]
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("non-object tool plan item should fail");
+
+    assert!(err.to_string().contains("tool_plan[0]"));
 }
 
 #[test]
@@ -688,6 +733,42 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
     .expect_err("invalid continuation tool_plan should fail");
 
     assert!(err.to_string().contains("continuation.tool_plan"));
+}
+
+#[test]
+fn continue_run_step_rejects_missing_next_tool_plan_name() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+      "protocol_version": "agent.v1",
+      "run_id": "run_018f0000-0000-7000-8000-000000000000",
+      "agent_id": "execution_review",
+      "agent_version": "1.0.0",
+      "status": "tool_call_requested",
+      "tool_call": {
+        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+        "name": "propose_fake",
+        "input": {"value": 1}
+      },
+      "continuation": {
+        "tool_plan": [
+          {"input": {"value": 2}}
+        ],
+        "tool_results": []
+      }
+    }"#
+        .to_owned(),
+        r#"{
+      "jsonrpc": "2.0",
+      "id": "tool_018f0000-0000-7000-8000-000000000000",
+      "result": {"accepted": true, "value": 1}
+    }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("missing next tool plan name should fail");
+
+    assert!(err.to_string().contains("continuation.tool_plan[0].name"));
 }
 
 #[test]

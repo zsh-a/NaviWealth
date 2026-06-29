@@ -720,7 +720,7 @@ fn parse_initial_tool_request(input: &Value) -> Result<Option<ToolRequestState>>
         if plan.is_empty() {
             return Ok(None);
         }
-        let first = serde_json::from_value(plan[0].clone())?;
+        let first = parse_requested_tool_call(&plan[0], "tool_plan[0]")?;
         return Ok(Some(ToolRequestState {
             first,
             remaining: plan[1..].to_vec(),
@@ -734,7 +734,7 @@ fn parse_initial_tool_request(input: &Value) -> Result<Option<ToolRequestState>>
         return Ok(None);
     };
     Ok(Some(ToolRequestState {
-        first: serde_json::from_value(tool_call.clone())?,
+        first: parse_requested_tool_call(tool_call, "tool_call")?,
         remaining: Vec::new(),
         tool_results: Vec::new(),
         llm_response: input.get("llm_response").cloned(),
@@ -759,7 +759,7 @@ fn next_tool_request_from_continuation(
     if plan.is_empty() {
         return Ok(None);
     }
-    let first = serde_json::from_value(plan[0].clone())?;
+    let first = parse_requested_tool_call(&plan[0], "continuation.tool_plan[0]")?;
     let step_index = continuation
         .get("next_step_index")
         .and_then(Value::as_u64)
@@ -777,6 +777,22 @@ fn next_tool_request_from_continuation(
         llm_response: continuation.get("llm_response").cloned(),
         step_index,
     }))
+}
+
+fn parse_requested_tool_call(value: &Value, label: &str) -> Result<RequestedToolCall> {
+    let object = value
+        .as_object()
+        .ok_or_else(|| anyhow::anyhow!("{label} must be an object"))?;
+    let name = object
+        .get("name")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("{label}.name is required"))?
+        .to_owned();
+    Ok(RequestedToolCall {
+        name,
+        input: object.get("input").cloned().unwrap_or(Value::Null),
+    })
 }
 
 fn continuation_tool_results(
