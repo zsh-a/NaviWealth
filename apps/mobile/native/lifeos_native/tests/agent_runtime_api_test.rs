@@ -119,6 +119,16 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
     .expect_err("mismatched run_id should fail native validation")
     .to_string();
     assert!(mismatched_run_id.contains("run_id"));
+
+    let mismatched_agent_id = agent_runtime_validate_trace(
+        include_str!(
+            "../../../../../fixtures/agent-runtime/trace.invalid.mismatched-step-agent-id.json"
+        )
+        .to_owned(),
+    )
+    .expect_err("mismatched agent_id should fail native validation")
+    .to_string();
+    assert!(mismatched_agent_id.contains("agent_id"));
 }
 
 #[test]
