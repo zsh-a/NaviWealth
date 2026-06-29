@@ -116,6 +116,75 @@ void main() {
     },
   );
 
+  test(
+    'AgentRuntimeProfileTurnRunner rejects mismatched native turn protocol',
+    () async {
+      final native = _FakeNativeBridge(nativeTurnProtocolVersion: 'agent.v0');
+      final runner = _runner(native: native);
+
+      await expectLater(
+        runner.run(
+          agentId: 'execution_review',
+          messages: const <Map<String, Object?>>[
+            <String, Object?>{'role': 'user', 'content': 'Summarize today'},
+          ],
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains('protocol_version'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'AgentRuntimeProfileTurnRunner rejects malformed native turn fields',
+    () {
+      Future<void> expectMalformedField({
+        required Object? llmResponse,
+        required Object? step,
+        required String expectedMessage,
+      }) async {
+        final native = _FakeNativeBridge(
+          nativeTurnLlmResponse: llmResponse,
+          nativeTurnStep: step,
+        );
+        final runner = _runner(native: native);
+
+        await expectLater(
+          runner.run(
+            agentId: 'execution_review',
+            messages: const <Map<String, Object?>>[
+              <String, Object?>{'role': 'user', 'content': 'Summarize today'},
+            ],
+          ),
+          throwsA(
+            isA<FormatException>().having(
+              (error) => error.message,
+              'message',
+              contains(expectedMessage),
+            ),
+          ),
+        );
+      }
+
+      return expectMalformedField(
+        llmResponse: 'bad',
+        step: const <String, Object?>{'status': 'completed'},
+        expectedMessage: 'field llm_response is not object',
+      ).then((_) {
+        return expectMalformedField(
+          llmResponse: const <String, Object?>{'content': 'ok'},
+          step: 'bad',
+          expectedMessage: 'field step is not object',
+        );
+      });
+    },
+  );
+
   test('provider returns null when no usable profile bridge exists', () {
     final container = ProviderContainer(
       overrides: [agentRuntimeLlmBridgeProvider.overrideWithValue(null)],
@@ -198,9 +267,17 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
       'finish_reason': 'stop',
       'metadata': <String, Object?>{'profile': true},
     },
-  }) : _llmResponse = llmResponse;
+    this.nativeTurnProtocolVersion = kAgentRuntimeProtocolVersion,
+    Object? nativeTurnLlmResponse,
+    Object? nativeTurnStep,
+  }) : _llmResponse = llmResponse,
+       _nativeTurnLlmResponse = nativeTurnLlmResponse,
+       _nativeTurnStep = nativeTurnStep;
 
   final Map<String, Object?> _llmResponse;
+  final String nativeTurnProtocolVersion;
+  final Object? _nativeTurnLlmResponse;
+  final Object? _nativeTurnStep;
   final llmRequests = <Map<String, Object?>>[];
   final turnRequests = <_TurnRequest>[];
   final startRequests = <_StartRequest>[];
@@ -254,9 +331,9 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
       _TurnRequest(catalog, llmRequest, agentId, runMetadata, initialStep),
     );
     return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'llm_response': _llmResponse,
-      'step': initialStep,
+      'protocol_version': nativeTurnProtocolVersion,
+      'llm_response': _nativeTurnLlmResponse ?? _llmResponse,
+      'step': _nativeTurnStep ?? initialStep,
     };
   }
 

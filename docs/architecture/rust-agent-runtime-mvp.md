@@ -134,7 +134,9 @@ Implemented:
 - Dart-side `AgentRuntimeProfileTurnRunner` and
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB
   LLM completion with the bounded native FRB step/tool loop and return both the
-  LLM response and terminal native step
+  LLM response and terminal native step; the runner rejects mismatched native
+  turn protocol versions and malformed `llm_response` / `step` objects before
+  dispatching Dart tools
 - FRB-facing native profile-turn step via
   `agentRuntimeStartProfileTurnStep`, which completes the active-profile LLM
   request in Rust, normalizes `null` run metadata to an object, rejects

@@ -57,8 +57,12 @@ class AgentRuntimeProfileTurnRunner {
       agentId: agentId,
       runMetadata: metadata,
     );
-    final llmResponse = _expectObject(nativeTurn['llm_response']);
-    final initialStep = _expectObject(nativeTurn['step']);
+    _expectProtocolVersion(nativeTurn);
+    final llmResponse = _expectObject(
+      nativeTurn['llm_response'],
+      'llm_response',
+    );
+    final initialStep = _expectObject(nativeTurn['step'], 'step');
     final stepRun = await _stepRunner.continueUntilTerminalWithTrace(
       catalog: _catalog.toJson(),
       initialStep: initialStep,
@@ -73,12 +77,22 @@ class AgentRuntimeProfileTurnRunner {
   }
 }
 
-Map<String, Object?> _expectObject(Object? value) {
+void _expectProtocolVersion(Map<String, Object?> nativeTurn) {
+  final version = nativeTurn['protocol_version'];
+  if (version != kAgentRuntimeProtocolVersion) {
+    throw FormatException(
+      'agent runtime native turn protocol_version must be $kAgentRuntimeProtocolVersion',
+      version,
+    );
+  }
+}
+
+Map<String, Object?> _expectObject(Object? value, String field) {
   if (value is Map<String, Object?>) return value;
   if (value is Map) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
-  throw const FormatException('agent runtime native turn field is not object');
+  throw FormatException('agent runtime native turn field $field is not object');
 }
 
 class AgentRuntimeProfileTurnResult {
