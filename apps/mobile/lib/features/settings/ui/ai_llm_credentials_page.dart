@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../app/agent_runtime_runner.dart';
 import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
@@ -46,7 +47,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   String? _editingId;
   bool _saving = false;
   bool _probing = false;
+  bool _runtimeChecking = false;
   LlmProbeResult? _probeResult;
+  AgentRuntimeProfileTurnResult? _runtimeResult;
+  Object? _runtimeError;
 
   @override
   void dispose() {
@@ -170,6 +174,51 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     _toast(ToastKind.success, l10n.aiLlmRemoved);
   }
 
+  Future<void> _checkRuntime() async {
+    final l10n = AppLocalizations.of(context);
+    final runner = ref.read(agentRuntimeProfileTurnRunnerProvider);
+    if (runner == null) {
+      _toast(ToastKind.warning, l10n.aiLlmRuntimeCheckNoProfile);
+      return;
+    }
+
+    setState(() {
+      _runtimeChecking = true;
+      _runtimeResult = null;
+      _runtimeError = null;
+    });
+    try {
+      final result = await runner.run(
+        agentId: 'settings_llm_runtime_check',
+        messages: <Map<String, Object?>>[
+          <String, Object?>{
+            'role': 'user',
+            'content': l10n.aiLlmRuntimeCheckPrompt,
+          },
+        ],
+        metadata: const <String, Object?>{
+          'surface': 'settings_ai_llm',
+          'purpose': 'runtime_check',
+        },
+        maxToolSteps: 0,
+      );
+      if (!mounted) return;
+      setState(() {
+        _runtimeChecking = false;
+        _runtimeResult = result;
+      });
+      final status = result.step['status']?.toString() ?? 'unknown';
+      _toast(ToastKind.success, l10n.aiLlmRuntimeCheckSucceeded(status));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _runtimeChecking = false;
+        _runtimeError = error;
+      });
+      _toast(ToastKind.error, l10n.aiLlmRuntimeCheckFailed('$error'));
+    }
+  }
+
   void _toast(ToastKind kind, String msg) =>
       AppMessenger.show(context, kind, msg);
 
@@ -178,6 +227,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final l10n = AppLocalizations.of(context);
     final supported = ref.watch(deviceLlmPlatformSupportedProvider);
     final asyncCreds = ref.watch(llmCredentialsProvider);
+    final runtimeRunner = ref.watch(agentRuntimeProfileTurnRunnerProvider);
     final creds = asyncCreds.asData?.value ?? const LlmCredentials();
     final profiles = creds.profiles;
     final editing = _editingId != null;
@@ -210,6 +260,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                 asyncCreds: asyncCreds,
                 profiles: profiles,
                 existing: existing,
+                runtimeRunner: runtimeRunner,
                 includeEditorActions: false,
               ),
             )
@@ -220,6 +271,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                 asyncCreds: asyncCreds,
                 profiles: profiles,
                 existing: null,
+                runtimeRunner: runtimeRunner,
               ),
             ),
     );
@@ -230,6 +282,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     required AsyncValue<LlmCredentials?> asyncCreds,
     required List<LlmProfile> profiles,
     required LlmProfile? existing,
+    required AgentRuntimeProfileTurnRunner? runtimeRunner,
     bool includeEditorActions = true,
   }) {
     final l10n = AppLocalizations.of(context);
@@ -263,8 +316,73 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         ),
       ],
       const SizedBox(height: AppSpacing.s16),
+      _runtimeCheckCard(context, runtimeRunner),
+      const SizedBox(height: AppSpacing.s16),
       _statusLine(context, asyncCreds, l10n),
     ];
+  }
+
+  Widget _runtimeCheckCard(
+    BuildContext context,
+    AgentRuntimeProfileTurnRunner? runtimeRunner,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final available = runtimeRunner != null;
+    final status = _runtimeResult?.step['status']?.toString();
+    final response = _runtimeResult?.llmResponse['content']?.toString();
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s14,
+        AppSpacing.s16,
+        AppSpacing.s16,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.aiLlmRuntimeCheckTitle, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s6),
+          Text(
+            available
+                ? l10n.aiLlmRuntimeCheckReady
+                : l10n.aiLlmRuntimeCheckNoProfile,
+            style: context.captionStyle,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: !available || _runtimeChecking ? null : _checkRuntime,
+            child: Text(
+              _runtimeChecking
+                  ? l10n.aiLlmRuntimeCheckRunning
+                  : l10n.aiLlmRuntimeCheckAction,
+            ),
+          ),
+          if (status != null || _runtimeError != null) ...[
+            const SizedBox(height: AppSpacing.s10),
+            Text(
+              status != null
+                  ? l10n.aiLlmRuntimeCheckStatus(status)
+                  : l10n.aiLlmRuntimeCheckFailed('$_runtimeError'),
+              style: context.captionStyle.copyWith(
+                color: status != null
+                    ? context.theme.colors.primary
+                    : context.theme.colors.destructive,
+              ),
+            ),
+          ],
+          if (response != null && response.trim().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s6),
+            Text(
+              response.trim(),
+              style: context.bodyCaptionStyle,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _profileCard(

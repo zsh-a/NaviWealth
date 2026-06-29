@@ -5215,6 +5215,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiModelsSubtitle => '下载与管理本地 EmbeddingGemma 模型';
 
   @override
+  String get aiLlmRuntimeCheckTitle => 'Agent Runtime';
+
+  @override
+  String get aiLlmRuntimeCheckReady =>
+      '通过 FRB 运行一次短的 active profile 回合，然后完成 native runtime step。';
+
+  @override
+  String get aiLlmRuntimeCheckNoProfile =>
+      '请先保存并启用一个 provider profile，再检查 agent runtime。';
+
+  @override
+  String get aiLlmRuntimeCheckAction => '检查 runtime';
+
+  @override
+  String get aiLlmRuntimeCheckRunning => '检查中…';
+
+  @override
+  String get aiLlmRuntimeCheckPrompt =>
+      '请用一句简短的话确认 NaviWealth agent runtime 可以访问。';
+
+  @override
+  String aiLlmRuntimeCheckSucceeded(String status) {
+    return 'Agent runtime step 已完成：$status';
+  }
+
+  @override
+  String aiLlmRuntimeCheckFailed(String error) {
+    return 'Agent runtime 检查失败：$error';
+  }
+
+  @override
+  String aiLlmRuntimeCheckStatus(String status) {
+    return 'Native step：$status';
+  }
+
+  @override
   String get settingsBadgeAuto => '自动';
 
   @override

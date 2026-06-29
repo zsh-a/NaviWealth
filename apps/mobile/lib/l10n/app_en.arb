@@ -2916,6 +2916,33 @@
   "@settingsAiModelsTitle": { "description": "Settings tile and page title for local AI model management" },
   "settingsAiModelsSubtitle": "Download and manage the local EmbeddingGemma model",
   "@settingsAiModelsSubtitle": { "description": "Settings tile subtitle for local AI model management" },
+  "aiLlmRuntimeCheckTitle": "Agent runtime",
+  "@aiLlmRuntimeCheckTitle": { "description": "Title for the LLM settings card that checks the FRB-backed agent runtime path" },
+  "aiLlmRuntimeCheckReady": "Runs a short active-profile turn through FRB, then completes a native runtime step.",
+  "@aiLlmRuntimeCheckReady": { "description": "Description for the FRB-backed runtime check when an active LLM profile is available" },
+  "aiLlmRuntimeCheckNoProfile": "Save and activate a provider profile before checking the agent runtime.",
+  "@aiLlmRuntimeCheckNoProfile": { "description": "Runtime check unavailable message shown when no usable active LLM profile exists" },
+  "aiLlmRuntimeCheckAction": "Check runtime",
+  "@aiLlmRuntimeCheckAction": { "description": "Button label that starts an FRB-backed agent runtime check" },
+  "aiLlmRuntimeCheckRunning": "Checking…",
+  "@aiLlmRuntimeCheckRunning": { "description": "Button label while the FRB-backed agent runtime check is running" },
+  "aiLlmRuntimeCheckPrompt": "Reply with one short sentence confirming the NaviWealth agent runtime is reachable.",
+  "@aiLlmRuntimeCheckPrompt": { "description": "Short prompt sent through the active LLM profile for the agent runtime check" },
+  "aiLlmRuntimeCheckSucceeded": "Agent runtime step finished: {status}",
+  "@aiLlmRuntimeCheckSucceeded": {
+    "description": "Toast shown after the FRB-backed agent runtime check completes.",
+    "placeholders": { "status": { "type": "String", "example": "completed" } }
+  },
+  "aiLlmRuntimeCheckFailed": "Agent runtime check failed: {error}",
+  "@aiLlmRuntimeCheckFailed": {
+    "description": "Status text and toast shown when the FRB-backed agent runtime check fails.",
+    "placeholders": { "error": { "type": "String", "example": "network timeout" } }
+  },
+  "aiLlmRuntimeCheckStatus": "Native step: {status}",
+  "@aiLlmRuntimeCheckStatus": {
+    "description": "Inline status shown after the FRB-backed native runtime step completes.",
+    "placeholders": { "status": { "type": "String", "example": "completed" } }
+  },
   "settingsBadgeAuto": "Auto",
   "@settingsBadgeAuto": { "description": "Compact trailing pill on a settings link row indicating the value is auto-tuned by another preference (e.g. risk appetite). Renders uppercase." },
   "settingsBadgeCustom": "Custom",

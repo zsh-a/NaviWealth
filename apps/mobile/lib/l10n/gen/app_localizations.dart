@@ -9321,6 +9321,60 @@ abstract class AppLocalizations {
   /// **'Download and manage the local EmbeddingGemma model'**
   String get settingsAiModelsSubtitle;
 
+  /// Title for the LLM settings card that checks the FRB-backed agent runtime path
+  ///
+  /// In en, this message translates to:
+  /// **'Agent runtime'**
+  String get aiLlmRuntimeCheckTitle;
+
+  /// Description for the FRB-backed runtime check when an active LLM profile is available
+  ///
+  /// In en, this message translates to:
+  /// **'Runs a short active-profile turn through FRB, then completes a native runtime step.'**
+  String get aiLlmRuntimeCheckReady;
+
+  /// Runtime check unavailable message shown when no usable active LLM profile exists
+  ///
+  /// In en, this message translates to:
+  /// **'Save and activate a provider profile before checking the agent runtime.'**
+  String get aiLlmRuntimeCheckNoProfile;
+
+  /// Button label that starts an FRB-backed agent runtime check
+  ///
+  /// In en, this message translates to:
+  /// **'Check runtime'**
+  String get aiLlmRuntimeCheckAction;
+
+  /// Button label while the FRB-backed agent runtime check is running
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get aiLlmRuntimeCheckRunning;
+
+  /// Short prompt sent through the active LLM profile for the agent runtime check
+  ///
+  /// In en, this message translates to:
+  /// **'Reply with one short sentence confirming the NaviWealth agent runtime is reachable.'**
+  String get aiLlmRuntimeCheckPrompt;
+
+  /// Toast shown after the FRB-backed agent runtime check completes.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent runtime step finished: {status}'**
+  String aiLlmRuntimeCheckSucceeded(String status);
+
+  /// Status text and toast shown when the FRB-backed agent runtime check fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent runtime check failed: {error}'**
+  String aiLlmRuntimeCheckFailed(String error);
+
+  /// Inline status shown after the FRB-backed native runtime step completes.
+  ///
+  /// In en, this message translates to:
+  /// **'Native step: {status}'**
+  String aiLlmRuntimeCheckStatus(String status);
+
   /// Compact trailing pill on a settings link row indicating the value is auto-tuned by another preference (e.g. risk appetite). Renders uppercase.
   ///
   /// In en, this message translates to:
