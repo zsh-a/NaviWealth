@@ -14,6 +14,8 @@ import 'package:dio/dio.dart';
 import '../core/ai/contracts/contracts.dart';
 import '../core/ai/progress/long_task_progress.dart';
 import '../core/ai/runtime/ai_runtime.dart';
+import '../core/ai/runtime/device/tools/ask_user_tool.dart'
+    show kAskUserToolName;
 import '../features/ai_chat/data/ai_chat_api_client.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
@@ -318,6 +320,7 @@ class FrbChatRunner implements DeviceChatRunner {
 
       conversation.add(state.assistantMessage());
       final resultBlocks = <Map<String, Object?>>[];
+      var awaitingUser = false;
       for (final call in toolCalls) {
         if (cancelToken?.isCancelled == true) {
           yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
@@ -352,11 +355,18 @@ class FrbChatRunner implements DeviceChatRunner {
           output: result.output,
         );
         resultBlocks.add(result.toToolResultBlock());
+        if (call.name == kAskUserToolName && !result.isError) {
+          awaitingUser = true;
+        }
       }
       conversation.add(<String, Object?>{
         'role': 'user',
         'content': resultBlocks,
       });
+      if (awaitingUser) {
+        yield DoneEvent(stopReason: 'end_turn', rounds: roundsUsed);
+        return;
+      }
     }
 
     yield const ErrorEvent(

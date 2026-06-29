@@ -212,6 +212,57 @@ void main() {
     expect(secondMetadata['round'], 2);
   });
 
+  test('stops after ask_user tool result without another model round', () async {
+    final bridge = _FakeLlmBridge();
+    final streamBridge = _streamBridgeBatches(
+      bridge,
+      eventBatches: const <List<String>>[
+        <String>[
+          '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+          '{"kind":"tool_call_start","tool_call_id":"decision_1","tool_name":"ask_user","metadata":{"stream":true}}',
+          '{"kind":"tool_call_end","tool_call_id":"decision_1","tool_name":"ask_user","tool_input":{"question":"Pick one","options":[{"id":"a","label":"A"}]},"metadata":{"stream":true}}',
+          '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+        ],
+        <String>[
+          '{"kind":"delta","content":"should not run","metadata":{"stream":true}}',
+          '{"kind":"finished","response":{"content":"should not run","finish_reason":"stop"},"metadata":{"stream":true}}',
+        ],
+      ],
+    );
+    final runner = FrbChatRunner(
+      llmBridge: bridge,
+      streamBridge: streamBridge,
+      toolLineHandler: (line) async {
+        return jsonEncode(<String, Object?>{
+          'jsonrpc': '2.0',
+          'id': 'decision_1',
+          'result': <String, Object?>{
+            'type': 'decision_request',
+            'question': 'Pick one',
+            'options': <Object?>[
+              <String, Object?>{'id': 'a', 'label': 'A'},
+            ],
+          },
+        });
+      },
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Need a decision'),
+          ],
+        )
+        .toList();
+
+    expect(streamBridge.requests, hasLength(1));
+    expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
+    expect(events.whereType<TextEvent>(), isEmpty);
+    final done = events.last as DoneEvent;
+    expect(done.stopReason, 'end_turn');
+    expect(done.rounds, 1);
+  });
+
   test('maps FRB native stream error events into chat errors', () async {
     final runner = FrbChatRunner(
       llmBridge: _FakeLlmBridge(),
