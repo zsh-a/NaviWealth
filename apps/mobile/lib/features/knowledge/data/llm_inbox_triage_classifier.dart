@@ -23,9 +23,9 @@ import 'inbox_triage_repository.dart';
 /// triage() call end-to-end.
 const String _kLogTag = '[inbox-triage-llm]';
 
-/// Same gate [LlmCaptureClassifier] uses — proposals the model is less
-/// than 60% sure about are dropped (the heuristic is preferred over a
-/// shaky LLM guess).
+/// Same gate the capture classifier uses — proposals the model is less than
+/// 60% sure about are dropped (the heuristic is preferred over a shaky LLM
+/// guess).
 const double _kMinConfidence = 0.6;
 
 /// How many candidate decisions to show the model. The owner's decision

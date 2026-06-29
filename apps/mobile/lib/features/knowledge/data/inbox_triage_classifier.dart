@@ -52,9 +52,8 @@ class HeuristicInboxTriageClassifier implements InboxTriageClassifier {
     return proposals(note, decisions);
   }
 
-  /// Synchronous entry point — also used by [LlmInboxTriageClassifier]
-  /// as its fallback so the LLM path degrades to the exact same
-  /// heuristic output.
+  /// Synchronous entry point — also used by the FRB-backed classifier fallback
+  /// so provider failures degrade to the exact same heuristic output.
   static List<InboxProposal> proposals(
     KnowledgeNote note,
     List<KnowledgeDecision> decisions,

@@ -31,11 +31,11 @@ import 'device_tool.dart';
 import 'query_memory_tool.dart';
 
 /// Per-tool dispatch backstop. Most device tools are local Drift reads
-/// (sub-100ms), but a few are LLM-backed (e.g. `propose_capture` →
-/// `LlmCaptureClassifier`), and an extended-thinking model can legitimately
-/// take 30s+. Set high enough not to kill those mid-flight; it stays a
-/// safety net against a genuinely hung tool. The LLM-backed tools carry
-/// their own (shorter) request timeout + heuristic fallback inside.
+/// (sub-100ms), but a few can call FRB-backed LLM classifiers (for example
+/// `propose_capture`) and an extended-thinking model can legitimately take
+/// 30s+. Set high enough not to kill those mid-flight; it stays a safety net
+/// against a genuinely hung tool. LLM-backed tools carry their own request
+/// timeout + heuristic fallback inside.
 const Duration kPerToolTimeout = Duration(seconds: 60);
 
 /// Shell-only tools (cross-domain). Domain tool lists live under
