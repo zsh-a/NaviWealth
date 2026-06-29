@@ -572,15 +572,31 @@ Map<String, Object?> _toolBudgetExhaustedStep(
   Map<String, Object?> step,
   int maxToolSteps,
 ) {
+  final previousRunState = _objectOrNull(step['run_state']);
   return <String, Object?>{
     ...step,
     'status': 'failed',
+    'run_state': <String, Object?>{
+      ...?previousRunState,
+      'status': 'failed',
+      'step_index': _intOrNull(step['step_index']),
+      'remaining_tool_count': 0,
+      'tool_result_count': maxToolSteps,
+      'terminal_reason': 'closed_early',
+    },
     'error': <String, Object?>{
       'code': 'tool_call_budget_exhausted',
       'message': 'agent runtime tool-call budget exhausted',
       'max_tool_steps': maxToolSteps,
     },
   };
+}
+
+int? _intOrNull(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
 }
 
 Map<String, Object?> _decodeObject(String json) {

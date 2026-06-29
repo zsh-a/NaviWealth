@@ -424,6 +424,14 @@ void main() {
       expect(result.budgetExhausted, isTrue);
       expect(result.steps, hasLength(2));
       expect(result.toolResponses, isEmpty);
+      expect(
+        result.terminalStep['run_state'],
+        containsPair('terminal_reason', 'closed_early'),
+      );
+      expect(
+        result.terminalStep['run_state'],
+        containsPair('tool_result_count', 0),
+      );
     },
   );
 
