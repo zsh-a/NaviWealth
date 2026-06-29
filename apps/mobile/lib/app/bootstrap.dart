@@ -36,6 +36,7 @@ import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/agents/recovery_alert_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
+import '../features/knowledge/agents/assumption_agent.dart';
 import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import '../features/knowledge/agents/review_agent.dart';
@@ -233,6 +234,27 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
                     stepRun: stepRun,
                     domain: 'knowledge',
                     surface: 'knowledge_review',
+                  );
+            },
+          ),
+        );
+      }),
+      // Knowledge Assumption Review uses the same embedded FRB tool-plan
+      // pattern for `list_open_assumptions`; Dart keeps the stale-threshold
+      // policy and memory write.
+      knowledge_agent_providers.assumptionAgentProvider.overrideWith((ref) {
+        return AssumptionAgent(
+          assumptionReader: FrbAssumptionReviewReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kKnowledgeAssumptionAgentId,
+                    stepRun: stepRun,
+                    domain: 'knowledge',
+                    surface: 'knowledge_assumption',
                   );
             },
           ),

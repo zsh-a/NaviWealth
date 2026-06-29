@@ -133,9 +133,10 @@ Implemented:
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
 - Production tool-plan trace persistence: HealthOS `RecoveryAlertAgent` and
-  KnowledgeOS `ReviewAgent` / `RoutineDueAgent` now record successful FRB
-  native step-only runs through `AgentRuntimeTraceRecorder.recordStepRun`, so
-  their device-tool loops appear in the same local `AiTraceStore`
+  KnowledgeOS `AssumptionAgent` / `ReviewAgent` / `RoutineDueAgent` now record
+  successful FRB native step-only runs through
+  `AgentRuntimeTraceRecorder.recordStepRun`, so their device-tool loops appear
+  in the same local `AiTraceStore`
 - Production profile-turn trace persistence: HealthOS `FrbBriefingSynthesizer`
   records successful Morning Briefing FRB profile turns through
   `AgentRuntimeTraceRecorder.recordProfileTurn`
@@ -164,6 +165,10 @@ Implemented:
   requests `list_due_reviews` and `list_open_assumptions` through a two-step
   FRB `tool_plan`, then keeps stale-assumption filtering and memory writing in
   Dart with a repository fallback
+- Additional KnowledgeOS production agent migration: `AssumptionAgent` now
+  reads open assumptions via `FrbAssumptionReviewReader`, which requests
+  `list_open_assumptions` through the FRB `tool_plan` loop while keeping the
+  90-day stale policy and memory writing in Dart
 
 Deferred:
 
