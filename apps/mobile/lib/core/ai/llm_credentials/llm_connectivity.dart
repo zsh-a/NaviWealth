@@ -62,8 +62,17 @@ class LlmProbeResult {
       status == LlmProbeStatus.notFound;
 }
 
-class LlmConnectivityProbe {
-  LlmConnectivityProbe({Dio Function()? dioFactory})
+abstract class LlmConnectivityProbe {
+  const LlmConnectivityProbe();
+
+  Future<LlmProbeResult> probe(
+    LlmProfile profile, {
+    Duration timeout = const Duration(seconds: 20),
+  });
+}
+
+class DirectLlmConnectivityProbe implements LlmConnectivityProbe {
+  DirectLlmConnectivityProbe({Dio Function()? dioFactory})
     : _dioFactory = dioFactory ?? _defaultDio;
 
   final Dio Function() _dioFactory;
@@ -76,6 +85,7 @@ class LlmConnectivityProbe {
   );
 
   /// Send a 1-token "ping" and classify the outcome.
+  @override
   Future<LlmProbeResult> probe(
     LlmProfile profile, {
     Duration timeout = const Duration(seconds: 20),

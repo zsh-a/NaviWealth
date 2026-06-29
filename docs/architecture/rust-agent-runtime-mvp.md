@@ -145,6 +145,9 @@ Implemented:
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status
+- Settings LLM profile connectivity probing is FRB-backed through
+  `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
+  native `agent-llm` provider path as production completions
 - A guarded confirmed-proposal surface on that runtime check: if the terminal
   FRB step carries a ready proposal, Settings shows the summary/warnings and
   applies it through `AgentRuntimeProposalBridge` only after explicit user

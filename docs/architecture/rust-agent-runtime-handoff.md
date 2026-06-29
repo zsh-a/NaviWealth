@@ -173,6 +173,9 @@ Current bridge capabilities:
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
   display the terminal native step status.
+- Provide a FRB-backed Settings connectivity probe through
+  `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
+  native `agent-llm` provider path as production completions.
 - Provide a guarded confirmed-proposal surface on that runtime check: if the
   terminal FRB step carries a ready proposal, Settings shows the summary and
   warnings, then applies through `AgentRuntimeProposalBridge` only after

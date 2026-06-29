@@ -26,7 +26,7 @@ final llmCredentialStoreProvider = Provider<LlmCredentialStore>((ref) {
 /// One-tap connectivity probe. Stateless; the settings page
 /// passes the (possibly unsaved) profile being edited.
 final llmConnectivityProbeProvider = Provider<LlmConnectivityProbe>((ref) {
-  return LlmConnectivityProbe();
+  return DirectLlmConnectivityProbe();
 });
 
 /// Whether this build can host the device LLM runtime at all.

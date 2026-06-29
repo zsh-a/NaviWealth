@@ -60,7 +60,7 @@ void main() {
   group('LlmConnectivityProbe', () {
     test('keyless profile short-circuits without a network call', () async {
       // dioFactory throws if invoked → proves no request is attempted.
-      final probe = LlmConnectivityProbe(
+      final probe = DirectLlmConnectivityProbe(
         dioFactory: () => throw StateError('should not hit the network'),
       );
       const profile = LlmProfile(
@@ -85,7 +85,7 @@ void main() {
           ],
         }),
       );
-      final probe = LlmConnectivityProbe(
+      final probe = DirectLlmConnectivityProbe(
         dioFactory: () => Dio()..httpClientAdapter = adapter,
       );
       const profile = LlmProfile(

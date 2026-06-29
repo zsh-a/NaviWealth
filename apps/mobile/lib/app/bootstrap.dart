@@ -49,6 +49,7 @@ import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
 import 'agent_runtime_trace_recorder.dart';
 import 'domain_composition.dart';
+import 'frb_llm_connectivity_probe.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
 
@@ -106,6 +107,11 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           if (!effectiveConfig.bypassAuth) ref.watch(authRouteGuardProvider),
           ref.watch(domainOptInRouteGuardProvider),
         ],
+      ),
+      llm_credentials.llmConnectivityProbeProvider.overrideWith(
+        (ref) => FrbLlmConnectivityProbe(
+          bridge: ref.watch(agentRuntimeNativeBridgeProvider),
+        ),
       ),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
