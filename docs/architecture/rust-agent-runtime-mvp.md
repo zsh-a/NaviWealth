@@ -1322,7 +1322,13 @@ The Flutter runner now provides the former parity gap:
   `trace_event` metadata as `native_trace_event_kind`,
   `native_trace_event_status`, and `native_trace_event_tool_name`. Dart-created
   budget-exhausted terminal steps synthesize the same `trace_event.run_state`
-  shape so closed-early traces follow the FRB contract.
+  shape so closed-early traces follow the FRB contract. Tool spans also match
+  native trace events by `step_index` and surface per-step
+  `trace_event.run_state` as `native_trace_event_step_index`,
+  `native_trace_event_terminal_reason`,
+  `native_trace_event_remaining_tool_count`, and
+  `native_trace_event_tool_result_count`, so Rust-owned step state is visible
+  both at the turn and individual tool-span levels.
 
 The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been
 removed; the remaining `DeviceLlmClient` surface is limited to low-level
