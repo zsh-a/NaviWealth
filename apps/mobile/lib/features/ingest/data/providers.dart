@@ -148,14 +148,13 @@ class IngestController {
     return result;
   }
 
-  /// §5.10.10 / S5b-vision — the Vision branch. Parse (③) runs
-  /// device-direct against the user's own key ([DeviceVisionIngestClient]);
-  /// ④⑤⑥ stay on-device (same `planFromParsed` the CSV path uses)
+  /// §5.10.10 / S5b-vision — the Vision branch. Parse (③) runs through
+  /// the FRB-backed native provider path ([FrbVisionIngestClient]) using the
+  /// user's own key; ④⑤⑥ stay on-device (same `planFromParsed` the CSV path uses)
   /// so dedup runs against the Drift truth, and a full [AiTrace] is
-  /// appended because this *is* a real model round-trip. Device-only AI
-  /// is account-less, so there is no login gate — when no on-device
-  /// runtime is configured the client surfaces actionable "configure a
-  /// key" guidance instead.
+  /// appended because this *is* a real model round-trip. When no FRB LLM
+  /// profile is configured the client surfaces actionable "configure a key"
+  /// guidance instead.
   Future<IngestResult> _ingestProviderVision(IngestSource source) async {
     final store = _ref.read(ingestDraftStoreProvider);
     if (store == null) {

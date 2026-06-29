@@ -1,12 +1,13 @@
 /// §5.10.10 / S5b-vision — Vision ingest client surface.
 ///
 /// The former Vision relay (`POST /ingest/parse`) was removed together
-/// with the backend AI surface. Vision parsing now runs
-/// device-direct ([DeviceVisionIngestClient]); when no on-device
-/// runtime exists the [VisionIngestClient] slot is the
+/// with the backend AI surface. Production Vision parsing now runs through the
+/// FRB-backed native provider path (`FrbVisionIngestClient`); when no on-device
+/// FRB LLM profile exists the [VisionIngestClient] slot is the
 /// [UnavailableVisionIngestClient] stub, which fails with a clear
 /// "configure a key" message instead of hitting a dead endpoint. The
-/// pure wire mappers below are retained — the device path reuses them.
+/// pure wire mappers below are retained — the FRB and legacy direct-Dart
+/// compatibility paths reuse them.
 library;
 
 import '../domain/ingest_models.dart';
