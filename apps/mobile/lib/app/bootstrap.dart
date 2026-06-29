@@ -38,6 +38,7 @@ import '../features/health/agents/recovery_alert_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
 import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
+import '../features/knowledge/agents/review_agent.dart';
 import '../features/knowledge/agents/routine_due_agent.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_native_bridge.dart';
@@ -210,6 +211,28 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
                     stepRun: stepRun,
                     domain: 'health',
                     surface: 'health_recovery_alert',
+                  );
+            },
+          ),
+        );
+      }),
+      // Knowledge Weekly Review reads two KnowledgeOS datasets. Keep its
+      // summary/memory policy in Dart, but route the reads through FRB native
+      // `tool_plan` steps so the production path exercises the embedded
+      // runtime and local trace capture.
+      knowledge_agent_providers.reviewAgentProvider.overrideWith((ref) {
+        return ReviewAgent(
+          dueReader: FrbReviewDueReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kKnowledgeReviewAgentId,
+                    stepRun: stepRun,
+                    domain: 'knowledge',
+                    surface: 'knowledge_review',
                   );
             },
           ),
