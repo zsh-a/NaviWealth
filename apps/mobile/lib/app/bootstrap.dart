@@ -30,6 +30,9 @@ import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
+import '../features/execution/agents/providers.dart'
+    as execution_agent_providers;
+import '../features/execution/agents/review_agent.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
@@ -143,6 +146,29 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // specs, domain provider seams, and the registry all derive from
       // the DomainPack list.
       ...lifeOsDomainCompositionOverrides(),
+      // Execution Review is a tool-using production agent. Route its read
+      // snapshot through FRB `tool_plan` steps while keeping weekly/today
+      // summarisation and memory writes in Dart.
+      execution_agent_providers.executionReviewAgentProvider.overrideWith((
+        ref,
+      ) {
+        return ExecutionReviewAgent(
+          reviewReader: FrbExecutionReviewReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kExecutionReviewAgentId,
+                    stepRun: stepRun,
+                    domain: 'execution',
+                    surface: 'execution_review',
+                  );
+            },
+          ),
+        );
+      }),
       // Wire the Morning Briefing with the LLM synthesizer
       // (FRB-backed first, then legacy Dart LLM, then programmatic)
       // and the local notification service so each successful run can

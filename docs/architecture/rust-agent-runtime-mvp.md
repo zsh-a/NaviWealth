@@ -132,9 +132,10 @@ Implemented:
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
-- Production tool-plan trace persistence: HealthOS `RecoveryAlertAgent` and
-  KnowledgeOS `AssumptionAgent` / `ReviewAgent` / `RoutineDueAgent` now record
-  successful FRB native step-only runs through
+- Production tool-plan trace persistence: HealthOS `RecoveryAlertAgent`,
+  KnowledgeOS `AssumptionAgent` / `ReviewAgent` / `RoutineDueAgent`, and
+  ExecutionOS `ExecutionReviewAgent` now record successful FRB native
+  step-only runs through
   `AgentRuntimeTraceRecorder.recordStepRun`, so their device-tool loops appear
   in the same local `AiTraceStore`
 - Production profile-turn trace persistence: HealthOS `FrbBriefingSynthesizer`
@@ -169,6 +170,11 @@ Implemented:
   reads open assumptions via `FrbAssumptionReviewReader`, which requests
   `list_open_assumptions` through the FRB `tool_plan` loop while keeping the
   90-day stale policy and memory writing in Dart
+- ExecutionOS production agent migration: `ExecutionReviewAgent` now reads
+  open actions and progress summary via `FrbExecutionReviewReader`, which
+  requests `list_open_actions` and `summarize_execution_progress` through a
+  two-step FRB `tool_plan`, then keeps today/due/blocked/weekly summarisation
+  and memory writing in Dart
 
 Deferred:
 
