@@ -125,6 +125,10 @@ Implemented:
   `agentRuntimeContinueRunStep` consumes each Dart tool response before either
   requesting the next catalog tool or returning a terminal `frb_tool_loop`
   output
+- Dart-side native step trace summary: `AgentRuntimeNativeStepRunner` now has
+  trace-aware run/continue methods that return the terminal step, every native
+  step observed, every Dart tool response, dispatch count, and tool-budget
+  exhaustion state; `AgentRuntimeProfileTurnResult` surfaces this summary
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status
@@ -150,7 +154,8 @@ Deferred:
 
 - complete embedded Rust runner loop beyond the current native-planned
   `tool_plan` continuation contract, promoting richer agent policy/state/trace
-  ownership into Rust while Dart keeps executing device tools
+  persistence and replay ownership into Rust while Dart keeps executing device
+  tools
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`

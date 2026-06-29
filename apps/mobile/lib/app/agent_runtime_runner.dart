@@ -59,13 +59,17 @@ class AgentRuntimeProfileTurnRunner {
     );
     final llmResponse = _expectObject(nativeTurn['llm_response']);
     final initialStep = _expectObject(nativeTurn['step']);
-    final step = await _stepRunner.continueUntilTerminal(
+    final stepRun = await _stepRunner.continueUntilTerminalWithTrace(
       catalog: _catalog.toJson(),
       initialStep: initialStep,
       agentId: agentId,
       maxToolSteps: maxToolSteps,
     );
-    return AgentRuntimeProfileTurnResult(llmResponse: llmResponse, step: step);
+    return AgentRuntimeProfileTurnResult(
+      llmResponse: llmResponse,
+      step: stepRun.terminalStep,
+      stepRun: stepRun,
+    );
   }
 }
 
@@ -81,13 +85,18 @@ class AgentRuntimeProfileTurnResult {
   const AgentRuntimeProfileTurnResult({
     required this.llmResponse,
     required this.step,
+    this.stepRun = const AgentRuntimeNativeStepRunResult(
+      terminalStep: <String, Object?>{},
+    ),
   });
 
   final Map<String, Object?> llmResponse;
   final Map<String, Object?> step;
+  final AgentRuntimeNativeStepRunResult stepRun;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'llm_response': llmResponse,
     'step': step,
+    'step_run': stepRun.toJson(),
   };
 }

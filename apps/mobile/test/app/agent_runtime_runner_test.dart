@@ -35,6 +35,9 @@ void main() {
 
       expect(result.llmResponse['content'], 'Summarized result');
       expect(result.step['status'], 'completed');
+      expect(result.stepRun.terminalStep['status'], 'completed');
+      expect(result.stepRun.dispatchedToolCount, 0);
+      expect(result.stepRun.steps.single['status'], 'completed');
       expect(native.llmRequests.single['provider'], 'openai');
       expect(native.turnRequests.single.agentId, 'execution_review');
       expect(
@@ -84,6 +87,9 @@ void main() {
       );
 
       expect(result.step['status'], 'completed');
+      expect(result.stepRun.dispatchedToolCount, 1);
+      expect(result.stepRun.toolResponses.single, containsPair('id', 'call_1'));
+      expect(result.toJson()['step_run'], isA<Map<String, Object?>>());
       expect(
         result.step['output'],
         containsPair('tool_result', <String, Object?>{

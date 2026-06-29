@@ -243,6 +243,55 @@ void main() {
   );
 
   test(
+    'AgentRuntimeNativeStepRunner exposes native step trace for tool loops',
+    () async {
+      final dispatcher = _RecordingDispatcher();
+      final bridge = _FakeBridge(
+        step: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_1',
+          'agent_id': 'execution_review',
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_1',
+            'name': 'read_first',
+            'input': <String, Object?>{'id': 'first'},
+          },
+        },
+        continuationSteps: const <Map<String, Object?>>[
+          <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'run_id': 'run_1',
+            'agent_id': 'execution_review',
+            'status': 'completed',
+            'output': <String, Object?>{'done': true},
+          },
+        ],
+      );
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.runUntilTerminalWithTrace(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+      );
+
+      expect(result.terminalStep['status'], 'completed');
+      expect(result.dispatchedToolCount, 1);
+      expect(result.budgetExhausted, isFalse);
+      expect(result.steps.map((step) => step['status']), <Object?>[
+        'tool_call_requested',
+        'completed',
+      ]);
+      expect(result.toolResponses.single, containsPair('id', 'call_1'));
+      expect(result.toJson(), containsPair('dispatched_tool_count', 1));
+    },
+  );
+
+  test(
     'AgentRuntimeNativeStepRunner dispatches native tool-plan continuations',
     () async {
       final dispatcher = _RecordingDispatcher();
@@ -311,6 +360,42 @@ void main() {
         containsPair('code', 'tool_call_budget_exhausted'),
       );
       expect(dispatcher.calls, isEmpty);
+    },
+  );
+
+  test(
+    'AgentRuntimeNativeStepRunner trace marks exhausted tool budgets',
+    () async {
+      final dispatcher = _RecordingDispatcher();
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: _FakeBridge(
+          step: const <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'run_id': 'run_1',
+            'agent_id': 'execution_review',
+            'status': 'tool_call_requested',
+            'tool_call': <String, Object?>{
+              'tool_call_id': 'call_1',
+              'name': 'read_task',
+              'input': <String, Object?>{'id': 'task_1'},
+            },
+          },
+        ),
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.runUntilTerminalWithTrace(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+        maxToolSteps: 0,
+      );
+
+      expect(result.terminalStep['status'], 'failed');
+      expect(result.dispatchedToolCount, 0);
+      expect(result.budgetExhausted, isTrue);
+      expect(result.steps, hasLength(2));
+      expect(result.toolResponses, isEmpty);
     },
   );
 

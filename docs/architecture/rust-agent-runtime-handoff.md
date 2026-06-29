@@ -155,6 +155,10 @@ Current bridge capabilities:
   `tool_call_requested` step, consume each Dart tool response through
   `agentRuntimeContinueRunStep`, and either request the next catalog tool or
   return a terminal `frb_tool_loop` output.
+- Provide Dart-side native step trace summaries:
+  `AgentRuntimeNativeStepRunner` can return the terminal step plus all native
+  steps observed, Dart tool responses, dispatch count, and budget-exhaustion
+  state; `AgentRuntimeProfileTurnResult` includes the same summary.
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
   display the terminal native step status.
@@ -197,8 +201,9 @@ Known limitation:
   production-agent path and the HealthOS Recovery Alert tool-using production
   agent path and KnowledgeOS Routine Due tool-using production agent path. The
   remaining production work is richer Rust-side agent policy/state/trace
-  ownership beyond the current tool-plan contract and migrating additional
-  tool-using production agents onto that fuller loop.
+  persistence and replay ownership beyond the current tool-plan/trace-summary
+  contract and migrating additional tool-using production agents onto that
+  fuller loop.
 
 ## Current Refactor State
 

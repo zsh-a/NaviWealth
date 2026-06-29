@@ -416,12 +416,26 @@ class AgentRuntimeNativeStepRunner {
     required String agentId,
     int? maxToolSteps,
   }) async {
+    return (await runUntilTerminalWithTrace(
+      catalog: catalog,
+      request: request,
+      agentId: agentId,
+      maxToolSteps: maxToolSteps,
+    )).terminalStep;
+  }
+
+  Future<AgentRuntimeNativeStepRunResult> runUntilTerminalWithTrace({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+    int? maxToolSteps,
+  }) async {
     final step = await _bridge.startRunStep(
       catalog: catalog,
       request: request,
       agentId: agentId,
     );
-    return continueUntilTerminal(
+    return continueUntilTerminalWithTrace(
       catalog: catalog,
       initialStep: step,
       agentId: agentId,
@@ -435,6 +449,20 @@ class AgentRuntimeNativeStepRunner {
     required String agentId,
     int? maxToolSteps,
   }) async {
+    return (await continueUntilTerminalWithTrace(
+      catalog: catalog,
+      initialStep: initialStep,
+      agentId: agentId,
+      maxToolSteps: maxToolSteps,
+    )).terminalStep;
+  }
+
+  Future<AgentRuntimeNativeStepRunResult> continueUntilTerminalWithTrace({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> initialStep,
+    required String agentId,
+    int? maxToolSteps,
+  }) async {
     final limit = maxToolSteps ?? _defaultMaxToolSteps;
     if (limit < 0) {
       throw RangeError.value(limit, 'maxToolSteps', 'must be non-negative');
@@ -442,23 +470,43 @@ class AgentRuntimeNativeStepRunner {
 
     var step = initialStep;
     var dispatched = 0;
+    final steps = <Map<String, Object?>>[step];
+    final toolResponses = <Map<String, Object?>>[];
+    var budgetExhausted = false;
 
     while (step['status'] == 'tool_call_requested') {
       if (dispatched >= limit) {
-        return _toolBudgetExhaustedStep(step, limit);
+        step = _toolBudgetExhaustedStep(step, limit);
+        steps.add(step);
+        budgetExhausted = true;
+        return AgentRuntimeNativeStepRunResult(
+          terminalStep: step,
+          steps: steps,
+          toolResponses: toolResponses,
+          dispatchedToolCount: dispatched,
+          budgetExhausted: budgetExhausted,
+        );
       }
       dispatched += 1;
 
       final response = await _dispatchToolCall(step);
+      toolResponses.add(response);
       step = await _bridge.continueRunStep(
         catalog: catalog,
         previousStep: step,
         toolResponse: response,
         agentId: agentId,
       );
+      steps.add(step);
     }
 
-    return step;
+    return AgentRuntimeNativeStepRunResult(
+      terminalStep: step,
+      steps: steps,
+      toolResponses: toolResponses,
+      dispatchedToolCount: dispatched,
+      budgetExhausted: budgetExhausted,
+    );
   }
 
   Future<Map<String, Object?>> _dispatchToolCall(
@@ -483,6 +531,30 @@ class AgentRuntimeNativeStepRunner {
     );
     return _decodeObject(responseLine);
   }
+}
+
+class AgentRuntimeNativeStepRunResult {
+  const AgentRuntimeNativeStepRunResult({
+    required this.terminalStep,
+    this.steps = const <Map<String, Object?>>[],
+    this.toolResponses = const <Map<String, Object?>>[],
+    this.dispatchedToolCount = 0,
+    this.budgetExhausted = false,
+  });
+
+  final Map<String, Object?> terminalStep;
+  final List<Map<String, Object?>> steps;
+  final List<Map<String, Object?>> toolResponses;
+  final int dispatchedToolCount;
+  final bool budgetExhausted;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'terminal_step': terminalStep,
+    'steps': steps,
+    'tool_responses': toolResponses,
+    'dispatched_tool_count': dispatchedToolCount,
+    'budget_exhausted': budgetExhausted,
+  };
 }
 
 Map<String, Object?> _toolBudgetExhaustedStep(
