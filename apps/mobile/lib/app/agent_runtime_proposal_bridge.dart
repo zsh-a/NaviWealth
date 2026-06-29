@@ -30,6 +30,36 @@ final agentRuntimeConfirmedProposalRunnerProvider =
       );
     });
 
+final agentRuntimeConfirmedProposalRunProvider =
+    FutureProvider.family<
+      Map<String, Object?>,
+      AgentRuntimeConfirmedProposalRunRequest
+    >((ref, request) async {
+      final runner = await ref.watch(
+        agentRuntimeConfirmedProposalRunnerProvider.future,
+      );
+      return runner.runAndApplyConfirmedProposal(
+        catalog: request.catalog,
+        request: request.request,
+        agentId: request.agentId,
+        maxToolSteps: request.maxToolSteps,
+      );
+    });
+
+class AgentRuntimeConfirmedProposalRunRequest {
+  const AgentRuntimeConfirmedProposalRunRequest({
+    required this.catalog,
+    required this.request,
+    required this.agentId,
+    this.maxToolSteps,
+  });
+
+  final Map<String, Object?> catalog;
+  final Map<String, Object?> request;
+  final String agentId;
+  final int? maxToolSteps;
+}
+
 class AgentRuntimeProposalBridge {
   const AgentRuntimeProposalBridge({required ProposalApplier applier})
     : _applier = applier;

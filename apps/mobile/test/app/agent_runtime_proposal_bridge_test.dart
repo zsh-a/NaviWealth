@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_proposal_bridge.dart';
@@ -155,6 +156,45 @@ void main() {
         containsPair('reason', 'no_ready_proposal'),
       );
       expect(applier.plans, isEmpty);
+    },
+  );
+
+  test(
+    'agentRuntimeConfirmedProposalRunProvider runs confirmed proposal flow',
+    () async {
+      final applier = _RecordingApplier(
+        state: const ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: 'action_1',
+          appliedTable: 'execution_actions',
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          agentRuntimeNativeBridgeProvider.overrideWithValue(
+            _TerminalBridge(step: _terminalProposalStep()),
+          ),
+          agentRuntimeToolHostProvider.overrideWithValue(
+            AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
+          ),
+          proposalApplierProvider.overrideWith((ref) async => applier),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final result = await container.read(
+        agentRuntimeConfirmedProposalRunProvider(
+          const AgentRuntimeConfirmedProposalRunRequest(
+            catalog: <String, Object?>{'protocol_version': 'agent.v1'},
+            request: <String, Object?>{'input': <String, Object?>{}},
+            agentId: 'execution_review',
+          ),
+        ).future,
+      );
+
+      expect(result['step'], containsPair('status', 'completed'));
+      expect(result['proposal_apply'], containsPair('status', 'applied'));
+      expect(applier.plans.single.kind, 'execution_action');
     },
   );
 }

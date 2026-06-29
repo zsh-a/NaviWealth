@@ -99,12 +99,14 @@ Implemented:
 - Dart-side `AgentRuntimeConfirmedProposalRunner` that composes the bounded
   FRB step runner with the proposal bridge for explicit confirmed-proposal
   execution
+- UI-callable `agentRuntimeConfirmedProposalRunProvider` FutureProvider entry
+  point for running a confirmed FRB proposal request
 
 Deferred:
 
 - complete embedded Rust runner loop over FRB beyond deterministic step
   contracts, including production LLM/tool continuation and wiring the confirmed
-  proposal runner into a concrete agent/UI entrypoint
+  proposal provider into a concrete user-facing surface
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
