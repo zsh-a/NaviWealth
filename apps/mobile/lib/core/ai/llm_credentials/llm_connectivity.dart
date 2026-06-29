@@ -71,6 +71,18 @@ abstract class LlmConnectivityProbe {
   });
 }
 
+class UnavailableLlmConnectivityProbe implements LlmConnectivityProbe {
+  const UnavailableLlmConnectivityProbe();
+
+  @override
+  Future<LlmProbeResult> probe(
+    LlmProfile profile, {
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
+    return const LlmProbeResult(LlmProbeStatus.unknown, 'AI 运行时尚未初始化，请稍后重试');
+  }
+}
+
 class DirectLlmConnectivityProbe implements LlmConnectivityProbe {
   DirectLlmConnectivityProbe({Dio Function()? dioFactory})
     : _dioFactory = dioFactory ?? _defaultDio;

@@ -23,10 +23,14 @@ final llmCredentialStoreProvider = Provider<LlmCredentialStore>((ref) {
   return LlmCredentialStore(ref.watch(secureKeyStoreProvider));
 });
 
-/// One-tap connectivity probe. Stateless; the settings page
-/// passes the (possibly unsaved) profile being edited.
+/// One-tap connectivity probe. Stateless; the settings page passes the
+/// (possibly unsaved) profile being edited.
+///
+/// Production bootstrap overrides this with the FRB-backed probe. The default
+/// fails closed so partial ProviderContainers never issue direct-Dart provider
+/// requests by accident.
 final llmConnectivityProbeProvider = Provider<LlmConnectivityProbe>((ref) {
-  return DirectLlmConnectivityProbe();
+  return const UnavailableLlmConnectivityProbe();
 });
 
 /// Whether this build can host the device LLM runtime at all.
