@@ -287,6 +287,7 @@ pub fn agent_runtime_continue_run_step(
     }
     require_previous_step_agent(&previous_step, &agent.id)?;
     let run_id = require_previous_step_run_id(&previous_step)?;
+    let previous_step_index = require_previous_step_index(&previous_step)?;
     let tool_call = previous_step
         .get("tool_call")
         .cloned()
@@ -294,7 +295,7 @@ pub fn agent_runtime_continue_run_step(
     require_previous_tool_call_catalog_tool(&catalog, &agent.id, &tool_call)?;
     require_tool_response_envelope(&tool_response)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
-    require_continuation_next_step_index(&previous_step)?;
+    require_continuation_next_step_index(&previous_step, previous_step_index)?;
     let mut tool_results = continuation_tool_results(&previous_step, &catalog, &agent.id)?;
     let tool_terminal_status = tool_response_terminal_status(&tool_response);
     if tool_terminal_status != Some("closed_early") {
@@ -304,11 +305,7 @@ pub fn agent_runtime_continue_run_step(
         }));
     }
 
-    let next_step_index = previous_step
-        .get("step_index")
-        .and_then(Value::as_u64)
-        .unwrap_or(0)
-        + 1;
+    let next_step_index = previous_step_index + 1;
 
     let mut response = match tool_terminal_status {
         Some(status) => {
@@ -385,6 +382,13 @@ fn require_previous_step_run_id(previous_step: &Value) -> Result<Value> {
     Ok(Value::String(run_id.to_owned()))
 }
 
+fn require_previous_step_index(previous_step: &Value) -> Result<u64> {
+    previous_step
+        .get("step_index")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| anyhow::anyhow!("previous step_index must be a non-negative integer"))
+}
+
 fn require_previous_tool_call_catalog_tool(
     catalog: &AgentRuntimeCatalog,
     agent_id: &str,
@@ -456,14 +460,14 @@ fn require_tool_response_envelope(tool_response: &Value) -> Result<()> {
     Ok(())
 }
 
-fn require_continuation_next_step_index(previous_step: &Value) -> Result<()> {
+fn require_continuation_next_step_index(
+    previous_step: &Value,
+    previous_step_index: u64,
+) -> Result<()> {
     let Some(continuation) = previous_step.get("continuation") else {
         return Ok(());
     };
     let Some(next_step_index) = continuation.get("next_step_index") else {
-        return Ok(());
-    };
-    let Some(previous_step_index) = previous_step.get("step_index").and_then(Value::as_u64) else {
         return Ok(());
     };
     let next_step_index = next_step_index.as_u64().ok_or_else(|| {

@@ -146,9 +146,10 @@ Implemented:
   consumers never receive an empty tool label
 - Native FRB tool continuations now validate the previous step and tool
   response before mutating run state: previous `agent_id` / `run_id`,
-  `tool_call_id`, catalog-bound tool names, `continuation.next_step_index`,
-  `continuation.tool_plan`, historical `continuation.tool_results`, and
-  JSON-RPC tool response envelopes are rejected when malformed or ambiguous
+  `step_index`, `tool_call_id`, catalog-bound tool names,
+  `continuation.next_step_index`, `continuation.tool_plan`, historical
+  `continuation.tool_results`, and JSON-RPC tool response envelopes are
+  rejected when malformed or ambiguous
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`

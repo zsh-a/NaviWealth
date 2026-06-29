@@ -574,6 +574,7 @@ fn continue_run_step_completes_with_tool_result() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
@@ -616,6 +617,7 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
@@ -673,6 +675,7 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
@@ -710,6 +713,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
@@ -744,6 +748,7 @@ fn continue_run_step_rejects_missing_next_tool_plan_name() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
@@ -778,6 +783,7 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000001",
@@ -827,6 +833,7 @@ fn continue_run_step_fails_with_tool_error() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
@@ -872,6 +879,7 @@ fn continue_run_step_rejects_mismatched_tool_response_id() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -902,6 +910,7 @@ fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -932,6 +941,7 @@ fn continue_run_step_rejects_non_object_tool_response() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -957,6 +967,7 @@ fn continue_run_step_rejects_empty_previous_run_id() {
           "run_id": "",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -979,6 +990,36 @@ fn continue_run_step_rejects_empty_previous_run_id() {
 }
 
 #[test]
+fn continue_run_step_rejects_missing_previous_step_index() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("missing previous step index should fail");
+
+    assert!(err.to_string().contains("step_index"));
+}
+
+#[test]
 fn continue_run_step_rejects_tool_response_with_result_and_error() {
     let err = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
@@ -987,6 +1028,7 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1018,6 +1060,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1048,6 +1091,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1078,6 +1122,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code()
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1108,6 +1153,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1138,6 +1184,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1168,6 +1215,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1197,6 +1245,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1226,6 +1275,7 @@ fn continue_run_step_rejects_mismatched_previous_agent() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "other_agent",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1256,6 +1306,7 @@ fn continue_run_step_rejects_previous_tool_not_in_catalog() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_unknown",
@@ -1286,6 +1337,7 @@ fn continue_run_step_rejects_missing_previous_tool_name() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_missing_name",
@@ -1391,6 +1443,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1425,6 +1478,7 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1461,6 +1515,7 @@ fn continue_run_step_rejects_historical_tool_not_in_catalog() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
           "agent_version": "1.0.0",
+          "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1498,6 +1553,7 @@ fn continue_run_step_maps_result_payload_policy_denied() {
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
       "agent_version": "1.0.0",
+          "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
         "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
