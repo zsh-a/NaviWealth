@@ -197,7 +197,8 @@ Implemented:
   code
 - Finance Activity entry insight now uses the FRB profile-backed LLM bridge
   via `AgentRuntimeLlmBridge.completeProfile` for its concise explanation,
-  preserving the existing localized heuristic fallback
+  preserving the existing localized heuristic fallback, and the app-level
+  wrapper records each FRB completion into the local `AiTraceStore`
 - `agent-llm` and the FRB LLM bridge now support JSON message content blocks,
   Anthropic tool schemas, and raw Anthropic content metadata; Finance Vision
   ingest uses `FrbVisionIngestClient` to send receipt/statement image or

@@ -145,7 +145,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
         return llmBridge == null
             ? null
-            : FrbActivityEntryInsightClient(llmBridge: llmBridge);
+            : FrbActivityEntryInsightClient(
+                llmBridge: llmBridge,
+                recordTrace: ref
+                    .read(agentRuntimeTraceRecorderProvider)
+                    .recordProfileCompletion,
+              );
       }),
       knowledgeLlmProfileClientProvider.overrideWith((ref) {
         final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
@@ -545,34 +550,61 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
   const FrbActivityEntryInsightClient({
     required AgentRuntimeLlmBridge llmBridge,
-  }) : _llmBridge = llmBridge;
+    FrbProfileCompletionTraceRecorder? recordTrace,
+  }) : _llmBridge = llmBridge,
+       _recordTrace = recordTrace;
 
   final AgentRuntimeLlmBridge _llmBridge;
+  final FrbProfileCompletionTraceRecorder? _recordTrace;
 
   @override
   Future<String?> explain(
     ActivityEntryInsightRequest request,
     AppLocalizations l10n,
   ) async {
-    final response = await _llmBridge.completeProfile(
-      messages: <Map<String, Object?>>[
-        <String, Object?>{
-          'role': 'system',
-          'content': activityEntryInsightSystem(request.locale),
+    final startedAt = DateTime.now().toUtc();
+    const agentId = 'finance_activity_insight';
+    const surface = 'finance_activity_insight';
+    try {
+      final response = await _llmBridge.completeProfile(
+        messages: <Map<String, Object?>>[
+          <String, Object?>{
+            'role': 'system',
+            'content': activityEntryInsightSystem(request.locale),
+          },
+          <String, Object?>{
+            'role': 'user',
+            'content': activityEntryInsightPrompt(request, l10n),
+          },
+        ],
+        maxOutputTokens: 256,
+        metadata: const <String, Object?>{
+          'surface': surface,
+          'agent_id': agentId,
         },
-        <String, Object?>{
-          'role': 'user',
-          'content': activityEntryInsightPrompt(request, l10n),
-        },
-      ],
-      maxOutputTokens: 256,
-      metadata: const <String, Object?>{
-        'surface': 'finance_activity_insight',
-        'agent_id': 'finance_activity_insight',
-      },
-    );
-    final body = response['content'];
-    return body is String ? body : null;
+      );
+      await _recordTrace?.call(
+        agentId: agentId,
+        llmResponse: response,
+        startedAt: startedAt,
+        finishedAt: DateTime.now().toUtc(),
+        domain: 'finance',
+        surface: surface,
+      );
+      final body = response['content'];
+      return body is String ? body : null;
+    } on Object catch (error) {
+      await _recordTrace?.call(
+        agentId: agentId,
+        llmResponse: null,
+        startedAt: startedAt,
+        finishedAt: DateTime.now().toUtc(),
+        domain: 'finance',
+        surface: surface,
+        error: error,
+      );
+      rethrow;
+    }
   }
 }
 
