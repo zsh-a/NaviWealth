@@ -101,7 +101,7 @@ ChatRepository
   （`isUsable = active?.hasKey`）。设置页是 profile 卡片列表（切换/编辑/删除 + 连通性测试）。
 - `LlmConnectivityProbe`（`llm_connectivity.dart`）在 app bootstrap 中由
   `FrbLlmConnectivityProbe` 覆盖，走 FRB/native provider path 发 1-token ping；
-  `DirectLlmConnectivityProbe` 仅保留为 legacy/test seam。
+  默认 provider fail-closed，不再保留 direct-Dart connectivity probe。
   `classifyLlmProbeException` 把结果分为 ok / 鉴权失败 / 端点不存在 / 限流 / 被拒 / 网络不可达。
 
 ### 2.3 平台门控与降级

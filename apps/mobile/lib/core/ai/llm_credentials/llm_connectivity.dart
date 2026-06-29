@@ -7,13 +7,7 @@
 /// profile the user is still editing and hasn't saved.
 library;
 
-import 'dart:async';
-
-import 'package:dio/dio.dart';
-
 import '../runtime/device/anthropic/anthropic_client.dart';
-import '../runtime/device/anthropic/anthropic_wire.dart';
-import '../runtime/device/openai/openai_client.dart';
 import 'llm_credentials.dart';
 
 enum LlmProbeStatus {
@@ -80,62 +74,6 @@ class UnavailableLlmConnectivityProbe implements LlmConnectivityProbe {
     Duration timeout = const Duration(seconds: 20),
   }) async {
     return const LlmProbeResult(LlmProbeStatus.unknown, 'AI 运行时尚未初始化，请稍后重试');
-  }
-}
-
-class DirectLlmConnectivityProbe implements LlmConnectivityProbe {
-  DirectLlmConnectivityProbe({Dio Function()? dioFactory})
-    : _dioFactory = dioFactory ?? _defaultDio;
-
-  final Dio Function() _dioFactory;
-
-  static Dio _defaultDio() => Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 20),
-    ),
-  );
-
-  /// Send a 1-token "ping" and classify the outcome.
-  @override
-  Future<LlmProbeResult> probe(
-    LlmProfile profile, {
-    Duration timeout = const Duration(seconds: 20),
-  }) async {
-    if (!profile.hasKey) {
-      return const LlmProbeResult(LlmProbeStatus.authFailed, '请先填入 API Key');
-    }
-    final dio = _dioFactory();
-    final (client, model) = switch (profile.provider) {
-      LlmProvider.anthropic => (
-        AnthropicClient(dio: dio, config: LlmConfig.fromProfile(profile)),
-        LlmConfig.fromProfile(profile).model,
-      ),
-      LlmProvider.openai => (
-        OpenAiClient(dio: dio, config: OpenAiConfig.fromProfile(profile)),
-        OpenAiConfig.fromProfile(profile).model,
-      ),
-    };
-    final request = AnthropicRequest(
-      model: model,
-      maxTokens: 1,
-      system: '',
-      messages: const [AnthropicChatMessage(role: 'user', content: 'ping')],
-      stream: false,
-    );
-    try {
-      await client.complete(request).timeout(timeout);
-      return const LlmProbeResult(LlmProbeStatus.ok, '连通正常 · 配置可用');
-    } on TimeoutException {
-      return const LlmProbeResult(
-        LlmProbeStatus.network,
-        '请求超时 · 检查网络或 Base URL',
-      );
-    } on LlmRequestException catch (e) {
-      return classifyLlmProbeException(e);
-    } catch (e) {
-      return LlmProbeResult(LlmProbeStatus.unknown, '测试失败：$e');
-    }
   }
 }
 
