@@ -176,6 +176,10 @@ Current bridge capabilities:
 - Provide a FRB-backed Settings connectivity probe through
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions.
+- Provide a migration guardrail:
+  `tool/lint-frb-llm-entrypoints.sh` rejects new production business/app uses
+  of the legacy direct-Dart LLM seams outside the documented runtime/legacy
+  allowlist.
 - Provide a guarded confirmed-proposal surface on that runtime check: if the
   terminal FRB step carries a ready proposal, Settings shows the summary and
   warnings, then applies through `AgentRuntimeProposalBridge` only after
