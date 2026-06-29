@@ -689,6 +689,52 @@ fn continue_run_step_fails_with_tool_error() {
 }
 
 #[test]
+fn continue_run_step_maps_result_payload_policy_denied() {
+    let step_json = r#"{
+      "protocol_version": "agent.v1",
+      "run_id": "run_018f0000-0000-7000-8000-000000000000",
+      "agent_id": "execution_review",
+      "agent_version": "1.0.0",
+      "status": "tool_call_requested",
+      "tool_call": {
+        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+        "name": "propose_fake",
+        "input": {"value": 7}
+      }
+    }"#;
+    let next_json = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        step_json.to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_018f0000-0000-7000-8000-000000000000",
+          "result": {
+            "error": {
+              "code": "policy_denied",
+              "policy": "confirmation_required",
+              "tool": "propose_fake",
+              "message": "confirmation required"
+            },
+            "policy_denied": true
+          }
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("policy-denied result payload should terminate as policy_denied");
+    let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
+
+    assert_eq!(next["status"], "policy_denied");
+    assert_eq!(next["error"]["code"], "policy_denied");
+    assert_eq!(next["tool_results"].as_array().unwrap().len(), 1);
+    assert_eq!(next["run_state"]["status"], "policy_denied");
+    assert_eq!(next["run_state"]["terminal_reason"], "policy_denied");
+    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["trace_event"]["status"], "policy_denied");
+    assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
+}
+
+#[test]
 fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
     let step_json = r#"{
       "protocol_version": "agent.v1",

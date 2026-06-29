@@ -294,8 +294,8 @@ pub fn agent_runtime_continue_run_step(
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
     let mut tool_results = continuation_tool_results(&previous_step)?;
-    let tool_error_status = tool_error_status(&tool_response);
-    if tool_error_status != Some("closed_early") {
+    let tool_terminal_status = tool_response_terminal_status(&tool_response);
+    if tool_terminal_status != Some("closed_early") {
         tool_results.push(json!({
             "tool_call": tool_call.clone(),
             "tool_response": tool_response.clone(),
@@ -308,9 +308,9 @@ pub fn agent_runtime_continue_run_step(
         .unwrap_or(0)
         + 1;
 
-    let mut response = match tool_response.get("error") {
-        Some(error) => {
-            let status = tool_error_status.unwrap_or("failed");
+    let mut response = match tool_terminal_status {
+        Some(status) => {
+            let error = tool_response_error_payload(&tool_response).unwrap_or(Value::Null);
             json!({
             "protocol_version": protocol_version(),
             "run_id": run_id,
@@ -361,16 +361,61 @@ pub fn agent_runtime_continue_run_step(
     Ok(serde_json::to_string(&response)?)
 }
 
-fn tool_error_status(tool_response: &Value) -> Option<&'static str> {
-    let code = tool_response
-        .get("error")
-        .and_then(|error| error.get("code"))
-        .and_then(Value::as_str);
-    match code {
+fn tool_response_terminal_status(tool_response: &Value) -> Option<&'static str> {
+    let code = tool_response_error_code(tool_response);
+    match code.as_deref() {
         Some("tool_call_budget_exhausted") => Some("closed_early"),
+        Some("policy_denied") => Some("policy_denied"),
+        Some("user_cancel" | "user_cancelled" | "cancelled") => Some("cancelled"),
+        Some("tool_timeout" | "timeout" | "timed_out") => Some("timed_out"),
         Some(_) => Some("failed"),
+        None if tool_response_error_payload(tool_response).is_some() => Some("failed"),
         None => None,
     }
+}
+
+fn tool_response_error_code(tool_response: &Value) -> Option<String> {
+    tool_response
+        .get("error")
+        .and_then(|error| error.get("code"))
+        .and_then(Value::as_str)
+        .or_else(|| tool_response.get("code").and_then(Value::as_str))
+        .or_else(|| {
+            tool_response
+                .get("result")
+                .and_then(|result| result.get("error"))
+                .and_then(|error| error.get("code"))
+                .and_then(Value::as_str)
+        })
+        .or_else(|| {
+            tool_response
+                .get("result")
+                .and_then(|result| result.get("code"))
+                .and_then(Value::as_str)
+        })
+        .map(str::to_owned)
+}
+
+fn tool_response_error_payload(tool_response: &Value) -> Option<Value> {
+    if let Some(error) = tool_response.get("error") {
+        return Some(error.clone());
+    }
+    let result = tool_response.get("result")?;
+    if let Some(error) = result.get("error") {
+        if error.is_object() {
+            return Some(error.clone());
+        }
+        let mut object = Map::new();
+        if let Some(code) = result.get("code").and_then(Value::as_str) {
+            object.insert("code".to_owned(), Value::String(code.to_owned()));
+        }
+        object.insert("message".to_owned(), error.clone());
+        return Some(Value::Object(object));
+    }
+    if let Some(code) = result.get("code").and_then(Value::as_str) {
+        return Some(json!({ "code": code }));
+    }
+    None
 }
 
 fn llm_metadata_string(request: &LlmRequest, key: &str) -> Result<String> {

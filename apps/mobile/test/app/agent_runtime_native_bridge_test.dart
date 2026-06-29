@@ -355,6 +355,63 @@ void main() {
   );
 
   test(
+    'AgentRuntimeNativeStepRunner lets native classify tool result errors',
+    () async {
+      final dispatcher = _RecordingDispatcher(
+        output: const <String, Object?>{
+          'error': <String, Object?>{
+            'code': 'policy_denied',
+            'policy': 'confirmation_required',
+            'message': 'confirmation required',
+          },
+          'policy_denied': true,
+        },
+      );
+      final bridge = _FakeBridge(
+        step: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_1',
+          'agent_id': 'execution_review',
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_1',
+            'name': 'read_task',
+            'input': <String, Object?>{'id': 'task_1'},
+          },
+        },
+      );
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.runUntilTerminalWithTrace(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+        maxToolSteps: 1,
+      );
+
+      expect(result.terminalStep['status'], 'policy_denied');
+      expect(result.dispatchedToolCount, 1);
+      expect(result.budgetExhausted, isFalse);
+      expect(bridge.continuations, hasLength(1));
+      expect(
+        bridge.continuations.single.toolResponse['result'],
+        containsPair('policy_denied', true),
+      );
+      expect(
+        result.terminalStep['run_state'],
+        containsPair('terminal_reason', 'policy_denied'),
+      );
+      expect(
+        result.terminalStep['trace_event'],
+        containsPair('status', 'policy_denied'),
+      );
+    },
+  );
+
+  test(
     'AgentRuntimeNativeStepRunner fails when tool-call budget is exhausted',
     () async {
       final dispatcher = _RecordingDispatcher();
@@ -858,6 +915,50 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
         'error': error.map((key, value) => MapEntry(key.toString(), value)),
       };
     }
+    final result = toolResponse['result'];
+    if (result is Map) {
+      final resultError = result['error'];
+      final code = resultError is Map ? resultError['code'] : result['code'];
+      if (code == 'policy_denied') {
+        final stepIndex = previousStep['step_index'] ?? 1;
+        final errorPayload = resultError is Map
+            ? resultError.map((key, value) => MapEntry(key.toString(), value))
+            : <String, Object?>{'code': 'policy_denied'};
+        final runState = <String, Object?>{
+          'status': 'policy_denied',
+          'step_index': stepIndex,
+          'remaining_tool_count': 0,
+          'tool_result_count': 1,
+          'terminal_reason': 'policy_denied',
+        };
+        return <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': previousStep['run_id'],
+          'agent_id': agentId,
+          'step_index': stepIndex,
+          'status': 'policy_denied',
+          'tool_call': previousStep['tool_call'],
+          'tool_response': toolResponse,
+          'tool_results': <Object?>[
+            <String, Object?>{
+              'tool_call': previousStep['tool_call'],
+              'tool_response': toolResponse,
+            },
+          ],
+          'run_state': runState,
+          'trace_event': <String, Object?>{
+            'kind': 'agent_runtime_step',
+            'run_id': previousStep['run_id'],
+            'agent_id': agentId,
+            'status': 'policy_denied',
+            'step_index': stepIndex,
+            'tool_name': (previousStep['tool_call'] as Map?)?['name'],
+            'run_state': runState,
+          },
+          'error': errorPayload,
+        };
+      }
+    }
     return <String, Object?>{
       'protocol_version': 'agent.v1',
       'run_id': previousStep['run_id'],
@@ -980,6 +1081,9 @@ class _ToolPlanBridge extends _FakeBridge {
 }
 
 class _RecordingDispatcher implements DeviceToolDispatcher {
+  _RecordingDispatcher({this.output});
+
+  final Object? output;
   final calls = <_ToolCall>[];
 
   @override
@@ -989,7 +1093,7 @@ class _RecordingDispatcher implements DeviceToolDispatcher {
     Object? input,
   ) async {
     calls.add(_ToolCall(name, input));
-    return <String, Object?>{'tool': name, 'input': input};
+    return output ?? <String, Object?>{'tool': name, 'input': input};
   }
 }
 
