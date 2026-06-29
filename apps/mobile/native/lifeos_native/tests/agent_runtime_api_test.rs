@@ -1542,6 +1542,83 @@ fn continue_run_step_rejects_empty_previous_tool_call_id() {
 }
 
 #[test]
+fn continue_run_step_rejects_mismatched_previous_run_state() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          },
+          "run_state": {
+            "status": "completed",
+            "step_index": 0,
+            "remaining_tool_count": 0,
+            "tool_result_count": 0,
+            "terminal_reason": "done"
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched previous run_state should fail");
+
+    assert!(err.to_string().contains("run_state"));
+}
+
+#[test]
+fn continue_run_step_rejects_mismatched_previous_trace_event() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          },
+          "trace_event": {
+            "kind": "agent_runtime_step",
+            "run_id": "run_wrong",
+            "agent_id": "execution_review",
+            "status": "tool_call_requested",
+            "step_index": 0,
+            "tool_name": "propose_fake"
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched previous trace_event should fail");
+
+    assert!(err.to_string().contains("run_id"));
+}
+
+#[test]
 fn continue_run_step_rejects_mismatched_continuation_next_step_index() {
     let err = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),

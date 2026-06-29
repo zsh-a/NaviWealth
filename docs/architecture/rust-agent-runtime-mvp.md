@@ -150,7 +150,9 @@ Implemented:
   as a required current tool-call id, catalog-bound tool names, `continuation.next_step_index`,
   `continuation.tool_plan`, historical `continuation.tool_results`,
   JSON-RPC tool response envelopes for current and historical results, and tool response
-  ids are rejected when malformed, mismatched, or ambiguous
+  ids are rejected when malformed, mismatched, or ambiguous. Previous
+  `run_state` and `trace_event` metadata, when present, must match the native
+  step fields before Rust advances the continuation.
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`

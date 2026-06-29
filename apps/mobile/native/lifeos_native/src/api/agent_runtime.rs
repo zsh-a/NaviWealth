@@ -295,6 +295,7 @@ pub fn agent_runtime_continue_run_step(
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
     require_previous_tool_call_id(&tool_call)?;
     require_previous_tool_call_catalog_tool(&catalog, &agent.id, &tool_call)?;
+    require_previous_step_runtime_metadata(&previous_step, &run_id, previous_step_index)?;
     require_tool_response_envelope(&tool_response)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
     require_continuation_next_step_index(&previous_step, previous_step_index)?;
@@ -446,6 +447,121 @@ fn require_previous_tool_call_id(tool_call: &Value) -> Result<()> {
         .ok_or_else(|| {
             anyhow::anyhow!("previous step tool_call.tool_call_id must be a non-empty string")
         })?;
+    Ok(())
+}
+
+fn require_previous_step_runtime_metadata(
+    previous_step: &Value,
+    run_id: &Value,
+    step_index: u64,
+) -> Result<()> {
+    if let Some(run_state) = previous_step.get("run_state") {
+        require_previous_step_run_state(previous_step, run_state, step_index)
+            .map_err(|error| anyhow::anyhow!("previous step run_state: {error}"))?;
+    }
+    if let Some(trace_event) = previous_step.get("trace_event") {
+        require_previous_step_trace_event(previous_step, trace_event, run_id, step_index)
+            .map_err(|error| anyhow::anyhow!("previous step trace_event: {error}"))?;
+    }
+    Ok(())
+}
+
+fn require_previous_step_run_state(
+    previous_step: &Value,
+    run_state: &Value,
+    step_index: u64,
+) -> Result<()> {
+    let run_state = run_state
+        .as_object()
+        .ok_or_else(|| anyhow::anyhow!("previous step run_state must be an object"))?;
+    require_step_status(run_state, "status")?;
+    require_matching_string(
+        run_state,
+        "status",
+        previous_step
+            .get("status")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+    )?;
+    match run_state.get("step_index").and_then(Value::as_u64) {
+        Some(value) if value == step_index => {}
+        _ => anyhow::bail!("previous step run_state.step_index must match step_index"),
+    }
+    let expected_remaining_tool_count = previous_step
+        .get("continuation")
+        .and_then(|value| value.get("tool_plan"))
+        .and_then(Value::as_array)
+        .map(Vec::len)
+        .unwrap_or(0) as u64;
+    match run_state
+        .get("remaining_tool_count")
+        .and_then(Value::as_u64)
+    {
+        Some(value) if value == expected_remaining_tool_count => {}
+        _ => anyhow::bail!(
+            "previous step run_state.remaining_tool_count must match continuation.tool_plan"
+        ),
+    }
+    let expected_tool_result_count = previous_step
+        .get("continuation")
+        .and_then(|value| value.get("tool_results"))
+        .and_then(Value::as_array)
+        .map(Vec::len)
+        .unwrap_or(0) as u64;
+    match run_state.get("tool_result_count").and_then(Value::as_u64) {
+        Some(value) if value == expected_tool_result_count => {}
+        _ => anyhow::bail!(
+            "previous step run_state.tool_result_count must match continuation.tool_results"
+        ),
+    }
+    require_terminal_reason(run_state, "terminal_reason")?;
+    require_terminal_reason_matches_status(run_state)?;
+    Ok(())
+}
+
+fn require_previous_step_trace_event(
+    previous_step: &Value,
+    trace_event: &Value,
+    run_id: &Value,
+    step_index: u64,
+) -> Result<()> {
+    let trace_event = trace_event
+        .as_object()
+        .ok_or_else(|| anyhow::anyhow!("previous step trace_event must be an object"))?;
+    require_matching_string(trace_event, "kind", "agent_runtime_step")?;
+    require_matching_string(trace_event, "run_id", run_id.as_str().unwrap_or_default())?;
+    require_matching_string(
+        trace_event,
+        "agent_id",
+        previous_step
+            .get("agent_id")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+    )?;
+    require_matching_string(
+        trace_event,
+        "status",
+        previous_step
+            .get("status")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+    )?;
+    match trace_event.get("step_index").and_then(Value::as_u64) {
+        Some(value) if value == step_index => {}
+        _ => anyhow::bail!("previous step trace_event.step_index must match step_index"),
+    }
+    if let Some(run_state) = previous_step.get("run_state") {
+        match trace_event.get("run_state") {
+            Some(value) if value == run_state => {}
+            _ => anyhow::bail!("previous step trace_event.run_state must match run_state"),
+        }
+    }
+    let expected_tool_name = previous_step
+        .get("tool_call")
+        .and_then(|tool_call| tool_call.get("name"))
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    require_matching_nullable_string(trace_event, "tool_name", expected_tool_name)?;
     Ok(())
 }
 
@@ -696,6 +812,21 @@ fn require_nullable_non_empty_string(object: &Map<String, Value>, field: &str) -
         Some(Value::Null) => Ok(()),
         Some(Value::String(value)) if !value.is_empty() => Ok(()),
         _ => anyhow::bail!("agent_runtime_step {field} must be null or a non-empty string"),
+    }
+}
+
+fn require_matching_nullable_string(
+    object: &Map<String, Value>,
+    field: &str,
+    expected: &str,
+) -> Result<()> {
+    if matches!(object.get(field), Some(Value::Null)) {
+        return Ok(());
+    }
+    require_nullable_non_empty_string(object, field)?;
+    match object.get(field).and_then(Value::as_str) {
+        Some(value) if value == expected => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must match expected {field}"),
     }
 }
 
