@@ -51,11 +51,11 @@ impl TuiState {
             trace_label,
             recent_runs,
             status,
-            input_mode: false,
+            input_mode: true,
             command_input: String::new(),
             log_lines: VecDeque::new(),
         };
-        state.push_log("Ready. ':' command, 'r' run, 't' tool, 'p' replay trace, '?' help.");
+        state.push_log("Ready. Type a message and press Enter. Use /help for commands.");
         Ok(state)
     }
 
@@ -85,11 +85,6 @@ impl TuiState {
         self.input_mode = true;
         self.command_input.clear();
         self.command_input.push_str(prefix);
-    }
-
-    pub(super) fn cancel_command(&mut self) {
-        self.input_mode = false;
-        self.command_input.clear();
     }
 
     pub(super) fn push_log(&mut self, line: impl Into<String>) {

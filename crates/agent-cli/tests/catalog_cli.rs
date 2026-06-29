@@ -1264,11 +1264,11 @@ fn tui_once_renders_catalog_and_trace_snapshot() {
         .stdout
         .clone();
     let output = String::from_utf8(output).expect("stdout is utf8");
-    assert!(output.contains("Agent Runtime TUI"));
-    assert!(output.contains("Catalog / Runs"));
-    assert!(output.contains("Trace"));
-    assert!(output.contains("Command"));
-    assert!(output.contains("run <agent_id> [json]"));
+    assert!(output.contains("Agent Runtime"));
+    assert!(output.contains("Context"));
+    assert!(output.contains("Output"));
+    assert!(output.contains("Input"));
+    assert!(output.contains("/help commands"));
     assert!(output.contains("agent: echo_agent@0.1.0"));
     assert!(output.contains("run_started"));
 }

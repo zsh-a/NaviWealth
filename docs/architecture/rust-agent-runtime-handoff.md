@@ -71,7 +71,7 @@ Major implemented capabilities:
 - Stores: in-memory and file-backed run/proposal/session/state storage.
 - CLI: `run`, `tick`, `replay`, `inspect`, `validate`, `catalog`, `tool`,
   `proposal`, `session`, `eval`, `cmd`, `debug-bundle`, `metrics`, `serve`,
-  and basic `tui`.
+  and `tui` with direct natural language input plus slash-command debugging.
 - Tool sources: inline mock tools, process JSON-RPC host, MCP stdio,
   HTTP JSON manifest.
 - LLM providers: OpenAI-compatible, Anthropic, Ollama, and mock.

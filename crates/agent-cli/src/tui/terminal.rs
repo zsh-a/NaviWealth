@@ -36,16 +36,18 @@ async fn run_tui_event_loop(
             && let Event::Key(key) = crossterm::event::read().into_diagnostic()?
         {
             if state.input_mode {
-                handle_input_key(state, key.code, key.modifiers).await?;
+                if handle_input_key(state, key.code, key.modifiers).await? {
+                    return Ok(());
+                }
                 continue;
             }
             match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                KeyCode::Char(':') => state.enter_command(""),
-                KeyCode::Char('r') => state.enter_command("run "),
-                KeyCode::Char('t') => state.enter_command("tool "),
-                KeyCode::Char('p') => state.enter_command("replay "),
-                KeyCode::Char('i') => state.enter_command("inspect "),
+                KeyCode::Char(':') | KeyCode::Char('/') => state.enter_command("/"),
+                KeyCode::Char('r') => state.enter_command("/run "),
+                KeyCode::Char('t') => state.enter_command("/tool "),
+                KeyCode::Char('p') => state.enter_command("/replay "),
+                KeyCode::Char('i') => state.enter_command("/inspect "),
                 KeyCode::Char('R') => {
                     if let Err(error) = state.refresh().await {
                         state.push_log(format!("refresh failed: {error}"));
@@ -53,7 +55,11 @@ async fn run_tui_event_loop(
                         state.push_log("refreshed catalog/trace/store");
                     }
                 }
-                KeyCode::Char('?') => run_command(state, "help").await,
+                KeyCode::Char('?') => run_command(state, "/help").await,
+                KeyCode::Char(ch) => {
+                    state.enter_command("");
+                    state.command_input.push(ch);
+                }
                 _ => {}
             }
         }
@@ -64,14 +70,20 @@ async fn handle_input_key(
     state: &mut TuiState,
     code: KeyCode,
     modifiers: KeyModifiers,
-) -> Result<()> {
+) -> Result<bool> {
     match code {
-        KeyCode::Esc => state.cancel_command(),
+        KeyCode::Esc => {
+            if state.command_input.is_empty() {
+                return Ok(true);
+            }
+            state.command_input.clear();
+        }
         KeyCode::Enter => {
             let command = state.command_input.trim().to_owned();
-            state.cancel_command();
+            state.command_input.clear();
             run_command(state, &command).await;
         }
+        KeyCode::Char('c') if modifiers.contains(KeyModifiers::CONTROL) => return Ok(true),
         KeyCode::Backspace => {
             state.command_input.pop();
         }
@@ -81,7 +93,7 @@ async fn handle_input_key(
         KeyCode::Char(ch) => state.command_input.push(ch),
         _ => {}
     }
-    Ok(())
+    Ok(false)
 }
 
 async fn run_command(state: &mut TuiState, command: &str) {
