@@ -185,6 +185,10 @@ Current bridge capabilities:
   Inbox Triage now prefers `FrbInboxTriageClassifier`, which calls
   `AgentRuntimeLlmBridge.completeProfile` for the structured JSON verdict
   while preserving the existing proposal parser and heuristic fallback.
+- Provide an additional KnowledgeOS FRB profile-backed LLM classifier
+  integration: Contradiction Judge now prefers `FrbContradictionJudge`, which
+  calls `AgentRuntimeLlmBridge.completeProfile` for the principle/memory
+  verdict while preserving the existing confidence gate and heuristic fallback.
 - Provide the first tool-using production agent integration on the
   native-planned continuation loop: HealthOS Recovery Alert now uses
   `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB

@@ -19,6 +19,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -542,5 +543,120 @@ void main() {
         expect(v.isContradiction, isFalse);
       },
     );
+
+    test(
+      'FrbContradictionJudge parses a genuine contradiction verdict',
+      () async {
+        final bridge = _FakeLlmBridge(
+          responseText:
+              '{"is_contradiction": true, "confidence": 0.9, '
+              '"reason_zh": "方向相反"}',
+        );
+        final judge = FrbContradictionJudge(llmBridge: bridge);
+
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '决定开始高频波段',
+        );
+
+        expect(bridge.calls, 1);
+        expect(bridge.lastMessages.first['role'], 'system');
+        expect(bridge.lastMessages.last['role'], 'user');
+        expect(bridge.lastMetadata['surface'], 'knowledge_contradiction');
+        expect(v.isContradiction, isTrue);
+        expect(v.reasonZh, '方向相反');
+      },
+    );
+
+    test(
+      'FrbContradictionJudge falls back when FRB completion throws',
+      () async {
+        final judge = FrbContradictionJudge(
+          llmBridge: _FakeLlmBridge(error: StateError('native unavailable')),
+        );
+
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '该决定违反了长期持有',
+        );
+
+        expect(v.isContradiction, isTrue);
+        expect(v.reasonZh, contains('违反'));
+      },
+    );
   });
+}
+
+class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+  _FakeLlmBridge({this.responseText, this.error});
+
+  final String? responseText;
+  final Object? error;
+  var calls = 0;
+  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
+  Map<String, Object?> lastMetadata = const <String, Object?>{};
+
+  @override
+  Map<String, Object?> buildRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
+    return <String, Object?>{
+      'messages': messages,
+      'metadata': metadata,
+      'max_output_tokens': maxOutputTokens,
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> completeMock({
+    required List<Map<String, Object?>> messages,
+    required String responseText,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return <String, Object?>{'content': responseText};
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    calls += 1;
+    lastMessages = messages;
+    lastMetadata = metadata;
+    final e = error;
+    if (e != null) throw e;
+    return <String, Object?>{
+      'provider': 'mock',
+      'model': 'test-model',
+      'content': responseText ?? '',
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> validateRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return buildRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
+  }
 }

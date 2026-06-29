@@ -157,6 +157,10 @@ Implemented:
   completion through `FrbInboxTriageClassifier`, using
   `AgentRuntimeLlmBridge.completeProfile` for the structured JSON verdict while
   preserving the existing proposal parser and heuristic fallback
+- KnowledgeOS Contradiction Judge now prefers a FRB profile-backed LLM
+  completion through `FrbContradictionJudge`, using
+  `AgentRuntimeLlmBridge.completeProfile` for the principle/memory verdict
+  while preserving the existing confidence gate and heuristic fallback
 - First tool-using production agent migration onto the native-planned
   continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`

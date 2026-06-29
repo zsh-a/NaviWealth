@@ -110,10 +110,10 @@ final inboxTriageClassifierProvider = FutureProvider<InboxTriageClassifier>((
 });
 
 /// Contradiction-judge seam (§14.2 "ContradictionAgent cosine + LLM
-/// judge 路径"). Returns the LLM-backed judge when a device LLM profile
-/// is configured, the pure-Dart marker heuristic otherwise. The LLM path
-/// degrades silently to the same heuristic on any per-pair failure (no
-/// profile / network / timeout / parse / low confidence), so the no-LLM
+/// judge 路径"). Returns the FRB profile-backed judge when an active device LLM
+/// profile is configured, the pure-Dart marker heuristic otherwise. The FRB
+/// LLM path degrades silently to the same heuristic on any per-pair failure
+/// (no profile / network / timeout / parse / low confidence), so the no-LLM
 /// (Web / no key) path stays deterministic. Resolved by
 /// [ContradictionAgent.run] via `ctx.ref` so the agent stays
 /// synchronously constructible (the agent list is sync, the client is
@@ -122,15 +122,15 @@ final contradictionJudgeProvider = FutureProvider<ContradictionJudge>((
   ref,
 ) async {
   final logger = ref.watch(loggerProvider);
-  final client = ref.watch(deviceLlmClientProvider);
-  if (client == null) {
+  final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+  if (llmBridge == null) {
     logger.i(
       '[contradiction] judge=heuristic — ${_diagnoseLlmUnavailable(ref)}',
     );
     return const HeuristicContradictionJudge();
   }
-  logger.i('[contradiction] judge=llm model=${client.config.model}');
-  return LlmContradictionJudge(client: client, logger: logger);
+  logger.i('[contradiction] judge=frb-llm');
+  return FrbContradictionJudge(llmBridge: llmBridge, logger: logger);
 });
 
 /// Capture classifier seam. Returns the LLM-driven classifier when a

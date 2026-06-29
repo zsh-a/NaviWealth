@@ -25,6 +25,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../../../core/logging/app_logger.dart';
@@ -127,7 +128,7 @@ class LlmContradictionJudge implements ContradictionJudge {
         return _fallback(principleStatement, memoryText);
       }
 
-      final verdict = _parseVerdict(json);
+      final verdict = _parseContradictionVerdict(json);
       // A well-formed "not a contradiction" verdict is a valid LLM
       // answer — do NOT fall back, that would re-introduce the marker
       // noise the model deliberately suppressed.
@@ -165,24 +166,6 @@ class LlmContradictionJudge implements ContradictionJudge {
       ..writeln('## 最近内容(Decision / Note 摘要)')
       ..writeln(memory);
     return buf.toString();
-  }
-
-  ContradictionVerdict _parseVerdict(Map<String, Object?> json) {
-    final isContradiction = json['is_contradiction'] == true;
-    final confidence = (_coerceDouble(json['confidence']) ?? 0.0).clamp(
-      0.0,
-      1.0,
-    );
-    final reason = (json['reason_zh'] as String?)?.trim() ?? '';
-    if (!isContradiction || confidence < _kMinConfidence || reason.isEmpty) {
-      // Below the gate (or a clean "no") → no flag.
-      return const ContradictionVerdict.none();
-    }
-    return ContradictionVerdict(
-      isContradiction: true,
-      confidence: confidence,
-      reasonZh: reason,
-    );
   }
 
   static String? _extractText(AnthropicCompletion completion) {
@@ -247,4 +230,114 @@ class LlmContradictionJudge implements ContradictionJudge {
     if (v is String) return double.tryParse(v);
     return null;
   }
+}
+
+class FrbContradictionJudge implements ContradictionJudge {
+  const FrbContradictionJudge({
+    required this.llmBridge,
+    this.fallback = const HeuristicContradictionJudge(),
+    this.maxTokens = 4096,
+    this.requestTimeout = const Duration(seconds: 8),
+    this.logger,
+  });
+
+  final AgentRuntimeLlmBridge llmBridge;
+  final ContradictionJudge fallback;
+  final int maxTokens;
+  final Duration requestTimeout;
+  final AppLogger? logger;
+
+  @override
+  Future<ContradictionVerdict> judge({
+    required String principleStatement,
+    required String memoryText,
+  }) async {
+    final principle = principleStatement.trim();
+    final memory = memoryText.trim();
+    if (principle.isEmpty || memory.isEmpty) {
+      return _fallback(principleStatement, memoryText);
+    }
+
+    final stopwatch = Stopwatch()..start();
+    try {
+      final response = await llmBridge
+          .completeProfile(
+            messages: <Map<String, Object?>>[
+              const <String, Object?>{
+                'role': 'system',
+                'content': LlmContradictionJudge._system,
+              },
+              <String, Object?>{
+                'role': 'user',
+                'content': LlmContradictionJudge._buildUserMessage(
+                  principle,
+                  memory,
+                ),
+              },
+            ],
+            maxOutputTokens: maxTokens,
+            metadata: const <String, Object?>{
+              'surface': 'knowledge_contradiction',
+              'agent_id': 'knowledge_contradiction',
+            },
+          )
+          .timeout(requestTimeout);
+      logger?.d(
+        '$_kLogTag frb response ${stopwatch.elapsedMilliseconds}ms '
+        'provider=${response['provider'] ?? "(unknown)"}',
+      );
+      final body = response['content'];
+      if (body is! String || body.trim().isEmpty) {
+        logger?.w('$_kLogTag FRB response missing content, falling back');
+        return _fallback(principleStatement, memoryText);
+      }
+      final json = LlmContradictionJudge._extractJsonObject(body);
+      if (json == null) {
+        logger?.w('$_kLogTag FRB JSON extract failed, falling back');
+        return _fallback(principleStatement, memoryText);
+      }
+      final verdict = _parseContradictionVerdict(json);
+      logger?.i(
+        '$_kLogTag frb verdict isContradiction=${verdict.isContradiction} '
+        'confidence=${verdict.confidence}',
+      );
+      return verdict;
+    } on Object catch (err, st) {
+      logger?.w(
+        '$_kLogTag frb exception after ${stopwatch.elapsedMilliseconds}ms '
+        '(${err.runtimeType}: $err), falling back to heuristic',
+        error: err,
+        stackTrace: st,
+      );
+      return _fallback(principleStatement, memoryText);
+    }
+  }
+
+  Future<ContradictionVerdict> _fallback(
+    String principleStatement,
+    String memoryText,
+  ) {
+    return fallback.judge(
+      principleStatement: principleStatement,
+      memoryText: memoryText,
+    );
+  }
+}
+
+ContradictionVerdict _parseContradictionVerdict(Map<String, Object?> json) {
+  final isContradiction = json['is_contradiction'] == true;
+  final confidence =
+      (LlmContradictionJudge._coerceDouble(json['confidence']) ?? 0.0).clamp(
+        0.0,
+        1.0,
+      );
+  final reason = (json['reason_zh'] as String?)?.trim() ?? '';
+  if (!isContradiction || confidence < _kMinConfidence || reason.isEmpty) {
+    return const ContradictionVerdict.none();
+  }
+  return ContradictionVerdict(
+    isContradiction: true,
+    confidence: confidence,
+    reasonZh: reason,
+  );
 }
