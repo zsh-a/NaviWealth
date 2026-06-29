@@ -145,12 +145,12 @@ Implemented:
   non-empty string in both JSON Schema and the native FRB validator, so trace
   consumers never receive an empty tool label
 - Native FRB tool continuations now validate the previous step and tool
-  response before mutating run state: previous `agent_id` / `agent_version` /
-  `run_id`, `step_index`, `tool_call_id`, catalog-bound tool names,
-  `continuation.next_step_index`, `continuation.tool_plan`, historical
-  `continuation.tool_results`, JSON-RPC tool response envelopes for current
-  and historical results, and tool response ids are rejected when malformed,
-  mismatched, or ambiguous
+  response before mutating run state: previous `protocol_version`,
+  `agent_id` / `agent_version` / `run_id`, `step_index`, `tool_call_id`,
+  catalog-bound tool names, `continuation.next_step_index`,
+  `continuation.tool_plan`, historical `continuation.tool_results`,
+  JSON-RPC tool response envelopes for current and historical results, and tool response
+  ids are rejected when malformed, mismatched, or ambiguous
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`

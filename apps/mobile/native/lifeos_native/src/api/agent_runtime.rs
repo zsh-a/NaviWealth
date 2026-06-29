@@ -285,6 +285,7 @@ pub fn agent_runtime_continue_run_step(
     if previous_step.get("status").and_then(Value::as_str) != Some("tool_call_requested") {
         anyhow::bail!("previous step status must be 'tool_call_requested'");
     }
+    require_previous_step_protocol_version(&previous_step)?;
     require_previous_step_agent(&previous_step, &agent.id, &agent.version)?;
     let run_id = require_previous_step_run_id(&previous_step)?;
     let previous_step_index = require_previous_step_index(&previous_step)?;
@@ -382,6 +383,23 @@ fn require_previous_step_agent(
     if previous_agent_version != agent_version {
         anyhow::bail!(
             "previous step agent_version '{previous_agent_version}' does not match catalog agent version '{agent_version}'"
+        );
+    }
+    Ok(())
+}
+
+fn require_previous_step_protocol_version(previous_step: &Value) -> Result<()> {
+    let previous_protocol_version = previous_step
+        .get("protocol_version")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            anyhow::anyhow!("previous step protocol_version must be a non-empty string")
+        })?;
+    let expected = protocol_version();
+    if previous_protocol_version != expected {
+        anyhow::bail!(
+            "previous step protocol_version '{previous_protocol_version}' does not match runtime protocol_version '{expected}'"
         );
     }
     Ok(())
