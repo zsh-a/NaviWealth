@@ -224,6 +224,18 @@ void main() {
       containsPair('native_step_index', 3),
     );
     expect(
+      trace.toolSpans.single.attributes,
+      containsPair('native_trace_event_kind', 'agent_runtime_step'),
+    );
+    expect(
+      trace.toolSpans.single.attributes,
+      containsPair('native_trace_event_status', 'completed'),
+    );
+    expect(
+      trace.toolSpans.single.attributes,
+      containsPair('native_trace_event_tool_name', 'list_due_routines'),
+    );
+    expect(
       trace.spans.first.attributes,
       containsPair('surface', 'knowledge_routine_due'),
     );

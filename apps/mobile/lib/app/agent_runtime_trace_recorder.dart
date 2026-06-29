@@ -161,6 +161,10 @@ class AgentRuntimeTraceRecorder {
       if (step['status'] != 'tool_call_requested') continue;
       final nativeStepIndex = _int(step['step_index']);
       final spanOrdinal = nativeStepIndex ?? i;
+      final nativeStepTraceEvent = _nativeTraceEventForStep(
+        stepRun,
+        nativeStepIndex,
+      );
       final toolCall = _object(step['tool_call']);
       final name = _string(toolCall?['name']) ?? 'unknown';
       final response = toolResponseIndex < stepRun.toolResponses.length
@@ -183,6 +187,13 @@ class AgentRuntimeTraceRecorder {
           'tool_call_id': _string(toolCall?['tool_call_id']),
           'native_step_index': ?nativeStepIndex,
           'native_step_status': _string(step['status']),
+          'native_trace_event_kind': ?_string(nativeStepTraceEvent?['kind']),
+          'native_trace_event_status': ?_string(
+            nativeStepTraceEvent?['status'],
+          ),
+          'native_trace_event_tool_name': ?_string(
+            nativeStepTraceEvent?['tool_name'],
+          ),
           'response_id': _string(response?['id']),
         },
       );
@@ -245,6 +256,17 @@ Map<String, Object?>? _nativeTraceEvent(
       (stepRun.nativeTraceEvents.isEmpty
           ? null
           : stepRun.nativeTraceEvents.last);
+}
+
+Map<String, Object?>? _nativeTraceEventForStep(
+  AgentRuntimeNativeStepRunResult stepRun,
+  int? stepIndex,
+) {
+  if (stepIndex == null) return null;
+  for (final event in stepRun.nativeTraceEvents) {
+    if (_int(event['step_index']) == stepIndex) return event;
+  }
+  return null;
 }
 
 Map<String, Object?>? _nativeRunState(
