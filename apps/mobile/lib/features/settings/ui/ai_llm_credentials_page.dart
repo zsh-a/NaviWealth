@@ -24,8 +24,6 @@ import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
-import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart'
-    show kDefaultDeviceModel;
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'settings_page_frame.dart';

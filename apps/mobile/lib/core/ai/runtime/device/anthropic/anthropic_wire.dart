@@ -8,13 +8,7 @@ library;
 
 import 'dart:convert';
 
-/// Default model when the request doesn't override it.
-///
-/// The backend default is a ModelScope gateway model; the device path
-/// uses the user's own Anthropic key, so default to a current Claude
-/// assistant model (cost/quality balance for routine chat — the user
-/// can override later).
-const String kDefaultDeviceModel = 'claude-sonnet-4-6';
+export '../../../llm_credentials/llm_credentials.dart' show kDefaultDeviceModel;
 
 /// One Messages API message. `role` is `user` or `assistant`; system
 /// instructions ride on [AnthropicRequest.system]. `content` is either
