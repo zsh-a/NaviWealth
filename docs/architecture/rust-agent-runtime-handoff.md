@@ -127,6 +127,9 @@ Current bridge capabilities:
 - Provide a Dart-side `AgentRuntimeProposalBridge` that parses ready proposal
   envelopes from terminal FRB steps and dispatches confirmed proposals through
   the active cross-domain `ProposalApplier`.
+- Provide a Dart-side `AgentRuntimeConfirmedProposalRunner` that composes the
+  bounded FRB step runner with the proposal bridge for explicit
+  confirmed-proposal execution.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -140,9 +143,9 @@ Known limitation:
   limitation, not the production mobile path. The production path should
   advance through FRB embedded runtime steps and Dart-side device tool dispatch.
 - The embedded FRB path currently covers deterministic native step contracts
-  bounded Dart-side tool loops, and an explicit confirmed-proposal apply
-  bridge. The remaining production work is the full LLM-backed native runner
-  and wiring this bridge into a concrete agent/UI confirmation flow.
+  bounded Dart-side tool loops, and an explicit confirmed-proposal runner. The
+  remaining production work is the full LLM-backed native runner and wiring this
+  runner into a concrete agent/UI confirmation entrypoint.
 
 ## Current Refactor State
 

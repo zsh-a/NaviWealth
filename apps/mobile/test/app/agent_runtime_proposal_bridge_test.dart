@@ -1,8 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_proposal_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 
 void main() {
   test('parses ready proposal from terminal tool result', () {
@@ -92,6 +96,67 @@ void main() {
     expect(result['proposal_id'], 'proposal_1');
     expect(result['apply_state'], containsPair('error_message', 'blocked'));
   });
+
+  test(
+    'AgentRuntimeConfirmedProposalRunner runs terminal step and applies proposal',
+    () async {
+      final applier = _RecordingApplier(
+        state: const ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: 'action_1',
+          appliedTable: 'execution_actions',
+        ),
+      );
+      final runner = AgentRuntimeConfirmedProposalRunner(
+        stepRunner: AgentRuntimeNativeStepRunner(
+          bridge: _TerminalBridge(step: _terminalProposalStep()),
+          toolHost: AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
+        ),
+        proposalBridge: AgentRuntimeProposalBridge(applier: applier),
+      );
+
+      final result = await runner.runAndApplyConfirmedProposal(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+      );
+
+      expect(result['step'], containsPair('status', 'completed'));
+      expect(result['proposal_apply'], containsPair('status', 'applied'));
+      expect(applier.plans.single.proposalId, 'proposal_1');
+    },
+  );
+
+  test(
+    'AgentRuntimeConfirmedProposalRunner preserves skipped apply result',
+    () async {
+      final applier = _RecordingApplier();
+      final runner = AgentRuntimeConfirmedProposalRunner(
+        stepRunner: AgentRuntimeNativeStepRunner(
+          bridge: const _TerminalBridge(
+            step: <String, Object?>{
+              'status': 'completed',
+              'output': <String, Object?>{'content': 'done'},
+            },
+          ),
+          toolHost: AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
+        ),
+        proposalBridge: AgentRuntimeProposalBridge(applier: applier),
+      );
+
+      final result = await runner.runAndApplyConfirmedProposal(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+      );
+
+      expect(
+        result['proposal_apply'],
+        containsPair('reason', 'no_ready_proposal'),
+      );
+      expect(applier.plans, isEmpty);
+    },
+  );
 }
 
 Map<String, Object?> _terminalProposalStep() {
@@ -131,4 +196,74 @@ class _RecordingApplier implements ProposalApplier {
 
   @override
   Future<void> undo(ProposalApplyState state) async {}
+}
+
+class _TerminalBridge implements AgentRuntimeNativeBridge {
+  const _TerminalBridge({required Map<String, Object?> step}) : _step = step;
+
+  final Map<String, Object?> _step;
+
+  @override
+  Future<String> protocolVersion() async => 'agent.v1';
+
+  @override
+  Future<String> catalogVersion() async => 'agent_catalog.v1';
+
+  @override
+  Future<Map<String, Object?>> catalogSummary(
+    Map<String, Object?> catalog,
+  ) async {
+    return catalog;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateRunRequest(
+    Map<String, Object?> request,
+  ) async {
+    return request;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateToolSpec(
+    Map<String, Object?> tool,
+  ) async {
+    return tool;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
+    return trace;
+  }
+
+  @override
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    return _step;
+  }
+
+  @override
+  Future<Map<String, Object?>> continueRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> previousStep,
+    required Map<String, Object?> toolResponse,
+    required String agentId,
+  }) async {
+    return _step;
+  }
+}
+
+class _NoopDispatcher implements DeviceToolDispatcher {
+  const _NoopDispatcher();
+
+  @override
+  Future<Object?> dispatch(
+    DeviceSession session,
+    String name,
+    Object? input,
+  ) async {
+    return const <String, Object?>{};
+  }
 }

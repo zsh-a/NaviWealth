@@ -11,11 +11,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ai/composition/proposal_applier.dart';
 import '../core/ai/composition/proposal_apply_state.dart';
 import '../core/ai/composition/proposal_plan.dart';
+import 'agent_runtime_native_bridge.dart';
 
 final agentRuntimeProposalBridgeProvider =
     FutureProvider<AgentRuntimeProposalBridge>((ref) async {
       return AgentRuntimeProposalBridge(
         applier: await ref.watch(proposalApplierProvider.future),
+      );
+    });
+
+final agentRuntimeConfirmedProposalRunnerProvider =
+    FutureProvider<AgentRuntimeConfirmedProposalRunner>((ref) async {
+      return AgentRuntimeConfirmedProposalRunner(
+        stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+        proposalBridge: await ref.watch(
+          agentRuntimeProposalBridgeProvider.future,
+        ),
       );
     });
 
@@ -58,6 +69,33 @@ class AgentRuntimeProposalBridge {
     } catch (e) {
       return _proposalApplyError(plan, '$e');
     }
+  }
+}
+
+class AgentRuntimeConfirmedProposalRunner {
+  const AgentRuntimeConfirmedProposalRunner({
+    required AgentRuntimeNativeStepRunner stepRunner,
+    required AgentRuntimeProposalBridge proposalBridge,
+  }) : _stepRunner = stepRunner,
+       _proposalBridge = proposalBridge;
+
+  final AgentRuntimeNativeStepRunner _stepRunner;
+  final AgentRuntimeProposalBridge _proposalBridge;
+
+  Future<Map<String, Object?>> runAndApplyConfirmedProposal({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+    int? maxToolSteps,
+  }) async {
+    final step = await _stepRunner.runUntilTerminal(
+      catalog: catalog,
+      request: request,
+      agentId: agentId,
+      maxToolSteps: maxToolSteps,
+    );
+    final apply = await _proposalBridge.applyTerminalReadyProposal(step);
+    return <String, Object?>{'step': step, 'proposal_apply': apply};
   }
 }
 
