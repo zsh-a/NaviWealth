@@ -45,6 +45,19 @@ void main() {
         agentId: 'execution_review',
       );
       expect(step, containsPair('status', 'completed'));
+      final continued = await bridge.continueRunStep(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        previousStep: const <String, Object?>{
+          'run_id': 'run_1',
+          'status': 'tool_call_requested',
+        },
+        toolResponse: const <String, Object?>{
+          'jsonrpc': '2.0',
+          'result': <String, Object?>{'ok': true},
+        },
+        agentId: 'execution_review',
+      );
+      expect(continued, containsPair('status', 'completed'));
       expect(initCalls, ['/tmp/liblifeos_native.dylib']);
       expect(
         api.catalogPayloads.single,
@@ -111,14 +124,18 @@ void main() {
         agentId: 'execution_review',
       );
 
-      expect(result['status'], 'tool_call_finished');
-      expect(result['tool_result'], <String, Object?>{
-        'tool': 'read_task',
-        'input': <String, Object?>{'id': 'task_1'},
-      });
-      expect(result['tool_response'], containsPair('id', 'call_1'));
+      expect(result['status'], 'completed');
+      expect(result['output'], containsPair('mode', 'fake_continue'));
+      expect(
+        result['output'],
+        containsPair('tool_result', <String, Object?>{
+          'tool': 'read_task',
+          'input': <String, Object?>{'id': 'task_1'},
+        }),
+      );
       expect(dispatcher.calls.single.name, 'read_task');
       expect(dispatcher.calls.single.input, <String, Object?>{'id': 'task_1'});
+      expect(result['tool_call'], containsPair('name', 'read_task'));
     },
   );
 
@@ -199,6 +216,22 @@ class _FakeNativeApi implements AgentRuntimeNativeApi {
       'status': request['input'] == null ? 'failed' : 'completed',
     });
   }
+
+  @override
+  Future<String> continueRunStep({
+    required String catalogJson,
+    required String previousStepJson,
+    required String toolResponseJson,
+    required String agentId,
+  }) async {
+    final toolResponse = jsonDecode(toolResponseJson) as Map<String, Object?>;
+    return jsonEncode(<String, Object?>{
+      'protocol_version': 'agent.v1',
+      'agent_id': agentId,
+      'status': toolResponse['error'] == null ? 'completed' : 'failed',
+      'output': <String, Object?>{'tool_result': toolResponse['result']},
+    });
+  }
 }
 
 class _FakeBridge implements AgentRuntimeNativeBridge {
@@ -212,6 +245,7 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
           };
 
   final catalogs = <Map<String, Object?>>[];
+  final continuations = <_Continuation>[];
   final Map<String, Object?> _step;
 
   @override
@@ -258,6 +292,27 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
   }) async {
     return _step;
   }
+
+  @override
+  Future<Map<String, Object?>> continueRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> previousStep,
+    required Map<String, Object?> toolResponse,
+    required String agentId,
+  }) async {
+    continuations.add(_Continuation(previousStep, toolResponse));
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': previousStep['run_id'],
+      'agent_id': agentId,
+      'status': toolResponse['error'] == null ? 'completed' : 'failed',
+      'tool_call': previousStep['tool_call'],
+      'output': <String, Object?>{
+        'mode': 'fake_continue',
+        'tool_result': toolResponse['result'],
+      },
+    };
+  }
 }
 
 class _RecordingDispatcher implements DeviceToolDispatcher {
@@ -279,4 +334,11 @@ class _ToolCall {
 
   final String name;
   final Object? input;
+}
+
+class _Continuation {
+  const _Continuation(this.previousStep, this.toolResponse);
+
+  final Map<String, Object?> previousStep;
+  final Map<String, Object?> toolResponse;
 }

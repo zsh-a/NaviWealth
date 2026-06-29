@@ -45,3 +45,15 @@ Future<String> agentRuntimeStartRunStep({
   requestJson: requestJson,
   agentId: agentId,
 );
+
+Future<String> agentRuntimeContinueRunStep({
+  required String catalogJson,
+  required String previousStepJson,
+  required String toolResponseJson,
+  required String agentId,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeContinueRunStep(
+  catalogJson: catalogJson,
+  previousStepJson: previousStepJson,
+  toolResponseJson: toolResponseJson,
+  agentId: agentId,
+);

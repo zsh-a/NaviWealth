@@ -4,12 +4,12 @@
 //! DTOs live in `agent-core`; Dart passes JSON strings across the bridge.
 
 use agent_core::{
-    AgentRuntimeCatalog, AgentTrace, RunId, RunRequest, ToolCallId, ToolSpec, catalog_version,
-    protocol_version,
+    catalog_version, protocol_version, AgentRuntimeCatalog, AgentTrace, RunId, RunRequest,
+    ToolCallId, ToolSpec,
 };
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 #[derive(Debug, Serialize)]
 struct CatalogSummary {
@@ -111,6 +111,60 @@ pub fn agent_runtime_start_run_step(
                 "output": request.input,
             })
         }
+    };
+    Ok(serde_json::to_string(&response)?)
+}
+
+pub fn agent_runtime_continue_run_step(
+    catalog_json: String,
+    previous_step_json: String,
+    tool_response_json: String,
+    agent_id: String,
+) -> Result<String> {
+    let catalog: AgentRuntimeCatalog = serde_json::from_str(&catalog_json)?;
+    let previous_step: Value = serde_json::from_str(&previous_step_json)?;
+    let tool_response: Value = serde_json::from_str(&tool_response_json)?;
+    let agent = catalog
+        .agents
+        .iter()
+        .find(|agent| agent.id == agent_id)
+        .ok_or_else(|| anyhow::anyhow!("agent '{agent_id}' is not present in the catalog"))?;
+    if previous_step.get("status").and_then(Value::as_str) != Some("tool_call_requested") {
+        anyhow::bail!("previous step status must be 'tool_call_requested'");
+    }
+    let run_id = previous_step
+        .get("run_id")
+        .cloned()
+        .ok_or_else(|| anyhow::anyhow!("previous step is missing run_id"))?;
+    let tool_call = previous_step
+        .get("tool_call")
+        .cloned()
+        .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
+
+    let response = match tool_response.get("error") {
+        Some(error) => json!({
+            "protocol_version": protocol_version(),
+            "run_id": run_id,
+            "agent_id": agent.id,
+            "agent_version": agent.version,
+            "status": "failed",
+            "tool_call": tool_call,
+            "tool_response": tool_response,
+            "error": error,
+        }),
+        None => json!({
+            "protocol_version": protocol_version(),
+            "run_id": run_id,
+            "agent_id": agent.id,
+            "agent_version": agent.version,
+            "status": "completed",
+            "output": {
+                "mode": "frb_tool_step",
+                "tool_call": tool_call,
+                "tool_result": tool_response.get("result").cloned().unwrap_or(Value::Null),
+                "tool_response": tool_response,
+            }
+        }),
     };
     Ok(serde_json::to_string(&response)?)
 }

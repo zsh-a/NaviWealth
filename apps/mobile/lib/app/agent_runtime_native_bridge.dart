@@ -62,6 +62,12 @@ abstract interface class AgentRuntimeNativeApi {
     required String requestJson,
     required String agentId,
   });
+  Future<String> continueRunStep({
+    required String catalogJson,
+    required String previousStepJson,
+    required String toolResponseJson,
+    required String agentId,
+  });
 }
 
 class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
@@ -105,6 +111,21 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
       agentId: agentId,
     );
   }
+
+  @override
+  Future<String> continueRunStep({
+    required String catalogJson,
+    required String previousStepJson,
+    required String toolResponseJson,
+    required String agentId,
+  }) {
+    return rust.agentRuntimeContinueRunStep(
+      catalogJson: catalogJson,
+      previousStepJson: previousStepJson,
+      toolResponseJson: toolResponseJson,
+      agentId: agentId,
+    );
+  }
 }
 
 abstract interface class AgentRuntimeNativeBridge {
@@ -117,6 +138,12 @@ abstract interface class AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
+    required String agentId,
+  });
+  Future<Map<String, Object?>> continueRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> previousStep,
+    required Map<String, Object?> toolResponse,
     required String agentId,
   });
 }
@@ -199,6 +226,23 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
     return _decodeObject(json);
   }
 
+  @override
+  Future<Map<String, Object?>> continueRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> previousStep,
+    required Map<String, Object?> toolResponse,
+    required String agentId,
+  }) async {
+    await _ensureInitialized();
+    final json = await _api.continueRunStep(
+      catalogJson: jsonEncode(catalog),
+      previousStepJson: jsonEncode(previousStep),
+      toolResponseJson: jsonEncode(toolResponse),
+      agentId: agentId,
+    );
+    return _decodeObject(json);
+  }
+
   Future<void> _ensureInitialized() {
     return _initFuture ??= _initRuntime(libraryPath: _libraryPath);
   }
@@ -246,15 +290,12 @@ class AgentRuntimeNativeStepRunner {
       }),
     );
     final response = _decodeObject(responseLine);
-    final error = response['error'];
-
-    return <String, Object?>{
-      ...step,
-      'status': error == null ? 'tool_call_finished' : 'tool_call_failed',
-      'tool_response': response,
-      if (error == null) 'tool_result': response['result'],
-      'tool_error': ?error,
-    };
+    return _bridge.continueRunStep(
+      catalog: catalog,
+      previousStep: step,
+      toolResponse: response,
+      agentId: agentId,
+    );
   }
 }
 

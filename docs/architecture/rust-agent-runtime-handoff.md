@@ -118,6 +118,11 @@ Current bridge capabilities:
 - Provide a headless Dart tool host entrypoint for local development.
 - Provide FRB/native validation, summary, and first-step run functions for
   agent runtime wire contracts.
+- Provide FRB/native continuation for the first Dart-dispatched tool step via
+  `agentRuntimeContinueRunStep`.
+- Provide a Dart-side `AgentRuntimeNativeStepRunner` that executes the first
+  embedded loop slice without a process host: native start step, Dart device
+  tool dispatch, native continuation step.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -130,6 +135,9 @@ Known limitation:
   contexts by sqlite3/Drift environment setup. Treat that as a dev/process-host
   limitation, not the production mobile path. The production path should
   advance through FRB embedded runtime steps and Dart-side device tool dispatch.
+- The embedded FRB path currently covers one tool-call continuation slice. The
+  remaining production work is the full multi-step runner loop and proposal
+  application round-trip.
 
 ## Current Refactor State
 
