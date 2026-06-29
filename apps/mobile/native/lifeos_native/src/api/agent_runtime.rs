@@ -592,13 +592,26 @@ fn attach_run_state(step: &mut Value) {
     let tool_result_count = continuation_result_count
         .or(output_result_count)
         .unwrap_or(0);
+    let status = object.get("status").cloned().unwrap_or(Value::Null);
     let state = json!({
-        "status": object.get("status").cloned().unwrap_or(Value::Null),
+        "status": status,
         "step_index": object.get("step_index").cloned().unwrap_or(Value::Null),
         "remaining_tool_count": remaining_tool_count,
         "tool_result_count": tool_result_count,
+        "terminal_reason": terminal_reason_for_status(object.get("status").and_then(Value::as_str)),
     });
     object.insert("run_state".to_owned(), state);
+}
+
+fn terminal_reason_for_status(status: Option<&str>) -> Value {
+    match status {
+        Some("completed") => Value::String("done".to_owned()),
+        Some("failed") => Value::String("stream_error".to_owned()),
+        Some("cancelled") => Value::String("user_cancel".to_owned()),
+        Some("policy_denied") => Value::String("policy_denied".to_owned()),
+        Some("closed_early") | Some("timed_out") => Value::String("closed_early".to_owned()),
+        _ => Value::Null,
+    }
 }
 
 fn attach_trace_event(step: &mut Value) {
@@ -722,6 +735,7 @@ mod tests {
         assert_eq!(first["trace_event"]["tool_name"], "read_first");
         assert_eq!(first["run_state"]["remaining_tool_count"], 1);
         assert_eq!(first["run_state"]["tool_result_count"], 0);
+        assert_eq!(first["run_state"]["terminal_reason"], Value::Null);
 
         let second: Value = serde_json::from_str(
             &agent_runtime_continue_run_step(
@@ -740,6 +754,7 @@ mod tests {
         assert_eq!(second["trace_event"]["tool_name"], "read_second");
         assert_eq!(second["run_state"]["remaining_tool_count"], 0);
         assert_eq!(second["run_state"]["tool_result_count"], 1);
+        assert_eq!(second["run_state"]["terminal_reason"], Value::Null);
 
         let terminal: Value = serde_json::from_str(
             &agent_runtime_continue_run_step(
@@ -758,5 +773,50 @@ mod tests {
         assert_eq!(terminal["output"]["mode"], "frb_tool_loop");
         assert_eq!(terminal["run_state"]["remaining_tool_count"], 0);
         assert_eq!(terminal["run_state"]["tool_result_count"], 2);
+        assert_eq!(terminal["run_state"]["terminal_reason"], "done");
+    }
+
+    #[test]
+    fn native_tool_response_errors_set_stream_error_terminal_reason() {
+        let request_json = json!({
+            "protocol_version": "agent.v1",
+            "run_id": "run_native_error_trace",
+            "input": {
+                "tool_call": {"name": "read_first", "input": {"id": "first"}}
+            },
+            "trigger": "manual",
+            "metadata": {}
+        })
+        .to_string();
+
+        let first: Value = serde_json::from_str(
+            &agent_runtime_start_run_step(
+                catalog_json(),
+                request_json,
+                "execution_review".to_owned(),
+            )
+            .expect("start step"),
+        )
+        .expect("first step json");
+
+        let failed: Value = serde_json::from_str(
+            &agent_runtime_continue_run_step(
+                catalog_json(),
+                first.to_string(),
+                json!({
+                    "jsonrpc": "2.0",
+                    "id": "call_1",
+                    "error": {"code": "denied", "message": "no"}
+                })
+                .to_string(),
+                "execution_review".to_owned(),
+            )
+            .expect("failed step"),
+        )
+        .expect("failed step json");
+
+        assert_eq!(failed["status"], "failed");
+        assert_eq!(failed["trace_event"]["status"], "failed");
+        assert_eq!(failed["run_state"]["terminal_reason"], "stream_error");
     }
 }

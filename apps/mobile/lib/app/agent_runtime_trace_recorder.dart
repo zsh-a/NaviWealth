@@ -123,6 +123,7 @@ class AgentRuntimeTraceRecorder {
         'budget_exhausted': stepRun.budgetExhausted,
         'native_trace_event_count': stepRun.nativeTraceEvents.length,
         'native_step_index': ?_int(nativeRunState?['step_index']),
+        'native_terminal_reason': ?_string(nativeRunState?['terminal_reason']),
         'native_remaining_tool_count': ?_int(
           nativeRunState?['remaining_tool_count'],
         ),
@@ -191,8 +192,14 @@ TerminalReason _terminalReason(
   AgentRuntimeNativeStepRunResult stepRun,
 ) {
   if (stepRun.budgetExhausted) return TerminalReason.closedEarly;
-  if (step['status'] == 'failed') return TerminalReason.streamError;
-  return TerminalReason.done;
+  final nativeReason = _string(_object(step['run_state'])?['terminal_reason']);
+  if (nativeReason != null) {
+    return TerminalReasonWire.parse(nativeReason);
+  }
+  return switch (step['status']) {
+    'failed' => TerminalReason.streamError,
+    _ => TerminalReason.done,
+  };
 }
 
 String _requestId({required String agentId, String? runId}) {

@@ -69,6 +69,36 @@ void main() {
     );
   });
 
+  test('uses native terminal reason for failed runs', () async {
+    final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+    final trace = await recorder.recordStepRun(
+      agentId: 'execution_review',
+      startedAt: DateTime.utc(2026, 6, 29, 8),
+      finishedAt: DateTime.utc(2026, 6, 29, 8),
+      stepRun: const AgentRuntimeNativeStepRunResult(
+        terminalStep: <String, Object?>{
+          'run_id': 'run_failed',
+          'status': 'failed',
+          'run_state': <String, Object?>{
+            'status': 'failed',
+            'step_index': 1,
+            'remaining_tool_count': 0,
+            'tool_result_count': 1,
+            'terminal_reason': 'stream_error',
+          },
+        },
+        dispatchedToolCount: 1,
+      ),
+    );
+
+    expect(trace.terminalReason, TerminalReason.streamError);
+    expect(trace.spans.first.status, AiSpanStatus.error);
+    expect(
+      trace.spans.first.attributes,
+      containsPair('native_terminal_reason', 'stream_error'),
+    );
+  });
+
   test('records native step-only tool plan runs', () async {
     final traces = <AiTrace>[];
     final recorder = AgentRuntimeTraceRecorder(
@@ -90,6 +120,7 @@ void main() {
             'step_index': 4,
             'remaining_tool_count': 0,
             'tool_result_count': 1,
+            'terminal_reason': 'done',
           },
         },
         dispatchedToolCount: 1,
@@ -141,6 +172,10 @@ void main() {
     expect(
       trace.spans.first.attributes,
       containsPair('native_tool_result_count', 1),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('native_terminal_reason', 'done'),
     );
     expect(
       trace.spans.first.attributes,
