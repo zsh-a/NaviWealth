@@ -89,6 +89,16 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
     .expect_err("unknown terminal reason should fail native validation")
     .to_string();
     assert!(unknown_terminal_reason.contains("terminal_reason"));
+
+    let unknown_status = agent_runtime_validate_trace(
+        include_str!(
+            "../../../../../fixtures/agent-runtime/trace.invalid.unknown-step-status.json"
+        )
+        .to_owned(),
+    )
+    .expect_err("unknown status should fail native validation")
+    .to_string();
+    assert!(unknown_status.contains("status"));
 }
 
 #[test]
