@@ -183,6 +183,23 @@ fn catalog_summary_rejects_malformed_proposal_kind() {
 }
 
 #[test]
+fn catalog_summary_rejects_proposal_kind_without_catalog_tool() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["proposal_kinds"][0]["tool_name"] = json!("missing_tool");
+
+    let err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("proposal kind should reference a catalog tool");
+
+    assert!(
+        err.to_string()
+            .contains("catalog.proposal_kinds[0].tool_name")
+    );
+}
+
+#[test]
 fn catalog_summary_rejects_duplicate_catalog_entries() {
     let mut catalog: Value = serde_json::from_str(include_str!(
         "../../../../../fixtures/agent-runtime/catalog.valid.json"

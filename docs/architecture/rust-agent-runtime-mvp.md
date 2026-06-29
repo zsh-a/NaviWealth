@@ -88,8 +88,9 @@ Implemented:
   validates catalog `AgentSpec` / `ProposalKindSpec` identifiers plus catalog /
   LLM `ToolSpec` names, descriptions, and JSON-schema object fields before
   native dispatch; interval schedules must have positive seconds and a local
-  hour from 0 through 23; catalog agent ids, tool names, proposal kinds, and
-  prompt block indexes must also be unique
+  hour from 0 through 23; proposal kinds must reference a catalog tool; catalog
+  agent ids, tool names, proposal kinds, and prompt block indexes must also be
+  unique
 - FRB-facing LLM request/response contract validation and deterministic mock
   LLM completion via `agentRuntimeValidateLlmRequest`,
   `agentRuntimeValidateLlmResponse`, and `agentRuntimeCompleteMockLlm`; LLM

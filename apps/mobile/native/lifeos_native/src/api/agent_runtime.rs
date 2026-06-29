@@ -811,6 +811,12 @@ fn require_catalog_contract(catalog: &AgentRuntimeCatalog) -> Result<()> {
     }
     for (index, proposal_kind) in catalog.proposal_kinds.iter().enumerate() {
         require_proposal_kind_contract(proposal_kind, &format!("catalog.proposal_kinds[{index}]"))?;
+        if !tool_names.contains(proposal_kind.tool_name.as_str()) {
+            anyhow::bail!(
+                "catalog.proposal_kinds[{index}].tool_name '{}' does not match any catalog tool",
+                proposal_kind.tool_name
+            );
+        }
         if !proposal_kinds.insert(proposal_kind.kind.as_str()) {
             anyhow::bail!(
                 "catalog.proposal_kinds[{index}].kind '{}' is duplicated",
