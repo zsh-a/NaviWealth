@@ -416,6 +416,29 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
 }
 
 #[test]
+fn start_run_step_rejects_unknown_remaining_tool_plan_item() {
+    let err = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {
+            "tool_plan": [
+              {"name": "propose_fake", "input": {"value": 1}},
+              {"name": "unknown_tool", "input": {"value": 2}}
+            ]
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("unknown remaining tool plan item should fail at start");
+
+    assert!(err.to_string().contains("continuation.tool_plan[0]"));
+}
+
+#[test]
 fn native_step_trace_events_validate_as_agent_trace_payloads() {
     let first_json = agent_runtime_start_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
@@ -594,6 +617,43 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
     assert!(next["run_state"]["terminal_reason"].is_null());
     assert_eq!(next["trace_event"]["status"], "tool_call_requested");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
+}
+
+#[test]
+fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+      "protocol_version": "agent.v1",
+      "run_id": "run_018f0000-0000-7000-8000-000000000000",
+      "agent_id": "execution_review",
+      "agent_version": "1.0.0",
+      "status": "tool_call_requested",
+      "tool_call": {
+        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+        "name": "propose_fake",
+        "input": {"value": 1}
+      },
+      "continuation": {
+        "tool_plan": [
+          {"name": "propose_fake", "input": {"value": 2}},
+          {"name": "unknown_tool", "input": {"value": 3}}
+        ],
+        "tool_results": []
+      }
+    }"#
+        .to_owned(),
+        r#"{
+      "jsonrpc": "2.0",
+      "id": "tool_018f0000-0000-7000-8000-000000000000",
+      "result": {"accepted": true, "value": 1}
+    }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("unknown remaining continuation tool plan item should fail");
+
+    assert!(err.to_string().contains("continuation.tool_plan[0]"));
 }
 
 #[test]

@@ -820,6 +820,7 @@ fn build_tool_call_requested_step(
     tool_call: RequestedToolCall,
     continuation: Option<Value>,
 ) -> Result<Value> {
+    validate_continuation_tool_plan(catalog, agent_id, &continuation)?;
     let tool = catalog
         .tools
         .iter()
@@ -853,6 +854,27 @@ fn build_tool_call_requested_step(
     }
     attach_runtime_metadata(&mut step);
     Ok(step)
+}
+
+fn validate_continuation_tool_plan(
+    catalog: &AgentRuntimeCatalog,
+    agent_id: &str,
+    continuation: &Option<Value>,
+) -> Result<()> {
+    let Some(continuation) = continuation else {
+        return Ok(());
+    };
+    let Some(plan) = continuation.get("tool_plan") else {
+        return Ok(());
+    };
+    let plan = plan
+        .as_array()
+        .ok_or_else(|| anyhow::anyhow!("continuation.tool_plan must be an array"))?;
+    for (index, tool_call) in plan.iter().enumerate() {
+        require_previous_tool_call_catalog_tool(catalog, agent_id, tool_call)
+            .map_err(|error| anyhow::anyhow!("continuation.tool_plan[{index}]: {error}"))?;
+    }
+    Ok(())
 }
 
 fn tool_call_step_index(continuation: &Option<Value>) -> u64 {
