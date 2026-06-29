@@ -178,6 +178,25 @@ void main() {
       expect(out.source, BriefingSource.programmatic);
       expect(out.summary, 'Slept 7.5h · HRV 48ms');
     });
+
+    test(
+      'ignores trace recording failures after a successful FRB turn',
+      () async {
+        final runner = _FakeProfileTurnRunner(
+          content: 'You slept 7.5h and HRV was 48ms.',
+        );
+        final synth = FrbBriefingSynthesizer(
+          runner: runner,
+          recordTrace: (_) async => throw StateError('trace store unavailable'),
+        );
+
+        final out = await synth.synthesize(baselineInputs);
+
+        expect(out.source, BriefingSource.llm);
+        expect(out.summary, 'You slept 7.5h and HRV was 48ms.');
+        expect(runner.calls.single.agentId, 'morning_briefing');
+      },
+    );
   });
 }
 
