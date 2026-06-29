@@ -382,7 +382,7 @@ void main() {
         maxToolSteps: 0,
       );
 
-      expect(result['status'], 'failed');
+      expect(result['status'], 'closed_early');
       expect(
         result['error'],
         containsPair('code', 'tool_call_budget_exhausted'),
@@ -419,11 +419,15 @@ void main() {
         maxToolSteps: 0,
       );
 
-      expect(result.terminalStep['status'], 'failed');
+      expect(result.terminalStep['status'], 'closed_early');
       expect(result.dispatchedToolCount, 0);
       expect(result.budgetExhausted, isTrue);
       expect(result.steps, hasLength(2));
       expect(result.toolResponses, isEmpty);
+      expect(
+        result.terminalStep['run_state'],
+        containsPair('status', 'closed_early'),
+      );
       expect(
         result.terminalStep['run_state'],
         containsPair('terminal_reason', 'closed_early'),
@@ -434,7 +438,7 @@ void main() {
       );
       expect(
         result.terminalStep['trace_event'],
-        containsPair('status', 'failed'),
+        containsPair('status', 'closed_early'),
       );
       expect(
         result.terminalStep['trace_event'],

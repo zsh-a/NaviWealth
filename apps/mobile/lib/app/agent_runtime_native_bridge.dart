@@ -576,7 +576,7 @@ Map<String, Object?> _toolBudgetExhaustedStep(
   final stepIndex = _intOrNull(step['step_index']);
   final runState = <String, Object?>{
     ...?previousRunState,
-    'status': 'failed',
+    'status': 'closed_early',
     'step_index': stepIndex,
     'remaining_tool_count': 0,
     'tool_result_count': maxToolSteps,
@@ -584,14 +584,14 @@ Map<String, Object?> _toolBudgetExhaustedStep(
   };
   return <String, Object?>{
     ...step,
-    'status': 'failed',
+    'status': 'closed_early',
     'run_state': runState,
     'trace_event': <String, Object?>{
       ...?_objectOrNull(step['trace_event']),
       'kind': 'agent_runtime_step',
       'run_id': step['run_id'],
       'agent_id': step['agent_id'],
-      'status': 'failed',
+      'status': 'closed_early',
       'step_index': stepIndex,
       'tool_name': _objectOrNull(step['tool_call'])?['name'],
       'run_state': runState,
