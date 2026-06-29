@@ -749,6 +749,65 @@ fn continue_run_step_rejects_mismatched_previous_agent() {
 }
 
 #[test]
+fn continue_run_step_rejects_previous_tool_not_in_catalog() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_unknown",
+            "name": "unknown_tool",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_unknown",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("unknown previous tool should fail");
+
+    assert!(err.to_string().contains("not present in the catalog"));
+}
+
+#[test]
+fn continue_run_step_rejects_missing_previous_tool_name() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_missing_name",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_missing_name",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("missing previous tool name should fail");
+
+    assert!(err.to_string().contains("tool_call.name"));
+}
+
+#[test]
 fn continue_run_step_maps_result_payload_policy_denied() {
     let step_json = r#"{
       "protocol_version": "agent.v1",

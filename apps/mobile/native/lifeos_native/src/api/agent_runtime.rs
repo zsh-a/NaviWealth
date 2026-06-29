@@ -294,6 +294,7 @@ pub fn agent_runtime_continue_run_step(
         .get("tool_call")
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
+    require_previous_tool_call_catalog_tool(&catalog, &agent.id, &tool_call)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
     let mut tool_results = continuation_tool_results(&previous_step)?;
     let tool_terminal_status = tool_response_terminal_status(&tool_response);
@@ -374,6 +375,22 @@ fn require_previous_step_agent(previous_step: &Value, agent_id: &str) -> Result<
         );
     }
     Ok(())
+}
+
+fn require_previous_tool_call_catalog_tool(
+    catalog: &AgentRuntimeCatalog,
+    agent_id: &str,
+    tool_call: &Value,
+) -> Result<()> {
+    let name = tool_call
+        .get("name")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("previous step tool_call.name is required"))?;
+    if catalog.tools.iter().any(|tool| tool.name == name) {
+        return Ok(());
+    }
+    anyhow::bail!("tool '{name}' requested by agent '{agent_id}' is not present in the catalog");
 }
 
 fn require_matching_tool_response_id(tool_call: &Value, tool_response: &Value) -> Result<()> {
