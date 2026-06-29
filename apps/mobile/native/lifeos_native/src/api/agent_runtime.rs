@@ -294,10 +294,13 @@ pub fn agent_runtime_continue_run_step(
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
     let mut tool_results = continuation_tool_results(&previous_step)?;
-    tool_results.push(json!({
-        "tool_call": tool_call.clone(),
-        "tool_response": tool_response.clone(),
-    }));
+    let tool_error_status = tool_error_status(&tool_response);
+    if tool_error_status != Some("closed_early") {
+        tool_results.push(json!({
+            "tool_call": tool_call.clone(),
+            "tool_response": tool_response.clone(),
+        }));
+    }
 
     let next_step_index = previous_step
         .get("step_index")
@@ -306,18 +309,21 @@ pub fn agent_runtime_continue_run_step(
         + 1;
 
     let mut response = match tool_response.get("error") {
-        Some(error) => json!({
+        Some(error) => {
+            let status = tool_error_status.unwrap_or("failed");
+            json!({
             "protocol_version": protocol_version(),
             "run_id": run_id,
             "agent_id": agent.id,
             "agent_version": agent.version,
             "step_index": next_step_index,
-            "status": "failed",
+            "status": status,
             "tool_call": tool_call,
             "tool_response": tool_response,
             "tool_results": tool_results,
             "error": error,
-        }),
+            })
+        }
         None => match next_tool_request_from_continuation(&previous_step, tool_results.clone())? {
             Some(next) => {
                 let continuation = next.continuation();
@@ -353,6 +359,18 @@ pub fn agent_runtime_continue_run_step(
     };
     attach_runtime_metadata(&mut response);
     Ok(serde_json::to_string(&response)?)
+}
+
+fn tool_error_status(tool_response: &Value) -> Option<&'static str> {
+    let code = tool_response
+        .get("error")
+        .and_then(|error| error.get("code"))
+        .and_then(Value::as_str);
+    match code {
+        Some("tool_call_budget_exhausted") => Some("closed_early"),
+        Some(_) => Some("failed"),
+        None => None,
+    }
 }
 
 fn llm_metadata_string(request: &LlmRequest, key: &str) -> Result<String> {

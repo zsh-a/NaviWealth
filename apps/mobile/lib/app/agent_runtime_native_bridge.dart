@@ -476,7 +476,15 @@ class AgentRuntimeNativeStepRunner {
 
     while (step['status'] == 'tool_call_requested') {
       if (dispatched >= limit) {
-        step = _toolBudgetExhaustedStep(step, limit);
+        step = await _bridge.continueRunStep(
+          catalog: catalog,
+          previousStep: step,
+          toolResponse: _toolBudgetExhaustedResponse(
+            maxToolSteps: limit,
+            dispatchedToolCount: dispatched,
+          ),
+          agentId: agentId,
+        );
         steps.add(step);
         budgetExhausted = true;
         return AgentRuntimeNativeStepRunResult(
@@ -568,47 +576,18 @@ List<Map<String, Object?>> _nativeTraceEvents(
   return [for (final step in steps) ?_objectOrNull(step['trace_event'])];
 }
 
-Map<String, Object?> _toolBudgetExhaustedStep(
-  Map<String, Object?> step,
-  int maxToolSteps,
-) {
-  final previousRunState = _objectOrNull(step['run_state']);
-  final stepIndex = _intOrNull(step['step_index']);
-  final runState = <String, Object?>{
-    ...?previousRunState,
-    'status': 'closed_early',
-    'step_index': stepIndex,
-    'remaining_tool_count': 0,
-    'tool_result_count': maxToolSteps,
-    'terminal_reason': 'closed_early',
-  };
+Map<String, Object?> _toolBudgetExhaustedResponse({
+  required int maxToolSteps,
+  required int dispatchedToolCount,
+}) {
   return <String, Object?>{
-    ...step,
-    'status': 'closed_early',
-    'run_state': runState,
-    'trace_event': <String, Object?>{
-      ...?_objectOrNull(step['trace_event']),
-      'kind': 'agent_runtime_step',
-      'run_id': step['run_id'],
-      'agent_id': step['agent_id'],
-      'status': 'closed_early',
-      'step_index': stepIndex,
-      'tool_name': _objectOrNull(step['tool_call'])?['name'],
-      'run_state': runState,
-    },
     'error': <String, Object?>{
       'code': 'tool_call_budget_exhausted',
       'message': 'agent runtime tool-call budget exhausted',
       'max_tool_steps': maxToolSteps,
+      'dispatched_tool_count': dispatchedToolCount,
     },
   };
-}
-
-int? _intOrNull(Object? value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  if (value is String) return int.tryParse(value);
-  return null;
 }
 
 Map<String, Object?> _decodeObject(String json) {

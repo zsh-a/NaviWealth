@@ -688,6 +688,60 @@ fn continue_run_step_fails_with_tool_error() {
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
+#[test]
+fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
+    let step_json = r#"{
+      "protocol_version": "agent.v1",
+      "run_id": "run_018f0000-0000-7000-8000-000000000000",
+      "agent_id": "execution_review",
+      "agent_version": "1.0.0",
+      "step_index": 1,
+      "status": "tool_call_requested",
+      "tool_call": {
+        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000001",
+        "name": "propose_fake",
+        "input": {"value": 2}
+      },
+      "continuation": {
+        "tool_plan": [],
+        "tool_results": [
+          {
+            "tool_call": {"name": "propose_fake", "input": {"value": 1}},
+            "tool_response": {"result": {"accepted": true, "value": 1}}
+          }
+        ]
+      }
+    }"#;
+    let next_json = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        step_json.to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_018f0000-0000-7000-8000-000000000001",
+          "error": {
+            "code": "tool_call_budget_exhausted",
+            "message": "agent runtime tool-call budget exhausted",
+            "max_tool_steps": 1,
+            "dispatched_tool_count": 1
+          }
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect("budget exhaustion should close the native step early");
+    let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
+
+    assert_eq!(next["status"], "closed_early");
+    assert_eq!(next["error"]["code"], "tool_call_budget_exhausted");
+    assert_eq!(next["tool_results"].as_array().unwrap().len(), 1);
+    assert_eq!(next["run_state"]["status"], "closed_early");
+    assert_eq!(next["run_state"]["terminal_reason"], "closed_early");
+    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
+    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["trace_event"]["status"], "closed_early");
+    assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
+}
+
 fn spawn_openai_compatible_server() -> (String, thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind local test server");
     let addr = listener.local_addr().expect("local addr");

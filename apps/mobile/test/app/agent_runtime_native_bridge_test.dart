@@ -395,20 +395,21 @@ void main() {
     'AgentRuntimeNativeStepRunner trace marks exhausted tool budgets',
     () async {
       final dispatcher = _RecordingDispatcher();
-      final runner = AgentRuntimeNativeStepRunner(
-        bridge: _FakeBridge(
-          step: const <String, Object?>{
-            'protocol_version': 'agent.v1',
-            'run_id': 'run_1',
-            'agent_id': 'execution_review',
-            'status': 'tool_call_requested',
-            'tool_call': <String, Object?>{
-              'tool_call_id': 'call_1',
-              'name': 'read_task',
-              'input': <String, Object?>{'id': 'task_1'},
-            },
+      final bridge = _FakeBridge(
+        step: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_1',
+          'agent_id': 'execution_review',
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_1',
+            'name': 'read_task',
+            'input': <String, Object?>{'id': 'task_1'},
           },
-        ),
+        },
+      );
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
         toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
       );
 
@@ -424,6 +425,11 @@ void main() {
       expect(result.budgetExhausted, isTrue);
       expect(result.steps, hasLength(2));
       expect(result.toolResponses, isEmpty);
+      expect(bridge.continuations, hasLength(1));
+      expect(
+        bridge.continuations.single.toolResponse['error'],
+        containsPair('code', 'tool_call_budget_exhausted'),
+      );
       expect(
         result.terminalStep['run_state'],
         containsPair('status', 'closed_early'),
@@ -819,6 +825,38 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
     continuations.add(_Continuation(previousStep, toolResponse));
     if (continuations.length <= _continuationSteps.length) {
       return _continuationSteps[continuations.length - 1];
+    }
+    final error = toolResponse['error'];
+    if (error is Map && error['code'] == 'tool_call_budget_exhausted') {
+      final stepIndex = previousStep['step_index'] ?? 0;
+      final runState = <String, Object?>{
+        'status': 'closed_early',
+        'step_index': stepIndex,
+        'remaining_tool_count': 0,
+        'tool_result_count': error['dispatched_tool_count'] ?? 0,
+        'terminal_reason': 'closed_early',
+      };
+      return <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': previousStep['run_id'],
+        'agent_id': agentId,
+        'step_index': stepIndex,
+        'status': 'closed_early',
+        'tool_call': previousStep['tool_call'],
+        'tool_response': toolResponse,
+        'tool_results': const <Object?>[],
+        'run_state': runState,
+        'trace_event': <String, Object?>{
+          'kind': 'agent_runtime_step',
+          'run_id': previousStep['run_id'],
+          'agent_id': agentId,
+          'status': 'closed_early',
+          'step_index': stepIndex,
+          'tool_name': (previousStep['tool_call'] as Map?)?['name'],
+          'run_state': runState,
+        },
+        'error': error.map((key, value) => MapEntry(key.toString(), value)),
+      };
     }
     return <String, Object?>{
       'protocol_version': 'agent.v1',
