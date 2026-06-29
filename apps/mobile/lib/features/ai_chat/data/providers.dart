@@ -79,13 +79,14 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   );
 });
 
-/// What `ChatRepository` injects. Device-only: every turn
-/// runs on the on-device runtime; with no device (web / no key / opted
-/// out) the turn surfaces an explanatory error (no cloud relay).
+/// What `ChatRepository` injects before app-level composition.
+///
+/// Production bootstrap overrides this provider with [FrbChatRunner] when an
+/// active FRB LLM profile exists. The feature-layer default deliberately stays
+/// unavailable so a partial ProviderContainer cannot silently fall back to the
+/// legacy direct-Dart LLM runtime.
 final aiChatApiClientProvider = Provider<AiChatApiClient>((ref) {
-  return RuntimeRoutingAiChatApiClient(
-    device: ref.watch(deviceLlmRuntimeProvider),
-  );
+  return const RuntimeRoutingAiChatApiClient();
 });
 
 /// Chat persistence is awaited once via [appDatabaseProvider]. We expose

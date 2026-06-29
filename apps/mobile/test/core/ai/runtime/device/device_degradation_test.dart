@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/ai_runtime.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
+import 'package:naviwealth/features/ai_chat/data/providers.dart';
 import 'package:naviwealth/features/ai_chat/data/runtime_routing_api_client.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_transparency_badge.dart';
 
@@ -104,6 +106,25 @@ void main() {
           expect(out, hasLength(2));
           expect((out.first as ErrorEvent).code, 'device_unavailable');
           expect((out.last as DoneEvent).stopReason, 'error');
+        },
+      );
+
+      test(
+        'feature default stays unavailable until bootstrap injects FRB chat',
+        () async {
+          final container = ProviderContainer();
+          addTearDown(container.dispose);
+
+          final api = container.read(aiChatApiClientProvider);
+          final out = await api
+              .chat(
+                session: _session(),
+                messages: const [WireMessage(role: 'user', content: 'hi')],
+              )
+              .toList();
+
+          expect((out.first as ErrorEvent).code, 'device_unavailable');
+          expect((out.last as DoneEvent).rounds, 0);
         },
       );
 
