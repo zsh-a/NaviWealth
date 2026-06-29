@@ -56,6 +56,16 @@ fn normalizes_trace_contract() {
     assert_eq!(trace["protocol_version"], "agent.v1");
     assert_eq!(trace["run_id"], "run_018f0000-0000-7000-8000-000000000000");
     assert_eq!(trace["events"][0]["kind"], "run_started");
+    assert_eq!(trace["events"][1]["kind"], "agent_runtime_step");
+    assert_eq!(trace["events"][1]["payload"]["tool_name"], "echo");
+    assert_eq!(
+        trace["events"][1]["payload"]["run_state"]["terminal_reason"],
+        "done"
+    );
+    assert_eq!(
+        trace["events"][1]["payload"]["run_state"]["tool_result_count"],
+        1
+    );
 }
 
 #[test]
