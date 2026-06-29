@@ -630,6 +630,7 @@ fn attach_trace_event(step: &mut Value) {
         "agent_id": object.get("agent_id").cloned().unwrap_or(Value::Null),
         "status": object.get("status").cloned().unwrap_or(Value::Null),
         "step_index": object.get("step_index").cloned().unwrap_or(Value::Null),
+        "run_state": object.get("run_state").cloned().unwrap_or(Value::Null),
         "tool_name": object
             .get("tool_call")
             .and_then(|tool_call| tool_call.get("name"))
@@ -745,6 +746,8 @@ mod tests {
         assert_eq!(first["trace_event"]["kind"], "agent_runtime_step");
         assert_eq!(first["trace_event"]["step_index"], 0);
         assert_eq!(first["trace_event"]["tool_name"], "read_first");
+        assert_eq!(first["trace_event"]["run_state"]["remaining_tool_count"], 1);
+        assert_eq!(first["trace_event"]["run_state"]["tool_result_count"], 0);
         assert_eq!(first["run_state"]["remaining_tool_count"], 1);
         assert_eq!(first["run_state"]["tool_result_count"], 0);
         assert_eq!(first["run_state"]["terminal_reason"], Value::Null);
@@ -764,6 +767,11 @@ mod tests {
         assert_eq!(second["tool_call"]["name"], "read_second");
         assert_eq!(second["trace_event"]["step_index"], 1);
         assert_eq!(second["trace_event"]["tool_name"], "read_second");
+        assert_eq!(
+            second["trace_event"]["run_state"]["remaining_tool_count"],
+            0
+        );
+        assert_eq!(second["trace_event"]["run_state"]["tool_result_count"], 1);
         assert_eq!(second["run_state"]["remaining_tool_count"], 0);
         assert_eq!(second["run_state"]["tool_result_count"], 1);
         assert_eq!(second["run_state"]["terminal_reason"], Value::Null);
@@ -781,7 +789,12 @@ mod tests {
         assert_eq!(terminal["status"], "completed");
         assert_eq!(terminal["step_index"], 2);
         assert_eq!(terminal["trace_event"]["step_index"], 2);
-        assert_eq!(terminal["trace_event"]["tool_name"], Value::Null);
+        assert_eq!(terminal["trace_event"]["tool_name"], "read_second");
+        assert_eq!(
+            terminal["trace_event"]["run_state"]["terminal_reason"],
+            "done"
+        );
+        assert_eq!(terminal["trace_event"]["run_state"]["tool_result_count"], 2);
         assert_eq!(terminal["output"]["mode"], "frb_tool_loop");
         assert_eq!(terminal["run_state"]["remaining_tool_count"], 0);
         assert_eq!(terminal["run_state"]["tool_result_count"], 2);
@@ -829,6 +842,11 @@ mod tests {
 
         assert_eq!(failed["status"], "failed");
         assert_eq!(failed["trace_event"]["status"], "failed");
+        assert_eq!(
+            failed["trace_event"]["run_state"]["terminal_reason"],
+            "stream_error"
+        );
+        assert_eq!(failed["trace_event"]["run_state"]["tool_result_count"], 1);
         assert_eq!(failed["run_state"]["terminal_reason"], "stream_error");
     }
 }
