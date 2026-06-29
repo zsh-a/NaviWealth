@@ -153,11 +153,13 @@ Implemented:
   stream events through `agentRuntimeStreamProfileLlm`; the runner maps
   `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
   `tool_call_*` / `finished` / `error` events into the existing `AiChatEvent`
-  vocabulary. It is intentionally not the production default yet because Dart
-  tool-result continuation, cancellation, and trace-span parity still need to
-  match `DeviceLlmRuntime` before replacing the interactive chat UI path.
-  OpenAI-compatible and Anthropic text/usage/tool/reasoning SSE are now
-  provider-real in `agent-llm`.
+  vocabulary. Production interactive chat is now routed through this FRB seam
+  from the app composition root when an active FRB LLM profile is available.
+  The runner advertises active-domain tools, executes Dart tool results through
+  the JSON-RPC tool host, feeds `tool_result` blocks into bounded continuation
+  rounds, pauses terminally after successful `ask_user`, and emits LLM/tool
+  trace spans plus cancellation spans. OpenAI-compatible and Anthropic
+  text/usage/tool/reasoning SSE are now provider-real in `agent-llm`.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
   documented runtime/legacy allowlist

@@ -182,9 +182,12 @@ Current bridge capabilities:
   `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
   `tool_call_*` / `finished` / `error` into the existing `AiChatEvent` stream
   contract. OpenAI-compatible and Anthropic text/usage/tool/reasoning SSE are
-  provider-real in `agent-llm`; production chat should stay on
-  `DeviceLlmRuntime` until Dart tool-result continuation, cancellation, and
-  trace-span parity are complete.
+  provider-real in `agent-llm`. Production chat is now routed through
+  `FrbChatRunner` from the app composition root when an active FRB LLM profile
+  is available; it advertises active domain tools, executes Dart tool results
+  through the JSON-RPC tool host, feeds results into bounded follow-up model
+  rounds, pauses terminally after successful `ask_user`, and emits LLM/tool
+  trace spans plus cancellation spans.
 - Provide a migration guardrail:
   `tool/lint-frb-llm-entrypoints.sh` rejects new production business/app uses
   of the legacy direct-Dart LLM seams outside the documented runtime/legacy

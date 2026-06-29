@@ -368,11 +368,11 @@ regression/                      regression_corpus（静态契约测试）
 (已删除子目录: freshness/ · router/  —— 2026-05-24 boundary audit)
 ```
 
-`lib/features/ai_chat/`：`runtime_routing_api_client.dart`（→ DeviceLlmRuntime streaming，
-无 cloud 回落；`FrbChatRunner` / `AgentRuntimeLlmStreamBridge` 已能消费 FRB primitive
-LLM event stream，OpenAI-compatible 与 Anthropic text/usage SSE 已 provider-real，
-tool/reasoning 事件也已映射到 `AiChatEvent`，但 production 切换仍等待 tool-result
-continuation / trace / cancel parity）·
+`lib/features/ai_chat/`：`runtime_routing_api_client.dart`（无 cloud 回落；
+production 由 app composition root 覆盖到 `FrbChatRunner` +
+`AgentRuntimeLlmStreamBridge`，消费 FRB primitive LLM event stream；OpenAI-compatible
+与 Anthropic text/usage/tool/reasoning SSE 已 provider-real，并支持 Dart
+tool-result continuation、`ask_user` terminal pause、trace span 与 cancel parity）·
 `chat_repository.dart` · `proposal_applier.dart` · ui/（`ai_chat_page` 现为
 `/settings/ai-history` 只读 · `propose_card`（mode 三分支）· `tool_invocation_*`
 domain renderer · `ai_object_capsule` · `reply_chips` · `ai_transparency_badge`）。
@@ -432,7 +432,7 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | FRB 端侧 Vision 直发（图片/PDF 摄取，`FrbVisionIngestClient`，替代已删除的 Worker 中转）| ✅ |
 | AiTrace span 可观测性（Opik 瀑布树，取代旧 flat 格式，不向后兼容）| ✅ |
 | 多 provider profile + 切换 + FRB 连通性测试（无 opt-in 开关）| ✅ |
-| §4.6 Device LLM Runtime（用户自带 key · FRB/native 生产业务入口 · chat streaming legacy seam · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
+| §4.6 Device LLM Runtime（用户自带 key · FRB/native 生产业务入口 · FRB chat streaming seam · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
 | FRB LLM entrypoint guardrail（`tool/lint-frb-llm-entrypoints.sh`）| ✅ |
 | Boundary audit 2026-05-24（四轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AllowedRuntime/AnonymizationLevel/usedCloud/analyticalUploads 字段/l10n orphans（累计净删 ~4 400 行）| ✅ |
 | UI 测试准出 P1 | A11y baseline / 性能预算已接入 `tool/check-ui-baselines.sh` 与 mobile CI | ✅ |
