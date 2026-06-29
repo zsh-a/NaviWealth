@@ -105,6 +105,64 @@
                           ]
                         }
                       },
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": { "status": { "const": "tool_call_requested" } },
+                            "required": ["status"]
+                          },
+                          "then": {
+                            "properties": { "terminal_reason": { "const": null } }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": { "status": { "const": "completed" } },
+                            "required": ["status"]
+                          },
+                          "then": {
+                            "properties": { "terminal_reason": { "const": "done" } }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": { "status": { "const": "failed" } },
+                            "required": ["status"]
+                          },
+                          "then": {
+                            "properties": { "terminal_reason": { "const": "stream_error" } }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": { "status": { "const": "cancelled" } },
+                            "required": ["status"]
+                          },
+                          "then": {
+                            "properties": { "terminal_reason": { "const": "user_cancel" } }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": { "status": { "const": "policy_denied" } },
+                            "required": ["status"]
+                          },
+                          "then": {
+                            "properties": { "terminal_reason": { "const": "policy_denied" } }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "status": { "enum": ["closed_early", "timed_out"] }
+                            },
+                            "required": ["status"]
+                          },
+                          "then": {
+                            "properties": { "terminal_reason": { "const": "closed_early" } }
+                          }
+                        }
+                      ],
                       "additionalProperties": true
                     }
                   },

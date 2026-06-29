@@ -132,6 +132,10 @@ Implemented:
 - The shared trace fixture set includes a valid `closed_early`
   `agent_runtime_step`, locking the Dart-synthesised tool-budget-exhausted
   state against both JSON Schema and the native FRB validator
+- `trace.schema.json` and the native FRB validator both enforce
+  `agent_runtime_step.run_state.status` / `terminal_reason` consistency, so
+  terminal state semantics are shared across CLI fixtures, native validation,
+  and Flutter-synthesised trace events
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
