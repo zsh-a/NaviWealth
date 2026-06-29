@@ -116,6 +116,10 @@ Implemented:
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB
   LLM completion with the bounded native FRB step/tool loop and return both the
   LLM response and terminal native step
+- FRB-facing native profile-turn step via
+  `agentRuntimeStartProfileTurnStep`, which completes the active-profile LLM
+  request in Rust and starts the first native runtime step before Dart resumes
+  bounded tool dispatch
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status
@@ -126,9 +130,9 @@ Implemented:
 
 Deferred:
 
-- complete embedded Rust runner loop over FRB beyond deterministic step
-  contracts, promoting the current Dart composition seam into a fuller native
-  runner as the Rust runtime grows
+- complete embedded Rust runner loop over FRB beyond the native profile-turn
+  first step, promoting the remaining Dart continuation seam into a fuller
+  native runner as the Rust runtime grows
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`

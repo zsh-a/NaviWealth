@@ -36,23 +36,20 @@ void main() {
       expect(result.llmResponse['content'], 'Summarized result');
       expect(result.step['status'], 'completed');
       expect(native.llmRequests.single['provider'], 'openai');
-      expect(native.startRequests.single.agentId, 'execution_review');
+      expect(native.turnRequests.single.agentId, 'execution_review');
       expect(
-        native.startRequests.single.catalog['catalog_version'],
+        native.turnRequests.single.catalog['catalog_version'],
         kAgentRuntimeCatalogVersion,
       );
-      final input = native.startRequests.single.request['input'];
+      final input = native.turnRequests.single.initialStep['output'];
       expect(input, isA<Map<String, Object?>>());
       expect(
         input as Map<String, Object?>,
         containsPair('content', 'Summarized result'),
       );
-      final requestMetadata = native.startRequests.single.request['metadata'];
+      final requestMetadata = native.turnRequests.single.runMetadata;
       expect(requestMetadata, isA<Map<String, Object?>>());
-      expect(
-        requestMetadata as Map<String, Object?>,
-        containsPair('trace_id', 'trace_1'),
-      );
+      expect(requestMetadata, containsPair('trace_id', 'trace_1'));
     },
   );
 
@@ -100,9 +97,10 @@ void main() {
         native.continuations.single.toolResponse,
         containsPair('id', 'call_1'),
       );
-      final input = native.startRequests.single.request['input'];
+      final input = native.turnRequests.single.initialStep['tool_call'];
+      expect(input as Map<String, Object?>, containsPair('name', 'read_task'));
       expect(
-        input as Map<String, Object?>,
+        native.turnRequests.single.initialStep,
         containsPair('tool_call', const <String, Object?>{
           'tool_call_id': 'call_1',
           'name': 'read_task',
@@ -198,6 +196,7 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
 
   final Map<String, Object?> _llmResponse;
   final llmRequests = <Map<String, Object?>>[];
+  final turnRequests = <_TurnRequest>[];
   final startRequests = <_StartRequest>[];
   final continuations = <_Continuation>[];
 
@@ -234,6 +233,25 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
   }) async {
     llmRequests.add(request);
     return _llmResponse;
+  }
+
+  @override
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+  }) async {
+    llmRequests.add(llmRequest);
+    final initialStep = _initialStepForLlmResponse(_llmResponse, agentId);
+    turnRequests.add(
+      _TurnRequest(catalog, llmRequest, agentId, runMetadata, initialStep),
+    );
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': _llmResponse,
+      'step': initialStep,
+    };
   }
 
   @override
@@ -280,6 +298,35 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
       'agent_id': agentId,
       'status': 'completed',
       'output': input,
+    };
+  }
+
+  Map<String, Object?> _initialStepForLlmResponse(
+    Map<String, Object?> llmResponse,
+    String agentId,
+  ) {
+    final metadata = llmResponse['metadata'];
+    if (metadata is Map<String, Object?>) {
+      final toolCall = metadata['tool_call'];
+      if (toolCall is Map<String, Object?>) {
+        return <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_1',
+          'agent_id': agentId,
+          'status': 'tool_call_requested',
+          'tool_call': toolCall,
+        };
+      }
+    }
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': 'run_1',
+      'agent_id': agentId,
+      'status': 'completed',
+      'output': <String, Object?>{
+        'content': llmResponse['content'],
+        'llm_response': llmResponse,
+      },
     };
   }
 
@@ -337,6 +384,22 @@ class _StartRequest {
   final Map<String, Object?> catalog;
   final Map<String, Object?> request;
   final String agentId;
+}
+
+class _TurnRequest {
+  const _TurnRequest(
+    this.catalog,
+    this.llmRequest,
+    this.agentId,
+    this.runMetadata,
+    this.initialStep,
+  );
+
+  final Map<String, Object?> catalog;
+  final Map<String, Object?> llmRequest;
+  final String agentId;
+  final Map<String, Object?> runMetadata;
+  final Map<String, Object?> initialStep;
 }
 
 class _Continuation {

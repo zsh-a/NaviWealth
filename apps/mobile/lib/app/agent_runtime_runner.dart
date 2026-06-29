@@ -45,25 +45,36 @@ class AgentRuntimeProfileTurnRunner {
     Map<String, Object?> metadata = const <String, Object?>{},
     int? maxToolSteps,
   }) async {
-    final llmResponse = await _llmBridge.completeProfile(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
-    final step = await _stepRunner.runUntilTerminal(
+    final nativeTurn = await _stepRunner.bridge.startProfileTurnStep(
       catalog: _catalog.toJson(),
-      request: <String, Object?>{
-        'protocol_version': kAgentRuntimeProtocolVersion,
-        'input': _runtimeInputFromLlmResponse(llmResponse),
-        'metadata': <String, Object?>{...metadata, 'llm_response': llmResponse},
-      },
+      llmRequest: _llmBridge.buildRequest(
+        messages: messages,
+        tools: tools,
+        temperature: temperature,
+        maxOutputTokens: maxOutputTokens,
+        metadata: metadata,
+      ),
+      agentId: agentId,
+      runMetadata: metadata,
+    );
+    final llmResponse = _expectObject(nativeTurn['llm_response']);
+    final initialStep = _expectObject(nativeTurn['step']);
+    final step = await _stepRunner.continueUntilTerminal(
+      catalog: _catalog.toJson(),
+      initialStep: initialStep,
       agentId: agentId,
       maxToolSteps: maxToolSteps,
     );
     return AgentRuntimeProfileTurnResult(llmResponse: llmResponse, step: step);
   }
+}
+
+Map<String, Object?> _expectObject(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  throw const FormatException('agent runtime native turn field is not object');
 }
 
 class AgentRuntimeProfileTurnResult {
@@ -78,24 +89,5 @@ class AgentRuntimeProfileTurnResult {
   Map<String, Object?> toJson() => <String, Object?>{
     'llm_response': llmResponse,
     'step': step,
-  };
-}
-
-Map<String, Object?> _runtimeInputFromLlmResponse(
-  Map<String, Object?> llmResponse,
-) {
-  final metadata = llmResponse['metadata'];
-  if (metadata is Map<String, Object?>) {
-    final toolCall = metadata['tool_call'];
-    if (toolCall is Map<String, Object?>) {
-      return <String, Object?>{
-        'tool_call': toolCall,
-        'llm_response': llmResponse,
-      };
-    }
-  }
-  return <String, Object?>{
-    'content': llmResponse['content'],
-    'llm_response': llmResponse,
   };
 }

@@ -236,6 +236,25 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+  }) async {
+    final response = await completeProfileLlm(request: llmRequest);
+    final initialStep = _initialStep(
+      request: const <String, Object?>{},
+      agentId: agentId,
+    );
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': response,
+      'step': initialStep,
+    };
+  }
+
+  @override
   Future<Map<String, Object?>> continueRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> previousStep,
@@ -255,6 +274,13 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
     required Map<String, Object?> request,
     required String agentId,
   }) async {
+    return _initialStep(request: request, agentId: agentId);
+  }
+
+  Map<String, Object?> _initialStep({
+    required Map<String, Object?> request,
+    required String agentId,
+  }) {
     startRequests.add(_StartRequest(request, agentId));
     final proposal = this.proposal;
     return <String, Object?>{

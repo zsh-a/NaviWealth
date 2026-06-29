@@ -1,9 +1,10 @@
 use lifeos_native::api::agent_runtime::{
     agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
     agent_runtime_complete_profile_llm, agent_runtime_continue_run_step,
-    agent_runtime_protocol_version, agent_runtime_start_run_step,
-    agent_runtime_validate_llm_request, agent_runtime_validate_llm_response,
-    agent_runtime_validate_run_request, agent_runtime_validate_trace,
+    agent_runtime_protocol_version, agent_runtime_start_profile_turn_step,
+    agent_runtime_start_run_step, agent_runtime_validate_llm_request,
+    agent_runtime_validate_llm_response, agent_runtime_validate_run_request,
+    agent_runtime_validate_trace,
 };
 use serde_json::Value;
 use std::io::{Read, Write};
@@ -139,6 +140,36 @@ async fn complete_profile_llm_calls_openai_compatible_provider() {
     assert_eq!(response["content"], "profile response");
     assert_eq!(response["finish_reason"], "stop");
     assert_eq!(response["metadata"]["api"], "openai_chat_completions");
+}
+
+#[tokio::test]
+async fn start_profile_turn_step_completes_llm_and_starts_native_step() {
+    let turn_json = agent_runtime_start_profile_turn_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "ping"}],
+          "metadata": {"mock_response": "native turn response"}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+        r#"{"surface":"rust_test"}"#.to_owned(),
+    )
+    .await
+    .expect("profile turn step should complete");
+    let turn: Value = serde_json::from_str(&turn_json).expect("turn should be json");
+
+    assert_eq!(turn["protocol_version"], "agent.v1");
+    assert_eq!(turn["llm_response"]["content"], "native turn response");
+    assert_eq!(turn["step"]["agent_id"], "execution_review");
+    assert_eq!(turn["step"]["status"], "completed");
+    assert_eq!(turn["step"]["output"]["content"], "native turn response");
+    assert_eq!(
+        turn["step"]["output"]["llm_response"]["content"],
+        "native turn response"
+    );
 }
 
 #[test]

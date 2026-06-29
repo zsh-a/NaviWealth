@@ -361,6 +361,21 @@ class _TerminalBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+  }) async {
+    catalogs.add(catalog);
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': await completeProfileLlm(request: llmRequest),
+      'step': _step,
+    };
+  }
+
+  @override
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,

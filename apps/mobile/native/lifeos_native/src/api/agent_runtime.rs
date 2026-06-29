@@ -86,6 +86,51 @@ pub async fn agent_runtime_complete_mock_llm(
 
 pub async fn agent_runtime_complete_profile_llm(request_json: String) -> Result<String> {
     let request: LlmRequest = serde_json::from_str(&request_json)?;
+    let response = complete_profile_llm_response(request).await?;
+    Ok(serde_json::to_string(&response)?)
+}
+
+pub async fn agent_runtime_start_profile_turn_step(
+    catalog_json: String,
+    llm_request_json: String,
+    agent_id: String,
+    run_metadata_json: String,
+) -> Result<String> {
+    let llm_request: LlmRequest = serde_json::from_str(&llm_request_json)?;
+    let llm_response = complete_profile_llm_response(llm_request).await?;
+    let mut metadata = if run_metadata_json.trim().is_empty() {
+        json!({})
+    } else {
+        serde_json::from_str::<Value>(&run_metadata_json)?
+    };
+    if let Some(object) = metadata.as_object_mut() {
+        object.insert(
+            "llm_response".to_owned(),
+            serde_json::to_value(&llm_response)?,
+        );
+    } else {
+        anyhow::bail!("run metadata must be a JSON object");
+    }
+    let request = RunRequest {
+        protocol_version: protocol_version(),
+        run_id: None,
+        input: runtime_input_from_llm_response(&llm_response)?,
+        user: None,
+        trigger: agent_core::TriggerKind::Manual,
+        metadata,
+    };
+    let step_json =
+        agent_runtime_start_run_step(catalog_json, serde_json::to_string(&request)?, agent_id)?;
+    let step: Value = serde_json::from_str(&step_json)?;
+    let output = json!({
+        "protocol_version": protocol_version(),
+        "llm_response": llm_response,
+        "step": step,
+    });
+    Ok(serde_json::to_string(&output)?)
+}
+
+async fn complete_profile_llm_response(request: LlmRequest) -> Result<LlmResponse> {
     let response = match request.provider.as_str() {
         "mock" => MockLlmProvider::new("mock", request.model.clone(), "mock response")
             .complete(request)
@@ -116,7 +161,7 @@ pub async fn agent_runtime_complete_profile_llm(request_json: String) -> Result<
         }
         other => anyhow::bail!("unsupported LLM provider '{other}'"),
     };
-    Ok(serde_json::to_string(&response)?)
+    Ok(response)
 }
 
 pub fn agent_runtime_start_run_step(
@@ -282,4 +327,17 @@ fn parse_requested_tool_call(input: &Value) -> Result<Option<RequestedToolCall>>
         return Ok(None);
     };
     Ok(Some(serde_json::from_value(tool_call.clone())?))
+}
+
+fn runtime_input_from_llm_response(response: &LlmResponse) -> Result<Value> {
+    if let Some(tool_call) = response.metadata.get("tool_call") {
+        return Ok(json!({
+            "tool_call": tool_call,
+            "llm_response": response,
+        }));
+    }
+    Ok(json!({
+        "content": response.content,
+        "llm_response": response,
+    }))
 }

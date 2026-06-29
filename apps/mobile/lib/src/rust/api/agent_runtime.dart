@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `llm_error_to_anyhow`, `llm_metadata_string`, `normalize_json`, `normalize_openai_base_url`, `parse_requested_tool_call`
+// These functions are ignored because they are not marked as `pub`: `complete_profile_llm_response`, `llm_error_to_anyhow`, `llm_metadata_string`, `normalize_json`, `normalize_openai_base_url`, `parse_requested_tool_call`, `runtime_input_from_llm_response`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CatalogSummary`, `RequestedToolCall`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`
 
@@ -59,6 +59,18 @@ Future<String> agentRuntimeCompleteProfileLlm({required String requestJson}) =>
     RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeCompleteProfileLlm(
       requestJson: requestJson,
     );
+
+Future<String> agentRuntimeStartProfileTurnStep({
+  required String catalogJson,
+  required String llmRequestJson,
+  required String agentId,
+  required String runMetadataJson,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStartProfileTurnStep(
+  catalogJson: catalogJson,
+  llmRequestJson: llmRequestJson,
+  agentId: agentId,
+  runMetadataJson: runMetadataJson,
+);
 
 Future<String> agentRuntimeStartRunStep({
   required String catalogJson,

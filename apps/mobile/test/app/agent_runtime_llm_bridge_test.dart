@@ -249,6 +249,26 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+  }) async {
+    final response = await completeProfileLlm(request: llmRequest);
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': response,
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'agent_id': agentId,
+        'status': 'completed',
+        'output': <String, Object?>{'content': response['content']},
+      },
+    };
+  }
+
+  @override
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,

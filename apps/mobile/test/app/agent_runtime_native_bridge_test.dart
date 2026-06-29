@@ -53,6 +53,17 @@ void main() {
         await bridge.completeProfileLlm(request: llmRequest),
         containsPair('content', 'profile answer'),
       );
+      final turn = await bridge.startProfileTurnStep(
+        catalog: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'catalog_version': 'agent_catalog.v1',
+        },
+        llmRequest: llmRequest,
+        agentId: 'execution_review',
+        runMetadata: const <String, Object?>{'surface': 'test'},
+      );
+      expect(turn['llm_response'], containsPair('content', 'profile answer'));
+      expect(turn['step'], containsPair('status', 'completed'));
       expect(
         await bridge.validateLlmResponse(llmResponse),
         containsPair('finish_reason', 'stop'),
@@ -372,6 +383,32 @@ class _FakeNativeApi implements AgentRuntimeNativeApi {
   }
 
   @override
+  Future<String> startProfileTurnStep({
+    required String catalogJson,
+    required String llmRequestJson,
+    required String agentId,
+    required String runMetadataJson,
+  }) async {
+    final request = jsonDecode(llmRequestJson) as Map<String, Object?>;
+    return jsonEncode(<String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'provider': request['provider'],
+        'model': request['model'],
+        'content': 'profile answer',
+        'finish_reason': 'stop',
+      },
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'agent_id': agentId,
+        'status': 'completed',
+        'output': <String, Object?>{'content': 'profile answer'},
+      },
+    });
+  }
+
+  @override
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -497,6 +534,21 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
       'content': 'profile answer',
       'finish_reason': 'stop',
       'metadata': <String, Object?>{'profile': true},
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+  }) async {
+    final response = await completeProfileLlm(request: llmRequest);
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': response,
+      'step': _step,
     };
   }
 

@@ -146,6 +146,10 @@ Current bridge capabilities:
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB LLM
   completion with the bounded native FRB step/tool loop and return both the LLM
   response and terminal native step.
+- Provide FRB/native profile-turn first-step execution via
+  `agentRuntimeStartProfileTurnStep`: Rust completes the active-profile LLM
+  request and starts the first native runtime step, then Dart resumes bounded
+  tool dispatch from that initial step.
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
   display the terminal native step status.
@@ -168,9 +172,10 @@ Known limitation:
 - The embedded FRB path currently covers deterministic native step contracts
   bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
   active-profile LLM request bridge, profile-backed native LLM completion, and
-  explicit confirmed-proposal/profile-turn providers, plus a user-facing
-  runtime check and guarded confirmed-proposal apply surface in the AI provider
-  settings page. The remaining production work is the full native runner and
+  native profile-turn first-step execution, plus explicit
+  confirmed-proposal/profile-turn providers and a user-facing runtime check /
+  guarded confirmed-proposal apply surface in the AI provider settings page.
+  The remaining production work is the full native continuation runner and
   first production agent migration onto it.
 
 ## Current Refactor State

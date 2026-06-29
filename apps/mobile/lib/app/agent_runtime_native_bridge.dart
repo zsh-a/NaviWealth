@@ -64,6 +64,12 @@ abstract interface class AgentRuntimeNativeApi {
     required String responseText,
   });
   Future<String> completeProfileLlm({required String requestJson});
+  Future<String> startProfileTurnStep({
+    required String catalogJson,
+    required String llmRequestJson,
+    required String agentId,
+    required String runMetadataJson,
+  });
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -133,6 +139,21 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
   }
 
   @override
+  Future<String> startProfileTurnStep({
+    required String catalogJson,
+    required String llmRequestJson,
+    required String agentId,
+    required String runMetadataJson,
+  }) {
+    return rust.agentRuntimeStartProfileTurnStep(
+      catalogJson: catalogJson,
+      llmRequestJson: llmRequestJson,
+      agentId: agentId,
+      runMetadataJson: runMetadataJson,
+    );
+  }
+
+  @override
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -178,6 +199,12 @@ abstract interface class AgentRuntimeNativeBridge {
   });
   Future<Map<String, Object?>> completeProfileLlm({
     required Map<String, Object?> request,
+  });
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
   });
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
@@ -302,6 +329,23 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+  }) async {
+    await _ensureInitialized();
+    final json = await _api.startProfileTurnStep(
+      catalogJson: jsonEncode(catalog),
+      llmRequestJson: jsonEncode(llmRequest),
+      agentId: agentId,
+      runMetadataJson: jsonEncode(runMetadata),
+    );
+    return _decodeObject(json);
+  }
+
+  @override
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
@@ -351,6 +395,8 @@ class AgentRuntimeNativeStepRunner {
   final AgentRuntimeToolHost _toolHost;
   final int _defaultMaxToolSteps;
 
+  AgentRuntimeNativeBridge get bridge => _bridge;
+
   Future<Map<String, Object?>> startAndDispatchFirstToolStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
@@ -370,16 +416,31 @@ class AgentRuntimeNativeStepRunner {
     required String agentId,
     int? maxToolSteps,
   }) async {
+    final step = await _bridge.startRunStep(
+      catalog: catalog,
+      request: request,
+      agentId: agentId,
+    );
+    return continueUntilTerminal(
+      catalog: catalog,
+      initialStep: step,
+      agentId: agentId,
+      maxToolSteps: maxToolSteps,
+    );
+  }
+
+  Future<Map<String, Object?>> continueUntilTerminal({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> initialStep,
+    required String agentId,
+    int? maxToolSteps,
+  }) async {
     final limit = maxToolSteps ?? _defaultMaxToolSteps;
     if (limit < 0) {
       throw RangeError.value(limit, 'maxToolSteps', 'must be non-negative');
     }
 
-    var step = await _bridge.startRunStep(
-      catalog: catalog,
-      request: request,
-      agentId: agentId,
-    );
+    var step = initialStep;
     var dispatched = 0;
 
     while (step['status'] == 'tool_call_requested') {
