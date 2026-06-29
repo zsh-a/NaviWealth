@@ -67,15 +67,16 @@ Domain agent / business AI seam
   → Dart AgentRuntimeToolHost / proposal confirmation seam as needed
 ```
 
-交互式 AI Chat 仍保留 Dart streaming runtime，因为 UI 依赖 `LlmStreamEvent`
-的增量文本、tool-call delta、取消与 trace 捕获语义：
+交互式 AI Chat 已切到 FRB streaming runtime，同时保留既有 `AiChatEvent`
+词汇表给 UI 使用（增量文本、tool-call delta、取消与 trace 捕获语义不改）：
 
 ```text
 ChatRepository
   → RuntimeRoutingAiChatApiClient   (features/ai_chat/data/)
-  → DeviceLlmRuntime                (runtime/ai_runtime.dart + runtime/device/)
-  → AnthropicClient | OpenAiClient  (runtime/device/{anthropic,openai}/)
-  → DriftDeviceToolDispatcher       (runtime/device/device_tool_dispatcher.dart)
+  → FrbChatRunner                   (app/frb_chat_runner.dart; bootstrap override)
+  → AgentRuntimeLlmStreamBridge     (FRB primitive JSON event stream)
+  → agent-llm native providers      (OpenAI-compatible / Anthropic)
+  → AgentRuntimeToolHost            (Dart JSON-RPC tool dispatch)
 ```
 
 - `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner` 是当前生产业务 agent 的首选入口：
@@ -192,10 +193,11 @@ label 影响。**Privacy policy 永远优先于 source。**
 - **§4.5 ProposalEnvelope**：见 §3.3（`CloudProposal` 子类已在 2026-05-24 audit 中删除）。
 - **§4.6 Device LLM Runtime（当前架构的落地决策——代码大量引用 §4.6.N）**：
   1. **用户自带 key** — `SecureKeyStore`，绝不进 OpLog/同步/明文备份。
-  2. **FRB/native 为生产业务 LLM 默认入口** — domain agent、profile-turn、连通性探测、
-     Vision ingest 与已迁移的 classifier/synthesizer 通过 `AgentRuntimeLlmBridge` /
-     `AgentRuntimeProfileTurnRunner` 进入 native runtime。`DeviceLlmRuntime` 目前仅作为
-     交互式 AI Chat 的 Dart streaming runtime 与 legacy/test seam 保留。
+  2. **FRB/native 为生产业务 LLM 默认入口** — interactive AI Chat、domain agent、
+     profile-turn、连通性探测、Vision ingest 与已迁移的 classifier/synthesizer 通过
+     `FrbChatRunner` / `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner`
+     进入 native runtime。`DeviceLlmRuntime` 仅作为 legacy direct-Dart runtime/test
+     seam 保留。
   3. **工具读 Drift 本地真源** — §4.2 freshness gate 已物理删除；`ScopedDisclosure`
      协议（DisclosureRequest/Response/LedgerField/UserConsent）也已删除，只保留
      `DisclosurePurpose` enum 用作 window tool 参数校验。
@@ -336,7 +338,7 @@ runtime/
   agent_runtime_*.dart           FRB/native agent runtime bridge, profile-turn runner,
                                  LLM bridge, tool host, trace recorder
   ai_runtime.dart                DeviceLlmRuntime + DeviceChatRunner
-                                 （交互式 AI Chat streaming runtime / legacy seam）
+                                 （legacy direct-Dart runtime / test seam）
                                  （boundary audit 删 RuntimeRegistry / RuntimeId /
                                  AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime）
   device/
@@ -411,10 +413,10 @@ Domain agent / business AI request
 ```
 Chat → providers.dart _prepareChatTrace(ref, requestId)
   → ContextCompressor.compress() 编 ContextPack（端侧派生信号 + 偏好）
-  → RuntimeRoutingAiChatApiClient → DeviceLlmRuntime
-     - Anthropic/OpenAiClient 直连用户 provider（用户 key）
-     - DriftDeviceToolDispatcher 仅广告 active DomainPack 聚合出的工具
-     - 每个 tool_call 直接读本机 Drift / 端侧 provider，数据不经我方服务器
+  → RuntimeRoutingAiChatApiClient → FrbChatRunner（bootstrap 注入）
+     - AgentRuntimeLlmStreamBridge 经 FRB 调 native `agent-llm` provider（用户 key）
+     - AgentRuntimeToolHost 仅广告 active DomainPack 聚合出的工具
+     - 每个 tool_call 通过 Dart JSON-RPC host 读本机 Drift / 端侧 provider，数据不经我方服务器
   → Dart stream events 回流，端侧渲染
   → AiTraceBuilder 记录 turn / llm / tool spans
   → AiTraceStore.append(trace.finalize())

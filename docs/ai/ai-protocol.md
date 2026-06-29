@@ -1,25 +1,28 @@
 # NaviWealth AI Chat Event Contract
 
 The cloud AI backend and the `/ai/chat` SSE endpoint were removed. The active
-interactive chat path is device-only and currently remains on the Dart
-streaming runtime:
+interactive chat path is device-only and runs through the FRB/native streaming
+runtime:
 
 ```text
 ChatRepository
   -> RuntimeRoutingAiChatApiClient
-  -> DeviceLlmRuntime
-  -> AnthropicClient + DriftDeviceToolDispatcher
+  -> FrbChatRunner
+  -> AgentRuntimeLlmStreamBridge + AgentRuntimeToolHost
+  -> agent-llm native provider + Dart device-tool dispatch
 ```
 
 The repository/UI contract still uses the old event vocabulary so chat history,
 stream rendering, cancellation, and trace capture did not need a rewrite. These
-events are now in-process Dart stream events, not backend SSE frames.
+events are now in-process Dart stream events mapped from FRB primitive JSON
+stream frames, not backend SSE frames.
 
 Production domain agents, profile-turn business seams, Settings connectivity
-probing, and Vision ingest use the FRB/native runtime path described in
+probing, Vision ingest, and interactive AI Chat use the FRB/native runtime path described in
 [`ai-architecture.md`](./ai-architecture.md) and
 [`../architecture/rust-agent-runtime-mvp.md`](../architecture/rust-agent-runtime-mvp.md).
-This file only defines the interactive AI Chat streaming event vocabulary.
+This file defines the interactive AI Chat streaming event vocabulary retained by
+that FRB runner.
 
 ## Events
 

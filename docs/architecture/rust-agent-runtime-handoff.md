@@ -409,13 +409,18 @@ is currently blocked by existing `clippy::result_large_err` findings in
 
 ## Recommended Next Steps
 
-The remaining critical Flutter integration work is AI Chat streaming parity on
-FRB/native. `FrbChatRunner` now proves the existing `DeviceChatRunner` seam can
-be fed by an FRB LLM event stream, and OpenAI-compatible plus Anthropic
-text/usage/tool/reasoning SSE are now decoded in `agent-llm` and mapped by
-`FrbChatRunner`. Replacing `DeviceLlmRuntime` in production still requires Dart
-tool-result continuation, span events for `AiTraceBuilder`, cancellation, and
-provider errors with the same semantics consumed by `ChatRepository`.
+The critical Flutter integration work for AI Chat streaming parity on
+FRB/native is implemented. `FrbChatRunner` now feeds the existing
+`DeviceChatRunner` seam from the FRB LLM event stream, advertises active-domain
+tools, dispatches Dart tool results through `AgentRuntimeToolHost`, continues
+bounded tool-result rounds, pauses terminally after `ask_user`, and emits
+LLM/tool/cancellation spans consumed by `AiTraceBuilder`. OpenAI-compatible plus
+Anthropic text/usage/tool/reasoning SSE are decoded in `agent-llm` and mapped by
+`FrbChatRunner`.
+
+The remaining cleanup is to keep shrinking the legacy direct-Dart
+`DeviceLlmRuntime` surface to focused runtime/provider tests and explicit
+fallback adapters only.
 
 The original suggested extraction order has now been implemented in the
 continuation worktree:
