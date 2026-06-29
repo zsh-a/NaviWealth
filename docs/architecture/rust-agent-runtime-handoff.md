@@ -177,8 +177,8 @@ Current bridge capabilities:
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions.
 - Provide an app-level `FrbChatRunner` adapter for the Flutter AI Chat seam.
-  It consumes primitive JSON-string events from
-  `agentRuntimeStreamProfileLlm` through `AgentRuntimeLlmStreamBridge` and maps
+  It consumes primitive JSON-string AgentTurn events from
+  `agentRuntimeStreamAgentTurn` through `AgentRuntimeLlmStreamBridge` and maps
   `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
   `tool_call_*` / `finished` / `error` into the existing `AiChatEvent` stream
   contract. OpenAI-compatible and Anthropic text/usage/tool/reasoning SSE are

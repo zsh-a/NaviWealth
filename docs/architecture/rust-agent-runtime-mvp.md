@@ -108,6 +108,12 @@ Implemented:
 - FRB-facing profile-backed LLM completion via
   `agentRuntimeCompleteProfileLlm`, using device-local profile metadata for
   OpenAI-compatible and Anthropic-compatible HTTP providers
+- FRB-facing AgentTurn validation and streaming via
+  `agentRuntimeValidateAgentTurnRequest` and `agentRuntimeStreamAgentTurn`.
+  The request keeps a small top-level turn envelope (`turn_id`, `surface`,
+  `agent_id`, `mode`) while preserving provider-neutral LLM messages, including
+  multimodal content blocks, and streams primitive JSON events with the same
+  envelope attached
 - FRB-first native run-step contract via `agentRuntimeStartRunStep`, which
   validates the active catalog/run request, including `RunRequest.protocol_version`
   and JSON-object `input`, `metadata`, and `user.metadata` fields, and returns
@@ -197,8 +203,8 @@ Implemented:
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions
 - AI Chat now has an app-level `FrbChatRunner` adapter and
-  `AgentRuntimeLlmStreamBridge`. Native FRB exposes primitive JSON-string LLM
-  stream events through `agentRuntimeStreamProfileLlm`; the runner maps
+  `AgentRuntimeLlmStreamBridge`. Native FRB exposes primitive JSON-string
+  AgentTurn stream events through `agentRuntimeStreamAgentTurn`; the runner maps
   `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
   `tool_call_*` / `finished` / `error` events into the existing `AiChatEvent`
   vocabulary. Native stream events normalize JSON-object event metadata and

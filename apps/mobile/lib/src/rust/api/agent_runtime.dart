@@ -6,9 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `build_tool_call_requested_step`, `complete_profile_llm_response`, `continuation_tool_results`, `continuation`, `llm_error_to_anyhow`, `llm_metadata_string`, `next_tool_request_from_continuation`, `normalize_json`, `normalize_openai_base_url`, `parse_initial_tool_request`, `profile_llm_provider`, `runtime_input_from_llm_response`, `stream_llm_response`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CatalogSummary`, `RequestedToolCall`, `ToolRequestState`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `agent_turn_error_event`, `agent_turn_event_from_llm_event`, `attach_agent_turn_envelope`, `attach_run_state`, `attach_runtime_metadata`, `attach_trace_event`, `build_tool_call_requested_step`, `complete_profile_llm_response`, `continuation_tool_results`, `continuation`, `envelope`, `llm_error_to_anyhow`, `llm_metadata_string`, `next_tool_request_from_continuation`, `normalize_agent_turn_request_contract`, `normalize_json`, `normalize_llm_event_contract`, `normalize_llm_request_contract`, `normalize_llm_response_contract`, `normalize_llm_response_tool_metadata`, `normalize_openai_base_url`, `normalize_run_request_contract`, `parse_initial_tool_request`, `parse_requested_tool_call`, `previous_step_continuation`, `profile_llm_provider`, `profile_turn_run_metadata`, `require_agent_spec_contract`, `require_catalog_contract`, `require_continuation_next_step_index`, `require_matching_nullable_integer`, `require_matching_nullable_string`, `require_matching_string`, `require_matching_tool_response_id`, `require_non_empty_string`, `require_non_negative_integer`, `require_nullable_non_empty_string`, `require_nullable_non_negative_integer`, `require_optional_non_empty`, `require_previous_step_agent`, `require_previous_step_index`, `require_previous_step_protocol_version`, `require_previous_step_run_id`, `require_previous_step_run_state`, `require_previous_step_runtime_metadata`, `require_previous_step_trace_event`, `require_previous_tool_call_catalog_tool`, `require_previous_tool_call_id`, `require_proposal_kind_contract`, `require_schedule_spec_contract`, `require_step_status`, `require_terminal_reason_matches_status`, `require_terminal_reason`, `require_tool_call_input_object`, `require_tool_response_envelope`, `require_tool_spec_contract`, `runtime_input_from_llm_response`, `stream_agent_turn_response`, `stream_llm_response`, `terminal_reason_for_status`, `to_llm_request`, `tool_call_step_index`, `tool_response_error_code`, `tool_response_error_payload`, `tool_response_terminal_status`, `validate_agent_runtime_step_trace_events`, `validate_continuation_tool_plan`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `AgentTurnEnvelope`, `AgentTurnRequest`, `CatalogSummary`, `RequestedToolCall`, `ToolRequestState`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 Future<String> agentRuntimeProtocolVersion() =>
     RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeProtocolVersion();
@@ -47,6 +47,13 @@ Future<String> agentRuntimeValidateLlmResponse({
   responseJson: responseJson,
 );
 
+Future<String> agentRuntimeValidateAgentTurnRequest({
+  required String requestJson,
+}) => RustLib.instance.api
+    .crateApiAgentRuntimeAgentRuntimeValidateAgentTurnRequest(
+      requestJson: requestJson,
+    );
+
 Future<String> agentRuntimeCompleteMockLlm({
   required String requestJson,
   required String responseText,
@@ -70,6 +77,11 @@ Stream<String> agentRuntimeStreamMockLlm({
 
 Stream<String> agentRuntimeStreamProfileLlm({required String requestJson}) =>
     RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStreamProfileLlm(
+      requestJson: requestJson,
+    );
+
+Stream<String> agentRuntimeStreamAgentTurn({required String requestJson}) =>
+    RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStreamAgentTurn(
       requestJson: requestJson,
     );
 

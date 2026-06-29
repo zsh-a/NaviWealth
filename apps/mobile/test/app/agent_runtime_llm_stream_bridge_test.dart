@@ -67,6 +67,8 @@ void main() {
 
     final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
     expect(request['protocol_version'], 'agent.v1');
+    expect(request['surface'], 'ai_chat');
+    expect(request['mode'], 'chat');
     expect(request['provider'], 'openai');
     expect(request['model'], 'gpt-test');
     expect(request['temperature'], 0);
@@ -81,6 +83,90 @@ void main() {
     expect(metadata['profile_name'], 'Work gateway');
     expect(metadata['base_url'], 'https://llm.example.test/v1');
     expect(metadata['api_key'], 'sk-test');
+  });
+
+  test('streams multimodal agent turns from request JSON', () async {
+    final bridge = AgentRuntimeLlmBridge(
+      bridge: _FakeNativeBridge(),
+      profile: const LlmProfile(
+        id: 'profile_2',
+        name: 'Claude',
+        provider: LlmProvider.anthropic,
+        apiKey: 'sk-ant',
+        model: 'claude-test',
+      ),
+    );
+    final requestJsons = <String>[];
+    final streamBridge = AgentRuntimeLlmStreamBridge(
+      llmBridge: bridge,
+      initRuntime: ({String? libraryPath}) async {},
+      streamAgentTurnJson: ({required String requestJson}) {
+        requestJsons.add(requestJson);
+        return Stream<String>.fromIterable(const <String>[
+          '{"kind":"started","protocol_version":"agent.v1","turn_id":"turn_1","surface":"flutter_ai_chat"}',
+          '{"kind":"delta","content":"The image shows a receipt."}',
+        ]);
+      },
+    );
+
+    final events = await streamBridge
+        .streamAgentTurn(
+          messages: const <Map<String, Object?>>[
+            <String, Object?>{
+              'role': 'user',
+              'content': <Object?>[
+                <String, Object?>{
+                  'type': 'text',
+                  'text': 'What is in this image?',
+                },
+                <String, Object?>{
+                  'type': 'image',
+                  'mime_type': 'image/png',
+                  'data': 'base64-image',
+                },
+              ],
+            },
+          ],
+          metadata: const <String, Object?>{'source': 'composer'},
+          turnId: 'turn_1',
+          surface: 'flutter_ai_chat',
+          agentId: 'assistant',
+          mode: 'interactive',
+        )
+        .toList();
+
+    expect(events.map((event) => event['kind']), <String>['started', 'delta']);
+    expect(events[1]['content'], 'The image shows a receipt.');
+
+    final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
+    expect(request['protocol_version'], 'agent.v1');
+    expect(request['turn_id'], 'turn_1');
+    expect(request['surface'], 'flutter_ai_chat');
+    expect(request['agent_id'], 'assistant');
+    expect(request['mode'], 'interactive');
+    expect(request['provider'], 'anthropic');
+    expect(request['model'], 'claude-test');
+
+    final messages = request['messages'] as List<Object?>;
+    final userMessage = messages.single as Map<String, Object?>;
+    expect(userMessage['role'], 'user');
+    final content = userMessage['content'] as List<Object?>;
+    expect(content, hasLength(2));
+    expect(content.first, <String, Object?>{
+      'type': 'text',
+      'text': 'What is in this image?',
+    });
+    expect(content.last, <String, Object?>{
+      'type': 'image',
+      'mime_type': 'image/png',
+      'data': 'base64-image',
+    });
+
+    final metadata = request['metadata'] as Map<String, Object?>;
+    expect(metadata['source'], 'composer');
+    expect(metadata['profile_id'], 'profile_2');
+    expect(metadata['profile_name'], 'Claude');
+    expect(metadata['api_key'], 'sk-ant');
   });
 
   test('initializes the native runtime only once per stream bridge', () async {

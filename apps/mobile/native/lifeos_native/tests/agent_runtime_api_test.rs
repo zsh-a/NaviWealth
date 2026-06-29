@@ -2,9 +2,10 @@ use lifeos_native::api::agent_runtime::{
     agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
     agent_runtime_complete_profile_llm, agent_runtime_continue_run_step,
     agent_runtime_protocol_version, agent_runtime_start_profile_turn_step,
-    agent_runtime_start_run_step, agent_runtime_validate_llm_request,
-    agent_runtime_validate_llm_response, agent_runtime_validate_run_request,
-    agent_runtime_validate_tool_spec, agent_runtime_validate_trace,
+    agent_runtime_start_run_step, agent_runtime_validate_agent_turn_request,
+    agent_runtime_validate_llm_request, agent_runtime_validate_llm_response,
+    agent_runtime_validate_run_request, agent_runtime_validate_tool_spec,
+    agent_runtime_validate_trace,
 };
 use serde_json::{Value, json};
 use std::io::{Read, Write};
@@ -502,6 +503,85 @@ fn normalizes_llm_contracts() {
     let response: Value = serde_json::from_str(&response_json).expect("response should be json");
     assert_eq!(response["protocol_version"], "agent.v1");
     assert_eq!(response["finish_reason"], "stop");
+}
+
+#[test]
+fn normalizes_agent_turn_request_contract() {
+    let request_json = agent_runtime_validate_agent_turn_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "turn_id": "turn_1",
+          "surface": "ai_chat",
+          "agent_id": "ai_chat",
+          "mode": "chat",
+          "provider": "openai",
+          "model": "gpt-test",
+          "messages": [{
+            "role": "user",
+            "content": [
+              {"type": "text", "text": "Extract this receipt."},
+              {
+                "type": "image",
+                "source": {
+                  "type": "base64",
+                  "media_type": "image/png",
+                  "data": "ZmFrZQ=="
+                }
+              }
+            ],
+            "metadata": null
+          }],
+          "tools": [{
+            "name": "emit_parsed_transactions",
+            "description": "Emit parsed rows",
+            "input_schema": {"type": "object"},
+            "risk": "read_only"
+          }],
+          "metadata": {"api_key": "sk-test"}
+        }"#
+        .to_owned(),
+    )
+    .expect("agent turn request should normalize");
+    let request: Value = serde_json::from_str(&request_json).expect("request should be json");
+
+    assert_eq!(request["protocol_version"], "agent.v1");
+    assert_eq!(request["turn_id"], "turn_1");
+    assert_eq!(request["messages"][0]["content"][0]["type"], "text");
+    assert_eq!(request["messages"][0]["content"][1]["type"], "image");
+    assert_eq!(request["messages"][0]["metadata"], json!({}));
+    assert_eq!(request["metadata"]["agent_turn"], true);
+    assert_eq!(request["metadata"]["surface"], "ai_chat");
+    assert_eq!(request["tools"][0]["name"], "emit_parsed_transactions");
+}
+
+#[test]
+fn validate_agent_turn_request_rejects_malformed_fields() {
+    let empty_surface = agent_runtime_validate_agent_turn_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "surface": "",
+          "provider": "openai",
+          "model": "gpt-test",
+          "messages": [{"role": "user", "content": "hello"}],
+          "metadata": {}
+        }"#
+        .to_owned(),
+    )
+    .expect_err("empty surface should fail");
+    assert!(empty_surface.to_string().contains("surface"));
+
+    let bad_metadata = agent_runtime_validate_agent_turn_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "openai",
+          "model": "gpt-test",
+          "messages": [{"role": "user", "content": "hello"}],
+          "metadata": []
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object metadata should fail");
+    assert!(bad_metadata.to_string().contains("metadata"));
 }
 
 #[test]

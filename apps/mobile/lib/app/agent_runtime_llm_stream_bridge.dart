@@ -18,6 +18,8 @@ import 'agent_runtime_native_bridge.dart';
 
 typedef AgentRuntimeProfileLlmJsonStream =
     Stream<String> Function({required String requestJson});
+typedef AgentRuntimeAgentTurnJsonStream =
+    Stream<String> Function({required String requestJson});
 
 final agentRuntimeLlmStreamBridgeProvider =
     Provider<AgentRuntimeLlmStreamBridge?>((ref) {
@@ -38,17 +40,22 @@ class AgentRuntimeLlmStreamBridge {
     required AgentRuntimeLlmBridge llmBridge,
     required LifeosNativeRuntimeInitializer initRuntime,
     String? libraryPath,
-    AgentRuntimeProfileLlmJsonStream streamProfileJson =
-        rust.agentRuntimeStreamProfileLlm,
+    AgentRuntimeProfileLlmJsonStream? streamProfileJson,
+    AgentRuntimeAgentTurnJsonStream? streamAgentTurnJson,
   }) : _llmBridge = llmBridge,
        _initRuntime = initRuntime,
        _libraryPath = libraryPath,
-       _streamProfileJson = streamProfileJson;
+       _streamAgentTurnJson =
+           streamAgentTurnJson ??
+           (streamProfileJson == null
+               ? rust.agentRuntimeStreamAgentTurn
+               : ({required String requestJson}) =>
+                     streamProfileJson(requestJson: requestJson));
 
   final AgentRuntimeLlmBridge _llmBridge;
   final LifeosNativeRuntimeInitializer _initRuntime;
   final String? _libraryPath;
-  final AgentRuntimeProfileLlmJsonStream _streamProfileJson;
+  final AgentRuntimeAgentTurnJsonStream _streamAgentTurnJson;
 
   Future<void>? _initFuture;
 
@@ -58,16 +65,44 @@ class AgentRuntimeLlmStreamBridge {
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) async* {
-    await _ensureInitialized();
-    final request = _llmBridge.buildRequest(
+  }) {
+    return streamAgentTurn(
       messages: messages,
       tools: tools,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
       metadata: metadata,
+      turnId: _metadataString(metadata, 'turn_id'),
+      surface: _metadataString(metadata, 'surface'),
+      agentId: _metadataString(metadata, 'agent_id'),
+      mode: _metadataString(metadata, 'mode') ?? 'chat',
     );
-    await for (final eventJson in _streamProfileJson(
+  }
+
+  Stream<Map<String, Object?>> streamAgentTurn({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+    String? turnId,
+    String? surface,
+    String? agentId,
+    String? mode,
+  }) async* {
+    await _ensureInitialized();
+    final request = _buildAgentTurnRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+      turnId: turnId,
+      surface: surface,
+      agentId: agentId,
+      mode: mode,
+    );
+    await for (final eventJson in _streamAgentTurnJson(
       requestJson: jsonEncode(request),
     )) {
       yield _decodeObject(eventJson);
@@ -76,6 +111,40 @@ class AgentRuntimeLlmStreamBridge {
 
   Future<void> _ensureInitialized() {
     return _initFuture ??= _initRuntime(libraryPath: _libraryPath);
+  }
+
+  Map<String, Object?> _buildAgentTurnRequest({
+    required List<Map<String, Object?>> messages,
+    required List<Map<String, Object?>> tools,
+    required Map<String, Object?> metadata,
+    required double? temperature,
+    required int? maxOutputTokens,
+    required String? turnId,
+    required String? surface,
+    required String? agentId,
+    required String? mode,
+  }) {
+    final llmRequest = _llmBridge.buildRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
+    return <String, Object?>{
+      'protocol_version': llmRequest['protocol_version'],
+      'turn_id': ?turnId,
+      'surface': ?surface,
+      'agent_id': ?agentId,
+      'mode': ?mode,
+      'provider': llmRequest['provider'],
+      'model': llmRequest['model'],
+      'messages': llmRequest['messages'],
+      'temperature': ?llmRequest['temperature'],
+      'max_output_tokens': ?llmRequest['max_output_tokens'],
+      'tools': llmRequest['tools'],
+      'metadata': llmRequest['metadata'],
+    };
   }
 }
 
@@ -86,4 +155,10 @@ Map<String, Object?> _decodeObject(String json) {
     return decoded.map((key, value) => MapEntry(key.toString(), value));
   }
   throw const FormatException('agent runtime LLM stream event is not object');
+}
+
+String? _metadataString(Map<String, Object?> metadata, String key) {
+  final value = metadata[key];
+  if (value is String && value.trim().isNotEmpty) return value.trim();
+  return null;
 }
