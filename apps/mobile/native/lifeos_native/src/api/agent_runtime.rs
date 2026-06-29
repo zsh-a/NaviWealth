@@ -439,11 +439,11 @@ fn require_tool_response_envelope(tool_response: &Value) -> Result<()> {
             let error = error
                 .as_object()
                 .ok_or_else(|| anyhow::anyhow!("tool response error must be an object"))?;
-            if !error.contains_key("code") {
-                anyhow::bail!("tool response error.code is required");
+            if error.get("code").and_then(Value::as_i64).is_none() {
+                anyhow::bail!("tool response error.code must be an integer");
             }
-            if !error.contains_key("message") {
-                anyhow::bail!("tool response error.message is required");
+            if error.get("message").and_then(Value::as_str).is_none() {
+                anyhow::bail!("tool response error.message must be a string");
             }
         }
     }

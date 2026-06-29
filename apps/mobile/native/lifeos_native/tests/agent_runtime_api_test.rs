@@ -1066,7 +1066,37 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
     )
     .expect_err("JSON-RPC tool response error without code should fail");
 
-    assert!(err.to_string().contains("error.code"));
+    assert!(err.to_string().contains("error.code must be an integer"));
+}
+
+#[test]
+fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "error": {"code": "failed", "message": "failed"}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("JSON-RPC tool response error with non-integer code should fail");
+
+    assert!(err.to_string().contains("error.code must be an integer"));
 }
 
 #[test]
@@ -1096,7 +1126,37 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
     )
     .expect_err("JSON-RPC tool response error without message should fail");
 
-    assert!(err.to_string().contains("error.message"));
+    assert!(err.to_string().contains("error.message must be a string"));
+}
+
+#[test]
+fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "error": {"code": -32000, "message": 11}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("JSON-RPC tool response error with non-string message should fail");
+
+    assert!(err.to_string().contains("error.message must be a string"));
 }
 
 #[test]
@@ -1505,8 +1565,6 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
         step_json.to_owned(),
         r#"{
-          "jsonrpc": "2.0",
-          "id": "tool_018f0000-0000-7000-8000-000000000001",
           "error": {
             "code": "tool_call_budget_exhausted",
             "message": "agent runtime tool-call budget exhausted",
