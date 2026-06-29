@@ -132,6 +132,38 @@ void main() {
       expect(snapshot.dueReviews.single.id, 'fallback_decision');
       expect(fallback.calls, 1);
     });
+
+    test(
+      'ignores trace recording failures after a successful FRB read',
+      () async {
+        final fallback = _FallbackReader(
+          const ReviewDueSnapshot(
+            dueReviews: <ReviewDecisionItem>[
+              ReviewDecisionItem(
+                id: 'fallback_decision',
+                question: 'Fallback?',
+              ),
+            ],
+            staleAssumptions: <ReviewAssumptionItem>[],
+          ),
+        );
+        final reader = FrbReviewDueReader(
+          stepRunner: AgentRuntimeNativeStepRunner(
+            bridge: _ToolPlanBridge(),
+            toolHost: AgentRuntimeToolHost(dispatcher: _ReviewDispatcher()),
+          ),
+          catalog: _catalog(),
+          fallback: fallback,
+          recordTrace: (_) async => throw StateError('trace store unavailable'),
+        );
+
+        final snapshot = await reader.read(_context());
+
+        expect(snapshot.dueReviews.single.question, 'Revisit portfolio hedge?');
+        expect(snapshot.staleAssumptions.single.statement, 'Rates stay high');
+        expect(fallback.calls, 0);
+      },
+    );
   });
 }
 
