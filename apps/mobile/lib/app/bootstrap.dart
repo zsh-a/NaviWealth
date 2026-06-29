@@ -45,6 +45,7 @@ import '../features/health/agents/weekly_summary_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
 import '../features/ingest/data/ingest_llm_client.dart';
 import '../features/knowledge/agents/assumption_agent.dart';
+import '../features/knowledge/agents/inbox_triage_agent.dart';
 import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import '../features/knowledge/agents/review_agent.dart';
@@ -364,6 +365,27 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
                     stepRun: stepRun,
                     domain: 'knowledge',
                     surface: 'knowledge_assumption',
+                  );
+            },
+          ),
+        );
+      }),
+      // Inbox Triage now reads untriaged notes and decision context through
+      // FRB native `tool_plan` steps; classification and local side-table
+      // writes remain in Dart so the existing proposal semantics stay intact.
+      knowledge_agent_providers.inboxTriageAgentProvider.overrideWith((ref) {
+        return InboxTriageAgent(
+          sourceReader: FrbInboxTriageSourceReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kKnowledgeInboxTriageAgentId,
+                    stepRun: stepRun,
+                    domain: 'knowledge',
+                    surface: 'knowledge_inbox_triage',
                   );
             },
           ),

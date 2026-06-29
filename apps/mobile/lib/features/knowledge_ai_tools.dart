@@ -14,7 +14,9 @@ import '../core/ai/runtime/device/tools/registered_device_tool.dart';
 import 'knowledge/ai_tools/find_similar_knowledge_tool.dart';
 import 'knowledge/ai_tools/list_due_reviews_tool.dart';
 import 'knowledge/ai_tools/list_due_routines_tool.dart';
+import 'knowledge/ai_tools/list_inbox_triage_candidates_tool.dart';
 import 'knowledge/ai_tools/list_open_assumptions_tool.dart';
+import 'knowledge/ai_tools/list_triage_decisions_tool.dart';
 import 'knowledge/ai_tools/propose_capture_tool.dart';
 import 'knowledge/ai_tools/propose_concept_link_tool.dart';
 import 'knowledge/ai_tools/propose_merge_tool.dart';
@@ -44,6 +46,8 @@ kKnowledgeToolRegistrations = <RegisteredDeviceTool>[
   _knowledgeTool.read(const ListOpenAssumptionsTool()),
   _knowledgeTool.read(const ListDueReviewsTool()),
   _knowledgeTool.read(const ListDueRoutinesTool()),
+  _knowledgeTool.read(const ListInboxTriageCandidatesTool()),
+  _knowledgeTool.read(const ListTriageDecisionsTool()),
   _knowledgeTool.read(const SearchNotesTool()),
   _knowledgeTool.read(const SearchKnowledgeTool(), tier: BudgetTier.standard),
   _knowledgeTool.read(const FindSimilarKnowledgeTool()),

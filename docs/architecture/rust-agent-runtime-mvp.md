@@ -250,6 +250,11 @@ Implemented:
   which requests `get_recovery_signal`, `get_recent_sleep_summary`, and
   `get_activity_summary` through a three-step FRB `tool_plan`, then keeps
   weekly summary composition and memory writing in Dart
+- Additional KnowledgeOS production agent migration: `InboxTriageAgent` now
+  reads untriaged notes and decision context via `FrbInboxTriageSourceReader`,
+  which requests `list_inbox_triage_candidates` and `list_triage_decisions`
+  through a two-step FRB `tool_plan`, then keeps classification and local
+  side-table proposal persistence in Dart
 
 Deferred:
 
