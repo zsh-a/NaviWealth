@@ -55,7 +55,9 @@ pub fn agent_runtime_catalog_summary(catalog_json: String) -> Result<String> {
 }
 
 pub fn agent_runtime_validate_run_request(request_json: String) -> Result<String> {
-    normalize_json::<RunRequest>(&request_json)
+    let request: RunRequest = serde_json::from_str(&request_json)?;
+    require_run_request_protocol_version(&request)?;
+    Ok(serde_json::to_string(&request)?)
 }
 
 pub fn agent_runtime_validate_trace(trace_json: String) -> Result<String> {
@@ -233,6 +235,7 @@ pub fn agent_runtime_start_run_step(
 ) -> Result<String> {
     let catalog: AgentRuntimeCatalog = serde_json::from_str(&catalog_json)?;
     let request: RunRequest = serde_json::from_str(&request_json)?;
+    require_run_request_protocol_version(&request)?;
     let agent = catalog
         .agents
         .iter()
@@ -748,6 +751,17 @@ where
 {
     let value: T = serde_json::from_str(json)?;
     Ok(serde_json::to_string(&value)?)
+}
+
+fn require_run_request_protocol_version(request: &RunRequest) -> Result<()> {
+    let expected = protocol_version();
+    if request.protocol_version != expected {
+        anyhow::bail!(
+            "run request protocol_version '{}' does not match runtime protocol_version '{expected}'",
+            request.protocol_version
+        );
+    }
+    Ok(())
 }
 
 fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Result<()> {

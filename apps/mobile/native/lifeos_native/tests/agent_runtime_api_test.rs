@@ -46,6 +46,21 @@ fn normalizes_run_request_contract() {
 }
 
 #[test]
+fn validate_run_request_rejects_mismatched_protocol_version() {
+    let err = agent_runtime_validate_run_request(
+        r#"{
+          "protocol_version": "agent.v0",
+          "input": {"message": "hello runtime"},
+          "trigger": "manual"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("mismatched run request protocol should fail");
+
+    assert!(err.to_string().contains("protocol_version"));
+}
+
+#[test]
 fn normalizes_trace_contract() {
     let normalized = agent_runtime_validate_trace(
         include_str!("../../../../../fixtures/agent-runtime/trace.valid.json").to_owned(),
@@ -401,6 +416,29 @@ fn start_run_step_rejects_empty_tool_call_name() {
     .expect_err("empty tool call name should fail");
 
     assert!(err.to_string().contains("tool_call.name"));
+}
+
+#[test]
+fn start_run_step_rejects_mismatched_run_request_protocol_version() {
+    let err = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v0",
+          "input": {
+            "tool_call": {
+              "name": "propose_fake",
+              "input": {"value": 7}
+            }
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched run request protocol should fail");
+
+    assert!(err.to_string().contains("protocol_version"));
 }
 
 #[test]
