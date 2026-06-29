@@ -293,6 +293,7 @@ pub fn agent_runtime_continue_run_step(
         .get("tool_call")
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
+    require_previous_tool_call_id(&tool_call)?;
     require_previous_tool_call_catalog_tool(&catalog, &agent.id, &tool_call)?;
     require_tool_response_envelope(&tool_response)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
@@ -435,6 +436,17 @@ fn require_previous_tool_call_catalog_tool(
         return Ok(());
     }
     anyhow::bail!("tool '{name}' requested by agent '{agent_id}' is not present in the catalog");
+}
+
+fn require_previous_tool_call_id(tool_call: &Value) -> Result<()> {
+    tool_call
+        .get("tool_call_id")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            anyhow::anyhow!("previous step tool_call.tool_call_id must be a non-empty string")
+        })?;
+    Ok(())
 }
 
 fn require_matching_tool_response_id(tool_call: &Value, tool_response: &Value) -> Result<()> {
