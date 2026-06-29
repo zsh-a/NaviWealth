@@ -145,6 +145,38 @@ fn catalog_summary_rejects_malformed_proposal_kind() {
 }
 
 #[test]
+fn catalog_summary_rejects_duplicate_catalog_entries() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    let duplicate_tool = catalog["tools"][0].clone();
+    catalog["tools"]
+        .as_array_mut()
+        .expect("tools should be array")
+        .push(duplicate_tool);
+    let tool_err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("duplicate tool name should fail");
+    assert!(tool_err.to_string().contains("catalog.tools[1].name"));
+
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["prompt_blocks"] = json!([
+        {"index": 0, "text": "first"},
+        {"index": 0, "text": "duplicate"}
+    ]);
+    let prompt_err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("duplicate prompt block index should fail");
+    assert!(
+        prompt_err
+            .to_string()
+            .contains("catalog.prompt_blocks[1].index")
+    );
+}
+
+#[test]
 fn normalizes_run_request_contract() {
     let normalized = agent_runtime_validate_run_request(
         include_str!("../../../../../fixtures/agent-runtime/run-request.valid.json").to_owned(),

@@ -15,6 +15,7 @@ use anyhow::Result;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
+use std::collections::HashSet;
 
 use crate::frb_generated::StreamSink;
 
@@ -792,14 +793,38 @@ fn require_catalog_contract(catalog: &AgentRuntimeCatalog) -> Result<()> {
             catalog.catalog_version
         );
     }
+    let mut agent_ids = HashSet::new();
+    let mut tool_names = HashSet::new();
+    let mut proposal_kinds = HashSet::new();
+    let mut prompt_block_indexes = HashSet::new();
     for (index, tool) in catalog.tools.iter().enumerate() {
         require_tool_spec_contract(tool, &format!("catalog.tools[{index}]"))?;
+        if !tool_names.insert(tool.name.as_str()) {
+            anyhow::bail!("catalog.tools[{index}].name '{}' is duplicated", tool.name);
+        }
     }
     for (index, agent) in catalog.agents.iter().enumerate() {
         require_agent_spec_contract(agent, &format!("catalog.agents[{index}]"))?;
+        if !agent_ids.insert(agent.id.as_str()) {
+            anyhow::bail!("catalog.agents[{index}].id '{}' is duplicated", agent.id);
+        }
     }
     for (index, proposal_kind) in catalog.proposal_kinds.iter().enumerate() {
         require_proposal_kind_contract(proposal_kind, &format!("catalog.proposal_kinds[{index}]"))?;
+        if !proposal_kinds.insert(proposal_kind.kind.as_str()) {
+            anyhow::bail!(
+                "catalog.proposal_kinds[{index}].kind '{}' is duplicated",
+                proposal_kind.kind
+            );
+        }
+    }
+    for (index, prompt_block) in catalog.prompt_blocks.iter().enumerate() {
+        if !prompt_block_indexes.insert(prompt_block.index) {
+            anyhow::bail!(
+                "catalog.prompt_blocks[{index}].index {} is duplicated",
+                prompt_block.index
+            );
+        }
     }
     Ok(())
 }
