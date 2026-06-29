@@ -63,6 +63,7 @@ abstract interface class AgentRuntimeNativeApi {
     required String requestJson,
     required String responseText,
   });
+  Future<String> completeProfileLlm({required String requestJson});
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -127,6 +128,11 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
   }
 
   @override
+  Future<String> completeProfileLlm({required String requestJson}) {
+    return rust.agentRuntimeCompleteProfileLlm(requestJson: requestJson);
+  }
+
+  @override
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -169,6 +175,9 @@ abstract interface class AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> completeMockLlm({
     required Map<String, Object?> request,
     required String responseText,
+  });
+  Future<Map<String, Object?>> completeProfileLlm({
+    required Map<String, Object?> request,
   });
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
@@ -277,6 +286,17 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
     final json = await _api.completeMockLlm(
       requestJson: jsonEncode(request),
       responseText: responseText,
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfileLlm({
+    required Map<String, Object?> request,
+  }) async {
+    await _ensureInitialized();
+    final json = await _api.completeProfileLlm(
+      requestJson: jsonEncode(request),
     );
     return _decodeObject(json);
   }

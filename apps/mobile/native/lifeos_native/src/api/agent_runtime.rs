@@ -7,7 +7,10 @@ use agent_core::{
     AgentRuntimeCatalog, AgentTrace, RunId, RunRequest, ToolCallId, ToolSpec, catalog_version,
     protocol_version,
 };
-use agent_llm::{LlmProvider, LlmRequest, LlmResponse, MockLlmProvider};
+use agent_llm::{
+    AnthropicProvider, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
+    OpenAiCompatibleProvider,
+};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -78,6 +81,41 @@ pub async fn agent_runtime_complete_mock_llm(
         .complete(request)
         .await
         .map_err(|e| anyhow::anyhow!(e.record.message.clone()))?;
+    Ok(serde_json::to_string(&response)?)
+}
+
+pub async fn agent_runtime_complete_profile_llm(request_json: String) -> Result<String> {
+    let request: LlmRequest = serde_json::from_str(&request_json)?;
+    let response = match request.provider.as_str() {
+        "mock" => MockLlmProvider::new("mock", request.model.clone(), "mock response")
+            .complete(request)
+            .await
+            .map_err(llm_error_to_anyhow)?,
+        "openai" | "openai-compatible" => {
+            let api_key = llm_metadata_string(&request, "api_key")?;
+            let base_url = llm_metadata_string(&request, "base_url")
+                .map(normalize_openai_base_url)
+                .unwrap_or_else(|_| "https://api.openai.com/v1".to_owned());
+            OpenAiCompatibleProvider::new(request.provider.clone(), base_url, api_key)
+                .map_err(llm_error_to_anyhow)?
+                .complete(request)
+                .await
+                .map_err(llm_error_to_anyhow)?
+        }
+        "anthropic" => {
+            let api_key = llm_metadata_string(&request, "api_key")?;
+            let base_url = llm_metadata_string(&request, "base_url")
+                .unwrap_or_else(|_| "https://api.anthropic.com/v1".to_owned());
+            let version = llm_metadata_string(&request, "anthropic_version")
+                .unwrap_or_else(|_| "2023-06-01".to_owned());
+            AnthropicProvider::new(request.provider.clone(), base_url, api_key, version)
+                .map_err(llm_error_to_anyhow)?
+                .complete(request)
+                .await
+                .map_err(llm_error_to_anyhow)?
+        }
+        other => anyhow::bail!("unsupported LLM provider '{other}'"),
+    };
     Ok(serde_json::to_string(&response)?)
 }
 
@@ -189,6 +227,39 @@ pub fn agent_runtime_continue_run_step(
         }),
     };
     Ok(serde_json::to_string(&response)?)
+}
+
+fn llm_metadata_string(request: &LlmRequest, key: &str) -> Result<String> {
+    let value = request
+        .metadata
+        .get(key)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
+    if value.is_empty() {
+        anyhow::bail!("LLM request metadata.{key} is required");
+    }
+    Ok(value)
+}
+
+fn normalize_openai_base_url(base_url: String) -> String {
+    let base = base_url.trim().trim_end_matches('/').to_owned();
+    if let Some(prefix) = base.strip_suffix("/v1/chat/completions") {
+        return prefix.to_owned() + "/v1";
+    }
+    if let Some(prefix) = base.strip_suffix("/chat/completions") {
+        return prefix.to_owned();
+    }
+    if base.ends_with("/v1") {
+        base
+    } else {
+        base + "/v1"
+    }
+}
+
+fn llm_error_to_anyhow(error: agent_llm::LlmError) -> anyhow::Error {
+    anyhow::anyhow!(error.record.message.clone())
 }
 
 fn normalize_json<T>(json: &str) -> Result<String>

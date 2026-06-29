@@ -1,10 +1,14 @@
 use lifeos_native::api::agent_runtime::{
     agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
-    agent_runtime_continue_run_step, agent_runtime_protocol_version, agent_runtime_start_run_step,
+    agent_runtime_complete_profile_llm, agent_runtime_continue_run_step,
+    agent_runtime_protocol_version, agent_runtime_start_run_step,
     agent_runtime_validate_llm_request, agent_runtime_validate_llm_response,
     agent_runtime_validate_run_request, agent_runtime_validate_trace,
 };
 use serde_json::Value;
+use std::io::{Read, Write};
+use std::net::TcpListener;
+use std::thread;
 
 #[test]
 fn exposes_protocol_version() {
@@ -89,6 +93,52 @@ async fn complete_mock_llm_returns_provider_response() {
     assert_eq!(response["content"], "native mock response");
     assert_eq!(response["finish_reason"], "stop");
     assert_eq!(response["metadata"]["mock"], true);
+}
+
+#[tokio::test]
+async fn complete_profile_llm_requires_profile_api_key() {
+    let err = agent_runtime_complete_profile_llm(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "openai",
+          "model": "test-model",
+          "messages": [{"role": "user", "content": "ping"}],
+          "metadata": {}
+        }"#
+        .to_owned(),
+    )
+    .await
+    .expect_err("profile llm should require metadata api key");
+
+    assert!(err.to_string().contains("metadata.api_key"));
+}
+
+#[tokio::test]
+async fn complete_profile_llm_calls_openai_compatible_provider() {
+    let (base_url, server) = spawn_openai_compatible_server();
+    let response_json = agent_runtime_complete_profile_llm(format!(
+        r#"{{
+          "protocol_version": "agent.v1",
+          "provider": "openai",
+          "model": "test-model",
+          "messages": [{{"role": "user", "content": "ping"}}],
+          "metadata": {{
+            "api_key": "sk-test",
+            "base_url": "{base_url}"
+          }}
+        }}"#
+    ))
+    .await
+    .expect("profile llm should complete through local provider");
+    server.join().expect("server thread should finish");
+    let response: Value = serde_json::from_str(&response_json).expect("response should be json");
+
+    assert_eq!(response["protocol_version"], "agent.v1");
+    assert_eq!(response["provider"], "openai");
+    assert_eq!(response["model"], "test-model");
+    assert_eq!(response["content"], "profile response");
+    assert_eq!(response["finish_reason"], "stop");
+    assert_eq!(response["metadata"]["api"], "openai_chat_completions");
 }
 
 #[test]
@@ -186,4 +236,37 @@ fn continue_run_step_fails_with_tool_error() {
     assert_eq!(next["status"], "failed");
     assert_eq!(next["error"]["message"], "tool failed");
     assert_eq!(next["tool_call"]["name"], "propose_fake");
+}
+
+fn spawn_openai_compatible_server() -> (String, thread::JoinHandle<()>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind local test server");
+    let addr = listener.local_addr().expect("local addr");
+    let handle = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept provider request");
+        let mut request = [0_u8; 4096];
+        let read = stream.read(&mut request).expect("read provider request");
+        let request = String::from_utf8_lossy(&request[..read]);
+        assert!(request.contains("POST /v1/chat/completions HTTP/1.1"));
+        assert!(request.contains("authorization: Bearer sk-test"));
+        let body = r#"{
+          "choices": [{
+            "message": {"content": "profile response"},
+            "finish_reason": "stop"
+          }],
+          "usage": {
+            "prompt_tokens": 1,
+            "completion_tokens": 2,
+            "total_tokens": 3
+          }
+        }"#;
+        let response = format!(
+            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\n\r\n{}",
+            body.len(),
+            body
+        );
+        stream
+            .write_all(response.as_bytes())
+            .expect("write provider response");
+    });
+    (format!("http://{addr}"), handle)
 }

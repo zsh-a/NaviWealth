@@ -50,6 +50,10 @@ void main() {
       );
       expect(llmResponse, containsPair('content', 'mock answer'));
       expect(
+        await bridge.completeProfileLlm(request: llmRequest),
+        containsPair('content', 'profile answer'),
+      );
+      expect(
         await bridge.validateLlmResponse(llmResponse),
         containsPair('finish_reason', 'stop'),
       );
@@ -355,6 +359,19 @@ class _FakeNativeApi implements AgentRuntimeNativeApi {
   }
 
   @override
+  Future<String> completeProfileLlm({required String requestJson}) async {
+    final request = jsonDecode(requestJson) as Map<String, Object?>;
+    return jsonEncode(<String, Object?>{
+      'protocol_version': 'agent.v1',
+      'provider': request['provider'],
+      'model': request['model'],
+      'content': 'profile answer',
+      'finish_reason': 'stop',
+      'metadata': <String, Object?>{'profile': true},
+    });
+  }
+
+  @override
   Future<String> startRunStep({
     required String catalogJson,
     required String requestJson,
@@ -466,6 +483,20 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
       'content': responseText,
       'finish_reason': 'stop',
       'metadata': <String, Object?>{'mock': true},
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfileLlm({
+    required Map<String, Object?> request,
+  }) async {
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'provider': request['provider'],
+      'model': request['model'],
+      'content': 'profile answer',
+      'finish_reason': 'stop',
+      'metadata': <String, Object?>{'profile': true},
     };
   }
 

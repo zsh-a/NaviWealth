@@ -95,6 +95,23 @@ class AgentRuntimeLlmBridge {
       responseText: responseText,
     );
   }
+
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
+    final request = buildRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
+    return _bridge.completeProfileLlm(request: request);
+  }
 }
 
 String _defaultModel(LlmProvider provider) {

@@ -65,6 +65,36 @@ void main() {
     expect(native.llmRequests.single['model'], 'claude-sonnet-4-5');
   });
 
+  test(
+    'completeProfile sends active profile request through native bridge',
+    () async {
+      final native = _FakeNativeBridge();
+      final bridge = AgentRuntimeLlmBridge(
+        bridge: native,
+        profile: const LlmProfile(
+          id: 'profile_1',
+          name: '',
+          provider: LlmProvider.openai,
+          apiKey: 'sk-openai',
+        ),
+      );
+
+      final response = await bridge.completeProfile(
+        messages: const <Map<String, Object?>>[
+          <String, Object?>{'role': 'user', 'content': 'Ping'},
+        ],
+      );
+
+      expect(response['content'], 'profile response');
+      expect(native.llmRequests.single['provider'], 'openai');
+      expect(
+        (native.llmRequests.single['metadata']
+            as Map<String, Object?>)['api_key'],
+        'sk-openai',
+      );
+    },
+  );
+
   test('provider returns bridge for active usable profile', () async {
     final native = _FakeNativeBridge();
     final container = ProviderContainer(
@@ -200,6 +230,21 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
       'content': responseText,
       'finish_reason': 'stop',
       'metadata': <String, Object?>{'mock': true},
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfileLlm({
+    required Map<String, Object?> request,
+  }) async {
+    llmRequests.add(request);
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'provider': request['provider'],
+      'model': request['model'],
+      'content': 'profile response',
+      'finish_reason': 'stop',
+      'metadata': <String, Object?>{'profile': true},
     };
   }
 
