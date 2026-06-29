@@ -523,6 +523,26 @@ fn normalizes_llm_request_default_object_fields() {
 }
 
 #[test]
+fn validates_llm_request_generation_limits() {
+    let request_json = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}],
+          "temperature": 0.2,
+          "max_output_tokens": 16
+        }"#
+        .to_owned(),
+    )
+    .expect("valid generation limits should validate");
+    let request: Value = serde_json::from_str(&request_json).expect("request should be json");
+
+    assert_eq!(request["temperature"], 0.2);
+    assert_eq!(request["max_output_tokens"], 16);
+}
+
+#[test]
 fn normalizes_llm_response_default_object_fields() {
     let response_json = agent_runtime_validate_llm_response(
         r#"{
@@ -696,6 +716,35 @@ fn validate_llm_request_rejects_malformed_required_fields() {
     )
     .expect_err("empty messages should fail");
     assert!(messages_err.to_string().contains("messages"));
+}
+
+#[test]
+fn validate_llm_request_rejects_invalid_generation_limits() {
+    let temperature_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}],
+          "temperature": -0.1
+        }"#
+        .to_owned(),
+    )
+    .expect_err("negative temperature should fail");
+    assert!(temperature_err.to_string().contains("temperature"));
+
+    let max_tokens_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}],
+          "max_output_tokens": 0
+        }"#
+        .to_owned(),
+    )
+    .expect_err("zero max output tokens should fail");
+    assert!(max_tokens_err.to_string().contains("max_output_tokens"));
 }
 
 #[test]

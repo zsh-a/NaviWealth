@@ -881,6 +881,12 @@ fn normalize_llm_request_contract(request: &mut LlmRequest) -> Result<()> {
     if request.messages.is_empty() {
         anyhow::bail!("LLM request messages must contain at least one message");
     }
+    if matches!(request.temperature, Some(value) if value < 0.0) {
+        anyhow::bail!("LLM request temperature must be greater than or equal to zero");
+    }
+    if matches!(request.max_output_tokens, Some(0)) {
+        anyhow::bail!("LLM request max_output_tokens must be greater than zero");
+    }
     for (index, message) in request.messages.iter_mut().enumerate() {
         if message.metadata.is_null() {
             message.metadata = json!({});
