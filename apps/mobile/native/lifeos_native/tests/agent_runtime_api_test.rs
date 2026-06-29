@@ -505,6 +505,24 @@ fn normalizes_llm_contracts() {
 }
 
 #[test]
+fn normalizes_llm_request_default_object_fields() {
+    let request_json = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}]
+        }"#
+        .to_owned(),
+    )
+    .expect("LLM request defaults should normalize");
+    let request: Value = serde_json::from_str(&request_json).expect("request should be json");
+
+    assert_eq!(request["metadata"], json!({}));
+    assert_eq!(request["messages"][0]["metadata"], json!({}));
+}
+
+#[test]
 fn validate_llm_contracts_reject_mismatched_protocol_version() {
     let request_err = agent_runtime_validate_llm_request(
         r#"{
@@ -530,6 +548,77 @@ fn validate_llm_contracts_reject_mismatched_protocol_version() {
     )
     .expect_err("mismatched LLM response protocol should fail");
     assert!(response_err.to_string().contains("protocol_version"));
+}
+
+#[test]
+fn validate_llm_request_rejects_malformed_required_fields() {
+    let provider_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}]
+        }"#
+        .to_owned(),
+    )
+    .expect_err("empty provider should fail");
+    assert!(provider_err.to_string().contains("provider"));
+
+    let model_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "",
+          "messages": [{"role": "user", "content": "hello"}]
+        }"#
+        .to_owned(),
+    )
+    .expect_err("empty model should fail");
+    assert!(model_err.to_string().contains("model"));
+
+    let messages_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": []
+        }"#
+        .to_owned(),
+    )
+    .expect_err("empty messages should fail");
+    assert!(messages_err.to_string().contains("messages"));
+}
+
+#[test]
+fn validate_llm_request_rejects_malformed_metadata_fields() {
+    let request_metadata_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}],
+          "metadata": []
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object request metadata should fail");
+    assert!(request_metadata_err.to_string().contains("metadata"));
+
+    let message_metadata_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello", "metadata": []}]
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object message metadata should fail");
+    assert!(
+        message_metadata_err
+            .to_string()
+            .contains("messages[0].metadata")
+    );
 }
 
 #[test]

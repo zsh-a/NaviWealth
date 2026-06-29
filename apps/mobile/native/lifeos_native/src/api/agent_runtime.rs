@@ -75,8 +75,8 @@ pub fn agent_runtime_validate_tool_spec(tool_json: String) -> Result<String> {
 }
 
 pub fn agent_runtime_validate_llm_request(request_json: String) -> Result<String> {
-    let request: LlmRequest = serde_json::from_str(&request_json)?;
-    require_llm_request_protocol_version(&request)?;
+    let mut request: LlmRequest = serde_json::from_str(&request_json)?;
+    normalize_llm_request_contract(&mut request)?;
     Ok(serde_json::to_string(&request)?)
 }
 
@@ -90,8 +90,8 @@ pub async fn agent_runtime_complete_mock_llm(
     request_json: String,
     response_text: String,
 ) -> Result<String> {
-    let request: LlmRequest = serde_json::from_str(&request_json)?;
-    require_llm_request_protocol_version(&request)?;
+    let mut request: LlmRequest = serde_json::from_str(&request_json)?;
+    normalize_llm_request_contract(&mut request)?;
     let provider = MockLlmProvider::new("mock", request.model.clone(), response_text);
     let response = provider
         .complete(request)
@@ -111,8 +111,8 @@ pub async fn agent_runtime_stream_mock_llm(
     request_json: String,
     response_text: String,
 ) -> Result<()> {
-    let request: LlmRequest = serde_json::from_str(&request_json)?;
-    require_llm_request_protocol_version(&request)?;
+    let mut request: LlmRequest = serde_json::from_str(&request_json)?;
+    normalize_llm_request_contract(&mut request)?;
     let provider = MockLlmProvider::new("mock", request.model.clone(), response_text);
     stream_llm_response(sink, Box::new(provider), request).await
 }
@@ -121,8 +121,8 @@ pub async fn agent_runtime_stream_profile_llm(
     sink: StreamSink<String>,
     request_json: String,
 ) -> Result<()> {
-    let request: LlmRequest = serde_json::from_str(&request_json)?;
-    require_llm_request_protocol_version(&request)?;
+    let mut request: LlmRequest = serde_json::from_str(&request_json)?;
+    normalize_llm_request_contract(&mut request)?;
     let provider = profile_llm_provider(&request)?;
     stream_llm_response(sink, provider, request).await
 }
@@ -167,8 +167,8 @@ pub async fn agent_runtime_start_profile_turn_step(
     Ok(serde_json::to_string(&output)?)
 }
 
-async fn complete_profile_llm_response(request: LlmRequest) -> Result<LlmResponse> {
-    require_llm_request_protocol_version(&request)?;
+async fn complete_profile_llm_response(mut request: LlmRequest) -> Result<LlmResponse> {
+    normalize_llm_request_contract(&mut request)?;
     profile_llm_provider(&request)?
         .complete(request)
         .await
@@ -861,13 +861,34 @@ fn require_catalog_contract(catalog: &AgentRuntimeCatalog) -> Result<()> {
     Ok(())
 }
 
-fn require_llm_request_protocol_version(request: &LlmRequest) -> Result<()> {
+fn normalize_llm_request_contract(request: &mut LlmRequest) -> Result<()> {
     let expected = protocol_version();
     if request.protocol_version != expected {
         anyhow::bail!(
             "LLM request protocol_version '{}' does not match runtime protocol_version '{expected}'",
             request.protocol_version
         );
+    }
+    if request.provider.trim().is_empty() {
+        anyhow::bail!("LLM request provider must be a non-empty string");
+    }
+    if request.model.trim().is_empty() {
+        anyhow::bail!("LLM request model must be a non-empty string");
+    }
+    if request.messages.is_empty() {
+        anyhow::bail!("LLM request messages must contain at least one message");
+    }
+    for (index, message) in request.messages.iter_mut().enumerate() {
+        if message.metadata.is_null() {
+            message.metadata = json!({});
+        } else if !message.metadata.is_object() {
+            anyhow::bail!("LLM request messages[{index}].metadata must be a JSON object");
+        }
+    }
+    if request.metadata.is_null() {
+        request.metadata = json!({});
+    } else if !request.metadata.is_object() {
+        anyhow::bail!("LLM request metadata must be a JSON object");
     }
     for (index, tool) in request.tools.iter().enumerate() {
         require_tool_spec_contract(tool, &format!("LLM request tools[{index}]"))?;
