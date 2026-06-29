@@ -127,6 +127,10 @@ Implemented:
   FRB step carries a ready proposal, Settings shows the summary/warnings and
   applies it through `AgentRuntimeProposalBridge` only after explicit user
   confirmation
+- First production agent migration onto the embedded FRB profile-turn path:
+  HealthOS `FrbBriefingSynthesizer` now routes Morning Briefing synthesis
+  through `AgentRuntimeProfileTurnRunner` before falling back to the legacy
+  Dart LLM and deterministic programmatic synthesizers
 
 Deferred:
 
@@ -137,7 +141,8 @@ Deferred:
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
   (`NativeCallable.isolateLocal`) on the local latest toolchain.
-- first production agent migration onto the embedded Rust runner
+- migrate a tool-using production agent once the native runner owns more of the
+  continuation loop
 
 ## Commands
 

@@ -157,6 +157,10 @@ Current bridge capabilities:
   terminal FRB step carries a ready proposal, Settings shows the summary and
   warnings, then applies through `AgentRuntimeProposalBridge` only after
   explicit user confirmation.
+- Provide the first production agent integration on the FRB profile-turn path:
+  HealthOS Morning Briefing now uses `FrbBriefingSynthesizer` and
+  `AgentRuntimeProfileTurnRunner` before falling back to the legacy Dart LLM
+  and deterministic programmatic synthesizers.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -174,9 +178,10 @@ Known limitation:
   active-profile LLM request bridge, profile-backed native LLM completion, and
   native profile-turn first-step execution, plus explicit
   confirmed-proposal/profile-turn providers and a user-facing runtime check /
-  guarded confirmed-proposal apply surface in the AI provider settings page.
-  The remaining production work is the full native continuation runner and
-  first production agent migration onto it.
+  guarded confirmed-proposal apply surface in the AI provider settings page,
+  plus the HealthOS Morning Briefing production-agent path. The remaining
+  production work is the full native continuation runner and then migrating a
+  tool-using production agent onto that fuller loop.
 
 ## Current Refactor State
 

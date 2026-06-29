@@ -35,6 +35,7 @@ import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/data/morning_briefing_preferences.dart';
+import 'agent_runtime_runner.dart';
 import 'domain_composition.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
@@ -134,12 +135,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // the DomainPack list.
       ...lifeOsDomainCompositionOverrides(),
       // Wire the Morning Briefing with the LLM synthesizer
-      // (falling back to programmatic when no device LLM is configured)
+      // (FRB-backed first, then legacy Dart LLM, then programmatic)
       // and the local notification service so each successful run can
       // surface a toast even when the app is backgrounded. The agent
       // itself stays composition-blind; this is the seam where the
       // shell decides "use which synthesis + which notifier".
       morningBriefingAgentProvider.overrideWith((ref) {
+        final frbRunner = ref.watch(agentRuntimeProfileTurnRunnerProvider);
         final runtime = ref.watch(ai_chat_providers.deviceLlmRuntimeProvider);
         final notificationsEnabled = ref.watch(notificationsEnabledProvider);
         final briefingNotificationsEnabled = ref.watch(
@@ -149,7 +151,14 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
             ? ref.watch(notif_providers.notificationServiceProvider)
             : null;
         final hourLocal = ref.watch(morningBriefingHourProvider);
-        final BriefingSynthesizer synth = runtime != null
+        final BriefingSynthesizer synth = frbRunner != null
+            ? FrbBriefingSynthesizer(
+                runner: frbRunner,
+                fallback: runtime != null
+                    ? LlmBriefingSynthesizer(client: runtime.client)
+                    : const ProgrammaticBriefingSynthesizer(),
+              )
+            : runtime != null
             ? LlmBriefingSynthesizer(client: runtime.client)
             : const ProgrammaticBriefingSynthesizer();
         return MorningBriefingAgent(

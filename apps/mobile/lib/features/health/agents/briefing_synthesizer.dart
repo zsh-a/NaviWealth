@@ -6,7 +6,10 @@
 ///  * [ProgrammaticBriefingSynthesizer] — pure-Dart, deterministic.
 ///    Wraps the original D-2.5 static logic; what tests assert against
 ///    and the safe fallback when no LLM is configured.
-///  * [LlmBriefingSynthesizer] — calls the user's configured device
+///  * [FrbBriefingSynthesizer] — calls the user's configured device
+///    LLM through the FRB agent runtime profile-turn seam.
+///  * [LlmBriefingSynthesizer] — legacy direct Dart LLM fallback.
+///    Calls the user's configured device
 ///    LLM (Anthropic or OpenAI-compatible) for richer narrative,
 ///    automatically falling back to programmatic on any error so the
 ///    agent never crashes on a flaky network.
@@ -19,6 +22,7 @@ library;
 
 import 'package:dio/dio.dart';
 
+import '../../../app/agent_runtime_runner.dart';
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
@@ -81,6 +85,16 @@ enum BriefingSource { programmatic, llm }
 abstract class BriefingSynthesizer {
   Future<BriefingOutput> synthesize(BriefingInputs inputs);
 }
+
+const String _kMorningBriefingAgentId = 'morning_briefing';
+
+const String _kBriefingSystemPrompt =
+    'You are HealthOS Morning Briefing. Given structured Health + '
+    'Finance signals from the last 24 hours, write a single-sentence '
+    'morning briefing in the user\'s tone (short, calm, factual). '
+    'Use only the numbers provided. Do not add advice unless the '
+    'numbers are clearly outliers. Reply in the same language the '
+    'inputs are in (Chinese or English).';
 
 /// Deterministic fallback. Replicates the D-2.5 logic verbatim so the
 /// existing tests still pin behaviour.
@@ -158,6 +172,62 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
   }
 }
 
+/// FRB-backed synthesis for the first production agent migration onto the
+/// embedded Rust agent-runtime path. The native side owns LLM profile
+/// completion + first runtime step; Dart keeps the existing fallback contract.
+class FrbBriefingSynthesizer implements BriefingSynthesizer {
+  const FrbBriefingSynthesizer({
+    required this.runner,
+    this.fallback = const ProgrammaticBriefingSynthesizer(),
+    this.maxTokens = 200,
+    this.requestTimeout = const Duration(seconds: 20),
+  });
+
+  final AgentRuntimeProfileTurnRunner runner;
+  final BriefingSynthesizer fallback;
+  final int maxTokens;
+  final Duration requestTimeout;
+
+  @override
+  Future<BriefingOutput> synthesize(BriefingInputs inputs) async {
+    final baseline = await fallback.synthesize(inputs);
+    if (baseline.isEmpty) return baseline;
+    try {
+      final prompt = _buildBriefingPrompt(inputs, baseline);
+      final result = await runner
+          .run(
+            agentId: _kMorningBriefingAgentId,
+            messages: <Map<String, Object?>>[
+              const <String, Object?>{
+                'role': 'system',
+                'content': _kBriefingSystemPrompt,
+              },
+              <String, Object?>{'role': 'user', 'content': prompt},
+            ],
+            maxOutputTokens: maxTokens,
+            metadata: <String, Object?>{
+              'surface': 'health_morning_briefing',
+              'agent_id': _kMorningBriefingAgentId,
+              'day_key': inputs.dayKey,
+            },
+            maxToolSteps: 0,
+          )
+          .timeout(requestTimeout);
+      final text = result.llmResponse['content']?.toString().trim();
+      if (text == null || text.isEmpty) return baseline;
+      return BriefingOutput(
+        summary: text,
+        sleepLine: baseline.sleepLine,
+        hrvLine: baseline.hrvLine,
+        financeLine: baseline.financeLine,
+        source: BriefingSource.llm,
+      );
+    } on Object {
+      return baseline;
+    }
+  }
+}
+
 /// LLM-driven synthesis (D-2.5b). Composes a programmatic baseline,
 /// then asks the user's configured device LLM to rewrite it into a
 /// short narrative grounded in the structured lines. The LLM never
@@ -179,24 +249,16 @@ class LlmBriefingSynthesizer implements BriefingSynthesizer {
   final int maxTokens;
   final Duration requestTimeout;
 
-  static const String _system =
-      'You are HealthOS Morning Briefing. Given structured Health + '
-      'Finance signals from the last 24 hours, write a single-sentence '
-      'morning briefing in the user\'s tone (short, calm, factual). '
-      'Use only the numbers provided. Do not add advice unless the '
-      'numbers are clearly outliers. Reply in the same language the '
-      'inputs are in (Chinese or English).';
-
   @override
   Future<BriefingOutput> synthesize(BriefingInputs inputs) async {
     final baseline = await fallback.synthesize(inputs);
     if (baseline.isEmpty) return baseline;
     try {
-      final prompt = _buildPrompt(inputs, baseline);
+      final prompt = _buildBriefingPrompt(inputs, baseline);
       final request = AnthropicRequest(
         model: client.config.model,
         maxTokens: maxTokens,
-        system: _system,
+        system: _kBriefingSystemPrompt,
         messages: <AnthropicChatMessage>[
           AnthropicChatMessage.text('user', prompt),
         ],
@@ -219,25 +281,6 @@ class LlmBriefingSynthesizer implements BriefingSynthesizer {
     }
   }
 
-  String _buildPrompt(BriefingInputs inputs, BriefingOutput baseline) {
-    final buf = StringBuffer()
-      ..writeln('Date: ${inputs.dayKey}')
-      ..writeln('---')
-      ..writeln(
-        'Structured signals (use these numbers verbatim, do not change them):',
-      );
-    if (baseline.sleepLine != null) buf.writeln('- ${baseline.sleepLine}');
-    if (baseline.hrvLine != null) buf.writeln('- ${baseline.hrvLine}');
-    if (baseline.financeLine != null) buf.writeln('- ${baseline.financeLine}');
-    buf
-      ..writeln('---')
-      ..writeln(
-        'Write one calm, factual sentence (≤ 30 words) that mentions '
-        'each signal. No bullet points. No emojis.',
-      );
-    return buf.toString();
-  }
-
   static String? _extractText(AnthropicCompletion completion) {
     for (final block in completion.content) {
       if (block is! Map) continue;
@@ -247,4 +290,23 @@ class LlmBriefingSynthesizer implements BriefingSynthesizer {
     }
     return null;
   }
+}
+
+String _buildBriefingPrompt(BriefingInputs inputs, BriefingOutput baseline) {
+  final buf = StringBuffer()
+    ..writeln('Date: ${inputs.dayKey}')
+    ..writeln('---')
+    ..writeln(
+      'Structured signals (use these numbers verbatim, do not change them):',
+    );
+  if (baseline.sleepLine != null) buf.writeln('- ${baseline.sleepLine}');
+  if (baseline.hrvLine != null) buf.writeln('- ${baseline.hrvLine}');
+  if (baseline.financeLine != null) buf.writeln('- ${baseline.financeLine}');
+  buf
+    ..writeln('---')
+    ..writeln(
+      'Write one calm, factual sentence (<= 30 words) that mentions '
+      'each signal. No bullet points. No emojis.',
+    );
+  return buf.toString();
 }
