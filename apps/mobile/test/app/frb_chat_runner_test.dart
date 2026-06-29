@@ -36,11 +36,18 @@ void main() {
         )
         .toList();
 
-    expect(events, hasLength(3));
+    expect(events, hasLength(4));
     expect((events[0] as UsageEvent).usage.input, 7);
     expect((events[0] as UsageEvent).usage.output, 3);
     expect((events[1] as TextEvent).text, 'FRB answer');
-    final done = events[2] as DoneEvent;
+    final span = events[2] as SpanEvent;
+    expect(span.kind, AiSpanKind.llm);
+    expect(span.status, AiSpanStatus.ok);
+    expect(span.model, 'gpt-test');
+    expect(span.stopReason, 'end_turn');
+    expect(span.tokens?.total, 10);
+    expect(span.attributes, containsPair('streaming', false));
+    final done = events[3] as DoneEvent;
     expect(done.stopReason, 'end_turn');
     expect(done.rounds, 1);
     expect(bridge.messages.single, <String, Object?>{
@@ -439,7 +446,7 @@ void main() {
           )
           .toList();
 
-      expect((events.single as DoneEvent).stopReason, entry.value);
+      expect(events.whereType<DoneEvent>().single.stopReason, entry.value);
     }
   });
 

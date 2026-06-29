@@ -73,6 +73,7 @@ class FrbChatRunner implements DeviceChatRunner {
         );
         return;
       }
+      final roundStart = DateTime.now().toUtc();
       final response = await _llmBridge.completeProfile(
         messages: <Map<String, Object?>>[
           for (final message in messages) message.toJson(),
@@ -97,6 +98,12 @@ class FrbChatRunner implements DeviceChatRunner {
 
       final text = _string(response['content']);
       if (text.isNotEmpty) yield TextEvent(text);
+      yield _completionSpan(
+        startedAt: roundStart,
+        response: response,
+        inputMessageCount: messages.length,
+        requestedModel: model,
+      );
 
       yield DoneEvent(
         stopReason: _chatStopReason(_string(response['finish_reason'])),
@@ -433,6 +440,35 @@ class _FrbStreamOutcome {
   final Map<String, Object?>? event;
   final bool done;
   final bool cancelled;
+}
+
+SpanEvent _completionSpan({
+  required DateTime startedAt,
+  required Map<String, Object?> response,
+  required int inputMessageCount,
+  required String? requestedModel,
+}) {
+  final text = _string(response['content']);
+  final responseModel = _string(response['model']);
+  return SpanEvent(
+    id: 'r1',
+    parentId: kTurnSpanId,
+    kind: AiSpanKind.llm,
+    name: 'llm:round-1',
+    startedAt: startedAt,
+    endedAt: DateTime.now().toUtc(),
+    status: AiSpanStatus.ok,
+    tokens: _spanTokensFromUsage(_usageFromResponse(response)),
+    model: responseModel.isNotEmpty ? responseModel : requestedModel,
+    stopReason: _chatStopReason(_string(response['finish_reason'])),
+    input: <String, Object?>{'messages': inputMessageCount},
+    output: text.isEmpty ? null : _clip(text),
+    attributes: const <String, Object?>{
+      'round': 1,
+      'runtime': 'frb',
+      'streaming': false,
+    },
+  );
 }
 
 SpanEvent _llmSpan({

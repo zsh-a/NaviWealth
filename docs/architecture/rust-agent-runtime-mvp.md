@@ -163,7 +163,8 @@ Implemented:
   The runner advertises active-domain tools, executes Dart tool results through
   the JSON-RPC tool host, feeds `tool_result` blocks into bounded continuation
   rounds, pauses terminally after successful `ask_user`, and emits LLM/tool
-  trace spans plus cancellation spans. OpenAI-compatible and Anthropic
+  trace spans plus cancellation spans for streaming and non-streaming FRB
+  fallback completions. OpenAI-compatible and Anthropic
   text/usage/tool/reasoning SSE are now provider-real in `agent-llm`.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
