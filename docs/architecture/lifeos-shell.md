@@ -312,6 +312,7 @@ Run these when touching architecture boundaries:
 ./tool/lint-cross-feature-imports.sh
 ./tool/lint-row-family-prefix.sh
 ./tool/lint-domain-neutral-contracts.sh
+./tool/lint-frb-llm-entrypoints.sh
 ./tool/check-tool-descriptors.sh
 ```
 

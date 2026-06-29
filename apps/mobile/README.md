@@ -175,6 +175,7 @@ wrangler pages deploy --branch main
 ./tool/lint-cross-feature-imports.sh     # feature 间无跨域导入
 ./tool/lint-row-family-prefix.sh         # sync 行族前缀正确
 ./tool/lint-domain-neutral-contracts.sh  # 域中立契约不含域类型
+./tool/lint-frb-llm-entrypoints.sh       # 生产 LLM/agent 入口保持 FRB seam
 ./tool/check-tool-descriptors.sh         # 工具描述符与注册一致
 ```
 
