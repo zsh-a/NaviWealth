@@ -96,6 +96,36 @@ void main() {
       expect(result.skipReason, 'fallback used');
       expect(fallback.calls, 1);
     });
+
+    test(
+      'ignores trace recording failures after a successful FRB read',
+      () async {
+        final fallback = _FallbackReader(
+          RecoveryAlertSignalRead.skipped(
+            source: 'fallback',
+            reason: 'fallback used',
+          ),
+        );
+        final reader = FrbRecoveryAlertSignalReader(
+          stepRunner: AgentRuntimeNativeStepRunner(
+            bridge: _ToolPlanBridge(),
+            toolHost: AgentRuntimeToolHost(
+              dispatcher: _RecoveryTrendDispatcher(),
+            ),
+          ),
+          catalog: _catalog(),
+          fallback: fallback,
+          recordTrace: (_) async => throw StateError('trace store unavailable'),
+        );
+
+        final result = await reader.read(_context());
+
+        expect(result.source, 'frb_tool:get_hrv_trend');
+        expect(result.alert, isNotNull);
+        expect(result.alert!.consecutiveDays, 3);
+        expect(fallback.calls, 0);
+      },
+    );
   });
 }
 
