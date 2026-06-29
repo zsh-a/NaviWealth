@@ -918,6 +918,17 @@ fn normalize_llm_response_contract(response: &mut LlmResponse) -> Result<()> {
     } else if !response.metadata.is_object() {
         anyhow::bail!("LLM response metadata must be a JSON object");
     }
+    if let Some(usage) = &response.usage {
+        let expected_total = usage
+            .input_tokens
+            .checked_add(usage.output_tokens)
+            .ok_or_else(|| anyhow::anyhow!("LLM response usage total_tokens overflowed"))?;
+        if usage.total_tokens != expected_total {
+            anyhow::bail!(
+                "LLM response usage.total_tokens must equal input_tokens + output_tokens"
+            );
+        }
+    }
     Ok(())
 }
 

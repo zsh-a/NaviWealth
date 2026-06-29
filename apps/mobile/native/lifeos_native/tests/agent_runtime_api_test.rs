@@ -541,6 +541,29 @@ fn normalizes_llm_response_default_object_fields() {
 }
 
 #[test]
+fn validates_llm_response_usage_totals() {
+    let response_json = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "stop",
+          "usage": {
+            "input_tokens": 2,
+            "output_tokens": 3,
+            "total_tokens": 5
+          }
+        }"#
+        .to_owned(),
+    )
+    .expect("matching usage totals should validate");
+    let response: Value = serde_json::from_str(&response_json).expect("response should be json");
+
+    assert_eq!(response["usage"]["total_tokens"], 5);
+}
+
+#[test]
 fn validate_llm_contracts_reject_mismatched_protocol_version() {
     let request_err = agent_runtime_validate_llm_request(
         r#"{
@@ -612,6 +635,28 @@ fn validate_llm_response_rejects_malformed_metadata_field() {
     )
     .expect_err("non-object response metadata should fail");
     assert!(metadata_err.to_string().contains("metadata"));
+}
+
+#[test]
+fn validate_llm_response_rejects_mismatched_usage_totals() {
+    let err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "stop",
+          "usage": {
+            "input_tokens": 2,
+            "output_tokens": 3,
+            "total_tokens": 4
+          }
+        }"#
+        .to_owned(),
+    )
+    .expect_err("mismatched usage totals should fail");
+
+    assert!(err.to_string().contains("usage.total_tokens"));
 }
 
 #[test]

@@ -97,7 +97,8 @@ Implemented:
   request/response protocol versions are rejected when they do not match the
   native runtime protocol, and LLM requests validate non-empty provider/model,
   at least one message, JSON-object request/message metadata, and tool specs;
-  LLM responses validate non-empty provider/model and JSON-object metadata
+  LLM responses validate non-empty provider/model, JSON-object metadata, and
+  internally consistent usage token totals
 - Dart-side `AgentRuntimeLlmBridge` that maps the active on-device
   `LlmProfile` into the provider-neutral `agent-llm` request shape for FRB
 - FRB-facing profile-backed LLM completion via
