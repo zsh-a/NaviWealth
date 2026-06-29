@@ -95,8 +95,9 @@ Implemented:
   validates the active catalog/run request and returns either a completed
   dry-run step or a `tool_call_requested` step for Dart-side device dispatch
 - FRB-first native continuation contract via `agentRuntimeContinueRunStep`,
-  which accepts the previous native step plus the Dart-side tool response and
-  returns a completed or failed native step
+  which accepts the previous native step plus the Dart-side tool response,
+  validates the continuation envelope, and returns the next native step or a
+  terminal native step
 - Dart-side `AgentRuntimeNativeStepRunner` that performs a bounded embedded
   tool loop: FRB start step -> Dart `AgentRuntimeToolHost` dispatch -> FRB
   continuation step, repeated until a terminal native step or the tool-call
@@ -130,8 +131,9 @@ Implemented:
   step observed, every Dart tool response, dispatch count, and tool-budget
   exhaustion state; `AgentRuntimeProfileTurnResult` surfaces this summary
 - The shared trace fixture set includes a valid `closed_early`
-  `agent_runtime_step`, locking the Dart-synthesised tool-budget-exhausted
-  state against both JSON Schema and the native FRB validator
+  `agent_runtime_step`; tool-budget exhaustion is now closed through the
+  native FRB continuation path so Rust owns the terminal step/run_state/trace
+  shape while Dart only sends the structured budget-exhausted tool response
 - `trace.schema.json` and the native FRB validator both enforce
   `agent_runtime_step.run_state.status` / `terminal_reason` consistency, so
   terminal state semantics are shared across CLI fixtures, native validation,
@@ -142,6 +144,11 @@ Implemented:
 - `agent_runtime_step.payload.tool_name` is constrained to `null` or a
   non-empty string in both JSON Schema and the native FRB validator, so trace
   consumers never receive an empty tool label
+- Native FRB tool continuations now validate the previous step and tool
+  response before mutating run state: previous `agent_id` / `run_id`,
+  `tool_call_id`, catalog-bound tool names, `continuation.next_step_index`,
+  `continuation.tool_plan`, historical `continuation.tool_results`, and
+  JSON-RPC tool response envelopes are rejected when malformed or ambiguous
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
