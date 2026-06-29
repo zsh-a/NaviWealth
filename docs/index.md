@@ -22,6 +22,7 @@ This documentation uses a docs-as-code structure:
 | Change architecture or cross-domain code | [Architecture Northstar](architecture/lifeos-architecture-northstar.md), [LifeOS Shell](architecture/lifeos-shell.md) |
 | Add or modify a domain | [LifeOS Shell](architecture/lifeos-shell.md), then the owning domain SSOT |
 | Work on device AI | [Device AI Architecture](ai/ai-architecture.md), [Runtime Event Contract](ai/ai-protocol.md) |
+| Work on Rust agent runtime | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md), [Rust Agent Runtime MVP](architecture/rust-agent-runtime-mvp.md), [Rust Agent Runtime Design](architecture/rust-agent-runtime-design.md) |
 | Work on sync | [Sync v2 Protocol](sync/sync-v2.md), [Protocol Test Catalogue](sync/sync-protocol-tests.md) |
 | Run or test locally | [Local Development](development/local-development.md), [Testing Strategy](development/testing-strategy.md) |
 | Plan product work | [LifeOS Roadmap](roadmap/roadmap-lifeos.md), [FinanceOS Roadmap](roadmap/roadmap-finance.md) |

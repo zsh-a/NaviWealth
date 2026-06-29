@@ -2,6 +2,10 @@
 
 Date: 2026-06-28
 
+Historical note: this file is a point-in-time handoff from an earlier
+implementation slice. For the current code map and maintenance guidance, use
+[`agent-runtime-current.md`](agent-runtime-current.md).
+
 This file records the current implementation state before switching development
 to another machine.
 

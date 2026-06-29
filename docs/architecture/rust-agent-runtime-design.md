@@ -1,5 +1,12 @@
 # Rust Agent Runtime 设计文档
 
+> Current implementation note: this document describes the long-term design
+> direction. For the current code map, maintenance routing, and known design
+> drift, start with
+> [`agent-runtime-current.md`](agent-runtime-current.md), then use
+> [`rust-agent-runtime-mvp.md`](rust-agent-runtime-mvp.md) for implemented
+> feature status.
+
 ## 1. 背景与目标
 
 希望将现有应用内的 agent 架构抽象成一个独立、可复用、可调试的 runtime，使其可以用于：

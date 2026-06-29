@@ -9,32 +9,31 @@ use miette::{IntoDiagnostic, Result, miette};
 use serde::Serialize;
 
 mod catalog;
-mod catalog_cli;
 mod cli_input;
-mod command_template;
+mod commands;
 mod config;
 mod debug_bundle;
 mod dev_stdio;
 mod eval;
-mod llm;
 mod metrics;
 mod proposal;
-mod proposal_cli;
 mod registry;
 mod replay;
-mod run_cli;
 mod runtime_server;
 mod server;
 mod session;
-mod session_cli;
 mod stdio_protocol;
-mod tool_cli;
 mod tools;
 mod trace_store;
 mod tui;
 
-use catalog_cli::{CatalogCommand, run_catalog_command};
-use command_template::{CommandRunOptions, create_command_from_run, run_command_template};
+use commands::catalog::{CatalogCommand, run_catalog_command};
+use commands::llm::{LlmCompleteOptions, run_llm_complete};
+use commands::proposal::{ProposalCommand, run_proposal_command};
+use commands::run::{RunCliOptions, TickCliOptions, run_agent_once, tick_agents};
+use commands::session::{SessionCommand, run_session_command};
+use commands::tool::{ToolCommand, run_tool_command};
+use commands::workflow::{CommandRunOptions, create_command_from_run, run_command_template};
 use config::{
     configured_path, configured_paths, configured_string, configured_u16, configured_u32,
     configured_u64, load_agent_config,
@@ -42,16 +41,11 @@ use config::{
 use debug_bundle::export_debug_bundle;
 use dev_stdio::{run_dev_mcp_server, run_dev_tool_host};
 use eval::{create_eval_from_run, run_dev_score_hook, run_eval_path};
-use llm::{LlmCompleteOptions, run_llm_complete};
 use metrics::build_metrics_summary;
-use proposal_cli::{ProposalCommand, run_proposal_command};
 use registry::load_registry;
 use replay::{ReplayMode, ReplayTraceOptions, replay_trace};
-use run_cli::{RunCliOptions, TickCliOptions, run_agent_once, tick_agents};
 use runtime_server::RuntimeServer;
 use server::{serve_http, serve_stdio};
-use session_cli::{SessionCommand, run_session_command};
-use tool_cli::{ToolCommand, run_tool_command};
 use tools::tool_overrides;
 use trace_store::read_json;
 use tui::{TuiOptions, run_tui};
