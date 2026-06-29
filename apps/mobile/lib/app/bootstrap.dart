@@ -36,6 +36,9 @@ import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/agents/recovery_alert_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
+import '../features/knowledge/agents/providers.dart'
+    as knowledge_agent_providers;
+import '../features/knowledge/agents/routine_due_agent.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
@@ -186,6 +189,22 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         return RecoveryAlertAgent(
           notifier: notifier,
           signalReader: FrbRecoveryAlertSignalReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+          ),
+        );
+      }),
+      // Knowledge Routine Due is another tool-using production agent. Route its
+      // due-routine read through the same FRB native `tool_plan` loop while
+      // preserving the existing repository fallback and notification behavior.
+      knowledge_agent_providers.routineDueAgentProvider.overrideWith((ref) {
+        final notificationsEnabled = ref.watch(notificationsEnabledProvider);
+        final notifier = notificationsEnabled
+            ? ref.watch(notif_providers.notificationServiceProvider)
+            : null;
+        return RoutineDueAgent(
+          notifier: notifier,
+          dueReader: FrbRoutineDueReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
           ),

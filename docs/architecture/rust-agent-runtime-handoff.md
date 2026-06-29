@@ -171,6 +171,10 @@ Current bridge capabilities:
   `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB
   `tool_plan`, while Dart executes the HealthOS device tool and the agent keeps
   its existing sustained-HRV-decline policy.
+- Provide an additional tool-using production agent integration:
+  KnowledgeOS Routine Due now uses `FrbRoutineDueReader` to request
+  `list_due_routines` through the same FRB `tool_plan` loop before falling
+  back to direct repository reads.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -191,9 +195,10 @@ Known limitation:
   user-facing runtime check / guarded confirmed-proposal apply surface in the
   AI provider settings page, plus the HealthOS Morning Briefing
   production-agent path and the HealthOS Recovery Alert tool-using production
-  agent path. The remaining production work is richer Rust-side agent
-  policy/state/trace ownership beyond the current tool-plan contract and
-  migrating additional tool-using production agents onto that fuller loop.
+  agent path and KnowledgeOS Routine Due tool-using production agent path. The
+  remaining production work is richer Rust-side agent policy/state/trace
+  ownership beyond the current tool-plan contract and migrating additional
+  tool-using production agents onto that fuller loop.
 
 ## Current Refactor State
 

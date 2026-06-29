@@ -141,6 +141,10 @@ Implemented:
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`
   `tool_plan` step and lets Dart execute the HealthOS device tool before the
   agent applies its existing sustained-HRV-decline policy
+- Additional tool-using production agent migration: KnowledgeOS
+  `RoutineDueAgent` now reads due routines via `FrbRoutineDueReader`, which
+  requests `list_due_routines` through the same native-planned `tool_plan`
+  loop before falling back to direct repository reads
 
 Deferred:
 

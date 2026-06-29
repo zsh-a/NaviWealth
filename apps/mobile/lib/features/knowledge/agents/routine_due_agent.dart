@@ -12,6 +12,8 @@
 /// drives the Review tab card.
 library;
 
+import '../../../app/agent_runtime_catalog.dart';
+import '../../../app/agent_runtime_native_bridge.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
@@ -33,7 +35,11 @@ const String kKnowledgeRoutineMemorySource = 'agent:knowledge_routine_due';
 const Duration kRoutineDueLookahead = Duration(days: 7);
 
 class RoutineDueAgent implements Agent {
-  const RoutineDueAgent({this.notifier, this.hourLocal = 8});
+  const RoutineDueAgent({
+    this.notifier,
+    this.hourLocal = 8,
+    this.dueReader = const RepositoryRoutineDueReader(),
+  });
 
   /// Optional local-notification hook. When supplied and the platform
   /// has granted permission, the agent posts a one-shot toast after
@@ -45,6 +51,7 @@ class RoutineDueAgent implements Agent {
   /// morning routine territory without colliding with HealthOS's 07:00
   /// Morning Briefing.
   final int hourLocal;
+  final RoutineDueReader dueReader;
 
   @override
   String get id => kKnowledgeRoutineAgentId;
@@ -59,15 +66,10 @@ class RoutineDueAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
-    final due = await repo.listDueRoutines(
-      ownerUserId: ownerUserId,
-      asOf: start.add(kRoutineDueLookahead),
-      excludeDoneSince: _startOfLocalDay(start),
-    );
+    final due = await dueReader.listDue(ctx);
     final finished = DateTime.now().toUtc();
 
     if (due.isEmpty) {
@@ -138,7 +140,7 @@ class RoutineDueAgent implements Agent {
     required AppLocalizations l10n,
     required int overdueCount,
     required int upcomingCount,
-    required KnowledgeRoutine first,
+    required RoutineDueItem first,
     required DateTime now,
   }) {
     final days = first.daysUntilDue(now);
@@ -192,6 +194,130 @@ class RoutineDueAgent implements Agent {
       // run failed. The memory record above is the durable surface.
     }
   }
+}
+
+abstract class RoutineDueReader {
+  Future<List<RoutineDueItem>> listDue(AgentContext ctx);
+}
+
+class RepositoryRoutineDueReader implements RoutineDueReader {
+  const RepositoryRoutineDueReader();
+
+  @override
+  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+    final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final due = await repo.listDueRoutines(
+      ownerUserId: ownerUserId,
+      asOf: ctx.now.add(kRoutineDueLookahead),
+      excludeDoneSince: _startOfLocalDay(ctx.now),
+    );
+    return due.map(RoutineDueItem.fromRoutine).toList(growable: false);
+  }
+}
+
+class FrbRoutineDueReader implements RoutineDueReader {
+  const FrbRoutineDueReader({
+    required AgentRuntimeNativeStepRunner stepRunner,
+    required AgentRuntimeCatalog catalog,
+    this.fallback = const RepositoryRoutineDueReader(),
+  }) : _stepRunner = stepRunner,
+       _catalog = catalog;
+
+  final AgentRuntimeNativeStepRunner _stepRunner;
+  final AgentRuntimeCatalog _catalog;
+  final RoutineDueReader fallback;
+
+  @override
+  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+    try {
+      final asOf = ctx.now.add(kRoutineDueLookahead).toUtc().toIso8601String();
+      final step = await _stepRunner.runUntilTerminal(
+        catalog: _catalog.toJson(),
+        request: <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'input': <String, Object?>{
+            'tool_plan': <Object?>[
+              <String, Object?>{
+                'name': 'list_due_routines',
+                'input': <String, Object?>{'as_of': asOf, 'limit': 50},
+              },
+            ],
+          },
+          'trigger': 'manual',
+          'metadata': const <String, Object?>{
+            'surface': 'knowledge_routine_due',
+            'agent_id': kKnowledgeRoutineAgentId,
+          },
+        },
+        agentId: kKnowledgeRoutineAgentId,
+        maxToolSteps: 1,
+      );
+      final output = _asObject(step['output']);
+      final result = _asObject(output?['tool_result']);
+      final routines = routineDueItemsFromToolResult(result);
+      if (routines == null) return fallback.listDue(ctx);
+      return routines;
+    } on Object {
+      return fallback.listDue(ctx);
+    }
+  }
+}
+
+class RoutineDueItem {
+  const RoutineDueItem({
+    required this.id,
+    required this.statement,
+    required this.nextDueAt,
+  });
+
+  factory RoutineDueItem.fromRoutine(KnowledgeRoutine routine) {
+    return RoutineDueItem(
+      id: routine.id,
+      statement: routine.statement,
+      nextDueAt: routine.nextDueAt,
+    );
+  }
+
+  final String id;
+  final String statement;
+  final DateTime nextDueAt;
+
+  int daysUntilDue(DateTime now) =>
+      nextDueAt.toUtc().difference(now.toUtc()).inDays;
+
+  bool isDue(DateTime now) => !nextDueAt.toUtc().isAfter(now.toUtc());
+}
+
+List<RoutineDueItem>? routineDueItemsFromToolResult(
+  Map<String, Object?>? result,
+) {
+  final rawRoutines = result?['routines'];
+  if (rawRoutines is! List) return null;
+  final items = <RoutineDueItem>[];
+  for (final raw in rawRoutines) {
+    final routine = _asObject(raw);
+    final id = routine?['id'];
+    final statement = routine?['statement'];
+    final nextDueAt = routine?['next_due_at'];
+    if (id is! String || statement is! String || nextDueAt is! String) {
+      return null;
+    }
+    final parsed = DateTime.tryParse(nextDueAt);
+    if (parsed == null) return null;
+    items.add(
+      RoutineDueItem(id: id, statement: statement, nextDueAt: parsed.toUtc()),
+    );
+  }
+  return items;
+}
+
+Map<String, Object?>? _asObject(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return null;
 }
 
 DateTime _startOfLocalDay(DateTime value) {
