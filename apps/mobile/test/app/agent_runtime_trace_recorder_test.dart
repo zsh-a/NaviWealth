@@ -99,6 +99,49 @@ void main() {
     );
   });
 
+  test(
+    'uses FRB trace event run state when root run state is absent',
+    () async {
+      final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+      final trace = await recorder.recordStepRun(
+        agentId: 'execution_review',
+        startedAt: DateTime.utc(2026, 6, 29, 8),
+        finishedAt: DateTime.utc(2026, 6, 29, 8),
+        stepRun: const AgentRuntimeNativeStepRunResult(
+          terminalStep: <String, Object?>{
+            'run_id': 'run_trace_event_state',
+            'status': 'failed',
+            'trace_event': <String, Object?>{
+              'kind': 'agent_runtime_step',
+              'run_state': <String, Object?>{
+                'status': 'failed',
+                'step_index': 2,
+                'remaining_tool_count': 0,
+                'tool_result_count': 2,
+                'terminal_reason': 'stream_error',
+              },
+            },
+          },
+          dispatchedToolCount: 2,
+        ),
+      );
+
+      expect(trace.terminalReason, TerminalReason.streamError);
+      expect(
+        trace.spans.first.attributes,
+        containsPair('native_step_index', 2),
+      );
+      expect(
+        trace.spans.first.attributes,
+        containsPair('native_tool_result_count', 2),
+      );
+      expect(
+        trace.spans.first.attributes,
+        containsPair('native_terminal_reason', 'stream_error'),
+      );
+    },
+  );
+
   test('records native step-only tool plan runs', () async {
     final traces = <AiTrace>[];
     final recorder = AgentRuntimeTraceRecorder(

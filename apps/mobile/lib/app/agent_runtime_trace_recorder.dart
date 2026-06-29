@@ -112,7 +112,7 @@ class AgentRuntimeTraceRecorder {
       routingReason: routingReason,
       totalDurationMs: 0,
     );
-    final nativeRunState = _object(step['run_state']);
+    final nativeRunState = _nativeRunState(step);
     final builder = AiTraceBuilder.fromSeed(seed, capturePayloads: false)
       ..addTurnAttributes(<String, Object?>{
         'runtime': 'frb_agent_runtime',
@@ -194,7 +194,7 @@ TerminalReason _terminalReason(
   AgentRuntimeNativeStepRunResult stepRun,
 ) {
   if (stepRun.budgetExhausted) return TerminalReason.closedEarly;
-  final nativeReason = _string(_object(step['run_state'])?['terminal_reason']);
+  final nativeReason = _string(_nativeRunState(step)?['terminal_reason']);
   if (nativeReason != null) {
     return TerminalReasonWire.parse(nativeReason);
   }
@@ -227,6 +227,11 @@ Map<String, Object?>? _object(Object? value) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
   return null;
+}
+
+Map<String, Object?>? _nativeRunState(Map<String, Object?> step) {
+  return _object(_object(step['trace_event'])?['run_state']) ??
+      _object(step['run_state']);
 }
 
 int? _int(Object? value) {
