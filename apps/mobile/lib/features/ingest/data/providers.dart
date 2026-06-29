@@ -226,7 +226,7 @@ class IngestController {
         ),
         backend: Backend.device,
         budgetTier: tier,
-        routingReason: kDeviceVisionDirectRoutingReason,
+        routingReason: kFrbVisionIngestRoutingReason,
         totalDurationMs: 0,
       );
       final parseEnd = DateTime.now().toUtc();

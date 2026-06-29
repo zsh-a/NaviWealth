@@ -597,7 +597,7 @@ void main() {
       expect(combinedText, isNot(contains('layer4_cloud_vision')));
       expect(combinedText, contains('VisionIngestClient'));
       expect(combinedText, contains('providerVisionAllowed'));
-      expect(combinedText, contains('kDeviceVisionDirectRoutingReason'));
+      expect(combinedText, contains('kFrbVisionIngestRoutingReason'));
       expect(combinedText, contains('backend: Backend.device'));
     });
 

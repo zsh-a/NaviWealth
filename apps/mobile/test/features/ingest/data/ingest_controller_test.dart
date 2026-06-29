@@ -203,7 +203,7 @@ void main() {
       expect(traces, hasLength(1));
       expect(traces.single.requestId, result.drafts.single.traceId);
       expect(traces.single.backend, Backend.device);
-      expect(traces.single.routingReason, kDeviceVisionDirectRoutingReason);
+      expect(traces.single.routingReason, kFrbVisionIngestRoutingReason);
       expect(
         traces.single.spans.map((span) => span.name),
         contains('tool:parse_receipt_image'),

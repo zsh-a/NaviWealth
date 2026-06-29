@@ -16,6 +16,7 @@ ALLOWLIST_REGEX='apps/mobile/lib/core/ai/runtime/'
 PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityProbe|DeviceVisionIngestClient|LlmBriefingSynthesizer\(client:|DeviceLlmClient|DeviceLlmRuntime|runtime/device/(anthropic|openai)/.*_client\.dart'
 FEATURE_FRB_BRIDGE_PATTERN="app/agent_runtime_llm_bridge.dart|agentRuntimeLlmBridgeProvider"
 RAW_DEVICE_UNAVAILABLE_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_unavailable['\"]"
+RAW_LEGACY_VISION_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_vision_direct['\"]"
 
 violations="$(
   grep -rnE --include='*.dart' "$PATTERN" "$LIB" \
@@ -58,6 +59,20 @@ if [[ -n "$raw_device_unavailable_trace_violations" ]]; then
   echo >&2
   echo "Use kDeviceUnavailableRoutingReason from core/ai/contracts/ai_trace.dart" >&2
   echo "so FRB/device trace labels stay centralized." >&2
+  exit 1
+fi
+
+raw_legacy_vision_trace_violations="$(
+  grep -rnE --include='*.dart' "$RAW_LEGACY_VISION_TRACE_PATTERN" "$LIB" \
+    || true
+)"
+
+if [[ -n "$raw_legacy_vision_trace_violations" ]]; then
+  echo "✖ legacy device_vision_direct trace routing reason used in production:" >&2
+  echo "$raw_legacy_vision_trace_violations" >&2
+  echo >&2
+  echo "Use kFrbVisionIngestRoutingReason for new Vision ingest traces." >&2
+  echo "kDeviceVisionDirectRoutingReason is legacy compatibility only." >&2
   exit 1
 fi
 
