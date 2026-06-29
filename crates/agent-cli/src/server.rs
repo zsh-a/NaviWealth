@@ -20,9 +20,11 @@ use tokio::net::TcpListener;
 
 use crate::{
     AgentRunParams, CatalogSummary, HttpAgentRunParams, HttpProposalCreateParams,
-    HttpProposalDecisionParams, HttpProposalListParams, HttpRunListParams, HttpSessionCreateParams,
-    HttpThreadForkParams, HttpToolCallParams, RuntimeServer, StdioError, StdioRequest,
-    StdioResponse, event_records_from_trace, stdio_error, stdio_result,
+    HttpProposalDecisionParams, HttpProposalListParams, HttpRunListParams, HttpToolCallParams,
+    RuntimeServer, StdioRequest, StdioResponse,
+    metrics::event_records_from_trace,
+    session::{HttpSessionCreateParams, HttpThreadForkParams},
+    stdio_error, stdio_result,
 };
 
 #[derive(Debug, Serialize)]

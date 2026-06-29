@@ -1,55 +1,66 @@
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use agent_core::{
-    Agent, AgentContext, AgentError, AgentProposalStore, AgentRunRecord, AgentRunResult,
-    AgentRunStore, AgentRuntimeCatalog, AgentServices, AgentSessionStore, AgentSpec,
-    ApprovalDecision, ApprovalDecisionKind, PROTOCOL_VERSION, ProposalEnvelope, ProposalId,
-    ProposalStatus, RunId, RunRequest, SessionId, SessionRecord, StepRecord, ThreadId,
-    ThreadRecord, TraceEvent, TriggerKind,
+    AgentProposalStore, AgentRunRecord, AgentRunResult, AgentRunStore, AgentRuntimeCatalog,
+    AgentServices, AgentSessionStore, ApprovalDecision, ApprovalDecisionKind, PROTOCOL_VERSION,
+    ProposalEnvelope, ProposalId, ProposalStatus, RunId, RunRequest, SessionId, SessionRecord,
+    ThreadId, ThreadRecord,
 };
 use agent_llm::{
     AnthropicProvider, LlmProvider, LlmRequest, MockLlmProvider, OllamaProvider,
     OpenAiCompatibleProvider, user_message,
 };
-use agent_runtime::{
-    AgentRunner, ExecutionPolicy, InMemoryAgentRegistry, RUNTIME_VERSION, recover_stale_runs,
-};
+use agent_runtime::{AgentRunner, ExecutionPolicy, recover_stale_runs};
 use agent_store::{FileProposalStore, FileRunStore, FileSessionStore};
-use async_trait::async_trait;
 use camino::{Utf8Path, Utf8PathBuf};
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 use miette::{IntoDiagnostic, Result, miette};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use time::format_description::well_known::Rfc3339;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 mod catalog;
+mod command_template;
 mod config;
 mod debug_bundle;
 mod eval;
+mod metrics;
 mod proposal;
+mod registry;
+mod replay;
 mod server;
+mod session;
 mod tools;
 mod tui;
 
 use catalog::{
-    CatalogSummary, build_prompt_manifest, call_traced_tool, load_catalog_registry, read_catalog,
+    CatalogSummary, build_prompt_manifest, load_catalog_registry, read_catalog,
     registry_from_catalog,
 };
+use command_template::{CommandRunOptions, create_command_from_run, run_command_template};
 use config::{
     configured_path, configured_paths, configured_string, configured_u16, configured_u32,
     configured_u64, execution_policy, load_agent_config,
 };
 use debug_bundle::export_debug_bundle;
 use eval::{create_eval_from_run, run_dev_score_hook, run_eval_path};
+use metrics::{RuntimeMetricsSummary, build_metrics_summary};
 use proposal::{
     ProposalAction, ProposalActionResponse, ProposalDecisionResponse,
     append_proposal_action_trace_event, append_proposal_created_trace_event,
     append_proposal_decision_trace_event, execute_proposal_action_with_store,
     parse_approval_decision, proposal_action_tool,
 };
+use registry::load_registry;
+use replay::{
+    ReplayExecutionReport, ReplayMode, ReplayTraceOptions, replay_source_trace, replay_trace,
+};
 use server::{serve_http, serve_stdio};
+use session::{
+    HttpSessionCreateParams, HttpSessionCreateResponse, HttpThreadForkParams, SessionShowReport,
+    ThreadForkReport, ThreadWithSteps, create_session, fork_thread, record_session_step,
+    run_metadata, show_session,
+};
 use tools::{
     CliServices, ToolOverrides, builtin_tools, load_tool_source_specs, load_tool_sources,
     source_has_tool, tool_overrides,
@@ -1216,40 +1227,6 @@ struct ValidationReport {
     errors: Vec<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ValueEnum)]
-#[serde(rename_all = "snake_case")]
-enum ReplayMode {
-    View,
-    Deterministic,
-    Live,
-}
-
-#[derive(Debug, Serialize)]
-struct ReplayExecutionReport {
-    mode: ReplayMode,
-    source_run_id: RunId,
-    replay_run_id: RunId,
-    agent_id: String,
-    result: AgentRunResult,
-    trace: agent_core::AgentTrace,
-    output_matches: bool,
-}
-
-struct ReplayTraceOptions {
-    trace_file: Utf8PathBuf,
-    mode: ReplayMode,
-    registry: Utf8PathBuf,
-    catalog: Option<Utf8PathBuf>,
-    tool_host: Vec<String>,
-    mock_tool: Vec<String>,
-    tool_source: Vec<Utf8PathBuf>,
-    store: Utf8PathBuf,
-    trace_out: Option<Utf8PathBuf>,
-    timeout_seconds: u64,
-    max_retries: u32,
-    retry_backoff_ms: u64,
-}
-
 #[derive(Clone)]
 struct RuntimeServer {
     catalog: Arc<AgentRuntimeCatalog>,
@@ -1271,12 +1248,6 @@ struct AgentRunResponse {
 struct ToolCallResponse {
     tool: String,
     output: Value,
-}
-
-#[derive(Debug, Serialize)]
-struct HttpSessionCreateResponse {
-    session: SessionRecord,
-    thread: ThreadRecord,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1308,34 +1279,6 @@ struct HttpProposalDecisionParams {
     decision: String,
     #[serde(default)]
     comment: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-struct RuntimeMetricsSummary {
-    protocol_version: String,
-    runtime_version: String,
-    generated_at: String,
-    store_root: String,
-    run_count: usize,
-    runs_by_status: BTreeMap<String, usize>,
-    successful_run_count: usize,
-    skipped_run_count: usize,
-    failed_run_count: usize,
-    timeout_count: usize,
-    total_run_latency_ms: u64,
-    average_run_latency_ms: Option<f64>,
-    tool_call_count: usize,
-    failed_tool_call_count: usize,
-    total_tool_call_latency_ms: u64,
-    average_tool_call_latency_ms: Option<f64>,
-    replay_count: usize,
-    proposal_count: usize,
-    proposals_by_status: BTreeMap<String, usize>,
-    proposal_created_count: usize,
-    proposal_approved_count: usize,
-    proposal_denied_count: usize,
-    proposal_applied_count: usize,
-    llm_total_tokens: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1393,105 +1336,6 @@ struct HttpAgentRunParams {
 struct HttpToolCallParams {
     #[serde(default)]
     input: Value,
-}
-
-#[derive(Debug, Deserialize)]
-struct HttpSessionCreateParams {
-    title: String,
-    #[serde(default)]
-    metadata: Value,
-}
-
-#[derive(Debug, Deserialize)]
-struct HttpThreadForkParams {
-    parent_thread_id: String,
-    #[serde(default)]
-    title: Option<String>,
-    #[serde(default)]
-    metadata: Value,
-}
-
-#[derive(Debug, Serialize)]
-struct CommandCreateReport {
-    id: String,
-    run_id: String,
-    agent_id: String,
-    command_file: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct CommandFrontmatter {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    description: Option<String>,
-    agent: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    catalog: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    registry: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    source_run_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    source_run_status: Option<agent_core::AgentRunStatus>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    created_at: Option<String>,
-}
-
-struct CommandTemplate {
-    frontmatter: CommandFrontmatter,
-    input: Value,
-}
-
-struct CommandRunOptions {
-    command_file: Utf8PathBuf,
-    catalog: Option<Utf8PathBuf>,
-    registry: Option<Utf8PathBuf>,
-    store: Utf8PathBuf,
-    tool_host: Vec<String>,
-    mock_tool: Vec<String>,
-    tool_source: Vec<Utf8PathBuf>,
-    trace_out: Option<Utf8PathBuf>,
-    timeout_seconds: u64,
-    max_retries: u32,
-    retry_backoff_ms: u64,
-}
-
-#[derive(Debug, Serialize)]
-struct CommandRunReport {
-    command_file: String,
-    agent_id: String,
-    result: AgentRunResult,
-    trace: agent_core::AgentTrace,
-}
-
-#[derive(Debug, Serialize)]
-struct SessionCreateReport {
-    session: SessionRecord,
-    thread: ThreadRecord,
-}
-
-#[derive(Debug, Serialize)]
-struct SessionShowReport {
-    session: SessionRecord,
-    threads: Vec<ThreadWithSteps>,
-}
-
-#[derive(Debug, Serialize)]
-struct ThreadWithSteps {
-    thread: ThreadRecord,
-    steps: Vec<StepRecord>,
-}
-
-#[derive(Debug, Serialize)]
-struct ThreadForkReport {
-    session_id: String,
-    parent_thread_id: String,
-    thread: ThreadRecord,
-}
-
-#[derive(Debug)]
-enum CommandRegistryPath {
-    Catalog(Utf8PathBuf),
-    Registry(Utf8PathBuf),
 }
 
 #[derive(Debug, Deserialize)]
@@ -1822,561 +1666,6 @@ impl RuntimeServer {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct RegistryFile {
-    agents: Vec<AgentManifest>,
-}
-
-#[derive(Debug, Deserialize)]
-struct AgentManifest {
-    #[serde(flatten)]
-    spec: AgentSpec,
-    #[serde(default = "default_runner")]
-    runner: String,
-}
-
-struct CliRegistry {
-    agents: Vec<Arc<dyn Agent>>,
-}
-
-impl CliRegistry {
-    fn list_specs(&self) -> Vec<AgentSpec> {
-        self.agents.iter().map(|agent| agent.spec()).collect()
-    }
-
-    fn into_agent_registry(self) -> Arc<InMemoryAgentRegistry> {
-        InMemoryAgentRegistry::shared(self.agents)
-    }
-}
-
-async fn load_registry(path: Utf8PathBuf) -> Result<CliRegistry> {
-    let bytes = fs_err::tokio::read(&path)
-        .await
-        .map_err(|e| miette!("failed to read registry at {path}: {e}"))?;
-    let file: RegistryFile = serde_yaml::from_slice(&bytes)
-        .map_err(|e| miette!("failed to parse registry at {path}: {e}"))?;
-    let agents = file
-        .agents
-        .into_iter()
-        .map(|manifest| match manifest.runner.as_str() {
-            "echo" => Ok(Arc::new(EchoAgent {
-                spec: manifest.spec,
-            }) as Arc<dyn Agent>),
-            other => Err(miette!("unsupported agent runner '{other}'")),
-        })
-        .collect::<Result<Vec<_>>>()?;
-    Ok(CliRegistry { agents })
-}
-
-async fn create_session(store_path: Utf8PathBuf, title: String) -> Result<SessionCreateReport> {
-    let store = FileSessionStore::new(store_path).await.into_diagnostic()?;
-    let session = SessionRecord::new(title.clone(), json!({}));
-    let thread = ThreadRecord::root(session.session_id.clone(), Some(title), json!({}));
-    store
-        .create_session(session.clone())
-        .await
-        .into_diagnostic()?;
-    store
-        .create_thread(thread.clone())
-        .await
-        .into_diagnostic()?;
-    Ok(SessionCreateReport { session, thread })
-}
-
-fn run_metadata(session: Option<&str>, thread: Option<&str>) -> Value {
-    json!({
-        "session_id": session,
-        "thread_id": thread,
-    })
-}
-
-async fn record_session_step(
-    store_path: &Utf8Path,
-    thread_id: Option<&str>,
-    outcome: &agent_runtime::RunOutcome,
-) -> Result<()> {
-    let Some(thread_id) = thread_id else {
-        return Ok(());
-    };
-    let store = FileSessionStore::new(store_path.to_path_buf())
-        .await
-        .into_diagnostic()?;
-    let thread_id = ThreadId(thread_id.to_owned());
-    let thread = store
-        .get_thread(&thread_id)
-        .await
-        .into_diagnostic()?
-        .ok_or_else(|| miette!("thread '{}' was not found", thread_id.0))?;
-    let step = StepRecord::agent_run(
-        thread.thread_id,
-        outcome.result.run_id.clone(),
-        outcome.result.summary.clone(),
-        json!({
-            "agent_id": outcome.result.agent_id.clone(),
-            "status": outcome.result.status.clone(),
-        }),
-    );
-    store.create_step(step).await.into_diagnostic()
-}
-
-async fn show_session(store_path: Utf8PathBuf, session_id: SessionId) -> Result<SessionShowReport> {
-    let store = FileSessionStore::new(store_path).await.into_diagnostic()?;
-    let session = store
-        .get_session(&session_id)
-        .await
-        .into_diagnostic()?
-        .ok_or_else(|| miette!("session '{}' was not found", session_id.0))?;
-    let mut threads = Vec::new();
-    for thread in store
-        .list_threads(&session.session_id)
-        .await
-        .into_diagnostic()?
-    {
-        let steps = store
-            .list_steps(&thread.thread_id)
-            .await
-            .into_diagnostic()?;
-        threads.push(ThreadWithSteps { thread, steps });
-    }
-    Ok(SessionShowReport { session, threads })
-}
-
-async fn fork_thread(
-    store_path: Utf8PathBuf,
-    session_id: SessionId,
-    parent_thread_id: ThreadId,
-    title: Option<String>,
-) -> Result<ThreadForkReport> {
-    let store = FileSessionStore::new(store_path).await.into_diagnostic()?;
-    store
-        .get_session(&session_id)
-        .await
-        .into_diagnostic()?
-        .ok_or_else(|| miette!("session '{}' was not found", session_id.0))?;
-    let parent = store
-        .get_thread(&parent_thread_id)
-        .await
-        .into_diagnostic()?
-        .ok_or_else(|| miette!("thread '{}' was not found", parent_thread_id.0))?;
-    if parent.session_id != session_id {
-        return Err(miette!(
-            "thread '{}' does not belong to session '{}'",
-            parent_thread_id.0,
-            session_id.0
-        ));
-    }
-    let thread = ThreadRecord::fork(
-        session_id.clone(),
-        parent_thread_id.clone(),
-        title,
-        json!({}),
-    );
-    store
-        .create_thread(thread.clone())
-        .await
-        .into_diagnostic()?;
-    Ok(ThreadForkReport {
-        session_id: session_id.0,
-        parent_thread_id: parent_thread_id.0,
-        thread,
-    })
-}
-
-async fn create_command_from_run(
-    run_id: String,
-    store_path: Utf8PathBuf,
-    out: Utf8PathBuf,
-    description: Option<String>,
-    catalog: Option<Utf8PathBuf>,
-    registry: Option<Utf8PathBuf>,
-) -> Result<CommandCreateReport> {
-    if catalog.is_some() && registry.is_some() {
-        return Err(miette!("use only one of --catalog or --registry"));
-    }
-    let store = FileRunStore::new(store_path).await.into_diagnostic()?;
-    let run_id = RunId(run_id);
-    let record = store
-        .get_run(&run_id)
-        .await
-        .into_diagnostic()?
-        .ok_or_else(|| miette!("run '{}' was not found", run_id.0))?;
-
-    let command_id = command_id_from_path(&out).unwrap_or_else(|| default_command_id(&record));
-    let frontmatter = CommandFrontmatter {
-        description: Some(description.unwrap_or_else(|| {
-            format!(
-                "Replay {} from captured run {}",
-                record.agent_id, record.run_id.0
-            )
-        })),
-        agent: record.agent_id.clone(),
-        catalog: catalog.map(|path| path.to_string()),
-        registry: registry.map(|path| path.to_string()),
-        source_run_id: Some(record.run_id.0.clone()),
-        source_run_status: Some(record.status.clone()),
-        created_at: Some(
-            time::OffsetDateTime::now_utc()
-                .format(&Rfc3339)
-                .unwrap_or_else(|_| time::OffsetDateTime::now_utc().to_string()),
-        ),
-    };
-    let markdown = render_command_markdown(&frontmatter, &record.input)?;
-    write_text(out.clone(), &markdown).await?;
-    Ok(CommandCreateReport {
-        id: command_id,
-        run_id: record.run_id.0,
-        agent_id: record.agent_id,
-        command_file: out.to_string(),
-    })
-}
-
-async fn run_command_template(options: CommandRunOptions) -> Result<CommandRunReport> {
-    if options.catalog.is_some() && options.registry.is_some() {
-        return Err(miette!("use only one of --catalog or --registry"));
-    }
-    let text = fs_err::tokio::read_to_string(&options.command_file)
-        .await
-        .map_err(|e| miette!("failed to read command at {}: {e}", options.command_file))?;
-    let template = parse_command_template(&text, &options.command_file)?;
-    let registry_path =
-        resolve_command_registry_path(&template.frontmatter, options.catalog, options.registry)?;
-    let registry = match registry_path {
-        CommandRegistryPath::Catalog(path) => load_catalog_registry(path).await?,
-        CommandRegistryPath::Registry(path) => load_registry(path).await?.into_agent_registry(),
-    };
-    let store = Arc::new(
-        FileRunStore::new(options.store.clone())
-            .await
-            .into_diagnostic()?,
-    );
-    let proposal_store = Arc::new(
-        FileProposalStore::new(options.store.clone())
-            .await
-            .into_diagnostic()?,
-    );
-    let services = Arc::new(CliServices::with_proposal_store(
-        tool_overrides(options.tool_host, options.mock_tool, options.tool_source).await?,
-        proposal_store,
-    ));
-    let runner = AgentRunner::new(registry, store, services).with_policy(execution_policy(
-        options.timeout_seconds,
-        options.max_retries,
-        options.retry_backoff_ms,
-    ));
-    let outcome = runner
-        .run_once(
-            &template.frontmatter.agent,
-            RunRequest {
-                protocol_version: PROTOCOL_VERSION.to_owned(),
-                run_id: None,
-                input: template.input,
-                user: None,
-                trigger: TriggerKind::Manual,
-                metadata: json!({
-                    "source": "command_template",
-                    "command_file": options.command_file.to_string(),
-                    "source_run_id": template.frontmatter.source_run_id,
-                }),
-            },
-        )
-        .await
-        .into_diagnostic()?;
-    write_store_trace(&options.store, &outcome.trace).await?;
-    if let Some(path) = options.trace_out {
-        write_json(path, &outcome.trace).await?;
-    }
-    Ok(CommandRunReport {
-        command_file: options.command_file.to_string(),
-        agent_id: outcome.result.agent_id.clone(),
-        result: outcome.result,
-        trace: outcome.trace,
-    })
-}
-
-fn resolve_command_registry_path(
-    frontmatter: &CommandFrontmatter,
-    catalog: Option<Utf8PathBuf>,
-    registry: Option<Utf8PathBuf>,
-) -> Result<CommandRegistryPath> {
-    if let Some(path) = catalog {
-        return Ok(CommandRegistryPath::Catalog(path));
-    }
-    if let Some(path) = registry {
-        return Ok(CommandRegistryPath::Registry(path));
-    }
-    match (&frontmatter.catalog, &frontmatter.registry) {
-        (Some(_), Some(_)) => Err(miette!(
-            "command frontmatter must not contain both catalog and registry"
-        )),
-        (Some(path), None) => Ok(CommandRegistryPath::Catalog(Utf8PathBuf::from(path))),
-        (None, Some(path)) => Ok(CommandRegistryPath::Registry(Utf8PathBuf::from(path))),
-        (None, None) => Ok(CommandRegistryPath::Registry(Utf8PathBuf::from(
-            "examples/agent-runtime/agents.yaml",
-        ))),
-    }
-}
-
-fn render_command_markdown(frontmatter: &CommandFrontmatter, input: &Value) -> Result<String> {
-    let frontmatter = serde_yaml::to_string(frontmatter).into_diagnostic()?;
-    let input = serde_json::to_string_pretty(input).into_diagnostic()?;
-    Ok(format!(
-        "---\n{frontmatter}---\n\nRun the configured agent with this captured input. Replace or extend `$ARGUMENTS` when invoking the command to add run-specific instructions.\n\n```json\n{input}\n```\n"
-    ))
-}
-
-fn parse_command_template(markdown: &str, path: &Utf8Path) -> Result<CommandTemplate> {
-    let Some(rest) = markdown.strip_prefix("---\n") else {
-        return Err(miette!(
-            "command template at {path} must start with YAML frontmatter"
-        ));
-    };
-    let Some((frontmatter, body)) = rest.split_once("\n---") else {
-        return Err(miette!(
-            "command template at {path} is missing closing frontmatter marker"
-        ));
-    };
-    let frontmatter: CommandFrontmatter = serde_yaml::from_str(frontmatter)
-        .map_err(|e| miette!("failed to parse command frontmatter at {path}: {e}"))?;
-    if frontmatter.agent.trim().is_empty() {
-        return Err(miette!("command frontmatter at {path} must include agent"));
-    }
-    let input_text = extract_json_fence(body)
-        .ok_or_else(|| miette!("command template at {path} must include a json code fence"))?;
-    let input = serde_json::from_str(input_text)
-        .map_err(|e| miette!("failed to parse command input JSON at {path}: {e}"))?;
-    Ok(CommandTemplate { frontmatter, input })
-}
-
-fn extract_json_fence(body: &str) -> Option<&str> {
-    let (_, after_open) = body.split_once("```json")?;
-    let after_open = after_open.strip_prefix('\n').unwrap_or(after_open);
-    let (json, _) = after_open.split_once("```")?;
-    Some(json.trim())
-}
-
-fn command_id_from_path(path: &Utf8Path) -> Option<String> {
-    path.file_stem().map(sanitize_eval_id)
-}
-
-fn default_command_id(record: &AgentRunRecord) -> String {
-    format!(
-        "{}_{}",
-        sanitize_eval_id(&record.agent_id),
-        sanitize_eval_id(&record.run_id.0)
-    )
-}
-
-fn sanitize_eval_id(value: &str) -> String {
-    value
-        .chars()
-        .map(|ch| {
-            if ch.is_ascii_alphanumeric() || ch == '_' {
-                ch
-            } else {
-                '_'
-            }
-        })
-        .collect()
-}
-
-async fn build_metrics_summary(
-    store_path: &Utf8Path,
-    run_store: &FileRunStore,
-    proposal_store: &FileProposalStore,
-) -> Result<RuntimeMetricsSummary> {
-    let runs = run_store.list_runs(None, None).await.into_diagnostic()?;
-    let proposals = proposal_store
-        .list_proposals(None)
-        .await
-        .into_diagnostic()?;
-    let mut runs_by_status = BTreeMap::new();
-    let mut total_run_latency_ms = 0_u64;
-    let mut completed_latency_count = 0_u64;
-    let mut tool_call_count = 0_usize;
-    let mut failed_tool_call_count = 0_usize;
-    let mut total_tool_call_latency_ms = 0_u64;
-    let mut replay_count = 0_usize;
-    let mut llm_total_tokens = 0_u64;
-    let mut proposal_created_count = 0_usize;
-    let mut proposal_approved_count = 0_usize;
-    let mut proposal_denied_count = 0_usize;
-    let mut proposal_applied_count = 0_usize;
-
-    for run in &runs {
-        *runs_by_status
-            .entry(run_status_key(&run.status))
-            .or_insert(0) += 1;
-        if let Some(finished_at) = run.finished_at {
-            let latency_ms = (finished_at - run.started_at).whole_milliseconds();
-            if latency_ms >= 0 {
-                total_run_latency_ms =
-                    total_run_latency_ms.saturating_add(u64::try_from(latency_ms).unwrap_or(0));
-                completed_latency_count = completed_latency_count.saturating_add(1);
-            }
-        }
-        if let Some(trace) = read_store_trace(store_path, &run.run_id).await? {
-            if trace_started_by_replay(&trace) {
-                replay_count += 1;
-            }
-            for event in event_records_from_trace(&trace) {
-                let kind = event.get("kind").and_then(Value::as_str);
-                let payload = event.get("payload").unwrap_or(&Value::Null);
-                match kind {
-                    Some("tool_call_finished") => {
-                        tool_call_count += 1;
-                        total_tool_call_latency_ms =
-                            total_tool_call_latency_ms.saturating_add(payload_duration_ms(payload));
-                    }
-                    Some("tool_call_failed") => {
-                        tool_call_count += 1;
-                        failed_tool_call_count += 1;
-                        total_tool_call_latency_ms =
-                            total_tool_call_latency_ms.saturating_add(payload_duration_ms(payload));
-                    }
-                    Some("llm_response") | Some("llm.round.finished") => {
-                        llm_total_tokens =
-                            llm_total_tokens.saturating_add(payload_total_tokens(payload));
-                    }
-                    Some("proposal_created") => {
-                        proposal_created_count += 1;
-                    }
-                    Some("proposal_decided") => {
-                        match payload.get("decision").and_then(Value::as_str) {
-                            Some("approve" | "approved") => proposal_approved_count += 1,
-                            Some("deny" | "denied") => proposal_denied_count += 1,
-                            _ => {}
-                        }
-                    }
-                    Some("proposal_applied") => {
-                        proposal_applied_count += 1;
-                    }
-                    _ => {}
-                }
-            }
-        }
-    }
-
-    let mut proposals_by_status = BTreeMap::new();
-    for proposal in &proposals {
-        *proposals_by_status
-            .entry(proposal_status_key(&proposal.status))
-            .or_insert(0) += 1;
-    }
-    if proposal_created_count == 0 {
-        proposal_created_count = proposals.len();
-    }
-    if proposal_approved_count == 0 {
-        proposal_approved_count = count_run_status(&proposals_by_status, "approved");
-    }
-    if proposal_denied_count == 0 {
-        proposal_denied_count = count_run_status(&proposals_by_status, "denied");
-    }
-    if proposal_applied_count == 0 {
-        proposal_applied_count = count_run_status(&proposals_by_status, "applied");
-    }
-    let generated_at = time::OffsetDateTime::now_utc()
-        .format(&Rfc3339)
-        .into_diagnostic()?;
-    Ok(RuntimeMetricsSummary {
-        protocol_version: PROTOCOL_VERSION.to_owned(),
-        runtime_version: RUNTIME_VERSION.to_owned(),
-        generated_at,
-        store_root: store_path.to_string(),
-        run_count: runs.len(),
-        successful_run_count: count_run_status(&runs_by_status, "completed"),
-        skipped_run_count: count_run_status(&runs_by_status, "skipped"),
-        failed_run_count: count_failure_runs(&runs_by_status),
-        timeout_count: count_run_status(&runs_by_status, "timed_out"),
-        total_run_latency_ms,
-        average_run_latency_ms: average_ms(total_run_latency_ms, completed_latency_count),
-        tool_call_count,
-        failed_tool_call_count,
-        total_tool_call_latency_ms,
-        average_tool_call_latency_ms: average_ms(
-            total_tool_call_latency_ms,
-            tool_call_count as u64,
-        ),
-        replay_count,
-        proposal_count: proposals.len(),
-        proposal_created_count,
-        proposal_approved_count,
-        proposal_denied_count,
-        proposal_applied_count,
-        proposals_by_status,
-        runs_by_status,
-        llm_total_tokens,
-    })
-}
-
-fn run_status_key(status: &agent_core::AgentRunStatus) -> String {
-    serde_json::to_value(status)
-        .ok()
-        .and_then(|value| value.as_str().map(ToOwned::to_owned))
-        .unwrap_or_else(|| format!("{status:?}"))
-}
-
-fn proposal_status_key(status: &ProposalStatus) -> String {
-    serde_json::to_value(status)
-        .ok()
-        .and_then(|value| value.as_str().map(ToOwned::to_owned))
-        .unwrap_or_else(|| format!("{status:?}"))
-}
-
-fn count_run_status(counts: &BTreeMap<String, usize>, status: &str) -> usize {
-    counts.get(status).copied().unwrap_or(0)
-}
-
-fn count_failure_runs(counts: &BTreeMap<String, usize>) -> usize {
-    ["failed", "cancelled", "timed_out", "abandoned"]
-        .iter()
-        .map(|status| count_run_status(counts, status))
-        .sum()
-}
-
-fn average_ms(total: u64, count: u64) -> Option<f64> {
-    (count > 0).then(|| total as f64 / count as f64)
-}
-
-fn payload_duration_ms(payload: &Value) -> u64 {
-    payload
-        .get("duration_ms")
-        .and_then(Value::as_u64)
-        .unwrap_or(0)
-}
-
-fn payload_total_tokens(payload: &Value) -> u64 {
-    payload
-        .get("usage")
-        .and_then(|usage| usage.get("total_tokens"))
-        .or_else(|| payload.get("total_tokens"))
-        .and_then(Value::as_u64)
-        .unwrap_or(0)
-}
-
-fn trace_started_by_replay(trace: &Value) -> bool {
-    trace
-        .get("events")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .any(|event| {
-            event.get("kind").and_then(Value::as_str) == Some("run_started")
-                && event
-                    .get("payload")
-                    .and_then(|payload| payload.get("trigger"))
-                    .and_then(Value::as_str)
-                    == Some("replay")
-        })
-}
-
-fn event_records_from_trace(trace: &Value) -> Vec<Value> {
-    trace
-        .get("events")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default()
-}
-
 async fn execute_proposal_action(
     proposal_id: ProposalId,
     store_path: Utf8PathBuf,
@@ -2401,115 +1690,14 @@ async fn execute_proposal_action(
     Ok(response)
 }
 
-async fn replay_trace(options: ReplayTraceOptions) -> Result<()> {
-    let source_trace = read_trace(options.trace_file).await?;
-    if options.mode == ReplayMode::Deterministic {
-        let report = deterministic_replay_report(source_trace)?;
-        if let Some(path) = options.trace_out {
-            write_json(path, &report.trace).await?;
-        }
-        return print_json(&report);
-    }
-    let registry = match options.catalog {
-        Some(path) => load_catalog_registry(path).await?,
-        None => load_registry(options.registry).await?.into_agent_registry(),
-    };
-    let store = Arc::new(
-        FileRunStore::new(options.store.clone())
-            .await
-            .into_diagnostic()?,
-    );
-    let proposal_store = Arc::new(
-        FileProposalStore::new(options.store.clone())
-            .await
-            .into_diagnostic()?,
-    );
-    let services = Arc::new(CliServices::with_proposal_store(
-        tool_overrides(options.tool_host, options.mock_tool, options.tool_source).await?,
-        proposal_store,
-    ));
-    let runner = AgentRunner::new(registry, store, services).with_policy(execution_policy(
-        options.timeout_seconds,
-        options.max_retries,
-        options.retry_backoff_ms,
-    ));
-    let report = replay_source_trace(&runner, &options.store, source_trace, options.mode).await?;
-    if let Some(path) = options.trace_out {
-        write_json(path, &report.trace).await?;
-    }
-    print_json(&report)
-}
-
-async fn replay_source_trace(
-    runner: &AgentRunner,
-    store_path: &Utf8Path,
-    source_trace: agent_core::AgentTrace,
-    mode: ReplayMode,
-) -> Result<ReplayExecutionReport> {
-    let source_output = source_trace.output.clone();
-    let outcome = runner
-        .run_once(
-            &source_trace.agent_id,
-            run_request_from_trace(&source_trace),
-        )
-        .await
-        .into_diagnostic()?;
-    write_store_trace(store_path, &outcome.trace).await?;
-    Ok(ReplayExecutionReport {
-        mode,
-        source_run_id: source_trace.run_id,
-        replay_run_id: outcome.result.run_id.clone(),
-        agent_id: outcome.result.agent_id.clone(),
-        output_matches: source_output == outcome.result.output,
-        result: outcome.result,
-        trace: outcome.trace,
-    })
-}
-
-fn deterministic_replay_report(
-    source_trace: agent_core::AgentTrace,
-) -> Result<ReplayExecutionReport> {
-    let result = AgentRunResult {
-        protocol_version: PROTOCOL_VERSION.to_owned(),
-        run_id: source_trace.run_id.clone(),
-        agent_id: source_trace.agent_id.clone(),
-        status: agent_core::AgentRunStatus::Completed,
-        started_at: source_trace.started_at,
-        finished_at: source_trace.finished_at,
-        summary: Some("deterministic replay reused source trace output".to_owned()),
-        output: source_trace.output.clone(),
-        error: None,
-    };
-    Ok(ReplayExecutionReport {
-        mode: ReplayMode::Deterministic,
-        source_run_id: source_trace.run_id.clone(),
-        replay_run_id: source_trace.run_id.clone(),
-        agent_id: source_trace.agent_id.clone(),
-        result,
-        trace: source_trace,
-        output_matches: true,
-    })
-}
-
-fn run_request_from_trace(trace: &agent_core::AgentTrace) -> RunRequest {
-    RunRequest {
-        protocol_version: PROTOCOL_VERSION.to_owned(),
-        run_id: None,
-        input: trace.input.clone(),
-        user: None,
-        trigger: TriggerKind::Replay,
-        metadata: json!({
-            "source": "trace_replay",
-            "source_run_id": trace.run_id.0
-        }),
-    }
-}
-
-async fn write_store_trace(store: &Utf8Path, trace: &agent_core::AgentTrace) -> Result<()> {
+pub(crate) async fn write_store_trace(
+    store: &Utf8Path,
+    trace: &agent_core::AgentTrace,
+) -> Result<()> {
     write_json(store_trace_path(store, &trace.run_id), trace).await
 }
 
-async fn read_store_trace(store: &Utf8Path, run_id: &RunId) -> Result<Option<Value>> {
+pub(crate) async fn read_store_trace(store: &Utf8Path, run_id: &RunId) -> Result<Option<Value>> {
     let path = store_trace_path(store, run_id);
     if !path.exists() {
         return Ok(None);
@@ -2521,38 +1709,6 @@ fn store_trace_path(store: &Utf8Path, run_id: &RunId) -> Utf8PathBuf {
     store
         .join("traces")
         .join(format!("{}.trace.json", run_id.0))
-}
-
-struct EchoAgent {
-    spec: AgentSpec,
-}
-
-#[async_trait]
-impl Agent for EchoAgent {
-    fn spec(&self) -> AgentSpec {
-        self.spec.clone()
-    }
-
-    async fn run(&self, ctx: AgentContext) -> std::result::Result<AgentRunResult, AgentError> {
-        ctx.trace
-            .emit(TraceEvent::new(
-                "echo_agent.input_received",
-                ctx.input.clone(),
-            ))
-            .await?;
-        let output = if let Some(tool_input) = ctx.input.get("tool_input") {
-            call_traced_tool(&ctx, "echo", tool_input.clone()).await?
-        } else {
-            ctx.input.clone()
-        };
-        Ok(AgentRunResult::completed(
-            ctx.run_id,
-            self.spec.id.clone(),
-            ctx.now,
-            output,
-            Some("echoed input".to_owned()),
-        ))
-    }
 }
 
 async fn run_dev_tool_host() -> Result<()> {
@@ -2724,14 +1880,14 @@ fn stdio_error_with_data(
     }
 }
 
-async fn read_json(path: Utf8PathBuf) -> Result<Value> {
+pub(crate) async fn read_json(path: Utf8PathBuf) -> Result<Value> {
     let bytes = fs_err::tokio::read(&path)
         .await
         .map_err(|e| miette!("failed to read JSON at {path}: {e}"))?;
     serde_json::from_slice(&bytes).map_err(|e| miette!("failed to parse JSON at {path}: {e}"))
 }
 
-async fn read_trace(path: Utf8PathBuf) -> Result<agent_core::AgentTrace> {
+pub(crate) async fn read_trace(path: Utf8PathBuf) -> Result<agent_core::AgentTrace> {
     let value = read_json(path.clone()).await?;
     serde_json::from_value(value).map_err(|e| miette!("failed to parse trace at {path}: {e}"))
 }
@@ -2779,12 +1935,12 @@ fn ensure_catalog_has_tool(catalog: &AgentRuntimeCatalog, name: &str) -> Result<
     ))
 }
 
-fn print_json(value: &impl serde::Serialize) -> Result<()> {
+pub(crate) fn print_json(value: &impl serde::Serialize) -> Result<()> {
     println!("{}", serde_json::to_string_pretty(value).into_diagnostic()?);
     Ok(())
 }
 
-async fn write_json(path: Utf8PathBuf, value: &impl serde::Serialize) -> Result<()> {
+pub(crate) async fn write_json(path: Utf8PathBuf, value: &impl serde::Serialize) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs_err::tokio::create_dir_all(parent)
             .await
@@ -2794,64 +1950,11 @@ async fn write_json(path: Utf8PathBuf, value: &impl serde::Serialize) -> Result<
     fs_err::tokio::write(path, bytes).await.into_diagnostic()
 }
 
-async fn write_text(path: Utf8PathBuf, text: &str) -> Result<()> {
+pub(crate) async fn write_text(path: Utf8PathBuf, text: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs_err::tokio::create_dir_all(parent)
             .await
             .into_diagnostic()?;
     }
     fs_err::tokio::write(path, text).await.into_diagnostic()
-}
-
-fn default_runner() -> String {
-    "echo".to_owned()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn command_markdown_has_frontmatter_and_captured_input() {
-        let frontmatter = CommandFrontmatter {
-            description: Some("Replay review".to_owned()),
-            agent: "execution_review".to_owned(),
-            catalog: Some("fixtures/agent-runtime/catalog.valid.json".to_owned()),
-            registry: None,
-            source_run_id: Some("run_01".to_owned()),
-            source_run_status: Some(agent_core::AgentRunStatus::Completed),
-            created_at: Some("2026-06-28T00:00:00Z".to_owned()),
-        };
-
-        let markdown = render_command_markdown(&frontmatter, &json!({"message": "hello"})).unwrap();
-
-        assert!(markdown.starts_with("---\n"));
-        assert!(markdown.contains("agent: execution_review"));
-        assert!(markdown.contains("source_run_id: run_01"));
-        assert!(markdown.contains("```json\n{\n  \"message\": \"hello\"\n}\n```"));
-    }
-
-    #[test]
-    fn command_template_parses_frontmatter_and_json_fence() {
-        let markdown = r#"---
-agent: echo_agent
-registry: examples/agent-runtime/agents.yaml
----
-
-```json
-{"message":"hello"}
-```
-"#;
-
-        let template =
-            parse_command_template(markdown, Utf8Path::new(".agent-runtime/commands/echo.md"))
-                .unwrap();
-
-        assert_eq!(template.frontmatter.agent, "echo_agent");
-        assert_eq!(
-            template.frontmatter.registry.as_deref(),
-            Some("examples/agent-runtime/agents.yaml")
-        );
-        assert_eq!(template.input, json!({"message": "hello"}));
-    }
 }

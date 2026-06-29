@@ -189,9 +189,20 @@ Moved in this continuation:
 - `server.rs`: HTTP route handlers and runtime stdio JSONL server surface.
 - `tui.rs`: ratatui state loading, render helpers, terminal event loop, and
   one-shot render support.
+- `registry.rs`: YAML registry loading, registry-to-runner conversion, and the
+  local echo agent runner.
+- `session.rs`: CLI/HTTP session reports, session/thread creation, thread fork,
+  run metadata, and session step recording.
+- `metrics.rs`: runtime metrics summary aggregation and trace event extraction.
+- `command_template.rs`: command markdown creation/parsing and command template
+  execution.
+- `replay.rs`: replay mode/report types plus deterministic and live trace
+  replay execution.
 
-The split is still intended to be behavior-preserving. The continuation changes
-are in the worktree and have not been committed in this session.
+The first split was committed as `dc428208`. The split is still intended to be
+behavior-preserving; the current continuation adds the registry/session/metrics,
+command-template, and replay modules in the worktree and has passed focused CLI
+verification.
 
 ## Last Verified Commands
 
@@ -221,10 +232,15 @@ so treat that as an HTTP server startup timing flake unless it reproduces.
 After the continuation module splits, these were run and passed:
 
 ```text
-rtk cargo fmt --all
-rtk cargo test -p agent-cli --test catalog_cli
-rtk cargo test --workspace
+rtk cargo fmt --all -- --check
+rtk cargo check -p agent-cli
+rtk cargo test -p agent-cli
+rtk git diff --check
 ```
+
+`rtk cargo clippy -p agent-cli --all-targets -- -D warnings` was also run, but
+is currently blocked by existing `clippy::result_large_err` findings in
+`crates/agent-runtime/src/lib.rs`.
 
 ## Recommended Next Steps
 
@@ -258,12 +274,23 @@ continuation worktree:
    - stdio JSONL server
 7. `tui.rs`
    - ratatui state and rendering helpers
+8. `registry.rs`
+   - YAML registry loading
+   - echo runner adapter
+9. `session.rs`
+   - session/thread reports and step recording
+10. `metrics.rs`
+   - metrics summary aggregation
+11. `command_template.rs`
+   - command markdown create/run flow
+12. `replay.rs`
+   - replay mode/report types
+   - deterministic/live replay execution
 
 Remaining useful cleanup:
 
-- Review whether `main.rs` should also split command-template, replay/session,
-  and metrics helpers; these were outside the original suggested list.
-- Run `rtk git diff --check` before committing.
+- Review whether `main.rs` should also split runtime server orchestration and
+  dev stdio helper surfaces.
 - Commit the continuation split intentionally, excluding unrelated untracked
   files.
 
