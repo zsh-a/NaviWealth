@@ -12,8 +12,11 @@ use agent_llm::{
     OpenAiCompatibleProvider,
 };
 use anyhow::Result;
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
+
+use crate::frb_generated::StreamSink;
 
 #[derive(Debug, Serialize)]
 struct CatalogSummary {
@@ -90,6 +93,25 @@ pub async fn agent_runtime_complete_profile_llm(request_json: String) -> Result<
     Ok(serde_json::to_string(&response)?)
 }
 
+pub async fn agent_runtime_stream_mock_llm(
+    sink: StreamSink<String>,
+    request_json: String,
+    response_text: String,
+) -> Result<()> {
+    let request: LlmRequest = serde_json::from_str(&request_json)?;
+    let provider = MockLlmProvider::new("mock", request.model.clone(), response_text);
+    stream_llm_response(sink, Box::new(provider), request).await
+}
+
+pub async fn agent_runtime_stream_profile_llm(
+    sink: StreamSink<String>,
+    request_json: String,
+) -> Result<()> {
+    let request: LlmRequest = serde_json::from_str(&request_json)?;
+    let provider = profile_llm_provider(&request)?;
+    stream_llm_response(sink, provider, request).await
+}
+
 pub async fn agent_runtime_start_profile_turn_step(
     catalog_json: String,
     llm_request_json: String,
@@ -131,37 +153,75 @@ pub async fn agent_runtime_start_profile_turn_step(
 }
 
 async fn complete_profile_llm_response(request: LlmRequest) -> Result<LlmResponse> {
-    let response = match request.provider.as_str() {
-        "mock" => MockLlmProvider::new("mock", request.model.clone(), "mock response")
-            .complete(request)
-            .await
-            .map_err(llm_error_to_anyhow)?,
+    profile_llm_provider(&request)?
+        .complete(request)
+        .await
+        .map_err(llm_error_to_anyhow)
+}
+
+async fn stream_llm_response(
+    sink: StreamSink<String>,
+    provider: Box<dyn LlmProvider>,
+    request: LlmRequest,
+) -> Result<()> {
+    let mut stream = provider
+        .stream(request)
+        .await
+        .map_err(llm_error_to_anyhow)?;
+    while let Some(event) = stream.next().await {
+        match event {
+            Ok(event) => {
+                let _ = sink.add(serde_json::to_string(&event)?);
+            }
+            Err(error) => {
+                let record = error.record;
+                let _ = sink.add(serde_json::to_string(&json!({
+                    "kind": "error",
+                    "content": null,
+                    "metadata": {
+                        "code": record.code,
+                        "message": record.message,
+                        "retryable": record.retryable,
+                        "details": record.details,
+                    }
+                }))?);
+                break;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmProvider>> {
+    match request.provider.as_str() {
+        "mock" => Ok(Box::new(MockLlmProvider::new(
+            "mock",
+            request.model.clone(),
+            "mock response",
+        ))),
         "openai" | "openai-compatible" => {
-            let api_key = llm_metadata_string(&request, "api_key")?;
-            let base_url = llm_metadata_string(&request, "base_url")
+            let api_key = llm_metadata_string(request, "api_key")?;
+            let base_url = llm_metadata_string(request, "base_url")
                 .map(normalize_openai_base_url)
                 .unwrap_or_else(|_| "https://api.openai.com/v1".to_owned());
-            OpenAiCompatibleProvider::new(request.provider.clone(), base_url, api_key)
-                .map_err(llm_error_to_anyhow)?
-                .complete(request)
-                .await
-                .map_err(llm_error_to_anyhow)?
+            let provider =
+                OpenAiCompatibleProvider::new(request.provider.clone(), base_url, api_key)
+                    .map_err(llm_error_to_anyhow)?;
+            Ok(Box::new(provider))
         }
         "anthropic" => {
-            let api_key = llm_metadata_string(&request, "api_key")?;
-            let base_url = llm_metadata_string(&request, "base_url")
+            let api_key = llm_metadata_string(request, "api_key")?;
+            let base_url = llm_metadata_string(request, "base_url")
                 .unwrap_or_else(|_| "https://api.anthropic.com/v1".to_owned());
-            let version = llm_metadata_string(&request, "anthropic_version")
+            let version = llm_metadata_string(request, "anthropic_version")
                 .unwrap_or_else(|_| "2023-06-01".to_owned());
-            AnthropicProvider::new(request.provider.clone(), base_url, api_key, version)
-                .map_err(llm_error_to_anyhow)?
-                .complete(request)
-                .await
-                .map_err(llm_error_to_anyhow)?
+            let provider =
+                AnthropicProvider::new(request.provider.clone(), base_url, api_key, version)
+                    .map_err(llm_error_to_anyhow)?;
+            Ok(Box::new(provider))
         }
         other => anyhow::bail!("unsupported LLM provider '{other}'"),
-    };
-    Ok(response)
+    }
 }
 
 pub fn agent_runtime_start_run_step(

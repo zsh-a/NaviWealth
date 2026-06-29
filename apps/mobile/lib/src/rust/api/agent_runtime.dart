@@ -6,9 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `complete_profile_llm_response`, `llm_error_to_anyhow`, `llm_metadata_string`, `normalize_json`, `normalize_openai_base_url`, `parse_requested_tool_call`, `runtime_input_from_llm_response`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CatalogSummary`, `RequestedToolCall`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `build_tool_call_requested_step`, `complete_profile_llm_response`, `continuation_tool_results`, `continuation`, `llm_error_to_anyhow`, `llm_metadata_string`, `next_tool_request_from_continuation`, `normalize_json`, `normalize_openai_base_url`, `parse_initial_tool_request`, `profile_llm_provider`, `runtime_input_from_llm_response`, `stream_llm_response`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CatalogSummary`, `RequestedToolCall`, `ToolRequestState`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `fmt`, `fmt`
 
 Future<String> agentRuntimeProtocolVersion() =>
     RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeProtocolVersion();
@@ -57,6 +57,19 @@ Future<String> agentRuntimeCompleteMockLlm({
 
 Future<String> agentRuntimeCompleteProfileLlm({required String requestJson}) =>
     RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeCompleteProfileLlm(
+      requestJson: requestJson,
+    );
+
+Stream<String> agentRuntimeStreamMockLlm({
+  required String requestJson,
+  required String responseText,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStreamMockLlm(
+  requestJson: requestJson,
+  responseText: responseText,
+);
+
+Stream<String> agentRuntimeStreamProfileLlm({required String requestJson}) =>
+    RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStreamProfileLlm(
       requestJson: requestJson,
     );
 

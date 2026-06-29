@@ -31,6 +31,7 @@ fastembed = { version = "5.17.2", default-features = false, features = ["ort-loa
 anyhow = "1.0.102"
 agent-core = { path = "../../../../crates/agent-core" }
 agent-llm = { path = "../../../../crates/agent-llm" }
+futures = "0.3"
 # flutter_rust_bridge generates Dart bindings from these signatures.
 # Surface in `src/api/` is the only thing the codegen looks at;
 # everything else stays private to the crate.

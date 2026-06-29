@@ -1249,6 +1249,7 @@ dependencies = [
  "chrono",
  "fastembed",
  "flutter_rust_bridge",
+ "futures",
  "once_cell",
  "reqwest",
  "serde",

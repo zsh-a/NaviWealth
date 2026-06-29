@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_llm_stream_bridge.dart';
 import 'package:naviwealth/app/frb_chat_runner.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
@@ -46,6 +49,66 @@ void main() {
     expect(bridge.metadata['surface'], 'ai_chat');
     expect(bridge.metadata['requested_model'], 'requested-model');
     expect(bridge.metadata['streaming'], false);
+  });
+
+  test('maps FRB native stream events into chat events', () async {
+    final bridge = _FakeLlmBridge();
+    final streamBridge = _streamBridge(
+      bridge,
+      events: const <String>[
+        '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+        '{"kind":"delta","content":"Hello ","metadata":{"synthetic_stream":true}}',
+        '{"kind":"delta","content":"from FRB","metadata":{"synthetic_stream":true}}',
+        '{"kind":"finished","response":{"content":"Hello from FRB","finish_reason":"stop","usage":{"input_tokens":4,"output_tokens":3,"total_tokens":7}},"metadata":{"synthetic_stream":true}}',
+      ],
+    );
+    final runner = FrbChatRunner(llmBridge: bridge, streamBridge: streamBridge);
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Hello'),
+          ],
+        )
+        .toList();
+
+    expect(events, hasLength(4));
+    expect((events[0] as TextEvent).text, 'Hello ');
+    expect((events[1] as TextEvent).text, 'from FRB');
+    expect((events[2] as UsageEvent).usage.total, 7);
+    expect((events[3] as DoneEvent).stopReason, 'end_turn');
+    final request = streamBridge.requests.single;
+    expect(request['messages'], <Object?>[
+      <String, Object?>{'role': 'user', 'content': 'Hello'},
+    ]);
+    final metadata = request['metadata'] as Map<String, Object?>;
+    expect(metadata['surface'], 'ai_chat');
+    expect(metadata['streaming'], true);
+  });
+
+  test('maps FRB native stream error events into chat errors', () async {
+    final runner = FrbChatRunner(
+      llmBridge: _FakeLlmBridge(),
+      streamBridge: _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"error","metadata":{"code":"provider_http_401","message":"bad key","retryable":false}}',
+        ],
+      ),
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Hello'),
+          ],
+        )
+        .toList();
+
+    expect(events, hasLength(2));
+    expect((events[0] as ErrorEvent).code, 'provider_http_401');
+    expect((events[0] as ErrorEvent).message, 'bad key');
+    expect((events[1] as DoneEvent).stopReason, 'error');
   });
 
   test('maps native finish reasons to chat stop reasons', () async {
@@ -98,6 +161,42 @@ void main() {
       expect((events[1] as DoneEvent).stopReason, 'error');
     },
   );
+}
+
+_RecordingStreamBridge _streamBridge(
+  _FakeLlmBridge bridge, {
+  required List<String> events,
+}) {
+  return _RecordingStreamBridge(llmBridge: bridge, events: events);
+}
+
+class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
+  factory _RecordingStreamBridge({
+    required _FakeLlmBridge llmBridge,
+    required List<String> events,
+  }) {
+    final requests = <Map<String, Object?>>[];
+    return _RecordingStreamBridge._(
+      llmBridge: llmBridge,
+      events: events,
+      requests: requests,
+    );
+  }
+
+  _RecordingStreamBridge._({
+    required _FakeLlmBridge llmBridge,
+    required List<String> events,
+    required this.requests,
+  }) : super(
+         llmBridge: llmBridge,
+         initRuntime: ({String? libraryPath}) async {},
+         streamProfileJson: ({required String requestJson}) {
+           requests.add(jsonDecode(requestJson) as Map<String, Object?>);
+           return Stream<String>.fromIterable(events);
+         },
+       );
+
+  final List<Map<String, Object?>> requests;
 }
 
 class _FakeLlmBridge implements AgentRuntimeLlmBridge {

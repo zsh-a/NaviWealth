@@ -148,11 +148,14 @@ Implemented:
 - Settings LLM profile connectivity probing is FRB-backed through
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions
-- AI Chat now has an app-level `FrbChatRunner` adapter that maps one
-  FRB/native profile completion into the existing `AiChatEvent` vocabulary.
-  It is intentionally not the production default yet because native FRB still
-  needs token-level streaming, tool-call delta, cancellation, and trace-span
-  event parity before replacing `DeviceLlmRuntime` for the interactive chat UI.
+- AI Chat now has an app-level `FrbChatRunner` adapter and
+  `AgentRuntimeLlmStreamBridge`. Native FRB exposes primitive JSON-string LLM
+  stream events through `agentRuntimeStreamProfileLlm`; the runner maps
+  `started` / `delta` / `finished` / `error` events into the existing
+  `AiChatEvent` vocabulary. It is intentionally not the production default yet
+  because provider-real token streaming, tool-call delta, cancellation, and
+  trace-span parity still need to match `DeviceLlmRuntime` before replacing the
+  interactive chat UI path.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
   documented runtime/legacy allowlist
@@ -1284,11 +1287,12 @@ upstream package constraint that prevents moving to the published latest.
 
 Most production business LLM/profile-turn paths now use the FRB/native bridge.
 The remaining high-value Flutter integration gap is interactive AI Chat. The
-current app-level `FrbChatRunner` proves the Flutter chat seam can consume a
-FRB-backed completion, but it emits a completed response rather than token
-deltas. The next migration should add native/FRB streaming event parity before
-switching the production `aiChatApiClientProvider` away from `DeviceLlmRuntime`.
-That parity must cover:
+current app-level `FrbChatRunner` can consume the primitive FRB LLM stream, but
+the stream is still provider-synthetic for OpenAI/Anthropic because
+`agent-llm` maps `stream()` through `complete()` and emits one text delta plus a
+finished response. The next migration should add provider-real native streaming
+and complete event parity before switching the production
+`aiChatApiClientProvider` away from `DeviceLlmRuntime`. That parity must cover:
 
 - text deltas (`TextEvent`)
 - thinking deltas where providers expose reasoning
