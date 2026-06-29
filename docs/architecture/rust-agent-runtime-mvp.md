@@ -162,7 +162,9 @@ Implemented:
   text/usage/tool/reasoning SSE are now provider-real in `agent-llm`.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
-  documented runtime/legacy allowlist
+  documented runtime/legacy allowlist, and by preventing feature code from
+  importing the app-level `AgentRuntimeLlmBridge` directly instead of receiving
+  a feature-owned seam from `app/bootstrap.dart`
 - A guarded confirmed-proposal surface on that runtime check: if the terminal
   FRB step carries a ready proposal, Settings shows the summary/warnings and
   applies it through `AgentRuntimeProposalBridge` only after explicit user
@@ -1313,7 +1315,9 @@ The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been
 removed; the remaining `DeviceLlmClient` surface is limited to low-level
 runtime/provider implementation and focused tests. Production app/domain
 entrypoints are guarded by `tool/lint-frb-llm-entrypoints.sh` and should stay on
-FRB seams.
+FRB seams. Feature packages own small local LLM seams; `app/bootstrap.dart`
+injects FRB-backed adapters from `AgentRuntimeLlmBridge` so feature code does
+not import app-level runtime providers directly.
 
 Already completed: Dart catalog export from the existing `DomainPack`
 composition root. The first version exists at
