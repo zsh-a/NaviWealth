@@ -34,7 +34,10 @@ import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
+import '../features/health/agents/recovery_alert_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
+import 'agent_runtime_catalog.dart';
+import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
 import 'domain_composition.dart';
 import 'memory_indexers_bootstrap.dart';
@@ -165,6 +168,27 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           synthesizer: synth,
           notifier: notifier,
           hourLocal: hourLocal,
+        );
+      }),
+      // Route the tool-using Recovery Alert production agent through the
+      // FRB native step runner first. The native runner requests
+      // `get_hrv_trend` through a `tool_plan`; Dart still executes the device
+      // tool against Riverpod/Drift, and the agent falls back to direct
+      // repository reads if the embedded runtime path is unavailable.
+      recoveryAlertAgentProvider.overrideWith((ref) {
+        final notificationsEnabled = ref.watch(notificationsEnabledProvider);
+        final briefingNotificationsEnabled = ref.watch(
+          healthBriefingNotificationsEnabledProvider,
+        );
+        final notifier = notificationsEnabled && briefingNotificationsEnabled
+            ? ref.watch(notif_providers.notificationServiceProvider)
+            : null;
+        return RecoveryAlertAgent(
+          notifier: notifier,
+          signalReader: FrbRecoveryAlertSignalReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+          ),
         );
       }),
       // Swap in the Rust

@@ -166,6 +166,11 @@ Current bridge capabilities:
   HealthOS Morning Briefing now uses `FrbBriefingSynthesizer` and
   `AgentRuntimeProfileTurnRunner` before falling back to the legacy Dart LLM
   and deterministic programmatic synthesizers.
+- Provide the first tool-using production agent integration on the
+  native-planned continuation loop: HealthOS Recovery Alert now uses
+  `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB
+  `tool_plan`, while Dart executes the HealthOS device tool and the agent keeps
+  its existing sustained-HRV-decline policy.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -185,9 +190,10 @@ Known limitation:
   continuation, plus explicit confirmed-proposal/profile-turn providers and a
   user-facing runtime check / guarded confirmed-proposal apply surface in the
   AI provider settings page, plus the HealthOS Morning Briefing
-  production-agent path. The remaining production work is richer Rust-side
-  agent policy/state/trace ownership beyond the current tool-plan contract and
-  migrating a tool-using production agent onto that fuller loop.
+  production-agent path and the HealthOS Recovery Alert tool-using production
+  agent path. The remaining production work is richer Rust-side agent
+  policy/state/trace ownership beyond the current tool-plan contract and
+  migrating additional tool-using production agents onto that fuller loop.
 
 ## Current Refactor State
 

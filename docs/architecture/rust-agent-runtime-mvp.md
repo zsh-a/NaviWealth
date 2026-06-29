@@ -136,6 +136,11 @@ Implemented:
   HealthOS `FrbBriefingSynthesizer` now routes Morning Briefing synthesis
   through `AgentRuntimeProfileTurnRunner` before falling back to the legacy
   Dart LLM and deterministic programmatic synthesizers
+- First tool-using production agent migration onto the native-planned
+  continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
+  `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`
+  `tool_plan` step and lets Dart execute the HealthOS device tool before the
+  agent applies its existing sustained-HRV-decline policy
 
 Deferred:
 
@@ -146,8 +151,8 @@ Deferred:
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
   (`NativeCallable.isolateLocal`) on the local latest toolchain.
-- migrate a tool-using production agent onto the native-planned continuation
-  loop
+- migrate additional tool-using production agents and move richer
+  policy/state/trace ownership into Rust once those contracts are ready
 
 ## Commands
 
