@@ -198,11 +198,28 @@ Moved in this continuation:
   execution.
 - `replay.rs`: replay mode/report types plus deterministic and live trace
   replay execution.
+- `trace_store.rs`: shared JSON/text file helpers and store trace read/write
+  paths used by CLI runtime modules.
+- `runtime_server.rs`: runtime server orchestration, HTTP/stdout-facing request
+  params, run/tool/proposal/session methods, metrics, and replay entrypoints.
+- `stdio_protocol.rs`: shared JSON-RPC-style stdio request/response helpers used
+  by the runtime stdio server and dev helper servers.
+- `dev_stdio.rs`: hidden development tool-host and MCP stdio helper servers.
+- `llm.rs`: `llm complete` provider selection and request execution.
+- `run_cli.rs`: `run` and `tick` command runner/store/service setup.
+- `catalog_cli.rs`: catalog subcommand dispatch and catalog report printing.
+- `tool_cli.rs`: tool list/call command dispatch and tool source validation.
+- `cli_input.rs`: shared `--input`/`--input-json` JSON input helper.
+- `session_cli.rs`: session create/list/show/fork command dispatch.
+- `proposal_cli.rs`: proposal create/list/inspect/decide/apply/undo command
+  dispatch.
 
 The first split was committed as `dc428208`. The split is still intended to be
 behavior-preserving; the current continuation adds the registry/session/metrics,
-command-template, and replay modules in the worktree and has passed focused CLI
-verification.
+command-template, replay, trace-store, runtime-server, and stdio-protocol
+modules plus dev-stdio, LLM, run/tick, catalog, tool, shared CLI input,
+session, and proposal command dispatch in the worktree and has passed focused
+CLI verification.
 
 ## Last Verified Commands
 
@@ -286,11 +303,35 @@ continuation worktree:
 12. `replay.rs`
    - replay mode/report types
    - deterministic/live replay execution
+13. `trace_store.rs`
+   - shared JSON/text file helpers
+   - store trace read/write paths
+14. `runtime_server.rs`
+   - runtime server orchestration
+   - run/tool/proposal/session method surface
+15. `stdio_protocol.rs`
+   - shared stdio request/response helpers
+16. `dev_stdio.rs`
+   - hidden development tool-host and MCP stdio helpers
+17. `llm.rs`
+   - LLM provider command handling
+18. `run_cli.rs`
+   - run/tick command runner setup
+19. `catalog_cli.rs`
+   - catalog command dispatch
+20. `tool_cli.rs`
+   - tool list/call command dispatch
+21. `cli_input.rs`
+   - shared JSON input argument handling
+22. `session_cli.rs`
+   - session command dispatch
+23. `proposal_cli.rs`
+   - proposal command dispatch
 
 Remaining useful cleanup:
 
-- Review whether `main.rs` should also split runtime server orchestration and
-  dev stdio helper surfaces.
+- Review whether `main.rs` should also split recover/metrics/cmd/eval command
+  dispatch groups.
 - Commit the continuation split intentionally, excluding unrelated untracked
   files.
 

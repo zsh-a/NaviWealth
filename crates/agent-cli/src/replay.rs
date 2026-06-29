@@ -12,10 +12,10 @@ use serde_json::json;
 use crate::{
     catalog::load_catalog_registry,
     config::execution_policy,
-    print_json, read_trace,
+    print_json,
     registry::load_registry,
     tools::{CliServices, tool_overrides},
-    write_json, write_store_trace,
+    trace_store::{read_trace, write_json, write_store_trace},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ValueEnum)]

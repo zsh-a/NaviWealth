@@ -9,7 +9,7 @@ use serde::Serialize;
 use serde_json::Value;
 use time::format_description::well_known::Rfc3339;
 
-use crate::read_store_trace;
+use crate::trace_store::read_store_trace;
 
 #[derive(Debug, Serialize)]
 pub(crate) struct RuntimeMetricsSummary {

@@ -13,7 +13,7 @@ use crate::catalog::load_catalog_registry;
 use crate::config::execution_policy;
 use crate::registry::load_registry;
 use crate::tools::{CliServices, tool_overrides};
-use crate::{write_json, write_store_trace, write_text};
+use crate::trace_store::{write_json, write_store_trace, write_text};
 
 #[derive(Debug, Serialize)]
 pub(crate) struct CommandCreateReport {

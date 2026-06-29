@@ -19,12 +19,14 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
 
 use crate::{
-    AgentRunParams, CatalogSummary, HttpAgentRunParams, HttpProposalCreateParams,
-    HttpProposalDecisionParams, HttpProposalListParams, HttpRunListParams, HttpToolCallParams,
-    RuntimeServer, StdioRequest, StdioResponse,
+    catalog::CatalogSummary,
     metrics::event_records_from_trace,
+    runtime_server::{
+        AgentRunParams, HttpAgentRunParams, HttpProposalCreateParams, HttpProposalDecisionParams,
+        HttpProposalListParams, HttpRunListParams, HttpToolCallParams, RuntimeServer,
+    },
     session::{HttpSessionCreateParams, HttpThreadForkParams},
-    stdio_error, stdio_result,
+    stdio_protocol::{StdioRequest, StdioResponse, stdio_error, stdio_result},
 };
 
 #[derive(Debug, Serialize)]
