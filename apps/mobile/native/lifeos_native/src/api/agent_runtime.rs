@@ -627,9 +627,9 @@ fn require_continuation_next_step_index(
     let Some(continuation) = previous_step.get("continuation") else {
         return Ok(());
     };
-    let Some(next_step_index) = continuation.get("next_step_index") else {
-        return Ok(());
-    };
+    let next_step_index = continuation.get("next_step_index").ok_or_else(|| {
+        anyhow::anyhow!("continuation.next_step_index must be present when continuation is present")
+    })?;
     let next_step_index = next_step_index.as_u64().ok_or_else(|| {
         anyhow::anyhow!("continuation.next_step_index must be a non-negative integer")
     })?;

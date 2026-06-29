@@ -625,6 +625,7 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
         "input": {"value": 1}
       },
       "continuation": {
+        "next_step_index": 1,
         "tool_plan": [
           {"name": "propose_fake", "input": {"value": 2}}
         ],
@@ -683,6 +684,7 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
         "input": {"value": 1}
       },
       "continuation": {
+        "next_step_index": 1,
         "tool_plan": [
           {"name": "propose_fake", "input": {"value": 2}},
           {"name": "unknown_tool", "input": {"value": 3}}
@@ -721,6 +723,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
         "input": {"value": 1}
       },
       "continuation": {
+        "next_step_index": 1,
         "tool_plan": {"name": "propose_fake"},
         "tool_results": []
       }
@@ -756,6 +759,7 @@ fn continue_run_step_rejects_missing_next_tool_plan_name() {
         "input": {"value": 1}
       },
       "continuation": {
+        "next_step_index": 1,
         "tool_plan": [
           {"input": {"value": 2}}
         ],
@@ -791,6 +795,7 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
         "input": {"value": 2}
       },
       "continuation": {
+        "next_step_index": 1,
         "tool_plan": [],
         "tool_results": [
           {
@@ -1695,6 +1700,43 @@ fn continue_run_step_rejects_invalid_continuation_next_step_index() {
 }
 
 #[test]
+fn continue_run_step_rejects_missing_continuation_next_step_index() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          },
+          "continuation": {
+            "tool_plan": [
+              {"name": "propose_fake", "input": {"value": 8}}
+            ],
+            "tool_results": []
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("missing continuation next step index should fail");
+
+    assert!(err.to_string().contains("next_step_index"));
+}
+
+#[test]
 fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
     let err = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
@@ -1711,6 +1753,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
             "input": {"value": 2}
           },
           "continuation": {
+        "next_step_index": 1,
             "tool_plan": [],
             "tool_results": ["bad"]
           }
@@ -1746,6 +1789,7 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
             "input": {"value": 2}
           },
           "continuation": {
+        "next_step_index": 1,
             "tool_plan": [],
             "tool_results": [
               {"tool_call": {"name": "propose_fake", "input": {"value": 1}}}
@@ -1783,6 +1827,7 @@ fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
             "input": {"value": 2}
           },
           "continuation": {
+        "next_step_index": 1,
             "tool_plan": [],
             "tool_results": [
               {
@@ -1829,6 +1874,7 @@ fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
             "input": {"value": 2}
           },
           "continuation": {
+        "next_step_index": 1,
             "tool_plan": [],
             "tool_results": [
               {
@@ -1878,6 +1924,7 @@ fn continue_run_step_rejects_historical_tool_not_in_catalog() {
             "input": {"value": 2}
           },
           "continuation": {
+        "next_step_index": 1,
             "tool_plan": [],
             "tool_results": [
               {
@@ -1963,6 +2010,7 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
         "input": {"value": 2}
       },
       "continuation": {
+        "next_step_index": 2,
         "tool_plan": [],
         "tool_results": [
           {
