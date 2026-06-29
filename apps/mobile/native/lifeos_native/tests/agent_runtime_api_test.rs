@@ -241,6 +241,13 @@ fn start_run_step_requests_catalog_tool_call() {
     assert_eq!(step["status"], "tool_call_requested");
     assert_eq!(step["tool_call"]["name"], "propose_fake");
     assert_eq!(step["tool_call"]["input"]["value"], 7);
+    assert_eq!(step["run_state"]["status"], "tool_call_requested");
+    assert_eq!(step["run_state"]["step_index"], 0);
+    assert_eq!(step["run_state"]["remaining_tool_count"], 0);
+    assert_eq!(step["run_state"]["tool_result_count"], 0);
+    assert!(step["run_state"]["terminal_reason"].is_null());
+    assert_eq!(step["trace_event"]["status"], "tool_call_requested");
+    assert_eq!(step["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]
@@ -272,6 +279,10 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
         step["continuation"]["llm_response"]["content"],
         "use two tools"
     );
+    assert_eq!(step["run_state"]["status"], "tool_call_requested");
+    assert_eq!(step["run_state"]["remaining_tool_count"], 1);
+    assert_eq!(step["run_state"]["tool_result_count"], 0);
+    assert!(step["run_state"]["terminal_reason"].is_null());
 }
 
 #[test]
@@ -308,6 +319,12 @@ fn continue_run_step_completes_with_tool_result() {
     assert_eq!(next["output"]["mode"], "frb_tool_step");
     assert_eq!(next["output"]["tool_result"]["accepted"], true);
     assert_eq!(next["output"]["tool_call"]["name"], "propose_fake");
+    assert_eq!(next["run_state"]["status"], "completed");
+    assert_eq!(next["run_state"]["terminal_reason"], "done");
+    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
+    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["trace_event"]["status"], "completed");
+    assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]
@@ -356,6 +373,13 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
         next["continuation"]["tool_results"][0]["tool_response"]["result"]["value"],
         1
     );
+    assert_eq!(next["run_state"]["status"], "tool_call_requested");
+    assert_eq!(next["run_state"]["step_index"], 1);
+    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
+    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert!(next["run_state"]["terminal_reason"].is_null());
+    assert_eq!(next["trace_event"]["status"], "tool_call_requested");
+    assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]
@@ -399,6 +423,12 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
     assert_eq!(next["output"]["mode"], "frb_tool_loop");
     assert_eq!(next["output"]["tool_results"].as_array().unwrap().len(), 2);
     assert_eq!(next["output"]["tool_result"]["value"], 2);
+    assert_eq!(next["run_state"]["status"], "completed");
+    assert_eq!(next["run_state"]["terminal_reason"], "done");
+    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
+    assert_eq!(next["run_state"]["tool_result_count"], 2);
+    assert_eq!(next["trace_event"]["status"], "completed");
+    assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]

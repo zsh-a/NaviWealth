@@ -633,6 +633,12 @@ fn attach_trace_event(step: &mut Value) {
         "tool_name": object
             .get("tool_call")
             .and_then(|tool_call| tool_call.get("name"))
+            .or_else(|| {
+                object
+                    .get("output")
+                    .and_then(|output| output.get("tool_call"))
+                    .and_then(|tool_call| tool_call.get("name"))
+            })
             .cloned()
             .unwrap_or(Value::Null),
     });
