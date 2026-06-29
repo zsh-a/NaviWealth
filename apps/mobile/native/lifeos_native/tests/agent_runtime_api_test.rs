@@ -224,6 +224,34 @@ fn normalizes_llm_contracts() {
 }
 
 #[test]
+fn validate_llm_contracts_reject_mismatched_protocol_version() {
+    let request_err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v0",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}]
+        }"#
+        .to_owned(),
+    )
+    .expect_err("mismatched LLM request protocol should fail");
+    assert!(request_err.to_string().contains("protocol_version"));
+
+    let response_err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v0",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "stop"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("mismatched LLM response protocol should fail");
+    assert!(response_err.to_string().contains("protocol_version"));
+}
+
+#[test]
 fn normalizes_multimodal_tool_llm_request_contract() {
     let request_json = agent_runtime_validate_llm_request(
         r#"{
@@ -282,6 +310,24 @@ async fn complete_mock_llm_returns_provider_response() {
     assert_eq!(response["content"], "native mock response");
     assert_eq!(response["finish_reason"], "stop");
     assert_eq!(response["metadata"]["mock"], true);
+}
+
+#[tokio::test]
+async fn complete_mock_llm_rejects_mismatched_protocol_version() {
+    let err = agent_runtime_complete_mock_llm(
+        r#"{
+          "protocol_version": "agent.v0",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "ping"}]
+        }"#
+        .to_owned(),
+        "pong".to_owned(),
+    )
+    .await
+    .expect_err("mismatched mock LLM request protocol should fail");
+
+    assert!(err.to_string().contains("protocol_version"));
 }
 
 #[tokio::test]

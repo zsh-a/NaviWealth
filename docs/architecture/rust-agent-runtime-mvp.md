@@ -85,7 +85,9 @@ Implemented:
   `agentRuntimeNativeCatalogSummaryProvider`
 - FRB-facing LLM request/response contract validation and deterministic mock
   LLM completion via `agentRuntimeValidateLlmRequest`,
-  `agentRuntimeValidateLlmResponse`, and `agentRuntimeCompleteMockLlm`
+  `agentRuntimeValidateLlmResponse`, and `agentRuntimeCompleteMockLlm`; LLM
+  request/response protocol versions are rejected when they do not match the
+  native runtime protocol
 - Dart-side `AgentRuntimeLlmBridge` that maps the active on-device
   `LlmProfile` into the provider-neutral `agent-llm` request shape for FRB
 - FRB-facing profile-backed LLM completion via

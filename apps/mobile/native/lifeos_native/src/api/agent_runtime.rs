@@ -71,11 +71,15 @@ pub fn agent_runtime_validate_tool_spec(tool_json: String) -> Result<String> {
 }
 
 pub fn agent_runtime_validate_llm_request(request_json: String) -> Result<String> {
-    normalize_json::<LlmRequest>(&request_json)
+    let request: LlmRequest = serde_json::from_str(&request_json)?;
+    require_llm_request_protocol_version(&request)?;
+    Ok(serde_json::to_string(&request)?)
 }
 
 pub fn agent_runtime_validate_llm_response(response_json: String) -> Result<String> {
-    normalize_json::<LlmResponse>(&response_json)
+    let response: LlmResponse = serde_json::from_str(&response_json)?;
+    require_llm_response_protocol_version(&response)?;
+    Ok(serde_json::to_string(&response)?)
 }
 
 pub async fn agent_runtime_complete_mock_llm(
@@ -83,6 +87,7 @@ pub async fn agent_runtime_complete_mock_llm(
     response_text: String,
 ) -> Result<String> {
     let request: LlmRequest = serde_json::from_str(&request_json)?;
+    require_llm_request_protocol_version(&request)?;
     let provider = MockLlmProvider::new("mock", request.model.clone(), response_text);
     let response = provider
         .complete(request)
@@ -103,6 +108,7 @@ pub async fn agent_runtime_stream_mock_llm(
     response_text: String,
 ) -> Result<()> {
     let request: LlmRequest = serde_json::from_str(&request_json)?;
+    require_llm_request_protocol_version(&request)?;
     let provider = MockLlmProvider::new("mock", request.model.clone(), response_text);
     stream_llm_response(sink, Box::new(provider), request).await
 }
@@ -112,6 +118,7 @@ pub async fn agent_runtime_stream_profile_llm(
     request_json: String,
 ) -> Result<()> {
     let request: LlmRequest = serde_json::from_str(&request_json)?;
+    require_llm_request_protocol_version(&request)?;
     let provider = profile_llm_provider(&request)?;
     stream_llm_response(sink, provider, request).await
 }
@@ -157,6 +164,7 @@ pub async fn agent_runtime_start_profile_turn_step(
 }
 
 async fn complete_profile_llm_response(request: LlmRequest) -> Result<LlmResponse> {
+    require_llm_request_protocol_version(&request)?;
     profile_llm_provider(&request)?
         .complete(request)
         .await
@@ -759,6 +767,28 @@ fn require_run_request_protocol_version(request: &RunRequest) -> Result<()> {
         anyhow::bail!(
             "run request protocol_version '{}' does not match runtime protocol_version '{expected}'",
             request.protocol_version
+        );
+    }
+    Ok(())
+}
+
+fn require_llm_request_protocol_version(request: &LlmRequest) -> Result<()> {
+    let expected = protocol_version();
+    if request.protocol_version != expected {
+        anyhow::bail!(
+            "LLM request protocol_version '{}' does not match runtime protocol_version '{expected}'",
+            request.protocol_version
+        );
+    }
+    Ok(())
+}
+
+fn require_llm_response_protocol_version(response: &LlmResponse) -> Result<()> {
+    let expected = protocol_version();
+    if response.protocol_version != expected {
+        anyhow::bail!(
+            "LLM response protocol_version '{}' does not match runtime protocol_version '{expected}'",
+            response.protocol_version
         );
     }
     Ok(())
