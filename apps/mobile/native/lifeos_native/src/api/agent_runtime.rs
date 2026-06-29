@@ -297,7 +297,7 @@ pub fn agent_runtime_continue_run_step(
     require_previous_tool_call_catalog_tool(&catalog, &agent.id, &tool_call)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
     require_continuation_next_step_index(&previous_step)?;
-    let mut tool_results = continuation_tool_results(&previous_step)?;
+    let mut tool_results = continuation_tool_results(&previous_step, &catalog, &agent.id)?;
     let tool_terminal_status = tool_response_terminal_status(&tool_response);
     if tool_terminal_status != Some("closed_early") {
         tool_results.push(json!({
@@ -777,17 +777,39 @@ fn next_tool_request_from_continuation(
     }))
 }
 
-fn continuation_tool_results(previous_step: &Value) -> Result<Vec<Value>> {
+fn continuation_tool_results(
+    previous_step: &Value,
+    catalog: &AgentRuntimeCatalog,
+    agent_id: &str,
+) -> Result<Vec<Value>> {
     let Some(continuation) = previous_step.get("continuation") else {
         return Ok(Vec::new());
     };
     let Some(results) = continuation.get("tool_results") else {
         return Ok(Vec::new());
     };
-    results
+    let results = results
         .as_array()
         .cloned()
-        .ok_or_else(|| anyhow::anyhow!("continuation.tool_results must be an array"))
+        .ok_or_else(|| anyhow::anyhow!("continuation.tool_results must be an array"))?;
+    for (index, result) in results.iter().enumerate() {
+        let object = result.as_object().ok_or_else(|| {
+            anyhow::anyhow!("continuation.tool_results[{index}] must be an object")
+        })?;
+        let tool_call = object.get("tool_call").ok_or_else(|| {
+            anyhow::anyhow!("continuation.tool_results[{index}].tool_call is required")
+        })?;
+        require_previous_tool_call_catalog_tool(catalog, agent_id, tool_call)?;
+        object
+            .get("tool_response")
+            .and_then(Value::as_object)
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "continuation.tool_results[{index}].tool_response must be an object"
+                )
+            })?;
+    }
+    Ok(results)
 }
 
 fn build_tool_call_requested_step(

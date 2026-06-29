@@ -884,6 +884,115 @@ fn continue_run_step_rejects_invalid_continuation_next_step_index() {
 }
 
 #[test]
+fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 2}
+          },
+          "continuation": {
+            "tool_plan": [],
+            "tool_results": ["bad"]
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("invalid historical tool result should fail");
+
+    assert!(err.to_string().contains("tool_results[0]"));
+}
+
+#[test]
+fn continue_run_step_rejects_historical_tool_result_without_response() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 2}
+          },
+          "continuation": {
+            "tool_plan": [],
+            "tool_results": [
+              {"tool_call": {"name": "propose_fake", "input": {"value": 1}}}
+            ]
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("historical tool result without response should fail");
+
+    assert!(err.to_string().contains("tool_response"));
+}
+
+#[test]
+fn continue_run_step_rejects_historical_tool_not_in_catalog() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 2}
+          },
+          "continuation": {
+            "tool_plan": [],
+            "tool_results": [
+              {
+                "tool_call": {"name": "unknown_tool", "input": {"value": 1}},
+                "tool_response": {"result": {"accepted": true}}
+              }
+            ]
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("historical unknown tool should fail");
+
+    assert!(err.to_string().contains("not present in the catalog"));
+}
+
+#[test]
 fn continue_run_step_maps_result_payload_policy_denied() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
