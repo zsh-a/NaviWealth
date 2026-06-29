@@ -120,6 +120,8 @@ Current bridge capabilities:
   agent runtime wire contracts.
 - Provide FRB/native LLM request/response contract validation and
   deterministic mock LLM completion through the shared `agent-llm` crate.
+- Provide `AgentRuntimeLlmBridge`, which maps the active device
+  `LlmProfile` into provider-neutral `agent-llm` request JSON for FRB.
 - Provide FRB/native continuation for the first Dart-dispatched tool step via
   `agentRuntimeContinueRunStep`.
 - Provide a Dart-side `AgentRuntimeNativeStepRunner` that executes a bounded
@@ -151,7 +153,8 @@ Known limitation:
   advance through FRB embedded runtime steps and Dart-side device tool dispatch.
 - The embedded FRB path currently covers deterministic native step contracts
   bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
-  explicit confirmed-proposal provider. The remaining production work is
+  active-profile LLM request bridge, plus an explicit confirmed-proposal
+  provider. The remaining production work is native HTTP execution for
   device-profile-backed LLM providers, the full native runner, and wiring this
   provider into a concrete user-facing surface.
 
