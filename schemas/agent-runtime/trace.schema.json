@@ -57,7 +57,17 @@
                   "properties": {
                     "run_id": { "type": "string", "minLength": 1 },
                     "agent_id": { "type": "string", "minLength": 1 },
-                    "status": { "type": "string", "minLength": 1 },
+                    "status": {
+                      "enum": [
+                        "tool_call_requested",
+                        "completed",
+                        "failed",
+                        "cancelled",
+                        "policy_denied",
+                        "closed_early",
+                        "timed_out"
+                      ]
+                    },
                     "step_index": { "type": "integer", "minimum": 0 },
                     "tool_name": { "type": ["string", "null"] },
                     "run_state": {
@@ -70,11 +80,30 @@
                         "terminal_reason"
                       ],
                       "properties": {
-                        "status": { "type": "string", "minLength": 1 },
+                        "status": {
+                          "enum": [
+                            "tool_call_requested",
+                            "completed",
+                            "failed",
+                            "cancelled",
+                            "policy_denied",
+                            "closed_early",
+                            "timed_out"
+                          ]
+                        },
                         "step_index": { "type": ["integer", "null"], "minimum": 0 },
                         "remaining_tool_count": { "type": "integer", "minimum": 0 },
                         "tool_result_count": { "type": "integer", "minimum": 0 },
-                        "terminal_reason": { "type": ["string", "null"] }
+                        "terminal_reason": {
+                          "enum": [
+                            "done",
+                            "stream_error",
+                            "user_cancel",
+                            "policy_denied",
+                            "closed_early",
+                            null
+                          ]
+                        }
                       },
                       "additionalProperties": true
                     }
