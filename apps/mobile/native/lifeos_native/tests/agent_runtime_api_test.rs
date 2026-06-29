@@ -657,6 +657,40 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
 }
 
 #[test]
+fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+      "protocol_version": "agent.v1",
+      "run_id": "run_018f0000-0000-7000-8000-000000000000",
+      "agent_id": "execution_review",
+      "agent_version": "1.0.0",
+      "status": "tool_call_requested",
+      "tool_call": {
+        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+        "name": "propose_fake",
+        "input": {"value": 1}
+      },
+      "continuation": {
+        "tool_plan": {"name": "propose_fake"},
+        "tool_results": []
+      }
+    }"#
+        .to_owned(),
+        r#"{
+      "jsonrpc": "2.0",
+      "id": "tool_018f0000-0000-7000-8000-000000000000",
+      "result": {"accepted": true, "value": 1}
+    }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("invalid continuation tool_plan should fail");
+
+    assert!(err.to_string().contains("continuation.tool_plan"));
+}
+
+#[test]
 fn continue_run_step_completes_native_tool_plan_after_last_item() {
     let step_json = r#"{
       "protocol_version": "agent.v1",

@@ -749,11 +749,13 @@ fn next_tool_request_from_continuation(
     let Some(continuation) = previous_step.get("continuation") else {
         return Ok(None);
     };
-    let plan = continuation
-        .get("tool_plan")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
+    let plan = match continuation.get("tool_plan") {
+        Some(value) => value
+            .as_array()
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("continuation.tool_plan must be an array"))?,
+        None => Vec::new(),
+    };
     if plan.is_empty() {
         return Ok(None);
     }
