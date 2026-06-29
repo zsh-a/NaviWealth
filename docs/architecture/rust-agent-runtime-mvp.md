@@ -195,7 +195,8 @@ Implemented:
   the app-level `AgentRuntimeTraceRecorder`, so Inbox Triage / Contradiction /
   Capture classifier calls get the same local transparency trail as native
   tool-plan runs without leaking app-level FRB types into KnowledgeOS feature
-  code
+  code; profile-completion trace capture is best-effort and never changes the
+  business result or masks the original provider error
 - Finance Activity entry insight now uses the FRB profile-backed LLM bridge
   via `AgentRuntimeLlmBridge.completeProfile` for its concise explanation,
   preserving the existing localized heuristic fallback, and the app-level

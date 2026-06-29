@@ -583,7 +583,8 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
           'agent_id': agentId,
         },
       );
-      await _recordTrace?.call(
+      await _recordProfileCompletionBestEffort(
+        _recordTrace,
         agentId: agentId,
         llmResponse: response,
         startedAt: startedAt,
@@ -594,7 +595,8 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
       final body = response['content'];
       return body is String ? body : null;
     } on Object catch (error) {
-      await _recordTrace?.call(
+      await _recordProfileCompletionBestEffort(
+        _recordTrace,
         agentId: agentId,
         llmResponse: null,
         startedAt: startedAt,
@@ -620,6 +622,36 @@ typedef FrbProfileCompletionTraceRecorder =
       String routingReason,
       Object? error,
     });
+
+Future<void> _recordProfileCompletionBestEffort(
+  FrbProfileCompletionTraceRecorder? recordTrace, {
+  required String agentId,
+  required Map<String, Object?>? llmResponse,
+  DateTime? startedAt,
+  DateTime? finishedAt,
+  String? requestId,
+  required String domain,
+  required String surface,
+  String routingReason = kFrbAgentRuntimeProfileRoutingReason,
+  Object? error,
+}) async {
+  if (recordTrace == null) return;
+  try {
+    await recordTrace(
+      agentId: agentId,
+      llmResponse: llmResponse,
+      startedAt: startedAt,
+      finishedAt: finishedAt,
+      requestId: requestId,
+      domain: domain,
+      surface: surface,
+      routingReason: routingReason,
+      error: error,
+    );
+  } catch (_) {
+    // Local transparency capture must not change the FRB business result.
+  }
+}
 
 class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
   const FrbKnowledgeLlmProfileClient({
@@ -650,7 +682,8 @@ class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
         maxOutputTokens: maxOutputTokens,
         metadata: metadata,
       );
-      await _recordTrace?.call(
+      await _recordProfileCompletionBestEffort(
+        _recordTrace,
         agentId: agentId,
         llmResponse: response,
         startedAt: startedAt,
@@ -660,7 +693,8 @@ class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
       );
       return response;
     } on Object catch (error) {
-      await _recordTrace?.call(
+      await _recordProfileCompletionBestEffort(
+        _recordTrace,
         agentId: agentId,
         llmResponse: null,
         startedAt: startedAt,
@@ -709,7 +743,8 @@ class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
         maxOutputTokens: maxOutputTokens,
         metadata: metadata,
       );
-      await _recordTrace?.call(
+      await _recordProfileCompletionBestEffort(
+        _recordTrace,
         agentId: agentId,
         llmResponse: response,
         startedAt: startedAt,
@@ -720,7 +755,8 @@ class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
       );
       return response;
     } on Object catch (error) {
-      await _recordTrace?.call(
+      await _recordProfileCompletionBestEffort(
+        _recordTrace,
         agentId: agentId,
         llmResponse: null,
         startedAt: startedAt,
