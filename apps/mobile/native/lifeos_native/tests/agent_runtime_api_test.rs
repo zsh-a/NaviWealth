@@ -573,7 +573,7 @@ fn continue_run_step_completes_with_tool_result() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -616,7 +616,7 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -674,7 +674,7 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -712,7 +712,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -747,7 +747,7 @@ fn continue_run_step_rejects_missing_next_tool_plan_name() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -782,7 +782,7 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -832,7 +832,7 @@ fn continue_run_step_fails_with_tool_error() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -878,7 +878,7 @@ fn continue_run_step_rejects_mismatched_tool_response_id() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -909,7 +909,7 @@ fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -940,7 +940,7 @@ fn continue_run_step_rejects_non_object_tool_response() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -966,7 +966,7 @@ fn continue_run_step_rejects_empty_previous_run_id() {
           "protocol_version": "agent.v1",
           "run_id": "",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -997,7 +997,7 @@ fn continue_run_step_rejects_missing_previous_step_index() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "status": "tool_call_requested",
           "tool_call": {
             "tool_call_id": "tool_expected",
@@ -1027,7 +1027,7 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1059,7 +1059,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1090,7 +1090,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1121,7 +1121,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code()
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1152,7 +1152,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1183,7 +1183,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1214,7 +1214,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1244,7 +1244,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1274,7 +1274,7 @@ fn continue_run_step_rejects_mismatched_previous_agent() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "other_agent",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1298,6 +1298,67 @@ fn continue_run_step_rejects_mismatched_previous_agent() {
 }
 
 #[test]
+fn continue_run_step_rejects_mismatched_previous_agent_version() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "old-version",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched previous agent version should fail");
+
+    assert!(err.to_string().contains("agent_version"));
+}
+
+#[test]
+fn continue_run_step_rejects_missing_previous_agent_version() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("missing previous agent version should fail");
+
+    assert!(err.to_string().contains("agent_version"));
+}
+
+#[test]
 fn continue_run_step_rejects_previous_tool_not_in_catalog() {
     let err = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
@@ -1305,7 +1366,7 @@ fn continue_run_step_rejects_previous_tool_not_in_catalog() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1336,7 +1397,7 @@ fn continue_run_step_rejects_missing_previous_tool_name() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1366,7 +1427,7 @@ fn continue_run_step_rejects_mismatched_continuation_next_step_index() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 3,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1404,7 +1465,7 @@ fn continue_run_step_rejects_invalid_continuation_next_step_index() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 3,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1442,7 +1503,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1477,7 +1538,7 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1514,7 +1575,7 @@ fn continue_run_step_rejects_historical_tool_not_in_catalog() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "execution_review",
-          "agent_version": "1.0.0",
+          "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -1552,7 +1613,7 @@ fn continue_run_step_maps_result_payload_policy_denied() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
       "tool_call": {
@@ -1599,7 +1660,7 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "execution_review",
-      "agent_version": "1.0.0",
+      "agent_version": "0.1.0",
       "step_index": 1,
       "status": "tool_call_requested",
       "tool_call": {

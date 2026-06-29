@@ -145,8 +145,8 @@ Implemented:
   non-empty string in both JSON Schema and the native FRB validator, so trace
   consumers never receive an empty tool label
 - Native FRB tool continuations now validate the previous step and tool
-  response before mutating run state: previous `agent_id` / `run_id`,
-  `step_index`, `tool_call_id`, catalog-bound tool names,
+  response before mutating run state: previous `agent_id` / `agent_version` /
+  `run_id`, `step_index`, `tool_call_id`, catalog-bound tool names,
   `continuation.next_step_index`, `continuation.tool_plan`, historical
   `continuation.tool_results`, and JSON-RPC tool response envelopes are
   rejected when malformed or ambiguous

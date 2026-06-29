@@ -285,7 +285,7 @@ pub fn agent_runtime_continue_run_step(
     if previous_step.get("status").and_then(Value::as_str) != Some("tool_call_requested") {
         anyhow::bail!("previous step status must be 'tool_call_requested'");
     }
-    require_previous_step_agent(&previous_step, &agent.id)?;
+    require_previous_step_agent(&previous_step, &agent.id, &agent.version)?;
     let run_id = require_previous_step_run_id(&previous_step)?;
     let previous_step_index = require_previous_step_index(&previous_step)?;
     let tool_call = previous_step
@@ -360,7 +360,11 @@ pub fn agent_runtime_continue_run_step(
     Ok(serde_json::to_string(&response)?)
 }
 
-fn require_previous_step_agent(previous_step: &Value, agent_id: &str) -> Result<()> {
+fn require_previous_step_agent(
+    previous_step: &Value,
+    agent_id: &str,
+    agent_version: &str,
+) -> Result<()> {
     let previous_agent_id = previous_step
         .get("agent_id")
         .and_then(Value::as_str)
@@ -368,6 +372,16 @@ fn require_previous_step_agent(previous_step: &Value, agent_id: &str) -> Result<
     if previous_agent_id != agent_id {
         anyhow::bail!(
             "previous step agent_id '{previous_agent_id}' does not match requested agent '{agent_id}'"
+        );
+    }
+    let previous_agent_version = previous_step
+        .get("agent_version")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("previous step agent_version must be a non-empty string"))?;
+    if previous_agent_version != agent_version {
+        anyhow::bail!(
+            "previous step agent_version '{previous_agent_version}' does not match catalog agent version '{agent_version}'"
         );
     }
     Ok(())
