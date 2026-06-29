@@ -440,12 +440,12 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
     let terminal_json = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
         first.to_string(),
-        r#"{
-          "jsonrpc": "2.0",
-          "id": "tool_018f0000-0000-7000-8000-000000000000",
-          "result": {"accepted": true}
-        }"#
-        .to_owned(),
+        json!({
+            "jsonrpc": "2.0",
+            "id": first["tool_call"]["tool_call_id"].clone(),
+            "result": {"accepted": true}
+        })
+        .to_string(),
         "execution_review".to_owned(),
     )
     .expect("continue step should accept tool result");
@@ -686,6 +686,66 @@ fn continue_run_step_fails_with_tool_error() {
     assert_eq!(next["run_state"]["tool_result_count"], 1);
     assert_eq!(next["trace_event"]["status"], "failed");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
+}
+
+#[test]
+fn continue_run_step_rejects_mismatched_tool_response_id() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_wrong",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched tool response id should fail");
+
+    assert!(err.to_string().contains("tool response id"));
+}
+
+#[test]
+fn continue_run_step_rejects_mismatched_previous_agent() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "other_agent",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched previous agent should fail");
+
+    assert!(err.to_string().contains("previous step agent_id"));
 }
 
 #[test]

@@ -285,6 +285,7 @@ pub fn agent_runtime_continue_run_step(
     if previous_step.get("status").and_then(Value::as_str) != Some("tool_call_requested") {
         anyhow::bail!("previous step status must be 'tool_call_requested'");
     }
+    require_previous_step_agent(&previous_step, &agent.id)?;
     let run_id = previous_step
         .get("run_id")
         .cloned()
@@ -293,6 +294,7 @@ pub fn agent_runtime_continue_run_step(
         .get("tool_call")
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
+    require_matching_tool_response_id(&tool_call, &tool_response)?;
     let mut tool_results = continuation_tool_results(&previous_step)?;
     let tool_terminal_status = tool_response_terminal_status(&tool_response);
     if tool_terminal_status != Some("closed_early") {
@@ -359,6 +361,35 @@ pub fn agent_runtime_continue_run_step(
     };
     attach_runtime_metadata(&mut response);
     Ok(serde_json::to_string(&response)?)
+}
+
+fn require_previous_step_agent(previous_step: &Value, agent_id: &str) -> Result<()> {
+    let previous_agent_id = previous_step
+        .get("agent_id")
+        .and_then(Value::as_str)
+        .ok_or_else(|| anyhow::anyhow!("previous step is missing agent_id"))?;
+    if previous_agent_id != agent_id {
+        anyhow::bail!(
+            "previous step agent_id '{previous_agent_id}' does not match requested agent '{agent_id}'"
+        );
+    }
+    Ok(())
+}
+
+fn require_matching_tool_response_id(tool_call: &Value, tool_response: &Value) -> Result<()> {
+    let Some(expected_id) = tool_call.get("tool_call_id").and_then(Value::as_str) else {
+        return Ok(());
+    };
+    let Some(response_id) = tool_response.get("id") else {
+        return Ok(());
+    };
+    match response_id.as_str() {
+        Some(value) if value == expected_id => Ok(()),
+        Some(value) => anyhow::bail!(
+            "tool response id '{value}' does not match requested tool_call_id '{expected_id}'"
+        ),
+        None => anyhow::bail!("tool response id must be a string when present"),
+    }
 }
 
 fn tool_response_terminal_status(tool_response: &Value) -> Option<&'static str> {
