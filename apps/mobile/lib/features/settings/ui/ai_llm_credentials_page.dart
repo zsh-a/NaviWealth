@@ -19,6 +19,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../app/agent_runtime_proposal_bridge.dart';
 import '../../../app/agent_runtime_runner.dart';
+import '../../../app/agent_runtime_trace_recorder.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
@@ -207,6 +208,19 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         },
         maxToolSteps: 0,
       );
+      try {
+        await ref
+            .read(agentRuntimeTraceRecorderProvider)
+            .recordProfileTurn(
+              agentId: 'settings_llm_runtime_check',
+              result: result,
+              domain: 'settings',
+              surface: 'settings_ai_llm',
+            );
+      } on Object {
+        // Best-effort diagnostics; a trace-store failure must not fail the
+        // user's provider connectivity check.
+      }
       if (!mounted) return;
       setState(() {
         _runtimeChecking = false;

@@ -159,6 +159,10 @@ Current bridge capabilities:
   `AgentRuntimeNativeStepRunner` can return the terminal step plus all native
   steps observed, Dart tool responses, dispatch count, and budget-exhaustion
   state; `AgentRuntimeProfileTurnResult` includes the same summary.
+- Provide local AI trace persistence for the user-facing runtime check:
+  `AgentRuntimeTraceRecorder` converts FRB profile-turn results into the
+  existing `AiTrace` span model, and Settings -> AI provider records successful
+  runtime checks into `AiTraceStore` best-effort.
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
   display the terminal native step status.
@@ -201,9 +205,9 @@ Known limitation:
   production-agent path and the HealthOS Recovery Alert tool-using production
   agent path and KnowledgeOS Routine Due tool-using production agent path. The
   remaining production work is richer Rust-side agent policy/state/trace
-  persistence and replay ownership beyond the current tool-plan/trace-summary
-  contract and migrating additional tool-using production agents onto that
-  fuller loop.
+  replay ownership beyond the current tool-plan/trace-summary/local
+  persistence contract and migrating additional tool-using production agents
+  onto that fuller loop.
 
 ## Current Refactor State
 

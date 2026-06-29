@@ -1,0 +1,115 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_runner.dart';
+import 'package:naviwealth/app/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/core/ai/contracts/contracts.dart';
+
+void main() {
+  test('records profile turns into AiTrace spans', () async {
+    final traces = <AiTrace>[];
+    final recorder = AgentRuntimeTraceRecorder(
+      appendTrace: (trace) async => traces.add(trace),
+    );
+    final trace = await recorder.recordProfileTurn(
+      agentId: 'execution_review',
+      domain: kDomainExecution,
+      surface: 'settings_runtime_check',
+      startedAt: DateTime.utc(2026, 6, 29, 8),
+      finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
+      result: _result(),
+    );
+
+    expect(traces.single, same(trace));
+    expect(trace.requestId, 'agent-runtime:execution_review:run_1');
+    expect(trace.backend, Backend.device);
+    expect(trace.routingReason, kDeviceLlmDirectRoutingReason);
+    expect(trace.intent.domain, kDomainExecution);
+    expect(trace.terminalReason, TerminalReason.done);
+    expect(trace.spans.map((span) => span.name), <String>[
+      'turn',
+      'llm:profile',
+      'tool:read_task',
+    ]);
+    expect(
+      trace.toolSpans.single.attributes,
+      containsPair('response_id', 'call_1'),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('surface', 'settings_runtime_check'),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('dispatched_tool_count', 1),
+    );
+  });
+
+  test('marks budget exhaustion as closed early', () async {
+    final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+    final trace = await recorder.recordProfileTurn(
+      agentId: 'execution_review',
+      startedAt: DateTime.utc(2026, 6, 29, 8),
+      finishedAt: DateTime.utc(2026, 6, 29, 8),
+      requestId: 'trace_custom',
+      result: _result(
+        stepRun: const AgentRuntimeNativeStepRunResult(
+          terminalStep: <String, Object?>{'status': 'failed'},
+          dispatchedToolCount: 0,
+          budgetExhausted: true,
+        ),
+      ),
+    );
+
+    expect(trace.requestId, 'trace_custom');
+    expect(trace.terminalReason, TerminalReason.closedEarly);
+    expect(trace.spans.first.status, AiSpanStatus.error);
+    expect(
+      trace.spans.first.attributes,
+      containsPair('budget_exhausted', true),
+    );
+  });
+}
+
+AgentRuntimeProfileTurnResult _result({
+  AgentRuntimeNativeStepRunResult? stepRun,
+}) {
+  final run =
+      stepRun ??
+      const AgentRuntimeNativeStepRunResult(
+        terminalStep: <String, Object?>{
+          'run_id': 'run_1',
+          'status': 'completed',
+          'output': <String, Object?>{'ok': true},
+        },
+        dispatchedToolCount: 1,
+        steps: <Map<String, Object?>>[
+          <String, Object?>{
+            'run_id': 'run_1',
+            'status': 'tool_call_requested',
+            'tool_call': <String, Object?>{
+              'tool_call_id': 'call_1',
+              'name': 'read_task',
+              'input': <String, Object?>{'id': 'task_1'},
+            },
+          },
+          <String, Object?>{'run_id': 'run_1', 'status': 'completed'},
+        ],
+        toolResponses: <Map<String, Object?>>[
+          <String, Object?>{
+            'jsonrpc': '2.0',
+            'id': 'call_1',
+            'result': <String, Object?>{'ok': true},
+          },
+        ],
+      );
+  return AgentRuntimeProfileTurnResult(
+    llmResponse: const <String, Object?>{
+      'provider': 'openai',
+      'model': 'gpt-test',
+      'finish_reason': 'stop',
+      'content': 'done',
+    },
+    step: run.terminalStep,
+    stepRun: run,
+  );
+}

@@ -129,6 +129,9 @@ Implemented:
   trace-aware run/continue methods that return the terminal step, every native
   step observed, every Dart tool response, dispatch count, and tool-budget
   exhaustion state; `AgentRuntimeProfileTurnResult` surfaces this summary
+- Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
+  profile-turn results into the existing `AiTrace` span model, and the Settings
+  -> AI provider runtime check records its FRB turn into `AiTraceStore`
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status
@@ -154,8 +157,7 @@ Deferred:
 
 - complete embedded Rust runner loop beyond the current native-planned
   `tool_plan` continuation contract, promoting richer agent policy/state/trace
-  persistence and replay ownership into Rust while Dart keeps executing device
-  tools
+  replay ownership into Rust while Dart keeps executing device tools
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
