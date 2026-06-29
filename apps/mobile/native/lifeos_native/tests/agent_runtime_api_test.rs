@@ -139,6 +139,16 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
     .expect_err("mismatched step_index should fail native validation")
     .to_string();
     assert!(mismatched_step_index.contains("step_index"));
+
+    let mismatched_terminal_status = agent_runtime_validate_trace(
+        include_str!(
+            "../../../../../fixtures/agent-runtime/trace.invalid.mismatched-step-terminal-status.json"
+        )
+        .to_owned(),
+    )
+    .expect_err("mismatched terminal status should fail native validation")
+    .to_string();
+    assert!(mismatched_terminal_status.contains("terminal_reason"));
 }
 
 #[test]

@@ -420,6 +420,7 @@ fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Result<()> {
         require_non_negative_integer(run_state, "remaining_tool_count")?;
         require_non_negative_integer(run_state, "tool_result_count")?;
         require_terminal_reason(run_state, "terminal_reason")?;
+        require_terminal_reason_matches_status(run_state)?;
     }
     Ok(())
 }
@@ -506,6 +507,24 @@ fn require_terminal_reason(object: &Map<String, Value>, field: &str) -> Result<(
             Ok(())
         }
         _ => anyhow::bail!("agent_runtime_step {field} is not a supported terminal reason"),
+    }
+}
+
+fn require_terminal_reason_matches_status(object: &Map<String, Value>) -> Result<()> {
+    let expected = match object.get("status").and_then(Value::as_str) {
+        Some("tool_call_requested") => None,
+        Some("completed") => Some("done"),
+        Some("failed") => Some("stream_error"),
+        Some("cancelled") => Some("user_cancel"),
+        Some("policy_denied") => Some("policy_denied"),
+        Some("closed_early" | "timed_out") => Some("closed_early"),
+        _ => return Ok(()),
+    };
+
+    match (expected, object.get("terminal_reason")) {
+        (None, Some(Value::Null)) => Ok(()),
+        (Some(expected), Some(Value::String(value))) if value == expected => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step terminal_reason must match run_state.status"),
     }
 }
 
