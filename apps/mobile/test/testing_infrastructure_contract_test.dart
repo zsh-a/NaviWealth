@@ -619,6 +619,61 @@ void main() {
       }
     });
 
+    test('production bootstrap keeps scheduled agents on FRB seams', () {
+      final bootstrap = File('${appRoot.path}/lib/app/bootstrap.dart');
+
+      expect(bootstrap.existsSync(), isTrue);
+      final text = bootstrap.readAsStringSync();
+      final contracts = <String, String>{
+        'executionReviewAgentProvider': 'FrbExecutionReviewReader',
+        'morningBriefingAgentProvider': 'FrbBriefingSynthesizer',
+        'recoveryAlertAgentProvider': 'FrbRecoveryAlertSignalReader',
+        'weeklySummaryAgentProvider': 'FrbWeeklySummaryReader',
+        'reviewAgentProvider': 'FrbReviewDueReader',
+        'assumptionAgentProvider': 'FrbAssumptionReviewReader',
+        'inboxTriageAgentProvider': 'FrbInboxTriageSourceReader',
+        'contradictionAgentProvider': 'FrbContradictionSourceReader',
+        'routineDueAgentProvider': 'FrbRoutineDueReader',
+      };
+
+      for (final entry in contracts.entries) {
+        final overrideIndex = text.indexOf('${entry.key}.overrideWith');
+        final frbIndex = text.indexOf(entry.value, overrideIndex);
+        expect(
+          overrideIndex,
+          isNot(-1),
+          reason: '${entry.key} must be overridden in production bootstrap',
+        );
+        expect(
+          frbIndex,
+          greaterThan(overrideIndex),
+          reason: '${entry.key} production override must inject ${entry.value}',
+        );
+      }
+
+      for (final surface in <String>[
+        'execution_review',
+        'health_morning_briefing',
+        'health_recovery_alert',
+        'health_weekly_summary',
+        'knowledge_review',
+        'knowledge_assumption',
+        'knowledge_inbox_triage',
+        'knowledge_contradiction',
+        'knowledge_routine_due',
+      ]) {
+        expect(
+          text,
+          contains("surface: '$surface'"),
+          reason: 'FRB agent surface $surface should record local AI traces',
+        );
+      }
+
+      expect(text, contains('agentRuntimeTraceRecorderProvider'));
+      expect(text, contains('agentRuntimeNativeStepRunnerProvider'));
+      expect(text, contains('agentRuntimeProfileTurnRunnerProvider'));
+    });
+
     test('AI architecture docs use current Vision ingest naming', () {
       final repoRoot = appRoot.parent.parent;
       final architecture = File('${repoRoot.path}/docs/ai/ai-architecture.md');
