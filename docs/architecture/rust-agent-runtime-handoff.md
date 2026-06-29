@@ -179,11 +179,12 @@ Current bridge capabilities:
 - Provide an app-level `FrbChatRunner` adapter for the Flutter AI Chat seam.
   It consumes primitive JSON-string events from
   `agentRuntimeStreamProfileLlm` through `AgentRuntimeLlmStreamBridge` and maps
-  `started` / `delta` / `finished` / `error` into the existing `AiChatEvent`
-  stream contract. OpenAI-compatible and Anthropic text/usage SSE are
+  `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
+  `tool_call_*` / `finished` / `error` into the existing `AiChatEvent` stream
+  contract. OpenAI-compatible and Anthropic text/usage/tool/reasoning SSE are
   provider-real in `agent-llm`; production chat should stay on
-  `DeviceLlmRuntime` until tool-call delta, reasoning/signature, cancellation,
-  and trace-span parity are complete.
+  `DeviceLlmRuntime` until Dart tool-result continuation, cancellation, and
+  trace-span parity are complete.
 - Provide a migration guardrail:
   `tool/lint-frb-llm-entrypoints.sh` rejects new production business/app uses
   of the legacy direct-Dart LLM seams outside the documented runtime/legacy
@@ -408,11 +409,10 @@ is currently blocked by existing `clippy::result_large_err` findings in
 The remaining critical Flutter integration work is AI Chat streaming parity on
 FRB/native. `FrbChatRunner` now proves the existing `DeviceChatRunner` seam can
 be fed by an FRB LLM event stream, and OpenAI-compatible plus Anthropic
-text/usage SSE are now decoded in `agent-llm`. Replacing `DeviceLlmRuntime` in
-production still requires native events for tool-call start/delta/final,
-reasoning/signature deltas, Dart tool results, usage/span events, cancellation,
-and provider errors with the same semantics consumed by `ChatRepository` and
-`AiTraceBuilder`.
+text/usage/tool/reasoning SSE are now decoded in `agent-llm` and mapped by
+`FrbChatRunner`. Replacing `DeviceLlmRuntime` in production still requires Dart
+tool-result continuation, span events for `AiTraceBuilder`, cancellation, and
+provider errors with the same semantics consumed by `ChatRepository`.
 
 The original suggested extraction order has now been implemented in the
 continuation worktree:

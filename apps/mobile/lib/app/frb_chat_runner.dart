@@ -6,6 +6,8 @@
 /// not switch to this runner until that contract is complete.
 library;
 
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../core/ai/contracts/contracts.dart';
@@ -125,6 +127,27 @@ class FrbChatRunner implements DeviceChatRunner {
             emittedText = true;
             yield TextEvent(text);
           }
+        case 'thinking_delta':
+          final text = _string(event['content']);
+          if (text.isNotEmpty) yield ThinkingDeltaEvent(text);
+        case 'thinking_signature_delta':
+          break;
+        case 'tool_call_start':
+          yield ToolCallStartEvent(
+            id: _string(event['tool_call_id']),
+            name: _string(event['tool_name']),
+          );
+        case 'tool_call_delta':
+          yield ToolCallDeltaEvent(
+            id: _string(event['tool_call_id']),
+            partialInputJson: _string(event['partial_input_json']),
+          );
+        case 'tool_call_end':
+          yield ToolCallEvent(
+            id: _string(event['tool_call_id']),
+            name: _string(event['tool_name']),
+            input: _toolInput(event['tool_input']),
+          );
         case 'finished':
           final response = _object(event['response']);
           final usage = _usageFromResponse(response);
@@ -198,6 +221,17 @@ Map<String, Object?> _object(Object? value) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
   return const <String, Object?>{};
+}
+
+Object? _toolInput(Object? value) {
+  if (value is String) {
+    try {
+      return jsonDecode(value);
+    } on FormatException {
+      return null;
+    }
+  }
+  return value;
 }
 
 int _int(Object? value) {

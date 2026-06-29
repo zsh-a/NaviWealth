@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{BTreeMap, VecDeque};
 use std::pin::Pin;
 use std::time::Duration;
 
@@ -87,6 +87,14 @@ pub struct LlmEvent {
     pub content: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub response: Option<LlmResponse>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub partial_input_json: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_input: Option<Value>,
     #[serde(default)]
     pub metadata: Value,
 }
@@ -96,6 +104,11 @@ pub struct LlmEvent {
 pub enum LlmEventKind {
     Started,
     Delta,
+    ThinkingDelta,
+    ThinkingSignatureDelta,
+    ToolCallStart,
+    ToolCallDelta,
+    ToolCallEnd,
     Finished,
 }
 
@@ -250,18 +263,30 @@ impl LlmProvider for MockLlmProvider {
                 kind: LlmEventKind::Started,
                 content: None,
                 response: None,
+                tool_call_id: None,
+                tool_name: None,
+                partial_input_json: None,
+                tool_input: None,
                 metadata: json!({"provider": response.provider, "model": response.model}),
             }),
             Ok(LlmEvent {
                 kind: LlmEventKind::Delta,
                 content: Some(response.content.clone()),
                 response: None,
+                tool_call_id: None,
+                tool_name: None,
+                partial_input_json: None,
+                tool_input: None,
                 metadata: json!({}),
             }),
             Ok(LlmEvent {
                 kind: LlmEventKind::Finished,
                 content: None,
                 response: Some(response),
+                tool_call_id: None,
+                tool_name: None,
+                partial_input_json: None,
+                tool_input: None,
                 metadata: json!({}),
             }),
         ];
@@ -468,6 +493,8 @@ struct AnthropicStreamEvent {
     #[serde(rename = "type")]
     event_type: String,
     #[serde(default)]
+    index: Option<i64>,
+    #[serde(default)]
     content_block: Option<Value>,
     #[serde(default)]
     delta: Option<Value>,
@@ -497,7 +524,17 @@ struct AnthropicSseState {
     input_tokens: u32,
     output_tokens: u32,
     raw_blocks: Vec<Value>,
+    blocks: BTreeMap<i64, AnthropicBlockState>,
     finished: bool,
+}
+
+#[derive(Debug, Default)]
+struct AnthropicBlockState {
+    block_type: String,
+    id: String,
+    name: String,
+    input: Option<Value>,
+    partial_input_json: String,
 }
 
 impl AnthropicSseState {
@@ -512,6 +549,10 @@ impl AnthropicSseState {
             kind: LlmEventKind::Started,
             content: None,
             response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
             metadata: json!({"provider": provider, "model": model, "stream": true}),
         }));
         Self {
@@ -526,6 +567,7 @@ impl AnthropicSseState {
             input_tokens: 0,
             output_tokens: 0,
             raw_blocks: Vec::new(),
+            blocks: BTreeMap::new(),
             finished: false,
         }
     }
@@ -601,13 +643,63 @@ impl AnthropicSseState {
                 }
             }
             "content_block_start" => {
+                let index = decoded.index.unwrap_or(0);
                 if let Some(block) = decoded.content_block {
-                    if block.get("type").and_then(Value::as_str) == Some("text") {
-                        if let Some(text) = block.get("text").and_then(Value::as_str) {
-                            if !text.is_empty() {
-                                self.push_text_delta(text.to_owned());
+                    let block_type = block
+                        .get("type")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default()
+                        .to_owned();
+                    match block_type.as_str() {
+                        "text" => {
+                            if let Some(text) = block.get("text").and_then(Value::as_str) {
+                                if !text.is_empty() {
+                                    self.push_text_delta(text.to_owned());
+                                }
                             }
                         }
+                        "thinking" => {
+                            if let Some(text) = block.get("thinking").and_then(Value::as_str) {
+                                if !text.is_empty() {
+                                    self.push_thinking_delta(text.to_owned());
+                                }
+                            }
+                            if let Some(signature) = block.get("signature").and_then(Value::as_str)
+                            {
+                                if !signature.is_empty() {
+                                    self.push_thinking_signature(signature.to_owned());
+                                }
+                            }
+                        }
+                        "tool_use" => {
+                            let state = AnthropicBlockState {
+                                block_type: block_type.clone(),
+                                id: block
+                                    .get("id")
+                                    .and_then(Value::as_str)
+                                    .unwrap_or_default()
+                                    .to_owned(),
+                                name: block
+                                    .get("name")
+                                    .and_then(Value::as_str)
+                                    .unwrap_or_default()
+                                    .to_owned(),
+                                input: block.get("input").cloned(),
+                                partial_input_json: String::new(),
+                            };
+                            self.pending.push_back(Ok(LlmEvent {
+                                kind: LlmEventKind::ToolCallStart,
+                                content: None,
+                                response: None,
+                                tool_call_id: Some(state.id.clone()),
+                                tool_name: Some(state.name.clone()),
+                                partial_input_json: None,
+                                tool_input: None,
+                                metadata: json!({"api": "anthropic_messages", "stream": true}),
+                            }));
+                            self.blocks.insert(index, state);
+                        }
+                        _ => {}
                     }
                     self.raw_blocks.push(block);
                 }
@@ -625,18 +717,37 @@ impl AnthropicSseState {
                         Some("thinking_delta") => {
                             if let Some(text) = delta.get("thinking").and_then(Value::as_str) {
                                 if !text.is_empty() {
-                                    self.pending.push_back(Ok(LlmEvent {
-                                        kind: LlmEventKind::Delta,
-                                        content: None,
-                                        response: None,
-                                        metadata: json!({
-                                            "api": "anthropic_messages",
-                                            "stream": true,
-                                            "thinking": text,
-                                        }),
-                                    }));
+                                    self.push_thinking_delta(text.to_owned());
                                 }
                             }
+                        }
+                        Some("signature_delta") => {
+                            if let Some(signature) = delta.get("signature").and_then(Value::as_str)
+                            {
+                                if !signature.is_empty() {
+                                    self.push_thinking_signature(signature.to_owned());
+                                }
+                            }
+                        }
+                        Some("input_json_delta") => {
+                            let index = decoded.index.unwrap_or(0);
+                            let partial = delta
+                                .get("partial_json")
+                                .and_then(Value::as_str)
+                                .unwrap_or_default()
+                                .to_owned();
+                            let state = self.blocks.entry(index).or_default();
+                            state.partial_input_json.push_str(&partial);
+                            self.pending.push_back(Ok(LlmEvent {
+                                kind: LlmEventKind::ToolCallDelta,
+                                content: None,
+                                response: None,
+                                tool_call_id: Some(state.id.clone()),
+                                tool_name: Some(state.name.clone()),
+                                partial_input_json: Some(partial),
+                                tool_input: None,
+                                metadata: json!({"api": "anthropic_messages", "stream": true}),
+                            }));
                         }
                         _ => {}
                     }
@@ -652,6 +763,28 @@ impl AnthropicSseState {
                     self.output_tokens = usage.output_tokens;
                 }
             }
+            "content_block_stop" => {
+                let index = decoded.index.unwrap_or(0);
+                if let Some(state) = self.blocks.remove(&index) {
+                    if state.block_type == "tool_use" {
+                        let input = if state.partial_input_json.trim().is_empty() {
+                            Some(state.input.unwrap_or_else(|| json!({})))
+                        } else {
+                            decode_json_value_or_null(&state.partial_input_json)
+                        };
+                        self.pending.push_back(Ok(LlmEvent {
+                            kind: LlmEventKind::ToolCallEnd,
+                            content: None,
+                            response: None,
+                            tool_call_id: Some(state.id),
+                            tool_name: Some(state.name),
+                            partial_input_json: None,
+                            tool_input: input,
+                            metadata: json!({"api": "anthropic_messages", "stream": true}),
+                        }));
+                    }
+                }
+            }
             "message_stop" => self.push_finished(),
             "error" => {
                 let error = decoded.error.unwrap_or(AnthropicErrorBody {
@@ -665,7 +798,7 @@ impl AnthropicSseState {
                     json!({}),
                 )));
             }
-            "ping" | "content_block_stop" => {}
+            "ping" => {}
             _ => {}
         }
     }
@@ -676,6 +809,36 @@ impl AnthropicSseState {
             kind: LlmEventKind::Delta,
             content: Some(text),
             response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            metadata: json!({"api": "anthropic_messages", "stream": true}),
+        }));
+    }
+
+    fn push_thinking_delta(&mut self, text: String) {
+        self.pending.push_back(Ok(LlmEvent {
+            kind: LlmEventKind::ThinkingDelta,
+            content: Some(text),
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            metadata: json!({"api": "anthropic_messages", "stream": true}),
+        }));
+    }
+
+    fn push_thinking_signature(&mut self, signature: String) {
+        self.pending.push_back(Ok(LlmEvent {
+            kind: LlmEventKind::ThinkingSignatureDelta,
+            content: Some(signature),
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
             metadata: json!({"api": "anthropic_messages", "stream": true}),
         }));
     }
@@ -708,6 +871,10 @@ impl AnthropicSseState {
             kind: LlmEventKind::Finished,
             content: None,
             response: Some(response),
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
             metadata: json!({"api": "anthropic_messages", "stream": true}),
         }));
     }
@@ -805,6 +972,30 @@ struct OpenAiChoice {
 struct OpenAiMessageResponse {
     #[serde(default)]
     content: Option<String>,
+    #[serde(default)]
+    reasoning_content: Option<String>,
+    #[serde(default)]
+    reasoning: Option<String>,
+    #[serde(default)]
+    tool_calls: Option<Vec<OpenAiStreamToolCall>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OpenAiStreamToolCall {
+    #[serde(default)]
+    index: Option<i64>,
+    #[serde(default)]
+    id: Option<String>,
+    #[serde(default)]
+    function: Option<OpenAiStreamToolFunction>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OpenAiStreamToolFunction {
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    arguments: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -836,7 +1027,17 @@ struct OpenAiSseState {
     content: String,
     finish_reason: Option<LlmFinishReason>,
     usage: Option<LlmUsage>,
+    tools: BTreeMap<i64, OpenAiToolCallState>,
     finished: bool,
+}
+
+#[derive(Debug, Default)]
+struct OpenAiToolCallState {
+    id: String,
+    name: String,
+    arguments: String,
+    started: bool,
+    ended: bool,
 }
 
 impl OpenAiSseState {
@@ -850,6 +1051,10 @@ impl OpenAiSseState {
             kind: LlmEventKind::Started,
             content: None,
             response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
             metadata: json!({"provider": provider, "model": model, "stream": true}),
         }));
         Self {
@@ -861,6 +1066,7 @@ impl OpenAiSseState {
             content: String::new(),
             finish_reason: None,
             usage: None,
+            tools: BTreeMap::new(),
             finished: false,
         }
     }
@@ -945,20 +1151,137 @@ impl OpenAiSseState {
             });
         }
         for choice in decoded.choices {
-            if let Some(content) = choice.delta.and_then(|message| message.content) {
-                if !content.is_empty() {
-                    self.content.push_str(&content);
-                    self.pending.push_back(Ok(LlmEvent {
-                        kind: LlmEventKind::Delta,
-                        content: Some(content),
-                        response: None,
-                        metadata: json!({"api": "openai_chat_completions", "stream": true}),
-                    }));
+            if let Some(delta) = choice.delta {
+                if let Some(content) = delta.content {
+                    if !content.is_empty() {
+                        self.content.push_str(&content);
+                        self.pending.push_back(Ok(LlmEvent {
+                            kind: LlmEventKind::Delta,
+                            content: Some(content),
+                            response: None,
+                            tool_call_id: None,
+                            tool_name: None,
+                            partial_input_json: None,
+                            tool_input: None,
+                            metadata: json!({"api": "openai_chat_completions", "stream": true}),
+                        }));
+                    }
+                }
+                if let Some(reasoning) = delta.reasoning_content.or(delta.reasoning) {
+                    if !reasoning.is_empty() {
+                        self.pending.push_back(Ok(LlmEvent {
+                            kind: LlmEventKind::ThinkingDelta,
+                            content: Some(reasoning),
+                            response: None,
+                            tool_call_id: None,
+                            tool_name: None,
+                            partial_input_json: None,
+                            tool_input: None,
+                            metadata: json!({"api": "openai_chat_completions", "stream": true}),
+                        }));
+                    }
+                }
+                if let Some(tool_calls) = delta.tool_calls {
+                    for tool_call in tool_calls {
+                        let index = tool_call.index.unwrap_or(0);
+                        let state = self.tools.entry(index).or_default();
+                        if let Some(id) = tool_call.id {
+                            if !id.is_empty() {
+                                state.id = id;
+                            }
+                        }
+                        if let Some(function) = tool_call.function {
+                            if let Some(name) = function.name {
+                                if !name.is_empty() {
+                                    state.name = name;
+                                }
+                            }
+                            if let Some(arguments) = function.arguments {
+                                if !state.started
+                                    && (!state.id.is_empty() || !state.name.is_empty())
+                                {
+                                    state.started = true;
+                                    self.pending.push_back(Ok(LlmEvent {
+                                        kind: LlmEventKind::ToolCallStart,
+                                        content: None,
+                                        response: None,
+                                        tool_call_id: Some(openai_tool_id(index, state)),
+                                        tool_name: Some(state.name.clone()),
+                                        partial_input_json: None,
+                                        tool_input: None,
+                                        metadata: json!({"api": "openai_chat_completions", "stream": true}),
+                                    }));
+                                }
+                                if !arguments.is_empty() {
+                                    state.arguments.push_str(&arguments);
+                                    self.pending.push_back(Ok(LlmEvent {
+                                        kind: LlmEventKind::ToolCallDelta,
+                                        content: None,
+                                        response: None,
+                                        tool_call_id: Some(openai_tool_id(index, state)),
+                                        tool_name: Some(state.name.clone()),
+                                        partial_input_json: Some(arguments),
+                                        tool_input: None,
+                                        metadata: json!({"api": "openai_chat_completions", "stream": true}),
+                                    }));
+                                }
+                            } else if !state.started
+                                && (!state.id.is_empty() || !state.name.is_empty())
+                            {
+                                state.started = true;
+                                self.pending.push_back(Ok(LlmEvent {
+                                    kind: LlmEventKind::ToolCallStart,
+                                    content: None,
+                                    response: None,
+                                    tool_call_id: Some(openai_tool_id(index, state)),
+                                    tool_name: Some(state.name.clone()),
+                                    partial_input_json: None,
+                                    tool_input: None,
+                                    metadata: json!({"api": "openai_chat_completions", "stream": true}),
+                                }));
+                            }
+                        }
+                    }
                 }
             }
             if let Some(reason) = choice.finish_reason {
                 self.finish_reason = Some(openai_finish_reason(Some(&reason)));
+                if matches!(self.finish_reason, Some(LlmFinishReason::ToolCall)) {
+                    self.push_openai_tool_call_ends();
+                }
             }
+        }
+    }
+
+    fn push_openai_tool_call_ends(&mut self) {
+        for (index, state) in self.tools.iter_mut() {
+            if state.ended {
+                continue;
+            }
+            if !state.started {
+                state.started = true;
+                self.pending.push_back(Ok(LlmEvent {
+                    kind: LlmEventKind::ToolCallStart,
+                    content: None,
+                    response: None,
+                    tool_call_id: Some(openai_tool_id(*index, state)),
+                    tool_name: Some(state.name.clone()),
+                    partial_input_json: None,
+                    tool_input: None,
+                    metadata: json!({"api": "openai_chat_completions", "stream": true}),
+                }));
+            }
+            state.ended = true;
+            self.pending.push_back(Ok(LlmEvent {
+                kind: LlmEventKind::ToolCallEnd,
+                content: None,
+                response: None,
+                tool_call_id: Some(openai_tool_id(*index, state)),
+                tool_name: Some(state.name.clone()),
+                partial_input_json: None,
+                tool_input: decode_json_value_or_null(&state.arguments),
+                metadata: json!({"api": "openai_chat_completions", "stream": true}),
+            }));
         }
     }
 
@@ -980,9 +1303,28 @@ impl OpenAiSseState {
             kind: LlmEventKind::Finished,
             content: None,
             response: Some(response),
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
             metadata: json!({"api": "openai_chat_completions", "stream": true}),
         }));
     }
+}
+
+fn openai_tool_id(index: i64, state: &OpenAiToolCallState) -> String {
+    if state.id.is_empty() {
+        format!("call_{index}")
+    } else {
+        state.id.clone()
+    }
+}
+
+fn decode_json_value_or_null(input: &str) -> Option<Value> {
+    if input.trim().is_empty() {
+        return Some(json!({}));
+    }
+    Some(serde_json::from_str::<Value>(input).unwrap_or(Value::Null))
 }
 
 fn take_next_sse_frame(buffer: &mut String) -> Option<String> {
@@ -1462,18 +1804,30 @@ impl LlmProvider for OllamaProvider {
                 kind: LlmEventKind::Started,
                 content: None,
                 response: None,
+                tool_call_id: None,
+                tool_name: None,
+                partial_input_json: None,
+                tool_input: None,
                 metadata: json!({"provider": response.provider, "model": response.model}),
             }),
             Ok(LlmEvent {
                 kind: LlmEventKind::Delta,
                 content: Some(response.content.clone()),
                 response: None,
+                tool_call_id: None,
+                tool_name: None,
+                partial_input_json: None,
+                tool_input: None,
                 metadata: json!({"synthetic_stream": true}),
             }),
             Ok(LlmEvent {
                 kind: LlmEventKind::Finished,
                 content: None,
                 response: Some(response),
+                tool_call_id: None,
+                tool_name: None,
+                partial_input_json: None,
+                tool_input: None,
                 metadata: json!({"synthetic_stream": true}),
             }),
         ];
@@ -1801,6 +2155,76 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn openai_compatible_provider_streams_reasoning_and_tool_calls() {
+        let listener = TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .expect("listener binds");
+        let addr = listener.local_addr().expect("local addr");
+        let app = Router::new().route(
+            "/chat/completions",
+            post(|Json(body): Json<Value>| async move {
+                assert_eq!(body["stream"], true);
+                (
+                    [("content-type", "text/event-stream")],
+                    concat!(
+                        "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"think\"},\"finish_reason\":null}]}\n\n",
+                        "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"read_task\",\"arguments\":\"{\\\"\"}}]},\"finish_reason\":null}]}\n\n",
+                        "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"id\\\":\\\"task_1\\\"}\"}}]},\"finish_reason\":null}]}\n\n",
+                        "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\"}]}\n\n",
+                        "data: [DONE]\n\n"
+                    ),
+                )
+            }),
+        );
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("test server runs");
+        });
+
+        let provider = OpenAiCompatibleProvider::new(
+            "openai-compatible",
+            format!("http://{addr}"),
+            "test-key",
+        )
+        .expect("provider builds");
+        let events = provider
+            .stream(LlmRequest {
+                protocol_version: PROTOCOL_VERSION.to_owned(),
+                provider: "openai-compatible".to_owned(),
+                model: "gpt-stream-test".to_owned(),
+                messages: vec![user_message("ping")],
+                temperature: None,
+                max_output_tokens: Some(32),
+                tools: vec![],
+                metadata: json!({}),
+            })
+            .await
+            .expect("provider streams")
+            .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .expect("stream events ok");
+
+        assert!(matches!(events[1].kind, LlmEventKind::ThinkingDelta));
+        assert_eq!(events[1].content.as_deref(), Some("think"));
+        assert!(matches!(events[2].kind, LlmEventKind::ToolCallStart));
+        assert_eq!(events[2].tool_call_id.as_deref(), Some("call_1"));
+        assert_eq!(events[2].tool_name.as_deref(), Some("read_task"));
+        assert_eq!(events[3].partial_input_json.as_deref(), Some("{\""));
+        assert_eq!(
+            events[4].partial_input_json.as_deref(),
+            Some("id\":\"task_1\"}")
+        );
+        assert!(matches!(events[5].kind, LlmEventKind::ToolCallEnd));
+        assert_eq!(events[5].tool_input, Some(json!({"id": "task_1"})));
+        let response = events
+            .last()
+            .and_then(|event| event.response.as_ref())
+            .unwrap();
+        assert_eq!(response.finish_reason, LlmFinishReason::ToolCall);
+    }
+
+    #[tokio::test]
     async fn anthropic_provider_completes_against_messages_api() {
         let listener = TcpListener::bind(("127.0.0.1", 0))
             .await
@@ -1941,6 +2365,104 @@ mod tests {
         assert_eq!(usage.output_tokens, 3);
         assert_eq!(usage.total_tokens, 8);
         assert_eq!(response.metadata["stream"], true);
+    }
+
+    #[tokio::test]
+    async fn anthropic_provider_streams_reasoning_signature_and_tool_calls() {
+        let listener = TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .expect("listener binds");
+        let addr = listener.local_addr().expect("local addr");
+        let app = Router::new().route(
+            "/messages",
+            post(|Json(body): Json<Value>| async move {
+                assert_eq!(body["stream"], true);
+                (
+                    [("content-type", "text/event-stream")],
+                    concat!(
+                        "event: message_start\n",
+                        "data: {\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":5,\"output_tokens\":0}}}\n\n",
+                        "event: content_block_start\n",
+                        "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"plan\",\"signature\":\"sig_1\"}}\n\n",
+                        "event: content_block_delta\n",
+                        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" more\"}}\n\n",
+                        "event: content_block_delta\n",
+                        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"sig_2\"}}\n\n",
+                        "event: content_block_start\n",
+                        "data: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"read_task\",\"input\":{}}}\n\n",
+                        "event: content_block_delta\n",
+                        "data: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"\"}}\n\n",
+                        "event: content_block_delta\n",
+                        "data: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"id\\\":\\\"task_1\\\"}\"}}\n\n",
+                        "event: content_block_stop\n",
+                        "data: {\"type\":\"content_block_stop\",\"index\":1}\n\n",
+                        "event: message_delta\n",
+                        "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":3}}\n\n",
+                        "event: message_stop\n",
+                        "data: {\"type\":\"message_stop\"}\n\n"
+                    ),
+                )
+            }),
+        );
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("test server runs");
+        });
+
+        let provider = AnthropicProvider::new(
+            "anthropic",
+            format!("http://{addr}"),
+            "test-key",
+            "2023-06-01",
+        )
+        .expect("provider builds");
+        let events = provider
+            .stream(LlmRequest {
+                protocol_version: PROTOCOL_VERSION.to_owned(),
+                provider: "anthropic".to_owned(),
+                model: "claude-stream-test".to_owned(),
+                messages: vec![user_message("ping")],
+                temperature: None,
+                max_output_tokens: Some(64),
+                tools: vec![],
+                metadata: json!({}),
+            })
+            .await
+            .expect("provider streams")
+            .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .expect("stream events ok");
+
+        assert!(matches!(events[1].kind, LlmEventKind::ThinkingDelta));
+        assert_eq!(events[1].content.as_deref(), Some("plan"));
+        assert!(matches!(
+            events[2].kind,
+            LlmEventKind::ThinkingSignatureDelta
+        ));
+        assert_eq!(events[2].content.as_deref(), Some("sig_1"));
+        assert!(matches!(events[3].kind, LlmEventKind::ThinkingDelta));
+        assert_eq!(events[3].content.as_deref(), Some(" more"));
+        assert!(matches!(
+            events[4].kind,
+            LlmEventKind::ThinkingSignatureDelta
+        ));
+        assert_eq!(events[4].content.as_deref(), Some("sig_2"));
+        assert!(matches!(events[5].kind, LlmEventKind::ToolCallStart));
+        assert_eq!(events[5].tool_call_id.as_deref(), Some("toolu_1"));
+        assert_eq!(events[5].tool_name.as_deref(), Some("read_task"));
+        assert_eq!(events[6].partial_input_json.as_deref(), Some("{\""));
+        assert_eq!(
+            events[7].partial_input_json.as_deref(),
+            Some("id\":\"task_1\"}")
+        );
+        assert!(matches!(events[8].kind, LlmEventKind::ToolCallEnd));
+        assert_eq!(events[8].tool_input, Some(json!({"id": "task_1"})));
+        let response = events
+            .last()
+            .and_then(|event| event.response.as_ref())
+            .unwrap();
+        assert_eq!(response.finish_reason, LlmFinishReason::ToolCall);
     }
 
     #[tokio::test]

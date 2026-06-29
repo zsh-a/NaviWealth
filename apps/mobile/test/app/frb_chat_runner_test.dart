@@ -57,7 +57,12 @@ void main() {
       bridge,
       events: const <String>[
         '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+        '{"kind":"thinking_delta","content":"reason","metadata":{"stream":true}}',
         '{"kind":"delta","content":"Hello ","metadata":{"synthetic_stream":true}}',
+        '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
+        '{"kind":"tool_call_delta","tool_call_id":"call_1","tool_name":"read_task","partial_input_json":"{\\"","metadata":{"stream":true}}',
+        '{"kind":"tool_call_delta","tool_call_id":"call_1","tool_name":"read_task","partial_input_json":"id\\":\\"task_1\\"}","metadata":{"stream":true}}',
+        '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
         '{"kind":"delta","content":"from FRB","metadata":{"synthetic_stream":true}}',
         '{"kind":"finished","response":{"content":"Hello from FRB","finish_reason":"stop","usage":{"input_tokens":4,"output_tokens":3,"total_tokens":7}},"metadata":{"synthetic_stream":true}}',
       ],
@@ -72,11 +77,18 @@ void main() {
         )
         .toList();
 
-    expect(events, hasLength(4));
-    expect((events[0] as TextEvent).text, 'Hello ');
-    expect((events[1] as TextEvent).text, 'from FRB');
-    expect((events[2] as UsageEvent).usage.total, 7);
-    expect((events[3] as DoneEvent).stopReason, 'end_turn');
+    expect(events, hasLength(9));
+    expect((events[0] as ThinkingDeltaEvent).text, 'reason');
+    expect((events[1] as TextEvent).text, 'Hello ');
+    expect((events[2] as ToolCallStartEvent).name, 'read_task');
+    expect((events[3] as ToolCallDeltaEvent).partialInputJson, '{"');
+    expect((events[4] as ToolCallDeltaEvent).partialInputJson, 'id":"task_1"}');
+    final toolCall = events[5] as ToolCallEvent;
+    expect(toolCall.id, 'call_1');
+    expect(toolCall.input, <String, Object?>{'id': 'task_1'});
+    expect((events[6] as TextEvent).text, 'from FRB');
+    expect((events[7] as UsageEvent).usage.total, 7);
+    expect((events[8] as DoneEvent).stopReason, 'end_turn');
     final request = streamBridge.requests.single;
     expect(request['messages'], <Object?>[
       <String, Object?>{'role': 'user', 'content': 'Hello'},

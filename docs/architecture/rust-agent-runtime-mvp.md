@@ -151,11 +151,12 @@ Implemented:
 - AI Chat now has an app-level `FrbChatRunner` adapter and
   `AgentRuntimeLlmStreamBridge`. Native FRB exposes primitive JSON-string LLM
   stream events through `agentRuntimeStreamProfileLlm`; the runner maps
-  `started` / `delta` / `finished` / `error` events into the existing
-  `AiChatEvent` vocabulary. It is intentionally not the production default yet
-  because tool-call delta, richer reasoning events, cancellation, and trace-span
-  parity still need to match `DeviceLlmRuntime` before replacing the interactive
-  chat UI path. OpenAI-compatible and Anthropic text/usage SSE are now
+  `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
+  `tool_call_*` / `finished` / `error` events into the existing `AiChatEvent`
+  vocabulary. It is intentionally not the production default yet because Dart
+  tool-result continuation, cancellation, and trace-span parity still need to
+  match `DeviceLlmRuntime` before replacing the interactive chat UI path.
+  OpenAI-compatible and Anthropic text/usage/tool/reasoning SSE are now
   provider-real in `agent-llm`.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
@@ -1290,14 +1291,13 @@ Most production business LLM/profile-turn paths now use the FRB/native bridge.
 The remaining high-value Flutter integration gap is interactive AI Chat. The
 current app-level `FrbChatRunner` can consume the primitive FRB LLM stream, and
 `agent-llm` now parses provider-real OpenAI-compatible Chat Completions SSE and
-Anthropic Messages SSE for text deltas, usage, and the final response. The next
-migration should add complete event parity before switching the production
-`aiChatApiClientProvider` away from `DeviceLlmRuntime`. That parity must cover:
+Anthropic Messages SSE for text deltas, reasoning/signature, tool-call deltas,
+usage, and the final response. The next migration should add continuation and
+observability parity before switching the production `aiChatApiClientProvider`
+away from `DeviceLlmRuntime`. That parity must cover:
 
-- thinking/signature deltas where providers expose reasoning
-- tool-call start/delta/final events
 - tool results from Dart `AgentRuntimeToolHost`
-- usage and span events for `AiTraceBuilder`
+- span events for `AiTraceBuilder`
 - cancellation/error semantics compatible with `ChatRepository`
 
 Already completed: Dart catalog export from the existing `DomainPack`
