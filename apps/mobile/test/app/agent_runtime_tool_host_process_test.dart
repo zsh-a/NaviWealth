@@ -89,4 +89,26 @@ void main() {
       expect(await process.exitCode, 0);
     },
   );
+
+  test(
+    'bin/agent_runtime_tool_host.dart rejects app-backed domain flags',
+    () async {
+      final process = await Process.start('dart', <String>[
+        'run',
+        'bin/agent_runtime_tool_host.dart',
+        '--domains=all',
+      ]);
+      addTearDown(() {
+        process.kill();
+      });
+
+      final stderrLine = await process.stderr
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .firstWhere((line) => line.contains('protocol smoke-test only'));
+
+      expect(stderrLine, contains('agent_runtime_tool_host_headless.dart'));
+      expect(await process.exitCode, 64);
+    },
+  );
 }

@@ -9,6 +9,15 @@ import 'dart:io';
 /// DB-free tools such as `ask_user`. The app-backed headless adapter lives in
 /// `bin/agent_runtime_tool_host_headless.dart`.
 Future<void> main(List<String> args) async {
+  if (_looksLikeHeadlessAppBackedRequest(args)) {
+    stderr.writeln(
+      'bin/agent_runtime_tool_host.dart is protocol smoke-test only. '
+      'Use Flutter/FRB integration through '
+      'bin/agent_runtime_tool_host_headless.dart for app-backed tools.',
+    );
+    exitCode = 64;
+    return;
+  }
   if (args.contains('--shell')) {
     await _runShell();
     return;
@@ -25,6 +34,16 @@ Future<void> main(List<String> args) async {
     '[--unavailable|--safe|--shell]',
   );
   exitCode = 64;
+}
+
+bool _looksLikeHeadlessAppBackedRequest(List<String> args) {
+  return args.any(
+    (arg) =>
+        arg == '--domains' ||
+        arg.startsWith('--domains=') ||
+        arg == '--headless' ||
+        arg == '--app-backed',
+  );
 }
 
 Future<void> _runUnavailable() async {
