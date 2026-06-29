@@ -720,5 +720,34 @@ void main() {
       );
       expect(await traceStore.recent(), hasLength(1));
     });
+
+    test(
+      'records FRB chat tool budget errors as stream-error traces',
+      () async {
+        api.script.addAll(const <AiChatEvent>[
+          ErrorEvent(
+            'FRB chat exceeded the tool round budget',
+            code: 'frb_chat_tool_round_budget_exceeded',
+          ),
+          DoneEvent(stopReason: 'error', rounds: 1),
+        ]);
+        final id = await activeSessionId();
+
+        final outcome = await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: 'Use a tool',
+        );
+
+        expect(outcome, SendOutcome.errored);
+        final trace = (await traceStore.recent()).single;
+        expect(trace.terminalReason, TerminalReason.streamError);
+        expect(trace.spans.first.status, AiSpanStatus.error);
+        expect(
+          trace.spans.first.attributes,
+          containsPair('terminal_reason', 'stream_error'),
+        );
+      },
+    );
   });
 }
