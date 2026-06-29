@@ -12,6 +12,7 @@ on:
       - 'docs/ai-protocol.md'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v2_*.json'
+      - 'apps/mobile/tool/check-back-nav-coverage.sh'
       - 'apps/mobile/tool/check-l10n-parity.sh'
       - 'apps/mobile/tool/check-ui-baselines.sh'
       - 'tool/check-ai-contract-wire-enums.sh'
@@ -38,6 +39,7 @@ on:
       - 'docs/ai-protocol.md'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v2_*.json'
+      - 'apps/mobile/tool/check-back-nav-coverage.sh'
       - 'apps/mobile/tool/check-l10n-parity.sh'
       - 'apps/mobile/tool/check-ui-baselines.sh'
       - 'tool/check-ai-contract-wire-enums.sh'
@@ -117,6 +119,8 @@ jobs:
         # budgets. Full flutter test still runs below with the known-failure
         # footprint pinning.
         run: ./tool/check-ui-baselines.sh
+      - name: Back navigation coverage
+        run: ./tool/check-back-nav-coverage.sh
       - name: Contract & boundary lints
         # High-value architecture gates, run from the repo root:
         #   - enum mirror: Dart↔Rust enums stay in sync (Wave 42)

@@ -72,7 +72,7 @@ done < <(grep -rl 'FHeader\.nested(' lib/features lib/app 2>/dev/null | sort)
 # Same check, just makes the intent obvious in the failure message.
 SETTINGS_PAGE="lib/features/settings/settings_page.dart"
 if [[ -f "${SETTINGS_PAGE}" ]] && \
-   ! grep -qE 'backHeaderAction|appSubPageHeader' "${SETTINGS_PAGE}"; then
+   ! grep -qE 'backHeaderAction|appSubPageHeader|AppPageScaffold' "${SETTINGS_PAGE}"; then
   missing+=("${SETTINGS_PAGE} (off-shell root — back is critical)")
 fi
 
