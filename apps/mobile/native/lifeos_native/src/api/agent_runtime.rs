@@ -435,6 +435,17 @@ fn require_tool_response_envelope(tool_response: &Value) -> Result<()> {
             (true, true) => anyhow::bail!("tool response cannot contain both result and error"),
             (false, false) => anyhow::bail!("tool response must contain result or error"),
         }
+        if let Some(error) = object.get("error") {
+            let error = error
+                .as_object()
+                .ok_or_else(|| anyhow::anyhow!("tool response error must be an object"))?;
+            if !error.contains_key("code") {
+                anyhow::bail!("tool response error.code is required");
+            }
+            if !error.contains_key("message") {
+                anyhow::bail!("tool response error.message is required");
+            }
+        }
     }
     if !object.contains_key("jsonrpc")
         && object.contains_key("result")
