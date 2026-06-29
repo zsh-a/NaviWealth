@@ -573,16 +573,28 @@ Map<String, Object?> _toolBudgetExhaustedStep(
   int maxToolSteps,
 ) {
   final previousRunState = _objectOrNull(step['run_state']);
+  final stepIndex = _intOrNull(step['step_index']);
+  final runState = <String, Object?>{
+    ...?previousRunState,
+    'status': 'failed',
+    'step_index': stepIndex,
+    'remaining_tool_count': 0,
+    'tool_result_count': maxToolSteps,
+    'terminal_reason': 'closed_early',
+  };
   return <String, Object?>{
     ...step,
     'status': 'failed',
-    'run_state': <String, Object?>{
-      ...?previousRunState,
+    'run_state': runState,
+    'trace_event': <String, Object?>{
+      ...?_objectOrNull(step['trace_event']),
+      'kind': 'agent_runtime_step',
+      'run_id': step['run_id'],
+      'agent_id': step['agent_id'],
       'status': 'failed',
-      'step_index': _intOrNull(step['step_index']),
-      'remaining_tool_count': 0,
-      'tool_result_count': maxToolSteps,
-      'terminal_reason': 'closed_early',
+      'step_index': stepIndex,
+      'tool_name': _objectOrNull(step['tool_call'])?['name'],
+      'run_state': runState,
     },
     'error': <String, Object?>{
       'code': 'tool_call_budget_exhausted',

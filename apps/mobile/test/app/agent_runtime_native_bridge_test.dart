@@ -432,6 +432,23 @@ void main() {
         result.terminalStep['run_state'],
         containsPair('tool_result_count', 0),
       );
+      expect(
+        result.terminalStep['trace_event'],
+        containsPair('status', 'failed'),
+      );
+      expect(
+        result.terminalStep['trace_event'],
+        containsPair('tool_name', 'read_task'),
+      );
+      expect(
+        result.terminalStep['trace_event'],
+        containsPair('run_state', result.terminalStep['run_state']),
+      );
+      expect(result.nativeTraceEvents, hasLength(1));
+      expect(
+        result.nativeTraceEvents.single,
+        result.terminalStep['trace_event'],
+      );
     },
   );
 
