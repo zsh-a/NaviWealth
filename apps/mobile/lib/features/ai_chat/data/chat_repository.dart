@@ -380,9 +380,16 @@ class ChatRepository {
             // "max_tokens / tool_use budget / refusal" without changing
             // the persistence model.
             final reason = ChatStopReasonX.parse(stopReason);
+            if (reason == ChatStopReason.error &&
+                assistant.status != ChatMessageStatus.errored) {
+              outcome = SendOutcome.errored;
+              terminalReason = TerminalReason.streamError;
+            }
             if (assistant.status != ChatMessageStatus.errored) {
               assistant = assistant.copyWith(
-                status: ChatMessageStatus.complete,
+                status: reason == ChatStopReason.error
+                    ? ChatMessageStatus.errored
+                    : ChatMessageStatus.complete,
                 stopReason: reason,
                 clearProgress: true,
               );

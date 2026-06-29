@@ -749,5 +749,23 @@ void main() {
         );
       },
     );
+
+    test('records error-only done frames as stream-error traces', () async {
+      api.script.add(const DoneEvent(stopReason: 'error', rounds: 1));
+      final id = await activeSessionId();
+
+      final outcome = await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'Q',
+      );
+
+      expect(outcome, SendOutcome.errored);
+      final messages = await store.listMessages(id);
+      expect(messages.last.status, ChatMessageStatus.errored);
+      final trace = (await traceStore.recent()).single;
+      expect(trace.terminalReason, TerminalReason.streamError);
+      expect(trace.spans.first.status, AiSpanStatus.error);
+    });
   });
 }
