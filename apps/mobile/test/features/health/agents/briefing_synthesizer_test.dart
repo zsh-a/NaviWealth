@@ -247,7 +247,11 @@ void main() {
       final runner = _FakeProfileTurnRunner(
         content: 'You slept 7.5h and HRV was 48ms.',
       );
-      final synth = FrbBriefingSynthesizer(runner: runner);
+      final traces = <AgentRuntimeProfileTurnResult>[];
+      final synth = FrbBriefingSynthesizer(
+        runner: runner,
+        recordTrace: (result) async => traces.add(result),
+      );
       final out = await synth.synthesize(baselineInputs);
 
       expect(out.source, BriefingSource.llm);
@@ -268,6 +272,8 @@ void main() {
         runner.calls.single.messages.first,
         containsPair('role', 'system'),
       );
+      expect(traces.single.llmResponse['content'], out.summary);
+      expect(traces.single.step['status'], 'completed');
     });
 
     test('falls back when the FRB runner throws', () async {

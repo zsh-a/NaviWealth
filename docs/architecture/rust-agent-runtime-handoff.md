@@ -166,6 +166,9 @@ Current bridge capabilities:
 - Provide local AI trace persistence for migrated production tool-plan agents:
   HealthOS Recovery Alert and KnowledgeOS Routine Due record successful
   step-only FRB runs through `AgentRuntimeTraceRecorder.recordStepRun`.
+- Provide local AI trace persistence for the migrated production profile-turn
+  agent: HealthOS Morning Briefing records successful FRB profile turns through
+  `AgentRuntimeTraceRecorder.recordProfileTurn`.
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
   display the terminal native step status.

@@ -161,6 +161,16 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         final BriefingSynthesizer synth = frbRunner != null
             ? FrbBriefingSynthesizer(
                 runner: frbRunner,
+                recordTrace: (result) {
+                  return ref
+                      .read(agentRuntimeTraceRecorderProvider)
+                      .recordProfileTurn(
+                        agentId: 'morning_briefing',
+                        result: result,
+                        domain: 'health',
+                        surface: 'health_morning_briefing',
+                      );
+                },
                 fallback: runtime != null
                     ? LlmBriefingSynthesizer(client: runtime.client)
                     : const ProgrammaticBriefingSynthesizer(),

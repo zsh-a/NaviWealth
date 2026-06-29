@@ -181,12 +181,15 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
     this.fallback = const ProgrammaticBriefingSynthesizer(),
     this.maxTokens = 200,
     this.requestTimeout = const Duration(seconds: 20),
+    this.recordTrace,
   });
 
   final AgentRuntimeProfileTurnRunner runner;
   final BriefingSynthesizer fallback;
   final int maxTokens;
   final Duration requestTimeout;
+  final Future<void> Function(AgentRuntimeProfileTurnResult result)?
+  recordTrace;
 
   @override
   Future<BriefingOutput> synthesize(BriefingInputs inputs) async {
@@ -213,6 +216,7 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
             maxToolSteps: 0,
           )
           .timeout(requestTimeout);
+      await _recordTrace(result);
       final text = result.llmResponse['content']?.toString().trim();
       if (text == null || text.isEmpty) return baseline;
       return BriefingOutput(
@@ -224,6 +228,16 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
       );
     } on Object {
       return baseline;
+    }
+  }
+
+  Future<void> _recordTrace(AgentRuntimeProfileTurnResult result) async {
+    final recorder = recordTrace;
+    if (recorder == null) return;
+    try {
+      await recorder(result);
+    } on Object {
+      // Best-effort diagnostics; never fail the production agent.
     }
   }
 }

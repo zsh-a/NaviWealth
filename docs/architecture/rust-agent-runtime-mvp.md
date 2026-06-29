@@ -136,6 +136,9 @@ Implemented:
   KnowledgeOS `RoutineDueAgent` now record successful FRB native step-only
   runs through `AgentRuntimeTraceRecorder.recordStepRun`, so their device-tool
   loops appear in the same local `AiTraceStore`
+- Production profile-turn trace persistence: HealthOS `FrbBriefingSynthesizer`
+  records successful Morning Briefing FRB profile turns through
+  `AgentRuntimeTraceRecorder.recordProfileTurn`
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status
