@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_vision_parse.dart';
 import 'package:naviwealth/features/ingest/data/device_ingest_client.dart';
+import 'package:naviwealth/features/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/ingest/data/vision_ingest_client.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
 
@@ -191,7 +191,7 @@ void main() {
             },
           ],
         );
-        final client = FrbVisionIngestClient(llmBridge: bridge);
+        final client = FrbVisionIngestClient(llmClient: bridge);
 
         final rows = await client.parse(
           kind: IngestSourceKind.receiptImage,
@@ -218,7 +218,7 @@ void main() {
       'throws a user-facing ingest error when FRB has no tool_use block',
       () {
         final client = FrbVisionIngestClient(
-          llmBridge: _FakeLlmBridge(anthropicContent: const <Object?>[]),
+          llmClient: _FakeLlmBridge(anthropicContent: const <Object?>[]),
         );
 
         expect(
@@ -234,7 +234,7 @@ void main() {
   });
 }
 
-class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+class _FakeLlmBridge implements IngestLlmProfileClient {
   _FakeLlmBridge({required this.anthropicContent});
 
   final List<Object?> anthropicContent;
@@ -242,34 +242,6 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
   List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
   List<Map<String, Object?>> lastTools = const <Map<String, Object?>>[];
   Map<String, Object?> lastMetadata = const <String, Object?>{};
-
-  @override
-  Map<String, Object?> buildRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return <String, Object?>{
-      'messages': messages,
-      'tools': tools,
-      'metadata': metadata,
-      'max_output_tokens': maxOutputTokens,
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMock({
-    required List<Map<String, Object?>> messages,
-    required String responseText,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return <String, Object?>{'content': responseText};
-  }
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -289,22 +261,5 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
       'content': '',
       'metadata': <String, Object?>{'anthropic_content': anthropicContent},
     };
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return buildRequest(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
   }
 }

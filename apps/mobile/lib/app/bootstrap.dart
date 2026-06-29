@@ -42,6 +42,7 @@ import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/agents/recovery_alert_agent.dart';
 import '../features/health/agents/weekly_summary_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
+import '../features/ingest/data/ingest_llm_client.dart';
 import '../features/knowledge/agents/assumption_agent.dart';
 import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
@@ -150,6 +151,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         return llmBridge == null
             ? null
             : FrbKnowledgeLlmProfileClient(llmBridge: llmBridge);
+      }),
+      ingestLlmProfileClientProvider.overrideWith((ref) {
+        final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+        return llmBridge == null
+            ? null
+            : FrbIngestLlmProfileClient(llmBridge: llmBridge);
       }),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
@@ -560,6 +567,30 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
 
 class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
   const FrbKnowledgeLlmProfileClient({required AgentRuntimeLlmBridge llmBridge})
+    : _llmBridge = llmBridge;
+
+  final AgentRuntimeLlmBridge _llmBridge;
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
+    return _llmBridge.completeProfile(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
+  }
+}
+
+class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
+  const FrbIngestLlmProfileClient({required AgentRuntimeLlmBridge llmBridge})
     : _llmBridge = llmBridge;
 
   final AgentRuntimeLlmBridge _llmBridge;

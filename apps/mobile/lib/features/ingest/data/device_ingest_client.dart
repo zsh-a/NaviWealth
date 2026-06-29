@@ -14,19 +14,19 @@
 /// Worker would break exactly that promise. The error surfaces instead.
 library;
 
-import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/ai/runtime/device/device_vision_parse.dart';
 import '../domain/ingest_models.dart';
+import 'ingest_llm_client.dart';
 import 'vision_ingest_client.dart';
 
 /// Mirrors the backend `VISION_MAX_TOKENS`.
 const int _kVisionMaxTokens = 4096;
 
 class FrbVisionIngestClient implements VisionIngestClient {
-  const FrbVisionIngestClient({required AgentRuntimeLlmBridge llmBridge})
-    : _llmBridge = llmBridge;
+  const FrbVisionIngestClient({required IngestLlmProfileClient llmClient})
+    : _llmClient = llmClient;
 
-  final AgentRuntimeLlmBridge _llmBridge;
+  final IngestLlmProfileClient _llmClient;
 
   @override
   Future<List<ParsedTransaction>> parse({
@@ -56,7 +56,7 @@ class FrbVisionIngestClient implements VisionIngestClient {
 
     final Map<String, Object?> response;
     try {
-      response = await _llmBridge.completeProfile(
+      response = await _llmClient.completeProfile(
         messages: messages,
         tools: tools,
         maxOutputTokens: _kVisionMaxTokens,
