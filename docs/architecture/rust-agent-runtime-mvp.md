@@ -139,6 +139,9 @@ Implemented:
 - `trace.schema.json` and the native FRB validator both require
   `agent_runtime_step.payload.status` to match `payload.run_state.status`,
   keeping the outer step state and embedded run-state summary from drifting
+- `agent_runtime_step.payload.tool_name` is constrained to `null` or a
+  non-empty string in both JSON Schema and the native FRB validator, so trace
+  consumers never receive an empty tool label
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
