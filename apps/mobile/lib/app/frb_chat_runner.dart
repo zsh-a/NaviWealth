@@ -216,7 +216,26 @@ class FrbChatRunner implements DeviceChatRunner {
             state.finishToolCall(id: id, name: name, input: input);
             yield ToolCallEvent(id: id, name: name, input: input);
           case 'finished':
-            final response = _object(event['response']);
+            final response = _objectOrNull(event['response']);
+            if (response == null) {
+              yield _llmSpan(
+                round: round,
+                roundId: roundId,
+                startedAt: roundStart,
+                state: state,
+                requestedModel: model,
+                status: AiSpanStatus.error,
+                errorCode: 'frb_chat_event_invalid',
+                errorMessage:
+                    'FRB LLM finished event response is not an object',
+              );
+              yield const ErrorEvent(
+                'FRB LLM finished event response is not an object',
+                code: 'frb_chat_event_invalid',
+              );
+              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+              return;
+            }
             state.finish(response);
             final usage = _usageFromResponse(response);
             if (usage != null) yield UsageEvent(usage);
@@ -718,11 +737,15 @@ String _chatStopReason(String reason) {
 String _string(Object? value) => value is String ? value : '';
 
 Map<String, Object?> _object(Object? value) {
+  return _objectOrNull(value) ?? const <String, Object?>{};
+}
+
+Map<String, Object?>? _objectOrNull(Object? value) {
   if (value is Map<String, Object?>) return value;
   if (value is Map) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
-  return const <String, Object?>{};
+  return null;
 }
 
 Object? _toolInput(Object? value) {

@@ -386,6 +386,39 @@ void main() {
     expect((events[2] as DoneEvent).stopReason, 'error');
   });
 
+  test('rejects malformed FRB finished response events', () async {
+    final runner = FrbChatRunner(
+      llmBridge: _FakeLlmBridge(),
+      streamBridge: _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+          '{"kind":"delta","content":"partial","metadata":{"stream":true}}',
+          '{"kind":"finished","response":"bad","metadata":{"stream":true}}',
+        ],
+      ),
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Hello'),
+          ],
+        )
+        .toList();
+
+    expect(events.whereType<TextEvent>().single.text, 'partial');
+    final span = events.whereType<SpanEvent>().single;
+    expect(span.status, AiSpanStatus.error);
+    expect(span.errorCode, 'frb_chat_event_invalid');
+    final error = events.whereType<ErrorEvent>().single;
+    expect(error.code, 'frb_chat_event_invalid');
+    expect(error.message, contains('finished event response'));
+    final done = events.last as DoneEvent;
+    expect(done.stopReason, 'error');
+    expect(done.rounds, 1);
+  });
+
   test('emits a cancelled span when the turn token is cancelled', () async {
     late CancelToken cancelToken;
     Stream<String> hangingStream() async* {
