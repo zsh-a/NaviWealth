@@ -47,12 +47,14 @@ void main() {
     test('reads HRV through FRB tool-plan continuation', () async {
       final dispatcher = _RecoveryTrendDispatcher();
       final bridge = _ToolPlanBridge();
+      final traces = <AgentRuntimeNativeStepRunResult>[];
       final reader = FrbRecoveryAlertSignalReader(
         stepRunner: AgentRuntimeNativeStepRunner(
           bridge: bridge,
           toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
         ),
         catalog: _catalog(),
+        recordTrace: (stepRun) async => traces.add(stepRun),
       );
       final result = await reader.read(_context());
 
@@ -66,6 +68,8 @@ void main() {
         bridge.startRequests.single.request['metadata'],
         containsPair('surface', 'health_recovery_alert'),
       );
+      expect(traces.single.terminalStep['status'], 'completed');
+      expect(traces.single.dispatchedToolCount, 1);
     });
 
     test('falls back when FRB tool path fails', () async {

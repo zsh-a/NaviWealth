@@ -221,18 +221,21 @@ class FrbRoutineDueReader implements RoutineDueReader {
     required AgentRuntimeNativeStepRunner stepRunner,
     required AgentRuntimeCatalog catalog,
     this.fallback = const RepositoryRoutineDueReader(),
+    this.recordTrace,
   }) : _stepRunner = stepRunner,
        _catalog = catalog;
 
   final AgentRuntimeNativeStepRunner _stepRunner;
   final AgentRuntimeCatalog _catalog;
   final RoutineDueReader fallback;
+  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
+  recordTrace;
 
   @override
   Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
     try {
       final asOf = ctx.now.add(kRoutineDueLookahead).toUtc().toIso8601String();
-      final step = await _stepRunner.runUntilTerminal(
+      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
         catalog: _catalog.toJson(),
         request: <String, Object?>{
           'protocol_version': 'agent.v1',
@@ -253,6 +256,8 @@ class FrbRoutineDueReader implements RoutineDueReader {
         agentId: kKnowledgeRoutineAgentId,
         maxToolSteps: 1,
       );
+      await _recordTrace(stepRun);
+      final step = stepRun.terminalStep;
       final output = _asObject(step['output']);
       final result = _asObject(output?['tool_result']);
       final routines = routineDueItemsFromToolResult(result);
@@ -260,6 +265,16 @@ class FrbRoutineDueReader implements RoutineDueReader {
       return routines;
     } on Object {
       return fallback.listDue(ctx);
+    }
+  }
+
+  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
+    final recorder = recordTrace;
+    if (recorder == null) return;
+    try {
+      await recorder(stepRun);
+    } on Object {
+      // Best-effort diagnostics; never fail the production agent.
     }
   }
 }

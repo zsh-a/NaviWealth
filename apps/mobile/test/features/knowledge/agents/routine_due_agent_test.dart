@@ -42,12 +42,14 @@ void main() {
     test('reads routines through FRB list_due_routines tool plan', () async {
       final dispatcher = _RoutineDispatcher();
       final bridge = _ToolPlanBridge();
+      final traces = <AgentRuntimeNativeStepRunResult>[];
       final reader = FrbRoutineDueReader(
         stepRunner: AgentRuntimeNativeStepRunner(
           bridge: bridge,
           toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
         ),
         catalog: _catalog(),
+        recordTrace: (stepRun) async => traces.add(stepRun),
       );
 
       final due = await reader.listDue(_context());
@@ -62,6 +64,8 @@ void main() {
         bridge.startRequests.single.request['metadata'],
         containsPair('surface', 'knowledge_routine_due'),
       );
+      expect(traces.single.terminalStep['status'], 'completed');
+      expect(traces.single.dispatchedToolCount, 1);
     });
 
     test('falls back when FRB tool path fails', () async {

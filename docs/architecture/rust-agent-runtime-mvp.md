@@ -132,6 +132,10 @@ Implemented:
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
+- Production tool-plan trace persistence: HealthOS `RecoveryAlertAgent` and
+  KnowledgeOS `RoutineDueAgent` now record successful FRB native step-only
+  runs through `AgentRuntimeTraceRecorder.recordStepRun`, so their device-tool
+  loops appear in the same local `AiTraceStore`
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
   terminal native step status

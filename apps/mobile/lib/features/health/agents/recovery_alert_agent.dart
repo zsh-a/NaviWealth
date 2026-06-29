@@ -166,17 +166,20 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
     required AgentRuntimeNativeStepRunner stepRunner,
     required AgentRuntimeCatalog catalog,
     this.fallback = const RepositoryRecoveryAlertSignalReader(),
+    this.recordTrace,
   }) : _stepRunner = stepRunner,
        _catalog = catalog;
 
   final AgentRuntimeNativeStepRunner _stepRunner;
   final AgentRuntimeCatalog _catalog;
   final RecoveryAlertSignalReader fallback;
+  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
+  recordTrace;
 
   @override
   Future<RecoveryAlertSignalRead> read(AgentContext ctx) async {
     try {
-      final step = await _stepRunner.runUntilTerminal(
+      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
         catalog: _catalog.toJson(),
         request: const <String, Object?>{
           'protocol_version': 'agent.v1',
@@ -197,6 +200,8 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
         agentId: kRecoveryAlertAgentId,
         maxToolSteps: 1,
       );
+      await _recordTrace(stepRun);
+      final step = stepRun.terminalStep;
       final output = _asObject(step['output']);
       final result = _asObject(output?['tool_result']);
       final points = _hrvPointsFromToolResult(result);
@@ -207,6 +212,16 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
       );
     } on Object {
       return fallback.read(ctx);
+    }
+  }
+
+  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
+    final recorder = recordTrace;
+    if (recorder == null) return;
+    try {
+      await recorder(stepRun);
+    } on Object {
+      // Best-effort diagnostics; never fail the production agent.
     }
   }
 }

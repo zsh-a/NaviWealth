@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ai/contracts/contracts.dart';
 import '../core/ai/trace/ai_trace_builder.dart';
 import '../core/ai/trace/providers.dart';
+import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
 
 final agentRuntimeTraceRecorderProvider = Provider<AgentRuntimeTraceRecorder>((
@@ -42,7 +43,9 @@ class AgentRuntimeTraceRecorder {
     final runId = _string(result.step['run_id']);
     final trace = _buildTrace(
       agentId: agentId,
-      result: result,
+      llmResponse: result.llmResponse,
+      step: result.step,
+      stepRun: result.stepRun,
       startedAt: started,
       finishedAt: finished.isBefore(started) ? started : finished,
       requestId: requestId ?? _requestId(agentId: agentId, runId: runId),
@@ -53,14 +56,47 @@ class AgentRuntimeTraceRecorder {
     return trace;
   }
 
+  Future<AiTrace> recordStepRun({
+    required String agentId,
+    required AgentRuntimeNativeStepRunResult stepRun,
+    DateTime? startedAt,
+    DateTime? finishedAt,
+    String? requestId,
+    String domain = kDefaultDomain,
+    String surface = 'agent_runtime',
+  }) async {
+    final started = (startedAt ?? DateTime.now().toUtc()).toUtc();
+    final finished = (finishedAt ?? DateTime.now().toUtc()).toUtc();
+    final runId = _string(stepRun.terminalStep['run_id']);
+    final trace = _buildTrace(
+      agentId: agentId,
+      llmResponse: null,
+      step: stepRun.terminalStep,
+      stepRun: stepRun,
+      startedAt: started,
+      finishedAt: finished.isBefore(started) ? started : finished,
+      requestId: requestId ?? _requestId(agentId: agentId, runId: runId),
+      domain: domain,
+      surface: surface,
+      label: 'agent_runtime_step_run',
+      routingReason: 'frb_native_tool_plan',
+    );
+    await _appendTrace(trace);
+    return trace;
+  }
+
   AiTrace _buildTrace({
     required String agentId,
-    required AgentRuntimeProfileTurnResult result,
+    required Map<String, Object?>? llmResponse,
+    required Map<String, Object?> step,
+    required AgentRuntimeNativeStepRunResult stepRun,
     required DateTime startedAt,
     required DateTime finishedAt,
     required String requestId,
     required String domain,
     required String surface,
+    String label = 'agent_runtime_profile_turn',
+    String routingReason = kDeviceLlmDirectRoutingReason,
   }) {
     final seed = AiTrace(
       requestId: requestId,
@@ -68,12 +104,12 @@ class AgentRuntimeTraceRecorder {
       intent: IntentHint(
         capability: Capability.analyze,
         risk: RiskLevel.info,
-        label: 'agent_runtime_profile_turn',
+        label: label,
         domain: domain,
       ),
       backend: Backend.device,
       budgetTier: BudgetTier.standard,
-      routingReason: kDeviceLlmDirectRoutingReason,
+      routingReason: routingReason,
       totalDurationMs: 0,
     );
     final builder = AiTraceBuilder.fromSeed(seed, capturePayloads: false)
@@ -81,40 +117,43 @@ class AgentRuntimeTraceRecorder {
         'runtime': 'frb_agent_runtime',
         'surface': surface,
         'agent_id': agentId,
-        'terminal_status': _string(result.step['status']),
-        'dispatched_tool_count': result.stepRun.dispatchedToolCount,
-        'budget_exhausted': result.stepRun.budgetExhausted,
+        'terminal_status': _string(step['status']),
+        'dispatched_tool_count': stepRun.dispatchedToolCount,
+        'budget_exhausted': stepRun.budgetExhausted,
       });
 
-    final llmFinished = _offsetTime(startedAt, 1);
-    builder.addSpan(
-      id: 'llm:profile',
-      parentId: kTurnSpanId,
-      kind: AiSpanKind.llm,
-      name: 'llm:profile',
-      startedAt: startedAt,
-      endedAt: llmFinished,
-      status: AiSpanStatus.ok,
-      model: _string(result.llmResponse['model']),
-      stopReason: _string(result.llmResponse['finish_reason']),
-      attributes: <String, Object?>{
-        'provider': _string(result.llmResponse['provider']),
-      },
-    );
+    final parentId = llmResponse == null ? kTurnSpanId : 'llm:profile';
+    if (llmResponse != null) {
+      final llmFinished = _offsetTime(startedAt, 1);
+      builder.addSpan(
+        id: 'llm:profile',
+        parentId: kTurnSpanId,
+        kind: AiSpanKind.llm,
+        name: 'llm:profile',
+        startedAt: startedAt,
+        endedAt: llmFinished,
+        status: AiSpanStatus.ok,
+        model: _string(llmResponse['model']),
+        stopReason: _string(llmResponse['finish_reason']),
+        attributes: <String, Object?>{
+          'provider': _string(llmResponse['provider']),
+        },
+      );
+    }
 
-    for (var i = 0; i < result.stepRun.steps.length; i++) {
-      final step = result.stepRun.steps[i];
+    for (var i = 0; i < stepRun.steps.length; i++) {
+      final step = stepRun.steps[i];
       if (step['status'] != 'tool_call_requested') continue;
       final toolCall = _object(step['tool_call']);
       final name = _string(toolCall?['name']) ?? 'unknown';
-      final response = i < result.stepRun.toolResponses.length
-          ? result.stepRun.toolResponses[i]
+      final response = i < stepRun.toolResponses.length
+          ? stepRun.toolResponses[i]
           : null;
       final error = _object(response?['error']);
       final spanStarted = _offsetTime(startedAt, 2 + i);
       builder.addSpan(
         id: 'tool:${i + 1}',
-        parentId: 'llm:profile',
+        parentId: parentId,
         kind: AiSpanKind.tool,
         name: 'tool:$name',
         startedAt: spanStarted,
@@ -132,14 +171,17 @@ class AgentRuntimeTraceRecorder {
 
     return builder.finalize(
       finishedAt: finishedAt,
-      terminalReason: _terminalReason(result),
+      terminalReason: _terminalReason(step, stepRun),
     );
   }
 }
 
-TerminalReason _terminalReason(AgentRuntimeProfileTurnResult result) {
-  if (result.stepRun.budgetExhausted) return TerminalReason.closedEarly;
-  if (result.step['status'] == 'failed') return TerminalReason.streamError;
+TerminalReason _terminalReason(
+  Map<String, Object?> step,
+  AgentRuntimeNativeStepRunResult stepRun,
+) {
+  if (stepRun.budgetExhausted) return TerminalReason.closedEarly;
+  if (step['status'] == 'failed') return TerminalReason.streamError;
   return TerminalReason.done;
 }
 

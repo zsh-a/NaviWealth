@@ -42,6 +42,7 @@ import '../features/knowledge/agents/routine_due_agent.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
+import 'agent_runtime_trace_recorder.dart';
 import 'domain_composition.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
@@ -191,6 +192,16 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           signalReader: FrbRecoveryAlertSignalReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kRecoveryAlertAgentId,
+                    stepRun: stepRun,
+                    domain: 'health',
+                    surface: 'health_recovery_alert',
+                  );
+            },
           ),
         );
       }),
@@ -207,6 +218,16 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           dueReader: FrbRoutineDueReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kKnowledgeRoutineAgentId,
+                    stepRun: stepRun,
+                    domain: 'knowledge',
+                    surface: 'knowledge_routine_due',
+                  );
+            },
           ),
         );
       }),

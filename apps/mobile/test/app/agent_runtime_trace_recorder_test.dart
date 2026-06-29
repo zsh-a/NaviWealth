@@ -68,6 +68,58 @@ void main() {
       containsPair('budget_exhausted', true),
     );
   });
+
+  test('records native step-only tool plan runs', () async {
+    final traces = <AiTrace>[];
+    final recorder = AgentRuntimeTraceRecorder(
+      appendTrace: (trace) async => traces.add(trace),
+    );
+
+    final trace = await recorder.recordStepRun(
+      agentId: 'knowledge_routine_due',
+      domain: kDomainKnowledge,
+      surface: 'knowledge_routine_due',
+      startedAt: DateTime.utc(2026, 6, 29, 8),
+      finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
+      stepRun: const AgentRuntimeNativeStepRunResult(
+        terminalStep: <String, Object?>{
+          'run_id': 'run_2',
+          'status': 'completed',
+        },
+        dispatchedToolCount: 1,
+        steps: <Map<String, Object?>>[
+          <String, Object?>{
+            'run_id': 'run_2',
+            'status': 'tool_call_requested',
+            'tool_call': <String, Object?>{
+              'tool_call_id': 'call_1',
+              'name': 'list_due_routines',
+              'input': <String, Object?>{'limit': 50},
+            },
+          },
+          <String, Object?>{'run_id': 'run_2', 'status': 'completed'},
+        ],
+        toolResponses: <Map<String, Object?>>[
+          <String, Object?>{
+            'jsonrpc': '2.0',
+            'id': 'call_1',
+            'result': <String, Object?>{'routines': <Object?>[]},
+          },
+        ],
+      ),
+    );
+
+    expect(traces.single, same(trace));
+    expect(trace.requestId, 'agent-runtime:knowledge_routine_due:run_2');
+    expect(trace.routingReason, 'frb_native_tool_plan');
+    expect(trace.intent.label, 'agent_runtime_step_run');
+    expect(trace.llmRoundCount, 0);
+    expect(trace.toolSpans.single.name, 'tool:list_due_routines');
+    expect(
+      trace.spans.first.attributes,
+      containsPair('surface', 'knowledge_routine_due'),
+    );
+  });
 }
 
 AgentRuntimeProfileTurnResult _result({
