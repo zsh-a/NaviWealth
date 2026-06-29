@@ -101,6 +101,9 @@ Implemented:
   execution
 - UI-callable `agentRuntimeConfirmedProposalRunProvider` FutureProvider entry
   point for running a confirmed FRB proposal request
+- Active-catalog variant
+  `agentRuntimeConfirmedProposalActiveCatalogRunProvider`, so UI callers can
+  use the current domain composition without manually passing catalog JSON
 
 Deferred:
 

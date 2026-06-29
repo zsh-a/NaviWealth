@@ -132,6 +132,9 @@ Current bridge capabilities:
   confirmed-proposal execution.
 - Provide `agentRuntimeConfirmedProposalRunProvider`, a UI-callable
   FutureProvider entry point for a confirmed FRB proposal request.
+- Provide `agentRuntimeConfirmedProposalActiveCatalogRunProvider`, which reads
+  the active Flutter `agentRuntimeCatalogProvider` before invoking the confirmed
+  proposal runner.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process

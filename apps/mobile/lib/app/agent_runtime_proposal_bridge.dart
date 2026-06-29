@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ai/composition/proposal_applier.dart';
 import '../core/ai/composition/proposal_apply_state.dart';
 import '../core/ai/composition/proposal_plan.dart';
+import 'agent_runtime_catalog.dart';
 import 'agent_runtime_native_bridge.dart';
 
 final agentRuntimeProposalBridgeProvider =
@@ -46,6 +47,24 @@ final agentRuntimeConfirmedProposalRunProvider =
       );
     });
 
+final agentRuntimeConfirmedProposalActiveCatalogRunProvider =
+    FutureProvider.family<
+      Map<String, Object?>,
+      AgentRuntimeConfirmedProposalActiveCatalogRunRequest
+    >((ref, request) {
+      final catalog = ref.watch(agentRuntimeCatalogProvider);
+      return ref.watch(
+        agentRuntimeConfirmedProposalRunProvider(
+          AgentRuntimeConfirmedProposalRunRequest(
+            catalog: catalog.toJson(),
+            request: request.request,
+            agentId: request.agentId,
+            maxToolSteps: request.maxToolSteps,
+          ),
+        ).future,
+      );
+    });
+
 class AgentRuntimeConfirmedProposalRunRequest {
   const AgentRuntimeConfirmedProposalRunRequest({
     required this.catalog,
@@ -55,6 +74,18 @@ class AgentRuntimeConfirmedProposalRunRequest {
   });
 
   final Map<String, Object?> catalog;
+  final Map<String, Object?> request;
+  final String agentId;
+  final int? maxToolSteps;
+}
+
+class AgentRuntimeConfirmedProposalActiveCatalogRunRequest {
+  const AgentRuntimeConfirmedProposalActiveCatalogRunRequest({
+    required this.request,
+    required this.agentId,
+    this.maxToolSteps,
+  });
+
   final Map<String, Object?> request;
   final String agentId;
   final int? maxToolSteps;

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_proposal_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
@@ -134,8 +135,8 @@ void main() {
       final applier = _RecordingApplier();
       final runner = AgentRuntimeConfirmedProposalRunner(
         stepRunner: AgentRuntimeNativeStepRunner(
-          bridge: const _TerminalBridge(
-            step: <String, Object?>{
+          bridge: _TerminalBridge(
+            step: const <String, Object?>{
               'status': 'completed',
               'output': <String, Object?>{'content': 'done'},
             },
@@ -197,6 +198,48 @@ void main() {
       expect(applier.plans.single.kind, 'execution_action');
     },
   );
+
+  test(
+    'agentRuntimeConfirmedProposalActiveCatalogRunProvider uses active catalog',
+    () async {
+      final applier = _RecordingApplier(
+        state: const ProposalApplyState(status: ProposalApplyStatus.applied),
+      );
+      final bridge = _TerminalBridge(step: _terminalProposalStep());
+      final container = ProviderContainer(
+        overrides: [
+          agentRuntimeCatalogProvider.overrideWithValue(
+            AgentRuntimeCatalog(
+              generatedAt: DateTime.utc(2026, 6, 29, 3, 0),
+              activeDomains: const <String>['execution'],
+              agents: const <AgentRuntimeAgentSpec>[],
+              tools: const <AgentRuntimeToolSpec>[],
+              proposalKinds: const <AgentRuntimeProposalKindSpec>[],
+              promptBlocks: const <AgentRuntimePromptBlockSpec>[],
+            ),
+          ),
+          agentRuntimeNativeBridgeProvider.overrideWithValue(bridge),
+          agentRuntimeToolHostProvider.overrideWithValue(
+            AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
+          ),
+          proposalApplierProvider.overrideWith((ref) async => applier),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final result = await container.read(
+        agentRuntimeConfirmedProposalActiveCatalogRunProvider(
+          const AgentRuntimeConfirmedProposalActiveCatalogRunRequest(
+            request: <String, Object?>{'input': <String, Object?>{}},
+            agentId: 'execution_review',
+          ),
+        ).future,
+      );
+
+      expect(result['proposal_apply'], containsPair('status', 'applied'));
+      expect(bridge.catalogs.single['active_domains'], ['execution']);
+    },
+  );
 }
 
 Map<String, Object?> _terminalProposalStep() {
@@ -239,9 +282,10 @@ class _RecordingApplier implements ProposalApplier {
 }
 
 class _TerminalBridge implements AgentRuntimeNativeBridge {
-  const _TerminalBridge({required Map<String, Object?> step}) : _step = step;
+  _TerminalBridge({required Map<String, Object?> step}) : _step = step;
 
   final Map<String, Object?> _step;
+  final catalogs = <Map<String, Object?>>[];
 
   @override
   Future<String> protocolVersion() async => 'agent.v1';
@@ -281,6 +325,7 @@ class _TerminalBridge implements AgentRuntimeNativeBridge {
     required Map<String, Object?> request,
     required String agentId,
   }) async {
+    catalogs.add(catalog);
     return _step;
   }
 
