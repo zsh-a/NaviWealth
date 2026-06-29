@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -89,7 +89,7 @@ JournalEntryWithPostings _entry({required String narration, String? payee}) {
 Widget _wrap({
   required JournalEntryWithPostings entry,
   Locale locale = const Locale('en'),
-  AgentRuntimeLlmBridge? llmBridge,
+  ActivityEntryInsightClient? insightClient,
 }) {
   final accounts = {
     'expenses:living': _account(
@@ -106,7 +106,7 @@ Widget _wrap({
   return ProviderScope(
     overrides: [
       aiTouchedAtProvider.overrideWith((ref, key) => Stream.value(null)),
-      agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
+      activityEntryInsightClientProvider.overrideWithValue(insightClient),
     ],
     child: MaterialApp(
       theme: AppTheme.light(),
@@ -185,7 +185,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         entry: _entry(narration: 'Spotify subscription'),
-        llmBridge: _FakeLlmBridge(
+        insightClient: _FakeInsightClient(
           responseText:
               'This looks like a recurring media subscription paid from cash.',
         ),
@@ -214,7 +214,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         entry: _entry(narration: 'Spotify subscription'),
-        llmBridge: _FakeLlmBridge(error: StateError('llm down')),
+        insightClient: _FakeInsightClient(error: StateError('llm down')),
       ),
     );
     await tester.pumpAndSettle();
@@ -241,74 +241,19 @@ void main() {
   });
 }
 
-class _FakeLlmBridge implements AgentRuntimeLlmBridge {
-  _FakeLlmBridge({this.responseText, this.error});
+class _FakeInsightClient implements ActivityEntryInsightClient {
+  _FakeInsightClient({this.responseText, this.error});
 
   final String? responseText;
   final Object? error;
-  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
-  Map<String, Object?> lastMetadata = const <String, Object?>{};
 
   @override
-  Map<String, Object?> buildRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return <String, Object?>{
-      'messages': messages,
-      'metadata': metadata,
-      'max_output_tokens': maxOutputTokens,
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMock({
-    required List<Map<String, Object?>> messages,
-    required String responseText,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return <String, Object?>{'content': responseText};
-  }
-
-  @override
-  Future<Map<String, Object?>> completeProfile({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    lastMessages = messages;
-    lastMetadata = metadata;
+  Future<String?> explain(
+    ActivityEntryInsightRequest request,
+    AppLocalizations l10n,
+  ) async {
     final e = error;
     if (e != null) throw e;
-    return <String, Object?>{
-      'provider': 'mock',
-      'model': 'test-model',
-      'content': responseText ?? '',
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRequest({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return buildRequest(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
+    return responseText;
   }
 }

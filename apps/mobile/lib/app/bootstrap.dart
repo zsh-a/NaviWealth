@@ -26,6 +26,7 @@ import '../core/notifications/providers.dart' as notif_providers;
 import '../core/perf/providers.dart';
 import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
+import '../features/activity/data/activity_entry_insight_client.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/ai_chat/data/runtime_routing_api_client.dart';
 import '../features/auth/data/auth_controller.dart';
@@ -46,6 +47,7 @@ import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import '../features/knowledge/agents/review_agent.dart';
 import '../features/knowledge/agents/routine_due_agent.dart';
+import '../l10n/gen/app_localizations.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
@@ -135,6 +137,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           );
         }
         return const RuntimeRoutingAiChatApiClient();
+      }),
+      activityEntryInsightClientProvider.overrideWith((ref) {
+        final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+        return llmBridge == null
+            ? null
+            : FrbActivityEntryInsightClient(llmBridge: llmBridge);
       }),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
@@ -507,6 +515,40 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   );
 
   return container;
+}
+
+class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
+  const FrbActivityEntryInsightClient({
+    required AgentRuntimeLlmBridge llmBridge,
+  }) : _llmBridge = llmBridge;
+
+  final AgentRuntimeLlmBridge _llmBridge;
+
+  @override
+  Future<String?> explain(
+    ActivityEntryInsightRequest request,
+    AppLocalizations l10n,
+  ) async {
+    final response = await _llmBridge.completeProfile(
+      messages: <Map<String, Object?>>[
+        <String, Object?>{
+          'role': 'system',
+          'content': activityEntryInsightSystem(request.locale),
+        },
+        <String, Object?>{
+          'role': 'user',
+          'content': activityEntryInsightPrompt(request, l10n),
+        },
+      ],
+      maxOutputTokens: 256,
+      metadata: const <String, Object?>{
+        'surface': 'finance_activity_insight',
+        'agent_id': 'finance_activity_insight',
+      },
+    );
+    final body = response['content'];
+    return body is String ? body : null;
+  }
 }
 
 /// Kick off Memory Runtime maintenance without blocking first paint.
