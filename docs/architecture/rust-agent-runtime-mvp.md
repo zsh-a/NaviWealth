@@ -112,12 +112,17 @@ Implemented:
 - Active-catalog variant
   `agentRuntimeConfirmedProposalActiveCatalogRunProvider`, so UI callers can
   use the current domain composition without manually passing catalog JSON
+- Dart-side `AgentRuntimeProfileTurnRunner` and
+  `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB
+  LLM completion with the bounded native FRB step/tool loop and return both the
+  LLM response and terminal native step
 
 Deferred:
 
 - complete embedded Rust runner loop over FRB beyond deterministic step
-  contracts, including production LLM/tool continuation and wiring the
-  confirmed proposal provider into a concrete user-facing surface
+  contracts, promoting the current Dart composition seam into a fuller native
+  runner as the Rust runtime grows, and wiring the confirmed proposal/profile
+  turn providers into a concrete user-facing surface
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`

@@ -142,6 +142,10 @@ Current bridge capabilities:
 - Provide `agentRuntimeConfirmedProposalActiveCatalogRunProvider`, which reads
   the active Flutter `agentRuntimeCatalogProvider` before invoking the confirmed
   proposal runner.
+- Provide `AgentRuntimeProfileTurnRunner` and
+  `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB LLM
+  completion with the bounded native FRB step/tool loop and return both the LLM
+  response and terminal native step.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -157,9 +161,9 @@ Known limitation:
 - The embedded FRB path currently covers deterministic native step contracts
   bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
   active-profile LLM request bridge, profile-backed native LLM completion, and
-  an explicit confirmed-proposal provider. The remaining production work is the
-  full native runner and wiring this provider into a concrete user-facing
-  surface.
+  explicit confirmed-proposal and profile-turn providers. The remaining
+  production work is the full native runner and wiring these providers into a
+  concrete user-facing surface.
 
 ## Current Refactor State
 
