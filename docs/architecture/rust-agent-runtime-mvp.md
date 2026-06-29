@@ -155,7 +155,8 @@ Implemented:
   `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
   `tool_call_*` / `finished` / `error` events into the existing `AiChatEvent`
   vocabulary. Production interactive chat is now routed through this FRB seam
-  from the app composition root when an active FRB LLM profile is available.
+  from the app composition root when an active FRB LLM profile is available;
+  chat traces use routing reason `frb_chat`.
   The runner advertises active-domain tools, executes Dart tool results through
   the JSON-RPC tool host, feeds `tool_result` blocks into bounded continuation
   rounds, pauses terminally after successful `ask_user`, and emits LLM/tool

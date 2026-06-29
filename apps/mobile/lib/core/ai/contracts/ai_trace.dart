@@ -25,6 +25,12 @@ const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 /// paths while preserving the same "no NaviWealth server" disclosure.
 const String kFrbAgentRuntimeProfileRoutingReason = 'frb_agent_runtime_profile';
 
+/// Interactive AI Chat was routed through the app-level FRB chat runner. The
+/// request still uses the user's own provider credentials from the device, but
+/// trace dashboards can now distinguish chat traffic from scheduled/profile
+/// agent runtime traffic.
+const String kFrbChatRoutingReason = 'frb_chat';
+
 /// FRB/native agent runtime executed a tool-plan step loop. Dart may still run
 /// the requested local tool calls, but native owns the step sequencing and
 /// terminal run-state summary for this trace.
@@ -129,8 +135,9 @@ class AiTrace {
 
   /// Short label for which runtime handled the turn — `device_llm_direct`
   /// (see [kDeviceLlmDirectRoutingReason]), `frb_agent_runtime_profile`
-  /// (see [kFrbAgentRuntimeProfileRoutingReason]), `frb_native_tool_plan`
-  /// (see [kFrbNativeToolPlanRoutingReason]), `device_vision_direct` (see
+  /// (see [kFrbAgentRuntimeProfileRoutingReason]), `frb_chat`
+  /// (see [kFrbChatRoutingReason]), `frb_native_tool_plan` (see
+  /// [kFrbNativeToolPlanRoutingReason]), `device_vision_direct` (see
   /// [kDeviceVisionDirectRoutingReason]), or `device_unavailable`.
   /// Free-form for now.
   final String routingReason;

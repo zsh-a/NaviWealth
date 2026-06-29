@@ -94,7 +94,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(
       backend: Backend.device,
       budgetTier: pack.budget.tier,
       routingReason: deviceUsable
-          ? kDeviceLlmDirectRoutingReason
+          ? kFrbChatRoutingReason
           : 'device_unavailable',
       totalDurationMs: 0,
     );
