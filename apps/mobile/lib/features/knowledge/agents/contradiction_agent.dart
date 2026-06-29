@@ -26,12 +26,16 @@
 ///   deterministic.
 library;
 
+import '../../../app/agent_runtime_catalog.dart';
+import '../../../app/agent_runtime_native_bridge.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/sync/hlc.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../data/contradiction_judge.dart';
 import '../data/knowledge_object_memory_indexers.dart'
     show kKnowledgeDecisionMemorySource, kKnowledgeNoteMemorySource;
@@ -57,13 +61,17 @@ const int _kCandidatesPerPrinciple = 4;
 const double _kCandidateCosineFloor = 0.55;
 
 class ContradictionAgent implements Agent {
-  const ContradictionAgent({this.judgeOverride});
+  const ContradictionAgent({
+    this.judgeOverride,
+    this.sourceReader = const RepositoryContradictionSourceReader(),
+  });
 
   /// Test seam — when null the agent resolves the judge from
   /// [contradictionJudgeProvider] per run (the production path, same
   /// constraint as [InboxTriageAgent]: the agent list is sync-constructed
   /// but the LLM client is async).
   final ContradictionJudge? judgeOverride;
+  final ContradictionSourceReader sourceReader;
 
   @override
   String get id => kKnowledgeContradictionAgentId;
@@ -81,22 +89,15 @@ class ContradictionAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
     final ContradictionJudge activeJudge =
         judgeOverride ?? await ctx.ref.read(contradictionJudgeProvider.future);
 
-    final decisions = await repo.listDecisions(
-      ownerUserId: ownerUserId,
-      limit: 200,
-    );
-    final principles = await repo.listActivePrinciples(
-      ownerUserId: ownerUserId,
-    );
-    final openAssumptions = await repo.listOpenAssumptions(
-      ownerUserId: ownerUserId,
-    );
+    final source = await sourceReader.read(ctx);
+    final decisions = source.decisions;
+    final principles = source.principles;
+    final openAssumptions = source.openAssumptions;
 
     final issues = <_Contradiction>[];
 
@@ -320,6 +321,297 @@ class ContradictionAgent implements Agent {
     final union = (<String>{...a, ...b}).length;
     return union == 0 ? 0 : inter / union;
   }
+}
+
+abstract class ContradictionSourceReader {
+  Future<ContradictionSourceSnapshot> read(AgentContext ctx);
+}
+
+class RepositoryContradictionSourceReader implements ContradictionSourceReader {
+  const RepositoryContradictionSourceReader();
+
+  @override
+  Future<ContradictionSourceSnapshot> read(AgentContext ctx) async {
+    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+    final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final decisions = await repo.listDecisions(
+      ownerUserId: ownerUserId,
+      limit: 200,
+    );
+    final principles = await repo.listActivePrinciples(
+      ownerUserId: ownerUserId,
+    );
+    final openAssumptions = await repo.listOpenAssumptions(
+      ownerUserId: ownerUserId,
+    );
+    return ContradictionSourceSnapshot(
+      decisions: decisions,
+      principles: principles,
+      openAssumptions: openAssumptions,
+    );
+  }
+}
+
+class FrbContradictionSourceReader implements ContradictionSourceReader {
+  const FrbContradictionSourceReader({
+    required AgentRuntimeNativeStepRunner stepRunner,
+    required AgentRuntimeCatalog catalog,
+    this.fallback = const RepositoryContradictionSourceReader(),
+    this.recordTrace,
+  }) : _stepRunner = stepRunner,
+       _catalog = catalog;
+
+  final AgentRuntimeNativeStepRunner _stepRunner;
+  final AgentRuntimeCatalog _catalog;
+  final ContradictionSourceReader fallback;
+  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
+  recordTrace;
+
+  @override
+  Future<ContradictionSourceSnapshot> read(AgentContext ctx) async {
+    try {
+      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
+        catalog: _catalog.toJson(),
+        request: <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'input': <String, Object?>{
+            'tool_plan': <Object?>[
+              const <String, Object?>{
+                'name': 'list_triage_decisions',
+                'input': <String, Object?>{'limit': 200},
+              },
+              const <String, Object?>{
+                'name': 'list_active_principles',
+                'input': <String, Object?>{'limit': 200},
+              },
+              const <String, Object?>{
+                'name': 'list_open_assumptions',
+                'input': <String, Object?>{'limit': 200},
+              },
+            ],
+          },
+          'trigger': 'manual',
+          'metadata': const <String, Object?>{
+            'surface': 'knowledge_contradiction',
+            'agent_id': kKnowledgeContradictionAgentId,
+          },
+        },
+        agentId: kKnowledgeContradictionAgentId,
+        maxToolSteps: 3,
+      );
+      await _recordTrace(stepRun);
+      final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+      final snapshot = contradictionSourceSnapshotFromTerminalStep(
+        stepRun.terminalStep,
+        ownerUserId: ownerUserId,
+      );
+      if (snapshot == null) return fallback.read(ctx);
+      return snapshot;
+    } on Object {
+      return fallback.read(ctx);
+    }
+  }
+
+  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
+    final recorder = recordTrace;
+    if (recorder == null) return;
+    try {
+      await recorder(stepRun);
+    } on Object {
+      // Best-effort diagnostics; never fail the production agent.
+    }
+  }
+}
+
+class ContradictionSourceSnapshot {
+  const ContradictionSourceSnapshot({
+    required this.decisions,
+    required this.principles,
+    required this.openAssumptions,
+  });
+
+  final List<KnowledgeDecision> decisions;
+  final List<KnowledgePrinciple> principles;
+  final List<KnowledgeAssumption> openAssumptions;
+}
+
+ContradictionSourceSnapshot? contradictionSourceSnapshotFromTerminalStep(
+  Map<String, Object?> step, {
+  required String ownerUserId,
+}) {
+  final output = _asObject(step['output']);
+  if (output == null) return null;
+  final byTool = _toolResultsByName(output);
+  final decisions = contradictionDecisionsFromToolResult(
+    byTool['list_triage_decisions'],
+    ownerUserId: ownerUserId,
+  );
+  final principles = contradictionPrinciplesFromToolResult(
+    byTool['list_active_principles'],
+    ownerUserId: ownerUserId,
+  );
+  final assumptions = contradictionAssumptionsFromToolResult(
+    byTool['list_open_assumptions'],
+    ownerUserId: ownerUserId,
+  );
+  if (decisions == null || principles == null || assumptions == null) {
+    return null;
+  }
+  return ContradictionSourceSnapshot(
+    decisions: decisions,
+    principles: principles,
+    openAssumptions: assumptions,
+  );
+}
+
+List<KnowledgeDecision>? contradictionDecisionsFromToolResult(
+  Map<String, Object?>? result, {
+  required String ownerUserId,
+}) {
+  final rawDecisions = result?['decisions'];
+  if (rawDecisions is! List) return null;
+  final out = <KnowledgeDecision>[];
+  for (final raw in rawDecisions) {
+    final decision = _asObject(raw);
+    final id = decision?['id'];
+    final question = decision?['question'];
+    final selected = decision?['selected'];
+    final status = decision?['status'];
+    final decidedAt = DateTime.tryParse(
+      (decision?['decided_at'] as String?) ?? '',
+    );
+    if (id is! String || question is! String) return null;
+    out.add(
+      KnowledgeDecision(
+        id: id,
+        question: question,
+        options: const <DecisionOption>[],
+        selectedLabel: selected is String ? selected : '',
+        rationaleMd: '',
+        principleIds: _stringList(decision?['principle_ids']),
+        assumptionIds: _stringList(decision?['assumption_ids']),
+        status: status is String
+            ? DecisionStatus.parse(status)
+            : DecisionStatus.active,
+        decidedAt:
+            decidedAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        sync: _syntheticSync(ownerUserId),
+      ),
+    );
+  }
+  return out;
+}
+
+List<KnowledgePrinciple>? contradictionPrinciplesFromToolResult(
+  Map<String, Object?>? result, {
+  required String ownerUserId,
+}) {
+  final rawPrinciples = result?['principles'];
+  if (rawPrinciples is! List) return null;
+  final out = <KnowledgePrinciple>[];
+  for (final raw in rawPrinciples) {
+    final principle = _asObject(raw);
+    final id = principle?['id'];
+    final statement = principle?['statement'];
+    final declaredAt = DateTime.tryParse(
+      (principle?['declared_at'] as String?) ?? '',
+    );
+    if (id is! String || statement is! String) return null;
+    out.add(
+      KnowledgePrinciple(
+        id: id,
+        statement: statement,
+        rationaleMd: (principle?['rationale_md'] as String?) ?? '',
+        scope: (principle?['scope'] as String?) ?? '*',
+        status: PrincipleStatus.active,
+        declaredAt:
+            declaredAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        sync: _syntheticSync(ownerUserId),
+      ),
+    );
+  }
+  return out;
+}
+
+List<KnowledgeAssumption>? contradictionAssumptionsFromToolResult(
+  Map<String, Object?>? result, {
+  required String ownerUserId,
+}) {
+  final rawAssumptions = result?['assumptions'];
+  if (rawAssumptions is! List) return null;
+  final out = <KnowledgeAssumption>[];
+  for (final raw in rawAssumptions) {
+    final assumption = _asObject(raw);
+    final id = assumption?['id'];
+    final statement = assumption?['statement'];
+    final confidence = assumption?['confidence'];
+    final lastVerifiedAt = DateTime.tryParse(
+      (assumption?['last_verified_at'] as String?) ?? '',
+    );
+    if (id is! String || statement is! String) return null;
+    out.add(
+      KnowledgeAssumption(
+        id: id,
+        statement: statement,
+        confidence: confidence is num ? confidence.toDouble() : 0.7,
+        scope: (assumption?['scope'] as String?) ?? '*',
+        evidenceIds: const <String>[],
+        status: AssumptionStatus.active,
+        declaredAt:
+            lastVerifiedAt ??
+            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        lastVerifiedAt: lastVerifiedAt,
+        sync: _syntheticSync(ownerUserId),
+      ),
+    );
+  }
+  return out;
+}
+
+Map<String, Map<String, Object?>> _toolResultsByName(
+  Map<String, Object?> output,
+) {
+  final byTool = <String, Map<String, Object?>>{};
+  final toolResults = output['tool_results'];
+  if (toolResults is List) {
+    for (final raw in toolResults) {
+      final item = _asObject(raw);
+      final call = _asObject(item?['tool_call']);
+      final response = _asObject(item?['tool_response']);
+      final name = call?['name'];
+      final result = _asObject(response?['result']);
+      if (name is String && result != null) byTool[name] = result;
+    }
+  }
+  final singleCall = _asObject(output['tool_call']);
+  final singleName = singleCall?['name'];
+  final singleResult = _asObject(output['tool_result']);
+  if (singleName is String && singleResult != null) {
+    byTool.putIfAbsent(singleName, () => singleResult);
+  }
+  return byTool;
+}
+
+Map<String, Object?>? _asObject(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return null;
+}
+
+List<String> _stringList(Object? value) {
+  if (value is! List) return const <String>[];
+  return value.whereType<String>().toList(growable: false);
+}
+
+SyncMeta _syntheticSync(String ownerUserId) {
+  return SyncMeta(
+    ownerUserId: ownerUserId,
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    updatedByDevice: 'frb-agent-runtime',
+    hlc: Hlc.zero('frb-agent-runtime'),
+  );
 }
 
 class _Contradiction {

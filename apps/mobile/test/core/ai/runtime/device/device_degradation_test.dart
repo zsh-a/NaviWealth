@@ -277,6 +277,7 @@ void main() {
         'get_subscription_changes',
         'get_transfer_links',
         'get_wheel_lifecycle',
+        'list_active_principles',
         'list_blocked_actions',
         'list_due_reviews',
         'list_due_routines',

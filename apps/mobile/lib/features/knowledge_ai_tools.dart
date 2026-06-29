@@ -12,6 +12,7 @@ import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/ai/runtime/device/tools/registered_device_tool.dart';
 import 'knowledge/ai_tools/find_similar_knowledge_tool.dart';
+import 'knowledge/ai_tools/list_active_principles_tool.dart';
 import 'knowledge/ai_tools/list_due_reviews_tool.dart';
 import 'knowledge/ai_tools/list_due_routines_tool.dart';
 import 'knowledge/ai_tools/list_inbox_triage_candidates_tool.dart';
@@ -43,6 +44,7 @@ const DeviceToolRegistrationBuilder _knowledgeTool =
 final List<RegisteredDeviceTool>
 kKnowledgeToolRegistrations = <RegisteredDeviceTool>[
   _knowledgeTool.read(const RecallDecisionTool()),
+  _knowledgeTool.read(const ListActivePrinciplesTool()),
   _knowledgeTool.read(const ListOpenAssumptionsTool()),
   _knowledgeTool.read(const ListDueReviewsTool()),
   _knowledgeTool.read(const ListDueRoutinesTool()),

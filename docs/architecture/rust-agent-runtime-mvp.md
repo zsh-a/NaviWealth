@@ -255,6 +255,11 @@ Implemented:
   which requests `list_inbox_triage_candidates` and `list_triage_decisions`
   through a two-step FRB `tool_plan`, then keeps classification and local
   side-table proposal persistence in Dart
+- Additional KnowledgeOS production agent migration: `ContradictionAgent` now
+  reads decisions, active principles, and open assumptions via
+  `FrbContradictionSourceReader`, which requests `list_triage_decisions`,
+  `list_active_principles`, and `list_open_assumptions` through a three-step
+  FRB `tool_plan`, then keeps memory recall and contradiction judging in Dart
 
 Deferred:
 

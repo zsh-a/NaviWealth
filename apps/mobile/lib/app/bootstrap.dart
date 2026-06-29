@@ -45,6 +45,7 @@ import '../features/health/agents/weekly_summary_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
 import '../features/ingest/data/ingest_llm_client.dart';
 import '../features/knowledge/agents/assumption_agent.dart';
+import '../features/knowledge/agents/contradiction_agent.dart';
 import '../features/knowledge/agents/inbox_triage_agent.dart';
 import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
@@ -386,6 +387,27 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
                     stepRun: stepRun,
                     domain: 'knowledge',
                     surface: 'knowledge_inbox_triage',
+                  );
+            },
+          ),
+        );
+      }),
+      // ContradictionAgent still owns memory recall and judge policy in Dart,
+      // but the source-of-truth KnowledgeOS rows now enter through the FRB
+      // native `tool_plan` loop.
+      knowledge_agent_providers.contradictionAgentProvider.overrideWith((ref) {
+        return ContradictionAgent(
+          sourceReader: FrbContradictionSourceReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kKnowledgeContradictionAgentId,
+                    stepRun: stepRun,
+                    domain: 'knowledge',
+                    surface: 'knowledge_contradiction',
                   );
             },
           ),

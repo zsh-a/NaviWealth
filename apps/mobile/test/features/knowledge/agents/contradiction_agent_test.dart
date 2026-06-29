@@ -16,11 +16,16 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart'
     show memoryRuntimeProvider;
+import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -391,6 +396,76 @@ void main() {
     expect(result.summary, contains('No contradictions'));
   });
 
+  group('FrbContradictionSourceReader', () {
+    test('reads source rows through a three-step FRB tool plan', () async {
+      final dispatcher = _ContradictionDispatcher();
+      final bridge = _ToolPlanBridge();
+      final traces = <AgentRuntimeNativeStepRunResult>[];
+      final reader = FrbContradictionSourceReader(
+        stepRunner: AgentRuntimeNativeStepRunner(
+          bridge: bridge,
+          toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+        ),
+        catalog: _catalog(),
+        recordTrace: (stepRun) async => traces.add(stepRun),
+      );
+
+      final snapshot = await reader.read(_context());
+
+      expect(snapshot.decisions.single.assumptionIds, <String>['a-frb']);
+      expect(snapshot.principles.single.id, 'p-frb');
+      expect(snapshot.openAssumptions.single.id, 'a-open');
+      expect(dispatcher.calls.map((call) => call.name), <String>[
+        'list_triage_decisions',
+        'list_active_principles',
+        'list_open_assumptions',
+      ]);
+      expect(
+        bridge.startRequests.single.agentId,
+        kKnowledgeContradictionAgentId,
+      );
+      expect(
+        bridge.startRequests.single.request['metadata'],
+        containsPair('surface', 'knowledge_contradiction'),
+      );
+      expect(traces.single.terminalStep['status'], 'completed');
+      expect(traces.single.dispatchedToolCount, 3);
+    });
+
+    test('falls back when FRB source read fails', () async {
+      final fallback = _FallbackSourceReader(
+        ContradictionSourceSnapshot(
+          decisions: <KnowledgeDecision>[
+            _decision('fallback-decision', question: 'Fallback?'),
+          ],
+          principles: <KnowledgePrinciple>[
+            _principle('fallback-principle', 'Fallback principle'),
+          ],
+          openAssumptions: <KnowledgeAssumption>[
+            _assumption('fallback-assumption', 'Fallback assumption'),
+          ],
+        ),
+      );
+      final reader = FrbContradictionSourceReader(
+        stepRunner: AgentRuntimeNativeStepRunner(
+          bridge: _FailingBridge(),
+          toolHost: AgentRuntimeToolHost(
+            dispatcher: _ContradictionDispatcher(),
+          ),
+        ),
+        catalog: _catalog(),
+        fallback: fallback,
+      );
+
+      final snapshot = await reader.read(_context());
+
+      expect(snapshot.decisions.single.id, 'fallback-decision');
+      expect(snapshot.principles.single.id, 'fallback-principle');
+      expect(snapshot.openAssumptions.single.id, 'fallback-assumption');
+      expect(fallback.calls, 1);
+    });
+  });
+
   group('fallback / parity', () {
     test(
       'HeuristicContradictionJudge: marker token -> contradiction',
@@ -516,6 +591,287 @@ void main() {
       },
     );
   });
+}
+
+AgentContext _context() {
+  final container = ProviderContainer(
+    overrides: [currentUserIdProvider.overrideWithValue(() async => _owner)],
+  );
+  addTearDown(container.dispose);
+  final ref = container.read(_refProvider);
+  return AgentContext(ref: ref, now: _now);
+}
+
+final _refProvider = Provider<Ref>((ref) => ref);
+
+AgentRuntimeCatalog _catalog() {
+  return AgentRuntimeCatalog(
+    generatedAt: _now,
+    activeDomains: const <String>['knowledge'],
+    agents: const <AgentRuntimeAgentSpec>[
+      AgentRuntimeAgentSpec(
+        id: kKnowledgeContradictionAgentId,
+        name: 'Contradiction Check',
+        version: '0.1.0',
+        schedule: AgentRuntimeScheduleSpec.interval(everySeconds: 21600),
+        capabilities: <String>['scheduled_agent'],
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+    ],
+    tools: const <AgentRuntimeToolSpec>[
+      AgentRuntimeToolSpec(
+        name: 'list_triage_decisions',
+        description: 'List triage decisions',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+      AgentRuntimeToolSpec(
+        name: 'list_active_principles',
+        description: 'List active principles',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+      AgentRuntimeToolSpec(
+        name: 'list_open_assumptions',
+        description: 'List open assumptions',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+    ],
+    proposalKinds: const <AgentRuntimeProposalKindSpec>[],
+    promptBlocks: const <AgentRuntimePromptBlockSpec>[],
+  );
+}
+
+class _ContradictionDispatcher implements DeviceToolDispatcher {
+  final calls = <_ToolCall>[];
+
+  @override
+  Future<Object?> dispatch(
+    DeviceToolSession session,
+    String name,
+    Object? input,
+  ) async {
+    calls.add(_ToolCall(name, input));
+    return switch (name) {
+      'list_triage_decisions' => <String, Object?>{
+        'decisions': <Object?>[
+          <String, Object?>{
+            'id': 'd-frb',
+            'question': 'Should I hold BOXX?',
+            'selected': 'yes',
+            'status': 'active',
+            'principle_ids': const <String>['p-frb'],
+            'assumption_ids': const <String>['a-frb'],
+            'decided_at': _now.toIso8601String(),
+          },
+        ],
+      },
+      'list_active_principles' => <String, Object?>{
+        'principles': <Object?>[
+          <String, Object?>{
+            'id': 'p-frb',
+            'statement': '长期持有',
+            'rationale_md': '',
+            'scope': '*',
+            'declared_at': _now.toIso8601String(),
+          },
+        ],
+      },
+      'list_open_assumptions' => <String, Object?>{
+        'assumptions': <Object?>[
+          <String, Object?>{
+            'id': 'a-open',
+            'statement': 'Open assumption',
+            'confidence': 0.7,
+            'scope': '*',
+            'last_verified_at': _now.toIso8601String(),
+          },
+        ],
+      },
+      _ => throw StateError('unexpected tool $name'),
+    };
+  }
+}
+
+class _ToolPlanBridge implements AgentRuntimeNativeBridge {
+  final startRequests = <_StartRequest>[];
+  var _plan = const <Object?>[];
+  var _next = 0;
+  final _responses = <Map<String, Object?>>[];
+
+  @override
+  Future<String> protocolVersion() async => 'agent.v1';
+
+  @override
+  Future<String> catalogVersion() async => 'agent_catalog.v1';
+
+  @override
+  Future<Map<String, Object?>> catalogSummary(
+    Map<String, Object?> catalog,
+  ) async {
+    return catalog;
+  }
+
+  @override
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    startRequests.add(_StartRequest(request: request, agentId: agentId));
+    final input = request['input']! as Map<String, Object?>;
+    _plan = input['tool_plan']! as List<Object?>;
+    _next = 0;
+    _responses.clear();
+    return _toolCallStep(agentId);
+  }
+
+  @override
+  Future<Map<String, Object?>> continueRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> previousStep,
+    required Map<String, Object?> toolResponse,
+    required String agentId,
+  }) async {
+    _responses.add(<String, Object?>{
+      'tool_call': previousStep['tool_call'],
+      'tool_response': toolResponse,
+    });
+    _next += 1;
+    if (_next < _plan.length) return _toolCallStep(agentId);
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': previousStep['run_id'],
+      'agent_id': agentId,
+      'status': 'completed',
+      'output': <String, Object?>{
+        'mode': 'frb_tool_loop',
+        'tool_results': _responses
+            .map(
+              (response) => <String, Object?>{
+                'tool_call': response['tool_call'],
+                'tool_response': response['tool_response'],
+              },
+            )
+            .toList(growable: false),
+      },
+    };
+  }
+
+  Map<String, Object?> _toolCallStep(String agentId) {
+    final item = _plan[_next]! as Map<String, Object?>;
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': 'run_1',
+      'agent_id': agentId,
+      'status': 'tool_call_requested',
+      'tool_call': <String, Object?>{
+        'tool_call_id': 'call_${_next + 1}',
+        'name': item['name'],
+        'input': item['input'],
+      },
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> completeMockLlm({
+    required Map<String, Object?> request,
+    required String responseText,
+  }) async {
+    return const <String, Object?>{};
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfileLlm({
+    required Map<String, Object?> request,
+  }) async {
+    return const <String, Object?>{};
+  }
+
+  @override
+  Future<Map<String, Object?>> startProfileTurnStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+  }) async {
+    return const <String, Object?>{};
+  }
+
+  @override
+  Future<Map<String, Object?>> validateLlmRequest(
+    Map<String, Object?> request,
+  ) async {
+    return request;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateLlmResponse(
+    Map<String, Object?> response,
+  ) async {
+    return response;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateRunRequest(
+    Map<String, Object?> request,
+  ) async {
+    return request;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateToolSpec(
+    Map<String, Object?> tool,
+  ) async {
+    return tool;
+  }
+
+  @override
+  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
+    return trace;
+  }
+}
+
+class _FailingBridge extends _ToolPlanBridge {
+  @override
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    throw StateError('native unavailable');
+  }
+}
+
+class _FallbackSourceReader implements ContradictionSourceReader {
+  _FallbackSourceReader(this.result);
+
+  final ContradictionSourceSnapshot result;
+  var calls = 0;
+
+  @override
+  Future<ContradictionSourceSnapshot> read(AgentContext ctx) async {
+    calls += 1;
+    return result;
+  }
+}
+
+class _StartRequest {
+  const _StartRequest({required this.request, required this.agentId});
+
+  final Map<String, Object?> request;
+  final String agentId;
+}
+
+class _ToolCall {
+  const _ToolCall(this.name, this.input);
+
+  final String name;
+  final Object? input;
 }
 
 class _FakeLlmBridge implements KnowledgeLlmProfileClient {

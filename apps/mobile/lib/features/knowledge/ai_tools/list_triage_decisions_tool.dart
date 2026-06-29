@@ -19,7 +19,7 @@ class ListTriageDecisionsTool implements DeviceTool {
   @override
   String get description =>
       '列出 InboxTriageAgent 关联候选用的最近 KnowledgeOS decisions。'
-      '返回 id / question / selected / status / decided_at。';
+      '返回 id / question / selected / status / principle_ids / assumption_ids / decided_at。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
@@ -59,6 +59,8 @@ class ListTriageDecisionsTool implements DeviceTool {
       'question': decision.question,
       'selected': decision.selectedLabel,
       'status': decision.status.wire,
+      'principle_ids': decision.principleIds,
+      'assumption_ids': decision.assumptionIds,
       'decided_at': decision.decidedAt.toUtc().toIso8601String(),
     };
   }
