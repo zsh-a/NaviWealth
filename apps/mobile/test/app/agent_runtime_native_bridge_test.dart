@@ -188,7 +188,12 @@ void main() {
           'protocol_version': 'agent.v1',
           'run_id': 'run_1',
           'agent_id': 'execution_review',
+          'step_index': 0,
           'status': 'tool_call_requested',
+          'trace_event': <String, Object?>{
+            'kind': 'agent_runtime_step',
+            'step_index': 0,
+          },
           'tool_call': <String, Object?>{
             'tool_call_id': 'call_1',
             'name': 'read_first',
@@ -211,7 +216,12 @@ void main() {
             'protocol_version': 'agent.v1',
             'run_id': 'run_1',
             'agent_id': 'execution_review',
+            'step_index': 1,
             'status': 'completed',
+            'trace_event': <String, Object?>{
+              'kind': 'agent_runtime_step',
+              'step_index': 1,
+            },
             'output': <String, Object?>{'done': true},
           },
         ],
@@ -251,7 +261,12 @@ void main() {
           'protocol_version': 'agent.v1',
           'run_id': 'run_1',
           'agent_id': 'execution_review',
+          'step_index': 0,
           'status': 'tool_call_requested',
+          'trace_event': <String, Object?>{
+            'kind': 'agent_runtime_step',
+            'step_index': 0,
+          },
           'tool_call': <String, Object?>{
             'tool_call_id': 'call_1',
             'name': 'read_first',
@@ -263,7 +278,12 @@ void main() {
             'protocol_version': 'agent.v1',
             'run_id': 'run_1',
             'agent_id': 'execution_review',
+            'step_index': 1,
             'status': 'completed',
+            'trace_event': <String, Object?>{
+              'kind': 'agent_runtime_step',
+              'step_index': 1,
+            },
             'output': <String, Object?>{'done': true},
           },
         ],
@@ -287,6 +307,14 @@ void main() {
         'completed',
       ]);
       expect(result.toolResponses.single, containsPair('id', 'call_1'));
+      expect(result.nativeTraceEvents.map((event) => event['step_index']), [
+        0,
+        1,
+      ]);
+      expect(
+        result.toJson(),
+        containsPair('native_trace_events', result.nativeTraceEvents),
+      );
       expect(result.toJson(), containsPair('dispatched_tool_count', 1));
     },
   );

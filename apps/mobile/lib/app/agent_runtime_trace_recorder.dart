@@ -120,6 +120,7 @@ class AgentRuntimeTraceRecorder {
         'terminal_status': _string(step['status']),
         'dispatched_tool_count': stepRun.dispatchedToolCount,
         'budget_exhausted': stepRun.budgetExhausted,
+        'native_trace_event_count': stepRun.nativeTraceEvents.length,
       });
 
     final parentId = llmResponse == null ? kTurnSpanId : 'llm:profile';

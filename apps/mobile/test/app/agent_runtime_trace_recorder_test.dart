@@ -87,6 +87,9 @@ void main() {
           'status': 'completed',
         },
         dispatchedToolCount: 1,
+        nativeTraceEvents: <Map<String, Object?>>[
+          <String, Object?>{'kind': 'agent_runtime_step', 'step_index': 3},
+        ],
         steps: <Map<String, Object?>>[
           <String, Object?>{
             'run_id': 'run_2',
@@ -124,6 +127,10 @@ void main() {
     expect(
       trace.spans.first.attributes,
       containsPair('surface', 'knowledge_routine_due'),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('native_trace_event_count', 1),
     );
   });
 }

@@ -483,6 +483,7 @@ class AgentRuntimeNativeStepRunner {
           terminalStep: step,
           steps: steps,
           toolResponses: toolResponses,
+          nativeTraceEvents: _nativeTraceEvents(steps),
           dispatchedToolCount: dispatched,
           budgetExhausted: budgetExhausted,
         );
@@ -504,6 +505,7 @@ class AgentRuntimeNativeStepRunner {
       terminalStep: step,
       steps: steps,
       toolResponses: toolResponses,
+      nativeTraceEvents: _nativeTraceEvents(steps),
       dispatchedToolCount: dispatched,
       budgetExhausted: budgetExhausted,
     );
@@ -538,6 +540,7 @@ class AgentRuntimeNativeStepRunResult {
     required this.terminalStep,
     this.steps = const <Map<String, Object?>>[],
     this.toolResponses = const <Map<String, Object?>>[],
+    this.nativeTraceEvents = const <Map<String, Object?>>[],
     this.dispatchedToolCount = 0,
     this.budgetExhausted = false,
   });
@@ -545,6 +548,7 @@ class AgentRuntimeNativeStepRunResult {
   final Map<String, Object?> terminalStep;
   final List<Map<String, Object?>> steps;
   final List<Map<String, Object?>> toolResponses;
+  final List<Map<String, Object?>> nativeTraceEvents;
   final int dispatchedToolCount;
   final bool budgetExhausted;
 
@@ -552,9 +556,16 @@ class AgentRuntimeNativeStepRunResult {
     'terminal_step': terminalStep,
     'steps': steps,
     'tool_responses': toolResponses,
+    'native_trace_events': nativeTraceEvents,
     'dispatched_tool_count': dispatchedToolCount,
     'budget_exhausted': budgetExhausted,
   };
+}
+
+List<Map<String, Object?>> _nativeTraceEvents(
+  Iterable<Map<String, Object?>> steps,
+) {
+  return [for (final step in steps) ?_objectOrNull(step['trace_event'])];
 }
 
 Map<String, Object?> _toolBudgetExhaustedStep(
@@ -580,6 +591,14 @@ Map<String, Object?> _decodeObject(String json) {
     );
   }
   return decoded;
+}
+
+Map<String, Object?>? _objectOrNull(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return null;
 }
 
 Map<String, Object?> _expectObject(Object? value, String field) {
