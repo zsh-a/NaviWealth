@@ -199,10 +199,43 @@ class FrbChatRunner implements DeviceChatRunner {
           case 'tool_call_start':
             final id = _string(event['tool_call_id']);
             final name = _string(event['tool_name']);
+            if (id.isEmpty || name.isEmpty) {
+              yield _invalidStreamEventSpan(
+                round: round,
+                roundId: roundId,
+                startedAt: roundStart,
+                state: state,
+                requestedModel: model,
+                message:
+                    'FRB LLM tool_call_start event requires tool_call_id and tool_name',
+              );
+              yield const ErrorEvent(
+                'FRB LLM tool_call_start event requires tool_call_id and tool_name',
+                code: 'frb_chat_event_invalid',
+              );
+              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+              return;
+            }
             state.startToolCall(id: id, name: name);
             yield ToolCallStartEvent(id: id, name: name);
           case 'tool_call_delta':
             final id = _string(event['tool_call_id']);
+            if (id.isEmpty) {
+              yield _invalidStreamEventSpan(
+                round: round,
+                roundId: roundId,
+                startedAt: roundStart,
+                state: state,
+                requestedModel: model,
+                message: 'FRB LLM tool_call_delta event requires tool_call_id',
+              );
+              yield const ErrorEvent(
+                'FRB LLM tool_call_delta event requires tool_call_id',
+                code: 'frb_chat_event_invalid',
+              );
+              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+              return;
+            }
             final partialInputJson = _string(event['partial_input_json']);
             state.appendToolInput(id: id, partialInputJson: partialInputJson);
             yield ToolCallDeltaEvent(
@@ -212,22 +245,36 @@ class FrbChatRunner implements DeviceChatRunner {
           case 'tool_call_end':
             final id = _string(event['tool_call_id']);
             final name = _string(event['tool_name']);
+            if (id.isEmpty || name.isEmpty) {
+              yield _invalidStreamEventSpan(
+                round: round,
+                roundId: roundId,
+                startedAt: roundStart,
+                state: state,
+                requestedModel: model,
+                message:
+                    'FRB LLM tool_call_end event requires tool_call_id and tool_name',
+              );
+              yield const ErrorEvent(
+                'FRB LLM tool_call_end event requires tool_call_id and tool_name',
+                code: 'frb_chat_event_invalid',
+              );
+              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+              return;
+            }
             final input = _toolInput(event['tool_input']);
             state.finishToolCall(id: id, name: name, input: input);
             yield ToolCallEvent(id: id, name: name, input: input);
           case 'finished':
             final response = _objectOrNull(event['response']);
             if (response == null) {
-              yield _llmSpan(
+              yield _invalidStreamEventSpan(
                 round: round,
                 roundId: roundId,
                 startedAt: roundStart,
                 state: state,
                 requestedModel: model,
-                status: AiSpanStatus.error,
-                errorCode: 'frb_chat_event_invalid',
-                errorMessage:
-                    'FRB LLM finished event response is not an object',
+                message: 'FRB LLM finished event response is not an object',
               );
               yield const ErrorEvent(
                 'FRB LLM finished event response is not an object',
@@ -401,6 +448,26 @@ class FrbChatRunner implements DeviceChatRunner {
     );
     yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
   }
+}
+
+SpanEvent _invalidStreamEventSpan({
+  required int round,
+  required String roundId,
+  required DateTime startedAt,
+  required _FrbStreamRoundState state,
+  required String? requestedModel,
+  required String message,
+}) {
+  return _llmSpan(
+    round: round,
+    roundId: roundId,
+    startedAt: startedAt,
+    state: state,
+    requestedModel: requestedModel,
+    status: AiSpanStatus.error,
+    errorCode: 'frb_chat_event_invalid',
+    errorMessage: message,
+  );
 }
 
 Stream<Map<String, Object?>> _cancelableFrbStream(

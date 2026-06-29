@@ -213,7 +213,8 @@ Implemented:
   rounds, pauses terminally after successful `ask_user`, and emits LLM/tool
   trace spans plus cancellation spans for streaming and non-streaming FRB
   fallback completions. The chat runner rejects malformed `finished.response`
-  stream events instead of treating them as empty completions. OpenAI-compatible and Anthropic
+  stream events and tool-call stream events missing `tool_call_id` / `tool_name`
+  instead of treating them as empty completions or unnamed tool calls. OpenAI-compatible and Anthropic
   text/usage/tool/reasoning SSE are now provider-real in `agent-llm`.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the

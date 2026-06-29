@@ -419,6 +419,65 @@ void main() {
     expect(done.rounds, 1);
   });
 
+  test('rejects malformed FRB tool call stream events', () async {
+    Future<void> expectInvalidToolEvent({
+      required List<String> events,
+      required String expectedMessage,
+    }) async {
+      var toolHostCalls = 0;
+      final runner = FrbChatRunner(
+        llmBridge: _FakeLlmBridge(),
+        streamBridge: _streamBridge(_FakeLlmBridge(), events: events),
+        toolLineHandler: (line) async {
+          toolHostCalls += 1;
+          return jsonEncode(const <String, Object?>{'result': 'unexpected'});
+        },
+      );
+
+      final chatEvents = await runner
+          .run(
+            messages: const <WireMessage>[
+              WireMessage(role: 'user', content: 'Hello'),
+            ],
+          )
+          .toList();
+
+      expect(toolHostCalls, 0);
+      expect(chatEvents.whereType<ToolCallEvent>(), isEmpty);
+      final span = chatEvents.whereType<SpanEvent>().single;
+      expect(span.status, AiSpanStatus.error);
+      expect(span.errorCode, 'frb_chat_event_invalid');
+      final error = chatEvents.whereType<ErrorEvent>().single;
+      expect(error.code, 'frb_chat_event_invalid');
+      expect(error.message, expectedMessage);
+      final done = chatEvents.last as DoneEvent;
+      expect(done.stopReason, 'error');
+      expect(done.rounds, 1);
+    }
+
+    await expectInvalidToolEvent(
+      events: const <String>[
+        '{"kind":"tool_call_start","tool_call_id":"call_1","metadata":{"stream":true}}',
+      ],
+      expectedMessage:
+          'FRB LLM tool_call_start event requires tool_call_id and tool_name',
+    );
+    await expectInvalidToolEvent(
+      events: const <String>[
+        '{"kind":"tool_call_delta","partial_input_json":"{}","metadata":{"stream":true}}',
+      ],
+      expectedMessage: 'FRB LLM tool_call_delta event requires tool_call_id',
+    );
+    await expectInvalidToolEvent(
+      events: const <String>[
+        '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
+        '{"kind":"tool_call_end","tool_call_id":"call_1","tool_input":{},"metadata":{"stream":true}}',
+      ],
+      expectedMessage:
+          'FRB LLM tool_call_end event requires tool_call_id and tool_name',
+    );
+  });
+
   test('emits a cancelled span when the turn token is cancelled', () async {
     late CancelToken cancelToken;
     Stream<String> hangingStream() async* {
