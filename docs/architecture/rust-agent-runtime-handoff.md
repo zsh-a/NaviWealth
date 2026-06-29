@@ -418,9 +418,9 @@ LLM/tool/cancellation spans consumed by `AiTraceBuilder`. OpenAI-compatible plus
 Anthropic text/usage/tool/reasoning SSE are decoded in `agent-llm` and mapped by
 `FrbChatRunner`.
 
-The direct-Dart business adapters have been removed; the remaining
-`DeviceLlmRuntime` surface is limited to low-level runtime/provider
-implementation and focused tests.
+The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been
+removed; the remaining direct provider surface is limited to low-level
+runtime/provider implementation and focused tests.
 
 The original suggested extraction order has now been implemented in the
 continuation worktree:

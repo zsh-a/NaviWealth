@@ -196,8 +196,8 @@ label 影响。**Privacy policy 永远优先于 source。**
   2. **FRB/native 为生产业务 LLM 默认入口** — interactive AI Chat、domain agent、
      profile-turn、连通性探测、Vision ingest 与已迁移的 classifier/synthesizer 通过
      `FrbChatRunner` / `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner`
-     进入 native runtime。`DeviceLlmRuntime` 仅作为 legacy direct-Dart runtime/test
-     seam 保留。
+     进入 native runtime。legacy direct-Dart `DeviceLlmRuntime` 已删除；Dart 侧只保留
+     `DeviceChatRunner` seam 供路由客户端与测试注入 FRB runner。
   3. **工具读 Drift 本地真源** — §4.2 freshness gate 已物理删除；`ScopedDisclosure`
      协议（DisclosureRequest/Response/LedgerField/UserConsent）也已删除，只保留
      `DisclosurePurpose` enum 用作 window tool 参数校验。
@@ -337,10 +337,11 @@ contracts/   intent · privacy_budget · task_context(route/intent/signals) ·
 runtime/
   agent_runtime_*.dart           FRB/native agent runtime bridge, profile-turn runner,
                                  LLM bridge, tool host, trace recorder
-  ai_runtime.dart                DeviceLlmRuntime + DeviceChatRunner
-                                 （legacy direct-Dart runtime / test seam）
+  ai_runtime.dart                DeviceChatRunner seam only
+                                 （production bound to FrbChatRunner in app/bootstrap.dart）
                                  （boundary audit 删 RuntimeRegistry / RuntimeId /
-                                 AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime）
+                                 AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime /
+                                 DeviceLlmRuntime）
   device/
     device_agent_loop.dart       端侧 agent loop
     device_session.dart          per-turn session

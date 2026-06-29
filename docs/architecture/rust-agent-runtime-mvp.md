@@ -1302,11 +1302,11 @@ The Flutter runner now provides the former parity gap:
 - LLM/tool span events for `AiTraceBuilder`
 - cancellation/error semantics compatible with `ChatRepository`
 
-The direct-Dart business adapters have been removed; the remaining
-`DeviceLlmRuntime` / `DeviceLlmClient` surface is limited to low-level
+The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been
+removed; the remaining `DeviceLlmClient` surface is limited to low-level
 runtime/provider implementation and focused tests. Production app/domain
-entrypoints are guarded by `tool/lint-frb-llm-entrypoints.sh` and should stay
-on FRB seams.
+entrypoints are guarded by `tool/lint-frb-llm-entrypoints.sh` and should stay on
+FRB seams.
 
 Already completed: Dart catalog export from the existing `DomainPack`
 composition root. The first version exists at
