@@ -79,7 +79,7 @@ class AgentRuntimeTraceRecorder {
       domain: domain,
       surface: surface,
       label: 'agent_runtime_step_run',
-      routingReason: 'frb_native_tool_plan',
+      routingReason: kFrbNativeToolPlanRoutingReason,
     );
     await _appendTrace(trace);
     return trace;

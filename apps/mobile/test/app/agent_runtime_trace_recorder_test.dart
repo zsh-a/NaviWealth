@@ -152,7 +152,7 @@ void main() {
 
     expect(traces.single, same(trace));
     expect(trace.requestId, 'agent-runtime:knowledge_routine_due:run_2');
-    expect(trace.routingReason, 'frb_native_tool_plan');
+    expect(trace.routingReason, kFrbNativeToolPlanRoutingReason);
     expect(trace.intent.label, 'agent_runtime_step_run');
     expect(trace.llmRoundCount, 0);
     expect(trace.toolSpans.single.id, 'tool:4');

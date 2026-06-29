@@ -25,6 +25,11 @@ const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 /// paths while preserving the same "no NaviWealth server" disclosure.
 const String kFrbAgentRuntimeProfileRoutingReason = 'frb_agent_runtime_profile';
 
+/// FRB/native agent runtime executed a tool-plan step loop. Dart may still run
+/// the requested local tool calls, but native owns the step sequencing and
+/// terminal run-state summary for this trace.
+const String kFrbNativeToolPlanRoutingReason = 'frb_native_tool_plan';
+
 /// §5.10.10 — device Vision ingest used the user's own key and called the
 /// provider directly from the device runtime. This is not the deleted cloud
 /// relay; the transparency surface should disclose the same "no NaviWealth
@@ -124,8 +129,9 @@ class AiTrace {
 
   /// Short label for which runtime handled the turn — `device_llm_direct`
   /// (see [kDeviceLlmDirectRoutingReason]), `frb_agent_runtime_profile`
-  /// (see [kFrbAgentRuntimeProfileRoutingReason]), `device_vision_direct`
-  /// (see [kDeviceVisionDirectRoutingReason]), or `device_unavailable`.
+  /// (see [kFrbAgentRuntimeProfileRoutingReason]), `frb_native_tool_plan`
+  /// (see [kFrbNativeToolPlanRoutingReason]), `device_vision_direct` (see
+  /// [kDeviceVisionDirectRoutingReason]), or `device_unavailable`.
   /// Free-form for now.
   final String routingReason;
 
