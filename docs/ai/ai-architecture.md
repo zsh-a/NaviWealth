@@ -353,7 +353,7 @@ runtime/
     openai/                      OpenAiClient + SSE decoder
     tools/                       Shell core tools + DeviceToolRegistry
 llm_credentials/                 LlmCredentials/LlmProfile + SecureKeyStore +
-                                 连通性探测接口 + direct legacy providers   (§2.2)
+                                 FRB-backed connectivity probe seam   (§2.2)
 trace/                           AiTraceStore / DriftAiTraceStore / builder /
                                  capture preference / providers
 write/                           ProposalEnvelope 应用（3 子类）· InteractionMode ·
