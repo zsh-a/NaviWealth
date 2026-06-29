@@ -8,7 +8,7 @@ use agent_core::{
     ToolCallId, ToolSpec, catalog_version, protocol_version,
 };
 use agent_llm::{
-    AnthropicProvider, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
+    AnthropicProvider, LlmEvent, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
     OpenAiCompatibleProvider,
 };
 use anyhow::Result;
@@ -189,7 +189,8 @@ async fn stream_llm_response(
         .map_err(llm_error_to_anyhow)?;
     while let Some(event) = stream.next().await {
         match event {
-            Ok(event) => {
+            Ok(mut event) => {
+                normalize_llm_event_contract(&mut event)?;
                 let _ = sink.add(serde_json::to_string(&event)?);
             }
             Err(error) => {
@@ -938,6 +939,18 @@ fn normalize_llm_response_contract(response: &mut LlmResponse) -> Result<()> {
     Ok(())
 }
 
+fn normalize_llm_event_contract(event: &mut LlmEvent) -> Result<()> {
+    if event.metadata.is_null() {
+        event.metadata = json!({});
+    } else if !event.metadata.is_object() {
+        anyhow::bail!("LLM stream event metadata must be a JSON object");
+    }
+    if let Some(response) = &mut event.response {
+        normalize_llm_response_contract(response)?;
+    }
+    Ok(())
+}
+
 fn require_tool_spec_contract(tool: &ToolSpec, label: &str) -> Result<()> {
     if tool.name.trim().is_empty() {
         anyhow::bail!("{label}.name must be a non-empty string");
@@ -1584,12 +1597,17 @@ mod tests {
         assert_eq!(first["run_state"]["remaining_tool_count"], 1);
         assert_eq!(first["run_state"]["tool_result_count"], 0);
         assert_eq!(first["run_state"]["terminal_reason"], Value::Null);
+        let first_tool_call_id = first["tool_call"]["tool_call_id"]
+            .as_str()
+            .expect("first tool_call_id")
+            .to_owned();
 
         let second: Value = serde_json::from_str(
             &agent_runtime_continue_run_step(
                 catalog_json(),
                 first.to_string(),
-                json!({"jsonrpc": "2.0", "id": "call_1", "result": {"ok": true}}).to_string(),
+                json!({"jsonrpc": "2.0", "id": first_tool_call_id, "result": {"ok": true}})
+                    .to_string(),
                 "execution_review".to_owned(),
             )
             .expect("second step"),
@@ -1608,12 +1626,17 @@ mod tests {
         assert_eq!(second["run_state"]["remaining_tool_count"], 0);
         assert_eq!(second["run_state"]["tool_result_count"], 1);
         assert_eq!(second["run_state"]["terminal_reason"], Value::Null);
+        let second_tool_call_id = second["tool_call"]["tool_call_id"]
+            .as_str()
+            .expect("second tool_call_id")
+            .to_owned();
 
         let terminal: Value = serde_json::from_str(
             &agent_runtime_continue_run_step(
                 catalog_json(),
                 second.to_string(),
-                json!({"jsonrpc": "2.0", "id": "call_2", "result": {"done": true}}).to_string(),
+                json!({"jsonrpc": "2.0", "id": second_tool_call_id, "result": {"done": true}})
+                    .to_string(),
                 "execution_review".to_owned(),
             )
             .expect("terminal step"),
@@ -1656,6 +1679,10 @@ mod tests {
             .expect("start step"),
         )
         .expect("first step json");
+        let first_tool_call_id = first["tool_call"]["tool_call_id"]
+            .as_str()
+            .expect("first tool_call_id")
+            .to_owned();
 
         let failed: Value = serde_json::from_str(
             &agent_runtime_continue_run_step(
@@ -1663,8 +1690,8 @@ mod tests {
                 first.to_string(),
                 json!({
                     "jsonrpc": "2.0",
-                    "id": "call_1",
-                    "error": {"code": "denied", "message": "no"}
+                    "id": first_tool_call_id,
+                    "error": {"code": -32000, "message": "no"}
                 })
                 .to_string(),
                 "execution_review".to_owned(),
@@ -1681,5 +1708,54 @@ mod tests {
         );
         assert_eq!(failed["trace_event"]["run_state"]["tool_result_count"], 1);
         assert_eq!(failed["run_state"]["terminal_reason"], "stream_error");
+    }
+
+    #[test]
+    fn llm_stream_event_contract_normalizes_metadata() {
+        let mut event = LlmEvent {
+            kind: agent_llm::LlmEventKind::Delta,
+            content: Some("hello".to_owned()),
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            metadata: Value::Null,
+        };
+
+        normalize_llm_event_contract(&mut event).expect("event should normalize");
+
+        assert_eq!(event.metadata, json!({}));
+    }
+
+    #[test]
+    fn llm_stream_event_contract_validates_finished_response() {
+        let mut event = LlmEvent {
+            kind: agent_llm::LlmEventKind::Finished,
+            content: None,
+            response: Some(LlmResponse {
+                protocol_version: protocol_version(),
+                provider: "mock".to_owned(),
+                model: "mock-model".to_owned(),
+                content: "hello".to_owned(),
+                finish_reason: agent_llm::LlmFinishReason::Stop,
+                usage: Some(agent_llm::LlmUsage {
+                    input_tokens: 2,
+                    output_tokens: 3,
+                    total_tokens: 4,
+                }),
+                metadata: json!({}),
+            }),
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            metadata: json!({}),
+        };
+
+        let err = normalize_llm_event_contract(&mut event)
+            .expect_err("mismatched finished usage should fail");
+
+        assert!(err.to_string().contains("usage.total_tokens"));
     }
 }

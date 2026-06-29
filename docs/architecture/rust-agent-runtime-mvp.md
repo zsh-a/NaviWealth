@@ -195,8 +195,10 @@ Implemented:
   stream events through `agentRuntimeStreamProfileLlm`; the runner maps
   `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
   `tool_call_*` / `finished` / `error` events into the existing `AiChatEvent`
-  vocabulary. Production interactive chat is now routed through this FRB seam
-  from the app composition root when an active FRB LLM profile is available;
+  vocabulary. Native stream events normalize JSON-object event metadata and
+  validate `finished.response` with the same LLM response contract used by
+  non-streaming completions. Production interactive chat is now routed through
+  this FRB seam from the app composition root when an active FRB LLM profile is available;
   chat traces use routing reason `frb_chat`. Transparency surfaces use
   `isDirectProviderRoutingReason` as the single contract for showing the
   "no NaviWealth server" disclosure across FRB chat/profile turns, FRB Vision
