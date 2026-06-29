@@ -153,6 +153,10 @@ Implemented:
   HealthOS `FrbBriefingSynthesizer` now routes Morning Briefing synthesis
   through `AgentRuntimeProfileTurnRunner` before falling back to the legacy
   Dart LLM and deterministic programmatic synthesizers
+- KnowledgeOS Inbox Triage classifier now prefers a FRB profile-backed LLM
+  completion through `FrbInboxTriageClassifier`, using
+  `AgentRuntimeLlmBridge.completeProfile` for the structured JSON verdict while
+  preserving the existing proposal parser and heuristic fallback
 - First tool-using production agent migration onto the native-planned
   continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`

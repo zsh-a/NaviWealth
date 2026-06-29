@@ -20,6 +20,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
@@ -284,6 +285,57 @@ void main() {
     });
   });
 
+  group('FrbInboxTriageClassifier', () {
+    test('parses all proposal kinds from FRB profile completion', () async {
+      final bridge = _FakeLlmBridge(
+        responseText: '''
+{
+  "classification": {"kind":"decision_candidate","confidence":0.82,
+                     "reason_zh":"在权衡两个方案"},
+  "tags": {"tags":["fire","options"],"confidence":0.75,"reason_zh":"含期权/FIRE"},
+  "link_to_decision": {"decision_ids":["dec1"],"confidence":0.7,
+                       "reason_zh":"与该决策相关"}
+}''',
+      );
+      final c = FrbInboxTriageClassifier(llmBridge: bridge);
+      final note = _note(id: 'n1', title: 'QQQ vs BOXX', body: '该不该升级对冲?');
+
+      final out = await c.triage(note, [
+        _decision(id: 'dec1', question: '该不该升级动态对冲?'),
+      ]);
+
+      expect(bridge.calls, 1);
+      expect(bridge.lastMessages.first['role'], 'system');
+      expect(bridge.lastMessages.last['role'], 'user');
+      expect(bridge.lastMetadata['surface'], 'knowledge_inbox_triage');
+      expect(out, hasLength(3));
+      final byKind = {for (final p in out) p.kind: p};
+      expect(
+        byKind[InboxProposalKind.classification]!.payload['kind'],
+        'decision_candidate',
+      );
+      expect(
+        byKind[InboxProposalKind.linkToDecision]!
+            .payload['related_decision_ids'],
+        <String>['dec1'],
+      );
+    });
+
+    test('falls back to heuristic when FRB completion fails', () async {
+      final bridge = _FakeLlmBridge(error: StateError('native unavailable'));
+      final c = FrbInboxTriageClassifier(llmBridge: bridge);
+
+      final out = await c.triage(
+        _note(id: 'n1', title: 'edge-first', body: 'short def'),
+        const [],
+      );
+
+      expect(bridge.calls, 1);
+      expect(out.single.kind, InboxProposalKind.classification);
+      expect(out.single.payload['kind'], 'concept_candidate');
+    });
+  });
+
   // -------------------------------------------------------------------------
   // Agent end-to-end against an in-memory DB.
   // -------------------------------------------------------------------------
@@ -504,4 +556,78 @@ void main() {
       );
     });
   });
+}
+
+class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+  _FakeLlmBridge({this.responseText, this.error});
+
+  final String? responseText;
+  final Object? error;
+  var calls = 0;
+  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
+  Map<String, Object?> lastMetadata = const <String, Object?>{};
+
+  @override
+  Map<String, Object?> buildRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
+    return <String, Object?>{
+      'messages': messages,
+      'metadata': metadata,
+      'max_output_tokens': maxOutputTokens,
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> completeMock({
+    required List<Map<String, Object?>> messages,
+    required String responseText,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return <String, Object?>{'content': responseText};
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    calls += 1;
+    lastMessages = messages;
+    lastMetadata = metadata;
+    final e = error;
+    if (e != null) throw e;
+    return <String, Object?>{
+      'provider': 'mock',
+      'model': 'test-model',
+      'content': responseText ?? '',
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> validateRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return buildRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
+  }
 }

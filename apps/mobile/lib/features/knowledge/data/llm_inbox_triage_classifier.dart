@@ -25,6 +25,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../../../core/logging/app_logger.dart';
@@ -133,7 +134,7 @@ class LlmInboxTriageClassifier implements InboxTriageClassifier {
         return fallback.triage(note, decisions);
       }
 
-      final proposals = _parseProposals(note, decisions, json);
+      final proposals = _parseInboxTriageProposals(note, decisions, json);
       // A well-formed but empty answer ("nothing worth proposing") is a
       // valid LLM verdict — do NOT fall back, that would re-introduce
       // heuristic noise the model deliberately suppressed.
@@ -173,127 +174,6 @@ class LlmInboxTriageClassifier implements InboxTriageClassifier {
       }
     }
     return buf.toString();
-  }
-
-  List<InboxProposal> _parseProposals(
-    KnowledgeNote note,
-    List<KnowledgeDecision> decisions,
-    Map<String, Object?> json,
-  ) {
-    final out = <InboxProposal>[];
-
-    final classification = _parseClassification(note, json['classification']);
-    if (classification != null) out.add(classification);
-
-    final tags = _parseTags(note, json['tags']);
-    if (tags != null) out.add(tags);
-
-    final link = _parseLink(note, decisions, json['link_to_decision']);
-    if (link != null) out.add(link);
-
-    return out;
-  }
-
-  InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
-    if (raw is! Map) return null;
-    final m = raw.map((k, v) => MapEntry(k.toString(), v));
-    final kind = (m['kind'] as String?)?.trim() ?? '';
-    if (kind != 'decision_candidate' && kind != 'concept_candidate') {
-      return null;
-    }
-    final confidence = _coerceDouble(m['confidence']) ?? 0.0;
-    if (confidence < _kMinConfidence) return null;
-    final reason = (m['reason_zh'] as String?)?.trim();
-    if (reason == null || reason.isEmpty) return null;
-
-    final label = kind == 'decision_candidate'
-        ? '看起来像在权衡某个选项 — 建议升级为 Decision draft'
-        : '短小定义型笔记 — 建议提取为 Concept';
-    return InboxProposal(
-      kind: InboxProposalKind.classification,
-      summaryZh: label,
-      payload: <String, Object?>{
-        'note_id': note.id,
-        'kind': kind,
-        'confidence': confidence.clamp(0.0, 1.0),
-        'reason': reason,
-      },
-      status: InboxProposalStatus.pending,
-    );
-  }
-
-  InboxProposal? _parseTags(KnowledgeNote note, Object? raw) {
-    // Respect the heuristic's "already user-tagged → skip" rule.
-    if (note.tags.isNotEmpty) return null;
-    if (raw is! Map) return null;
-    final m = raw.map((k, v) => MapEntry(k.toString(), v));
-    final confidence = _coerceDouble(m['confidence']) ?? 0.0;
-    if (confidence < _kMinConfidence) return null;
-    final rawTags = m['tags'];
-    final tags = rawTags is List
-        ? rawTags
-              .whereType<String>()
-              .map((t) => t.trim().toLowerCase())
-              .where((t) => t.isNotEmpty)
-              .toSet()
-              .toList(growable: false)
-        : const <String>[];
-    if (tags.isEmpty) return null;
-    final reason = (m['reason_zh'] as String?)?.trim();
-    if (reason == null || reason.isEmpty) return null;
-
-    return InboxProposal(
-      kind: InboxProposalKind.tags,
-      summaryZh: '建议加上 tags: ${tags.join("/")}',
-      payload: <String, Object?>{
-        'note_id': note.id,
-        'tags': tags,
-        'reason': reason,
-      },
-      status: InboxProposalStatus.pending,
-    );
-  }
-
-  InboxProposal? _parseLink(
-    KnowledgeNote note,
-    List<KnowledgeDecision> decisions,
-    Object? raw,
-  ) {
-    if (decisions.isEmpty) return null;
-    if (raw is! Map) return null;
-    final m = raw.map((k, v) => MapEntry(k.toString(), v));
-    final confidence = _coerceDouble(m['confidence']) ?? 0.0;
-    if (confidence < _kMinConfidence) return null;
-    final rawIds = m['decision_ids'];
-    final requested = rawIds is List
-        ? rawIds
-              .whereType<String>()
-              .map((s) => s.trim())
-              .where((s) => s.isNotEmpty)
-              .toSet()
-        : const <String>{};
-    // Only keep ids the model didn't hallucinate — they must exist in
-    // the candidate set we handed it.
-    final valid = decisions
-        .where((d) => requested.contains(d.id))
-        .take(3)
-        .toList(growable: false);
-    if (valid.isEmpty) return null;
-    final reason = (m['reason_zh'] as String?)?.trim();
-    if (reason == null || reason.isEmpty) return null;
-
-    return InboxProposal(
-      kind: InboxProposalKind.linkToDecision,
-      summaryZh: valid.length == 1
-          ? '看起来和决策 "${valid.first.question}" 相关 — 建议关联'
-          : '看起来和 ${valid.length} 条决策相关 — 建议关联',
-      payload: <String, Object?>{
-        'note_id': note.id,
-        'related_decision_ids': valid.map((d) => d.id).toList(growable: false),
-        'reason': reason,
-      },
-      status: InboxProposalStatus.pending,
-    );
   }
 
   static String? _extractText(AnthropicCompletion completion) {
@@ -358,4 +238,207 @@ class LlmInboxTriageClassifier implements InboxTriageClassifier {
     if (v is String) return double.tryParse(v);
     return null;
   }
+}
+
+class FrbInboxTriageClassifier implements InboxTriageClassifier {
+  const FrbInboxTriageClassifier({
+    required this.llmBridge,
+    this.fallback = const HeuristicInboxTriageClassifier(),
+    this.maxTokens = 8192,
+    this.requestTimeout = const Duration(seconds: 8),
+    this.logger,
+  });
+
+  final AgentRuntimeLlmBridge llmBridge;
+  final InboxTriageClassifier fallback;
+  final int maxTokens;
+  final Duration requestTimeout;
+  final AppLogger? logger;
+
+  @override
+  Future<List<InboxProposal>> triage(
+    KnowledgeNote note,
+    List<KnowledgeDecision> decisions,
+  ) async {
+    final corpus = '${note.title}\n${note.bodyMd}'.trim();
+    if (corpus.isEmpty) {
+      return fallback.triage(note, decisions);
+    }
+
+    final stopwatch = Stopwatch()..start();
+    try {
+      final response = await llmBridge
+          .completeProfile(
+            messages: <Map<String, Object?>>[
+              const <String, Object?>{
+                'role': 'system',
+                'content': LlmInboxTriageClassifier._system,
+              },
+              <String, Object?>{
+                'role': 'user',
+                'content': LlmInboxTriageClassifier._buildUserMessage(
+                  note,
+                  decisions,
+                ),
+              },
+            ],
+            maxOutputTokens: maxTokens,
+            metadata: const <String, Object?>{
+              'surface': 'knowledge_inbox_triage',
+              'agent_id': 'knowledge_inbox_triage',
+            },
+          )
+          .timeout(requestTimeout);
+      logger?.d(
+        '$_kLogTag frb response ${stopwatch.elapsedMilliseconds}ms '
+        'provider=${response['provider'] ?? "(unknown)"}',
+      );
+
+      final body = response['content'];
+      if (body is! String || body.trim().isEmpty) {
+        logger?.w('$_kLogTag FRB response missing content, falling back');
+        return fallback.triage(note, decisions);
+      }
+      final json = LlmInboxTriageClassifier._extractJsonObject(body);
+      if (json == null) {
+        logger?.w('$_kLogTag FRB JSON extract failed, falling back');
+        return fallback.triage(note, decisions);
+      }
+      final proposals = _parseInboxTriageProposals(note, decisions, json);
+      logger?.i(
+        '$_kLogTag frb parsed ${proposals.length} proposal(s) '
+        'for note ${note.id}',
+      );
+      return proposals;
+    } on Object catch (err, st) {
+      logger?.w(
+        '$_kLogTag frb exception after ${stopwatch.elapsedMilliseconds}ms '
+        '(${err.runtimeType}: $err), falling back to heuristic',
+        error: err,
+        stackTrace: st,
+      );
+      return fallback.triage(note, decisions);
+    }
+  }
+}
+
+List<InboxProposal> _parseInboxTriageProposals(
+  KnowledgeNote note,
+  List<KnowledgeDecision> decisions,
+  Map<String, Object?> json,
+) {
+  final out = <InboxProposal>[];
+
+  final classification = _parseClassification(note, json['classification']);
+  if (classification != null) out.add(classification);
+
+  final tags = _parseTags(note, json['tags']);
+  if (tags != null) out.add(tags);
+
+  final link = _parseLink(note, decisions, json['link_to_decision']);
+  if (link != null) out.add(link);
+
+  return out;
+}
+
+InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
+  if (raw is! Map) return null;
+  final m = raw.map((k, v) => MapEntry(k.toString(), v));
+  final kind = (m['kind'] as String?)?.trim() ?? '';
+  if (kind != 'decision_candidate' && kind != 'concept_candidate') {
+    return null;
+  }
+  final confidence =
+      LlmInboxTriageClassifier._coerceDouble(m['confidence']) ?? 0.0;
+  if (confidence < _kMinConfidence) return null;
+  final reason = (m['reason_zh'] as String?)?.trim();
+  if (reason == null || reason.isEmpty) return null;
+
+  final label = kind == 'decision_candidate'
+      ? '看起来像在权衡某个选项 — 建议升级为 Decision draft'
+      : '短小定义型笔记 — 建议提取为 Concept';
+  return InboxProposal(
+    kind: InboxProposalKind.classification,
+    summaryZh: label,
+    payload: <String, Object?>{
+      'note_id': note.id,
+      'kind': kind,
+      'confidence': confidence.clamp(0.0, 1.0),
+      'reason': reason,
+    },
+    status: InboxProposalStatus.pending,
+  );
+}
+
+InboxProposal? _parseTags(KnowledgeNote note, Object? raw) {
+  if (note.tags.isNotEmpty) return null;
+  if (raw is! Map) return null;
+  final m = raw.map((k, v) => MapEntry(k.toString(), v));
+  final confidence =
+      LlmInboxTriageClassifier._coerceDouble(m['confidence']) ?? 0.0;
+  if (confidence < _kMinConfidence) return null;
+  final rawTags = m['tags'];
+  final tags = rawTags is List
+      ? rawTags
+            .whereType<String>()
+            .map((t) => t.trim().toLowerCase())
+            .where((t) => t.isNotEmpty)
+            .toSet()
+            .toList(growable: false)
+      : const <String>[];
+  if (tags.isEmpty) return null;
+  final reason = (m['reason_zh'] as String?)?.trim();
+  if (reason == null || reason.isEmpty) return null;
+
+  return InboxProposal(
+    kind: InboxProposalKind.tags,
+    summaryZh: '建议加上 tags: ${tags.join("/")}',
+    payload: <String, Object?>{
+      'note_id': note.id,
+      'tags': tags,
+      'reason': reason,
+    },
+    status: InboxProposalStatus.pending,
+  );
+}
+
+InboxProposal? _parseLink(
+  KnowledgeNote note,
+  List<KnowledgeDecision> decisions,
+  Object? raw,
+) {
+  if (decisions.isEmpty) return null;
+  if (raw is! Map) return null;
+  final m = raw.map((k, v) => MapEntry(k.toString(), v));
+  final confidence =
+      LlmInboxTriageClassifier._coerceDouble(m['confidence']) ?? 0.0;
+  if (confidence < _kMinConfidence) return null;
+  final rawIds = m['decision_ids'];
+  final requested = rawIds is List
+      ? rawIds
+            .whereType<String>()
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toSet()
+      : const <String>{};
+  final valid = decisions
+      .where((d) => requested.contains(d.id))
+      .take(3)
+      .toList(growable: false);
+  if (valid.isEmpty) return null;
+  final reason = (m['reason_zh'] as String?)?.trim();
+  if (reason == null || reason.isEmpty) return null;
+
+  return InboxProposal(
+    kind: InboxProposalKind.linkToDecision,
+    summaryZh: valid.length == 1
+        ? '看起来和决策 "${valid.first.question}" 相关 — 建议关联'
+        : '看起来和 ${valid.length} 条决策相关 — 建议关联',
+    payload: <String, Object?>{
+      'note_id': note.id,
+      'related_decision_ids': valid.map((d) => d.id).toList(growable: false),
+      'reason': reason,
+    },
+    status: InboxProposalStatus.pending,
+  );
 }

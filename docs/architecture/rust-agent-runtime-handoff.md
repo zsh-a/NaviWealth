@@ -181,6 +181,10 @@ Current bridge capabilities:
   HealthOS Morning Briefing now uses `FrbBriefingSynthesizer` and
   `AgentRuntimeProfileTurnRunner` before falling back to the legacy Dart LLM
   and deterministic programmatic synthesizers.
+- Provide the first KnowledgeOS FRB profile-backed LLM classifier integration:
+  Inbox Triage now prefers `FrbInboxTriageClassifier`, which calls
+  `AgentRuntimeLlmBridge.completeProfile` for the structured JSON verdict
+  while preserving the existing proposal parser and heuristic fallback.
 - Provide the first tool-using production agent integration on the
   native-planned continuation loop: HealthOS Recovery Alert now uses
   `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB

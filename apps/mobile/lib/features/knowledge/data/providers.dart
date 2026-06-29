@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/ai/llm_credentials/providers.dart'
     show llmCredentialsProvider;
 import '../../../core/ai/local/memory/providers.dart'
@@ -97,15 +98,15 @@ final inboxTriageClassifierProvider = FutureProvider<InboxTriageClassifier>((
   ref,
 ) async {
   final logger = ref.watch(loggerProvider);
-  final client = ref.watch(deviceLlmClientProvider);
-  if (client == null) {
+  final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+  if (llmBridge == null) {
     logger.i(
       '[inbox-triage] classifier=heuristic — ${_diagnoseLlmUnavailable(ref)}',
     );
     return const HeuristicInboxTriageClassifier();
   }
-  logger.i('[inbox-triage] classifier=llm model=${client.config.model}');
-  return LlmInboxTriageClassifier(client: client, logger: logger);
+  logger.i('[inbox-triage] classifier=frb-llm');
+  return FrbInboxTriageClassifier(llmBridge: llmBridge, logger: logger);
 });
 
 /// Contradiction-judge seam (§14.2 "ContradictionAgent cosine + LLM
