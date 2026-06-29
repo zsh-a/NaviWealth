@@ -59,7 +59,9 @@ pub fn agent_runtime_validate_run_request(request_json: String) -> Result<String
 }
 
 pub fn agent_runtime_validate_trace(trace_json: String) -> Result<String> {
-    normalize_json::<AgentTrace>(&trace_json)
+    let trace: AgentTrace = serde_json::from_str(&trace_json)?;
+    validate_agent_runtime_step_trace_events(&trace)?;
+    Ok(serde_json::to_string(&trace)?)
 }
 
 pub fn agent_runtime_validate_tool_spec(tool_json: String) -> Result<String> {
@@ -392,6 +394,87 @@ where
 {
     let value: T = serde_json::from_str(json)?;
     Ok(serde_json::to_string(&value)?)
+}
+
+fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Result<()> {
+    for event in &trace.events {
+        if event.kind != "agent_runtime_step" {
+            continue;
+        }
+        let payload = event
+            .payload
+            .as_object()
+            .ok_or_else(|| anyhow::anyhow!("agent_runtime_step payload must be an object"))?;
+        require_non_empty_string(payload, "run_id")?;
+        require_non_empty_string(payload, "agent_id")?;
+        require_step_status(payload, "status")?;
+        require_non_negative_integer(payload, "step_index")?;
+        if !payload.contains_key("tool_name") {
+            anyhow::bail!("agent_runtime_step payload.tool_name is required");
+        }
+        let run_state = payload
+            .get("run_state")
+            .and_then(Value::as_object)
+            .ok_or_else(|| anyhow::anyhow!("agent_runtime_step payload.run_state is required"))?;
+        require_step_status(run_state, "status")?;
+        require_nullable_non_negative_integer(run_state, "step_index")?;
+        require_non_negative_integer(run_state, "remaining_tool_count")?;
+        require_non_negative_integer(run_state, "tool_result_count")?;
+        require_terminal_reason(run_state, "terminal_reason")?;
+    }
+    Ok(())
+}
+
+fn require_non_empty_string(object: &Map<String, Value>, field: &str) -> Result<()> {
+    match object.get(field).and_then(Value::as_str) {
+        Some(value) if !value.is_empty() => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must be a non-empty string"),
+    }
+}
+
+fn require_non_negative_integer(object: &Map<String, Value>, field: &str) -> Result<()> {
+    match object.get(field).and_then(Value::as_u64) {
+        Some(_) => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must be a non-negative integer"),
+    }
+}
+
+fn require_nullable_non_negative_integer(object: &Map<String, Value>, field: &str) -> Result<()> {
+    match object.get(field) {
+        Some(Value::Null) => Ok(()),
+        Some(value) if value.as_u64().is_some() => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must be null or a non-negative integer"),
+    }
+}
+
+fn require_step_status(object: &Map<String, Value>, field: &str) -> Result<()> {
+    match object.get(field).and_then(Value::as_str) {
+        Some(
+            "tool_call_requested"
+            | "completed"
+            | "failed"
+            | "cancelled"
+            | "policy_denied"
+            | "closed_early"
+            | "timed_out",
+        ) => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} is not a supported status"),
+    }
+}
+
+fn require_terminal_reason(object: &Map<String, Value>, field: &str) -> Result<()> {
+    match object.get(field) {
+        Some(Value::Null) => Ok(()),
+        Some(Value::String(value))
+            if matches!(
+                value.as_str(),
+                "done" | "stream_error" | "user_cancel" | "policy_denied" | "closed_early"
+            ) =>
+        {
+            Ok(())
+        }
+        _ => anyhow::bail!("agent_runtime_step {field} is not a supported terminal reason"),
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

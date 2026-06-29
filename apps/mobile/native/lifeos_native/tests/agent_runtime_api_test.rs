@@ -69,6 +69,29 @@ fn normalizes_trace_contract() {
 }
 
 #[test]
+fn rejects_invalid_agent_runtime_step_trace_contracts() {
+    let missing_run_state = agent_runtime_validate_trace(
+        include_str!(
+            "../../../../../fixtures/agent-runtime/trace.invalid.missing-step-run-state.json"
+        )
+        .to_owned(),
+    )
+    .expect_err("missing run_state should fail native validation")
+    .to_string();
+    assert!(missing_run_state.contains("payload.run_state"));
+
+    let unknown_terminal_reason = agent_runtime_validate_trace(
+        include_str!(
+            "../../../../../fixtures/agent-runtime/trace.invalid.unknown-step-terminal-reason.json"
+        )
+        .to_owned(),
+    )
+    .expect_err("unknown terminal reason should fail native validation")
+    .to_string();
+    assert!(unknown_terminal_reason.contains("terminal_reason"));
+}
+
+#[test]
 fn normalizes_llm_contracts() {
     let request_json = agent_runtime_validate_llm_request(
         include_str!("../../../../../fixtures/agent-runtime/llm-request.valid.json").to_owned(),
