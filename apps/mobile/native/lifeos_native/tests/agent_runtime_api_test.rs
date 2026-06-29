@@ -114,6 +114,37 @@ fn catalog_summary_rejects_malformed_tool_spec() {
 }
 
 #[test]
+fn catalog_summary_rejects_malformed_agent_spec() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["agents"][0]["id"] = json!("");
+
+    let err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("catalog with malformed agent spec should fail");
+
+    assert!(err.to_string().contains("catalog.agents[0].id"));
+}
+
+#[test]
+fn catalog_summary_rejects_malformed_proposal_kind() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["proposal_kinds"][0]["tool_name"] = json!("");
+
+    let err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("catalog with malformed proposal kind should fail");
+
+    assert!(
+        err.to_string()
+            .contains("catalog.proposal_kinds[0].tool_name")
+    );
+}
+
+#[test]
 fn normalizes_run_request_contract() {
     let normalized = agent_runtime_validate_run_request(
         include_str!("../../../../../fixtures/agent-runtime/run-request.valid.json").to_owned(),

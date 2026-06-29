@@ -4,8 +4,8 @@
 //! DTOs live in `agent-core`; Dart passes JSON strings across the bridge.
 
 use agent_core::{
-    AgentRuntimeCatalog, AgentTrace, RunId, RunRequest, ToolCallId, ToolSpec, catalog_version,
-    protocol_version,
+    AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunId, RunRequest, ToolCallId,
+    ToolSpec, catalog_version, protocol_version,
 };
 use agent_llm::{
     AnthropicProvider, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
@@ -795,6 +795,12 @@ fn require_catalog_contract(catalog: &AgentRuntimeCatalog) -> Result<()> {
     for (index, tool) in catalog.tools.iter().enumerate() {
         require_tool_spec_contract(tool, &format!("catalog.tools[{index}]"))?;
     }
+    for (index, agent) in catalog.agents.iter().enumerate() {
+        require_agent_spec_contract(agent, &format!("catalog.agents[{index}]"))?;
+    }
+    for (index, proposal_kind) in catalog.proposal_kinds.iter().enumerate() {
+        require_proposal_kind_contract(proposal_kind, &format!("catalog.proposal_kinds[{index}]"))?;
+    }
     Ok(())
 }
 
@@ -835,6 +841,36 @@ fn require_tool_spec_contract(tool: &ToolSpec, label: &str) -> Result<()> {
     }
     if matches!(tool.output_schema.as_ref(), Some(value) if !value.is_object()) {
         anyhow::bail!("{label}.output_schema must be an object when present");
+    }
+    Ok(())
+}
+
+fn require_agent_spec_contract(agent: &AgentSpec, label: &str) -> Result<()> {
+    let expected = protocol_version();
+    if agent.protocol_version != expected {
+        anyhow::bail!(
+            "{label}.protocol_version '{}' does not match runtime protocol_version '{expected}'",
+            agent.protocol_version
+        );
+    }
+    if agent.id.trim().is_empty() {
+        anyhow::bail!("{label}.id must be a non-empty string");
+    }
+    if agent.name.trim().is_empty() {
+        anyhow::bail!("{label}.name must be a non-empty string");
+    }
+    if agent.version.trim().is_empty() {
+        anyhow::bail!("{label}.version must be a non-empty string");
+    }
+    Ok(())
+}
+
+fn require_proposal_kind_contract(proposal_kind: &ProposalKindSpec, label: &str) -> Result<()> {
+    if proposal_kind.kind.trim().is_empty() {
+        anyhow::bail!("{label}.kind must be a non-empty string");
+    }
+    if proposal_kind.tool_name.trim().is_empty() {
+        anyhow::bail!("{label}.tool_name must be a non-empty string");
     }
     Ok(())
 }
