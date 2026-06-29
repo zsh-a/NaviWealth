@@ -176,6 +176,11 @@ Current bridge capabilities:
 - Provide a FRB-backed Settings connectivity probe through
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions.
+- Provide an app-level `FrbChatRunner` adapter for the Flutter AI Chat seam.
+  It converts one FRB/native profile completion into the existing
+  `AiChatEvent` stream contract for integration tests, but production chat
+  should stay on `DeviceLlmRuntime` until native FRB exposes token streaming,
+  tool-call delta, cancellation, and trace-span parity.
 - Provide a migration guardrail:
   `tool/lint-frb-llm-entrypoints.sh` rejects new production business/app uses
   of the legacy direct-Dart LLM seams outside the documented runtime/legacy
@@ -396,6 +401,14 @@ is currently blocked by existing `clippy::result_large_err` findings in
 `crates/agent-runtime/src/lib.rs`.
 
 ## Recommended Next Steps
+
+The remaining critical Flutter integration work is AI Chat streaming parity on
+FRB/native. `FrbChatRunner` proves the existing `DeviceChatRunner` seam can be
+fed by an FRB completion, but replacing `DeviceLlmRuntime` in production still
+requires a native event stream that can emit text deltas, tool-call
+start/delta/final events, Dart tool results, usage/span events, cancellation,
+and provider errors with the same semantics consumed by `ChatRepository` and
+`AiTraceBuilder`.
 
 The original suggested extraction order has now been implemented in the
 continuation worktree:

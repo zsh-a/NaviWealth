@@ -148,6 +148,11 @@ Implemented:
 - Settings LLM profile connectivity probing is FRB-backed through
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions
+- AI Chat now has an app-level `FrbChatRunner` adapter that maps one
+  FRB/native profile completion into the existing `AiChatEvent` vocabulary.
+  It is intentionally not the production default yet because native FRB still
+  needs token-level streaming, tool-call delta, cancellation, and trace-span
+  event parity before replacing `DeviceLlmRuntime` for the interactive chat UI.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
   documented runtime/legacy allowlist
@@ -1277,8 +1282,23 @@ upstream package constraint that prevents moving to the published latest.
 
 ## Next Migration Step
 
-The next useful increment is a Dart catalog export from the existing
-`DomainPack` composition root. The first version now exists at
+Most production business LLM/profile-turn paths now use the FRB/native bridge.
+The remaining high-value Flutter integration gap is interactive AI Chat. The
+current app-level `FrbChatRunner` proves the Flutter chat seam can consume a
+FRB-backed completion, but it emits a completed response rather than token
+deltas. The next migration should add native/FRB streaming event parity before
+switching the production `aiChatApiClientProvider` away from `DeviceLlmRuntime`.
+That parity must cover:
+
+- text deltas (`TextEvent`)
+- thinking deltas where providers expose reasoning
+- tool-call start/delta/final events
+- tool results from Dart `AgentRuntimeToolHost`
+- usage and span events for `AiTraceBuilder`
+- cancellation/error semantics compatible with `ChatRepository`
+
+Already completed: Dart catalog export from the existing `DomainPack`
+composition root. The first version exists at
 `apps/mobile/lib/app/agent_runtime_catalog.dart` and exports:
 
 - active `Agent` values -> `AgentSpec`
