@@ -949,6 +949,36 @@ fn continue_run_step_rejects_non_object_tool_response() {
 }
 
 #[test]
+fn continue_run_step_rejects_empty_previous_run_id() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("empty previous run id should fail");
+
+    assert!(err.to_string().contains("run_id"));
+}
+
+#[test]
 fn continue_run_step_rejects_tool_response_with_result_and_error() {
     let err = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
@@ -977,6 +1007,64 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
     .expect_err("ambiguous tool response should fail");
 
     assert!(err.to_string().contains("both result and error"));
+}
+
+#[test]
+fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("JSON-RPC tool response without id should fail");
+
+    assert!(err.to_string().contains("id is required"));
+}
+
+#[test]
+fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "1.0.0",
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected"
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("JSON-RPC tool response without result or error should fail");
+
+    assert!(err.to_string().contains("result or error"));
 }
 
 #[test]

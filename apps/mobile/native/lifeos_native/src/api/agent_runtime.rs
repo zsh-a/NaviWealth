@@ -286,10 +286,7 @@ pub fn agent_runtime_continue_run_step(
         anyhow::bail!("previous step status must be 'tool_call_requested'");
     }
     require_previous_step_agent(&previous_step, &agent.id)?;
-    let run_id = previous_step
-        .get("run_id")
-        .cloned()
-        .ok_or_else(|| anyhow::anyhow!("previous step is missing run_id"))?;
+    let run_id = require_previous_step_run_id(&previous_step)?;
     let tool_call = previous_step
         .get("tool_call")
         .cloned()
@@ -379,6 +376,15 @@ fn require_previous_step_agent(previous_step: &Value, agent_id: &str) -> Result<
     Ok(())
 }
 
+fn require_previous_step_run_id(previous_step: &Value) -> Result<Value> {
+    let run_id = previous_step
+        .get("run_id")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("previous step run_id must be a non-empty string"))?;
+    Ok(Value::String(run_id.to_owned()))
+}
+
 fn require_previous_tool_call_catalog_tool(
     catalog: &AgentRuntimeCatalog,
     agent_id: &str,
@@ -421,8 +427,19 @@ fn require_tool_response_envelope(tool_response: &Value) -> Result<()> {
             Some(_) => anyhow::bail!("tool response jsonrpc must be '2.0'"),
             None => anyhow::bail!("tool response jsonrpc must be a string"),
         }
+        if !object.contains_key("id") {
+            anyhow::bail!("tool response id is required when jsonrpc is present");
+        }
+        match (object.contains_key("result"), object.contains_key("error")) {
+            (true, false) | (false, true) => {}
+            (true, true) => anyhow::bail!("tool response cannot contain both result and error"),
+            (false, false) => anyhow::bail!("tool response must contain result or error"),
+        }
     }
-    if object.contains_key("result") && object.contains_key("error") {
+    if !object.contains_key("jsonrpc")
+        && object.contains_key("result")
+        && object.contains_key("error")
+    {
         anyhow::bail!("tool response cannot contain both result and error");
     }
     Ok(())
