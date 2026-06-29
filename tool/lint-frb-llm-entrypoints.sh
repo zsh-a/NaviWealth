@@ -13,7 +13,7 @@ LIB="$ROOT/apps/mobile/lib"
 
 ALLOWLIST_REGEX='apps/mobile/lib/core/ai/runtime/'
 
-PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityProbe|DeviceVisionIngestClient|LlmBriefingSynthesizer\(client:|DeviceLlmClient|DeviceLlmRuntime'
+PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityProbe|DeviceVisionIngestClient|LlmBriefingSynthesizer\(client:|DeviceLlmClient|DeviceLlmRuntime|runtime/device/(anthropic|openai)/.*_client\.dart'
 
 violations="$(
   grep -rnE --include='*.dart' "$PATTERN" "$LIB" \

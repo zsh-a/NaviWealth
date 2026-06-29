@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_connectivity.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
 
-LlmRequestException _e(int s, [String m = 'boom']) =>
-    LlmRequestException(statusCode: s, message: m);
+LlmProbeException _e(int s, [String m = 'boom']) =>
+    LlmProbeException(statusCode: s, message: m);
 
 void main() {
   group('classifyLlmProbeException', () {

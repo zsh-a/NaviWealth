@@ -5,7 +5,6 @@ import 'dart:async';
 
 import '../core/ai/llm_credentials/llm_connectivity.dart';
 import '../core/ai/llm_credentials/llm_credentials.dart';
-import '../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 
@@ -53,8 +52,9 @@ LlmProbeResult _classifyFrbProbeError(Object error) {
   final message = error.toString();
   final status = _extractHttpStatus(message);
   if (status != null) {
-    return classifyLlmProbeException(
-      LlmRequestException(statusCode: status, message: message),
+    return classifyLlmProbeFailure(
+      statusCode: status,
+      message: message,
     );
   }
   if (message.contains('metadata.api_key')) {

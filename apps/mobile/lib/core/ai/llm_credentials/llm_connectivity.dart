@@ -7,7 +7,6 @@
 /// profile the user is still editing and hasn't saved.
 library;
 
-import '../runtime/device/anthropic/anthropic_client.dart';
 import 'llm_credentials.dart';
 
 enum LlmProbeStatus {
@@ -77,14 +76,38 @@ class UnavailableLlmConnectivityProbe implements LlmConnectivityProbe {
   }
 }
 
+/// Minimal provider failure shape used by connectivity UX.
+///
+/// Kept in the credentials seam so app/settings code does not import the
+/// low-level direct-Dart provider clients merely to classify FRB errors.
+class LlmProbeException implements Exception {
+  const LlmProbeException({required this.statusCode, required this.message});
+
+  final int statusCode;
+  final String message;
+
+  @override
+  String toString() => 'LlmProbeException($statusCode): $message';
+}
+
 /// Pure mapping HTTP failure → user-facing probe result. Top-level so
 /// it's unit-testable without a network.
-LlmProbeResult classifyLlmProbeException(LlmRequestException e) {
-  final s = e.statusCode;
+LlmProbeResult classifyLlmProbeException(LlmProbeException e) {
+  return classifyLlmProbeFailure(
+    statusCode: e.statusCode,
+    message: e.message,
+  );
+}
+
+LlmProbeResult classifyLlmProbeFailure({
+  required int statusCode,
+  required String message,
+}) {
+  final s = statusCode;
   return switch (s) {
     0 => LlmProbeResult(
       LlmProbeStatus.network,
-      '无法连接 · 检查网络或 Base URL（${e.message}）',
+      '无法连接 · 检查网络或 Base URL（$message）',
     ),
     401 || 403 => LlmProbeResult(
       LlmProbeStatus.authFailed,
@@ -103,12 +126,12 @@ LlmProbeResult classifyLlmProbeException(LlmRequestException e) {
     ),
     400 => LlmProbeResult(
       LlmProbeStatus.badRequest,
-      '已连通，但请求被拒（400）· 多为模型名无效：${e.message}',
+      '已连通，但请求被拒（400）· 多为模型名无效：$message',
       httpStatus: s,
     ),
     _ => LlmProbeResult(
       LlmProbeStatus.unknown,
-      '测试失败（HTTP $s）：${e.message}',
+      '测试失败（HTTP $s）：$message',
       httpStatus: s,
     ),
   };
