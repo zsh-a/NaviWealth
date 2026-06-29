@@ -17,6 +17,7 @@ PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityP
 FEATURE_FRB_BRIDGE_PATTERN="app/agent_runtime_llm_bridge.dart|agentRuntimeLlmBridgeProvider"
 RAW_DEVICE_UNAVAILABLE_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_unavailable['\"]"
 RAW_LEGACY_VISION_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_vision_direct['\"]"
+LEGACY_VISION_TRACE_CONSTANT_PATTERN='kDeviceVisionDirectRoutingReason'
 
 violations="$(
   grep -rnE --include='*.dart' "$PATTERN" "$LIB" \
@@ -70,6 +71,21 @@ raw_legacy_vision_trace_violations="$(
 if [[ -n "$raw_legacy_vision_trace_violations" ]]; then
   echo "✖ legacy device_vision_direct trace routing reason used in production:" >&2
   echo "$raw_legacy_vision_trace_violations" >&2
+  echo >&2
+  echo "Use kFrbVisionIngestRoutingReason for new Vision ingest traces." >&2
+  echo "kDeviceVisionDirectRoutingReason is legacy compatibility only." >&2
+  exit 1
+fi
+
+legacy_vision_trace_constant_violations="$(
+  grep -rnE --include='*.dart' "$LEGACY_VISION_TRACE_CONSTANT_PATTERN" "$LIB" \
+    | grep -vE 'apps/mobile/lib/core/ai/contracts/ai_trace\.dart' \
+    || true
+)"
+
+if [[ -n "$legacy_vision_trace_constant_violations" ]]; then
+  echo "✖ legacy Vision trace routing constant used in production:" >&2
+  echo "$legacy_vision_trace_constant_violations" >&2
   echo >&2
   echo "Use kFrbVisionIngestRoutingReason for new Vision ingest traces." >&2
   echo "kDeviceVisionDirectRoutingReason is legacy compatibility only." >&2
