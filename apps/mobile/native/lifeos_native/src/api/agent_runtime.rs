@@ -882,14 +882,15 @@ fn continuation_tool_results(
             anyhow::anyhow!("continuation.tool_results[{index}].tool_call is required")
         })?;
         require_previous_tool_call_catalog_tool(catalog, agent_id, tool_call)?;
-        object
-            .get("tool_response")
-            .and_then(Value::as_object)
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "continuation.tool_results[{index}].tool_response must be an object"
-                )
-            })?;
+        let tool_response = object.get("tool_response").ok_or_else(|| {
+            anyhow::anyhow!("continuation.tool_results[{index}].tool_response is required")
+        })?;
+        require_tool_response_envelope(tool_response).map_err(|error| {
+            anyhow::anyhow!("continuation.tool_results[{index}].tool_response: {error}")
+        })?;
+        require_matching_tool_response_id(tool_call, tool_response).map_err(|error| {
+            anyhow::anyhow!("continuation.tool_results[{index}].tool_response: {error}")
+        })?;
     }
     Ok(results)
 }

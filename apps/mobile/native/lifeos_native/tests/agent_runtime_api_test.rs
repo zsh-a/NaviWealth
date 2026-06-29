@@ -1568,6 +1568,101 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
 }
 
 #[test]
+fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 2}
+          },
+          "continuation": {
+            "tool_plan": [],
+            "tool_results": [
+              {
+                "tool_call": {"name": "propose_fake", "input": {"value": 1}},
+                "tool_response": {
+                  "jsonrpc": "2.0",
+                  "id": "historical",
+                  "result": {"accepted": true},
+                  "error": {"code": -32000, "message": "ambiguous"}
+                }
+              }
+            ]
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("invalid historical tool response envelope should fail");
+
+    assert!(err.to_string().contains("tool_results[0].tool_response"));
+    assert!(err.to_string().contains("both result and error"));
+}
+
+#[test]
+fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 2}
+          },
+          "continuation": {
+            "tool_plan": [],
+            "tool_results": [
+              {
+                "tool_call": {
+                  "tool_call_id": "historical_expected",
+                  "name": "propose_fake",
+                  "input": {"value": 1}
+                },
+                "tool_response": {
+                  "jsonrpc": "2.0",
+                  "id": "historical_wrong",
+                  "result": {"accepted": true}
+                }
+              }
+            ]
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched historical tool response id should fail");
+
+    assert!(err.to_string().contains("tool_results[0].tool_response"));
+    assert!(err.to_string().contains("tool response id"));
+}
+
+#[test]
 fn continue_run_step_rejects_historical_tool_not_in_catalog() {
     let err = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
