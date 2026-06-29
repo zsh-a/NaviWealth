@@ -101,20 +101,21 @@ void main() {
     'AgentRuntimeNativeStepRunner dispatches requested native tool call',
     () async {
       final dispatcher = _RecordingDispatcher();
-      final runner = AgentRuntimeNativeStepRunner(
-        bridge: _FakeBridge(
-          step: const <String, Object?>{
-            'protocol_version': 'agent.v1',
-            'run_id': 'run_1',
-            'agent_id': 'execution_review',
-            'status': 'tool_call_requested',
-            'tool_call': <String, Object?>{
-              'tool_call_id': 'call_1',
-              'name': 'read_task',
-              'input': <String, Object?>{'id': 'task_1'},
-            },
+      final bridge = _FakeBridge(
+        step: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_1',
+          'agent_id': 'execution_review',
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_1',
+            'name': 'read_task',
+            'input': <String, Object?>{'id': 'task_1'},
           },
-        ),
+        },
+      );
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
         toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
       );
 
@@ -136,6 +137,110 @@ void main() {
       expect(dispatcher.calls.single.name, 'read_task');
       expect(dispatcher.calls.single.input, <String, Object?>{'id': 'task_1'});
       expect(result['tool_call'], containsPair('name', 'read_task'));
+      expect(
+        bridge.continuations.single.toolResponse,
+        containsPair('id', 'call_1'),
+      );
+    },
+  );
+
+  test(
+    'AgentRuntimeNativeStepRunner loops until native terminal step',
+    () async {
+      final dispatcher = _RecordingDispatcher();
+      final bridge = _FakeBridge(
+        step: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_1',
+          'agent_id': 'execution_review',
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_1',
+            'name': 'read_first',
+            'input': <String, Object?>{'id': 'first'},
+          },
+        },
+        continuationSteps: const <Map<String, Object?>>[
+          <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'run_id': 'run_1',
+            'agent_id': 'execution_review',
+            'status': 'tool_call_requested',
+            'tool_call': <String, Object?>{
+              'tool_call_id': 'call_2',
+              'name': 'read_second',
+              'input': <String, Object?>{'id': 'second'},
+            },
+          },
+          <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'run_id': 'run_1',
+            'agent_id': 'execution_review',
+            'status': 'completed',
+            'output': <String, Object?>{'done': true},
+          },
+        ],
+      );
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.runUntilTerminal(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+        maxToolSteps: 2,
+      );
+
+      expect(result['status'], 'completed');
+      expect(result['output'], <String, Object?>{'done': true});
+      expect(dispatcher.calls.map((call) => call.name), <String>[
+        'read_first',
+        'read_second',
+      ]);
+      expect(bridge.continuations, hasLength(2));
+      expect(
+        bridge.continuations.last.toolResponse,
+        containsPair('id', 'call_2'),
+      );
+    },
+  );
+
+  test(
+    'AgentRuntimeNativeStepRunner fails when tool-call budget is exhausted',
+    () async {
+      final dispatcher = _RecordingDispatcher();
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: _FakeBridge(
+          step: const <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'run_id': 'run_1',
+            'agent_id': 'execution_review',
+            'status': 'tool_call_requested',
+            'tool_call': <String, Object?>{
+              'tool_call_id': 'call_1',
+              'name': 'read_task',
+              'input': <String, Object?>{'id': 'task_1'},
+            },
+          },
+        ),
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.runUntilTerminal(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+        maxToolSteps: 0,
+      );
+
+      expect(result['status'], 'failed');
+      expect(
+        result['error'],
+        containsPair('code', 'tool_call_budget_exhausted'),
+      );
+      expect(dispatcher.calls, isEmpty);
     },
   );
 
@@ -235,18 +340,23 @@ class _FakeNativeApi implements AgentRuntimeNativeApi {
 }
 
 class _FakeBridge implements AgentRuntimeNativeBridge {
-  _FakeBridge({Map<String, Object?>? step})
-    : _step =
-          step ??
-          const <String, Object?>{
-            'protocol_version': 'agent.v1',
-            'agent_id': 'execution_review',
-            'status': 'completed',
-          };
+  _FakeBridge({
+    Map<String, Object?>? step,
+    List<Map<String, Object?>> continuationSteps =
+        const <Map<String, Object?>>[],
+  }) : _continuationSteps = continuationSteps,
+       _step =
+           step ??
+           const <String, Object?>{
+             'protocol_version': 'agent.v1',
+             'agent_id': 'execution_review',
+             'status': 'completed',
+           };
 
   final catalogs = <Map<String, Object?>>[];
   final continuations = <_Continuation>[];
   final Map<String, Object?> _step;
+  final List<Map<String, Object?>> _continuationSteps;
 
   @override
   Future<String> protocolVersion() async => 'agent.v1';
@@ -301,6 +411,9 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
     required String agentId,
   }) async {
     continuations.add(_Continuation(previousStep, toolResponse));
+    if (continuations.length <= _continuationSteps.length) {
+      return _continuationSteps[continuations.length - 1];
+    }
     return <String, Object?>{
       'protocol_version': 'agent.v1',
       'run_id': previousStep['run_id'],

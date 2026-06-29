@@ -252,26 +252,67 @@ class AgentRuntimeNativeStepRunner {
   const AgentRuntimeNativeStepRunner({
     required AgentRuntimeNativeBridge bridge,
     required AgentRuntimeToolHost toolHost,
+    int defaultMaxToolSteps = 4,
   }) : _bridge = bridge,
-       _toolHost = toolHost;
+       _toolHost = toolHost,
+       _defaultMaxToolSteps = defaultMaxToolSteps;
 
   final AgentRuntimeNativeBridge _bridge;
   final AgentRuntimeToolHost _toolHost;
+  final int _defaultMaxToolSteps;
 
   Future<Map<String, Object?>> startAndDispatchFirstToolStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
+  }) {
+    return runUntilTerminal(
+      catalog: catalog,
+      request: request,
+      agentId: agentId,
+      maxToolSteps: 1,
+    );
+  }
+
+  Future<Map<String, Object?>> runUntilTerminal({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+    int? maxToolSteps,
   }) async {
-    final step = await _bridge.startRunStep(
+    final limit = maxToolSteps ?? _defaultMaxToolSteps;
+    if (limit < 0) {
+      throw RangeError.value(limit, 'maxToolSteps', 'must be non-negative');
+    }
+
+    var step = await _bridge.startRunStep(
       catalog: catalog,
       request: request,
       agentId: agentId,
     );
-    if (step['status'] != 'tool_call_requested') {
-      return step;
+    var dispatched = 0;
+
+    while (step['status'] == 'tool_call_requested') {
+      if (dispatched >= limit) {
+        return _toolBudgetExhaustedStep(step, limit);
+      }
+      dispatched += 1;
+
+      final response = await _dispatchToolCall(step);
+      step = await _bridge.continueRunStep(
+        catalog: catalog,
+        previousStep: step,
+        toolResponse: response,
+        agentId: agentId,
+      );
     }
 
+    return step;
+  }
+
+  Future<Map<String, Object?>> _dispatchToolCall(
+    Map<String, Object?> step,
+  ) async {
     final toolCall = _expectObject(step['tool_call'], 'tool_call');
     final name = toolCall['name'];
     if (name is! String || name.isEmpty) {
@@ -289,14 +330,23 @@ class AgentRuntimeNativeStepRunner {
         },
       }),
     );
-    final response = _decodeObject(responseLine);
-    return _bridge.continueRunStep(
-      catalog: catalog,
-      previousStep: step,
-      toolResponse: response,
-      agentId: agentId,
-    );
+    return _decodeObject(responseLine);
   }
+}
+
+Map<String, Object?> _toolBudgetExhaustedStep(
+  Map<String, Object?> step,
+  int maxToolSteps,
+) {
+  return <String, Object?>{
+    ...step,
+    'status': 'failed',
+    'error': <String, Object?>{
+      'code': 'tool_call_budget_exhausted',
+      'message': 'agent runtime tool-call budget exhausted',
+      'max_tool_steps': maxToolSteps,
+    },
+  };
 }
 
 Map<String, Object?> _decodeObject(String json) {

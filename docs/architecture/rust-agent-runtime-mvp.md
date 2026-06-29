@@ -89,14 +89,15 @@ Implemented:
 - FRB-first native continuation contract via `agentRuntimeContinueRunStep`,
   which accepts the previous native step plus the Dart-side tool response and
   returns a completed or failed native step
-- Dart-side `AgentRuntimeNativeStepRunner` that performs the first embedded
-  loop slice: FRB start step -> Dart `AgentRuntimeToolHost` dispatch -> FRB
-  continuation step
+- Dart-side `AgentRuntimeNativeStepRunner` that performs a bounded embedded
+  tool loop: FRB start step -> Dart `AgentRuntimeToolHost` dispatch -> FRB
+  continuation step, repeated until a terminal native step or the tool-call
+  budget is exhausted
 
 Deferred:
 
-- complete embedded Rust runner loop over FRB beyond the first tool step,
-  including multi-step LLM/tool continuation and production proposal
+- complete embedded Rust runner loop over FRB beyond deterministic step
+  contracts, including production LLM/tool continuation and proposal
   application round-trip
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
