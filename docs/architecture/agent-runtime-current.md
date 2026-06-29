@@ -30,6 +30,38 @@ crates/
   agent-llm/        Provider-neutral LLM DTOs, mock/OpenAI/Anthropic/Ollama providers
   agent-cli/        Local developer surfaces and host adapters
 
+crates/agent-runtime/src/
+  lib.rs            Public exports only
+  runner.rs         AgentRunner lifecycle, retry/timeout, idempotency keys
+  policy.rs         ExecutionPolicy
+  lock.rs           AgentLockStore helpers and in-memory lease store
+  recovery.rs       Stale run recovery
+  scheduler.rs      Manual/interval schedule decisions
+  services.rs       Basic and traced AgentServices wrappers
+  trace.rs          In-memory trace sink
+  registry.rs       In-memory AgentRegistry
+  tests.rs          Runner lifecycle tests
+
+crates/agent-store/src/
+  lib.rs            Public exports only
+  memory.rs         In-memory run/state/proposal/session stores
+  file.rs           File-backed run/proposal/session stores
+  util.rs           Shared scope and run sorting helpers
+  tests.rs          Store backend tests
+
+crates/agent-llm/src/
+  lib.rs            Public exports only
+  types.rs          Provider-neutral LLM DTOs, stream events, errors, provider trait
+  mock.rs           Mock provider for local tests and deterministic runners
+  usage.rs          Rough token usage estimator for mock/local responses
+  sse.rs            Shared server-sent event frame parsing helpers
+  providers/
+    mod.rs          Provider exports and shared mapping helpers
+    openai.rs       OpenAI-compatible chat/completions request, response, stream mapping
+    anthropic.rs    Anthropic messages request, response, stream mapping
+    ollama.rs       Ollama chat request, response, synthetic stream mapping
+  tests.rs          Provider request mapping and SSE stream tests
+
 crates/agent-cli/src/
   main.rs           clap wiring and top-level command dispatch only
   commands/         Thin command handlers for run/catalog/tool/proposal/session/llm/cmd
@@ -115,6 +147,7 @@ agent; slash commands perform explicit debugging:
 |---|---|---|
 | Add or change a wire field | `schemas/agent-runtime/`, `crates/agent-core/`, fixtures | schema validation tests, `rtk cargo test -p agent-cli` |
 | Change runner lifecycle | `crates/agent-runtime/src/lib.rs` | `rtk cargo test -p agent-runtime`, `rtk cargo test -p agent-cli` |
+| Change LLM provider behavior | `crates/agent-llm/src/providers/` | `rtk cargo test -p agent-llm`, native tests when FRB LLM bridge behavior changes |
 | Change CLI command behavior | `crates/agent-cli/src/commands/` plus supporting module | focused command test, `rtk cargo test -p agent-cli` |
 | Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
 | Change FRB API | `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs` | FRB codegen, native API tests, Dart bridge tests |
