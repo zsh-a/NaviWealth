@@ -295,6 +295,7 @@ pub fn agent_runtime_continue_run_step(
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("previous step is missing tool_call"))?;
     require_previous_tool_call_catalog_tool(&catalog, &agent.id, &tool_call)?;
+    require_tool_response_envelope(&tool_response)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
     require_continuation_next_step_index(&previous_step)?;
     let mut tool_results = continuation_tool_results(&previous_step, &catalog, &agent.id)?;
@@ -408,6 +409,23 @@ fn require_matching_tool_response_id(tool_call: &Value, tool_response: &Value) -
         ),
         None => anyhow::bail!("tool response id must be a string when present"),
     }
+}
+
+fn require_tool_response_envelope(tool_response: &Value) -> Result<()> {
+    let Some(object) = tool_response.as_object() else {
+        anyhow::bail!("tool response must be an object");
+    };
+    if let Some(jsonrpc) = object.get("jsonrpc") {
+        match jsonrpc.as_str() {
+            Some("2.0") => {}
+            Some(_) => anyhow::bail!("tool response jsonrpc must be '2.0'"),
+            None => anyhow::bail!("tool response jsonrpc must be a string"),
+        }
+    }
+    if object.contains_key("result") && object.contains_key("error") {
+        anyhow::bail!("tool response cannot contain both result and error");
+    }
+    Ok(())
 }
 
 fn require_continuation_next_step_index(previous_step: &Value) -> Result<()> {
