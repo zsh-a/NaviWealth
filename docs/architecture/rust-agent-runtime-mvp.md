@@ -129,6 +129,9 @@ Implemented:
   trace-aware run/continue methods that return the terminal step, every native
   step observed, every Dart tool response, dispatch count, and tool-budget
   exhaustion state; `AgentRuntimeProfileTurnResult` surfaces this summary
+- The shared trace fixture set includes a valid `closed_early`
+  `agent_runtime_step`, locking the Dart-synthesised tool-budget-exhausted
+  state against both JSON Schema and the native FRB validator
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`

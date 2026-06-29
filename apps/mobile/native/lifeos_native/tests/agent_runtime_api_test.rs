@@ -69,6 +69,23 @@ fn normalizes_trace_contract() {
 }
 
 #[test]
+fn normalizes_closed_early_step_trace_contract() {
+    let normalized = agent_runtime_validate_trace(
+        include_str!("../../../../../fixtures/agent-runtime/trace.valid.closed-early-step.json")
+            .to_owned(),
+    )
+    .expect("closed_early trace should validate");
+    let trace: Value = serde_json::from_str(&normalized).expect("trace should be json");
+
+    assert_eq!(trace["agent_id"], "execution_review");
+    assert_eq!(trace["events"][1]["payload"]["status"], "closed_early");
+    assert_eq!(
+        trace["events"][1]["payload"]["run_state"]["terminal_reason"],
+        "closed_early"
+    );
+}
+
+#[test]
 fn rejects_invalid_agent_runtime_step_trace_contracts() {
     let missing_run_state = agent_runtime_validate_trace(
         include_str!(

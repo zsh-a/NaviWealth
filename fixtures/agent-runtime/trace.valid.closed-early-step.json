@@ -1,0 +1,52 @@
+{
+  "protocol_version": "agent.v1",
+  "runtime_version": "0.1.0",
+  "run_id": "run_018f0000-0000-7000-8000-000000000001",
+  "agent_id": "execution_review",
+  "agent_version": "0.1.0",
+  "started_at": "2026-06-28T09:12:31Z",
+  "finished_at": "2026-06-28T09:12:32Z",
+  "input": {
+    "tool_plan": [
+      {
+        "name": "read_task",
+        "input": {
+          "id": "task_1"
+        }
+      }
+    ]
+  },
+  "output": {
+    "error": {
+      "code": "tool_call_budget_exhausted",
+      "message": "agent runtime tool-call budget exhausted"
+    }
+  },
+  "events": [
+    {
+      "kind": "run_started",
+      "occurred_at": "2026-06-28T09:12:31Z",
+      "payload": {
+        "agent_id": "execution_review"
+      }
+    },
+    {
+      "kind": "agent_runtime_step",
+      "occurred_at": "2026-06-28T09:12:31Z",
+      "payload": {
+        "run_id": "run_018f0000-0000-7000-8000-000000000001",
+        "agent_id": "execution_review",
+        "status": "closed_early",
+        "step_index": 0,
+        "tool_name": "read_task",
+        "run_state": {
+          "status": "closed_early",
+          "step_index": 0,
+          "remaining_tool_count": 0,
+          "tool_result_count": 0,
+          "terminal_reason": "closed_early"
+        }
+      }
+    }
+  ]
+}
