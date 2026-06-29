@@ -108,4 +108,57 @@ if [[ -n "$legacy_vision_trace_constant_violations" ]]; then
   exit 1
 fi
 
-echo "✓ production LLM entrypoints stay on FRB seams."
+BOOTSTRAP="$LIB/app/bootstrap.dart"
+declare -A SCHEDULED_AGENT_FRB_OVERRIDES=(
+  [executionReviewAgentProvider]=FrbExecutionReviewReader
+  [morningBriefingAgentProvider]=FrbBriefingSynthesizer
+  [recoveryAlertAgentProvider]=FrbRecoveryAlertSignalReader
+  [weeklySummaryAgentProvider]=FrbWeeklySummaryReader
+  [reviewAgentProvider]=FrbReviewDueReader
+  [assumptionAgentProvider]=FrbAssumptionReviewReader
+  [inboxTriageAgentProvider]=FrbInboxTriageSourceReader
+  [contradictionAgentProvider]=FrbContradictionSourceReader
+  [routineDueAgentProvider]=FrbRoutineDueReader
+)
+
+for provider in "${!SCHEDULED_AGENT_FRB_OVERRIDES[@]}"; do
+  frb_type="${SCHEDULED_AGENT_FRB_OVERRIDES[$provider]}"
+  if ! grep -q "${provider}\.overrideWith" "$BOOTSTRAP"; then
+    echo "✖ production scheduled agent provider is not overridden in bootstrap:" >&2
+    echo "  $provider" >&2
+    echo >&2
+    echo "Scheduled production agents must be wired at app/bootstrap.dart so" >&2
+    echo "DomainPack agent registration receives FRB-backed seams." >&2
+    exit 1
+  fi
+  if ! grep -q "$frb_type" "$BOOTSTRAP"; then
+    echo "✖ production scheduled agent is missing its FRB seam in bootstrap:" >&2
+    echo "  $provider -> $frb_type" >&2
+    echo >&2
+    echo "Keep repository/programmatic implementations as feature fallbacks, but" >&2
+    echo "production bootstrap should inject the FRB reader/synthesizer." >&2
+    exit 1
+  fi
+done
+
+for surface in \
+  execution_review \
+  health_morning_briefing \
+  health_recovery_alert \
+  health_weekly_summary \
+  knowledge_review \
+  knowledge_assumption \
+  knowledge_inbox_triage \
+  knowledge_contradiction \
+  knowledge_routine_due; do
+  if ! grep -q "surface: '$surface'" "$BOOTSTRAP"; then
+    echo "✖ production FRB scheduled agent is missing local trace capture:" >&2
+    echo "  surface: $surface" >&2
+    echo >&2
+    echo "FRB scheduled-agent runs should record local AiTrace spans through" >&2
+    echo "agentRuntimeTraceRecorderProvider for transparency/debugging." >&2
+    exit 1
+  fi
+done
+
+echo "✓ production LLM and scheduled-agent entrypoints stay on FRB seams."
