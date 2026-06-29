@@ -93,6 +93,7 @@ class AgentRuntimeTraceRecorder {
     String? requestId,
     String domain = kDefaultDomain,
     String surface = 'agent_runtime',
+    String routingReason = kFrbAgentRuntimeProfileRoutingReason,
     Object? error,
   }) async {
     final started = (startedAt ?? DateTime.now().toUtc()).toUtc();
@@ -105,6 +106,7 @@ class AgentRuntimeTraceRecorder {
       requestId: requestId ?? _requestId(agentId: agentId),
       domain: domain,
       surface: surface,
+      routingReason: routingReason,
       error: error,
     );
     await _appendTrace(trace);
@@ -252,6 +254,7 @@ class AgentRuntimeTraceRecorder {
     required String requestId,
     required String domain,
     required String surface,
+    required String routingReason,
     Object? error,
   }) {
     final hasError = error != null;
@@ -266,7 +269,7 @@ class AgentRuntimeTraceRecorder {
       ),
       backend: Backend.device,
       budgetTier: BudgetTier.standard,
-      routingReason: kFrbAgentRuntimeProfileRoutingReason,
+      routingReason: routingReason,
       totalDurationMs: 0,
     );
     final builder = AiTraceBuilder.fromSeed(seed, capturePayloads: false)

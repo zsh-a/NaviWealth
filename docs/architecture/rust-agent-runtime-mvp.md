@@ -202,7 +202,10 @@ Implemented:
   Anthropic tool schemas, and raw Anthropic content metadata; Finance Vision
   ingest uses `FrbVisionIngestClient` to send receipt/statement image or
   document blocks through the FRB profile bridge and extract
-  `emit_parsed_transactions` tool_use results locally
+  `emit_parsed_transactions` tool_use results locally; the app-level
+  `FrbIngestLlmProfileClient` records the underlying profile completion with
+  routing reason `frb_vision_ingest`, while the ingest controller keeps the
+  existing pipeline-level parse trace linked to staged drafts
 - First tool-using production agent migration onto the native-planned
   continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`

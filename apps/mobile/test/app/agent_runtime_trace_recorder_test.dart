@@ -410,6 +410,35 @@ void main() {
       containsPair('terminal_status', 'failed'),
     );
   });
+
+  test(
+    'records vision profile completions with ingest routing reason',
+    () async {
+      final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+
+      final trace = await recorder.recordProfileCompletion(
+        agentId: 'finance_vision_ingest',
+        domain: kDomainFinance,
+        surface: 'finance_vision_ingest',
+        routingReason: kFrbVisionIngestRoutingReason,
+        startedAt: DateTime.utc(2026, 6, 29, 8),
+        finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
+        llmResponse: const <String, Object?>{
+          'provider': 'anthropic',
+          'model': 'claude-test',
+          'finish_reason': 'tool_use',
+        },
+      );
+
+      expect(trace.routingReason, kFrbVisionIngestRoutingReason);
+      expect(trace.intent.domain, kDomainFinance);
+      expect(trace.llmSpans.single.model, 'claude-test');
+      expect(
+        trace.llmSpans.single.attributes,
+        containsPair('provider', 'anthropic'),
+      );
+    },
+  );
 }
 
 AgentRuntimeProfileTurnResult _result({

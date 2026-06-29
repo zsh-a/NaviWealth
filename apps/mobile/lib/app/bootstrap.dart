@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/ai/contracts/contracts.dart';
 import '../core/ai/llm_credentials/providers.dart' as llm_credentials;
 import '../core/ai/local/embedding/embedder.dart';
 import '../core/ai/local/embedding/embedder_path_resolution.dart';
@@ -161,7 +162,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
         return llmBridge == null
             ? null
-            : FrbIngestLlmProfileClient(llmBridge: llmBridge);
+            : FrbIngestLlmProfileClient(
+                llmBridge: llmBridge,
+                recordTrace: ref
+                    .read(agentRuntimeTraceRecorderProvider)
+                    .recordProfileCompletion,
+              );
       }),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
@@ -579,6 +585,7 @@ typedef FrbProfileCompletionTraceRecorder =
       String? requestId,
       String domain,
       String surface,
+      String routingReason,
       Object? error,
     });
 
@@ -642,10 +649,14 @@ String? _metadataString(Map<String, Object?> metadata, String key) {
 }
 
 class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
-  const FrbIngestLlmProfileClient({required AgentRuntimeLlmBridge llmBridge})
-    : _llmBridge = llmBridge;
+  const FrbIngestLlmProfileClient({
+    required AgentRuntimeLlmBridge llmBridge,
+    FrbProfileCompletionTraceRecorder? recordTrace,
+  }) : _llmBridge = llmBridge,
+       _recordTrace = recordTrace;
 
   final AgentRuntimeLlmBridge _llmBridge;
+  final FrbProfileCompletionTraceRecorder? _recordTrace;
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -654,14 +665,41 @@ class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return _llmBridge.completeProfile(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
+  }) async {
+    final startedAt = DateTime.now().toUtc();
+    final agentId = _metadataString(metadata, 'agent_id') ?? 'finance_ingest';
+    final surface = _metadataString(metadata, 'surface') ?? agentId;
+    try {
+      final response = await _llmBridge.completeProfile(
+        messages: messages,
+        tools: tools,
+        temperature: temperature,
+        maxOutputTokens: maxOutputTokens,
+        metadata: metadata,
+      );
+      await _recordTrace?.call(
+        agentId: agentId,
+        llmResponse: response,
+        startedAt: startedAt,
+        finishedAt: DateTime.now().toUtc(),
+        domain: 'finance',
+        surface: surface,
+        routingReason: kFrbVisionIngestRoutingReason,
+      );
+      return response;
+    } on Object catch (error) {
+      await _recordTrace?.call(
+        agentId: agentId,
+        llmResponse: null,
+        startedAt: startedAt,
+        finishedAt: DateTime.now().toUtc(),
+        domain: 'finance',
+        surface: surface,
+        routingReason: kFrbVisionIngestRoutingReason,
+        error: error,
+      );
+      rethrow;
+    }
   }
 }
 
