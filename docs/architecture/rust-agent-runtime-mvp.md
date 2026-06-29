@@ -102,9 +102,10 @@ Implemented:
   `agentRuntimeCompleteProfileLlm`, using device-local profile metadata for
   OpenAI-compatible and Anthropic-compatible HTTP providers
 - FRB-first native run-step contract via `agentRuntimeStartRunStep`, which
-  validates the active catalog/run request, including `RunRequest.protocol_version`,
-  and returns either a completed dry-run step or a `tool_call_requested` step
-  for Dart-side device dispatch
+  validates the active catalog/run request, including `RunRequest.protocol_version`
+  and JSON-object `input`, `metadata`, and `user.metadata` fields, and returns
+  either a completed dry-run step or a `tool_call_requested` step for Dart-side
+  device dispatch
 - FRB-first native continuation contract via `agentRuntimeContinueRunStep`,
   which accepts the previous native step plus the Dart-side tool response,
   validates the continuation envelope, and returns the next native step or a

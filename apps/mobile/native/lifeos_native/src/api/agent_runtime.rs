@@ -57,8 +57,8 @@ pub fn agent_runtime_catalog_summary(catalog_json: String) -> Result<String> {
 }
 
 pub fn agent_runtime_validate_run_request(request_json: String) -> Result<String> {
-    let request: RunRequest = serde_json::from_str(&request_json)?;
-    require_run_request_protocol_version(&request)?;
+    let mut request: RunRequest = serde_json::from_str(&request_json)?;
+    normalize_run_request_contract(&mut request)?;
     Ok(serde_json::to_string(&request)?)
 }
 
@@ -247,8 +247,8 @@ pub fn agent_runtime_start_run_step(
 ) -> Result<String> {
     let catalog: AgentRuntimeCatalog = serde_json::from_str(&catalog_json)?;
     require_catalog_contract(&catalog)?;
-    let request: RunRequest = serde_json::from_str(&request_json)?;
-    require_run_request_protocol_version(&request)?;
+    let mut request: RunRequest = serde_json::from_str(&request_json)?;
+    normalize_run_request_contract(&mut request)?;
     let agent = catalog
         .agents
         .iter()
@@ -768,13 +768,33 @@ where
     Ok(serde_json::to_string(&value)?)
 }
 
-fn require_run_request_protocol_version(request: &RunRequest) -> Result<()> {
+fn normalize_run_request_contract(request: &mut RunRequest) -> Result<()> {
     let expected = protocol_version();
     if request.protocol_version != expected {
         anyhow::bail!(
             "run request protocol_version '{}' does not match runtime protocol_version '{expected}'",
             request.protocol_version
         );
+    }
+    if request.input.is_null() {
+        request.input = json!({});
+    } else if !request.input.is_object() {
+        anyhow::bail!("run request input must be a JSON object");
+    }
+    if request.metadata.is_null() {
+        request.metadata = json!({});
+    } else if !request.metadata.is_object() {
+        anyhow::bail!("run request metadata must be a JSON object");
+    }
+    if let Some(user) = &mut request.user {
+        if user.user_id.trim().is_empty() {
+            anyhow::bail!("run request user.user_id must be a non-empty string");
+        }
+        if user.metadata.is_null() {
+            user.metadata = json!({});
+        } else if !user.metadata.is_object() {
+            anyhow::bail!("run request user.metadata must be a JSON object");
+        }
     }
     Ok(())
 }

@@ -259,6 +259,24 @@ fn normalizes_run_request_contract() {
 }
 
 #[test]
+fn normalizes_run_request_default_object_fields() {
+    let normalized = agent_runtime_validate_run_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "user": {"user_id": "user_1"},
+          "trigger": "manual"
+        }"#
+        .to_owned(),
+    )
+    .expect("run request defaults should normalize");
+    let request: Value = serde_json::from_str(&normalized).expect("request should be json");
+
+    assert_eq!(request["input"], json!({}));
+    assert_eq!(request["metadata"], json!({}));
+    assert_eq!(request["user"]["metadata"], json!({}));
+}
+
+#[test]
 fn validate_run_request_rejects_mismatched_protocol_version() {
     let err = agent_runtime_validate_run_request(
         r#"{
@@ -271,6 +289,56 @@ fn validate_run_request_rejects_mismatched_protocol_version() {
     .expect_err("mismatched run request protocol should fail");
 
     assert!(err.to_string().contains("protocol_version"));
+}
+
+#[test]
+fn validate_run_request_rejects_malformed_json_object_fields() {
+    let input_err = agent_runtime_validate_run_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": "bad",
+          "trigger": "manual"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object input should fail");
+    assert!(input_err.to_string().contains("input"));
+
+    let metadata_err = agent_runtime_validate_run_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {"message": "hello runtime"},
+          "trigger": "manual",
+          "metadata": "bad"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object metadata should fail");
+    assert!(metadata_err.to_string().contains("metadata"));
+
+    let user_err = agent_runtime_validate_run_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {"message": "hello runtime"},
+          "user": {"user_id": ""},
+          "trigger": "manual"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("malformed user context should fail");
+    assert!(user_err.to_string().contains("user.user_id"), "{user_err}");
+
+    let user_metadata_err = agent_runtime_validate_run_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {"message": "hello runtime"},
+          "user": {"user_id": "user_1", "metadata": []},
+          "trigger": "manual"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("malformed user metadata should fail");
+    assert!(user_metadata_err.to_string().contains("user.metadata"));
 }
 
 #[test]
@@ -697,6 +765,24 @@ fn start_run_step_rejects_empty_tool_call_name() {
     .expect_err("empty tool call name should fail");
 
     assert!(err.to_string().contains("tool_call.name"));
+}
+
+#[test]
+fn start_run_step_rejects_non_object_run_request_input() {
+    let err = agent_runtime_start_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": "bad",
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("non-object run request input should fail");
+
+    assert!(err.to_string().contains("run request input"));
 }
 
 #[test]
