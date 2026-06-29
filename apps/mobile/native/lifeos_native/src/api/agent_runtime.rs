@@ -405,8 +405,8 @@ fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Result<()> {
             .payload
             .as_object()
             .ok_or_else(|| anyhow::anyhow!("agent_runtime_step payload must be an object"))?;
-        require_non_empty_string(payload, "run_id")?;
-        require_non_empty_string(payload, "agent_id")?;
+        require_matching_string(payload, "run_id", trace.run_id.0.as_str())?;
+        require_matching_string(payload, "agent_id", &trace.agent_id)?;
         require_step_status(payload, "status")?;
         require_non_negative_integer(payload, "step_index")?;
         require_nullable_string(payload, "tool_name")?;
@@ -427,6 +427,14 @@ fn require_non_empty_string(object: &Map<String, Value>, field: &str) -> Result<
     match object.get(field).and_then(Value::as_str) {
         Some(value) if !value.is_empty() => Ok(()),
         _ => anyhow::bail!("agent_runtime_step {field} must be a non-empty string"),
+    }
+}
+
+fn require_matching_string(object: &Map<String, Value>, field: &str, expected: &str) -> Result<()> {
+    require_non_empty_string(object, field)?;
+    match object.get(field).and_then(Value::as_str) {
+        Some(value) if value == expected => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must match trace {field}"),
     }
 }
 
