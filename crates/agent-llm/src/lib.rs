@@ -931,6 +931,8 @@ struct OpenAiChatCompletionRequest {
     temperature: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     max_tokens: Option<u32>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    tools: Vec<OpenAiTool>,
     stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     stream_options: Option<OpenAiStreamOptions>,
@@ -944,9 +946,40 @@ struct OpenAiStreamOptions {
 #[derive(Debug, Serialize)]
 struct OpenAiMessage {
     role: String,
+    #[serde(skip_serializing_if = "Value::is_null")]
     content: Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tool_call_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    tool_calls: Vec<OpenAiToolCall>,
+}
+
+#[derive(Debug, Serialize)]
+struct OpenAiTool {
+    r#type: String,
+    function: OpenAiToolFunction,
+}
+
+#[derive(Debug, Serialize)]
+struct OpenAiToolFunction {
+    name: String,
+    description: String,
+    parameters: Value,
+}
+
+#[derive(Debug, Serialize)]
+struct OpenAiToolCall {
+    id: String,
+    r#type: String,
+    function: OpenAiToolCallFunction,
+}
+
+#[derive(Debug, Serialize)]
+struct OpenAiToolCallFunction {
+    name: String,
+    arguments: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1383,10 +1416,14 @@ impl LlmProvider for OpenAiCompatibleProvider {
             messages: request
                 .messages
                 .iter()
-                .map(openai_message_from_llm)
-                .collect::<Result<Vec<_>, _>>()?,
+                .map(openai_messages_from_llm)
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .collect(),
             temperature: request.temperature,
             max_tokens: request.max_output_tokens,
+            tools: request.tools.iter().map(openai_tool_from_spec).collect(),
             stream: false,
             stream_options: None,
         };
@@ -1481,10 +1518,14 @@ impl LlmProvider for OpenAiCompatibleProvider {
             messages: request
                 .messages
                 .iter()
-                .map(openai_message_from_llm)
-                .collect::<Result<Vec<_>, _>>()?,
+                .map(openai_messages_from_llm)
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .collect(),
             temperature: request.temperature,
             max_tokens: request.max_output_tokens,
+            tools: request.tools.iter().map(openai_tool_from_spec).collect(),
             stream: true,
             stream_options: Some(OpenAiStreamOptions {
                 include_usage: true,
@@ -1835,22 +1876,175 @@ impl LlmProvider for OllamaProvider {
     }
 }
 
-fn openai_message_from_llm(message: &LlmMessage) -> Result<OpenAiMessage, LlmError> {
-    let role = match message.role {
-        LlmRole::System => "system",
-        LlmRole::User => "user",
-        LlmRole::Assistant => "assistant",
-        LlmRole::Tool => {
-            return Err(LlmError::validation(
-                "OpenAI-compatible provider does not yet support tool role messages",
-            ));
-        }
-    };
-    Ok(OpenAiMessage {
+fn openai_messages_from_llm(message: &LlmMessage) -> Result<Vec<OpenAiMessage>, LlmError> {
+    match message.role {
+        LlmRole::System => Ok(vec![openai_plain_message(
+            "system",
+            message.content.clone(),
+            message.name.clone(),
+        )]),
+        LlmRole::User => openai_user_messages_from_llm(message),
+        LlmRole::Assistant => Ok(vec![openai_assistant_message_from_llm(message)?]),
+        LlmRole::Tool => Ok(vec![OpenAiMessage {
+            role: "tool".to_owned(),
+            content: openai_content_as_text_value(&message.content),
+            name: message.name.clone(),
+            tool_call_id: openai_tool_call_id_from_message(message),
+            tool_calls: Vec::new(),
+        }]),
+    }
+}
+
+fn openai_plain_message(role: &str, content: Value, name: Option<String>) -> OpenAiMessage {
+    OpenAiMessage {
         role: role.to_owned(),
-        content: message.content.clone(),
+        content,
+        name,
+        tool_call_id: None,
+        tool_calls: Vec::new(),
+    }
+}
+
+fn openai_user_messages_from_llm(message: &LlmMessage) -> Result<Vec<OpenAiMessage>, LlmError> {
+    let Some(blocks) = message.content.as_array() else {
+        return Ok(vec![openai_plain_message(
+            "user",
+            message.content.clone(),
+            message.name.clone(),
+        )]);
+    };
+
+    let mut messages = Vec::new();
+    let mut text_parts = Vec::new();
+    for block in blocks {
+        match block.get("type").and_then(Value::as_str) {
+            Some("text") => {
+                if let Some(text) = block.get("text").and_then(Value::as_str) {
+                    if !text.is_empty() {
+                        text_parts.push(json!({"type": "text", "text": text}));
+                    }
+                }
+            }
+            Some("tool_result") => messages.push(OpenAiMessage {
+                role: "tool".to_owned(),
+                tool_call_id: block
+                    .get("tool_use_id")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+                    .or_else(|| openai_tool_call_id_from_message(message)),
+                content: openai_content_as_text_value(block.get("content").unwrap_or(&Value::Null)),
+                name: message.name.clone(),
+                tool_calls: Vec::new(),
+            }),
+            _ => {}
+        }
+    }
+    if !text_parts.is_empty() {
+        messages.insert(
+            0,
+            openai_plain_message("user", Value::Array(text_parts), message.name.clone()),
+        );
+    }
+    if messages.is_empty() {
+        messages.push(openai_plain_message(
+            "user",
+            message.content.clone(),
+            message.name.clone(),
+        ));
+    }
+    Ok(messages)
+}
+
+fn openai_assistant_message_from_llm(message: &LlmMessage) -> Result<OpenAiMessage, LlmError> {
+    let Some(blocks) = message.content.as_array() else {
+        return Ok(openai_plain_message(
+            "assistant",
+            message.content.clone(),
+            message.name.clone(),
+        ));
+    };
+
+    let mut text = String::new();
+    let mut tool_calls = Vec::new();
+    for block in blocks {
+        match block.get("type").and_then(Value::as_str) {
+            Some("text") => {
+                if let Some(value) = block.get("text").and_then(Value::as_str) {
+                    text.push_str(value);
+                }
+            }
+            Some("tool_use") => {
+                let id = block
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_owned();
+                let name = block
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_owned();
+                if name.is_empty() {
+                    return Err(LlmError::validation(
+                        "OpenAI assistant tool_use block requires a name",
+                    ));
+                }
+                tool_calls.push(OpenAiToolCall {
+                    id,
+                    r#type: "function".to_owned(),
+                    function: OpenAiToolCallFunction {
+                        name,
+                        arguments: serde_json::to_string(block.get("input").unwrap_or(&json!({})))
+                            .map_err(|err| {
+                                LlmError::validation(format!(
+                                    "OpenAI assistant tool input is not serializable: {err}"
+                                ))
+                            })?,
+                    },
+                });
+            }
+            _ => {}
+        }
+    }
+
+    Ok(OpenAiMessage {
+        role: "assistant".to_owned(),
+        content: if text.is_empty() {
+            Value::Null
+        } else {
+            Value::String(text)
+        },
         name: message.name.clone(),
+        tool_call_id: None,
+        tool_calls,
     })
+}
+
+fn openai_tool_call_id_from_message(message: &LlmMessage) -> Option<String> {
+    message
+        .metadata
+        .get("tool_call_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+}
+
+fn openai_content_as_text_value(value: &Value) -> Value {
+    match value {
+        Value::String(_) => value.clone(),
+        Value::Null => Value::String(String::new()),
+        _ => Value::String(value.to_string()),
+    }
+}
+
+fn openai_tool_from_spec(tool: &ToolSpec) -> OpenAiTool {
+    OpenAiTool {
+        r#type: "function".to_owned(),
+        function: OpenAiToolFunction {
+            name: tool.name.clone(),
+            description: tool.description.clone(),
+            parameters: tool.input_schema.clone(),
+        },
+    }
 }
 
 fn ollama_message_from_llm(message: &LlmMessage) -> Result<OllamaMessage, LlmError> {
@@ -2222,6 +2416,100 @@ mod tests {
             .and_then(|event| event.response.as_ref())
             .unwrap();
         assert_eq!(response.finish_reason, LlmFinishReason::ToolCall);
+    }
+
+    #[tokio::test]
+    async fn openai_compatible_provider_sends_tools_and_tool_results() {
+        let listener = TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .expect("listener binds");
+        let addr = listener.local_addr().expect("local addr");
+        let app = Router::new().route(
+            "/chat/completions",
+            post(|Json(body): Json<Value>| async move {
+                assert_eq!(body["tools"][0]["type"], "function");
+                assert_eq!(body["tools"][0]["function"]["name"], "read_task");
+                assert_eq!(
+                    body["tools"][0]["function"]["parameters"]["required"][0],
+                    "id"
+                );
+                assert_eq!(body["messages"][1]["role"], "assistant");
+                assert_eq!(body["messages"][1]["content"], Value::Null);
+                assert_eq!(body["messages"][1]["tool_calls"][0]["id"], "call_1");
+                assert_eq!(
+                    body["messages"][1]["tool_calls"][0]["function"]["arguments"],
+                    "{\"id\":\"task_1\"}"
+                );
+                assert_eq!(body["messages"][2]["role"], "tool");
+                assert_eq!(body["messages"][2]["tool_call_id"], "call_1");
+                assert_eq!(body["messages"][2]["content"], "{\"title\":\"Task\"}");
+                Json(json!({
+                    "choices": [{
+                        "message": {"content": "done"},
+                        "finish_reason": "stop"
+                    }]
+                }))
+            }),
+        );
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("test server runs");
+        });
+
+        let provider = OpenAiCompatibleProvider::new(
+            "openai-compatible",
+            format!("http://{addr}"),
+            "test-key",
+        )
+        .expect("provider builds");
+        let response = provider
+            .complete(LlmRequest {
+                protocol_version: PROTOCOL_VERSION.to_owned(),
+                provider: "openai-compatible".to_owned(),
+                model: "gpt-tool-test".to_owned(),
+                messages: vec![
+                    user_message("read task"),
+                    LlmMessage {
+                        role: LlmRole::Assistant,
+                        content: json!([{
+                            "type": "tool_use",
+                            "id": "call_1",
+                            "name": "read_task",
+                            "input": {"id": "task_1"}
+                        }]),
+                        name: None,
+                        metadata: json!({}),
+                    },
+                    LlmMessage {
+                        role: LlmRole::User,
+                        content: json!([{
+                            "type": "tool_result",
+                            "tool_use_id": "call_1",
+                            "content": {"title": "Task"}
+                        }]),
+                        name: None,
+                        metadata: json!({}),
+                    },
+                ],
+                temperature: None,
+                max_output_tokens: Some(32),
+                tools: vec![ToolSpec {
+                    name: "read_task".to_owned(),
+                    description: "Read a task".to_owned(),
+                    input_schema: json!({
+                        "type": "object",
+                        "properties": {"id": {"type": "string"}},
+                        "required": ["id"]
+                    }),
+                    output_schema: None,
+                    risk: agent_core::ToolRisk::ReadOnly,
+                    metadata: json!({}),
+                }],
+                metadata: json!({}),
+            })
+            .await
+            .expect("provider completes");
+
+        assert_eq!(response.content, "done");
     }
 
     #[tokio::test]

@@ -26,6 +26,8 @@ import '../core/notifications/providers.dart' as notif_providers;
 import '../core/perf/providers.dart';
 import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
+import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
+import '../features/ai_chat/data/runtime_routing_api_client.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
@@ -45,10 +47,14 @@ import '../features/knowledge/agents/providers.dart'
 import '../features/knowledge/agents/review_agent.dart';
 import '../features/knowledge/agents/routine_due_agent.dart';
 import 'agent_runtime_catalog.dart';
+import 'agent_runtime_llm_bridge.dart';
+import 'agent_runtime_llm_stream_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
+import 'agent_runtime_tool_host.dart';
 import 'agent_runtime_trace_recorder.dart';
 import 'domain_composition.dart';
+import 'frb_chat_runner.dart';
 import 'frb_llm_connectivity_probe.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
@@ -113,6 +119,23 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           bridge: ref.watch(agentRuntimeNativeBridgeProvider),
         ),
       ),
+      ai_chat_providers.aiChatApiClientProvider.overrideWith((ref) {
+        final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+        final streamBridge = ref.watch(agentRuntimeLlmStreamBridgeProvider);
+        if (llmBridge != null && streamBridge != null) {
+          final catalog = ref.watch(agentRuntimeCatalogProvider);
+          final toolHost = ref.watch(agentRuntimeToolHostProvider);
+          return RuntimeRoutingAiChatApiClient(
+            device: FrbChatRunner(
+              llmBridge: llmBridge,
+              streamBridge: streamBridge,
+              tools: [for (final tool in catalog.tools) tool.toJson()],
+              toolLineHandler: toolHost.handleLine,
+            ),
+          );
+        }
+        return const RuntimeRoutingAiChatApiClient();
+      }),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
       // closes over Riverpod's container, so token rotation is picked up

@@ -98,6 +98,105 @@ void main() {
     expect(metadata['streaming'], true);
   });
 
+  test('executes FRB tool calls and continues with tool results', () async {
+    final bridge = _FakeLlmBridge();
+    final streamBridge = _streamBridgeBatches(
+      bridge,
+      eventBatches: const <List<String>>[
+        <String>[
+          '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+          '{"kind":"thinking_delta","content":"plan","metadata":{"stream":true}}',
+          '{"kind":"thinking_signature_delta","content":"sig_1","metadata":{"stream":true}}',
+          '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
+          '{"kind":"tool_call_delta","tool_call_id":"call_1","tool_name":"read_task","partial_input_json":"{\\"id\\":\\"task_1\\"}","metadata":{"stream":true}}',
+          '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
+          '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+        ],
+        <String>[
+          '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+          '{"kind":"delta","content":"Task title","metadata":{"stream":true}}',
+          '{"kind":"finished","response":{"content":"Task title","finish_reason":"stop","usage":{"input_tokens":5,"output_tokens":3,"total_tokens":8}},"metadata":{"stream":true}}',
+        ],
+      ],
+    );
+    final toolRequests = <Map<String, Object?>>[];
+    final runner = FrbChatRunner(
+      llmBridge: bridge,
+      streamBridge: streamBridge,
+      tools: const <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'read_task',
+          'description': 'Read a task',
+          'input_schema': <String, Object?>{'type': 'object'},
+          'risk': 'read_only',
+        },
+      ],
+      toolLineHandler: (line) async {
+        toolRequests.add(jsonDecode(line) as Map<String, Object?>);
+        return jsonEncode(<String, Object?>{
+          'jsonrpc': '2.0',
+          'id': 'call_1',
+          'result': <String, Object?>{'title': 'Task title'},
+        });
+      },
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Read task task_1'),
+          ],
+        )
+        .toList();
+
+    expect(streamBridge.requests, hasLength(2));
+    expect(toolRequests.single['method'], 'tool.call');
+    final params = toolRequests.single['params'] as Map<String, Object?>;
+    expect(params['name'], 'read_task');
+    expect(params['input'], <String, Object?>{'id': 'task_1'});
+    expect(events.whereType<ToolResultEvent>().single.output, <String, Object?>{
+      'title': 'Task title',
+    });
+    expect(events.whereType<TextEvent>().single.text, 'Task title');
+    final done = events.last as DoneEvent;
+    expect(done.stopReason, 'end_turn');
+    expect(done.rounds, 2);
+
+    final firstRequest = streamBridge.requests.first;
+    expect(firstRequest['tools'], hasLength(1));
+    final secondMessages = streamBridge.requests[1]['messages'] as List;
+    expect(secondMessages, hasLength(3));
+    expect(secondMessages[1], <String, Object?>{
+      'role': 'assistant',
+      'content': <Object?>[
+        <String, Object?>{
+          'type': 'thinking',
+          'thinking': 'plan',
+          'signature': 'sig_1',
+        },
+        <String, Object?>{
+          'type': 'tool_use',
+          'id': 'call_1',
+          'name': 'read_task',
+          'input': <String, Object?>{'id': 'task_1'},
+        },
+      ],
+    });
+    expect(secondMessages[2], <String, Object?>{
+      'role': 'user',
+      'content': <Object?>[
+        <String, Object?>{
+          'type': 'tool_result',
+          'tool_use_id': 'call_1',
+          'content': '{"title":"Task title"}',
+        },
+      ],
+    });
+    final secondMetadata =
+        streamBridge.requests[1]['metadata'] as Map<String, Object?>;
+    expect(secondMetadata['round'], 2);
+  });
+
   test('maps FRB native stream error events into chat errors', () async {
     final runner = FrbChatRunner(
       llmBridge: _FakeLlmBridge(),
@@ -179,32 +278,46 @@ _RecordingStreamBridge _streamBridge(
   _FakeLlmBridge bridge, {
   required List<String> events,
 }) {
-  return _RecordingStreamBridge(llmBridge: bridge, events: events);
+  return _streamBridgeBatches(bridge, eventBatches: <List<String>>[events]);
+}
+
+_RecordingStreamBridge _streamBridgeBatches(
+  _FakeLlmBridge bridge, {
+  required List<List<String>> eventBatches,
+}) {
+  return _RecordingStreamBridge(llmBridge: bridge, eventBatches: eventBatches);
 }
 
 class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
   factory _RecordingStreamBridge({
     required _FakeLlmBridge llmBridge,
-    required List<String> events,
+    required List<List<String>> eventBatches,
   }) {
     final requests = <Map<String, Object?>>[];
+    var requestIndex = 0;
     return _RecordingStreamBridge._(
       llmBridge: llmBridge,
-      events: events,
+      eventBatches: eventBatches,
       requests: requests,
+      nextRequestIndex: () => requestIndex++,
     );
   }
 
   _RecordingStreamBridge._({
     required _FakeLlmBridge llmBridge,
-    required List<String> events,
+    required List<List<String>> eventBatches,
     required this.requests,
+    required int Function() nextRequestIndex,
   }) : super(
          llmBridge: llmBridge,
          initRuntime: ({String? libraryPath}) async {},
          streamProfileJson: ({required String requestJson}) {
            requests.add(jsonDecode(requestJson) as Map<String, Object?>);
-           return Stream<String>.fromIterable(events);
+           final index = nextRequestIndex();
+           final batchIndex = index >= eventBatches.length
+               ? eventBatches.length - 1
+               : index;
+           return Stream<String>.fromIterable(eventBatches[batchIndex]);
          },
        );
 
