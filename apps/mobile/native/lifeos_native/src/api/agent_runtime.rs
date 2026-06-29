@@ -416,6 +416,7 @@ fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Result<()> {
             .ok_or_else(|| anyhow::anyhow!("agent_runtime_step payload.run_state is required"))?;
         require_step_status(run_state, "status")?;
         require_nullable_non_negative_integer(run_state, "step_index")?;
+        require_matching_nullable_integer(run_state, "step_index", payload, "step_index")?;
         require_non_negative_integer(run_state, "remaining_tool_count")?;
         require_non_negative_integer(run_state, "tool_result_count")?;
         require_terminal_reason(run_state, "terminal_reason")?;
@@ -458,6 +459,23 @@ fn require_nullable_string(object: &Map<String, Value>, field: &str) -> Result<(
         Some(Value::Null) => Ok(()),
         Some(Value::String(_)) => Ok(()),
         _ => anyhow::bail!("agent_runtime_step {field} must be null or a string"),
+    }
+}
+
+fn require_matching_nullable_integer(
+    object: &Map<String, Value>,
+    field: &str,
+    expected_object: &Map<String, Value>,
+    expected_field: &str,
+) -> Result<()> {
+    if matches!(object.get(field), Some(Value::Null)) {
+        return Ok(());
+    }
+    let value = object.get(field).and_then(Value::as_u64);
+    let expected = expected_object.get(expected_field).and_then(Value::as_u64);
+    match (value, expected) {
+        (Some(value), Some(expected)) if value == expected => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must match payload {expected_field}"),
     }
 }
 
