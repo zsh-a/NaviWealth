@@ -153,10 +153,10 @@ Implemented:
   stream events through `agentRuntimeStreamProfileLlm`; the runner maps
   `started` / `delta` / `finished` / `error` events into the existing
   `AiChatEvent` vocabulary. It is intentionally not the production default yet
-  because Anthropic provider streaming, tool-call delta, cancellation, and
-  trace-span parity still need to match `DeviceLlmRuntime` before replacing the
-  interactive chat UI path. OpenAI-compatible text/usage SSE is now provider-real
-  in `agent-llm`.
+  because tool-call delta, richer reasoning events, cancellation, and trace-span
+  parity still need to match `DeviceLlmRuntime` before replacing the interactive
+  chat UI path. OpenAI-compatible and Anthropic text/usage SSE are now
+  provider-real in `agent-llm`.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
   documented runtime/legacy allowlist
@@ -1289,14 +1289,12 @@ upstream package constraint that prevents moving to the published latest.
 Most production business LLM/profile-turn paths now use the FRB/native bridge.
 The remaining high-value Flutter integration gap is interactive AI Chat. The
 current app-level `FrbChatRunner` can consume the primitive FRB LLM stream, and
-`agent-llm` now parses provider-real OpenAI-compatible Chat Completions SSE for
-text deltas, usage, and the final response. The next migration should add
-Anthropic native streaming and complete event parity before switching the
-production `aiChatApiClientProvider` away from `DeviceLlmRuntime`. That parity
-must cover:
+`agent-llm` now parses provider-real OpenAI-compatible Chat Completions SSE and
+Anthropic Messages SSE for text deltas, usage, and the final response. The next
+migration should add complete event parity before switching the production
+`aiChatApiClientProvider` away from `DeviceLlmRuntime`. That parity must cover:
 
-- Anthropic text deltas (`TextEvent`)
-- thinking deltas where providers expose reasoning
+- thinking/signature deltas where providers expose reasoning
 - tool-call start/delta/final events
 - tool results from Dart `AgentRuntimeToolHost`
 - usage and span events for `AiTraceBuilder`

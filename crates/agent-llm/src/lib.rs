@@ -419,6 +419,7 @@ struct AnthropicMessagesRequest {
     temperature: Option<f32>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     tools: Vec<AnthropicTool>,
+    stream: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -460,6 +461,256 @@ struct AnthropicErrorBody {
     r#type: Option<String>,
     #[serde(default)]
     message: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct AnthropicStreamEvent {
+    #[serde(rename = "type")]
+    event_type: String,
+    #[serde(default)]
+    content_block: Option<Value>,
+    #[serde(default)]
+    delta: Option<Value>,
+    #[serde(default)]
+    usage: Option<AnthropicUsage>,
+    #[serde(default)]
+    message: Option<AnthropicStreamMessage>,
+    #[serde(default)]
+    error: Option<AnthropicErrorBody>,
+}
+
+#[derive(Debug, Deserialize)]
+struct AnthropicStreamMessage {
+    #[serde(default)]
+    usage: Option<AnthropicUsage>,
+}
+
+struct AnthropicSseState {
+    provider: String,
+    model: String,
+    anthropic_version: String,
+    chunks: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
+    buffer: String,
+    pending: VecDeque<Result<LlmEvent, LlmError>>,
+    content: String,
+    finish_reason: Option<LlmFinishReason>,
+    input_tokens: u32,
+    output_tokens: u32,
+    raw_blocks: Vec<Value>,
+    finished: bool,
+}
+
+impl AnthropicSseState {
+    fn new(
+        provider: String,
+        model: String,
+        anthropic_version: String,
+        chunks: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
+    ) -> Self {
+        let mut pending = VecDeque::new();
+        pending.push_back(Ok(LlmEvent {
+            kind: LlmEventKind::Started,
+            content: None,
+            response: None,
+            metadata: json!({"provider": provider, "model": model, "stream": true}),
+        }));
+        Self {
+            provider,
+            model,
+            anthropic_version,
+            chunks,
+            buffer: String::new(),
+            pending,
+            content: String::new(),
+            finish_reason: None,
+            input_tokens: 0,
+            output_tokens: 0,
+            raw_blocks: Vec::new(),
+            finished: false,
+        }
+    }
+
+    async fn next_event(&mut self) -> Option<Result<LlmEvent, LlmError>> {
+        loop {
+            if let Some(event) = self.pending.pop_front() {
+                return Some(event);
+            }
+            if self.finished {
+                return None;
+            }
+            match self.chunks.next().await {
+                Some(Ok(bytes)) => {
+                    self.buffer.push_str(&String::from_utf8_lossy(&bytes));
+                    self.drain_frames();
+                }
+                Some(Err(err)) => {
+                    self.finished = true;
+                    return Some(Err(LlmError::provider(
+                        "provider_stream_read_failed",
+                        err.to_string(),
+                        true,
+                        json!({}),
+                    )));
+                }
+                None => {
+                    if !self.buffer.trim().is_empty() {
+                        if let Some(frame) = take_remaining_sse_frame(&mut self.buffer) {
+                            self.handle_frame(&frame);
+                        }
+                    }
+                    if !self.finished {
+                        self.push_finished();
+                    }
+                }
+            }
+        }
+    }
+
+    fn drain_frames(&mut self) {
+        while let Some(frame) = take_next_sse_frame(&mut self.buffer) {
+            self.handle_frame(&frame);
+        }
+    }
+
+    fn handle_frame(&mut self, frame: &str) {
+        let data = sse_data(frame);
+        if data.is_empty() || data.trim() == "[DONE]" {
+            return;
+        }
+        let decoded = match serde_json::from_str::<AnthropicStreamEvent>(&data) {
+            Ok(decoded) => decoded,
+            Err(err) => {
+                self.pending.push_back(Err(LlmError::provider(
+                    "provider_stream_decode_failed",
+                    err.to_string(),
+                    false,
+                    json!({"frame": data}),
+                )));
+                return;
+            }
+        };
+        match decoded.event_type.as_str() {
+            "message_start" => {
+                if let Some(usage) = decoded
+                    .message
+                    .and_then(|message| message.usage)
+                    .or(decoded.usage)
+                {
+                    self.input_tokens = usage.input_tokens;
+                    self.output_tokens = usage.output_tokens;
+                }
+            }
+            "content_block_start" => {
+                if let Some(block) = decoded.content_block {
+                    if block.get("type").and_then(Value::as_str) == Some("text") {
+                        if let Some(text) = block.get("text").and_then(Value::as_str) {
+                            if !text.is_empty() {
+                                self.push_text_delta(text.to_owned());
+                            }
+                        }
+                    }
+                    self.raw_blocks.push(block);
+                }
+            }
+            "content_block_delta" => {
+                if let Some(delta) = decoded.delta {
+                    match delta.get("type").and_then(Value::as_str) {
+                        Some("text_delta") => {
+                            if let Some(text) = delta.get("text").and_then(Value::as_str) {
+                                if !text.is_empty() {
+                                    self.push_text_delta(text.to_owned());
+                                }
+                            }
+                        }
+                        Some("thinking_delta") => {
+                            if let Some(text) = delta.get("thinking").and_then(Value::as_str) {
+                                if !text.is_empty() {
+                                    self.pending.push_back(Ok(LlmEvent {
+                                        kind: LlmEventKind::Delta,
+                                        content: None,
+                                        response: None,
+                                        metadata: json!({
+                                            "api": "anthropic_messages",
+                                            "stream": true,
+                                            "thinking": text,
+                                        }),
+                                    }));
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            "message_delta" => {
+                if let Some(delta) = decoded.delta {
+                    if let Some(reason) = delta.get("stop_reason").and_then(Value::as_str) {
+                        self.finish_reason = Some(anthropic_finish_reason(Some(reason)));
+                    }
+                }
+                if let Some(usage) = decoded.usage {
+                    self.output_tokens = usage.output_tokens;
+                }
+            }
+            "message_stop" => self.push_finished(),
+            "error" => {
+                let error = decoded.error.unwrap_or(AnthropicErrorBody {
+                    r#type: Some("provider_error".to_owned()),
+                    message: "provider stream error".to_owned(),
+                });
+                self.pending.push_back(Err(LlmError::provider(
+                    error.r#type.unwrap_or_else(|| "provider_error".to_owned()),
+                    error.message,
+                    false,
+                    json!({}),
+                )));
+            }
+            "ping" | "content_block_stop" => {}
+            _ => {}
+        }
+    }
+
+    fn push_text_delta(&mut self, text: String) {
+        self.content.push_str(&text);
+        self.pending.push_back(Ok(LlmEvent {
+            kind: LlmEventKind::Delta,
+            content: Some(text),
+            response: None,
+            metadata: json!({"api": "anthropic_messages", "stream": true}),
+        }));
+    }
+
+    fn push_finished(&mut self) {
+        if self.finished {
+            return;
+        }
+        self.finished = true;
+        let usage = (self.input_tokens > 0 || self.output_tokens > 0).then_some(LlmUsage {
+            input_tokens: self.input_tokens,
+            output_tokens: self.output_tokens,
+            total_tokens: self.input_tokens + self.output_tokens,
+        });
+        let response = LlmResponse {
+            protocol_version: PROTOCOL_VERSION.to_owned(),
+            provider: self.provider.clone(),
+            model: self.model.clone(),
+            content: self.content.clone(),
+            finish_reason: self.finish_reason.clone().unwrap_or(LlmFinishReason::Stop),
+            usage,
+            metadata: json!({
+                "api": "anthropic_messages",
+                "stream": true,
+                "anthropic_version": self.anthropic_version,
+                "anthropic_content": self.raw_blocks,
+            }),
+        };
+        self.pending.push_back(Ok(LlmEvent {
+            kind: LlmEventKind::Finished,
+            content: None,
+            response: Some(response),
+            metadata: json!({"api": "anthropic_messages", "stream": true}),
+        }));
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -965,6 +1216,7 @@ impl LlmProvider for AnthropicProvider {
             system,
             temperature: request.temperature,
             tools: request.tools.iter().map(anthropic_tool_from_spec).collect(),
+            stream: false,
         };
         let response = self
             .client
@@ -1043,28 +1295,72 @@ impl LlmProvider for AnthropicProvider {
     }
 
     async fn stream(&self, request: LlmRequest) -> Result<LlmEventStream, LlmError> {
-        let response = self.complete(request).await?;
-        let events = vec![
-            Ok(LlmEvent {
-                kind: LlmEventKind::Started,
-                content: None,
-                response: None,
-                metadata: json!({"provider": response.provider, "model": response.model}),
-            }),
-            Ok(LlmEvent {
-                kind: LlmEventKind::Delta,
-                content: Some(response.content.clone()),
-                response: None,
-                metadata: json!({"synthetic_stream": true}),
-            }),
-            Ok(LlmEvent {
-                kind: LlmEventKind::Finished,
-                content: None,
-                response: Some(response),
-                metadata: json!({"synthetic_stream": true}),
-            }),
-        ];
-        Ok(Box::pin(stream::iter(events)))
+        if request.messages.is_empty() {
+            return Err(LlmError::validation(
+                "llm request requires at least one message",
+            ));
+        }
+        let (system, messages) = anthropic_messages_from_llm(&request.messages)?;
+        if messages.is_empty() {
+            return Err(LlmError::validation(
+                "Anthropic request requires at least one user or assistant message",
+            ));
+        }
+        let payload = AnthropicMessagesRequest {
+            model: request.model.clone(),
+            max_tokens: request.max_output_tokens.unwrap_or(1024),
+            messages,
+            system,
+            temperature: request.temperature,
+            tools: request.tools.iter().map(anthropic_tool_from_spec).collect(),
+            stream: true,
+        };
+        let response = self
+            .client
+            .post(self.messages_url())
+            .header("x-api-key", &self.api_key)
+            .header("anthropic-version", &self.anthropic_version)
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|err| {
+                LlmError::provider("provider_request_failed", err.to_string(), true, json!({}))
+            })?;
+        let status = response.status();
+        if !status.is_success() {
+            let body = response.text().await.map_err(|err| {
+                LlmError::provider(
+                    "provider_body_read_failed",
+                    err.to_string(),
+                    true,
+                    json!({}),
+                )
+            })?;
+            let details = serde_json::from_str::<Value>(&body).unwrap_or_else(|_| json!({}));
+            let message = details
+                .pointer("/error/message")
+                .and_then(Value::as_str)
+                .unwrap_or(&body)
+                .to_owned();
+            if status.as_u16() == 429 {
+                return Err(LlmError::rate_limited(message, details));
+            }
+            return Err(LlmError::provider(
+                format!("provider_http_{}", status.as_u16()),
+                message,
+                status.is_server_error(),
+                details,
+            ));
+        }
+        let state = AnthropicSseState::new(
+            self.provider.clone(),
+            request.model,
+            self.anthropic_version.clone(),
+            Box::pin(response.bytes_stream()),
+        );
+        Ok(Box::pin(stream::unfold(state, |mut state| async move {
+            state.next_event().await.map(|event| (event, state))
+        })))
     }
 }
 
@@ -1569,6 +1865,82 @@ mod tests {
             8,
             "Anthropic usage totals input plus output tokens"
         );
+    }
+
+    #[tokio::test]
+    async fn anthropic_provider_streams_sse_text_and_usage() {
+        let listener = TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .expect("listener binds");
+        let addr = listener.local_addr().expect("local addr");
+        let app = Router::new().route(
+            "/messages",
+            post(|Json(body): Json<Value>| async move {
+                assert_eq!(body["model"], "claude-stream-test");
+                assert_eq!(body["stream"], true);
+                assert_eq!(body["messages"][0]["role"], "user");
+                (
+                    [("content-type", "text/event-stream")],
+                    concat!(
+                        "event: message_start\n",
+                        "data: {\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":5,\"output_tokens\":0}}}\n\n",
+                        "event: content_block_start\n",
+                        "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n",
+                        "event: content_block_delta\n",
+                        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"hel\"}}\n\n",
+                        "event: content_block_delta\n",
+                        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lo\"}}\n\n",
+                        "event: message_delta\n",
+                        "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":3}}\n\n",
+                        "event: message_stop\n",
+                        "data: {\"type\":\"message_stop\"}\n\n"
+                    ),
+                )
+            }),
+        );
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("test server runs");
+        });
+
+        let provider = AnthropicProvider::new(
+            "anthropic",
+            format!("http://{addr}"),
+            "test-key",
+            "2023-06-01",
+        )
+        .expect("provider builds");
+        let events = provider
+            .stream(LlmRequest {
+                protocol_version: PROTOCOL_VERSION.to_owned(),
+                provider: "anthropic".to_owned(),
+                model: "claude-stream-test".to_owned(),
+                messages: vec![user_message("ping")],
+                temperature: None,
+                max_output_tokens: Some(64),
+                tools: vec![],
+                metadata: json!({}),
+            })
+            .await
+            .expect("provider streams")
+            .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .expect("stream events ok");
+
+        assert!(matches!(events[0].kind, LlmEventKind::Started));
+        assert_eq!(events[1].content.as_deref(), Some("hel"));
+        assert_eq!(events[2].content.as_deref(), Some("lo"));
+        let finished = events.last().expect("finished event");
+        assert!(matches!(finished.kind, LlmEventKind::Finished));
+        let response = finished.response.as_ref().expect("response");
+        assert_eq!(response.content, "hello");
+        assert_eq!(response.finish_reason, LlmFinishReason::Stop);
+        let usage = response.usage.as_ref().expect("usage");
+        assert_eq!(usage.input_tokens, 5);
+        assert_eq!(usage.output_tokens, 3);
+        assert_eq!(usage.total_tokens, 8);
+        assert_eq!(response.metadata["stream"], true);
     }
 
     #[tokio::test]
