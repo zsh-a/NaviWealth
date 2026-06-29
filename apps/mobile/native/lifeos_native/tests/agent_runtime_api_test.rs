@@ -33,6 +33,27 @@ fn summarizes_catalog_contract() {
 }
 
 #[test]
+fn catalog_summary_rejects_mismatched_catalog_contract() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["protocol_version"] = json!("agent.v0");
+    let protocol_err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("mismatched catalog protocol should fail");
+    assert!(protocol_err.to_string().contains("protocol_version"));
+
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["catalog_version"] = json!("agent_catalog.v0");
+    let catalog_err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("mismatched catalog version should fail");
+    assert!(catalog_err.to_string().contains("catalog_version"));
+}
+
+#[test]
 fn normalizes_run_request_contract() {
     let normalized = agent_runtime_validate_run_request(
         include_str!("../../../../../fixtures/agent-runtime/run-request.valid.json").to_owned(),
@@ -488,6 +509,35 @@ fn start_run_step_rejects_mismatched_run_request_protocol_version() {
 }
 
 #[test]
+fn start_run_step_rejects_mismatched_catalog_contract() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["protocol_version"] = json!("agent.v0");
+
+    let err = agent_runtime_start_run_step(
+        catalog.to_string(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "input": {
+            "tool_call": {
+              "name": "propose_fake",
+              "input": {"value": 7}
+            }
+          },
+          "trigger": "manual",
+          "metadata": {}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched catalog protocol should fail");
+
+    assert!(err.to_string().contains("catalog protocol_version"));
+}
+
+#[test]
 fn start_run_step_seeds_native_tool_plan_continuation() {
     let step_json = agent_runtime_start_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
@@ -692,6 +742,43 @@ fn continue_run_step_completes_with_tool_result() {
     assert_eq!(next["run_state"]["tool_result_count"], 1);
     assert_eq!(next["trace_event"]["status"], "completed");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
+}
+
+#[test]
+fn continue_run_step_rejects_mismatched_catalog_contract() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["catalog_version"] = json!("agent_catalog.v0");
+
+    let err = agent_runtime_continue_run_step(
+        catalog.to_string(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("mismatched catalog version should fail");
+
+    assert!(err.to_string().contains("catalog_version"));
 }
 
 #[test]

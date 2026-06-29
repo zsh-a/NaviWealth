@@ -40,6 +40,7 @@ pub fn agent_runtime_catalog_version() -> String {
 
 pub fn agent_runtime_catalog_summary(catalog_json: String) -> Result<String> {
     let catalog: AgentRuntimeCatalog = serde_json::from_str(&catalog_json)?;
+    require_catalog_contract(&catalog)?;
     let summary = CatalogSummary {
         protocol_version: catalog.protocol_version,
         catalog_version: catalog.catalog_version,
@@ -242,6 +243,7 @@ pub fn agent_runtime_start_run_step(
     agent_id: String,
 ) -> Result<String> {
     let catalog: AgentRuntimeCatalog = serde_json::from_str(&catalog_json)?;
+    require_catalog_contract(&catalog)?;
     let request: RunRequest = serde_json::from_str(&request_json)?;
     require_run_request_protocol_version(&request)?;
     let agent = catalog
@@ -286,6 +288,7 @@ pub fn agent_runtime_continue_run_step(
     agent_id: String,
 ) -> Result<String> {
     let catalog: AgentRuntimeCatalog = serde_json::from_str(&catalog_json)?;
+    require_catalog_contract(&catalog)?;
     let previous_step: Value = serde_json::from_str(&previous_step_json)?;
     let tool_response: Value = serde_json::from_str(&tool_response_json)?;
     let agent = catalog
@@ -767,6 +770,24 @@ fn require_run_request_protocol_version(request: &RunRequest) -> Result<()> {
         anyhow::bail!(
             "run request protocol_version '{}' does not match runtime protocol_version '{expected}'",
             request.protocol_version
+        );
+    }
+    Ok(())
+}
+
+fn require_catalog_contract(catalog: &AgentRuntimeCatalog) -> Result<()> {
+    let expected_protocol = protocol_version();
+    if catalog.protocol_version != expected_protocol {
+        anyhow::bail!(
+            "catalog protocol_version '{}' does not match runtime protocol_version '{expected_protocol}'",
+            catalog.protocol_version
+        );
+    }
+    let expected_catalog = catalog_version();
+    if catalog.catalog_version != expected_catalog {
+        anyhow::bail!(
+            "catalog catalog_version '{}' does not match runtime catalog_version '{expected_catalog}'",
+            catalog.catalog_version
         );
     }
     Ok(())
