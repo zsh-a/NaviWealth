@@ -238,7 +238,7 @@ pub fn agent_runtime_start_run_step(
         .ok_or_else(|| anyhow::anyhow!("agent '{agent_id}' is not present in the catalog"))?;
     let run_id = request.run_id.clone().unwrap_or_else(RunId::new_v7);
 
-    let response = match parse_initial_tool_request(&request.input)? {
+    let mut response = match parse_initial_tool_request(&request.input)? {
         Some(tool_request) => {
             let continuation = tool_request.continuation();
             build_tool_call_requested_step(
@@ -256,11 +256,13 @@ pub fn agent_runtime_start_run_step(
                 "run_id": run_id,
                 "agent_id": agent.id,
                 "agent_version": agent.version,
+                "step_index": 0,
                 "status": "completed",
                 "output": request.input,
             })
         }
     };
+    attach_trace_event(&mut response);
     Ok(serde_json::to_string(&response)?)
 }
 
@@ -295,12 +297,19 @@ pub fn agent_runtime_continue_run_step(
         "tool_response": tool_response.clone(),
     }));
 
-    let response = match tool_response.get("error") {
+    let next_step_index = previous_step
+        .get("step_index")
+        .and_then(Value::as_u64)
+        .unwrap_or(0)
+        + 1;
+
+    let mut response = match tool_response.get("error") {
         Some(error) => json!({
             "protocol_version": protocol_version(),
             "run_id": run_id,
             "agent_id": agent.id,
             "agent_version": agent.version,
+            "step_index": next_step_index,
             "status": "failed",
             "tool_call": tool_call,
             "tool_response": tool_response,
@@ -323,6 +332,7 @@ pub fn agent_runtime_continue_run_step(
                 "run_id": run_id,
                 "agent_id": agent.id,
                 "agent_version": agent.version,
+                "step_index": next_step_index,
                 "status": "completed",
                 "output": {
                     "mode": if tool_results.len() > 1 {
@@ -338,6 +348,7 @@ pub fn agent_runtime_continue_run_step(
             }),
         },
     };
+    attach_trace_event(&mut response);
     Ok(serde_json::to_string(&response)?)
 }
 
@@ -395,11 +406,15 @@ struct ToolRequestState {
     remaining: Vec<Value>,
     tool_results: Vec<Value>,
     llm_response: Option<Value>,
+    step_index: u64,
 }
 
 impl ToolRequestState {
     fn continuation(&self) -> Option<Value> {
-        if self.remaining.is_empty() && self.tool_results.is_empty() && self.llm_response.is_none()
+        if self.remaining.is_empty()
+            && self.tool_results.is_empty()
+            && self.llm_response.is_none()
+            && self.step_index == 0
         {
             return None;
         }
@@ -412,6 +427,10 @@ impl ToolRequestState {
         if let Some(llm_response) = &self.llm_response {
             object.insert("llm_response".to_owned(), llm_response.clone());
         }
+        object.insert(
+            "next_step_index".to_owned(),
+            Value::Number(serde_json::Number::from(self.step_index + 1)),
+        );
         Some(Value::Object(object))
     }
 }
@@ -430,6 +449,7 @@ fn parse_initial_tool_request(input: &Value) -> Result<Option<ToolRequestState>>
             remaining: plan[1..].to_vec(),
             tool_results: Vec::new(),
             llm_response: input.get("llm_response").cloned(),
+            step_index: 0,
         }));
     }
 
@@ -441,6 +461,7 @@ fn parse_initial_tool_request(input: &Value) -> Result<Option<ToolRequestState>>
         remaining: Vec::new(),
         tool_results: Vec::new(),
         llm_response: input.get("llm_response").cloned(),
+        step_index: 0,
     }))
 }
 
@@ -460,11 +481,22 @@ fn next_tool_request_from_continuation(
         return Ok(None);
     }
     let first = serde_json::from_value(plan[0].clone())?;
+    let step_index = continuation
+        .get("next_step_index")
+        .and_then(Value::as_u64)
+        .unwrap_or_else(|| {
+            previous_step
+                .get("step_index")
+                .and_then(Value::as_u64)
+                .unwrap_or(0)
+                + 1
+        });
     Ok(Some(ToolRequestState {
         first,
         remaining: plan[1..].to_vec(),
         tool_results,
         llm_response: continuation.get("llm_response").cloned(),
+        step_index,
     }))
 }
 
@@ -505,6 +537,7 @@ fn build_tool_call_requested_step(
         "run_id": run_id,
         "agent_id": agent_id,
         "agent_version": agent_version,
+        "step_index": tool_call_step_index(&continuation),
         "status": "tool_call_requested",
         "tool_call": {
             "tool_call_id": ToolCallId::new_v7(),
@@ -519,7 +552,36 @@ fn build_tool_call_requested_step(
             .expect("step is an object")
             .insert("continuation".to_owned(), continuation);
     }
+    attach_trace_event(&mut step);
     Ok(step)
+}
+
+fn tool_call_step_index(continuation: &Option<Value>) -> u64 {
+    continuation
+        .as_ref()
+        .and_then(|value| value.get("next_step_index"))
+        .and_then(Value::as_u64)
+        .map(|next| next.saturating_sub(1))
+        .unwrap_or(0)
+}
+
+fn attach_trace_event(step: &mut Value) {
+    let Some(object) = step.as_object_mut() else {
+        return;
+    };
+    let event = json!({
+        "kind": "agent_runtime_step",
+        "run_id": object.get("run_id").cloned().unwrap_or(Value::Null),
+        "agent_id": object.get("agent_id").cloned().unwrap_or(Value::Null),
+        "status": object.get("status").cloned().unwrap_or(Value::Null),
+        "step_index": object.get("step_index").cloned().unwrap_or(Value::Null),
+        "tool_name": object
+            .get("tool_call")
+            .and_then(|tool_call| tool_call.get("name"))
+            .cloned()
+            .unwrap_or(Value::Null),
+    });
+    object.insert("trace_event".to_owned(), event);
 }
 
 fn runtime_input_from_llm_response(response: &LlmResponse) -> Result<Value> {
@@ -548,4 +610,111 @@ fn runtime_input_from_llm_response(response: &LlmResponse) -> Result<Value> {
         "content": response.content,
         "llm_response": response,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn catalog_json() -> String {
+        json!({
+            "protocol_version": "agent.v1",
+            "catalog_version": "agent_catalog.v1",
+            "generated_at": "2026-06-29T00:00:00Z",
+            "agents": [
+                {
+                    "id": "execution_review",
+                    "name": "Execution Review",
+                    "version": "0.1.0",
+                    "schedule": {"type": "manual"},
+                    "capabilities": ["scheduled_agent"],
+                    "metadata": {"domain": "execution"}
+                }
+            ],
+            "tools": [
+                {
+                    "name": "read_first",
+                    "description": "Read first",
+                    "input_schema": {"type": "object"},
+                    "risk": "read_only",
+                    "metadata": {}
+                },
+                {
+                    "name": "read_second",
+                    "description": "Read second",
+                    "input_schema": {"type": "object"},
+                    "risk": "read_only",
+                    "metadata": {}
+                }
+            ],
+            "proposal_kinds": [],
+            "prompt_blocks": []
+        })
+        .to_string()
+    }
+
+    #[test]
+    fn native_tool_plan_steps_own_step_index_and_trace_events() {
+        let request_json = json!({
+            "protocol_version": "agent.v1",
+            "run_id": "run_native_trace",
+            "input": {
+                "tool_plan": [
+                    {"name": "read_first", "input": {"id": "first"}},
+                    {"name": "read_second", "input": {"id": "second"}}
+                ]
+            },
+            "trigger": "manual",
+            "metadata": {}
+        })
+        .to_string();
+
+        let first: Value = serde_json::from_str(
+            &agent_runtime_start_run_step(
+                catalog_json(),
+                request_json,
+                "execution_review".to_owned(),
+            )
+            .expect("start step"),
+        )
+        .expect("first step json");
+        assert_eq!(first["status"], "tool_call_requested");
+        assert_eq!(first["step_index"], 0);
+        assert_eq!(first["tool_call"]["name"], "read_first");
+        assert_eq!(first["trace_event"]["kind"], "agent_runtime_step");
+        assert_eq!(first["trace_event"]["step_index"], 0);
+        assert_eq!(first["trace_event"]["tool_name"], "read_first");
+
+        let second: Value = serde_json::from_str(
+            &agent_runtime_continue_run_step(
+                catalog_json(),
+                first.to_string(),
+                json!({"jsonrpc": "2.0", "id": "call_1", "result": {"ok": true}}).to_string(),
+                "execution_review".to_owned(),
+            )
+            .expect("second step"),
+        )
+        .expect("second step json");
+        assert_eq!(second["status"], "tool_call_requested");
+        assert_eq!(second["step_index"], 1);
+        assert_eq!(second["tool_call"]["name"], "read_second");
+        assert_eq!(second["trace_event"]["step_index"], 1);
+        assert_eq!(second["trace_event"]["tool_name"], "read_second");
+
+        let terminal: Value = serde_json::from_str(
+            &agent_runtime_continue_run_step(
+                catalog_json(),
+                second.to_string(),
+                json!({"jsonrpc": "2.0", "id": "call_2", "result": {"done": true}}).to_string(),
+                "execution_review".to_owned(),
+            )
+            .expect("terminal step"),
+        )
+        .expect("terminal step json");
+        assert_eq!(terminal["status"], "completed");
+        assert_eq!(terminal["step_index"], 2);
+        assert_eq!(terminal["trace_event"]["step_index"], 2);
+        assert_eq!(terminal["trace_event"]["tool_name"], Value::Null);
+        assert_eq!(terminal["output"]["mode"], "frb_tool_loop");
+    }
 }

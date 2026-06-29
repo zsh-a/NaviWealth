@@ -1301,6 +1301,9 @@ The Flutter runner now provides the former parity gap:
 - terminal `ask_user` pause semantics
 - LLM/tool span events for `AiTraceBuilder`
 - cancellation/error semantics compatible with `ChatRepository`
+- native `step_index` / `trace_event` fields on FRB tool-plan steps, consumed
+  by Dart trace recording so Rust owns step sequencing even while Dart executes
+  local tools
 
 The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been
 removed; the remaining `DeviceLlmClient` surface is limited to low-level

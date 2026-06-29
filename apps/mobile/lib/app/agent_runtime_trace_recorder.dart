@@ -144,15 +144,17 @@ class AgentRuntimeTraceRecorder {
     for (var i = 0; i < stepRun.steps.length; i++) {
       final step = stepRun.steps[i];
       if (step['status'] != 'tool_call_requested') continue;
+      final nativeStepIndex = _int(step['step_index']);
+      final spanOrdinal = nativeStepIndex ?? i;
       final toolCall = _object(step['tool_call']);
       final name = _string(toolCall?['name']) ?? 'unknown';
       final response = i < stepRun.toolResponses.length
           ? stepRun.toolResponses[i]
           : null;
       final error = _object(response?['error']);
-      final spanStarted = _offsetTime(startedAt, 2 + i);
+      final spanStarted = _offsetTime(startedAt, 2 + spanOrdinal);
       builder.addSpan(
-        id: 'tool:${i + 1}',
+        id: 'tool:${spanOrdinal + 1}',
         parentId: parentId,
         kind: AiSpanKind.tool,
         name: 'tool:$name',
@@ -163,6 +165,7 @@ class AgentRuntimeTraceRecorder {
         errorMessage: _string(error?['message']),
         attributes: <String, Object?>{
           'tool_call_id': _string(toolCall?['tool_call_id']),
+          'native_step_index': ?nativeStepIndex,
           'native_step_status': _string(step['status']),
           'response_id': _string(response?['id']),
         },
@@ -207,5 +210,12 @@ Map<String, Object?>? _object(Object? value) {
   if (value is Map) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
+  return null;
+}
+
+int? _int(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value);
   return null;
 }

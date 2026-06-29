@@ -90,6 +90,7 @@ void main() {
         steps: <Map<String, Object?>>[
           <String, Object?>{
             'run_id': 'run_2',
+            'step_index': 3,
             'status': 'tool_call_requested',
             'tool_call': <String, Object?>{
               'tool_call_id': 'call_1',
@@ -114,7 +115,12 @@ void main() {
     expect(trace.routingReason, 'frb_native_tool_plan');
     expect(trace.intent.label, 'agent_runtime_step_run');
     expect(trace.llmRoundCount, 0);
+    expect(trace.toolSpans.single.id, 'tool:4');
     expect(trace.toolSpans.single.name, 'tool:list_due_routines');
+    expect(
+      trace.toolSpans.single.attributes,
+      containsPair('native_step_index', 3),
+    );
     expect(
       trace.spans.first.attributes,
       containsPair('surface', 'knowledge_routine_due'),
