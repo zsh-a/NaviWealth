@@ -1,19 +1,15 @@
 import 'package:decimal/decimal.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
+import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/activity/ui/activity_entry_detail_page.dart';
-import 'package:naviwealth/features/ai_chat/data/providers.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
@@ -93,7 +89,7 @@ JournalEntryWithPostings _entry({required String narration, String? payee}) {
 Widget _wrap({
   required JournalEntryWithPostings entry,
   Locale locale = const Locale('en'),
-  DeviceLlmClient? client,
+  AgentRuntimeLlmBridge? llmBridge,
 }) {
   final accounts = {
     'expenses:living': _account(
@@ -110,7 +106,7 @@ Widget _wrap({
   return ProviderScope(
     overrides: [
       aiTouchedAtProvider.overrideWith((ref, key) => Stream.value(null)),
-      deviceLlmClientProvider.overrideWithValue(client),
+      agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
     ],
     child: MaterialApp(
       theme: AppTheme.light(),
@@ -183,12 +179,15 @@ void main() {
     expect(find.text('暂无该笔记录的洞察。'), findsNothing);
   });
 
-  testWidgets('uses device LLM explanation when available', (tester) async {
+  testWidgets('uses FRB profile LLM explanation when available', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(
         entry: _entry(narration: 'Spotify subscription'),
-        client: const _FakeActivityLlmClient(
-          'This looks like a recurring media subscription paid from cash.',
+        llmBridge: _FakeLlmBridge(
+          responseText:
+              'This looks like a recurring media subscription paid from cash.',
         ),
       ),
     );
@@ -209,11 +208,13 @@ void main() {
     );
   });
 
-  testWidgets('falls back to heuristic when device LLM fails', (tester) async {
+  testWidgets('falls back to heuristic when FRB profile LLM fails', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(
         entry: _entry(narration: 'Spotify subscription'),
-        client: const _FailingActivityLlmClient(),
+        llmBridge: _FakeLlmBridge(error: StateError('llm down')),
       ),
     );
     await tester.pumpAndSettle();
@@ -240,58 +241,74 @@ void main() {
   });
 }
 
-class _FakeLlmConfig implements DeviceLlmConfig {
-  const _FakeLlmConfig();
+class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+  _FakeLlmBridge({this.responseText, this.error});
+
+  final String? responseText;
+  final Object? error;
+  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
+  Map<String, Object?> lastMetadata = const <String, Object?>{};
 
   @override
-  String get model => 'test-model';
-}
-
-class _FakeActivityLlmClient implements DeviceLlmClient {
-  const _FakeActivityLlmClient(this.text);
-
-  final String text;
-
-  @override
-  DeviceLlmConfig get config => const _FakeLlmConfig();
-
-  @override
-  Stream<LlmStreamEvent> streamMessages(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) => const Stream<LlmStreamEvent>.empty();
-
-  @override
-  Future<AnthropicCompletion> complete(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async {
-    return AnthropicCompletion(
-      content: [
-        {'type': 'text', 'text': text},
-      ],
-      stopReason: 'end_turn',
-    );
+  Map<String, Object?> buildRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
+    return <String, Object?>{
+      'messages': messages,
+      'metadata': metadata,
+      'max_output_tokens': maxOutputTokens,
+    };
   }
-}
-
-class _FailingActivityLlmClient implements DeviceLlmClient {
-  const _FailingActivityLlmClient();
 
   @override
-  DeviceLlmConfig get config => const _FakeLlmConfig();
-
-  @override
-  Stream<LlmStreamEvent> streamMessages(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) => const Stream<LlmStreamEvent>.empty();
-
-  @override
-  Future<AnthropicCompletion> complete(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
+  Future<Map<String, Object?>> completeMock({
+    required List<Map<String, Object?>> messages,
+    required String responseText,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
-    throw StateError('llm down');
+    return <String, Object?>{'content': responseText};
+  }
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    lastMessages = messages;
+    lastMetadata = metadata;
+    final e = error;
+    if (e != null) throw e;
+    return <String, Object?>{
+      'provider': 'mock',
+      'model': 'test-model',
+      'content': responseText ?? '',
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> validateRequest({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return buildRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
   }
 }

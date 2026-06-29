@@ -1,11 +1,9 @@
 import 'package:decimal/decimal.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
+import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -18,7 +16,6 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/data/providers.dart';
 import '../../finance/data/repositories/journal_entry_providers.dart';
 import '../../finance/data/repositories/providers.dart';
 import '../../shared/account_l10n.dart';
@@ -174,28 +171,31 @@ final aiExplainEntryProvider = FutureProvider.autoDispose
             : const Locale('en'),
       );
       final fallback = _heuristicInsight(request.entry, l10n);
-      final client = ref.watch(deviceLlmClientProvider);
-      if (client == null) return fallback;
+      final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+      if (llmBridge == null) return fallback;
 
       try {
-        final completion = await client
-            .complete(
-              AnthropicRequest(
-                model: client.config.model,
-                maxTokens: 256,
-                system: _activityInsightSystem(request.locale),
-                messages: [
-                  AnthropicChatMessage.text(
-                    'user',
-                    _activityInsightPrompt(request, l10n),
-                  ),
-                ],
-                stream: false,
-              ),
-              cancelToken: CancelToken(),
+        final response = await llmBridge
+            .completeProfile(
+              messages: <Map<String, Object?>>[
+                <String, Object?>{
+                  'role': 'system',
+                  'content': _activityInsightSystem(request.locale),
+                },
+                <String, Object?>{
+                  'role': 'user',
+                  'content': _activityInsightPrompt(request, l10n),
+                },
+              ],
+              maxOutputTokens: 256,
+              metadata: const <String, Object?>{
+                'surface': 'finance_activity_insight',
+                'agent_id': 'finance_activity_insight',
+              },
             )
             .timeout(const Duration(seconds: 15));
-        final text = _cleanAiInsight(_extractCompletionText(completion));
+        final body = response['content'];
+        final text = _cleanAiInsight(body is String ? body : null);
         return text ?? fallback;
       } on Object {
         return fallback;
@@ -789,18 +789,6 @@ String _promptAccountLabel(Posting posting, Map<String, Account> accountsById) {
   if (account == null) return posting.accountId;
   final side = account.category.name;
   return side.isEmpty ? account.name : '${account.name} ($side)';
-}
-
-String? _extractCompletionText(AnthropicCompletion completion) {
-  for (final block in completion.content) {
-    if (block is! Map) continue;
-    final type = block['type'];
-    final text = block['text'];
-    if (type == 'text' && text is String && text.trim().isNotEmpty) {
-      return text;
-    }
-  }
-  return null;
 }
 
 String? _cleanAiInsight(String? text) {

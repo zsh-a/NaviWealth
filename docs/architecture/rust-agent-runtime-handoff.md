@@ -193,6 +193,9 @@ Current bridge capabilities:
   integration: Capture classifier now prefers `FrbCaptureClassifier`, so both
   the Capture sheet and `propose_capture` tool use the same FRB-backed
   taxonomy/polish seam while preserving the existing heuristic fallback.
+- Provide a Finance FRB profile-backed LLM integration: Activity entry insight
+  now calls `AgentRuntimeLlmBridge.completeProfile` for its concise explanation
+  while preserving the existing localized heuristic fallback.
 - Provide the first tool-using production agent integration on the
   native-planned continuation loop: HealthOS Recovery Alert now uses
   `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB

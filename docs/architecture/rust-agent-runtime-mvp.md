@@ -165,6 +165,9 @@ Implemented:
   completion through `FrbCaptureClassifier`, so both the Capture sheet and
   `propose_capture` tool use the same FRB-backed taxonomy/polish seam while
   preserving the existing heuristic fallback
+- Finance Activity entry insight now uses the FRB profile-backed LLM bridge
+  via `AgentRuntimeLlmBridge.completeProfile` for its concise explanation,
+  preserving the existing localized heuristic fallback
 - First tool-using production agent migration onto the native-planned
   continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`
