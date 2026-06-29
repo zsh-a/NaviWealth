@@ -1,9 +1,11 @@
+use std::collections::VecDeque;
 use std::pin::Pin;
 use std::time::Duration;
 
 use agent_core::{PROTOCOL_VERSION, ToolSpec};
 use async_trait::async_trait;
-use futures::{Stream, stream};
+use bytes::Bytes;
+use futures::{Stream, StreamExt, stream};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -512,6 +514,13 @@ struct OpenAiChatCompletionRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     max_tokens: Option<u32>,
     stream: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    stream_options: Option<OpenAiStreamOptions>,
+}
+
+#[derive(Debug, Serialize)]
+struct OpenAiStreamOptions {
+    include_usage: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -535,6 +544,8 @@ struct OpenAiChatCompletionResponse {
 #[derive(Debug, Deserialize)]
 struct OpenAiChoice {
     message: Option<OpenAiMessageResponse>,
+    #[serde(default)]
+    delta: Option<OpenAiMessageResponse>,
     #[serde(default)]
     finish_reason: Option<String>,
 }
@@ -565,6 +576,207 @@ struct OpenAiErrorBody {
     code: Option<Value>,
 }
 
+struct OpenAiSseState {
+    provider: String,
+    model: String,
+    chunks: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
+    buffer: String,
+    pending: VecDeque<Result<LlmEvent, LlmError>>,
+    content: String,
+    finish_reason: Option<LlmFinishReason>,
+    usage: Option<LlmUsage>,
+    finished: bool,
+}
+
+impl OpenAiSseState {
+    fn new(
+        provider: String,
+        model: String,
+        chunks: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
+    ) -> Self {
+        let mut pending = VecDeque::new();
+        pending.push_back(Ok(LlmEvent {
+            kind: LlmEventKind::Started,
+            content: None,
+            response: None,
+            metadata: json!({"provider": provider, "model": model, "stream": true}),
+        }));
+        Self {
+            provider,
+            model,
+            chunks,
+            buffer: String::new(),
+            pending,
+            content: String::new(),
+            finish_reason: None,
+            usage: None,
+            finished: false,
+        }
+    }
+
+    async fn next_event(&mut self) -> Option<Result<LlmEvent, LlmError>> {
+        loop {
+            if let Some(event) = self.pending.pop_front() {
+                return Some(event);
+            }
+            if self.finished {
+                return None;
+            }
+            match self.chunks.next().await {
+                Some(Ok(bytes)) => {
+                    self.buffer.push_str(&String::from_utf8_lossy(&bytes));
+                    self.drain_frames();
+                }
+                Some(Err(err)) => {
+                    self.finished = true;
+                    return Some(Err(LlmError::provider(
+                        "provider_stream_read_failed",
+                        err.to_string(),
+                        true,
+                        json!({}),
+                    )));
+                }
+                None => {
+                    if !self.buffer.trim().is_empty() {
+                        if let Some(frame) = take_remaining_sse_frame(&mut self.buffer) {
+                            self.handle_frame(&frame);
+                        }
+                    }
+                    if !self.finished {
+                        self.push_finished();
+                    }
+                }
+            }
+        }
+    }
+
+    fn drain_frames(&mut self) {
+        while let Some(frame) = take_next_sse_frame(&mut self.buffer) {
+            self.handle_frame(&frame);
+        }
+    }
+
+    fn handle_frame(&mut self, frame: &str) {
+        let data = sse_data(frame);
+        if data.is_empty() {
+            return;
+        }
+        if data.trim() == "[DONE]" {
+            self.push_finished();
+            return;
+        }
+        let decoded = match serde_json::from_str::<OpenAiChatCompletionResponse>(&data) {
+            Ok(decoded) => decoded,
+            Err(err) => {
+                self.pending.push_back(Err(LlmError::provider(
+                    "provider_stream_decode_failed",
+                    err.to_string(),
+                    false,
+                    json!({"frame": data}),
+                )));
+                return;
+            }
+        };
+        if let Some(error) = decoded.error {
+            self.pending.push_back(Err(LlmError::provider(
+                error.r#type.unwrap_or_else(|| "provider_error".to_owned()),
+                error.message,
+                false,
+                json!({"code": error.code}),
+            )));
+            return;
+        }
+        if let Some(usage) = decoded.usage {
+            self.usage = Some(LlmUsage {
+                input_tokens: usage.prompt_tokens,
+                output_tokens: usage.completion_tokens,
+                total_tokens: usage.total_tokens,
+            });
+        }
+        for choice in decoded.choices {
+            if let Some(content) = choice.delta.and_then(|message| message.content) {
+                if !content.is_empty() {
+                    self.content.push_str(&content);
+                    self.pending.push_back(Ok(LlmEvent {
+                        kind: LlmEventKind::Delta,
+                        content: Some(content),
+                        response: None,
+                        metadata: json!({"api": "openai_chat_completions", "stream": true}),
+                    }));
+                }
+            }
+            if let Some(reason) = choice.finish_reason {
+                self.finish_reason = Some(openai_finish_reason(Some(&reason)));
+            }
+        }
+    }
+
+    fn push_finished(&mut self) {
+        if self.finished {
+            return;
+        }
+        self.finished = true;
+        let response = LlmResponse {
+            protocol_version: PROTOCOL_VERSION.to_owned(),
+            provider: self.provider.clone(),
+            model: self.model.clone(),
+            content: self.content.clone(),
+            finish_reason: self.finish_reason.clone().unwrap_or(LlmFinishReason::Stop),
+            usage: self.usage.clone(),
+            metadata: json!({"api": "openai_chat_completions", "stream": true}),
+        };
+        self.pending.push_back(Ok(LlmEvent {
+            kind: LlmEventKind::Finished,
+            content: None,
+            response: Some(response),
+            metadata: json!({"api": "openai_chat_completions", "stream": true}),
+        }));
+    }
+}
+
+fn take_next_sse_frame(buffer: &mut String) -> Option<String> {
+    let lf = buffer.find("\n\n").map(|idx| (idx, 2));
+    let crlf = buffer.find("\r\n\r\n").map(|idx| (idx, 4));
+    let (idx, len) = match (lf, crlf) {
+        (Some(a), Some(b)) => {
+            if a.0 <= b.0 {
+                a
+            } else {
+                b
+            }
+        }
+        (Some(a), None) => a,
+        (None, Some(b)) => b,
+        (None, None) => return None,
+    };
+    let frame = buffer[..idx].to_owned();
+    buffer.drain(..idx + len);
+    Some(frame)
+}
+
+fn take_remaining_sse_frame(buffer: &mut String) -> Option<String> {
+    let frame = buffer.trim().to_owned();
+    buffer.clear();
+    if frame.is_empty() { None } else { Some(frame) }
+}
+
+fn sse_data(frame: &str) -> String {
+    let mut data = String::new();
+    for line in frame.lines() {
+        let line = line.trim_end_matches('\r');
+        if line.starts_with(':') {
+            continue;
+        }
+        if let Some(piece) = line.strip_prefix("data:") {
+            if !data.is_empty() {
+                data.push('\n');
+            }
+            data.push_str(piece.trim_start());
+        }
+    }
+    data
+}
+
 #[async_trait]
 impl LlmProvider for OpenAiCompatibleProvider {
     async fn complete(&self, request: LlmRequest) -> Result<LlmResponse, LlmError> {
@@ -583,6 +795,7 @@ impl LlmProvider for OpenAiCompatibleProvider {
             temperature: request.temperature,
             max_tokens: request.max_output_tokens,
             stream: false,
+            stream_options: None,
         };
         let response = self
             .client
@@ -665,28 +878,69 @@ impl LlmProvider for OpenAiCompatibleProvider {
     }
 
     async fn stream(&self, request: LlmRequest) -> Result<LlmEventStream, LlmError> {
-        let response = self.complete(request).await?;
-        let events = vec![
-            Ok(LlmEvent {
-                kind: LlmEventKind::Started,
-                content: None,
-                response: None,
-                metadata: json!({"provider": response.provider, "model": response.model}),
+        if request.messages.is_empty() {
+            return Err(LlmError::validation(
+                "llm request requires at least one message",
+            ));
+        }
+        let payload = OpenAiChatCompletionRequest {
+            model: request.model.clone(),
+            messages: request
+                .messages
+                .iter()
+                .map(openai_message_from_llm)
+                .collect::<Result<Vec<_>, _>>()?,
+            temperature: request.temperature,
+            max_tokens: request.max_output_tokens,
+            stream: true,
+            stream_options: Some(OpenAiStreamOptions {
+                include_usage: true,
             }),
-            Ok(LlmEvent {
-                kind: LlmEventKind::Delta,
-                content: Some(response.content.clone()),
-                response: None,
-                metadata: json!({"synthetic_stream": true}),
-            }),
-            Ok(LlmEvent {
-                kind: LlmEventKind::Finished,
-                content: None,
-                response: Some(response),
-                metadata: json!({"synthetic_stream": true}),
-            }),
-        ];
-        Ok(Box::pin(stream::iter(events)))
+        };
+        let response = self
+            .client
+            .post(self.completions_url())
+            .bearer_auth(&self.api_key)
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|err| {
+                LlmError::provider("provider_request_failed", err.to_string(), true, json!({}))
+            })?;
+        let status = response.status();
+        if !status.is_success() {
+            let body = response.text().await.map_err(|err| {
+                LlmError::provider(
+                    "provider_body_read_failed",
+                    err.to_string(),
+                    true,
+                    json!({}),
+                )
+            })?;
+            let details = serde_json::from_str::<Value>(&body).unwrap_or_else(|_| json!({}));
+            let message = details
+                .pointer("/error/message")
+                .and_then(Value::as_str)
+                .unwrap_or(&body)
+                .to_owned();
+            if status.as_u16() == 429 {
+                return Err(LlmError::rate_limited(message, details));
+            }
+            return Err(LlmError::provider(
+                format!("provider_http_{}", status.as_u16()),
+                message,
+                status.is_server_error(),
+                details,
+            ));
+        }
+        let state = OpenAiSseState::new(
+            self.provider.clone(),
+            request.model,
+            Box::pin(response.bytes_stream()),
+        );
+        Ok(Box::pin(stream::unfold(state, |mut state| async move {
+            state.next_event().await.map(|event| (event, state))
+        })))
     }
 }
 
@@ -1183,6 +1437,71 @@ mod tests {
             5,
             "usage maps from provider response"
         );
+    }
+
+    #[tokio::test]
+    async fn openai_compatible_provider_streams_sse_text_and_usage() {
+        let listener = TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .expect("listener binds");
+        let addr = listener.local_addr().expect("local addr");
+        let app = Router::new().route(
+            "/chat/completions",
+            post(|Json(body): Json<Value>| async move {
+                assert_eq!(body["model"], "gpt-stream-test");
+                assert_eq!(body["stream"], true);
+                assert_eq!(body["stream_options"]["include_usage"], true);
+                (
+                    [("content-type", "text/event-stream")],
+                    concat!(
+                        "data: {\"choices\":[{\"delta\":{\"content\":\"hel\"},\"finish_reason\":null}]}\n\n",
+                        "data: {\"choices\":[{\"delta\":{\"content\":\"lo\"},\"finish_reason\":null}]}\n\n",
+                        "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+                        "data: {\"choices\":[],\"usage\":{\"prompt_tokens\":4,\"completion_tokens\":2,\"total_tokens\":6}}\n\n",
+                        "data: [DONE]\n\n"
+                    ),
+                )
+            }),
+        );
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("test server runs");
+        });
+
+        let provider = OpenAiCompatibleProvider::new(
+            "openai-compatible",
+            format!("http://{addr}"),
+            "test-key",
+        )
+        .expect("provider builds");
+        let events = provider
+            .stream(LlmRequest {
+                protocol_version: PROTOCOL_VERSION.to_owned(),
+                provider: "openai-compatible".to_owned(),
+                model: "gpt-stream-test".to_owned(),
+                messages: vec![user_message("ping")],
+                temperature: None,
+                max_output_tokens: Some(32),
+                tools: vec![],
+                metadata: json!({}),
+            })
+            .await
+            .expect("provider streams")
+            .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .expect("stream events ok");
+
+        assert!(matches!(events[0].kind, LlmEventKind::Started));
+        assert_eq!(events[1].content.as_deref(), Some("hel"));
+        assert_eq!(events[2].content.as_deref(), Some("lo"));
+        let finished = events.last().expect("finished event");
+        assert!(matches!(finished.kind, LlmEventKind::Finished));
+        let response = finished.response.as_ref().expect("response");
+        assert_eq!(response.content, "hello");
+        assert_eq!(response.finish_reason, LlmFinishReason::Stop);
+        assert_eq!(response.usage.as_ref().expect("usage").total_tokens, 6);
+        assert_eq!(response.metadata["stream"], true);
     }
 
     #[tokio::test]

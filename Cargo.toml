@@ -31,7 +31,7 @@ futures = "0.3.32"
 jsonschema = "0.46.6"
 miette = { version = "7.6.0", features = ["fancy"] }
 ratatui = "0.30.2"
-reqwest = { version = "0.13.4", default-features = false, features = ["json", "rustls"] }
+reqwest = { version = "0.13.4", default-features = false, features = ["json", "rustls", "stream"] }
 schemars = { version = "1.2.1", features = ["derive", "preserve_order"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.150", features = ["preserve_order"] }

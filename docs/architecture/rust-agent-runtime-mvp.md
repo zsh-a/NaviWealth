@@ -153,9 +153,10 @@ Implemented:
   stream events through `agentRuntimeStreamProfileLlm`; the runner maps
   `started` / `delta` / `finished` / `error` events into the existing
   `AiChatEvent` vocabulary. It is intentionally not the production default yet
-  because provider-real token streaming, tool-call delta, cancellation, and
+  because Anthropic provider streaming, tool-call delta, cancellation, and
   trace-span parity still need to match `DeviceLlmRuntime` before replacing the
-  interactive chat UI path.
+  interactive chat UI path. OpenAI-compatible text/usage SSE is now provider-real
+  in `agent-llm`.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
   documented runtime/legacy allowlist
@@ -1287,14 +1288,14 @@ upstream package constraint that prevents moving to the published latest.
 
 Most production business LLM/profile-turn paths now use the FRB/native bridge.
 The remaining high-value Flutter integration gap is interactive AI Chat. The
-current app-level `FrbChatRunner` can consume the primitive FRB LLM stream, but
-the stream is still provider-synthetic for OpenAI/Anthropic because
-`agent-llm` maps `stream()` through `complete()` and emits one text delta plus a
-finished response. The next migration should add provider-real native streaming
-and complete event parity before switching the production
-`aiChatApiClientProvider` away from `DeviceLlmRuntime`. That parity must cover:
+current app-level `FrbChatRunner` can consume the primitive FRB LLM stream, and
+`agent-llm` now parses provider-real OpenAI-compatible Chat Completions SSE for
+text deltas, usage, and the final response. The next migration should add
+Anthropic native streaming and complete event parity before switching the
+production `aiChatApiClientProvider` away from `DeviceLlmRuntime`. That parity
+must cover:
 
-- text deltas (`TextEvent`)
+- Anthropic text deltas (`TextEvent`)
 - thinking deltas where providers expose reasoning
 - tool-call start/delta/final events
 - tool results from Dart `AgentRuntimeToolHost`

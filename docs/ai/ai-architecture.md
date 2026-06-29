@@ -370,7 +370,8 @@ regression/                      regression_corpus（静态契约测试）
 
 `lib/features/ai_chat/`：`runtime_routing_api_client.dart`（→ DeviceLlmRuntime streaming，
 无 cloud 回落；`FrbChatRunner` / `AgentRuntimeLlmStreamBridge` 已能消费 FRB primitive
-LLM event stream，但 production 切换仍等待 provider-real token/tool/trace parity）·
+LLM event stream，OpenAI-compatible text/usage SSE 已 provider-real，但 production
+切换仍等待 Anthropic token/tool/trace parity）·
 `chat_repository.dart` · `proposal_applier.dart` · ui/（`ai_chat_page` 现为
 `/settings/ai-history` 只读 · `propose_card`（mode 三分支）· `tool_invocation_*`
 domain renderer · `ai_object_capsule` · `reply_chips` · `ai_transparency_badge`）。
