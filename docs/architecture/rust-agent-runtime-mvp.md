@@ -148,7 +148,7 @@ Implemented:
   response before mutating run state: previous `protocol_version`,
   `agent_id` / `agent_version` / `run_id`, `step_index`, `tool_call_id`,
   as a required current tool-call id, catalog-bound tool names, required
-  `continuation.next_step_index`,
+  continuation envelopes, `continuation.next_step_index`,
   `continuation.tool_plan`, historical `continuation.tool_results`,
   JSON-RPC tool response envelopes for current and historical results, and tool response
   ids are rejected when malformed, mismatched, or ambiguous. Previous

@@ -1737,6 +1737,38 @@ fn continue_run_step_rejects_missing_continuation_next_step_index() {
 }
 
 #[test]
+fn continue_run_step_rejects_non_object_continuation() {
+    let err = agent_runtime_continue_run_step(
+        include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "execution_review",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "tool_call_requested",
+          "tool_call": {
+            "tool_call_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          },
+          "continuation": "bad"
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "execution_review".to_owned(),
+    )
+    .expect_err("non-object continuation should fail");
+
+    assert!(err.to_string().contains("continuation must be an object"));
+}
+
+#[test]
 fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
     let err = agent_runtime_continue_run_step(
         include_str!("../../../../../fixtures/agent-runtime/catalog.valid.json").to_owned(),

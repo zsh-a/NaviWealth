@@ -624,7 +624,7 @@ fn require_continuation_next_step_index(
     previous_step: &Value,
     previous_step_index: u64,
 ) -> Result<()> {
-    let Some(continuation) = previous_step.get("continuation") else {
+    let Some(continuation) = previous_step_continuation(previous_step)? else {
         return Ok(());
     };
     let next_step_index = continuation.get("next_step_index").ok_or_else(|| {
@@ -640,6 +640,16 @@ fn require_continuation_next_step_index(
         );
     }
     Ok(())
+}
+
+fn previous_step_continuation(previous_step: &Value) -> Result<Option<&Map<String, Value>>> {
+    let Some(continuation) = previous_step.get("continuation") else {
+        return Ok(None);
+    };
+    let continuation = continuation
+        .as_object()
+        .ok_or_else(|| anyhow::anyhow!("continuation must be an object"))?;
+    Ok(Some(continuation))
 }
 
 fn tool_response_terminal_status(tool_response: &Value) -> Option<&'static str> {
@@ -971,7 +981,7 @@ fn next_tool_request_from_continuation(
     previous_step: &Value,
     tool_results: Vec<Value>,
 ) -> Result<Option<ToolRequestState>> {
-    let Some(continuation) = previous_step.get("continuation") else {
+    let Some(continuation) = previous_step_continuation(previous_step)? else {
         return Ok(None);
     };
     let plan = match continuation.get("tool_plan") {
@@ -988,13 +998,9 @@ fn next_tool_request_from_continuation(
     let step_index = continuation
         .get("next_step_index")
         .and_then(Value::as_u64)
-        .unwrap_or_else(|| {
-            previous_step
-                .get("step_index")
-                .and_then(Value::as_u64)
-                .unwrap_or(0)
-                + 1
-        });
+        .ok_or_else(|| {
+            anyhow::anyhow!("continuation.next_step_index must be a non-negative integer")
+        })?;
     Ok(Some(ToolRequestState {
         first,
         remaining: plan[1..].to_vec(),
@@ -1025,7 +1031,7 @@ fn continuation_tool_results(
     catalog: &AgentRuntimeCatalog,
     agent_id: &str,
 ) -> Result<Vec<Value>> {
-    let Some(continuation) = previous_step.get("continuation") else {
+    let Some(continuation) = previous_step_continuation(previous_step)? else {
         return Ok(Vec::new());
     };
     let Some(results) = continuation.get("tool_results") else {
