@@ -78,6 +78,49 @@ fn normalizes_llm_contracts() {
     assert_eq!(response["finish_reason"], "stop");
 }
 
+#[test]
+fn normalizes_multimodal_tool_llm_request_contract() {
+    let request_json = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "anthropic",
+          "model": "claude-vision-test",
+          "messages": [{
+            "role": "user",
+            "content": [
+              {
+                "type": "image",
+                "source": {
+                  "type": "base64",
+                  "media_type": "image/png",
+                  "data": "ZmFrZQ=="
+                }
+              },
+              {"type": "text", "text": "Extract transactions."}
+            ]
+          }],
+          "tools": [{
+            "name": "emit_parsed_transactions",
+            "description": "Emit rows",
+            "input_schema": {
+              "type": "object",
+              "properties": {"transactions": {"type": "array"}},
+              "required": ["transactions"]
+            },
+            "risk": "read_only"
+          }],
+          "metadata": {"api_key": "sk-test"}
+        }"#
+        .to_owned(),
+    )
+    .expect("multimodal llm request should validate");
+    let request: Value = serde_json::from_str(&request_json).expect("request should be json");
+
+    assert_eq!(request["messages"][0]["content"][0]["type"], "image");
+    assert_eq!(request["tools"][0]["name"], "emit_parsed_transactions");
+    assert_eq!(request["tools"][0]["risk"], "read_only");
+}
+
 #[tokio::test]
 async fn complete_mock_llm_returns_provider_response() {
     let response_json = agent_runtime_complete_mock_llm(

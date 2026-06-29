@@ -196,6 +196,10 @@ Current bridge capabilities:
 - Provide a Finance FRB profile-backed LLM integration: Activity entry insight
   now calls `AgentRuntimeLlmBridge.completeProfile` for its concise explanation
   while preserving the existing localized heuristic fallback.
+- Provide a Finance Vision ingest FRB integration: `agent-llm` accepts JSON
+  message content blocks and Anthropic tool schemas, preserves raw Anthropic
+  content blocks in response metadata, and `FrbVisionIngestClient` extracts the
+  `emit_parsed_transactions` tool_use result locally.
 - Provide the first tool-using production agent integration on the
   native-planned continuation loop: HealthOS Recovery Alert now uses
   `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB
@@ -236,10 +240,6 @@ Known limitation:
   contexts by sqlite3/Drift environment setup. Treat that as a dev/process-host
   limitation, not the production mobile path. The production path should
   advance through FRB embedded runtime steps and Dart-side device tool dispatch.
-- Vision ingest is not yet safe to migrate to `AgentRuntimeLlmBridge`: the
-  shared `agent-llm` DTO is currently text-only for request/response content,
-  while receipt/statement parsing needs Anthropic image/document content
-  blocks, tool schema emission, and `tool_use` extraction.
 - The embedded FRB path currently covers deterministic native step contracts
   bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
   active-profile LLM request bridge, profile-backed native LLM completion, and

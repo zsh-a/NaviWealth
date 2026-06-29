@@ -31,7 +31,7 @@ pub struct LlmRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct LlmMessage {
     pub role: LlmRole,
-    pub content: String,
+    pub content: Value,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(default)]
@@ -415,32 +415,33 @@ struct AnthropicMessagesRequest {
     system: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     temperature: Option<f32>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    tools: Vec<AnthropicTool>,
 }
 
 #[derive(Debug, Serialize)]
 struct AnthropicMessage {
     role: String,
-    content: String,
+    content: Value,
+}
+
+#[derive(Debug, Serialize)]
+struct AnthropicTool {
+    name: String,
+    description: String,
+    input_schema: Value,
 }
 
 #[derive(Debug, Deserialize)]
 struct AnthropicMessagesResponse {
     #[serde(default)]
-    content: Vec<AnthropicContentBlock>,
+    content: Vec<Value>,
     #[serde(default)]
     stop_reason: Option<String>,
     #[serde(default)]
     usage: Option<AnthropicUsage>,
     #[serde(default)]
     error: Option<AnthropicErrorBody>,
-}
-
-#[derive(Debug, Deserialize)]
-struct AnthropicContentBlock {
-    #[serde(default)]
-    r#type: String,
-    #[serde(default)]
-    text: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -516,7 +517,7 @@ struct OpenAiChatCompletionRequest {
 #[derive(Debug, Serialize)]
 struct OpenAiMessage {
     role: String,
-    content: String,
+    content: Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
 }
@@ -709,6 +710,7 @@ impl LlmProvider for AnthropicProvider {
             messages,
             system,
             temperature: request.temperature,
+            tools: request.tools.iter().map(anthropic_tool_from_spec).collect(),
         };
         let response = self
             .client
@@ -763,13 +765,10 @@ impl LlmProvider for AnthropicProvider {
                 json!({}),
             ));
         }
-        let content = decoded
-            .content
-            .into_iter()
-            .filter(|block| block.r#type == "text")
-            .filter_map(|block| block.text)
-            .collect::<Vec<_>>()
-            .join("");
+        let raw_content = serde_json::to_value(&decoded.content).map_err(|err| {
+            LlmError::provider("provider_decode_failed", err.to_string(), false, json!({}))
+        })?;
+        let content = anthropic_text_from_blocks(&decoded.content);
         Ok(LlmResponse {
             protocol_version: PROTOCOL_VERSION.to_owned(),
             provider: self.provider.clone(),
@@ -784,6 +783,7 @@ impl LlmProvider for AnthropicProvider {
             metadata: json!({
                 "api": "anthropic_messages",
                 "anthropic_version": self.anthropic_version,
+                "anthropic_content": raw_content,
             }),
         })
     }
@@ -958,7 +958,7 @@ fn ollama_message_from_llm(message: &LlmMessage) -> Result<OllamaMessage, LlmErr
     };
     Ok(OllamaMessage {
         role: role.to_owned(),
-        content: message.content.clone(),
+        content: llm_content_as_text(&message.content, "Ollama")?.to_owned(),
     })
 }
 
@@ -977,7 +977,9 @@ fn anthropic_messages_from_llm(
     let mut mapped = Vec::new();
     for message in messages {
         match message.role {
-            LlmRole::System => system.push(message.content.clone()),
+            LlmRole::System => system.push(
+                llm_content_as_text(&message.content, "Anthropic system message")?.to_owned(),
+            ),
             LlmRole::User => mapped.push(AnthropicMessage {
                 role: "user".to_owned(),
                 content: message.content.clone(),
@@ -999,6 +1001,31 @@ fn anthropic_messages_from_llm(
         Some(system.join("\n\n"))
     };
     Ok((system, mapped))
+}
+
+fn anthropic_tool_from_spec(tool: &ToolSpec) -> AnthropicTool {
+    AnthropicTool {
+        name: tool.name.clone(),
+        description: tool.description.clone(),
+        input_schema: tool.input_schema.clone(),
+    }
+}
+
+fn anthropic_text_from_blocks(blocks: &[Value]) -> String {
+    blocks
+        .iter()
+        .filter(|block| block.get("type").and_then(Value::as_str) == Some("text"))
+        .filter_map(|block| block.get("text").and_then(Value::as_str))
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn llm_content_as_text<'a>(content: &'a Value, provider: &str) -> Result<&'a str, LlmError> {
+    content.as_str().ok_or_else(|| {
+        LlmError::validation(format!(
+            "{provider} provider only supports text message content"
+        ))
+    })
 }
 
 fn anthropic_finish_reason(value: Option<&str>) -> LlmFinishReason {
@@ -1023,7 +1050,7 @@ fn openai_finish_reason(value: Option<&str>) -> LlmFinishReason {
 pub fn user_message(content: impl Into<String>) -> LlmMessage {
     LlmMessage {
         role: LlmRole::User,
-        content: content.into(),
+        content: Value::String(content.into()),
         name: None,
         metadata: json!({}),
     }
@@ -1033,7 +1060,7 @@ fn estimate_usage(request: &LlmRequest, output: &str) -> LlmUsage {
     let input_tokens = request
         .messages
         .iter()
-        .map(|message| rough_token_count(&message.content))
+        .map(|message| rough_token_count(&content_for_usage(&message.content)))
         .sum::<u32>();
     let output_tokens = rough_token_count(output);
     LlmUsage {
@@ -1041,6 +1068,13 @@ fn estimate_usage(request: &LlmRequest, output: &str) -> LlmUsage {
         output_tokens,
         total_tokens: input_tokens + output_tokens,
     }
+}
+
+fn content_for_usage(content: &Value) -> String {
+    content
+        .as_str()
+        .map(str::to_owned)
+        .unwrap_or_else(|| content.to_string())
 }
 
 fn rough_token_count(text: &str) -> u32 {
@@ -1193,7 +1227,7 @@ mod tests {
                 messages: vec![
                     LlmMessage {
                         role: LlmRole::System,
-                        content: "be concise".to_owned(),
+                        content: json!("be concise"),
                         name: None,
                         metadata: json!({}),
                     },
@@ -1215,6 +1249,115 @@ mod tests {
             response.usage.expect("usage").total_tokens,
             8,
             "Anthropic usage totals input plus output tokens"
+        );
+    }
+
+    #[tokio::test]
+    async fn anthropic_provider_preserves_multimodal_content_tools_and_raw_blocks() {
+        let listener = TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .expect("listener binds");
+        let addr = listener.local_addr().expect("local addr");
+        let app = Router::new().route(
+            "/messages",
+            post(|Json(body): Json<Value>| async move {
+                assert_eq!(body["model"], "claude-vision-test");
+                assert_eq!(body["messages"][0]["role"], "user");
+                assert_eq!(body["messages"][0]["content"][0]["type"], "image");
+                assert_eq!(
+                    body["messages"][0]["content"][0]["source"]["media_type"],
+                    "image/png"
+                );
+                assert_eq!(body["tools"][0]["name"], "emit_parsed_transactions");
+                assert_eq!(
+                    body["tools"][0]["input_schema"]["required"][0],
+                    "transactions"
+                );
+                Json(json!({
+                    "content": [{
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "emit_parsed_transactions",
+                        "input": {
+                            "transactions": [{
+                                "description": "Coffee",
+                                "amount_minor": -450,
+                                "currency": "USD",
+                                "occurred_at": "2026-06-01"
+                            }]
+                        }
+                    }],
+                    "stop_reason": "tool_use",
+                    "usage": {
+                        "input_tokens": 7,
+                        "output_tokens": 5
+                    }
+                }))
+            }),
+        );
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.expect("test server runs");
+        });
+
+        let provider = AnthropicProvider::new(
+            "anthropic",
+            format!("http://{addr}"),
+            "test-key",
+            "2023-06-01",
+        )
+        .expect("provider builds");
+        let response = provider
+            .complete(LlmRequest {
+                protocol_version: PROTOCOL_VERSION.to_owned(),
+                provider: "anthropic".to_owned(),
+                model: "claude-vision-test".to_owned(),
+                messages: vec![LlmMessage {
+                    role: LlmRole::User,
+                    content: json!([
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": "ZmFrZQ=="
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": "Extract transactions."
+                        }
+                    ]),
+                    name: None,
+                    metadata: json!({}),
+                }],
+                temperature: None,
+                max_output_tokens: Some(1024),
+                tools: vec![ToolSpec {
+                    name: "emit_parsed_transactions".to_owned(),
+                    description: "Emit rows".to_owned(),
+                    input_schema: json!({
+                        "type": "object",
+                        "properties": {"transactions": {"type": "array"}},
+                        "required": ["transactions"]
+                    }),
+                    output_schema: None,
+                    risk: agent_core::ToolRisk::ReadOnly,
+                    metadata: json!({}),
+                }],
+                metadata: json!({}),
+            })
+            .await
+            .expect("provider completes");
+
+        assert_eq!(response.content, "");
+        assert_eq!(response.finish_reason, LlmFinishReason::ToolCall);
+        assert_eq!(
+            response.metadata["anthropic_content"][0]["name"],
+            "emit_parsed_transactions"
+        );
+        assert_eq!(
+            response.metadata["anthropic_content"][0]["input"]["transactions"][0]["description"],
+            "Coffee"
         );
     }
 

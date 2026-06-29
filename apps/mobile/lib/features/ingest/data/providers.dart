@@ -11,18 +11,17 @@ import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_inpu
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../app/agent_runtime_llm_bridge.dart';
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/contracts/ai_span.dart';
 import '../../../core/ai/contracts/ai_trace.dart';
 import '../../../core/ai/contracts/intent.dart';
 import '../../../core/ai/contracts/privacy_mode_provider.dart';
 import '../../../core/ai/local/skills/skills.dart';
-import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/persistence/providers.dart';
-import '../../ai_chat/data/providers.dart' show deviceLlmRuntimeProvider;
 import '../domain/ingest_models.dart';
 import 'device_ingest_client.dart';
 import 'ingest_confirm_service.dart';
@@ -65,21 +64,20 @@ final ingestPipelineProvider = Provider<IngestPipeline>(
   (ref) => IngestPipeline(),
 );
 
-/// Vision parse runs device-direct when the on-device
-/// runtime is available (native incl. desktop × user key × opt-in),
-/// reusing the *same* [AnthropicClient] the chat path built. The former
+/// Vision parse runs through the embedded FRB profile-backed LLM bridge when
+/// an active device profile is available. The former
 /// Vision relay (`/ingest/parse`) was deleted with the backend AI surface,
 /// so the non-device slot is the
 /// [UnavailableVisionIngestClient] stub: it fails with actionable
 /// guidance (configure a key / use CSV) which the controller surfaces
 /// as the rejected reason — no dead endpoint, no device→cloud failover.
 final visionIngestClientProvider = Provider<VisionIngestClient>((ref) {
-  final DeviceLlmRuntime? runtime = ref.watch(deviceLlmRuntimeProvider);
+  final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
   return RoutingVisionIngestClient(
     fallback: const UnavailableVisionIngestClient(),
-    device: runtime == null
+    device: llmBridge == null
         ? null
-        : DeviceVisionIngestClient(client: runtime.client),
+        : FrbVisionIngestClient(llmBridge: llmBridge),
   );
 });
 

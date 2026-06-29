@@ -168,6 +168,11 @@ Implemented:
 - Finance Activity entry insight now uses the FRB profile-backed LLM bridge
   via `AgentRuntimeLlmBridge.completeProfile` for its concise explanation,
   preserving the existing localized heuristic fallback
+- `agent-llm` and the FRB LLM bridge now support JSON message content blocks,
+  Anthropic tool schemas, and raw Anthropic content metadata; Finance Vision
+  ingest uses `FrbVisionIngestClient` to send receipt/statement image or
+  document blocks through the FRB profile bridge and extract
+  `emit_parsed_transactions` tool_use results locally
 - First tool-using production agent migration onto the native-planned
   continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`
@@ -206,10 +211,6 @@ Deferred:
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
   (`NativeCallable.isolateLocal`) on the local latest toolchain.
-- extend `agent-llm` beyond text-only `LlmMessage.content`/text-only
-  `LlmResponse.content` before migrating Vision ingest: receipt/statement
-  parsing needs Anthropic image/document content blocks, tool schema emission,
-  and `tool_use` extraction through the FRB profile bridge
 - migrate additional tool-using production agents and move richer
   policy/state/trace ownership into Rust once those contracts are ready
 
