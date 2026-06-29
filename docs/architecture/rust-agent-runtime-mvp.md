@@ -151,8 +151,8 @@ Implemented:
   confirmation
 - First production agent migration onto the embedded FRB profile-turn path:
   HealthOS `FrbBriefingSynthesizer` now routes Morning Briefing synthesis
-  through `AgentRuntimeProfileTurnRunner` before falling back to the legacy
-  Dart LLM and deterministic programmatic synthesizers
+  through `AgentRuntimeProfileTurnRunner` before falling back to the
+  deterministic programmatic synthesizer
 - KnowledgeOS Inbox Triage classifier now prefers a FRB profile-backed LLM
   completion through `FrbInboxTriageClassifier`, using
   `AgentRuntimeLlmBridge.completeProfile` for the structured JSON verdict while
@@ -206,6 +206,10 @@ Deferred:
   library adapter works under Flutter tests, but `dart run` over Drift native
   currently hits a Dart VM FFI compiler crash in `sqlite3 3.3.3`
   (`NativeCallable.isolateLocal`) on the local latest toolchain.
+- extend `agent-llm` beyond text-only `LlmMessage.content`/text-only
+  `LlmResponse.content` before migrating Vision ingest: receipt/statement
+  parsing needs Anthropic image/document content blocks, tool schema emission,
+  and `tool_use` extraction through the FRB profile bridge
 - migrate additional tool-using production agents and move richer
   policy/state/trace ownership into Rust once those contracts are ready
 

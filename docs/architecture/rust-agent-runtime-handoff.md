@@ -179,8 +179,8 @@ Current bridge capabilities:
   explicit user confirmation.
 - Provide the first production agent integration on the FRB profile-turn path:
   HealthOS Morning Briefing now uses `FrbBriefingSynthesizer` and
-  `AgentRuntimeProfileTurnRunner` before falling back to the legacy Dart LLM
-  and deterministic programmatic synthesizers.
+  `AgentRuntimeProfileTurnRunner` before falling back to the deterministic
+  programmatic synthesizer.
 - Provide the first KnowledgeOS FRB profile-backed LLM classifier integration:
   Inbox Triage now prefers `FrbInboxTriageClassifier`, which calls
   `AgentRuntimeLlmBridge.completeProfile` for the structured JSON verdict
@@ -236,6 +236,10 @@ Known limitation:
   contexts by sqlite3/Drift environment setup. Treat that as a dev/process-host
   limitation, not the production mobile path. The production path should
   advance through FRB embedded runtime steps and Dart-side device tool dispatch.
+- Vision ingest is not yet safe to migrate to `AgentRuntimeLlmBridge`: the
+  shared `agent-llm` DTO is currently text-only for request/response content,
+  while receipt/statement parsing needs Anthropic image/document content
+  blocks, tool schema emission, and `tool_use` extraction.
 - The embedded FRB path currently covers deterministic native step contracts
   bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
   active-profile LLM request bridge, profile-backed native LLM completion, and

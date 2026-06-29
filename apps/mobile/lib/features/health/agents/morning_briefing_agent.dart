@@ -10,9 +10,9 @@
 /// and the next `build_context` call finds it.
 ///
 /// D-2.5b layers in:
-///  * [BriefingSynthesizer] injection — agent picks LLM-driven
-///    synthesis when an LLM client is configured, programmatic
-///    otherwise (programmatic is also the LLM path's auto-fallback).
+///  * [BriefingSynthesizer] injection — production wiring picks FRB-backed
+///    LLM synthesis when the profile runtime is available, programmatic
+///    otherwise (programmatic is also the FRB path's auto-fallback).
 ///  * Optional [NotificationService] hook — fires a local notification
 ///    after a successful run so the user sees the briefing without
 ///    opening the app.
@@ -43,8 +43,8 @@ class MorningBriefingAgent implements Agent {
   });
 
   /// Pluggable synthesis step. `bootstrap.dart` injects
-  /// [LlmBriefingSynthesizer] when the user has configured an LLM
-  /// profile; otherwise the programmatic default ships.
+  /// [FrbBriefingSynthesizer] when the FRB profile runtime is available;
+  /// otherwise the programmatic default ships.
   final BriefingSynthesizer synthesizer;
 
   /// Optional local-notification hook. When supplied and the platform
@@ -222,7 +222,7 @@ class MorningBriefingAgent implements Agent {
 }
 
 /// Riverpod-exposed agent. Bootstrap can override with
-/// [LlmBriefingSynthesizer] when an LLM profile is configured.
+/// [FrbBriefingSynthesizer] when the FRB profile runtime is available.
 final morningBriefingAgentProvider = Provider<Agent>(
   (ref) => const MorningBriefingAgent(),
 );

@@ -1,14 +1,15 @@
 /// Morning Briefing synthesis seam (`docs/domains/healthos-domain.md` §8,
 /// D-2.5 + D-2.5b).
 ///
-/// Two implementations:
+/// Production implementations:
 ///
 ///  * [ProgrammaticBriefingSynthesizer] — pure-Dart, deterministic.
 ///    Wraps the original D-2.5 static logic; what tests assert against
-///    and the safe fallback when no LLM is configured.
+///    and the safe fallback when FRB/profile is unavailable.
 ///  * [FrbBriefingSynthesizer] — calls the user's configured device
 ///    LLM through the FRB agent runtime profile-turn seam.
-///  * [LlmBriefingSynthesizer] — legacy direct Dart LLM fallback.
+///  * [LlmBriefingSynthesizer] — legacy direct Dart LLM implementation kept
+///    for compatibility/unit coverage, not selected by production bootstrap.
 ///    Calls the user's configured device
 ///    LLM (Anthropic or OpenAI-compatible) for richer narrative,
 ///    automatically falling back to programmatic on any error so the
@@ -16,8 +17,8 @@
 ///
 /// The agent stays composition-blind: it takes a [BriefingSynthesizer]
 /// and asks for `synthesize(events, …)`. Bootstrap picks which
-/// implementation to inject (LLM when a profile exists with a key,
-/// programmatic otherwise).
+/// implementation to inject (FRB profile-turn when available, programmatic
+/// otherwise).
 library;
 
 import 'package:dio/dio.dart';
