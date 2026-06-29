@@ -90,6 +90,34 @@ void main() {
       expect(due.single.id, 'fallback_routine');
       expect(fallback.calls, 1);
     });
+
+    test(
+      'ignores trace recording failures after a successful FRB read',
+      () async {
+        final fallback = _FallbackReader(<RoutineDueItem>[
+          RoutineDueItem(
+            id: 'fallback_routine',
+            statement: 'Fallback routine',
+            nextDueAt: DateTime.utc(2026, 6, 30),
+          ),
+        ]);
+        final reader = FrbRoutineDueReader(
+          stepRunner: AgentRuntimeNativeStepRunner(
+            bridge: _ToolPlanBridge(),
+            toolHost: AgentRuntimeToolHost(dispatcher: _RoutineDispatcher()),
+          ),
+          catalog: _catalog(),
+          fallback: fallback,
+          recordTrace: (_) async => throw StateError('trace store unavailable'),
+        );
+
+        final due = await reader.listDue(_context());
+
+        expect(due, hasLength(1));
+        expect(due.single.id, 'routine_1');
+        expect(fallback.calls, 0);
+      },
+    );
   });
 }
 

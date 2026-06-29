@@ -94,6 +94,34 @@ void main() {
       expect(items.single.id, 'fallback_assumption');
       expect(fallback.calls, 1);
     });
+
+    test(
+      'ignores trace recording failures after a successful FRB read',
+      () async {
+        final fallback = _FallbackReader(const <AssumptionReviewItem>[
+          AssumptionReviewItem(
+            id: 'fallback_assumption',
+            statement: 'Fallback assumption',
+            daysSinceVerify: 100,
+          ),
+        ]);
+        final reader = FrbAssumptionReviewReader(
+          stepRunner: AgentRuntimeNativeStepRunner(
+            bridge: _ToolPlanBridge(),
+            toolHost: AgentRuntimeToolHost(dispatcher: _AssumptionDispatcher()),
+          ),
+          catalog: _catalog(),
+          fallback: fallback,
+          recordTrace: (_) async => throw StateError('trace store unavailable'),
+        );
+
+        final items = await reader.listOpen(_context());
+
+        expect(items, hasLength(2));
+        expect(items.first.id, 'assumption_stale');
+        expect(fallback.calls, 0);
+      },
+    );
   });
 }
 
