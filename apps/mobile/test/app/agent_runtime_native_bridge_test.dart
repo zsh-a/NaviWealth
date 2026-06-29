@@ -457,6 +457,77 @@ void main() {
   );
 
   test(
+    'AgentRuntimeNativeStepRunner closed-early trace validates through bridge',
+    () async {
+      final bridge = _TraceValidatingBridge(
+        step: const <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'run_budget',
+          'agent_id': 'execution_review',
+          'step_index': 0,
+          'status': 'tool_call_requested',
+          'tool_call': <String, Object?>{
+            'tool_call_id': 'call_1',
+            'name': 'read_task',
+            'input': <String, Object?>{'id': 'task_1'},
+          },
+          'run_state': <String, Object?>{
+            'status': 'tool_call_requested',
+            'step_index': 0,
+            'remaining_tool_count': 1,
+            'tool_result_count': 0,
+            'terminal_reason': null,
+          },
+        },
+      );
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: _RecordingDispatcher()),
+      );
+
+      final result = await runner.runUntilTerminalWithTrace(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+        maxToolSteps: 0,
+      );
+      final trace = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'runtime_version': '0.1.0',
+        'run_id': 'run_budget',
+        'agent_id': 'execution_review',
+        'agent_version': '0.1.0',
+        'started_at': '2026-06-28T09:12:31Z',
+        'finished_at': '2026-06-28T09:12:32Z',
+        'input': const <String, Object?>{},
+        'output': result.terminalStep['error'],
+        'events': <Object?>[
+          const <String, Object?>{
+            'kind': 'run_started',
+            'occurred_at': '2026-06-28T09:12:31Z',
+            'payload': <String, Object?>{'agent_id': 'execution_review'},
+          },
+          <String, Object?>{
+            'kind': 'agent_runtime_step',
+            'occurred_at': '2026-06-28T09:12:32Z',
+            'payload': result.terminalStep['trace_event'],
+          },
+        ],
+      };
+
+      final normalized = await bridge.validateTrace(trace);
+
+      expect(bridge.validatedTraces, hasLength(1));
+      expect(
+        normalized['events'],
+        contains(
+          containsPair('payload', containsPair('status', 'closed_early')),
+        ),
+      );
+    },
+  );
+
+  test(
     'AgentRuntimeNativeStepRunner returns non-tool steps unchanged',
     () async {
       final dispatcher = _RecordingDispatcher();
@@ -760,6 +831,40 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
         'tool_result': toolResponse['result'],
       },
     };
+  }
+}
+
+class _TraceValidatingBridge extends _FakeBridge {
+  _TraceValidatingBridge({required super.step});
+
+  final validatedTraces = <Map<String, Object?>>[];
+
+  @override
+  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
+    validatedTraces.add(trace);
+    final runId = trace['run_id'];
+    final agentId = trace['agent_id'];
+    final events = trace['events'];
+    expect(events, isA<List<Object?>>());
+    final stepEvents = (events! as List<Object?>)
+        .whereType<Map<String, Object?>>()
+        .where((event) => event['kind'] == 'agent_runtime_step')
+        .toList(growable: false);
+    expect(stepEvents, isNotEmpty);
+    for (final event in stepEvents) {
+      final payload = event['payload']! as Map<String, Object?>;
+      final runState = payload['run_state']! as Map<String, Object?>;
+      expect(payload['run_id'], runId);
+      expect(payload['agent_id'], agentId);
+      expect(payload['status'], runState['status']);
+      expect(payload['step_index'], runState['step_index']);
+      expect(payload['tool_name'], isA<String>());
+      if (payload['status'] == 'closed_early') {
+        expect(runState['terminal_reason'], 'closed_early');
+        expect(runState['remaining_tool_count'], 0);
+      }
+    }
+    return trace;
   }
 }
 
