@@ -1289,18 +1289,23 @@ upstream package constraint that prevents moving to the published latest.
 
 ## Next Migration Step
 
-Most production business LLM/profile-turn paths now use the FRB/native bridge.
-The remaining high-value Flutter integration gap is interactive AI Chat. The
-current app-level `FrbChatRunner` can consume the primitive FRB LLM stream, and
-`agent-llm` now parses provider-real OpenAI-compatible Chat Completions SSE and
-Anthropic Messages SSE for text deltas, reasoning/signature, tool-call deltas,
-usage, and the final response. The next migration should add continuation and
-observability parity before switching the production `aiChatApiClientProvider`
-away from `DeviceLlmRuntime`. That parity must cover:
+Most production business LLM/profile-turn paths now use the FRB/native bridge,
+and interactive AI Chat is routed through the app-level `FrbChatRunner` when an
+active FRB LLM profile exists. `agent-llm` parses provider-real
+OpenAI-compatible Chat Completions SSE and Anthropic Messages SSE for text
+deltas, reasoning/signature, tool-call deltas, usage, and the final response.
+The Flutter runner now provides the former parity gap:
 
 - tool results from Dart `AgentRuntimeToolHost`
-- span events for `AiTraceBuilder`
+- bounded tool-result continuation rounds
+- terminal `ask_user` pause semantics
+- LLM/tool span events for `AiTraceBuilder`
 - cancellation/error semantics compatible with `ChatRepository`
+
+The next cleanup step is to continue shrinking the legacy direct-Dart
+`DeviceLlmRuntime` surface to focused runtime/provider tests and explicit
+fallback adapters only. Production app/domain entrypoints are guarded by
+`tool/lint-frb-llm-entrypoints.sh` and should stay on FRB seams.
 
 Already completed: Dart catalog export from the existing `DomainPack`
 composition root. The first version exists at

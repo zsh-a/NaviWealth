@@ -1,16 +1,13 @@
 /// Device LLM runtime contract.
 ///
-/// The cloud AI backend was deleted, leaving exactly one chat
-/// runtime: [DeviceLlmRuntime], which owns the on-device agent loop and
-/// calls the user's chosen LLM provider directly with the user's own
-/// key. The earlier `AiRuntime` / `RuntimeRegistry` / `CloudAnthropicRuntime`
-/// / `RulesDeviceRuntime` scaffolding was removed in the
-/// boundary audit (see `docs/ai-boundary-audit.md`); selection now
-/// happens upstream in [RuntimeRoutingAiChatApiClient], which either
-/// dispatches to the device runtime or yields `device_unavailable`.
+/// The cloud AI backend was deleted. Production interactive chat is composed
+/// in `app/bootstrap.dart` through the FRB-backed `FrbChatRunner`; this
+/// direct-Dart runtime remains as a legacy/tested device loop contract and as
+/// the implementation behind focused runtime tests.
 ///
-/// This file deliberately stays thin: [DeviceLlmRuntime] (production
-/// runtime) + [DeviceChatRunner] (the seam tests inject through).
+/// This file deliberately stays thin: [DeviceLlmRuntime] (legacy direct-Dart
+/// runtime contract) + [DeviceChatRunner] (the seam production/tests inject
+/// through).
 library;
 
 import 'package:dio/dio.dart';

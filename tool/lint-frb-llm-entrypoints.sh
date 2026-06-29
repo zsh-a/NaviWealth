@@ -2,10 +2,10 @@
 # Guardrail: production business entrypoints should use the FRB LLM/profile
 # bridge, not the legacy direct-Dart DeviceLlmClient/DeviceLlmRuntime seams.
 #
-# The direct seams still exist for the interactive chat runtime, provider
-# implementations, connectivity legacy fallback, and legacy unit-covered
-# adapters. New app/domain integrations should route through
-# AgentRuntimeLlmBridge / AgentRuntimeProfileTurnRunner.
+# The direct seams still exist for focused runtime/provider tests, explicit
+# legacy fallback adapters, and low-level provider implementations. Production
+# app/domain integrations should route through AgentRuntimeLlmBridge /
+# AgentRuntimeProfileTurnRunner / FrbChatRunner.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

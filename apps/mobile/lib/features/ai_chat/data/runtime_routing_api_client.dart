@@ -1,14 +1,11 @@
 /// Device-only [AiChatApiClient].
 ///
 /// The seam that lets `ChatRepository` "go through the registry"
-/// unchanged: same [AiChatApiClient] surface, but every turn is
-/// dispatched to the on-device [DeviceLlmRuntime]. The cloud relay
-/// (`/ai/chat`) was removed, so there is no device→cloud
-/// failover anymore — when no device runtime exists (web platform / no
-/// user key / opted out) AI is unavailable and the turn surfaces a
-/// single explanatory `ErrorEvent` + `DoneEvent` guiding the user to
-/// configure a key (§4.6.4, revised: "cloud relay 删除后，无 key 即禁用
-/// AI 并引导填 key").
+/// unchanged: same [AiChatApiClient] surface, with app-level composition
+/// injecting the active device runner. Production injects the FRB-backed
+/// runner; with no injected runner (web platform / no user key / partial test
+/// container) AI is unavailable and the turn surfaces a single explanatory
+/// `ErrorEvent` + `DoneEvent`. There is no device-to-cloud failover.
 library;
 
 import 'package:dio/dio.dart';
