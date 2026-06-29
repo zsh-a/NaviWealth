@@ -4,7 +4,7 @@
 /// The dispatcher holds `deviceLlmRuntimeProvider`'s `ref`; the tool reads
 /// `captureClassifierProvider`. Before the fix that classifier depended on
 /// `deviceLlmRuntimeProvider` (→ the runtime depended on itself). It now
-/// depends on the lighter `deviceLlmClientProvider`, breaking the cycle.
+/// depends on the FRB profile bridge seam, breaking the cycle.
 library;
 
 import 'package:dio/dio.dart';
@@ -54,8 +54,9 @@ void main() {
   test('propose_capture dispatch via runtime ref does not cycle', () async {
     final container = ProviderContainer(
       overrides: [
-        // Non-null client so the runtime materialises; captureClassifier
-        // depends on THIS, not the runtime.
+        // Non-null client so the legacy chat runtime materialises. The
+        // capture classifier no longer depends on this runtime; it reads
+        // the FRB bridge seam and falls back to the heuristic when absent.
         deviceLlmClientProvider.overrideWithValue(_FakeClient()),
         deviceToolsProvider.overrideWith(
           (ref) => const <DeviceTool>[ProposeCaptureTool()],
