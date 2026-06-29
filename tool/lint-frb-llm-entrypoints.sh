@@ -15,6 +15,7 @@ ALLOWLIST_REGEX='apps/mobile/lib/core/ai/runtime/'
 
 PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityProbe|DeviceVisionIngestClient|LlmBriefingSynthesizer\(client:|DeviceLlmClient|DeviceLlmRuntime|runtime/device/(anthropic|openai)/.*_client\.dart'
 FEATURE_FRB_BRIDGE_PATTERN="app/agent_runtime_llm_bridge.dart|agentRuntimeLlmBridgeProvider"
+APP_FEATURE_DEVICE_LOOP_PATTERN="runtime/device/device_agent_loop.dart|DeviceAgentLoop"
 RAW_DEVICE_UNAVAILABLE_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_unavailable['\"]"
 RAW_LEGACY_VISION_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_vision_direct['\"]"
 LEGACY_VISION_TRACE_CONSTANT_PATTERN='kDeviceVisionDirectRoutingReason'
@@ -46,6 +47,21 @@ if [[ -n "$feature_bridge_violations" ]]; then
   echo >&2
   echo "Features should own a small domain seam and let app/bootstrap.dart" >&2
   echo "inject an FRB-backed adapter from AgentRuntimeLlmBridge." >&2
+  exit 1
+fi
+
+app_feature_device_loop_violations="$(
+  grep -rnE --include='*.dart' "$APP_FEATURE_DEVICE_LOOP_PATTERN" \
+    "$LIB/app" "$LIB/features" \
+    || true
+)"
+
+if [[ -n "$app_feature_device_loop_violations" ]]; then
+  echo "✖ app/feature production code references the legacy Dart device loop:" >&2
+  echo "$app_feature_device_loop_violations" >&2
+  echo >&2
+  echo "Interactive chat and business LLM paths should enter through" >&2
+  echo "FrbChatRunner, AgentRuntimeLlmBridge, or AgentRuntimeProfileTurnRunner." >&2
   exit 1
 fi
 
