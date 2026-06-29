@@ -344,7 +344,7 @@ runtime/
                                  AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime /
                                  DeviceLlmRuntime）
   device/
-    device_agent_loop.dart       端侧 agent loop
+    device_agent_loop.dart       legacy direct-Dart loop / provider focused tests only
     device_session.dart          per-turn session
     device_tool_session.dart     provider-neutral tool execution context
     device_system_prompt.dart    端侧 system prompt + 硬限额

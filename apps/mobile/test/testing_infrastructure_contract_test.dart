@@ -638,6 +638,32 @@ void main() {
       expect(ingestSection, isNot(contains('UnavailableCloudIngestClient')));
       expect(ingestSection, isNot(contains('拒云端摄取')));
     });
+
+    test(
+      'AI architecture docs keep DeviceAgentLoop out of production paths',
+      () {
+        final repoRoot = appRoot.parent.parent;
+        final architecture = File(
+          '${repoRoot.path}/docs/ai/ai-architecture.md',
+        );
+
+        expect(architecture.existsSync(), isTrue);
+        final text = architecture.readAsStringSync();
+        final runtimeSection = _sectionBetween(
+          text,
+          '## 2. Runtime',
+          '## 3. Local Skills / Tools / Memory',
+        );
+
+        expect(runtimeSection, contains('FrbChatRunner'));
+        expect(runtimeSection, contains('legacy direct-Dart loop'));
+        expect(runtimeSection, contains('focused tests only'));
+        expect(
+          runtimeSection,
+          isNot(contains('device_agent_loop.dart       端侧 agent loop')),
+        );
+      },
+    );
   });
 }
 
