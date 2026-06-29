@@ -183,6 +183,65 @@ void main() {
     );
     expect(trace.spans.first.attributes, containsPair('native_step_index', 4));
   });
+
+  test(
+    'aligns tool responses by tool-call ordinal, not native step index',
+    () async {
+      final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+
+      final trace = await recorder.recordStepRun(
+        agentId: 'knowledge_review',
+        startedAt: DateTime.utc(2026, 6, 29, 8),
+        finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
+        stepRun: const AgentRuntimeNativeStepRunResult(
+          terminalStep: <String, Object?>{
+            'run_id': 'run_multi',
+            'status': 'completed',
+          },
+          dispatchedToolCount: 2,
+          steps: <Map<String, Object?>>[
+            <String, Object?>{
+              'run_id': 'run_multi',
+              'step_index': 0,
+              'status': 'tool_call_requested',
+              'tool_call': <String, Object?>{
+                'tool_call_id': 'call_1',
+                'name': 'list_due_reviews',
+              },
+            },
+            <String, Object?>{
+              'run_id': 'run_multi',
+              'step_index': 1,
+              'status': 'completed',
+            },
+            <String, Object?>{
+              'run_id': 'run_multi',
+              'step_index': 2,
+              'status': 'tool_call_requested',
+              'tool_call': <String, Object?>{
+                'tool_call_id': 'call_2',
+                'name': 'list_open_assumptions',
+              },
+            },
+            <String, Object?>{
+              'run_id': 'run_multi',
+              'step_index': 3,
+              'status': 'completed',
+            },
+          ],
+          toolResponses: <Map<String, Object?>>[
+            <String, Object?>{'jsonrpc': '2.0', 'id': 'call_1'},
+            <String, Object?>{'jsonrpc': '2.0', 'id': 'call_2'},
+          ],
+        ),
+      );
+
+      final spans = trace.toolSpans.toList(growable: false);
+      expect(spans, hasLength(2));
+      expect(spans.first.attributes, containsPair('response_id', 'call_1'));
+      expect(spans.last.attributes, containsPair('response_id', 'call_2'));
+    },
+  );
 }
 
 AgentRuntimeProfileTurnResult _result({

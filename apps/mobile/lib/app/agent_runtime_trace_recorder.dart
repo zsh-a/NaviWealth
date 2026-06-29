@@ -149,6 +149,7 @@ class AgentRuntimeTraceRecorder {
       );
     }
 
+    var toolResponseIndex = 0;
     for (var i = 0; i < stepRun.steps.length; i++) {
       final step = stepRun.steps[i];
       if (step['status'] != 'tool_call_requested') continue;
@@ -156,9 +157,10 @@ class AgentRuntimeTraceRecorder {
       final spanOrdinal = nativeStepIndex ?? i;
       final toolCall = _object(step['tool_call']);
       final name = _string(toolCall?['name']) ?? 'unknown';
-      final response = i < stepRun.toolResponses.length
-          ? stepRun.toolResponses[i]
+      final response = toolResponseIndex < stepRun.toolResponses.length
+          ? stepRun.toolResponses[toolResponseIndex]
           : null;
+      toolResponseIndex++;
       final error = _object(response?['error']);
       final spanStarted = _offsetTime(startedAt, 2 + spanOrdinal);
       builder.addSpan(
