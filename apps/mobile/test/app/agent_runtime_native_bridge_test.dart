@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_tool_host.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 
 void main() {
   test(
@@ -80,6 +83,71 @@ void main() {
       expect(bridge.catalogs.single['catalog_version'], 'agent_catalog.v1');
     },
   );
+
+  test(
+    'AgentRuntimeNativeStepRunner dispatches requested native tool call',
+    () async {
+      final dispatcher = _RecordingDispatcher();
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: _FakeBridge(
+          step: const <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'run_id': 'run_1',
+            'agent_id': 'execution_review',
+            'status': 'tool_call_requested',
+            'tool_call': <String, Object?>{
+              'tool_call_id': 'call_1',
+              'name': 'read_task',
+              'input': <String, Object?>{'id': 'task_1'},
+            },
+          },
+        ),
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.startAndDispatchFirstToolStep(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+      );
+
+      expect(result['status'], 'tool_call_finished');
+      expect(result['tool_result'], <String, Object?>{
+        'tool': 'read_task',
+        'input': <String, Object?>{'id': 'task_1'},
+      });
+      expect(result['tool_response'], containsPair('id', 'call_1'));
+      expect(dispatcher.calls.single.name, 'read_task');
+      expect(dispatcher.calls.single.input, <String, Object?>{'id': 'task_1'});
+    },
+  );
+
+  test(
+    'AgentRuntimeNativeStepRunner returns non-tool steps unchanged',
+    () async {
+      final dispatcher = _RecordingDispatcher();
+      const step = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'run_1',
+        'agent_id': 'execution_review',
+        'status': 'completed',
+        'output': <String, Object?>{'content': 'done'},
+      };
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: _FakeBridge(step: step),
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.startAndDispatchFirstToolStep(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'execution_review',
+      );
+
+      expect(result, step);
+      expect(dispatcher.calls, isEmpty);
+    },
+  );
 }
 
 class _FakeNativeApi implements AgentRuntimeNativeApi {
@@ -134,7 +202,17 @@ class _FakeNativeApi implements AgentRuntimeNativeApi {
 }
 
 class _FakeBridge implements AgentRuntimeNativeBridge {
+  _FakeBridge({Map<String, Object?>? step})
+    : _step =
+          step ??
+          const <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'agent_id': 'execution_review',
+            'status': 'completed',
+          };
+
   final catalogs = <Map<String, Object?>>[];
+  final Map<String, Object?> _step;
 
   @override
   Future<String> protocolVersion() async => 'agent.v1';
@@ -178,10 +256,27 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
     required Map<String, Object?> request,
     required String agentId,
   }) async {
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'agent_id': agentId,
-      'status': 'completed',
-    };
+    return _step;
   }
+}
+
+class _RecordingDispatcher implements DeviceToolDispatcher {
+  final calls = <_ToolCall>[];
+
+  @override
+  Future<Object?> dispatch(
+    DeviceSession session,
+    String name,
+    Object? input,
+  ) async {
+    calls.add(_ToolCall(name, input));
+    return <String, Object?>{'tool': name, 'input': input};
+  }
+}
+
+class _ToolCall {
+  const _ToolCall(this.name, this.input);
+
+  final String name;
+  final Object? input;
 }

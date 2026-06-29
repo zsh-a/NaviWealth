@@ -13,6 +13,7 @@ import 'package:naviwealth/src/rust/api/agent_runtime.dart' as rust;
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/config/providers.dart';
 import 'agent_runtime_catalog.dart';
+import 'agent_runtime_tool_host.dart';
 
 typedef LifeosNativeRuntimeInitializer =
     Future<void> Function({String? libraryPath});
@@ -39,6 +40,14 @@ final agentRuntimeNativeCatalogSummaryProvider =
       final catalog = ref.watch(agentRuntimeCatalogProvider);
       final bridge = ref.watch(agentRuntimeNativeBridgeProvider);
       return bridge.catalogSummary(catalog.toJson());
+    });
+
+final agentRuntimeNativeStepRunnerProvider =
+    Provider<AgentRuntimeNativeStepRunner>((ref) {
+      return AgentRuntimeNativeStepRunner(
+        bridge: ref.watch(agentRuntimeNativeBridgeProvider),
+        toolHost: ref.watch(agentRuntimeToolHostProvider),
+      );
     });
 
 abstract interface class AgentRuntimeNativeApi {
@@ -195,6 +204,60 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   }
 }
 
+class AgentRuntimeNativeStepRunner {
+  const AgentRuntimeNativeStepRunner({
+    required AgentRuntimeNativeBridge bridge,
+    required AgentRuntimeToolHost toolHost,
+  }) : _bridge = bridge,
+       _toolHost = toolHost;
+
+  final AgentRuntimeNativeBridge _bridge;
+  final AgentRuntimeToolHost _toolHost;
+
+  Future<Map<String, Object?>> startAndDispatchFirstToolStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    final step = await _bridge.startRunStep(
+      catalog: catalog,
+      request: request,
+      agentId: agentId,
+    );
+    if (step['status'] != 'tool_call_requested') {
+      return step;
+    }
+
+    final toolCall = _expectObject(step['tool_call'], 'tool_call');
+    final name = toolCall['name'];
+    if (name is! String || name.isEmpty) {
+      throw const FormatException('native tool_call.name is required');
+    }
+
+    final responseLine = await _toolHost.handleLine(
+      jsonEncode(<String, Object?>{
+        'jsonrpc': '2.0',
+        'id': _toolCallId(toolCall, step),
+        'method': 'tool.call',
+        'params': <String, Object?>{
+          'name': name,
+          'input': toolCall['input'] ?? const <String, Object?>{},
+        },
+      }),
+    );
+    final response = _decodeObject(responseLine);
+    final error = response['error'];
+
+    return <String, Object?>{
+      ...step,
+      'status': error == null ? 'tool_call_finished' : 'tool_call_failed',
+      'tool_response': response,
+      if (error == null) 'tool_result': response['result'],
+      'tool_error': ?error,
+    };
+  }
+}
+
 Map<String, Object?> _decodeObject(String json) {
   final decoded = jsonDecode(json);
   if (decoded is! Map<String, Object?>) {
@@ -203,4 +266,19 @@ Map<String, Object?> _decodeObject(String json) {
     );
   }
   return decoded;
+}
+
+Map<String, Object?> _expectObject(Object? value, String field) {
+  if (value is Map<String, Object?>) return value;
+  throw FormatException(
+    'native agent-runtime response field $field is not an object',
+  );
+}
+
+Object _toolCallId(Map<String, Object?> toolCall, Map<String, Object?> step) {
+  final explicitId = toolCall['tool_call_id'];
+  if (explicitId is String && explicitId.isNotEmpty) return explicitId;
+  final runId = step['run_id'];
+  if (runId is String && runId.isNotEmpty) return runId;
+  return 'tool_call';
 }
