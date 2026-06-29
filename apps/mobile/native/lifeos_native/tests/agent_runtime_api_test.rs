@@ -4,7 +4,7 @@ use lifeos_native::api::agent_runtime::{
     agent_runtime_protocol_version, agent_runtime_start_profile_turn_step,
     agent_runtime_start_run_step, agent_runtime_validate_llm_request,
     agent_runtime_validate_llm_response, agent_runtime_validate_run_request,
-    agent_runtime_validate_trace,
+    agent_runtime_validate_tool_spec, agent_runtime_validate_trace,
 };
 use serde_json::{Value, json};
 use std::io::{Read, Write};
@@ -51,6 +51,66 @@ fn catalog_summary_rejects_mismatched_catalog_contract() {
     let catalog_err = agent_runtime_catalog_summary(catalog.to_string())
         .expect_err("mismatched catalog version should fail");
     assert!(catalog_err.to_string().contains("catalog_version"));
+}
+
+#[test]
+fn validates_tool_spec_contract() {
+    let normalized = agent_runtime_validate_tool_spec(
+        r#"{
+          "name": "read_task",
+          "description": "Read a task",
+          "input_schema": {"type": "object"},
+          "risk": "read_only",
+          "metadata": {}
+        }"#
+        .to_owned(),
+    )
+    .expect("tool spec should validate");
+    let tool: Value = serde_json::from_str(&normalized).expect("tool should be json");
+
+    assert_eq!(tool["name"], "read_task");
+    assert_eq!(tool["risk"], "read_only");
+}
+
+#[test]
+fn validate_tool_spec_rejects_malformed_contract() {
+    let empty_name = agent_runtime_validate_tool_spec(
+        r#"{
+          "name": "",
+          "description": "Read a task",
+          "input_schema": {"type": "object"},
+          "risk": "read_only"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("empty tool name should fail");
+    assert!(empty_name.to_string().contains("name"));
+
+    let bad_schema = agent_runtime_validate_tool_spec(
+        r#"{
+          "name": "read_task",
+          "description": "Read a task",
+          "input_schema": "bad",
+          "risk": "read_only"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object input_schema should fail");
+    assert!(bad_schema.to_string().contains("input_schema"));
+}
+
+#[test]
+fn catalog_summary_rejects_malformed_tool_spec() {
+    let mut catalog: Value = serde_json::from_str(include_str!(
+        "../../../../../fixtures/agent-runtime/catalog.valid.json"
+    ))
+    .expect("catalog fixture should be json");
+    catalog["tools"][0]["description"] = json!("");
+
+    let err = agent_runtime_catalog_summary(catalog.to_string())
+        .expect_err("catalog with malformed tool spec should fail");
+
+    assert!(err.to_string().contains("catalog.tools[0].description"));
 }
 
 #[test]
@@ -270,6 +330,28 @@ fn validate_llm_contracts_reject_mismatched_protocol_version() {
     )
     .expect_err("mismatched LLM response protocol should fail");
     assert!(response_err.to_string().contains("protocol_version"));
+}
+
+#[test]
+fn validate_llm_request_rejects_malformed_tool_spec() {
+    let err = agent_runtime_validate_llm_request(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "hello"}],
+          "tools": [{
+            "name": "emit",
+            "description": "",
+            "input_schema": {"type": "object"},
+            "risk": "read_only"
+          }]
+        }"#
+        .to_owned(),
+    )
+    .expect_err("LLM request with malformed tool spec should fail");
+
+    assert!(err.to_string().contains("LLM request tools[0].description"));
 }
 
 #[test]

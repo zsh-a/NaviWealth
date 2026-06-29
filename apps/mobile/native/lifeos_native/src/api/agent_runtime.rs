@@ -68,7 +68,9 @@ pub fn agent_runtime_validate_trace(trace_json: String) -> Result<String> {
 }
 
 pub fn agent_runtime_validate_tool_spec(tool_json: String) -> Result<String> {
-    normalize_json::<ToolSpec>(&tool_json)
+    let tool: ToolSpec = serde_json::from_str(&tool_json)?;
+    require_tool_spec_contract(&tool, "tool")?;
+    Ok(serde_json::to_string(&tool)?)
 }
 
 pub fn agent_runtime_validate_llm_request(request_json: String) -> Result<String> {
@@ -790,6 +792,9 @@ fn require_catalog_contract(catalog: &AgentRuntimeCatalog) -> Result<()> {
             catalog.catalog_version
         );
     }
+    for (index, tool) in catalog.tools.iter().enumerate() {
+        require_tool_spec_contract(tool, &format!("catalog.tools[{index}]"))?;
+    }
     Ok(())
 }
 
@@ -801,6 +806,9 @@ fn require_llm_request_protocol_version(request: &LlmRequest) -> Result<()> {
             request.protocol_version
         );
     }
+    for (index, tool) in request.tools.iter().enumerate() {
+        require_tool_spec_contract(tool, &format!("LLM request tools[{index}]"))?;
+    }
     Ok(())
 }
 
@@ -811,6 +819,22 @@ fn require_llm_response_protocol_version(response: &LlmResponse) -> Result<()> {
             "LLM response protocol_version '{}' does not match runtime protocol_version '{expected}'",
             response.protocol_version
         );
+    }
+    Ok(())
+}
+
+fn require_tool_spec_contract(tool: &ToolSpec, label: &str) -> Result<()> {
+    if tool.name.trim().is_empty() {
+        anyhow::bail!("{label}.name must be a non-empty string");
+    }
+    if tool.description.trim().is_empty() {
+        anyhow::bail!("{label}.description must be a non-empty string");
+    }
+    if !tool.input_schema.is_object() {
+        anyhow::bail!("{label}.input_schema must be an object");
+    }
+    if matches!(tool.output_schema.as_ref(), Some(value) if !value.is_object()) {
+        anyhow::bail!("{label}.output_schema must be an object when present");
     }
     Ok(())
 }

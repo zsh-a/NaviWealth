@@ -84,7 +84,9 @@ Implemented:
 - Dart-side app provider wiring via `agentRuntimeNativeBridgeProvider` and
   `agentRuntimeNativeCatalogSummaryProvider`
 - FRB-facing catalog validation rejects mismatched `protocol_version` and
-  `catalog_version` before summary, start-step, or continuation execution
+  `catalog_version` before summary, start-step, or continuation execution, and
+  validates catalog / LLM `ToolSpec` names, descriptions, and JSON-schema
+  object fields before native dispatch
 - FRB-facing LLM request/response contract validation and deterministic mock
   LLM completion via `agentRuntimeValidateLlmRequest`,
   `agentRuntimeValidateLlmResponse`, and `agentRuntimeCompleteMockLlm`; LLM
