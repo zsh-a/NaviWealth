@@ -2,12 +2,11 @@
 /// the provider; the original image never reaches our servers).
 ///
 /// Implements the shared [VisionIngestClient] surface, so the ingest pipeline
-/// can choose FRB-backed Vision or an unavailable fallback. The legacy direct
-/// [DeviceVisionIngestClient] is retained for compatibility, but production
-/// wiring uses [FrbVisionIngestClient]. Both use the verbatim-ported
-/// schema/prompt/extraction (`device_vision_parse.dart`), then map rows through
-/// the *shared* `parsedTransactionFromWire` — so deterministic and Vision paths
-/// share the same [ParsedTransaction] JSON semantics.
+/// can choose FRB-backed Vision or an unavailable fallback. The FRB client uses
+/// the verbatim-ported schema/prompt/extraction (`device_vision_parse.dart`),
+/// then maps rows through the *shared* `parsedTransactionFromWire` — so
+/// deterministic and Vision paths share the same [ParsedTransaction] JSON
+/// semantics.
 ///
 /// **Privacy-correct divergence from the chat failover (§4.6.4)**: a
 /// device Vision failure is *not* retried on a cloud relay. The user
@@ -16,63 +15,12 @@
 library;
 
 import '../../../app/agent_runtime_llm_bridge.dart';
-import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
-import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../../../core/ai/runtime/device/device_vision_parse.dart';
 import '../domain/ingest_models.dart';
 import 'vision_ingest_client.dart';
 
 /// Mirrors the backend `VISION_MAX_TOKENS`.
 const int _kVisionMaxTokens = 4096;
-
-class DeviceVisionIngestClient implements VisionIngestClient {
-  const DeviceVisionIngestClient({required DeviceLlmClient client})
-    : _client = client;
-
-  final DeviceLlmClient _client;
-
-  @override
-  Future<List<ParsedTransaction>> parse({
-    required IngestSourceKind kind,
-    required String mime,
-    required String contentBase64,
-    String? currencyHint,
-  }) async {
-    final request = AnthropicRequest(
-      model: _client.config.model,
-      maxTokens: _kVisionMaxTokens,
-      system: kVisionSystemPrompt,
-      messages: buildVisionMessages(
-        mime: mime,
-        contentB64: contentBase64,
-        currencyHint: currencyHint,
-      ),
-      tools: [visionParseToolSchema()],
-      stream: false,
-    );
-
-    final AnthropicCompletion completion;
-    try {
-      completion = await _client.complete(request);
-    } on LlmRequestException catch (e) {
-      throw VisionIngestException('端侧解析失败：${e.message}');
-    }
-
-    final List<Map<String, Object?>> rows;
-    try {
-      rows = extractVisionDraftRows(completion.content);
-    } on VisionNoExtraction {
-      throw VisionIngestException('未能从该文件解析出交易');
-    }
-
-    final out = <ParsedTransaction>[];
-    for (final row in rows) {
-      final parsed = parsedTransactionFromWire(row);
-      if (parsed != null) out.add(parsed);
-    }
-    return out;
-  }
-}
 
 class FrbVisionIngestClient implements VisionIngestClient {
   const FrbVisionIngestClient({required AgentRuntimeLlmBridge llmBridge})

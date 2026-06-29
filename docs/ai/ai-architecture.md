@@ -203,8 +203,8 @@ label 影响。**Privacy policy 永远优先于 source。**
      `DisclosurePurpose` enum 用作 window tool 参数校验。
   4. **Vision 端侧直发走 FRB** — 图像/PDF content block + tool schema 经
      `FrbVisionIngestClient` / `AgentRuntimeLlmBridge` 发送到 native provider path；
-     原图不经我方服务器（比已删除的 Worker 中转更私密）。`DeviceVisionIngestClient`
-     仅保留为 legacy direct adapter。
+     原图不经我方服务器（比已删除的 Worker 中转更私密）。direct-Dart Vision adapter
+     已删除，只保留共享的 prompt/schema/extraction helpers。
   5. **平台边界 = 全部原生平台，仅排除 Web**（门控 `!kIsWeb`，见 §2.3）。
   - 无 device→cloud 失效转移（见 §2.3 降级）。
 
@@ -346,7 +346,7 @@ runtime/
     device_session.dart          per-turn session
     device_system_prompt.dart    端侧 system prompt + 硬限额
     device_tool_dispatcher.dart  只广告 active DomainPack 聚合出的工具
-    device_vision_parse.dart     legacy direct Vision 抽取 adapter
+    device_vision_parse.dart     Vision prompt/schema/extraction helpers
     llm_stream_event.dart        provider-neutral 事件
     anthropic/                   AnthropicClient + SSE decoder + wire
     openai/                      OpenAiClient + SSE decoder
