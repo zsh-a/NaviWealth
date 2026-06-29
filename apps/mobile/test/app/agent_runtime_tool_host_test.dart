@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/composition/device_tools_provider.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 
 void main() {
@@ -180,7 +180,7 @@ class _FakeDispatcher implements DeviceToolDispatcher {
 
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async {

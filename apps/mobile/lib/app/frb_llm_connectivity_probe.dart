@@ -52,10 +52,7 @@ LlmProbeResult _classifyFrbProbeError(Object error) {
   final message = error.toString();
   final status = _extractHttpStatus(message);
   if (status != null) {
-    return classifyLlmProbeFailure(
-      statusCode: status,
-      message: message,
-    );
+    return classifyLlmProbeFailure(statusCode: status, message: message);
   }
   if (message.contains('metadata.api_key')) {
     return const LlmProbeResult(LlmProbeStatus.authFailed, '请先填入 API Key');

@@ -4,8 +4,8 @@ import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
 
 void main() {
@@ -135,7 +135,7 @@ class _RoutineDispatcher implements DeviceToolDispatcher {
 
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async {

@@ -7,14 +7,18 @@
 /// a model somehow calls a tool that was not wired into the runtime.
 library;
 
-import 'device_session.dart';
+import 'device_tool_session.dart';
 
 abstract class DeviceToolDispatcher {
   /// Execute `name(input)` against local data. Returns the JSON-able
   /// output the loop serialises into a `tool_result` block. Must never
   /// throw — surface failures as an `{error, code, message}` map so the
   /// model can react.
-  Future<Object?> dispatch(DeviceSession session, String name, Object? input);
+  Future<Object?> dispatch(
+    DeviceToolSession session,
+    String name,
+    Object? input,
+  );
 }
 
 /// Placeholder. With no tool schemas advertised the model
@@ -24,7 +28,7 @@ class UnavailableToolDispatcher implements DeviceToolDispatcher {
 
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async => <String, Object?>{

@@ -16,8 +16,8 @@ import 'package:naviwealth/app/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
 
@@ -274,7 +274,7 @@ class _ProfileTurnCall {
 class _NoopDispatcher implements DeviceToolDispatcher {
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async {

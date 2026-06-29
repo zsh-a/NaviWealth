@@ -12,8 +12,8 @@ import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/ai_llm_credentials_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -351,7 +351,7 @@ class _NoopDispatcher implements DeviceToolDispatcher {
 
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async {

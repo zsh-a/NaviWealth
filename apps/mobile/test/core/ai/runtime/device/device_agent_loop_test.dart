@@ -8,6 +8,7 @@ import 'package:naviwealth/core/ai/runtime/device/device_agent_loop.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
@@ -70,7 +71,7 @@ class _RecordingDispatcher implements DeviceToolDispatcher {
   final List<String> calls = [];
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async {

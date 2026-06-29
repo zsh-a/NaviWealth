@@ -23,8 +23,8 @@ import '../../../contracts/intent.dart' show RiskLevel;
 import '../../../contracts/privacy_budget.dart' show BudgetTier;
 import '../../../contracts/tool_descriptor.dart';
 import '../anthropic/anthropic_wire.dart';
-import '../device_session.dart';
 import '../device_tool_dispatcher.dart';
+import '../device_tool_session.dart';
 import 'ask_user_tool.dart';
 import 'build_context_tool.dart';
 import 'device_tool.dart';
@@ -121,7 +121,7 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
 
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async {

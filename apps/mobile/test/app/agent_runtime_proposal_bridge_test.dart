@@ -7,8 +7,8 @@ import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 
 void main() {
   test('parses ready proposal from terminal tool result', () {
@@ -401,7 +401,7 @@ class _NoopDispatcher implements DeviceToolDispatcher {
 
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async {

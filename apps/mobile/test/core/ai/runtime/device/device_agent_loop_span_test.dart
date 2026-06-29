@@ -7,6 +7,7 @@ import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart'
 import 'package:naviwealth/core/ai/runtime/device/device_agent_loop.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
 
 class _ScriptedAdapter {
@@ -28,7 +29,7 @@ class _ScriptedAdapter {
 class _OkDispatcher implements DeviceToolDispatcher {
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async => {'ok': true, 'tool': name};
@@ -37,7 +38,7 @@ class _OkDispatcher implements DeviceToolDispatcher {
 class _ErrDispatcher implements DeviceToolDispatcher {
   @override
   Future<Object?> dispatch(
-    DeviceSession session,
+    DeviceToolSession session,
     String name,
     Object? input,
   ) async => {'error': 'boom', 'code': 'tool_error'};

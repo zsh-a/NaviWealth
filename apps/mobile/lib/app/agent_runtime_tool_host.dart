@@ -3,7 +3,8 @@
 /// The Rust side sends JSON-RPC-style `tool.call` requests over a process or
 /// stdio bridge. This adapter maps that protocol to the existing
 /// [DeviceToolDispatcher], so Flutter can expose the same device tools used by
-/// chat without changing the tool implementations.
+/// chat without changing the tool implementations or constructing a legacy
+/// provider-specific chat session.
 library;
 
 import 'dart:convert';
@@ -11,12 +12,11 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/ai/composition/device_tools_provider.dart';
-import '../core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import '../core/ai/runtime/device/device_session.dart';
 import '../core/ai/runtime/device/device_tool_dispatcher.dart';
+import '../core/ai/runtime/device/device_tool_session.dart';
 import '../core/ai/runtime/device/tools/device_tool_registry.dart';
 
-typedef AgentRuntimeSessionFactory = DeviceSession Function();
+typedef AgentRuntimeSessionFactory = DeviceToolSession Function();
 
 final agentRuntimeToolHostProvider = Provider<AgentRuntimeToolHost>((ref) {
   final registry = DeviceToolRegistry(ref.watch(deviceToolsProvider));
@@ -30,9 +30,7 @@ class AgentRuntimeToolHost {
     required DeviceToolDispatcher dispatcher,
     AgentRuntimeSessionFactory? sessionFactory,
   }) : _dispatcher = dispatcher,
-       _sessionFactory =
-           sessionFactory ??
-           (() => DeviceSession(messages: <AnthropicChatMessage>[]));
+       _sessionFactory = sessionFactory ?? (() => const DeviceToolSession());
 
   final DeviceToolDispatcher _dispatcher;
   final AgentRuntimeSessionFactory _sessionFactory;

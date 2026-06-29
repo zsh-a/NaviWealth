@@ -345,6 +345,7 @@ runtime/
   device/
     device_agent_loop.dart       端侧 agent loop
     device_session.dart          per-turn session
+    device_tool_session.dart     provider-neutral tool execution context
     device_system_prompt.dart    端侧 system prompt + 硬限额
     device_tool_dispatcher.dart  只广告 active DomainPack 聚合出的工具
     device_vision_parse.dart     Vision prompt/schema/extraction helpers

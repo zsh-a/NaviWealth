@@ -10,7 +10,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../device_session.dart';
+import '../device_tool_session.dart';
 
 /// What a [DeviceTool.invoke] gets: Riverpod access for the
 /// repositories/services it reuses, plus the live turn session (for
@@ -22,7 +22,7 @@ class DeviceToolContext {
   /// Read device providers/services here — never cache across turns;
   /// the dispatcher creates a fresh context per call.
   final Ref ref;
-  final DeviceSession session;
+  final DeviceToolSession session;
 }
 
 abstract class DeviceTool {

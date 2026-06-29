@@ -93,10 +93,7 @@ class LlmProbeException implements Exception {
 /// Pure mapping HTTP failure → user-facing probe result. Top-level so
 /// it's unit-testable without a network.
 LlmProbeResult classifyLlmProbeException(LlmProbeException e) {
-  return classifyLlmProbeFailure(
-    statusCode: e.statusCode,
-    message: e.message,
-  );
+  return classifyLlmProbeFailure(statusCode: e.statusCode, message: e.message);
 }
 
 LlmProbeResult classifyLlmProbeFailure({
