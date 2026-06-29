@@ -409,9 +409,7 @@ fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Result<()> {
         require_non_empty_string(payload, "agent_id")?;
         require_step_status(payload, "status")?;
         require_non_negative_integer(payload, "step_index")?;
-        if !payload.contains_key("tool_name") {
-            anyhow::bail!("agent_runtime_step payload.tool_name is required");
-        }
+        require_nullable_string(payload, "tool_name")?;
         let run_state = payload
             .get("run_state")
             .and_then(Value::as_object)
@@ -444,6 +442,14 @@ fn require_nullable_non_negative_integer(object: &Map<String, Value>, field: &st
         Some(Value::Null) => Ok(()),
         Some(value) if value.as_u64().is_some() => Ok(()),
         _ => anyhow::bail!("agent_runtime_step {field} must be null or a non-negative integer"),
+    }
+}
+
+fn require_nullable_string(object: &Map<String, Value>, field: &str) -> Result<()> {
+    match object.get(field) {
+        Some(Value::Null) => Ok(()),
+        Some(Value::String(_)) => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must be null or a string"),
     }
 }
 

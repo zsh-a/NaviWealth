@@ -36,6 +36,10 @@ fn committed_fixtures_match_json_schemas() {
         "schemas/agent-runtime/trace.schema.json",
         "fixtures/agent-runtime/trace.invalid.unknown-step-status.json",
     );
+    assert_invalid(
+        "schemas/agent-runtime/trace.schema.json",
+        "fixtures/agent-runtime/trace.invalid.non-string-step-tool-name.json",
+    );
     assert_valid(
         "schemas/agent-runtime/catalog.schema.json",
         "fixtures/agent-runtime/catalog.valid.json",
