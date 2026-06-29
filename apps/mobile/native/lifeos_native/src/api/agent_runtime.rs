@@ -81,8 +81,8 @@ pub fn agent_runtime_validate_llm_request(request_json: String) -> Result<String
 }
 
 pub fn agent_runtime_validate_llm_response(response_json: String) -> Result<String> {
-    let response: LlmResponse = serde_json::from_str(&response_json)?;
-    require_llm_response_protocol_version(&response)?;
+    let mut response: LlmResponse = serde_json::from_str(&response_json)?;
+    normalize_llm_response_contract(&mut response)?;
     Ok(serde_json::to_string(&response)?)
 }
 
@@ -93,10 +93,11 @@ pub async fn agent_runtime_complete_mock_llm(
     let mut request: LlmRequest = serde_json::from_str(&request_json)?;
     normalize_llm_request_contract(&mut request)?;
     let provider = MockLlmProvider::new("mock", request.model.clone(), response_text);
-    let response = provider
+    let mut response = provider
         .complete(request)
         .await
         .map_err(|e| anyhow::anyhow!(e.record.message.clone()))?;
+    normalize_llm_response_contract(&mut response)?;
     Ok(serde_json::to_string(&response)?)
 }
 
@@ -169,10 +170,12 @@ pub async fn agent_runtime_start_profile_turn_step(
 
 async fn complete_profile_llm_response(mut request: LlmRequest) -> Result<LlmResponse> {
     normalize_llm_request_contract(&mut request)?;
-    profile_llm_provider(&request)?
+    let mut response = profile_llm_provider(&request)?
         .complete(request)
         .await
-        .map_err(llm_error_to_anyhow)
+        .map_err(llm_error_to_anyhow)?;
+    normalize_llm_response_contract(&mut response)?;
+    Ok(response)
 }
 
 async fn stream_llm_response(
@@ -896,13 +899,24 @@ fn normalize_llm_request_contract(request: &mut LlmRequest) -> Result<()> {
     Ok(())
 }
 
-fn require_llm_response_protocol_version(response: &LlmResponse) -> Result<()> {
+fn normalize_llm_response_contract(response: &mut LlmResponse) -> Result<()> {
     let expected = protocol_version();
     if response.protocol_version != expected {
         anyhow::bail!(
             "LLM response protocol_version '{}' does not match runtime protocol_version '{expected}'",
             response.protocol_version
         );
+    }
+    if response.provider.trim().is_empty() {
+        anyhow::bail!("LLM response provider must be a non-empty string");
+    }
+    if response.model.trim().is_empty() {
+        anyhow::bail!("LLM response model must be a non-empty string");
+    }
+    if response.metadata.is_null() {
+        response.metadata = json!({});
+    } else if !response.metadata.is_object() {
+        anyhow::bail!("LLM response metadata must be a JSON object");
     }
     Ok(())
 }

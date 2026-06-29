@@ -523,6 +523,24 @@ fn normalizes_llm_request_default_object_fields() {
 }
 
 #[test]
+fn normalizes_llm_response_default_object_fields() {
+    let response_json = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "stop"
+        }"#
+        .to_owned(),
+    )
+    .expect("LLM response defaults should normalize");
+    let response: Value = serde_json::from_str(&response_json).expect("response should be json");
+
+    assert_eq!(response["metadata"], json!({}));
+}
+
+#[test]
 fn validate_llm_contracts_reject_mismatched_protocol_version() {
     let request_err = agent_runtime_validate_llm_request(
         r#"{
@@ -548,6 +566,52 @@ fn validate_llm_contracts_reject_mismatched_protocol_version() {
     )
     .expect_err("mismatched LLM response protocol should fail");
     assert!(response_err.to_string().contains("protocol_version"));
+}
+
+#[test]
+fn validate_llm_response_rejects_malformed_required_fields() {
+    let provider_err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "stop"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("empty response provider should fail");
+    assert!(provider_err.to_string().contains("provider"));
+
+    let model_err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "",
+          "content": "hello",
+          "finish_reason": "stop"
+        }"#
+        .to_owned(),
+    )
+    .expect_err("empty response model should fail");
+    assert!(model_err.to_string().contains("model"));
+}
+
+#[test]
+fn validate_llm_response_rejects_malformed_metadata_field() {
+    let metadata_err = agent_runtime_validate_llm_response(
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "content": "hello",
+          "finish_reason": "stop",
+          "metadata": []
+        }"#
+        .to_owned(),
+    )
+    .expect_err("non-object response metadata should fail");
+    assert!(metadata_err.to_string().contains("metadata"));
 }
 
 #[test]
