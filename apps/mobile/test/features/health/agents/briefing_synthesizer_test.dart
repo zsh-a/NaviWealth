@@ -5,11 +5,9 @@
 //     summarisation behaviour. Mirrors the existing static-synthesise
 //     coverage in `morning_briefing_agent_test.dart` so a refactor to
 //     the agent can't silently regress the line shapes.
-//   * LlmBriefingSynthesizer — wraps a DeviceLlmClient. We fake the
-//     client to script the happy path and several failure modes;
-//     every failure must fall back to the programmatic baseline.
+//   * FrbBriefingSynthesizer — wraps the FRB profile-turn runner. We fake
+//     the runner to script the happy path and fallback behavior.
 
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
@@ -18,11 +16,8 @@ import 'package:naviwealth/app/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
-import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
 
@@ -70,50 +65,6 @@ EventRecord _financeEvent({required DateTime when, required String type}) =>
       entities: const <String>{},
       importance: 0.5,
     );
-
-class _FakeLlmConfig implements DeviceLlmConfig {
-  const _FakeLlmConfig();
-  @override
-  String get model => 'fake-model';
-}
-
-class _FakeLlmClient implements DeviceLlmClient {
-  _FakeLlmClient({this.scriptedText, this.shouldThrow = false});
-  final String? scriptedText;
-  final bool shouldThrow;
-  int completeCalls = 0;
-
-  @override
-  DeviceLlmConfig get config => const _FakeLlmConfig();
-
-  @override
-  Future<AnthropicCompletion> complete(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async {
-    completeCalls++;
-    if (shouldThrow) {
-      throw const LlmRequestException(statusCode: 500, message: 'boom');
-    }
-    final text = scriptedText;
-    if (text == null) {
-      return const AnthropicCompletion(content: <Object?>[]);
-    }
-    return AnthropicCompletion(
-      content: <Object?>[
-        <String, Object?>{'type': 'text', 'text': text},
-      ],
-    );
-  }
-
-  @override
-  Stream<LlmStreamEvent> streamMessages(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async* {
-    throw UnsupportedError('streamMessages not used by briefing synthesizer');
-  }
-}
 
 void main() {
   group('ProgrammaticBriefingSynthesizer', () {
@@ -172,63 +123,6 @@ void main() {
         ),
       );
       expect(out.summary, 'Slept 4.3h (short)');
-    });
-  });
-
-  group('LlmBriefingSynthesizer', () {
-    final now = DateTime.utc(2026, 5, 27, 7);
-    final baselineInputs = BriefingInputs(
-      dayKey: '2026-05-27',
-      healthEvents: <EventRecord>[
-        _sleepEvent(when: now, valueSeconds: 7.5 * 3600),
-        _hrvEvent(when: now, valueMs: 48),
-      ],
-      financeEvents: const <EventRecord>[],
-    );
-
-    test('uses LLM output when the call succeeds', () async {
-      final client = _FakeLlmClient(
-        scriptedText: 'You slept 7.5h with HRV 48ms — calm baseline morning.',
-      );
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(baselineInputs);
-      expect(out.source, BriefingSource.llm);
-      expect(out.summary, contains('7.5h'));
-      // Structured lines are still surfaced — agent embeds them in the
-      // memory `outcome` payload regardless of source.
-      expect(out.sleepLine, 'Slept 7.5h');
-      expect(out.hrvLine, 'HRV 48ms');
-      expect(client.completeCalls, 1);
-    });
-
-    test('falls back to programmatic when the LLM call throws', () async {
-      final client = _FakeLlmClient(shouldThrow: true);
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(baselineInputs);
-      expect(out.source, BriefingSource.programmatic);
-      expect(out.summary, 'Slept 7.5h · HRV 48ms');
-    });
-
-    test('falls back when the LLM returns empty content', () async {
-      final client = _FakeLlmClient(scriptedText: null);
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(baselineInputs);
-      expect(out.source, BriefingSource.programmatic);
-      expect(out.summary, 'Slept 7.5h · HRV 48ms');
-    });
-
-    test('skips the LLM call when baseline already empty', () async {
-      final client = _FakeLlmClient(scriptedText: 'something');
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(
-        const BriefingInputs(
-          dayKey: '2026-05-27',
-          healthEvents: <EventRecord>[],
-          financeEvents: <EventRecord>[],
-        ),
-      );
-      expect(out.isEmpty, isTrue);
-      expect(client.completeCalls, 0);
     });
   });
 

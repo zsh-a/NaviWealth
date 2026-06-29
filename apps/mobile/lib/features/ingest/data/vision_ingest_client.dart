@@ -6,8 +6,8 @@
 /// FRB LLM profile exists the [VisionIngestClient] slot is the
 /// [UnavailableVisionIngestClient] stub, which fails with a clear
 /// "configure a key" message instead of hitting a dead endpoint. The
-/// pure wire mappers below are retained — the FRB and legacy direct-Dart
-/// compatibility paths reuse them.
+/// pure wire mappers below are retained so deterministic and FRB paths share
+/// the same parsed transaction contract.
 library;
 
 import '../domain/ingest_models.dart';

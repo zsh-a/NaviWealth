@@ -8,12 +8,6 @@
 ///    and the safe fallback when FRB/profile is unavailable.
 ///  * [FrbBriefingSynthesizer] — calls the user's configured device
 ///    LLM through the FRB agent runtime profile-turn seam.
-///  * [LlmBriefingSynthesizer] — legacy direct Dart LLM implementation kept
-///    for compatibility/unit coverage, not selected by production bootstrap.
-///    Calls the user's configured device
-///    LLM (Anthropic or OpenAI-compatible) for richer narrative,
-///    automatically falling back to programmatic on any error so the
-///    agent never crashes on a flaky network.
 ///
 /// The agent stays composition-blind: it takes a [BriefingSynthesizer]
 /// and asks for `synthesize(events, …)`. Bootstrap picks which
@@ -21,12 +15,8 @@
 /// otherwise).
 library;
 
-import 'package:dio/dio.dart';
-
 import '../../../app/agent_runtime_runner.dart';
 import '../../../core/ai/contracts/event_record.dart';
-import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
-import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../data/health_metric_memory_indexer.dart';
 
 /// Inputs to a single synthesis call. The agent pre-partitions events
@@ -240,70 +230,6 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
     } on Object {
       // Best-effort diagnostics; never fail the production agent.
     }
-  }
-}
-
-/// LLM-driven synthesis (D-2.5b). Composes a programmatic baseline,
-/// then asks the user's configured device LLM to rewrite it into a
-/// short narrative grounded in the structured lines. The LLM never
-/// invents numbers; the programmatic lines are the source of truth.
-///
-/// Any failure (no network, provider down, malformed response, parse
-/// error) falls back to the programmatic baseline so the agent always
-/// produces *something* the user can read.
-class LlmBriefingSynthesizer implements BriefingSynthesizer {
-  const LlmBriefingSynthesizer({
-    required this.client,
-    this.fallback = const ProgrammaticBriefingSynthesizer(),
-    this.maxTokens = 200,
-    this.requestTimeout = const Duration(seconds: 20),
-  });
-
-  final DeviceLlmClient client;
-  final BriefingSynthesizer fallback;
-  final int maxTokens;
-  final Duration requestTimeout;
-
-  @override
-  Future<BriefingOutput> synthesize(BriefingInputs inputs) async {
-    final baseline = await fallback.synthesize(inputs);
-    if (baseline.isEmpty) return baseline;
-    try {
-      final prompt = _buildBriefingPrompt(inputs, baseline);
-      final request = AnthropicRequest(
-        model: client.config.model,
-        maxTokens: maxTokens,
-        system: _kBriefingSystemPrompt,
-        messages: <AnthropicChatMessage>[
-          AnthropicChatMessage.text('user', prompt),
-        ],
-        stream: false,
-      );
-      final completion = await client
-          .complete(request, cancelToken: CancelToken())
-          .timeout(requestTimeout);
-      final text = _extractText(completion);
-      if (text == null || text.trim().isEmpty) return baseline;
-      return BriefingOutput(
-        summary: text.trim(),
-        sleepLine: baseline.sleepLine,
-        hrvLine: baseline.hrvLine,
-        financeLine: baseline.financeLine,
-        source: BriefingSource.llm,
-      );
-    } on Object {
-      return baseline;
-    }
-  }
-
-  static String? _extractText(AnthropicCompletion completion) {
-    for (final block in completion.content) {
-      if (block is! Map) continue;
-      if (block['type'] == 'text' && block['text'] is String) {
-        return block['text'] as String;
-      }
-    }
-    return null;
   }
 }
 

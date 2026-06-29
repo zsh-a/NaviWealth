@@ -11,7 +11,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB="$ROOT/apps/mobile/lib"
 
-ALLOWLIST_REGEX='apps/mobile/lib/core/ai/runtime/|apps/mobile/lib/features/ingest/data/device_ingest_client\.dart|apps/mobile/lib/features/health/agents/briefing_synthesizer\.dart|apps/mobile/lib/features/knowledge/data/llm_(capture_classifier|contradiction_judge|inbox_triage_classifier)\.dart'
+ALLOWLIST_REGEX='apps/mobile/lib/core/ai/runtime/|apps/mobile/lib/features/ingest/data/device_ingest_client\.dart|apps/mobile/lib/features/knowledge/data/llm_(capture_classifier|contradiction_judge|inbox_triage_classifier)\.dart'
 
 PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityProbe|DeviceVisionIngestClient|LlmBriefingSynthesizer\(client:|DeviceLlmClient|DeviceLlmRuntime'
 
