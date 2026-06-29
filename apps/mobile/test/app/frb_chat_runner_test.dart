@@ -212,6 +212,96 @@ void main() {
     expect(secondMetadata['round'], 2);
   });
 
+  test('reports a missing FRB tool host without continuing', () async {
+    final bridge = _FakeLlmBridge();
+    final streamBridge = _streamBridge(
+      bridge,
+      events: const <String>[
+        '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+        '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
+        '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
+        '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+      ],
+    );
+    final runner = FrbChatRunner(
+      llmBridge: bridge,
+      streamBridge: streamBridge,
+      tools: const <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'read_task',
+          'description': 'Read a task',
+          'input_schema': <String, Object?>{'type': 'object'},
+          'risk': 'read_only',
+        },
+      ],
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Read task task_1'),
+          ],
+        )
+        .toList();
+
+    expect(streamBridge.requests, hasLength(1));
+    expect(events.whereType<ToolResultEvent>(), isEmpty);
+    final spans = events.whereType<SpanEvent>().toList();
+    expect(spans, hasLength(1));
+    expect(spans.single.status, AiSpanStatus.ok);
+    final error = events.whereType<ErrorEvent>().single;
+    expect(error.code, 'frb_chat_tool_host_unavailable');
+    expect(error.message, 'FRB chat received a tool call without a tool host');
+    final done = events.last as DoneEvent;
+    expect(done.stopReason, 'error');
+    expect(done.rounds, 1);
+  });
+
+  test('enforces the FRB chat tool round budget', () async {
+    final bridge = _FakeLlmBridge();
+    final streamBridge = _streamBridge(
+      bridge,
+      events: const <String>[
+        '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+        '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
+        '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
+        '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+      ],
+    );
+    var toolHostCalls = 0;
+    final runner = FrbChatRunner(
+      llmBridge: bridge,
+      streamBridge: streamBridge,
+      maxToolRounds: 1,
+      toolLineHandler: (line) async {
+        toolHostCalls += 1;
+        return jsonEncode(<String, Object?>{
+          'jsonrpc': '2.0',
+          'id': 'call_1',
+          'result': <String, Object?>{'title': 'Task title'},
+        });
+      },
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Read task task_1'),
+          ],
+        )
+        .toList();
+
+    expect(streamBridge.requests, hasLength(1));
+    expect(toolHostCalls, 0);
+    expect(events.whereType<ToolResultEvent>(), isEmpty);
+    final error = events.whereType<ErrorEvent>().single;
+    expect(error.code, 'frb_chat_tool_round_budget_exceeded');
+    expect(error.message, 'FRB chat exceeded the tool round budget');
+    final done = events.last as DoneEvent;
+    expect(done.stopReason, 'error');
+    expect(done.rounds, 1);
+  });
+
   test('stops after ask_user tool result without another model round', () async {
     final bridge = _FakeLlmBridge();
     final streamBridge = _streamBridgeBatches(
