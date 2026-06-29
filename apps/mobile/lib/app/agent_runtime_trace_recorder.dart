@@ -165,6 +165,7 @@ class AgentRuntimeTraceRecorder {
         stepRun,
         nativeStepIndex,
       );
+      final nativeStepRunState = _object(nativeStepTraceEvent?['run_state']);
       final toolCall = _object(step['tool_call']);
       final name = _string(toolCall?['name']) ?? 'unknown';
       final response = toolResponseIndex < stepRun.toolResponses.length
@@ -193,6 +194,18 @@ class AgentRuntimeTraceRecorder {
           ),
           'native_trace_event_tool_name': ?_string(
             nativeStepTraceEvent?['tool_name'],
+          ),
+          'native_trace_event_step_index': ?_int(
+            nativeStepRunState?['step_index'],
+          ),
+          'native_trace_event_terminal_reason': ?_string(
+            nativeStepRunState?['terminal_reason'],
+          ),
+          'native_trace_event_remaining_tool_count': ?_int(
+            nativeStepRunState?['remaining_tool_count'],
+          ),
+          'native_trace_event_tool_result_count': ?_int(
+            nativeStepRunState?['tool_result_count'],
           ),
           'response_id': _string(response?['id']),
         },
@@ -273,8 +286,9 @@ Map<String, Object?>? _nativeRunState(
   Map<String, Object?> step,
   AgentRuntimeNativeStepRunResult stepRun,
 ) {
-  return _object(_nativeTraceEvent(step, stepRun)?['run_state']) ??
-      _object(step['run_state']);
+  return _object(_object(step['trace_event'])?['run_state']) ??
+      _object(step['run_state']) ??
+      _object(_nativeTraceEvent(step, stepRun)?['run_state']);
 }
 
 int? _int(Object? value) {

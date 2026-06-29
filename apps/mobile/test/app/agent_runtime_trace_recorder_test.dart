@@ -187,6 +187,13 @@ void main() {
             'status': 'completed',
             'step_index': 3,
             'tool_name': 'list_due_routines',
+            'run_state': <String, Object?>{
+              'status': 'tool_call_requested',
+              'step_index': 3,
+              'remaining_tool_count': 0,
+              'tool_result_count': 0,
+              'terminal_reason': null,
+            },
           },
         ],
         steps: <Map<String, Object?>>[
@@ -234,6 +241,18 @@ void main() {
     expect(
       trace.toolSpans.single.attributes,
       containsPair('native_trace_event_tool_name', 'list_due_routines'),
+    );
+    expect(
+      trace.toolSpans.single.attributes,
+      containsPair('native_trace_event_step_index', 3),
+    );
+    expect(
+      trace.toolSpans.single.attributes,
+      containsPair('native_trace_event_remaining_tool_count', 0),
+    );
+    expect(
+      trace.toolSpans.single.attributes,
+      containsPair('native_trace_event_tool_result_count', 0),
     );
     expect(
       trace.spans.first.attributes,
