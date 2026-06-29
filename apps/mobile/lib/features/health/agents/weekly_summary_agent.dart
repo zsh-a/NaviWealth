@@ -6,6 +6,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/agent_runtime_catalog.dart';
+import '../../../app/agent_runtime_native_bridge.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
@@ -21,7 +23,11 @@ const String kWeeklySummaryAgentId = 'weekly_summary';
 const String kWeeklySummaryMemorySource = 'agent:weekly_summary';
 
 class WeeklySummaryAgent implements Agent {
-  const WeeklySummaryAgent();
+  const WeeklySummaryAgent({
+    this.summaryReader = const RepositoryWeeklySummaryReader(),
+  });
+
+  final WeeklySummaryReader summaryReader;
 
   @override
   String get id => kWeeklySummaryAgentId;
@@ -37,29 +43,11 @@ class WeeklySummaryAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
-    final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    final data = await repo.listByKinds(
-      ownerUserId: ownerUserId,
-      kinds: const {
-        HealthMetricKind.hrvDaily,
-        HealthMetricKind.sleepSession,
-        HealthMetricKind.rhrDaily,
-        HealthMetricKind.stepsDaily,
-        HealthMetricKind.workoutSession,
-        HealthMetricKind.vo2Max,
-      },
-      limit: 14,
-    );
+    final snapshot = await summaryReader.read(ctx);
 
-    final hrv = data[HealthMetricKind.hrvDaily] ?? const [];
-    final sleep = data[HealthMetricKind.sleepSession] ?? const [];
-    final rhr = data[HealthMetricKind.rhrDaily] ?? const [];
-    final steps = data[HealthMetricKind.stepsDaily] ?? const [];
-    final workouts = data[HealthMetricKind.workoutSession] ?? const [];
-
-    if (hrv.isEmpty && sleep.isEmpty && steps.isEmpty) {
+    if (!snapshot.hasAnySignal) {
       return AgentRunResult.skipped(
         agentId: kWeeklySummaryAgentId,
         startedAt: start,
@@ -68,29 +56,23 @@ class WeeklySummaryAgent implements Agent {
       );
     }
 
-    // Compute recovery.
-    const scorer = RecoveryScorer();
-    final recovery = scorer.score(hrv: hrv, sleep: sleep, rhr: rhr);
-
-    // Aggregate weekly stats.
-    final now = ctx.now;
-    final weekFrom = now.subtract(const Duration(days: 7));
-    final weekSteps = _sumInWindow(steps, weekFrom, now);
-    final weekWorkouts = _countInWindow(workouts, weekFrom, now);
-    final weekWorkoutMin = _sumWorkoutMinutes(workouts, weekFrom, now);
-    final avgSleep = _avgSleepHours(sleep, weekFrom, now);
-
     // Build summary.
     final parts = <String>[];
-    if (recovery.hasScore) {
-      parts.add('Recovery ${recovery.score}/100 (${recovery.verdict})');
+    final recoveryScore = snapshot.recoveryScore;
+    final recoveryVerdict = snapshot.recoveryVerdict;
+    if (recoveryScore != null && recoveryVerdict != null) {
+      parts.add('Recovery $recoveryScore/100 ($recoveryVerdict)');
     }
+    final avgSleep = snapshot.avgSleepHours;
     if (avgSleep != null) {
       parts.add('avg sleep ${_round(avgSleep)}h');
     }
+    final weekSteps = snapshot.totalSteps;
     if (weekSteps > 0) {
       parts.add('${_formatSteps(weekSteps)} steps');
     }
+    final weekWorkouts = snapshot.workoutCount;
+    final weekWorkoutMin = snapshot.workoutMinutes;
     if (weekWorkouts > 0) {
       parts.add('$weekWorkouts workouts (${_round(weekWorkoutMin)} min)');
     }
@@ -120,8 +102,8 @@ class WeeklySummaryAgent implements Agent {
       payload: <String, Object?>{
         'context': 'weekly summary at ${start.toUtc().toIso8601String()}',
         'outcome': <String, Object?>{
-          'recovery_score': recovery.score,
-          'recovery_verdict': recovery.verdict,
+          'recovery_score': recoveryScore,
+          'recovery_verdict': recoveryVerdict,
           'avg_sleep_hours': avgSleep == null ? null : _round(avgSleep),
           'total_steps': weekSteps,
           'workout_count': weekWorkouts,
@@ -144,7 +126,7 @@ class WeeklySummaryAgent implements Agent {
       finishedAt: DateTime.now().toUtc(),
       summary: summary,
       payload: <String, Object?>{
-        'recovery_score': recovery.score,
+        'recovery_score': recoveryScore,
         'total_steps': weekSteps,
         'workout_count': weekWorkouts,
       },
@@ -222,6 +204,240 @@ class WeeklySummaryAgent implements Agent {
   }
 
   static double _round(double v) => (v * 100).round() / 100.0;
+}
+
+abstract class WeeklySummaryReader {
+  Future<WeeklySummarySnapshot> read(AgentContext ctx);
+}
+
+class RepositoryWeeklySummaryReader implements WeeklySummaryReader {
+  const RepositoryWeeklySummaryReader();
+
+  @override
+  Future<WeeklySummarySnapshot> read(AgentContext ctx) async {
+    final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
+    final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+
+    final data = await repo.listByKinds(
+      ownerUserId: ownerUserId,
+      kinds: const {
+        HealthMetricKind.hrvDaily,
+        HealthMetricKind.sleepSession,
+        HealthMetricKind.rhrDaily,
+        HealthMetricKind.stepsDaily,
+        HealthMetricKind.workoutSession,
+        HealthMetricKind.vo2Max,
+      },
+      limit: 14,
+    );
+
+    final hrv = data[HealthMetricKind.hrvDaily] ?? const [];
+    final sleep = data[HealthMetricKind.sleepSession] ?? const [];
+    final rhr = data[HealthMetricKind.rhrDaily] ?? const [];
+    final steps = data[HealthMetricKind.stepsDaily] ?? const [];
+    final workouts = data[HealthMetricKind.workoutSession] ?? const [];
+    const scorer = RecoveryScorer();
+    final recovery = scorer.score(hrv: hrv, sleep: sleep, rhr: rhr);
+    final now = ctx.now;
+    final weekFrom = now.subtract(const Duration(days: 7));
+    return WeeklySummarySnapshot(
+      hasHealthData: hrv.isNotEmpty || sleep.isNotEmpty || steps.isNotEmpty,
+      recoveryScore: recovery.hasScore ? recovery.score : null,
+      recoveryVerdict: recovery.hasScore ? recovery.verdict : null,
+      avgSleepHours: WeeklySummaryAgent._avgSleepHours(sleep, weekFrom, now),
+      totalSteps: WeeklySummaryAgent._sumInWindow(steps, weekFrom, now),
+      workoutCount: WeeklySummaryAgent._countInWindow(workouts, weekFrom, now),
+      workoutMinutes: WeeklySummaryAgent._sumWorkoutMinutes(
+        workouts,
+        weekFrom,
+        now,
+      ),
+    );
+  }
+}
+
+class FrbWeeklySummaryReader implements WeeklySummaryReader {
+  const FrbWeeklySummaryReader({
+    required AgentRuntimeNativeStepRunner stepRunner,
+    required AgentRuntimeCatalog catalog,
+    this.fallback = const RepositoryWeeklySummaryReader(),
+    this.recordTrace,
+  }) : _stepRunner = stepRunner,
+       _catalog = catalog;
+
+  final AgentRuntimeNativeStepRunner _stepRunner;
+  final AgentRuntimeCatalog _catalog;
+  final WeeklySummaryReader fallback;
+  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
+  recordTrace;
+
+  @override
+  Future<WeeklySummarySnapshot> read(AgentContext ctx) async {
+    try {
+      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
+        catalog: _catalog.toJson(),
+        request: <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'input': <String, Object?>{
+            'tool_plan': <Object?>[
+              const <String, Object?>{
+                'name': 'get_recovery_signal',
+                'input': <String, Object?>{},
+              },
+              const <String, Object?>{
+                'name': 'get_recent_sleep_summary',
+                'input': <String, Object?>{'days_back': 7},
+              },
+              const <String, Object?>{
+                'name': 'get_activity_summary',
+                'input': <String, Object?>{'days_back': 7},
+              },
+            ],
+          },
+          'trigger': 'manual',
+          'metadata': const <String, Object?>{
+            'surface': 'health_weekly_summary',
+            'agent_id': kWeeklySummaryAgentId,
+          },
+        },
+        agentId: kWeeklySummaryAgentId,
+        maxToolSteps: 3,
+      );
+      await _recordTrace(stepRun);
+      final snapshot = weeklySummarySnapshotFromTerminalStep(
+        stepRun.terminalStep,
+      );
+      if (snapshot == null) return fallback.read(ctx);
+      return snapshot;
+    } on Object {
+      return fallback.read(ctx);
+    }
+  }
+
+  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
+    final recorder = recordTrace;
+    if (recorder == null) return;
+    try {
+      await recorder(stepRun);
+    } on Object {
+      // Best-effort diagnostics; never fail the production agent.
+    }
+  }
+}
+
+class WeeklySummarySnapshot {
+  const WeeklySummarySnapshot({
+    required this.hasHealthData,
+    this.recoveryScore,
+    this.recoveryVerdict,
+    this.avgSleepHours,
+    required this.totalSteps,
+    required this.workoutCount,
+    required this.workoutMinutes,
+  });
+
+  final bool hasHealthData;
+  final int? recoveryScore;
+  final String? recoveryVerdict;
+  final double? avgSleepHours;
+  final double totalSteps;
+  final int workoutCount;
+  final double workoutMinutes;
+
+  bool get hasAnySignal =>
+      hasHealthData ||
+      recoveryScore != null ||
+      avgSleepHours != null ||
+      totalSteps > 0 ||
+      workoutCount > 0;
+}
+
+WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
+  Map<String, Object?> step,
+) {
+  final output = _asObject(step['output']);
+  if (output == null) return null;
+  final byTool = _toolResultsByName(output);
+  final recovery = byTool['get_recovery_signal'];
+  final sleep = byTool['get_recent_sleep_summary'];
+  final activity = byTool['get_activity_summary'];
+  if (recovery == null || sleep == null || activity == null) return null;
+
+  final sleepSummary = _asObject(sleep['summary']);
+  final activitySummary = _asObject(activity['summary']);
+  if (sleepSummary == null || activitySummary == null) return null;
+  final sessions = sleep['sessions'];
+  final days = activity['days'];
+  if (sessions is! List || days is! List) return null;
+  final recoveryScore = _intValue(recovery['score']);
+  final recoveryVerdict = recovery['verdict'];
+  final avgSleep = _doubleValue(sleepSummary['average_hours']);
+  final totalSteps = _doubleValue(activitySummary['total_steps']);
+  final workoutCount = _intValue(activitySummary['workout_count']);
+  final workoutMinutes = _doubleValue(activitySummary['workout_total_minutes']);
+  if (totalSteps == null || workoutCount == null || workoutMinutes == null) {
+    return null;
+  }
+  return WeeklySummarySnapshot(
+    hasHealthData:
+        sessions.isNotEmpty ||
+        days.isNotEmpty ||
+        recoveryScore != null ||
+        avgSleep != null ||
+        totalSteps > 0 ||
+        workoutCount > 0,
+    recoveryScore: recoveryScore,
+    recoveryVerdict: recoveryVerdict is String ? recoveryVerdict : null,
+    avgSleepHours: avgSleep == 0 ? null : avgSleep,
+    totalSteps: totalSteps,
+    workoutCount: workoutCount,
+    workoutMinutes: workoutMinutes,
+  );
+}
+
+Map<String, Map<String, Object?>> _toolResultsByName(
+  Map<String, Object?> output,
+) {
+  final byTool = <String, Map<String, Object?>>{};
+  final toolResults = output['tool_results'];
+  if (toolResults is List) {
+    for (final raw in toolResults) {
+      final item = _asObject(raw);
+      final call = _asObject(item?['tool_call']);
+      final response = _asObject(item?['tool_response']);
+      final name = call?['name'];
+      final result = _asObject(response?['result']);
+      if (name is String && result != null) {
+        byTool[name] = result;
+      }
+    }
+  }
+
+  final singleCall = _asObject(output['tool_call']);
+  final singleName = singleCall?['name'];
+  final singleResult = _asObject(output['tool_result']);
+  if (singleName is String && singleResult != null) {
+    byTool.putIfAbsent(singleName, () => singleResult);
+  }
+  return byTool;
+}
+
+int? _intValue(Object? value) {
+  if (value is num) return value.toInt();
+  return null;
+}
+
+double? _doubleValue(Object? value) {
+  if (value is num) return value.toDouble();
+  return null;
+}
+
+Map<String, Object?>? _asObject(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return null;
 }
 
 /// Riverpod-exposed agent.

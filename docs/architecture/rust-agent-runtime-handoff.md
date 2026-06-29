@@ -164,9 +164,9 @@ Current bridge capabilities:
   existing `AiTrace` span model, and Settings -> AI provider records successful
   runtime checks into `AiTraceStore` best-effort.
 - Provide local AI trace persistence for migrated production tool-plan agents:
-  HealthOS Recovery Alert, KnowledgeOS Assumption Review / Weekly Review /
-  Routine Due, and ExecutionOS Review record successful step-only FRB runs
-  through `AgentRuntimeTraceRecorder.recordStepRun`.
+  HealthOS Recovery Alert / Weekly Summary, KnowledgeOS Assumption Review /
+  Weekly Review / Routine Due, and ExecutionOS Review record successful
+  step-only FRB runs through `AgentRuntimeTraceRecorder.recordStepRun`.
 - Provide local AI trace persistence for the migrated production profile-turn
   agent: HealthOS Morning Briefing records successful FRB profile turns through
   `AgentRuntimeTraceRecorder.recordProfileTurn`.
@@ -204,6 +204,11 @@ Current bridge capabilities:
   `summarize_execution_progress` through a two-step FRB `tool_plan`, while
   Dart keeps today/due/blocked/weekly summarisation, memory writes, and
   repository fallback.
+- Provide an additional HealthOS production agent integration: Weekly Summary
+  now uses `FrbWeeklySummaryReader` to request `get_recovery_signal`,
+  `get_recent_sleep_summary`, and `get_activity_summary` through a three-step
+  FRB `tool_plan`, while Dart keeps weekly summary composition, memory writes,
+  and repository fallback.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
 bridge and keeps Drift/Riverpod device tools on the Dart side. JSONL process
@@ -224,11 +229,12 @@ Known limitation:
   user-facing runtime check / guarded confirmed-proposal apply surface in the
   AI provider settings page, plus the HealthOS Morning Briefing
   production-agent path and the HealthOS Recovery Alert tool-using production
-  agent path, KnowledgeOS Assumption Review / Weekly Review / Routine Due
-  tool-using production agent paths, and ExecutionOS Review. The remaining
-  production work is richer Rust-side agent policy/state/trace replay ownership
-  beyond the current tool-plan/trace-summary/local persistence contract and
-  migrating additional tool-using production agents onto that fuller loop.
+  agent path, the HealthOS Recovery Alert / Weekly Summary tool-using paths,
+  KnowledgeOS Assumption Review / Weekly Review / Routine Due tool-using
+  production agent paths, and ExecutionOS Review. The remaining production
+  work is richer Rust-side agent policy/state/trace replay ownership beyond
+  the current tool-plan/trace-summary/local persistence contract and migrating
+  additional tool-using production agents onto that fuller loop.
 
 ## Current Refactor State
 

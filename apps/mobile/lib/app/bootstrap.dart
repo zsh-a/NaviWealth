@@ -38,6 +38,7 @@ import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/agents/recovery_alert_agent.dart';
+import '../features/health/agents/weekly_summary_agent.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
 import '../features/knowledge/agents/assumption_agent.dart';
 import '../features/knowledge/agents/providers.dart'
@@ -238,6 +239,27 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
                     stepRun: stepRun,
                     domain: 'health',
                     surface: 'health_recovery_alert',
+                  );
+            },
+          ),
+        );
+      }),
+      // Weekly Summary aggregates HealthOS read tools through the FRB
+      // `tool_plan` loop, preserving Dart-side summary/memory policy and
+      // repository fallback.
+      weeklySummaryAgentProvider.overrideWith((ref) {
+        return WeeklySummaryAgent(
+          summaryReader: FrbWeeklySummaryReader(
+            stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+            catalog: ref.watch(agentRuntimeCatalogProvider),
+            recordTrace: (stepRun) {
+              return ref
+                  .read(agentRuntimeTraceRecorderProvider)
+                  .recordStepRun(
+                    agentId: kWeeklySummaryAgentId,
+                    stepRun: stepRun,
+                    domain: 'health',
+                    surface: 'health_weekly_summary',
                   );
             },
           ),
