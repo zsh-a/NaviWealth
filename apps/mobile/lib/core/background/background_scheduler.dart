@@ -33,8 +33,8 @@ const String kHealthPlatformSyncTaskName = 'com.naviwealth.healthPlatformSync';
 
 /// SharedPreferences key set by the background callback when the OS
 /// fires the periodic task. The foreground app reads it on launch and
-/// triggers an in-process agent run if found (the background isolate
-/// can't run the full agent — no ProviderContainer / Drift access).
+/// triggers an in-process scheduled-agent tick if found (the background
+/// isolate can't run the full agent — no ProviderContainer / Drift access).
 const String kMorningBriefingDueAtKey = 'lifeos.health.briefing.dueAt';
 
 /// SharedPreferences key set by the background callback when Garmin data

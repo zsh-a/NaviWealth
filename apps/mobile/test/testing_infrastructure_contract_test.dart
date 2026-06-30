@@ -695,7 +695,7 @@ void main() {
     });
 
     test(
-      'AI architecture docs keep DeviceAgentLoop out of production paths',
+      'AI architecture docs keep direct-Dart streaming out of production paths',
       () {
         final repoRoot = appRoot.parent.parent;
         final architecture = File(
@@ -711,12 +711,12 @@ void main() {
         );
 
         expect(runtimeSection, contains('FrbChatRunner'));
-        expect(runtimeSection, contains('legacy direct-Dart loop'));
-        expect(runtimeSection, contains('focused tests only'));
-        expect(
-          runtimeSection,
-          isNot(contains('device_agent_loop.dart       端侧 agent loop')),
-        );
+        expect(runtimeSection, contains('旧 direct-Dart streaming'));
+        expect(runtimeSection, contains('已从 Flutter `lib/` 删除'));
+        expect(runtimeSection, isNot(contains('DeviceAgentLoop')));
+        expect(runtimeSection, isNot(contains('LlmStreamEvent')));
+        expect(runtimeSection, isNot(contains('AnthropicClient')));
+        expect(runtimeSection, isNot(contains('OpenAiClient')));
       },
     );
   });

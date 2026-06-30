@@ -612,7 +612,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](../sync
 - ❌ 不让 AI tool 触发实时扫描。
 - ❌ 不在 web 构建出现 Income Planner 入口。
 - ❌ 不绕过 `OptionsApprovedUnderlyings` 给"陌生标的"打分。
-- ❌ 不引入新的 chat 入口或新的 AI runtime——所有 LLM 调用走现有 `DeviceAgentLoop`。
+- ❌ 不引入新的 chat 入口或新的 AI runtime——所有 LLM 调用走现有 FRB/native runtime。
 - ❌ MVP 不接券商交易 API；不存在 `propose_options_trade` 工具。
 
 ---

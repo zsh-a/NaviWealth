@@ -12,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/ai/agents/agent.dart';
-import '../../../core/ai/agents/agent_runner.dart';
+import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart' as memory_providers;
 import '../../../core/auth/current_user.dart';
@@ -113,7 +113,7 @@ final pendingBriefingRunProvider = FutureProvider.autoDispose<AgentRunResult?>((
   final due = prefs.getInt(kMorningBriefingDueAtKey);
   if (due == null) return null;
   await prefs.remove(kMorningBriefingDueAtKey);
-  return runMorningBriefingNow(ref);
+  return runDueMorningBriefingTick(ref);
 });
 
 /// Runs a pending Garmin sync after a native background wake-up stamped
@@ -167,9 +167,28 @@ final manualMorningBriefingRunProvider =
       return runMorningBriefingNow(ref);
     });
 
-/// Shared run-now path used by both [pendingBriefingRunProvider] and
-/// [manualMorningBriefingRunProvider]. Public so test scaffolds can
-/// drive the agent without going through workmanager.
+/// Background catch-up path used by [pendingBriefingRunProvider].
+///
+/// The OS background callback only marks a due flag. Foreground catch-up then
+/// calls the shared scheduled-agent [AgentRunController.tick] entry so
+/// [AgentSchedule] remains the only due/not-due policy.
+Future<AgentRunResult?> runDueMorningBriefingTick(Ref ref) async {
+  final link = ref.keepAlive();
+  try {
+    await _syncHealthBeforeBriefing(ref);
+    final controller = await ref.read(agentRunControllerProvider.future);
+    final results = await controller.tick(
+      onlyAgentIds: const <String>[kMorningBriefingAgentId],
+    );
+    return results.isEmpty ? null : results.single;
+  } finally {
+    link.close();
+  }
+}
+
+/// Explicit run-now path used by [manualMorningBriefingRunProvider].
+/// Public so test scaffolds can drive the agent without going through
+/// workmanager.
 ///
 /// **Pulls fresh platform data first** so the briefing reflects last
 /// night's sleep / HRV that the workmanager wakeup couldn't fetch from
@@ -186,26 +205,24 @@ Future<AgentRunResult> runMorningBriefingNow(Ref ref) async {
   // pins it for the duration; the link is released once the run settles.
   final link = ref.keepAlive();
   try {
-    // Best-effort sync so the agent reads the night that just happened.
-    // Wrapped so a missing service / permissions / network error doesn't
-    // block the briefing from running on whatever data is already in the
-    // local DB.
-    try {
-      final svc = await ref.read(healthSyncServiceProvider.future);
-      await svc.syncRange();
-    } on Object {
-      // Best-effort — sync failure here surfaces in the next manual sync.
-    }
-    // `read`, not `watch`: watching after an async gap re-subscribes the
-    // already-running provider and can re-invalidate it mid-flight.
-    final runner = await ref.read(agentRunnerProvider.future);
-    final agent = ref.read(morningBriefingAgentProvider);
-    return await runner.runOnce(
-      agent,
-      AgentContext(ref: ref, now: DateTime.now().toUtc()),
-    );
+    await _syncHealthBeforeBriefing(ref);
+    final controller = await ref.read(agentRunControllerProvider.future);
+    return await controller.runOnceById(kMorningBriefingAgentId);
   } finally {
     link.close();
+  }
+}
+
+Future<void> _syncHealthBeforeBriefing(Ref ref) async {
+  // Best-effort sync so the agent reads the night that just happened.
+  // Wrapped so a missing service / permissions / network error doesn't
+  // block the briefing from running on whatever data is already in the
+  // local DB.
+  try {
+    final svc = await ref.read(healthSyncServiceProvider.future);
+    await svc.syncRange();
+  } on Object {
+    // Best-effort — sync failure here surfaces in the next manual sync.
   }
 }
 

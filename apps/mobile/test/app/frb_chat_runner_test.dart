@@ -11,56 +11,6 @@ import 'package:naviwealth/core/ai/runtime/chat_agent.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 
 void main() {
-  test('maps FRB profile completion into chat events', () async {
-    final bridge = _FakeLlmBridge(
-      response: const <String, Object?>{
-        'protocol_version': 'agent.v1',
-        'provider': 'openai',
-        'model': 'gpt-test',
-        'content': 'FRB answer',
-        'finish_reason': 'stop',
-        'usage': <String, Object?>{
-          'input_tokens': 7,
-          'output_tokens': 3,
-          'total_tokens': 10,
-        },
-      },
-    );
-    final runner = FrbChatRunner(llmBridge: bridge);
-
-    final events = await runner
-        .run(
-          messages: const <WireMessage>[
-            WireMessage(role: 'user', content: 'Hello'),
-          ],
-          model: 'requested-model',
-        )
-        .toList();
-
-    expect(events, hasLength(4));
-    expect((events[0] as UsageEvent).usage.input, 7);
-    expect((events[0] as UsageEvent).usage.output, 3);
-    expect((events[1] as TextEvent).text, 'FRB answer');
-    final span = events[2] as SpanEvent;
-    expect(span.kind, AiSpanKind.llm);
-    expect(span.status, AiSpanStatus.ok);
-    expect(span.model, 'gpt-test');
-    expect(span.stopReason, 'end_turn');
-    expect(span.tokens?.total, 10);
-    expect(span.attributes, containsPair('streaming', false));
-    final done = events[3] as DoneEvent;
-    expect(done.stopReason, 'end_turn');
-    expect(done.rounds, 1);
-    expect(bridge.messages.single, <String, Object?>{
-      'role': 'user',
-      'content': 'Hello',
-    });
-    expect(bridge.metadata['agent_id'], kFrbChatRunnerAgentId);
-    expect(bridge.metadata['surface'], 'ai_chat');
-    expect(bridge.metadata['requested_model'], 'requested-model');
-    expect(bridge.metadata['streaming'], false);
-  });
-
   test('maps FRB native stream events into chat events', () async {
     final bridge = _FakeLlmBridge();
     final streamBridge = _streamBridge(
@@ -80,7 +30,7 @@ void main() {
         '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
       ],
     );
-    final runner = FrbChatRunner(llmBridge: bridge, streamBridge: streamBridge);
+    final runner = FrbChatRunner(streamBridge: streamBridge);
 
     final events = await runner
         .run(
@@ -125,10 +75,7 @@ void main() {
         '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
       ],
     );
-    final runner = FrbChatRunner(
-      llmBridge: _FakeLlmBridge(),
-      streamBridge: streamBridge,
-    );
+    final runner = FrbChatRunner(streamBridge: streamBridge);
 
     await runner
         .runTurn(
@@ -176,10 +123,7 @@ void main() {
           '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
         ],
       );
-      final runner = FrbChatRunner(
-        llmBridge: _FakeLlmBridge(),
-        streamBridge: streamBridge,
-      );
+      final runner = FrbChatRunner(streamBridge: streamBridge);
 
       final events = await runner
           .run(
@@ -221,7 +165,6 @@ void main() {
     );
     final toolRequests = <Map<String, Object?>>[];
     final runner = FrbChatRunner(
-      llmBridge: bridge,
       streamBridge: streamBridge,
       tools: const <Map<String, Object?>>[
         <String, Object?>{
@@ -302,7 +245,6 @@ void main() {
       ],
     );
     final runner = FrbChatRunner(
-      llmBridge: bridge,
       streamBridge: streamBridge,
       tools: const <Map<String, Object?>>[
         <String, Object?>{
@@ -348,7 +290,6 @@ void main() {
     );
     var toolHostCalls = 0;
     final runner = FrbChatRunner(
-      llmBridge: bridge,
       streamBridge: streamBridge,
       maxToolRounds: 1,
       toolLineHandler: (line) async {
@@ -398,7 +339,6 @@ void main() {
       ],
     );
     final runner = FrbChatRunner(
-      llmBridge: bridge,
       streamBridge: streamBridge,
       toolLineHandler: (line) async {
         return jsonEncode(<String, Object?>{
@@ -433,7 +373,6 @@ void main() {
 
   test('maps FRB native stream error events into chat errors', () async {
     final runner = FrbChatRunner(
-      llmBridge: _FakeLlmBridge(),
       streamBridge: _streamBridge(
         _FakeLlmBridge(),
         events: const <String>[
@@ -459,7 +398,6 @@ void main() {
 
   test('maps FRB source stream errors without incomplete fallback', () async {
     final runner = FrbChatRunner(
-      llmBridge: _FakeLlmBridge(),
       streamBridge: _streamBridgeStreams(
         _FakeLlmBridge(),
         eventBatches: <Stream<String>>[
@@ -489,7 +427,6 @@ void main() {
 
   test('rejects malformed FRB finished response events', () async {
     final runner = FrbChatRunner(
-      llmBridge: _FakeLlmBridge(),
       streamBridge: _streamBridge(
         _FakeLlmBridge(),
         events: const <String>[
@@ -527,7 +464,6 @@ void main() {
     }) async {
       var toolHostCalls = 0;
       final runner = FrbChatRunner(
-        llmBridge: _FakeLlmBridge(),
         streamBridge: _streamBridge(_FakeLlmBridge(), events: events),
         toolLineHandler: (line) async {
           toolHostCalls += 1;
@@ -591,10 +527,7 @@ void main() {
       _FakeLlmBridge(),
       eventBatches: <Stream<String>>[hangingStream()],
     );
-    final runner = FrbChatRunner(
-      llmBridge: _FakeLlmBridge(),
-      streamBridge: streamBridge,
-    );
+    final runner = FrbChatRunner(streamBridge: streamBridge);
     cancelToken = CancelToken();
 
     final events = await runner
@@ -623,11 +556,19 @@ void main() {
 
     for (final entry in cases.entries) {
       final runner = FrbChatRunner(
-        llmBridge: _FakeLlmBridge(
-          response: <String, Object?>{
-            'content': '',
-            'finish_reason': entry.key,
-          },
+        streamBridge: _streamBridge(
+          _FakeLlmBridge(),
+          events: <String>[
+            jsonEncode(<String, Object?>{
+              'kind': 'round_finished',
+              'response': <String, Object?>{
+                'content': '',
+                'finish_reason': entry.key,
+              },
+              'round': 1,
+              'metadata': <String, Object?>{'finish_reason': entry.key},
+            }),
+          ],
         ),
       );
 
@@ -643,26 +584,26 @@ void main() {
     }
   });
 
-  test(
-    'emits existing chat error vocabulary when FRB completion fails',
-    () async {
-      final runner = FrbChatRunner(
-        llmBridge: _FakeLlmBridge(error: StateError('native unavailable')),
-      );
+  test('emits stream error vocabulary when FRB stream setup fails', () async {
+    final runner = FrbChatRunner(
+      streamBridge: _ThrowingStreamBridge(
+        error: StateError('native unavailable'),
+      ),
+    );
 
-      final events = await runner
-          .run(
-            messages: const <WireMessage>[
-              WireMessage(role: 'user', content: 'Hello'),
-            ],
-          )
-          .toList();
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Hello'),
+          ],
+        )
+        .toList();
 
-      expect(events, hasLength(2));
-      expect((events[0] as ErrorEvent).code, 'frb_chat_error');
-      expect((events[1] as DoneEvent).stopReason, 'error');
-    },
-  );
+    expect(events, hasLength(3));
+    expect((events[0] as SpanEvent).status, AiSpanStatus.error);
+    expect((events[1] as ErrorEvent).code, 'frb_llm_stream_error');
+    expect((events[2] as DoneEvent).stopReason, 'error');
+  });
 }
 
 _RecordingStreamBridge _streamBridge(
@@ -717,7 +658,7 @@ class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
   }) : super(
          llmBridge: llmBridge,
          initRuntime: ({String? libraryPath}) async {},
-         streamProfileJson: ({required String requestJson}) {
+         streamAgentTurnJson: ({required String requestJson}) {
            requests.add(jsonDecode(requestJson) as Map<String, Object?>);
            final index = nextRequestIndex();
            final batchIndex = index >= eventBatches.length
@@ -730,17 +671,18 @@ class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
   final List<Map<String, Object?>> requests;
 }
 
-class _FakeLlmBridge implements AgentRuntimeLlmBridge {
-  _FakeLlmBridge({
-    this.response = const <String, Object?>{
-      'content': 'ok',
-      'finish_reason': 'stop',
-    },
-    this.error,
-  });
+class _ThrowingStreamBridge extends AgentRuntimeLlmStreamBridge {
+  _ThrowingStreamBridge({required Object error})
+    : super(
+        llmBridge: _FakeLlmBridge(),
+        initRuntime: ({String? libraryPath}) async {},
+        streamAgentTurnJson: ({required String requestJson}) => throw error,
+      );
+}
 
-  final Map<String, Object?> response;
-  final Object? error;
+class _FakeLlmBridge implements AgentRuntimeLlmBridge {
+  _FakeLlmBridge();
+
   List<Map<String, Object?>> messages = const <Map<String, Object?>>[];
   Map<String, Object?> metadata = const <String, Object?>{};
 
@@ -781,9 +723,7 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
   }) async {
     this.messages = messages;
     this.metadata = metadata;
-    final error = this.error;
-    if (error != null) throw error;
-    return response;
+    return const <String, Object?>{'content': 'ok', 'finish_reason': 'stop'};
   }
 
   @override

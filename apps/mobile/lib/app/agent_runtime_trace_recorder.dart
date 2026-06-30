@@ -22,12 +22,44 @@ final agentRuntimeTraceRecorderProvider = Provider<AgentRuntimeTraceRecorder>((
   );
 });
 
+typedef AgentRuntimeStepTraceRecorder =
+    Future<void> Function(AgentRuntimeNativeStepRunResult stepRun);
+
+typedef AgentRuntimeProfileTurnTraceRecorder =
+    Future<void> Function(AgentRuntimeProfileTurnResult result);
+
 class AgentRuntimeTraceRecorder {
   const AgentRuntimeTraceRecorder({
     required Future<void> Function(AiTrace trace) appendTrace,
   }) : _appendTrace = appendTrace;
 
   final Future<void> Function(AiTrace trace) _appendTrace;
+
+  AgentRuntimeStepTraceRecorder stepRunRecorder({
+    required String agentId,
+    required String domain,
+    required String surface,
+  }) {
+    return (stepRun) => recordStepRun(
+      agentId: agentId,
+      stepRun: stepRun,
+      domain: domain,
+      surface: surface,
+    );
+  }
+
+  AgentRuntimeProfileTurnTraceRecorder profileTurnRecorder({
+    required String agentId,
+    required String domain,
+    required String surface,
+  }) {
+    return (result) => recordProfileTurn(
+      agentId: agentId,
+      result: result,
+      domain: domain,
+      surface: surface,
+    );
+  }
 
   Future<AiTrace> recordProfileTurn({
     required String agentId,

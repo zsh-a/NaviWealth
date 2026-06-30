@@ -132,7 +132,6 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           final catalog = ref.watch(agentRuntimeCatalogProvider);
           final toolHost = ref.watch(agentRuntimeToolHostProvider);
           return FrbChatRunner(
-            llmBridge: llmBridge,
             streamBridge: streamBridge,
             tools: [for (final tool in catalog.tools) tool.toJson()],
             toolLineHandler: toolHost.handleLine,
@@ -222,16 +221,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           reviewReader: FrbExecutionReviewReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kExecutionReviewAgentId,
-                    stepRun: stepRun,
-                    domain: 'execution',
-                    surface: 'execution_review',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kExecutionReviewAgentId,
+                  domain: 'execution',
+                  surface: 'execution_review',
+                ),
           ),
         );
       }),
@@ -254,16 +250,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         final BriefingSynthesizer synth = frbRunner != null
             ? FrbBriefingSynthesizer(
                 runner: frbRunner,
-                recordTrace: (result) {
-                  return ref
-                      .read(agentRuntimeTraceRecorderProvider)
-                      .recordProfileTurn(
-                        agentId: 'morning_briefing',
-                        result: result,
-                        domain: 'health',
-                        surface: 'health_morning_briefing',
-                      );
-                },
+                recordTrace: ref
+                    .read(agentRuntimeTraceRecorderProvider)
+                    .profileTurnRecorder(
+                      agentId: 'morning_briefing',
+                      domain: 'health',
+                      surface: 'health_morning_briefing',
+                    ),
                 fallback: const ProgrammaticBriefingSynthesizer(),
               )
             : const ProgrammaticBriefingSynthesizer();
@@ -291,16 +284,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           signalReader: FrbRecoveryAlertSignalReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kRecoveryAlertAgentId,
-                    stepRun: stepRun,
-                    domain: 'health',
-                    surface: 'health_recovery_alert',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kRecoveryAlertAgentId,
+                  domain: 'health',
+                  surface: 'health_recovery_alert',
+                ),
           ),
         );
       }),
@@ -312,16 +302,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           summaryReader: FrbWeeklySummaryReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kWeeklySummaryAgentId,
-                    stepRun: stepRun,
-                    domain: 'health',
-                    surface: 'health_weekly_summary',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kWeeklySummaryAgentId,
+                  domain: 'health',
+                  surface: 'health_weekly_summary',
+                ),
           ),
         );
       }),
@@ -334,16 +321,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           dueReader: FrbReviewDueReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kKnowledgeReviewAgentId,
-                    stepRun: stepRun,
-                    domain: 'knowledge',
-                    surface: 'knowledge_review',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kKnowledgeReviewAgentId,
+                  domain: 'knowledge',
+                  surface: 'knowledge_review',
+                ),
           ),
         );
       }),
@@ -355,16 +339,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           assumptionReader: FrbAssumptionReviewReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kKnowledgeAssumptionAgentId,
-                    stepRun: stepRun,
-                    domain: 'knowledge',
-                    surface: 'knowledge_assumption',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kKnowledgeAssumptionAgentId,
+                  domain: 'knowledge',
+                  surface: 'knowledge_assumption',
+                ),
           ),
         );
       }),
@@ -376,16 +357,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           sourceReader: FrbInboxTriageSourceReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kKnowledgeInboxTriageAgentId,
-                    stepRun: stepRun,
-                    domain: 'knowledge',
-                    surface: 'knowledge_inbox_triage',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kKnowledgeInboxTriageAgentId,
+                  domain: 'knowledge',
+                  surface: 'knowledge_inbox_triage',
+                ),
           ),
         );
       }),
@@ -397,16 +375,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           sourceReader: FrbContradictionSourceReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kKnowledgeContradictionAgentId,
-                    stepRun: stepRun,
-                    domain: 'knowledge',
-                    surface: 'knowledge_contradiction',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kKnowledgeContradictionAgentId,
+                  domain: 'knowledge',
+                  surface: 'knowledge_contradiction',
+                ),
           ),
         );
       }),
@@ -423,16 +398,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           dueReader: FrbRoutineDueReader(
             stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
             catalog: ref.watch(agentRuntimeCatalogProvider),
-            recordTrace: (stepRun) {
-              return ref
-                  .read(agentRuntimeTraceRecorderProvider)
-                  .recordStepRun(
-                    agentId: kKnowledgeRoutineAgentId,
-                    stepRun: stepRun,
-                    domain: 'knowledge',
-                    surface: 'knowledge_routine_due',
-                  );
-            },
+            recordTrace: ref
+                .read(agentRuntimeTraceRecorderProvider)
+                .stepRunRecorder(
+                  agentId: kKnowledgeRoutineAgentId,
+                  domain: 'knowledge',
+                  surface: 'knowledge_routine_due',
+                ),
           ),
         );
       }),
@@ -561,8 +533,8 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   container.read(health_agent_providers.healthPlatformSyncCronProvider);
   // When the workmanager callback fired while the app was
   // backgrounded it stamped `kMorningBriefingDueAtKey`. Kick off the
-  // in-process run so the freshest summary lands in Memory + the
-  // notification gets refined to the actual content.
+  // in-process scheduled-agent tick so ScheduleSpec remains the single
+  // due/not-due policy for autonomous agents.
   unawaited(
     container.read(health_agent_providers.pendingBriefingRunProvider.future),
   );
@@ -589,65 +561,44 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 }
 
 class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
-  const FrbActivityEntryInsightClient({
+  FrbActivityEntryInsightClient({
     required AgentRuntimeLlmBridge llmBridge,
     FrbProfileCompletionTraceRecorder? recordTrace,
-  }) : _llmBridge = llmBridge,
-       _recordTrace = recordTrace;
+  }) : _completer = _TracedProfileCompleter(
+         llmBridge: llmBridge,
+         recordTrace: recordTrace,
+         domain: 'finance',
+         defaultAgentId: 'finance_activity_insight',
+       );
 
-  final AgentRuntimeLlmBridge _llmBridge;
-  final FrbProfileCompletionTraceRecorder? _recordTrace;
+  final _TracedProfileCompleter _completer;
 
   @override
   Future<String?> explain(
     ActivityEntryInsightRequest request,
     AppLocalizations l10n,
   ) async {
-    final startedAt = DateTime.now().toUtc();
     const agentId = 'finance_activity_insight';
     const surface = 'finance_activity_insight';
-    try {
-      final response = await _llmBridge.completeProfile(
-        messages: <Map<String, Object?>>[
-          <String, Object?>{
-            'role': 'system',
-            'content': activityEntryInsightSystem(request.locale),
-          },
-          <String, Object?>{
-            'role': 'user',
-            'content': activityEntryInsightPrompt(request, l10n),
-          },
-        ],
-        maxOutputTokens: 256,
-        metadata: const <String, Object?>{
-          'surface': surface,
-          'agent_id': agentId,
+    final response = await _completer.completeProfile(
+      messages: <Map<String, Object?>>[
+        <String, Object?>{
+          'role': 'system',
+          'content': activityEntryInsightSystem(request.locale),
         },
-      );
-      await _recordProfileCompletionBestEffort(
-        _recordTrace,
-        agentId: agentId,
-        llmResponse: response,
-        startedAt: startedAt,
-        finishedAt: DateTime.now().toUtc(),
-        domain: 'finance',
-        surface: surface,
-      );
-      final body = response['content'];
-      return body is String ? body : null;
-    } on Object catch (error) {
-      await _recordProfileCompletionBestEffort(
-        _recordTrace,
-        agentId: agentId,
-        llmResponse: null,
-        startedAt: startedAt,
-        finishedAt: DateTime.now().toUtc(),
-        domain: 'finance',
-        surface: surface,
-        error: error,
-      );
-      rethrow;
-    }
+        <String, Object?>{
+          'role': 'user',
+          'content': activityEntryInsightPrompt(request, l10n),
+        },
+      ],
+      maxOutputTokens: 256,
+      metadata: const <String, Object?>{
+        'surface': surface,
+        'agent_id': agentId,
+      },
+    );
+    final body = response['content'];
+    return body is String ? body : null;
   }
 }
 
@@ -694,17 +645,25 @@ Future<void> _recordProfileCompletionBestEffort(
   }
 }
 
-class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
-  const FrbKnowledgeLlmProfileClient({
+class _TracedProfileCompleter {
+  const _TracedProfileCompleter({
     required AgentRuntimeLlmBridge llmBridge,
+    required String domain,
+    required String defaultAgentId,
     FrbProfileCompletionTraceRecorder? recordTrace,
+    String routingReason = kFrbAgentRuntimeProfileRoutingReason,
   }) : _llmBridge = llmBridge,
-       _recordTrace = recordTrace;
+       _recordTrace = recordTrace,
+       _domain = domain,
+       _defaultAgentId = defaultAgentId,
+       _routingReason = routingReason;
 
   final AgentRuntimeLlmBridge _llmBridge;
   final FrbProfileCompletionTraceRecorder? _recordTrace;
+  final String _domain;
+  final String _defaultAgentId;
+  final String _routingReason;
 
-  @override
   Future<Map<String, Object?>> completeProfile({
     required List<Map<String, Object?>> messages,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
@@ -713,7 +672,7 @@ class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
     Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     final startedAt = DateTime.now().toUtc();
-    final agentId = _metadataString(metadata, 'agent_id') ?? 'knowledge_llm';
+    final agentId = _metadataString(metadata, 'agent_id') ?? _defaultAgentId;
     final surface = _metadataString(metadata, 'surface') ?? agentId;
     try {
       final response = await _llmBridge.completeProfile(
@@ -729,8 +688,9 @@ class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
         llmResponse: response,
         startedAt: startedAt,
         finishedAt: DateTime.now().toUtc(),
-        domain: 'knowledge',
+        domain: _domain,
         surface: surface,
+        routingReason: _routingReason,
       );
       return response;
     } on Object catch (error) {
@@ -740,12 +700,44 @@ class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
         llmResponse: null,
         startedAt: startedAt,
         finishedAt: DateTime.now().toUtc(),
-        domain: 'knowledge',
+        domain: _domain,
         surface: surface,
+        routingReason: _routingReason,
         error: error,
       );
       rethrow;
     }
+  }
+}
+
+class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
+  FrbKnowledgeLlmProfileClient({
+    required AgentRuntimeLlmBridge llmBridge,
+    FrbProfileCompletionTraceRecorder? recordTrace,
+  }) : _completer = _TracedProfileCompleter(
+         llmBridge: llmBridge,
+         recordTrace: recordTrace,
+         domain: 'knowledge',
+         defaultAgentId: 'knowledge_llm',
+       );
+
+  final _TracedProfileCompleter _completer;
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    return _completer.completeProfile(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
   }
 }
 
@@ -756,14 +748,18 @@ String? _metadataString(Map<String, Object?> metadata, String key) {
 }
 
 class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
-  const FrbIngestLlmProfileClient({
+  FrbIngestLlmProfileClient({
     required AgentRuntimeLlmBridge llmBridge,
     FrbProfileCompletionTraceRecorder? recordTrace,
-  }) : _llmBridge = llmBridge,
-       _recordTrace = recordTrace;
+  }) : _completer = _TracedProfileCompleter(
+         llmBridge: llmBridge,
+         recordTrace: recordTrace,
+         domain: 'finance',
+         defaultAgentId: 'finance_ingest',
+         routingReason: kFrbVisionIngestRoutingReason,
+       );
 
-  final AgentRuntimeLlmBridge _llmBridge;
-  final FrbProfileCompletionTraceRecorder? _recordTrace;
+  final _TracedProfileCompleter _completer;
 
   @override
   Future<Map<String, Object?>> completeProfile({
@@ -773,42 +769,13 @@ class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
-    final startedAt = DateTime.now().toUtc();
-    final agentId = _metadataString(metadata, 'agent_id') ?? 'finance_ingest';
-    final surface = _metadataString(metadata, 'surface') ?? agentId;
-    try {
-      final response = await _llmBridge.completeProfile(
-        messages: messages,
-        tools: tools,
-        temperature: temperature,
-        maxOutputTokens: maxOutputTokens,
-        metadata: metadata,
-      );
-      await _recordProfileCompletionBestEffort(
-        _recordTrace,
-        agentId: agentId,
-        llmResponse: response,
-        startedAt: startedAt,
-        finishedAt: DateTime.now().toUtc(),
-        domain: 'finance',
-        surface: surface,
-        routingReason: kFrbVisionIngestRoutingReason,
-      );
-      return response;
-    } on Object catch (error) {
-      await _recordProfileCompletionBestEffort(
-        _recordTrace,
-        agentId: agentId,
-        llmResponse: null,
-        startedAt: startedAt,
-        finishedAt: DateTime.now().toUtc(),
-        domain: 'finance',
-        surface: surface,
-        routingReason: kFrbVisionIngestRoutingReason,
-        error: error,
-      );
-      rethrow;
-    }
+    return _completer.completeProfile(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
   }
 }
 

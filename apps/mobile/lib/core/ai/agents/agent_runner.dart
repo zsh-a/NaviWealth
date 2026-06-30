@@ -34,7 +34,7 @@ class AgentRunner {
   final MemoryRuntime runtime;
   final String ownerUserId;
 
-  /// Tracks each agent's last successful run so [tick] can apply the
+  /// Tracks each agent's last non-failed run so [tick] can apply the
   /// schedule's interval gate. Lives in-memory because cron persistence
   /// is platform-side (D-2.5 follow-up); MVP relies on the app being
   /// open at the schedule moment.
@@ -55,7 +55,7 @@ class AgentRunner {
         error: e.toString(),
       );
     }
-    if (result.status == AgentRunStatus.completed) {
+    if (result.status != AgentRunStatus.failed) {
       _lastRunAt[agent.id] = result.startedAt;
     }
     await _recordRunEvent(agent, result);
@@ -83,7 +83,7 @@ class AgentRunner {
     return results;
   }
 
-  /// When the last successful run was. Returns `null` if the agent
+  /// When the last non-failed run was. Returns `null` if the agent
   /// hasn't run in this process.
   DateTime? lastRunAt(String agentId) => _lastRunAt[agentId];
 

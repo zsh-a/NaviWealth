@@ -17,8 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../app/agent_runtime_proposal_bridge.dart';
 import '../../../app/agent_runtime_catalog.dart';
+import '../../../app/agent_runtime_proposal_bridge.dart';
 import '../../../app/agent_runtime_runner.dart';
 import '../../../app/agent_runtime_trace_recorder.dart';
 import '../../../core/ai/composition/proposal_plan.dart';

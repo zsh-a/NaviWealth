@@ -15,7 +15,6 @@ import '../core/ai/progress/long_task_progress.dart';
 import '../core/ai/runtime/ai_runtime.dart';
 import '../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
-import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
 import 'frb_chat_event.dart';
 import 'frb_chat_tool_dispatcher.dart';
@@ -26,21 +25,18 @@ const String kFrbChatRunnerAgentId = 'ai_chat';
 
 class FrbChatRunner implements ChatAgent {
   const FrbChatRunner({
-    required AgentRuntimeLlmBridge llmBridge,
-    AgentRuntimeLlmStreamBridge? streamBridge,
+    required AgentRuntimeLlmStreamBridge streamBridge,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     FrbChatToolLineHandler? toolLineHandler,
     int maxToolRounds = 4,
     String agentId = kFrbChatRunnerAgentId,
-  }) : _llmBridge = llmBridge,
-       _streamBridge = streamBridge,
+  }) : _streamBridge = streamBridge,
        _tools = tools,
        _toolLineHandler = toolLineHandler,
        _maxToolRounds = maxToolRounds,
        _agentId = agentId;
 
-  final AgentRuntimeLlmBridge _llmBridge;
-  final AgentRuntimeLlmStreamBridge? _streamBridge;
+  final AgentRuntimeLlmStreamBridge _streamBridge;
   final List<Map<String, Object?>> _tools;
   final FrbChatToolLineHandler? _toolLineHandler;
   final int _maxToolRounds;
@@ -73,8 +69,6 @@ class FrbChatRunner implements ChatAgent {
   }
 
   Stream<AiChatEvent> _runRequest(ChatAgentTurnRequest request) async* {
-    final messages = request.messages;
-    final model = request.model;
     final cancelToken = request.cancelToken;
     if (cancelToken?.isCancelled == true) {
       yield const DoneEvent(stopReason: 'error', rounds: 0);
@@ -82,52 +76,7 @@ class FrbChatRunner implements ChatAgent {
     }
 
     try {
-      final streamBridge = _streamBridge;
-      if (streamBridge != null) {
-        yield* _runStream(streamBridge: streamBridge, request: request);
-        return;
-      }
-      final roundStart = DateTime.now().toUtc();
-      final response = await _llmBridge.completeProfile(
-        messages: <Map<String, Object?>>[
-          for (final message in messages) message.toJson(),
-        ],
-        tools: _tools,
-        metadata: <String, Object?>{
-          ...request.metadata,
-          'turn_id': ?request.turnId,
-          'session_id': ?request.sessionId,
-          'thread_id': ?request.threadId,
-          'agent_id': request.agentId ?? _agentId,
-          'surface': request.surface ?? 'ai_chat',
-          'mode': ?request.mode,
-          'requested_model': ?model,
-          'portfolio_snapshot': ?request.portfolioSnapshot,
-          'context_pack': ?request.contextPack?.toJson(),
-          'streaming': false,
-        },
-      );
-      if (cancelToken?.isCancelled == true) {
-        yield const DoneEvent(stopReason: 'error', rounds: 0);
-        return;
-      }
-
-      final usage = frbUsageFromResponse(response);
-      if (usage != null) yield UsageEvent(usage);
-
-      final text = frbString(response['content']);
-      if (text.isNotEmpty) yield TextEvent(text);
-      yield frbCompletionSpan(
-        startedAt: roundStart,
-        response: response,
-        inputMessageCount: messages.length,
-        requestedModel: model,
-      );
-
-      yield DoneEvent(
-        stopReason: frbChatStopReason(frbString(response['finish_reason'])),
-        rounds: 1,
-      );
+      yield* _runStream(streamBridge: _streamBridge, request: request);
     } catch (error) {
       yield ErrorEvent(error.toString(), code: 'frb_chat_error');
       yield const DoneEvent(stopReason: 'error', rounds: 1);

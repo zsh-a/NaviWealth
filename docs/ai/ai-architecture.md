@@ -82,11 +82,9 @@ ChatRepository
 - `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner` 是当前生产业务 agent 的首选入口：
   它们把 active `LlmProfile` 映射为 provider-neutral native request，经 FRB 调 native
   runtime，并把 native tool plan / proposal result 回接到 Dart host。
-- `DeviceAgentLoop`（`runtime/device/device_agent_loop.dart`）= legacy direct-Dart streaming
-  loop / provider-adapter test seam。生产 interactive chat 由 `FrbChatRunner` 承接；旧 loop
-  只保留协议兼容与低层 provider focused tests。
-- Dart provider 客户端仍统一翻译为 provider-neutral `LlmStreamEvent`（含 `tool_use`），
-  但只属于低层 provider 实现 / focused tests，不是生产业务 LLM 入口的默认选择。
+- 旧 direct-Dart streaming loop / provider HTTP client 已从 Flutter `lib/` 删除。
+  生产 interactive chat 只有 `FrbChatRunner` 一个入口，provider SSE 解析与 tool loop
+  由 native runtime 承接。
 - 事件词表（`TextEvent` / `ToolCall*` / `SpanEvent` / `DoneEvent` …）见
   [`ai-protocol.md`](./ai-protocol.md)——repository/UI 仍用旧事件词表，故 chat 历史 /
   流式渲染 / 取消 / trace 捕获无需重写，只是事件改为进程内 Dart stream。
@@ -335,24 +333,25 @@ contracts/   intent · privacy_budget · task_context(route/intent/signals) ·
              ai_span · ai_trace(no usedCloud/usedRawLedger/disclosures/staleReadModelNames) ·
              privacy_mode_provider(no amountAnonymization) ·
              AnalyticalUpload(tool 输出 shape, not pre-injected)
-runtime/
-  agent_runtime_*.dart           FRB/native agent runtime bridge, profile-turn runner,
-                                 LLM bridge, tool host, trace recorder
-  ai_runtime.dart                DeviceChatRunner seam only
+	runtime/
+	  agent_runtime_*.dart           FRB/native agent runtime bridge, profile-turn runner,
+	                                 LLM bridge, tool host, trace recorder
+	  ai_runtime.dart                DeviceChatRunner seam only
                                  （production bound to FrbChatRunner in app/bootstrap.dart）
-                                 （boundary audit 删 RuntimeRegistry / RuntimeId /
-                                 AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime /
-                                 DeviceLlmRuntime）
-  device/
-    device_agent_loop.dart       legacy direct-Dart loop / provider focused tests only
-    device_session.dart          per-turn session
+	                                 （boundary audit 删 RuntimeRegistry / RuntimeId /
+	                                 AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime /
+	                                 DeviceLlmRuntime）
+	agents/
+	  agent_run_controller.dart      run_once by agent id + scheduled tick entry
+	  agent_runner.dart              shared run event recording + schedule gates
+	  device/
+    device_session.dart          provider-neutral tool/session context
     device_tool_session.dart     provider-neutral tool execution context
     device_system_prompt.dart    端侧 system prompt + 硬限额
     device_tool_dispatcher.dart  只广告 active DomainPack 聚合出的工具
     device_vision_parse.dart     Vision prompt/schema/extraction helpers
-    llm_stream_event.dart        provider-neutral 事件
-    anthropic/                   AnthropicClient + SSE decoder + wire
-    openai/                      OpenAiClient + SSE decoder
+    anthropic/anthropic_wire.dart
+                                 provider-neutral Anthropic-shaped message/tool schema
     tools/                       Shell core tools + DeviceToolRegistry
 llm_credentials/                 LlmCredentials/LlmProfile + SecureKeyStore +
                                  FRB-backed connectivity probe seam   (§2.2)

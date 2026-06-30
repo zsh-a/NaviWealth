@@ -16,8 +16,6 @@ import '../core/config/providers.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 
-typedef AgentRuntimeProfileLlmJsonStream =
-    Stream<String> Function({required String requestJson});
 typedef AgentRuntimeAgentTurnJsonStream =
     Stream<String> Function({required String requestJson});
 
@@ -40,17 +38,12 @@ class AgentRuntimeLlmStreamBridge {
     required AgentRuntimeLlmBridge llmBridge,
     required LifeosNativeRuntimeInitializer initRuntime,
     String? libraryPath,
-    AgentRuntimeProfileLlmJsonStream? streamProfileJson,
     AgentRuntimeAgentTurnJsonStream? streamAgentTurnJson,
   }) : _llmBridge = llmBridge,
        _initRuntime = initRuntime,
        _libraryPath = libraryPath,
        _streamAgentTurnJson =
-           streamAgentTurnJson ??
-           (streamProfileJson == null
-               ? rust.agentRuntimeStreamAgentTurn
-               : ({required String requestJson}) =>
-                     streamProfileJson(requestJson: requestJson));
+           streamAgentTurnJson ?? rust.agentRuntimeStreamAgentTurn;
 
   final AgentRuntimeLlmBridge _llmBridge;
   final LifeosNativeRuntimeInitializer _initRuntime;
@@ -58,29 +51,6 @@ class AgentRuntimeLlmStreamBridge {
   final AgentRuntimeAgentTurnJsonStream _streamAgentTurnJson;
 
   Future<void>? _initFuture;
-
-  Stream<Map<String, Object?>> streamProfile({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    return streamChatTurn(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-      turnId: _metadataString(metadata, 'turn_id'),
-      sessionId: _metadataString(metadata, 'session_id'),
-      threadId: _metadataString(metadata, 'thread_id'),
-      surface: _metadataString(metadata, 'surface'),
-      agentId: _metadataString(metadata, 'agent_id'),
-      mode: _metadataString(metadata, 'mode') ?? 'chat',
-      maxToolRounds: _metadataInt(metadata, 'max_tool_rounds'),
-    );
-  }
 
   Stream<Map<String, Object?>> streamAgentTurn({
     required List<Map<String, Object?>> messages,
@@ -221,18 +191,6 @@ Map<String, Object?> _decodeObject(String json) {
     return decoded.map((key, value) => MapEntry(key.toString(), value));
   }
   throw const FormatException('agent runtime LLM stream event is not object');
-}
-
-String? _metadataString(Map<String, Object?> metadata, String key) {
-  final value = metadata[key];
-  if (value is String && value.trim().isNotEmpty) return value.trim();
-  return null;
-}
-
-int? _metadataInt(Map<String, Object?> metadata, String key) {
-  final value = metadata[key];
-  if (value is int && value > 0) return value;
-  return null;
 }
 
 Map<String, Object?> _streamErrorEvent(Object error) {
