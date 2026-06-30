@@ -42,7 +42,8 @@
     "round": 1,
     "usage": {
       "input_tokens": 11,
-      "output_tokens": 7
+      "output_tokens": 7,
+      "total_tokens": 18
     },
     "metadata": {}
   },
@@ -50,8 +51,11 @@
     "kind": "round_finished",
     "round": 1,
     "response": {
+      "provider": "openai",
+      "model": "gpt-test",
       "content": "Checking holdings.",
-      "finish_reason": "tool_call"
+      "finish_reason": "tool_call",
+      "metadata": {}
     },
     "metadata": {
       "status": "requires_tool_results",

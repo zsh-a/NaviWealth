@@ -549,6 +549,57 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn tui_applies_shared_agent_chat_turn_event_fixture() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let mut state = TuiState::load(TuiOptions {
+            catalog_path: None,
+            trace_path: None,
+            store_path: temp_store_path(&dir),
+            registry_path: Utf8PathBuf::from("../../examples/agent-runtime/agents.yaml"),
+            tool_overrides: ToolOverrides::default(),
+            chat: test_chat_options("unused"),
+            timeout_seconds: 60,
+            max_retries: 0,
+            retry_backoff_ms: 0,
+            once: false,
+        })
+        .await
+        .expect("state loads");
+        state.clear_log();
+
+        let events: Vec<ChatTurnEvent> = serde_json::from_str(include_str!(
+            "../../../../docs/fixtures/agent_chat_turn_events.json"
+        ))
+        .expect("shared chat turn events fixture");
+        let mut assistant_text = String::new();
+        let mut final_response = None;
+        for event in &events {
+            apply_chat_event_to_tui(&mut state, event, &mut assistant_text, &mut final_response);
+        }
+
+        assert_eq!(assistant_text, "Checking ");
+        assert!(final_response.is_some());
+        assert!(
+            state
+                .log_lines
+                .iter()
+                .any(|line| line.contains("tool start: call_1 get_holdings"))
+        );
+        assert!(
+            state
+                .log_lines
+                .iter()
+                .any(|line| line.contains("usage: input=11 output=7 total=18"))
+        );
+        assert!(
+            state
+                .log_lines
+                .iter()
+                .any(|line| line.contains("round 1 finished"))
+        );
+    }
+
+    #[tokio::test]
     async fn run_command_accepts_text_input() {
         let dir = tempfile::tempdir().expect("temp dir");
         let mut state = TuiState::load(TuiOptions {

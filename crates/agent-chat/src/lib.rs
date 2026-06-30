@@ -1002,6 +1002,37 @@ mod tests {
         assert_eq!(event.metadata["status"], "requires_tool_results");
     }
 
+    #[test]
+    fn shared_agent_chat_turn_event_fixture_matches_runtime_types() {
+        let events: Vec<ChatTurnEvent> = serde_json::from_str(include_str!(
+            "../../../docs/fixtures/agent_chat_turn_events.json"
+        ))
+        .expect("shared chat turn events fixture");
+
+        assert_eq!(
+            events
+                .iter()
+                .map(|event| event.kind.clone())
+                .collect::<Vec<_>>(),
+            vec![
+                ChatTurnEventKind::Started,
+                ChatTurnEventKind::Delta,
+                ChatTurnEventKind::ToolCallStart,
+                ChatTurnEventKind::ToolCallDelta,
+                ChatTurnEventKind::ToolCallEnd,
+                ChatTurnEventKind::Usage,
+                ChatTurnEventKind::RoundFinished,
+            ]
+        );
+        assert_eq!(events[2].tool_name.as_deref(), Some("get_holdings"));
+        assert_eq!(
+            events[4].tool_input.as_ref(),
+            Some(&json!({"as_of": "today"}))
+        );
+        assert_eq!(events[5].usage.as_ref().expect("usage").total_tokens, 18);
+        assert_eq!(events[6].metadata["status"], "requires_tool_results");
+    }
+
     struct ScriptedToolProvider {
         calls: AtomicUsize,
     }
