@@ -12,6 +12,7 @@ import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_models.dart';
+import '../domain/chat_turn_metadata.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
@@ -123,14 +124,7 @@ class ChatRepository {
     String? systemContext,
     String? model,
     CancelToken? cancelToken,
-    Map<String, Object?>? turnMetadata,
-
-    /// When this turn was triggered through an
-    /// [AiIntentInvocation] (capsule / insight / command), pass the
-    /// invocation's `toTraceJson()` here so the finalised trace
-    /// records the entry point. Plain "user typed in chat tab" calls
-    /// leave this `null`.
-    Map<String, Object?>? invocationTrace,
+    ChatTurnMetadata turnMetadata = const ChatTurnMetadata.empty(),
   }) async {
     // Device-only AI: the runtime authenticates
     // with the user's own LLM key, not this token. In local-only mode there is
@@ -215,8 +209,8 @@ class ChatRepository {
             traceSeed,
             capturePayloads: prepResult?.traceVerbose ?? false,
           );
-    if (traceBuilder != null && invocationTrace != null) {
-      traceBuilder.attachInvocation(invocationTrace);
+    if (traceBuilder != null && turnMetadata.invocationTrace != null) {
+      traceBuilder.attachInvocation(turnMetadata.invocationTrace!);
     }
     traceBuilder?.addTurnAttributes(_contextPackTraceAttributes(contextPack));
 
@@ -251,10 +245,9 @@ class ChatRepository {
         agentId: 'ai_chat',
         mode: 'chat',
         metadata: <String, Object?>{
-          ...?turnMetadata,
+          ...turnMetadata.toAgentMetadata(),
           'owner_user_id': ownerUserId,
           'assistant_message_id': assistantId,
-          'invocation': ?invocationTrace,
         },
         portfolioSnapshot: portfolioSnapshot,
         contextPack: contextPack,

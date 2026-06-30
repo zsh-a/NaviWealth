@@ -37,6 +37,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
+import '../domain/chat_turn_metadata.dart';
 import '../state/ai_context.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
@@ -501,12 +502,14 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
         fallbackPromptTemplate: l10n.aiIntentFallbackPrompt('{{object_label}}'),
       );
       unawaited(
-        repo.sendMessage(
-          sessionId: session.id,
-          ownerUserId: ownerUserId,
-          content: prompt,
-          invocationTrace: invocation.toTraceJson(),
-        ),
+        ref
+            .read(chatControllerProvider(session.id).notifier)
+            .send(
+              prompt,
+              turnMetadata: ChatTurnMetadata(
+                invocationTrace: invocation.toTraceJson(),
+              ),
+            ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -514,65 +517,39 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     }
   }
 
-  Future<void> _sendChip(String sessionId, String chip) async {
-    final ownerUserId = ref.read(activeUserIdProvider);
-    if (ownerUserId == null) return;
-    try {
-      final repo = await ref.read(chatRepositoryProvider.future);
-      unawaited(
-        repo.sendMessage(
-          sessionId: sessionId,
-          ownerUserId: ownerUserId,
-          content: chip,
-          // Same invocation tag — trace attribution carries through
-          // follow-up chip taps so the transparency page can group them.
-          invocationTrace: widget.invocation!.toTraceJson(),
-        ),
-      );
-    } catch (_) {
-      // Best-effort: chip taps are non-critical.
-    }
+  void _sendChip(String sessionId, String chip) {
+    ref
+        .read(chatControllerProvider(sessionId).notifier)
+        .send(
+          chip,
+          turnMetadata: ChatTurnMetadata(
+            invocationTrace: widget.invocation?.toTraceJson(),
+          ),
+        );
   }
 
-  Future<void> _chooseDecision(
+  void _chooseDecision(
     String sessionId,
     DecisionSelectionRequest selection, {
     String? systemContext,
-  }) async {
-    final ownerUserId = ref.read(activeUserIdProvider);
-    if (ownerUserId == null) return;
+  }) {
     final decision = DecisionSelection(
       optionId: selection.option.id,
       label: selection.option.label,
       reply: selection.reply,
       selectedAt: DateTime.now().toUtc(),
     );
-    try {
-      final repo = await ref.read(chatRepositoryProvider.future);
-      await repo.recordDecisionSelection(
-        sessionId: sessionId,
-        messageId: selection.messageId,
-        toolInvocationId: selection.toolInvocationId,
-        selection: decision,
-      );
-      unawaited(
-        repo.sendMessage(
-          sessionId: sessionId,
-          ownerUserId: ownerUserId,
-          content: selection.reply,
-          systemContext: systemContext,
-          invocationTrace: widget.invocation?.toTraceJson(),
-          turnMetadata: <String, Object?>{
-            'decision': decision.toJson(),
-            'decision_message_id': selection.messageId,
-            'decision_tool_invocation_id': selection.toolInvocationId,
-          },
-        ),
-      );
-    } catch (_) {
-      // Keep the sheet responsive; the repository surfaces send failures in
-      // the conversation timeline when the stream starts.
-    }
+    unawaited(
+      ref
+          .read(chatControllerProvider(sessionId).notifier)
+          .chooseDecision(
+            messageId: selection.messageId,
+            toolInvocationId: selection.toolInvocationId,
+            selection: decision,
+            systemContext: systemContext,
+            invocationTrace: widget.invocation?.toTraceJson(),
+          ),
+    );
   }
 
   void _expandToChat() {

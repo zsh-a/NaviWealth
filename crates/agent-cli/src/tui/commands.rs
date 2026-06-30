@@ -272,11 +272,19 @@ fn apply_chat_event_to_tui(
             ));
         }
         ChatTurnEventKind::ToolResult => {
-            state.push_log(format!(
-                "tool result: {} {}",
-                event.tool_name.as_deref().unwrap_or(""),
-                compact_json(event.tool_output.as_ref().unwrap_or(&Value::Null))
-            ));
+            let tool_name = event.tool_name.as_deref().unwrap_or("");
+            let output = event.tool_output.as_ref().unwrap_or(&Value::Null);
+            if tool_name == "ask_user" {
+                if let Some(lines) = decision_request_lines(output) {
+                    for line in lines {
+                        state.push_log(line);
+                    }
+                } else {
+                    state.push_log(format!("tool result: {tool_name} {}", compact_json(output)));
+                }
+            } else {
+                state.push_log(format!("tool result: {tool_name} {}", compact_json(output)));
+            }
         }
         ChatTurnEventKind::Usage => {
             if let Some(usage) = &event.usage {
@@ -442,6 +450,56 @@ fn push_agent_output(state: &mut TuiState, output: &Value) {
     }
 }
 
+fn decision_request_lines(output: &Value) -> Option<Vec<String>> {
+    let object = output.as_object()?;
+    if object.get("type").and_then(Value::as_str) != Some("decision_request") {
+        return None;
+    }
+    let title = object.get("title").and_then(Value::as_str)?.trim();
+    if title.is_empty() {
+        return None;
+    }
+    let options = object.get("options").and_then(Value::as_array)?;
+    if options.len() < 2 {
+        return None;
+    }
+
+    let mut lines = vec![format!("decision: {title}")];
+    if let Some(context) = object
+        .get("context")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|context| !context.is_empty())
+    {
+        lines.push(format!("context: {context}"));
+    }
+    for (index, option) in options.iter().enumerate() {
+        let option = option.as_object()?;
+        let label = option.get("label").and_then(Value::as_str)?.trim();
+        if label.is_empty() {
+            return None;
+        }
+        let description = option
+            .get("description")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|description| !description.is_empty());
+        let recommended = option
+            .get("recommended")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let marker = if recommended { " [recommended]" } else { "" };
+        match description {
+            Some(description) => {
+                lines.push(format!("  {}. {label} - {description}{marker}", index + 1))
+            }
+            None => lines.push(format!("  {}. {label}{marker}", index + 1)),
+        }
+    }
+    lines.push("reply with your choice to continue".to_owned());
+    Some(lines)
+}
+
 fn pretty_json(value: &impl Serialize) -> String {
     serde_json::to_string_pretty(value).unwrap_or_else(|_| "<unprintable json>".to_owned())
 }
@@ -596,6 +654,61 @@ mod tests {
                 .log_lines
                 .iter()
                 .any(|line| line.contains("round 1 finished"))
+        );
+    }
+
+    #[tokio::test]
+    async fn tui_renders_shared_ask_user_turn_fixture_as_decision_options() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let mut state = TuiState::load(TuiOptions {
+            catalog_path: None,
+            trace_path: None,
+            store_path: temp_store_path(&dir),
+            registry_path: Utf8PathBuf::from("../../examples/agent-runtime/agents.yaml"),
+            tool_overrides: ToolOverrides::default(),
+            chat: test_chat_options("unused"),
+            timeout_seconds: 60,
+            max_retries: 0,
+            retry_backoff_ms: 0,
+            once: false,
+        })
+        .await
+        .expect("state loads");
+        state.clear_log();
+
+        let events: Vec<ChatTurnEvent> = serde_json::from_str(include_str!(
+            "../../../../docs/fixtures/agent_chat_ask_user_turn_events.json"
+        ))
+        .expect("shared ask_user turn events fixture");
+        let mut assistant_text = String::new();
+        let mut final_response = None;
+        for event in &events {
+            apply_chat_event_to_tui(&mut state, event, &mut assistant_text, &mut final_response);
+        }
+
+        assert!(
+            state
+                .log_lines
+                .iter()
+                .any(|line| line.contains("decision: Implementation path"))
+        );
+        assert!(
+            state
+                .log_lines
+                .iter()
+                .any(|line| line.contains("1. Context transcript"))
+        );
+        assert!(
+            state
+                .log_lines
+                .iter()
+                .any(|line| line.contains("[recommended]"))
+        );
+        assert!(
+            state
+                .log_lines
+                .iter()
+                .any(|line| line.contains("reply with your choice to continue"))
         );
     }
 

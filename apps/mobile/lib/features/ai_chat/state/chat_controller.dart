@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
+import '../domain/chat_turn_metadata.dart';
 
 /// Phases of the user's outgoing turn:
 ///  - [idle]: composer enabled, no work in flight
@@ -48,7 +49,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
   Future<void> send(
     String content, {
     String? systemContext,
-    Map<String, Object?>? turnMetadata,
+    ChatTurnMetadata turnMetadata = const ChatTurnMetadata.empty(),
   }) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty || state.isBusy) return;
@@ -87,6 +88,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
     required String toolInvocationId,
     required DecisionSelection selection,
     String? systemContext,
+    Map<String, Object?>? invocationTrace,
   }) async {
     if (state.isBusy) return;
     final repo = await ref.read(chatRepositoryProvider.future);
@@ -99,11 +101,12 @@ class ChatController extends StateNotifier<ChatTurnState> {
     await send(
       selection.reply,
       systemContext: systemContext,
-      turnMetadata: <String, Object?>{
-        'decision': selection.toJson(),
-        'decision_message_id': messageId,
-        'decision_tool_invocation_id': toolInvocationId,
-      },
+      turnMetadata: ChatTurnMetadata.forDecision(
+        selection: selection,
+        messageId: messageId,
+        toolInvocationId: toolInvocationId,
+        invocationTrace: invocationTrace,
+      ),
     );
   }
 

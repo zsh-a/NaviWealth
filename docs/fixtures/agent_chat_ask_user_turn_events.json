@@ -1,0 +1,75 @@
+[
+  {
+    "kind": "started",
+    "round": 1,
+    "metadata": {
+      "provider": "openai",
+      "model": "gpt-test"
+    }
+  },
+  {
+    "kind": "tool_call_start",
+    "round": 1,
+    "tool_call_id": "decision_1",
+    "tool_name": "ask_user",
+    "metadata": {}
+  },
+  {
+    "kind": "tool_call_end",
+    "round": 1,
+    "tool_call_id": "decision_1",
+    "tool_name": "ask_user",
+    "tool_input": {
+      "title": "Implementation path",
+      "context": "Choose the next maintainable step.",
+      "options": [
+        {
+          "id": "context",
+          "label": "Context transcript",
+          "description": "Preserve the prior decision in the next model turn.",
+          "recommended": true
+        },
+        {
+          "id": "ui",
+          "label": "UI polish",
+          "description": "Improve presentation before runtime semantics."
+        }
+      ]
+    },
+    "metadata": {}
+  },
+  {
+    "kind": "tool_result",
+    "round": 1,
+    "tool_call_id": "decision_1",
+    "tool_name": "ask_user",
+    "tool_output": {
+      "type": "decision_request",
+      "title": "Implementation path",
+      "context": "Choose the next maintainable step.",
+      "options": [
+        {
+          "id": "context",
+          "label": "Context transcript",
+          "description": "Preserve the prior decision in the next model turn.",
+          "recommended": true
+        },
+        {
+          "id": "ui",
+          "label": "UI polish",
+          "description": "Improve presentation before runtime semantics."
+        }
+      ],
+      "allow_custom": true,
+      "awaiting_user": true
+    },
+    "metadata": {}
+  },
+  {
+    "kind": "done",
+    "round": 1,
+    "metadata": {
+      "stop_reason": "end_turn"
+    }
+  }
+]

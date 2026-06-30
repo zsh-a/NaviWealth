@@ -14,6 +14,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
+import 'package:naviwealth/features/ai_chat/domain/chat_turn_metadata.dart';
 import 'package:naviwealth/features/ai_chat/state/chat_controller.dart';
 import 'package:naviwealth/features/ai_chat/state/chat_session_scope.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -32,7 +33,7 @@ class _ScriptedChatController extends ChatController {
   final Future<void> Function(
     String content, {
     String? systemContext,
-    Map<String, Object?>? turnMetadata,
+    required ChatTurnMetadata turnMetadata,
   })
   onSend;
 
@@ -40,7 +41,7 @@ class _ScriptedChatController extends ChatController {
   Future<void> send(
     String content, {
     String? systemContext,
-    Map<String, Object?>? turnMetadata,
+    ChatTurnMetadata turnMetadata = const ChatTurnMetadata.empty(),
   }) {
     return onSend(
       content,
@@ -75,7 +76,7 @@ void main() {
             return _ScriptedChatController(
               ref: ref,
               sessionId: id,
-              onSend: (content, {systemContext, turnMetadata}) async {
+              onSend: (content, {systemContext, required turnMetadata}) async {
                 sentQuestion = content;
                 final now = DateTime.utc(2026, 6, 19, 8);
                 messages.add([

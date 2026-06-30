@@ -11,6 +11,7 @@ import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
+import 'package:naviwealth/features/ai_chat/domain/chat_turn_metadata.dart';
 
 import '../../core/persistence/test_database.dart';
 
@@ -378,11 +379,11 @@ void main() {
           sessionId: id,
           ownerUserId: 'user-1',
           content: selection.reply,
-          turnMetadata: <String, Object?>{
-            'decision': selection.toJson(),
-            'decision_message_id': assistant.id,
-            'decision_tool_invocation_id': 'decision-1',
-          },
+          turnMetadata: ChatTurnMetadata.forDecision(
+            selection: selection,
+            messageId: assistant.id,
+            toolInvocationId: 'decision-1',
+          ),
         );
 
         final updated = (await store.listMessages(
@@ -787,13 +788,15 @@ void main() {
         sessionId: id,
         ownerUserId: 'user-1',
         content: 'Explain this card',
-        invocationTrace: const <String, Object?>{
-          'source': '/wealth/portfolio',
-          'intent': 'summarize_account',
-          'object_type': 'account',
-          'object_id': 'acct-1',
-          'domain': 'finance',
-        },
+        turnMetadata: const ChatTurnMetadata(
+          invocationTrace: <String, Object?>{
+            'source': '/wealth/portfolio',
+            'intent': 'summarize_account',
+            'object_type': 'account',
+            'object_id': 'acct-1',
+            'domain': 'finance',
+          },
+        ),
       );
 
       final trace = (await traceStore.recent()).single;

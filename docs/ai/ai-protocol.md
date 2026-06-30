@@ -128,5 +128,38 @@ Flow:
    (`我选择「…」。请在此方案下继续。`) and the agent continues under that
    constraint.
 
+The Host must also make the decision visible to the next model turn. Flutter
+persists the selected option on the original `ToolInvocation` as
+`decision_selection` and `buildContextWindow` serializes completed `ask_user`
+tool calls into a compact assistant transcript:
+
+```text
+Decision requested: <title>
+Context: <context>
+Options:
+- <id>: <label> — <description> (recommended)
+Selected option: <id> (<label>)
+User reply: <reply>
+```
+
+This prevents a follow-up such as "我选择 A" from losing the original option
+set when the prior assistant turn had no visible text body.
+
+Turn-scoped metadata is typed in Flutter as `ChatTurnMetadata`. It is converted
+to runtime JSON only at the `AiChatApiClient` boundary:
+
+| field | runtime metadata |
+| --- | --- |
+| `decision.selection` | `decision` |
+| `decision.messageId` | `decision_message_id` |
+| `decision.toolInvocationId` | `decision_tool_invocation_id` |
+| `invocationTrace` | `invocation` |
+
+The TUI consumes the same `ChatTurnEvent` stream. When it sees a
+`tool_result` from `ask_user` with `type: "decision_request"`, it renders a
+numbered terminal decision list instead of raw JSON, then waits for the user's
+next natural-language input. The shared fixture is
+`docs/fixtures/agent_chat_ask_user_turn_events.json`.
+
 Policy for *when* to ask lives in `kDeviceSystemPromptBase` (clauses 12–14).
 This supersedes the earlier markdown-menu string parsing.
