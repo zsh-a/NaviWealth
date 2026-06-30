@@ -1,2 +1,7 @@
 #include "../../Flutter/Flutter-Release.xcconfig"
 #include "Warnings.xcconfig"
+
+// Xcode 27 beta's lipo rejects Flutter 3.44's multi-arch verify command even
+// when the framework contains both slices. Keep local release builds on the
+// native Apple Silicon slice until the toolchain behavior is fixed.
+ARCHS = arm64

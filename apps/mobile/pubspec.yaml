@@ -50,7 +50,10 @@ dependencies:
   package_info_plus: ^10.2.0
   path: ^1.9.1
   path_provider: ^2.1.6
-  receive_sharing_intent: ^1.9.0
+  # Keep this pinned to the last CocoaPods-compatible release. 1.9.0 is
+  # SwiftPM-only on iOS, but this app's local lifeos_native FFI plugin still
+  # relies on Cargokit's CocoaPods build phase for Rust.
+  receive_sharing_intent: 1.8.1
   sentry_flutter: ^9.22.0
   share_plus: ^13.2.0
   shared_preferences: ^2.5.5
@@ -104,7 +107,11 @@ flutter:
     - assets/catalog/securities.v1.ndjson
     - assets/svg/logo.svg
   config:
-    enable-swift-package-manager: true
+    # Keep macOS/iOS plugin integration on CocoaPods for now. The local
+    # lifeos_native FFI plugin builds Rust through Cargokit's CocoaPods script
+    # phase, and enabling Flutter SPM makes Xcode wait on remote Swift package
+    # artifact resolution during `flutter build macos`.
+    enable-swift-package-manager: false
 
   fonts:
     # Inter — primary fontFamily for the entire app. Subset to Latin +
