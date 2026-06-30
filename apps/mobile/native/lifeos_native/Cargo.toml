@@ -29,9 +29,9 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 # the app; see `apps/mobile/native/lifeos_native/README.md`.
 fastembed = { version = "5.17.2", default-features = false, features = ["ort-load-dynamic"] }
 anyhow = "1.0.102"
-agent-core = { path = "../../../../crates/agent-core" }
-agent-chat = { path = "../../../../crates/agent-chat" }
-agent-llm = { path = "../../../../crates/agent-llm" }
+agent-core = { path = "../../../../third_party/agent-runtime/crates/agent-core" }
+agent-chat = { path = "../../../../third_party/agent-runtime/crates/agent-chat" }
+agent-llm = { path = "../../../../third_party/agent-runtime/crates/agent-llm" }
 futures = "0.3"
 # flutter_rust_bridge generates Dart bindings from these signatures.
 # Surface in `src/api/` is the only thing the codegen looks at;

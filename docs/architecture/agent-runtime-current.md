@@ -5,10 +5,15 @@ runtime. Use this document for code navigation and maintenance decisions.
 `rust-agent-runtime-design.md` is the long-term design direction; this document
 describes what exists now.
 
+NaviWealth consumes the standalone runtime through the
+`third_party/agent-runtime` Git submodule, pinned to
+`https://github.com/zsh-a/agent-runtime.git`. Unless a path explicitly starts
+with `apps/mobile/`, paths below are relative to that submodule.
+
 ## Scope
 
-The runtime is currently part of the NaviWealth monorepo, not a standalone
-repository. It provides:
+The runtime source of truth is now the standalone `agent-runtime` repository,
+vendored into NaviWealth as `third_party/agent-runtime`. It provides:
 
 - reusable Rust contracts and runner crates
 - schema / fixture / OpenAPI wire contracts
@@ -134,6 +139,7 @@ need both the final result and the captured `AgentTrace`.
 Use these entrypoints when debugging:
 
 ```bash
+cd third_party/agent-runtime
 rtk cargo run -p agent-cli -- list
 rtk cargo run -p agent-cli -- run echo_agent --input examples/agent-runtime/fixtures/echo-input.json
 rtk cargo run -p agent-cli -- tui
@@ -188,8 +194,7 @@ These are intentional or pending differences from the long-term design:
 
 - No standalone `agent-tools` crate exists yet. Tool traits live in
   `agent-core`; CLI and Flutter host adapters own concrete tool hosts.
-- The runtime is still in this monorepo. There is no standalone `bindings/dart`
-  or `bindings/ts` SDK package.
+- There is no standalone `bindings/dart` or `bindings/ts` SDK package yet.
 - Trace is event-first (`events`) and does not currently expose a separate
   `spans` array.
 - `ProposalEnvelope` does not carry a `risk` field; risk is currently expressed

@@ -4,29 +4,19 @@ on:
   push:
     branches: [main]
     paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'crates/**'
-      - 'schemas/agent-runtime/**'
-      - 'fixtures/agent-runtime/**'
-      - 'evals/agent-runtime/**'
-      - 'examples/agent-runtime/**'
-      - 'openapi/agent-runtime-api.yaml'
+      - '.gitmodules'
+      - 'third_party/agent-runtime'
       - 'apps/mobile/native/lifeos_native/**'
       - 'docs/architecture/agent-runtime-current.md'
+      - 'docs/architecture/rust-agent-runtime-mvp.md'
       - '.github/workflows/agent-runtime.yml'
   pull_request:
     paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'crates/**'
-      - 'schemas/agent-runtime/**'
-      - 'fixtures/agent-runtime/**'
-      - 'evals/agent-runtime/**'
-      - 'examples/agent-runtime/**'
-      - 'openapi/agent-runtime-api.yaml'
+      - '.gitmodules'
+      - 'third_party/agent-runtime'
       - 'apps/mobile/native/lifeos_native/**'
       - 'docs/architecture/agent-runtime-current.md'
+      - 'docs/architecture/rust-agent-runtime-mvp.md'
       - '.github/workflows/agent-runtime.yml'
 
 concurrency:
@@ -34,17 +24,22 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  root-crates:
-    name: root Rust workspace
+  runtime-submodule:
+    name: agent-runtime submodule
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: third_party/agent-runtime
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: .
+          workspaces: third_party/agent-runtime
       - run: cargo fmt --all -- --check
       - run: cargo test --workspace
 
@@ -56,6 +51,8 @@ jobs:
         working-directory: apps/mobile/native/lifeos_native
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:

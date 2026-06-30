@@ -1,8 +1,0 @@
-{
-  "tool_call_id": "call_1",
-  "tool_name": "read_task",
-  "output": {
-    "title": "Task title"
-  },
-  "is_error": false
-}

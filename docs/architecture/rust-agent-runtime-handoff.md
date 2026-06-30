@@ -3,8 +3,11 @@
 Date: 2026-06-28
 
 Historical note: this file is a point-in-time handoff from an earlier
-implementation slice. For the current code map and maintenance guidance, use
-[`agent-runtime-current.md`](agent-runtime-current.md).
+implementation slice before the runtime was extracted to the standalone
+`agent-runtime` repository. Paths below that refer to the repository root now
+live under the `third_party/agent-runtime` submodule unless they explicitly
+start with `apps/mobile/`. For the current code map and maintenance guidance,
+use [`agent-runtime-current.md`](agent-runtime-current.md).
 
 This file records the current implementation state before switching development
 to another machine.

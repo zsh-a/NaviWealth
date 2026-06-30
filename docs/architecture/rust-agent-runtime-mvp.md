@@ -3,6 +3,10 @@
 This is the first implementation slice of
 `docs/architecture/rust-agent-runtime-design.md`.
 
+NaviWealth consumes this runtime through the `third_party/agent-runtime`
+submodule. Unless a path explicitly starts with `apps/mobile/`, paths in this
+document are relative to the standalone runtime repository.
+
 ## Scope
 
 Implemented:
@@ -1093,6 +1097,7 @@ backend clients observe the same approval state.
 Run all current checks:
 
 ```bash
+cd third_party/agent-runtime
 rtk cargo test --workspace
 ```
 
@@ -1117,6 +1122,7 @@ rtk flutter test test/app/agent_runtime_native_bridge_test.dart \
 Run the sample eval:
 
 ```bash
+cd third_party/agent-runtime
 rtk cargo run -p agent-cli -- eval \
   evals/agent-runtime/catalog_dry_run.yaml \
   --store /private/tmp/agent-runtime-eval-store
@@ -1125,6 +1131,7 @@ rtk cargo run -p agent-cli -- eval \
 Run every eval case under a directory:
 
 ```bash
+cd third_party/agent-runtime
 rtk cargo run -p agent-cli -- eval \
   evals/agent-runtime \
   --store /private/tmp/agent-runtime-eval-suite-store
@@ -1372,8 +1379,9 @@ debugging runs.
 ## Dependency Approach
 
 The MVP targets Rust 1.96 (`rustc 1.96.0`, `cargo 1.96.0`) and Rust 2024
-edition for newly introduced Rust workspace crates. The root runtime workspace
-and the mobile native bridge use current mainstream Rust ecosystem crates:
+edition for newly introduced Rust workspace crates. The standalone runtime
+workspace under `third_party/agent-runtime` and the mobile native bridge use
+current mainstream Rust ecosystem crates:
 
 - async runtime: `tokio`
 - CLI: `clap`
