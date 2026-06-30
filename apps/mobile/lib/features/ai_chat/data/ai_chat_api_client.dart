@@ -1,30 +1,20 @@
 /// Chat client surface. The cloud relay transport
 /// (`DioAiChatApiClient` → `POST /ai/chat`) was removed when the cloud
-/// AI backend was deleted; turns now run on-device via
-/// [RuntimeRoutingAiChatApiClient] over the [DeviceChatRunner]. This
-/// file keeps the shared contract types: the [AiChatApiClient]
-/// interface `ChatRepository` injects, the [WireMessage] turn shape,
-/// and the request-level error sentinel `ChatRepository` still
-/// classifies.
+/// AI backend was deleted; turns now run on-device through the app-composed
+/// [ChatAgent]. This file keeps the [AiChatApiClient] interface
+/// `ChatRepository` injects, the [WireMessage] turn alias, and the
+/// request-level error sentinel `ChatRepository` still classifies.
 library;
 
 import 'package:dio/dio.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/runtime/chat_agent.dart';
 import '../../../core/auth/auth_session.dart';
 
 /// Wire shape for one turn. Kept as the typed turn contract between
 /// `ChatRepository` and the device runtime.
-class WireMessage {
-  const WireMessage({required this.role, required this.content});
-  final String role;
-  final String content;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'role': role,
-    'content': content,
-  };
-}
+typedef WireMessage = ChatAgentMessage;
 
 /// Streaming chat client. The only implementation now is
 /// [RuntimeRoutingAiChatApiClient] (device-only); the abstraction is

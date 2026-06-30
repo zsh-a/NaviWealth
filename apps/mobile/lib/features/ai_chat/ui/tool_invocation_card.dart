@@ -36,7 +36,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final invocation = widget.invocation;
-    final pending = invocation.output == null;
+    final pending = invocation.status.isPending;
     final friendlyName = friendlyToolName(l10n, invocation.name);
     final summary = _summarizeInput(invocation.input);
     final jumps = _extractJumps(l10n, invocation.output);

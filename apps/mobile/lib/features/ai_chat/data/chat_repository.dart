@@ -268,7 +268,12 @@ class ChatRepository {
               invocationOrder.add(id);
               segments.add('');
             }
-            invocations[id] = ToolInvocation(id: id, name: name, input: null);
+            invocations[id] = ToolInvocation(
+              id: id,
+              name: name,
+              input: null,
+              status: ToolInvocationStatus.streamingInput,
+            );
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),
@@ -285,12 +290,16 @@ class ChatRepository {
                 id: id,
                 name: '',
                 input: partialInputJson,
+                status: ToolInvocationStatus.streamingInput,
                 partialInputJson: partialInputJson,
               );
             } else {
+              final nextPartialInputJson =
+                  '${existing.partialInputJson ?? ''}$partialInputJson';
               invocations[id] = existing.copyWith(
-                input: partialInputJson,
-                partialInputJson: partialInputJson,
+                input: nextPartialInputJson,
+                status: ToolInvocationStatus.streamingInput,
+                partialInputJson: nextPartialInputJson,
               );
             }
             assistant = assistant.copyWith(
@@ -311,6 +320,8 @@ class ChatRepository {
               name: name.isEmpty ? (existing?.name ?? '') : name,
               input: input,
               output: existing?.output,
+              status: ToolInvocationStatus.pendingResult,
+              partialInputJson: existing?.partialInputJson,
             );
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
@@ -328,8 +339,17 @@ class ChatRepository {
               segments.add('');
             }
             invocations[id] = existing == null
-                ? ToolInvocation(id: id, name: '', input: null, output: output)
-                : existing.copyWith(output: output);
+                ? ToolInvocation(
+                    id: id,
+                    name: '',
+                    input: null,
+                    output: output,
+                    status: ToolInvocationStatus.completed,
+                  )
+                : existing.copyWith(
+                    output: output,
+                    status: ToolInvocationStatus.completed,
+                  );
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),

@@ -29,7 +29,6 @@ import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/activity/data/activity_entry_insight_client.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
-import '../features/ai_chat/data/runtime_routing_api_client.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
@@ -126,22 +125,20 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           bridge: ref.watch(agentRuntimeNativeBridgeProvider),
         ),
       ),
-      ai_chat_providers.aiChatApiClientProvider.overrideWith((ref) {
+      ai_chat_providers.chatAgentProvider.overrideWith((ref) {
         final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
         final streamBridge = ref.watch(agentRuntimeLlmStreamBridgeProvider);
         if (llmBridge != null && streamBridge != null) {
           final catalog = ref.watch(agentRuntimeCatalogProvider);
           final toolHost = ref.watch(agentRuntimeToolHostProvider);
-          return RuntimeRoutingAiChatApiClient(
-            device: FrbChatRunner(
-              llmBridge: llmBridge,
-              streamBridge: streamBridge,
-              tools: [for (final tool in catalog.tools) tool.toJson()],
-              toolLineHandler: toolHost.handleLine,
-            ),
+          return FrbChatRunner(
+            llmBridge: llmBridge,
+            streamBridge: streamBridge,
+            tools: [for (final tool in catalog.tools) tool.toJson()],
+            toolLineHandler: toolHost.handleLine,
           );
         }
-        return const RuntimeRoutingAiChatApiClient();
+        return null;
       }),
       activityEntryInsightClientProvider.overrideWith((ref) {
         final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);

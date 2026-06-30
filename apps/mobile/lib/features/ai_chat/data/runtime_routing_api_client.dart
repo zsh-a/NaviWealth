@@ -21,14 +21,13 @@ import 'ai_chat_api_client.dart';
 const String kDeviceUnavailableMessage = 'device_unavailable';
 
 class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
-  const RuntimeRoutingAiChatApiClient({DeviceChatRunner? device})
-    : _device = device;
+  const RuntimeRoutingAiChatApiClient({ChatAgent? agent}) : _agent = agent;
 
-  final DeviceChatRunner? _device;
+  final ChatAgent? _agent;
 
   /// Which runtime a turn would hit — surfaced for the transparency
   /// badge / trace label. Always device or unavailable now.
-  bool get usesDevice => _device != null;
+  bool get usesDevice => _agent != null;
 
   @override
   Stream<AiChatEvent> chat({
@@ -39,14 +38,16 @@ class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
     String? model,
     CancelToken? cancelToken,
   }) {
-    final device = _device;
-    if (device == null) return _unavailable();
-    return device.run(
-      messages: messages,
-      portfolioSnapshot: portfolioSnapshot,
-      contextPack: contextPack,
-      model: model,
-      cancelToken: cancelToken,
+    final agent = _agent;
+    if (agent == null) return _unavailable();
+    return agent.runTurn(
+      ChatAgentTurnRequest(
+        messages: messages,
+        portfolioSnapshot: portfolioSnapshot,
+        contextPack: contextPack,
+        model: model,
+        cancelToken: cancelToken,
+      ),
     );
   }
 

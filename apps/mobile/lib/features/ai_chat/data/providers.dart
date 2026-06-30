@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/portfolio_snapshot.dart';
+import '../../../core/ai/runtime/chat_agent.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/persistence/providers.dart';
@@ -11,14 +12,13 @@ import 'chat_history_store.dart';
 import 'chat_repository.dart';
 import 'runtime_routing_api_client.dart';
 
+/// App-composed chat agent. Feature defaults stay unavailable so a partial
+/// ProviderContainer cannot silently fall back to a legacy runtime.
+final chatAgentProvider = Provider<ChatAgent?>((ref) => null);
+
 /// What `ChatRepository` injects before app-level composition.
-///
-/// Production bootstrap overrides this provider with [FrbChatRunner] when an
-/// active FRB LLM profile exists. The feature-layer default deliberately stays
-/// unavailable so a partial ProviderContainer cannot silently fall back to the
-/// legacy direct-Dart LLM runtime.
 final aiChatApiClientProvider = Provider<AiChatApiClient>((ref) {
-  return const RuntimeRoutingAiChatApiClient();
+  return RuntimeRoutingAiChatApiClient(agent: ref.watch(chatAgentProvider));
 });
 
 /// Chat persistence is awaited once via [appDatabaseProvider]. We expose

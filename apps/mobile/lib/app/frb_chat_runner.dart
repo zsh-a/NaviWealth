@@ -15,7 +15,6 @@ import '../core/ai/progress/long_task_progress.dart';
 import '../core/ai/runtime/ai_runtime.dart';
 import '../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
-import '../features/ai_chat/data/ai_chat_api_client.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
 import 'frb_chat_event.dart';
@@ -25,7 +24,7 @@ import 'frb_chat_types.dart';
 
 const String kFrbChatRunnerAgentId = 'ai_chat';
 
-class FrbChatRunner implements DeviceChatRunner {
+class FrbChatRunner implements ChatAgent {
   const FrbChatRunner({
     required AgentRuntimeLlmBridge llmBridge,
     AgentRuntimeLlmStreamBridge? streamBridge,
@@ -48,8 +47,18 @@ class FrbChatRunner implements DeviceChatRunner {
   final String _agentId;
 
   @override
+  Stream<AiChatEvent> runTurn(ChatAgentTurnRequest request) {
+    return run(
+      messages: request.messages,
+      portfolioSnapshot: request.portfolioSnapshot,
+      contextPack: request.contextPack,
+      model: request.model,
+      cancelToken: request.cancelToken,
+    );
+  }
+
   Stream<AiChatEvent> run({
-    required List<WireMessage> messages,
+    required List<ChatAgentMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,
@@ -117,7 +126,7 @@ class FrbChatRunner implements DeviceChatRunner {
 
   Stream<AiChatEvent> _runStream({
     required AgentRuntimeLlmStreamBridge streamBridge,
-    required List<WireMessage> messages,
+    required List<ChatAgentMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,

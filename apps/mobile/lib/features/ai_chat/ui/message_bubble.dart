@@ -548,10 +548,10 @@ class _AssistantBubble extends StatelessWidget {
 
 /// Last unresolved tool name. The model emits tool_use frames
 /// serially under the Anthropic protocol, so the most recent
-/// invocation without an output is the one currently being awaited.
+/// pending invocation is the one currently being awaited.
 String? _findPendingToolName(List<ToolInvocation> tools) {
   for (var i = tools.length - 1; i >= 0; i--) {
-    if (tools[i].output == null) return tools[i].name;
+    if (tools[i].status.isPending) return tools[i].name;
   }
   return null;
 }

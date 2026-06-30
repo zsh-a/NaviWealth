@@ -251,11 +251,49 @@ void main() {
           'get_holdings',
           'compute_xirr',
         ]);
+        expect(assistant.toolCalls.map((t) => t.status), [
+          ToolInvocationStatus.completed,
+          ToolInvocationStatus.completed,
+        ]);
         expect(assistant.toolCalls.first.output, isA<Map<String, Object?>>());
         expect(assistant.toolCalls.last.output, isA<Map<String, Object?>>());
         expect(assistant.content, '好的，XIRR 是 12%');
       },
     );
+
+    test('records streaming tool input lifecycle', () async {
+      api.script.addAll(<AiChatEvent>[
+        const ToolCallStartEvent(id: 'a', name: 'get_holdings'),
+        const ToolCallDeltaEvent(id: 'a', partialInputJson: '{"as_of"'),
+        const ToolCallDeltaEvent(id: 'a', partialInputJson: ':"today"}'),
+        const ToolCallEvent(
+          id: 'a',
+          name: 'get_holdings',
+          input: <String, Object?>{'as_of': 'today'},
+        ),
+        const ToolResultEvent(
+          id: 'a',
+          name: 'get_holdings',
+          output: <String, Object?>{'rows': <Object?>[]},
+        ),
+        const DoneEvent(stopReason: 'end_turn', rounds: 1),
+      ]);
+      final id = await activeSessionId();
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: '查持仓',
+      );
+
+      final assistant = (await store.listMessages(
+        id,
+      )).firstWhere((m) => m.role == ChatRole.assistant);
+      final invocation = assistant.toolCalls.single;
+      expect(invocation.status, ToolInvocationStatus.completed);
+      expect(invocation.partialInputJson, '{"as_of":"today"}');
+      expect(invocation.input, <String, Object?>{'as_of': 'today'});
+      expect(invocation.output, <String, Object?>{'rows': <Object?>[]});
+    });
 
     test('marks turn errored when the stream throws', () async {
       api.errorToThrow = const AiChatRequestException(

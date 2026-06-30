@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
@@ -33,19 +32,15 @@ AuthSession _session() => AuthSession(
   deviceId: 'd',
 );
 
-class _ScriptedDevice implements DeviceChatRunner {
-  _ScriptedDevice(this._events, {this.throwAfter});
+class _ScriptedAgent implements ChatAgent {
+  _ScriptedAgent(this._events, {this.throwAfter});
   final List<AiChatEvent> _events;
   final int? throwAfter; // throw after N yielded events (null = never)
+  ChatAgentTurnRequest? lastRequest;
 
   @override
-  Stream<AiChatEvent> run({
-    required List<WireMessage> messages,
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
-    String? model,
-    CancelToken? cancelToken,
-  }) async* {
+  Stream<AiChatEvent> runTurn(ChatAgentTurnRequest request) async* {
+    lastRequest = request;
     var n = 0;
     for (final e in _events) {
       if (throwAfter != null && n == throwAfter) {
@@ -173,23 +168,23 @@ void main() {
       );
 
       test('device produces content → passed through unchanged', () async {
-        final c = RuntimeRoutingAiChatApiClient(
-          device: _ScriptedDevice(const [
-            TextEvent('device-answer'),
-            DoneEvent(stopReason: 'end_turn', rounds: 1),
-          ]),
-        );
+        final agent = _ScriptedAgent(const [
+          TextEvent('device-answer'),
+          DoneEvent(stopReason: 'end_turn', rounds: 1),
+        ]);
+        final c = RuntimeRoutingAiChatApiClient(agent: agent);
         expect(c.usesDevice, isTrue);
         final out = await _run(c);
         expect((out.first as TextEvent).text, 'device-answer');
         expect(out.last, isA<DoneEvent>());
+        expect(agent.lastRequest?.messages.single.content, 'hi');
       });
 
       test(
         'device error passes through verbatim (no cloud suppression)',
         () async {
           final c = RuntimeRoutingAiChatApiClient(
-            device: _ScriptedDevice(const [
+            agent: _ScriptedAgent(const [
               ErrorEvent('bad api key', code: 'provider_error'),
               DoneEvent(stopReason: 'error', rounds: 1),
             ]),
@@ -202,7 +197,7 @@ void main() {
 
       test('device throws → propagates (no failover)', () async {
         final c = RuntimeRoutingAiChatApiClient(
-          device: _ScriptedDevice(const [TextEvent('partial')], throwAfter: 1),
+          agent: _ScriptedAgent(const [TextEvent('partial')], throwAfter: 1),
         );
         expect(_run(c), throwsA(isA<StateError>()));
       });

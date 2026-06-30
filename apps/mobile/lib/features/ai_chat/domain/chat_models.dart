@@ -35,6 +35,25 @@ extension ChatRoleX on ChatRole {
 /// `errored` is a turn whose stream aborted before `done`.
 enum ChatMessageStatus { streaming, complete, errored }
 
+enum ToolInvocationStatus { streamingInput, pendingResult, completed }
+
+extension ToolInvocationStatusX on ToolInvocationStatus {
+  bool get isPending => this != ToolInvocationStatus.completed;
+
+  String get wire => switch (this) {
+    ToolInvocationStatus.streamingInput => 'streaming_input',
+    ToolInvocationStatus.pendingResult => 'pending_result',
+    ToolInvocationStatus.completed => 'completed',
+  };
+
+  static ToolInvocationStatus parse(String? wire) => switch (wire) {
+    'streaming_input' => ToolInvocationStatus.streamingInput,
+    'pending_result' => ToolInvocationStatus.pendingResult,
+    'completed' => ToolInvocationStatus.completed,
+    _ => ToolInvocationStatus.completed,
+  };
+}
+
 /// How an assistant turn finished, mirrored from Anthropic's `stop_reason`
 /// (forwarded by the backend in the SSE `done` frame).
 ///
@@ -100,6 +119,7 @@ class ToolInvocation {
     required this.name,
     required this.input,
     this.output,
+    this.status = ToolInvocationStatus.completed,
     this.applyState,
     this.partialInputJson,
   });
@@ -108,6 +128,7 @@ class ToolInvocation {
   final String name;
   final Object? input;
   final Object? output;
+  final ToolInvocationStatus status;
   final String? partialInputJson;
 
   /// Apply state for `propose_*` tool calls. `null` for read-only
@@ -120,6 +141,7 @@ class ToolInvocation {
     String? name,
     Object? input,
     Object? output,
+    ToolInvocationStatus? status,
     String? partialInputJson,
     ProposalApplyState? applyState,
     bool clearApplyState = false,
@@ -128,6 +150,7 @@ class ToolInvocation {
     name: name ?? this.name,
     input: input ?? this.input,
     output: output ?? this.output,
+    status: status ?? this.status,
     partialInputJson: partialInputJson ?? this.partialInputJson,
     applyState: clearApplyState ? null : (applyState ?? this.applyState),
   );
@@ -136,6 +159,7 @@ class ToolInvocation {
     'id': id,
     'name': name,
     'input': input,
+    'status': status.wire,
     if (partialInputJson != null) 'partial_input_json': partialInputJson,
     'output': output,
     if (applyState != null) 'apply_state': applyState!.toJson(),
@@ -153,6 +177,7 @@ class ToolInvocation {
       name: (json['name'] ?? '') as String,
       input: json['input'],
       output: json['output'],
+      status: ToolInvocationStatusX.parse(json['status'] as String?),
       partialInputJson: json['partial_input_json'] as String?,
       applyState: apply,
     );
