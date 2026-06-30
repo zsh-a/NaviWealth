@@ -114,6 +114,39 @@ void main() {
     expect(metadata['streaming'], true);
   });
 
+  test(
+    'uses standalone FRB usage stream events for chat usage and trace',
+    () async {
+      final streamBridge = _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"delta","content":"Hello","metadata":{"stream":true}}',
+          '{"kind":"usage","usage":{"input_tokens":9,"output_tokens":4,"total_tokens":13},"round":1,"metadata":{}}',
+          '{"kind":"round_finished","response":{"content":"Hello","finish_reason":"stop"},"round":1,"metadata":{"finish_reason":"stop"}}',
+          '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
+        ],
+      );
+      final runner = FrbChatRunner(
+        llmBridge: _FakeLlmBridge(),
+        streamBridge: streamBridge,
+      );
+
+      final events = await runner
+          .run(
+            messages: const <WireMessage>[
+              WireMessage(role: 'user', content: 'Hello'),
+            ],
+          )
+          .toList();
+
+      expect(events.whereType<UsageEvent>().single.usage.total, 13);
+      final span = events.whereType<SpanEvent>().single;
+      expect(span.tokens?.input, 9);
+      expect(span.tokens?.output, 4);
+      expect(span.tokens?.total, 13);
+    },
+  );
+
   test('executes FRB tool calls and continues with tool results', () async {
     final bridge = _FakeLlmBridge();
     final streamBridge = _streamBridgeBatches(

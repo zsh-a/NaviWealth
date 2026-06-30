@@ -15,6 +15,7 @@ class FrbStreamRoundState {
       <String, FrbToolCallBuilder>{};
   Map<String, Object?> _response = const <String, Object?>{};
   Map<String, Object?> _finishMetadata = const <String, Object?>{};
+  TokenUsage? _usage;
   String? _doneStopReason;
 
   bool get emittedText => _text.isNotEmpty;
@@ -30,7 +31,7 @@ class FrbStreamRoundState {
 
   String? get doneStopReason => _doneStopReason;
 
-  TokenUsage? get usage => frbUsageFromResponse(_response);
+  TokenUsage? get usage => _usage ?? frbUsageFromResponse(_response);
 
   String get stopReason =>
       frbChatStopReason(frbString(_response['finish_reason']));
@@ -93,11 +94,16 @@ class FrbStreamRoundState {
   }) {
     _response = response;
     _finishMetadata = metadata;
+    _usage ??= frbUsageFromResponse(response);
   }
 
   void finishDone(Map<String, Object?> metadata) {
     final stopReason = frbString(metadata['stop_reason']);
     if (stopReason.isNotEmpty) _doneStopReason = stopReason;
+  }
+
+  void recordUsage(TokenUsage usage) {
+    _usage = usage;
   }
 }
 
@@ -156,7 +162,10 @@ class FrbToolResult {
 }
 
 TokenUsage? frbUsageFromResponse(Map<String, Object?> response) {
-  final usage = response['usage'];
+  return frbUsageFromValue(response['usage']);
+}
+
+TokenUsage? frbUsageFromValue(Object? usage) {
   if (usage is! Map) return null;
   return TokenUsage(
     input: frbInt(usage['input_tokens'] ?? usage['input']),

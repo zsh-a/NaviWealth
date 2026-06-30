@@ -191,8 +191,13 @@ class FrbChatRunner implements DeviceChatRunner {
             return;
           case 'started':
           case 'llm_started':
-          case 'usage':
             break;
+          case 'usage':
+            final usage = frbUsageFromValue(event['usage']);
+            if (usage != null) {
+              state.recordUsage(usage);
+              yield UsageEvent(usage);
+            }
           case 'done':
             state.finishDone(frbObject(event['metadata']));
             break;
@@ -299,9 +304,10 @@ class FrbChatRunner implements DeviceChatRunner {
               yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
               return;
             }
+            final hasEmittedUsage = state.usage != null;
             state.finish(response, metadata: frbObject(event['metadata']));
             final usage = frbUsageFromResponse(response);
-            if (usage != null) yield UsageEvent(usage);
+            if (!hasEmittedUsage && usage != null) yield UsageEvent(usage);
             final text = frbString(response['content']);
             if (!state.emittedText && text.isNotEmpty) {
               state.appendText(text);
