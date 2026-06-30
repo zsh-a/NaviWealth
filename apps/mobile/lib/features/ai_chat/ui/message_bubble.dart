@@ -37,6 +37,7 @@ class MessageBubble extends StatelessWidget {
     required this.sessionId,
     required this.message,
     this.onReplyChip,
+    this.onDecisionSelect,
     this.invocationIntent,
     this.isLastAssistant = false,
     this.isLastUser = false,
@@ -52,6 +53,7 @@ class MessageBubble extends StatelessWidget {
   /// text. Caller sends it as the next user turn. Streaming/error
   /// messages render no chips regardless.
   final void Function(String chip)? onReplyChip;
+  final void Function(DecisionSelectionRequest selection)? onDecisionSelect;
 
   /// When false, the generic rules-based reply chips
   /// (`suggestReplyChips`) are suppressed — only a content-derived
@@ -94,6 +96,7 @@ class MessageBubble extends StatelessWidget {
         sessionId: sessionId,
         message: message,
         onReplyChip: onReplyChip,
+        onDecisionSelect: onDecisionSelect,
         invocationIntent: invocationIntent,
         isLastAssistant: isLastAssistant,
         suggestCannedReplies: suggestCannedReplies,
@@ -248,6 +251,7 @@ class _AssistantBubble extends StatelessWidget {
     required this.sessionId,
     required this.message,
     this.onReplyChip,
+    this.onDecisionSelect,
     this.invocationIntent,
     this.isLastAssistant = false,
     this.suggestCannedReplies = true,
@@ -256,6 +260,7 @@ class _AssistantBubble extends StatelessWidget {
   final String sessionId;
   final ChatMessage message;
   final void Function(String chip)? onReplyChip;
+  final void Function(DecisionSelectionRequest selection)? onDecisionSelect;
   final String? invocationIntent;
   final bool isLastAssistant;
   final bool suggestCannedReplies;
@@ -532,10 +537,30 @@ class _AssistantBubble extends StatelessWidget {
     if (invocation.name == kAskUserToolName) {
       final request = DecisionRequest.tryParse(invocation.output);
       if (request != null) {
+        final selected = invocation.decisionSelection;
+        final interactive =
+            selected == null &&
+            isLastAssistant &&
+            (onDecisionSelect != null || onReplyChip != null);
         return DecisionCard(
           request: request,
-          interactive: isLastAssistant && onReplyChip != null,
-          onSelect: (reply) => onReplyChip?.call(reply),
+          selectedOptionId: selected?.optionId,
+          interactive: interactive,
+          onSelect: (option, reply) {
+            final handler = onDecisionSelect;
+            if (handler != null) {
+              handler(
+                DecisionSelectionRequest(
+                  messageId: message.id,
+                  toolInvocationId: invocation.id,
+                  option: option,
+                  reply: reply,
+                ),
+              );
+              return;
+            }
+            onReplyChip?.call(reply);
+          },
         );
       }
     }

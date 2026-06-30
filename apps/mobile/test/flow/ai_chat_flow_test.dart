@@ -29,11 +29,24 @@ class _ScriptedChatController extends ChatController {
     required this.onSend,
   });
 
-  final Future<void> Function(String content, {String? systemContext}) onSend;
+  final Future<void> Function(
+    String content, {
+    String? systemContext,
+    Map<String, Object?>? turnMetadata,
+  })
+  onSend;
 
   @override
-  Future<void> send(String content, {String? systemContext}) {
-    return onSend(content, systemContext: systemContext);
+  Future<void> send(
+    String content, {
+    String? systemContext,
+    Map<String, Object?>? turnMetadata,
+  }) {
+    return onSend(
+      content,
+      systemContext: systemContext,
+      turnMetadata: turnMetadata,
+    );
   }
 }
 
@@ -62,7 +75,7 @@ void main() {
             return _ScriptedChatController(
               ref: ref,
               sessionId: id,
-              onSend: (content, {systemContext}) async {
+              onSend: (content, {systemContext, turnMetadata}) async {
                 sentQuestion = content;
                 final now = DateTime.utc(2026, 6, 19, 8);
                 messages.add([

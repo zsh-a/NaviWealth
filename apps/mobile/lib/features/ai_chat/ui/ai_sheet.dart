@@ -36,12 +36,14 @@ import '../../../core/auth/current_user.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../domain/chat_models.dart';
 import '../state/ai_context.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
 import 'ai_navigation.dart';
 import 'chat_composer.dart';
 import 'chat_conversation_view.dart';
+import 'decision_request.dart';
 import 'llm_profile_chip.dart';
 
 /// Open the AI sheet. Pass [invocation] for the object-semantic mode;
@@ -532,6 +534,47 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     }
   }
 
+  Future<void> _chooseDecision(
+    String sessionId,
+    DecisionSelectionRequest selection, {
+    String? systemContext,
+  }) async {
+    final ownerUserId = ref.read(activeUserIdProvider);
+    if (ownerUserId == null) return;
+    final decision = DecisionSelection(
+      optionId: selection.option.id,
+      label: selection.option.label,
+      reply: selection.reply,
+      selectedAt: DateTime.now().toUtc(),
+    );
+    try {
+      final repo = await ref.read(chatRepositoryProvider.future);
+      await repo.recordDecisionSelection(
+        sessionId: sessionId,
+        messageId: selection.messageId,
+        toolInvocationId: selection.toolInvocationId,
+        selection: decision,
+      );
+      unawaited(
+        repo.sendMessage(
+          sessionId: sessionId,
+          ownerUserId: ownerUserId,
+          content: selection.reply,
+          systemContext: systemContext,
+          invocationTrace: widget.invocation?.toTraceJson(),
+          turnMetadata: <String, Object?>{
+            'decision': decision.toJson(),
+            'decision_message_id': selection.messageId,
+            'decision_tool_invocation_id': selection.toolInvocationId,
+          },
+        ),
+      );
+    } catch (_) {
+      // Keep the sheet responsive; the repository surfaces send failures in
+      // the conversation timeline when the stream starts.
+    }
+  }
+
   void _expandToChat() {
     final sid = _sessionId;
     if (sid == null) return;
@@ -597,6 +640,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
       ),
       invocationIntent: widget.invocation!.intent,
       onReplyChip: (chip) => _sendChip(sessionId, chip),
+      onDecisionSelect: (selection) => _chooseDecision(sessionId, selection),
       loadingBuilder: (_) => const _BodySkeleton(),
       emptyBuilder: (_) => const _BodySkeleton(),
     );
@@ -682,6 +726,14 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                     ref
                         .read(chatControllerProvider(activeId).notifier)
                         .send(chip, systemContext: routeCtx.toSystemContext());
+                  },
+                  onDecisionSelect: (selection) {
+                    final routeCtx = ref.read(aiContextProvider);
+                    _chooseDecision(
+                      activeId,
+                      selection,
+                      systemContext: routeCtx.toSystemContext(),
+                    );
                   },
                   emptyBuilder: (context) => Center(
                     child: Padding(

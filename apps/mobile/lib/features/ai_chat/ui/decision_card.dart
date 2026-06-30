@@ -17,6 +17,7 @@ class DecisionCard extends StatelessWidget {
     super.key,
     required this.request,
     required this.interactive,
+    this.selectedOptionId,
     required this.onSelect,
   });
 
@@ -25,9 +26,10 @@ class DecisionCard extends StatelessWidget {
   /// Only the trailing turn's decision is actionable; past ones render
   /// read-only so a scroll-back can't re-fire a stale choice.
   final bool interactive;
+  final String? selectedOptionId;
 
   /// Called with the natural-language reply to send as the next user turn.
-  final void Function(String reply) onSelect;
+  final void Function(DecisionOption option, String reply) onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +59,12 @@ class DecisionCard extends StatelessWidget {
             if (i > 0) const SizedBox(height: AppSpacing.s8),
             _OptionTile(
               option: request.options[i],
+              selected: request.options[i].id == selectedOptionId,
               onTap: interactive
-                  ? () => onSelect(_replyFor(request.options[i]))
+                  ? () {
+                      final option = request.options[i];
+                      onSelect(option, replyFor(option));
+                    }
                   : null,
             ),
           ],
@@ -73,13 +79,18 @@ class DecisionCard extends StatelessWidget {
 
   /// Structured-but-natural reply written back to the conversation so the
   /// agent continues under the chosen constraint.
-  static String _replyFor(DecisionOption o) => '我选择「${o.label}」。请在此方案下继续。';
+  static String replyFor(DecisionOption o) => '我选择「${o.label}」。请在此方案下继续。';
 }
 
 class _OptionTile extends StatelessWidget {
-  const _OptionTile({required this.option, required this.onTap});
+  const _OptionTile({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
 
   final DecisionOption option;
+  final bool selected;
   final VoidCallback? onTap;
 
   @override
@@ -97,9 +108,11 @@ class _OptionTile extends StatelessWidget {
           color: colors.background,
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: option.recommended
-                ? colors.primary.withValues(alpha: AppOpacity.scrim)
-                : colors.border,
+            color: selected
+                ? colors.primary
+                : (option.recommended
+                      ? colors.primary.withValues(alpha: AppOpacity.scrim)
+                      : colors.border),
           ),
         ),
         child: Column(
@@ -121,6 +134,14 @@ class _OptionTile extends StatelessWidget {
                     tone: AppBadgeTone.accent,
                     size: AppBadgeSize.compact,
                   ),
+                if (selected) ...[
+                  const SizedBox(width: AppSpacing.s4),
+                  Icon(
+                    FLucideIcons.check,
+                    size: AppIconSizes.xs,
+                    color: colors.primary,
+                  ),
+                ],
                 if (onTap != null) ...[
                   const SizedBox(width: AppSpacing.s4),
                   Icon(

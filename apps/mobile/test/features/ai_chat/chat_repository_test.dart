@@ -331,6 +331,71 @@ void main() {
       expect(invocation.output, <String, Object?>{'rows': <Object?>[]});
     });
 
+    test(
+      'records ask_user decision selection and forwards next-turn metadata',
+      () async {
+        final id = await activeSessionId();
+        final assistant = ChatMessage(
+          id: 'assistant-1',
+          sessionId: id,
+          ownerUserId: 'user-1',
+          role: ChatRole.assistant,
+          content: '',
+          status: ChatMessageStatus.complete,
+          createdAt: DateTime.utc(2026, 5, 1),
+          toolCalls: const <ToolInvocation>[
+            ToolInvocation(
+              id: 'decision-1',
+              name: 'ask_user',
+              input: <String, Object?>{},
+              output: <String, Object?>{
+                'type': 'decision_request',
+                'title': '选择方案',
+                'options': <Object?>[
+                  <String, Object?>{'id': 'a', 'label': '方案 A'},
+                  <String, Object?>{'id': 'b', 'label': '方案 B'},
+                ],
+              },
+            ),
+          ],
+        );
+        await store.insertMessage(assistant);
+
+        final selection = DecisionSelection(
+          optionId: 'a',
+          label: '方案 A',
+          reply: '我选择「方案 A」。请在此方案下继续。',
+          selectedAt: DateTime.utc(2026, 5, 1, 12),
+        );
+        await repo.recordDecisionSelection(
+          sessionId: id,
+          messageId: assistant.id,
+          toolInvocationId: 'decision-1',
+          selection: selection,
+        );
+        api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+        await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: selection.reply,
+          turnMetadata: <String, Object?>{
+            'decision': selection.toJson(),
+            'decision_message_id': assistant.id,
+            'decision_tool_invocation_id': 'decision-1',
+          },
+        );
+
+        final updated = (await store.listMessages(
+          id,
+        )).firstWhere((message) => message.id == assistant.id);
+        expect(updated.toolCalls.single.decisionSelection?.optionId, 'a');
+        expect(api.lastMetadata?['decision_message_id'], assistant.id);
+        expect(api.lastMetadata?['decision_tool_invocation_id'], 'decision-1');
+        final metadataDecision = api.lastMetadata?['decision'] as Map;
+        expect(metadataDecision['option_id'], 'a');
+      },
+    );
+
     test('marks turn errored when the stream throws', () async {
       api.errorToThrow = const AiChatRequestException(
         statusCode: 500,

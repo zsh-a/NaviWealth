@@ -6,6 +6,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
+import 'decision_request.dart';
 import 'message_bubble.dart';
 
 /// The conversation timeline — message list + follow-scroll + the
@@ -32,6 +33,7 @@ class ChatConversationView extends ConsumerStatefulWidget {
     ),
     this.invocationIntent,
     this.onReplyChip,
+    this.onDecisionSelect,
     this.emptyBuilder,
     this.loadingBuilder,
     this.suggestCannedReplies = true,
@@ -49,6 +51,8 @@ class ChatConversationView extends ConsumerStatefulWidget {
   /// When non-null, completed assistant turns render reply chips and
   /// call this with the tapped chip text.
   final void Function(String chip)? onReplyChip;
+
+  final void Function(DecisionSelectionRequest selection)? onDecisionSelect;
 
   /// Shown when the session has no messages yet. Defaults to an empty
   /// box so a host that wants nothing pays for nothing.
@@ -190,6 +194,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
                 message: messages[i],
                 invocationIntent: widget.invocationIntent,
                 onReplyChip: widget.onReplyChip,
+                onDecisionSelect: widget.onDecisionSelect,
                 isLastAssistant: i == lastAssistantIdx,
                 isLastUser: i == lastUserIdx,
                 suggestCannedReplies: widget.suggestCannedReplies,

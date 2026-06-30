@@ -123,6 +123,7 @@ class ChatRepository {
     String? systemContext,
     String? model,
     CancelToken? cancelToken,
+    Map<String, Object?>? turnMetadata,
 
     /// When this turn was triggered through an
     /// [AiIntentInvocation] (capsule / insight / command), pass the
@@ -250,6 +251,7 @@ class ChatRepository {
         agentId: 'ai_chat',
         mode: 'chat',
         metadata: <String, Object?>{
+          ...?turnMetadata,
           'owner_user_id': ownerUserId,
           'assistant_message_id': assistantId,
           'invocation': ?invocationTrace,
@@ -521,6 +523,29 @@ class ChatRepository {
       for (final t in message.toolCalls)
         if (t.id == toolInvocationId)
           t.copyWith(applyState: newState, clearApplyState: newState == null)
+        else
+          t,
+    ];
+    await _store.updateMessage(message.copyWith(toolCalls: updatedToolCalls));
+  }
+
+  Future<void> recordDecisionSelection({
+    required String sessionId,
+    required String messageId,
+    required String toolInvocationId,
+    required DecisionSelection selection,
+  }) async {
+    final messages = await _store.listMessages(sessionId);
+    final message = messages.firstWhere(
+      (m) => m.id == messageId,
+      orElse: () => throw StateError(
+        'message $messageId not found in session $sessionId',
+      ),
+    );
+    final updatedToolCalls = <ToolInvocation>[
+      for (final t in message.toolCalls)
+        if (t.id == toolInvocationId)
+          t.copyWith(decisionSelection: selection)
         else
           t,
     ];

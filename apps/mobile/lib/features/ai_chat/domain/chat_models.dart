@@ -120,6 +120,7 @@ class ToolInvocation {
     required this.input,
     this.output,
     this.status = ToolInvocationStatus.completed,
+    this.decisionSelection,
     this.applyState,
     this.partialInputJson,
   });
@@ -129,6 +130,7 @@ class ToolInvocation {
   final Object? input;
   final Object? output;
   final ToolInvocationStatus status;
+  final DecisionSelection? decisionSelection;
   final String? partialInputJson;
 
   /// Apply state for `propose_*` tool calls. `null` for read-only
@@ -142,6 +144,7 @@ class ToolInvocation {
     Object? input,
     Object? output,
     ToolInvocationStatus? status,
+    DecisionSelection? decisionSelection,
     String? partialInputJson,
     ProposalApplyState? applyState,
     bool clearApplyState = false,
@@ -151,6 +154,7 @@ class ToolInvocation {
     input: input ?? this.input,
     output: output ?? this.output,
     status: status ?? this.status,
+    decisionSelection: decisionSelection ?? this.decisionSelection,
     partialInputJson: partialInputJson ?? this.partialInputJson,
     applyState: clearApplyState ? null : (applyState ?? this.applyState),
   );
@@ -160,6 +164,8 @@ class ToolInvocation {
     'name': name,
     'input': input,
     'status': status.wire,
+    if (decisionSelection != null)
+      'decision_selection': decisionSelection!.toJson(),
     if (partialInputJson != null) 'partial_input_json': partialInputJson,
     'output': output,
     if (applyState != null) 'apply_state': applyState!.toJson(),
@@ -172,12 +178,19 @@ class ToolInvocation {
             raw.map((k, v) => MapEntry(k.toString(), v)),
           )
         : null;
+    final rawSelection = json['decision_selection'];
+    final selection = rawSelection is Map
+        ? DecisionSelection.fromJson(
+            rawSelection.map((k, v) => MapEntry(k.toString(), v)),
+          )
+        : null;
     return ToolInvocation(
       id: (json['id'] ?? '') as String,
       name: (json['name'] ?? '') as String,
       input: json['input'],
       output: json['output'],
       status: ToolInvocationStatusX.parse(json['status'] as String?),
+      decisionSelection: selection,
       partialInputJson: json['partial_input_json'] as String?,
       applyState: apply,
     );
@@ -198,6 +211,38 @@ class ToolInvocation {
           ),
         )
         .toList(growable: false);
+  }
+}
+
+class DecisionSelection {
+  const DecisionSelection({
+    required this.optionId,
+    required this.label,
+    required this.reply,
+    required this.selectedAt,
+  });
+
+  final String optionId;
+  final String label;
+  final String reply;
+  final DateTime selectedAt;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'option_id': optionId,
+    'label': label,
+    'reply': reply,
+    'selected_at': selectedAt.toIso8601String(),
+  };
+
+  factory DecisionSelection.fromJson(Map<String, Object?> json) {
+    return DecisionSelection(
+      optionId: (json['option_id'] as String?) ?? '',
+      label: (json['label'] as String?) ?? '',
+      reply: (json['reply'] as String?) ?? '',
+      selectedAt:
+          DateTime.tryParse((json['selected_at'] as String?) ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    );
   }
 }
 

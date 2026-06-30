@@ -101,3 +101,17 @@ class DecisionOption {
             .toList()
       : const <String>[];
 }
+
+class DecisionSelectionRequest {
+  const DecisionSelectionRequest({
+    required this.messageId,
+    required this.toolInvocationId,
+    required this.option,
+    required this.reply,
+  });
+
+  final String messageId;
+  final String toolInvocationId;
+  final DecisionOption option;
+  final String reply;
+}

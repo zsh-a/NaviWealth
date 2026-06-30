@@ -150,6 +150,7 @@ class _FakeChatRepository implements ChatRepository {
     String? model,
     CancelToken? cancelToken,
     Map<String, Object?>? invocationTrace,
+    Map<String, Object?>? turnMetadata,
   }) async {
     sendCount += 1;
     lastSessionId = sessionId;
