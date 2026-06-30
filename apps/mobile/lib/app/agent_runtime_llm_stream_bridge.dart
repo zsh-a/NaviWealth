@@ -149,10 +149,16 @@ class AgentRuntimeLlmStreamBridge {
       chatState: chatState,
       toolResults: toolResults,
     );
-    await for (final eventJson in _streamAgentTurnJson(
-      requestJson: jsonEncode(request),
-    )) {
-      yield _decodeObject(eventJson);
+    try {
+      await for (final eventJson in _streamAgentTurnJson(
+        requestJson: jsonEncode(request),
+      )) {
+        yield _decodeObject(eventJson);
+      }
+    } on FormatException {
+      rethrow;
+    } catch (error) {
+      yield _streamErrorEvent(error);
     }
   }
 
@@ -227,4 +233,17 @@ int? _metadataInt(Map<String, Object?> metadata, String key) {
   final value = metadata[key];
   if (value is int && value > 0) return value;
   return null;
+}
+
+Map<String, Object?> _streamErrorEvent(Object error) {
+  return <String, Object?>{
+    'kind': 'error',
+    'content': null,
+    'metadata': <String, Object?>{
+      'code': 'frb_llm_stream_error',
+      'message': error.toString(),
+      'retryable': false,
+      'details': const <String, Object?>{},
+    },
+  };
 }

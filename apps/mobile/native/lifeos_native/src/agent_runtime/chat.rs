@@ -1,4 +1,4 @@
-use super::llm_provider::llm_error_to_anyhow;
+use super::llm_provider::llm_error_record_metadata;
 use super::*;
 
 const CHAT_STATE_METADATA_KEY: &str = "chat_state";
@@ -28,10 +28,14 @@ pub(super) async fn stream_agent_turn_response(
     let request = chat_turn_llm_request(&state);
     let started = agent_turn_started_event(&envelope, &request)?;
     let _ = sink.add(serde_json::to_string(&started)?);
-    let mut stream = provider
-        .stream(request)
-        .await
-        .map_err(llm_error_to_anyhow)?;
+    let mut stream = match provider.stream(request).await {
+        Ok(stream) => stream,
+        Err(error) => {
+            let value = agent_turn_error_event(&envelope, llm_error_record_metadata(error));
+            let _ = sink.add(serde_json::to_string(&value)?);
+            return Ok(());
+        }
+    };
     let mut saw_terminal_error = false;
     let mut assistant_text = String::new();
     let mut tool_calls = Vec::new();
@@ -68,16 +72,7 @@ pub(super) async fn stream_agent_turn_response(
             }
             Err(error) => {
                 saw_terminal_error = true;
-                let record = error.record;
-                let value = agent_turn_error_event(
-                    &envelope,
-                    json!({
-                        "code": record.code,
-                        "message": record.message,
-                        "retryable": record.retryable,
-                        "details": record.details,
-                    }),
-                );
+                let value = agent_turn_error_event(&envelope, llm_error_record_metadata(error));
                 let _ = sink.add(serde_json::to_string(&value)?);
                 break;
             }

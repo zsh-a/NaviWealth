@@ -1,3 +1,4 @@
+use super::llm_provider::llm_error_record_metadata;
 use super::llm_provider::llm_error_to_anyhow;
 use super::*;
 
@@ -30,10 +31,17 @@ pub(super) async fn stream_llm_response(
     provider: Box<dyn LlmProvider>,
     request: LlmRequest,
 ) -> Result<()> {
-    let mut stream = provider
-        .stream(request)
-        .await
-        .map_err(llm_error_to_anyhow)?;
+    let mut stream = match provider.stream(request).await {
+        Ok(stream) => stream,
+        Err(error) => {
+            let _ = sink.add(serde_json::to_string(&json!({
+                "kind": "error",
+                "content": null,
+                "metadata": llm_error_record_metadata(error),
+            }))?);
+            return Ok(());
+        }
+    };
     while let Some(event) = stream.next().await {
         match event {
             Ok(mut event) => {
@@ -41,16 +49,10 @@ pub(super) async fn stream_llm_response(
                 let _ = sink.add(serde_json::to_string(&event)?);
             }
             Err(error) => {
-                let record = error.record;
                 let _ = sink.add(serde_json::to_string(&json!({
                     "kind": "error",
                     "content": null,
-                    "metadata": {
-                        "code": record.code,
-                        "message": record.message,
-                        "retryable": record.retryable,
-                        "details": record.details,
-                    }
+                    "metadata": llm_error_record_metadata(error),
                 }))?);
                 break;
             }

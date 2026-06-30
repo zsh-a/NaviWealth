@@ -247,6 +247,39 @@ void main() {
       throwsA(isA<FormatException>()),
     );
   });
+
+  test('maps FRB stream source errors into error events', () async {
+    final streamBridge = AgentRuntimeLlmStreamBridge(
+      llmBridge: AgentRuntimeLlmBridge(
+        bridge: _FakeNativeBridge(),
+        profile: const LlmProfile(
+          id: 'profile_1',
+          name: '',
+          provider: LlmProvider.openai,
+          apiKey: 'sk-openai',
+        ),
+      ),
+      initRuntime: ({String? libraryPath}) async {},
+      streamProfileJson: ({required String requestJson}) {
+        return Stream<String>.error(StateError('404 page not found'));
+      },
+    );
+
+    final events = await streamBridge
+        .streamProfile(
+          messages: const <Map<String, Object?>>[
+            <String, Object?>{'role': 'user', 'content': 'Hello'},
+          ],
+        )
+        .toList();
+
+    expect(events, hasLength(1));
+    expect(events.single['kind'], 'error');
+    final metadata = events.single['metadata'] as Map<String, Object?>;
+    expect(metadata['code'], 'frb_llm_stream_error');
+    expect(metadata['message'], contains('404 page not found'));
+    expect(metadata['retryable'], false);
+  });
 }
 
 class _FakeNativeBridge implements AgentRuntimeNativeBridge {

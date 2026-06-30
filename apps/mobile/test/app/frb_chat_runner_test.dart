@@ -457,6 +457,36 @@ void main() {
     expect((events[2] as DoneEvent).stopReason, 'error');
   });
 
+  test('maps FRB source stream errors without incomplete fallback', () async {
+    final runner = FrbChatRunner(
+      llmBridge: _FakeLlmBridge(),
+      streamBridge: _streamBridgeStreams(
+        _FakeLlmBridge(),
+        eventBatches: <Stream<String>>[
+          Stream<String>.error(StateError('404 page not found')),
+        ],
+      ),
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Hello'),
+          ],
+        )
+        .toList();
+
+    expect(events, hasLength(3));
+    final span = events[0] as SpanEvent;
+    expect(span.status, AiSpanStatus.error);
+    expect(span.errorCode, 'frb_llm_stream_error');
+    expect(span.errorCode, isNot('frb_chat_stream_incomplete'));
+    final error = events[1] as ErrorEvent;
+    expect(error.code, 'frb_llm_stream_error');
+    expect(error.message, contains('404 page not found'));
+    expect((events[2] as DoneEvent).stopReason, 'error');
+  });
+
   test('rejects malformed FRB finished response events', () async {
     final runner = FrbChatRunner(
       llmBridge: _FakeLlmBridge(),

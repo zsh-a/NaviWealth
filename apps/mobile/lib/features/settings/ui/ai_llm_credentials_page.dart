@@ -18,6 +18,7 @@ import 'package:forui/forui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../app/agent_runtime_proposal_bridge.dart';
+import '../../../app/agent_runtime_catalog.dart';
 import '../../../app/agent_runtime_runner.dart';
 import '../../../app/agent_runtime_trace_recorder.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
@@ -193,7 +194,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     });
     try {
       final result = await runner.run(
-        agentId: 'settings_llm_runtime_check',
+        agentId: kSettingsLlmRuntimeCheckAgentId,
         messages: <Map<String, Object?>>[
           <String, Object?>{
             'role': 'user',
@@ -210,7 +211,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         await ref
             .read(agentRuntimeTraceRecorderProvider)
             .recordProfileTurn(
-              agentId: 'settings_llm_runtime_check',
+              agentId: kSettingsLlmRuntimeCheckAgentId,
               result: result,
               domain: 'settings',
               surface: 'settings_ai_llm',

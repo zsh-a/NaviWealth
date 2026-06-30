@@ -21,6 +21,7 @@ import 'domain_composition.dart';
 
 const String kAgentRuntimeProtocolVersion = 'agent.v1';
 const String kAgentRuntimeCatalogVersion = 'agent_catalog.v1';
+const String kSettingsLlmRuntimeCheckAgentId = 'settings_llm_runtime_check';
 
 final agentRuntimeCatalogProvider = Provider<AgentRuntimeCatalog>((ref) {
   final packs = ref.watch(activeDomainPacksProvider);
@@ -42,6 +43,7 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
     generatedAt: generatedAt.toUtc(),
     activeDomains: [for (final pack in packs) pack.scope.wire],
     agents: [
+      kSettingsLlmRuntimeCheckAgent,
       for (final agent in agents)
         AgentRuntimeAgentSpec.fromAgent(agent, domain: _domainForAgent(agent)),
     ],
@@ -59,6 +61,19 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
     ],
   );
 }
+
+const AgentRuntimeAgentSpec kSettingsLlmRuntimeCheckAgent =
+    AgentRuntimeAgentSpec(
+      id: kSettingsLlmRuntimeCheckAgentId,
+      name: 'Settings LLM Runtime Check',
+      version: '0.1.0',
+      schedule: AgentRuntimeScheduleSpec.manual(),
+      capabilities: <String>['diagnostic'],
+      metadata: <String, Object?>{
+        'domain': 'settings',
+        'surface': 'settings_ai_llm',
+      },
+    );
 
 class AgentRuntimeCatalog {
   const AgentRuntimeCatalog({
@@ -133,8 +148,13 @@ class AgentRuntimeAgentSpec {
 }
 
 class AgentRuntimeScheduleSpec {
+  const AgentRuntimeScheduleSpec.manual()
+    : everySeconds = null,
+      preferredHourLocal = null,
+      jitterSeconds = null;
+
   const AgentRuntimeScheduleSpec.interval({
-    required this.everySeconds,
+    required int this.everySeconds,
     this.preferredHourLocal,
     this.jitterSeconds,
   });
@@ -148,16 +168,23 @@ class AgentRuntimeScheduleSpec {
     );
   }
 
-  final int everySeconds;
+  final int? everySeconds;
   final int? preferredHourLocal;
   final int? jitterSeconds;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'type': 'interval',
-    'every_seconds': everySeconds,
-    if (preferredHourLocal != null) 'preferred_hour_local': preferredHourLocal,
-    if (jitterSeconds != null) 'jitter_seconds': jitterSeconds,
-  };
+  Map<String, Object?> toJson() {
+    final everySeconds = this.everySeconds;
+    if (everySeconds == null) {
+      return const <String, Object?>{'type': 'manual'};
+    }
+    return <String, Object?>{
+      'type': 'interval',
+      'every_seconds': everySeconds,
+      if (preferredHourLocal != null)
+        'preferred_hour_local': preferredHourLocal,
+      if (jitterSeconds != null) 'jitter_seconds': jitterSeconds,
+    };
+  }
 }
 
 class AgentRuntimeToolSpec {

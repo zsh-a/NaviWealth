@@ -80,8 +80,20 @@ void main() {
     expect(json['active_domains'], ['finance']);
 
     final agents = json['agents']! as List<Object?>;
-    expect(agents, hasLength(1));
-    expect(agents.single, <String, Object?>{
+    expect(agents, hasLength(2));
+    expect(agents.first, <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'id': 'settings_llm_runtime_check',
+      'name': 'Settings LLM Runtime Check',
+      'version': '0.1.0',
+      'schedule': <String, Object?>{'type': 'manual'},
+      'capabilities': <String>['diagnostic'],
+      'metadata': <String, Object?>{
+        'domain': 'settings',
+        'surface': 'settings_ai_llm',
+      },
+    });
+    expect(agents[1], <String, Object?>{
       'protocol_version': 'agent.v1',
       'id': 'execution_review',
       'name': 'Execution Review',
@@ -141,7 +153,7 @@ void main() {
       (catalog['agents']! as List<Object?>).cast<Map<String, Object?>>().map(
         (agent) => agent['id'],
       ),
-      ['execution_review'],
+      ['settings_llm_runtime_check', 'execution_review'],
     );
     expect(
       (catalog['tools']! as List<Object?>).cast<Map<String, Object?>>().map(

@@ -2,7 +2,7 @@ use agent_llm::{
     AnthropicProvider, LlmProvider, LlmRequest, MockLlmProvider, OpenAiCompatibleProvider,
 };
 use anyhow::Result;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmProvider>> {
     match request.provider.as_str() {
@@ -24,6 +24,7 @@ pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmPr
         "anthropic" => {
             let api_key = llm_metadata_string(request, "api_key")?;
             let base_url = llm_metadata_string(request, "base_url")
+                .map(normalize_anthropic_base_url)
                 .unwrap_or_else(|_| "https://api.anthropic.com/v1".to_owned());
             let version = llm_metadata_string(request, "anthropic_version")
                 .unwrap_or_else(|_| "2023-06-01".to_owned());
@@ -38,6 +39,16 @@ pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmPr
 
 pub(super) fn llm_error_to_anyhow(error: agent_llm::LlmError) -> anyhow::Error {
     anyhow::anyhow!(error.record.message.clone())
+}
+
+pub(super) fn llm_error_record_metadata(error: agent_llm::LlmError) -> Value {
+    let record = error.record;
+    json!({
+        "code": record.code,
+        "message": record.message,
+        "retryable": record.retryable,
+        "details": record.details,
+    })
 }
 
 fn llm_metadata_string(request: &LlmRequest, key: &str) -> Result<String> {
@@ -66,5 +77,41 @@ fn normalize_openai_base_url(base_url: String) -> String {
         base
     } else {
         base + "/v1"
+    }
+}
+
+fn normalize_anthropic_base_url(base_url: String) -> String {
+    let base = base_url.trim().trim_end_matches('/').to_owned();
+    if let Some(prefix) = base.strip_suffix("/v1/messages") {
+        return prefix.to_owned() + "/v1";
+    }
+    if let Some(prefix) = base.strip_suffix("/messages") {
+        return prefix.to_owned();
+    }
+    if base.ends_with("/v1") {
+        base
+    } else {
+        base + "/v1"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalizes_anthropic_base_url_to_v1_base() {
+        assert_eq!(
+            normalize_anthropic_base_url("https://api.anthropic.com".to_owned()),
+            "https://api.anthropic.com/v1"
+        );
+        assert_eq!(
+            normalize_anthropic_base_url("https://api.anthropic.com/v1".to_owned()),
+            "https://api.anthropic.com/v1"
+        );
+        assert_eq!(
+            normalize_anthropic_base_url("https://api.anthropic.com/v1/messages".to_owned()),
+            "https://api.anthropic.com/v1"
+        );
     }
 }
