@@ -78,6 +78,7 @@ class AgentRuntimeLlmStreamBridge {
       surface: _metadataString(metadata, 'surface'),
       agentId: _metadataString(metadata, 'agent_id'),
       mode: _metadataString(metadata, 'mode') ?? 'chat',
+      maxToolRounds: _metadataInt(metadata, 'max_tool_rounds'),
     );
   }
 
@@ -93,6 +94,9 @@ class AgentRuntimeLlmStreamBridge {
     String? surface,
     String? agentId,
     String? mode,
+    int? maxToolRounds,
+    Map<String, Object?>? chatState,
+    List<Map<String, Object?>> toolResults = const <Map<String, Object?>>[],
   }) {
     return streamChatTurn(
       messages: messages,
@@ -106,6 +110,9 @@ class AgentRuntimeLlmStreamBridge {
       surface: surface,
       agentId: agentId,
       mode: mode,
+      maxToolRounds: maxToolRounds,
+      chatState: chatState,
+      toolResults: toolResults,
     );
   }
 
@@ -121,6 +128,9 @@ class AgentRuntimeLlmStreamBridge {
     String? surface,
     String? agentId,
     String? mode,
+    int? maxToolRounds,
+    Map<String, Object?>? chatState,
+    List<Map<String, Object?>> toolResults = const <Map<String, Object?>>[],
   }) async* {
     await _ensureInitialized();
     final request = _buildChatTurnRequest(
@@ -135,6 +145,9 @@ class AgentRuntimeLlmStreamBridge {
       surface: surface,
       agentId: agentId,
       mode: mode,
+      maxToolRounds: maxToolRounds,
+      chatState: chatState,
+      toolResults: toolResults,
     );
     await for (final eventJson in _streamAgentTurnJson(
       requestJson: jsonEncode(request),
@@ -159,13 +172,21 @@ class AgentRuntimeLlmStreamBridge {
     required String? surface,
     required String? agentId,
     required String? mode,
+    required int? maxToolRounds,
+    required Map<String, Object?>? chatState,
+    required List<Map<String, Object?>> toolResults,
   }) {
+    final runtimeMetadata = <String, Object?>{
+      ...metadata,
+      if (chatState != null) 'chat_state': chatState,
+      if (toolResults.isNotEmpty) 'tool_results': toolResults,
+    };
     final llmRequest = _llmBridge.buildRequest(
       messages: messages,
       tools: tools,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
+      metadata: runtimeMetadata,
     );
     return <String, Object?>{
       'protocol_version': llmRequest['protocol_version'],
@@ -182,6 +203,7 @@ class AgentRuntimeLlmStreamBridge {
       'max_output_tokens': ?llmRequest['max_output_tokens'],
       'tools': llmRequest['tools'],
       'metadata': llmRequest['metadata'],
+      'max_tool_rounds': ?maxToolRounds,
     };
   }
 }
@@ -198,5 +220,11 @@ Map<String, Object?> _decodeObject(String json) {
 String? _metadataString(Map<String, Object?> metadata, String key) {
   final value = metadata[key];
   if (value is String && value.trim().isNotEmpty) return value.trim();
+  return null;
+}
+
+int? _metadataInt(Map<String, Object?> metadata, String key) {
+  final value = metadata[key];
+  if (value is int && value > 0) return value;
   return null;
 }

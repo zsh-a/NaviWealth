@@ -46,6 +46,72 @@ pub struct ChatTurnRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ChatTurnState {
+    #[serde(default = "protocol_version")]
+    pub protocol_version: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub turn_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub surface: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub thread_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_id: Option<String>,
+    pub provider: String,
+    pub model: String,
+    pub messages: Vec<LlmMessage>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_output_tokens: Option<u32>,
+    #[serde(default)]
+    pub tools: Vec<ToolSpec>,
+    #[serde(default)]
+    pub metadata: Value,
+    #[serde(default = "default_max_tool_rounds")]
+    pub max_tool_rounds: u32,
+    #[serde(default)]
+    pub round: u32,
+    #[serde(default)]
+    pub pending_tool_calls: Vec<ChatToolCall>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ChatToolCall {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub input: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ChatToolResult {
+    pub tool_call_id: String,
+    pub tool_name: String,
+    #[serde(default)]
+    pub output: Value,
+    #[serde(default)]
+    pub is_error: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ChatTurnAdvance {
+    Completed {
+        state: ChatTurnState,
+        stop_reason: String,
+    },
+    RequiresToolResults {
+        state: ChatTurnState,
+        tool_calls: Vec<ChatToolCall>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ChatTurnEvent {
     pub kind: ChatTurnEventKind,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -151,32 +217,135 @@ impl ChatTurnRunner {
     }
 }
 
+pub fn chat_turn_initial_state(request: &ChatTurnRequest) -> Result<ChatTurnState, ChatError> {
+    if request.messages.is_empty() {
+        return Err(ChatError::validation(
+            "chat turn requires at least one message",
+        ));
+    }
+    if !request.metadata.is_null() && !request.metadata.is_object() {
+        return Err(ChatError::validation(
+            "chat turn metadata must be a JSON object",
+        ));
+    }
+    Ok(ChatTurnState {
+        protocol_version: request.protocol_version.clone(),
+        turn_id: request.turn_id.clone(),
+        surface: request.surface.clone(),
+        mode: request.mode.clone(),
+        session_id: request.session_id.clone(),
+        thread_id: request.thread_id.clone(),
+        agent_id: request.agent_id.clone(),
+        provider: request.provider.clone(),
+        model: request.model.clone(),
+        messages: request.messages.clone(),
+        temperature: request.temperature,
+        max_output_tokens: request.max_output_tokens,
+        tools: request.tools.clone(),
+        metadata: if request.metadata.is_null() {
+            json!({})
+        } else {
+            request.metadata.clone()
+        },
+        max_tool_rounds: request.max_tool_rounds.max(1),
+        round: 0,
+        pending_tool_calls: Vec::new(),
+    })
+}
+
+pub fn chat_turn_llm_request(state: &ChatTurnState) -> LlmRequest {
+    LlmRequest {
+        protocol_version: state.protocol_version.clone(),
+        provider: state.provider.clone(),
+        model: state.model.clone(),
+        messages: state.messages.clone(),
+        temperature: state.temperature,
+        max_output_tokens: state.max_output_tokens,
+        tools: state.tools.clone(),
+        metadata: llm_metadata(state),
+    }
+}
+
+pub fn chat_turn_next_round(state: &ChatTurnState) -> u32 {
+    state.round.saturating_add(1)
+}
+
+pub fn chat_turn_apply_response(
+    mut state: ChatTurnState,
+    assistant_text: &str,
+    tool_calls: Vec<ChatToolCall>,
+    response: &LlmResponse,
+) -> Result<ChatTurnAdvance, ChatError> {
+    let round = chat_turn_next_round(&state);
+    state.round = round;
+    if !matches!(response.finish_reason, LlmFinishReason::ToolCall) || tool_calls.is_empty() {
+        state.pending_tool_calls.clear();
+        return Ok(ChatTurnAdvance::Completed {
+            state,
+            stop_reason: finish_reason(&response.finish_reason).to_owned(),
+        });
+    }
+    if round >= state.max_tool_rounds {
+        return Err(ChatError::validation(
+            "chat turn exceeded the tool round budget",
+        ));
+    }
+
+    state
+        .messages
+        .push(assistant_message(assistant_text, &tool_calls));
+    state.pending_tool_calls = tool_calls.clone();
+    Ok(ChatTurnAdvance::RequiresToolResults { state, tool_calls })
+}
+
+pub fn chat_turn_apply_tool_results(
+    mut state: ChatTurnState,
+    results: Vec<ChatToolResult>,
+) -> Result<ChatTurnState, ChatError> {
+    if state.pending_tool_calls.is_empty() {
+        return Err(ChatError::validation(
+            "chat turn has no pending tool calls to resume",
+        ));
+    }
+    let mut result_blocks = Vec::new();
+    for call in state.pending_tool_calls.clone() {
+        let result = results
+            .iter()
+            .find(|result| result.tool_call_id == call.id)
+            .ok_or_else(|| {
+                ChatError::validation(format!("missing tool result for tool call '{}'", call.id))
+            })?;
+        result_blocks.push(tool_result_block(
+            &call.id,
+            ToolOutput {
+                value: result.output.clone(),
+                is_error: result.is_error,
+            },
+        ));
+    }
+    state.pending_tool_calls.clear();
+    state.messages.push(LlmMessage {
+        role: LlmRole::User,
+        content: Value::Array(result_blocks),
+        name: None,
+        metadata: json!({}),
+    });
+    Ok(state)
+}
+
 async fn run_chat_turn(
     provider: Arc<dyn LlmProvider>,
     services: Arc<dyn AgentServices>,
     request: ChatTurnRequest,
     sender: mpsc::Sender<Result<ChatTurnEvent, ChatError>>,
 ) {
-    if request.messages.is_empty() {
-        send_error(
-            &sender,
-            0,
-            ChatError::validation("chat turn requires at least one message"),
-        )
-        .await;
-        return;
-    }
-    if !request.metadata.is_null() && !request.metadata.is_object() {
-        send_error(
-            &sender,
-            0,
-            ChatError::validation("chat turn metadata must be a JSON object"),
-        )
-        .await;
-        return;
-    }
-    let max_tool_rounds = request.max_tool_rounds.max(1);
-    let mut conversation = request.messages.clone();
+    let mut state = match chat_turn_initial_state(&request) {
+        Ok(state) => state,
+        Err(error) => {
+            send_error(&sender, 0, error).await;
+            return;
+        }
+    };
     send_event(
         &sender,
         ChatTurnEvent {
@@ -190,22 +359,14 @@ async fn run_chat_turn(
             tool_output: None,
             usage: None,
             round: 0,
-            metadata: turn_metadata(&request),
+            metadata: turn_metadata(&state),
         },
     )
     .await;
 
-    for round in 1..=max_tool_rounds {
-        let llm_request = LlmRequest {
-            protocol_version: request.protocol_version.clone(),
-            provider: request.provider.clone(),
-            model: request.model.clone(),
-            messages: conversation.clone(),
-            temperature: request.temperature,
-            max_output_tokens: request.max_output_tokens,
-            tools: request.tools.clone(),
-            metadata: llm_metadata(&request),
-        };
+    loop {
+        let round = chat_turn_next_round(&state);
+        let llm_request = chat_turn_llm_request(&state);
         let mut stream = match provider.stream(llm_request).await {
             Ok(stream) => stream,
             Err(error) => {
@@ -308,22 +469,26 @@ async fn run_chat_turn(
         )
         .await;
 
-        if !matches!(response.finish_reason, LlmFinishReason::ToolCall) || tool_calls.is_empty() {
-            send_done(&sender, round, finish_reason(&response.finish_reason)).await;
-            return;
-        }
-        if round >= max_tool_rounds {
-            send_error(
-                &sender,
-                round,
-                ChatError::validation("chat turn exceeded the tool round budget"),
-            )
-            .await;
-            return;
-        }
+        let advance = match chat_turn_apply_response(state, &assistant_text, tool_calls, &response)
+        {
+            Ok(advance) => advance,
+            Err(error) => {
+                send_error(&sender, round, error).await;
+                return;
+            }
+        };
+        let (pending_state, tool_calls) = match advance {
+            ChatTurnAdvance::Completed {
+                state: _,
+                stop_reason,
+            } => {
+                send_done(&sender, round, &stop_reason).await;
+                return;
+            }
+            ChatTurnAdvance::RequiresToolResults { state, tool_calls } => (state, tool_calls),
+        };
 
-        conversation.push(assistant_message(&assistant_text, &tool_calls));
-        let mut result_blocks = Vec::new();
+        let mut results = Vec::new();
         for tool_call in tool_calls {
             let output = match services
                 .call_tool(&tool_call.name, tool_call.input.clone())
@@ -360,22 +525,21 @@ async fn run_chat_turn(
                 },
             )
             .await;
-            result_blocks.push(tool_result_block(&tool_call.id, output));
+            results.push(ChatToolResult {
+                tool_call_id: tool_call.id,
+                tool_name: tool_call.name,
+                output: output.value,
+                is_error: output.is_error,
+            });
         }
-        conversation.push(LlmMessage {
-            role: LlmRole::User,
-            content: Value::Array(result_blocks),
-            name: None,
-            metadata: json!({}),
-        });
+        state = match chat_turn_apply_tool_results(pending_state, results) {
+            Ok(state) => state,
+            Err(error) => {
+                send_error(&sender, round, error).await;
+                return;
+            }
+        };
     }
-}
-
-#[derive(Debug, Clone)]
-struct ChatToolCall {
-    id: String,
-    name: String,
-    input: Value,
 }
 
 #[derive(Debug, Clone)]
@@ -497,43 +661,43 @@ async fn send_event(sender: &mpsc::Sender<Result<ChatTurnEvent, ChatError>>, eve
     let _ = sender.send(Ok(event)).await;
 }
 
-fn turn_metadata(request: &ChatTurnRequest) -> Value {
+fn turn_metadata(state: &ChatTurnState) -> Value {
     json!({
-        "turn_id": request.turn_id,
-        "session_id": request.session_id,
-        "thread_id": request.thread_id,
-        "agent_id": request.agent_id,
-        "surface": request.surface,
-        "mode": request.mode,
-        "provider": request.provider,
-        "model": request.model,
+        "turn_id": state.turn_id,
+        "session_id": state.session_id,
+        "thread_id": state.thread_id,
+        "agent_id": state.agent_id,
+        "surface": state.surface,
+        "mode": state.mode,
+        "provider": state.provider,
+        "model": state.model,
     })
 }
 
-fn llm_metadata(request: &ChatTurnRequest) -> Value {
-    let mut metadata = if request.metadata.is_null() {
+fn llm_metadata(state: &ChatTurnState) -> Value {
+    let mut metadata = if state.metadata.is_null() {
         json!({})
     } else {
-        request.metadata.clone()
+        state.metadata.clone()
     };
     if let Some(object) = metadata.as_object_mut() {
         object.insert("chat_turn".to_owned(), Value::Bool(true));
-        if let Some(value) = &request.turn_id {
+        if let Some(value) = &state.turn_id {
             object.insert("turn_id".to_owned(), Value::String(value.clone()));
         }
-        if let Some(value) = &request.session_id {
+        if let Some(value) = &state.session_id {
             object.insert("session_id".to_owned(), Value::String(value.clone()));
         }
-        if let Some(value) = &request.thread_id {
+        if let Some(value) = &state.thread_id {
             object.insert("thread_id".to_owned(), Value::String(value.clone()));
         }
-        if let Some(value) = &request.agent_id {
+        if let Some(value) = &state.agent_id {
             object.insert("agent_id".to_owned(), Value::String(value.clone()));
         }
-        if let Some(value) = &request.surface {
+        if let Some(value) = &state.surface {
             object.insert("surface".to_owned(), Value::String(value.clone()));
         }
-        if let Some(value) = &request.mode {
+        if let Some(value) = &state.mode {
             object.insert("mode".to_owned(), Value::String(value.clone()));
         }
     }
@@ -735,6 +899,76 @@ mod tests {
         assert_eq!(metadata["session_id"], "session_1");
         assert_eq!(metadata["thread_id"], "thread_1");
         assert_eq!(metadata["agent_id"], "chat");
+    }
+
+    #[test]
+    fn chat_turn_state_applies_tool_results_for_resume() {
+        let state = chat_turn_initial_state(&ChatTurnRequest {
+            protocol_version: PROTOCOL_VERSION.to_owned(),
+            turn_id: Some("turn_1".to_owned()),
+            surface: Some("agent_tui".to_owned()),
+            mode: Some("natural_language".to_owned()),
+            session_id: None,
+            thread_id: None,
+            agent_id: Some("chat".to_owned()),
+            provider: "mock".to_owned(),
+            model: "mock-model".to_owned(),
+            messages: vec![user_message("use a tool")],
+            temperature: None,
+            max_output_tokens: None,
+            tools: vec![],
+            metadata: json!({}),
+            max_tool_rounds: 4,
+        })
+        .expect("initial state");
+        let response = LlmResponse {
+            protocol_version: PROTOCOL_VERSION.to_owned(),
+            provider: "mock".to_owned(),
+            model: "mock-model".to_owned(),
+            content: String::new(),
+            finish_reason: LlmFinishReason::ToolCall,
+            usage: None,
+            metadata: json!({}),
+        };
+        let advance = chat_turn_apply_response(
+            state,
+            "",
+            vec![ChatToolCall {
+                id: "call_1".to_owned(),
+                name: "echo".to_owned(),
+                input: json!({"value": "ok"}),
+            }],
+            &response,
+        )
+        .expect("requires tools");
+        let pending = match advance {
+            ChatTurnAdvance::RequiresToolResults { state, tool_calls } => {
+                assert_eq!(tool_calls[0].id, "call_1");
+                state
+            }
+            ChatTurnAdvance::Completed { .. } => panic!("expected tool results"),
+        };
+
+        let resumed = chat_turn_apply_tool_results(
+            pending,
+            vec![ChatToolResult {
+                tool_call_id: "call_1".to_owned(),
+                tool_name: "echo".to_owned(),
+                output: json!({"value": "ok"}),
+                is_error: false,
+            }],
+        )
+        .expect("resume applies");
+
+        assert_eq!(resumed.round, 1);
+        assert!(resumed.pending_tool_calls.is_empty());
+        assert_eq!(resumed.messages.len(), 3);
+        assert_eq!(resumed.messages[1].role, LlmRole::Assistant);
+        assert_eq!(resumed.messages[2].role, LlmRole::User);
+        assert_eq!(
+            resumed.messages[2].content[0]["tool_use_id"],
+            Value::String("call_1".to_owned())
+        );
     }
 
     struct ScriptedToolProvider {

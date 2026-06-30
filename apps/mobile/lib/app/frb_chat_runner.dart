@@ -123,21 +123,24 @@ class FrbChatRunner implements DeviceChatRunner {
     String? model,
     CancelToken? cancelToken,
   }) async* {
-    final conversation = <Map<String, Object?>>[
+    final initialMessages = <Map<String, Object?>>[
       for (final message in messages) message.toJson(),
     ];
     var roundsUsed = 0;
-    for (var round = 1; round <= _maxToolRounds; round++) {
-      roundsUsed = round;
-      final roundId = 'r$round';
+    Map<String, Object?>? chatState;
+    var toolResults = const <Map<String, Object?>>[];
+    while (true) {
+      final nextRound = roundsUsed + 1;
+      roundsUsed = nextRound;
+      final roundId = 'r$nextRound';
       final roundStart = DateTime.now().toUtc();
       final state = _FrbStreamRoundState(
-        inputMessageCount: conversation.length,
+        inputMessageCount: initialMessages.length,
       );
       var finished = false;
       final stream = _cancelableFrbStream(
         streamBridge.streamChatTurn(
-          messages: conversation,
+          messages: initialMessages,
           tools: _tools,
           metadata: <String, Object?>{
             'agent_id': _agentId,
@@ -146,15 +149,21 @@ class FrbChatRunner implements DeviceChatRunner {
             'portfolio_snapshot': ?portfolioSnapshot,
             'context_pack': ?contextPack?.toJson(),
             'streaming': true,
-            'round': round,
+            'round': nextRound,
           },
+          maxToolRounds: _maxToolRounds,
+          chatState: chatState,
+          toolResults: toolResults,
         ),
         cancelToken,
       );
+      toolResults = const <Map<String, Object?>>[];
       await for (final event in stream) {
+        final eventRound = _int(event['round']);
+        if (eventRound > 0) roundsUsed = eventRound;
         if (cancelToken?.isCancelled == true) {
           yield _llmSpan(
-            round: round,
+            round: roundsUsed == 0 ? nextRound : roundsUsed,
             roundId: roundId,
             startedAt: roundStart,
             state: state,
@@ -169,7 +178,7 @@ class FrbChatRunner implements DeviceChatRunner {
         switch (_string(event['kind'])) {
           case _kFrbStreamCancelledKind:
             yield _llmSpan(
-              round: round,
+              round: roundsUsed == 0 ? nextRound : roundsUsed,
               roundId: roundId,
               startedAt: roundStart,
               state: state,
@@ -183,7 +192,9 @@ class FrbChatRunner implements DeviceChatRunner {
           case 'started':
           case 'llm_started':
           case 'usage':
+            break;
           case 'done':
+            state.finishDone(_object(event['metadata']));
             break;
           case 'delta':
             final text = _string(event['content']);
@@ -204,7 +215,7 @@ class FrbChatRunner implements DeviceChatRunner {
             final name = _string(event['tool_name']);
             if (id.isEmpty || name.isEmpty) {
               yield _invalidStreamEventSpan(
-                round: round,
+                round: roundsUsed == 0 ? nextRound : roundsUsed,
                 roundId: roundId,
                 startedAt: roundStart,
                 state: state,
@@ -225,7 +236,7 @@ class FrbChatRunner implements DeviceChatRunner {
             final id = _string(event['tool_call_id']);
             if (id.isEmpty) {
               yield _invalidStreamEventSpan(
-                round: round,
+                round: roundsUsed == 0 ? nextRound : roundsUsed,
                 roundId: roundId,
                 startedAt: roundStart,
                 state: state,
@@ -250,7 +261,7 @@ class FrbChatRunner implements DeviceChatRunner {
             final name = _string(event['tool_name']);
             if (id.isEmpty || name.isEmpty) {
               yield _invalidStreamEventSpan(
-                round: round,
+                round: roundsUsed == 0 ? nextRound : roundsUsed,
                 roundId: roundId,
                 startedAt: roundStart,
                 state: state,
@@ -274,7 +285,7 @@ class FrbChatRunner implements DeviceChatRunner {
             if (response == null) {
               final kind = _string(event['kind']);
               yield _invalidStreamEventSpan(
-                round: round,
+                round: roundsUsed == 0 ? nextRound : roundsUsed,
                 roundId: roundId,
                 startedAt: roundStart,
                 state: state,
@@ -288,7 +299,7 @@ class FrbChatRunner implements DeviceChatRunner {
               yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
               return;
             }
-            state.finish(response);
+            state.finish(response, metadata: _object(event['metadata']));
             final usage = _usageFromResponse(response);
             if (usage != null) yield UsageEvent(usage);
             final text = _string(response['content']);
@@ -300,7 +311,7 @@ class FrbChatRunner implements DeviceChatRunner {
           case 'error':
             final metadata = _object(event['metadata']);
             yield _llmSpan(
-              round: round,
+              round: roundsUsed == 0 ? nextRound : roundsUsed,
               roundId: roundId,
               startedAt: roundStart,
               state: state,
@@ -325,7 +336,7 @@ class FrbChatRunner implements DeviceChatRunner {
             return;
           default:
             yield _llmSpan(
-              round: round,
+              round: roundsUsed == 0 ? nextRound : roundsUsed,
               roundId: roundId,
               startedAt: roundStart,
               state: state,
@@ -346,7 +357,7 @@ class FrbChatRunner implements DeviceChatRunner {
 
       if (!finished) {
         yield _llmSpan(
-          round: round,
+          round: roundsUsed == 0 ? nextRound : roundsUsed,
           roundId: roundId,
           startedAt: roundStart,
           state: state,
@@ -364,23 +375,25 @@ class FrbChatRunner implements DeviceChatRunner {
       }
 
       yield _llmSpan(
-        round: round,
+        round: roundsUsed == 0 ? nextRound : roundsUsed,
         roundId: roundId,
         startedAt: roundStart,
         state: state,
         requestedModel: model,
         status: AiSpanStatus.ok,
       );
-      final stopReason = state.stopReason;
-      final toolCalls = state.toolCalls;
-      if (stopReason != 'tool_use' || toolCalls.isEmpty) {
-        yield DoneEvent(stopReason: stopReason, rounds: roundsUsed);
+      if (state.status != 'requires_tool_results') {
+        yield DoneEvent(
+          stopReason: state.doneStopReason ?? state.stopReason,
+          rounds: roundsUsed,
+        );
         return;
       }
-      if (round == _maxToolRounds) {
+      chatState = state.chatState;
+      if (chatState == null) {
         yield const ErrorEvent(
-          'FRB chat exceeded the tool round budget',
-          code: 'frb_chat_tool_round_budget_exceeded',
+          'FRB chat requires tool results but did not return chat_state',
+          code: 'frb_chat_state_missing',
         );
         yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
         return;
@@ -396,10 +409,9 @@ class FrbChatRunner implements DeviceChatRunner {
         return;
       }
 
-      conversation.add(state.assistantMessage());
       final resultBlocks = <Map<String, Object?>>[];
       var awaitingUser = false;
-      for (final call in toolCalls) {
+      for (final call in state.requiredToolCalls) {
         if (cancelToken?.isCancelled == true) {
           yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
           return;
@@ -425,33 +437,27 @@ class FrbChatRunner implements DeviceChatRunner {
           errorCode: result.errorCode,
           input: call.input,
           output: result.output,
-          attributes: <String, Object?>{'round': round, 'tool_use_id': call.id},
+          attributes: <String, Object?>{
+            'round': roundsUsed,
+            'tool_use_id': call.id,
+          },
         );
         yield ToolResultEvent(
           id: call.id,
           name: call.name,
           output: result.output,
         );
-        resultBlocks.add(result.toToolResultBlock());
+        resultBlocks.add(result.toChatToolResult());
         if (call.name == kAskUserToolName && !result.isError) {
           awaitingUser = true;
         }
       }
-      conversation.add(<String, Object?>{
-        'role': 'user',
-        'content': resultBlocks,
-      });
       if (awaitingUser) {
         yield DoneEvent(stopReason: 'end_turn', rounds: roundsUsed);
         return;
       }
+      toolResults = resultBlocks;
     }
-
-    yield const ErrorEvent(
-      'FRB chat exceeded the tool round budget',
-      code: 'frb_chat_tool_round_budget_exceeded',
-    );
-    yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
   }
 }
 
@@ -645,12 +651,21 @@ class _FrbStreamRoundState {
   final Map<String, _FrbToolCallBuilder> _toolCalls =
       <String, _FrbToolCallBuilder>{};
   Map<String, Object?> _response = const <String, Object?>{};
+  Map<String, Object?> _finishMetadata = const <String, Object?>{};
+  String? _doneStopReason;
 
   bool get emittedText => _text.isNotEmpty;
 
   String get text => _text.toString();
 
   Map<String, Object?> get response => _response;
+
+  String get status => _string(_finishMetadata['status']);
+
+  Map<String, Object?>? get chatState =>
+      _objectOrNull(_finishMetadata['chat_state']);
+
+  String? get doneStopReason => _doneStopReason;
 
   TokenUsage? get usage => _usageFromResponse(_response);
 
@@ -660,6 +675,23 @@ class _FrbStreamRoundState {
     return [
       for (final entry in _toolCalls.entries) entry.value.finish(id: entry.key),
     ];
+  }
+
+  List<_FrbToolCall> get requiredToolCalls {
+    final calls = _finishMetadata['tool_calls'];
+    if (calls is List) {
+      final parsed = [
+        for (final value in calls)
+          if (_objectOrNull(value) case final object?)
+            _FrbToolCall(
+              id: _string(object['id']),
+              name: _string(object['name']),
+              input: object['input'],
+            ),
+      ].where((call) => call.id.isNotEmpty && call.name.isNotEmpty).toList();
+      if (parsed.isNotEmpty) return parsed;
+    }
+    return toolCalls;
   }
 
   void appendText(String text) => _text.write(text);
@@ -691,24 +723,17 @@ class _FrbStreamRoundState {
     call.input = input;
   }
 
-  void finish(Map<String, Object?> response) {
+  void finish(
+    Map<String, Object?> response, {
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) {
     _response = response;
+    _finishMetadata = metadata;
   }
 
-  Map<String, Object?> assistantMessage() {
-    final blocks = <Map<String, Object?>>[
-      if (_thinking.isNotEmpty)
-        <String, Object?>{
-          'type': 'thinking',
-          'thinking': _thinking.toString(),
-          if (_thinkingSignature.isNotEmpty)
-            'signature': _thinkingSignature.toString(),
-        },
-      if (_text.isNotEmpty)
-        <String, Object?>{'type': 'text', 'text': _text.toString()},
-      for (final call in toolCalls) call.toToolUseBlock(),
-    ];
-    return <String, Object?>{'role': 'assistant', 'content': blocks};
+  void finishDone(Map<String, Object?> metadata) {
+    final stopReason = _string(metadata['stop_reason']);
+    if (stopReason.isNotEmpty) _doneStopReason = stopReason;
   }
 }
 
@@ -736,13 +761,6 @@ class _FrbToolCall {
   final String id;
   final String name;
   final Object? input;
-
-  Map<String, Object?> toToolUseBlock() => <String, Object?>{
-    'type': 'tool_use',
-    'id': id,
-    'name': name,
-    'input': input ?? const <String, Object?>{},
-  };
 }
 
 class _FrbToolResult {
@@ -765,11 +783,11 @@ class _FrbToolResult {
     return code.isEmpty ? 'frb_chat_tool_error' : code;
   }
 
-  Map<String, Object?> toToolResultBlock() => <String, Object?>{
-    'type': 'tool_result',
-    'tool_use_id': id,
-    'content': output is String ? output : jsonEncode(output),
-    if (isError) 'is_error': true,
+  Map<String, Object?> toChatToolResult() => <String, Object?>{
+    'tool_call_id': id,
+    'tool_name': name,
+    'output': output,
+    'is_error': isError,
   };
 }
 

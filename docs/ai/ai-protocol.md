@@ -8,14 +8,15 @@ runtime:
 ChatRepository
   -> RuntimeRoutingAiChatApiClient
   -> FrbChatRunner
-  -> AgentRuntimeLlmStreamBridge (ChatTurn stream) + AgentRuntimeToolHost
-  -> agent-llm native provider + Dart device-tool dispatch
+  -> AgentRuntimeLlmStreamBridge (ChatTurn stream/resume) + AgentRuntimeToolHost
+  -> agent-chat / agent-llm native provider + Dart device-tool dispatch
 ```
 
 The Flutter bridge and TUI now share the ChatTurn request/message/tool shape.
 TUI executes the shared Rust `agent-chat` continuation loop directly; Flutter
 maps primitive ChatTurn-style FRB stream frames into the existing
-`AiChatEvent` vocabulary and dispatches device tools in Dart.
+`AiChatEvent` vocabulary, dispatches device tools in Dart, then resumes the
+Rust-owned loop with `chat_state` and `tool_results`.
 
 The repository/UI contract still uses the old event vocabulary so chat history,
 stream rendering, cancellation, and trace capture did not need a rewrite. These

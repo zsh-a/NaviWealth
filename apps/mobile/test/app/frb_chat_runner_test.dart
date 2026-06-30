@@ -126,12 +126,13 @@ void main() {
           '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
           '{"kind":"tool_call_delta","tool_call_id":"call_1","tool_name":"read_task","partial_input_json":"{\\"id\\":\\"task_1\\"}","metadata":{"stream":true}}',
           '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
-          '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"status":"requires_tool_results","chat_state":{"round":1,"pending_tool_calls":[{"id":"call_1","name":"read_task","input":{"id":"task_1"}}]},"tool_calls":[{"id":"call_1","name":"read_task","input":{"id":"task_1"}}]}}',
         ],
         <String>[
           '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
           '{"kind":"delta","content":"Task title","metadata":{"stream":true}}',
-          '{"kind":"finished","response":{"content":"Task title","finish_reason":"stop","usage":{"input_tokens":5,"output_tokens":3,"total_tokens":8}},"metadata":{"stream":true}}',
+          '{"kind":"round_finished","response":{"content":"Task title","finish_reason":"stop","usage":{"input_tokens":5,"output_tokens":3,"total_tokens":8}},"metadata":{"status":"completed","chat_state":{"round":2}}}',
+          '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
         ],
       ],
     );
@@ -189,37 +190,21 @@ void main() {
 
     final firstRequest = streamBridge.requests.first;
     expect(firstRequest['tools'], hasLength(1));
+    expect(firstRequest['max_tool_rounds'], 4);
     final secondMessages = streamBridge.requests[1]['messages'] as List;
-    expect(secondMessages, hasLength(3));
-    expect(secondMessages[1], <String, Object?>{
-      'role': 'assistant',
-      'content': <Object?>[
-        <String, Object?>{
-          'type': 'thinking',
-          'thinking': 'plan',
-          'signature': 'sig_1',
-        },
-        <String, Object?>{
-          'type': 'tool_use',
-          'id': 'call_1',
-          'name': 'read_task',
-          'input': <String, Object?>{'id': 'task_1'},
-        },
-      ],
-    });
-    expect(secondMessages[2], <String, Object?>{
-      'role': 'user',
-      'content': <Object?>[
-        <String, Object?>{
-          'type': 'tool_result',
-          'tool_use_id': 'call_1',
-          'content': '{"title":"Task title"}',
-        },
-      ],
-    });
+    expect(secondMessages, hasLength(1));
     final secondMetadata =
         streamBridge.requests[1]['metadata'] as Map<String, Object?>;
     expect(secondMetadata['round'], 2);
+    expect(secondMetadata['chat_state'], isA<Map<String, Object?>>());
+    expect(secondMetadata['tool_results'], <Object?>[
+      <String, Object?>{
+        'tool_call_id': 'call_1',
+        'tool_name': 'read_task',
+        'output': <String, Object?>{'title': 'Task title'},
+        'is_error': false,
+      },
+    ]);
   });
 
   test('reports a missing FRB tool host without continuing', () async {
@@ -230,7 +215,7 @@ void main() {
         '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
         '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
         '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
-        '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+        '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"status":"requires_tool_results","chat_state":{"round":1,"pending_tool_calls":[{"id":"call_1","name":"read_task","input":{"id":"task_1"}}]},"tool_calls":[{"id":"call_1","name":"read_task","input":{"id":"task_1"}}]}}',
       ],
     );
     final runner = FrbChatRunner(
@@ -275,7 +260,7 @@ void main() {
         '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
         '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
         '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
-        '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+        '{"kind":"error","round":1,"metadata":{"code":"validation_error","message":"chat turn exceeded the tool round budget","retryable":false}}',
       ],
     );
     var toolHostCalls = 0;
@@ -305,8 +290,8 @@ void main() {
     expect(toolHostCalls, 0);
     expect(events.whereType<ToolResultEvent>(), isEmpty);
     final error = events.whereType<ErrorEvent>().single;
-    expect(error.code, 'frb_chat_tool_round_budget_exceeded');
-    expect(error.message, 'FRB chat exceeded the tool round budget');
+    expect(error.code, 'validation_error');
+    expect(error.message, 'chat turn exceeded the tool round budget');
     final done = events.last as DoneEvent;
     expect(done.stopReason, 'error');
     expect(done.rounds, 1);
@@ -321,7 +306,7 @@ void main() {
           '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
           '{"kind":"tool_call_start","tool_call_id":"decision_1","tool_name":"ask_user","metadata":{"stream":true}}',
           '{"kind":"tool_call_end","tool_call_id":"decision_1","tool_name":"ask_user","tool_input":{"question":"Pick one","options":[{"id":"a","label":"A"}]},"metadata":{"stream":true}}',
-          '{"kind":"finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"stream":true}}',
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"status":"requires_tool_results","chat_state":{"round":1,"pending_tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"}]}}]},"tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"}]}}]}}',
         ],
         <String>[
           '{"kind":"delta","content":"should not run","metadata":{"stream":true}}',

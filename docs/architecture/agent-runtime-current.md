@@ -193,17 +193,18 @@ These are intentional or pending differences from the long-term design:
   through tool/proposal metadata and host-side confirmation.
 - `ScheduleSpec` supports `manual` and `interval`; cron/plugin/HTTP registries
   remain future work.
-- External cancel/pause/resume is not implemented. TUI natural input now uses
-  the shared `agent-chat` stream, but terminal redraw/cancel is still not a
-  non-blocking live run loop.
+- External cancel/pause/resume is not fully implemented. Flutter ChatTurn uses
+  a Rust-owned pause/resume state (`chat_state` + `tool_results`) for device
+  tool continuation; TUI natural input uses the shared `agent-chat` stream, but
+  terminal redraw/cancel is still not a non-blocking live run loop.
 - Flutter production agents still keep most business policy in Dart. Rust owns
   contracts, LLM provider paths, native-planned tool continuation, and trace
   normalization for migrated seams.
 - Flutter interactive AI Chat uses the same ChatTurn request and event naming
-  through the FRB stream bridge. Its bounded device-tool dispatch remains in
-  `FrbChatRunner` because production tools live in Dart/DomainPack/Riverpod
-  host code; a fully Rust-owned loop would require an explicit FRB
-  callback/resume seam.
+  through the FRB stream bridge. Rust owns ChatTurn state, conversation
+  continuation, and tool-round budget through the `chat_state` resume seam;
+  `FrbChatRunner` only maps events and dispatches production Dart tools from
+  DomainPack/Riverpod host code.
 
 When code and older handoff notes disagree, use this document, the MVP status
 doc, and current tests as authority.

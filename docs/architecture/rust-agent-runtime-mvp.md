@@ -221,19 +221,20 @@ Implemented:
   "no NaviWealth server" disclosure across FRB chat/profile turns, FRB Vision
   ingest traces, and legacy direct-device trace rows.
   The runner advertises active-domain tools, executes Dart tool results through
-  the JSON-RPC tool host, feeds `tool_result` blocks into bounded continuation
-  rounds, pauses terminally after successful `ask_user`, and emits LLM/tool
-  trace spans plus cancellation spans for streaming and non-streaming FRB
-  fallback completions. The chat runner rejects malformed `finished.response`
+  the JSON-RPC tool host, and resumes Rust-owned ChatTurn state by sending
+  `chat_state` plus `tool_results` back through the same FRB stream request.
+  Rust owns conversation continuation and tool-round budget; Flutter maps
+  events, emits trace spans, handles cancellation, and pauses terminally after
+  successful `ask_user`. The chat runner rejects malformed `finished.response`
   or `round_finished.response` stream events and tool-call stream events
   missing `tool_call_id` / `tool_name` instead of treating them as empty
   completions or unnamed tool calls. OpenAI-compatible and Anthropic
   text/usage/tool/reasoning SSE are now provider-real in `agent-llm`.
 - TUI natural-language chat and Flutter interactive chat now share the ChatTurn
   request shape and provider-neutral LLM message/tool schema. TUI executes the
-  full shared `agent-chat` LLM/tool continuation loop; Flutter still owns the
-  bounded device-tool loop in `FrbChatRunner` while native FRB owns provider
-  streaming and request validation.
+  full shared `agent-chat` LLM/tool continuation loop; Flutter uses the native
+  FRB pause/resume seam so Rust owns the agent loop state while Dart remains
+  the device tool host.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
   documented runtime/legacy allowlist, and by preventing feature code from
