@@ -21,7 +21,7 @@ fn exposes_protocol_version() {
 fn summarizes_catalog_contract() {
     let summary_json = agent_runtime_catalog_summary(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
     )
@@ -39,7 +39,7 @@ fn summarizes_catalog_contract() {
 #[test]
 fn catalog_summary_rejects_mismatched_catalog_contract() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["protocol_version"] = json!("agent.v0");
@@ -48,7 +48,7 @@ fn catalog_summary_rejects_mismatched_catalog_contract() {
     assert!(protocol_err.to_string().contains("protocol_version"));
 
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["catalog_version"] = json!("agent_catalog.v0");
@@ -60,7 +60,7 @@ fn catalog_summary_rejects_mismatched_catalog_contract() {
 #[test]
 fn catalog_summary_rejects_empty_active_domain() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["active_domains"] = json!(["finance", " "]);
@@ -120,7 +120,7 @@ fn validate_tool_spec_rejects_malformed_contract() {
 #[test]
 fn catalog_summary_rejects_malformed_tool_spec() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["tools"][0]["description"] = json!("");
@@ -134,7 +134,7 @@ fn catalog_summary_rejects_malformed_tool_spec() {
 #[test]
 fn catalog_summary_rejects_malformed_agent_spec() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["agents"][0]["id"] = json!("");
@@ -148,7 +148,7 @@ fn catalog_summary_rejects_malformed_agent_spec() {
 #[test]
 fn catalog_summary_rejects_malformed_agent_schedule() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["agents"][0]["schedule"] = json!({
@@ -165,7 +165,7 @@ fn catalog_summary_rejects_malformed_agent_schedule() {
     );
 
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["agents"][0]["schedule"] = json!({
@@ -186,7 +186,7 @@ fn catalog_summary_rejects_malformed_agent_schedule() {
 #[test]
 fn catalog_summary_rejects_malformed_proposal_kind() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["proposal_kinds"][0]["tool_name"] = json!("");
@@ -203,7 +203,7 @@ fn catalog_summary_rejects_malformed_proposal_kind() {
 #[test]
 fn catalog_summary_rejects_proposal_kind_without_catalog_tool() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["proposal_kinds"][0]["tool_name"] = json!("missing_tool");
@@ -220,7 +220,7 @@ fn catalog_summary_rejects_proposal_kind_without_catalog_tool() {
 #[test]
 fn catalog_summary_rejects_duplicate_catalog_entries() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     let duplicate_tool = catalog["tools"][0].clone();
@@ -233,7 +233,7 @@ fn catalog_summary_rejects_duplicate_catalog_entries() {
     assert!(tool_err.to_string().contains("catalog.tools[1].name"));
 
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["prompt_blocks"] = json!([
@@ -253,7 +253,7 @@ fn catalog_summary_rejects_duplicate_catalog_entries() {
 fn normalizes_run_request_contract() {
     let normalized = agent_runtime_validate_run_request(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/run-request.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/run-request.valid.json"
         )
         .to_owned(),
     )
@@ -352,7 +352,7 @@ fn validate_run_request_rejects_malformed_json_object_fields() {
 fn normalizes_trace_contract() {
     let normalized = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.valid.json"
         )
         .to_owned(),
     )
@@ -377,7 +377,7 @@ fn normalizes_trace_contract() {
 #[test]
 fn normalizes_closed_early_step_trace_contract() {
     let normalized = agent_runtime_validate_trace(
-        include_str!("../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.valid.closed-early-step.json")
+        include_str!("../../../../../third_party/agent-runtime/fixtures/contracts/trace.valid.closed-early-step.json")
             .to_owned(),
     )
     .expect("closed_early trace should validate");
@@ -395,7 +395,7 @@ fn normalizes_closed_early_step_trace_contract() {
 fn rejects_invalid_agent_runtime_step_trace_contracts() {
     let missing_run_state = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.missing-step-run-state.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.missing-step-run-state.json"
         )
         .to_owned(),
     )
@@ -405,7 +405,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let unknown_terminal_reason = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.unknown-step-terminal-reason.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.unknown-step-terminal-reason.json"
         )
         .to_owned(),
     )
@@ -415,7 +415,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let unknown_status = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.unknown-step-status.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.unknown-step-status.json"
         )
         .to_owned(),
     )
@@ -425,7 +425,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let non_string_tool_name = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.non-string-step-tool-name.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.non-string-step-tool-name.json"
         )
         .to_owned(),
     )
@@ -435,7 +435,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let empty_tool_name = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.empty-step-tool-name.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.empty-step-tool-name.json"
         )
         .to_owned(),
     )
@@ -445,7 +445,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let mismatched_run_id = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.mismatched-step-run-id.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.mismatched-step-run-id.json"
         )
         .to_owned(),
     )
@@ -455,7 +455,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let mismatched_agent_id = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.mismatched-step-agent-id.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.mismatched-step-agent-id.json"
         )
         .to_owned(),
     )
@@ -465,7 +465,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let mismatched_step_index = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.mismatched-step-index.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.mismatched-step-index.json"
         )
         .to_owned(),
     )
@@ -475,7 +475,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let mismatched_run_state_status = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.mismatched-step-run-state-status.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.mismatched-step-run-state-status.json"
         )
         .to_owned(),
     )
@@ -485,7 +485,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 
     let mismatched_terminal_status = agent_runtime_validate_trace(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/trace.invalid.mismatched-step-terminal-status.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/trace.invalid.mismatched-step-terminal-status.json"
         )
         .to_owned(),
     )
@@ -498,7 +498,7 @@ fn rejects_invalid_agent_runtime_step_trace_contracts() {
 fn normalizes_llm_contracts() {
     let request_json = agent_runtime_validate_llm_request(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/llm-request.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/llm-request.valid.json"
         )
         .to_owned(),
     )
@@ -509,7 +509,10 @@ fn normalizes_llm_contracts() {
     assert_eq!(request["messages"][0]["role"], "user");
 
     let response_json = agent_runtime_validate_llm_response(
-        include_str!("../../../../../third_party/agent-runtime/fixtures/agent-runtime/llm-response.valid.json").to_owned(),
+        include_str!(
+            "../../../../../third_party/agent-runtime/fixtures/contracts/llm-response.valid.json"
+        )
+        .to_owned(),
     )
     .expect("llm response should validate");
     let response: Value = serde_json::from_str(&response_json).expect("response should be json");
@@ -1018,7 +1021,7 @@ fn normalizes_multimodal_tool_llm_request_contract() {
 async fn complete_mock_llm_returns_provider_response() {
     let response_json = agent_runtime_complete_mock_llm(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/llm-request.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/llm-request.valid.json"
         )
         .to_owned(),
         "native mock response".to_owned(),
@@ -1103,7 +1106,7 @@ async fn complete_profile_llm_calls_openai_compatible_provider() {
 async fn start_profile_turn_step_completes_llm_and_starts_native_step() {
     let turn_json = agent_runtime_start_profile_turn_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1136,7 +1139,7 @@ async fn start_profile_turn_step_completes_llm_and_starts_native_step() {
 async fn start_profile_turn_step_normalizes_null_run_metadata() {
     let turn_json = agent_runtime_start_profile_turn_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1164,7 +1167,7 @@ async fn start_profile_turn_step_normalizes_null_run_metadata() {
 async fn start_profile_turn_step_rejects_non_object_run_metadata() {
     let err = agent_runtime_start_profile_turn_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1188,7 +1191,7 @@ async fn start_profile_turn_step_rejects_non_object_run_metadata() {
 fn start_run_step_requests_catalog_tool_call() {
     let step_json = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1226,7 +1229,7 @@ fn start_run_step_requests_catalog_tool_call() {
 fn start_run_step_rejects_empty_tool_call_name() {
     let err = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1252,7 +1255,7 @@ fn start_run_step_rejects_empty_tool_call_name() {
 fn start_run_step_rejects_non_object_run_request_input() {
     let err = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1273,7 +1276,7 @@ fn start_run_step_rejects_non_object_run_request_input() {
 fn start_run_step_rejects_mismatched_run_request_protocol_version() {
     let err = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1298,7 +1301,7 @@ fn start_run_step_rejects_mismatched_run_request_protocol_version() {
 #[test]
 fn start_run_step_rejects_mismatched_catalog_contract() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["protocol_version"] = json!("agent.v0");
@@ -1328,7 +1331,7 @@ fn start_run_step_rejects_mismatched_catalog_contract() {
 fn start_run_step_seeds_native_tool_plan_continuation() {
     let step_json = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1366,7 +1369,7 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
 fn start_run_step_rejects_non_object_tool_plan_item() {
     let err = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1391,7 +1394,7 @@ fn start_run_step_rejects_non_object_tool_plan_item() {
 fn start_run_step_rejects_unknown_remaining_tool_plan_item() {
     let err = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1417,7 +1420,7 @@ fn start_run_step_rejects_unknown_remaining_tool_plan_item() {
 fn start_run_step_rejects_non_object_tool_call_input() {
     let err = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1443,7 +1446,7 @@ fn start_run_step_rejects_non_object_tool_call_input() {
 fn native_step_trace_events_validate_as_agent_trace_payloads() {
     let first_json = agent_runtime_start_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1466,7 +1469,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
 
     let terminal_json = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         first.to_string(),
@@ -1546,7 +1549,7 @@ fn continue_run_step_completes_with_tool_result() {
     }"#;
     let next_json = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         step_json.to_owned(),
@@ -1579,7 +1582,7 @@ fn continue_run_step_completes_with_tool_result() {
 fn continue_run_step_rejects_non_object_previous_tool_call_input() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1612,7 +1615,7 @@ fn continue_run_step_rejects_non_object_previous_tool_call_input() {
 #[test]
 fn continue_run_step_rejects_mismatched_catalog_contract() {
     let mut catalog: Value = serde_json::from_str(include_str!(
-        "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
     ))
     .expect("catalog fixture should be json");
     catalog["catalog_version"] = json!("agent_catalog.v0");
@@ -1671,7 +1674,7 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
     }"#;
     let next_json = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         step_json.to_owned(),
@@ -1710,7 +1713,7 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
 fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1752,7 +1755,7 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
 fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1791,7 +1794,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
 fn continue_run_step_rejects_missing_next_tool_plan_name() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1855,7 +1858,7 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
     }"#;
     let next_json = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         step_json.to_owned(),
@@ -1899,7 +1902,7 @@ fn continue_run_step_fails_with_tool_error() {
     }"#;
     let next_json = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         step_json.to_owned(),
@@ -1933,7 +1936,7 @@ fn continue_run_step_fails_with_tool_error() {
 fn continue_run_step_rejects_mismatched_tool_response_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -1967,7 +1970,7 @@ fn continue_run_step_rejects_mismatched_tool_response_id() {
 fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2001,7 +2004,7 @@ fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
 fn continue_run_step_rejects_non_object_tool_response() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2030,7 +2033,7 @@ fn continue_run_step_rejects_non_object_tool_response() {
 fn continue_run_step_rejects_empty_previous_run_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2064,7 +2067,7 @@ fn continue_run_step_rejects_empty_previous_run_id() {
 fn continue_run_step_rejects_missing_previous_step_index() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2097,7 +2100,7 @@ fn continue_run_step_rejects_missing_previous_step_index() {
 fn continue_run_step_rejects_tool_response_with_result_and_error() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2132,7 +2135,7 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
 fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2166,7 +2169,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
 fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2200,7 +2203,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
 fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2234,7 +2237,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code()
 fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2268,7 +2271,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
 fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2302,7 +2305,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message
 fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2335,7 +2338,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
 fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2368,7 +2371,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
 fn continue_run_step_rejects_mismatched_previous_agent() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2402,7 +2405,7 @@ fn continue_run_step_rejects_mismatched_previous_agent() {
 fn continue_run_step_rejects_missing_previous_protocol_version() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2435,7 +2438,7 @@ fn continue_run_step_rejects_missing_previous_protocol_version() {
 fn continue_run_step_rejects_mismatched_previous_protocol_version() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2469,7 +2472,7 @@ fn continue_run_step_rejects_mismatched_previous_protocol_version() {
 fn continue_run_step_rejects_mismatched_previous_agent_version() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2503,7 +2506,7 @@ fn continue_run_step_rejects_mismatched_previous_agent_version() {
 fn continue_run_step_rejects_missing_previous_agent_version() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2536,7 +2539,7 @@ fn continue_run_step_rejects_missing_previous_agent_version() {
 fn continue_run_step_rejects_previous_tool_not_in_catalog() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2570,7 +2573,7 @@ fn continue_run_step_rejects_previous_tool_not_in_catalog() {
 fn continue_run_step_rejects_missing_previous_tool_name() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2603,7 +2606,7 @@ fn continue_run_step_rejects_missing_previous_tool_name() {
 fn continue_run_step_rejects_missing_previous_tool_call_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2636,7 +2639,7 @@ fn continue_run_step_rejects_missing_previous_tool_call_id() {
 fn continue_run_step_rejects_empty_previous_tool_call_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2670,7 +2673,7 @@ fn continue_run_step_rejects_empty_previous_tool_call_id() {
 fn continue_run_step_rejects_mismatched_previous_run_state() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2711,7 +2714,7 @@ fn continue_run_step_rejects_mismatched_previous_run_state() {
 fn continue_run_step_rejects_mismatched_previous_trace_event() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2753,7 +2756,7 @@ fn continue_run_step_rejects_mismatched_previous_trace_event() {
 fn continue_run_step_rejects_mismatched_continuation_next_step_index() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2794,7 +2797,7 @@ fn continue_run_step_rejects_mismatched_continuation_next_step_index() {
 fn continue_run_step_rejects_invalid_continuation_next_step_index() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2835,7 +2838,7 @@ fn continue_run_step_rejects_invalid_continuation_next_step_index() {
 fn continue_run_step_rejects_missing_continuation_next_step_index() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2875,7 +2878,7 @@ fn continue_run_step_rejects_missing_continuation_next_step_index() {
 fn continue_run_step_rejects_non_object_continuation() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2910,7 +2913,7 @@ fn continue_run_step_rejects_non_object_continuation() {
 fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2949,7 +2952,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
 fn continue_run_step_rejects_historical_tool_result_without_response() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -2990,7 +2993,7 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
 fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -3040,7 +3043,7 @@ fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
 fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -3093,7 +3096,7 @@ fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
 fn continue_run_step_rejects_historical_tool_not_in_catalog() {
     let err = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         r#"{
@@ -3150,7 +3153,7 @@ fn continue_run_step_maps_result_payload_policy_denied() {
     }"#;
     let next_json = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         step_json.to_owned(),
@@ -3210,7 +3213,7 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
     }"#;
     let next_json = agent_runtime_continue_run_step(
         include_str!(
-            "../../../../../third_party/agent-runtime/fixtures/agent-runtime/catalog.valid.json"
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
         )
         .to_owned(),
         step_json.to_owned(),

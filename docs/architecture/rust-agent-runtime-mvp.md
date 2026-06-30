@@ -11,8 +11,8 @@ document are relative to the standalone runtime repository.
 
 Implemented:
 
-- schema-first wire contracts under `schemas/agent-runtime/`
-- committed valid/invalid fixtures under `fixtures/agent-runtime/`
+- schema-first wire contracts under `schemas/`
+- committed valid/invalid fixtures under `fixtures/contracts/`
 - Rust workspace crates:
   - `agent-core`: DTOs, traits, errors, trace contracts
   - `agent-llm`: provider-neutral LLM DTOs, provider trait, mock provider,
@@ -25,7 +25,7 @@ Implemented:
   - `agent-store`: in-memory and file-backed run/state stores
   - `agent-cli`: `agent list`, `agent run`, `agent tick`, `agent replay`,
     `agent inspect`, `agent debug-bundle export`
-- example registry and fixture under `examples/agent-runtime/`
+- example registry and fixture under `examples/`
 - JSON Schema contract tests using `jsonschema`
 - Flutter active-domain catalog export via `agentRuntimeCatalogProvider`
 - headless JSONL stdio server via `agent serve --stdio`
@@ -51,7 +51,7 @@ Implemented:
 - eval process scoring hooks via `scoring_hook.command` and `min_score`
 - shared HookEvent schema and eval report hook invocation records
 - traced `AgentServices` state read/write events
-- eval YAML contract at `schemas/agent-runtime/eval-case.schema.json`
+- eval YAML contract at `schemas/eval-case.schema.json`
 - eval generation from persisted runs via `agent eval create --from-run`
 - markdown workflow command generation from persisted runs via
   `agent cmd create --from-run`
@@ -339,15 +339,15 @@ List available example agents:
 
 ```bash
 rtk cargo run -p agent-cli -- list \
-  --registry examples/agent-runtime/agents.yaml
+  --registry examples/agents.yaml
 ```
 
 Run the example echo agent and write a trace:
 
 ```bash
 rtk cargo run -p agent-cli -- run echo_agent \
-  --registry examples/agent-runtime/agents.yaml \
-  --input examples/agent-runtime/fixtures/echo-input.json \
+  --registry examples/agents.yaml \
+  --input examples/fixtures/echo-input.json \
   --trace-out /private/tmp/agent-runtime-echo-trace.json \
   --store /private/tmp/agent-runtime-store
 ```
@@ -379,7 +379,7 @@ Execute live replay from a trace:
 rtk cargo run -p agent-cli -- replay \
   /private/tmp/agent-runtime-echo-trace.json \
   --mode live \
-  --registry examples/agent-runtime/agents.yaml \
+  --registry examples/agents.yaml \
   --trace-out /private/tmp/agent-runtime-echo-replay-trace.json \
   --store /private/tmp/agent-runtime-store
 ```
@@ -402,8 +402,8 @@ file-store inspection, and interactive local debugging:
 
 ```bash
 rtk cargo run -p agent-cli -- tui \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
-  --trace fixtures/agent-runtime/trace.valid.json
+  --catalog fixtures/contracts/catalog.valid.json \
+  --trace fixtures/contracts/trace.valid.json
 ```
 
 The TUI uses a Claude Code-style persistent input bar. Type natural language and
@@ -424,8 +424,8 @@ For CI and smoke tests, render one frame with ratatui's test backend:
 
 ```bash
 rtk cargo run -p agent-cli -- tui \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
-  --trace fixtures/agent-runtime/trace.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
+  --trace fixtures/contracts/trace.valid.json \
   --once
 ```
 
@@ -433,8 +433,8 @@ Validate a JSON fixture against a runtime schema:
 
 ```bash
 rtk cargo run -p agent-cli -- validate \
-  schemas/agent-runtime/run-request.schema.json \
-  fixtures/agent-runtime/run-request.valid.json
+  schemas/run-request.schema.json \
+  fixtures/contracts/run-request.valid.json
 ```
 
 Invalid instances print a JSON report with schema errors, then exit non-zero.
@@ -446,7 +446,7 @@ rtk cargo run -p agent-cli -- debug-bundle export \
   run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000 \
   --store /private/tmp/agent-runtime-store \
   --out /private/tmp/agent-runtime-debug-bundle \
-  --catalog fixtures/agent-runtime/catalog.valid.json
+  --catalog fixtures/contracts/catalog.valid.json
 ```
 
 The bundle currently writes:
@@ -509,13 +509,13 @@ Inspect a Flutter-exported `agent_catalog.v1`:
 
 ```bash
 rtk cargo run -p agent-cli -- catalog summary \
-  fixtures/agent-runtime/catalog.valid.json
+  fixtures/contracts/catalog.valid.json
 rtk cargo run -p agent-cli -- catalog agents \
-  fixtures/agent-runtime/catalog.valid.json
+  fixtures/contracts/catalog.valid.json
 rtk cargo run -p agent-cli -- catalog tools \
-  fixtures/agent-runtime/catalog.valid.json
+  fixtures/contracts/catalog.valid.json
 rtk cargo run -p agent-cli -- catalog prompt-manifest \
-  fixtures/agent-runtime/catalog.valid.json
+  fixtures/contracts/catalog.valid.json
 ```
 
 `catalog prompt-manifest` materializes the prompt/model version contract from
@@ -527,15 +527,15 @@ hashes. The command reads optional agent metadata keys (`prompt_id`,
 `tool_schema_version`) and falls back to stable defaults when older Flutter
 catalogs do not provide them yet. Multi-agent catalogs require `--agent-id`.
 The wire contract is schema-checked at
-`schemas/agent-runtime/prompt-manifest.schema.json` and exposed as the OpenAPI
+`schemas/prompt-manifest.schema.json` and exposed as the OpenAPI
 `PromptManifest` component.
 
 Dry-run an agent spec from a Flutter-exported catalog through the Rust runner:
 
 ```bash
 rtk cargo run -p agent-cli -- run execution_review \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
-  --input fixtures/agent-runtime/run-request.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
+  --input fixtures/contracts/run-request.valid.json \
   --trace-out /private/tmp/agent-runtime-catalog-dry-run-trace.json \
   --store /private/tmp/agent-runtime-catalog-dry-run-store
 ```
@@ -584,13 +584,13 @@ Tool calls made by catalog dry-run agents are traced as
 `tool_call_started`, `tool_call_finished`, or `tool_call_failed` events. Each
 event pair shares a `tool_call_id`, includes a BLAKE3 `input_hash`, and records
 duration plus completion status. The payload shape is captured by
-`schemas/agent-runtime/tool-call-record.schema.json`.
+`schemas/tool-call-record.schema.json`.
 
 Dry-run with an external process tool host:
 
 ```bash
 rtk cargo run -p agent-cli -- run execution_review \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --input /private/tmp/catalog-tool-call.json \
   --tool-host target/debug/agent dev-tool-host \
   --store /private/tmp/agent-runtime-tool-host-store
@@ -626,7 +626,7 @@ Dry-run with deterministic mock tool output:
 
 ```bash
 rtk cargo run -p agent-cli -- run execution_review \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --input /private/tmp/catalog-tool-call.json \
   --mock-tool 'example_tool={"ok":true}' \
   --store /private/tmp/agent-runtime-mock-tool-store
@@ -636,9 +636,9 @@ For larger outputs, point the mock at a JSON fixture:
 
 ```bash
 rtk cargo run -p agent-cli -- run execution_review \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --input /private/tmp/catalog-tool-call.json \
-  --mock-tool example_tool=@fixtures/agent-runtime/mock-tool-output.json
+  --mock-tool example_tool=@fixtures/contracts/mock-tool-output.json
 ```
 
 `--mock-tool` is available on `run`, `replay --execute`, `tool call`, `serve`,
@@ -649,14 +649,14 @@ List tool specs from a catalog:
 
 ```bash
 rtk cargo run -p agent-cli -- tool list \
-  --catalog fixtures/agent-runtime/catalog.valid.json
+  --catalog fixtures/contracts/catalog.valid.json
 ```
 
 Call a tool directly through a process tool host:
 
 ```bash
 rtk cargo run -p agent-cli -- tool call propose_fake \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --input-json '{"value":7}' \
   --tool-host target/debug/agent dev-tool-host
 ```
@@ -695,10 +695,10 @@ The manifest can be used with `run`, `replay --execute`, `tool list`,
 
 ```bash
 rtk cargo run -p agent-cli -- tool list \
-  --tool-source fixtures/agent-runtime/tool-source.example.json
+  --tool-source fixtures/contracts/tool-source.example.json
 
 rtk cargo run -p agent-cli -- tool call sourced_echo \
-  --tool-source fixtures/agent-runtime/tool-source.example.json \
+  --tool-source fixtures/contracts/tool-source.example.json \
   --input-json '{"value":7}'
 ```
 
@@ -708,7 +708,7 @@ Tool-source commands use JSONL `tool.call` by default. Set
 
 ```bash
 rtk cargo run -p agent-cli -- tool call mcp_echo \
-  --tool-source fixtures/agent-runtime/mcp-tool-source.example.json \
+  --tool-source fixtures/contracts/mcp-tool-source.example.json \
   --input-json '{"value":7}'
 ```
 
@@ -742,7 +742,7 @@ The runtime POSTs `{"protocol_version":"agent.v1","method":"tool.call",
 "tool":"http_echo","input":{...}}` to the endpoint and accepts either
 `{"output": ...}` or `{"result": ...}` as the tool output envelope. Static
 headers are supported for local gateways, IDE integrations, and remote runtime
-adapters. `schemas/agent-runtime/tool-source-manifest.schema.json` validates
+adapters. `schemas/tool-source-manifest.schema.json` validates
 JSONL, MCP stdio, and HTTP JSON manifests, including the protocol-specific
 `command`/`endpoint` requirements.
 
@@ -781,13 +781,13 @@ Apply and undo an approved proposal:
 rtk cargo run -p agent-cli -- proposal apply \
   proposal_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000 \
   --store /private/tmp/agent-runtime-store \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --mock-tool 'propose_fake={"applied":true}'
 
 rtk cargo run -p agent-cli -- proposal undo \
   proposal_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000 \
   --store /private/tmp/agent-runtime-store \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --mock-tool 'propose_fake={"undone":true}'
 ```
 
@@ -799,8 +799,8 @@ protocol and status transitions: `applying -> applied | apply_failed` and
 `undoing -> undone | undo_failed`.
 
 Proposal envelopes and approval decisions are schema-first wire contracts:
-`schemas/agent-runtime/proposal-envelope.schema.json` and
-`schemas/agent-runtime/approval-decision.schema.json`.
+`schemas/proposal-envelope.schema.json` and
+`schemas/approval-decision.schema.json`.
 CLI and HTTP proposal create/decision/apply/undo append lifecycle events to the
 associated run trace if the trace is present; manually supplied external run ids
 still work, but trace append becomes a no-op when the runtime has no matching
@@ -863,8 +863,8 @@ The LLM layer is provider-neutral. `agent-llm` defines `LlmProvider`,
 a deterministic `MockLlmProvider` for evals and CLI debugging. It also includes
 `OpenAiCompatibleProvider`, `AnthropicProvider`, and `OllamaProvider`
 implementations backed by `reqwest` with rustls TLS. Wire contracts are under
-`schemas/agent-runtime/llm-request.schema.json` and
-`schemas/agent-runtime/llm-response.schema.json`.
+`schemas/llm-request.schema.json` and
+`schemas/llm-response.schema.json`.
 
 Flutter production integration is FRB-first. The bridge starts with
 `agentRuntimeStartRunStep`: Dart passes the active `agent_catalog.v1`, a
@@ -940,7 +940,7 @@ Start the headless stdio server over the same catalog:
 ```bash
 rtk cargo run -p agent-cli -- serve \
   --stdio \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --store /private/tmp/agent-runtime-stdio-store \
   --tool-host target/debug/agent dev-tool-host
 ```
@@ -957,7 +957,7 @@ Start the headless HTTP server over the same catalog:
 
 ```bash
 rtk cargo run -p agent-cli -- serve \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --store /private/tmp/agent-runtime-http-store \
   --host 127.0.0.1 \
   --port 8765
@@ -994,7 +994,7 @@ frame is one persisted `TraceEvent` JSON object from the run trace. This is the
 server-side counterpart to debug bundle `events.jsonl`; it gives TUI/Web/IDE
 clients a stable event-stream contract today and can be extended to live tailing
 when the runner keeps per-run sinks open. Frames follow
-`schemas/agent-runtime/trace.schema.json`; `agent_runtime_step` frames include
+`schemas/trace.schema.json`; `agent_runtime_step` frames include
 `payload.run_state` so native step status, remaining tool count, tool result
 count, and terminal reason are available to stream consumers without inspecting
 mobile-specific FRB envelopes.
@@ -1124,7 +1124,7 @@ Run the sample eval:
 ```bash
 cd third_party/agent-runtime
 rtk cargo run -p agent-cli -- eval \
-  evals/agent-runtime/catalog_dry_run.yaml \
+  evals/catalog_dry_run.yaml \
   --store /private/tmp/agent-runtime-eval-store
 ```
 
@@ -1133,7 +1133,7 @@ Run every eval case under a directory:
 ```bash
 cd third_party/agent-runtime
 rtk cargo run -p agent-cli -- eval \
-  evals/agent-runtime \
+  evals \
   --store /private/tmp/agent-runtime-eval-suite-store
 ```
 
@@ -1194,7 +1194,7 @@ tests/examples; production scoring hooks can call an LLM judge, rubric script,
 or regression scorer.
 
 Scoring hook invocations are reported through the shared HookEvent contract.
-`schemas/agent-runtime/hook-event.schema.json` reserves the MVP hook event names
+`schemas/hook-event.schema.json` reserves the MVP hook event names
 from the runtime design (`SessionStart`, `RunStart`, `BeforeToolCall`,
 `AfterAgentStep`, and the rest of the extension points), hook kinds
 (`native_rust`, `process`, `server`), status, timestamps, duration, input, and
@@ -1204,7 +1204,7 @@ can consume one protocol before a full plugin system exists. The same schema is
 also exposed as the OpenAPI `HookEvent` component.
 
 Committed eval YAML files are schema-checked with
-`schemas/agent-runtime/eval-case.schema.json`, covering fixture input, expected
+`schemas/eval-case.schema.json`, covering fixture input, expected
 status, expected trace events, expected tool call sequence, expected proposals,
 prompt manifest fields, golden trace, and scoring hook configuration.
 
@@ -1212,7 +1212,7 @@ Refresh golden traces for one file or an entire directory:
 
 ```bash
 rtk cargo run -p agent-cli -- eval \
-  evals/agent-runtime \
+  evals \
   --store /private/tmp/agent-runtime-eval-suite-store \
   --update-golden
 ```
@@ -1223,7 +1223,7 @@ Generate a regression eval from a persisted run:
 rtk cargo run -p agent-cli -- eval create \
   --from-run run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000 \
   --store /private/tmp/agent-runtime-catalog-dry-run-store \
-  --catalog fixtures/agent-runtime/catalog.valid.json \
+  --catalog fixtures/contracts/catalog.valid.json \
   --out /private/tmp/agent-runtime-evals/generated.yaml \
   --id generated_from_run
 ```
@@ -1241,7 +1241,7 @@ rtk cargo run -p agent-cli -- cmd create \
   --from-run run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000 \
   --store /private/tmp/agent-runtime-catalog-dry-run-store \
   --out .agent-runtime/commands/execution-review.md \
-  --registry examples/agent-runtime/agents.yaml \
+  --registry examples/agents.yaml \
   --description 'Replay execution review fixture'
 ```
 
@@ -1251,7 +1251,7 @@ The command file uses YAML frontmatter plus a captured JSON input fence:
 ---
 description: Replay execution review fixture
 agent: execution_review
-registry: examples/agent-runtime/agents.yaml
+registry: examples/agents.yaml
 source_run_id: run_01975d8c-72f5-7f1e-9b7e-c7ef3e0a1000
 source_run_status: completed
 created_at: 2026-06-28T10:55:00Z
@@ -1297,8 +1297,8 @@ thread:
 
 ```bash
 rtk cargo run -p agent-cli -- run echo_agent \
-  --registry examples/agent-runtime/agents.yaml \
-  --input examples/agent-runtime/fixtures/echo-input.json \
+  --registry examples/agents.yaml \
+  --input examples/fixtures/echo-input.json \
   --store /private/tmp/agent-runtime-session-store \
   --session session_01975d8c-72f5-7f1e-b111-000000000001 \
   --thread thread_01975d8c-72f5-7f1e-b111-000000000002
@@ -1319,9 +1319,9 @@ rtk cargo run -p agent-cli -- session fork \
 The schema contracts live at:
 
 ```text
-schemas/agent-runtime/session-record.schema.json
-schemas/agent-runtime/thread-record.schema.json
-schemas/agent-runtime/step-record.schema.json
+schemas/session-record.schema.json
+schemas/thread-record.schema.json
+schemas/step-record.schema.json
 ```
 
 Use a profile config for repeatable local, CI, and server runs:
@@ -1329,8 +1329,8 @@ Use a profile config for repeatable local, CI, and server runs:
 ```toml
 [runtime]
 profile = "local-dev"
-registry = "examples/agent-runtime/agents.yaml"
-catalog = "fixtures/agent-runtime/catalog.valid.json"
+registry = "examples/agents.yaml"
+catalog = "fixtures/contracts/catalog.valid.json"
 store = ".agent-runtime/store"
 timeout_seconds = 60
 max_retries = 1
@@ -1342,7 +1342,7 @@ timeout_seconds = 10
 max_retries = 0
 
 [profiles.server]
-catalog = "fixtures/agent-runtime/catalog.valid.json"
+catalog = "fixtures/contracts/catalog.valid.json"
 store = ".agent-runtime/server-store"
 host = "127.0.0.1"
 port = 8765
@@ -1361,7 +1361,7 @@ rtk cargo run -p agent-cli -- \
   --config agent-runtime.toml \
   --profile ci \
   run echo_agent \
-  --input examples/agent-runtime/fixtures/echo-input.json
+  --input examples/fixtures/echo-input.json
 
 rtk cargo run -p agent-cli -- \
   --config agent-runtime.toml \

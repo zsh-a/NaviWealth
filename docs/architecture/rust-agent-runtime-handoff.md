@@ -60,10 +60,10 @@ crates/
   agent-store/
   agent-llm/
   agent-cli/
-schemas/agent-runtime/
-fixtures/agent-runtime/
-evals/agent-runtime/
-examples/agent-runtime/
+schemas/
+fixtures/contracts/
+evals/
+examples/
 openapi/agent-runtime-api.yaml
 ```
 
@@ -512,8 +512,8 @@ rtk cargo fmt --all
 rtk cargo test --workspace
 rtk cargo test -p agent-cli --test contracts
 rtk cargo test -p agent-cli --test catalog_cli
-rtk cargo run -p agent-cli -- catalog summary fixtures/agent-runtime/catalog.valid.json
-rtk cargo run -p agent-cli -- eval evals/agent-runtime --store /private/tmp/agent-runtime-eval-store
+rtk cargo run -p agent-cli -- catalog summary fixtures/contracts/catalog.valid.json
+rtk cargo run -p agent-cli -- eval evals --store /private/tmp/agent-runtime-eval-store
 ```
 
 Mobile targeted checks:

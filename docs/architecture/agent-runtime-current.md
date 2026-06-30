@@ -87,11 +87,11 @@ crates/agent-cli/src/
   debug_bundle.rs   Local reproduction bundle export and redaction helpers
   tui.rs, tui/      Interactive TUI shell, state, command handling, rendering
 
-schemas/agent-runtime/
+schemas/
   JSON Schema contracts for runtime wire types, including ChatTurn request,
   state, event, and tool-result resume payloads.
 
-fixtures/agent-runtime/
+fixtures/contracts/
   Valid and invalid schema fixtures used by contract tests and CLI examples.
   ChatTurn fixtures are also consumed by `agent-chat` runtime tests so schema
   drift breaks locally.
@@ -141,10 +141,10 @@ Use these entrypoints when debugging:
 ```bash
 cd third_party/agent-runtime
 rtk cargo run -p agent-cli -- list
-rtk cargo run -p agent-cli -- run echo_agent --input examples/agent-runtime/fixtures/echo-input.json
+rtk cargo run -p agent-cli -- run echo_agent --input examples/fixtures/echo-input.json
 rtk cargo run -p agent-cli -- tui
-rtk cargo run -p agent-cli -- serve --catalog fixtures/agent-runtime/catalog.valid.json
-rtk cargo run -p agent-cli -- validate schemas/agent-runtime/run-request.schema.json fixtures/agent-runtime/run-request.valid.json
+rtk cargo run -p agent-cli -- serve --catalog fixtures/contracts/catalog.valid.json
+rtk cargo run -p agent-cli -- validate schemas/run-request.schema.json fixtures/contracts/run-request.valid.json
 ```
 
 TUI uses persistent natural input by default. Plain text runs the shared
@@ -164,10 +164,10 @@ TUI uses persistent natural input by default. Plain text runs the shared
 
 | Change | Start Here | Required Checks |
 |---|---|---|
-| Add or change a wire field | `schemas/agent-runtime/`, `crates/agent-core/`, fixtures | schema validation tests, `rtk cargo test -p agent-cli` |
+| Add or change a wire field | `schemas/`, `crates/agent-core/`, fixtures | schema validation tests, `rtk cargo test -p agent-cli` |
 | Change runner lifecycle | `crates/agent-runtime/src/lib.rs` | `rtk cargo test -p agent-runtime`, `rtk cargo test -p agent-cli` |
 | Change LLM provider behavior | `crates/agent-llm/src/providers/` | `rtk cargo test -p agent-llm`, native tests when FRB LLM bridge behavior changes |
-| Change ChatTurn behavior | `crates/agent-chat/`, `schemas/agent-runtime/chat-turn-*.schema.json`, ChatTurn fixtures, `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli --test contracts`, native tests, Flutter chat bridge tests |
+| Change ChatTurn behavior | `crates/agent-chat/`, `schemas/chat-turn-*.schema.json`, ChatTurn fixtures, `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli --test contracts`, native tests, Flutter chat bridge tests |
 | Change CLI command behavior | `crates/agent-cli/src/commands/` plus supporting module | focused command test, `rtk cargo test -p agent-cli` |
 | Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
 | Change FRB API | `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs` | FRB codegen, native API tests, Dart bridge tests |
