@@ -66,6 +66,7 @@ void main() {
       bridge,
       events: const <String>[
         '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+        '{"kind":"llm_started","round":1,"metadata":{"stream":true}}',
         '{"kind":"thinking_delta","content":"reason","metadata":{"stream":true}}',
         '{"kind":"delta","content":"Hello ","metadata":{"synthetic_stream":true}}',
         '{"kind":"tool_call_start","tool_call_id":"call_1","tool_name":"read_task","metadata":{"stream":true}}',
@@ -73,7 +74,9 @@ void main() {
         '{"kind":"tool_call_delta","tool_call_id":"call_1","tool_name":"read_task","partial_input_json":"id\\":\\"task_1\\"}","metadata":{"stream":true}}',
         '{"kind":"tool_call_end","tool_call_id":"call_1","tool_name":"read_task","tool_input":{"id":"task_1"},"metadata":{"stream":true}}',
         '{"kind":"delta","content":"from FRB","metadata":{"synthetic_stream":true}}',
-        '{"kind":"finished","response":{"content":"Hello from FRB","finish_reason":"stop","usage":{"input_tokens":4,"output_tokens":3,"total_tokens":7}},"metadata":{"synthetic_stream":true}}',
+        '{"kind":"usage","usage":{"input_tokens":4,"output_tokens":3,"total_tokens":7},"round":1,"metadata":{}}',
+        '{"kind":"round_finished","response":{"content":"Hello from FRB","finish_reason":"stop","usage":{"input_tokens":4,"output_tokens":3,"total_tokens":7}},"round":1,"metadata":{"finish_reason":"stop"}}',
+        '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
       ],
     );
     final runner = FrbChatRunner(llmBridge: bridge, streamBridge: streamBridge);

@@ -5,7 +5,7 @@ Native primitives for the Flutter app, exposed through
 
 - EmbeddingGemma-300M sentence embedder via `fastembed-rs` + ONNX Runtime.
 - Native agent-runtime JSON contract helpers and device LLM provider bridge
-  through the shared root `agent-core` / `agent-llm` crates.
+  through the shared root `agent-core` / `agent-llm` / `agent-chat` crates.
 - Health provider primitives that require native HTTP/runtime behavior.
 
 Keep the FRB surface primitive and app-owned: everything FRB scans lives under
@@ -58,6 +58,12 @@ carrying the error message.
 
 Higher-level wrapper (implements the project's `Embedder` interface):
 `apps/mobile/lib/core/ai/local/embedding/rust_gemma_embedder.dart`.
+
+Agent runtime/chat wrappers live at the app layer:
+`apps/mobile/lib/app/agent_runtime_llm_stream_bridge.dart` exposes the native
+stream as a ChatTurn stream, and `apps/mobile/lib/app/frb_chat_runner.dart`
+maps those primitive events into the Flutter `AiChatEvent` vocabulary while
+Flutter still owns device tool dispatch.
 
 ## Build
 

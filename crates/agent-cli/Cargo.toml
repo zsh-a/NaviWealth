@@ -11,6 +11,7 @@ name = "agent"
 path = "src/main.rs"
 
 [dependencies]
+agent-chat.workspace = true
 agent-core.workspace = true
 agent-llm.workspace = true
 agent-runtime.workspace = true

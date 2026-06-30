@@ -14,6 +14,8 @@ Implemented:
   - `agent-llm`: provider-neutral LLM DTOs, provider trait, mock provider,
     OpenAI-compatible provider, Anthropic provider, Ollama-compatible local
     provider
+  - `agent-chat`: shared interactive ChatTurn request/event DTOs and the
+    provider/tool continuation loop over `agent-llm` and `AgentServices`
   - `agent-runtime`: scheduler, runner, in-memory registry, trace capture,
     timeout policy, run concurrency limiting, per-agent/scope lease locking
   - `agent-store`: in-memory and file-backed run/state stores
@@ -77,7 +79,7 @@ Implemented:
 - minimal OpenAPI 3.1 contract at `openapi/agent-runtime-api.yaml`
 - CLI JSON Schema validation gate via `agent validate`
 - ratatui/crossterm terminal UI via `agent tui`, including direct natural
-  language input for the default agent plus slash commands for interactive
+  language input through `agent-chat` plus slash commands for interactive
   `/run`, `/tool`, trace load, run inspect, refresh, and help
 - FRB-facing native JSON contract bridge in
   `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs`
@@ -109,7 +111,7 @@ Implemented:
 - FRB-facing profile-backed LLM completion via
   `agentRuntimeCompleteProfileLlm`, using device-local profile metadata for
   OpenAI-compatible and Anthropic-compatible HTTP providers
-- FRB-facing AgentTurn validation and streaming via
+- FRB-facing ChatTurn request validation and AgentTurn streaming via
   `agentRuntimeValidateAgentTurnRequest` and `agentRuntimeStreamAgentTurn`.
   The request keeps a small top-level turn envelope (`turn_id`, `surface`,
   `agent_id`, `mode`) while preserving provider-neutral LLM messages, including
@@ -205,11 +207,13 @@ Implemented:
   native `agent-llm` provider path as production completions
 - AI Chat now has an app-level `FrbChatRunner` adapter and
   `AgentRuntimeLlmStreamBridge`. Native FRB exposes primitive JSON-string
-  AgentTurn stream events through `agentRuntimeStreamAgentTurn`; the runner maps
-  `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
-  `tool_call_*` / `finished` / `error` events into the existing `AiChatEvent`
-  vocabulary. Native stream events normalize JSON-object event metadata and
-  validate `finished.response` with the same LLM response contract used by
+  AgentTurn stream events through `agentRuntimeStreamAgentTurn`; the Dart bridge
+  exposes this as `streamChatTurn`, and the runner maps
+  ChatTurn-style `started` / `llm_started` / `delta` / `thinking_delta` /
+  `thinking_signature_delta` / `tool_call_*` / `usage` / `round_finished` /
+  `done` / `error` events into the existing `AiChatEvent` vocabulary. Native
+  stream events normalize JSON-object event metadata and validate
+  `round_finished.response` with the same LLM response contract used by
   non-streaming completions. Production interactive chat is now routed through
   this FRB seam from the app composition root when an active FRB LLM profile is available;
   chat traces use routing reason `frb_chat`. Transparency surfaces use
@@ -221,9 +225,15 @@ Implemented:
   rounds, pauses terminally after successful `ask_user`, and emits LLM/tool
   trace spans plus cancellation spans for streaming and non-streaming FRB
   fallback completions. The chat runner rejects malformed `finished.response`
-  stream events and tool-call stream events missing `tool_call_id` / `tool_name`
-  instead of treating them as empty completions or unnamed tool calls. OpenAI-compatible and Anthropic
+  or `round_finished.response` stream events and tool-call stream events
+  missing `tool_call_id` / `tool_name` instead of treating them as empty
+  completions or unnamed tool calls. OpenAI-compatible and Anthropic
   text/usage/tool/reasoning SSE are now provider-real in `agent-llm`.
+- TUI natural-language chat and Flutter interactive chat now share the ChatTurn
+  request shape and provider-neutral LLM message/tool schema. TUI executes the
+  full shared `agent-chat` LLM/tool continuation loop; Flutter still owns the
+  bounded device-tool loop in `FrbChatRunner` while native FRB owns provider
+  streaming and request validation.
 - `tool/lint-frb-llm-entrypoints.sh` protects the migration by rejecting new
   production business/app uses of the legacy direct-Dart LLM seams outside the
   documented runtime/legacy allowlist, and by preventing feature code from

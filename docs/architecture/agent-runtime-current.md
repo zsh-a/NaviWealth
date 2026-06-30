@@ -28,6 +28,7 @@ crates/
   agent-runtime/    AgentRunner, scheduler, retry/timeout, lease locking, trace capture
   agent-store/      In-memory and file-backed run/state/proposal/session stores
   agent-llm/        Provider-neutral LLM DTOs, mock/OpenAI/Anthropic/Ollama providers
+  agent-chat/       Shared ChatTurn request/event contract and provider/tool loop
   agent-cli/        Local developer surfaces and host adapters
 
 crates/agent-runtime/src/
@@ -62,8 +63,12 @@ crates/agent-llm/src/
     ollama.rs       Ollama chat request, response, synthetic stream mapping
   tests.rs          Provider request mapping and SSE stream tests
 
+crates/agent-chat/src/
+  lib.rs            ChatTurnRequest, ChatTurnEvent, ChatTurnRunner, tool-round loop
+
 crates/agent-cli/src/
   main.rs           clap wiring and top-level command dispatch only
+  chat.rs           CLI/TUI LLM provider construction for ChatTurnRunner
   commands/         Thin command handlers for run/catalog/tool/proposal/session/llm/cmd
   catalog.rs        Catalog loading, prompt manifest, catalog dry-run registry
   registry.rs       YAML registry and local example agent implementations
@@ -100,18 +105,23 @@ apps/mobile/lib/app/
   agent_runtime_tool_host.dart        Device tool JSON-RPC host adapter
   agent_runtime_runner.dart           Profile turn + native step loop composition
   agent_runtime_llm_bridge.dart       LlmProfile -> provider-neutral request
-  agent_runtime_llm_stream_bridge.dart AgentTurn streaming bridge
-  frb_chat_runner.dart                AI Chat event mapping and tool loop
+  agent_runtime_llm_stream_bridge.dart ChatTurn streaming bridge over FRB JSON
+  frb_chat_runner.dart                ChatTurn event mapping and Flutter tool loop
   agent_runtime_trace_recorder.dart   FRB result -> local AiTraceStore adapter
 ```
 
 ## Runtime Layers
 
 1. `agent-core` defines protocol shapes and host-facing traits.
-2. `agent-runtime` executes `Agent` instances through `AgentRunner`.
-3. `agent-store` persists run/state/proposal/session records.
-4. Host adapters implement `AgentServices` and tool/proposal/state behavior.
-5. CLI/server/TUI/FRB are surfaces over the same contracts.
+2. `agent-llm` owns provider-neutral request/response/event DTOs and provider
+   clients.
+3. `agent-chat` owns provider-neutral interactive ChatTurn request/event
+   contracts and the LLM/tool continuation loop over `AgentServices`.
+4. `agent-runtime` executes scheduled or explicit `Agent` instances through
+   `AgentRunner`.
+5. `agent-store` persists run/state/proposal/session records.
+6. Host adapters implement `AgentServices` and tool/proposal/state behavior.
+7. CLI/server/TUI/FRB are surfaces over these contracts.
 
 `AgentRunner` returns `RunOutcome`, not only `AgentRunResult`, because callers
 need both the final result and the captured `AgentTrace`.
@@ -128,8 +138,8 @@ rtk cargo run -p agent-cli -- serve --catalog fixtures/agent-runtime/catalog.val
 rtk cargo run -p agent-cli -- validate schemas/agent-runtime/run-request.schema.json fixtures/agent-runtime/run-request.valid.json
 ```
 
-TUI uses persistent natural input by default. Plain text runs the default
-agent; slash commands perform explicit debugging:
+TUI uses persistent natural input by default. Plain text runs the shared
+`agent-chat` ChatTurn path; slash commands perform explicit runtime debugging:
 
 ```text
 /run <agent_id> [json|text]
@@ -148,6 +158,7 @@ agent; slash commands perform explicit debugging:
 | Add or change a wire field | `schemas/agent-runtime/`, `crates/agent-core/`, fixtures | schema validation tests, `rtk cargo test -p agent-cli` |
 | Change runner lifecycle | `crates/agent-runtime/src/lib.rs` | `rtk cargo test -p agent-runtime`, `rtk cargo test -p agent-cli` |
 | Change LLM provider behavior | `crates/agent-llm/src/providers/` | `rtk cargo test -p agent-llm`, native tests when FRB LLM bridge behavior changes |
+| Change ChatTurn behavior | `crates/agent-chat/`, `crates/agent-cli/src/tui/`, `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli`, native tests, Flutter chat bridge tests |
 | Change CLI command behavior | `crates/agent-cli/src/commands/` plus supporting module | focused command test, `rtk cargo test -p agent-cli` |
 | Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
 | Change FRB API | `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs` | FRB codegen, native API tests, Dart bridge tests |
@@ -164,8 +175,9 @@ agent; slash commands perform explicit debugging:
 - Flutter feature code should not import app-level FRB bridges directly; route
   feature-owned seams through app composition.
 - Generated FRB files are regenerated, not hand-edited.
-- TUI and CLI must execute through `AgentRunner` or the same JSON contracts;
-  they should not invent parallel runtime behavior.
+- TUI natural input must execute through `ChatTurnRunner`. Runtime debugging
+  slash commands may execute through `AgentRunner`, but must still use shared
+  JSON contracts rather than ad-hoc behavior.
 
 ## Current Design Drift
 
@@ -181,11 +193,17 @@ These are intentional or pending differences from the long-term design:
   through tool/proposal metadata and host-side confirmation.
 - `ScheduleSpec` supports `manual` and `interval`; cron/plugin/HTTP registries
   remain future work.
-- External cancel/pause/resume is not implemented. TUI natural input is
-  interactive, but live token/tool stream control is still pending.
+- External cancel/pause/resume is not implemented. TUI natural input now uses
+  the shared `agent-chat` stream, but terminal redraw/cancel is still not a
+  non-blocking live run loop.
 - Flutter production agents still keep most business policy in Dart. Rust owns
   contracts, LLM provider paths, native-planned tool continuation, and trace
   normalization for migrated seams.
+- Flutter interactive AI Chat uses the same ChatTurn request and event naming
+  through the FRB stream bridge. Its bounded device-tool dispatch remains in
+  `FrbChatRunner` because production tools live in Dart/DomainPack/Riverpod
+  host code; a fully Rust-owned loop would require an explicit FRB
+  callback/resume seam.
 
 When code and older handoff notes disagree, use this document, the MVP status
 doc, and current tests as authority.

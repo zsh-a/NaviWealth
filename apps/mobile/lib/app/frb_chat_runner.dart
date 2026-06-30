@@ -136,7 +136,7 @@ class FrbChatRunner implements DeviceChatRunner {
       );
       var finished = false;
       final stream = _cancelableFrbStream(
-        streamBridge.streamProfile(
+        streamBridge.streamChatTurn(
           messages: conversation,
           tools: _tools,
           metadata: <String, Object?>{
@@ -181,6 +181,9 @@ class FrbChatRunner implements DeviceChatRunner {
             yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
             return;
           case 'started':
+          case 'llm_started':
+          case 'usage':
+          case 'done':
             break;
           case 'delta':
             final text = _string(event['content']);
@@ -266,18 +269,20 @@ class FrbChatRunner implements DeviceChatRunner {
             state.finishToolCall(id: id, name: name, input: input);
             yield ToolCallEvent(id: id, name: name, input: input);
           case 'finished':
+          case 'round_finished':
             final response = _objectOrNull(event['response']);
             if (response == null) {
+              final kind = _string(event['kind']);
               yield _invalidStreamEventSpan(
                 round: round,
                 roundId: roundId,
                 startedAt: roundStart,
                 state: state,
                 requestedModel: model,
-                message: 'FRB LLM finished event response is not an object',
+                message: 'FRB LLM $kind event response is not an object',
               );
-              yield const ErrorEvent(
-                'FRB LLM finished event response is not an object',
+              yield ErrorEvent(
+                'FRB LLM $kind event response is not an object',
                 code: 'frb_chat_event_invalid',
               );
               yield DoneEvent(stopReason: 'error', rounds: roundsUsed);

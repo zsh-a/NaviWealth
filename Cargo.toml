@@ -5,6 +5,7 @@ members = [
   "crates/agent-runtime",
   "crates/agent-store",
   "crates/agent-llm",
+  "crates/agent-chat",
   "crates/agent-cli",
 ]
 
@@ -16,6 +17,7 @@ rust-version = "1.96"
 
 [workspace.dependencies]
 agent-core = { path = "crates/agent-core" }
+agent-chat = { path = "crates/agent-chat" }
 agent-llm = { path = "crates/agent-llm" }
 agent-runtime = { path = "crates/agent-runtime" }
 agent-store = { path = "crates/agent-store" }

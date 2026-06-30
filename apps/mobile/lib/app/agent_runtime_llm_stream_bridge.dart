@@ -66,13 +66,15 @@ class AgentRuntimeLlmStreamBridge {
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
-    return streamAgentTurn(
+    return streamChatTurn(
       messages: messages,
       tools: tools,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
       metadata: metadata,
       turnId: _metadataString(metadata, 'turn_id'),
+      sessionId: _metadataString(metadata, 'session_id'),
+      threadId: _metadataString(metadata, 'thread_id'),
       surface: _metadataString(metadata, 'surface'),
       agentId: _metadataString(metadata, 'agent_id'),
       mode: _metadataString(metadata, 'mode') ?? 'chat',
@@ -86,18 +88,50 @@ class AgentRuntimeLlmStreamBridge {
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
     String? turnId,
+    String? sessionId,
+    String? threadId,
     String? surface,
     String? agentId,
     String? mode,
-  }) async* {
-    await _ensureInitialized();
-    final request = _buildAgentTurnRequest(
+  }) {
+    return streamChatTurn(
       messages: messages,
       tools: tools,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
       metadata: metadata,
       turnId: turnId,
+      sessionId: sessionId,
+      threadId: threadId,
+      surface: surface,
+      agentId: agentId,
+      mode: mode,
+    );
+  }
+
+  Stream<Map<String, Object?>> streamChatTurn({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+    String? turnId,
+    String? sessionId,
+    String? threadId,
+    String? surface,
+    String? agentId,
+    String? mode,
+  }) async* {
+    await _ensureInitialized();
+    final request = _buildChatTurnRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+      turnId: turnId,
+      sessionId: sessionId,
+      threadId: threadId,
       surface: surface,
       agentId: agentId,
       mode: mode,
@@ -113,13 +147,15 @@ class AgentRuntimeLlmStreamBridge {
     return _initFuture ??= _initRuntime(libraryPath: _libraryPath);
   }
 
-  Map<String, Object?> _buildAgentTurnRequest({
+  Map<String, Object?> _buildChatTurnRequest({
     required List<Map<String, Object?>> messages,
     required List<Map<String, Object?>> tools,
     required Map<String, Object?> metadata,
     required double? temperature,
     required int? maxOutputTokens,
     required String? turnId,
+    required String? sessionId,
+    required String? threadId,
     required String? surface,
     required String? agentId,
     required String? mode,
@@ -134,6 +170,8 @@ class AgentRuntimeLlmStreamBridge {
     return <String, Object?>{
       'protocol_version': llmRequest['protocol_version'],
       'turn_id': ?turnId,
+      'session_id': ?sessionId,
+      'thread_id': ?threadId,
       'surface': ?surface,
       'agent_id': ?agentId,
       'mode': ?mode,

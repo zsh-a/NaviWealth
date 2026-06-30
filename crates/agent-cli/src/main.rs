@@ -9,6 +9,7 @@ use miette::{IntoDiagnostic, Result, miette};
 use serde::Serialize;
 
 mod catalog;
+mod chat;
 mod cli_input;
 mod commands;
 mod config;
@@ -221,6 +222,24 @@ enum Command {
         mock_tool: Vec<String>,
         #[arg(long)]
         tool_source: Vec<Utf8PathBuf>,
+        #[arg(long, env = "AGENT_LLM_PROVIDER", default_value = "mock")]
+        provider: String,
+        #[arg(long, default_value = "mock-model")]
+        model: String,
+        #[arg(long, default_value = "mock response")]
+        mock_response: String,
+        #[arg(long, env = "OPENAI_BASE_URL")]
+        api_base_url: Option<String>,
+        #[arg(long, default_value = "OPENAI_API_KEY")]
+        api_key_env: String,
+        #[arg(long, default_value = "2023-06-01")]
+        anthropic_version: String,
+        #[arg(long)]
+        temperature: Option<f32>,
+        #[arg(long)]
+        max_output_tokens: Option<u32>,
+        #[arg(long, default_value_t = 4)]
+        max_tool_rounds: u32,
         #[arg(long, default_value_t = DEFAULT_TIMEOUT_SECONDS)]
         timeout_seconds: u64,
         #[arg(long, default_value_t = 0)]
@@ -682,6 +701,15 @@ async fn main() -> Result<()> {
             tool_host,
             mock_tool,
             tool_source,
+            provider,
+            model,
+            mock_response,
+            api_base_url,
+            api_key_env,
+            anthropic_version,
+            temperature,
+            max_output_tokens,
+            max_tool_rounds,
             timeout_seconds,
             max_retries,
             retry_backoff_ms,
@@ -706,6 +734,17 @@ async fn main() -> Result<()> {
                 store_path: store,
                 registry_path: registry,
                 tool_overrides: tool_overrides(tool_host, mock_tool, tool_source).await?,
+                chat: chat::ChatLlmOptions {
+                    provider,
+                    model,
+                    mock_response,
+                    api_base_url,
+                    api_key_env,
+                    anthropic_version,
+                    temperature,
+                    max_output_tokens,
+                    max_tool_rounds,
+                },
                 timeout_seconds,
                 max_retries,
                 retry_backoff_ms,

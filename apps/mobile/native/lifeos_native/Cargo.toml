@@ -30,6 +30,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 fastembed = { version = "5.17.2", default-features = false, features = ["ort-load-dynamic"] }
 anyhow = "1.0.102"
 agent-core = { path = "../../../../crates/agent-core" }
+agent-chat = { path = "../../../../crates/agent-chat" }
 agent-llm = { path = "../../../../crates/agent-llm" }
 futures = "0.3"
 # flutter_rust_bridge generates Dart bindings from these signatures.

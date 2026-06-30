@@ -1,17 +1,22 @@
 use std::sync::Arc;
 
+use agent_chat::{ChatTurnEvent, ChatTurnEventKind, ChatTurnRequest, ChatTurnRunner};
 use agent_core::{
-    AgentRegistry, AgentRunStore, AgentServices, PROTOCOL_VERSION, RunId, RunRequest,
+    AgentRegistry, AgentRunStore, AgentServices, PROTOCOL_VERSION, RunId, RunRequest, ToolRisk,
+    ToolSpec,
 };
+use agent_llm::{LlmMessage, LlmRole, user_message};
 use agent_runtime::AgentRunner;
 use agent_store::{FileProposalStore, FileRunStore};
 use camino::Utf8PathBuf;
+use futures::StreamExt;
 use miette::{IntoDiagnostic, Result, miette};
 use serde::Serialize;
 use serde_json::{Value, json};
 
 use crate::{
     catalog::{load_catalog_registry, read_catalog},
+    chat::provider_from_options,
     config::execution_policy,
     registry::load_registry,
     tools::CliServices,
@@ -64,13 +69,8 @@ fn show_help(state: &mut TuiState) {
 
 async fn run_natural_language_command(state: &mut TuiState, text: &str) -> Result<()> {
     let agent_id = default_agent_id(state).await?;
-    let input = json!({
-        "message": text,
-        "surface": "agent_tui",
-        "mode": "natural_language"
-    });
     state.push_log(format!("you: {text}"));
-    run_agent_with_input(state, &agent_id, input, "natural_language").await
+    run_chat_turn(state, &agent_id, text).await
 }
 
 async fn run_agent_command(state: &mut TuiState, rest: &str) -> Result<()> {
@@ -109,7 +109,7 @@ async fn run_agent_with_input(
     ));
     let outcome = runner
         .run_once(
-            &agent_id,
+            agent_id,
             RunRequest {
                 protocol_version: PROTOCOL_VERSION.to_owned(),
                 run_id: None,
@@ -153,6 +153,182 @@ async fn tool_call_command(state: &mut TuiState, rest: &str) -> Result<()> {
         .map_err(|err| miette!(err.record.message))?;
     state.push_log(pretty_json(&output));
     Ok(())
+}
+
+async fn run_chat_turn(state: &mut TuiState, agent_id: &str, text: &str) -> Result<()> {
+    let provider = provider_from_options(&state.options.chat)?;
+    let proposal_store = Arc::new(
+        FileProposalStore::new(state.options.store_path.clone())
+            .await
+            .into_diagnostic()?,
+    );
+    let services = Arc::new(CliServices::with_proposal_store(
+        state.options.tool_overrides.clone(),
+        proposal_store,
+    ));
+    let runner = ChatTurnRunner::new(provider, services);
+    let user = user_message(text);
+    state.chat_messages.push(user.clone());
+    let request = ChatTurnRequest {
+        protocol_version: PROTOCOL_VERSION.to_owned(),
+        turn_id: None,
+        surface: Some("agent_tui".to_owned()),
+        mode: Some("natural_language".to_owned()),
+        session_id: None,
+        thread_id: None,
+        agent_id: Some(agent_id.to_owned()),
+        provider: state.options.chat.provider.clone(),
+        model: state.options.chat.model.clone(),
+        messages: state.chat_messages.clone(),
+        temperature: state.options.chat.temperature,
+        max_output_tokens: state.options.chat.max_output_tokens,
+        tools: chat_tools(state).await?,
+        metadata: json!({
+            "source": "agent_tui",
+            "surface": "agent_tui",
+            "mode": "natural_language",
+        }),
+        max_tool_rounds: state.options.chat.max_tool_rounds,
+    };
+
+    let mut stream = runner.stream(request);
+    let mut assistant_text = String::new();
+    let mut final_response = None;
+    while let Some(event) = stream.next().await {
+        let event = event.map_err(|err| miette!(err.record.message))?;
+        apply_chat_event_to_tui(state, &event, &mut assistant_text, &mut final_response);
+    }
+    let assistant_content = final_response
+        .as_ref()
+        .map(|response: &agent_llm::LlmResponse| response.content.clone())
+        .filter(|content| !content.is_empty())
+        .unwrap_or(assistant_text);
+    if !assistant_content.is_empty() {
+        state.chat_messages.push(LlmMessage {
+            role: LlmRole::Assistant,
+            content: Value::String(assistant_content),
+            name: None,
+            metadata: json!({}),
+        });
+    }
+    Ok(())
+}
+
+fn apply_chat_event_to_tui(
+    state: &mut TuiState,
+    event: &ChatTurnEvent,
+    assistant_text: &mut String,
+    final_response: &mut Option<agent_llm::LlmResponse>,
+) {
+    match event.kind {
+        ChatTurnEventKind::Started => {
+            let provider = event
+                .metadata
+                .get("provider")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown");
+            let model = event
+                .metadata
+                .get("model")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown");
+            state.push_log(format!("chat started: {provider}/{model}"));
+        }
+        ChatTurnEventKind::LlmStarted => {
+            state.push_log(format!("round {} started", event.round));
+        }
+        ChatTurnEventKind::Delta => {
+            if let Some(content) = &event.content {
+                assistant_text.push_str(content);
+                state.push_log(format!("agent: {content}"));
+            }
+        }
+        ChatTurnEventKind::ThinkingDelta => {
+            if let Some(content) = &event.content {
+                state.push_log(format!("thinking: {content}"));
+            }
+        }
+        ChatTurnEventKind::ThinkingSignatureDelta => {}
+        ChatTurnEventKind::ToolCallStart => {
+            state.push_log(format!(
+                "tool start: {} {}",
+                event.tool_call_id.as_deref().unwrap_or(""),
+                event.tool_name.as_deref().unwrap_or("")
+            ));
+        }
+        ChatTurnEventKind::ToolCallDelta => {
+            if let Some(partial) = &event.partial_input_json {
+                state.push_log(format!(
+                    "tool args {}: {partial}",
+                    event.tool_call_id.as_deref().unwrap_or("")
+                ));
+            }
+        }
+        ChatTurnEventKind::ToolCallEnd => {
+            state.push_log(format!(
+                "tool ready: {} {}",
+                event.tool_call_id.as_deref().unwrap_or(""),
+                event.tool_name.as_deref().unwrap_or("")
+            ));
+        }
+        ChatTurnEventKind::ToolResult => {
+            state.push_log(format!(
+                "tool result: {} {}",
+                event.tool_name.as_deref().unwrap_or(""),
+                compact_json(event.tool_output.as_ref().unwrap_or(&Value::Null))
+            ));
+        }
+        ChatTurnEventKind::Usage => {
+            if let Some(usage) = &event.usage {
+                state.push_log(format!(
+                    "usage: input={} output={} total={}",
+                    usage.input_tokens, usage.output_tokens, usage.total_tokens
+                ));
+            }
+        }
+        ChatTurnEventKind::RoundFinished => {
+            if let Some(response) = &event.response {
+                *final_response = Some(response.clone());
+                state.push_log(format!(
+                    "round {} finished: {:?}",
+                    event.round, response.finish_reason
+                ));
+            }
+        }
+        ChatTurnEventKind::Error => {
+            state.push_log(format!(
+                "chat error: {}",
+                event.content.as_deref().unwrap_or("unknown error")
+            ));
+        }
+        ChatTurnEventKind::Done => {
+            let reason = event
+                .metadata
+                .get("stop_reason")
+                .and_then(Value::as_str)
+                .unwrap_or("done");
+            state.push_log(format!("done: {reason} in {} round(s)", event.round));
+        }
+    }
+}
+
+async fn chat_tools(state: &TuiState) -> Result<Vec<ToolSpec>> {
+    let mut tools = match &state.options.catalog_path {
+        Some(path) => read_catalog(path.clone()).await?.tools,
+        None => Vec::new(),
+    };
+    tools.extend(state.options.tool_overrides.source_specs.clone());
+    if !tools.iter().any(|tool| tool.name == "echo") {
+        tools.push(ToolSpec {
+            name: "echo".to_owned(),
+            description: "Echo the provided JSON input.".to_owned(),
+            input_schema: json!({"type": "object"}),
+            output_schema: Some(json!({"type": "object"})),
+            risk: ToolRisk::ReadOnly,
+            metadata: json!({"source": "agent_cli_builtin"}),
+        });
+    }
+    Ok(tools)
 }
 
 async fn load_trace_command(state: &mut TuiState, rest: &str) -> Result<()> {
@@ -277,10 +453,24 @@ fn compact_json(value: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tools::ToolOverrides, tui::data::TuiOptions};
+    use crate::{chat::ChatLlmOptions, tools::ToolOverrides, tui::data::TuiOptions};
 
     fn temp_store_path(dir: &tempfile::TempDir) -> Utf8PathBuf {
         Utf8PathBuf::from_path_buf(dir.path().join("store")).expect("temp path should be utf8")
+    }
+
+    fn test_chat_options(response: &str) -> ChatLlmOptions {
+        ChatLlmOptions {
+            provider: "mock".to_owned(),
+            model: "mock-model".to_owned(),
+            mock_response: response.to_owned(),
+            api_base_url: None,
+            api_key_env: "OPENAI_API_KEY".to_owned(),
+            anthropic_version: "2023-06-01".to_owned(),
+            temperature: None,
+            max_output_tokens: None,
+            max_tool_rounds: 4,
+        }
     }
 
     #[tokio::test]
@@ -292,6 +482,7 @@ mod tests {
             store_path: temp_store_path(&dir),
             registry_path: Utf8PathBuf::from("../../examples/agent-runtime/agents.yaml"),
             tool_overrides: ToolOverrides::default(),
+            chat: test_chat_options("mock response"),
             timeout_seconds: 60,
             max_retries: 0,
             retry_backoff_ms: 0,
@@ -327,6 +518,7 @@ mod tests {
             store_path: temp_store_path(&dir),
             registry_path: Utf8PathBuf::from("../../examples/agent-runtime/agents.yaml"),
             tool_overrides: ToolOverrides::default(),
+            chat: test_chat_options("chat answer"),
             timeout_seconds: 60,
             max_retries: 0,
             retry_backoff_ms: 0,
@@ -339,9 +531,9 @@ mod tests {
             .await
             .expect("natural input runs");
 
-        assert!(state.trace.is_some());
-        assert_eq!(state.recent_runs.len(), 1);
-        assert_eq!(state.recent_runs[0].agent_id, "echo_agent");
+        assert!(state.trace.is_none());
+        assert!(state.recent_runs.is_empty());
+        assert_eq!(state.chat_messages.len(), 2);
         assert!(
             state
                 .log_lines
@@ -352,7 +544,7 @@ mod tests {
             state
                 .log_lines
                 .iter()
-                .any(|line| line.contains("agent: Summarize my day"))
+                .any(|line| line.contains("agent: chat answer"))
         );
     }
 
@@ -365,6 +557,7 @@ mod tests {
             store_path: temp_store_path(&dir),
             registry_path: Utf8PathBuf::from("../../examples/agent-runtime/agents.yaml"),
             tool_overrides: ToolOverrides::default(),
+            chat: test_chat_options("mock response"),
             timeout_seconds: 60,
             max_retries: 0,
             retry_backoff_ms: 0,
@@ -395,6 +588,7 @@ mod tests {
             store_path: temp_store_path(&dir),
             registry_path: Utf8PathBuf::from("../../examples/agent-runtime/agents.yaml"),
             tool_overrides: ToolOverrides::default(),
+            chat: test_chat_options("mock response"),
             timeout_seconds: 60,
             max_retries: 0,
             retry_backoff_ms: 0,

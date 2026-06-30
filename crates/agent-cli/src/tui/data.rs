@@ -1,12 +1,14 @@
 use std::collections::VecDeque;
 
 use agent_core::AgentRunRecord;
+use agent_llm::LlmMessage;
 use camino::{Utf8Path, Utf8PathBuf};
 use miette::{IntoDiagnostic, Result, miette};
 use serde_json::Value;
 
 use crate::{
     catalog::{CatalogSummary, read_catalog},
+    chat::ChatLlmOptions,
     tools::ToolOverrides,
 };
 
@@ -19,6 +21,7 @@ pub(crate) struct TuiOptions {
     pub(crate) store_path: Utf8PathBuf,
     pub(crate) registry_path: Utf8PathBuf,
     pub(crate) tool_overrides: ToolOverrides,
+    pub(crate) chat: ChatLlmOptions,
     pub(crate) timeout_seconds: u64,
     pub(crate) max_retries: u32,
     pub(crate) retry_backoff_ms: u64,
@@ -35,6 +38,7 @@ pub(super) struct TuiState {
     pub(super) input_mode: bool,
     pub(super) command_input: String,
     pub(super) log_lines: VecDeque<String>,
+    pub(super) chat_messages: Vec<LlmMessage>,
 }
 
 impl TuiState {
@@ -54,6 +58,7 @@ impl TuiState {
             input_mode: true,
             command_input: String::new(),
             log_lines: VecDeque::new(),
+            chat_messages: Vec::new(),
         };
         state.push_log("Ready. Type a message and press Enter. Use /help for commands.");
         Ok(state)

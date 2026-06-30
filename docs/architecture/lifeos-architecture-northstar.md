@@ -164,8 +164,9 @@ Current Rust surface:
 
 - `apps/mobile/native/lifeos_native/`
 - EmbeddingGemma embedder via fastembed and ONNX Runtime.
-- Native agent-runtime / `agent-llm` FRB bridge for device-only provider calls
-  and runtime JSON contract normalization.
+- Native agent-runtime / `agent-llm` / `agent-chat` FRB bridge for
+  device-only provider calls, ChatTurn request contracts, and runtime JSON
+  contract normalization.
 - Native Health provider primitives where platform/runtime behavior requires
   Rust.
 - Generated FRB bindings under `apps/mobile/lib/src/rust/`.

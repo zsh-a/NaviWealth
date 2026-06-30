@@ -53,7 +53,11 @@ void main() {
           ],
           temperature: 0,
           maxOutputTokens: 64,
-          metadata: const <String, Object?>{'surface': 'ai_chat'},
+          metadata: const <String, Object?>{
+            'surface': 'ai_chat',
+            'session_id': 'session_1',
+            'thread_id': 'thread_1',
+          },
         )
         .toList();
 
@@ -68,6 +72,8 @@ void main() {
     final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
     expect(request['protocol_version'], 'agent.v1');
     expect(request['surface'], 'ai_chat');
+    expect(request['session_id'], 'session_1');
+    expect(request['thread_id'], 'thread_1');
     expect(request['mode'], 'chat');
     expect(request['provider'], 'openai');
     expect(request['model'], 'gpt-test');
@@ -129,6 +135,8 @@ void main() {
           ],
           metadata: const <String, Object?>{'source': 'composer'},
           turnId: 'turn_1',
+          sessionId: 'session_2',
+          threadId: 'thread_2',
           surface: 'flutter_ai_chat',
           agentId: 'assistant',
           mode: 'interactive',
@@ -141,6 +149,8 @@ void main() {
     final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
     expect(request['protocol_version'], 'agent.v1');
     expect(request['turn_id'], 'turn_1');
+    expect(request['session_id'], 'session_2');
+    expect(request['thread_id'], 'thread_2');
     expect(request['surface'], 'flutter_ai_chat');
     expect(request['agent_id'], 'assistant');
     expect(request['mode'], 'interactive');

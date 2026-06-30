@@ -7,9 +7,10 @@ use agent_core::{
     AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunId, RunRequest, ScheduleSpec,
     ToolCallId, ToolSpec, catalog_version, protocol_version,
 };
+use agent_chat::{ChatTurnEvent, ChatTurnEventKind, ChatTurnRequest as AgentTurnRequest};
 use agent_llm::{
-    AnthropicProvider, LlmEvent, LlmMessage, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
-    OpenAiCompatibleProvider,
+    AnthropicProvider, LlmEvent, LlmEventKind, LlmFinishReason, LlmMessage, LlmProvider,
+    LlmRequest, LlmResponse, MockLlmProvider, OpenAiCompatibleProvider,
 };
 use anyhow::Result;
 use futures::StreamExt;
@@ -31,79 +32,63 @@ struct CatalogSummary {
     prompt_block_count: usize,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-struct AgentTurnRequest {
-    #[serde(default = "protocol_version")]
-    protocol_version: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    turn_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    surface: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    agent_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    mode: Option<String>,
-    provider: String,
-    model: String,
-    messages: Vec<LlmMessage>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    temperature: Option<f32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    max_output_tokens: Option<u32>,
-    #[serde(default)]
-    tools: Vec<ToolSpec>,
-    #[serde(default)]
-    metadata: Value,
-}
-
 #[derive(Debug, Clone)]
 struct AgentTurnEnvelope {
     turn_id: Option<String>,
+    session_id: Option<String>,
+    thread_id: Option<String>,
     surface: Option<String>,
     agent_id: Option<String>,
     mode: Option<String>,
 }
 
-impl AgentTurnRequest {
-    fn envelope(&self) -> AgentTurnEnvelope {
-        AgentTurnEnvelope {
-            turn_id: self.turn_id.clone(),
-            surface: self.surface.clone(),
-            agent_id: self.agent_id.clone(),
-            mode: self.mode.clone(),
+fn agent_turn_envelope(request: &AgentTurnRequest) -> AgentTurnEnvelope {
+    AgentTurnEnvelope {
+        turn_id: request.turn_id.clone(),
+        session_id: request.session_id.clone(),
+        thread_id: request.thread_id.clone(),
+        surface: request.surface.clone(),
+        agent_id: request.agent_id.clone(),
+        mode: request.mode.clone(),
+    }
+}
+
+fn agent_turn_to_llm_request(request: &AgentTurnRequest) -> LlmRequest {
+    let mut metadata = request.metadata.clone();
+    if metadata.is_null() {
+        metadata = json!({});
+    }
+    if let Some(object) = metadata.as_object_mut() {
+        object.insert("agent_turn".to_owned(), Value::Bool(true));
+        object.insert("chat_turn".to_owned(), Value::Bool(true));
+        if let Some(turn_id) = &request.turn_id {
+            object.insert("turn_id".to_owned(), Value::String(turn_id.clone()));
+        }
+        if let Some(surface) = &request.surface {
+            object.insert("surface".to_owned(), Value::String(surface.clone()));
+        }
+        if let Some(agent_id) = &request.agent_id {
+            object.insert("agent_id".to_owned(), Value::String(agent_id.clone()));
+        }
+        if let Some(mode) = &request.mode {
+            object.insert("mode".to_owned(), Value::String(mode.clone()));
+        }
+        if let Some(session_id) = &request.session_id {
+            object.insert("session_id".to_owned(), Value::String(session_id.clone()));
+        }
+        if let Some(thread_id) = &request.thread_id {
+            object.insert("thread_id".to_owned(), Value::String(thread_id.clone()));
         }
     }
-
-    fn to_llm_request(&self) -> LlmRequest {
-        let mut metadata = self.metadata.clone();
-        if metadata.is_null() {
-            metadata = json!({});
-        }
-        if let Some(object) = metadata.as_object_mut() {
-            object.insert("agent_turn".to_owned(), Value::Bool(true));
-            if let Some(turn_id) = &self.turn_id {
-                object.insert("turn_id".to_owned(), Value::String(turn_id.clone()));
-            }
-            if let Some(surface) = &self.surface {
-                object.insert("surface".to_owned(), Value::String(surface.clone()));
-            }
-            if let Some(agent_id) = &self.agent_id {
-                object.insert("agent_id".to_owned(), Value::String(agent_id.clone()));
-            }
-            if let Some(mode) = &self.mode {
-                object.insert("mode".to_owned(), Value::String(mode.clone()));
-            }
-        }
-        LlmRequest {
-            protocol_version: self.protocol_version.clone(),
-            provider: self.provider.clone(),
-            model: self.model.clone(),
-            messages: self.messages.clone(),
-            temperature: self.temperature,
-            max_output_tokens: self.max_output_tokens,
-            tools: self.tools.clone(),
-            metadata,
-        }
+    LlmRequest {
+        protocol_version: request.protocol_version.clone(),
+        provider: request.provider.clone(),
+        model: request.model.clone(),
+        messages: request.messages.clone(),
+        temperature: request.temperature,
+        max_output_tokens: request.max_output_tokens,
+        tools: request.tools.clone(),
+        metadata,
     }
 }
 
@@ -216,9 +201,9 @@ pub async fn agent_runtime_stream_agent_turn(
 ) -> Result<()> {
     let mut request: AgentTurnRequest = serde_json::from_str(&request_json)?;
     normalize_agent_turn_request_contract(&mut request)?;
-    let llm_request = request.to_llm_request();
+    let llm_request = agent_turn_to_llm_request(&request);
     let provider = profile_llm_provider(&llm_request)?;
-    stream_agent_turn_response(sink, provider, llm_request, request.envelope()).await
+    stream_agent_turn_response(sink, provider, llm_request, agent_turn_envelope(&request)).await
 }
 
 pub async fn agent_runtime_start_profile_turn_step(
@@ -321,18 +306,48 @@ async fn stream_agent_turn_response(
     request: LlmRequest,
     envelope: AgentTurnEnvelope,
 ) -> Result<()> {
+    let started = agent_turn_started_event(&envelope, &request)?;
+    let _ = sink.add(serde_json::to_string(&started)?);
     let mut stream = provider
         .stream(request)
         .await
         .map_err(llm_error_to_anyhow)?;
+    let mut saw_finished = false;
+    let mut saw_terminal_error = false;
     while let Some(event) = stream.next().await {
         match event {
             Ok(mut event) => {
                 normalize_llm_event_contract(&mut event)?;
-                let value = agent_turn_event_from_llm_event(&envelope, event)?;
-                let _ = sink.add(serde_json::to_string(&value)?);
+                if matches!(event.kind, LlmEventKind::Finished) {
+                    saw_finished = true;
+                    match agent_turn_finished_events(&envelope, event) {
+                        Ok(values) => {
+                            for value in values {
+                                let _ = sink.add(serde_json::to_string(&value)?);
+                            }
+                        }
+                        Err(error) => {
+                            saw_terminal_error = true;
+                            let value = agent_turn_error_event(
+                                &envelope,
+                                json!({
+                                    "code": "llm_stream_event_invalid",
+                                    "message": error.to_string(),
+                                    "retryable": false,
+                                    "details": {},
+                                }),
+                            );
+                            let _ = sink.add(serde_json::to_string(&value)?);
+                            break;
+                        }
+                    }
+                } else {
+                    let value = agent_turn_event_from_llm_event(&envelope, event)?;
+                    let _ = sink.add(serde_json::to_string(&value)?);
+                }
             }
             Err(error) => {
+                saw_terminal_error = true;
                 let record = error.record;
                 let value = agent_turn_error_event(
                     &envelope,
@@ -347,6 +362,18 @@ async fn stream_agent_turn_response(
                 break;
             }
         }
+    }
+    if !saw_finished && !saw_terminal_error {
+        let value = agent_turn_error_event(
+            &envelope,
+            json!({
+                "code": "llm_stream_incomplete",
+                "message": "LLM stream ended without a finished event",
+                "retryable": false,
+                "details": {},
+            }),
+        );
+        let _ = sink.add(serde_json::to_string(&value)?);
     }
     Ok(())
 }
@@ -1048,9 +1075,11 @@ fn normalize_llm_request_contract(request: &mut LlmRequest) -> Result<()> {
 fn normalize_agent_turn_request_contract(request: &mut AgentTurnRequest) -> Result<()> {
     require_optional_non_empty(&request.turn_id, "Agent turn turn_id")?;
     require_optional_non_empty(&request.surface, "Agent turn surface")?;
+    require_optional_non_empty(&request.session_id, "Agent turn session_id")?;
+    require_optional_non_empty(&request.thread_id, "Agent turn thread_id")?;
     require_optional_non_empty(&request.agent_id, "Agent turn agent_id")?;
     require_optional_non_empty(&request.mode, "Agent turn mode")?;
-    let mut llm_request = request.to_llm_request();
+    let mut llm_request = agent_turn_to_llm_request(request);
     normalize_llm_request_contract(&mut llm_request)?;
     request.protocol_version = llm_request.protocol_version;
     request.provider = llm_request.provider;
@@ -1135,15 +1164,119 @@ fn normalize_llm_response_tool_metadata(metadata: &mut Value) -> Result<()> {
 }
 
 fn agent_turn_event_from_llm_event(envelope: &AgentTurnEnvelope, event: LlmEvent) -> Result<Value> {
-    let mut value = serde_json::to_value(event)?;
+    let mut value = serde_json::to_value(ChatTurnEvent {
+        kind: match event.kind {
+            LlmEventKind::Started => ChatTurnEventKind::LlmStarted,
+            LlmEventKind::Delta => ChatTurnEventKind::Delta,
+            LlmEventKind::ThinkingDelta => ChatTurnEventKind::ThinkingDelta,
+            LlmEventKind::ThinkingSignatureDelta => ChatTurnEventKind::ThinkingSignatureDelta,
+            LlmEventKind::ToolCallStart => ChatTurnEventKind::ToolCallStart,
+            LlmEventKind::ToolCallDelta => ChatTurnEventKind::ToolCallDelta,
+            LlmEventKind::ToolCallEnd => ChatTurnEventKind::ToolCallEnd,
+            LlmEventKind::Finished => ChatTurnEventKind::RoundFinished,
+        },
+        content: event.content,
+        response: event.response,
+        tool_call_id: event.tool_call_id,
+        tool_name: event.tool_name,
+        partial_input_json: event.partial_input_json,
+        tool_input: event.tool_input,
+        tool_output: None,
+        usage: None,
+        round: 1,
+        metadata: event.metadata,
+    })?;
     attach_agent_turn_envelope(envelope, &mut value);
     Ok(value)
+}
+
+fn agent_turn_started_event(envelope: &AgentTurnEnvelope, request: &LlmRequest) -> Result<Value> {
+    let mut value = serde_json::to_value(ChatTurnEvent {
+        kind: ChatTurnEventKind::Started,
+        content: None,
+        response: None,
+        tool_call_id: None,
+        tool_name: None,
+        partial_input_json: None,
+        tool_input: None,
+        tool_output: None,
+        usage: None,
+        round: 0,
+        metadata: json!({
+            "provider": request.provider.clone(),
+            "model": request.model.clone(),
+        }),
+    })?;
+    attach_agent_turn_envelope(envelope, &mut value);
+    Ok(value)
+}
+
+fn agent_turn_finished_events(envelope: &AgentTurnEnvelope, event: LlmEvent) -> Result<Vec<Value>> {
+    let Some(response) = event.response else {
+        anyhow::bail!("LLM finished event response is required");
+    };
+    let mut values = Vec::new();
+    if let Some(usage) = response.usage.clone() {
+        let mut value = serde_json::to_value(ChatTurnEvent {
+            kind: ChatTurnEventKind::Usage,
+            content: None,
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            tool_output: None,
+            usage: Some(usage),
+            round: 1,
+            metadata: json!({}),
+        })?;
+        attach_agent_turn_envelope(envelope, &mut value);
+        values.push(value);
+    }
+
+    let finish_reason = response.finish_reason.clone();
+    let usage = response.usage.clone();
+    let mut round_finished = serde_json::to_value(ChatTurnEvent {
+        kind: ChatTurnEventKind::RoundFinished,
+        content: None,
+        response: Some(response),
+        tool_call_id: None,
+        tool_name: None,
+        partial_input_json: None,
+        tool_input: None,
+        tool_output: None,
+        usage,
+        round: 1,
+        metadata: json!({"finish_reason": finish_reason.clone()}),
+    })?;
+    attach_agent_turn_envelope(envelope, &mut round_finished);
+    values.push(round_finished);
+
+    if !matches!(finish_reason, LlmFinishReason::ToolCall) {
+        let mut done = serde_json::to_value(ChatTurnEvent {
+            kind: ChatTurnEventKind::Done,
+            content: None,
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            tool_output: None,
+            usage: None,
+            round: 1,
+            metadata: json!({"stop_reason": chat_stop_reason(&finish_reason)}),
+        })?;
+        attach_agent_turn_envelope(envelope, &mut done);
+        values.push(done);
+    }
+    Ok(values)
 }
 
 fn agent_turn_error_event(envelope: &AgentTurnEnvelope, metadata: Value) -> Value {
     let mut value = json!({
         "kind": "error",
         "content": null,
+        "round": 1,
         "metadata": metadata,
     });
     attach_agent_turn_envelope(envelope, &mut value);
@@ -1161,6 +1294,12 @@ fn attach_agent_turn_envelope(envelope: &AgentTurnEnvelope, value: &mut Value) {
     if let Some(turn_id) = &envelope.turn_id {
         object.insert("turn_id".to_owned(), Value::String(turn_id.clone()));
     }
+    if let Some(session_id) = &envelope.session_id {
+        object.insert("session_id".to_owned(), Value::String(session_id.clone()));
+    }
+    if let Some(thread_id) = &envelope.thread_id {
+        object.insert("thread_id".to_owned(), Value::String(thread_id.clone()));
+    }
     if let Some(surface) = &envelope.surface {
         object.insert("surface".to_owned(), Value::String(surface.clone()));
     }
@@ -1169,6 +1308,16 @@ fn attach_agent_turn_envelope(envelope: &AgentTurnEnvelope, value: &mut Value) {
     }
     if let Some(mode) = &envelope.mode {
         object.insert("mode".to_owned(), Value::String(mode.clone()));
+    }
+}
+
+fn chat_stop_reason(reason: &LlmFinishReason) -> &'static str {
+    match reason {
+        LlmFinishReason::Stop => "end_turn",
+        LlmFinishReason::Length => "max_tokens",
+        LlmFinishReason::ToolCall => "tool_use",
+        LlmFinishReason::ContentFilter => "content_filter",
+        LlmFinishReason::Error => "error",
     }
 }
 
@@ -1798,6 +1947,43 @@ mod tests {
     fn agent_turn_event_wraps_llm_event_with_envelope() {
         let envelope = AgentTurnEnvelope {
             turn_id: Some("turn_1".to_owned()),
+            session_id: Some("session_1".to_owned()),
+            thread_id: Some("thread_1".to_owned()),
+            surface: Some("ai_chat".to_owned()),
+            agent_id: Some("ai_chat".to_owned()),
+            mode: Some("chat".to_owned()),
+        };
+        let event = LlmEvent {
+            kind: agent_llm::LlmEventKind::Delta,
+            content: Some("done".to_owned()),
+            response: None,
+            tool_call_id: None,
+            tool_name: None,
+            partial_input_json: None,
+            tool_input: None,
+            metadata: json!({"stream": true}),
+        };
+
+        let value = agent_turn_event_from_llm_event(&envelope, event).expect("event wraps");
+
+        assert_eq!(value["protocol_version"], "agent.v1");
+        assert_eq!(value["turn_id"], "turn_1");
+        assert_eq!(value["session_id"], "session_1");
+        assert_eq!(value["thread_id"], "thread_1");
+        assert_eq!(value["surface"], "ai_chat");
+        assert_eq!(value["agent_id"], "ai_chat");
+        assert_eq!(value["mode"], "chat");
+        assert_eq!(value["kind"], "delta");
+        assert_eq!(value["round"], 1);
+        assert_eq!(value["content"], "done");
+    }
+
+    #[test]
+    fn agent_turn_finished_event_expands_to_chat_turn_events() {
+        let envelope = AgentTurnEnvelope {
+            turn_id: Some("turn_1".to_owned()),
+            session_id: Some("session_1".to_owned()),
+            thread_id: Some("thread_1".to_owned()),
             surface: Some("ai_chat".to_owned()),
             agent_id: Some("ai_chat".to_owned()),
             mode: Some("chat".to_owned()),
@@ -1811,7 +1997,11 @@ mod tests {
                 model: "mock-model".to_owned(),
                 content: "done".to_owned(),
                 finish_reason: agent_llm::LlmFinishReason::Stop,
-                usage: None,
+                usage: Some(agent_llm::LlmUsage {
+                    input_tokens: 1,
+                    output_tokens: 2,
+                    total_tokens: 3,
+                }),
                 metadata: json!({}),
             }),
             tool_call_id: None,
@@ -1821,21 +2011,23 @@ mod tests {
             metadata: json!({"stream": true}),
         };
 
-        let value = agent_turn_event_from_llm_event(&envelope, event).expect("event wraps");
+        let values = agent_turn_finished_events(&envelope, event).expect("event expands");
 
-        assert_eq!(value["protocol_version"], "agent.v1");
-        assert_eq!(value["turn_id"], "turn_1");
-        assert_eq!(value["surface"], "ai_chat");
-        assert_eq!(value["agent_id"], "ai_chat");
-        assert_eq!(value["mode"], "chat");
-        assert_eq!(value["kind"], "finished");
-        assert_eq!(value["response"]["content"], "done");
+        assert_eq!(values.len(), 3);
+        assert_eq!(values[0]["kind"], "usage");
+        assert_eq!(values[0]["usage"]["total_tokens"], 3);
+        assert_eq!(values[1]["kind"], "round_finished");
+        assert_eq!(values[1]["response"]["content"], "done");
+        assert_eq!(values[2]["kind"], "done");
+        assert_eq!(values[2]["metadata"]["stop_reason"], "end_turn");
     }
 
     #[test]
     fn agent_turn_error_event_wraps_error_metadata() {
         let envelope = AgentTurnEnvelope {
             turn_id: Some("turn_1".to_owned()),
+            session_id: None,
+            thread_id: None,
             surface: None,
             agent_id: None,
             mode: None,
