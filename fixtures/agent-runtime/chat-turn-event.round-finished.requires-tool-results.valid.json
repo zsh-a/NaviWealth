@@ -1,0 +1,91 @@
+{
+  "kind": "round_finished",
+  "content": null,
+  "response": {
+    "protocol_version": "agent.v1",
+    "provider": "mock",
+    "model": "mock-model",
+    "content": "",
+    "finish_reason": "tool_call",
+    "usage": {
+      "input_tokens": 4,
+      "output_tokens": 2,
+      "total_tokens": 6
+    },
+    "metadata": {}
+  },
+  "tool_call_id": null,
+  "tool_name": null,
+  "partial_input_json": null,
+  "tool_input": null,
+  "tool_output": null,
+  "usage": {
+    "input_tokens": 4,
+    "output_tokens": 2,
+    "total_tokens": 6
+  },
+  "round": 1,
+  "metadata": {
+    "status": "requires_tool_results",
+    "chat_state": {
+      "protocol_version": "agent.v1",
+      "turn_id": "turn_1",
+      "surface": "ai_chat",
+      "mode": "chat",
+      "session_id": "session_1",
+      "thread_id": "thread_1",
+      "agent_id": "ai_chat",
+      "provider": "mock",
+      "model": "mock-model",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Read task task_1",
+          "metadata": {}
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "call_1",
+              "name": "read_task",
+              "input": { "id": "task_1" }
+            }
+          ],
+          "metadata": {}
+        }
+      ],
+      "temperature": 0,
+      "max_output_tokens": 128,
+      "tools": [
+        {
+          "name": "read_task",
+          "description": "Read a task",
+          "input_schema": { "type": "object" },
+          "output_schema": { "type": "object" },
+          "risk": "read_only",
+          "metadata": {}
+        }
+      ],
+      "metadata": { "source": "contract_test" },
+      "max_tool_rounds": 4,
+      "round": 1,
+      "pending_tool_calls": [
+        {
+          "id": "call_1",
+          "name": "read_task",
+          "input": { "id": "task_1" }
+        }
+      ]
+    },
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "name": "read_task",
+        "input": { "id": "task_1" }
+      }
+    ],
+    "finish_reason": "tool_call"
+  }
+}

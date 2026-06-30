@@ -1,0 +1,6 @@
+{
+  "protocol_version": "agent.v1",
+  "provider": "mock",
+  "model": "mock-model",
+  "metadata": {}
+}

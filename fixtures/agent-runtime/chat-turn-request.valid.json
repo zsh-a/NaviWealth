@@ -1,0 +1,34 @@
+{
+  "protocol_version": "agent.v1",
+  "turn_id": "turn_1",
+  "surface": "agent_tui",
+  "mode": "natural_language",
+  "session_id": "session_1",
+  "thread_id": "thread_1",
+  "agent_id": "ai_chat",
+  "provider": "mock",
+  "model": "mock-model",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Read task task_1",
+      "metadata": {}
+    }
+  ],
+  "temperature": 0,
+  "max_output_tokens": 128,
+  "tools": [
+    {
+      "name": "read_task",
+      "description": "Read a task",
+      "input_schema": { "type": "object" },
+      "output_schema": { "type": "object" },
+      "risk": "read_only",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "source": "contract_test"
+  },
+  "max_tool_rounds": 4
+}

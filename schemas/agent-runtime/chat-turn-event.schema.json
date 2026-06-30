@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/chat-turn-event.schema.json",
+  "title": "ChatTurnEvent",
+  "type": "object",
+  "required": ["kind", "round", "metadata"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": [
+        "started",
+        "llm_started",
+        "delta",
+        "thinking_delta",
+        "thinking_signature_delta",
+        "tool_call_start",
+        "tool_call_delta",
+        "tool_call_end",
+        "tool_result",
+        "usage",
+        "round_finished",
+        "error",
+        "done"
+      ]
+    },
+    "content": { "type": ["string", "null"] },
+    "response": { "type": ["object", "null"] },
+    "tool_call_id": { "type": ["string", "null"], "minLength": 1 },
+    "tool_name": { "type": ["string", "null"], "minLength": 1 },
+    "partial_input_json": { "type": ["string", "null"] },
+    "tool_input": true,
+    "tool_output": true,
+    "usage": {
+      "type": ["object", "null"],
+      "required": ["input_tokens", "output_tokens", "total_tokens"],
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "total_tokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "round": { "type": "integer", "minimum": 0 },
+    "metadata": { "type": "object", "default": {} }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "round_finished" } } },
+      "then": {
+        "required": ["response"],
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "required": ["status", "chat_state"],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["completed", "requires_tool_results"]
+              },
+              "chat_state": { "$ref": "#/$defs/chat_turn_state" },
+              "tool_calls": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/chat_tool_call" }
+              },
+              "finish_reason": true
+            },
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "llm_message": {
+      "type": "object",
+      "required": ["role", "content"],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["system", "user", "assistant", "tool"]
+        },
+        "content": true,
+        "name": { "type": ["string", "null"] },
+        "metadata": { "type": "object", "default": {} }
+      },
+      "additionalProperties": false
+    },
+    "tool_spec": {
+      "type": "object",
+      "required": ["name", "description", "input_schema", "risk"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "input_schema": { "type": "object" },
+        "output_schema": { "type": ["object", "null"] },
+        "risk": {
+          "type": "string",
+          "enum": ["read_only", "low", "medium", "high"]
+        },
+        "metadata": { "type": "object", "default": {} }
+      },
+      "additionalProperties": false
+    },
+    "chat_tool_call": {
+      "type": "object",
+      "required": ["id", "name", "input"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "input": true
+      },
+      "additionalProperties": false
+    },
+    "chat_turn_state": {
+      "type": "object",
+      "required": [
+        "protocol_version",
+        "provider",
+        "model",
+        "messages",
+        "max_tool_rounds",
+        "round",
+        "pending_tool_calls"
+      ],
+      "properties": {
+        "protocol_version": { "const": "agent.v1" },
+        "turn_id": { "type": ["string", "null"], "minLength": 1 },
+        "surface": { "type": ["string", "null"], "minLength": 1 },
+        "mode": { "type": ["string", "null"], "minLength": 1 },
+        "session_id": { "type": ["string", "null"], "minLength": 1 },
+        "thread_id": { "type": ["string", "null"], "minLength": 1 },
+        "agent_id": { "type": ["string", "null"], "minLength": 1 },
+        "provider": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "messages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/llm_message" }
+        },
+        "temperature": { "type": ["number", "null"], "minimum": 0 },
+        "max_output_tokens": { "type": ["integer", "null"], "minimum": 1 },
+        "tools": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tool_spec" },
+          "default": []
+        },
+        "metadata": { "type": "object", "default": {} },
+        "max_tool_rounds": { "type": "integer", "minimum": 1 },
+        "round": { "type": "integer", "minimum": 0 },
+        "pending_tool_calls": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/chat_tool_call" },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -117,6 +117,26 @@ fn committed_fixtures_match_json_schemas() {
         "fixtures/agent-runtime/llm-response.valid.json",
     );
     assert_valid(
+        "schemas/agent-runtime/chat-turn-request.schema.json",
+        "fixtures/agent-runtime/chat-turn-request.valid.json",
+    );
+    assert_invalid(
+        "schemas/agent-runtime/chat-turn-request.schema.json",
+        "fixtures/agent-runtime/chat-turn-request.invalid.missing-messages.json",
+    );
+    assert_valid(
+        "schemas/agent-runtime/chat-turn-state.schema.json",
+        "fixtures/agent-runtime/chat-turn-state.requires-tool-results.valid.json",
+    );
+    assert_valid(
+        "schemas/agent-runtime/chat-tool-result.schema.json",
+        "fixtures/agent-runtime/chat-tool-result.valid.json",
+    );
+    assert_valid(
+        "schemas/agent-runtime/chat-turn-event.schema.json",
+        "fixtures/agent-runtime/chat-turn-event.round-finished.requires-tool-results.valid.json",
+    );
+    assert_valid(
         "schemas/agent-runtime/session-record.schema.json",
         "fixtures/agent-runtime/session-record.valid.json",
     );

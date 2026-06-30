@@ -971,6 +971,37 @@ mod tests {
         );
     }
 
+    #[test]
+    fn committed_chat_turn_fixtures_match_runtime_types() {
+        let request: ChatTurnRequest = serde_json::from_str(include_str!(
+            "../../../fixtures/agent-runtime/chat-turn-request.valid.json"
+        ))
+        .expect("request fixture");
+        let state = chat_turn_initial_state(&request).expect("request creates state");
+        assert_eq!(state.provider, "mock");
+        assert_eq!(state.max_tool_rounds, 4);
+
+        let pending_state: ChatTurnState = serde_json::from_str(include_str!(
+            "../../../fixtures/agent-runtime/chat-turn-state.requires-tool-results.valid.json"
+        ))
+        .expect("state fixture");
+        let result: ChatToolResult = serde_json::from_str(include_str!(
+            "../../../fixtures/agent-runtime/chat-tool-result.valid.json"
+        ))
+        .expect("tool result fixture");
+        let resumed =
+            chat_turn_apply_tool_results(pending_state, vec![result]).expect("resume fixture");
+        assert_eq!(resumed.messages.len(), 3);
+        assert!(resumed.pending_tool_calls.is_empty());
+
+        let event: ChatTurnEvent = serde_json::from_str(include_str!(
+            "../../../fixtures/agent-runtime/chat-turn-event.round-finished.requires-tool-results.valid.json"
+        ))
+        .expect("event fixture");
+        assert_eq!(event.kind, ChatTurnEventKind::RoundFinished);
+        assert_eq!(event.metadata["status"], "requires_tool_results");
+    }
+
     struct ScriptedToolProvider {
         calls: AtomicUsize,
     }

@@ -83,10 +83,13 @@ crates/agent-cli/src/
   tui.rs, tui/      Interactive TUI shell, state, command handling, rendering
 
 schemas/agent-runtime/
-  JSON Schema contracts for runtime wire types.
+  JSON Schema contracts for runtime wire types, including ChatTurn request,
+  state, event, and tool-result resume payloads.
 
 fixtures/agent-runtime/
   Valid and invalid schema fixtures used by contract tests and CLI examples.
+  ChatTurn fixtures are also consumed by `agent-chat` runtime tests so schema
+  drift breaks locally.
 
 openapi/agent-runtime-api.yaml
   Minimal HTTP API contract for server-first clients.
@@ -158,7 +161,7 @@ TUI uses persistent natural input by default. Plain text runs the shared
 | Add or change a wire field | `schemas/agent-runtime/`, `crates/agent-core/`, fixtures | schema validation tests, `rtk cargo test -p agent-cli` |
 | Change runner lifecycle | `crates/agent-runtime/src/lib.rs` | `rtk cargo test -p agent-runtime`, `rtk cargo test -p agent-cli` |
 | Change LLM provider behavior | `crates/agent-llm/src/providers/` | `rtk cargo test -p agent-llm`, native tests when FRB LLM bridge behavior changes |
-| Change ChatTurn behavior | `crates/agent-chat/`, `crates/agent-cli/src/tui/`, `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli`, native tests, Flutter chat bridge tests |
+| Change ChatTurn behavior | `crates/agent-chat/`, `schemas/agent-runtime/chat-turn-*.schema.json`, ChatTurn fixtures, `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli --test contracts`, native tests, Flutter chat bridge tests |
 | Change CLI command behavior | `crates/agent-cli/src/commands/` plus supporting module | focused command test, `rtk cargo test -p agent-cli` |
 | Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
 | Change FRB API | `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs` | FRB codegen, native API tests, Dart bridge tests |

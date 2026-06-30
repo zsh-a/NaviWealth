@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://naviwealth.local/schemas/agent-runtime/chat-tool-result.schema.json",
+  "title": "ChatToolResult",
+  "type": "object",
+  "required": ["tool_call_id", "tool_name", "output", "is_error"],
+  "properties": {
+    "tool_call_id": { "type": "string", "minLength": 1 },
+    "tool_name": { "type": "string", "minLength": 1 },
+    "output": true,
+    "is_error": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}
