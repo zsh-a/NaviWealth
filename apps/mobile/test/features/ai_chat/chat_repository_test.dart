@@ -19,6 +19,13 @@ class _FakeApi implements AiChatApiClient {
 
   final List<AiChatEvent> script = <AiChatEvent>[];
   List<WireMessage>? lastMessages;
+  String? lastTurnId;
+  String? lastSessionId;
+  String? lastThreadId;
+  String? lastSurface;
+  String? lastAgentId;
+  String? lastMode;
+  Map<String, Object?>? lastMetadata;
   ContextPack? lastContextPack;
   Object? errorToThrow;
   Object? cancelBeforeThrow;
@@ -27,12 +34,26 @@ class _FakeApi implements AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    String? turnId,
+    String? sessionId,
+    String? threadId,
+    String? surface,
+    String? agentId,
+    String? mode,
+    Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   }) async* {
     lastMessages = messages;
+    lastTurnId = turnId;
+    lastSessionId = sessionId;
+    lastThreadId = threadId;
+    lastSurface = surface;
+    lastAgentId = agentId;
+    lastMode = mode;
+    lastMetadata = metadata;
     lastContextPack = contextPack;
     if (errorToThrow != null) {
       final reason = cancelBeforeThrow;
@@ -59,6 +80,13 @@ class _NoDoneApi implements AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    String? turnId,
+    String? sessionId,
+    String? threadId,
+    String? surface,
+    String? agentId,
+    String? mode,
+    Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,
@@ -128,6 +156,14 @@ void main() {
       // Wire form sent to the API: just the new user turn (no prior history).
       expect(api.lastMessages, hasLength(1));
       expect(api.lastMessages!.single.role, 'user');
+      expect(api.lastTurnId, isNotEmpty);
+      expect(api.lastSessionId, id);
+      expect(api.lastThreadId, id);
+      expect(api.lastSurface, 'ai_chat');
+      expect(api.lastAgentId, 'ai_chat');
+      expect(api.lastMode, 'chat');
+      expect(api.lastMetadata?['owner_user_id'], 'user-1');
+      expect(api.lastMetadata?['assistant_message_id'], api.lastTurnId);
     });
 
     test('clears long-task progress when the turn completes', () async {

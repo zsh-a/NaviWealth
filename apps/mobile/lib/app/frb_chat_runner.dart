@@ -48,13 +48,7 @@ class FrbChatRunner implements ChatAgent {
 
   @override
   Stream<AiChatEvent> runTurn(ChatAgentTurnRequest request) {
-    return run(
-      messages: request.messages,
-      portfolioSnapshot: request.portfolioSnapshot,
-      contextPack: request.contextPack,
-      model: request.model,
-      cancelToken: request.cancelToken,
-    );
+    return _runRequest(request);
   }
 
   Stream<AiChatEvent> run({
@@ -63,7 +57,25 @@ class FrbChatRunner implements ChatAgent {
     ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
-  }) async* {
+  }) {
+    return _runRequest(
+      ChatAgentTurnRequest(
+        messages: messages,
+        surface: 'ai_chat',
+        agentId: _agentId,
+        mode: 'chat',
+        portfolioSnapshot: portfolioSnapshot,
+        contextPack: contextPack,
+        model: model,
+        cancelToken: cancelToken,
+      ),
+    );
+  }
+
+  Stream<AiChatEvent> _runRequest(ChatAgentTurnRequest request) async* {
+    final messages = request.messages;
+    final model = request.model;
+    final cancelToken = request.cancelToken;
     if (cancelToken?.isCancelled == true) {
       yield const DoneEvent(stopReason: 'error', rounds: 0);
       return;
@@ -72,14 +84,7 @@ class FrbChatRunner implements ChatAgent {
     try {
       final streamBridge = _streamBridge;
       if (streamBridge != null) {
-        yield* _runStream(
-          streamBridge: streamBridge,
-          messages: messages,
-          portfolioSnapshot: portfolioSnapshot,
-          contextPack: contextPack,
-          model: model,
-          cancelToken: cancelToken,
-        );
+        yield* _runStream(streamBridge: streamBridge, request: request);
         return;
       }
       final roundStart = DateTime.now().toUtc();
@@ -89,11 +94,16 @@ class FrbChatRunner implements ChatAgent {
         ],
         tools: _tools,
         metadata: <String, Object?>{
-          'agent_id': _agentId,
-          'surface': 'ai_chat',
+          ...request.metadata,
+          'turn_id': ?request.turnId,
+          'session_id': ?request.sessionId,
+          'thread_id': ?request.threadId,
+          'agent_id': request.agentId ?? _agentId,
+          'surface': request.surface ?? 'ai_chat',
+          'mode': ?request.mode,
           'requested_model': ?model,
-          'portfolio_snapshot': ?portfolioSnapshot,
-          'context_pack': ?contextPack?.toJson(),
+          'portfolio_snapshot': ?request.portfolioSnapshot,
+          'context_pack': ?request.contextPack?.toJson(),
           'streaming': false,
         },
       );
@@ -126,12 +136,11 @@ class FrbChatRunner implements ChatAgent {
 
   Stream<AiChatEvent> _runStream({
     required AgentRuntimeLlmStreamBridge streamBridge,
-    required List<ChatAgentMessage> messages,
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
-    String? model,
-    CancelToken? cancelToken,
+    required ChatAgentTurnRequest request,
   }) async* {
+    final messages = request.messages;
+    final model = request.model;
+    final cancelToken = request.cancelToken;
     final initialMessages = <Map<String, Object?>>[
       for (final message in messages) message.toJson(),
     ];
@@ -152,15 +161,26 @@ class FrbChatRunner implements ChatAgent {
           messages: initialMessages,
           tools: _tools,
           metadata: <String, Object?>{
-            'agent_id': _agentId,
-            'surface': 'ai_chat',
+            ...request.metadata,
+            'turn_id': ?request.turnId,
+            'session_id': ?request.sessionId,
+            'thread_id': ?request.threadId,
+            'agent_id': request.agentId ?? _agentId,
+            'surface': request.surface ?? 'ai_chat',
+            'mode': ?request.mode,
             'requested_model': ?model,
-            'portfolio_snapshot': ?portfolioSnapshot,
-            'context_pack': ?contextPack?.toJson(),
+            'portfolio_snapshot': ?request.portfolioSnapshot,
+            'context_pack': ?request.contextPack?.toJson(),
             'streaming': true,
             'round': nextRound,
           },
           maxToolRounds: _maxToolRounds,
+          turnId: request.turnId,
+          sessionId: request.sessionId,
+          threadId: request.threadId,
+          surface: request.surface ?? 'ai_chat',
+          agentId: request.agentId ?? _agentId,
+          mode: request.mode,
           chatState: chatState,
           toolResults: toolResults,
         ),

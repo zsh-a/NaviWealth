@@ -243,6 +243,17 @@ class ChatRepository {
       final stream = _api.chat(
         session: session,
         messages: wireMessages,
+        turnId: assistantId,
+        sessionId: sessionId,
+        threadId: sessionId,
+        surface: 'ai_chat',
+        agentId: 'ai_chat',
+        mode: 'chat',
+        metadata: <String, Object?>{
+          'owner_user_id': ownerUserId,
+          'assistant_message_id': assistantId,
+          'invocation': ?invocationTrace,
+        },
         portfolioSnapshot: portfolioSnapshot,
         contextPack: contextPack,
         model: model,

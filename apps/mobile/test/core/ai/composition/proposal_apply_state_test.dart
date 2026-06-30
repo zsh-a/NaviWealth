@@ -15,6 +15,13 @@ class _NoopApi implements AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    String? turnId,
+    String? sessionId,
+    String? threadId,
+    String? surface,
+    String? agentId,
+    String? mode,
+    Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,

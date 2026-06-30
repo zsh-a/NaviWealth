@@ -7,6 +7,7 @@ import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_llm_stream_bridge.dart';
 import 'package:naviwealth/app/frb_chat_runner.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
+import 'package:naviwealth/core/ai/runtime/chat_agent.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 
 void main() {
@@ -106,12 +107,61 @@ void main() {
     expect(span.tokens?.total, 7);
     expect((events[9] as DoneEvent).stopReason, 'end_turn');
     final request = streamBridge.requests.single;
+    expect(request['surface'], 'ai_chat');
+    expect(request['agent_id'], kFrbChatRunnerAgentId);
     expect(request['messages'], <Object?>[
       <String, Object?>{'role': 'user', 'content': 'Hello'},
     ]);
     final metadata = request['metadata'] as Map<String, Object?>;
     expect(metadata['surface'], 'ai_chat');
     expect(metadata['streaming'], true);
+  });
+
+  test('passes ChatAgent turn metadata to the FRB chat request', () async {
+    final streamBridge = _streamBridge(
+      _FakeLlmBridge(),
+      events: const <String>[
+        '{"kind":"round_finished","response":{"content":"ok","finish_reason":"stop"},"round":1,"metadata":{"finish_reason":"stop"}}',
+        '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
+      ],
+    );
+    final runner = FrbChatRunner(
+      llmBridge: _FakeLlmBridge(),
+      streamBridge: streamBridge,
+    );
+
+    await runner
+        .runTurn(
+          const ChatAgentTurnRequest(
+            messages: <ChatAgentMessage>[
+              ChatAgentMessage(role: 'user', content: 'Hello'),
+            ],
+            turnId: 'turn_1',
+            sessionId: 'session_1',
+            threadId: 'thread_1',
+            surface: 'ai_chat',
+            agentId: 'ai_chat',
+            mode: 'chat',
+            metadata: <String, Object?>{'source': 'test'},
+          ),
+        )
+        .toList();
+
+    final request = streamBridge.requests.single;
+    expect(request['turn_id'], 'turn_1');
+    expect(request['session_id'], 'session_1');
+    expect(request['thread_id'], 'thread_1');
+    expect(request['surface'], 'ai_chat');
+    expect(request['agent_id'], 'ai_chat');
+    expect(request['mode'], 'chat');
+    final metadata = request['metadata'] as Map<String, Object?>;
+    expect(metadata['source'], 'test');
+    expect(metadata['turn_id'], 'turn_1');
+    expect(metadata['session_id'], 'session_1');
+    expect(metadata['thread_id'], 'thread_1');
+    expect(metadata['surface'], 'ai_chat');
+    expect(metadata['agent_id'], 'ai_chat');
+    expect(metadata['mode'], 'chat');
   });
 
   test(

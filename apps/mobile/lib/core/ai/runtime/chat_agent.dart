@@ -19,15 +19,29 @@ class ChatAgentMessage {
 class ChatAgentTurnRequest {
   const ChatAgentTurnRequest({
     required this.messages,
+    this.turnId,
+    this.sessionId,
+    this.threadId,
+    this.surface,
+    this.agentId,
+    this.mode,
     this.portfolioSnapshot,
     this.contextPack,
+    this.metadata = const <String, Object?>{},
     this.model,
     this.cancelToken,
   });
 
   final List<ChatAgentMessage> messages;
+  final String? turnId;
+  final String? sessionId;
+  final String? threadId;
+  final String? surface;
+  final String? agentId;
+  final String? mode;
   final Map<String, Object?>? portfolioSnapshot;
   final ContextPack? contextPack;
+  final Map<String, Object?> metadata;
   final String? model;
   final CancelToken? cancelToken;
 }
