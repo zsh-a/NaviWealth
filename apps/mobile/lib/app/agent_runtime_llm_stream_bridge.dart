@@ -178,7 +178,7 @@ class AgentRuntimeLlmStreamBridge {
   }) {
     final runtimeMetadata = <String, Object?>{
       ...metadata,
-      if (chatState != null) 'chat_state': chatState,
+      'chat_state': ?chatState,
       if (toolResults.isNotEmpty) 'tool_results': toolResults,
     };
     final llmRequest = _llmBridge.buildRequest(

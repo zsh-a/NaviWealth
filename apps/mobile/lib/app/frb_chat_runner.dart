@@ -18,12 +18,12 @@ import '../core/ai/runtime/device/tools/ask_user_tool.dart'
 import '../features/ai_chat/data/ai_chat_api_client.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
+import 'frb_chat_event.dart';
 import 'frb_chat_tool_dispatcher.dart';
 import 'frb_chat_trace_mapper.dart';
 import 'frb_chat_types.dart';
 
 const String kFrbChatRunnerAgentId = 'ai_chat';
-const String _kFrbStreamCancelledKind = '__frb_stream_cancelled';
 
 class FrbChatRunner implements DeviceChatRunner {
   const FrbChatRunner({
@@ -158,8 +158,9 @@ class FrbChatRunner implements DeviceChatRunner {
         cancelToken,
       );
       toolResults = const <Map<String, Object?>>[];
-      await for (final event in stream) {
-        final eventRound = frbInt(event['round']);
+      await for (final rawEvent in stream) {
+        final event = FrbChatStreamEvent.parse(rawEvent);
+        final eventRound = event.round;
         if (eventRound > 0) roundsUsed = eventRound;
         if (cancelToken?.isCancelled == true) {
           yield frbLlmSpan(
@@ -175,8 +176,8 @@ class FrbChatRunner implements DeviceChatRunner {
           yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
           return;
         }
-        switch (frbString(event['kind'])) {
-          case _kFrbStreamCancelledKind:
+        switch (event) {
+          case FrbChatCancelledEvent():
             yield frbLlmSpan(
               round: roundsUsed == 0 ? nextRound : roundsUsed,
               roundId: roundId,
@@ -189,123 +190,42 @@ class FrbChatRunner implements DeviceChatRunner {
             );
             yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
             return;
-          case 'started':
-          case 'llm_started':
+          case FrbChatStartedEvent():
+          case FrbChatLlmStartedEvent():
             break;
-          case 'usage':
-            final usage = frbUsageFromValue(event['usage']);
-            if (usage != null) {
-              state.recordUsage(usage);
-              yield UsageEvent(usage);
-            }
-          case 'done':
-            state.finishDone(frbObject(event['metadata']));
+          case FrbChatUsageEvent(:final usage):
+            state.recordUsage(usage);
+            yield UsageEvent(usage);
+          case FrbChatDoneEvent(:final metadata):
+            state.finishDone(metadata);
             break;
-          case 'delta':
-            final text = frbString(event['content']);
-            if (text.isNotEmpty) {
-              state.appendText(text);
-              yield TextEvent(text);
+          case FrbChatDeltaEvent(:final content):
+            if (content.isNotEmpty) {
+              state.appendText(content);
+              yield TextEvent(content);
             }
-          case 'thinking_delta':
-            final text = frbString(event['content']);
-            if (text.isNotEmpty) {
-              state.appendThinking(text);
-              yield ThinkingDeltaEvent(text);
+          case FrbChatThinkingDeltaEvent(:final content):
+            if (content.isNotEmpty) {
+              state.appendThinking(content);
+              yield ThinkingDeltaEvent(content);
             }
-          case 'thinking_signature_delta':
-            state.appendThinkingSignature(frbString(event['content']));
-          case 'tool_call_start':
-            final id = frbString(event['tool_call_id']);
-            final name = frbString(event['tool_name']);
-            if (id.isEmpty || name.isEmpty) {
-              yield frbInvalidStreamEventSpan(
-                round: roundsUsed == 0 ? nextRound : roundsUsed,
-                roundId: roundId,
-                startedAt: roundStart,
-                state: state,
-                requestedModel: model,
-                message:
-                    'FRB LLM tool_call_start event requires tool_call_id and tool_name',
-              );
-              yield const ErrorEvent(
-                'FRB LLM tool_call_start event requires tool_call_id and tool_name',
-                code: 'frb_chat_event_invalid',
-              );
-              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
-              return;
-            }
+          case FrbChatThinkingSignatureDeltaEvent(:final content):
+            state.appendThinkingSignature(content);
+          case FrbChatToolCallStartEvent(:final id, :final name):
             state.startToolCall(id: id, name: name);
             yield ToolCallStartEvent(id: id, name: name);
-          case 'tool_call_delta':
-            final id = frbString(event['tool_call_id']);
-            if (id.isEmpty) {
-              yield frbInvalidStreamEventSpan(
-                round: roundsUsed == 0 ? nextRound : roundsUsed,
-                roundId: roundId,
-                startedAt: roundStart,
-                state: state,
-                requestedModel: model,
-                message: 'FRB LLM tool_call_delta event requires tool_call_id',
-              );
-              yield const ErrorEvent(
-                'FRB LLM tool_call_delta event requires tool_call_id',
-                code: 'frb_chat_event_invalid',
-              );
-              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
-              return;
-            }
-            final partialInputJson = frbString(event['partial_input_json']);
+          case FrbChatToolCallDeltaEvent(:final id, :final partialInputJson):
             state.appendToolInput(id: id, partialInputJson: partialInputJson);
             yield ToolCallDeltaEvent(
               id: id,
               partialInputJson: partialInputJson,
             );
-          case 'tool_call_end':
-            final id = frbString(event['tool_call_id']);
-            final name = frbString(event['tool_name']);
-            if (id.isEmpty || name.isEmpty) {
-              yield frbInvalidStreamEventSpan(
-                round: roundsUsed == 0 ? nextRound : roundsUsed,
-                roundId: roundId,
-                startedAt: roundStart,
-                state: state,
-                requestedModel: model,
-                message:
-                    'FRB LLM tool_call_end event requires tool_call_id and tool_name',
-              );
-              yield const ErrorEvent(
-                'FRB LLM tool_call_end event requires tool_call_id and tool_name',
-                code: 'frb_chat_event_invalid',
-              );
-              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
-              return;
-            }
-            final input = frbToolInput(event['tool_input']);
+          case FrbChatToolCallEndEvent(:final id, :final name, :final input):
             state.finishToolCall(id: id, name: name, input: input);
             yield ToolCallEvent(id: id, name: name, input: input);
-          case 'finished':
-          case 'round_finished':
-            final response = frbObjectOrNull(event['response']);
-            if (response == null) {
-              final kind = frbString(event['kind']);
-              yield frbInvalidStreamEventSpan(
-                round: roundsUsed == 0 ? nextRound : roundsUsed,
-                roundId: roundId,
-                startedAt: roundStart,
-                state: state,
-                requestedModel: model,
-                message: 'FRB LLM $kind event response is not an object',
-              );
-              yield ErrorEvent(
-                'FRB LLM $kind event response is not an object',
-                code: 'frb_chat_event_invalid',
-              );
-              yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
-              return;
-            }
+          case FrbChatRoundFinishedEvent(:final response, :final metadata):
             final hasEmittedUsage = state.usage != null;
-            state.finish(response, metadata: frbObject(event['metadata']));
+            state.finish(response, metadata: metadata);
             final usage = frbUsageFromResponse(response);
             if (!hasEmittedUsage && usage != null) yield UsageEvent(usage);
             final text = frbString(response['content']);
@@ -314,8 +234,7 @@ class FrbChatRunner implements DeviceChatRunner {
               yield TextEvent(text);
             }
             finished = true;
-          case 'error':
-            final metadata = frbObject(event['metadata']);
+          case FrbChatErrorEvent(:final code, :final message):
             yield frbLlmSpan(
               round: roundsUsed == 0 ? nextRound : roundsUsed,
               roundId: roundId,
@@ -323,24 +242,25 @@ class FrbChatRunner implements DeviceChatRunner {
               state: state,
               requestedModel: model,
               status: AiSpanStatus.error,
-              errorCode: frbString(metadata['code']).isEmpty
-                  ? 'frb_chat_error'
-                  : frbString(metadata['code']),
-              errorMessage: frbString(metadata['message']).isEmpty
-                  ? 'frb_chat_error'
-                  : frbString(metadata['message']),
+              errorCode: code,
+              errorMessage: message,
             );
-            yield ErrorEvent(
-              frbString(metadata['message']).isEmpty
-                  ? 'frb_chat_error'
-                  : frbString(metadata['message']),
-              code: frbString(metadata['code']).isEmpty
-                  ? 'frb_chat_error'
-                  : frbString(metadata['code']),
-            );
+            yield ErrorEvent(message, code: code);
             yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
             return;
-          default:
+          case FrbInvalidChatEvent(:final message):
+            yield frbInvalidStreamEventSpan(
+              round: roundsUsed == 0 ? nextRound : roundsUsed,
+              roundId: roundId,
+              startedAt: roundStart,
+              state: state,
+              requestedModel: model,
+              message: message,
+            );
+            yield ErrorEvent(message, code: 'frb_chat_event_invalid');
+            yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+            return;
+          case FrbUnknownChatEvent(:final message):
             yield frbLlmSpan(
               round: roundsUsed == 0 ? nextRound : roundsUsed,
               roundId: roundId,
@@ -349,13 +269,9 @@ class FrbChatRunner implements DeviceChatRunner {
               requestedModel: model,
               status: AiSpanStatus.error,
               errorCode: 'frb_chat_event_unknown',
-              errorMessage:
-                  'unknown FRB LLM stream event kind: ${event['kind']}',
+              errorMessage: message,
             );
-            yield ErrorEvent(
-              'unknown FRB LLM stream event kind: ${event['kind']}',
-              code: 'frb_chat_event_unknown',
-            );
+            yield ErrorEvent(message, code: 'frb_chat_event_unknown');
             yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
             return;
         }
@@ -484,7 +400,7 @@ Stream<Map<String, Object?>> _cancelableFrbStream(
   try {
     while (true) {
       if (cancelToken.isCancelled) {
-        yield const <String, Object?>{'kind': _kFrbStreamCancelledKind};
+        yield const <String, Object?>{'kind': kFrbChatStreamCancelledKind};
         return;
       }
       final outcome = await Future.any<_FrbStreamOutcome>([
@@ -496,7 +412,7 @@ Stream<Map<String, Object?>> _cancelableFrbStream(
         cancellation,
       ]);
       if (outcome.cancelled) {
-        yield const <String, Object?>{'kind': _kFrbStreamCancelledKind};
+        yield const <String, Object?>{'kind': kFrbChatStreamCancelledKind};
         return;
       }
       if (outcome.done) return;
