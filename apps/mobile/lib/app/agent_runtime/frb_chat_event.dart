@@ -1,6 +1,6 @@
 library;
 
-import '../core/ai/contracts/contracts.dart';
+import '../../core/ai/contracts/contracts.dart';
 import 'frb_chat_types.dart';
 
 const String kFrbChatStreamCancelledKind = '__frb_stream_cancelled';

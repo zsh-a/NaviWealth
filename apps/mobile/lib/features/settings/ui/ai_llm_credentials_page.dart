@@ -17,10 +17,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../app/agent_runtime_catalog.dart';
-import '../../../app/agent_runtime_profile_turn_binding.dart';
-import '../../../app/agent_runtime_proposal_bridge.dart';
-import '../../../app/agent_runtime_runner.dart';
+import '../../../app/agent_runtime/agent_runtime_catalog.dart';
+import '../../../app/agent_runtime/agent_runtime_profile_turn_binding.dart';
+import '../../../app/agent_runtime/agent_runtime_proposal_bridge.dart';
+import '../../../app/agent_runtime/agent_runtime_runner.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';

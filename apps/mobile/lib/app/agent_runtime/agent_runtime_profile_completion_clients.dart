@@ -1,11 +1,11 @@
 /// FRB-backed profile-completion adapters used by app-level provider wiring.
 library;
 
-import '../core/ai/contracts/contracts.dart';
-import '../features/activity/data/activity_entry_insight_client.dart';
-import '../features/ingest/data/ingest_llm_client.dart';
-import '../features/knowledge/data/knowledge_llm_client.dart';
-import '../l10n/gen/app_localizations.dart';
+import '../../core/ai/contracts/contracts.dart';
+import '../../features/activity/data/activity_entry_insight_client.dart';
+import '../../features/ingest/data/ingest_llm_client.dart';
+import '../../features/knowledge/data/knowledge_llm_client.dart';
+import '../../l10n/gen/app_localizations.dart';
 import 'agent_runtime_llm_bridge.dart';
 
 class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {

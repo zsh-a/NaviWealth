@@ -10,10 +10,10 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
-import '../core/ai/contracts/contracts.dart';
-import '../core/ai/progress/long_task_progress.dart';
-import '../core/ai/runtime/ai_runtime.dart';
-import '../core/ai/runtime/device/tools/ask_user_tool.dart'
+import '../../core/ai/contracts/contracts.dart';
+import '../../core/ai/progress/long_task_progress.dart';
+import '../../core/ai/runtime/ai_runtime.dart';
+import '../../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
 import 'agent_runtime_llm_stream_bridge.dart';
 import 'agent_runtime_tool_dispatcher.dart';

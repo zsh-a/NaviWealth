@@ -11,10 +11,10 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/ai/composition/device_tools_provider.dart';
-import '../core/ai/runtime/device/device_tool_dispatcher.dart';
-import '../core/ai/runtime/device/device_tool_session.dart';
-import '../core/ai/runtime/device/tools/device_tool_registry.dart';
+import '../../core/ai/composition/device_tools_provider.dart';
+import '../../core/ai/runtime/device/device_tool_dispatcher.dart';
+import '../../core/ai/runtime/device/device_tool_session.dart';
+import '../../core/ai/runtime/device/tools/device_tool_registry.dart';
 
 typedef AgentRuntimeSessionFactory = DeviceToolSession Function();
 

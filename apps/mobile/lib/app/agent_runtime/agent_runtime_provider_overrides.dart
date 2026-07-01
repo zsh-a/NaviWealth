@@ -5,29 +5,29 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 
-import '../core/ai/llm_credentials/providers.dart' as llm_credentials;
-import '../core/notifications/notification_preferences.dart';
-import '../core/notifications/notification_service.dart';
-import '../core/notifications/providers.dart' as notif_providers;
-import '../features/activity/data/activity_entry_insight_client.dart';
-import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
-import '../features/execution/agents/providers.dart'
+import '../../core/ai/llm_credentials/providers.dart' as llm_credentials;
+import '../../core/notifications/notification_preferences.dart';
+import '../../core/notifications/notification_service.dart';
+import '../../core/notifications/providers.dart' as notif_providers;
+import '../../features/activity/data/activity_entry_insight_client.dart';
+import '../../features/ai_chat/data/providers.dart' as ai_chat_providers;
+import '../../features/execution/agents/providers.dart'
     as execution_agent_providers;
-import '../features/execution/agents/review_agent.dart';
-import '../features/health/agents/briefing_synthesizer.dart';
-import '../features/health/agents/morning_briefing_agent.dart';
-import '../features/health/agents/recovery_alert_agent.dart';
-import '../features/health/agents/weekly_summary_agent.dart';
-import '../features/health/data/morning_briefing_preferences.dart';
-import '../features/ingest/data/ingest_llm_client.dart';
-import '../features/knowledge/agents/assumption_agent.dart';
-import '../features/knowledge/agents/contradiction_agent.dart';
-import '../features/knowledge/agents/inbox_triage_agent.dart';
-import '../features/knowledge/agents/providers.dart'
+import '../../features/execution/agents/review_agent.dart';
+import '../../features/health/agents/briefing_synthesizer.dart';
+import '../../features/health/agents/morning_briefing_agent.dart';
+import '../../features/health/agents/recovery_alert_agent.dart';
+import '../../features/health/agents/weekly_summary_agent.dart';
+import '../../features/health/data/morning_briefing_preferences.dart';
+import '../../features/ingest/data/ingest_llm_client.dart';
+import '../../features/knowledge/agents/assumption_agent.dart';
+import '../../features/knowledge/agents/contradiction_agent.dart';
+import '../../features/knowledge/agents/inbox_triage_agent.dart';
+import '../../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
-import '../features/knowledge/agents/review_agent.dart';
-import '../features/knowledge/agents/routine_due_agent.dart';
-import '../features/knowledge/data/knowledge_llm_client.dart';
+import '../../features/knowledge/agents/review_agent.dart';
+import '../../features/knowledge/agents/routine_due_agent.dart';
+import '../../features/knowledge/data/knowledge_llm_client.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';

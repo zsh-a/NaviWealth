@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_headless_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_headless_tool_host.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 
 void main() {

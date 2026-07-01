@@ -8,9 +8,9 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/ai/composition/proposal_applier.dart';
-import '../core/ai/composition/proposal_apply_state.dart';
-import '../core/ai/composition/proposal_plan.dart';
+import '../../core/ai/composition/proposal_applier.dart';
+import '../../core/ai/composition/proposal_apply_state.dart';
+import '../../core/ai/composition/proposal_plan.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_step_runner.dart';
 

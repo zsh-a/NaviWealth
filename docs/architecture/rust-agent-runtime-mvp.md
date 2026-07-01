@@ -899,7 +899,7 @@ final host = AgentRuntimeToolHost(dispatcher: driftDispatcher);
 final responseLine = await host.handleLine(requestLine);
 ```
 
-The adapter lives at `apps/mobile/lib/app/agent_runtime_tool_host.dart` and maps
+The adapter lives at `apps/mobile/lib/app/agent_runtime/agent_runtime_tool_host.dart` and maps
 JSONL `tool.call` requests onto the existing `DeviceToolDispatcher`. Tool-level
 policy/error envelopes returned by device tools are preserved as `result`
 payloads; malformed JSON-RPC requests return protocol errors.
@@ -933,7 +933,7 @@ the app database.
 
 For library-level headless integration tests, use
 `createAgentRuntimeHeadlessToolHost` from
-`apps/mobile/lib/app/agent_runtime_headless_tool_host.dart`. It builds a
+`apps/mobile/lib/app/agent_runtime/agent_runtime_headless_tool_host.dart`. It builds a
 `ProviderContainer`, mounts the same tool dispatcher protocol, and can register
 the production domain tool graph without starting the UI. This path is covered
 by `test/app/agent_runtime_headless_tool_host_test.dart`.
@@ -1125,7 +1125,7 @@ Check the Dart-side native bridge wiring and generated FRB contract:
 
 ```bash
 cd apps/mobile
-rtk dart analyze lib/app/agent_runtime_native_bridge.dart \
+rtk dart analyze lib/app/agent_runtime/agent_runtime_native_bridge.dart \
   test/app/agent_runtime_native_bridge_test.dart \
   test/native/frb_garmin_codegen_contract_test.dart
 rtk flutter test test/app/agent_runtime_native_bridge_test.dart \
@@ -1470,7 +1470,7 @@ not import app-level runtime providers directly.
 
 Already completed: Dart catalog export from the existing `DomainPack`
 composition root. The first version exists at
-`apps/mobile/lib/app/agent_runtime_catalog.dart` and exports:
+`apps/mobile/lib/app/agent_runtime/agent_runtime_catalog.dart` and exports:
 
 - active `Agent` values -> `AgentSpec`
 - active `DeviceTool` values -> `ToolSpec`

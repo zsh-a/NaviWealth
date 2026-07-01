@@ -69,8 +69,8 @@ Higher-level wrapper (implements the project's `Embedder` interface):
 `apps/mobile/lib/core/ai/local/embedding/rust_gemma_embedder.dart`.
 
 Agent runtime/chat wrappers live at the app layer:
-`apps/mobile/lib/app/agent_runtime_llm_stream_bridge.dart` exposes the native
-stream as a ChatTurn stream, and `apps/mobile/lib/app/frb_chat_runner.dart`
+`apps/mobile/lib/app/agent_runtime/agent_runtime_llm_stream_bridge.dart` exposes the native
+stream as a ChatTurn stream, and `apps/mobile/lib/app/agent_runtime/frb_chat_runner.dart`
 maps those primitive events into the Flutter `AiChatEvent` vocabulary while
 Flutter still owns device tool dispatch. Tool continuation is Rust-owned:
 native stream events return a resumable `chat_state`, and Dart sends that state

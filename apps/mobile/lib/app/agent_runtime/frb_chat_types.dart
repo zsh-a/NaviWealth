@@ -2,7 +2,7 @@ library;
 
 import 'dart:convert';
 
-import '../core/ai/contracts/contracts.dart';
+import '../../core/ai/contracts/contracts.dart';
 import 'agent_runtime_json.dart';
 import 'agent_runtime_tool_dispatcher.dart';
 

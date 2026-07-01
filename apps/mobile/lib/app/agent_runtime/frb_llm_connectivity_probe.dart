@@ -3,8 +3,8 @@ library;
 
 import 'dart:async';
 
-import '../core/ai/llm_credentials/llm_connectivity.dart';
-import '../core/ai/llm_credentials/llm_credentials.dart';
+import '../../core/ai/llm_credentials/llm_connectivity.dart';
+import '../../core/ai/llm_credentials/llm_credentials.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 

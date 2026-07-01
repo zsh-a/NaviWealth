@@ -1,5 +1,5 @@
-import 'package:naviwealth/app/agent_runtime_catalog.dart';
-import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_native_bridge.dart';
 
 class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   FakeAgentRuntimeNativeBridge({

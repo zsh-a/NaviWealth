@@ -21,8 +21,8 @@
 ///   merge in `_inbox_triage_support.persistEnvelope`).
 library;
 
-import '../../../app/agent_runtime_terminal_output.dart';
-import '../../../app/agent_runtime_tool_plan_binding.dart';
+import '../../../app/agent_runtime/agent_runtime_terminal_output.dart';
+import '../../../app/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/auth/current_user.dart';

@@ -105,10 +105,10 @@ docs/architecture/rust-agent-runtime-mvp.md
 The mobile bridge commit added Flutter/Dart and native Rust integration pieces:
 
 ```text
-apps/mobile/lib/app/agent_runtime_catalog.dart
-apps/mobile/lib/app/agent_runtime_tool_host.dart
-apps/mobile/lib/app/agent_runtime_headless_tool_host.dart
-apps/mobile/lib/app/agent_runtime_native_bridge.dart
+apps/mobile/lib/app/agent_runtime/agent_runtime_catalog.dart
+apps/mobile/lib/app/agent_runtime/agent_runtime_tool_host.dart
+apps/mobile/lib/app/agent_runtime/agent_runtime_headless_tool_host.dart
+apps/mobile/lib/app/agent_runtime/agent_runtime_native_bridge.dart
 apps/mobile/lib/src/rust/api/agent_runtime.dart
 apps/mobile/native/lifeos_native/src/api/agent_runtime.rs
 apps/mobile/bin/agent_runtime_tool_host.dart

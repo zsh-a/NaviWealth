@@ -29,7 +29,7 @@ import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
-import 'agent_runtime_provider_overrides.dart';
+import 'agent_runtime/agent_runtime_provider_overrides.dart';
 import 'domain_composition.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';

@@ -12,8 +12,8 @@
 /// drives the Review tab card.
 library;
 
-import '../../../app/agent_runtime_terminal_output.dart';
-import '../../../app/agent_runtime_tool_plan_binding.dart';
+import '../../../app/agent_runtime/agent_runtime_terminal_output.dart';
+import '../../../app/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';

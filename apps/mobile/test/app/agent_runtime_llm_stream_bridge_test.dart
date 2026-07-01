@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
-import 'package:naviwealth/app/agent_runtime_llm_stream_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_stream_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 
 import 'agent_runtime_native_bridge_test_harness.dart';

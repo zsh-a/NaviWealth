@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/frb_llm_connectivity_probe.dart';
+import 'package:naviwealth/app/agent_runtime/frb_llm_connectivity_probe.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_connectivity.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 

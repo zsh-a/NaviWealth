@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:naviwealth/app/agent_runtime_headless_tool_host.dart';
-import 'package:naviwealth/app/agent_runtime_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_headless_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_tool_host.dart';
 
 /// Headless app-backed process entry for the Rust `--tool-host` bridge.
 ///

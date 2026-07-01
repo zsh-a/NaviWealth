@@ -622,7 +622,7 @@ void main() {
     test('production runtime overrides keep scheduled agents on FRB seams', () {
       final bootstrap = File('${appRoot.path}/lib/app/bootstrap.dart');
       final runtimeOverrides = File(
-        '${appRoot.path}/lib/app/agent_runtime_provider_overrides.dart',
+        '${appRoot.path}/lib/app/agent_runtime/agent_runtime_provider_overrides.dart',
       );
 
       expect(bootstrap.existsSync(), isTrue);

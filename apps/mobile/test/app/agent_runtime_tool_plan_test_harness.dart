@@ -1,9 +1,9 @@
-import 'package:naviwealth/app/agent_runtime_catalog.dart';
-import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
-import 'package:naviwealth/app/agent_runtime_step_runner.dart';
-import 'package:naviwealth/app/agent_runtime_tool_host.dart';
-import 'package:naviwealth/app/agent_runtime_tool_plan_binding.dart';
-import 'package:naviwealth/app/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_step_runner.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_trace_recorder.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 
 import 'agent_runtime_native_bridge_test_harness.dart';

@@ -169,7 +169,7 @@ TUI uses persistent natural input by default. Plain text runs the shared
 | Change LLM provider behavior | `crates/agent-llm/src/providers/` | `rtk cargo test -p agent-llm`, native tests when FRB LLM bridge behavior changes |
 | Change ChatTurn behavior | `crates/agent-chat/`, `schemas/chat-turn-*.schema.json`, ChatTurn fixtures, `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli --test contracts`, native tests, Flutter chat bridge tests |
 | Change CLI command behavior | `crates/agent-cli/src/commands/` plus supporting module | focused command test, `rtk cargo test -p agent-cli` |
-| Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
+| Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
 | Change FRB API | `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs` | FRB codegen, native API tests, Dart bridge tests |
 | Change AI Chat streaming | `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `frb_chat_runner_test.dart`, stream bridge test |
 | Change proposal apply behavior | `crates/agent-cli/src/proposal.rs`, `agent_runtime_proposal_bridge.dart` | proposal CLI tests, targeted Flutter proposal tests |

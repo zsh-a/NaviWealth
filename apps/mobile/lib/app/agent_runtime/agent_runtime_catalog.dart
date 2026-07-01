@@ -9,15 +9,15 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/ai/agents/agent.dart';
-import '../core/ai/agents/agent_registry.dart';
-import '../core/ai/agents/agent_schedule.dart';
-import '../core/ai/composition/proposal_kind_registry.dart';
-import '../core/ai/contracts/intent.dart';
-import '../core/ai/contracts/tool_descriptor.dart';
-import '../core/ai/runtime/device/tools/device_tool.dart';
-import '../core/lifeos/domain_pack.dart';
-import 'domain_composition.dart';
+import '../../core/ai/agents/agent.dart';
+import '../../core/ai/agents/agent_registry.dart';
+import '../../core/ai/agents/agent_schedule.dart';
+import '../../core/ai/composition/proposal_kind_registry.dart';
+import '../../core/ai/contracts/intent.dart';
+import '../../core/ai/contracts/tool_descriptor.dart';
+import '../../core/ai/runtime/device/tools/device_tool.dart';
+import '../../core/lifeos/domain_pack.dart';
+import '../domain_composition.dart';
 
 const String kAgentRuntimeProtocolVersion = 'agent.v1';
 const String kAgentRuntimeCatalogVersion = 'agent_catalog.v1';

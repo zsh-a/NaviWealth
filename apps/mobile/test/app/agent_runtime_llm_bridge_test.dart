@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
-import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 

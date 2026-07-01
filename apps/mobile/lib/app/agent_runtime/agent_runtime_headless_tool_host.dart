@@ -13,24 +13,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/ai/composition/device_tools_provider.dart';
-import '../core/ai/composition/tool_descriptor_lookup.dart';
-import '../core/ai/contracts/tool_descriptor.dart';
-import '../core/ai/runtime/device/tools/device_tool.dart';
-import '../core/ai/runtime/device/tools/device_tool_registry.dart'
+import '../../core/ai/composition/device_tools_provider.dart';
+import '../../core/ai/composition/tool_descriptor_lookup.dart';
+import '../../core/ai/contracts/tool_descriptor.dart';
+import '../../core/ai/runtime/device/tools/device_tool.dart';
+import '../../core/ai/runtime/device/tools/device_tool_registry.dart'
     show kShellDeviceToolsCore, kShellToolDescriptors;
-import '../core/auth/auth_state.dart';
-import '../core/auth/domain_scope.dart';
-import '../core/auth/providers.dart' as auth;
-import '../core/config/app_config.dart';
-import '../core/config/providers.dart';
-import '../core/persistence/app_database.dart';
-import '../core/persistence/providers.dart';
-import '../design_system/preferences/theme_preferences.dart';
-import '../features/execution_ai_tools.dart';
-import '../features/finance_ai_tools.dart';
-import '../features/health_ai_tools.dart';
-import '../features/knowledge_ai_tools.dart';
+import '../../core/auth/auth_state.dart';
+import '../../core/auth/domain_scope.dart';
+import '../../core/auth/providers.dart' as auth;
+import '../../core/config/app_config.dart';
+import '../../core/config/providers.dart';
+import '../../core/persistence/app_database.dart';
+import '../../core/persistence/providers.dart';
+import '../../design_system/preferences/theme_preferences.dart';
+import '../../features/execution_ai_tools.dart';
+import '../../features/finance_ai_tools.dart';
+import '../../features/health_ai_tools.dart';
+import '../../features/knowledge_ai_tools.dart';
 import 'agent_runtime_tool_host.dart';
 
 class AgentRuntimeHeadlessToolHost {

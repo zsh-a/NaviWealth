@@ -15,7 +15,7 @@
 /// otherwise).
 library;
 
-import '../../../app/agent_runtime_profile_turn_binding.dart';
+import '../../../app/agent_runtime/agent_runtime_profile_turn_binding.dart';
 import '../../../core/ai/contracts/event_record.dart';
 import '../data/health_metric_memory_indexer.dart';
 
