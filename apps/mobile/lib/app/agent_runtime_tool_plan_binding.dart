@@ -10,21 +10,30 @@ import 'agent_runtime_step_runner.dart';
 import 'agent_runtime_trace_recorder.dart';
 
 class AgentRuntimeToolPlanBinding {
-  const AgentRuntimeToolPlanBinding({
+  AgentRuntimeToolPlanBinding({
     required this.agentId,
     required this.domain,
     required this.surface,
     required this.stepRunner,
-    required this.catalog,
+    required AgentRuntimeCatalog catalog,
     this.recordTrace,
-  });
+  }) : _catalogReader = (() => catalog);
+
+  const AgentRuntimeToolPlanBinding.lazyCatalog({
+    required this.agentId,
+    required this.domain,
+    required this.surface,
+    required this.stepRunner,
+    required AgentRuntimeCatalog Function() catalogReader,
+    this.recordTrace,
+  }) : _catalogReader = catalogReader;
 
   final String agentId;
   final String domain;
   final String surface;
   final AgentRuntimeNativeStepRunner stepRunner;
-  final AgentRuntimeCatalog catalog;
   final AgentRuntimeStepTraceRecorder? recordTrace;
+  final AgentRuntimeCatalog Function() _catalogReader;
 
   Future<AgentRuntimeNativeStepRunResult> runToolPlan({
     required List<Map<String, Object?>> toolPlan,
@@ -32,6 +41,7 @@ class AgentRuntimeToolPlanBinding {
     Map<String, Object?> metadata = const <String, Object?>{},
     int? maxToolSteps,
   }) async {
+    final catalog = _catalogReader();
     final stepRun = await stepRunner.runUntilTerminalWithTrace(
       catalog: catalog.toJson(),
       request: <String, Object?>{
@@ -93,12 +103,12 @@ AgentRuntimeToolPlanBinding agentRuntimeToolPlanBinding(
   required String domain,
   required String surface,
 }) {
-  return AgentRuntimeToolPlanBinding(
+  return AgentRuntimeToolPlanBinding.lazyCatalog(
     agentId: agentId,
     domain: domain,
     surface: surface,
     stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
-    catalog: ref.watch(agentRuntimeCatalogProvider),
+    catalogReader: () => ref.read(agentRuntimeCatalogProvider),
     recordTrace: ref
         .read(agentRuntimeTraceRecorderProvider)
         .stepRunRecorder(agentId: agentId, domain: domain, surface: surface),

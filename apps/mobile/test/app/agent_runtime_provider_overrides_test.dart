@@ -9,10 +9,14 @@ import 'package:naviwealth/app/agent_runtime_provider_overrides.dart';
 import 'package:naviwealth/app/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/frb_chat_runner.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/notifications/notification_preferences.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/activity/data/activity_entry_insight_client.dart';
@@ -166,6 +170,56 @@ void main() {
           'dueReader',
           isA<FrbRoutineDueReader>(),
         ),
+      );
+    },
+  );
+
+  test(
+    'agent runtime catalog can compose FRB-backed Health and Knowledge agents',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        SharedBoolPreferenceController.notificationsEnabledKey: false,
+        SharedBoolPreferenceController.healthBriefingEnabledKey: false,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final native = FakeAgentRuntimeToolPlanBridge();
+      final llmBridge = _llmBridge(native);
+      final toolHost = AgentRuntimeToolHost(
+        dispatcher: const _NoopDispatcher(),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          activeDomainPacksProvider.overrideWith(
+            (ref) => [kHealthPack, kKnowledgePack],
+          ),
+          agentRegistryProvider.overrideWith(
+            (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
+          ),
+          agentRuntimeNativeBridgeProvider.overrideWithValue(native),
+          agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
+          agentRuntimeToolHostProvider.overrideWithValue(toolHost),
+          agentRuntimeNativeStepRunnerProvider.overrideWithValue(
+            AgentRuntimeNativeStepRunner(bridge: native, toolHost: toolHost),
+          ),
+          agentRuntimeTraceRecorderProvider.overrideWithValue(
+            AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
+          ),
+          ...agentRuntimeProviderOverrides(),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final catalog = container.read(agentRuntimeCatalogProvider);
+
+      expect(catalog.activeDomains, ['health', 'knowledge']);
+      expect(
+        catalog.agents.map((agent) => agent.id),
+        containsAll(<String>[
+          'morning_briefing',
+          'knowledge_review',
+          'knowledge_inbox_triage',
+        ]),
       );
     },
   );

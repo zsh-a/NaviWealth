@@ -16,8 +16,8 @@ final agentRuntimeProfileTurnRunnerProvider =
     Provider<AgentRuntimeProfileTurnRunner?>((ref) {
       final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
       if (llmBridge == null) return null;
-      return AgentRuntimeProfileTurnRunner(
-        catalog: ref.watch(agentRuntimeCatalogProvider),
+      return AgentRuntimeProfileTurnRunner.lazyCatalog(
+        catalogReader: () => ref.read(agentRuntimeCatalogProvider),
         llmBridge: llmBridge,
         stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
       );
@@ -29,10 +29,21 @@ class AgentRuntimeProfileTurnRunner {
     required AgentRuntimeLlmBridge llmBridge,
     required AgentRuntimeNativeStepRunner stepRunner,
   }) : _catalog = catalog,
+       _catalogReader = null,
        _llmBridge = llmBridge,
        _stepRunner = stepRunner;
 
-  final AgentRuntimeCatalog _catalog;
+  const AgentRuntimeProfileTurnRunner.lazyCatalog({
+    required AgentRuntimeCatalog Function() catalogReader,
+    required AgentRuntimeLlmBridge llmBridge,
+    required AgentRuntimeNativeStepRunner stepRunner,
+  }) : _catalog = null,
+       _catalogReader = catalogReader,
+       _llmBridge = llmBridge,
+       _stepRunner = stepRunner;
+
+  final AgentRuntimeCatalog? _catalog;
+  final AgentRuntimeCatalog Function()? _catalogReader;
   final AgentRuntimeLlmBridge _llmBridge;
   final AgentRuntimeNativeStepRunner _stepRunner;
 
@@ -45,8 +56,9 @@ class AgentRuntimeProfileTurnRunner {
     Map<String, Object?> metadata = const <String, Object?>{},
     int? maxToolSteps,
   }) async {
+    final catalog = _catalogReader?.call() ?? _catalog!;
     final nativeTurn = await _stepRunner.bridge.startProfileTurnStep(
-      catalog: _catalog.toJson(),
+      catalog: catalog.toJson(),
       llmRequest: _llmBridge.buildRequest(
         messages: messages,
         tools: tools,
@@ -64,7 +76,7 @@ class AgentRuntimeProfileTurnRunner {
     );
     final initialStep = _expectObject(nativeTurn['step'], 'step');
     final stepRun = await _stepRunner.continueUntilTerminalWithTrace(
-      catalog: _catalog.toJson(),
+      catalog: catalog.toJson(),
       initialStep: initialStep,
       agentId: agentId,
       maxToolSteps: maxToolSteps,
