@@ -5,10 +5,12 @@ import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 
+import 'agent_runtime_native_bridge_test_harness.dart';
+
 void main() {
   test('buildRequest maps LlmProfile to agent-llm request shape', () {
     final bridge = AgentRuntimeLlmBridge(
-      bridge: _FakeNativeBridge(),
+      bridge: FakeAgentRuntimeNativeBridge(),
       profile: const LlmProfile(
         id: 'profile_1',
         name: 'Work gateway',
@@ -42,7 +44,7 @@ void main() {
   });
 
   test('completeMock sends request through native bridge', () async {
-    final native = _FakeNativeBridge();
+    final native = FakeAgentRuntimeNativeBridge();
     final bridge = AgentRuntimeLlmBridge(
       bridge: native,
       profile: const LlmProfile(
@@ -68,7 +70,7 @@ void main() {
   test(
     'completeProfile sends active profile request through native bridge',
     () async {
-      final native = _FakeNativeBridge();
+      final native = FakeAgentRuntimeNativeBridge();
       final bridge = AgentRuntimeLlmBridge(
         bridge: native,
         profile: const LlmProfile(
@@ -96,7 +98,7 @@ void main() {
   );
 
   test('provider returns bridge for active usable profile', () async {
-    final native = _FakeNativeBridge();
+    final native = FakeAgentRuntimeNativeBridge();
     final container = ProviderContainer(
       overrides: [
         agentRuntimeNativeBridgeProvider.overrideWithValue(native),
@@ -165,125 +167,4 @@ class _FakeCredentialsNotifier extends LlmCredentialsNotifier {
 
   @override
   Future<LlmCredentials?> fetch() async => _credentials;
-}
-
-class _FakeNativeBridge implements AgentRuntimeNativeBridge {
-  final llmRequests = <Map<String, Object?>>[];
-
-  @override
-  Future<String> protocolVersion() async => 'agent.v1';
-
-  @override
-  Future<String> catalogVersion() async => 'agent_catalog.v1';
-
-  @override
-  Future<Map<String, Object?>> catalogSummary(
-    Map<String, Object?> catalog,
-  ) async {
-    return catalog;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRunRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
-    return trace;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateToolSpec(
-    Map<String, Object?> tool,
-  ) async {
-    return tool;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmRequest(
-    Map<String, Object?> request,
-  ) async {
-    llmRequests.add(request);
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmResponse(
-    Map<String, Object?> response,
-  ) async {
-    return response;
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMockLlm({
-    required Map<String, Object?> request,
-    required String responseText,
-  }) async {
-    llmRequests.add(request);
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'provider': request['provider'],
-      'model': request['model'],
-      'content': responseText,
-      'finish_reason': 'stop',
-      'metadata': <String, Object?>{'mock': true},
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeProfileLlm({
-    required Map<String, Object?> request,
-  }) async {
-    llmRequests.add(request);
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'provider': request['provider'],
-      'model': request['model'],
-      'content': 'profile response',
-      'finish_reason': 'stop',
-      'metadata': <String, Object?>{'profile': true},
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> startProfileTurnStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> llmRequest,
-    required String agentId,
-    required Map<String, Object?> runMetadata,
-  }) async {
-    final response = await completeProfileLlm(request: llmRequest);
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'llm_response': response,
-      'step': <String, Object?>{
-        'protocol_version': 'agent.v1',
-        'agent_id': agentId,
-        'status': 'completed',
-        'output': <String, Object?>{'content': response['content']},
-      },
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> startRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) async {
-    return const <String, Object?>{'status': 'completed'};
-  }
-
-  @override
-  Future<Map<String, Object?>> continueRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
-    required String agentId,
-  }) async {
-    return previousStep;
-  }
 }

@@ -19,7 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_step_runner.dart';
-import 'package:naviwealth/app/agent_runtime_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime_tool_plan_binding.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -39,6 +39,8 @@ import 'package:naviwealth/features/knowledge/data/llm_contradiction_judge.dart'
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../app/agent_runtime_tool_plan_test_harness.dart';
 
 const _owner = 'u1';
 final _now = DateTime.utc(2026, 5, 30, 12);
@@ -400,15 +402,14 @@ void main() {
   group('FrbContradictionSourceReader', () {
     test('reads source rows through a three-step FRB tool plan', () async {
       final dispatcher = _ContradictionDispatcher();
-      final bridge = _ToolPlanBridge();
+      final bridge = FakeAgentRuntimeToolPlanBridge();
       final traces = <AgentRuntimeNativeStepRunResult>[];
       final reader = FrbContradictionSourceReader(
-        stepRunner: AgentRuntimeNativeStepRunner(
+        runtime: _runtime(
           bridge: bridge,
-          toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+          dispatcher: dispatcher,
+          recordTrace: (stepRun) async => traces.add(stepRun),
         ),
-        catalog: _catalog(),
-        recordTrace: (stepRun) async => traces.add(stepRun),
       );
 
       final snapshot = await reader.read(_context());
@@ -448,13 +449,10 @@ void main() {
         ),
       );
       final reader = FrbContradictionSourceReader(
-        stepRunner: AgentRuntimeNativeStepRunner(
-          bridge: _FailingBridge(),
-          toolHost: AgentRuntimeToolHost(
-            dispatcher: _ContradictionDispatcher(),
-          ),
+        runtime: _runtime(
+          bridge: FailingAgentRuntimeToolPlanBridge(),
+          dispatcher: _ContradictionDispatcher(),
         ),
-        catalog: _catalog(),
         fallback: fallback,
       );
 
@@ -605,6 +603,22 @@ AgentContext _context() {
 
 final _refProvider = Provider<Ref>((ref) => ref);
 
+AgentRuntimeToolPlanBinding _runtime({
+  required AgentRuntimeNativeBridge bridge,
+  required DeviceToolDispatcher dispatcher,
+  Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
+}) {
+  return agentRuntimeToolPlanTestBinding(
+    agentId: kKnowledgeContradictionAgentId,
+    domain: 'knowledge',
+    surface: 'knowledge_contradiction',
+    bridge: bridge,
+    dispatcher: dispatcher,
+    catalog: _catalog(),
+    recordTrace: recordTrace,
+  );
+}
+
 AgentRuntimeCatalog _catalog() {
   return AgentRuntimeCatalog(
     generatedAt: _now,
@@ -648,7 +662,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _ContradictionDispatcher implements DeviceToolDispatcher {
-  final calls = <_ToolCall>[];
+  final calls = <AgentRuntimeToolPlanToolCall>[];
 
   @override
   Future<Object?> dispatch(
@@ -656,7 +670,7 @@ class _ContradictionDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(_ToolCall(name, input));
+    calls.add(AgentRuntimeToolPlanToolCall(name, input));
     return switch (name) {
       'list_triage_decisions' => <String, Object?>{
         'decisions': <Object?>[
@@ -698,156 +712,6 @@ class _ContradictionDispatcher implements DeviceToolDispatcher {
   }
 }
 
-class _ToolPlanBridge implements AgentRuntimeNativeBridge {
-  final startRequests = <_StartRequest>[];
-  var _plan = const <Object?>[];
-  var _next = 0;
-  final _responses = <Map<String, Object?>>[];
-
-  @override
-  Future<String> protocolVersion() async => 'agent.v1';
-
-  @override
-  Future<String> catalogVersion() async => 'agent_catalog.v1';
-
-  @override
-  Future<Map<String, Object?>> catalogSummary(
-    Map<String, Object?> catalog,
-  ) async {
-    return catalog;
-  }
-
-  @override
-  Future<Map<String, Object?>> startRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) async {
-    startRequests.add(_StartRequest(request: request, agentId: agentId));
-    final input = request['input']! as Map<String, Object?>;
-    _plan = input['tool_plan']! as List<Object?>;
-    _next = 0;
-    _responses.clear();
-    return _toolCallStep(agentId);
-  }
-
-  @override
-  Future<Map<String, Object?>> continueRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
-    required String agentId,
-  }) async {
-    _responses.add(<String, Object?>{
-      'tool_call': previousStep['tool_call'],
-      'tool_response': toolResponse,
-    });
-    _next += 1;
-    if (_next < _plan.length) return _toolCallStep(agentId);
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'run_id': previousStep['run_id'],
-      'agent_id': agentId,
-      'status': 'completed',
-      'output': <String, Object?>{
-        'mode': 'frb_tool_loop',
-        'tool_results': _responses
-            .map(
-              (response) => <String, Object?>{
-                'tool_call': response['tool_call'],
-                'tool_response': response['tool_response'],
-              },
-            )
-            .toList(growable: false),
-      },
-    };
-  }
-
-  Map<String, Object?> _toolCallStep(String agentId) {
-    final item = _plan[_next]! as Map<String, Object?>;
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'run_id': 'run_1',
-      'agent_id': agentId,
-      'status': 'tool_call_requested',
-      'tool_call': <String, Object?>{
-        'tool_call_id': 'call_${_next + 1}',
-        'name': item['name'],
-        'input': item['input'],
-      },
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMockLlm({
-    required Map<String, Object?> request,
-    required String responseText,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> completeProfileLlm({
-    required Map<String, Object?> request,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> startProfileTurnStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> llmRequest,
-    required String agentId,
-    required Map<String, Object?> runMetadata,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmResponse(
-    Map<String, Object?> response,
-  ) async {
-    return response;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRunRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateToolSpec(
-    Map<String, Object?> tool,
-  ) async {
-    return tool;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
-    return trace;
-  }
-}
-
-class _FailingBridge extends _ToolPlanBridge {
-  @override
-  Future<Map<String, Object?>> startRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) async {
-    throw StateError('native unavailable');
-  }
-}
-
 class _FallbackSourceReader implements ContradictionSourceReader {
   _FallbackSourceReader(this.result);
 
@@ -859,20 +723,6 @@ class _FallbackSourceReader implements ContradictionSourceReader {
     calls += 1;
     return result;
   }
-}
-
-class _StartRequest {
-  const _StartRequest({required this.request, required this.agentId});
-
-  final Map<String, Object?> request;
-  final String agentId;
-}
-
-class _ToolCall {
-  const _ToolCall(this.name, this.input);
-
-  final String name;
-  final Object? input;
 }
 
 class _FakeLlmBridge implements KnowledgeLlmProfileClient {

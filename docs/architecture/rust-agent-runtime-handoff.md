@@ -166,6 +166,12 @@ Current bridge capabilities:
   `AgentRuntimeNativeStepRunner` can return the terminal step plus all native
   steps observed, Dart tool responses, dispatch count, and budget-exhaustion
   state; `AgentRuntimeProfileTurnResult` includes the same summary.
+- Provide Dart-side runtime bindings:
+  `AgentRuntimeToolPlanBinding` and `AgentRuntimeProfileTurnBinding` own
+  runtime metadata, active catalog lookup, runner invocation, and best-effort
+  trace recording for feature-level FRB integrations. Tool-plan business
+  readers use `AgentRuntimeToolPlanBinding.readFromToolPlan` for shared
+  run/decode/fallback control flow.
 - Provide local AI trace persistence for the user-facing runtime check:
   `AgentRuntimeTraceRecorder` converts FRB profile-turn results into the
   existing `AiTrace` span model, and Settings -> AI provider records successful
@@ -177,15 +183,21 @@ Current bridge capabilities:
 - Provide local AI trace persistence for the migrated production profile-turn
   agent: HealthOS Morning Briefing records successful FRB profile turns through
   `AgentRuntimeTraceRecorder.recordProfileTurn`.
+- Centralize production app wiring in
+  `app/agent_runtime_provider_overrides.dart`, keeping `app/bootstrap.dart`
+  focused on startup/auth/sync/domain/bootstrap concerns while FRB chat,
+  profile-completion clients, profile-turn synthesis, and migrated tool-plan
+  agents are composed through the shared runtime binding layer.
 - Provide a Settings -> AI provider runtime check that uses
-  `AgentRuntimeProfileTurnRunner` to run one FRB-backed active-profile turn and
-  display the terminal native step status.
+  `AgentRuntimeProfileTurnBinding` / `agentRuntimeProfileTurnBindingProvider`
+  to run one FRB-backed active-profile turn and display the terminal native
+  step status.
 - Provide a FRB-backed Settings connectivity probe through
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions.
 - Provide an app-level `FrbChatRunner` adapter for the Flutter AI Chat seam.
-  It consumes primitive JSON-string AgentTurn events from
-  `agentRuntimeStreamAgentTurn` through `AgentRuntimeLlmStreamBridge` and maps
+  It consumes primitive JSON-string ChatTurn events from
+  `agentRuntimeStreamChatTurn` through `AgentRuntimeLlmStreamBridge` and maps
   `started` / `delta` / `thinking_delta` / `thinking_signature_delta` /
   `tool_call_*` / `finished` / `error` into the existing `AiChatEvent` stream
   contract. OpenAI-compatible and Anthropic text/usage/tool/reasoning SSE are

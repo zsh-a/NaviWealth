@@ -12,13 +12,12 @@ pub(super) struct CatalogSummary {
     pub(super) prompt_block_count: usize,
 }
 
-fn agent_turn_to_llm_request(request: &AgentTurnRequest) -> LlmRequest {
+fn chat_turn_to_llm_request(request: &ChatTurnRequest) -> LlmRequest {
     let mut metadata = request.metadata.clone();
     if metadata.is_null() {
         metadata = json!({});
     }
     if let Some(object) = metadata.as_object_mut() {
-        object.insert("agent_turn".to_owned(), Value::Bool(true));
         object.insert("chat_turn".to_owned(), Value::Bool(true));
         if let Some(turn_id) = &request.turn_id {
             object.insert("turn_id".to_owned(), Value::String(turn_id.clone()));
@@ -185,14 +184,14 @@ pub(super) fn normalize_llm_request_contract(request: &mut LlmRequest) -> Result
     Ok(())
 }
 
-pub(super) fn normalize_agent_turn_request_contract(request: &mut AgentTurnRequest) -> Result<()> {
-    require_optional_non_empty(&request.turn_id, "Agent turn turn_id")?;
-    require_optional_non_empty(&request.surface, "Agent turn surface")?;
-    require_optional_non_empty(&request.session_id, "Agent turn session_id")?;
-    require_optional_non_empty(&request.thread_id, "Agent turn thread_id")?;
-    require_optional_non_empty(&request.agent_id, "Agent turn agent_id")?;
-    require_optional_non_empty(&request.mode, "Agent turn mode")?;
-    let mut llm_request = agent_turn_to_llm_request(request);
+pub(super) fn normalize_chat_turn_request_contract(request: &mut ChatTurnRequest) -> Result<()> {
+    require_optional_non_empty(&request.turn_id, "Chat turn turn_id")?;
+    require_optional_non_empty(&request.surface, "Chat turn surface")?;
+    require_optional_non_empty(&request.session_id, "Chat turn session_id")?;
+    require_optional_non_empty(&request.thread_id, "Chat turn thread_id")?;
+    require_optional_non_empty(&request.agent_id, "Chat turn agent_id")?;
+    require_optional_non_empty(&request.mode, "Chat turn mode")?;
+    let mut llm_request = chat_turn_to_llm_request(request);
     normalize_llm_request_contract(&mut llm_request)?;
     request.protocol_version = llm_request.protocol_version;
     request.provider = llm_request.provider;

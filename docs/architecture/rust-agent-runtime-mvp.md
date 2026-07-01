@@ -115,8 +115,8 @@ Implemented:
 - FRB-facing profile-backed LLM completion via
   `agentRuntimeCompleteProfileLlm`, using device-local profile metadata for
   OpenAI-compatible and Anthropic-compatible HTTP providers
-- FRB-facing ChatTurn request validation and AgentTurn streaming via
-  `agentRuntimeValidateAgentTurnRequest` and `agentRuntimeStreamAgentTurn`.
+- FRB-facing ChatTurn request validation and ChatTurn streaming via
+  `agentRuntimeValidateChatTurnRequest` and `agentRuntimeStreamChatTurn`.
   The request keeps a small top-level turn envelope (`turn_id`, `surface`,
   `agent_id`, `mode`) while preserving provider-neutral LLM messages, including
   multimodal content blocks, and streams primitive JSON events with the same
@@ -165,6 +165,13 @@ Implemented:
   trace-aware run/continue methods that return the terminal step, every native
   step observed, every Dart tool response, dispatch count, and tool-budget
   exhaustion state; `AgentRuntimeProfileTurnResult` surfaces this summary
+- Dart-side runtime binding layer: `AgentRuntimeToolPlanBinding` and
+  `AgentRuntimeProfileTurnBinding` centralize agent id / domain / surface
+  metadata, active catalog lookup, bounded runner invocation, and best-effort
+  trace recording so feature agents receive one runtime dependency instead of
+  assembling FRB request envelopes directly. `AgentRuntimeToolPlanBinding`
+  also exposes `readFromToolPlan`, so business readers share the same
+  run/decode/fallback control flow.
 - The shared trace fixture set includes a valid `closed_early`
   `agent_runtime_step`; tool-budget exhaustion is now closed through the
   native FRB continuation path so Rust owns the terminal step/run_state/trace
@@ -203,15 +210,21 @@ Implemented:
   records successful Morning Briefing FRB profile turns through
   `AgentRuntimeTraceRecorder.recordProfileTurn` with routing reason
   `frb_agent_runtime_profile`
+- Production app wiring is centralized in
+  `app/agent_runtime_provider_overrides.dart`: chat, FRB profile-completion
+  clients, Morning Briefing profile-turn synthesis, and migrated tool-plan
+  agents are composed through the shared binding layer outside
+  `app/bootstrap.dart`.
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
-  active-profile turn through `AgentRuntimeProfileTurnRunner` and displays the
-  terminal native step status
+  active-profile turn through `AgentRuntimeProfileTurnBinding` /
+  `agentRuntimeProfileTurnBindingProvider` and displays the terminal native
+  step status
 - Settings LLM profile connectivity probing is FRB-backed through
   `FrbLlmConnectivityProbe`, so testing an editable profile uses the same
   native `agent-llm` provider path as production completions
 - AI Chat now has an app-level `FrbChatRunner` adapter and
   `AgentRuntimeLlmStreamBridge`. Native FRB exposes primitive JSON-string
-  AgentTurn stream events through `agentRuntimeStreamAgentTurn`; the Dart bridge
+  ChatTurn stream events through `agentRuntimeStreamChatTurn`; the Dart bridge
   exposes this as `streamChatTurn`, and the runner maps
   ChatTurn-style `started` / `llm_started` / `delta` / `thinking_delta` /
   `thinking_signature_delta` / `tool_call_*` / `usage` / `round_finished` /
@@ -250,7 +263,7 @@ Implemented:
   confirmation
 - First production agent migration onto the embedded FRB profile-turn path:
   HealthOS `FrbBriefingSynthesizer` now routes Morning Briefing synthesis
-  through `AgentRuntimeProfileTurnRunner` before falling back to the
+  through `AgentRuntimeProfileTurnBinding` before falling back to the
   deterministic programmatic synthesizer
 - KnowledgeOS Inbox Triage classifier now prefers a FRB profile-backed LLM
   completion through `FrbInboxTriageClassifier`, using

@@ -26,8 +26,8 @@
 ///   deterministic.
 library;
 
-import '../../../app/agent_runtime_catalog.dart';
-import '../../../app/agent_runtime_step_runner.dart';
+import '../../../app/agent_runtime_terminal_output.dart';
+import '../../../app/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
@@ -354,72 +354,40 @@ class RepositoryContradictionSourceReader implements ContradictionSourceReader {
 
 class FrbContradictionSourceReader implements ContradictionSourceReader {
   const FrbContradictionSourceReader({
-    required AgentRuntimeNativeStepRunner stepRunner,
-    required AgentRuntimeCatalog catalog,
+    required AgentRuntimeToolPlanBinding runtime,
     this.fallback = const RepositoryContradictionSourceReader(),
-    this.recordTrace,
-  }) : _stepRunner = stepRunner,
-       _catalog = catalog;
+  }) : _runtime = runtime;
 
-  final AgentRuntimeNativeStepRunner _stepRunner;
-  final AgentRuntimeCatalog _catalog;
+  final AgentRuntimeToolPlanBinding _runtime;
   final ContradictionSourceReader fallback;
-  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
-  recordTrace;
 
   @override
   Future<ContradictionSourceSnapshot> read(AgentContext ctx) async {
-    try {
-      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
-        catalog: _catalog.toJson(),
-        request: <String, Object?>{
-          'protocol_version': 'agent.v1',
-          'input': <String, Object?>{
-            'tool_plan': <Object?>[
-              const <String, Object?>{
-                'name': 'list_triage_decisions',
-                'input': <String, Object?>{'limit': 200},
-              },
-              const <String, Object?>{
-                'name': 'list_active_principles',
-                'input': <String, Object?>{'limit': 200},
-              },
-              const <String, Object?>{
-                'name': 'list_open_assumptions',
-                'input': <String, Object?>{'limit': 200},
-              },
-            ],
-          },
-          'trigger': 'manual',
-          'metadata': const <String, Object?>{
-            'surface': 'knowledge_contradiction',
-            'agent_id': kKnowledgeContradictionAgentId,
-          },
+    return _runtime.readFromToolPlan(
+      toolPlan: const <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'list_triage_decisions',
+          'input': <String, Object?>{'limit': 200},
         },
-        agentId: kKnowledgeContradictionAgentId,
-        maxToolSteps: 3,
-      );
-      await _recordTrace(stepRun);
-      final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-      final snapshot = contradictionSourceSnapshotFromTerminalStep(
-        stepRun.terminalStep,
-        ownerUserId: ownerUserId,
-      );
-      if (snapshot == null) return fallback.read(ctx);
-      return snapshot;
-    } on Object {
-      return fallback.read(ctx);
-    }
-  }
-
-  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
-    final recorder = recordTrace;
-    if (recorder == null) return;
-    try {
-      await recorder(stepRun);
-    } on Object {
-      // Best-effort diagnostics; never fail the production agent.
-    }
+        <String, Object?>{
+          'name': 'list_active_principles',
+          'input': <String, Object?>{'limit': 200},
+        },
+        <String, Object?>{
+          'name': 'list_open_assumptions',
+          'input': <String, Object?>{'limit': 200},
+        },
+      ],
+      maxToolSteps: 3,
+      fallback: () => fallback.read(ctx),
+      decode: (terminalStep) async {
+        final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+        return contradictionSourceSnapshotFromTerminalStep(
+          terminalStep,
+          ownerUserId: ownerUserId,
+        );
+      },
+    );
   }
 }
 
@@ -439,9 +407,7 @@ ContradictionSourceSnapshot? contradictionSourceSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required String ownerUserId,
 }) {
-  final output = _asObject(step['output']);
-  if (output == null) return null;
-  final byTool = _toolResultsByName(output);
+  final byTool = agentRuntimeTerminalToolResultsByName(step);
   final decisions = contradictionDecisionsFromToolResult(
     byTool['list_triage_decisions'],
     ownerUserId: ownerUserId,
@@ -566,30 +532,6 @@ List<KnowledgeAssumption>? contradictionAssumptionsFromToolResult(
     );
   }
   return out;
-}
-
-Map<String, Map<String, Object?>> _toolResultsByName(
-  Map<String, Object?> output,
-) {
-  final byTool = <String, Map<String, Object?>>{};
-  final toolResults = output['tool_results'];
-  if (toolResults is List) {
-    for (final raw in toolResults) {
-      final item = _asObject(raw);
-      final call = _asObject(item?['tool_call']);
-      final response = _asObject(item?['tool_response']);
-      final name = call?['name'];
-      final result = _asObject(response?['result']);
-      if (name is String && result != null) byTool[name] = result;
-    }
-  }
-  final singleCall = _asObject(output['tool_call']);
-  final singleName = singleCall?['name'];
-  final singleResult = _asObject(output['tool_result']);
-  if (singleName is String && singleResult != null) {
-    byTool.putIfAbsent(singleName, () => singleResult);
-  }
-  return byTool;
 }
 
 Map<String, Object?>? _asObject(Object? value) {

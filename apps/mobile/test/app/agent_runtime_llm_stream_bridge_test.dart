@@ -4,12 +4,13 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_llm_stream_bridge.dart';
-import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
+
+import 'agent_runtime_native_bridge_test_harness.dart';
 
 void main() {
   test('streams profile-backed FRB chat-turn events from request JSON', () async {
-    final native = _FakeNativeBridge();
+    final native = FakeAgentRuntimeNativeBridge();
     final bridge = AgentRuntimeLlmBridge(
       bridge: native,
       profile: const LlmProfile(
@@ -97,7 +98,7 @@ void main() {
 
   test('streams multimodal chat turns from request JSON', () async {
     final bridge = AgentRuntimeLlmBridge(
-      bridge: _FakeNativeBridge(),
+      bridge: FakeAgentRuntimeNativeBridge(),
       profile: const LlmProfile(
         id: 'profile_2',
         name: 'Claude',
@@ -187,7 +188,7 @@ void main() {
     var initCalls = 0;
     final streamBridge = AgentRuntimeLlmStreamBridge(
       llmBridge: AgentRuntimeLlmBridge(
-        bridge: _FakeNativeBridge(),
+        bridge: FakeAgentRuntimeNativeBridge(),
         profile: const LlmProfile(
           id: 'profile_1',
           name: '',
@@ -226,7 +227,7 @@ void main() {
   test('rejects non-object FRB LLM stream events', () async {
     final streamBridge = AgentRuntimeLlmStreamBridge(
       llmBridge: AgentRuntimeLlmBridge(
-        bridge: _FakeNativeBridge(),
+        bridge: FakeAgentRuntimeNativeBridge(),
         profile: const LlmProfile(
           id: 'profile_1',
           name: '',
@@ -255,7 +256,7 @@ void main() {
   test('maps FRB stream source errors into error events', () async {
     final streamBridge = AgentRuntimeLlmStreamBridge(
       llmBridge: AgentRuntimeLlmBridge(
-        bridge: _FakeNativeBridge(),
+        bridge: FakeAgentRuntimeNativeBridge(),
         profile: const LlmProfile(
           id: 'profile_1',
           name: '',
@@ -284,108 +285,4 @@ void main() {
     expect(metadata['message'], contains('404 page not found'));
     expect(metadata['retryable'], false);
   });
-}
-
-class _FakeNativeBridge implements AgentRuntimeNativeBridge {
-  @override
-  Future<String> protocolVersion() async => 'agent.v1';
-
-  @override
-  Future<String> catalogVersion() async => 'agent_catalog.v1';
-
-  @override
-  Future<Map<String, Object?>> catalogSummary(
-    Map<String, Object?> catalog,
-  ) async {
-    return catalog;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRunRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
-    return trace;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateToolSpec(
-    Map<String, Object?> tool,
-  ) async {
-    return tool;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmResponse(
-    Map<String, Object?> response,
-  ) async {
-    return response;
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMockLlm({
-    required Map<String, Object?> request,
-    required String responseText,
-  }) async {
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'provider': request['provider'],
-      'model': request['model'],
-      'content': responseText,
-      'finish_reason': 'stop',
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeProfileLlm({
-    required Map<String, Object?> request,
-  }) async {
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'provider': request['provider'],
-      'model': request['model'],
-      'content': 'profile response',
-      'finish_reason': 'stop',
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> startProfileTurnStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> llmRequest,
-    required String agentId,
-    required Map<String, Object?> runMetadata,
-  }) async {
-    return const <String, Object?>{'status': 'completed'};
-  }
-
-  @override
-  Future<Map<String, Object?>> startRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) async {
-    return const <String, Object?>{'status': 'completed'};
-  }
-
-  @override
-  Future<Map<String, Object?>> continueRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
-    required String agentId,
-  }) async {
-    return previousStep;
-  }
 }

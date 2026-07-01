@@ -8,8 +8,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/agent_runtime_catalog.dart';
-import '../../../app/agent_runtime_step_runner.dart';
+import '../../../app/agent_runtime_terminal_output.dart';
+import '../../../app/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
@@ -163,66 +163,37 @@ class RepositoryRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
 
 class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
   const FrbRecoveryAlertSignalReader({
-    required AgentRuntimeNativeStepRunner stepRunner,
-    required AgentRuntimeCatalog catalog,
+    required AgentRuntimeToolPlanBinding runtime,
     this.fallback = const RepositoryRecoveryAlertSignalReader(),
-    this.recordTrace,
-  }) : _stepRunner = stepRunner,
-       _catalog = catalog;
+  }) : _runtime = runtime;
 
-  final AgentRuntimeNativeStepRunner _stepRunner;
-  final AgentRuntimeCatalog _catalog;
+  final AgentRuntimeToolPlanBinding _runtime;
   final RecoveryAlertSignalReader fallback;
-  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
-  recordTrace;
 
   @override
   Future<RecoveryAlertSignalRead> read(AgentContext ctx) async {
-    try {
-      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
-        catalog: _catalog.toJson(),
-        request: const <String, Object?>{
-          'protocol_version': 'agent.v1',
-          'input': <String, Object?>{
-            'tool_plan': <Object?>[
-              <String, Object?>{
-                'name': 'get_hrv_trend',
-                'input': <String, Object?>{'window_days': 14},
-              },
-            ],
-          },
-          'trigger': 'manual',
-          'metadata': <String, Object?>{
-            'surface': 'health_recovery_alert',
-            'agent_id': kRecoveryAlertAgentId,
-          },
+    return _runtime.readFromToolPlan(
+      toolPlan: const <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'get_hrv_trend',
+          'input': <String, Object?>{'window_days': 14},
         },
-        agentId: kRecoveryAlertAgentId,
-        maxToolSteps: 1,
-      );
-      await _recordTrace(stepRun);
-      final step = stepRun.terminalStep;
-      final output = _asObject(step['output']);
-      final result = _asObject(output?['tool_result']);
-      final points = _hrvPointsFromToolResult(result);
-      if (points == null) return fallback.read(ctx);
-      return recoveryAlertSignalFromValues(
-        points,
-        source: 'frb_tool:get_hrv_trend',
-      );
-    } on Object {
-      return fallback.read(ctx);
-    }
-  }
-
-  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
-    final recorder = recordTrace;
-    if (recorder == null) return;
-    try {
-      await recorder(stepRun);
-    } on Object {
-      // Best-effort diagnostics; never fail the production agent.
-    }
+      ],
+      maxToolSteps: 1,
+      fallback: () => fallback.read(ctx),
+      decode: (terminalStep) {
+        final result = agentRuntimeTerminalToolResult(
+          terminalStep,
+          'get_hrv_trend',
+        );
+        final points = _hrvPointsFromToolResult(result);
+        if (points == null) return null;
+        return recoveryAlertSignalFromValues(
+          points,
+          source: 'frb_tool:get_hrv_trend',
+        );
+      },
+    );
   }
 }
 

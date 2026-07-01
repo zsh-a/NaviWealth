@@ -44,7 +44,7 @@ class AgentRuntimeLlmStreamBridge {
        _initRuntime = initRuntime,
        _libraryPath = libraryPath,
        _streamChatTurnJson =
-           streamChatTurnJson ?? rust.agentRuntimeStreamAgentTurn;
+           streamChatTurnJson ?? rust.agentRuntimeStreamChatTurn;
 
   final AgentRuntimeLlmBridge _llmBridge;
   final LifeosNativeRuntimeInitializer _initRuntime;

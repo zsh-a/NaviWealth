@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
-import 'package:naviwealth/app/bootstrap.dart';
+import 'package:naviwealth/app/agent_runtime_profile_completion_clients.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 
 void main() {

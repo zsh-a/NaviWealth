@@ -2,7 +2,7 @@ use lifeos_native::api::agent_runtime::{
     agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
     agent_runtime_complete_profile_llm, agent_runtime_continue_run_step,
     agent_runtime_protocol_version, agent_runtime_start_profile_turn_step,
-    agent_runtime_start_run_step, agent_runtime_validate_agent_turn_request,
+    agent_runtime_start_run_step, agent_runtime_validate_chat_turn_request,
     agent_runtime_validate_llm_request, agent_runtime_validate_llm_response,
     agent_runtime_validate_run_request, agent_runtime_validate_tool_spec,
     agent_runtime_validate_trace,
@@ -521,8 +521,8 @@ fn normalizes_llm_contracts() {
 }
 
 #[test]
-fn normalizes_agent_turn_request_contract() {
-    let request_json = agent_runtime_validate_agent_turn_request(
+fn normalizes_chat_turn_request_contract() {
+    let request_json = agent_runtime_validate_chat_turn_request(
         r#"{
           "protocol_version": "agent.v1",
           "turn_id": "turn_1",
@@ -564,14 +564,14 @@ fn normalizes_agent_turn_request_contract() {
     assert_eq!(request["messages"][0]["content"][0]["type"], "text");
     assert_eq!(request["messages"][0]["content"][1]["type"], "image");
     assert_eq!(request["messages"][0]["metadata"], json!({}));
-    assert_eq!(request["metadata"]["agent_turn"], true);
+    assert_eq!(request["metadata"]["chat_turn"], true);
     assert_eq!(request["metadata"]["surface"], "ai_chat");
     assert_eq!(request["tools"][0]["name"], "emit_parsed_transactions");
 }
 
 #[test]
-fn validate_agent_turn_request_rejects_malformed_fields() {
-    let empty_surface = agent_runtime_validate_agent_turn_request(
+fn validate_chat_turn_request_rejects_malformed_fields() {
+    let empty_surface = agent_runtime_validate_chat_turn_request(
         r#"{
           "protocol_version": "agent.v1",
           "surface": "",
@@ -585,7 +585,7 @@ fn validate_agent_turn_request_rejects_malformed_fields() {
     .expect_err("empty surface should fail");
     assert!(empty_surface.to_string().contains("surface"));
 
-    let bad_metadata = agent_runtime_validate_agent_turn_request(
+    let bad_metadata = agent_runtime_validate_chat_turn_request(
         r#"{
           "protocol_version": "agent.v1",
           "provider": "openai",

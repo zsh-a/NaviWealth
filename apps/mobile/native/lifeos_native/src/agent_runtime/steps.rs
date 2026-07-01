@@ -76,14 +76,21 @@ pub(super) fn agent_runtime_continue_run_step(
     require_previous_step_runtime_metadata(&previous_step, &run_id, previous_step_index)?;
     require_tool_response_envelope(&tool_response)?;
     require_matching_tool_response_id(&tool_call, &tool_response)?;
-    require_continuation_next_step_index(&previous_step, previous_step_index)?;
-    let mut tool_results = continuation_tool_results(&previous_step, &catalog, &agent.id)?;
+    let previous_continuation =
+        RuntimeContinuation::from_step(&previous_step, &catalog, &agent.id)?;
+    if let Some(continuation) = &previous_continuation {
+        continuation.require_next_step_index(previous_step_index)?;
+    }
+    let mut tool_results = previous_continuation
+        .as_ref()
+        .map(|continuation| continuation.tool_results.clone())
+        .unwrap_or_default();
     let tool_terminal_status = tool_response_terminal_status(&tool_response);
     if tool_terminal_status != Some("closed_early") {
-        tool_results.push(json!({
-            "tool_call": tool_call.clone(),
-            "tool_response": tool_response.clone(),
-        }));
+        tool_results.push(ToolResultRecord::new(
+            tool_call.clone(),
+            tool_response.clone(),
+        ));
     }
 
     let next_step_index = previous_step_index + 1;
@@ -91,6 +98,7 @@ pub(super) fn agent_runtime_continue_run_step(
     let mut response = match tool_terminal_status {
         Some(status) => {
             let error = tool_response_error_payload(&tool_response).unwrap_or(Value::Null);
+            let tool_results = ToolResultRecord::to_values(&tool_results);
             json!({
             "protocol_version": protocol_version(),
             "run_id": run_id,
@@ -104,38 +112,45 @@ pub(super) fn agent_runtime_continue_run_step(
             "error": error,
             })
         }
-        None => match next_tool_request_from_continuation(&previous_step, tool_results.clone())? {
-            Some(next) => {
-                let continuation = next.continuation();
-                build_tool_call_requested_step(
-                    &catalog,
-                    &agent.id,
-                    &agent.version,
-                    run_id,
-                    next.first,
-                    continuation,
-                )?
-            }
-            None => json!({
-                "protocol_version": protocol_version(),
-                "run_id": run_id,
-                "agent_id": agent.id,
-                "agent_version": agent.version,
-                "step_index": next_step_index,
-                "status": "completed",
-                "output": {
-                    "mode": if tool_results.len() > 1 {
-                        "frb_tool_loop"
-                    } else {
-                        "frb_tool_step"
-                    },
-                    "tool_call": tool_call,
-                    "tool_result": tool_response.get("result").cloned().unwrap_or(Value::Null),
-                    "tool_response": tool_response,
-                    "tool_results": tool_results,
+        None => {
+            match next_tool_request_from_continuation(previous_continuation, tool_results.clone())?
+            {
+                Some(next) => {
+                    let continuation = next.continuation();
+                    build_tool_call_requested_step(
+                        &catalog,
+                        &agent.id,
+                        &agent.version,
+                        run_id,
+                        next.first,
+                        continuation,
+                    )?
                 }
-            }),
-        },
+                None => {
+                    let tool_result_count = tool_results.len();
+                    let tool_results = ToolResultRecord::to_values(&tool_results);
+                    json!({
+                    "protocol_version": protocol_version(),
+                    "run_id": run_id,
+                    "agent_id": agent.id,
+                    "agent_version": agent.version,
+                    "step_index": next_step_index,
+                    "status": "completed",
+                    "output": {
+                        "mode": if tool_result_count > 1 {
+                            "frb_tool_loop"
+                        } else {
+                            "frb_tool_step"
+                        },
+                        "tool_call": tool_call,
+                        "tool_result": tool_response.get("result").cloned().unwrap_or(Value::Null),
+                        "tool_response": tool_response,
+                        "tool_results": tool_results,
+                    }
+                    })
+                }
+            }
+        }
     };
     attach_runtime_metadata(&mut response);
     Ok(serde_json::to_string(&response)?)
@@ -266,12 +281,8 @@ fn require_previous_step_run_state(
         Some(value) if value == step_index => {}
         _ => anyhow::bail!("previous step run_state.step_index must match step_index"),
     }
-    let expected_remaining_tool_count = previous_step
-        .get("continuation")
-        .and_then(|value| value.get("tool_plan"))
-        .and_then(Value::as_array)
-        .map(Vec::len)
-        .unwrap_or(0) as u64;
+    let continuation_counts = RuntimeContinuation::counts_from_step(previous_step);
+    let expected_remaining_tool_count = continuation_counts.remaining_tool_count as u64;
     match run_state
         .get("remaining_tool_count")
         .and_then(Value::as_u64)
@@ -281,12 +292,7 @@ fn require_previous_step_run_state(
             "previous step run_state.remaining_tool_count must match continuation.tool_plan"
         ),
     }
-    let expected_tool_result_count = previous_step
-        .get("continuation")
-        .and_then(|value| value.get("tool_results"))
-        .and_then(Value::as_array)
-        .map(Vec::len)
-        .unwrap_or(0) as u64;
+    let expected_tool_result_count = continuation_counts.tool_result_count as u64;
     match run_state.get("tool_result_count").and_then(Value::as_u64) {
         Some(value) if value == expected_tool_result_count => {}
         _ => anyhow::bail!(
@@ -399,38 +405,6 @@ fn require_tool_response_envelope(tool_response: &Value) -> Result<()> {
     Ok(())
 }
 
-fn require_continuation_next_step_index(
-    previous_step: &Value,
-    previous_step_index: u64,
-) -> Result<()> {
-    let Some(continuation) = previous_step_continuation(previous_step)? else {
-        return Ok(());
-    };
-    let next_step_index = continuation.get("next_step_index").ok_or_else(|| {
-        anyhow::anyhow!("continuation.next_step_index must be present when continuation is present")
-    })?;
-    let next_step_index = next_step_index.as_u64().ok_or_else(|| {
-        anyhow::anyhow!("continuation.next_step_index must be a non-negative integer")
-    })?;
-    let expected = previous_step_index + 1;
-    if next_step_index != expected {
-        anyhow::bail!(
-            "continuation.next_step_index {next_step_index} must equal previous step_index + 1 ({expected})"
-        );
-    }
-    Ok(())
-}
-
-fn previous_step_continuation(previous_step: &Value) -> Result<Option<&Map<String, Value>>> {
-    let Some(continuation) = previous_step.get("continuation") else {
-        return Ok(None);
-    };
-    let continuation = continuation
-        .as_object()
-        .ok_or_else(|| anyhow::anyhow!("continuation must be an object"))?;
-    Ok(Some(continuation))
-}
-
 fn tool_response_terminal_status(tool_response: &Value) -> Option<&'static str> {
     let code = tool_response_error_code(tool_response);
     match code.as_deref() {
@@ -488,38 +462,217 @@ fn tool_response_error_payload(tool_response: &Value) -> Option<Value> {
     None
 }
 
-#[derive(Debug)]
-struct ToolRequestState {
-    first: contracts::RequestedToolCall,
-    remaining: Vec<Value>,
-    tool_results: Vec<Value>,
-    llm_response: Option<Value>,
-    step_index: u64,
+#[derive(Debug, Clone)]
+struct ToolResultRecord {
+    tool_call: Value,
+    tool_response: Value,
 }
 
-impl ToolRequestState {
-    fn continuation(&self) -> Option<Value> {
-        if self.remaining.is_empty()
-            && self.tool_results.is_empty()
-            && self.llm_response.is_none()
-            && self.step_index == 0
+impl ToolResultRecord {
+    fn new(tool_call: Value, tool_response: Value) -> Self {
+        Self {
+            tool_call,
+            tool_response,
+        }
+    }
+
+    fn from_value(
+        value: &Value,
+        label: &str,
+        catalog: &AgentRuntimeCatalog,
+        agent_id: &str,
+    ) -> Result<Self> {
+        let object = value
+            .as_object()
+            .ok_or_else(|| anyhow::anyhow!("{label} must be an object"))?;
+        let tool_call = object
+            .get("tool_call")
+            .ok_or_else(|| anyhow::anyhow!("{label}.tool_call is required"))?;
+        require_previous_tool_call_catalog_tool(catalog, agent_id, tool_call)?;
+        let tool_response = object
+            .get("tool_response")
+            .ok_or_else(|| anyhow::anyhow!("{label}.tool_response is required"))?;
+        require_tool_response_envelope(tool_response)
+            .map_err(|error| anyhow::anyhow!("{label}.tool_response: {error}"))?;
+        require_matching_tool_response_id(tool_call, tool_response)
+            .map_err(|error| anyhow::anyhow!("{label}.tool_response: {error}"))?;
+        Ok(Self::new(tool_call.clone(), tool_response.clone()))
+    }
+
+    fn to_value(&self) -> Value {
+        json!({
+            "tool_call": self.tool_call,
+            "tool_response": self.tool_response,
+        })
+    }
+
+    fn to_values(records: &[Self]) -> Vec<Value> {
+        records.iter().map(Self::to_value).collect()
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct RuntimeContinuationCounts {
+    remaining_tool_count: usize,
+    tool_result_count: usize,
+}
+
+#[derive(Debug, Clone)]
+struct RuntimeContinuation {
+    tool_plan: Vec<Value>,
+    tool_results: Vec<ToolResultRecord>,
+    llm_response: Option<Value>,
+    next_step_index: u64,
+}
+
+impl RuntimeContinuation {
+    fn from_tool_request_state(state: &ToolRequestState) -> Option<Self> {
+        if state.remaining.is_empty()
+            && state.tool_results.is_empty()
+            && state.llm_response.is_none()
+            && state.step_index == 0
         {
             return None;
         }
+        Some(Self {
+            tool_plan: state.remaining.clone(),
+            tool_results: state.tool_results.clone(),
+            llm_response: state.llm_response.clone(),
+            next_step_index: state.step_index + 1,
+        })
+    }
+
+    fn from_step(
+        previous_step: &Value,
+        catalog: &AgentRuntimeCatalog,
+        agent_id: &str,
+    ) -> Result<Option<Self>> {
+        let Some(value) = previous_step.get("continuation") else {
+            return Ok(None);
+        };
+        let object = value
+            .as_object()
+            .ok_or_else(|| anyhow::anyhow!("continuation must be an object"))?;
+        let tool_plan = match object.get("tool_plan") {
+            Some(value) => value
+                .as_array()
+                .cloned()
+                .ok_or_else(|| anyhow::anyhow!("continuation.tool_plan must be an array"))?,
+            None => Vec::new(),
+        };
+        let tool_results = match object.get("tool_results") {
+            Some(value) => Self::tool_results_from_value(value, catalog, agent_id)?,
+            None => Vec::new(),
+        };
+        let next_step_index = object.get("next_step_index").ok_or_else(|| {
+            anyhow::anyhow!(
+                "continuation.next_step_index must be present when continuation is present"
+            )
+        })?;
+        let next_step_index = next_step_index.as_u64().ok_or_else(|| {
+            anyhow::anyhow!("continuation.next_step_index must be a non-negative integer")
+        })?;
+        Ok(Some(Self {
+            tool_plan,
+            tool_results,
+            llm_response: object.get("llm_response").cloned(),
+            next_step_index,
+        }))
+    }
+
+    fn counts_from_step(step: &Value) -> RuntimeContinuationCounts {
+        let Some(continuation) = step.get("continuation").and_then(Value::as_object) else {
+            return RuntimeContinuationCounts::default();
+        };
+        RuntimeContinuationCounts {
+            remaining_tool_count: continuation
+                .get("tool_plan")
+                .and_then(Value::as_array)
+                .map(Vec::len)
+                .unwrap_or(0),
+            tool_result_count: continuation
+                .get("tool_results")
+                .and_then(Value::as_array)
+                .map(Vec::len)
+                .unwrap_or(0),
+        }
+    }
+
+    fn tool_results_from_value(
+        value: &Value,
+        catalog: &AgentRuntimeCatalog,
+        agent_id: &str,
+    ) -> Result<Vec<ToolResultRecord>> {
+        let results = value
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("continuation.tool_results must be an array"))?;
+        results
+            .iter()
+            .enumerate()
+            .map(|(index, result)| {
+                ToolResultRecord::from_value(
+                    result,
+                    &format!("continuation.tool_results[{index}]"),
+                    catalog,
+                    agent_id,
+                )
+            })
+            .collect()
+    }
+
+    fn validate_tool_plan(&self, catalog: &AgentRuntimeCatalog, agent_id: &str) -> Result<()> {
+        for (index, tool_call) in self.tool_plan.iter().enumerate() {
+            require_previous_tool_call_catalog_tool(catalog, agent_id, tool_call)
+                .map_err(|error| anyhow::anyhow!("continuation.tool_plan[{index}]: {error}"))?;
+        }
+        Ok(())
+    }
+
+    fn require_next_step_index(&self, previous_step_index: u64) -> Result<()> {
+        let expected = previous_step_index + 1;
+        if self.next_step_index != expected {
+            anyhow::bail!(
+                "continuation.next_step_index {} must equal previous step_index + 1 ({expected})",
+                self.next_step_index
+            );
+        }
+        Ok(())
+    }
+
+    fn requested_step_index(&self) -> u64 {
+        self.next_step_index.saturating_sub(1)
+    }
+
+    fn to_value(&self) -> Value {
         let mut object = Map::new();
-        object.insert("tool_plan".to_owned(), Value::Array(self.remaining.clone()));
+        object.insert("tool_plan".to_owned(), Value::Array(self.tool_plan.clone()));
         object.insert(
             "tool_results".to_owned(),
-            Value::Array(self.tool_results.clone()),
+            Value::Array(ToolResultRecord::to_values(&self.tool_results)),
         );
         if let Some(llm_response) = &self.llm_response {
             object.insert("llm_response".to_owned(), llm_response.clone());
         }
         object.insert(
             "next_step_index".to_owned(),
-            Value::Number(serde_json::Number::from(self.step_index + 1)),
+            Value::Number(serde_json::Number::from(self.next_step_index)),
         );
-        Some(Value::Object(object))
+        Value::Object(object)
+    }
+}
+
+#[derive(Debug)]
+struct ToolRequestState {
+    first: contracts::RequestedToolCall,
+    remaining: Vec<Value>,
+    tool_results: Vec<ToolResultRecord>,
+    llm_response: Option<Value>,
+    step_index: u64,
+}
+
+impl ToolRequestState {
+    fn continuation(&self) -> Option<RuntimeContinuation> {
+        RuntimeContinuation::from_tool_request_state(self)
     }
 }
 
@@ -554,72 +707,26 @@ fn parse_initial_tool_request(input: &Value) -> Result<Option<ToolRequestState>>
 }
 
 fn next_tool_request_from_continuation(
-    previous_step: &Value,
-    tool_results: Vec<Value>,
+    continuation: Option<RuntimeContinuation>,
+    tool_results: Vec<ToolResultRecord>,
 ) -> Result<Option<ToolRequestState>> {
-    let Some(continuation) = previous_step_continuation(previous_step)? else {
+    let Some(continuation) = continuation else {
         return Ok(None);
     };
-    let plan = match continuation.get("tool_plan") {
-        Some(value) => value
-            .as_array()
-            .cloned()
-            .ok_or_else(|| anyhow::anyhow!("continuation.tool_plan must be an array"))?,
-        None => Vec::new(),
-    };
-    if plan.is_empty() {
+    if continuation.tool_plan.is_empty() {
         return Ok(None);
     }
-    let first = contracts::parse_requested_tool_call(&plan[0], "continuation.tool_plan[0]")?;
-    let step_index = continuation
-        .get("next_step_index")
-        .and_then(Value::as_u64)
-        .ok_or_else(|| {
-            anyhow::anyhow!("continuation.next_step_index must be a non-negative integer")
-        })?;
+    let first = contracts::parse_requested_tool_call(
+        &continuation.tool_plan[0],
+        "continuation.tool_plan[0]",
+    )?;
     Ok(Some(ToolRequestState {
         first,
-        remaining: plan[1..].to_vec(),
+        remaining: continuation.tool_plan[1..].to_vec(),
         tool_results,
-        llm_response: continuation.get("llm_response").cloned(),
-        step_index,
+        llm_response: continuation.llm_response,
+        step_index: continuation.next_step_index,
     }))
-}
-
-fn continuation_tool_results(
-    previous_step: &Value,
-    catalog: &AgentRuntimeCatalog,
-    agent_id: &str,
-) -> Result<Vec<Value>> {
-    let Some(continuation) = previous_step_continuation(previous_step)? else {
-        return Ok(Vec::new());
-    };
-    let Some(results) = continuation.get("tool_results") else {
-        return Ok(Vec::new());
-    };
-    let results = results
-        .as_array()
-        .cloned()
-        .ok_or_else(|| anyhow::anyhow!("continuation.tool_results must be an array"))?;
-    for (index, result) in results.iter().enumerate() {
-        let object = result.as_object().ok_or_else(|| {
-            anyhow::anyhow!("continuation.tool_results[{index}] must be an object")
-        })?;
-        let tool_call = object.get("tool_call").ok_or_else(|| {
-            anyhow::anyhow!("continuation.tool_results[{index}].tool_call is required")
-        })?;
-        require_previous_tool_call_catalog_tool(catalog, agent_id, tool_call)?;
-        let tool_response = object.get("tool_response").ok_or_else(|| {
-            anyhow::anyhow!("continuation.tool_results[{index}].tool_response is required")
-        })?;
-        require_tool_response_envelope(tool_response).map_err(|error| {
-            anyhow::anyhow!("continuation.tool_results[{index}].tool_response: {error}")
-        })?;
-        require_matching_tool_response_id(tool_call, tool_response).map_err(|error| {
-            anyhow::anyhow!("continuation.tool_results[{index}].tool_response: {error}")
-        })?;
-    }
-    Ok(results)
 }
 
 fn build_tool_call_requested_step(
@@ -628,9 +735,11 @@ fn build_tool_call_requested_step(
     agent_version: &str,
     run_id: Value,
     tool_call: contracts::RequestedToolCall,
-    continuation: Option<Value>,
+    continuation: Option<RuntimeContinuation>,
 ) -> Result<Value> {
-    validate_continuation_tool_plan(catalog, agent_id, &continuation)?;
+    if let Some(continuation) = &continuation {
+        continuation.validate_tool_plan(catalog, agent_id)?;
+    }
     let tool = catalog
         .tools
         .iter()
@@ -647,7 +756,10 @@ fn build_tool_call_requested_step(
         "run_id": run_id,
         "agent_id": agent_id,
         "agent_version": agent_version,
-        "step_index": tool_call_step_index(&continuation),
+        "step_index": continuation
+            .as_ref()
+            .map(RuntimeContinuation::requested_step_index)
+            .unwrap_or(0),
         "status": "tool_call_requested",
         "tool_call": {
             "tool_call_id": ToolCallId::new_v7(),
@@ -660,40 +772,10 @@ fn build_tool_call_requested_step(
     if let Some(continuation) = continuation {
         step.as_object_mut()
             .expect("step is an object")
-            .insert("continuation".to_owned(), continuation);
+            .insert("continuation".to_owned(), continuation.to_value());
     }
     attach_runtime_metadata(&mut step);
     Ok(step)
-}
-
-fn validate_continuation_tool_plan(
-    catalog: &AgentRuntimeCatalog,
-    agent_id: &str,
-    continuation: &Option<Value>,
-) -> Result<()> {
-    let Some(continuation) = continuation else {
-        return Ok(());
-    };
-    let Some(plan) = continuation.get("tool_plan") else {
-        return Ok(());
-    };
-    let plan = plan
-        .as_array()
-        .ok_or_else(|| anyhow::anyhow!("continuation.tool_plan must be an array"))?;
-    for (index, tool_call) in plan.iter().enumerate() {
-        require_previous_tool_call_catalog_tool(catalog, agent_id, tool_call)
-            .map_err(|error| anyhow::anyhow!("continuation.tool_plan[{index}]: {error}"))?;
-    }
-    Ok(())
-}
-
-fn tool_call_step_index(continuation: &Option<Value>) -> u64 {
-    continuation
-        .as_ref()
-        .and_then(|value| value.get("next_step_index"))
-        .and_then(Value::as_u64)
-        .map(|next| next.saturating_sub(1))
-        .unwrap_or(0)
 }
 
 fn attach_runtime_metadata(step: &mut Value) {

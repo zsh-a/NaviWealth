@@ -8,8 +8,8 @@
 /// Review tab via an episodic memory.
 library;
 
-import '../../../app/agent_runtime_catalog.dart';
-import '../../../app/agent_runtime_step_runner.dart';
+import '../../../app/agent_runtime_terminal_output.dart';
+import '../../../app/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
@@ -135,62 +135,32 @@ class RepositoryAssumptionReviewReader implements AssumptionReviewReader {
 
 class FrbAssumptionReviewReader implements AssumptionReviewReader {
   const FrbAssumptionReviewReader({
-    required AgentRuntimeNativeStepRunner stepRunner,
-    required AgentRuntimeCatalog catalog,
+    required AgentRuntimeToolPlanBinding runtime,
     this.fallback = const RepositoryAssumptionReviewReader(),
-    this.recordTrace,
-  }) : _stepRunner = stepRunner,
-       _catalog = catalog;
+  }) : _runtime = runtime;
 
-  final AgentRuntimeNativeStepRunner _stepRunner;
-  final AgentRuntimeCatalog _catalog;
+  final AgentRuntimeToolPlanBinding _runtime;
   final AssumptionReviewReader fallback;
-  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
-  recordTrace;
 
   @override
   Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
-    try {
-      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
-        catalog: _catalog.toJson(),
-        request: <String, Object?>{
-          'protocol_version': 'agent.v1',
-          'input': <String, Object?>{
-            'tool_plan': <Object?>[
-              const <String, Object?>{
-                'name': 'list_open_assumptions',
-                'input': <String, Object?>{'limit': 50},
-              },
-            ],
-          },
-          'trigger': 'manual',
-          'metadata': const <String, Object?>{
-            'surface': 'knowledge_assumption',
-            'agent_id': kKnowledgeAssumptionAgentId,
-          },
+    return _runtime.readFromToolPlan(
+      toolPlan: const <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'list_open_assumptions',
+          'input': <String, Object?>{'limit': 50},
         },
-        agentId: kKnowledgeAssumptionAgentId,
-        maxToolSteps: 1,
-      );
-      await _recordTrace(stepRun);
-      final output = _asObject(stepRun.terminalStep['output']);
-      final result = _asObject(output?['tool_result']);
-      final assumptions = assumptionReviewItemsFromToolResult(result);
-      if (assumptions == null) return fallback.listOpen(ctx);
-      return assumptions;
-    } on Object {
-      return fallback.listOpen(ctx);
-    }
-  }
-
-  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
-    final recorder = recordTrace;
-    if (recorder == null) return;
-    try {
-      await recorder(stepRun);
-    } on Object {
-      // Best-effort diagnostics; never fail the production agent.
-    }
+      ],
+      maxToolSteps: 1,
+      fallback: () => fallback.listOpen(ctx),
+      decode: (terminalStep) {
+        final result = agentRuntimeTerminalToolResult(
+          terminalStep,
+          'list_open_assumptions',
+        );
+        return assumptionReviewItemsFromToolResult(result);
+      },
+    );
   }
 }
 

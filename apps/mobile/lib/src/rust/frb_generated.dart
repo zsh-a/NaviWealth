@@ -66,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0-beta.4';
 
   @override
-  int get rustContentHash => 523259077;
+  int get rustContentHash => 1209651351;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -131,7 +131,7 @@ abstract class RustLibApi extends BaseApi {
     required String agentId,
   });
 
-  Stream<String> crateApiAgentRuntimeAgentRuntimeStreamAgentTurn({
+  Stream<String> crateApiAgentRuntimeAgentRuntimeStreamChatTurn({
     required String requestJson,
   });
 
@@ -144,7 +144,7 @@ abstract class RustLibApi extends BaseApi {
     required String requestJson,
   });
 
-  Future<String> crateApiAgentRuntimeAgentRuntimeValidateAgentTurnRequest({
+  Future<String> crateApiAgentRuntimeAgentRuntimeValidateChatTurnRequest({
     required String requestJson,
   });
 
@@ -646,7 +646,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Stream<String> crateApiAgentRuntimeAgentRuntimeStreamAgentTurn({
+  Stream<String> crateApiAgentRuntimeAgentRuntimeStreamChatTurn({
     required String requestJson,
   }) {
     final sink = RustStreamSink<String>();
@@ -668,7 +668,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             decodeSuccessData: sse_decode_unit,
             decodeErrorData: sse_decode_AnyhowException,
           ),
-          constMeta: kCrateApiAgentRuntimeAgentRuntimeStreamAgentTurnConstMeta,
+          constMeta: kCrateApiAgentRuntimeAgentRuntimeStreamChatTurnConstMeta,
           argValues: [sink, requestJson],
           apiImpl: this,
         ),
@@ -677,9 +677,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return sink.stream;
   }
 
-  TaskConstMeta get kCrateApiAgentRuntimeAgentRuntimeStreamAgentTurnConstMeta =>
+  TaskConstMeta get kCrateApiAgentRuntimeAgentRuntimeStreamChatTurnConstMeta =>
       const TaskConstMeta(
-        debugName: "agent_runtime_stream_agent_turn",
+        debugName: "agent_runtime_stream_chat_turn",
         argNames: ["sink", "requestJson"],
       );
 
@@ -763,7 +763,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiAgentRuntimeAgentRuntimeValidateAgentTurnRequest({
+  Future<String> crateApiAgentRuntimeAgentRuntimeValidateChatTurnRequest({
     required String requestJson,
   }) {
     return handler.executeNormal(
@@ -783,7 +783,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta:
-            kCrateApiAgentRuntimeAgentRuntimeValidateAgentTurnRequestConstMeta,
+            kCrateApiAgentRuntimeAgentRuntimeValidateChatTurnRequestConstMeta,
         argValues: [requestJson],
         apiImpl: this,
       ),
@@ -791,9 +791,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   TaskConstMeta
-  get kCrateApiAgentRuntimeAgentRuntimeValidateAgentTurnRequestConstMeta =>
+  get kCrateApiAgentRuntimeAgentRuntimeValidateChatTurnRequestConstMeta =>
       const TaskConstMeta(
-        debugName: "agent_runtime_validate_agent_turn_request",
+        debugName: "agent_runtime_validate_chat_turn_request",
         argNames: ["requestJson"],
       );
 

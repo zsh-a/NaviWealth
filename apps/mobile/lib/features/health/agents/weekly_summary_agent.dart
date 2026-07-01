@@ -6,8 +6,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/agent_runtime_catalog.dart';
-import '../../../app/agent_runtime_step_runner.dart';
+import '../../../app/agent_runtime_terminal_output.dart';
+import '../../../app/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
@@ -258,70 +258,34 @@ class RepositoryWeeklySummaryReader implements WeeklySummaryReader {
 
 class FrbWeeklySummaryReader implements WeeklySummaryReader {
   const FrbWeeklySummaryReader({
-    required AgentRuntimeNativeStepRunner stepRunner,
-    required AgentRuntimeCatalog catalog,
+    required AgentRuntimeToolPlanBinding runtime,
     this.fallback = const RepositoryWeeklySummaryReader(),
-    this.recordTrace,
-  }) : _stepRunner = stepRunner,
-       _catalog = catalog;
+  }) : _runtime = runtime;
 
-  final AgentRuntimeNativeStepRunner _stepRunner;
-  final AgentRuntimeCatalog _catalog;
+  final AgentRuntimeToolPlanBinding _runtime;
   final WeeklySummaryReader fallback;
-  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
-  recordTrace;
 
   @override
   Future<WeeklySummarySnapshot> read(AgentContext ctx) async {
-    try {
-      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
-        catalog: _catalog.toJson(),
-        request: <String, Object?>{
-          'protocol_version': 'agent.v1',
-          'input': <String, Object?>{
-            'tool_plan': <Object?>[
-              const <String, Object?>{
-                'name': 'get_recovery_signal',
-                'input': <String, Object?>{},
-              },
-              const <String, Object?>{
-                'name': 'get_recent_sleep_summary',
-                'input': <String, Object?>{'days_back': 7},
-              },
-              const <String, Object?>{
-                'name': 'get_activity_summary',
-                'input': <String, Object?>{'days_back': 7},
-              },
-            ],
-          },
-          'trigger': 'manual',
-          'metadata': const <String, Object?>{
-            'surface': 'health_weekly_summary',
-            'agent_id': kWeeklySummaryAgentId,
-          },
+    return _runtime.readFromToolPlan(
+      toolPlan: const <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'get_recovery_signal',
+          'input': <String, Object?>{},
         },
-        agentId: kWeeklySummaryAgentId,
-        maxToolSteps: 3,
-      );
-      await _recordTrace(stepRun);
-      final snapshot = weeklySummarySnapshotFromTerminalStep(
-        stepRun.terminalStep,
-      );
-      if (snapshot == null) return fallback.read(ctx);
-      return snapshot;
-    } on Object {
-      return fallback.read(ctx);
-    }
-  }
-
-  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
-    final recorder = recordTrace;
-    if (recorder == null) return;
-    try {
-      await recorder(stepRun);
-    } on Object {
-      // Best-effort diagnostics; never fail the production agent.
-    }
+        <String, Object?>{
+          'name': 'get_recent_sleep_summary',
+          'input': <String, Object?>{'days_back': 7},
+        },
+        <String, Object?>{
+          'name': 'get_activity_summary',
+          'input': <String, Object?>{'days_back': 7},
+        },
+      ],
+      maxToolSteps: 3,
+      fallback: () => fallback.read(ctx),
+      decode: weeklySummarySnapshotFromTerminalStep,
+    );
   }
 }
 
@@ -355,9 +319,7 @@ class WeeklySummarySnapshot {
 WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
   Map<String, Object?> step,
 ) {
-  final output = _asObject(step['output']);
-  if (output == null) return null;
-  final byTool = _toolResultsByName(output);
+  final byTool = agentRuntimeTerminalToolResultsByName(step);
   final recovery = byTool['get_recovery_signal'];
   final sleep = byTool['get_recent_sleep_summary'];
   final activity = byTool['get_activity_summary'];
@@ -393,33 +355,6 @@ WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
     workoutCount: workoutCount,
     workoutMinutes: workoutMinutes,
   );
-}
-
-Map<String, Map<String, Object?>> _toolResultsByName(
-  Map<String, Object?> output,
-) {
-  final byTool = <String, Map<String, Object?>>{};
-  final toolResults = output['tool_results'];
-  if (toolResults is List) {
-    for (final raw in toolResults) {
-      final item = _asObject(raw);
-      final call = _asObject(item?['tool_call']);
-      final response = _asObject(item?['tool_response']);
-      final name = call?['name'];
-      final result = _asObject(response?['result']);
-      if (name is String && result != null) {
-        byTool[name] = result;
-      }
-    }
-  }
-
-  final singleCall = _asObject(output['tool_call']);
-  final singleName = singleCall?['name'];
-  final singleResult = _asObject(output['tool_result']);
-  if (singleName is String && singleResult != null) {
-    byTool.putIfAbsent(singleName, () => singleResult);
-  }
-  return byTool;
 }
 
 int? _intValue(Object? value) {

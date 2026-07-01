@@ -18,9 +18,9 @@ import 'package:forui/forui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../app/agent_runtime_catalog.dart';
+import '../../../app/agent_runtime_profile_turn_binding.dart';
 import '../../../app/agent_runtime_proposal_bridge.dart';
 import '../../../app/agent_runtime_runner.dart';
-import '../../../app/agent_runtime_trace_recorder.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
@@ -28,6 +28,12 @@ import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'settings_page_frame.dart';
+
+const _settingsRuntimeBindingKey = (
+  agentId: kSettingsLlmRuntimeCheckAgentId,
+  domain: 'settings',
+  surface: 'settings_ai_llm',
+);
 
 class AiLlmCredentialsPage extends ConsumerStatefulWidget {
   const AiLlmCredentialsPage({super.key});
@@ -180,8 +186,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
 
   Future<void> _checkRuntime() async {
     final l10n = AppLocalizations.of(context);
-    final runner = ref.read(agentRuntimeProfileTurnRunnerProvider);
-    if (runner == null) {
+    final runtime = ref.read(
+      agentRuntimeProfileTurnBindingProvider(_settingsRuntimeBindingKey),
+    );
+    if (runtime == null) {
       _toast(ToastKind.warning, l10n.aiLlmRuntimeCheckNoProfile);
       return;
     }
@@ -193,33 +201,16 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       _runtimeError = null;
     });
     try {
-      final result = await runner.run(
-        agentId: kSettingsLlmRuntimeCheckAgentId,
+      final result = await runtime.run(
         messages: <Map<String, Object?>>[
           <String, Object?>{
             'role': 'user',
             'content': l10n.aiLlmRuntimeCheckPrompt,
           },
         ],
-        metadata: const <String, Object?>{
-          'surface': 'settings_ai_llm',
-          'purpose': 'runtime_check',
-        },
+        metadata: const <String, Object?>{'purpose': 'runtime_check'},
         maxToolSteps: 0,
       );
-      try {
-        await ref
-            .read(agentRuntimeTraceRecorderProvider)
-            .recordProfileTurn(
-              agentId: kSettingsLlmRuntimeCheckAgentId,
-              result: result,
-              domain: 'settings',
-              surface: 'settings_ai_llm',
-            );
-      } on Object {
-        // Best-effort diagnostics; a trace-store failure must not fail the
-        // user's provider connectivity check.
-      }
       if (!mounted) return;
       setState(() {
         _runtimeChecking = false;
@@ -289,7 +280,9 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final l10n = AppLocalizations.of(context);
     final supported = ref.watch(deviceLlmPlatformSupportedProvider);
     final asyncCreds = ref.watch(llmCredentialsProvider);
-    final runtimeRunner = ref.watch(agentRuntimeProfileTurnRunnerProvider);
+    final runtime = ref.watch(
+      agentRuntimeProfileTurnBindingProvider(_settingsRuntimeBindingKey),
+    );
     final creds = asyncCreds.asData?.value ?? const LlmCredentials();
     final profiles = creds.profiles;
     final editing = _editingId != null;
@@ -322,7 +315,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                 asyncCreds: asyncCreds,
                 profiles: profiles,
                 existing: existing,
-                runtimeRunner: runtimeRunner,
+                runtime: runtime,
                 includeEditorActions: false,
               ),
             )
@@ -333,7 +326,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                 asyncCreds: asyncCreds,
                 profiles: profiles,
                 existing: null,
-                runtimeRunner: runtimeRunner,
+                runtime: runtime,
               ),
             ),
     );
@@ -344,7 +337,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     required AsyncValue<LlmCredentials?> asyncCreds,
     required List<LlmProfile> profiles,
     required LlmProfile? existing,
-    required AgentRuntimeProfileTurnRunner? runtimeRunner,
+    required AgentRuntimeProfileTurnBinding? runtime,
     bool includeEditorActions = true,
   }) {
     final l10n = AppLocalizations.of(context);
@@ -378,7 +371,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         ),
       ],
       const SizedBox(height: AppSpacing.s16),
-      _runtimeCheckCard(context, runtimeRunner),
+      _runtimeCheckCard(context, runtime),
       const SizedBox(height: AppSpacing.s16),
       _statusLine(context, asyncCreds, l10n),
     ];
@@ -386,10 +379,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
 
   Widget _runtimeCheckCard(
     BuildContext context,
-    AgentRuntimeProfileTurnRunner? runtimeRunner,
+    AgentRuntimeProfileTurnBinding? runtime,
   ) {
     final l10n = AppLocalizations.of(context);
-    final available = runtimeRunner != null;
+    final available = runtime != null;
     final status = _runtimeResult?.step['status']?.toString();
     final response = _runtimeResult?.llmResponse['content']?.toString();
     final proposal = _runtimeResult == null

@@ -12,9 +12,8 @@ mod steps;
 
 use agent_chat::{
     ChatError, ChatToolCall, ChatToolResult, ChatTurnAdvance, ChatTurnEvent, ChatTurnEventKind,
-    ChatTurnRequest as AgentTurnRequest, ChatTurnState, chat_turn_apply_response,
-    chat_turn_apply_tool_results, chat_turn_initial_state, chat_turn_llm_request,
-    chat_turn_next_round,
+    ChatTurnRequest, ChatTurnState, chat_turn_apply_response, chat_turn_apply_tool_results,
+    chat_turn_initial_state, chat_turn_llm_request, chat_turn_next_round,
 };
 use agent_core::{
     AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunId, RunRequest, ScheduleSpec,
@@ -89,9 +88,9 @@ pub fn agent_runtime_validate_llm_response(response_json: String) -> Result<Stri
     Ok(serde_json::to_string(&response)?)
 }
 
-pub fn agent_runtime_validate_agent_turn_request(request_json: String) -> Result<String> {
-    let mut request: AgentTurnRequest = serde_json::from_str(&request_json)?;
-    contracts::normalize_agent_turn_request_contract(&mut request)?;
+pub fn agent_runtime_validate_chat_turn_request(request_json: String) -> Result<String> {
+    let mut request: ChatTurnRequest = serde_json::from_str(&request_json)?;
+    contracts::normalize_chat_turn_request_contract(&mut request)?;
     Ok(serde_json::to_string(&request)?)
 }
 
@@ -137,16 +136,16 @@ pub async fn agent_runtime_stream_profile_llm(
     llm::stream_llm_response(sink, provider, request).await
 }
 
-pub async fn agent_runtime_stream_agent_turn(
+pub async fn agent_runtime_stream_chat_turn(
     sink: StreamSink<String>,
     request_json: String,
 ) -> Result<()> {
-    let mut request: AgentTurnRequest = serde_json::from_str(&request_json)?;
-    contracts::normalize_agent_turn_request_contract(&mut request)?;
+    let mut request: ChatTurnRequest = serde_json::from_str(&request_json)?;
+    contracts::normalize_chat_turn_request_contract(&mut request)?;
     let state = chat::chat_turn_state_from_request(&request)?;
     let llm_request = chat_turn_llm_request(&state);
     let provider = profile_llm_provider(&llm_request)?;
-    chat::stream_agent_turn_response(sink, provider, state).await
+    chat::stream_chat_turn_response(sink, provider, state).await
 }
 
 pub async fn agent_runtime_start_profile_turn_step(

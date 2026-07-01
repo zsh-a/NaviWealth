@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_step_runner.dart';
-import 'package:naviwealth/app/agent_runtime_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime_tool_plan_binding.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
+
+import '../../../app/agent_runtime_tool_plan_test_harness.dart';
 
 void main() {
   group('recoveryAlertSignalFromValues', () {
@@ -47,15 +49,14 @@ void main() {
   group('FrbRecoveryAlertSignalReader', () {
     test('reads HRV through FRB tool-plan continuation', () async {
       final dispatcher = _RecoveryTrendDispatcher();
-      final bridge = _ToolPlanBridge();
+      final bridge = FakeAgentRuntimeToolPlanBridge();
       final traces = <AgentRuntimeNativeStepRunResult>[];
       final reader = FrbRecoveryAlertSignalReader(
-        stepRunner: AgentRuntimeNativeStepRunner(
+        runtime: _runtime(
           bridge: bridge,
-          toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+          dispatcher: dispatcher,
+          recordTrace: (stepRun) async => traces.add(stepRun),
         ),
-        catalog: _catalog(),
-        recordTrace: (stepRun) async => traces.add(stepRun),
       );
       final result = await reader.read(_context());
 
@@ -81,13 +82,10 @@ void main() {
         ),
       );
       final reader = FrbRecoveryAlertSignalReader(
-        stepRunner: AgentRuntimeNativeStepRunner(
-          bridge: _FailingBridge(),
-          toolHost: AgentRuntimeToolHost(
-            dispatcher: _RecoveryTrendDispatcher(),
-          ),
+        runtime: _runtime(
+          bridge: FailingAgentRuntimeToolPlanBridge(),
+          dispatcher: _RecoveryTrendDispatcher(),
         ),
-        catalog: _catalog(),
         fallback: fallback,
       );
 
@@ -108,15 +106,13 @@ void main() {
           ),
         );
         final reader = FrbRecoveryAlertSignalReader(
-          stepRunner: AgentRuntimeNativeStepRunner(
-            bridge: _ToolPlanBridge(),
-            toolHost: AgentRuntimeToolHost(
-              dispatcher: _RecoveryTrendDispatcher(),
-            ),
+          runtime: _runtime(
+            bridge: FakeAgentRuntimeToolPlanBridge(),
+            dispatcher: _RecoveryTrendDispatcher(),
+            recordTrace: (_) async =>
+                throw StateError('trace store unavailable'),
           ),
-          catalog: _catalog(),
           fallback: fallback,
-          recordTrace: (_) async => throw StateError('trace store unavailable'),
         );
 
         final result = await reader.read(_context());
@@ -138,6 +134,22 @@ AgentContext _context() {
 }
 
 final _refProvider = Provider<Ref>((ref) => ref);
+
+AgentRuntimeToolPlanBinding _runtime({
+  required AgentRuntimeNativeBridge bridge,
+  required DeviceToolDispatcher dispatcher,
+  Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
+}) {
+  return agentRuntimeToolPlanTestBinding(
+    agentId: kRecoveryAlertAgentId,
+    domain: 'health',
+    surface: 'health_recovery_alert',
+    bridge: bridge,
+    dispatcher: dispatcher,
+    catalog: _catalog(),
+    recordTrace: recordTrace,
+  );
+}
 
 AgentRuntimeCatalog _catalog() {
   return AgentRuntimeCatalog(
@@ -168,7 +180,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _RecoveryTrendDispatcher implements DeviceToolDispatcher {
-  final calls = <_ToolCall>[];
+  final calls = <AgentRuntimeToolPlanToolCall>[];
 
   @override
   Future<Object?> dispatch(
@@ -176,7 +188,7 @@ class _RecoveryTrendDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(_ToolCall(name, input));
+    calls.add(AgentRuntimeToolPlanToolCall(name, input));
     return <String, Object?>{
       'window_days': 14,
       'points': <Object?>[
@@ -192,134 +204,6 @@ class _RecoveryTrendDispatcher implements DeviceToolDispatcher {
   }
 }
 
-class _ToolPlanBridge implements AgentRuntimeNativeBridge {
-  final startRequests = <_StartRequest>[];
-
-  @override
-  Future<String> protocolVersion() async => 'agent.v1';
-
-  @override
-  Future<String> catalogVersion() async => 'agent_catalog.v1';
-
-  @override
-  Future<Map<String, Object?>> catalogSummary(
-    Map<String, Object?> catalog,
-  ) async {
-    return catalog;
-  }
-
-  @override
-  Future<Map<String, Object?>> startRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) async {
-    startRequests.add(_StartRequest(request: request, agentId: agentId));
-    final input = request['input']! as Map<String, Object?>;
-    final plan = input['tool_plan']! as List<Object?>;
-    final first = plan.single! as Map<String, Object?>;
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'run_id': 'run_1',
-      'agent_id': agentId,
-      'status': 'tool_call_requested',
-      'tool_call': <String, Object?>{
-        'tool_call_id': 'call_1',
-        'name': first['name'],
-        'input': first['input'],
-      },
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> continueRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
-    required String agentId,
-  }) async {
-    return <String, Object?>{
-      'protocol_version': 'agent.v1',
-      'run_id': previousStep['run_id'],
-      'agent_id': agentId,
-      'status': 'completed',
-      'output': <String, Object?>{
-        'mode': 'frb_tool_step',
-        'tool_result': toolResponse['result'],
-      },
-    };
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMockLlm({
-    required Map<String, Object?> request,
-    required String responseText,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> completeProfileLlm({
-    required Map<String, Object?> request,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> startProfileTurnStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> llmRequest,
-    required String agentId,
-    required Map<String, Object?> runMetadata,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmResponse(
-    Map<String, Object?> response,
-  ) async {
-    return response;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRunRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateToolSpec(
-    Map<String, Object?> tool,
-  ) async {
-    return tool;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
-    return trace;
-  }
-}
-
-class _FailingBridge extends _ToolPlanBridge {
-  @override
-  Future<Map<String, Object?>> startRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) async {
-    throw StateError('native unavailable');
-  }
-}
-
 class _FallbackReader implements RecoveryAlertSignalReader {
   _FallbackReader(this.result);
 
@@ -331,18 +215,4 @@ class _FallbackReader implements RecoveryAlertSignalReader {
     calls += 1;
     return result;
   }
-}
-
-class _StartRequest {
-  const _StartRequest({required this.request, required this.agentId});
-
-  final Map<String, Object?> request;
-  final String agentId;
-}
-
-class _ToolCall {
-  const _ToolCall(this.name, this.input);
-
-  final String name;
-  final Object? input;
 }

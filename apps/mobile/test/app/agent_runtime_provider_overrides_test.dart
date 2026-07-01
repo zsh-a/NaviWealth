@@ -1,0 +1,209 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_llm_stream_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_profile_completion_clients.dart';
+import 'package:naviwealth/app/agent_runtime_provider_overrides.dart';
+import 'package:naviwealth/app/agent_runtime_step_runner.dart';
+import 'package:naviwealth/app/agent_runtime_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/app/frb_chat_runner.dart';
+import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/notifications/notification_preferences.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/activity/data/activity_entry_insight_client.dart';
+import 'package:naviwealth/features/ai_chat/data/providers.dart'
+    as ai_chat_providers;
+import 'package:naviwealth/features/execution/agents/providers.dart'
+    as execution_agent_providers;
+import 'package:naviwealth/features/execution/agents/review_agent.dart';
+import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
+import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
+import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
+import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
+import 'package:naviwealth/features/ingest/data/ingest_llm_client.dart';
+import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
+import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
+import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';
+import 'package:naviwealth/features/knowledge/agents/providers.dart'
+    as knowledge_agent_providers;
+import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
+import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'agent_runtime_tool_plan_test_harness.dart';
+
+void main() {
+  test(
+    'agentRuntimeProviderOverrides wires FRB-backed app integrations',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        SharedBoolPreferenceController.notificationsEnabledKey: false,
+        SharedBoolPreferenceController.healthBriefingEnabledKey: false,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final native = FakeAgentRuntimeToolPlanBridge();
+      final llmBridge = _llmBridge(native);
+      final toolHost = AgentRuntimeToolHost(
+        dispatcher: const _NoopDispatcher(),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          agentRuntimeCatalogProvider.overrideWithValue(_catalog()),
+          agentRuntimeNativeBridgeProvider.overrideWithValue(native),
+          agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
+          agentRuntimeLlmStreamBridgeProvider.overrideWithValue(
+            AgentRuntimeLlmStreamBridge(
+              llmBridge: llmBridge,
+              initRuntime: ({String? libraryPath}) async {},
+              streamChatTurnJson: ({required String requestJson}) =>
+                  const Stream<String>.empty(),
+            ),
+          ),
+          agentRuntimeToolHostProvider.overrideWithValue(toolHost),
+          agentRuntimeNativeStepRunnerProvider.overrideWithValue(
+            AgentRuntimeNativeStepRunner(bridge: native, toolHost: toolHost),
+          ),
+          agentRuntimeTraceRecorderProvider.overrideWithValue(
+            AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
+          ),
+          ...agentRuntimeProviderOverrides(),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(
+        container.read(ai_chat_providers.chatAgentProvider),
+        isA<FrbChatRunner>(),
+      );
+      expect(
+        container.read(activityEntryInsightClientProvider),
+        isA<FrbActivityEntryInsightClient>(),
+      );
+      expect(
+        container.read(knowledgeLlmProfileClientProvider),
+        isA<FrbKnowledgeLlmProfileClient>(),
+      );
+      expect(
+        container.read(ingestLlmProfileClientProvider),
+        isA<FrbIngestLlmProfileClient>(),
+      );
+
+      expect(
+        container.read(morningBriefingAgentProvider),
+        isA<MorningBriefingAgent>().having(
+          (agent) => agent.synthesizer,
+          'synthesizer',
+          isA<FrbBriefingSynthesizer>(),
+        ),
+      );
+      expect(
+        container.read(execution_agent_providers.executionReviewAgentProvider),
+        isA<ExecutionReviewAgent>().having(
+          (agent) => agent.reviewReader,
+          'reviewReader',
+          isA<FrbExecutionReviewReader>(),
+        ),
+      );
+      expect(
+        container.read(recoveryAlertAgentProvider),
+        isA<RecoveryAlertAgent>().having(
+          (agent) => agent.signalReader,
+          'signalReader',
+          isA<FrbRecoveryAlertSignalReader>(),
+        ),
+      );
+      expect(
+        container.read(weeklySummaryAgentProvider),
+        isA<WeeklySummaryAgent>().having(
+          (agent) => agent.summaryReader,
+          'summaryReader',
+          isA<FrbWeeklySummaryReader>(),
+        ),
+      );
+      expect(
+        container.read(knowledge_agent_providers.reviewAgentProvider),
+        isA<ReviewAgent>().having(
+          (agent) => agent.dueReader,
+          'dueReader',
+          isA<FrbReviewDueReader>(),
+        ),
+      );
+      expect(
+        container.read(knowledge_agent_providers.assumptionAgentProvider),
+        isA<AssumptionAgent>().having(
+          (agent) => agent.assumptionReader,
+          'assumptionReader',
+          isA<FrbAssumptionReviewReader>(),
+        ),
+      );
+      expect(
+        container.read(knowledge_agent_providers.inboxTriageAgentProvider),
+        isA<InboxTriageAgent>().having(
+          (agent) => agent.sourceReader,
+          'sourceReader',
+          isA<FrbInboxTriageSourceReader>(),
+        ),
+      );
+      expect(
+        container.read(knowledge_agent_providers.contradictionAgentProvider),
+        isA<ContradictionAgent>().having(
+          (agent) => agent.sourceReader,
+          'sourceReader',
+          isA<FrbContradictionSourceReader>(),
+        ),
+      );
+      expect(
+        container.read(knowledge_agent_providers.routineDueAgentProvider),
+        isA<RoutineDueAgent>().having(
+          (agent) => agent.dueReader,
+          'dueReader',
+          isA<FrbRoutineDueReader>(),
+        ),
+      );
+    },
+  );
+}
+
+AgentRuntimeLlmBridge _llmBridge(AgentRuntimeNativeBridge native) {
+  return AgentRuntimeLlmBridge(
+    bridge: native,
+    profile: const LlmProfile(
+      id: 'profile_1',
+      name: 'Local profile',
+      provider: LlmProvider.openai,
+      apiKey: 'sk-test',
+      model: 'gpt-test',
+    ),
+  );
+}
+
+AgentRuntimeCatalog _catalog() {
+  return AgentRuntimeCatalog(
+    generatedAt: DateTime.utc(2026, 6, 29, 8),
+    activeDomains: const <String>['execution', 'health', 'knowledge'],
+    agents: const <AgentRuntimeAgentSpec>[],
+    tools: const <AgentRuntimeToolSpec>[],
+    proposalKinds: const <AgentRuntimeProposalKindSpec>[],
+    promptBlocks: const <AgentRuntimePromptBlockSpec>[],
+  );
+}
+
+class _NoopDispatcher implements DeviceToolDispatcher {
+  const _NoopDispatcher();
+
+  @override
+  Future<Object?> dispatch(
+    DeviceToolSession session,
+    String name,
+    Object? input,
+  ) async {
+    return const <String, Object?>{};
+  }
+}

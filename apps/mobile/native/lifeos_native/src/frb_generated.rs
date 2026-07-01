@@ -29,7 +29,7 @@
 
 use crate::api::embedder::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 
 // Section: boilerplate
@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0-beta.4";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 523259077;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1209651351;
 
 // Section: executor
 
@@ -552,7 +552,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_start_run_step_impl(
         },
     )
 }
-fn wire__crate__api__agent_runtime__agent_runtime_stream_agent_turn_impl(
+fn wire__crate__api__agent_runtime__agent_runtime_stream_chat_turn_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -560,7 +560,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_stream_agent_turn_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "agent_runtime_stream_agent_turn",
+            debug_name: "agent_runtime_stream_chat_turn",
             port: Some(port_),
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
@@ -583,7 +583,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_stream_agent_turn_impl(
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || async move {
-                        let output_ok = crate::api::agent_runtime::agent_runtime_stream_agent_turn(
+                        let output_ok = crate::api::agent_runtime::agent_runtime_stream_chat_turn(
                             api_sink,
                             api_request_json,
                         )
@@ -687,7 +687,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_stream_profile_llm_impl(
         },
     )
 }
-fn wire__crate__api__agent_runtime__agent_runtime_validate_agent_turn_request_impl(
+fn wire__crate__api__agent_runtime__agent_runtime_validate_chat_turn_request_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -695,7 +695,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_validate_agent_turn_request_im
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "agent_runtime_validate_agent_turn_request",
+            debug_name: "agent_runtime_validate_chat_turn_request",
             port: Some(port_),
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
@@ -715,7 +715,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_validate_agent_turn_request_im
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
                         let output_ok =
-                            crate::api::agent_runtime::agent_runtime_validate_agent_turn_request(
+                            crate::api::agent_runtime::agent_runtime_validate_chat_turn_request(
                                 api_request_json,
                             )?;
                         Ok(output_ok)
@@ -1583,7 +1583,7 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        13 => wire__crate__api__agent_runtime__agent_runtime_stream_agent_turn_impl(
+        13 => wire__crate__api__agent_runtime__agent_runtime_stream_chat_turn_impl(
             port,
             ptr,
             rust_vec_len,
@@ -1601,7 +1601,7 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        16 => wire__crate__api__agent_runtime__agent_runtime_validate_agent_turn_request_impl(
+        16 => wire__crate__api__agent_runtime__agent_runtime_validate_chat_turn_request_impl(
             port,
             ptr,
             rust_vec_len,
@@ -1884,7 +1884,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
@@ -1923,7 +1923,7 @@ mod web {
     };
     use flutter_rust_bridge::for_generated::wasm_bindgen;
     use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate

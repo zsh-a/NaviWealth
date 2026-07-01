@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_profile_turn_binding.dart';
 import 'package:naviwealth/app/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
@@ -21,6 +22,8 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
+
+import '../../../app/agent_runtime_native_bridge_test_harness.dart';
 
 EventRecord _sleepEvent({
   required DateTime when,
@@ -144,8 +147,10 @@ void main() {
       );
       final traces = <AgentRuntimeProfileTurnResult>[];
       final synth = FrbBriefingSynthesizer(
-        runner: runner,
-        recordTrace: (result) async => traces.add(result),
+        runtime: _profileRuntime(
+          runner: runner,
+          recordTrace: (result) async => traces.add(result),
+        ),
       );
       final out = await synth.synthesize(baselineInputs);
 
@@ -173,7 +178,9 @@ void main() {
 
     test('falls back when the FRB runner throws', () async {
       final runner = _FakeProfileTurnRunner(shouldThrow: true);
-      final synth = FrbBriefingSynthesizer(runner: runner);
+      final synth = FrbBriefingSynthesizer(
+        runtime: _profileRuntime(runner: runner),
+      );
       final out = await synth.synthesize(baselineInputs);
 
       expect(out.source, BriefingSource.programmatic);
@@ -187,8 +194,11 @@ void main() {
           content: 'You slept 7.5h and HRV was 48ms.',
         );
         final synth = FrbBriefingSynthesizer(
-          runner: runner,
-          recordTrace: (_) async => throw StateError('trace store unavailable'),
+          runtime: _profileRuntime(
+            runner: runner,
+            recordTrace: (_) async =>
+                throw StateError('trace store unavailable'),
+          ),
         );
 
         final out = await synth.synthesize(baselineInputs);
@@ -201,13 +211,26 @@ void main() {
   });
 }
 
+AgentRuntimeProfileTurnBinding _profileRuntime({
+  required AgentRuntimeProfileTurnRunner runner,
+  Future<void> Function(AgentRuntimeProfileTurnResult result)? recordTrace,
+}) {
+  return AgentRuntimeProfileTurnBinding(
+    agentId: 'morning_briefing',
+    domain: 'health',
+    surface: 'health_morning_briefing',
+    runner: runner,
+    recordTrace: recordTrace,
+  );
+}
+
 class _FakeProfileTurnRunner extends AgentRuntimeProfileTurnRunner {
   _FakeProfileTurnRunner({this.content, this.shouldThrow = false})
     : super(
         catalog: _catalog(),
-        llmBridge: _llmBridge(_NoopNativeBridge()),
+        llmBridge: _llmBridge(FakeAgentRuntimeNativeBridge()),
         stepRunner: AgentRuntimeNativeStepRunner(
-          bridge: _NoopNativeBridge(),
+          bridge: FakeAgentRuntimeNativeBridge(),
           toolHost: AgentRuntimeToolHost(dispatcher: _NoopDispatcher()),
         ),
       );
@@ -299,97 +322,5 @@ class _NoopDispatcher implements DeviceToolDispatcher {
     Object? input,
   ) async {
     return null;
-  }
-}
-
-class _NoopNativeBridge implements AgentRuntimeNativeBridge {
-  @override
-  Future<String> protocolVersion() async => 'agent.v1';
-
-  @override
-  Future<String> catalogVersion() async => 'agent_catalog.v1';
-
-  @override
-  Future<Map<String, Object?>> catalogSummary(
-    Map<String, Object?> catalog,
-  ) async {
-    return catalog;
-  }
-
-  @override
-  Future<Map<String, Object?>> completeMockLlm({
-    required Map<String, Object?> request,
-    required String responseText,
-  }) async {
-    return <String, Object?>{'content': responseText};
-  }
-
-  @override
-  Future<Map<String, Object?>> completeProfileLlm({
-    required Map<String, Object?> request,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> continueRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
-    required String agentId,
-  }) async {
-    return previousStep;
-  }
-
-  @override
-  Future<Map<String, Object?>> startProfileTurnStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> llmRequest,
-    required String agentId,
-    required Map<String, Object?> runMetadata,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> startRunStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) async {
-    return const <String, Object?>{};
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateLlmResponse(
-    Map<String, Object?> response,
-  ) async {
-    return response;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateRunRequest(
-    Map<String, Object?> request,
-  ) async {
-    return request;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateToolSpec(
-    Map<String, Object?> tool,
-  ) async {
-    return tool;
-  }
-
-  @override
-  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
-    return trace;
   }
 }

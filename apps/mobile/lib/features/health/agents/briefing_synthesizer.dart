@@ -15,7 +15,7 @@
 /// otherwise).
 library;
 
-import '../../../app/agent_runtime_runner.dart';
+import '../../../app/agent_runtime_profile_turn_binding.dart';
 import '../../../core/ai/contracts/event_record.dart';
 import '../data/health_metric_memory_indexer.dart';
 
@@ -76,8 +76,6 @@ enum BriefingSource { programmatic, llm }
 abstract class BriefingSynthesizer {
   Future<BriefingOutput> synthesize(BriefingInputs inputs);
 }
-
-const String _kMorningBriefingAgentId = 'morning_briefing';
 
 const String _kBriefingSystemPrompt =
     'You are HealthOS Morning Briefing. Given structured Health + '
@@ -168,19 +166,16 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
 /// completion + first runtime step; Dart keeps the existing fallback contract.
 class FrbBriefingSynthesizer implements BriefingSynthesizer {
   const FrbBriefingSynthesizer({
-    required this.runner,
+    required this.runtime,
     this.fallback = const ProgrammaticBriefingSynthesizer(),
     this.maxTokens = 200,
     this.requestTimeout = const Duration(seconds: 20),
-    this.recordTrace,
   });
 
-  final AgentRuntimeProfileTurnRunner runner;
+  final AgentRuntimeProfileTurnBinding runtime;
   final BriefingSynthesizer fallback;
   final int maxTokens;
   final Duration requestTimeout;
-  final Future<void> Function(AgentRuntimeProfileTurnResult result)?
-  recordTrace;
 
   @override
   Future<BriefingOutput> synthesize(BriefingInputs inputs) async {
@@ -188,9 +183,8 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
     if (baseline.isEmpty) return baseline;
     try {
       final prompt = _buildBriefingPrompt(inputs, baseline);
-      final result = await runner
+      final result = await runtime
           .run(
-            agentId: _kMorningBriefingAgentId,
             messages: <Map<String, Object?>>[
               const <String, Object?>{
                 'role': 'system',
@@ -199,15 +193,10 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
               <String, Object?>{'role': 'user', 'content': prompt},
             ],
             maxOutputTokens: maxTokens,
-            metadata: <String, Object?>{
-              'surface': 'health_morning_briefing',
-              'agent_id': _kMorningBriefingAgentId,
-              'day_key': inputs.dayKey,
-            },
+            metadata: <String, Object?>{'day_key': inputs.dayKey},
             maxToolSteps: 0,
           )
           .timeout(requestTimeout);
-      await _recordTrace(result);
       final text = result.llmResponse['content']?.toString().trim();
       if (text == null || text.isEmpty) return baseline;
       return BriefingOutput(
@@ -219,16 +208,6 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
       );
     } on Object {
       return baseline;
-    }
-  }
-
-  Future<void> _recordTrace(AgentRuntimeProfileTurnResult result) async {
-    final recorder = recordTrace;
-    if (recorder == null) return;
-    try {
-      await recorder(result);
-    } on Object {
-      // Best-effort diagnostics; never fail the production agent.
     }
   }
 }

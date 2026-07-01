@@ -1,6 +1,6 @@
 use super::chat::{
-    AgentTurnEnvelope, agent_turn_error_event, agent_turn_event_from_llm_event,
-    agent_turn_finished_events,
+    ChatTurnEnvelope, chat_turn_error_event, chat_turn_event_from_llm_event,
+    chat_turn_finished_events,
 };
 use super::contracts::normalize_llm_event_contract;
 use super::*;
@@ -43,8 +43,8 @@ fn catalog_json() -> String {
 }
 
 #[test]
-fn agent_turn_event_wraps_llm_event_with_envelope() {
-    let envelope = AgentTurnEnvelope {
+fn chat_turn_event_wraps_llm_event_with_envelope() {
+    let envelope = ChatTurnEnvelope {
         turn_id: Some("turn_1".to_owned()),
         session_id: Some("session_1".to_owned()),
         thread_id: Some("thread_1".to_owned()),
@@ -63,7 +63,7 @@ fn agent_turn_event_wraps_llm_event_with_envelope() {
         metadata: json!({"stream": true}),
     };
 
-    let value = agent_turn_event_from_llm_event(&envelope, event).expect("event wraps");
+    let value = chat_turn_event_from_llm_event(&envelope, event).expect("event wraps");
 
     assert_eq!(value["protocol_version"], "agent.v1");
     assert_eq!(value["turn_id"], "turn_1");
@@ -78,8 +78,8 @@ fn agent_turn_event_wraps_llm_event_with_envelope() {
 }
 
 #[test]
-fn agent_turn_finished_event_expands_to_chat_turn_events() {
-    let envelope = AgentTurnEnvelope {
+fn chat_turn_finished_event_expands_to_chat_turn_events() {
+    let envelope = ChatTurnEnvelope {
         turn_id: Some("turn_1".to_owned()),
         session_id: Some("session_1".to_owned()),
         thread_id: Some("thread_1".to_owned()),
@@ -110,7 +110,7 @@ fn agent_turn_finished_event_expands_to_chat_turn_events() {
         metadata: json!({"stream": true}),
     };
 
-    let values = agent_turn_finished_events(&envelope, event).expect("event expands");
+    let values = chat_turn_finished_events(&envelope, event).expect("event expands");
 
     assert_eq!(values.len(), 3);
     assert_eq!(values[0]["kind"], "usage");
@@ -122,8 +122,8 @@ fn agent_turn_finished_event_expands_to_chat_turn_events() {
 }
 
 #[test]
-fn agent_turn_error_event_wraps_error_metadata() {
-    let envelope = AgentTurnEnvelope {
+fn chat_turn_error_event_wraps_error_metadata() {
+    let envelope = ChatTurnEnvelope {
         turn_id: Some("turn_1".to_owned()),
         session_id: None,
         thread_id: None,
@@ -132,7 +132,7 @@ fn agent_turn_error_event_wraps_error_metadata() {
         mode: None,
     };
 
-    let value = agent_turn_error_event(
+    let value = chat_turn_error_event(
         &envelope,
         json!({"code": "provider_error", "message": "bad key"}),
     );

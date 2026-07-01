@@ -41,8 +41,8 @@ pub fn agent_runtime_validate_llm_response(response_json: String) -> Result<Stri
     runtime::agent_runtime_validate_llm_response(response_json)
 }
 
-pub fn agent_runtime_validate_agent_turn_request(request_json: String) -> Result<String> {
-    runtime::agent_runtime_validate_agent_turn_request(request_json)
+pub fn agent_runtime_validate_chat_turn_request(request_json: String) -> Result<String> {
+    runtime::agent_runtime_validate_chat_turn_request(request_json)
 }
 
 pub async fn agent_runtime_complete_mock_llm(
@@ -71,11 +71,11 @@ pub async fn agent_runtime_stream_profile_llm(
     runtime::agent_runtime_stream_profile_llm(sink, request_json).await
 }
 
-pub async fn agent_runtime_stream_agent_turn(
+pub async fn agent_runtime_stream_chat_turn(
     sink: StreamSink<String>,
     request_json: String,
 ) -> Result<()> {
-    runtime::agent_runtime_stream_agent_turn(sink, request_json).await
+    runtime::agent_runtime_stream_chat_turn(sink, request_json).await
 }
 
 pub async fn agent_runtime_start_profile_turn_step(

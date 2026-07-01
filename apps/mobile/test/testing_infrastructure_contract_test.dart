@@ -619,11 +619,23 @@ void main() {
       }
     });
 
-    test('production bootstrap keeps scheduled agents on FRB seams', () {
+    test('production runtime overrides keep scheduled agents on FRB seams', () {
       final bootstrap = File('${appRoot.path}/lib/app/bootstrap.dart');
+      final runtimeOverrides = File(
+        '${appRoot.path}/lib/app/agent_runtime_provider_overrides.dart',
+      );
 
       expect(bootstrap.existsSync(), isTrue);
-      final text = bootstrap.readAsStringSync();
+      expect(runtimeOverrides.existsSync(), isTrue);
+      expect(
+        bootstrap.readAsStringSync(),
+        contains('...agentRuntimeProviderOverrides()'),
+        reason:
+            'bootstrap should delegate FRB runtime wiring to the centralized '
+            'runtime override module.',
+      );
+
+      final text = runtimeOverrides.readAsStringSync();
       final contracts = <String, String>{
         'executionReviewAgentProvider': 'FrbExecutionReviewReader',
         'morningBriefingAgentProvider': 'FrbBriefingSynthesizer',
@@ -642,12 +654,15 @@ void main() {
         expect(
           overrideIndex,
           isNot(-1),
-          reason: '${entry.key} must be overridden in production bootstrap',
+          reason:
+              '${entry.key} must be overridden in production runtime wiring',
         );
         expect(
           frbIndex,
           greaterThan(overrideIndex),
-          reason: '${entry.key} production override must inject ${entry.value}',
+          reason:
+              '${entry.key} production runtime override must inject '
+              '${entry.value}',
         );
       }
 
@@ -670,8 +685,8 @@ void main() {
       }
 
       expect(text, contains('agentRuntimeTraceRecorderProvider'));
-      expect(text, contains('agentRuntimeNativeStepRunnerProvider'));
-      expect(text, contains('agentRuntimeProfileTurnRunnerProvider'));
+      expect(text, contains('agentRuntimeToolPlanBinding'));
+      expect(text, contains('agentRuntimeProfileTurnBinding'));
     });
 
     test('AI architecture docs use current Vision ingest naming', () {

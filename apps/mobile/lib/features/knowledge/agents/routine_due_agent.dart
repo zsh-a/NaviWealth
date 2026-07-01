@@ -12,8 +12,8 @@
 /// drives the Review tab card.
 library;
 
-import '../../../app/agent_runtime_catalog.dart';
-import '../../../app/agent_runtime_step_runner.dart';
+import '../../../app/agent_runtime_terminal_output.dart';
+import '../../../app/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
@@ -218,64 +218,33 @@ class RepositoryRoutineDueReader implements RoutineDueReader {
 
 class FrbRoutineDueReader implements RoutineDueReader {
   const FrbRoutineDueReader({
-    required AgentRuntimeNativeStepRunner stepRunner,
-    required AgentRuntimeCatalog catalog,
+    required AgentRuntimeToolPlanBinding runtime,
     this.fallback = const RepositoryRoutineDueReader(),
-    this.recordTrace,
-  }) : _stepRunner = stepRunner,
-       _catalog = catalog;
+  }) : _runtime = runtime;
 
-  final AgentRuntimeNativeStepRunner _stepRunner;
-  final AgentRuntimeCatalog _catalog;
+  final AgentRuntimeToolPlanBinding _runtime;
   final RoutineDueReader fallback;
-  final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
-  recordTrace;
 
   @override
   Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
-    try {
-      final asOf = ctx.now.add(kRoutineDueLookahead).toUtc().toIso8601String();
-      final stepRun = await _stepRunner.runUntilTerminalWithTrace(
-        catalog: _catalog.toJson(),
-        request: <String, Object?>{
-          'protocol_version': 'agent.v1',
-          'input': <String, Object?>{
-            'tool_plan': <Object?>[
-              <String, Object?>{
-                'name': 'list_due_routines',
-                'input': <String, Object?>{'as_of': asOf, 'limit': 50},
-              },
-            ],
-          },
-          'trigger': 'manual',
-          'metadata': const <String, Object?>{
-            'surface': 'knowledge_routine_due',
-            'agent_id': kKnowledgeRoutineAgentId,
-          },
+    final asOf = ctx.now.add(kRoutineDueLookahead).toUtc().toIso8601String();
+    return _runtime.readFromToolPlan(
+      toolPlan: <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'list_due_routines',
+          'input': <String, Object?>{'as_of': asOf, 'limit': 50},
         },
-        agentId: kKnowledgeRoutineAgentId,
-        maxToolSteps: 1,
-      );
-      await _recordTrace(stepRun);
-      final step = stepRun.terminalStep;
-      final output = _asObject(step['output']);
-      final result = _asObject(output?['tool_result']);
-      final routines = routineDueItemsFromToolResult(result);
-      if (routines == null) return fallback.listDue(ctx);
-      return routines;
-    } on Object {
-      return fallback.listDue(ctx);
-    }
-  }
-
-  Future<void> _recordTrace(AgentRuntimeNativeStepRunResult stepRun) async {
-    final recorder = recordTrace;
-    if (recorder == null) return;
-    try {
-      await recorder(stepRun);
-    } on Object {
-      // Best-effort diagnostics; never fail the production agent.
-    }
+      ],
+      maxToolSteps: 1,
+      fallback: () => fallback.listDue(ctx),
+      decode: (terminalStep) {
+        final result = agentRuntimeTerminalToolResult(
+          terminalStep,
+          'list_due_routines',
+        );
+        return routineDueItemsFromToolResult(result);
+      },
+    );
   }
 }
 
