@@ -6,6 +6,7 @@ import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_proposal_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_runner.dart';
+import 'package:naviwealth/app/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_runner.dart';
+import 'package:naviwealth/app/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime_trace_recorder.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 

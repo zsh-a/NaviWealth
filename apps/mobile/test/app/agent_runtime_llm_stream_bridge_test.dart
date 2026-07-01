@@ -8,97 +8,94 @@ import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 
 void main() {
-  test(
-    'streams profile-backed FRB agent-turn events from request JSON',
-    () async {
-      final native = _FakeNativeBridge();
-      final bridge = AgentRuntimeLlmBridge(
-        bridge: native,
-        profile: const LlmProfile(
-          id: 'profile_1',
-          name: 'Work gateway',
-          provider: LlmProvider.openai,
-          apiKey: 'sk-test',
-          baseUrl: 'https://llm.example.test/v1',
-          model: 'gpt-test',
-        ),
-      );
-      final initCalls = <String?>[];
-      final requestJsons = <String>[];
-      final streamBridge = AgentRuntimeLlmStreamBridge(
-        llmBridge: bridge,
-        libraryPath: '/tmp/liblifeos_native.dylib',
-        initRuntime: ({String? libraryPath}) async {
-          initCalls.add(libraryPath);
-        },
-        streamAgentTurnJson: ({required String requestJson}) {
-          requestJsons.add(requestJson);
-          return Stream<String>.fromIterable(const <String>[
-            '{"kind":"started","metadata":{"provider":"openai"}}',
-            '{"kind":"delta","content":"Hello"}',
-            '{"kind":"finished","response":{"content":"Hello","finish_reason":"stop"}}',
-          ]);
-        },
-      );
+  test('streams profile-backed FRB chat-turn events from request JSON', () async {
+    final native = _FakeNativeBridge();
+    final bridge = AgentRuntimeLlmBridge(
+      bridge: native,
+      profile: const LlmProfile(
+        id: 'profile_1',
+        name: 'Work gateway',
+        provider: LlmProvider.openai,
+        apiKey: 'sk-test',
+        baseUrl: 'https://llm.example.test/v1',
+        model: 'gpt-test',
+      ),
+    );
+    final initCalls = <String?>[];
+    final requestJsons = <String>[];
+    final streamBridge = AgentRuntimeLlmStreamBridge(
+      llmBridge: bridge,
+      libraryPath: '/tmp/liblifeos_native.dylib',
+      initRuntime: ({String? libraryPath}) async {
+        initCalls.add(libraryPath);
+      },
+      streamChatTurnJson: ({required String requestJson}) {
+        requestJsons.add(requestJson);
+        return Stream<String>.fromIterable(const <String>[
+          '{"kind":"started","metadata":{"provider":"openai"}}',
+          '{"kind":"delta","content":"Hello"}',
+          '{"kind":"finished","response":{"content":"Hello","finish_reason":"stop"}}',
+        ]);
+      },
+    );
 
-      final events = await streamBridge
-          .streamAgentTurn(
-            messages: const <Map<String, Object?>>[
-              <String, Object?>{'role': 'user', 'content': 'Hello'},
-            ],
-            tools: const <Map<String, Object?>>[
-              <String, Object?>{
-                'name': 'read_task',
-                'description': 'Read a task',
-                'input_schema': <String, Object?>{'type': 'object'},
-              },
-            ],
-            temperature: 0,
-            maxOutputTokens: 64,
-            metadata: const <String, Object?>{
-              'surface': 'ai_chat',
-              'session_id': 'session_1',
-              'thread_id': 'thread_1',
+    final events = await streamBridge
+        .streamChatTurn(
+          messages: const <Map<String, Object?>>[
+            <String, Object?>{'role': 'user', 'content': 'Hello'},
+          ],
+          tools: const <Map<String, Object?>>[
+            <String, Object?>{
+              'name': 'read_task',
+              'description': 'Read a task',
+              'input_schema': <String, Object?>{'type': 'object'},
             },
-            sessionId: 'session_1',
-            threadId: 'thread_1',
-            surface: 'ai_chat',
-            mode: 'chat',
-          )
-          .toList();
+          ],
+          temperature: 0,
+          maxOutputTokens: 64,
+          metadata: const <String, Object?>{
+            'surface': 'ai_chat',
+            'session_id': 'session_1',
+            'thread_id': 'thread_1',
+          },
+          sessionId: 'session_1',
+          threadId: 'thread_1',
+          surface: 'ai_chat',
+          mode: 'chat',
+        )
+        .toList();
 
-      expect(initCalls, <String?>['/tmp/liblifeos_native.dylib']);
-      expect(events.map((event) => event['kind']), <String>[
-        'started',
-        'delta',
-        'finished',
-      ]);
-      expect(events[1]['content'], 'Hello');
+    expect(initCalls, <String?>['/tmp/liblifeos_native.dylib']);
+    expect(events.map((event) => event['kind']), <String>[
+      'started',
+      'delta',
+      'finished',
+    ]);
+    expect(events[1]['content'], 'Hello');
 
-      final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
-      expect(request['protocol_version'], 'agent.v1');
-      expect(request['surface'], 'ai_chat');
-      expect(request['session_id'], 'session_1');
-      expect(request['thread_id'], 'thread_1');
-      expect(request['mode'], 'chat');
-      expect(request['provider'], 'openai');
-      expect(request['model'], 'gpt-test');
-      expect(request['temperature'], 0);
-      expect(request['max_output_tokens'], 64);
-      expect(request['messages'], <Object?>[
-        <String, Object?>{'role': 'user', 'content': 'Hello'},
-      ]);
-      expect(request['tools'], hasLength(1));
-      final metadata = request['metadata'] as Map<String, Object?>;
-      expect(metadata['surface'], 'ai_chat');
-      expect(metadata['profile_id'], 'profile_1');
-      expect(metadata['profile_name'], 'Work gateway');
-      expect(metadata['base_url'], 'https://llm.example.test/v1');
-      expect(metadata['api_key'], 'sk-test');
-    },
-  );
+    final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
+    expect(request['protocol_version'], 'agent.v1');
+    expect(request['surface'], 'ai_chat');
+    expect(request['session_id'], 'session_1');
+    expect(request['thread_id'], 'thread_1');
+    expect(request['mode'], 'chat');
+    expect(request['provider'], 'openai');
+    expect(request['model'], 'gpt-test');
+    expect(request['temperature'], 0);
+    expect(request['max_output_tokens'], 64);
+    expect(request['messages'], <Object?>[
+      <String, Object?>{'role': 'user', 'content': 'Hello'},
+    ]);
+    expect(request['tools'], hasLength(1));
+    final metadata = request['metadata'] as Map<String, Object?>;
+    expect(metadata['surface'], 'ai_chat');
+    expect(metadata['profile_id'], 'profile_1');
+    expect(metadata['profile_name'], 'Work gateway');
+    expect(metadata['base_url'], 'https://llm.example.test/v1');
+    expect(metadata['api_key'], 'sk-test');
+  });
 
-  test('streams multimodal agent turns from request JSON', () async {
+  test('streams multimodal chat turns from request JSON', () async {
     final bridge = AgentRuntimeLlmBridge(
       bridge: _FakeNativeBridge(),
       profile: const LlmProfile(
@@ -113,7 +110,7 @@ void main() {
     final streamBridge = AgentRuntimeLlmStreamBridge(
       llmBridge: bridge,
       initRuntime: ({String? libraryPath}) async {},
-      streamAgentTurnJson: ({required String requestJson}) {
+      streamChatTurnJson: ({required String requestJson}) {
         requestJsons.add(requestJson);
         return Stream<String>.fromIterable(const <String>[
           '{"kind":"started","protocol_version":"agent.v1","turn_id":"turn_1","surface":"flutter_ai_chat"}',
@@ -123,7 +120,7 @@ void main() {
     );
 
     final events = await streamBridge
-        .streamAgentTurn(
+        .streamChatTurn(
           messages: const <Map<String, Object?>>[
             <String, Object?>{
               'role': 'user',
@@ -201,7 +198,7 @@ void main() {
       initRuntime: ({String? libraryPath}) async {
         initCalls += 1;
       },
-      streamAgentTurnJson: ({required String requestJson}) {
+      streamChatTurnJson: ({required String requestJson}) {
         return Stream<String>.fromIterable(const <String>[
           '{"kind":"finished","response":{"content":"ok","finish_reason":"stop"}}',
         ]);
@@ -209,14 +206,14 @@ void main() {
     );
 
     await streamBridge
-        .streamAgentTurn(
+        .streamChatTurn(
           messages: const <Map<String, Object?>>[
             <String, Object?>{'role': 'user', 'content': 'one'},
           ],
         )
         .drain<void>();
     await streamBridge
-        .streamAgentTurn(
+        .streamChatTurn(
           messages: const <Map<String, Object?>>[
             <String, Object?>{'role': 'user', 'content': 'two'},
           ],
@@ -238,14 +235,14 @@ void main() {
         ),
       ),
       initRuntime: ({String? libraryPath}) async {},
-      streamAgentTurnJson: ({required String requestJson}) {
+      streamChatTurnJson: ({required String requestJson}) {
         return Stream<String>.fromIterable(const <String>['["bad"]']);
       },
     );
 
     expect(
       streamBridge
-          .streamAgentTurn(
+          .streamChatTurn(
             messages: const <Map<String, Object?>>[
               <String, Object?>{'role': 'user', 'content': 'Hello'},
             ],
@@ -267,13 +264,13 @@ void main() {
         ),
       ),
       initRuntime: ({String? libraryPath}) async {},
-      streamAgentTurnJson: ({required String requestJson}) {
+      streamChatTurnJson: ({required String requestJson}) {
         return Stream<String>.error(StateError('404 page not found'));
       },
     );
 
     final events = await streamBridge
-        .streamAgentTurn(
+        .streamChatTurn(
           messages: const <Map<String, Object?>>[
             <String, Object?>{'role': 'user', 'content': 'Hello'},
           ],

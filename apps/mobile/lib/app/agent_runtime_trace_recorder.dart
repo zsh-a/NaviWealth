@@ -11,8 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ai/contracts/contracts.dart';
 import '../core/ai/trace/ai_trace_builder.dart';
 import '../core/ai/trace/providers.dart';
-import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
+import 'agent_runtime_step_runner.dart';
 
 final agentRuntimeTraceRecorderProvider = Provider<AgentRuntimeTraceRecorder>((
   ref,

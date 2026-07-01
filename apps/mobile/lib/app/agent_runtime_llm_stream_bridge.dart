@@ -13,10 +13,11 @@ import 'package:naviwealth/src/rust/api/agent_runtime.dart' as rust;
 
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/config/providers.dart';
+import 'agent_runtime_json.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 
-typedef AgentRuntimeAgentTurnJsonStream =
+typedef AgentRuntimeChatTurnJsonStream =
     Stream<String> Function({required String requestJson});
 
 final agentRuntimeLlmStreamBridgeProvider =
@@ -38,53 +39,19 @@ class AgentRuntimeLlmStreamBridge {
     required AgentRuntimeLlmBridge llmBridge,
     required LifeosNativeRuntimeInitializer initRuntime,
     String? libraryPath,
-    AgentRuntimeAgentTurnJsonStream? streamAgentTurnJson,
+    AgentRuntimeChatTurnJsonStream? streamChatTurnJson,
   }) : _llmBridge = llmBridge,
        _initRuntime = initRuntime,
        _libraryPath = libraryPath,
-       _streamAgentTurnJson =
-           streamAgentTurnJson ?? rust.agentRuntimeStreamAgentTurn;
+       _streamChatTurnJson =
+           streamChatTurnJson ?? rust.agentRuntimeStreamAgentTurn;
 
   final AgentRuntimeLlmBridge _llmBridge;
   final LifeosNativeRuntimeInitializer _initRuntime;
   final String? _libraryPath;
-  final AgentRuntimeAgentTurnJsonStream _streamAgentTurnJson;
+  final AgentRuntimeChatTurnJsonStream _streamChatTurnJson;
 
   Future<void>? _initFuture;
-
-  Stream<Map<String, Object?>> streamAgentTurn({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-    String? turnId,
-    String? sessionId,
-    String? threadId,
-    String? surface,
-    String? agentId,
-    String? mode,
-    int? maxToolRounds,
-    Map<String, Object?>? chatState,
-    List<Map<String, Object?>> toolResults = const <Map<String, Object?>>[],
-  }) {
-    return streamChatTurn(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-      turnId: turnId,
-      sessionId: sessionId,
-      threadId: threadId,
-      surface: surface,
-      agentId: agentId,
-      mode: mode,
-      maxToolRounds: maxToolRounds,
-      chatState: chatState,
-      toolResults: toolResults,
-    );
-  }
 
   Stream<Map<String, Object?>> streamChatTurn({
     required List<Map<String, Object?>> messages,
@@ -120,10 +87,13 @@ class AgentRuntimeLlmStreamBridge {
       toolResults: toolResults,
     );
     try {
-      await for (final eventJson in _streamAgentTurnJson(
+      await for (final eventJson in _streamChatTurnJson(
         requestJson: jsonEncode(request),
       )) {
-        yield _decodeObject(eventJson);
+        yield agentRuntimeDecodeObject(
+          eventJson,
+          label: 'agent runtime LLM stream event',
+        );
       }
     } on FormatException {
       rethrow;
@@ -182,15 +152,6 @@ class AgentRuntimeLlmStreamBridge {
       'max_tool_rounds': ?maxToolRounds,
     };
   }
-}
-
-Map<String, Object?> _decodeObject(String json) {
-  final decoded = jsonDecode(json);
-  if (decoded is Map<String, Object?>) return decoded;
-  if (decoded is Map) {
-    return decoded.map((key, value) => MapEntry(key.toString(), value));
-  }
-  throw const FormatException('agent runtime LLM stream event is not object');
 }
 
 Map<String, Object?> _streamErrorEvent(Object error) {

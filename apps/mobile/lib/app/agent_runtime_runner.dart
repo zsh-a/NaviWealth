@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_llm_bridge.dart';
-import 'agent_runtime_native_bridge.dart';
+import 'agent_runtime_step_runner.dart';
 
 final agentRuntimeProfileTurnRunnerProvider =
     Provider<AgentRuntimeProfileTurnRunner?>((ref) {

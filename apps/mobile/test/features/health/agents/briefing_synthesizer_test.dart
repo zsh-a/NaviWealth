@@ -13,6 +13,7 @@ import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime_runner.dart';
+import 'package:naviwealth/app/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';

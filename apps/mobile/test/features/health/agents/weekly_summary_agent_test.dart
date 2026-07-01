@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';

@@ -658,7 +658,7 @@ class _RecordingStreamBridge extends AgentRuntimeLlmStreamBridge {
   }) : super(
          llmBridge: llmBridge,
          initRuntime: ({String? libraryPath}) async {},
-         streamAgentTurnJson: ({required String requestJson}) {
+         streamChatTurnJson: ({required String requestJson}) {
            requests.add(jsonDecode(requestJson) as Map<String, Object?>);
            final index = nextRequestIndex();
            final batchIndex = index >= eventBatches.length
@@ -676,7 +676,7 @@ class _ThrowingStreamBridge extends AgentRuntimeLlmStreamBridge {
     : super(
         llmBridge: _FakeLlmBridge(),
         initRuntime: ({String? libraryPath}) async {},
-        streamAgentTurnJson: ({required String requestJson}) => throw error,
+        streamChatTurnJson: ({required String requestJson}) => throw error,
       );
 }
 

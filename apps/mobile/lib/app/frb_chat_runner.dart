@@ -16,8 +16,8 @@ import '../core/ai/runtime/ai_runtime.dart';
 import '../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
 import 'agent_runtime_llm_stream_bridge.dart';
+import 'agent_runtime_tool_dispatcher.dart';
 import 'frb_chat_event.dart';
-import 'frb_chat_tool_dispatcher.dart';
 import 'frb_chat_trace_mapper.dart';
 import 'frb_chat_types.dart';
 
@@ -27,7 +27,7 @@ class FrbChatRunner implements ChatAgent {
   const FrbChatRunner({
     required AgentRuntimeLlmStreamBridge streamBridge,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    FrbChatToolLineHandler? toolLineHandler,
+    AgentRuntimeToolLineHandler? toolLineHandler,
     int maxToolRounds = 4,
     String agentId = kFrbChatRunnerAgentId,
   }) : _streamBridge = streamBridge,
@@ -38,7 +38,7 @@ class FrbChatRunner implements ChatAgent {
 
   final AgentRuntimeLlmStreamBridge _streamBridge;
   final List<Map<String, Object?>> _tools;
-  final FrbChatToolLineHandler? _toolLineHandler;
+  final AgentRuntimeToolLineHandler? _toolLineHandler;
   final int _maxToolRounds;
   final String _agentId;
 
@@ -309,7 +309,7 @@ class FrbChatRunner implements ChatAgent {
         return;
       }
 
-      final dispatcher = FrbChatToolDispatcher(handler: toolLineHandler);
+      final dispatcher = AgentRuntimeToolDispatcher(handler: toolLineHandler);
       final resultBlocks = <Map<String, Object?>>[];
       var awaitingUser = false;
       for (final call in state.requiredToolCalls) {
@@ -320,7 +320,7 @@ class FrbChatRunner implements ChatAgent {
         final toolStart = DateTime.now().toUtc();
         yield ProgressEvent(
           LongTaskProgress(
-            id: 'tool:${call.id}',
+            id: 'tool:${call.stringId}',
             label: 'tool',
             detail: call.name,
             startedAt: toolStart,
@@ -328,7 +328,7 @@ class FrbChatRunner implements ChatAgent {
         );
         final result = await dispatcher.call(call);
         yield SpanEvent(
-          id: 'tool:${call.id}',
+          id: 'tool:${call.stringId}',
           parentId: roundId,
           kind: AiSpanKind.tool,
           name: 'tool:${call.name}',
@@ -344,7 +344,7 @@ class FrbChatRunner implements ChatAgent {
           },
         );
         yield ToolResultEvent(
-          id: call.id,
+          id: call.stringId,
           name: call.name,
           output: result.output,
         );

@@ -57,6 +57,7 @@ import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_runner.dart';
+import 'agent_runtime_step_runner.dart';
 import 'agent_runtime_tool_host.dart';
 import 'agent_runtime_trace_recorder.dart';
 import 'domain_composition.dart';

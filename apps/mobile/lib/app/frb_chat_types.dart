@@ -3,6 +3,8 @@ library;
 import 'dart:convert';
 
 import '../core/ai/contracts/contracts.dart';
+import 'agent_runtime_json.dart';
+import 'agent_runtime_tool_dispatcher.dart';
 
 class FrbStreamRoundState {
   FrbStreamRoundState({required this.inputMessageCount});
@@ -36,24 +38,27 @@ class FrbStreamRoundState {
   String get stopReason =>
       frbChatStopReason(frbString(_response['finish_reason']));
 
-  List<FrbToolCall> get toolCalls {
+  List<AgentRuntimeToolCall> get toolCalls {
     return [
       for (final entry in _toolCalls.entries) entry.value.finish(id: entry.key),
     ];
   }
 
-  List<FrbToolCall> get requiredToolCalls {
+  List<AgentRuntimeToolCall> get requiredToolCalls {
     final calls = _finishMetadata['tool_calls'];
     if (calls is List) {
-      final parsed = [
-        for (final value in calls)
-          if (frbObjectOrNull(value) case final object?)
-            FrbToolCall(
-              id: frbString(object['id']),
-              name: frbString(object['name']),
-              input: object['input'],
-            ),
-      ].where((call) => call.id.isNotEmpty && call.name.isNotEmpty).toList();
+      final parsed =
+          [
+                for (final value in calls)
+                  if (frbObjectOrNull(value) case final object?)
+                    AgentRuntimeToolCall(
+                      id: frbString(object['id']),
+                      name: frbString(object['name']),
+                      input: object['input'],
+                    ),
+              ]
+              .where((call) => call.stringId.isNotEmpty && call.name.isNotEmpty)
+              .toList();
       if (parsed.isNotEmpty) return parsed;
     }
     return toolCalls;
@@ -112,53 +117,13 @@ class FrbToolCallBuilder {
   Object? input;
   final StringBuffer partialInputJson = StringBuffer();
 
-  FrbToolCall finish({required String id}) {
-    return FrbToolCall(
+  AgentRuntimeToolCall finish({required String id}) {
+    return AgentRuntimeToolCall(
       id: id,
       name: name,
       input: input ?? frbToolInput(partialInputJson.toString()),
     );
   }
-}
-
-class FrbToolCall {
-  const FrbToolCall({
-    required this.id,
-    required this.name,
-    required this.input,
-  });
-
-  final String id;
-  final String name;
-  final Object? input;
-}
-
-class FrbToolResult {
-  const FrbToolResult({
-    required this.id,
-    required this.name,
-    required this.output,
-    this.isError = false,
-  });
-
-  final String id;
-  final String name;
-  final Object? output;
-  final bool isError;
-
-  String? get errorCode {
-    if (!isError) return null;
-    final object = frbObject(output);
-    final code = frbString(object['code']);
-    return code.isEmpty ? 'frb_chat_tool_error' : code;
-  }
-
-  Map<String, Object?> toChatToolResult() => <String, Object?>{
-    'tool_call_id': id,
-    'tool_name': name,
-    'output': output,
-    'is_error': isError,
-  };
 }
 
 TokenUsage? frbUsageFromResponse(Map<String, Object?> response) {
@@ -187,19 +152,14 @@ String frbChatStopReason(String reason) {
   };
 }
 
-String frbString(Object? value) => value is String ? value : '';
+String frbString(Object? value) => agentRuntimeString(value);
 
 Map<String, Object?> frbObject(Object? value) {
   return frbObjectOrNull(value) ?? const <String, Object?>{};
 }
 
-Map<String, Object?>? frbObjectOrNull(Object? value) {
-  if (value is Map<String, Object?>) return value;
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
-  return null;
-}
+Map<String, Object?>? frbObjectOrNull(Object? value) =>
+    agentRuntimeObjectOrNull(value);
 
 Object? frbToolInput(Object? value) {
   if (value is String) {
@@ -212,11 +172,7 @@ Object? frbToolInput(Object? value) {
   return value;
 }
 
-int frbInt(Object? value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return 0;
-}
+int frbInt(Object? value) => agentRuntimeInt(value);
 
 String frbClip(String value, [int max = 500]) {
   if (value.length <= max) return value;

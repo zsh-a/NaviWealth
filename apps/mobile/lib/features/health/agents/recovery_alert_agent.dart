@@ -9,7 +9,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/agent_runtime_catalog.dart';
-import '../../../app/agent_runtime_native_bridge.dart';
+import '../../../app/agent_runtime_step_runner.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';

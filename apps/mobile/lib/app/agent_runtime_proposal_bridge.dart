@@ -12,7 +12,7 @@ import '../core/ai/composition/proposal_applier.dart';
 import '../core/ai/composition/proposal_apply_state.dart';
 import '../core/ai/composition/proposal_plan.dart';
 import 'agent_runtime_catalog.dart';
-import 'agent_runtime_native_bridge.dart';
+import 'agent_runtime_step_runner.dart';
 
 final agentRuntimeProposalBridgeProvider =
     FutureProvider<AgentRuntimeProposalBridge>((ref) async {
