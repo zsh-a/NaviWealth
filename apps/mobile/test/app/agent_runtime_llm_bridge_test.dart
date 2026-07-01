@@ -158,6 +158,32 @@ void main() {
 
     expect(container.read(agentRuntimeLlmBridgeProvider), isNull);
   });
+
+  test('provider returns null when platform does not support device LLM', () {
+    final container = ProviderContainer(
+      overrides: [
+        deviceLlmPlatformSupportedProvider.overrideWithValue(false),
+        llmCredentialsProvider.overrideWith(
+          () => _FakeCredentialsNotifier(
+            const LlmCredentials(
+              profiles: <LlmProfile>[
+                LlmProfile(
+                  id: 'profile_1',
+                  name: '',
+                  provider: LlmProvider.openai,
+                  apiKey: 'sk-openai',
+                ),
+              ],
+              activeId: 'profile_1',
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(agentRuntimeLlmBridgeProvider), isNull);
+  });
 }
 
 class _FakeCredentialsNotifier extends LlmCredentialsNotifier {

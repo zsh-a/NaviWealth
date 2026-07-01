@@ -12,6 +12,7 @@ import '../../core/ai/llm_credentials/providers.dart';
 import 'agent_runtime_native_bridge.dart';
 
 final agentRuntimeLlmBridgeProvider = Provider<AgentRuntimeLlmBridge?>((ref) {
+  if (!ref.watch(deviceLlmPlatformSupportedProvider)) return null;
   final profile = ref.watch(llmCredentialsProvider).asData?.value?.active;
   if (profile == null || !profile.hasKey) return null;
   return AgentRuntimeLlmBridge(

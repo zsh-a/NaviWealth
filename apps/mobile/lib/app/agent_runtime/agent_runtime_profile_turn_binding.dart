@@ -22,6 +22,7 @@ final agentRuntimeProfileTurnBindingProvider =
         agentId: key.agentId,
         domain: key.domain,
         surface: key.surface,
+        resolveAvailability: true,
       );
     });
 
@@ -30,7 +31,21 @@ AgentRuntimeProfileTurnBinding? agentRuntimeProfileTurnBinding(
   required String agentId,
   required String domain,
   required String surface,
+  bool resolveAvailability = true,
 }) {
+  final recorder = ref
+      .read(agentRuntimeTraceRecorderProvider)
+      .profileTurnRecorder(agentId: agentId, domain: domain, surface: surface);
+  if (!resolveAvailability) {
+    return AgentRuntimeProfileTurnBinding.lazyRunner(
+      agentId: agentId,
+      domain: domain,
+      surface: surface,
+      runnerReader: () => ref.read(agentRuntimeProfileTurnRunnerProvider),
+      recordTrace: recorder,
+    );
+  }
+
   final runner = ref.watch(agentRuntimeProfileTurnRunnerProvider);
   if (runner == null) return null;
   return AgentRuntimeProfileTurnBinding(
@@ -38,30 +53,34 @@ AgentRuntimeProfileTurnBinding? agentRuntimeProfileTurnBinding(
     domain: domain,
     surface: surface,
     runner: runner,
-    recordTrace: ref
-        .read(agentRuntimeTraceRecorderProvider)
-        .profileTurnRecorder(
-          agentId: agentId,
-          domain: domain,
-          surface: surface,
-        ),
+    recordTrace: recorder,
   );
 }
 
 class AgentRuntimeProfileTurnBinding {
-  const AgentRuntimeProfileTurnBinding({
+  AgentRuntimeProfileTurnBinding({
     required this.agentId,
     required this.domain,
     required this.surface,
-    required this.runner,
+    required AgentRuntimeProfileTurnRunner runner,
     this.recordTrace,
-  });
+  }) : _runnerReader = (() => runner);
+
+  AgentRuntimeProfileTurnBinding.lazyRunner({
+    required this.agentId,
+    required this.domain,
+    required this.surface,
+    required AgentRuntimeProfileTurnRunner? Function() runnerReader,
+    this.recordTrace,
+  }) : _runnerReader = runnerReader;
 
   final String agentId;
   final String domain;
   final String surface;
-  final AgentRuntimeProfileTurnRunner runner;
   final AgentRuntimeProfileTurnTraceRecorder? recordTrace;
+  final AgentRuntimeProfileTurnRunner? Function() _runnerReader;
+
+  AgentRuntimeProfileTurnRunner? get runner => _runnerReader();
 
   Future<AgentRuntimeProfileTurnResult> run({
     required List<Map<String, Object?>> messages,
@@ -71,6 +90,10 @@ class AgentRuntimeProfileTurnBinding {
     Map<String, Object?> metadata = const <String, Object?>{},
     int? maxToolSteps,
   }) async {
+    final runner = _runnerReader();
+    if (runner == null) {
+      throw StateError('agent runtime profile turn runner is unavailable');
+    }
     final result = await runner.run(
       agentId: agentId,
       messages: messages,

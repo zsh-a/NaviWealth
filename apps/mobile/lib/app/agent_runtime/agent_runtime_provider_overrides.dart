@@ -51,11 +51,13 @@ List<Override> agentRuntimeProviderOverrides() => <Override>[
     final streamBridge = ref.watch(agentRuntimeLlmStreamBridgeProvider);
     if (llmBridge == null || streamBridge == null) return null;
 
-    final catalog = ref.watch(agentRuntimeCatalogProvider);
     final toolHost = ref.watch(agentRuntimeToolHostProvider);
-    return FrbChatRunner(
+    return FrbChatRunner.lazyTools(
       streamBridge: streamBridge,
-      tools: [for (final tool in catalog.tools) tool.toJson()],
+      toolsReader: () => [
+        for (final tool in ref.read(agentRuntimeCatalogProvider).tools)
+          tool.toJson(),
+      ],
       toolLineHandler: toolHost.handleLine,
     );
   }),
@@ -110,16 +112,14 @@ List<Override> agentRuntimeProviderOverrides() => <Override>[
       agentId: 'morning_briefing',
       domain: 'health',
       surface: 'health_morning_briefing',
-    );
+      resolveAvailability: false,
+    )!;
     final notifier = _briefingNotificationService(ref);
-    final synth = frbRuntime == null
-        ? const ProgrammaticBriefingSynthesizer()
-        : FrbBriefingSynthesizer(
-            runtime: frbRuntime,
-            fallback: const ProgrammaticBriefingSynthesizer(),
-          );
     return MorningBriefingAgent(
-      synthesizer: synth,
+      synthesizer: FrbBriefingSynthesizer(
+        runtime: frbRuntime,
+        fallback: const ProgrammaticBriefingSynthesizer(),
+      ),
       notifier: notifier,
       hourLocal: ref.watch(morningBriefingHourProvider),
     );

@@ -6,6 +6,7 @@ import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_stream_bridge.dar
 import 'package:naviwealth/app/agent_runtime/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_profile_completion_clients.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_provider_overrides.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_trace_recorder.dart';
@@ -223,6 +224,82 @@ void main() {
       );
     },
   );
+
+  test(
+    'agent runtime catalog does not construct FRB execution providers',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        SharedBoolPreferenceController.notificationsEnabledKey: false,
+        SharedBoolPreferenceController.healthBriefingEnabledKey: false,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          activeDomainPacksProvider.overrideWith(
+            (ref) => [kHealthPack, kKnowledgePack, kExecutionPack],
+          ),
+          agentRegistryProvider.overrideWith(
+            (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
+          ),
+          agentRuntimeProfileTurnRunnerProvider.overrideWith((ref) {
+            throw StateError('profile runner should be read lazily');
+          }),
+          agentRuntimeNativeStepRunnerProvider.overrideWith((ref) {
+            throw StateError('step runner should be read lazily');
+          }),
+          agentRuntimeTraceRecorderProvider.overrideWithValue(
+            AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
+          ),
+          ...agentRuntimeProviderOverrides(),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final catalog = container.read(agentRuntimeCatalogProvider);
+
+      expect(catalog.activeDomains, ['health', 'knowledge', 'execution']);
+      expect(
+        catalog.agents.map((agent) => agent.id),
+        containsAll(<String>[
+          'morning_briefing',
+          'knowledge_review',
+          'execution_review',
+        ]),
+      );
+    },
+  );
+
+  test('chat runner construction does not read the runtime catalog', () async {
+    final native = FakeAgentRuntimeToolPlanBridge();
+    final llmBridge = _llmBridge(native);
+    final container = ProviderContainer(
+      overrides: [
+        agentRuntimeCatalogProvider.overrideWith((ref) {
+          throw StateError('catalog should be read lazily');
+        }),
+        agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
+        agentRuntimeLlmStreamBridgeProvider.overrideWithValue(
+          AgentRuntimeLlmStreamBridge(
+            llmBridge: llmBridge,
+            initRuntime: ({String? libraryPath}) async {},
+            streamChatTurnJson: ({required String requestJson}) =>
+                const Stream<String>.empty(),
+          ),
+        ),
+        agentRuntimeToolHostProvider.overrideWithValue(
+          AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
+        ),
+        ...agentRuntimeProviderOverrides(),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(
+      container.read(ai_chat_providers.chatAgentProvider),
+      isA<FrbChatRunner>(),
+    );
+  });
 }
 
 AgentRuntimeLlmBridge _llmBridge(AgentRuntimeNativeBridge native) {

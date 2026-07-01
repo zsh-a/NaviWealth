@@ -24,20 +24,32 @@ import 'frb_chat_types.dart';
 const String kFrbChatRunnerAgentId = 'ai_chat';
 
 class FrbChatRunner implements ChatAgent {
-  const FrbChatRunner({
+  FrbChatRunner({
     required AgentRuntimeLlmStreamBridge streamBridge,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     AgentRuntimeToolLineHandler? toolLineHandler,
     int maxToolRounds = 4,
     String agentId = kFrbChatRunnerAgentId,
   }) : _streamBridge = streamBridge,
-       _tools = tools,
+       _toolsReader = (() => tools),
+       _toolLineHandler = toolLineHandler,
+       _maxToolRounds = maxToolRounds,
+       _agentId = agentId;
+
+  const FrbChatRunner.lazyTools({
+    required AgentRuntimeLlmStreamBridge streamBridge,
+    required List<Map<String, Object?>> Function() toolsReader,
+    AgentRuntimeToolLineHandler? toolLineHandler,
+    int maxToolRounds = 4,
+    String agentId = kFrbChatRunnerAgentId,
+  }) : _streamBridge = streamBridge,
+       _toolsReader = toolsReader,
        _toolLineHandler = toolLineHandler,
        _maxToolRounds = maxToolRounds,
        _agentId = agentId;
 
   final AgentRuntimeLlmStreamBridge _streamBridge;
-  final List<Map<String, Object?>> _tools;
+  final List<Map<String, Object?>> Function() _toolsReader;
   final AgentRuntimeToolLineHandler? _toolLineHandler;
   final int _maxToolRounds;
   final String _agentId;
@@ -93,6 +105,7 @@ class FrbChatRunner implements ChatAgent {
     final initialMessages = <Map<String, Object?>>[
       for (final message in messages) message.toJson(),
     ];
+    final tools = _toolsReader();
     var roundsUsed = 0;
     Map<String, Object?>? chatState;
     var toolResults = const <Map<String, Object?>>[];
@@ -108,7 +121,7 @@ class FrbChatRunner implements ChatAgent {
       final stream = _cancelableFrbStream(
         streamBridge.streamChatTurn(
           messages: initialMessages,
-          tools: _tools,
+          tools: tools,
           metadata: <String, Object?>{
             ...request.metadata,
             'turn_id': ?request.turnId,

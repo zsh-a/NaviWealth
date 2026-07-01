@@ -14,26 +14,30 @@ class AgentRuntimeToolPlanBinding {
     required this.agentId,
     required this.domain,
     required this.surface,
-    required this.stepRunner,
+    required AgentRuntimeNativeStepRunner stepRunner,
     required AgentRuntimeCatalog catalog,
     this.recordTrace,
-  }) : _catalogReader = (() => catalog);
+  }) : _stepRunnerReader = (() => stepRunner),
+       _catalogReader = (() => catalog);
 
-  const AgentRuntimeToolPlanBinding.lazyCatalog({
+  AgentRuntimeToolPlanBinding.lazyCatalog({
     required this.agentId,
     required this.domain,
     required this.surface,
-    required this.stepRunner,
+    required AgentRuntimeNativeStepRunner Function() stepRunnerReader,
     required AgentRuntimeCatalog Function() catalogReader,
     this.recordTrace,
-  }) : _catalogReader = catalogReader;
+  }) : _stepRunnerReader = stepRunnerReader,
+       _catalogReader = catalogReader;
 
   final String agentId;
   final String domain;
   final String surface;
-  final AgentRuntimeNativeStepRunner stepRunner;
   final AgentRuntimeStepTraceRecorder? recordTrace;
+  final AgentRuntimeNativeStepRunner Function() _stepRunnerReader;
   final AgentRuntimeCatalog Function() _catalogReader;
+
+  AgentRuntimeNativeStepRunner get stepRunner => _stepRunnerReader();
 
   Future<AgentRuntimeNativeStepRunResult> runToolPlan({
     required List<Map<String, Object?>> toolPlan,
@@ -42,6 +46,7 @@ class AgentRuntimeToolPlanBinding {
     int? maxToolSteps,
   }) async {
     final catalog = _catalogReader();
+    final stepRunner = _stepRunnerReader();
     final stepRun = await stepRunner.runUntilTerminalWithTrace(
       catalog: catalog.toJson(),
       request: <String, Object?>{
@@ -107,7 +112,7 @@ AgentRuntimeToolPlanBinding agentRuntimeToolPlanBinding(
     agentId: agentId,
     domain: domain,
     surface: surface,
-    stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+    stepRunnerReader: () => ref.read(agentRuntimeNativeStepRunnerProvider),
     catalogReader: () => ref.read(agentRuntimeCatalogProvider),
     recordTrace: ref
         .read(agentRuntimeTraceRecorderProvider)
