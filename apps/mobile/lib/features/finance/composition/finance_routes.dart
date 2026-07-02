@@ -62,7 +62,7 @@ import 'finance_route_paths.dart';
 
 /// FinanceOS `StatefulShellRoute`: 4 branches (Today / Activity / Wealth /
 /// Plan) backed by [DomainTabsShell]. Search + Settings are surfaced by the
-/// shared header chrome (`app/shell_chrome.dart`), not a bottom-nav slot.
+/// shared header chrome (`core/shell/shell_chrome.dart`), not a bottom-nav slot.
 StatefulShellRoute financeShellRoute() {
   return StatefulShellRoute.indexedStack(
     builder: (context, state, shell) => DomainTabsShell(

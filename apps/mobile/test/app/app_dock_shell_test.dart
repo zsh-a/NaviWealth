@@ -56,6 +56,7 @@ Future<ProviderContainer> _pumpAt(
     overrides: [
       appDatabaseProvider.overrideWith((_) async => db),
       sharedPreferencesProvider.overrideWithValue(prefs),
+      ...appShellChromeOverrides(),
       // Register the production pack inventory so the router has routes
       // to mount under the dock shell. Tests still control dock UI by
       // overriding `activeDomainShellsProvider` below.

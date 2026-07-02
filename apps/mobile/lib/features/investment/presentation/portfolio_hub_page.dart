@@ -12,11 +12,11 @@ import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/shell_chrome.dart';
 import '../../../core/async/async_notifier_convention.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
+import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../cashflow/data/dividend_center_providers.dart';

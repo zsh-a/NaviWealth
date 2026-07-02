@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
-import '../../../app/shell_chrome.dart';
+import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../fire/data/fire_providers.dart';

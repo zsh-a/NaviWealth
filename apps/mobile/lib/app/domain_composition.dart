@@ -35,10 +35,12 @@ import '../design_system/preferences/theme_preferences.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
+import 'shell_chrome.dart';
 
 List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
   final resolvedPacks = packs ?? kAllDomainPacks;
   return [
+    ...appShellChromeOverrides(),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),

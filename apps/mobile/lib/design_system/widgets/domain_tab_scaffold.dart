@@ -27,7 +27,7 @@ import '../tokens/text_style_presets.dart';
 ///
 /// This widget owns only *presentation*. The shell-level chrome —
 /// the domain switcher chip and the global Search / Settings actions —
-/// is composed one layer up (`app/shell_chrome.dart`) and passed in via
+/// is composed one layer up (`core/shell/shell_chrome.dart`) and passed in via
 /// [leading] (a header prefix) and [actions] (header suffixes). Keeping
 /// the injection out of `design_system` preserves this layer as a leaf
 /// (no `app/` or `core/shell` imports).
