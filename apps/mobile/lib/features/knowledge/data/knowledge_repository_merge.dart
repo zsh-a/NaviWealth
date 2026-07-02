@@ -36,15 +36,7 @@ mixin KnowledgeRepositoryMerge {
     required String ownerUserId,
     int limit = 1000,
     int offset = 0,
-  }) async {
-    final q = _db.select(_db.knowledgeConcepts)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..orderBy([(t) => OrderingTerm(expression: t.name)])
-      ..limit(limit, offset: offset);
-    final rows = await q.get();
-    return rows.map(knowledgeConceptFromRow).toList();
-  }
+  });
 
   /// Merge [duplicates] into [primary] (`docs/domains/knowledgeos-domain.md`
   /// §15.3). Unions tags onto the survivor, optionally overrides its
