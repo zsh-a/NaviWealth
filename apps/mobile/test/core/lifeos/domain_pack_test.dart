@@ -43,6 +43,7 @@ void main() {
       expect(empty.agentBuilder, isNull);
       expect(empty.memoryBootstrapBuilder, isNull);
       expect(empty.backgroundBootstrapBuilder, isNull);
+      expect(empty.settingsSpec, isNull);
     });
   });
 

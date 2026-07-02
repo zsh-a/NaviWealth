@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/biometric_auth_service.dart';
 import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
@@ -11,14 +13,16 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
-import 'package:naviwealth/features/settings/ui/execution_domain_settings_page.dart';
-import 'package:naviwealth/features/settings/ui/knowledge_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/test_database.dart';
 
-GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
+GoRouter _router({
+  String initialLocation = AppRoutes.settingsDomains,
+  List<DomainPack>? packs,
+}) {
+  final resolvedPacks = packs ?? kAllDomainPacks;
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -31,16 +35,9 @@ GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
             name: AppRouteNames.domains,
             builder: (_, _) => const DomainsSettingsPage(),
           ),
-          GoRoute(
-            path: 'domains/knowledge',
-            name: AppRouteNames.domainsKnowledge,
-            builder: (_, _) => const KnowledgeDomainSettingsPage(),
-          ),
-          GoRoute(
-            path: 'domains/execution',
-            name: AppRouteNames.domainsExecution,
-            builder: (_, _) => const ExecutionDomainSettingsPage(),
-          ),
+          for (final pack in resolvedPacks)
+            if (pack.settingsSpec?.routeBuilder != null)
+              pack.settingsSpec!.routeBuilder!((child) => child),
         ],
       ),
     ],
@@ -57,6 +54,7 @@ Future<Widget> _wrap(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
+      domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
     ],
     child: MaterialApp.router(
       theme: AppTheme.light(),

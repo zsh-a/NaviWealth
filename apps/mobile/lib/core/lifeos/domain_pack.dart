@@ -2,14 +2,15 @@
 ///
 /// Each LifeOS domain (Finance / Health / Knowledge / future) declares
 /// itself once as a [DomainPack] and registers into
-/// [domainPackRegistryProvider]. The four shell aggregators that used
+/// [domainPackRegistryProvider]. The shell aggregators that used
 /// to repeat the same opt-in branching (device tools, system-prompt
 /// blocks, proposal kinds, proposal applier routes, shell specs, agent list,
-/// memory indexers, background jobs) all read this registry seam instead —
+/// memory indexers, background jobs, settings surfaces) all read this registry seam instead —
 /// adding a new domain is now a single entry in the registry, not scattered
 /// edits in `bootstrap.dart`.
 library;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:go_router/go_router.dart';
@@ -70,6 +71,39 @@ typedef DomainBootstrapBuilder = void Function(Ref ref);
 /// seams that are not yet represented by a narrower [DomainPack] field.
 typedef DomainProviderOverridesBuilder = List<Override> Function();
 
+/// Localized subtitle for the Settings → Domains toggle.
+typedef DomainSettingsSubtitleBuilder =
+    String Function(AppLocalizations l10n, bool enabled);
+
+/// Wraps settings pages in router-level chrome such as `SystemBackScope`.
+typedef DomainSettingsRouteWrapper = Widget Function(Widget child);
+
+/// Builds one domain's Settings → Domains detail route.
+typedef DomainSettingsRouteBuilder =
+    RouteBase Function(DomainSettingsRouteWrapper wrap);
+
+/// Optional Settings → Domains contribution for an opt-in domain.
+class DomainSettingsSpec {
+  const DomainSettingsSpec({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    this.routeBuilder,
+  });
+
+  /// Icon shown on the Settings → Domains toggle row.
+  final IconData icon;
+
+  /// User-facing domain label, e.g. `HealthOS`.
+  final String label;
+
+  /// Toggle subtitle that can vary with enabled state.
+  final DomainSettingsSubtitleBuilder subtitle;
+
+  /// Optional per-domain settings detail page route.
+  final DomainSettingsRouteBuilder? routeBuilder;
+}
+
 /// Static description of one LifeOS domain's shell contributions. Held
 /// next to the domain's tool barrel, so the inventory list in
 /// `lib/app/domain_packs.dart` is the single grep-able answer to "what
@@ -93,6 +127,7 @@ class DomainPack {
     this.backgroundBootstrapBuilder,
     this.commandPaletteEntriesBuilder,
     this.providerOverridesBuilder,
+    this.settingsSpec,
   });
 
   /// Opt-in scope this pack registers under.
@@ -171,6 +206,10 @@ class DomainPack {
   /// the build inventory; opt-in-gated work should still check opt-ins
   /// inside the contributing provider.
   final DomainProviderOverridesBuilder? providerOverridesBuilder;
+
+  /// Settings → Domains toggle metadata and optional domain detail route.
+  /// Null when the domain is always-on or has no settings surface yet.
+  final DomainSettingsSpec? settingsSpec;
 }
 
 /// Inventory of all known [DomainPack]s. Default empty; `bootstrap.dart`

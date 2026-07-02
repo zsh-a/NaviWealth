@@ -342,6 +342,12 @@ void main() {
 
       expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
       expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
+      expect(
+        kAllDomainPacks
+            .where((pack) => pack.settingsSpec != null)
+            .map((pack) => pack.settingsSpec!.label),
+        ['HealthOS', 'KnowledgeOS', 'ExecutionOS'],
+      );
       expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
         DomainScope.finance,
         DomainScope.health,

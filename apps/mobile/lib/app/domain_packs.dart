@@ -12,7 +12,10 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/ai/agents/agent.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
@@ -61,6 +64,10 @@ import '../features/knowledge/data/knowledge_decision_memory_indexer.dart';
 import '../features/knowledge/data/knowledge_object_memory_indexers.dart';
 import '../features/knowledge_ai_tools.dart';
 import '../features/options_income/data/trade_journal_memory_indexer.dart';
+import '../features/settings/ui/execution_domain_settings_page.dart';
+import '../features/settings/ui/health_domain_settings_page.dart';
+import '../features/settings/ui/knowledge_domain_settings_page.dart';
+import '../l10n/gen/app_localizations.dart';
 import 'agent_runtime/agent_runtime_execution_overrides.dart';
 import 'agent_runtime/agent_runtime_health_overrides.dart';
 import 'agent_runtime/agent_runtime_knowledge_overrides.dart';
@@ -112,6 +119,14 @@ final DomainPack kHealthPack = DomainPack(
   backgroundBootstrapBuilder: _healthBackgroundBootstrap,
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeHealthProviderOverrides,
+  settingsSpec: _domainSettingsSpec(
+    icon: FLucideIcons.heartPulse,
+    label: 'HealthOS',
+    subtitle: _healthSettingsSubtitle,
+    routePath: AppRoutes.settingsDomainsHealth,
+    routeName: AppRouteNames.domainsHealth,
+    page: const HealthDomainSettingsPage(),
+  ),
 );
 
 final DomainPack kKnowledgePack = DomainPack(
@@ -132,6 +147,14 @@ final DomainPack kKnowledgePack = DomainPack(
   memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
+  settingsSpec: _domainSettingsSpec(
+    icon: FLucideIcons.brain,
+    label: 'KnowledgeOS',
+    subtitle: _knowledgeSettingsSubtitle,
+    routePath: AppRoutes.settingsDomainsKnowledge,
+    routeName: AppRouteNames.domainsKnowledge,
+    page: const KnowledgeDomainSettingsPage(),
+  ),
 );
 
 final DomainPack kExecutionPack = DomainPack(
@@ -152,6 +175,14 @@ final DomainPack kExecutionPack = DomainPack(
   memoryBootstrapBuilder: _executionMemoryBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeExecutionProviderOverrides,
+  settingsSpec: _domainSettingsSpec(
+    icon: FLucideIcons.listTodo,
+    label: 'ExecutionOS',
+    subtitle: _executionSettingsSubtitle,
+    routePath: AppRoutes.settingsDomainsExecution,
+    routeName: AppRouteNames.domainsExecution,
+    page: const ExecutionDomainSettingsPage(),
+  ),
 );
 
 /// Production inventory. `bootstrap.dart` overrides
@@ -212,6 +243,52 @@ void _healthBackgroundBootstrap(Ref ref) {
     ),
   );
 }
+
+DomainSettingsSpec _domainSettingsSpec({
+  required IconData icon,
+  required String label,
+  required DomainSettingsSubtitleBuilder subtitle,
+  required String routePath,
+  required String routeName,
+  required Widget page,
+}) {
+  return DomainSettingsSpec(
+    icon: icon,
+    label: label,
+    subtitle: subtitle,
+    routeBuilder: (wrap) => GoRoute(
+      path: _settingsChildPath(routePath),
+      name: routeName,
+      builder: (context, state) => wrap(page),
+    ),
+  );
+}
+
+String _settingsChildPath(String absolutePath) {
+  const prefix = '${AppRoutes.settings}/';
+  if (!absolutePath.startsWith(prefix)) {
+    throw ArgumentError.value(
+      absolutePath,
+      'absolutePath',
+      'must be under ${AppRoutes.settings}',
+    );
+  }
+  return absolutePath.substring(prefix.length);
+}
+
+String _healthSettingsSubtitle(AppLocalizations l10n, bool enabled) => enabled
+    ? l10n.settingsDomainsHealthEnabledSubtitle
+    : l10n.settingsDomainsHealthDisabledSubtitle;
+
+String _knowledgeSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
+    enabled
+    ? l10n.settingsDomainsKnowledgeEnabledSubtitle
+    : l10n.settingsDomainsKnowledgeDisabledSubtitle;
+
+String _executionSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
+    enabled
+    ? l10n.settingsDomainsExecutionEnabledSubtitle
+    : l10n.settingsDomainsExecutionDisabledSubtitle;
 
 Future<ProposalApplierRoute> _financeProposalApplierRoute(Ref ref) async {
   final applier = await ref.watch(

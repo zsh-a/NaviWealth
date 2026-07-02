@@ -20,10 +20,7 @@ import '../features/settings/ui/ai_models_page.dart';
 import '../features/settings/ui/ai_privacy_page.dart';
 import '../features/settings/ui/ai_transparency_page.dart';
 import '../features/settings/ui/domains_settings_page.dart';
-import '../features/settings/ui/execution_domain_settings_page.dart';
 import '../features/settings/ui/fire_stress_settings_page.dart';
-import '../features/settings/ui/health_domain_settings_page.dart';
-import '../features/settings/ui/knowledge_domain_settings_page.dart';
 import '../features/settings/ui/monthly_expense_settings_page.dart';
 import '../features/settings/ui/notification_settings_page.dart';
 import '../features/settings/ui/perf_diagnostics_page.dart';
@@ -105,7 +102,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
       // Settings — global meta, accessed from Today's header gear. Lives
       // outside the dock shell so it covers the full canvas while open and
       // returns to whatever tab the user came from on pop.
-      _settingsRoute(),
+      _settingsRoute(packs),
       // Multi-domain dock shell (D-2.3b). Wraps every per-domain
       // StatefulShellRoute so the dock chrome + global lifecycle hooks
       // stay mounted across domain switches. Skipped when no pack
@@ -130,7 +127,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
 /// toolbar arrow (pop → else go to the logical parent) instead of falling
 /// through to the OS and exiting the app when a settings route is the
 /// stack root (reached via `go()` / deep link / app restore).
-GoRoute _settingsRoute() {
+GoRoute _settingsRoute(List<DomainPack> packs) {
   return GoRoute(
     path: AppRoutes.settings,
     name: AppRouteNames.settings,
@@ -187,24 +184,7 @@ GoRoute _settingsRoute() {
         name: AppRouteNames.domains,
         builder: (context, state) => _backSafe(const DomainsSettingsPage()),
       ),
-      GoRoute(
-        path: 'domains/health',
-        name: AppRouteNames.domainsHealth,
-        builder: (context, state) =>
-            _backSafe(const HealthDomainSettingsPage()),
-      ),
-      GoRoute(
-        path: 'domains/knowledge',
-        name: AppRouteNames.domainsKnowledge,
-        builder: (context, state) =>
-            _backSafe(const KnowledgeDomainSettingsPage()),
-      ),
-      GoRoute(
-        path: 'domains/execution',
-        name: AppRouteNames.domainsExecution,
-        builder: (context, state) =>
-            _backSafe(const ExecutionDomainSettingsPage()),
-      ),
+      ..._domainSettingsRoutes(packs),
       GoRoute(
         path: 'ai-history',
         name: AppRouteNames.aiHistory,
@@ -264,6 +244,14 @@ GoRoute _settingsRoute() {
       ),
     ],
   );
+}
+
+List<RouteBase> _domainSettingsRoutes(List<DomainPack> packs) {
+  return [
+    for (final pack in packs)
+      if (pack.settingsSpec?.routeBuilder case final routeBuilder?)
+        routeBuilder(_backSafe),
+  ];
 }
 
 /// Wraps an out-of-shell settings page so the system back gesture routes

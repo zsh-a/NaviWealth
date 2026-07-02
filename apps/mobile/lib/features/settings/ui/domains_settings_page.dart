@@ -1,11 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
+import '../../../core/lifeos/domain_pack.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'finance_domain_settings_section.dart';
@@ -29,19 +28,20 @@ class DomainsSettingsPage extends ConsumerWidget {
       child: SettingsPageFrame(
         children: [
           const FinanceDomainSettingsSection(),
-          for (final spec in _kDomainToggleSpecs) ...[
-            const SizedBox(height: AppSpacing.s16),
-            _DomainToggleCard(
-              icon: spec.icon,
-              label: spec.label,
-              subtitle: spec.subtitle(
-                l10n,
-                optIns?.contains(spec.scope) ?? false,
+          for (final pack in ref.watch(domainPackRegistryProvider))
+            if (pack.settingsSpec case final spec?) ...[
+              const SizedBox(height: AppSpacing.s16),
+              _DomainToggleCard(
+                icon: spec.icon,
+                label: spec.label,
+                subtitle: spec.subtitle(
+                  l10n,
+                  optIns?.contains(pack.scope) ?? false,
+                ),
+                value: optIns?.contains(pack.scope) ?? false,
+                onChanged: (v) => _setDomainEnabled(context, ref, pack, v),
               ),
-              value: optIns?.contains(spec.scope) ?? false,
-              onChanged: (v) => _setDomainEnabled(context, ref, spec, v),
-            ),
-          ],
+            ],
         ],
       ),
     );
@@ -50,72 +50,23 @@ class DomainsSettingsPage extends ConsumerWidget {
   Future<void> _setDomainEnabled(
     BuildContext context,
     WidgetRef ref,
-    _DomainToggleSpec spec,
+    DomainPack pack,
     bool enabled,
   ) async {
     await ref
         .read(auth_providers.domainOptInsProvider.notifier)
-        .setEnabled(spec.scope, enabled);
+        .setEnabled(pack.scope, enabled);
     if (!context.mounted || enabled) return;
     final l10n = AppLocalizations.of(context);
+    final label = pack.settingsSpec?.label ?? pack.scope.wire;
     context.go(AppRoutes.settingsDomains);
     AppMessenger.show(
       context,
       ToastKind.info,
-      l10n.settingsDomainsDisabledToast(spec.label),
+      l10n.settingsDomainsDisabledToast(label),
     );
   }
 }
-
-typedef _DomainToggleSubtitle =
-    String Function(AppLocalizations l10n, bool enabled);
-
-class _DomainToggleSpec {
-  const _DomainToggleSpec({
-    required this.scope,
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-  });
-
-  final DomainScope scope;
-  final IconData icon;
-  final String label;
-  final _DomainToggleSubtitle subtitle;
-}
-
-const List<_DomainToggleSpec> _kDomainToggleSpecs = <_DomainToggleSpec>[
-  _DomainToggleSpec(
-    scope: DomainScope.health,
-    icon: FLucideIcons.heartPulse,
-    label: 'HealthOS',
-    subtitle: _healthSubtitle,
-  ),
-  _DomainToggleSpec(
-    scope: DomainScope.knowledge,
-    icon: FLucideIcons.brain,
-    label: 'KnowledgeOS',
-    subtitle: _knowledgeSubtitle,
-  ),
-  _DomainToggleSpec(
-    scope: DomainScope.execution,
-    icon: FLucideIcons.listTodo,
-    label: 'ExecutionOS',
-    subtitle: _executionSubtitle,
-  ),
-];
-
-String _healthSubtitle(AppLocalizations l10n, bool enabled) => enabled
-    ? l10n.settingsDomainsHealthEnabledSubtitle
-    : l10n.settingsDomainsHealthDisabledSubtitle;
-
-String _knowledgeSubtitle(AppLocalizations l10n, bool enabled) => enabled
-    ? l10n.settingsDomainsKnowledgeEnabledSubtitle
-    : l10n.settingsDomainsKnowledgeDisabledSubtitle;
-
-String _executionSubtitle(AppLocalizations l10n, bool enabled) => enabled
-    ? l10n.settingsDomainsExecutionEnabledSubtitle
-    : l10n.settingsDomainsExecutionDisabledSubtitle;
 
 class _DomainToggleCard extends StatelessWidget {
   const _DomainToggleCard({
