@@ -2,7 +2,7 @@
 library;
 
 import '../../core/ai/contracts/contracts.dart';
-import '../../features/activity/data/activity_entry_insight_client.dart';
+import '../../features/finance/activity/data/activity_entry_insight_client.dart';
 import '../../features/ingest/data/ingest_llm_client.dart';
 import '../../features/knowledge/data/knowledge_llm_client.dart';
 import '../../l10n/gen/app_localizations.dart';

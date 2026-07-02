@@ -559,7 +559,7 @@ if (kIsWeb) return const SizedBox.shrink();
 | `features/finance/accounts` + `cashflow` | 计算 `availableCashForOptions = cashAccounts - kCashReserveBuffer`，与 FIRE 现金桶规则相容。 |
 | `features/rebalance` | **软约束**：covered call strike 高于 rebalance target sell price → 加分；sell put strike 低于 target buy price → 加分。**不阻塞** rebalance 计算。 |
 | `features/fire` | 期权 premium 入账后通过 `cashflow_buckets` 体现为 "options income"。FIRE engine 不感知期权语义。 |
-| `features/activity` | `OptionsTradeJournalTable` 写入触发 domain event log，进 activity timeline。 |
+| `features/finance/activity` | `OptionsTradeJournalTable` 写入触发 domain event log，进 activity timeline。 |
 | `features/ai_chat` | 通过 §8 注册的 tool 读 cache。无新 chat 入口。 |
 
 ---

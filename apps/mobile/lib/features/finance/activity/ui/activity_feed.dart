@@ -4,9 +4,9 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
-import '../../../core/format/formatters.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../../../core/format/formatters.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../data/activity_feed_provider.dart';
 import 'activity_feed_grouping.dart';
 import 'activity_feed_row.dart';

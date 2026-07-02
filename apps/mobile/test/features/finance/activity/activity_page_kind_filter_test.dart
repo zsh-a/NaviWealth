@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
-import 'package:naviwealth/features/activity/activity_page.dart';
-import 'package:naviwealth/features/activity/data/activity_feed_provider.dart';
-import 'package:naviwealth/features/activity/data/activity_feed_query.dart';
+import 'package:naviwealth/features/finance/activity/activity_page.dart';
+import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
+import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 

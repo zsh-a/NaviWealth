@@ -11,7 +11,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../activity/ui/activity_entry_detail_page.dart';
+import '../../finance/activity/ui/activity_entry_detail_page.dart';
 import '../domain/dividend_center.dart';
 
 /// Per-row actions for a single dividend timeline event.

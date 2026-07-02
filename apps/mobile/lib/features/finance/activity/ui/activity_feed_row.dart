@@ -9,10 +9,10 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
-import '../../../core/format/formatters.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/shared/account_l10n.dart';
+import '../../../../core/format/formatters.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import 'activity_entry_detail_page.dart';
 
 /// One row in the unified Activity timeline (iOS Wallet style).

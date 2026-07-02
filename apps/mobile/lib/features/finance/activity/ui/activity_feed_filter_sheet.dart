@@ -4,9 +4,9 @@ import 'package:forui/forui.dart';
 
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/shared/account_l10n.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import '../data/activity_feed_provider.dart';
 
 /// Activity timeline filter sheet — dimensions the inline kind chip row

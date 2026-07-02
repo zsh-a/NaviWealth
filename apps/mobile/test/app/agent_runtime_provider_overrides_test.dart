@@ -20,12 +20,12 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/notifications/notification_preferences.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/features/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart'
     as ai_chat_providers;
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
 import 'package:naviwealth/features/execution/agents/review_agent.dart';
+import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';

@@ -8,12 +8,12 @@ library;
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/data/domain/account.dart';
-import '../../finance/data/domain/entry_kind.dart';
-import '../../finance/data/domain/posting.dart';
-import '../../finance/data/repositories/journal_entry_repository.dart';
-import '../../finance/shared/entry_kind_labels.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../data/domain/account.dart';
+import '../../data/domain/entry_kind.dart';
+import '../../data/domain/posting.dart';
+import '../../data/repositories/journal_entry_repository.dart';
+import '../../shared/entry_kind_labels.dart';
 
 abstract class ActivityEntryInsightClient {
   Future<String?> explain(

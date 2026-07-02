@@ -10,15 +10,15 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
-import '../../../core/ai/write/write.dart';
-import '../../../core/format/formatters.dart';
-import '../../../core/format/providers.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/data/repositories/journal_entry_providers.dart';
-import '../../finance/data/repositories/providers.dart';
-import '../../finance/shared/account_l10n.dart';
-import '../../finance/shared/entry_kind_labels.dart';
+import '../../../../core/ai/write/write.dart';
+import '../../../../core/format/formatters.dart';
+import '../../../../core/format/providers.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../data/repositories/journal_entry_providers.dart';
+import '../../data/repositories/providers.dart';
+import '../../shared/account_l10n.dart';
+import '../../shared/entry_kind_labels.dart';
 import '../data/activity_entry_insight_client.dart';
 
 /// Full-page detail surface for one journal entry. Pushed when the user

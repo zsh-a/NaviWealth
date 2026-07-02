@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
-import '../../core/shell/shell_chrome.dart';
-import '../../design_system/design_system.dart';
-import '../../l10n/gen/app_localizations.dart';
-import '../finance/shared/entry_kind_labels.dart';
+import '../../../core/shell/shell_chrome.dart';
+import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../shared/entry_kind_labels.dart';
 import 'data/activity_feed_provider.dart';
 import 'data/activity_feed_query.dart';
 import 'ui/activity_action_panel.dart';

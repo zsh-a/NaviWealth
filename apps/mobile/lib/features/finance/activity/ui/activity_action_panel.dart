@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 
 /// Activity-scoped quick-add panel.
 ///

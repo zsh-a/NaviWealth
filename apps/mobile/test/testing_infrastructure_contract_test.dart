@@ -466,7 +466,10 @@ void main() {
           .readAsStringSync();
 
       for (final text in [roadmapText, phase1Text]) {
-        expect(text, isNot(contains('lib/features/activity/data/` 是空目录')));
+        expect(
+          text,
+          isNot(contains('lib/features/finance/activity/data/` 是空目录')),
+        );
         expect(text, isNot(contains('缺 data/repository 层')));
       }
       expect(roadmapText, contains('ActivityFeedQuery'));
