@@ -74,7 +74,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](../ai/ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
 | Backend 只做 sync_rows 存储 | [`sync-v2.md`](../sync/sync-v2.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
-| Device tool descriptor catalog | `features/options_income/ai_tools/` + `features/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
+| Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
 | Modal 系统 | memory: modal_system | 详情面板用 `showAppFormSheet` + `AppSheetFooter`；CI 由 `tool/check-modal-helpers.sh` 守护。 |
@@ -173,7 +173,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ## 5. 领域层
 
-位置：`apps/mobile/lib/features/options_income/domain/`。
+位置：`apps/mobile/lib/features/finance/options_income/domain/`。
 
 ### 5.1 实体
 
@@ -382,7 +382,7 @@ cache 表有 TTL：单批保留 24 小时，新批扫描时清除超过 1 周的
 
 ## 7. 评分引擎
 
-位置：`apps/mobile/lib/features/options_income/domain/services/opportunity_scorer.dart`。
+位置：`apps/mobile/lib/features/finance/options_income/domain/services/opportunity_scorer.dart`。
 形态参考 FIRE engine（`lib/features/fire/domain/`）——**纯函数、无 IO、可重放**。
 
 ### 7.1 硬过滤（Hard Filters）
@@ -450,7 +450,7 @@ final_score =
 ### 8.2 Tool 注册
 
 Income Planner tools are FinanceOS-owned device tools. Their implementations
-live under `features/options_income/ai_tools/`; their registrations and
+live under `features/finance/options_income/ai_tools/`; their registrations and
 `ToolDescriptor` metadata are exported through `features/finance_ai_tools.dart`
 and merged into the production catalog by `kFinancePack`.
 
@@ -461,7 +461,7 @@ and merged into the production catalog by `kFinancePack`.
 文件落点：
 
 ```
-lib/features/options_income/ai_tools/
+lib/features/finance/options_income/ai_tools/
 ├── get_options_income_opportunities_tool.dart
 ├── get_options_strategy_profile_tool.dart
 ├── get_wheel_lifecycle_tool.dart
@@ -512,7 +512,7 @@ LLM **不能**做的事（dispatcher 层不强制，但 system prompt 提示）�
 
 ### 9.1 入口
 
-主页面：`apps/mobile/lib/features/options_income/presentation/pages/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
+主页面：`apps/mobile/lib/features/finance/options_income/presentation/pages/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
 
 页内四 tab：
 
@@ -626,7 +626,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](../sync
 | 2026-05-21 | 评分引擎在端侧（纯 Dart） | 在 Worker 上 | 与 device-only 原则一致；评分逻辑不下放 server |
 | 2026-05-21 | opportunity cache 不上同步 | 走 sync_rows | 派生数据，重算成本低；跨设备各自扫描更新鲜 |
 | 2026-05-21 | profile / approved / journal 走 sync_rows | 仅本地 | 用户状态，跨设备一致性必要 |
-| 2026-05-21 | 模块为独立 feature `options_income/` | 塞进 `investment/` | 跨 investment / accounts / fire / rebalance，独立 feature 避免双向依赖 |
+| 2026-05-21 | 模块为 FinanceOS 子 feature `features/finance/options_income/` | 塞进 `investment/` | 跨 investment / accounts / fire / rebalance，保持独立 FinanceOS slice 避免双向依赖 |
 | 2026-05-21 | 命名 "Income Planner" | "Options Scanner" | 避免被识别成交易终端；与 NaviWealth 财富管理定位一致 |
 
 ---
@@ -636,7 +636,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](../sync
 P0–P3 已落地（2026-05-21）：
 
 ```
-apps/mobile/lib/features/options_income/
+apps/mobile/lib/features/finance/options_income/
 ├── application/
 │   ├── scan_controller.dart            # P1 — StateNotifier driving refresh button
 │   ├── scan_inputs_bridge.dart         # P1 — holdings/cash bridge from portfolio
@@ -668,7 +668,7 @@ apps/mobile/lib/data/market/providers/options/
 ├── options_chain_provider.dart         # P1 abstract chain provider
 └── yfinance_options_provider.dart      # P1 — yfinance options chain adapter
 
-apps/mobile/lib/features/options_income/ai_tools/
+apps/mobile/lib/features/finance/options_income/ai_tools/
 ├── get_options_income_opportunities_tool.dart  # P1 — cache-read tool
 ├── get_options_strategy_profile_tool.dart      # P1 — profile read tool
 ├── get_wheel_lifecycle_tool.dart               # P4 — wheel lifecycle read tool
@@ -688,6 +688,6 @@ apps/backend/src/sync/store.rs                     # schema-agnostic row store
 后续阶段会落地：
 
 ```
-P4: features/options_income/application/wheel_state_machine.dart   # Wheel / income cycle
+P4: features/finance/options_income/application/wheel_state_machine.dart   # Wheel / income cycle
 P5: apps/backend/src/routes/market/options.rs                       # Tradier OAuth proxy
 ```

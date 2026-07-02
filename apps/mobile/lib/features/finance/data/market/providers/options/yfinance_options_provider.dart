@@ -7,7 +7,7 @@ import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yahoo_crumb_session.dart';
-import 'package:naviwealth/features/options_income/domain/option_contract.dart';
+import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
 
 import 'options_chain_provider.dart';
 

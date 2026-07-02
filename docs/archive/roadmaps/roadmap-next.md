@@ -115,8 +115,8 @@
 > P0–P3 已完成。P4 是 state machine,纯设备端,**不**触碰后端。
 
 - ✅ **State machine 落地** (2026-05-24): `wheel_lifecycle.dart`,9 个 stage(between / cashWaiting / shortPut / putExpired / putAssigned / sharesHeld / shortCall / callExpired / callCalled)+ `buildWheelLifecycle` pure function 从 trade journal 派生。10 个测试覆盖完整状态转换。
-- ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
-- ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `features/options_income/ai_tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。通过 FinanceOS tool barrel / `DomainPack` 注册到生产 device tool catalog。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
+- ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/finance/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
+- ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `features/finance/options_income/ai_tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。通过 FinanceOS tool barrel / `DomainPack` 注册到生产 device tool catalog。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
 - 详: [options-income P4](../../domains/options-income.md)
 
 ### 3.4 AI Copilot M1: user profile + evidence

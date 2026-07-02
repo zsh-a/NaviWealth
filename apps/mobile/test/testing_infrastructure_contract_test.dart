@@ -183,8 +183,8 @@ void main() {
               minTestFiles: 7,
               minTestCases: 30,
             ),
-            'features/options_income': (
-              testPath: 'test/features/options_income',
+            'features/finance/options_income': (
+              testPath: 'test/features/finance/options_income',
               minTestFiles: 8,
               minTestCases: 50,
             ),
@@ -240,19 +240,21 @@ void main() {
 
         // Options income: scanner/application, repositories, scoring, AI, and
         // presentation should not collapse back into one broad smoke file.
-        'test/features/options_income/application/scan_inputs_bridge_test.dart':
+        'test/features/finance/options_income/application/scan_inputs_bridge_test.dart':
             3,
-        'test/features/options_income/application/scan_orchestrator_test.dart':
+        'test/features/finance/options_income/application/scan_orchestrator_test.dart':
             3,
-        'test/features/options_income/data/options_income_repositories_test.dart':
+        'test/features/finance/options_income/data/options_income_repositories_test.dart':
             6,
-        'test/features/options_income/data/options_opportunity_cache_repository_test.dart':
+        'test/features/finance/options_income/data/options_opportunity_cache_repository_test.dart':
             3,
-        'test/features/options_income/domain/opportunity_scorer_test.dart': 8,
-        'test/features/options_income/domain/wheel_lifecycle_test.dart': 4,
-        'test/features/options_income/ai_tools/get_wheel_lifecycle_tool_test.dart':
+        'test/features/finance/options_income/domain/opportunity_scorer_test.dart':
+            8,
+        'test/features/finance/options_income/domain/wheel_lifecycle_test.dart':
+            4,
+        'test/features/finance/options_income/ai_tools/get_wheel_lifecycle_tool_test.dart':
             3,
-        'test/features/options_income/presentation/wheel_lifecycle_page_test.dart':
+        'test/features/finance/options_income/presentation/wheel_lifecycle_page_test.dart':
             1,
 
         // Rebalance: engine behavior, insight provider, and both editing /

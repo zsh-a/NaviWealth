@@ -22,6 +22,11 @@ import 'finance/expense/ai_tools/get_subscription_changes_tool.dart';
 import 'finance/expense/ai_tools/propose_expense_tool.dart';
 import 'finance/expense/ai_tools/read_category_window_tool.dart';
 import 'finance/liabilities/ai_tools/propose_liability_payment_tool.dart';
+import 'finance/options_income/ai_tools/get_options_income_opportunities_tool.dart';
+import 'finance/options_income/ai_tools/get_options_strategy_profile_tool.dart';
+import 'finance/options_income/ai_tools/get_wheel_lifecycle_tool.dart';
+import 'finance/options_income/ai_tools/propose_options_journal_entry_tool.dart';
+import 'finance/options_income/ai_tools/propose_options_profile_update_tool.dart';
 import 'fire/ai_tools/get_fire_buckets_tool.dart';
 import 'fire/ai_tools/get_fire_plan_tool.dart';
 import 'fire/ai_tools/get_fire_review_tool.dart';
@@ -38,11 +43,6 @@ import 'investment/ai_tools/get_investment_performance_tool.dart';
 import 'investment/ai_tools/propose_asset_valuation_tool.dart';
 import 'investment/ai_tools/propose_trade_tool.dart';
 import 'investment/ai_tools/read_asset_window_tool.dart';
-import 'options_income/ai_tools/get_options_income_opportunities_tool.dart';
-import 'options_income/ai_tools/get_options_strategy_profile_tool.dart';
-import 'options_income/ai_tools/get_wheel_lifecycle_tool.dart';
-import 'options_income/ai_tools/propose_options_journal_entry_tool.dart';
-import 'options_income/ai_tools/propose_options_profile_update_tool.dart';
 
 /// FinanceOS device tools and policy metadata. Adding a Finance tool means
 /// adding one registration here; the runtime tool list and descriptor map

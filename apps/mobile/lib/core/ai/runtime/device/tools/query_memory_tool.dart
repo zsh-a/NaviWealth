@@ -9,7 +9,7 @@
 /// Reads the Memory Runtime via [memoryRuntimeProvider]; no embedding
 /// happens for unindexed sources. Population is per-feature extractors
 /// (e.g. trade journal in
-/// `features/options_income/data/trade_journal_memory_indexer.dart`).
+/// `features/finance/options_income/data/trade_journal_memory_indexer.dart`).
 library;
 
 import 'package:naviwealth/core/auth/current_user.dart';

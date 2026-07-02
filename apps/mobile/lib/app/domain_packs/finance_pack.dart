@@ -14,9 +14,9 @@ import '../../features/finance/composition/finance_proposal_kinds.dart'
     show kFinanceProposalKinds;
 import '../../features/finance/composition/finance_routes.dart';
 import '../../features/finance/data/diagnostics/local_table_counts.dart';
+import '../../features/finance/options_income/data/trade_journal_memory_indexer.dart';
 import '../../features/finance/ui/settings/finance_domain_settings_section.dart';
 import '../../features/finance_ai_tools.dart';
-import '../../features/options_income/data/trade_journal_memory_indexer.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../route_paths.dart';
 import 'proposal_applier_route.dart';

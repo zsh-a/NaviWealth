@@ -26,6 +26,12 @@ import 'package:naviwealth/features/finance/data/repositories/price_repository.d
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
+import 'package:naviwealth/features/finance/options_income/application/options_journal_ledger_service.dart';
+import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
+import 'package:naviwealth/features/finance/options_income/data/providers.dart';
+import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
+import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
+import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
 
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
@@ -42,12 +48,6 @@ import '../../investment/domain/models/lot.dart';
 import '../../investment/domain/trade_entry/trade_draft.dart'
     show TradeDraft, TradeType;
 import '../../investment/domain/trade_entry/trade_entry_service.dart';
-import '../../options_income/application/options_journal_ledger_service.dart';
-import '../../options_income/data/options_strategy_profile_repository.dart';
-import '../../options_income/data/providers.dart';
-import '../../options_income/data/trade_journal_repository.dart';
-import '../../options_income/domain/options_strategy_profile.dart';
-import '../../options_income/domain/trade_journal_entry.dart';
 
 export 'finance_proposal_kinds.dart' show kFinanceProposalAppliedKinds;
 
