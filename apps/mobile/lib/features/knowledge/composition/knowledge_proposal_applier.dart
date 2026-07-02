@@ -32,6 +32,9 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
+import '../application/knowledge_concept_proposal_applier.dart';
+import '../application/knowledge_proposal_undo.dart';
+import '../application/knowledge_routine_proposal_applier.dart';
 import '../data/capture_kind.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
@@ -49,8 +52,26 @@ class KnowledgeProposalApplier implements ProposalApplier {
     required this.repo,
     required this.ownerUserId,
     required this.stamp,
+    KnowledgeRoutineProposalApplier? routineApplier,
+    KnowledgeConceptProposalApplier? conceptApplier,
     DateTime Function()? now,
-  }) : _now = now ?? (() => DateTime.now().toUtc());
+  }) : _now = now ?? (() => DateTime.now().toUtc()),
+       routineApplier =
+           routineApplier ??
+           KnowledgeRoutineProposalApplier(
+             repo: repo,
+             stamp: stamp,
+             createId: kKnowledgeUuid.v4,
+             now: now,
+           ),
+       conceptApplier =
+           conceptApplier ??
+           KnowledgeConceptProposalApplier(
+             repo: repo,
+             ownerUserId: ownerUserId,
+             stamp: stamp,
+             now: now,
+           );
 
   final KnowledgeRepository repo;
   final String ownerUserId;
@@ -58,6 +79,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
   /// Mints one fresh [SyncMeta] per touched row (own HLC). Production
   /// wiring delegates to [MutationStamper.stamp]; tests inject a fake.
   final Future<SyncMeta> Function() stamp;
+  final KnowledgeRoutineProposalApplier routineApplier;
+  final KnowledgeConceptProposalApplier conceptApplier;
   final DateTime Function() _now;
 
   @override
@@ -66,8 +89,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
       return switch (plan.kind) {
         'capture_upgrade' => await _applyCaptureUpgrade(plan),
         'knowledge_merge' => await _applyMerge(plan),
-        'knowledge_routine' => await _applyRoutine(plan),
-        'knowledge_concept_link' => await _applyConceptLink(plan),
+        'knowledge_routine' => await routineApplier.applyRoutine(plan),
+        'knowledge_concept_link' => await conceptApplier.applyConceptLink(plan),
         _ => throw ProposalApplyException(
           'unknown knowledge proposal kind: ${plan.kind}',
         ),
@@ -112,13 +135,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
     }
 
     if (detected == CaptureKind.routine) {
-      final state = await _createRoutine(
-        statement: _requireRoutineStatement(plan),
-        intervalDays: _requireRoutineIntervalDays(plan),
-        scope: plan.get('scope') ?? '*',
-        nextDueAt: _parseOptionalUtc(plan.get('next_due_at')),
-        summaryZh: plan.summaryZh,
-      );
+      final state = await routineApplier.applyRoutine(plan);
       if (existing != null) {
         final meta = await stamp();
         await repo.upsertNote(
@@ -138,7 +155,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
       return existing == null
           ? state
           : state.copyWith(
-              undoData: _mergeUndoData(
+              undoData: mergeKnowledgeProposalUndoData(
                 state.undoData,
                 restore: [_snapshotNote(existing)],
               ),
@@ -173,8 +190,10 @@ class KnowledgeProposalApplier implements ProposalApplier {
       appliedTable: 'knowledge_notes',
       appliedAt: _now(),
       undoData: existing == null
-          ? _undoData(delete: [_deleteRow('knowledge_notes', note.id)])
-          : _undoData(restore: [_snapshotNote(existing)]),
+          ? knowledgeProposalUndoData(
+              delete: [knowledgeProposalDeleteRow('knowledge_notes', note.id)],
+            )
+          : knowledgeProposalUndoData(restore: [_snapshotNote(existing)]),
       shortLabel:
           '$action：${_short(note.title.isEmpty ? note.bodyMd : note.title)}',
     );
@@ -234,7 +253,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_notes',
           appliedAt: _now(),
-          undoData: _undoData(restore: restore),
+          undoData: knowledgeProposalUndoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.title}」',
         );
       case 'concept':
@@ -264,8 +283,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
           throw ProposalApplyException('没有可合并的重复 concept');
         }
         final restore = <Map<String, Object?>>[
-          _snapshotConcept(primary),
-          for (final d in dups) _snapshotConcept(d),
+          snapshotKnowledgeConcept(primary),
+          for (final d in dups) snapshotKnowledgeConcept(d),
           ...await _conceptRepointSnapshots(primary, dups),
         ];
         final survivor = await repo.mergeConcepts(
@@ -280,7 +299,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_concepts',
           appliedAt: _now(),
-          undoData: _undoData(restore: restore),
+          undoData: knowledgeProposalUndoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.name}」',
         );
       case 'principle':
@@ -314,7 +333,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_principles',
           appliedAt: _now(),
-          undoData: _undoData(restore: restore),
+          undoData: knowledgeProposalUndoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
         );
       case 'assumption':
@@ -348,7 +367,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_assumptions',
           appliedAt: _now(),
-          undoData: _undoData(restore: restore),
+          undoData: knowledgeProposalUndoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
         );
       case 'decision':
@@ -382,7 +401,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_decisions',
           appliedAt: _now(),
-          undoData: _undoData(restore: restore),
+          undoData: knowledgeProposalUndoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.question}」',
         );
       case 'experiment':
@@ -415,7 +434,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
           appliedEntityId: survivor.id,
           appliedTable: 'knowledge_experiments',
           appliedAt: _now(),
-          undoData: _undoData(restore: restore),
+          undoData: knowledgeProposalUndoData(restore: restore),
           shortLabel: '已合并 ${dups.length} 条到「${survivor.hypothesis}」',
         );
       default:
@@ -451,71 +470,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
     return out;
   }
 
-  Future<ProposalApplyState> _applyConceptLink(ReadyProposalPlan plan) async {
-    final fromId = plan.get('from_concept_id');
-    final toId = plan.get('to_concept_id');
-    if (fromId == null || toId == null || fromId == toId) {
-      throw ProposalApplyException('concept_link 缺少 from/to 或两者相同');
-    }
-    final a = await repo.findConcept(ownerUserId: ownerUserId, id: fromId);
-    final b = await repo.findConcept(ownerUserId: ownerUserId, id: toId);
-    if (a == null || b == null) {
-      throw ProposalApplyException('concept_link 引用的概念不存在');
-    }
-    final (updatedA, _) = await repo.linkConcepts(a: a, b: b, stamp: stamp);
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: updatedA.id,
-      appliedTable: 'knowledge_concepts',
-      appliedAt: _now(),
-      undoData: _undoData(restore: [_snapshotConcept(a), _snapshotConcept(b)]),
-      shortLabel: '已关联「${a.name}」↔「${b.name}」',
-    );
-  }
-
-  Future<ProposalApplyState> _applyRoutine(ReadyProposalPlan plan) async {
-    return _createRoutine(
-      statement: _requireRoutineStatement(plan),
-      intervalDays: _requireRoutineIntervalDays(plan),
-      scope: plan.get('scope') ?? '*',
-      nextDueAt: _parseOptionalUtc(plan.get('next_due_at')),
-      summaryZh: plan.summaryZh,
-    );
-  }
-
-  Future<ProposalApplyState> _createRoutine({
-    required String statement,
-    required int intervalDays,
-    required String scope,
-    required DateTime? nextDueAt,
-    required String summaryZh,
-  }) async {
-    final meta = await stamp();
-    final routine = KnowledgeRoutine(
-      id: kKnowledgeUuid.v4(),
-      statement: statement,
-      intervalDays: intervalDays,
-      nextDueAt: nextDueAt ?? meta.updatedAt.add(Duration(days: intervalDays)),
-      scope: scope,
-      status: RoutineStatus.active,
-      createdAt: meta.updatedAt,
-      sync: meta,
-    );
-    await repo.upsertRoutine(routine);
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: routine.id,
-      appliedTable: 'knowledge_routines',
-      appliedAt: _now(),
-      undoData: _undoData(
-        delete: [_deleteRow('knowledge_routines', routine.id)],
-      ),
-      shortLabel: '已建立 Routine：${summaryZh.isEmpty ? statement : summaryZh}',
-    );
-  }
-
   Future<void> _runUndoData(Map<String, Object?> undoData) async {
-    for (final row in _mapList(undoData['delete'])) {
+    for (final row in knowledgeProposalMapList(undoData['delete'])) {
       final table = row['table'] as String?;
       final id = row['id'] as String?;
       if (table == null || id == null) continue;
@@ -527,7 +483,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
       );
     }
 
-    for (final snapshot in _mapList(undoData['restore'])) {
+    for (final snapshot in knowledgeProposalMapList(undoData['restore'])) {
       await _restoreSnapshot(snapshot);
     }
   }
@@ -572,7 +528,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
         if (concept.id != primary.id &&
             !dupIds.contains(concept.id) &&
             concept.relatedConceptIds.any(dupIds.contains))
-          _snapshotConcept(concept),
+          snapshotKnowledgeConcept(concept),
     ];
   }
 
@@ -635,39 +591,6 @@ class KnowledgeProposalApplier implements ProposalApplier {
 }
 
 const int _allRows = 100000;
-
-Map<String, Object?> _undoData({
-  List<Map<String, Object?>> restore = const [],
-  List<Map<String, Object?>> delete = const [],
-}) => <String, Object?>{
-  if (restore.isNotEmpty) 'restore': restore,
-  if (delete.isNotEmpty) 'delete': delete,
-};
-
-Map<String, Object?> _mergeUndoData(
-  Map<String, Object?>? base, {
-  List<Map<String, Object?>> restore = const [],
-  List<Map<String, Object?>> delete = const [],
-}) {
-  return _undoData(
-    restore: [..._mapList(base?['restore']), ...restore],
-    delete: [..._mapList(base?['delete']), ...delete],
-  );
-}
-
-Map<String, Object?> _deleteRow(String table, String id) => <String, Object?>{
-  'table': table,
-  'id': id,
-};
-
-Iterable<Map<String, Object?>> _mapList(Object? raw) sync* {
-  if (raw is! List) return;
-  for (final item in raw) {
-    if (item is Map) {
-      yield item.map((key, value) => MapEntry(key.toString(), value));
-    }
-  }
-}
 
 KnowledgeEntryKind _kindForTable(String table) => switch (table) {
   'knowledge_notes' => KnowledgeEntryKind.note,
@@ -742,16 +665,6 @@ Map<String, Object?> _snapshotDecision(KnowledgeDecision d) =>
       'merged_into_id': d.mergedIntoId,
     };
 
-Map<String, Object?> _snapshotConcept(KnowledgeConcept c) => <String, Object?>{
-  ..._snapshotBase('knowledge_concepts', c.id, c.sync),
-  'name': c.name,
-  'aliases': c.aliases,
-  'summary_md': c.summaryMd,
-  'related_concept_ids': c.relatedConceptIds,
-  'created_at': c.createdAt.toUtc().toIso8601String(),
-  'merged_into_id': c.mergedIntoId,
-};
-
 Map<String, Object?> _snapshotExperiment(KnowledgeExperiment e) =>
     <String, Object?>{
       ..._snapshotBase('knowledge_experiments', e.id, e.sync),
@@ -822,7 +735,8 @@ KnowledgeDecision _decisionFromSnapshot(
   id: _string(s, 'id'),
   question: _string(s, 'question'),
   options: [
-    for (final raw in _mapList(s['options'])) DecisionOption.fromJson(raw),
+    for (final raw in knowledgeProposalMapList(s['options']))
+      DecisionOption.fromJson(raw),
   ],
   selectedLabel: _string(s, 'selected_label'),
   rationaleMd: _string(s, 'rationale_md'),
@@ -896,27 +810,6 @@ DateTime _date(Object? raw) => DateTime.parse(raw as String).toUtc();
 
 DateTime? _dateOrNull(Object? raw) =>
     raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
-
-String _requireRoutineStatement(ReadyProposalPlan plan) {
-  final statement = plan.get('statement');
-  if (statement == null) {
-    throw ProposalApplyException('routine 缺少 statement / interval_days');
-  }
-  return statement;
-}
-
-int _requireRoutineIntervalDays(ReadyProposalPlan plan) {
-  final intervalDays = plan.num_('interval_days')?.toInt() ?? 0;
-  if (intervalDays <= 0) {
-    throw ProposalApplyException('routine 缺少 statement / interval_days');
-  }
-  return intervalDays;
-}
-
-DateTime? _parseOptionalUtc(String? value) {
-  if (value == null || value.isEmpty) return null;
-  return DateTime.tryParse(value)?.toUtc();
-}
 
 String _captureTitle(ReadyProposalPlan plan, KnowledgeNote? existing) {
   final polished = plan.get('polished_title');
