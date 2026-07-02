@@ -109,37 +109,48 @@ if [[ -n "$legacy_vision_trace_constant_violations" ]]; then
 fi
 
 BOOTSTRAP="$LIB/app/bootstrap.dart"
-declare -A SCHEDULED_AGENT_FRB_OVERRIDES=(
-  [executionReviewAgentProvider]=FrbExecutionReviewReader
-  [morningBriefingAgentProvider]=FrbBriefingSynthesizer
-  [recoveryAlertAgentProvider]=FrbRecoveryAlertSignalReader
-  [weeklySummaryAgentProvider]=FrbWeeklySummaryReader
-  [reviewAgentProvider]=FrbReviewDueReader
-  [assumptionAgentProvider]=FrbAssumptionReviewReader
-  [inboxTriageAgentProvider]=FrbInboxTriageSourceReader
-  [contradictionAgentProvider]=FrbContradictionSourceReader
-  [routineDueAgentProvider]=FrbRoutineDueReader
-)
+RUNTIME_OVERRIDES="$LIB/app/agent_runtime/agent_runtime_provider_overrides.dart"
 
-for provider in "${!SCHEDULED_AGENT_FRB_OVERRIDES[@]}"; do
-  frb_type="${SCHEDULED_AGENT_FRB_OVERRIDES[$provider]}"
-  if ! grep -q "${provider}\.overrideWith" "$BOOTSTRAP"; then
-    echo "✖ production scheduled agent provider is not overridden in bootstrap:" >&2
+if ! grep -q '\.\.\.agentRuntimeProviderOverrides()' "$BOOTSTRAP"; then
+  echo "✖ bootstrap does not install centralized FRB runtime overrides:" >&2
+  echo "  $BOOTSTRAP" >&2
+  echo >&2
+  echo "Keep app/bootstrap.dart delegating to agentRuntimeProviderOverrides()" >&2
+  echo "so runtime wiring stays centralized." >&2
+  exit 1
+fi
+
+SCHEDULED_AGENT_FRB_OVERRIDES='
+executionReviewAgentProvider FrbExecutionReviewReader
+morningBriefingAgentProvider FrbBriefingSynthesizer
+recoveryAlertAgentProvider FrbRecoveryAlertSignalReader
+weeklySummaryAgentProvider FrbWeeklySummaryReader
+reviewAgentProvider FrbReviewDueReader
+assumptionAgentProvider FrbAssumptionReviewReader
+inboxTriageAgentProvider FrbInboxTriageSourceReader
+contradictionAgentProvider FrbContradictionSourceReader
+routineDueAgentProvider FrbRoutineDueReader
+'
+
+while read -r provider frb_type; do
+  [[ -z "$provider" ]] && continue
+  if ! grep -q "${provider}\.overrideWith" "$RUNTIME_OVERRIDES"; then
+    echo "✖ production scheduled agent provider is not overridden in runtime wiring:" >&2
     echo "  $provider" >&2
     echo >&2
-    echo "Scheduled production agents must be wired at app/bootstrap.dart so" >&2
+    echo "Scheduled production agents must be wired in agent_runtime_provider_overrides.dart so" >&2
     echo "DomainPack agent registration receives FRB-backed seams." >&2
     exit 1
   fi
-  if ! grep -q "$frb_type" "$BOOTSTRAP"; then
-    echo "✖ production scheduled agent is missing its FRB seam in bootstrap:" >&2
+  if ! grep -q "$frb_type" "$RUNTIME_OVERRIDES"; then
+    echo "✖ production scheduled agent is missing its FRB seam in runtime wiring:" >&2
     echo "  $provider -> $frb_type" >&2
     echo >&2
     echo "Keep repository/programmatic implementations as feature fallbacks, but" >&2
-    echo "production bootstrap should inject the FRB reader/synthesizer." >&2
+    echo "production runtime overrides should inject the FRB reader/synthesizer." >&2
     exit 1
   fi
-done
+done <<< "$SCHEDULED_AGENT_FRB_OVERRIDES"
 
 for surface in \
   execution_review \
@@ -151,7 +162,7 @@ for surface in \
   knowledge_inbox_triage \
   knowledge_contradiction \
   knowledge_routine_due; do
-  if ! grep -q "surface: '$surface'" "$BOOTSTRAP"; then
+  if ! grep -q "surface: '$surface'" "$RUNTIME_OVERRIDES"; then
     echo "✖ production FRB scheduled agent is missing local trace capture:" >&2
     echo "  surface: $surface" >&2
     echo >&2

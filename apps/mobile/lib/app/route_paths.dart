@@ -288,14 +288,13 @@ DomainScope? domainForRoute(List<DomainPack> packs, String path) {
   return null;
 }
 
-/// Primary shell tab paths in display order across all registered
-/// domains. Used by root-tab affordances and by the global Cmd-1..N tab
-/// switcher in `app.dart`.
+/// Primary shell tab paths in display order across active domains. Used by
+/// root-tab affordances and by the global Cmd-1..N tab switcher in `app.dart`.
 /// Settings is not a tab (IA contract §1).
 ///
-/// Reads [domainPackRegistryProvider] so the list rebuilds automatically
-/// when a new pack lands.
+/// Reads [activeDomainPacksProvider] so optional-domain tabs do not become
+/// keyboard targets before the user opts in.
 final primaryTabPathsProvider = Provider<List<String>>((ref) {
-  final packs = ref.watch(domainPackRegistryProvider);
+  final packs = ref.watch(activeDomainPacksProvider);
   return [for (final p in packs) ...p.tabPaths];
 });

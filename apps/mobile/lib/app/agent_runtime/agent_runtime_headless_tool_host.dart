@@ -15,22 +15,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/ai/composition/device_tools_provider.dart';
 import '../../core/ai/composition/tool_descriptor_lookup.dart';
-import '../../core/ai/contracts/tool_descriptor.dart';
-import '../../core/ai/runtime/device/tools/device_tool.dart';
-import '../../core/ai/runtime/device/tools/device_tool_registry.dart'
-    show kShellDeviceToolsCore, kShellToolDescriptors;
 import '../../core/auth/auth_state.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/auth/providers.dart' as auth;
 import '../../core/config/app_config.dart';
 import '../../core/config/providers.dart';
+import '../../core/lifeos/domain_pack.dart';
 import '../../core/persistence/app_database.dart';
 import '../../core/persistence/providers.dart';
 import '../../design_system/preferences/theme_preferences.dart';
-import '../../features/execution_ai_tools.dart';
-import '../../features/finance_ai_tools.dart';
-import '../../features/health_ai_tools.dart';
-import '../../features/knowledge_ai_tools.dart';
+import '../domain_composition.dart';
+import '../domain_packs.dart';
 import 'agent_runtime_tool_host.dart';
 
 class AgentRuntimeHeadlessToolHost {
@@ -98,10 +93,12 @@ Future<AgentRuntimeHeadlessToolHost> createAgentRuntimeHeadlessToolHost({
 
 List<Override> _headlessToolOverrides(Iterable<DomainScope> domains) {
   final activeDomains = _activeHeadlessDomains(domains);
+  final packs = _headlessDomainPacks(activeDomains);
+  final descriptors = domainToolDescriptors(packs);
   return <Override>[
-    deviceToolsProvider.overrideWithValue(_headlessDeviceTools(activeDomains)),
+    deviceToolsProvider.overrideWithValue(domainDeviceTools(packs)),
     toolDescriptorLookupProvider.overrideWithValue((name) {
-      return _headlessToolDescriptors(activeDomains)[name];
+      return descriptors[name];
     }),
   ];
 }
@@ -110,24 +107,11 @@ Set<DomainScope> _activeHeadlessDomains(Iterable<DomainScope> domains) {
   return <DomainScope>{DomainScope.finance, ...domains};
 }
 
-List<DeviceTool> _headlessDeviceTools(Set<DomainScope> domains) {
-  return <DeviceTool>[
-    ...kShellDeviceToolsCore,
-    if (domains.contains(DomainScope.finance)) ...kFinanceDeviceTools,
-    if (domains.contains(DomainScope.health)) ...kHealthDeviceTools,
-    if (domains.contains(DomainScope.knowledge)) ...kKnowledgeDeviceTools,
-    if (domains.contains(DomainScope.execution)) ...kExecutionDeviceTools,
+List<DomainPack> _headlessDomainPacks(Set<DomainScope> domains) {
+  return [
+    for (final pack in kAllDomainPacks)
+      if (domains.contains(pack.scope)) pack,
   ];
-}
-
-Map<String, ToolDescriptor> _headlessToolDescriptors(Set<DomainScope> domains) {
-  return <String, ToolDescriptor>{
-    ...kShellToolDescriptors,
-    if (domains.contains(DomainScope.finance)) ...kFinanceToolDescriptors,
-    if (domains.contains(DomainScope.health)) ...kHealthToolDescriptors,
-    if (domains.contains(DomainScope.knowledge)) ...kKnowledgeToolDescriptors,
-    if (domains.contains(DomainScope.execution)) ...kExecutionToolDescriptors,
-  };
 }
 
 List<DomainScope> parseHeadlessDomains(String? raw) {
