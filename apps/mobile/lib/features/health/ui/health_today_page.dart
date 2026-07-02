@@ -40,6 +40,8 @@ import 'recovery_verdict.dart';
 
 part 'briefing_panel.dart';
 part 'metric_grid.dart';
+part 'metric_grid_cards.dart';
+part 'metric_grid_primitives.dart';
 part 'recovery_hero.dart';
 part 'weekly_summary_panel.dart';
 
