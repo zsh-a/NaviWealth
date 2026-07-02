@@ -25,6 +25,7 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
 import '_agent_memory.dart';
+import 'knowledge_notifications.dart';
 
 const String kKnowledgeRoutineAgentId = 'knowledge_routine_due';
 const String kKnowledgeRoutineMemorySource = 'agent:knowledge_routine_due';
@@ -43,8 +44,7 @@ class RoutineDueAgent implements Agent {
 
   /// Optional local-notification hook. When supplied and the platform
   /// has granted permission, the agent posts a one-shot toast after
-  /// each successful run on the [NotificationChannelSpec.knowledgeReview]
-  /// channel.
+  /// each successful run on the Knowledge review notification channel.
   final NotificationService? notifier;
 
   /// Local hour-of-day anchor (0–23). Default 08:00 keeps the toast in
@@ -187,7 +187,7 @@ class RoutineDueAgent implements Agent {
         title: l10n.knowledgeAgentRoutineTitle,
         body: summary,
         payload: kKnowledgeRoutineAgentId,
-        channel: NotificationChannelSpec.knowledgeReview,
+        channel: kKnowledgeReviewNotificationChannel,
       );
     } on Object {
       // Best-effort — a notification failure must not mark the agent

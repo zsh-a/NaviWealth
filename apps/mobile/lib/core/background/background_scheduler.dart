@@ -16,6 +16,8 @@
 /// **Web / desktop** get a no-op stub via conditional import.
 library;
 
+import '../notifications/notification_service.dart';
+
 /// Stable workmanager task name for the daily Morning Briefing.
 /// Mirrors the `Info.plist::BGTaskSchedulerPermittedIdentifiers`
 /// entry and the iOS `AppDelegate.swift` registration call site —
@@ -69,6 +71,16 @@ const BackgroundTaskSpec kMorningBriefingBackgroundTask = BackgroundTaskSpec(
   dueAtPreferenceKey: kMorningBriefingDueAtKey,
   defaultInterval: Duration(hours: 24),
 );
+
+const NotificationChannelSpec kMorningBriefingWakeNotificationChannel =
+    NotificationChannelSpec(
+      id: 'lifeos.health.briefing',
+      name: 'Morning Briefing',
+      description: 'Daily HealthOS morning briefing summaries.',
+    );
+
+int morningBriefingWakeNotificationId(DateTime localDay) =>
+    localDay.year * 10000 + localDay.month * 100 + localDay.day;
 
 const BackgroundTaskSpec kGarminSyncBackgroundTask = BackgroundTaskSpec(
   name: kGarminSyncTaskName,

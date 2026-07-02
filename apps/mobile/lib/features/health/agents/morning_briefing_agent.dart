@@ -31,6 +31,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../data/morning_briefing_preferences.dart';
 import 'briefing_synthesizer.dart';
+import 'health_notifications.dart';
 
 const String kMorningBriefingAgentId = 'morning_briefing';
 const String kMorningBriefingMemorySource = 'agent:morning_briefing';
@@ -213,6 +214,7 @@ class MorningBriefingAgent implements Agent {
         title: 'Morning Briefing',
         body: summary,
         payload: 'morning_briefing',
+        channel: kHealthBriefingNotificationChannel,
       );
     } on Object {
       // Best-effort — never let a notification failure mark the agent

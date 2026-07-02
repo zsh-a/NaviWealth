@@ -19,6 +19,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
+import 'health_notifications.dart';
 
 const String kRecoveryAlertAgentId = 'recovery_alert';
 const String kRecoveryAlertMemorySource = 'agent:recovery_alert';
@@ -111,6 +112,7 @@ class RecoveryAlertAgent implements Agent {
                 'HRV down ${_round(alert.declinePct)}% over ${alert.consecutiveDays} days. '
                 'Consider lighter activity today.',
             payload: 'recovery_alert',
+            channel: kHealthBriefingNotificationChannel,
           );
         }
       } on Object {

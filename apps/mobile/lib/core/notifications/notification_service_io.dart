@@ -18,6 +18,7 @@ class _LocalNotificationService implements NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  final Set<String> _createdAndroidChannelIds = <String>{};
 
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
@@ -33,27 +34,25 @@ class _LocalNotificationService implements NotificationService {
         iOS: darwinInit,
       ),
     );
-    // Android needs every channel created up-front so the first
-    // showNow() on any channel doesn't fall through to the default
-    // low-priority bucket. Walks the enum so adding a new channel is
-    // one-line at the spec site.
+    _initialized = true;
+  }
+
+  Future<void> _ensureAndroidChannel(NotificationChannelSpec channel) async {
+    await _ensureInitialized();
+    if (!Platform.isAndroid) return;
+    if (!_createdAndroidChannelIds.add(channel.id)) return;
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    if (android != null) {
-      for (final spec in NotificationChannelSpec.values) {
-        await android.createNotificationChannel(
-          AndroidNotificationChannel(
-            spec.id,
-            spec.name,
-            description: spec.description,
-            importance: Importance.defaultImportance,
-          ),
-        );
-      }
-    }
-    _initialized = true;
+    await android?.createNotificationChannel(
+      AndroidNotificationChannel(
+        channel.id,
+        channel.name,
+        description: channel.description,
+        importance: Importance.defaultImportance,
+      ),
+    );
   }
 
   @override
@@ -106,11 +105,11 @@ class _LocalNotificationService implements NotificationService {
     required int id,
     required String title,
     required String body,
+    required NotificationChannelSpec channel,
     String? payload,
-    NotificationChannelSpec channel = NotificationChannelSpec.healthBriefing,
   }) async {
     if (!await isAvailable()) return;
-    await _ensureInitialized();
+    await _ensureAndroidChannel(channel);
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         channel.id,

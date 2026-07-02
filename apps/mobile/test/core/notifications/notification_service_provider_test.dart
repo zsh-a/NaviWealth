@@ -18,7 +18,12 @@ void main() {
       expect(await service.isAvailable(), isFalse);
       expect(await service.hasPermissions(), isFalse);
       expect(await service.requestPermissions(), isFalse);
-      await service.showNow(id: 42, title: 'Title', body: 'Body');
+      await service.showNow(
+        id: 42,
+        title: 'Title',
+        body: 'Body',
+        channel: _testChannel,
+      );
       await service.cancel(42);
     },
     skip: Platform.isIOS || Platform.isAndroid
@@ -26,3 +31,9 @@ void main() {
         : false,
   );
 }
+
+const NotificationChannelSpec _testChannel = NotificationChannelSpec(
+  id: 'lifeos.test',
+  name: 'Test',
+  description: 'Test notifications.',
+);

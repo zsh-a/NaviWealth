@@ -1,23 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/notifications/notification_service_stub.dart';
+import 'package:naviwealth/features/health/agents/health_notifications.dart';
+import 'package:naviwealth/features/knowledge/agents/knowledge_notifications.dart';
 
 void main() {
   test('notification channel metadata stays stable', () {
-    expect(NotificationChannelSpec.healthBriefing.id, 'lifeos.health.briefing');
-    expect(NotificationChannelSpec.healthBriefing.name, 'Morning Briefing');
+    expect(kHealthBriefingNotificationChannel.id, 'lifeos.health.briefing');
+    expect(kHealthBriefingNotificationChannel.name, 'Morning Briefing');
     expect(
-      NotificationChannelSpec.healthBriefing.description,
+      kHealthBriefingNotificationChannel.description,
       'Daily HealthOS morning briefing summaries.',
     );
 
+    expect(kKnowledgeReviewNotificationChannel.id, 'lifeos.knowledge.review');
+    expect(kKnowledgeReviewNotificationChannel.name, 'Knowledge Review');
     expect(
-      NotificationChannelSpec.knowledgeReview.id,
-      'lifeos.knowledge.review',
-    );
-    expect(NotificationChannelSpec.knowledgeReview.name, 'Knowledge Review');
-    expect(
-      NotificationChannelSpec.knowledgeReview.description,
+      kKnowledgeReviewNotificationChannel.description,
       'KnowledgeOS reminders: due decisions, stale assumptions, and recurring routines.',
     );
   });
@@ -25,7 +24,7 @@ void main() {
   test('notification channel ids are unique and Android-safe', () {
     final ids = <String>{};
 
-    for (final spec in NotificationChannelSpec.values) {
+    for (final spec in _knownDomainChannels) {
       expect(spec.id, isNotEmpty, reason: spec.name);
       expect(spec.id, matches(RegExp(r'^[a-z0-9.]+$')), reason: spec.id);
       expect(ids.add(spec.id), isTrue, reason: 'Duplicate channel ${spec.id}');
@@ -94,14 +93,25 @@ void main() {
     expect(await service.isAvailable(), isFalse);
     expect(await service.hasPermissions(), isFalse);
     expect(await service.requestPermissions(), isFalse);
-    await service.showNow(id: 1, title: 'Title', body: 'Body');
+    await service.showNow(
+      id: 1,
+      title: 'Title',
+      body: 'Body',
+      channel: kHealthBriefingNotificationChannel,
+    );
     await service.showNow(
       id: 2,
       title: 'Knowledge',
       body: 'Review',
       payload: 'payload',
-      channel: NotificationChannelSpec.knowledgeReview,
+      channel: kKnowledgeReviewNotificationChannel,
     );
     await service.cancel(1);
   });
 }
+
+const List<NotificationChannelSpec> _knownDomainChannels =
+    <NotificationChannelSpec>[
+      kHealthBriefingNotificationChannel,
+      kKnowledgeReviewNotificationChannel,
+    ];

@@ -22,7 +22,6 @@ library;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
-import '../notifications/notification_service.dart';
 import '../notifications/notification_service_factory.dart';
 import 'background_scheduler.dart';
 
@@ -45,9 +44,10 @@ void lifeosBackgroundCallback() {
         final notifier = createNotificationService();
         if (await notifier.hasPermissions()) {
           await notifier.showNow(
-            id: HealthNotifications.idForBriefing(now),
+            id: morningBriefingWakeNotificationId(now),
             title: 'Morning briefing ready',
             body: 'Open the app to see today\'s HealthOS summary.',
+            channel: kMorningBriefingWakeNotificationChannel,
           );
         }
       }
