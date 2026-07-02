@@ -16,6 +16,7 @@ import '../state/chat_controller.dart';
 import 'ai_transparency_badge.dart';
 import 'decision_card.dart';
 import 'decision_request.dart';
+import 'propose_batch_actions.dart';
 import 'propose_card.dart';
 import 'reply_chips.dart';
 import 'tool_invocation_card.dart' show friendlyToolName;
