@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../../core/ai/agents/agent.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
+import '../../core/shell/settings_route_paths.dart';
 import '../../features/health/agents/morning_briefing_agent.dart';
 import '../../features/health/agents/providers.dart' as health_agent_providers;
 import '../../features/health/agents/recovery_alert_agent.dart';
@@ -43,8 +44,8 @@ final DomainPack kHealthPack = DomainPack(
     icon: FLucideIcons.heartPulse,
     label: 'HealthOS',
     subtitle: _healthSettingsSubtitle,
-    routePath: AppRoutes.settingsDomainsHealth,
-    routeName: AppRouteNames.domainsHealth,
+    routePath: SettingsRoutes.domainsHealth,
+    routeName: SettingsRouteNames.domainsHealth,
     page: const HealthDomainSettingsPage(),
   ),
 );

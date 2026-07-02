@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
+import '../core/shell/settings_route_paths.dart';
 import '../design_system/widgets/system_back_scope.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/auth/presentation/devices_page.dart'
@@ -129,8 +130,8 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
 /// stack root (reached via `go()` / deep link / app restore).
 GoRoute _settingsRoute(List<DomainPack> packs) {
   return GoRoute(
-    path: AppRoutes.settings,
-    name: AppRouteNames.settings,
+    path: SettingsRoutes.root,
+    name: SettingsRouteNames.root,
     builder: (context, state) => _backSafe(
       DeferredRoute(
         load: settings_lib.loadLibrary,
@@ -140,7 +141,7 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
     routes: [
       GoRoute(
         path: 'devices',
-        name: AppRouteNames.devices,
+        name: SettingsRouteNames.devices,
         builder: (context, state) => _backSafe(
           DeferredRoute(
             load: devices_lib.loadLibrary,
@@ -150,44 +151,44 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
       ),
       GoRoute(
         path: 'fx-rates',
-        name: AppRouteNames.fxRates,
+        name: SettingsRouteNames.fxRates,
         builder: (context, state) => _backSafe(const FxRatesPage()),
       ),
       GoRoute(
         path: 'backup',
-        name: AppRouteNames.backup,
+        name: SettingsRouteNames.backup,
         builder: (context, state) => _backSafe(const BackupPage()),
       ),
       GoRoute(
         path: 'notifications',
-        name: AppRouteNames.notifications,
+        name: SettingsRouteNames.notifications,
         builder: (context, state) =>
             _backSafe(const NotificationSettingsPage()),
       ),
       GoRoute(
         path: 'logs',
-        name: AppRouteNames.logs,
+        name: SettingsRouteNames.logs,
         builder: (context, state) => _backSafe(const LogViewerPage()),
       ),
       GoRoute(
         path: 'performance',
-        name: AppRouteNames.performance,
+        name: SettingsRouteNames.performance,
         builder: (context, state) => _backSafe(const PerfDiagnosticsPage()),
       ),
       GoRoute(
         path: 'sync',
-        name: AppRouteNames.sync,
+        name: SettingsRouteNames.sync,
         builder: (context, state) => _backSafe(const SyncStatusPage()),
       ),
       GoRoute(
         path: 'domains',
-        name: AppRouteNames.domains,
+        name: SettingsRouteNames.domains,
         builder: (context, state) => _backSafe(const DomainsSettingsPage()),
       ),
       ..._domainSettingsRoutes(packs),
       GoRoute(
         path: 'ai-history',
-        name: AppRouteNames.aiHistory,
+        name: SettingsRouteNames.aiHistory,
         builder: (context, state) => _backSafe(
           DeferredRoute(
             load: ai_chat_lib.loadLibrary,
@@ -197,43 +198,43 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
       ),
       GoRoute(
         path: 'ai-privacy',
-        name: AppRouteNames.aiPrivacy,
+        name: SettingsRouteNames.aiPrivacy,
         builder: (context, state) => _backSafe(const AiPrivacyPage()),
       ),
       GoRoute(
         path: 'ai-llm',
-        name: AppRouteNames.aiLlm,
+        name: SettingsRouteNames.aiLlm,
         builder: (context, state) => _backSafe(const AiLlmCredentialsPage()),
       ),
       GoRoute(
         path: 'ai-models',
-        name: AppRouteNames.aiModels,
+        name: SettingsRouteNames.aiModels,
         builder: (context, state) => _backSafe(const AiModelsPage()),
       ),
       GoRoute(
         path: 'risk-thresholds',
-        name: AppRouteNames.riskThresholds,
+        name: SettingsRouteNames.riskThresholds,
         builder: (context, state) => _backSafe(const RiskThresholdsPage()),
       ),
       GoRoute(
         path: 'stress-test',
-        name: AppRouteNames.stressTest,
+        name: SettingsRouteNames.stressTest,
         builder: (context, state) => _backSafe(const FireStressSettingsPage()),
       ),
       GoRoute(
         path: 'monthly-expense',
-        name: AppRouteNames.monthlyExpense,
+        name: SettingsRouteNames.monthlyExpense,
         builder: (context, state) =>
             _backSafe(const MonthlyExpenseSettingsPage()),
       ),
       GoRoute(
         path: 'ai-transparency',
-        name: AppRouteNames.aiTransparency,
+        name: SettingsRouteNames.aiTransparency,
         builder: (context, state) => _backSafe(const AiTransparencyPage()),
         routes: [
           GoRoute(
             path: ':requestId',
-            name: AppRouteNames.aiTransparencyDetail,
+            name: SettingsRouteNames.aiTransparencyDetail,
             builder: (context, state) => _backSafe(
               AiTransparencyDetailPage(
                 requestId: state.pathParameters['requestId'] ?? '',

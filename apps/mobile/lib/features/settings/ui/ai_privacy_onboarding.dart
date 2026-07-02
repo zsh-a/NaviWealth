@@ -11,8 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
@@ -133,7 +133,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
               child: FButton(
                 onPress: () {
                   Navigator.of(context).pop();
-                  context.goNamed(AppRouteNames.aiPrivacy);
+                  context.goNamed(SettingsRouteNames.aiPrivacy);
                 },
                 variant: FButtonVariant.outline,
                 child: Text(l10n.aiPrivacyTitle),

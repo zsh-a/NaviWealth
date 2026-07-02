@@ -10,9 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../health/composition/health_route_paths.dart';
 import '../../health/data/health_sync_service.dart';
 import '../../health/data/morning_briefing_preferences.dart';
 import '../../health/data/providers.dart' as health_data;
@@ -39,7 +39,7 @@ class HealthDomainSettingsPage extends ConsumerWidget {
                   icon: FLucideIcons.eye,
                   label: 'HealthOS · Today',
                   subtitle: l10n.settingsDomainsHealthTodaySubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.healthToday),
+                  onTap: () => context.goNamed(HealthRouteNames.today),
                 ),
                 const AppGradientDivider(),
                 const _HealthPlatformSyncRow(),

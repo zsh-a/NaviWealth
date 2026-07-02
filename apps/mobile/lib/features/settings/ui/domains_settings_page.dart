@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/lifeos/domain_pack.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'finance_domain_settings_section.dart';
@@ -59,7 +59,7 @@ class DomainsSettingsPage extends ConsumerWidget {
     if (!context.mounted || enabled) return;
     final l10n = AppLocalizations.of(context);
     final label = pack.settingsSpec?.label ?? pack.scope.wire;
-    context.go(AppRoutes.settingsDomains);
+    context.go(SettingsRoutes.domains);
     AppMessenger.show(
       context,
       ToastKind.info,

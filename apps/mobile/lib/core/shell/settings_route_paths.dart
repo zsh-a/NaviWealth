@@ -1,0 +1,61 @@
+/// Settings shell route path and route name contract.
+library;
+
+abstract final class SettingsRoutes {
+  static const root = '/settings';
+  static const devices = '/settings/devices';
+  static const fxRates = '/settings/fx-rates';
+  static const backup = '/settings/backup';
+  static const notifications = '/settings/notifications';
+  static const logs = '/settings/logs';
+  static const performance = '/settings/performance';
+  static const sync = '/settings/sync';
+  static const aiTransparency = '/settings/ai-transparency';
+  // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
+  // under Settings as part of the AI audit surface.
+  static const aiHistory = '/settings/ai-history';
+  // §5.10.5 — user-facing privacy posture for provider-direct AI requests.
+  static const aiPrivacy = '/settings/ai-privacy';
+  // Bring-your-own LLM key for the on-device AI runtime.
+  static const aiLlm = '/settings/ai-llm';
+  static const aiModels = '/settings/ai-models';
+  // Investment preferences — risk appetite SSOT + advanced
+  // concentration thresholds.
+  static const riskThresholds = '/settings/risk-thresholds';
+  // Stress-test parameters for the FIRE engine.
+  static const stressTest = '/settings/stress-test';
+  // Monthly-expense window / override editor (powers FIRE projection).
+  static const monthlyExpense = '/settings/monthly-expense';
+  // LifeOS domain console — per-user opt-in toggles + per-domain ops.
+  static const domains = '/settings/domains';
+  static const domainsHealth = '/settings/domains/health';
+  static const domainsKnowledge = '/settings/domains/knowledge';
+  static const domainsExecution = '/settings/domains/execution';
+
+  static String aiTransparencyDetail(String requestId) =>
+      '$aiTransparency/${Uri.encodeComponent(requestId)}';
+}
+
+abstract final class SettingsRouteNames {
+  static const root = 'settings';
+  static const devices = 'devices';
+  static const fxRates = 'fx-rates';
+  static const backup = 'backup';
+  static const notifications = 'notifications';
+  static const logs = 'logs';
+  static const performance = 'performance';
+  static const sync = 'sync';
+  static const aiTransparency = 'ai-transparency';
+  static const aiTransparencyDetail = 'ai-transparency-detail';
+  static const aiHistory = 'ai-history';
+  static const aiPrivacy = 'ai-privacy';
+  static const aiLlm = 'ai-llm';
+  static const aiModels = 'ai-models';
+  static const riskThresholds = 'risk-thresholds';
+  static const stressTest = 'stress-test';
+  static const monthlyExpense = 'monthly-expense';
+  static const domains = 'domains';
+  static const domainsHealth = 'domains-health';
+  static const domainsKnowledge = 'domains-knowledge';
+  static const domainsExecution = 'domains-execution';
+}

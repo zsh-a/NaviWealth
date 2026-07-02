@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../../core/ai/agents/agent.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
+import '../../core/shell/settings_route_paths.dart';
 import '../../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import '../../features/knowledge/composition/knowledge_command_palette.dart';
@@ -51,8 +52,8 @@ final DomainPack kKnowledgePack = DomainPack(
     icon: FLucideIcons.brain,
     label: 'KnowledgeOS',
     subtitle: _knowledgeSettingsSubtitle,
-    routePath: AppRoutes.settingsDomainsKnowledge,
-    routeName: AppRouteNames.domainsKnowledge,
+    routePath: SettingsRoutes.domainsKnowledge,
+    routeName: SettingsRouteNames.domainsKnowledge,
     page: const KnowledgeDomainSettingsPage(),
   ),
 );

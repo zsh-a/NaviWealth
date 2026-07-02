@@ -2,10 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
-
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
-import '../../../app/route_paths.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
 import '../../cashflow/data/cash_flow_providers.dart';
 import '../../cashflow/domain/cash_flow_aggregator.dart';
@@ -321,7 +320,7 @@ InsightItem? summarizeCurrencyMismatchInsight({
     icon: FLucideIcons.arrowLeftRight,
     kind: InsightKind.currencyMismatch,
     tone: InsightTone.warning,
-    route: AppRoutes.settingsFxRates,
+    route: SettingsRoutes.fxRates,
     currencyMismatchCount: mismatches.length,
     currencyMismatchBaseCurrency: baseCurrency,
   );

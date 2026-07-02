@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/dashboard_models.dart';
@@ -71,7 +71,7 @@ class CurrencyMismatchNotice extends StatelessWidget {
               suffix: const Icon(FLucideIcons.chevronRight),
               onPress: () {
                 Navigator.of(ctx).pop();
-                context.goNamed(AppRouteNames.fxRates);
+                context.goNamed(SettingsRouteNames.fxRates);
               },
             ),
         ],

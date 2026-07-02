@@ -19,9 +19,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/visual/visual.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'ai_navigation.dart';
@@ -49,7 +49,7 @@ class LlmProfileChip extends ConsumerWidget {
           child: AiPill(
             leading: const AiSparkle(size: 12),
             label: active.displayName,
-            onTap: () => pushFromAiSurface(context, AppRoutes.settingsAiLlm),
+            onTap: () => pushFromAiSurface(context, SettingsRoutes.aiLlm),
           ),
         ),
       ),

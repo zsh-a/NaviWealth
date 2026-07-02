@@ -8,12 +8,12 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/shell/selection_query.dart';
+import '../../../core/shell/settings_route_paths.dart';
 
 String aiHistoryLocation(String sessionId) {
   return Uri(
-    path: AppRoutes.settingsAiHistory,
+    path: SettingsRoutes.aiHistory,
     queryParameters: <String, String>{kSelectedQueryKey: sessionId},
   ).toString();
 }

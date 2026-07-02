@@ -9,6 +9,7 @@ import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
 import '../../../core/security/biometric_auth_service.dart';
 import '../../../core/security/biometric_lock_preferences.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../auth/data/auth_controller.dart';
@@ -53,28 +54,28 @@ class SettingsOverview extends ConsumerWidget {
             icon: FLucideIcons.lock,
             label: l10n.settingsAiPrivacyTitle,
             subtitle: l10n.settingsAiPrivacySubtitle,
-            onTap: () => context.goNamed(AppRouteNames.aiPrivacy),
+            onTap: () => context.goNamed(SettingsRouteNames.aiPrivacy),
           ),
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.key,
             label: l10n.settingsAiLlmTitle,
             subtitle: l10n.settingsAiLlmSubtitle,
-            onTap: () => context.goNamed(AppRouteNames.aiLlm),
+            onTap: () => context.goNamed(SettingsRouteNames.aiLlm),
           ),
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.eye,
             label: l10n.settingsAiTransparencyTitle,
             subtitle: l10n.settingsAiTransparencySubtitle,
-            onTap: () => context.goNamed(AppRouteNames.aiTransparency),
+            onTap: () => context.goNamed(SettingsRouteNames.aiTransparency),
           ),
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.download,
             label: l10n.settingsAiModelsTitle,
             subtitle: l10n.settingsAiModelsSubtitle,
-            onTap: () => context.goNamed(AppRouteNames.aiModels),
+            onTap: () => context.goNamed(SettingsRouteNames.aiModels),
           ),
         ],
       ),
@@ -90,7 +91,7 @@ class SettingsOverview extends ConsumerWidget {
               icon: FLucideIcons.refreshCw,
               label: l10n.settingsSyncTitle,
               subtitle: l10n.settingsSyncSubtitle,
-              onTap: () => context.goNamed(AppRouteNames.sync),
+              onTap: () => context.goNamed(SettingsRouteNames.sync),
             ),
             const AppGradientDivider(),
           ],
@@ -98,14 +99,14 @@ class SettingsOverview extends ConsumerWidget {
             icon: FLucideIcons.cloudUpload,
             label: l10n.settingsDataTitle,
             subtitle: l10n.settingsDataSubtitle,
-            onTap: () => context.goNamed(AppRouteNames.backup),
+            onTap: () => context.goNamed(SettingsRouteNames.backup),
           ),
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.bell,
             label: l10n.settingsNotificationsTitle,
             subtitle: l10n.settingsNotificationsSubtitle,
-            onTap: () => context.goNamed(AppRouteNames.notifications),
+            onTap: () => context.goNamed(SettingsRouteNames.notifications),
           ),
           const AppGradientDivider(),
           const _BiometricUnlockRow(),
@@ -122,7 +123,7 @@ class SettingsOverview extends ConsumerWidget {
         icon: FLucideIcons.blocks,
         label: l10n.settingsDomainsTitle,
         subtitle: l10n.settingsDomainsSubtitle,
-        onTap: () => context.goNamed(AppRouteNames.domains),
+        onTap: () => context.goNamed(SettingsRouteNames.domains),
       ),
     );
     // Logs viewer is exposed in release as well — the talker history is
@@ -137,14 +138,14 @@ class SettingsOverview extends ConsumerWidget {
             icon: FLucideIcons.bug,
             label: l10n.settingsLogsTitle,
             subtitle: l10n.settingsLogsSubtitle,
-            onTap: () => context.goNamed(AppRouteNames.logs),
+            onTap: () => context.goNamed(SettingsRouteNames.logs),
           ),
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.activity,
             label: l10n.settingsPerfTitle,
             subtitle: l10n.settingsPerfSubtitle,
-            onTap: () => context.goNamed(AppRouteNames.performance),
+            onTap: () => context.goNamed(SettingsRouteNames.performance),
           ),
           const AppGradientDivider(),
           const _AboutTile(),
@@ -318,7 +319,7 @@ class _AccountSection extends ConsumerWidget {
           icon: FLucideIcons.monitor,
           label: l10n.settingsDevicesTitle,
           subtitle: l10n.settingsDevicesSubtitle,
-          onTap: () => context.goNamed(AppRouteNames.devices),
+          onTap: () => context.goNamed(SettingsRouteNames.devices),
         ),
         const AppGradientDivider(),
         InlineLinkRow(

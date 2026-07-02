@@ -9,9 +9,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../knowledge/composition/knowledge_route_paths.dart';
 import 'inline_setting_row.dart';
 import 'settings_page_frame.dart';
 
@@ -35,28 +36,28 @@ class KnowledgeDomainSettingsPage extends ConsumerWidget {
                   icon: FLucideIcons.inbox,
                   label: 'KnowledgeOS · Inbox',
                   subtitle: l10n.settingsDomainsKnowledgeInboxSubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.knowledgeInbox),
+                  onTap: () => context.goNamed(KnowledgeRouteNames.inbox),
                 ),
                 const AppGradientDivider(),
                 InlineLinkRow(
                   icon: FLucideIcons.library,
                   label: 'KnowledgeOS · Library',
                   subtitle: l10n.settingsDomainsKnowledgeLibrarySubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.knowledgeLibrary),
+                  onTap: () => context.goNamed(KnowledgeRouteNames.library),
                 ),
                 const AppGradientDivider(),
                 InlineLinkRow(
                   icon: FLucideIcons.clipboardCheck,
                   label: 'KnowledgeOS · Review',
                   subtitle: l10n.settingsDomainsKnowledgeReviewSubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.knowledgeReview),
+                  onTap: () => context.goNamed(KnowledgeRouteNames.review),
                 ),
                 const AppGradientDivider(),
                 InlineLinkRow(
                   icon: FLucideIcons.brainCircuit,
                   label: l10n.settingsDomainsKnowledgeMemoryTitle,
                   subtitle: l10n.settingsDomainsKnowledgeMemorySubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.aiModels),
+                  onTap: () => context.goNamed(SettingsRouteNames.aiModels),
                 ),
               ],
             ),

@@ -12,12 +12,12 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/shell/domain_shell.dart';
+import '../core/shell/settings_route_paths.dart';
 import '../core/shell/shell_chrome.dart';
 import '../core/shortcuts/shortcut_intents.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_switcher.dart';
-import 'route_paths.dart';
 
 List<Override> appShellChromeOverrides() {
   return [
@@ -54,7 +54,7 @@ List<Widget> _buildShellGlobalActions(BuildContext context, WidgetRef ref) {
     FHeaderAction(
       icon: const Icon(FLucideIcons.settings),
       semanticsLabel: l10n.navSettingsTooltip,
-      onPress: () => context.push(AppRoutes.settings),
+      onPress: () => context.push(SettingsRoutes.root),
     ),
   ];
 }
@@ -132,7 +132,7 @@ Widget _buildShellActionRow(BuildContext context, WidgetRef ref) {
       _ShellIconButton(
         icon: FLucideIcons.settings,
         tooltip: l10n.navSettingsTooltip,
-        onPress: () => context.push(AppRoutes.settings),
+        onPress: () => context.push(SettingsRoutes.root),
       ),
     ],
   );

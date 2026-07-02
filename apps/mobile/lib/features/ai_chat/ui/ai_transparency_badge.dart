@@ -9,9 +9,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/trace.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'ai_navigation.dart';
@@ -39,7 +39,7 @@ class AiTransparencyIndicator extends ConsumerWidget {
         child: FTappable(
           onPress: () => pushFromAiSurface(
             context,
-            AppRoutes.settingsAiTransparencyDetail(messageId),
+            SettingsRoutes.aiTransparencyDetail(messageId),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../core/shell/settings_route_paths.dart';
 import '../features/execution/composition/execution_route_paths.dart';
 import '../features/finance/composition/finance_route_paths.dart';
 import '../features/health/composition/health_route_paths.dart';
@@ -76,7 +77,7 @@ abstract final class AppRoutes {
   static const executionCommitmentDetail = ExecutionRoutes.commitmentDetail;
 
   // ── Global meta (not a tab) ────────────────────────────────────────────
-  static const settings = '/settings';
+  static const settings = SettingsRoutes.root;
 
   // ── Activity sub-flows (things that happen) ────────────────────────────
   static const activityExpenses = FinanceRoutes.activityExpenses;
@@ -113,39 +114,30 @@ abstract final class AppRoutes {
   static const planWheel = FinanceRoutes.planWheel;
 
   // ── Settings sub-flows ─────────────────────────────────────────────────
-  static const settingsDevices = '/settings/devices';
-  static const settingsFxRates = '/settings/fx-rates';
-  static const settingsBackup = '/settings/backup';
-  static const settingsNotifications = '/settings/notifications';
-  static const settingsLogs = '/settings/logs';
-  static const settingsPerformance = '/settings/performance';
-  static const settingsSync = '/settings/sync';
-  static const settingsAiTransparency = '/settings/ai-transparency';
-  // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
-  // under Settings as part of the AI audit surface.
-  static const settingsAiHistory = '/settings/ai-history';
-  // §5.10.5 — user-facing privacy posture for provider-direct AI requests.
-  static const settingsAiPrivacy = '/settings/ai-privacy';
-  // Bring-your-own LLM key for the on-device AI runtime.
-  static const settingsAiLlm = '/settings/ai-llm';
-  // Investment preferences — risk appetite SSOT + advanced
-  // concentration thresholds.
-  static const settingsRiskThresholds = '/settings/risk-thresholds';
-  // Stress-test parameters for the FIRE engine.
-  static const settingsStressTest = '/settings/stress-test';
-  // Monthly-expense window / override editor (powers FIRE projection).
-  static const settingsMonthlyExpense = '/settings/monthly-expense';
-  // LifeOS domain console — per-user opt-in toggles + per-domain ops.
-  static const settingsDomains = '/settings/domains';
-  static const settingsDomainsHealth = '/settings/domains/health';
-  static const settingsDomainsKnowledge = '/settings/domains/knowledge';
-  static const settingsDomainsExecution = '/settings/domains/execution';
+  static const settingsDevices = SettingsRoutes.devices;
+  static const settingsFxRates = SettingsRoutes.fxRates;
+  static const settingsBackup = SettingsRoutes.backup;
+  static const settingsNotifications = SettingsRoutes.notifications;
+  static const settingsLogs = SettingsRoutes.logs;
+  static const settingsPerformance = SettingsRoutes.performance;
+  static const settingsSync = SettingsRoutes.sync;
+  static const settingsAiTransparency = SettingsRoutes.aiTransparency;
+  static const settingsAiHistory = SettingsRoutes.aiHistory;
+  static const settingsAiPrivacy = SettingsRoutes.aiPrivacy;
+  static const settingsAiLlm = SettingsRoutes.aiLlm;
+  static const settingsRiskThresholds = SettingsRoutes.riskThresholds;
+  static const settingsStressTest = SettingsRoutes.stressTest;
+  static const settingsMonthlyExpense = SettingsRoutes.monthlyExpense;
+  static const settingsDomains = SettingsRoutes.domains;
+  static const settingsDomainsHealth = SettingsRoutes.domainsHealth;
+  static const settingsDomainsKnowledge = SettingsRoutes.domainsKnowledge;
+  static const settingsDomainsExecution = SettingsRoutes.domainsExecution;
   // Target allocation editor is reachable via the rebalance Custom
   // chip; settings overview links to it through a deep link for
   // discoverability.
   static const rebalanceTargetAllocation = '/rebalance/target-allocation';
   static String settingsAiTransparencyDetail(String requestId) =>
-      '/settings/ai-transparency/${Uri.encodeComponent(requestId)}';
+      SettingsRoutes.aiTransparencyDetail(requestId);
 
   // ── Detail-page builders ───────────────────────────────────────────────
   static String wealthAsset(String id) => FinanceRoutes.wealthAsset(id);
@@ -177,27 +169,27 @@ abstract final class AppRouteNames {
   static const login = 'login';
   static const onboarding = 'onboarding';
   static const home = FinanceRouteNames.home;
-  static const settings = 'settings';
-  static const devices = 'devices';
-  static const fxRates = 'fx-rates';
-  static const backup = 'backup';
-  static const notifications = 'notifications';
-  static const logs = 'logs';
-  static const performance = 'performance';
-  static const sync = 'sync';
-  static const aiTransparency = 'ai-transparency';
-  static const aiTransparencyDetail = 'ai-transparency-detail';
-  static const aiHistory = 'ai-history';
-  static const aiPrivacy = 'ai-privacy';
-  static const aiLlm = 'ai-llm';
-  static const aiModels = 'ai-models';
-  static const riskThresholds = 'risk-thresholds';
-  static const stressTest = 'stress-test';
-  static const monthlyExpense = 'monthly-expense';
-  static const domains = 'domains';
-  static const domainsHealth = 'domains-health';
-  static const domainsKnowledge = 'domains-knowledge';
-  static const domainsExecution = 'domains-execution';
+  static const settings = SettingsRouteNames.root;
+  static const devices = SettingsRouteNames.devices;
+  static const fxRates = SettingsRouteNames.fxRates;
+  static const backup = SettingsRouteNames.backup;
+  static const notifications = SettingsRouteNames.notifications;
+  static const logs = SettingsRouteNames.logs;
+  static const performance = SettingsRouteNames.performance;
+  static const sync = SettingsRouteNames.sync;
+  static const aiTransparency = SettingsRouteNames.aiTransparency;
+  static const aiTransparencyDetail = SettingsRouteNames.aiTransparencyDetail;
+  static const aiHistory = SettingsRouteNames.aiHistory;
+  static const aiPrivacy = SettingsRouteNames.aiPrivacy;
+  static const aiLlm = SettingsRouteNames.aiLlm;
+  static const aiModels = SettingsRouteNames.aiModels;
+  static const riskThresholds = SettingsRouteNames.riskThresholds;
+  static const stressTest = SettingsRouteNames.stressTest;
+  static const monthlyExpense = SettingsRouteNames.monthlyExpense;
+  static const domains = SettingsRouteNames.domains;
+  static const domainsHealth = SettingsRouteNames.domainsHealth;
+  static const domainsKnowledge = SettingsRouteNames.domainsKnowledge;
+  static const domainsExecution = SettingsRouteNames.domainsExecution;
 
   // ── Wealth ──────────────────────────────────────────────────────────────
   static const wealth = FinanceRouteNames.wealth;

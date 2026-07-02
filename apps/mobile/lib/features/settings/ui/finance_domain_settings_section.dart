@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
@@ -43,15 +43,15 @@ class FinanceDomainSettingsSection extends ConsumerWidget {
           ),
           const AppGradientDivider(),
           _MonthlyExpenseLink(
-            onTap: () => context.goNamed(AppRouteNames.monthlyExpense),
+            onTap: () => context.goNamed(SettingsRouteNames.monthlyExpense),
           ),
           const AppGradientDivider(),
           _RiskThresholdsLink(
-            onTap: () => context.goNamed(AppRouteNames.riskThresholds),
+            onTap: () => context.goNamed(SettingsRouteNames.riskThresholds),
           ),
           const AppGradientDivider(),
           _StressTestLink(
-            onTap: () => context.goNamed(AppRouteNames.stressTest),
+            onTap: () => context.goNamed(SettingsRouteNames.stressTest),
           ),
         ],
       ),
@@ -138,7 +138,7 @@ class _NumbersAndMoneyRows extends ConsumerWidget {
           icon: FLucideIcons.refreshCw,
           label: l10n.settingsFxRatesTitle,
           subtitle: l10n.settingsFxRatesSubtitle,
-          onTap: () => context.goNamed(AppRouteNames.fxRates),
+          onTap: () => context.goNamed(SettingsRouteNames.fxRates),
         ),
       ],
     );

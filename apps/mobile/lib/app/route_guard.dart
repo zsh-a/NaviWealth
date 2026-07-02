@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/auth/providers.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../core/shell/settings_route_paths.dart';
 import 'route_paths.dart';
 
 /// Decision returned by a [RouteGuard]. `null` means "let the requested route
@@ -84,7 +85,7 @@ class DomainOptInRouteGuard implements RouteGuard {
       state.uri.path,
     );
     if (owner == null || optIns.contains(owner)) return null;
-    return AppRoutes.settingsDomains;
+    return SettingsRoutes.domains;
   }
 }
 

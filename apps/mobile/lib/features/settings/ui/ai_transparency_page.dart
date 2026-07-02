@@ -18,7 +18,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/ai_trace_capture_preference.dart';
 import '../../../core/ai/trace/providers.dart';
@@ -26,6 +25,7 @@ import '../../../core/ai/visual/visual.dart';
 import '../../../core/ai/write/drift_undo_stack.dart';
 import '../../../core/ai/write/persisted_undo_dispatcher.dart';
 import '../../../core/ai/write/providers.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'ai_trace_waterfall.dart';
@@ -556,7 +556,7 @@ class _TraceRow extends StatelessWidget {
     final isError = trace.terminalReason != TerminalReason.done;
     return FTappable(
       onPress: () => context.goNamed(
-        AppRouteNames.aiTransparencyDetail,
+        SettingsRouteNames.aiTransparencyDetail,
         pathParameters: <String, String>{'requestId': trace.requestId},
       ),
       child: Padding(

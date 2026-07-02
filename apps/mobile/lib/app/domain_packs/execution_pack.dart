@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../../core/ai/agents/agent.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
+import '../../core/shell/settings_route_paths.dart';
 import '../../features/execution/agents/providers.dart'
     as execution_agent_providers;
 import '../../features/execution/composition/execution_command_palette.dart';
@@ -50,8 +51,8 @@ final DomainPack kExecutionPack = DomainPack(
     icon: FLucideIcons.listTodo,
     label: 'ExecutionOS',
     subtitle: _executionSettingsSubtitle,
-    routePath: AppRoutes.settingsDomainsExecution,
-    routeName: AppRouteNames.domainsExecution,
+    routePath: SettingsRoutes.domainsExecution,
+    routeName: SettingsRouteNames.domainsExecution,
     page: const ExecutionDomainSettingsPage(),
   ),
 );

@@ -9,9 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../execution/composition/execution_route_paths.dart';
 import 'inline_setting_row.dart';
 import 'settings_page_frame.dart';
 
@@ -35,22 +35,21 @@ class ExecutionDomainSettingsPage extends ConsumerWidget {
                   icon: FLucideIcons.listTodo,
                   label: 'ExecutionOS · Today',
                   subtitle: l10n.settingsDomainsExecutionTodaySubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.executionToday),
+                  onTap: () => context.goNamed(ExecutionRouteNames.today),
                 ),
                 const AppGradientDivider(),
                 InlineLinkRow(
                   icon: FLucideIcons.handshake,
                   label: 'ExecutionOS · Commitments',
                   subtitle: l10n.executionCommandCommitments,
-                  onTap: () =>
-                      context.goNamed(AppRouteNames.executionCommitments),
+                  onTap: () => context.goNamed(ExecutionRouteNames.commitments),
                 ),
                 const AppGradientDivider(),
                 InlineLinkRow(
                   icon: FLucideIcons.clipboardCheck,
                   label: 'ExecutionOS · Review',
                   subtitle: l10n.executionCommandReview,
-                  onTap: () => context.goNamed(AppRouteNames.executionReview),
+                  onTap: () => context.goNamed(ExecutionRouteNames.review),
                 ),
               ],
             ),

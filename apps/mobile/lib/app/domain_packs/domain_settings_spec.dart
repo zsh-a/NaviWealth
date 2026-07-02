@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/lifeos/domain_pack.dart';
-import '../route_paths.dart';
+import '../../core/shell/settings_route_paths.dart';
 
 DomainSettingsSpec domainSettingsSpec({
   required IconData icon,
@@ -25,12 +25,12 @@ DomainSettingsSpec domainSettingsSpec({
 }
 
 String _settingsChildPath(String absolutePath) {
-  const prefix = '${AppRoutes.settings}/';
+  const prefix = '${SettingsRoutes.root}/';
   if (!absolutePath.startsWith(prefix)) {
     throw ArgumentError.value(
       absolutePath,
       'absolutePath',
-      'must be under ${AppRoutes.settings}',
+      'must be under ${SettingsRoutes.root}',
     );
   }
   return absolutePath.substring(prefix.length);
