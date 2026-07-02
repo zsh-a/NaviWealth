@@ -8,12 +8,12 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';

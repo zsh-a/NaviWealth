@@ -21,10 +21,10 @@
 ///   merge in `_inbox_triage_support.persistEnvelope`).
 library;
 
-import '../../../app/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';

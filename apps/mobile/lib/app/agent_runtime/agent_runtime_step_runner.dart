@@ -3,9 +3,13 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
+import '../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_tool_dispatcher.dart';
 import 'agent_runtime_tool_host.dart';
+
+export '../../core/ai/runtime/agent_runtime/agent_runtime_step_result.dart'
+    show AgentRuntimeNativeStepRunResult;
 
 final agentRuntimeNativeStepRunnerProvider =
     Provider<AgentRuntimeNativeStepRunner>((ref) {
@@ -15,7 +19,7 @@ final agentRuntimeNativeStepRunnerProvider =
       );
     });
 
-class AgentRuntimeNativeStepRunner {
+class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
   AgentRuntimeNativeStepRunner({
     required AgentRuntimeNativeBridge bridge,
     required AgentRuntimeToolHost toolHost,
@@ -59,6 +63,7 @@ class AgentRuntimeNativeStepRunner {
     )).terminalStep;
   }
 
+  @override
   Future<AgentRuntimeNativeStepRunResult> runUntilTerminalWithTrace({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
@@ -174,33 +179,6 @@ class AgentRuntimeNativeStepRunner {
       ),
     )).response;
   }
-}
-
-class AgentRuntimeNativeStepRunResult {
-  const AgentRuntimeNativeStepRunResult({
-    required this.terminalStep,
-    this.steps = const <Map<String, Object?>>[],
-    this.toolResponses = const <Map<String, Object?>>[],
-    this.nativeTraceEvents = const <Map<String, Object?>>[],
-    this.dispatchedToolCount = 0,
-    this.budgetExhausted = false,
-  });
-
-  final Map<String, Object?> terminalStep;
-  final List<Map<String, Object?>> steps;
-  final List<Map<String, Object?>> toolResponses;
-  final List<Map<String, Object?>> nativeTraceEvents;
-  final int dispatchedToolCount;
-  final bool budgetExhausted;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'terminal_step': terminalStep,
-    'steps': steps,
-    'tool_responses': toolResponses,
-    'native_trace_events': nativeTraceEvents,
-    'dispatched_tool_count': dispatchedToolCount,
-    'budget_exhausted': budgetExhausted,
-  };
 }
 
 List<Map<String, Object?>> _nativeTraceEvents(
