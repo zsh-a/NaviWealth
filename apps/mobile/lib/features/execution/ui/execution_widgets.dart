@@ -7,6 +7,9 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../domain/execution_models.dart';
 
 part 'execution_card_widgets.dart';
+part 'execution_action_card.dart';
+part 'execution_lifecycle_cards.dart';
+part 'execution_progress_card.dart';
 part 'execution_overview_widgets.dart';
 
 String executionDate(BuildContext context, DateTime date) {
