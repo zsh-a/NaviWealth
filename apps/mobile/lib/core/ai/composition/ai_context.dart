@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../../core/auth/domain_scope.dart';
+import '../../auth/domain_scope.dart';
 
 /// Ambient AI context — the single fact source for "where is the user
 /// right now" used by every AI surface.

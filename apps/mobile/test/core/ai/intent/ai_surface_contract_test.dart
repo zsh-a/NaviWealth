@@ -58,15 +58,13 @@ void main() {
           'trigger surfaces must go through AiIntentInvocation.',
     );
     expect(
-      showAiSheetCallSites.toSet(),
-      <String>{
-        'lib/features/ai_chat/ui/ask_ai.dart:51',
-        'lib/features/ai_chat/ui/ask_ai.dart:55',
-      },
+      showAiSheetCallSites.map(_filePathOnly).toSet(),
+      <String>{'lib/features/ai_chat/composition/ai_chat_surface.dart'},
       reason:
           'showAiSheet is the renderer, not the public trigger seam. External '
           'surfaces should call askAi(), which constructs AiIntentInvocation.',
     );
+    expect(showAiSheetCallSites, hasLength(1));
     expect(
       directAiChatPageConstructions.toSet(),
       <String>{'lib/app/router_builder.dart:195'},
@@ -110,7 +108,7 @@ void main() {
     expect(globalPalette, contains('commandPaletteOpenAi'));
 
     final contextualCapsule = File(
-      'lib/features/ai_chat/ui/ai_object_capsule.dart',
+      'lib/core/ai/visual/ai_object_capsule.dart',
     ).readAsStringSync();
     expect(contextualCapsule, contains('class AiObjectCapsule'));
     expect(contextualCapsule, contains('askAi('));
@@ -171,3 +169,5 @@ String _stripLineComment(String line) {
   final index = line.indexOf('//');
   return index == -1 ? line : line.substring(0, index);
 }
+
+String _filePathOnly(String location) => location.split(':').first;

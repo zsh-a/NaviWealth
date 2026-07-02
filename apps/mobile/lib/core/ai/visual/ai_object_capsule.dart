@@ -14,10 +14,11 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/ai/intent/intent.dart';
-import '../../../core/ai/visual/visual.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'ask_ai.dart';
+import '../composition/ask_ai.dart';
+import '../intent/intent.dart';
+import 'ai_pill.dart';
+import 'ai_sparkle.dart';
 
 class AiObjectCapsule extends ConsumerWidget {
   const AiObjectCapsule({

@@ -10,6 +10,7 @@ library;
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
 import 'package:naviwealth/features/finance/assets/data/deposit_maturity_insight_provider.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -26,7 +27,6 @@ import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/trace/trace.dart';
-import '../../ai_chat/state/ai_context.dart';
 import '../ai_tools/query_plan/finance_query_plan.dart';
 import '../ai_tools/query_plan/nl_to_query_plan.dart';
 

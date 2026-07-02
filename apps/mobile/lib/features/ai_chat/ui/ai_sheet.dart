@@ -29,6 +29,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/visual/visual.dart';
@@ -38,7 +39,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/chat_turn_metadata.dart';
-import '../state/ai_context.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
 import 'ai_navigation.dart';

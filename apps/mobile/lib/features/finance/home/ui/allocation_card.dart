@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
+import 'package:naviwealth/core/ai/visual/ai_hover_overlay.dart';
+import 'package:naviwealth/core/ai/visual/ai_object_capsule.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/ai_chat/ui/ai_hover_overlay.dart';
-import 'package:naviwealth/features/ai_chat/ui/ai_object_capsule.dart';
 import 'package:naviwealth/features/finance/liabilities/ui/liability_l10n.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/visual/visual.dart';
@@ -12,7 +13,6 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
-import '../state/ai_context.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
 import 'ai_action_cards_rail.dart';

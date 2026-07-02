@@ -1,13 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
+import 'package:naviwealth/core/ai/visual/ai_hover_overlay.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/ai_chat/ui/ai_hover_overlay.dart';
-import 'package:naviwealth/features/ai_chat/ui/ask_ai.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/fire_providers.dart';

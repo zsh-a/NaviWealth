@@ -1,10 +1,9 @@
 /// `askAi` — the single API every UI surface uses to invoke the AI.
 ///
-/// This is the layer above [showAiSheet]: it auto-fills the bits that
-/// should not vary by call site (domain from current route, source
-/// from current path, default capabilities) so feature code can express
-/// only what's domain-specific to it — an intent, an object, maybe a
-/// prefill.
+/// This core layer auto-fills the bits that should not vary by call site
+/// (domain from current route, source from current path, default
+/// capabilities) and dispatches to the app-provided [askAiSurfaceProvider].
+/// The concrete chat sheet stays in `features/ai_chat/`.
 ///
 /// Two modes, picked by whether [intent] is supplied:
 ///
@@ -24,10 +23,31 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/ai/intent/ai_intent_invocation.dart';
-import '../../../core/auth/domain_scope.dart';
-import '../state/ai_context.dart';
-import 'ai_sheet.dart';
+import '../../auth/domain_scope.dart';
+import '../intent/ai_intent_invocation.dart';
+import 'ai_context.dart';
+
+typedef AskAiSurface =
+    Future<void> Function(
+      BuildContext context, {
+      AiIntentInvocation? invocation,
+      String? objectLabel,
+      String? prefill,
+    });
+
+Future<void> _noopAskAiSurface(
+  BuildContext context, {
+  AiIntentInvocation? invocation,
+  String? objectLabel,
+  String? prefill,
+}) async {}
+
+/// App-provided AI surface opener.
+///
+/// The default is a no-op so feature widgets can be rendered in isolation
+/// without importing `features/ai_chat/`. Production installs the chat sheet
+/// implementation from the app composition root.
+final askAiSurfaceProvider = Provider<AskAiSurface>((ref) => _noopAskAiSurface);
 
 /// Open the AI surface. Pass [intent] for the object-semantic mode;
 /// omit it (and optionally pass [prefill]) for a conversation.
@@ -47,12 +67,13 @@ Future<void> askAi(
   String? source,
   Set<AiCapability>? capabilities,
 }) {
+  final openSurface = ref.read(askAiSurfaceProvider);
   if (intent == null) {
-    return showAiSheet(context, prefill: prefill);
+    return openSurface(context, prefill: prefill);
   }
   final aiCtx = ref.read(aiContextProvider);
   final domain = (aiCtx.domain ?? DomainScope.finance).wire;
-  return showAiSheet(
+  return openSurface(
     context,
     invocation: AiIntentInvocation(
       source: source ?? aiCtx.path,

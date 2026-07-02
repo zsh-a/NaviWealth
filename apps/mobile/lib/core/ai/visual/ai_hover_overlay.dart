@@ -17,7 +17,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
-import '../../../core/ai/visual/ai_motion.dart';
+import 'ai_motion.dart';
 
 class AiHoverOverlay extends StatefulWidget {
   const AiHoverOverlay({

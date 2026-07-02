@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/ai/composition/ai_context.dart';
+import '../core/ai/composition/ask_ai.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
-import '../features/ai_chat/state/ai_context.dart';
-import '../features/ai_chat/ui/ask_ai.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
 import 'share_intent_service.dart';

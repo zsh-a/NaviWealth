@@ -11,13 +11,13 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/ai/composition/ask_ai.dart';
 import '../core/shell/domain_shell.dart';
 import '../core/shell/domain_switcher.dart';
 import '../core/shell/settings_route_paths.dart';
 import '../core/shell/shell_chrome.dart';
 import '../core/shortcuts/shortcut_intents.dart';
 import '../design_system/design_system.dart';
-import '../features/ai_chat/ui/ask_ai.dart';
 import '../l10n/gen/app_localizations.dart';
 
 List<Override> appShellChromeOverrides() {

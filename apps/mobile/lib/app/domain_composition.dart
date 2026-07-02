@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/misc.dart';
 
 import '../core/ai/agents/agent.dart';
 import '../core/ai/agents/agent_registry.dart';
+import '../core/ai/composition/ask_ai.dart';
 import '../core/ai/composition/batch_proposal_undo.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/ai/composition/device_tools_provider.dart';
@@ -34,8 +35,8 @@ import '../core/shell/domain_shell.dart';
 import '../core/shell/domain_tabs_shell.dart';
 import '../core/shell/entity_route_resolver.dart';
 import '../design_system/preferences/theme_preferences.dart';
+import '../features/ai_chat/composition/ai_chat_surface.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
-import '../features/ai_chat/ui/ask_ai.dart';
 import '../features/finance/composition/finance_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
@@ -47,6 +48,7 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
   return [
     ...appShellChromeOverrides(),
     ...appShareIntentNavigationOverrides(),
+    ...aiChatSurfaceOverrides(),
     domainTabsCenterActionProvider.overrideWith(
       (ref) =>
           (context, widgetRef) => askAi(context, widgetRef),

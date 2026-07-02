@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
-import 'package:naviwealth/features/ai_chat/ui/ai_object_capsule.dart';
+import 'package:naviwealth/core/ai/visual/ai_object_capsule.dart';
 
 /// Thin wrapper around [AiObjectCapsule] that hides the pill when the
 /// device LLM runtime is unavailable (web builds, no profile, etc.).

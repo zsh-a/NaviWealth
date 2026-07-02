@@ -2,10 +2,10 @@
 /// carries through to the runtime.
 ///
 /// The supported entry point is the `askAi()` helper
-/// (`features/ai_chat/ui/ask_ai.dart`); it builds this invocation,
+/// (`core/ai/composition/ask_ai.dart`); it builds this invocation,
 /// fills `domain` from `aiContextProvider`, and dispatches to
-/// `showAiSheet`. Capsules, command palette, home insight taps, future
-/// voice / drag-to-AI surfaces all converge there. Direct
+/// the app-provided AI surface. Capsules, command palette, home insight taps,
+/// future voice / drag-to-AI surfaces all converge there. Direct
 /// `Navigator.push(ChatPage(...))` style is forbidden by the §5.8
 /// hard-constraint checklist.
 ///
