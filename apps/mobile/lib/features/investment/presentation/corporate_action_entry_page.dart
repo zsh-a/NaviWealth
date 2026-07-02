@@ -8,7 +8,7 @@ import '../../../core/format/formatters.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/forms.dart';
+import '../../finance/shared/forms/forms.dart';
 import '../domain/corporate_action_preview.dart';
 import '../domain/cost_basis/fifo_strategy.dart';
 import '../domain/cost_basis_engine.dart';

@@ -3,7 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 
 import '../../../design_system/design_system.dart';
-import '../../shared/account_color.dart';
+import '../../finance/shared/account_color.dart';
 
 /// UI-side visual lookup for expense [Account]s.
 ///

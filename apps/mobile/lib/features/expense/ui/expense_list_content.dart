@@ -8,7 +8,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/account_l10n.dart';
+import '../../finance/shared/account_l10n.dart';
 import 'expense_category_visuals.dart';
 import 'expense_list_models.dart';
 

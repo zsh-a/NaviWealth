@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
-import 'package:naviwealth/features/shared/account_tree_picker.dart';
+import 'package:naviwealth/features/finance/shared/account_tree_picker.dart';
 
 import 'app_harness.dart';
 

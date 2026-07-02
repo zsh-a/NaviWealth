@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/shared/account_color.dart';
+import 'package:naviwealth/features/finance/shared/account_color.dart';
 
 void main() {
   group('parseAccountColor', () {

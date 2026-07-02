@@ -6,7 +6,7 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/symbol_field.dart';
+import '../../finance/shared/forms/symbol_field.dart';
 import '../data/providers.dart';
 import '../domain/approved_underlying.dart';
 

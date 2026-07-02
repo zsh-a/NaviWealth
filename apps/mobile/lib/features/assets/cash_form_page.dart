@@ -18,8 +18,8 @@ import '../../core/haptics/haptics.dart';
 import '../../core/logging/app_logger.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../shared/account_l10n.dart';
-import '../shared/forms/forms.dart';
+import '../finance/shared/account_l10n.dart';
+import '../finance/shared/forms/forms.dart';
 
 /// Create / edit form for a cash balance asset.
 class CashFormPage extends ConsumerStatefulWidget {

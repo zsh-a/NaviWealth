@@ -12,7 +12,7 @@ import '../../../design_system/design_system.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/symbol_field.dart';
+import '../../finance/shared/forms/symbol_field.dart';
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';
 

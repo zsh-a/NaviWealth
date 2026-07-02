@@ -18,7 +18,7 @@ import 'package:naviwealth/features/accounts/transfer_form_page.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/shared/account_tree_picker.dart';
+import 'package:naviwealth/features/finance/shared/account_tree_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

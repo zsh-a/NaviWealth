@@ -17,8 +17,8 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../finance/data/repositories/journal_entry_providers.dart';
 import '../../finance/data/repositories/providers.dart';
-import '../../shared/account_l10n.dart';
-import '../../shared/entry_kind_labels.dart';
+import '../../finance/shared/account_l10n.dart';
+import '../../finance/shared/entry_kind_labels.dart';
 import '../data/activity_entry_insight_client.dart';
 
 /// Full-page detail surface for one journal entry. Pushed when the user

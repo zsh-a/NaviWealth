@@ -11,7 +11,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/forms.dart';
+import '../../finance/shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';

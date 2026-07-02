@@ -80,7 +80,7 @@ void main() {
     _expectNoMatches(
       _dartFiles(Directory('${appRoot.path}/lib/features')).where(
         (file) => !file.path.endsWith(
-          '/features/shared/forms/manual_security_sheet.dart',
+          '/features/finance/shared/forms/manual_security_sheet.dart',
         ),
       ),
       RegExp(r'showFDialog|FDialog\.raw|FDialog\('),
@@ -114,7 +114,7 @@ void main() {
           Directory('${appRoot.path}/lib/features/finance'),
           Directory('${appRoot.path}/lib/features/ingest'),
           Directory('${appRoot.path}/lib/features/investment'),
-          Directory('${appRoot.path}/lib/features/shared'),
+          Directory('${appRoot.path}/lib/features/finance/shared'),
           Directory('${appRoot.path}/lib/features/auth'),
         ].expand(_dartFiles),
       ].where((file) => file.existsSync()),

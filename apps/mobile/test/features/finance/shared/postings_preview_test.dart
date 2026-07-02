@@ -8,7 +8,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
-import 'package:naviwealth/features/shared/postings_preview.dart';
+import 'package:naviwealth/features/finance/shared/postings_preview.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 const _hlc = Hlc(wallMillis: 1700000000000, counter: 0, nodeId: 'dev');

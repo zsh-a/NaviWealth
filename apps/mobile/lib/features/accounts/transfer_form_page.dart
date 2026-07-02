@@ -17,9 +17,9 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../shared/account_tree_picker.dart';
-import '../shared/forms/forms.dart';
-import '../shared/postings_preview.dart';
+import '../finance/shared/account_tree_picker.dart';
+import '../finance/shared/forms/forms.dart';
+import '../finance/shared/postings_preview.dart';
 
 /// Records a transfer between two of the user's asset / liability
 /// accounts using the [JournalEntryRepository] / [JournalEntryBuilders]

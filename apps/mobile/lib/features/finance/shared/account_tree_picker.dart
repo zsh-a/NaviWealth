@@ -5,8 +5,8 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../design_system/design_system.dart';
-import '../accounts/account_icon_catalog.dart';
 import 'account_color.dart';
+import 'account_icon_catalog.dart';
 import 'account_l10n.dart';
 
 /// Drop-in replacement for the legacy flat

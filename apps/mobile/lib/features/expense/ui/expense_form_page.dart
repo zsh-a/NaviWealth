@@ -20,8 +20,8 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
-import '../../shared/account_tree_picker.dart';
-import '../../shared/forms/forms.dart';
+import '../../finance/shared/account_tree_picker.dart';
+import '../../finance/shared/forms/forms.dart';
 
 /// Quick-entry page for a single expense. Shared between create and
 /// edit flows — when [expenseId] is non-null we hydrate the form from

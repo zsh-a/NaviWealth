@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/accounts/account_icon_catalog.dart';
+import 'package:naviwealth/features/finance/shared/account_icon_catalog.dart';
 
 void main() {
   test('catalogue is non-empty and uniquely keyed', () {

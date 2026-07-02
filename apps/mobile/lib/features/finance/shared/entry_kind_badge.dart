@@ -3,7 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 
 import '../../../design_system/design_system.dart';
-import '../../l10n/gen/app_localizations.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'entry_kind_labels.dart';
 
 /// Pill-shaped badge that surfaces the derived

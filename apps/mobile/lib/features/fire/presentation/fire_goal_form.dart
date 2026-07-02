@@ -7,7 +7,7 @@ import 'package:forui/forui.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/forms.dart';
+import '../../finance/shared/forms/forms.dart';
 import '../data/fire_goal_preferences.dart';
 import '../data/fire_plan_preferences.dart';
 import '../domain/fire_goal.dart';

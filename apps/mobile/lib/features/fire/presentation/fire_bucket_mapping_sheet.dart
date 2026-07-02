@@ -5,9 +5,9 @@ import 'package:forui/forui.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../finance/shared/forms/forms.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../home/domain/dashboard_models.dart';
-import '../../shared/forms/forms.dart';
 import '../data/fire_bucket_rules_preferences.dart';
 import '../domain/fire_bucket.dart';
 

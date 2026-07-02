@@ -7,10 +7,10 @@ import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/asset_search_hit.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/securities_search_service.dart';
-import 'package:naviwealth/features/shared/forms/symbol_field.dart';
+import 'package:naviwealth/features/finance/shared/forms/symbol_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../../../core/persistence/test_database.dart';
+import '../../../../core/persistence/test_database.dart';
 
 class _FakeSearch extends SecuritiesSearchService {
   _FakeSearch(AppDatabase db, {this.onSearch}) : super(db: db);

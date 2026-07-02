@@ -18,7 +18,7 @@ import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/forms.dart';
+import '../../finance/shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/models/lot.dart';
 import '../domain/trade_entry/trade_draft.dart' show TradeDraft, TradeType;

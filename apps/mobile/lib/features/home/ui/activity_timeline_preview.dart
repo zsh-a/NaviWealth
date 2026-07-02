@@ -16,7 +16,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../activity/data/activity_feed_provider.dart';
 import '../../activity/ui/activity_entry_detail_page.dart';
-import '../../shared/account_l10n.dart';
+import '../../finance/shared/account_l10n.dart';
 import 'home_section.dart';
 
 /// Last `kHomeActivityPreviewCount` journal entries, rendered iOS Wallet

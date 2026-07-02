@@ -17,7 +17,7 @@ import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../shared/forms/forms.dart';
+import '../finance/shared/forms/forms.dart';
 
 /// Create / edit form for term + demand bank deposits.
 class DepositFormPage extends ConsumerStatefulWidget {
