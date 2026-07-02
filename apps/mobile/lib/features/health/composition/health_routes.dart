@@ -18,6 +18,7 @@ import '../ui/health_plan_page.dart' deferred as plan_lib;
 import '../ui/health_today_page.dart' deferred as today_lib;
 import '../ui/health_trend_page.dart' deferred as trend_lib;
 import 'health_domain_shell.dart';
+import 'health_route_paths.dart';
 
 /// HealthOS `StatefulShellRoute`: 3 branches (Today / Trend / Plan)
 /// backed by [DomainTabsShell]. HealthOS command/search entries are
@@ -32,7 +33,7 @@ StatefulShellRoute healthShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.healthToday,
+            path: HealthRoutes.today,
             name: AppRouteNames.healthToday,
             builder: (context, state) => DeferredRoute(
               load: today_lib.loadLibrary,
@@ -44,7 +45,7 @@ StatefulShellRoute healthShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.healthTrend,
+            path: HealthRoutes.trend,
             name: AppRouteNames.healthTrend,
             builder: (context, state) {
               final query = state.uri.queryParameters;
@@ -59,7 +60,7 @@ StatefulShellRoute healthShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.healthPlan,
+            path: HealthRoutes.plan,
             name: AppRouteNames.healthPlan,
             builder: (context, state) => DeferredRoute(
               load: plan_lib.loadLibrary,

@@ -1,9 +1,9 @@
 import 'package:forui/forui.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/shell/domain_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'execution_route_paths.dart';
 
 DomainShellSpec executionDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
@@ -16,19 +16,19 @@ DomainShellSpec executionDomainShell(AppLocalizations l10n) {
         icon: FLucideIcons.sun,
         selectedIcon: FLucideIcons.sun,
         label: l10n.executionTabToday,
-        routePath: AppRoutes.executionToday,
+        routePath: ExecutionRoutes.today,
       ),
       DomainShellTab(
         icon: FLucideIcons.target,
         selectedIcon: FLucideIcons.target,
         label: l10n.executionTabCommitments,
-        routePath: AppRoutes.executionCommitments,
+        routePath: ExecutionRoutes.commitments,
       ),
       DomainShellTab(
         icon: FLucideIcons.clipboardCheck,
         selectedIcon: FLucideIcons.clipboardCheck,
         label: l10n.executionTabReview,
-        routePath: AppRoutes.executionReview,
+        routePath: ExecutionRoutes.review,
       ),
     ],
   );

@@ -8,10 +8,10 @@ library;
 
 import 'package:forui/forui.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/shell/domain_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'health_route_paths.dart';
 
 /// Build the HealthOS shell spec.
 ///
@@ -28,19 +28,19 @@ DomainShellSpec healthDomainShell(AppLocalizations l10n) {
         icon: FLucideIcons.sun,
         selectedIcon: FLucideIcons.sun,
         label: l10n.healthTabToday,
-        routePath: AppRoutes.healthToday,
+        routePath: HealthRoutes.today,
       ),
       DomainShellTab(
         icon: FLucideIcons.trendingUp,
         selectedIcon: FLucideIcons.trendingUp,
         label: l10n.healthTabTrend,
-        routePath: AppRoutes.healthTrend,
+        routePath: HealthRoutes.trend,
       ),
       DomainShellTab(
         icon: FLucideIcons.lightbulb,
         selectedIcon: FLucideIcons.lightbulb,
         label: l10n.healthTabPlan,
-        routePath: AppRoutes.healthPlan,
+        routePath: HealthRoutes.plan,
       ),
     ],
   );

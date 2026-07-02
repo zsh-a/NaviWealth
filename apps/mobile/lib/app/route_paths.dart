@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../features/execution/composition/execution_route_paths.dart';
+import '../features/health/composition/health_route_paths.dart';
+import '../features/knowledge/composition/knowledge_route_paths.dart';
 
 /// Canonical route paths for NaviWealth's information architecture.
 ///
@@ -49,27 +52,27 @@ abstract final class AppRoutes {
 
   // ── HealthOS (Phase D-2.3) — gated by domain opt-in (Health OFF by
   // default). Tabs mirror healthos-domain.md §5: Today / Trend / Plan.
-  static const healthToday = '/health';
-  static const healthTrend = '/health/trend';
-  static const healthPlan = '/health/plan';
+  static const healthToday = HealthRoutes.today;
+  static const healthTrend = HealthRoutes.trend;
+  static const healthPlan = HealthRoutes.plan;
 
   // ── KnowledgeOS (`docs/domains/knowledgeos-domain.md` §5) — gated by domain
   // opt-in. 3 tabs: Inbox / Library / Review.
-  static const knowledgeInbox = '/knowledge';
-  static const knowledgeLibrary = '/knowledge/library';
-  static const knowledgeReview = '/knowledge/review';
+  static const knowledgeInbox = KnowledgeRoutes.inbox;
+  static const knowledgeLibrary = KnowledgeRoutes.library;
+  static const knowledgeReview = KnowledgeRoutes.review;
   // Detail pages live under Library. Decision has its own editable page;
   // the other typed objects (concept / experiment / principle / assumption)
   // share one read-only object page keyed by `:kind`.
-  static const knowledgeDecisionDetail = '/knowledge/library/decision/:id';
-  static const knowledgeObjectDetail = '/knowledge/library/object/:kind/:id';
+  static const knowledgeDecisionDetail = KnowledgeRoutes.decisionDetail;
+  static const knowledgeObjectDetail = KnowledgeRoutes.objectDetail;
 
   // ── ExecutionOS — optional personal action / commitment loop.
-  static const executionToday = '/execution';
-  static const executionCommitments = '/execution/commitments';
-  static const executionReview = '/execution/review';
-  static const executionActionDetail = '/execution/action/:id';
-  static const executionCommitmentDetail = '/execution/commitments/:id';
+  static const executionToday = ExecutionRoutes.today;
+  static const executionCommitments = ExecutionRoutes.commitments;
+  static const executionReview = ExecutionRoutes.review;
+  static const executionActionDetail = ExecutionRoutes.actionDetail;
+  static const executionCommitmentDetail = ExecutionRoutes.commitmentDetail;
 
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = '/settings';
@@ -168,11 +171,10 @@ abstract final class AppRoutes {
   static String tradeForAsset(String id) =>
       '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
 
-  static String executionAction(String id) =>
-      '/execution/action/${Uri.encodeComponent(id)}';
+  static String executionAction(String id) => ExecutionRoutes.action(id);
 
   static String executionCommitment(String id) =>
-      '/execution/commitments/${Uri.encodeComponent(id)}';
+      ExecutionRoutes.commitment(id);
 }
 
 /// Canonical GoRouter route names. Used by tests and named navigation

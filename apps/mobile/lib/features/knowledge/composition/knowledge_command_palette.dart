@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/command_palette/command_palette_entry.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'knowledge_route_paths.dart';
 
 /// KnowledgeOS contributions to the shared Cmd-K command palette.
 ///
@@ -26,7 +26,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
       label: l10n.knowledgeCommandInbox,
       icon: FLucideIcons.inbox,
       keywords: <String>[
-        AppRoutes.knowledgeInbox,
+        KnowledgeRoutes.inbox,
         'knowledge',
         'inbox',
         'capture',
@@ -35,14 +35,14 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
         l10n.knowledgeInboxTitle,
         l10n.knowledgeSegmentNotes,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.knowledgeInbox),
+      run: (BuildContext ctx) => ctx.go(KnowledgeRoutes.inbox),
     ),
     CommandPaletteEntry(
       id: 'nav.knowledge.library',
       label: l10n.knowledgeCommandLibrary,
       icon: FLucideIcons.bookOpen,
       keywords: <String>[
-        AppRoutes.knowledgeLibrary,
+        KnowledgeRoutes.library,
         'knowledge',
         'library',
         'decision',
@@ -52,21 +52,21 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
         l10n.knowledgeSegmentDecisions,
         l10n.knowledgeSegmentConcepts,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.knowledgeLibrary),
+      run: (BuildContext ctx) => ctx.go(KnowledgeRoutes.library),
     ),
     CommandPaletteEntry(
       id: 'nav.knowledge.review',
       label: l10n.knowledgeCommandReview,
       icon: FLucideIcons.scrollText,
       keywords: <String>[
-        AppRoutes.knowledgeReview,
+        KnowledgeRoutes.review,
         'knowledge',
         'review',
         'reflect',
         l10n.knowledgeCommandReview,
         l10n.knowledgeReviewTitle,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.knowledgeReview),
+      run: (BuildContext ctx) => ctx.go(KnowledgeRoutes.review),
     ),
   ];
 }

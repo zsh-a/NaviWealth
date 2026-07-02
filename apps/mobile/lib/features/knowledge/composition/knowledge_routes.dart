@@ -16,6 +16,7 @@ import '../ui/knowledge_library_page.dart';
 import '../ui/knowledge_object_detail_page.dart';
 import '../ui/knowledge_review_page.dart';
 import 'knowledge_domain_shell.dart';
+import 'knowledge_route_paths.dart';
 
 StatefulShellRoute knowledgeShellRoute() {
   return StatefulShellRoute.indexedStack(
@@ -27,7 +28,7 @@ StatefulShellRoute knowledgeShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.knowledgeInbox,
+            path: KnowledgeRoutes.inbox,
             name: AppRouteNames.knowledgeInbox,
             builder: (context, state) => const KnowledgeInboxPage(),
           ),
@@ -36,7 +37,7 @@ StatefulShellRoute knowledgeShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.knowledgeLibrary,
+            path: KnowledgeRoutes.library,
             name: AppRouteNames.knowledgeLibrary,
             builder: (context, state) => const KnowledgeLibraryPage(),
             routes: [
@@ -62,7 +63,7 @@ StatefulShellRoute knowledgeShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.knowledgeReview,
+            path: KnowledgeRoutes.review,
             name: AppRouteNames.knowledgeReview,
             builder: (context, state) => const KnowledgeReviewPage(),
           ),

@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/command_palette/command_palette_entry.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'health_route_paths.dart';
 
 /// HealthOS contributions to the shared Cmd-K command palette.
 ///
@@ -18,7 +18,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
       label: l10n.healthCommandToday,
       icon: FLucideIcons.heart,
       keywords: <String>[
-        AppRoutes.healthToday,
+        HealthRoutes.today,
         'health',
         'today',
         'briefing',
@@ -32,14 +32,14 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
         '简报',
         '同步',
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.healthToday),
+      run: (BuildContext ctx) => ctx.go(HealthRoutes.today),
     ),
     CommandPaletteEntry(
       id: 'nav.health.trend',
       label: l10n.healthCommandTrend,
       icon: FLucideIcons.trendingUp,
       keywords: <String>[
-        AppRoutes.healthTrend,
+        HealthRoutes.trend,
         'health',
         'trend',
         'hrv',
@@ -68,14 +68,14 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
         '步数',
         '训练负荷',
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.healthTrend),
+      run: (BuildContext ctx) => ctx.go(HealthRoutes.trend),
     ),
     CommandPaletteEntry(
       id: 'nav.health.plan',
       label: l10n.healthCommandPlan,
       icon: FLucideIcons.zap,
       keywords: <String>[
-        AppRoutes.healthPlan,
+        HealthRoutes.plan,
         'health',
         'plan',
         'recovery',
@@ -92,7 +92,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
         '训练',
         '休息',
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.healthPlan),
+      run: (BuildContext ctx) => ctx.go(HealthRoutes.plan),
     ),
   ];
 }

@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/execution_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_action_card_controller.dart';
@@ -216,7 +216,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                   commitmentId: commitment.id,
                 ),
                 onOpen: () =>
-                    context.push(AppRoutes.executionCommitment(commitment.id)),
+                    context.push(ExecutionRoutes.commitment(commitment.id)),
               ),
               const SizedBox(height: AppSpacing.s8),
             ],
@@ -241,8 +241,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                       commitments,
                       action.commitmentId,
                     ),
-                onOpen: () =>
-                    context.push(AppRoutes.executionAction(action.id)),
+                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
                 onEdit: () => showExecutionActionSheet(
                   context: context,
                   ref: ref,

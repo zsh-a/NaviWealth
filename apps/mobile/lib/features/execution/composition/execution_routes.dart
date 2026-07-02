@@ -8,6 +8,7 @@ import '../ui/execution_detail_page.dart';
 import '../ui/execution_review_page.dart';
 import '../ui/execution_today_page.dart';
 import 'execution_domain_shell.dart';
+import 'execution_route_paths.dart';
 
 StatefulShellRoute executionShellRoute() {
   return StatefulShellRoute.indexedStack(
@@ -19,7 +20,7 @@ StatefulShellRoute executionShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.executionToday,
+            path: ExecutionRoutes.today,
             name: AppRouteNames.executionToday,
             builder: (context, state) => const ExecutionTodayPage(),
             routes: [
@@ -37,7 +38,7 @@ StatefulShellRoute executionShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.executionCommitments,
+            path: ExecutionRoutes.commitments,
             name: AppRouteNames.executionCommitments,
             builder: (context, state) => const ExecutionCommitmentsPage(),
             routes: [
@@ -55,7 +56,7 @@ StatefulShellRoute executionShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.executionReview,
+            path: ExecutionRoutes.review,
             name: AppRouteNames.executionReview,
             builder: (context, state) => const ExecutionReviewPage(),
           ),

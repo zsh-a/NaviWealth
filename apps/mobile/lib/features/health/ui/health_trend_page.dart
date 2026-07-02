@@ -11,13 +11,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/health_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
@@ -202,7 +202,7 @@ String healthTrendPath({
   if (metricKind != null) query['metric'] = metricKind.wire;
   if (windowDays != 30) query['window'] = windowDays.toString();
   return Uri(
-    path: AppRoutes.healthTrend,
+    path: HealthRoutes.trend,
     queryParameters: query.isEmpty ? null : query,
   ).toString();
 }
