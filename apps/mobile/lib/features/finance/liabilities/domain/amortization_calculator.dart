@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 /// One row in a generated amortization schedule. The shape mirrors
 /// `AmortizationEntry` in the data layer (period index, dates, principal /

@@ -2,9 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/domain/models/amortization_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
 import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
 
 Decimal d(String s) => Decimal.parse(s);

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';

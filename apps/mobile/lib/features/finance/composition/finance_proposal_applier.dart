@@ -13,9 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart'
-    show AccountCategory, AssetType;
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -23,6 +20,9 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart'
+    show AccountCategory, AssetType;
 import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_bucket_rules_preferences.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';

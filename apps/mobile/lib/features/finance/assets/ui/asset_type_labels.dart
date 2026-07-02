@@ -1,4 +1,4 @@
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 String securitiesAssetTypeLabel(AppLocalizations l10n, AssetType t) {

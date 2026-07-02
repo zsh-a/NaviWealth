@@ -4,9 +4,9 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/features/finance/data/domain/expense.dart';
-import 'package:naviwealth/features/finance/data/domain/invariants.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
+import 'package:naviwealth/features/finance/domain/models/expense.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 
 import 'journal_entry_repository.dart';
 import 'providers.dart';

@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/domain/models/amortization_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
 
 /// Roll-up stats for a single [Liability], derived from its persisted
 /// amortization rows + payment history. Held as a value object so the UI can

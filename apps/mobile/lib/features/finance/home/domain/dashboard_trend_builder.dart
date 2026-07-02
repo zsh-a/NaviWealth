@@ -3,10 +3,10 @@ import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
-import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/domain/models/amortization_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 import 'dashboard_granularity.dart';

@@ -10,9 +10,9 @@ import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_spend_mapper.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_summary.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import 'account_repository.dart';
 import 'budget_repository.dart';

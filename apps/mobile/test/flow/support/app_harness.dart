@@ -39,10 +39,10 @@ import 'package:naviwealth/features/finance/assets/physical/data/providers.dart'
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
 import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';

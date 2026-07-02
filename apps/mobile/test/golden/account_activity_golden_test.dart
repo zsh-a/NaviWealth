@@ -11,12 +11,12 @@ import 'package:naviwealth/features/finance/accounts/data/account_balances_provi
 import 'package:naviwealth/features/finance/accounts/domain/account_balances.dart';
 import 'package:naviwealth/features/finance/accounts/ui/accounts_master.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';

@@ -25,7 +25,7 @@ library;
 import 'dart:convert';
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/investment/ai_tools/get_holdings_tool.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 

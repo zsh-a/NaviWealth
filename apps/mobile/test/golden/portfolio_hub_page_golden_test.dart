@@ -8,10 +8,10 @@ import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_prov
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';

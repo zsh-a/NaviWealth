@@ -5,11 +5,11 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 void main() {

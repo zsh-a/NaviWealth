@@ -11,9 +11,9 @@
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 class ListPaymentAccountsTool implements DeviceTool {
   const ListPaymentAccountsTool();

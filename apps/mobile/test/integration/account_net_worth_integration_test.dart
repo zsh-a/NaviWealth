@@ -7,8 +7,8 @@
 // Tagged `integration` so the suite can be split from the unit gate.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 
 import 'support/integration_env.dart';

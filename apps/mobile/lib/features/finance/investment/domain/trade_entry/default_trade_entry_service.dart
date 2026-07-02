@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart'
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart'
     show AssetType;
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';

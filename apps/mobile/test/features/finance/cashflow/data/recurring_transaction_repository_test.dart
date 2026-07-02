@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_repository.dart';
-import 'package:naviwealth/features/finance/data/domain/invariants.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../../../core/sync/_outbox_test_ext.dart';

@@ -6,11 +6,11 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_classifier.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 
 void main() {
   group('CashFlow classifier', () {

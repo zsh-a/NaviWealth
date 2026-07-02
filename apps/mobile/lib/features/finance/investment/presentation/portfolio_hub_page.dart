@@ -16,10 +16,10 @@ import 'package:naviwealth/features/finance/cashflow/data/dividend_center_provid
 import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/providers.dart';

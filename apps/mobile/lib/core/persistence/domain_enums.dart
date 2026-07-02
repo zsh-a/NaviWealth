@@ -1,7 +1,7 @@
 /// Cross-domain enum types used by Drift table definitions in
 /// `core/persistence/`.
 ///
-/// These enums were extracted from `features/finance/data/domain/enums.dart`
+/// These enums were extracted from `features/finance/domain/models/enums.dart`
 /// so that `core/persistence/tables.dart` and `app_database.dart` do not
 /// import from `features/`. The original file re-exports this library for
 /// backward compatibility.

@@ -7,9 +7,9 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_feed_filter_sheet.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 const _hlc = Hlc(wallMillis: 1700000000000, counter: 0, nodeId: 'dev');

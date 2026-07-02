@@ -4,11 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
-import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/invariants.dart';
-import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../../../core/sync/_outbox_test_ext.dart';

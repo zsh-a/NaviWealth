@@ -6,7 +6,7 @@ import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_spend_mapper.dart';
-import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/domain/models/expense.dart';
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',

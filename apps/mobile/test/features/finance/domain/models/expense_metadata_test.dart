@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/finance/data/domain/expense_metadata.dart';
+import 'package:naviwealth/features/finance/domain/models/expense_metadata.dart';
 
 void main() {
   group('ExpenseMetadata', () {

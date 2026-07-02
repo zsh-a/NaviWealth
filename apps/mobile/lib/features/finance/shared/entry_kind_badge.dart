@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
+import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';

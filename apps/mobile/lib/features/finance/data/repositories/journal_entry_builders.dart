@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/features/finance/data/domain/posting.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'journal_entry_repository.dart';
 
 /// Pure construction layer that turns a high-level economic

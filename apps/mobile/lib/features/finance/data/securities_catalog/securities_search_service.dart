@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import 'asset_search_hit.dart';

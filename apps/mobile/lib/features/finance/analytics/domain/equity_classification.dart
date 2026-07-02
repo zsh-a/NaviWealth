@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 /// Market-cap bucket used by the equity allocation view.

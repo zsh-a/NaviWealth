@@ -48,12 +48,12 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/expense.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/expense.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';

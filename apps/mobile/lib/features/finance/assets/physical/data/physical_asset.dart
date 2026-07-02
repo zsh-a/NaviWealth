@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import 'physical_asset_meta.dart';
 

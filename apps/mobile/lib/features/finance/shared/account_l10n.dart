@@ -1,4 +1,4 @@
-import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 String localizedAccountName(AppLocalizations l10n, Account account) {

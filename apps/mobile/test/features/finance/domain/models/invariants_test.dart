@@ -2,10 +2,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/invariants.dart';
-import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/posting.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/posting.dart';
 
 /// Deterministic [FxRateSource] backed by a fixed `(from, to) → rate`
 /// map. Asks for an unknown pair return `null` so tests can exercise

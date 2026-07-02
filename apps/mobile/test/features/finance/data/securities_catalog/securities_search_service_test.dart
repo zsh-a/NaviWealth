@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/metrics/market_metrics.dart';
@@ -14,6 +13,7 @@ import 'package:naviwealth/features/finance/data/repositories/securities_asset_r
 import 'package:naviwealth/features/finance/data/securities_catalog/asset_search_hit.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/securities_catalog_loader.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/securities_search_service.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import '../../../../core/persistence/test_database.dart';

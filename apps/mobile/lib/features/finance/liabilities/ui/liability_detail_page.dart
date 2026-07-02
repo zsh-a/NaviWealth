@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/domain/models/amortization_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
 
 import '../../../../core/format/formatters.dart';
 import '../../../../core/format/providers.dart';

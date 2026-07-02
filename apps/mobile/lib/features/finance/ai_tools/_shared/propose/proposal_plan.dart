@@ -9,9 +9,9 @@
 /// candidate shape `{id,name,type}`) are ported exactly.
 library;
 
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
 
 export 'package:naviwealth/core/ai/composition/proposal_envelope.dart'
@@ -38,7 +38,7 @@ const List<String> kProposalAccountTypes = [
 ];
 
 /// **Deliberately distinct** from the feature-side
-/// `kManualValuationAssetTypes` (`data/domain/enums.dart`), which is a
+/// `kManualValuationAssetTypes` (`domain/models/enums.dart`), which is a
 /// stricter set excluding realEstate/vehicle. The device
 /// `propose_asset_valuation` must gate exactly like the original
 /// backend `MANUAL_VALUATION_ASSET_TYPES` (which *does* allow

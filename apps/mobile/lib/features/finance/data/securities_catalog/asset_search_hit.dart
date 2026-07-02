@@ -1,4 +1,4 @@
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 /// Where a [AssetSearchHit] came from. Drives the UI grouping in the

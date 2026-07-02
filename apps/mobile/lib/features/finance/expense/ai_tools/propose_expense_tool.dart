@@ -16,8 +16,8 @@ library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/ai_tools/_shared/propose/proposal_plan.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
 
 class ProposeExpenseTool implements DeviceTool {
   const ProposeExpenseTool();

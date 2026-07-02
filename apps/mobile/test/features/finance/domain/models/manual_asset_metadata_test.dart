@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
+import 'package:naviwealth/features/finance/domain/models/manual_asset_metadata.dart';
 
 void main() {
   test('CashMetadata roundtrips through encode/decode', () {

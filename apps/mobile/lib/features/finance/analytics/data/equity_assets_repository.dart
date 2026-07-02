@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 
 import '../domain/equity_allocation.dart';
 

@@ -13,7 +13,7 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart'
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis/fifo_strategy.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis_engine.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';

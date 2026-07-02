@@ -4,7 +4,7 @@ import 'package:naviwealth/core/async/isolate_runner.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../domain/holding_service.dart';
 import '../domain/returns/portfolio_return.dart';

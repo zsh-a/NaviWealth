@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/domain/models/expense.dart';
 
 import 'expense_report.dart';
 import 'expense_report_range.dart';
