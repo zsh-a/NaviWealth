@@ -49,9 +49,8 @@ apps/mobile/lib/
     shell/              multi-domain IA primitives
     sync/               sync v2 row-state client and sync envelope types
   design_system/        tokens, themes, charts, reusable widgets
-  domain/               legacy pure finance-neutral values/services still shared by Finance
   features/
-    finance/            Finance composition and data root
+    finance/            Finance composition, data root, domain values, and slices
     health/             HealthOS data, UI, AI tools, agents
     knowledge/          KnowledgeOS data, UI, AI tools, agents
     execution/          ExecutionOS data, UI, AI tools, agents

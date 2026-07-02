@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
 import 'package:naviwealth/features/finance/rebalance/ui/rebalance_execution_sheet.dart';

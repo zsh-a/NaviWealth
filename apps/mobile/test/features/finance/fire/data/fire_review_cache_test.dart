@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_review_cache.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_review.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_state.dart';

@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
@@ -13,6 +12,7 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart'
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis/fifo_strategy.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis_engine.dart';

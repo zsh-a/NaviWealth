@@ -10,12 +10,12 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/domain/entities/fx_rate.dart' as dom;
-import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 
 import '../domain/cost_basis/fifo_strategy.dart';

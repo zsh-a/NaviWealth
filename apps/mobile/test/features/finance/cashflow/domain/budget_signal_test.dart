@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/budget_summary.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 
 CategoryBudgetStatus _cat(String id, String budget, String spent) =>
     CategoryBudgetStatus(

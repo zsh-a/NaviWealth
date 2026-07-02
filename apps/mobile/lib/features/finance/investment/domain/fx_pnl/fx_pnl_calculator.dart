@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import '../models/lot.dart';
 import '../models/realized_pnl.dart';
 import 'fx_pnl_breakdown.dart';

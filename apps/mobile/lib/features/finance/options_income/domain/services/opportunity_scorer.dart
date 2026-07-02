@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:intl/intl.dart';
 
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import '../approved_underlying.dart';
 import '../opportunity_explanation.dart';
 import '../option_contract.dart';

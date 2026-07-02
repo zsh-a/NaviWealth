@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/domain/entities/fx_rate.dart' as dom;
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
 import 'package:uuid/uuid.dart';
 
 /// Read / write API for the local `fx_rates` table.

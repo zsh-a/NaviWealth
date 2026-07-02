@@ -1,9 +1,8 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
 
-import '../../core/logging/app_logger.dart';
-
-import '../entities/fx_rate.dart';
-import '../values/money.dart';
+import 'fx_rate.dart';
+import 'money.dart';
 
 /// Domain-side contract for converting [Money] across currencies.
 ///

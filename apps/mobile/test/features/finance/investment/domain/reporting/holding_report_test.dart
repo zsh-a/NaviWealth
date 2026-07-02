@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/entities/fx_rate.dart';
-import 'package:naviwealth/domain/services/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_price_source.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/holding_report.dart';
 

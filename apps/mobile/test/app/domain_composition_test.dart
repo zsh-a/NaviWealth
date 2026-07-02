@@ -380,7 +380,7 @@ void main() {
         kAllDomainPacks
             .where((pack) => pack.settingsSpec != null)
             .map((pack) => pack.settingsSpec!.label),
-        ['HealthOS', 'KnowledgeOS', 'ExecutionOS'],
+        ['FinanceOS', 'HealthOS', 'KnowledgeOS', 'ExecutionOS'],
       );
       expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
         DomainScope.finance,

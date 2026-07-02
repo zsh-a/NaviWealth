@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
-import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/market/providers/options/options_chain_provider.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/options_opportunity_cache_repository.dart';

@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/entities/fx_rate.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 
 void main() {
   FxRate make({

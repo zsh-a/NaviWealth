@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 
 /// The five buckets every FIRE plan is sliced into. They are an
 /// *interpretation* layer over accounts and assets — not a new account

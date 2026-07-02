@@ -257,7 +257,9 @@ class OpportunityExplanation with _$OpportunityExplanation {
 
 - `Money` 不允许跨币种相加（已有）。`cashRequired = strike * 100` 走 `Money.scale(int)`，**不是** `Money + Money`。
 - `Decimal` 用于 delta / IV / 百分比 / 评分。
-- `IntRange` / `DecimalRange` 在 `lib/domain/values/` 已有或新增。
+- `Money` 等金额/汇率计算值对象归 Finance 域所有；新增 Options
+  Income 专属值对象放在 `features/finance/options_income/domain/`，只有真正
+  跨域中立的 primitive 才进入 `core/`。
 
 ---
 

@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
-
-import '../../../../domain/values/money.dart';
 
 /// User-configured target weights. Category targets represent broad
 /// buckets; asset targets carve specific holdings out into their own

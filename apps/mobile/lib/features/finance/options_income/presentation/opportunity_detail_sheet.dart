@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../domain/options_opportunity.dart';
 import 'trade_journal_sheet.dart';

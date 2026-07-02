@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'fire_action.dart';
 import 'fire_bucket.dart';
 import 'fire_bucket_allocator.dart';

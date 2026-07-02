@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 
 /// What the user should do next. Each `kind` is a stable, l10n-ready code —
 /// the UI/AI render localised copy from the kind + structured params.

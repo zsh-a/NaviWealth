@@ -2,8 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/async/isolate_runner.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../domain/holding_service.dart';

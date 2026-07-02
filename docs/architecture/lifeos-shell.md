@@ -332,6 +332,7 @@ Run these when touching architecture boundaries:
 ./tool/lint-no-finance-in-core.sh
 ./tool/lint-no-feature-in-shared.sh
 ./tool/lint-design-system-domain-neutral.sh
+./tool/lint-no-legacy-mobile-domain.sh
 ./tool/lint-cross-feature-imports.sh
 ./tool/lint-finance-domain-model-path.sh
 ./tool/lint-row-family-prefix.sh
@@ -345,6 +346,7 @@ Expected guarantees:
 - `core/ai/runtime/` does not import domain features.
 - `features/ai_chat/` does not import sibling features directly.
 - `design_system/` stays free of domain business value objects.
+- The retired top-level mobile `domain/` package does not return.
 - Finance core models stay under `features/finance/domain/models/`, not the
   data-layer repository directory.
 - Row change literals in sync code carry domain prefixes.

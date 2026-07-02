@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
-import '../../../../domain/values/money.dart';
 import 'rebalance_models.dart';
 
 /// Pure domain engine that computes drift and generates suggested trades.

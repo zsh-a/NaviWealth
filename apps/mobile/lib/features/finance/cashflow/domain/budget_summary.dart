@@ -7,7 +7,7 @@ library;
 import 'package:decimal/decimal.dart';
 
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 
 /// One category's budget posture: how much was set, how much was spent,
 /// and whether the user is on track / at risk / over.
