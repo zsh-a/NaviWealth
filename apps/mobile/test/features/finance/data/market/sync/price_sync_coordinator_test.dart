@@ -11,10 +11,10 @@ import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
+import 'package:naviwealth/features/finance/data/market/sync/fx_rate_sync_service.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordinator.dart';
 import 'package:naviwealth/features/finance/data/repositories/fx_rate_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
-import 'package:naviwealth/features/settings/fx_rates/fx_rate_sync_service.dart';
 
 import '../../../../../core/persistence/test_database.dart';
 import '../../../../../core/sync/_outbox_test_ext.dart';

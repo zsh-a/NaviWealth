@@ -14,10 +14,10 @@ import '../features/auth/presentation/devices_page.dart'
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/onboarding_page.dart';
 import '../features/finance/ui/settings/fire_stress_settings_page.dart';
+import '../features/finance/ui/settings/fx_rates_page.dart';
 import '../features/finance/ui/settings/monthly_expense_settings_page.dart';
 import '../features/finance/ui/settings/risk_thresholds_page.dart';
 import '../features/settings/backup/backup_page.dart';
-import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../features/settings/ui/ai_llm_credentials_page.dart';

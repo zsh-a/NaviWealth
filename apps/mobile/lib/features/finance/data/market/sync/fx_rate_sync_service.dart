@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/features/finance/data/repositories/fx_rate_repository.dart';
 
-import '../../../core/logging/app_logger.dart';
-import '../../../domain/services/market_data_service.dart';
-import '../../../domain/values/asset_market.dart';
+import '../../../../../core/logging/app_logger.dart';
+import '../../../../../domain/services/market_data_service.dart';
+import '../../../../../domain/values/asset_market.dart';
+import '../../repositories/fx_rate_repository.dart';
 
 /// Fetches today's FX rates from Yahoo Finance and persists them to the
 /// local `fx_rates` table.

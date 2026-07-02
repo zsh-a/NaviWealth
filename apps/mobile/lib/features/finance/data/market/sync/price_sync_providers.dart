@@ -7,8 +7,8 @@ import 'package:naviwealth/features/finance/data/market/market_data_providers.da
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/data/price_sync_preferences.dart';
-import 'package:naviwealth/features/settings/fx_rates/providers.dart';
 
+import 'fx_rate_sync_providers.dart';
 import 'price_sync_coordinator.dart';
 
 final priceSyncStatusBusProvider = Provider<PriceSyncStatusBus>((ref) {

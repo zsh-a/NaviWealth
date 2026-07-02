@@ -154,10 +154,10 @@ deleted_at_hlc TEXT;
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
 | MT-2.3.M2.1 | P0 | M | `fx_rates` 表加 `source` 字段（`auto`/`manual`）+ 迁移 | — | `data/db/tables.dart`, `data/repositories/fx_rate_repository.dart` |
-| MT-2.3.M2.2 | P0 | M | `FxRateSyncService` 升级：周期任务 + 多源 fallback（exchangerate.host / Frankfurter） | MT-2.3.M2.1 | `features/settings/fx_rates/fx_rate_sync_service.dart` |
-| MT-2.3.M2.3 | P1 | M | mini chart 组件 + settings 页历史曲线 | MT-2.3.M2.1 | `features/settings/fx_rates/` |
+| MT-2.3.M2.2 | P0 | M | `FxRateSyncService` 升级：周期任务 + 多源 fallback（exchangerate.host / Frankfurter） | MT-2.3.M2.1 | `features/finance/data/market/sync/fx_rate_sync_service.dart` |
+| MT-2.3.M2.3 | P1 | M | mini chart 组件 + settings 页历史曲线 | MT-2.3.M2.1 | `features/finance/ui/settings/fx_rates_page.dart` |
 | MT-2.3.M2.4 | P1 | S | 离线 fallback：读最后已知 + 标注 stale | MT-2.3.M2.2 | 同上 |
-| MT-2.3.M2.5 | P0 | M | 24h 至少 1 次成功率 > 99% 集成测试（mock 多源） | MT-2.3.M2.2 | `test/features/settings/fx_rates/` |
+| MT-2.3.M2.5 | P0 | M | 24h 至少 1 次成功率 > 99% 集成测试（mock 多源） | MT-2.3.M2.2 | `test/features/finance/data/market/sync/` |
 
 ### M3 — base currency 全局热切换
 

@@ -187,7 +187,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 2.3 多币种与汇率体验
 
-**现状**：`features/settings/fx_rates/fx_rate_sync_service.dart` 已存在；`domain/services/currency_converter.dart` 已统一汇率换算；`data/repositories/fx_rate_repository.dart` 持久化。
+**现状**：`features/finance/data/market/sync/fx_rate_sync_service.dart` 已存在；`domain/services/currency_converter.dart` 已统一汇率换算；`features/finance/data/repositories/fx_rate_repository.dart` 持久化。
 **缺口**：UI 端金额展示零散（部分显示原币、部分显示折算、部分仅 base），无历史曲线，base currency 切换需重启。
 
 **阶段拆分**：
@@ -197,7 +197,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
   - Lint 规则（custom analyzer 或 grep PR check）：禁止直接拼接 `.toStringAsFixed` 显示 Money；依赖全量替换完成后再强制接入 CI，迁移期只允许 advisory/report 模式。
 - **M2（月 3）— 历史汇率 + 自动拉取**
   - `fx_rate_sync_service` 升级为周期任务（前台 + 进入相关页面时触发），存历史快照（按日，HLC 标记来源 = `auto`/`manual`）。
-  - 历史曲线 mini chart（在 settings/fx_rates 页 + 资产折算溢价提示中复用）。
+  - 历史曲线 mini chart（在 FinanceOS 的 `/settings/fx-rates` 页 + 资产折算溢价提示中复用）。
   - 数据源：开放免费 API（exchangerate.host 或 ECB Frankfurter，避免商用 key）；有 fallback；离线读取最后已知。
 - **M3（月 6）— base currency 全局切换**
   - 切换 base 不重启 app：所有 provider 监听 `baseCurrencyProvider`，受影响范围（dashboard、analytics、FIRE）触发 rebuild。

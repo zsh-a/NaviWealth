@@ -10,7 +10,8 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
-import 'package:naviwealth/features/settings/fx_rates/fx_rate_sync_service.dart';
+
+import 'fx_rate_sync_service.dart';
 
 /// Reason that triggered a coordinator cycle. Used in logs and metrics so
 /// "why did the app just fire a burst of quote calls" stays answerable
