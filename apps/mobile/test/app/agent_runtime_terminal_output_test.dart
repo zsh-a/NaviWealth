@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_terminal_output.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 
 void main() {
   test('indexes terminal tool_results by tool name', () {

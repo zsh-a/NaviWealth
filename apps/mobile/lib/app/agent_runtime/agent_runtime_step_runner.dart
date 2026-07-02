@@ -2,7 +2,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'agent_runtime_json.dart';
+import '../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_tool_dispatcher.dart';
 import 'agent_runtime_tool_host.dart';

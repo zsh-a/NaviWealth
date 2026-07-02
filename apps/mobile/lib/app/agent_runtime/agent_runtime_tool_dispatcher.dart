@@ -1,6 +1,6 @@
 library;
 
-import 'agent_runtime_json.dart';
+import '../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 
 typedef AgentRuntimeToolLineHandler = Future<String> Function(String line);
 

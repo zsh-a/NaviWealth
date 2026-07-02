@@ -12,8 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/src/rust/api/agent_runtime.dart' as rust;
 
 import '../../core/ai/local/embedding/rust_gemma_embedder.dart';
+import '../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import '../../core/config/providers.dart';
-import 'agent_runtime_json.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 
