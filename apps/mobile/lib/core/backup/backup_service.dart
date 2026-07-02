@@ -6,8 +6,8 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import '../../core/persistence/app_database.dart';
 import '../logging/app_logger.dart';
 import '../sync/op_outbox.dart';
-import '../sync/sync_table_registry.dart';
 import 'backup_codec.dart';
+import 'backup_table_registry.dart';
 
 const _backupMagic = 'naviwealth.backup.v1';
 
@@ -62,7 +62,7 @@ class BackupService {
   final OutboxStore _outbox;
   final AppLogger _logger;
 
-  /// Export all syncable user data as an encrypted backup envelope.
+  /// Export all backup-eligible local data as an encrypted backup envelope.
   Future<Uint8List> exportBackup({
     required String passphrase,
     int? overrideIterations,
@@ -73,7 +73,7 @@ class BackupService {
     final tableCounts = <String, int>{};
     final data = <String, List<Map<String, Object?>>>{};
 
-    for (final tableName in kSyncableTables) {
+    for (final tableName in kBackupTables) {
       final rows = await _db.customSelect('SELECT * FROM $tableName').get();
       final rowMaps = <Map<String, Object?>>[];
       for (final row in rows) {
@@ -194,7 +194,7 @@ class BackupService {
     }
 
     for (final key in data.keys) {
-      if (!kSyncableTables.contains(key)) {
+      if (!isBackupTable(key)) {
         _logger.e('backup: unknown table "$key"');
         throw BackupValidationException('Unknown table: $key');
       }
@@ -225,11 +225,11 @@ class BackupService {
       final txSw = Stopwatch()..start();
       await _db.transaction(() async {
         // Clear all existing data.
-        for (final tableName in kSyncableTables) {
+        for (final tableName in kBackupTables) {
           await _db.customStatement('DELETE FROM $tableName');
         }
         await _db.customStatement('DELETE FROM op_outbox');
-        _logger.d('backup: cleared all syncable tables + op_outbox');
+        _logger.d('backup: cleared all backup tables + op_outbox');
 
         // Insert restored rows and enqueue ops.
         for (final entry in data.entries) {
@@ -240,7 +240,9 @@ class BackupService {
           for (final rowRaw in rows) {
             final row = rowRaw as Map<String, Object?>;
             await _insertRow(tableName, row);
-            await _enqueueRestoreOp(tableName, row);
+            if (shouldEnqueueRestoreOpForBackupTable(tableName)) {
+              await _enqueueRestoreOp(tableName, row);
+            }
             count++;
           }
 
@@ -315,10 +317,10 @@ class BackupService {
 
   /// Extract the primary key value from a row map.
   ///
-  /// Most tables use `id` as PK. Singleton user-scoped tables use the sync
+  /// Most tables use `id` as PK. Singleton user-scoped tables use the backup
   /// table registry's PK override.
   String _extractRowId(String tableName, Map<String, Object?> row) {
-    final pk = syncPrimaryKeyForTable(tableName);
+    final pk = backupPrimaryKeyForTable(tableName);
     final value = row[pk] ?? (pk == 'user_id' ? row['userId'] : null);
     return value?.toString() ?? '';
   }

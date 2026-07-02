@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
+import 'package:naviwealth/core/backup/backup_table_registry.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -177,9 +178,14 @@ void main() {
         final header = json['header'] as Map<String, Object?>;
         expect(header['magic'], 'naviwealth.backup.v1');
         expect(header['schemaVersion'], db.schemaVersion);
+        expect(
+          (header['tables'] as Map<String, Object?>).keys.toSet(),
+          kBackupTables.toSet(),
+        );
 
         // Verify data contains our rows.
         final data = json['data'] as Map<String, Object?>;
+        expect(data.keys.toSet(), kBackupTables.toSet());
         final accounts = data['accounts'] as List<Object?>;
         expect(accounts.length, 1);
         expect((accounts[0] as Map)['id'], 'acct-1');

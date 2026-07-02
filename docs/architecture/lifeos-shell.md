@@ -12,6 +12,7 @@ The shell owns cross-domain infrastructure:
 - Memory Runtime and indexer bootstrap.
 - Sync v2 row-family namespace.
 - Shared persistence adapter.
+- Encrypted local backup and restore.
 - Background jobs and notifications.
 
 Domain business behavior belongs in the domain SSOT:
@@ -35,6 +36,7 @@ core/
   lifeos/domain_pack.dart        Domain registration contract
   shell/domain_shell.dart        Domain shell spec and tab ownership
   auth/domain_scope.dart         Domain opt-in enum and wire values
+  backup/backup_table_registry.dart  Encrypted backup table metadata
   sync/sync_table_registry.dart  Row-family prefixes and sync table metadata
   ai/composition/                Cross-domain AI seams
   ai/agents/                     Agent framework
@@ -276,6 +278,21 @@ Rules:
 - Ownership remains per domain even when table declarations live in `core/persistence/`.
 - Repositories are the domain boundary for business reads and writes.
 - Generated Drift files are never edited by hand.
+
+## Backup And Restore
+
+Location:
+
+- `core/backup/`
+- `core/backup/backup_table_registry.dart`
+
+Rules:
+
+- Backup/restore uses `kBackupTables`, not `kSyncableTables`.
+- Backup table primary keys and restore outbox enqueue behavior are explicit
+  in `BackupTableRegistration`.
+- Syncable tables are not automatically backup tables unless their table
+  metadata opts into backup coverage.
 
 ## Background And Notifications
 

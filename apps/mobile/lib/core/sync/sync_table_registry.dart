@@ -35,6 +35,7 @@ class SyncTableRegistration {
     this.primaryKey = 'id',
     this.ownerScoped = true,
     this.backfillEligible = true,
+    this.backupEligible = true,
   });
 
   final String table;
@@ -47,6 +48,9 @@ class SyncTableRegistration {
 
   /// True when existing local rows should be queued during sync backfill.
   final bool backfillEligible;
+
+  /// True when encrypted local backups should include this table.
+  final bool backupEligible;
 }
 
 /// Single source of truth for the client-side sync table surface.
