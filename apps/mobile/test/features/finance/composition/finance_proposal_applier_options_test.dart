@@ -12,6 +12,7 @@ import 'package:naviwealth/features/finance/data/repositories/manual_asset_repos
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
@@ -98,14 +99,16 @@ void main() {
         tradeJournalRepo: journalRepo,
         currentUserId: () async => 'u-test',
       ),
+      fireApplier: FireProposalApplier(
+        planWriter: (after) async {
+          firePlanAfter = after;
+        },
+        bucketRuleWriter: (payload) async {
+          fireBucketPayload = payload;
+          return payload['target_id'] as String;
+        },
+      ),
       currentUserId: () async => 'u-test',
-      firePlanWriter: (after) async {
-        firePlanAfter = after;
-      },
-      fireBucketRuleWriter: (payload) async {
-        fireBucketPayload = payload;
-        return payload['target_id'] as String;
-      },
     );
   });
 
