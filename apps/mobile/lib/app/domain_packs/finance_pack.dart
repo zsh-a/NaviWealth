@@ -1,4 +1,6 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
@@ -12,8 +14,10 @@ import '../../features/finance/composition/finance_proposal_kinds.dart'
     show kFinanceProposalKinds;
 import '../../features/finance/composition/finance_routes.dart';
 import '../../features/finance/data/diagnostics/local_table_counts.dart';
+import '../../features/finance/ui/settings/finance_domain_settings_section.dart';
 import '../../features/finance_ai_tools.dart';
 import '../../features/options_income/data/trade_journal_memory_indexer.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../route_paths.dart';
 import 'proposal_applier_route.dart';
 
@@ -49,8 +53,19 @@ final DomainPack kFinancePack = DomainPack(
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
   providerOverridesBuilder: financeCompositionOverrides,
   localTableCountsBuilder: financeLocalTableCounts,
+  settingsSpec: const DomainSettingsSpec(
+    icon: FLucideIcons.walletCards,
+    label: 'FinanceOS',
+    subtitle: _financeSettingsSubtitle,
+    sectionBuilder: _financeSettingsSection,
+  ),
 );
 
 void _financeMemoryBootstrap(Ref ref) {
   ref.watch(tradeJournalMemoryIndexerProvider);
 }
+
+String _financeSettingsSubtitle(AppLocalizations l10n, bool _) =>
+    l10n.settingsDomainsFinanceSubtitle;
+
+Widget _financeSettingsSection() => const FinanceDomainSettingsSection();

@@ -62,6 +62,12 @@ typedef DomainCommandPaletteBuilder =
 typedef DomainProposalApplierRouteBuilder =
     Future<ProposalApplierRoute> Function(Ref ref);
 
+/// Builds one domain-owned section for Settings -> Domains.
+typedef DomainSettingsSectionBuilder = Widget Function();
+
+/// Builds domain-owned rows for Settings -> Notifications.
+typedef DomainNotificationSettingsBuilder = List<Widget> Function();
+
 /// Side-effecting bootstrap hook contributed by a domain. Use for app-start
 /// provider reads that must stay alive for as long as the app container lives
 /// (memory indexers, background scheduler registration, pending wakeup drains).
@@ -92,6 +98,7 @@ class DomainSettingsSpec {
     required this.icon,
     required this.label,
     required this.subtitle,
+    this.sectionBuilder,
     this.routeBuilder,
   });
 
@@ -103,6 +110,10 @@ class DomainSettingsSpec {
 
   /// Toggle subtitle that can vary with enabled state.
   final DomainSettingsSubtitleBuilder subtitle;
+
+  /// Optional fully-owned section shown on Settings -> Domains. Use this for
+  /// always-on domains whose settings are richer than an opt-in toggle.
+  final DomainSettingsSectionBuilder? sectionBuilder;
 
   /// Optional per-domain settings detail page route.
   final DomainSettingsRouteBuilder? routeBuilder;
@@ -132,6 +143,7 @@ class DomainPack {
     this.commandPaletteEntriesBuilder,
     this.providerOverridesBuilder,
     this.localTableCountsBuilder,
+    this.notificationSettingsBuilder,
     this.settingsSpec,
   });
 
@@ -216,8 +228,13 @@ class DomainPack {
   /// the Settings page reads the domain-neutral aggregate provider.
   final DomainLocalTableCountsBuilder? localTableCountsBuilder;
 
+  /// Rows contributed to Settings → Notifications when this domain is active.
+  /// Global notification permission and master enablement stay in Settings;
+  /// domain-specific notification toggles remain with the owning domain.
+  final DomainNotificationSettingsBuilder? notificationSettingsBuilder;
+
   /// Settings → Domains toggle metadata and optional domain detail route.
-  /// Null when the domain is always-on or has no settings surface yet.
+  /// Null when the domain has no settings surface yet.
   final DomainSettingsSpec? settingsSpec;
 }
 

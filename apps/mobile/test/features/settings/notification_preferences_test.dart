@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/notifications/notification_preferences.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/notifications/providers.dart';
@@ -63,6 +65,7 @@ void main() {
             notificationServiceProvider.overrideWithValue(
               const _FakeNotificationService(available: true, granted: true),
             ),
+            activeDomainPacksProvider.overrideWithValue([kHealthPack]),
           ],
           child: MaterialApp(
             theme: AppTheme.light(),

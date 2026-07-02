@@ -95,6 +95,7 @@ void main() {
             overrides: [
               sharedPreferencesProvider.overrideWithValue(prefs),
               appDatabaseProvider.overrideWith((_) async => db),
+              domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
             ],
             child: MaterialApp.router(
               theme: AppTheme.light(),

@@ -2,14 +2,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/lifeos/domain_pack.dart';
 import '../../../core/notifications/notification_preferences.dart';
 import '../../../core/notifications/providers.dart';
 import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../health/data/health_notification_preferences.dart';
-import '../../health/data/morning_briefing_preferences.dart';
 
 final _notificationPermissionSnapshotProvider =
     FutureProvider.autoDispose<_NotificationPermissionSnapshot>((ref) async {
@@ -34,11 +33,10 @@ class NotificationSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final notificationsEnabled = ref.watch(notificationsEnabledProvider);
-    final briefingEnabled = ref.watch(
-      healthBriefingNotificationsEnabledProvider,
-    );
-    final hour = ref.watch(morningBriefingHourProvider);
-    final hourLabel = hour.toString().padLeft(2, '0');
+    final domainRows = [
+      for (final pack in ref.watch(activeDomainPacksProvider))
+        ...?pack.notificationSettingsBuilder?.call(),
+    ];
 
     return AppPageScaffold(
       title: l10n.settingsNotificationsTitle,
@@ -60,21 +58,10 @@ class NotificationSettingsPage extends ConsumerWidget {
                       .read(notificationsEnabledProvider.notifier)
                       .setEnabled(next),
                 ),
-                const AppGradientDivider(),
-                InlineSwitchRow(
-                  icon: FLucideIcons.sunrise,
-                  label: l10n.settingsNotificationsHealthBriefingTitle,
-                  subtitle: notificationsEnabled
-                      ? l10n.settingsNotificationsHealthBriefingSubtitle(
-                          hourLabel,
-                        )
-                      : l10n.settingsNotificationsHealthBriefingBlockedSubtitle,
-                  value: notificationsEnabled && briefingEnabled,
-                  enabled: notificationsEnabled,
-                  onChanged: (next) => ref
-                      .read(healthBriefingNotificationsEnabledProvider.notifier)
-                      .setEnabled(next),
-                ),
+                for (final row in domainRows) ...[
+                  const AppGradientDivider(),
+                  row,
+                ],
               ],
             ),
           ),

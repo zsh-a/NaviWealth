@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/lifeos/domain_pack.dart';
 import '../../../core/shell/settings_route_paths.dart';
@@ -9,7 +10,6 @@ import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/ui/settings/finance_domain_settings_section.dart';
 
 /// `/settings/domains` — LifeOS domain management.
 ///
@@ -26,25 +26,45 @@ class DomainsSettingsPage extends ConsumerWidget {
       title: l10n.settingsDomainsTitle,
       childPad: false,
       child: SettingsPageFrame(
-        children: [
-          const FinanceDomainSettingsSection(),
-          for (final pack in ref.watch(domainPackRegistryProvider))
-            if (pack.settingsSpec case final spec?) ...[
-              const SizedBox(height: AppSpacing.s16),
-              _DomainToggleCard(
-                icon: spec.icon,
-                label: spec.label,
-                subtitle: spec.subtitle(
-                  l10n,
-                  optIns?.contains(pack.scope) ?? false,
-                ),
-                value: optIns?.contains(pack.scope) ?? false,
-                onChanged: (v) => _setDomainEnabled(context, ref, pack, v),
-              ),
-            ],
-        ],
+        children: _domainSettingSections(
+          context: context,
+          ref: ref,
+          optIns: optIns,
+          l10n: l10n,
+        ),
       ),
     );
+  }
+
+  List<Widget> _domainSettingSections({
+    required BuildContext context,
+    required WidgetRef ref,
+    required DomainOptIns? optIns,
+    required AppLocalizations l10n,
+  }) {
+    final sections = <Widget>[];
+    for (final pack in ref.watch(domainPackRegistryProvider)) {
+      final spec = pack.settingsSpec;
+      if (spec == null) continue;
+      if (sections.isNotEmpty) {
+        sections.add(const SizedBox(height: AppSpacing.s16));
+      }
+      final sectionBuilder = spec.sectionBuilder;
+      if (sectionBuilder != null) {
+        sections.add(sectionBuilder());
+        continue;
+      }
+      sections.add(
+        _DomainToggleCard(
+          icon: spec.icon,
+          label: spec.label,
+          subtitle: spec.subtitle(l10n, optIns?.contains(pack.scope) ?? false),
+          value: optIns?.contains(pack.scope) ?? false,
+          onChanged: (v) => _setDomainEnabled(context, ref, pack, v),
+        ),
+      );
+    }
+    return sections;
   }
 
   Future<void> _setDomainEnabled(

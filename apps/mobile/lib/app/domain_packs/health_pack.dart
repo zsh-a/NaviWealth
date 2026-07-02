@@ -16,6 +16,7 @@ import '../../features/health/composition/health_domain_shell.dart';
 import '../../features/health/composition/health_routes.dart';
 import '../../features/health/data/health_metric_memory_indexer.dart';
 import '../../features/health/ui/health_domain_settings_page.dart';
+import '../../features/health/ui/settings/health_notification_settings.dart';
 import '../../features/health_ai_tools.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../agent_runtime/agent_runtime_health_overrides.dart';
@@ -40,6 +41,7 @@ final DomainPack kHealthPack = DomainPack(
   backgroundBootstrapBuilder: _healthBackgroundBootstrap,
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeHealthProviderOverrides,
+  notificationSettingsBuilder: healthNotificationSettings,
   settingsSpec: domainSettingsSpec(
     icon: FLucideIcons.heartPulse,
     label: 'HealthOS',

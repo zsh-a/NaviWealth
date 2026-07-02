@@ -116,6 +116,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
       ),
+      core_auth.switchToLocalOnlyProvider.overrideWith(
+        (ref) =>
+            () => ref.read(authControllerProvider.notifier).switchToLocalOnly(),
+      ),
       core_auth.domainOptInTokenRefreshProvider.overrideWith(
         (ref) => () async {
           await ref.read(authControllerProvider.notifier).refreshIfPossible();

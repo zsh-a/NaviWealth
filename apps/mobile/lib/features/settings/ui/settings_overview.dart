@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/auth_state.dart';
+import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
@@ -13,7 +15,6 @@ import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../auth/data/auth_controller.dart';
 
 /// Settings landing page — iOS-style inset-grouped sections.
 ///
@@ -81,7 +82,7 @@ class SettingsOverview extends ConsumerWidget {
       ),
     );
     final isLocalOnly =
-        ref.watch(authControllerProvider).value is AuthLocalOnly;
+        ref.watch(auth_providers.authStateProvider) is AuthLocalOnly;
     final dataGroup = _Section(
       title: l10n.settingsDataSection,
       child: Column(
@@ -298,7 +299,7 @@ class _AccountSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final isLocalOnly =
-        ref.watch(authControllerProvider).value is AuthLocalOnly;
+        ref.watch(auth_providers.authStateProvider) is AuthLocalOnly;
 
     if (isLocalOnly) {
       return InlineLinkRow(
@@ -375,7 +376,7 @@ class _SwitchToLocalSheetFooterState
   Future<void> _confirm() async {
     setState(() => _busy = true);
     try {
-      await ref.read(authControllerProvider.notifier).switchToLocalOnly();
+      await ref.read(auth_providers.switchToLocalOnlyProvider)();
       if (mounted) Navigator.of(context).pop(true);
     } finally {
       if (mounted) setState(() => _busy = false);
