@@ -6,6 +6,8 @@ import '../core/lifeos/domain_pack.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
 import '../core/shell/auth_route_paths.dart';
+import '../core/shell/deferred_route.dart';
+import '../core/shell/route_error_page.dart';
 import '../core/shell/settings_route_paths.dart';
 import '../design_system/widgets/system_back_scope.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
@@ -29,10 +31,8 @@ import '../features/settings/ui/notification_settings_page.dart';
 import '../features/settings/ui/perf_diagnostics_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_dock_shell.dart';
-import 'deferred_route.dart';
 import 'domain_packs.dart';
 import 'route_analytics_observer.dart';
-import 'route_error_page.dart';
 import 'route_guard.dart';
 
 /// Test-only: eagerly resolve every deferred-as library the router maps
