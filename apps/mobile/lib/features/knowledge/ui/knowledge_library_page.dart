@@ -29,6 +29,7 @@ import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
+part 'knowledge_library_controls.dart';
 part 'knowledge_library_list.dart';
 
 enum _LibrarySegment {
