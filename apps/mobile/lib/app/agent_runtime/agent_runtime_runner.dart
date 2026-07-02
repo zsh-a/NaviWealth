@@ -8,22 +8,27 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
+    as core_profile_turn;
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_step_runner.dart';
 
-final agentRuntimeProfileTurnRunnerProvider =
-    Provider<AgentRuntimeProfileTurnRunner?>((ref) {
-      final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
-      if (llmBridge == null) return null;
-      return AgentRuntimeProfileTurnRunner.lazyCatalog(
-        catalogReader: () => ref.read(agentRuntimeCatalogProvider),
-        llmBridge: llmBridge,
-        stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
-      );
-    });
+export '../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
+    show AgentRuntimeProfileTurnResult, agentRuntimeProfileTurnRunnerProvider;
 
-class AgentRuntimeProfileTurnRunner {
+AgentRuntimeProfileTurnRunner? buildAgentRuntimeProfileTurnRunner(Ref ref) {
+  final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
+  if (llmBridge == null) return null;
+  return AgentRuntimeProfileTurnRunner.lazyCatalog(
+    catalogReader: () => ref.read(agentRuntimeCatalogProvider),
+    llmBridge: llmBridge,
+    stepRunner: ref.watch(agentRuntimeNativeStepRunnerProvider),
+  );
+}
+
+class AgentRuntimeProfileTurnRunner
+    implements core_profile_turn.AgentRuntimeProfileTurnRunner {
   const AgentRuntimeProfileTurnRunner({
     required AgentRuntimeCatalog catalog,
     required AgentRuntimeLlmBridge llmBridge,
@@ -47,7 +52,8 @@ class AgentRuntimeProfileTurnRunner {
   final AgentRuntimeLlmBridge _llmBridge;
   final AgentRuntimeNativeStepRunner _stepRunner;
 
-  Future<AgentRuntimeProfileTurnResult> run({
+  @override
+  Future<core_profile_turn.AgentRuntimeProfileTurnResult> run({
     required String agentId,
     required List<Map<String, Object?>> messages,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
@@ -81,7 +87,7 @@ class AgentRuntimeProfileTurnRunner {
       agentId: agentId,
       maxToolSteps: maxToolSteps,
     );
-    return AgentRuntimeProfileTurnResult(
+    return core_profile_turn.AgentRuntimeProfileTurnResult(
       llmResponse: llmResponse,
       step: stepRun.terminalStep,
       stepRun: stepRun,
@@ -105,24 +111,4 @@ Map<String, Object?> _expectObject(Object? value, String field) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
   throw FormatException('agent runtime native turn field $field is not object');
-}
-
-class AgentRuntimeProfileTurnResult {
-  const AgentRuntimeProfileTurnResult({
-    required this.llmResponse,
-    required this.step,
-    this.stepRun = const AgentRuntimeNativeStepRunResult(
-      terminalStep: <String, Object?>{},
-    ),
-  });
-
-  final Map<String, Object?> llmResponse;
-  final Map<String, Object?> step;
-  final AgentRuntimeNativeStepRunResult stepRun;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'llm_response': llmResponse,
-    'step': step,
-    'step_run': stepRun.toJson(),
-  };
 }

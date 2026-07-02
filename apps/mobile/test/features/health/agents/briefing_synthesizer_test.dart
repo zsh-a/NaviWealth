@@ -9,21 +9,10 @@
 //     the runner to script the happy path and fallback behavior.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_catalog.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_native_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_profile_turn_binding.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_runner.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_step_runner.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
-import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
-
-import '../../../app/agent_runtime_native_bridge_test_harness.dart';
 
 EventRecord _sleepEvent({
   required DateTime when,
@@ -224,16 +213,8 @@ AgentRuntimeProfileTurnBinding _profileRuntime({
   );
 }
 
-class _FakeProfileTurnRunner extends AgentRuntimeProfileTurnRunner {
-  _FakeProfileTurnRunner({this.content, this.shouldThrow = false})
-    : super(
-        catalog: _catalog(),
-        llmBridge: _llmBridge(FakeAgentRuntimeNativeBridge()),
-        stepRunner: AgentRuntimeNativeStepRunner(
-          bridge: FakeAgentRuntimeNativeBridge(),
-          toolHost: AgentRuntimeToolHost(dispatcher: _NoopDispatcher()),
-        ),
-      );
+class _FakeProfileTurnRunner implements AgentRuntimeProfileTurnRunner {
+  _FakeProfileTurnRunner({this.content, this.shouldThrow = false});
 
   final String? content;
   final bool shouldThrow;
@@ -276,30 +257,6 @@ class _FakeProfileTurnRunner extends AgentRuntimeProfileTurnRunner {
   }
 }
 
-AgentRuntimeCatalog _catalog() {
-  return AgentRuntimeCatalog(
-    generatedAt: DateTime.utc(2026, 6, 29, 8),
-    activeDomains: const <String>['health'],
-    agents: const <AgentRuntimeAgentSpec>[],
-    tools: const <AgentRuntimeToolSpec>[],
-    proposalKinds: const <AgentRuntimeProposalKindSpec>[],
-    promptBlocks: const <AgentRuntimePromptBlockSpec>[],
-  );
-}
-
-AgentRuntimeLlmBridge _llmBridge(AgentRuntimeNativeBridge bridge) {
-  return AgentRuntimeLlmBridge(
-    bridge: bridge,
-    profile: const LlmProfile(
-      id: 'profile_1',
-      name: 'Local profile',
-      provider: LlmProvider.openai,
-      apiKey: 'sk-test',
-      model: 'gpt-test',
-    ),
-  );
-}
-
 class _ProfileTurnCall {
   const _ProfileTurnCall({
     required this.agentId,
@@ -312,15 +269,4 @@ class _ProfileTurnCall {
   final List<Map<String, Object?>> messages;
   final Map<String, Object?> metadata;
   final int? maxToolSteps;
-}
-
-class _NoopDispatcher implements DeviceToolDispatcher {
-  @override
-  Future<Object?> dispatch(
-    DeviceToolSession session,
-    String name,
-    Object? input,
-  ) async {
-    return null;
-  }
 }

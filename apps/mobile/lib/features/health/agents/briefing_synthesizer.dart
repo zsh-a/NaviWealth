@@ -15,8 +15,8 @@
 /// otherwise).
 library;
 
-import '../../../app/agent_runtime/agent_runtime_profile_turn_binding.dart';
 import '../../../core/ai/contracts/event_record.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import '../data/health_metric_memory_indexer.dart';
 
 /// Inputs to a single synthesis call. The agent pre-partitions events

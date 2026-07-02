@@ -7,7 +7,6 @@ import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_stream_bridge.dar
 import 'package:naviwealth/app/agent_runtime/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_profile_completion_clients.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_provider_overrides.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_trace_recorder.dart';
@@ -248,9 +247,6 @@ void main() {
           agentRegistryProvider.overrideWith(
             (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
           ),
-          agentRuntimeProfileTurnRunnerProvider.overrideWith((ref) {
-            throw StateError('profile runner should be read lazily');
-          }),
           agentRuntimeNativeStepRunnerProvider.overrideWith((ref) {
             throw StateError('step runner should be read lazily');
           }),

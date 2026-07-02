@@ -188,7 +188,12 @@ void main() {
 
   test('provider returns null when no usable profile bridge exists', () {
     final container = ProviderContainer(
-      overrides: [agentRuntimeLlmBridgeProvider.overrideWithValue(null)],
+      overrides: [
+        agentRuntimeLlmBridgeProvider.overrideWithValue(null),
+        agentRuntimeProfileTurnRunnerProvider.overrideWith(
+          buildAgentRuntimeProfileTurnRunner,
+        ),
+      ],
     );
     addTearDown(container.dispose);
 
@@ -206,6 +211,9 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
+          agentRuntimeProfileTurnRunnerProvider.overrideWith(
+            buildAgentRuntimeProfileTurnRunner,
+          ),
           agentRuntimeCatalogProvider.overrideWithValue(_catalog()),
           agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
           agentRuntimeNativeStepRunnerProvider.overrideWithValue(stepRunner),

@@ -4,6 +4,7 @@ library;
 import 'package:flutter_riverpod/misc.dart' show Override;
 
 import '../../core/ai/llm_credentials/providers.dart' as llm_credentials;
+import '../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import '../../features/activity/data/activity_entry_insight_client.dart';
 import '../../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../../features/ingest/data/ingest_llm_client.dart';
@@ -13,12 +14,26 @@ import 'agent_runtime_llm_bridge.dart';
 import 'agent_runtime_llm_stream_bridge.dart';
 import 'agent_runtime_native_bridge.dart';
 import 'agent_runtime_profile_completion_clients.dart';
+import 'agent_runtime_runner.dart';
 import 'agent_runtime_tool_host.dart';
 import 'agent_runtime_trace_recorder.dart';
 import 'frb_chat_runner.dart';
 import 'frb_llm_connectivity_probe.dart';
 
 List<Override> agentRuntimeAppProviderOverrides() => <Override>[
+  agentRuntimeProfileTurnRunnerProvider.overrideWith(
+    buildAgentRuntimeProfileTurnRunner,
+  ),
+  agentRuntimeProfileTurnTraceRecorderFactoryProvider.overrideWith((ref) {
+    final recorder = ref.read(agentRuntimeTraceRecorderProvider);
+    return ({required agentId, required domain, required surface}) {
+      return recorder.profileTurnRecorder(
+        agentId: agentId,
+        domain: domain,
+        surface: surface,
+      );
+    };
+  }),
   llm_credentials.llmConnectivityProbeProvider.overrideWith(
     (ref) => FrbLlmConnectivityProbe(
       bridge: ref.watch(agentRuntimeNativeBridgeProvider),
