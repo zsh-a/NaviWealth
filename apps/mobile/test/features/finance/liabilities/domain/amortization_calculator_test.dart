@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/liabilities/domain/amortization_calculator.dart';
+import 'package:naviwealth/features/finance/liabilities/domain/amortization_calculator.dart';
 
 Decimal d(String s) => Decimal.parse(s);
 

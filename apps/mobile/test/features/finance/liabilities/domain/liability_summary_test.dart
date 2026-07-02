@@ -5,7 +5,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
-import 'package:naviwealth/features/liabilities/domain/liability_summary.dart';
+import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
 
 Decimal d(String s) => Decimal.parse(s);
 

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/liabilities/ui/liability_l10n.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../liabilities/ui/liability_l10n.dart';
 import '../domain/dashboard_models.dart';
 import 'asset_category_visuals.dart';
 

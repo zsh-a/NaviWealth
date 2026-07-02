@@ -41,6 +41,7 @@ import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart'
     show JournalEntryWithPostings;
+import 'package:naviwealth/features/finance/liabilities/ai_tools/propose_liability_payment_tool.dart';
 import 'package:naviwealth/features/home/ai_tools/get_net_worth_summary_tool.dart';
 import 'package:naviwealth/features/investment/ai_tools/breakdown_tools.dart';
 import 'package:naviwealth/features/investment/ai_tools/get_asset_allocation_tool.dart';
@@ -52,7 +53,6 @@ import 'package:naviwealth/features/investment/ai_tools/read_asset_window_tool.d
 import 'package:naviwealth/features/investment/data/providers.dart'
     show holdingSnapshotToUpload;
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
-import 'package:naviwealth/features/liabilities/ai_tools/propose_liability_payment_tool.dart';
 
 SyncMeta _stamp() => SyncMeta(
   ownerUserId: 'u',

@@ -3,13 +3,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/liabilities/ui/liability_l10n.dart';
 
 import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
-import '../../liabilities/ui/liability_l10n.dart';
 import '../domain/dashboard_models.dart';
 import 'asset_category_visuals.dart';
 import 'dashboard_chart_fullscreen.dart';

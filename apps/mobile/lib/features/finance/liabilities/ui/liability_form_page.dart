@@ -7,10 +7,10 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
-import '../../../core/haptics/haptics.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/shared/forms/forms.dart';
+import '../../../../core/haptics/haptics.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import 'liability_l10n.dart';
 

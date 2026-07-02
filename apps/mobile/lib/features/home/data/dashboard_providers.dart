@@ -10,6 +10,8 @@ import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
+import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
 
 import '../../../core/async/isolate_runner.dart';
 import '../../../core/persistence/app_database.dart';
@@ -21,8 +23,6 @@ import '../../assets/physical/data/physical_asset.dart';
 import '../../assets/physical/data/providers.dart';
 import '../../investment/data/providers.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
-import '../../liabilities/data/providers.dart';
-import '../../liabilities/domain/liability_summary.dart';
 import '../domain/dashboard_aggregator.dart';
 import '../domain/dashboard_models.dart';
 import '../domain/dashboard_time_range.dart';

@@ -1,5 +1,5 @@
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 
 /// Resolves [LiabilityType] / [RepaymentMethod] / [LiabilityRateType] enum
 /// values to their localized strings. Centralized so the list, detail, and

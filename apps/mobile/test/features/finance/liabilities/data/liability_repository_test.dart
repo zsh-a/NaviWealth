@@ -5,11 +5,11 @@ import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/invariants.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
-import 'package:naviwealth/features/liabilities/data/liability_repository.dart';
+import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 
-import '../../../core/persistence/test_database.dart';
-import '../../../core/sync/_outbox_test_ext.dart';
-import '../../../features/finance/data/repositories/_stub_stamper.dart';
+import '../../../../core/persistence/test_database.dart';
+import '../../../../core/sync/_outbox_test_ext.dart';
+import '../../data/repositories/_stub_stamper.dart';
 
 Decimal d(String s) => Decimal.parse(s);
 

@@ -7,7 +7,7 @@ import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart'
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 
-import '../../../core/persistence/providers.dart';
+import '../../../../core/persistence/providers.dart';
 import '../domain/amortization_calculator.dart';
 import '../domain/liability_summary.dart';
 import 'liability_repository.dart';

@@ -8,6 +8,11 @@
 library;
 
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/liabilities/ui/liabilities_page.dart'
+    deferred as liabilities_lib;
+import 'package:naviwealth/features/finance/liabilities/ui/liability_detail_page.dart'
+    deferred as liability_detail_lib;
+import 'package:naviwealth/features/finance/liabilities/ui/liability_form_page.dart';
 
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
@@ -41,10 +46,6 @@ import '../../investment/presentation/portfolio_hub_page.dart'
 import '../../investment/presentation/trade_entry_form_page.dart';
 import '../../investment/presentation/watchlist_page.dart'
     deferred as watchlist_lib;
-import '../../liabilities/ui/liabilities_page.dart' deferred as liabilities_lib;
-import '../../liabilities/ui/liability_detail_page.dart'
-    deferred as liability_detail_lib;
-import '../../liabilities/ui/liability_form_page.dart';
 import '../../options_income/presentation/income_planner_page.dart'
     deferred as income_planner_lib;
 import '../../options_income/presentation/options_trade_stats_page.dart'

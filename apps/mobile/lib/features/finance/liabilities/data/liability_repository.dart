@@ -11,8 +11,8 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_buil
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../core/persistence/app_database.dart';
-import '../../../core/sync/op_outbox.dart';
+import '../../../../core/persistence/app_database.dart';
+import '../../../../core/sync/op_outbox.dart';
 import '../domain/amortization_calculator.dart';
 
 /// Persistence + amortization-orchestration layer for liabilities.

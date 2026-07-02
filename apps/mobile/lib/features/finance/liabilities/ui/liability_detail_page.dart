@@ -6,10 +6,10 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 
-import '../../../core/format/formatters.dart';
-import '../../../core/format/providers.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../../../core/format/formatters.dart';
+import '../../../../core/format/providers.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/liability_summary.dart';
 import 'liability_l10n.dart';
