@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -113,7 +113,7 @@ class _LiabilityHeaderCard extends ConsumerWidget {
               child: FButton(
                 variant: FButtonVariant.outline,
                 onPress: () =>
-                    context.push(AppRoutes.wealthLiabilityEdit(l.id)),
+                    context.push(FinanceRoutes.wealthLiabilityEdit(l.id)),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

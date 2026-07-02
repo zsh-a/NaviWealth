@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -54,7 +55,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
         : SemanticColors.of(context).warning;
 
     return SoftCard(
-      onPress: () => context.push(AppRoutes.cashflow),
+      onPress: () => context.push(FinanceRoutes.cashflow),
       padding: const EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.xlg,
       borderless: true,

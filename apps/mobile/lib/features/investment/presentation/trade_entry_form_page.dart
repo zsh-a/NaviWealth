@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -13,7 +14,6 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_buil
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
@@ -58,7 +58,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         OptimisticFormSubmit<TradeEntryFormPage>,
         FormDirtyGuard<TradeEntryFormPage> {
   @override
-  String get leaveFallback => AppRoutes.activity;
+  String get leaveFallback => FinanceRoutes.activity;
 
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();

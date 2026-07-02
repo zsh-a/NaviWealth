@@ -2,12 +2,12 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';
 import '../../../design_system/design_system.dart';
@@ -92,9 +92,13 @@ class ManualAssetTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: AppRoutes.wealth, selected: asset.id);
+      replaceSelectedQuery(
+        context,
+        path: FinanceRoutes.wealth,
+        selected: asset.id,
+      );
     } else {
-      context.go(AppRoutes.wealthAsset(asset.id));
+      context.go(FinanceRoutes.wealthAsset(asset.id));
     }
   }
 

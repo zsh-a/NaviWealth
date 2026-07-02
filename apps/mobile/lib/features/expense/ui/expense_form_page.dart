@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
@@ -12,7 +13,6 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../core/haptics/haptics.dart';
@@ -43,7 +43,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
         OptimisticFormSubmit<ExpenseFormPage>,
         FormDirtyGuard<ExpenseFormPage> {
   @override
-  String get leaveFallback => AppRoutes.activityExpenses;
+  String get leaveFallback => FinanceRoutes.activityExpenses;
 
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
@@ -84,7 +84,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
       AppMessenger.show(context, ToastKind.error, l10n.expenseFormLoadError);
-      popOrGo(context, fallback: AppRoutes.activityExpenses);
+      popOrGo(context, fallback: FinanceRoutes.activityExpenses);
       return;
     }
     if (!mounted) return;
@@ -156,7 +156,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     // The record is being persisted — the post-save pop must not prompt.
     dirty.markPristine();
     await submitOptimisticAndLeave(
-      leaveFallback: AppRoutes.activityExpenses,
+      leaveFallback: FinanceRoutes.activityExpenses,
       onBeforeLeave: Haptics.success,
       tag: 'expense',
       failureMessage: (_) => l10n.commonSaveFailed,
@@ -207,7 +207,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       await journalRepo.softDelete(_initial!.entry.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.activityExpenses);
+      popOrGo(context, fallback: FinanceRoutes.activityExpenses);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -498,7 +498,7 @@ class _NoAccountsHint extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s10),
                 FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => context.push(AppRoutes.wealthAccountNew),
+                  onPress: () => context.push(FinanceRoutes.wealthAccountNew),
                   child: Text(l10n.expenseFormNoAccountsCta),
                 ),
               ],

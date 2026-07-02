@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/shell/selection_query.dart';
 import '../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../home/data/dashboard_providers.dart';
@@ -99,7 +99,7 @@ class AssetsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: AppRoutes.wealth,
+      path: FinanceRoutes.wealth,
       selected: allIds[nextIndex],
     );
   }

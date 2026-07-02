@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/entities/symbol_info.dart';
@@ -186,7 +186,8 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               const SizedBox(height: AppSpacing.s16),
               FButton(
                 variant: FButtonVariant.primary,
-                onPress: () => context.push(AppRoutes.tradeForAsset(asset.id)),
+                onPress: () =>
+                    context.push(FinanceRoutes.tradeForAsset(asset.id)),
                 prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
                 child: Text(l10n.assetDetailNewTradeLabel),
               ),

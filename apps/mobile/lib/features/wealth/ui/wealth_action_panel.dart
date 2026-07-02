@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../assets/physical/ui/physical_asset_create_sheet.dart';
@@ -40,7 +40,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
               onPress: () => _closeAndPush(
                 sheetContext,
                 context,
-                AppRoutes.wealthAccountNew,
+                FinanceRoutes.wealthAccountNew,
               ),
             ),
             _WealthAction(
@@ -50,7 +50,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
               onPress: () => _closeAndPush(
                 sheetContext,
                 context,
-                AppRoutes.wealthLiabilityNew,
+                FinanceRoutes.wealthLiabilityNew,
               ),
             ),
           ],
@@ -63,8 +63,11 @@ Future<void> showWealthActionPanel(BuildContext context) {
               icon: FLucideIcons.wallet,
               title: l10n.assetsAddCashTitle,
               subtitle: l10n.assetsAddCashSubtitle,
-              onPress: () =>
-                  _closeAndPush(sheetContext, context, AppRoutes.wealthNewCash),
+              onPress: () => _closeAndPush(
+                sheetContext,
+                context,
+                FinanceRoutes.wealthNewCash,
+              ),
             ),
             _WealthAction(
               icon: FLucideIcons.piggyBank,
@@ -73,7 +76,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
               onPress: () => _closeAndPush(
                 sheetContext,
                 context,
-                AppRoutes.wealthNewDeposit,
+                FinanceRoutes.wealthNewDeposit,
               ),
             ),
             _WealthAction(
@@ -83,7 +86,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
               onPress: () => _closeAndPush(
                 sheetContext,
                 context,
-                AppRoutes.wealthNewWealth,
+                FinanceRoutes.wealthNewWealth,
               ),
             ),
           ],
@@ -265,7 +268,7 @@ Future<void> _closeAndOpenPhysical(
     );
     if (created != null && routeContext.mounted) {
       routeContext.goNamed(
-        AppRouteNames.wealthPhysicalDetail,
+        FinanceRouteNames.wealthPhysicalDetail,
         pathParameters: {'id': created.id},
       );
     }

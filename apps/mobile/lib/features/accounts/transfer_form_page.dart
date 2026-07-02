@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
@@ -13,7 +14,6 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../app/route_paths.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -49,7 +49,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         OptimisticFormSubmit<TransferFormPage>,
         FormDirtyGuard<TransferFormPage> {
   @override
-  String get leaveFallback => AppRoutes.wealth;
+  String get leaveFallback => FinanceRoutes.wealth;
 
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
@@ -550,7 +550,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     // The record is being persisted — the post-save pop must not prompt.
     dirty.markPristine();
     await submitOptimisticAndLeave(
-      leaveFallback: AppRoutes.wealth,
+      leaveFallback: FinanceRoutes.wealth,
       write: () => repo.create(entry: build.entry, postings: build.postings),
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>

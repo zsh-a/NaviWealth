@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';
 import '../../../core/shortcuts/master_detail_shortcuts.dart';
@@ -95,7 +95,7 @@ class AccountsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: AppRoutes.wealthAccounts,
+      path: FinanceRoutes.wealthAccounts,
       selected: allIds[nextIndex],
     );
   }
@@ -136,7 +136,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
             child: const Icon(FLucideIcons.creditCard),
           ),
           semanticsLabel: l10n.accountsCreateAction,
-          onPress: () => context.push(AppRoutes.wealthAccountNew),
+          onPress: () => context.push(FinanceRoutes.wealthAccountNew),
         ),
         FHeaderAction(
           icon: FTooltip(
@@ -144,7 +144,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
             child: const Icon(FLucideIcons.history),
           ),
           semanticsLabel: l10n.accountsJournalAction,
-          onPress: () => context.push(AppRoutes.journalEntries),
+          onPress: () => context.push(FinanceRoutes.journalEntries),
         ),
         FHeaderAction(
           icon: FTooltip(
@@ -152,7 +152,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
             child: const Icon(FLucideIcons.arrowLeftRight),
           ),
           semanticsLabel: l10n.accountsTransferAction,
-          onPress: () => context.push(AppRoutes.transfer),
+          onPress: () => context.push(FinanceRoutes.transfer),
         ),
       ],
       childPad: false,
@@ -172,7 +172,7 @@ class _EmptyAccounts extends StatelessWidget {
       title: l10n.accountsEmptyHint,
       action: FButton(
         variant: FButtonVariant.primary,
-        onPress: () => context.push(AppRoutes.wealthAccountNew),
+        onPress: () => context.push(FinanceRoutes.wealthAccountNew),
         prefix: const Icon(FLucideIcons.creditCard),
         child: Text(l10n.accountFormCreateTitle),
       ),
@@ -221,11 +221,11 @@ class _AccountsByType extends StatelessWidget {
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
       replaceSelectedQuery(
         context,
-        path: AppRoutes.wealthAccounts,
+        path: FinanceRoutes.wealthAccounts,
         selected: account.id,
       );
     } else {
-      context.push(AppRoutes.wealthAccount(account.id));
+      context.push(FinanceRoutes.wealthAccount(account.id));
     }
   }
 }

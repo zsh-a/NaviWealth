@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../app/shell_chrome.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -64,7 +65,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         FHeaderAction(
           icon: const Icon(FLucideIcons.inbox),
           semanticsLabel: l10n.ingestReviewTitle,
-          onPress: () => context.push(AppRoutes.activityIngest),
+          onPress: () => context.push(FinanceRoutes.activityIngest),
         ),
         if (!isDesktop) ...[
           FHeaderAction(
@@ -205,13 +206,13 @@ class _ActivityRightRail extends ConsumerWidget {
                     _QuickLinkTile(
                       icon: FLucideIcons.receipt,
                       label: l10n.activityExpenseListLink,
-                      onTap: () => context.push(AppRoutes.activityExpenses),
+                      onTap: () => context.push(FinanceRoutes.activityExpenses),
                     ),
                     const SizedBox(height: AppSpacing.s8),
                     _QuickLinkTile(
                       icon: FLucideIcons.pieChart,
                       label: l10n.activityExpenseReportLink,
-                      onTap: () => context.push(AppRoutes.expenseReport),
+                      onTap: () => context.push(FinanceRoutes.expenseReport),
                     ),
                   ],
                 ),
@@ -366,13 +367,13 @@ class _ExpenseQuickLinks extends StatelessWidget {
             icon: FLucideIcons.receipt,
             title: l10n.activityExpenseListLink,
             subtitle: '',
-            onPress: () => context.push(AppRoutes.activityExpenses),
+            onPress: () => context.push(FinanceRoutes.activityExpenses),
           ),
           AppGroupedAction(
             icon: FLucideIcons.pieChart,
             title: l10n.activityExpenseReportLink,
             subtitle: '',
-            onPress: () => context.push(AppRoutes.expenseReport),
+            onPress: () => context.push(FinanceRoutes.expenseReport),
           ),
         ],
       ),

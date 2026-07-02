@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -788,7 +789,7 @@ class _TradeJournalSection extends ConsumerWidget {
             children: [
               FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.push(AppRoutes.planIncomeStats),
+                onPress: () => context.push(FinanceRoutes.planIncomeStats),
                 child: Text(l10n.incomePlannerStatsAction),
               ),
               FButton(

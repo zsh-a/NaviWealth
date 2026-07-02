@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -12,7 +13,6 @@ import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.da
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
@@ -34,7 +34,7 @@ class DepositFormPage extends ConsumerStatefulWidget {
 class _DepositFormPageState extends ConsumerState<DepositFormPage>
     with FormDirtyGuard<DepositFormPage> {
   @override
-  String get leaveFallback => AppRoutes.wealth;
+  String get leaveFallback => FinanceRoutes.wealth;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -193,7 +193,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
-      popOrGo(context, fallback: AppRoutes.wealth);
+      popOrGo(context, fallback: FinanceRoutes.wealth);
     } on Object {
       if (!mounted) return;
       Haptics.error();
@@ -223,7 +223,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.wealth);
+      popOrGo(context, fallback: FinanceRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -283,7 +283,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
         .toList(growable: false);
     if (eligible.isEmpty) {
       return _PromptCreateAccount(
-        onTap: () => context.go(AppRoutes.wealthAccountNew),
+        onTap: () => context.go(FinanceRoutes.wealthAccountNew),
       );
     }
     if (!_hydratedFromList && !widget.isEdit) {

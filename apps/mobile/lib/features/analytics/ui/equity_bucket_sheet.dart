@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -86,7 +87,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                   onPress: () {
                     Navigator.of(context).pop();
                     context.goNamed(
-                      AppRouteNames.wealthAssetDetail,
+                      FinanceRouteNames.wealthAssetDetail,
                       pathParameters: {'assetId': h.assetId},
                     );
                   },

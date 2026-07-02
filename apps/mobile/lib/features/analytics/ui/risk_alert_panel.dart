@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -128,7 +129,7 @@ class _AlertRow extends ConsumerWidget {
       ),
       onPress: alert.assetIds.length == 1
           ? () => context.goNamed(
-              AppRouteNames.wealthAssetDetail,
+              FinanceRouteNames.wealthAssetDetail,
               pathParameters: {'assetId': alert.assetIds.first},
             )
           : null,

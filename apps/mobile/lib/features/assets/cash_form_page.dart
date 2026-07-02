@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -12,7 +13,6 @@ import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.da
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../core/logging/app_logger.dart';
@@ -36,7 +36,7 @@ class CashFormPage extends ConsumerStatefulWidget {
 class _CashFormPageState extends ConsumerState<CashFormPage>
     with FormDirtyGuard<CashFormPage> {
   @override
-  String get leaveFallback => AppRoutes.wealth;
+  String get leaveFallback => FinanceRoutes.wealth;
 
   final _formKey = GlobalKey<FormState>();
   final _balanceController = TextEditingController();
@@ -141,7 +141,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
-      popOrGo(context, fallback: AppRoutes.wealth);
+      popOrGo(context, fallback: FinanceRoutes.wealth);
     } on Object catch (error, stack) {
       AppLogger.instance.e(
         'cash balance save failed',
@@ -168,7 +168,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.wealth);
+      popOrGo(context, fallback: FinanceRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -234,7 +234,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
               const SizedBox(height: AppSpacing.s12),
               FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.go(AppRoutes.wealthAccountNew),
+                onPress: () => context.go(FinanceRoutes.wealthAccountNew),
                 prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
                 child: Text(l10n.cashFormCreateAccountAction),
               ),

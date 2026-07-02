@@ -3,13 +3,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -87,7 +87,7 @@ class _ActivityPreviewSection extends StatelessWidget {
     return HomeSection(
       title: l10n.dashboardActivityPreviewTitle,
       actionLabel: l10n.dashboardActivityPreviewViewAll,
-      onAction: () => context.go(AppRoutes.activity),
+      onAction: () => context.go(FinanceRoutes.activity),
       child: child,
     );
   }
@@ -272,7 +272,7 @@ class _PreviewRow extends StatelessWidget {
     final router = GoRouter.maybeOf(context);
     if (router != null) {
       context.pushNamed(
-        AppRouteNames.activityEntryDetail,
+        FinanceRouteNames.activityEntryDetail,
         pathParameters: {'entryId': entry.entry.id},
         extra: args,
       );

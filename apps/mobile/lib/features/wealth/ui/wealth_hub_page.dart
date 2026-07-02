@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../app/shell_chrome.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -201,25 +202,25 @@ class _WealthSectionGrid extends StatelessWidget {
         icon: FLucideIcons.slidersHorizontal,
         title: l10n.wealthAccountsSectionTitle,
         subtitle: l10n.wealthAccountsSectionSubtitle,
-        path: AppRoutes.wealthAccounts,
+        path: FinanceRoutes.wealthAccounts,
       ),
       _WealthSectionSpec(
         icon: FLucideIcons.chartLine,
         title: l10n.wealthHoldingsSectionTitle,
         subtitle: l10n.wealthHoldingsSectionSubtitle,
-        path: AppRoutes.wealthPortfolio,
+        path: FinanceRoutes.wealthPortfolio,
       ),
       _WealthSectionSpec(
         icon: FLucideIcons.bellRing,
         title: l10n.wealthWatchlistSectionTitle,
         subtitle: l10n.wealthWatchlistSectionSubtitle,
-        path: AppRoutes.wealthWatchlist,
+        path: FinanceRoutes.wealthWatchlist,
       ),
       _WealthSectionSpec(
         icon: FLucideIcons.landmark,
         title: l10n.wealthLiabilitiesSectionTitle,
         subtitle: l10n.wealthLiabilitiesSectionSubtitle,
-        path: AppRoutes.wealthLiabilities,
+        path: FinanceRoutes.wealthLiabilities,
       ),
     ];
     return AppGroupedActionList(

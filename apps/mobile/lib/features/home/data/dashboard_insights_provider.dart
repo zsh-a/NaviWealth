@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../app/route_paths.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
 import '../../cashflow/data/cash_flow_providers.dart';
@@ -41,7 +43,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: FLucideIcons.flag,
           kind: InsightKind.fireProgress,
           monthsToTarget: months,
-          route: AppRoutes.planFire,
+          route: FinanceRoutes.planFire,
         ),
       );
     } else if (months == 0) {
@@ -50,7 +52,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: FLucideIcons.partyPopper,
           kind: InsightKind.fireReached,
           tone: InsightTone.success,
-          route: AppRoutes.planFire,
+          route: FinanceRoutes.planFire,
         ),
       );
     }
@@ -69,7 +71,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: FLucideIcons.trendingUp,
           kind: InsightKind.fireOsHighWithdrawalRate,
           tone: InsightTone.warning,
-          route: AppRoutes.planFire,
+          route: FinanceRoutes.planFire,
           fireOsWithdrawalRate: state.withdrawalRate,
           fireOsSafeWithdrawalRate: state.plan.safeWithdrawalRate,
         ),
@@ -82,7 +84,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: FLucideIcons.landmark,
           kind: InsightKind.fireOsLowCashBucket,
           tone: InsightTone.warning,
-          route: AppRoutes.planFire,
+          route: FinanceRoutes.planFire,
           fireOsCashBucketMonths: state.cashBucketMonths,
           fireOsTargetCashBucketMonths: state.plan.targetCashBucketMonths,
         ),
@@ -94,7 +96,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: FLucideIcons.circleHelp,
           kind: InsightKind.fireOsUnmappedHoldings,
           tone: InsightTone.warning,
-          route: AppRoutes.planFire,
+          route: FinanceRoutes.planFire,
           fireOsUnmappedCount: state.unmappedHoldings.length,
         ),
       );
@@ -116,7 +118,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
               : FLucideIcons.unfoldVertical,
           kind: InsightKind.fireOsBucketDeviation,
           tone: InsightTone.warning,
-          route: AppRoutes.planFire,
+          route: FinanceRoutes.planFire,
           fireOsBucketRoleLabel: _bucketRoleWire(worst.role),
           fireOsBucketCurrentLabel: fmt
               .format(worst.currentValue.amount.toDouble())
@@ -138,7 +140,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         category: drift.category,
         driftPct: drift.deviation,
         tone: InsightTone.warning,
-        route: AppRoutes.planRebalance,
+        route: FinanceRoutes.planRebalance,
       ),
     );
   }
@@ -151,7 +153,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         kind: InsightKind.maturity,
         maturityCount: maturity.count,
         maturityDays: maturity.days,
-        route: AppRoutes.wealth,
+        route: FinanceRoutes.wealth,
       ),
     );
   }
@@ -164,7 +166,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         kind: InsightKind.anomaly,
         anomalyPct: anomaly.deltaRatio,
         tone: anomaly.deltaRatio > 0 ? InsightTone.warning : null,
-        route: AppRoutes.expenseReport,
+        route: FinanceRoutes.expenseReport,
       ),
     );
   }
@@ -179,7 +181,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         duplicateChargeCount: duplicate.matches.length,
         duplicateChargeAmountMinor: duplicate.totalAbsAmountMinor,
         duplicateChargeCurrency: duplicate.currency,
-        route: AppRoutes.activityExpenses,
+        route: FinanceRoutes.activityExpenses,
       ),
     );
   }
@@ -197,7 +199,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         summaryMonth: summary.month,
         summaryDeltaMinor: summary.deltaMinor,
         summaryCurrency: summary.currency,
-        route: AppRoutes.cashflow,
+        route: FinanceRoutes.cashflow,
       ),
     );
   }
@@ -221,14 +223,14 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           cashFlowMonthKey: metrics.monthKey,
           cashFlowNetMinor: _moneyToMinor(metrics.net.amount),
           cashFlowCurrency: metrics.net.currency,
-          route: AppRoutes.cashflow,
+          route: FinanceRoutes.cashflow,
         ),
       );
     }
   });
 
   // §5.10.10 / S5a.1 — Layer 4 queue surfaces as a calm ambient card;
-  // row tap deep-links to the review page (AppRoutes.activityIngest).
+  // row tap deep-links to the review page (FinanceRoutes.activityIngest).
   final ingest = ref.watch(ingestQueueInsightProvider);
   if (ingest != null && !ingest.isEmpty) {
     insights.add(
@@ -237,7 +239,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         kind: InsightKind.ingestQueue,
         ingestPendingCount: ingest.pendingCount,
         ingestFreshCount: ingest.freshCount,
-        route: AppRoutes.activityIngest,
+        route: FinanceRoutes.activityIngest,
       ),
     );
   }

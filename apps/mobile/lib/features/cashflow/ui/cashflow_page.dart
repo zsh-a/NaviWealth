@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -57,11 +58,11 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
       actions: [
         FHeaderAction(
           icon: const Icon(FLucideIcons.calendarClock),
-          onPress: () => context.push(AppRoutes.cashflowRecurring),
+          onPress: () => context.push(FinanceRoutes.cashflowRecurring),
         ),
         FHeaderAction(
           icon: const Icon(FLucideIcons.wallet),
-          onPress: () => context.push(AppRoutes.cashflowDividends),
+          onPress: () => context.push(FinanceRoutes.cashflowDividends),
         ),
       ],
       childPad: false,
@@ -91,7 +92,7 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
   void _changePeriod(CashFlowPeriod period) {
     if (period == _period) return;
     setState(() => _period = period);
-    context.go('${AppRoutes.cashflow}?period=${period.name}');
+    context.go('${FinanceRoutes.cashflow}?period=${period.name}');
   }
 }
 
@@ -393,7 +394,7 @@ class _CategoryPanel extends StatelessWidget {
               padding: const EdgeInsets.only(top: AppSpacing.s12),
               child: FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.push(AppRoutes.cashflowDividends),
+                onPress: () => context.push(FinanceRoutes.cashflowDividends),
                 prefix: const Icon(FLucideIcons.wallet),
                 child: Text(l10n.cashFlowViewDividendCenter),
               ),

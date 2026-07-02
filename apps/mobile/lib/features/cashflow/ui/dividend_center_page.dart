@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -26,7 +27,7 @@ class DividendCenterPage extends ConsumerWidget {
       actions: [
         FHeaderAction(
           icon: const Icon(FLucideIcons.creditCard),
-          onPress: () => context.push(AppRoutes.wealthCorporateAction),
+          onPress: () => context.push(FinanceRoutes.wealthCorporateAction),
         ),
       ],
       childPad: false,
@@ -523,7 +524,7 @@ class _EmptyDividendState extends StatelessWidget {
       message: l10n.dividendCenterEmptyBody,
       action: FButton(
         key: const Key('dividend-center-record-cta'),
-        onPress: () => context.push(AppRoutes.wealthCorporateAction),
+        onPress: () => context.push(FinanceRoutes.wealthCorporateAction),
         child: Text(l10n.dividendCenterRecordAction),
       ),
     );

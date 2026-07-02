@@ -2,11 +2,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
@@ -39,7 +39,7 @@ class AccountFormPage extends ConsumerStatefulWidget {
 class _AccountFormPageState extends ConsumerState<AccountFormPage>
     with FormDirtyGuard<AccountFormPage> {
   @override
-  String get leaveFallback => AppRoutes.wealthAccounts;
+  String get leaveFallback => FinanceRoutes.wealthAccounts;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -184,7 +184,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
-      popOrGo(context, fallback: AppRoutes.wealthAccounts);
+      popOrGo(context, fallback: FinanceRoutes.wealthAccounts);
     } on Object {
       if (!mounted) return;
       Haptics.error();
@@ -215,7 +215,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.wealthAccounts);
+      popOrGo(context, fallback: FinanceRoutes.wealthAccounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

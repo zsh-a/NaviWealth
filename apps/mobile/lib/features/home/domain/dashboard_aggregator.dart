@@ -1,8 +1,8 @@
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
@@ -132,7 +132,7 @@ class DashboardAggregator {
           valueInBase: converted,
           nativeAmount: outstanding,
           nativeCurrency: liability.currency,
-          routeHint: AppRoutes.wealthLiability(liability.id),
+          routeHint: FinanceRoutes.wealthLiability(liability.id),
         ),
       );
     }
@@ -202,7 +202,7 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: value,
       nativeCurrency: asset.currency,
-      routeHint: AppRoutes.wealthAsset(asset.id),
+      routeHint: FinanceRoutes.wealthAsset(asset.id),
     );
   }
 
@@ -222,7 +222,7 @@ class DashboardAggregator {
       valueInBase: Money(snap.marketValueInBase, baseCurrency),
       nativeAmount: snap.marketValueInAssetCurrency,
       nativeCurrency: snap.assetCurrency,
-      routeHint: AppRoutes.wealthAsset(asset.id),
+      routeHint: FinanceRoutes.wealthAsset(asset.id),
     );
   }
 
@@ -238,7 +238,7 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: value,
       nativeCurrency: asset.currency,
-      routeHint: AppRoutes.wealthPhysical(asset.id),
+      routeHint: FinanceRoutes.wealthPhysical(asset.id),
     );
   }
 

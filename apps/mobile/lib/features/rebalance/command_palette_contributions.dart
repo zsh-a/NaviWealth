@@ -2,7 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../core/command_palette/command_palette_entry.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'ui/target_allocation_editor_sheet.dart';
@@ -16,14 +17,14 @@ List<CommandPaletteEntry> rebalanceCommandPaletteEntries(
       label: l10n.rebalanceCommandOpen,
       icon: FLucideIcons.scale,
       keywords: <String>[
-        AppRoutes.planRebalance,
+        FinanceRoutes.planRebalance,
         '/accounts/rebalance',
         'rebalance',
         'allocation',
         'portfolio drift',
         l10n.commandKeywordRebalanceCn,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.planRebalance),
+      run: (BuildContext ctx) => ctx.go(FinanceRoutes.planRebalance),
     ),
     CommandPaletteEntry(
       id: 'action.rebalance.targetAllocation',

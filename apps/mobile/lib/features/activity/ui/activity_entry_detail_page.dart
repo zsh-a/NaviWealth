@@ -3,13 +3,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
@@ -64,7 +64,7 @@ class ActivityEntryDetailPage extends ConsumerWidget {
         if (classification.kind == EntryKind.expense)
           FHeaderAction(
             icon: const Icon(FLucideIcons.pencil),
-            onPress: () => context.go(AppRoutes.expense(entry.entry.id)),
+            onPress: () => context.go(FinanceRoutes.expense(entry.entry.id)),
           ),
       ],
       childPad: false,

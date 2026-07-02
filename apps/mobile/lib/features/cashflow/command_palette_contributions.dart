@@ -2,7 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../core/command_palette/command_palette_entry.dart';
 import '../../l10n/gen/app_localizations.dart';
 
@@ -13,7 +14,7 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
       label: l10n.cashFlowCommandOpen,
       icon: FLucideIcons.chartColumnStacked,
       keywords: <String>[
-        AppRoutes.cashflow,
+        FinanceRoutes.cashflow,
         'cashflow',
         'cash flow',
         'income',
@@ -22,7 +23,7 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
         l10n.commandKeywordIncomeCn,
         l10n.commandKeywordDividendCn,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.cashflow),
+      run: (BuildContext ctx) => ctx.go(FinanceRoutes.cashflow),
     ),
     CommandPaletteEntry(
       id: 'nav.income',
@@ -37,20 +38,21 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
         l10n.commandKeywordSalaryCn,
         l10n.commandKeywordDividendCn,
       ],
-      run: (BuildContext ctx) => ctx.go('${AppRoutes.activity}?kinds=income'),
+      run: (BuildContext ctx) =>
+          ctx.go('${FinanceRoutes.activity}?kinds=income'),
     ),
     CommandPaletteEntry(
       id: 'nav.cashflow.recurring',
       label: l10n.recurringCommandOpen,
       icon: FLucideIcons.calendarClock,
       keywords: <String>[
-        AppRoutes.cashflowRecurring,
+        FinanceRoutes.cashflowRecurring,
         'recurring',
         'subscription',
         'scheduled',
         l10n.commandKeywordRecurringCn,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.cashflowRecurring),
+      run: (BuildContext ctx) => ctx.go(FinanceRoutes.cashflowRecurring),
     ),
   ];
 }

@@ -4,10 +4,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -51,7 +51,9 @@ Future<void> showDividendEventActions(
           title: l10n.dividendEventEdit,
           subtitle: l10n.dividendEventEditHint,
           onPress: () => closeSheetThen(sheetContext, () {
-            if (context.mounted) context.push(AppRoutes.wealthCorporateAction);
+            if (context.mounted) {
+              context.push(FinanceRoutes.wealthCorporateAction);
+            }
           }),
         ),
         AppActionSheetTile(
@@ -96,7 +98,7 @@ Future<void> _viewInActivity(
     );
     unawaited(
       context.pushNamed(
-        AppRouteNames.activityEntryDetail,
+        FinanceRouteNames.activityEntryDetail,
         pathParameters: {'entryId': entry.entry.id},
         extra: args,
       ),

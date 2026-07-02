@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -547,7 +547,7 @@ class _CategoryDrillDown extends StatelessWidget {
                       formatter: formatter,
                       onTap: () {
                         Navigator.of(ctx).pop();
-                        context.push(AppRoutes.expense(exp.id));
+                        context.push(FinanceRoutes.expense(exp.id));
                       },
                     );
                   },

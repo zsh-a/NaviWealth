@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../core/async/deferred_provider_snapshot.dart';
 import '../../core/format/providers.dart';
 import '../../core/sync/providers.dart';
@@ -239,7 +240,7 @@ class _HomeQuickActions extends StatelessWidget {
             child: _HomeQuickAction(
               icon: FLucideIcons.walletCards,
               label: l10n.homeQuickAddAccount,
-              onPress: () => context.push(AppRoutes.wealthAccountNew),
+              onPress: () => context.push(FinanceRoutes.wealthAccountNew),
             ),
           ),
           _QuickActionDivider(color: colors.border),
@@ -247,7 +248,7 @@ class _HomeQuickActions extends StatelessWidget {
             child: _HomeQuickAction(
               icon: FLucideIcons.receiptText,
               label: l10n.homeQuickRecordEntry,
-              onPress: () => context.push(AppRoutes.expenseNew),
+              onPress: () => context.push(FinanceRoutes.expenseNew),
             ),
           ),
           _QuickActionDivider(color: colors.border),
@@ -255,7 +256,7 @@ class _HomeQuickActions extends StatelessWidget {
             child: _HomeQuickAction(
               icon: FLucideIcons.upload,
               label: l10n.homeQuickImport,
-              onPress: () => context.push(AppRoutes.activityIngest),
+              onPress: () => context.push(FinanceRoutes.activityIngest),
             ),
           ),
         ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../features/execution/composition/execution_route_paths.dart';
+import '../features/finance/composition/finance_route_paths.dart';
 import '../features/health/composition/health_route_paths.dart';
 import '../features/knowledge/composition/knowledge_route_paths.dart';
 
@@ -45,10 +46,10 @@ abstract final class AppRoutes {
   static const onboarding = '/onboarding';
 
   // ── Primary tabs ────────────────────────────────────────────────────────
-  static const home = '/';
-  static const activity = '/activity';
-  static const wealth = '/wealth';
-  static const plan = '/plan';
+  static const home = FinanceRoutes.home;
+  static const activity = FinanceRoutes.activity;
+  static const wealth = FinanceRoutes.wealth;
+  static const plan = FinanceRoutes.plan;
 
   // ── HealthOS (Phase D-2.3) — gated by domain opt-in (Health OFF by
   // default). Tabs mirror healthos-domain.md §5: Today / Trend / Plan.
@@ -78,38 +79,38 @@ abstract final class AppRoutes {
   static const settings = '/settings';
 
   // ── Activity sub-flows (things that happen) ────────────────────────────
-  static const activityExpenses = '/activity/expenses';
-  static const expenseNew = '/activity/expenses/new';
-  static const expenseReport = '/activity/expenses/report';
-  static const cashflow = '/cashflow';
-  static const cashflowRecurring = '/cashflow/recurring';
-  static const cashflowDividends = '/activity/cashflow/dividends';
-  static const tradeEntry = '/activity/trade';
-  static const transfer = '/activity/transfer';
-  static const journalEntries = '/activity/journal';
+  static const activityExpenses = FinanceRoutes.activityExpenses;
+  static const expenseNew = FinanceRoutes.expenseNew;
+  static const expenseReport = FinanceRoutes.expenseReport;
+  static const cashflow = FinanceRoutes.cashflow;
+  static const cashflowRecurring = FinanceRoutes.cashflowRecurring;
+  static const cashflowDividends = FinanceRoutes.cashflowDividends;
+  static const tradeEntry = FinanceRoutes.tradeEntry;
+  static const transfer = FinanceRoutes.transfer;
+  static const journalEntries = FinanceRoutes.journalEntries;
   // §5.10.10 / S5a — Layer 4 ingest review queue.
-  static const activityIngest = '/activity/ingest';
+  static const activityIngest = FinanceRoutes.activityIngest;
 
   // ── Wealth sub-flows (objects you own / owe) ───────────────────────────
-  static const wealthAccounts = '/wealth/accounts';
-  static const wealthAccountNew = '/wealth/accounts/new';
-  static const wealthNewCash = '/wealth/new/cash';
-  static const wealthNewDeposit = '/wealth/new/deposit';
-  static const wealthNewWealth = '/wealth/new/wealth';
-  static const wealthCorporateAction = '/wealth/corporate-action';
-  static const wealthLiabilities = '/wealth/liabilities';
-  static const wealthLiabilityNew = '/wealth/liabilities/new';
-  static const wealthPortfolio = '/wealth/portfolio';
-  static const wealthWatchlist = '/wealth/watchlist';
+  static const wealthAccounts = FinanceRoutes.wealthAccounts;
+  static const wealthAccountNew = FinanceRoutes.wealthAccountNew;
+  static const wealthNewCash = FinanceRoutes.wealthNewCash;
+  static const wealthNewDeposit = FinanceRoutes.wealthNewDeposit;
+  static const wealthNewWealth = FinanceRoutes.wealthNewWealth;
+  static const wealthCorporateAction = FinanceRoutes.wealthCorporateAction;
+  static const wealthLiabilities = FinanceRoutes.wealthLiabilities;
+  static const wealthLiabilityNew = FinanceRoutes.wealthLiabilityNew;
+  static const wealthPortfolio = FinanceRoutes.wealthPortfolio;
+  static const wealthWatchlist = FinanceRoutes.wealthWatchlist;
 
   // ── Plan sub-flows (decisions + future state) ──────────────────────────
-  static const planFire = '/plan/fire';
-  static const planRebalance = '/plan/rebalance';
-  static const planIncome = '/plan/income';
-  static const planIncomeStats = '/plan/income/stats';
-  static const planDca = '/plan/dca';
-  static const planBudget = '/plan/budget';
-  static const planWheel = '/plan/wheel';
+  static const planFire = FinanceRoutes.planFire;
+  static const planRebalance = FinanceRoutes.planRebalance;
+  static const planIncome = FinanceRoutes.planIncome;
+  static const planIncomeStats = FinanceRoutes.planIncomeStats;
+  static const planDca = FinanceRoutes.planDca;
+  static const planBudget = FinanceRoutes.planBudget;
+  static const planWheel = FinanceRoutes.planWheel;
 
   // ── Settings sub-flows ─────────────────────────────────────────────────
   static const settingsDevices = '/settings/devices';
@@ -147,29 +148,22 @@ abstract final class AppRoutes {
       '/settings/ai-transparency/${Uri.encodeComponent(requestId)}';
 
   // ── Detail-page builders ───────────────────────────────────────────────
-  static String wealthAsset(String id) =>
-      '/wealth/assets/${Uri.encodeComponent(id)}';
+  static String wealthAsset(String id) => FinanceRoutes.wealthAsset(id);
 
-  static String wealthPhysical(String id) =>
-      '/wealth/physical/${Uri.encodeComponent(id)}';
+  static String wealthPhysical(String id) => FinanceRoutes.wealthPhysical(id);
 
-  static String wealthLiability(String id) =>
-      '/wealth/liabilities/${Uri.encodeComponent(id)}';
+  static String wealthLiability(String id) => FinanceRoutes.wealthLiability(id);
 
   static String wealthLiabilityEdit(String id) =>
-      '/wealth/liabilities/${Uri.encodeComponent(id)}/edit';
+      FinanceRoutes.wealthLiabilityEdit(id);
 
-  static String wealthAccount(String id) =>
-      '/wealth/accounts/${Uri.encodeComponent(id)}';
+  static String wealthAccount(String id) => FinanceRoutes.wealthAccount(id);
 
-  static String expense(String id) =>
-      '/activity/expenses/${Uri.encodeComponent(id)}';
+  static String expense(String id) => FinanceRoutes.expense(id);
 
-  static String activityEntry(String id) =>
-      '/activity/entry/${Uri.encodeComponent(id)}';
+  static String activityEntry(String id) => FinanceRoutes.activityEntry(id);
 
-  static String tradeForAsset(String id) =>
-      '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
+  static String tradeForAsset(String id) => FinanceRoutes.tradeForAsset(id);
 
   static String executionAction(String id) => ExecutionRoutes.action(id);
 
@@ -182,7 +176,7 @@ abstract final class AppRoutes {
 abstract final class AppRouteNames {
   static const login = 'login';
   static const onboarding = 'onboarding';
-  static const home = 'home';
+  static const home = FinanceRouteNames.home;
   static const settings = 'settings';
   static const devices = 'devices';
   static const fxRates = 'fx-rates';
@@ -206,21 +200,21 @@ abstract final class AppRouteNames {
   static const domainsExecution = 'domains-execution';
 
   // ── Wealth ──────────────────────────────────────────────────────────────
-  static const wealth = 'wealth';
-  static const wealthAccounts = 'wealth-accounts';
-  static const wealthAccountNew = 'wealth-account-new';
-  static const wealthAccount = 'wealth-account';
-  static const wealthNewCash = 'wealth-new-cash';
-  static const wealthNewDeposit = 'wealth-new-deposit';
-  static const wealthNewWealth = 'wealth-new-wealth';
-  static const wealthCorporateAction = 'wealth-corporate-action';
-  static const wealthAssetDetail = 'wealth-asset-detail';
-  static const wealthPhysicalDetail = 'wealth-physical-detail';
-  static const wealthLiabilities = 'wealth-liabilities';
-  static const wealthLiabilityNew = 'wealth-liability-new';
-  static const wealthLiabilityDetail = 'wealth-liability-detail';
-  static const wealthPortfolio = 'wealth-portfolio';
-  static const wealthWatchlist = 'wealth-watchlist';
+  static const wealth = FinanceRouteNames.wealth;
+  static const wealthAccounts = FinanceRouteNames.wealthAccounts;
+  static const wealthAccountNew = FinanceRouteNames.wealthAccountNew;
+  static const wealthAccount = FinanceRouteNames.wealthAccount;
+  static const wealthNewCash = FinanceRouteNames.wealthNewCash;
+  static const wealthNewDeposit = FinanceRouteNames.wealthNewDeposit;
+  static const wealthNewWealth = FinanceRouteNames.wealthNewWealth;
+  static const wealthCorporateAction = FinanceRouteNames.wealthCorporateAction;
+  static const wealthAssetDetail = FinanceRouteNames.wealthAssetDetail;
+  static const wealthPhysicalDetail = FinanceRouteNames.wealthPhysicalDetail;
+  static const wealthLiabilities = FinanceRouteNames.wealthLiabilities;
+  static const wealthLiabilityNew = FinanceRouteNames.wealthLiabilityNew;
+  static const wealthLiabilityDetail = FinanceRouteNames.wealthLiabilityDetail;
+  static const wealthPortfolio = FinanceRouteNames.wealthPortfolio;
+  static const wealthWatchlist = FinanceRouteNames.wealthWatchlist;
 
   // ── HealthOS — gated by opt-in. 3 tabs per healthos-domain.md §5. ─────
   static const healthToday = HealthRouteNames.today;
@@ -242,29 +236,29 @@ abstract final class AppRouteNames {
   static const executionCommitmentDetail = ExecutionRouteNames.commitmentDetail;
 
   // ── Plan ────────────────────────────────────────────────────────────────
-  static const plan = 'plan';
-  static const planFire = 'plan-fire';
-  static const planRebalance = 'plan-rebalance';
-  static const planIncome = 'plan-income';
-  static const planIncomeStats = 'plan-income-stats';
-  static const planDca = 'plan-dca';
-  static const planBudget = 'plan-budget';
-  static const planWheel = 'plan-wheel';
+  static const plan = FinanceRouteNames.plan;
+  static const planFire = FinanceRouteNames.planFire;
+  static const planRebalance = FinanceRouteNames.planRebalance;
+  static const planIncome = FinanceRouteNames.planIncome;
+  static const planIncomeStats = FinanceRouteNames.planIncomeStats;
+  static const planDca = FinanceRouteNames.planDca;
+  static const planBudget = FinanceRouteNames.planBudget;
+  static const planWheel = FinanceRouteNames.planWheel;
 
   // ── Activity ────────────────────────────────────────────────────────────
-  static const activity = 'activity';
-  static const activityEntryDetail = 'activity-entry-detail';
-  static const expenses = 'expenses';
-  static const expenseNew = 'expense-new';
-  static const expenseReport = 'expense-report';
-  static const cashflow = 'cashflow';
-  static const cashflowRecurring = 'cashflow-recurring';
-  static const expenseDetail = 'expense-detail';
-  static const cashflowDividends = 'cashflow-dividends';
-  static const tradeEntry = 'trade-entry';
-  static const transfer = 'transfer';
-  static const journalEntries = 'journal-entries';
-  static const activityIngest = 'activity-ingest';
+  static const activity = FinanceRouteNames.activity;
+  static const activityEntryDetail = FinanceRouteNames.activityEntryDetail;
+  static const expenses = FinanceRouteNames.expenses;
+  static const expenseNew = FinanceRouteNames.expenseNew;
+  static const expenseReport = FinanceRouteNames.expenseReport;
+  static const cashflow = FinanceRouteNames.cashflow;
+  static const cashflowRecurring = FinanceRouteNames.cashflowRecurring;
+  static const expenseDetail = FinanceRouteNames.expenseDetail;
+  static const cashflowDividends = FinanceRouteNames.cashflowDividends;
+  static const tradeEntry = FinanceRouteNames.tradeEntry;
+  static const transfer = FinanceRouteNames.transfer;
+  static const journalEntries = FinanceRouteNames.journalEntries;
+  static const activityIngest = FinanceRouteNames.activityIngest;
 }
 
 /// Resolve a route path to its owning LifeOS domain. Returns `null` for

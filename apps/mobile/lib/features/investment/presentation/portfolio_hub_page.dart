@@ -6,12 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/async/async_notifier_convention.dart';
 import '../../../core/format/formatters.dart';
@@ -527,7 +527,7 @@ class _DcaSimulatorEntry extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
         child: FTile(
-          onPress: () => context.push(AppRoutes.planDca),
+          onPress: () => context.push(FinanceRoutes.planDca),
           prefix: Icon(
             FLucideIcons.calendarClock,
             color: context.theme.colors.mutedForeground,
@@ -1059,7 +1059,7 @@ class _HoldingRowCard extends StatelessWidget {
       borderless: true,
       tinted: false,
       child: FTappable(
-        onPress: () => context.push(AppRoutes.wealthAsset(holding.assetId)),
+        onPress: () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(

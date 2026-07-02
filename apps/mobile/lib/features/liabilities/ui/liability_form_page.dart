@@ -4,9 +4,9 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -33,7 +33,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         OptimisticFormSubmit<LiabilityFormPage>,
         FormDirtyGuard<LiabilityFormPage> {
   @override
-  String get leaveFallback => AppRoutes.wealthLiabilities;
+  String get leaveFallback => FinanceRoutes.wealthLiabilities;
 
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
@@ -429,7 +429,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
     if (liabilityId != null) {
       dirty.markPristine();
       await submitOptimisticAndLeave(
-        leaveFallback: AppRoutes.wealthLiability(liabilityId),
+        leaveFallback: FinanceRoutes.wealthLiability(liabilityId),
         onBeforeLeave: Haptics.success,
         tag: 'liability',
         failureMessage: (_) => l10n.commonSaveFailed,
@@ -472,7 +472,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
     // The record is being persisted — the post-save pop must not prompt.
     dirty.markPristine();
     await submitOptimisticAndLeave(
-      leaveFallback: AppRoutes.wealthLiabilities,
+      leaveFallback: FinanceRoutes.wealthLiabilities,
       onBeforeLeave: Haptics.success,
       tag: 'liability',
       failureMessage: (_) => l10n.commonSaveFailed,

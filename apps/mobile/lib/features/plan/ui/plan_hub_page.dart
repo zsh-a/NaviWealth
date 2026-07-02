@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -115,7 +116,7 @@ class _FireSummaryCard extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s16),
           FButton(
             variant: FButtonVariant.primary,
-            onPress: () => context.push(AppRoutes.planFire),
+            onPress: () => context.push(FinanceRoutes.planFire),
             child: Text(l10n.planHeroSeePlan),
           ),
         ],
@@ -189,7 +190,7 @@ class _FireSummaryCard extends ConsumerWidget {
             children: [
               FButton(
                 variant: FButtonVariant.primary,
-                onPress: () => context.push(AppRoutes.planFire),
+                onPress: () => context.push(FinanceRoutes.planFire),
                 child: Text(l10n.planHeroSeePlan),
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -218,19 +219,19 @@ class _PlanActions extends StatelessWidget {
               icon: FLucideIcons.flame,
               title: l10n.planFireSectionTitle,
               subtitle: l10n.planFireSectionSubtitle,
-              path: AppRoutes.planFire,
+              path: FinanceRoutes.planFire,
             ),
             _PlanActionSpec(
               icon: FLucideIcons.scale,
               title: l10n.planRebalanceSectionTitle,
               subtitle: l10n.planRebalanceSectionSubtitle,
-              path: AppRoutes.planRebalance,
+              path: FinanceRoutes.planRebalance,
             ),
             _PlanActionSpec(
               icon: FLucideIcons.piggyBank,
               title: l10n.planBudgetSectionTitle,
               subtitle: l10n.planBudgetSectionSubtitle,
-              path: AppRoutes.planBudget,
+              path: FinanceRoutes.planBudget,
             ),
           ],
         ),
@@ -244,19 +245,19 @@ class _PlanActions extends StatelessWidget {
                 icon: FLucideIcons.candlestickChart,
                 title: l10n.planIncomeSectionTitle,
                 subtitle: l10n.planIncomeSectionSubtitle,
-                path: AppRoutes.planIncome,
+                path: FinanceRoutes.planIncome,
               ),
             _PlanActionSpec(
               icon: FLucideIcons.calendarClock,
               title: l10n.planDcaSectionTitle,
               subtitle: l10n.planDcaSectionSubtitle,
-              path: AppRoutes.planDca,
+              path: FinanceRoutes.planDca,
             ),
             _PlanActionSpec(
               icon: FLucideIcons.refreshCw,
               title: l10n.planWheelSectionTitle,
               subtitle: l10n.planWheelSectionSubtitle,
-              path: AppRoutes.planWheel,
+              path: FinanceRoutes.planWheel,
             ),
           ],
         ),
