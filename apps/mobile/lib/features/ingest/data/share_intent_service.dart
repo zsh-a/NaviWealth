@@ -19,8 +19,6 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'package:uuid/uuid.dart';
 
-import '../../../app/route_paths.dart';
-import '../../../app/router_builder.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/sync/mutation_context.dart';
@@ -30,6 +28,7 @@ import '../../knowledge/domain/knowledge_models.dart';
 import '../domain/ingest_models.dart';
 import 'ingest_capture_source.dart';
 import 'providers.dart';
+import 'share_intent_navigation.dart';
 
 const _kShareUuid = Uuid();
 
@@ -106,14 +105,16 @@ class ShareIntentService {
       }
     }
     if (handledFinance) {
-      try {
-        _ref.read(appRouterProvider).go(AppRoutes.activityIngest);
-      } catch (_) {}
+      _navigate(ShareIntentDestination.financeIngest);
     } else if (handledKnowledge) {
-      try {
-        _ref.read(appRouterProvider).go(AppRoutes.knowledgeInbox);
-      } catch (_) {}
+      _navigate(ShareIntentDestination.knowledgeInbox);
     }
+  }
+
+  void _navigate(ShareIntentDestination destination) {
+    try {
+      _ref.read(shareIntentNavigationSinkProvider)(destination);
+    } catch (_) {}
   }
 
   /// Direct-write a [KnowledgeNote] from a text / url share. Title is
