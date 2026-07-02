@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
-
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+
 import '../domain/opportunity_explanation.dart';
 import '../domain/option_contract.dart';
 import '../domain/options_opportunity.dart';

@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../application/dca_simulation_service.dart';
 import '../application/dca_trade_entry_prefills.dart';
 import '../domain/dca/dca_simulator.dart';

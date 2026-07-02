@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/domain/values/price_confidence.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
 
 /// The seven top-level "big bucket" categories surfaced by the dashboard pie
 /// chart. The set is derived from scope: 股票 / ETF / 现金 / 加密 /

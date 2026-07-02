@@ -1,7 +1,8 @@
 import 'package:naviwealth/core/logging/app_logger.dart';
-import 'package:naviwealth/domain/entities/historical_bar.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+
 import '../../domain/benchmark/benchmark_comparison.dart';
 import '../../domain/benchmark/benchmark_index.dart';
 

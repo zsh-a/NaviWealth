@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/domain/values/price_confidence.dart';
-import 'package:naviwealth/domain/values/resolved_price.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
+import 'package:naviwealth/features/finance/market/domain/resolved_price.dart';
 
 /// Per-asset price observation used by the holding pipeline.
 ///

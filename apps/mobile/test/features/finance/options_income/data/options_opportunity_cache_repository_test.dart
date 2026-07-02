@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_opportunity_cache_repository.dart';
 import 'package:naviwealth/features/finance/options_income/domain/opportunity_explanation.dart';
 import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';

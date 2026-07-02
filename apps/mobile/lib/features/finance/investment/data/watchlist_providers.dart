@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
-import 'package:naviwealth/domain/entities/quote.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
 
 import 'watchlist_repository.dart';
 

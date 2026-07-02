@@ -1,4 +1,4 @@
-import 'package:naviwealth/domain/values/resolved_price.dart';
+import 'package:naviwealth/features/finance/market/domain/resolved_price.dart';
 
 import '../../domain/asset.dart';
 

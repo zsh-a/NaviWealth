@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
@@ -10,6 +9,7 @@ import 'package:naviwealth/features/finance/data/repositories/price_repository.d
 import 'package:naviwealth/features/finance/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import '../domain/options_strategy_profile.dart';
 import '../domain/trade_journal_entry.dart';

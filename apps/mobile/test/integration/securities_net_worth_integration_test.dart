@@ -13,8 +13,6 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
-import 'package:naviwealth/domain/values/price_confidence.dart';
-import 'package:naviwealth/domain/values/resolved_price.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
@@ -23,6 +21,8 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_buil
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
+import 'package:naviwealth/features/finance/market/domain/resolved_price.dart';
 
 import 'support/integration_env.dart';
 

@@ -1,7 +1,7 @@
-import '../entities/historical_bar.dart';
-import '../entities/quote.dart';
-import '../entities/symbol_info.dart';
-import '../values/asset_market.dart';
+import 'asset_market.dart';
+import 'historical_bar.dart';
+import 'quote.dart';
+import 'symbol_info.dart';
 
 /// Freshness label attached to every market-data response.
 ///

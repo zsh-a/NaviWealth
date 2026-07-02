@@ -8,8 +8,8 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/shared/forms/symbol_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 

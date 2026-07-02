@@ -4,13 +4,13 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/entities/symbol_info.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/investment/ui/event_timeline_section.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import 'asset_detail_sections.dart';

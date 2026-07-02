@@ -4,7 +4,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import '../domain/approved_underlying.dart';
 

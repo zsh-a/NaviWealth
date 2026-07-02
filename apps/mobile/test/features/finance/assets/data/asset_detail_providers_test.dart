@@ -1,17 +1,17 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/entities/historical_bar.dart';
-import 'package:naviwealth/domain/entities/quote.dart';
-import 'package:naviwealth/domain/entities/symbol_info.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/assets/asset_detail_providers.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
+import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 void main() {
   group('PriceHistoryKey', () {

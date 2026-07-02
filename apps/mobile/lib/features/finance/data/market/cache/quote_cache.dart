@@ -2,14 +2,14 @@ import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
-
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/domain/entities/historical_bar.dart';
-import 'package:naviwealth/domain/entities/quote.dart';
-import 'package:naviwealth/domain/entities/symbol_info.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
+import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
+
 import 'cache_policy.dart';
 
 /// Read-through cache for quotes, history, and symbol search.

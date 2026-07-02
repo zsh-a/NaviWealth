@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import 'equity_classification.dart';
 

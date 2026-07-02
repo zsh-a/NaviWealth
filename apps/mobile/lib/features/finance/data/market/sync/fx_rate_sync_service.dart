@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 
 import '../../../../../core/logging/app_logger.dart';
-import '../../../../../domain/services/market_data_service.dart';
-import '../../../../../domain/values/asset_market.dart';
+import '../../../market/domain/asset_market.dart';
+import '../../../market/domain/market_data_service.dart';
 import '../../repositories/fx_rate_repository.dart';
 
 /// Fetches today's FX rates from Yahoo Finance and persists them to the

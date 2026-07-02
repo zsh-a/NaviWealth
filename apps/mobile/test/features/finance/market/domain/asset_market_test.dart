@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 void main() {
   group('AssetMarket.wire round-trips', () {

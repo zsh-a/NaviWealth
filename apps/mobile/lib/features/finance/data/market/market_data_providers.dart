@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import 'cache/cache_policy.dart';

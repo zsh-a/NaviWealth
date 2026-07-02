@@ -1,13 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/entities/historical_bar.dart';
-import 'package:naviwealth/domain/entities/quote.dart';
-import 'package:naviwealth/domain/entities/symbol_info.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_history_source.dart';
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
+import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 class _FakeMarketData implements MarketDataService {
   _FakeMarketData({this.bars = const [], this.error});

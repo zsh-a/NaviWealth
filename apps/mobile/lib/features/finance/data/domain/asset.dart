@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import 'enums.dart';
 

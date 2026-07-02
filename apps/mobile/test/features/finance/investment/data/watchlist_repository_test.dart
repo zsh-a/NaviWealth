@@ -5,9 +5,9 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../../../core/sync/_outbox_test_ext.dart';

@@ -1,4 +1,4 @@
-import '../values/asset_market.dart';
+import 'asset_market.dart';
 
 /// A search-result row for symbol lookup.
 class SymbolInfo {

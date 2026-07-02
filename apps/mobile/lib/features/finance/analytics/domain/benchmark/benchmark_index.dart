@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 /// Catalogue of mainstream broad-base indices the user can pin against
 /// their portfolio. Kept as a closed enum (rather than an open list driven

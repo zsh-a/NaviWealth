@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
-
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 /// One normalized option contract returned by an [OptionsChainProvider].
 ///

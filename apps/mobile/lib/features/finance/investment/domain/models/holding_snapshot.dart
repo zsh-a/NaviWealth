@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/domain/values/price_confidence.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
 import 'lot.dart';
 
 /// Per-asset position summary at a given point in time.

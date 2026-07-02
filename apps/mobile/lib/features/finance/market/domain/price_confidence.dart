@@ -1,5 +1,5 @@
-import '../services/market_data_service.dart';
 import 'asset_market.dart';
+import 'market_data_service.dart';
 
 /// How much to trust a resolved price.
 ///

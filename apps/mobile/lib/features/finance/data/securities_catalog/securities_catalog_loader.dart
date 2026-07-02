@@ -4,9 +4,9 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 /// Default location of the bundled seed catalog inside the Flutter asset
 /// tree. Lives under `assets/catalog/` so it can be lazy-loaded via

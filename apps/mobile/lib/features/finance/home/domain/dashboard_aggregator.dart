@@ -1,7 +1,6 @@
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/domain/values/price_confidence.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
@@ -9,6 +8,7 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
 
 import 'dashboard_models.dart';
 

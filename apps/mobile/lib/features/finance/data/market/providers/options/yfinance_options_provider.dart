@@ -1,12 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yahoo_crumb_session.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
 
 import 'options_chain_provider.dart';
