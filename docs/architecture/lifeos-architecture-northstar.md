@@ -149,7 +149,7 @@ Domain indexers convert domain rows into events and memories:
 - Health metric indexer.
 - Knowledge object and decision indexers.
 
-New indexers belong in the owning domain and are watched by `app/memory_indexers_bootstrap.dart`. Do not make `core/ai/local/memory/` import a domain.
+New indexers belong in the owning domain and are contributed through the owning `DomainPack.memoryBootstrapBuilder`; `app/domain_bootstrap.dart` only loops active packs. Do not make `core/ai/local/memory/` import a domain.
 
 ## Rust Boundary
 

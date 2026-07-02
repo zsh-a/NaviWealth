@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
-import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
@@ -70,7 +69,9 @@ void main() {
   test('buildAgentRuntimeCatalog exports Rust runtime wire shapes', () {
     final catalog = buildAgentRuntimeCatalog(
       packs: [_pack],
-      agents: [_agent],
+      agentRegistrations: [
+        DomainAgentRegistration(agent: _agent, domain: DomainScope.finance),
+      ],
       generatedAt: DateTime.utc(2026, 6, 28, 9, 12, 31),
     );
 
@@ -106,7 +107,7 @@ void main() {
       },
       'capabilities': <String>['scheduled_agent'],
       'metadata': <String, Object?>{
-        'domain': 'execution',
+        'domain': 'finance',
         'dart_type': '_FakeAgent',
       },
     });
@@ -142,7 +143,6 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeDomainPacksProvider.overrideWith((ref) => [_pack]),
-        agentRegistryProvider.overrideWith((ref) => [_agent]),
       ],
     );
     addTearDown(container.dispose);

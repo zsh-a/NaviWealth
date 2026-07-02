@@ -6,9 +6,11 @@
 /// `bootstrap.dart` registers this list as
 /// [domainPackRegistryProvider]; the shell aggregators (device tools,
 /// prompt blocks, proposal kinds, proposal applier routes, shell specs, agent
-/// registry, router branches, primary tab paths, test preloaders) derive from
-/// it automatically.
+/// registry, memory/background bootstraps, router branches, primary tab paths,
+/// test preloaders) derive from it automatically.
 library;
+
+import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,6 +27,7 @@ import '../features/execution/composition/execution_proposal_applier.dart'
 import '../features/execution/composition/execution_proposal_kinds.dart'
     show kExecutionProposalKinds;
 import '../features/execution/composition/execution_routes.dart';
+import '../features/execution/data/execution_memory_indexer.dart';
 import '../features/execution_ai_tools.dart';
 import '../features/finance/composition/finance_bootstrap.dart';
 import '../features/finance/composition/finance_command_palette.dart';
@@ -37,11 +40,13 @@ import '../features/finance/composition/finance_routes.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
+import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/agents/recovery_alert_agent.dart';
 import '../features/health/agents/weekly_summary_agent.dart';
 import '../features/health/composition/health_command_palette.dart';
 import '../features/health/composition/health_domain_shell.dart';
 import '../features/health/composition/health_routes.dart';
+import '../features/health/data/health_metric_memory_indexer.dart';
 import '../features/health_ai_tools.dart';
 import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
@@ -52,7 +57,10 @@ import '../features/knowledge/composition/knowledge_proposal_applier.dart'
 import '../features/knowledge/composition/knowledge_proposal_kinds.dart'
     show kKnowledgeProposalKinds;
 import '../features/knowledge/composition/knowledge_routes.dart';
+import '../features/knowledge/data/knowledge_decision_memory_indexer.dart';
+import '../features/knowledge/data/knowledge_object_memory_indexers.dart';
 import '../features/knowledge_ai_tools.dart';
+import '../features/options_income/data/trade_journal_memory_indexer.dart';
 import 'route_paths.dart';
 
 final DomainPack kFinancePack = DomainPack(
@@ -77,6 +85,7 @@ final DomainPack kFinancePack = DomainPack(
   // through Wealth / Plan navigation. Listing it here keeps
   // `aiContextProvider` aware that those routes belong to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
+  memoryBootstrapBuilder: _financeMemoryBootstrap,
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
   providerOverridesBuilder: financeCompositionOverrides,
 );
@@ -95,6 +104,8 @@ final DomainPack kHealthPack = DomainPack(
     AppRoutes.healthPlan,
   ],
   agentBuilder: _healthAgents,
+  memoryBootstrapBuilder: _healthMemoryBootstrap,
+  backgroundBootstrapBuilder: _healthBackgroundBootstrap,
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
 );
 
@@ -113,6 +124,7 @@ final DomainPack kKnowledgePack = DomainPack(
     AppRoutes.knowledgeReview,
   ],
   agentBuilder: _knowledgeAgents,
+  memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
 );
 
@@ -131,6 +143,7 @@ final DomainPack kExecutionPack = DomainPack(
     AppRoutes.executionReview,
   ],
   agentBuilder: _executionAgents,
+  memoryBootstrapBuilder: _executionMemoryBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
 );
 
@@ -155,6 +168,43 @@ List<Agent> _knowledgeAgents(Ref ref) =>
 
 List<Agent> _executionAgents(Ref ref) =>
     ref.watch(execution_agent_providers.executionAgentsProvider);
+
+void _financeMemoryBootstrap(Ref ref) {
+  ref.watch(tradeJournalMemoryIndexerProvider);
+}
+
+void _healthMemoryBootstrap(Ref ref) {
+  ref.watch(healthMetricMemoryIndexerProvider);
+}
+
+void _knowledgeMemoryBootstrap(Ref ref) {
+  ref.watch(knowledgeDecisionMemoryIndexerProvider);
+  ref.watch(knowledgeNoteMemoryIndexerProvider);
+  ref.watch(knowledgePrincipleMemoryIndexerProvider);
+  ref.watch(knowledgeAssumptionMemoryIndexerProvider);
+  ref.watch(knowledgeConceptMemoryIndexerProvider);
+  ref.watch(knowledgeExperimentMemoryIndexerProvider);
+  ref.watch(knowledgeRoutineMemoryIndexerProvider);
+}
+
+void _executionMemoryBootstrap(Ref ref) {
+  ref.watch(executionMemoryIndexerProvider);
+}
+
+void _healthBackgroundBootstrap(Ref ref) {
+  ref.watch(health_agent_providers.morningBriefingCronProvider);
+  ref.watch(health_agent_providers.garminSyncCronProvider);
+  ref.watch(health_agent_providers.healthPlatformSyncCronProvider);
+  unawaited(ref.read(health_agent_providers.pendingBriefingRunProvider.future));
+  unawaited(
+    ref.read(health_agent_providers.pendingGarminSyncRunProvider.future),
+  );
+  unawaited(
+    ref.read(
+      health_agent_providers.pendingHealthPlatformSyncRunProvider.future,
+    ),
+  );
+}
 
 Future<ProposalApplierRoute> _financeProposalApplierRoute(Ref ref) async {
   final applier = await ref.watch(

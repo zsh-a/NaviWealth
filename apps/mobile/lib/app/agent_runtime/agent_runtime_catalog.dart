@@ -10,10 +10,9 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/agents/agent.dart';
-import '../../core/ai/agents/agent_registry.dart';
 import '../../core/ai/agents/agent_schedule.dart';
 import '../../core/ai/composition/proposal_kind_registry.dart';
-import '../../core/ai/contracts/intent.dart';
+import '../../core/ai/contracts/intent.dart' show RiskLevel;
 import '../../core/ai/contracts/tool_descriptor.dart';
 import '../../core/ai/runtime/device/tools/device_tool.dart';
 import '../../core/lifeos/domain_pack.dart';
@@ -27,14 +26,14 @@ final agentRuntimeCatalogProvider = Provider<AgentRuntimeCatalog>((ref) {
   final packs = ref.watch(activeDomainPacksProvider);
   return buildAgentRuntimeCatalog(
     packs: packs,
-    agents: ref.watch(agentRegistryProvider),
+    agentRegistrations: domainAgentRegistrations(ref, packs),
     generatedAt: DateTime.now().toUtc(),
   );
 });
 
 AgentRuntimeCatalog buildAgentRuntimeCatalog({
   required List<DomainPack> packs,
-  required List<Agent> agents,
+  required List<DomainAgentRegistration> agentRegistrations,
   required DateTime generatedAt,
 }) {
   final descriptors = domainToolDescriptors(packs);
@@ -44,8 +43,11 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
     activeDomains: [for (final pack in packs) pack.scope.wire],
     agents: [
       kSettingsLlmRuntimeCheckAgent,
-      for (final agent in agents)
-        AgentRuntimeAgentSpec.fromAgent(agent, domain: _domainForAgent(agent)),
+      for (final registration in agentRegistrations)
+        AgentRuntimeAgentSpec.fromAgent(
+          registration.agent,
+          domain: registration.domain.wire,
+        ),
     ],
     tools: [
       for (final tool in domainDeviceTools(packs))
@@ -273,22 +275,4 @@ String _runtimeRisk(DeviceTool tool, ToolDescriptor? descriptor) {
 
 Map<String, Object?> _jsonObject(Map<String, Object?> value) {
   return value.isEmpty ? const <String, Object?>{'type': 'object'} : value;
-}
-
-String? _domainForAgent(Agent agent) {
-  final id = agent.id;
-  if (id.startsWith('knowledge_') ||
-      id.contains('routine') ||
-      id.contains('contradiction') ||
-      id.contains('assumption') ||
-      id.contains('inbox')) {
-    return kDomainKnowledge;
-  }
-  if (id.startsWith('execution_')) return kDomainExecution;
-  if (id.contains('briefing') ||
-      id.contains('recovery') ||
-      id.contains('weekly_summary')) {
-    return kDomainHealth;
-  }
-  return null;
 }

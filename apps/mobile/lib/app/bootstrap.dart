@@ -28,10 +28,9 @@ import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
-import '../features/health/agents/providers.dart' as health_agent_providers;
 import 'agent_runtime/agent_runtime_provider_overrides.dart';
+import 'domain_bootstrap.dart';
 import 'domain_composition.dart';
-import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
@@ -245,28 +244,9 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     logger.i('Memory Runtime startup tasks skipped until auth is ready');
     logger.i('Memory Layer indexers skipped until auth is ready');
   }
-  // Drive the platform background scheduler from the
-  // Health domain opt-in. Eager-read so the provider mounts now
-  // and reacts to subsequent toggles (workmanager register / cancel
-  // happens inside the provider build, see `morningBriefingCronProvider`).
-  container.read(health_agent_providers.morningBriefingCronProvider);
-  container.read(health_agent_providers.garminSyncCronProvider);
-  container.read(health_agent_providers.healthPlatformSyncCronProvider);
-  // When the workmanager callback fired while the app was
-  // backgrounded it stamped `kMorningBriefingDueAtKey`. Kick off the
-  // in-process scheduled-agent tick so ScheduleSpec remains the single
-  // due/not-due policy for autonomous agents.
-  unawaited(
-    container.read(health_agent_providers.pendingBriefingRunProvider.future),
-  );
-  unawaited(
-    container.read(health_agent_providers.pendingGarminSyncRunProvider.future),
-  );
-  unawaited(
-    container.read(
-      health_agent_providers.pendingHealthPlatformSyncRunProvider.future,
-    ),
-  );
+  // Mount domain-owned background bootstraps (scheduler registration and
+  // pending native wakeup drains). DomainPack remains the startup inventory.
+  container.read(domainBackgroundBootstrapProvider);
   // Eager startup catch-up for due recurring transactions. This is a
   // local-first finance job (it writes through the mutation stamper /
   // journal repo, no cloud session needed — the same provider runs

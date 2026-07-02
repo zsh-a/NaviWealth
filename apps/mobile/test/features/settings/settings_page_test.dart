@@ -11,6 +11,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
+import 'package:naviwealth/features/settings/ui/execution_domain_settings_page.dart';
 import 'package:naviwealth/features/settings/ui/knowledge_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +35,11 @@ GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
             path: 'domains/knowledge',
             name: AppRouteNames.domainsKnowledge,
             builder: (_, _) => const KnowledgeDomainSettingsPage(),
+          ),
+          GoRoute(
+            path: 'domains/execution',
+            name: AppRouteNames.domainsExecution,
+            builder: (_, _) => const ExecutionDomainSettingsPage(),
           ),
         ],
       ),
@@ -140,6 +146,24 @@ void main() {
       expect(find.text('KnowledgeOS · Library'), findsOneWidget);
       expect(find.text('KnowledgeOS · Review'), findsOneWidget);
       expect(find.text('KnowledgeOS Memory'), findsOneWidget);
+    });
+  });
+
+  group('Settings → ExecutionOS', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('surfaces today, commitments, and review settings', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settingsDomainsExecution),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ExecutionOS · Today'), findsOneWidget);
+      expect(find.text('ExecutionOS · Commitments'), findsOneWidget);
+      expect(find.text('ExecutionOS · Review'), findsOneWidget);
     });
   });
 

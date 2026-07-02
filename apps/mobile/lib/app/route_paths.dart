@@ -201,6 +201,7 @@ abstract final class AppRouteNames {
   static const domains = 'domains';
   static const domainsHealth = 'domains-health';
   static const domainsKnowledge = 'domains-knowledge';
+  static const domainsExecution = 'domains-execution';
 
   // ── Wealth ──────────────────────────────────────────────────────────────
   static const wealth = 'wealth';

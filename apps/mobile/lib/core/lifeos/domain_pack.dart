@@ -4,9 +4,10 @@
 /// itself once as a [DomainPack] and registers into
 /// [domainPackRegistryProvider]. The four shell aggregators that used
 /// to repeat the same opt-in branching (device tools, system-prompt
-/// blocks, proposal kinds, proposal applier routes, shell specs, agent list) all read
-/// [activeDomainPacksProvider] instead — adding a new domain is now a
-/// single entry in the registry, not scattered edits in `bootstrap.dart`.
+/// blocks, proposal kinds, proposal applier routes, shell specs, agent list,
+/// memory indexers, background jobs) all read this registry seam instead —
+/// adding a new domain is now a single entry in the registry, not scattered
+/// edits in `bootstrap.dart`.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +31,15 @@ import '../shell/domain_shell.dart';
 /// on runtime services like the LLM client or notification service).
 typedef DomainAgentBuilder = List<Agent> Function(Ref ref);
 
+/// Agent plus the domain that registered it. Runtime metadata exporters use
+/// this instead of guessing ownership from agent ids.
+class DomainAgentRegistration {
+  const DomainAgentRegistration({required this.agent, required this.domain});
+
+  final Agent agent;
+  final DomainScope domain;
+}
+
 /// Returns the top-level [StatefulShellRoute] the domain mounts under
 /// the dock shell. Called once during router construction.
 typedef DomainShellRouteBuilder = StatefulShellRoute Function();
@@ -50,6 +60,11 @@ typedef DomainCommandPaletteBuilder =
 /// domain can resolve its concrete applier provider lazily.
 typedef DomainProposalApplierRouteBuilder =
     Future<ProposalApplierRoute> Function(Ref ref);
+
+/// Side-effecting bootstrap hook contributed by a domain. Use for app-start
+/// provider reads that must stay alive for as long as the app container lives
+/// (memory indexers, background scheduler registration, pending wakeup drains).
+typedef DomainBootstrapBuilder = void Function(Ref ref);
 
 /// Build-level provider overrides a domain contributes to composition
 /// seams that are not yet represented by a narrower [DomainPack] field.
@@ -74,6 +89,8 @@ class DomainPack {
     this.tabPaths = const <String>[],
     this.additionalPathPrefixes = const <String>[],
     this.agentBuilder,
+    this.memoryBootstrapBuilder,
+    this.backgroundBootstrapBuilder,
     this.commandPaletteEntriesBuilder,
     this.providerOverridesBuilder,
   });
@@ -134,6 +151,14 @@ class DomainPack {
   /// one or more agent providers from `ref` so each agent stays
   /// composition-blind.
   final DomainAgentBuilder? agentBuilder;
+
+  /// Eager Memory Runtime indexer bootstrap. Null when the domain has no
+  /// memory indexers with source streams.
+  final DomainBootstrapBuilder? memoryBootstrapBuilder;
+
+  /// Eager background-job bootstrap. Null when the domain has no startup
+  /// background scheduler or pending wakeup drain.
+  final DomainBootstrapBuilder? backgroundBootstrapBuilder;
 
   /// Cmd-K command palette contributions. Null when the domain has no
   /// palette entries yet. Non-null builders are invoked with the active

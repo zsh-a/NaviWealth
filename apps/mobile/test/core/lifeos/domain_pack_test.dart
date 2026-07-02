@@ -41,6 +41,8 @@ void main() {
       expect(empty.systemPromptBlock, '');
       expect(empty.shellSpecBuilder, isNull);
       expect(empty.agentBuilder, isNull);
+      expect(empty.memoryBootstrapBuilder, isNull);
+      expect(empty.backgroundBootstrapBuilder, isNull);
     });
   });
 

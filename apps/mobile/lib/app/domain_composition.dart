@@ -179,9 +179,33 @@ List<String> domainSystemPromptBlocks(List<DomainPack> packs) {
 
 List<Agent> domainAgents(Ref ref, List<DomainPack> packs) {
   return [
-    for (final p in packs)
-      if (p.agentBuilder != null) ...p.agentBuilder!(ref),
+    for (final registration in domainAgentRegistrations(ref, packs))
+      registration.agent,
   ];
+}
+
+List<DomainAgentRegistration> domainAgentRegistrations(
+  Ref ref,
+  List<DomainPack> packs,
+) {
+  return [
+    for (final p in packs)
+      if (p.agentBuilder != null)
+        for (final agent in p.agentBuilder!(ref))
+          DomainAgentRegistration(agent: agent, domain: p.scope),
+  ];
+}
+
+void domainMemoryBootstraps(Ref ref, List<DomainPack> packs) {
+  for (final p in packs) {
+    p.memoryBootstrapBuilder?.call(ref);
+  }
+}
+
+void domainBackgroundBootstraps(Ref ref, List<DomainPack> packs) {
+  for (final p in packs) {
+    p.backgroundBootstrapBuilder?.call(ref);
+  }
 }
 
 List<DomainShellSpec> domainShellSpecs(

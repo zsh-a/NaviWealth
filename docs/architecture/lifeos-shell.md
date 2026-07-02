@@ -29,7 +29,7 @@ app/
   domain_packs.dart              Production domain inventory
   router_builder.dart            Outer dock shell plus domain routes
   app_dock_shell.dart            Multi-domain chrome
-  memory_indexers_bootstrap.dart Domain indexer startup
+  domain_bootstrap.dart          Domain indexer/background startup
 
 core/
   lifeos/domain_pack.dart        Domain registration contract
@@ -74,7 +74,7 @@ Use this path for any domain-level change:
 4. Add agents under `features/<domain>/agents/` and expose a builder provider if needed.
 5. Add command palette entries under `features/<domain>/composition/`.
 6. Register the domain once in `app/domain_packs.dart`.
-7. Add domain memory indexers to `app/memory_indexers_bootstrap.dart` only when they have a real source stream.
+7. Add domain memory/background bootstraps through the owning `DomainPack` only when they have a real source stream or startup task.
 8. Add tests for opt-in behavior, route ownership, tool registration, and domain-specific repositories.
 
 Do not add custom opt-in checks to every consumer. Consumers should derive from `activeDomainPacksProvider` or from a domain-owned provider that already observes the opt-in.
@@ -189,7 +189,7 @@ Location:
 
 - `core/ai/local/memory/`
 - `core/ai/local/embedding/`
-- `app/memory_indexers_bootstrap.dart`
+- `app/domain_bootstrap.dart`
 
 Core types:
 
@@ -211,6 +211,8 @@ Rules:
 
 - `core/ai/local/memory/` does not import domains.
 - Domain indexers live in domain `data/`.
+- Domain indexers are contributed through `DomainPack.memoryBootstrapBuilder`;
+  the app bootstrap only loops active packs.
 - Memory embeddings are derived local data and can be rebuilt.
 - `build_context` is the preferred LLM retrieval tool for contextual answers; `query_memory` remains a flat fallback.
 
