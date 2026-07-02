@@ -173,8 +173,8 @@ void main() {
               minTestFiles: 2,
               minTestCases: 5,
             ),
-            'features/plan': (
-              testPath: 'test/features/plan',
+            'features/finance/ui': (
+              testPath: 'test/features/finance/ui',
               minTestFiles: 1,
               minTestCases: 7,
             ),

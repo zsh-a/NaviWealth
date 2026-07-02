@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
 import 'package:naviwealth/features/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/fire/domain/fire_projection.dart';
-import 'package:naviwealth/features/plan/ui/plan_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(FireDashboardView view) => _wrapAsync(AsyncValue.data(view));
