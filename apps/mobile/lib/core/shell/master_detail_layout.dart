@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../design_system/design_system.dart';
+import '../../design_system/design_system.dart';
 import 'selection_query.dart';
 import 'shell_preferences.dart';
 

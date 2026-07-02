@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/master_detail_layout.dart';
-import '../../app/selection_query.dart';
+import '../../core/shell/master_detail_layout.dart';
+import '../../core/shell/selection_query.dart';
 import 'asset_detail_page.dart';
 import 'ui/assets_list_body.dart';
 import 'ui/assets_master.dart';

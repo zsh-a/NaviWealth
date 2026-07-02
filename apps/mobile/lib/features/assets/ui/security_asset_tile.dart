@@ -3,9 +3,9 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 
-import '../../../app/master_detail_layout.dart';
 import '../../../app/route_paths.dart';
-import '../../../app/selection_query.dart';
+import '../../../core/shell/master_detail_layout.dart';
+import '../../../core/shell/selection_query.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../investment/domain/models/holding_snapshot.dart';

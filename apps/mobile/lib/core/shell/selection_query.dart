@@ -1,12 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../design_system/widgets/back_navigation.dart';
+import '../../design_system/widgets/back_navigation.dart';
 
 // `kSelectedQueryKey` is the SoT for the master-detail "selected row"
 // query parameter; it lives in design_system so the back primitives and
 // the master-detail widget can share it without duplication.
-export '../design_system/widgets/back_navigation.dart' show kSelectedQueryKey;
+export '../../design_system/widgets/back_navigation.dart'
+    show kSelectedQueryKey;
 
 /// Reads `?selected=` off the current router location, or null if absent
 /// (or if no GoRouter is mounted — returning null lets shared widgets

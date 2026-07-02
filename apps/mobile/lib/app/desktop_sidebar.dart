@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/shell/shell_preferences.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
-import 'shell_preferences.dart';
 
 /// Collapsible left sidebar for the desktop shell.
 ///

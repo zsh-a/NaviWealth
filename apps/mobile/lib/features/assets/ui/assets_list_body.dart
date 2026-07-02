@@ -5,7 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 
-import '../../../app/master_detail_layout.dart';
+import '../../../core/shell/master_detail_layout.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../home/domain/dashboard_models.dart';

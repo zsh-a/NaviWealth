@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
-import 'package:naviwealth/app/selection_query.dart';
+import 'package:naviwealth/core/shell/selection_query.dart';
 
 GoRouter _router(String initialLocation) {
   return GoRouter(

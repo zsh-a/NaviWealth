@@ -2,12 +2,12 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../app/master_detail_layout.dart';
 import '../../../app/route_paths.dart';
-import '../../../app/selection_query.dart';
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/shell/master_detail_layout.dart';
+import '../../../core/shell/selection_query.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';

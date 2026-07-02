@@ -9,7 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../app/selection_query.dart';
+import '../../../core/shell/selection_query.dart';
 
 String aiHistoryLocation(String sessionId) {
   return Uri(

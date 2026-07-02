@@ -6,7 +6,7 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../app/selection_query.dart';
+import '../../../core/shell/selection_query.dart';
 import '../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../home/domain/dashboard_models.dart';
