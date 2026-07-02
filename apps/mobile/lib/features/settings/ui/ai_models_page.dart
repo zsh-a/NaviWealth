@@ -21,9 +21,9 @@ import '../../../core/ai/local/embedding/embedder_diagnostics.dart';
 import '../../../core/ai/local/embedding/embedder_path_resolution.dart';
 import '../../../core/ai/local/embedding/model_install_state.dart';
 import '../../../core/ai/local/embedding/model_manifest.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'settings_page_frame.dart';
 
 class AiModelsPage extends ConsumerWidget {
   const AiModelsPage({super.key});

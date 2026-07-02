@@ -23,9 +23,9 @@ import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_proposal_bridge.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'settings_page_frame.dart';
 
 const _settingsRuntimeBindingKey = (
   agentId: kSettingsLlmRuntimeCheckAgentId,

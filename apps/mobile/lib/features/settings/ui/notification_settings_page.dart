@@ -4,12 +4,12 @@ import 'package:forui/forui.dart';
 
 import '../../../core/notifications/notification_preferences.dart';
 import '../../../core/notifications/providers.dart';
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../health/data/health_notification_preferences.dart';
 import '../../health/data/morning_briefing_preferences.dart';
-import 'inline_setting_row.dart';
-import 'settings_page_frame.dart';
 
 final _notificationPermissionSnapshotProvider =
     FutureProvider.autoDispose<_NotificationPermissionSnapshot>((ref) async {

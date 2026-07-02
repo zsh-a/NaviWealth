@@ -10,14 +10,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../health/composition/health_route_paths.dart';
-import '../../health/data/health_sync_service.dart';
-import '../../health/data/morning_briefing_preferences.dart';
-import '../../health/data/providers.dart' as health_data;
-import 'inline_setting_row.dart';
-import 'settings_page_frame.dart';
+import '../composition/health_route_paths.dart';
+import '../data/health_sync_service.dart';
+import '../data/morning_briefing_preferences.dart';
+import '../data/providers.dart' as health_data;
 
 class HealthDomainSettingsPage extends ConsumerWidget {
   const HealthDomainSettingsPage({super.key});

@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
+import '../../haptics/haptics.dart';
 
 /// Single-line setting row in iOS-style inset-grouped lists.
 ///

@@ -15,8 +15,8 @@ import '../../features/execution/composition/execution_proposal_kinds.dart'
     show kExecutionProposalKinds;
 import '../../features/execution/composition/execution_routes.dart';
 import '../../features/execution/data/execution_memory_indexer.dart';
+import '../../features/execution/ui/execution_domain_settings_page.dart';
 import '../../features/execution_ai_tools.dart';
-import '../../features/settings/ui/execution_domain_settings_page.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../agent_runtime/agent_runtime_execution_overrides.dart';
 import '../route_paths.dart';

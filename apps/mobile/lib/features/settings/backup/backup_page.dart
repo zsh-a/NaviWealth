@@ -8,10 +8,10 @@ import '../../../core/backup/backup_codec.dart';
 import '../../../core/backup/backup_service.dart';
 import '../../../core/backup/providers.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../ui/inline_setting_row.dart';
-import '../ui/settings_page_frame.dart';
 import 'file_saver.dart';
 
 typedef BackupFileSaver =

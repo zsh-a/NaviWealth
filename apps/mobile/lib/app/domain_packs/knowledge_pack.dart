@@ -16,8 +16,8 @@ import '../../features/knowledge/composition/knowledge_proposal_kinds.dart'
 import '../../features/knowledge/composition/knowledge_routes.dart';
 import '../../features/knowledge/data/knowledge_decision_memory_indexer.dart';
 import '../../features/knowledge/data/knowledge_object_memory_indexers.dart';
+import '../../features/knowledge/ui/knowledge_domain_settings_page.dart';
 import '../../features/knowledge_ai_tools.dart';
-import '../../features/settings/ui/knowledge_domain_settings_page.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../agent_runtime/agent_runtime_knowledge_overrides.dart';
 import '../route_paths.dart';

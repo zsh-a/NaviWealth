@@ -10,11 +10,11 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/settings_route_paths.dart';
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../knowledge/composition/knowledge_route_paths.dart';
-import 'inline_setting_row.dart';
-import 'settings_page_frame.dart';
+import '../composition/knowledge_route_paths.dart';
 
 class KnowledgeDomainSettingsPage extends ConsumerWidget {
   const KnowledgeDomainSettingsPage({super.key});

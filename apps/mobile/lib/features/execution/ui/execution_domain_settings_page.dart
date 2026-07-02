@@ -9,11 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../execution/composition/execution_route_paths.dart';
-import 'inline_setting_row.dart';
-import 'settings_page_frame.dart';
+import '../composition/execution_route_paths.dart';
 
 class ExecutionDomainSettingsPage extends ConsumerWidget {
   const ExecutionDomainSettingsPage({super.key});

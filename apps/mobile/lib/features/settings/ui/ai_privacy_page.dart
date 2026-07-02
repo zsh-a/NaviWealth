@@ -12,10 +12,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'inline_setting_row.dart';
-import 'settings_page_frame.dart';
 
 class AiPrivacyPage extends ConsumerWidget {
   const AiPrivacyPage({super.key});

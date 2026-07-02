@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/lifeos/domain_pack.dart';
 import '../../../core/shell/settings_route_paths.dart';
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'finance_domain_settings_section.dart';
-import 'inline_setting_row.dart';
-import 'settings_page_frame.dart';
 
 /// `/settings/domains` — LifeOS domain management.
 ///

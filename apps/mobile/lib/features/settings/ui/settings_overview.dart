@@ -10,10 +10,10 @@ import '../../../core/security/biometric_auth_service.dart';
 import '../../../core/security/biometric_lock_preferences.dart';
 import '../../../core/shell/auth_route_paths.dart';
 import '../../../core/shell/settings_route_paths.dart';
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../auth/data/auth_controller.dart';
-import 'inline_setting_row.dart';
 
 /// Settings landing page — iOS-style inset-grouped sections.
 ///
