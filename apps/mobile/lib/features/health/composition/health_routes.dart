@@ -12,7 +12,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/deferred_route.dart';
 import '../../../app/domain_tabs_shell.dart';
-import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/health_plan_page.dart' deferred as plan_lib;
 import '../ui/health_today_page.dart' deferred as today_lib;
@@ -34,7 +33,7 @@ StatefulShellRoute healthShellRoute() {
         routes: [
           GoRoute(
             path: HealthRoutes.today,
-            name: AppRouteNames.healthToday,
+            name: HealthRouteNames.today,
             builder: (context, state) => DeferredRoute(
               load: today_lib.loadLibrary,
               builder: (_) => today_lib.HealthTodayPage(),
@@ -46,7 +45,7 @@ StatefulShellRoute healthShellRoute() {
         routes: [
           GoRoute(
             path: HealthRoutes.trend,
-            name: AppRouteNames.healthTrend,
+            name: HealthRouteNames.trend,
             builder: (context, state) {
               final query = state.uri.queryParameters;
               return DeferredRoute(
@@ -61,7 +60,7 @@ StatefulShellRoute healthShellRoute() {
         routes: [
           GoRoute(
             path: HealthRoutes.plan,
-            name: AppRouteNames.healthPlan,
+            name: HealthRouteNames.plan,
             builder: (context, state) => DeferredRoute(
               load: plan_lib.loadLibrary,
               builder: (_) => plan_lib.HealthPlanPage(),

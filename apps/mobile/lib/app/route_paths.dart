@@ -223,23 +223,23 @@ abstract final class AppRouteNames {
   static const wealthWatchlist = 'wealth-watchlist';
 
   // ── HealthOS — gated by opt-in. 3 tabs per healthos-domain.md §5. ─────
-  static const healthToday = 'health-today';
-  static const healthTrend = 'health-trend';
-  static const healthPlan = 'health-plan';
+  static const healthToday = HealthRouteNames.today;
+  static const healthTrend = HealthRouteNames.trend;
+  static const healthPlan = HealthRouteNames.plan;
 
   // ── KnowledgeOS — gated by opt-in. 3 tabs per knowledgeos-domain.md §5.
-  static const knowledgeInbox = 'knowledge-inbox';
-  static const knowledgeLibrary = 'knowledge-library';
-  static const knowledgeReview = 'knowledge-review';
-  static const knowledgeDecisionDetail = 'knowledge-decision-detail';
-  static const knowledgeObjectDetail = 'knowledge-object-detail';
+  static const knowledgeInbox = KnowledgeRouteNames.inbox;
+  static const knowledgeLibrary = KnowledgeRouteNames.library;
+  static const knowledgeReview = KnowledgeRouteNames.review;
+  static const knowledgeDecisionDetail = KnowledgeRouteNames.decisionDetail;
+  static const knowledgeObjectDetail = KnowledgeRouteNames.objectDetail;
 
   // ── ExecutionOS — gated by opt-in. ─────────────────────────────────────
-  static const executionToday = 'execution-today';
-  static const executionCommitments = 'execution-commitments';
-  static const executionReview = 'execution-review';
-  static const executionActionDetail = 'execution-action-detail';
-  static const executionCommitmentDetail = 'execution-commitment-detail';
+  static const executionToday = ExecutionRouteNames.today;
+  static const executionCommitments = ExecutionRouteNames.commitments;
+  static const executionReview = ExecutionRouteNames.review;
+  static const executionActionDetail = ExecutionRouteNames.actionDetail;
+  static const executionCommitmentDetail = ExecutionRouteNames.commitmentDetail;
 
   // ── Plan ────────────────────────────────────────────────────────────────
   static const plan = 'plan';

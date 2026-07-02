@@ -13,12 +13,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -847,7 +847,7 @@ Widget _buildDecisionTile(
     typeIcon: FLucideIcons.gitBranch,
     typeColor: colors.primary,
     onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeDecisionDetail,
+      KnowledgeRouteNames.decisionDetail,
       pathParameters: {'id': d.id},
     ),
     onDelete: onDelete,
@@ -880,7 +880,7 @@ Widget _buildNoteTile(
     typeIcon: FLucideIcons.fileText,
     typeColor: colors.mutedForeground,
     onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeObjectDetail,
+      KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'note', 'id': n.id},
     ),
     onDelete: onDelete,
@@ -916,7 +916,7 @@ Widget _buildPrincipleTile(
     typeIcon: FLucideIcons.badgeCheck,
     typeColor: KnowledgeTypeColors.principle,
     onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeObjectDetail,
+      KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'principle', 'id': p.id},
     ),
     onDelete: onDelete,
@@ -950,7 +950,7 @@ Widget _buildAssumptionTile(
     typeIcon: FLucideIcons.lightbulb,
     typeColor: KnowledgeTypeColors.assumption,
     onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeObjectDetail,
+      KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'assumption', 'id': a.id},
     ),
     onDelete: onDelete,
@@ -981,7 +981,7 @@ Widget _buildConceptTile(
     typeIcon: FLucideIcons.folderTree,
     typeColor: KnowledgeTypeColors.concept,
     onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeObjectDetail,
+      KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'concept', 'id': c.id},
     ),
     onDelete: onDelete,
@@ -1005,7 +1005,7 @@ Widget _buildExperimentTile(
     typeIcon: FLucideIcons.flaskConical,
     typeColor: KnowledgeTypeColors.experiment,
     onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeObjectDetail,
+      KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'experiment', 'id': e.id},
     ),
     onDelete: onDelete,
@@ -1044,7 +1044,7 @@ Widget _buildRoutineTile(
     typeIcon: FLucideIcons.calendarClock,
     typeColor: KnowledgeTypeColors.routine,
     onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeObjectDetail,
+      KnowledgeRouteNames.objectDetail,
       pathParameters: {'kind': 'routine', 'id': r.id},
     ),
     onDelete: onDelete,

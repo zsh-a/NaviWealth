@@ -13,10 +13,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_decision_lifecycle_sheet.dart';
@@ -258,7 +258,7 @@ class _BodyState extends ConsumerState<_Body> {
                   icon: FLucideIcons.badgeCheck,
                   iconColor: KnowledgeTypeColors.principle,
                   onPress: () => context.pushNamed(
-                    AppRouteNames.knowledgeObjectDetail,
+                    KnowledgeRouteNames.objectDetail,
                     pathParameters: {'kind': 'principle', 'id': p.id},
                   ),
                 ),
@@ -278,7 +278,7 @@ class _BodyState extends ConsumerState<_Body> {
                   icon: FLucideIcons.lightbulb,
                   iconColor: KnowledgeTypeColors.assumption,
                   onPress: () => context.pushNamed(
-                    AppRouteNames.knowledgeObjectDetail,
+                    KnowledgeRouteNames.objectDetail,
                     pathParameters: {'kind': 'assumption', 'id': a.id},
                   ),
                 ),

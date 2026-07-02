@@ -1,7 +1,6 @@
 import 'package:go_router/go_router.dart';
 
 import '../../../app/domain_tabs_shell.dart';
-import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/execution_commitments_page.dart';
 import '../ui/execution_detail_page.dart';
@@ -21,12 +20,12 @@ StatefulShellRoute executionShellRoute() {
         routes: [
           GoRoute(
             path: ExecutionRoutes.today,
-            name: AppRouteNames.executionToday,
+            name: ExecutionRouteNames.today,
             builder: (context, state) => const ExecutionTodayPage(),
             routes: [
               GoRoute(
                 path: 'action/:id',
-                name: AppRouteNames.executionActionDetail,
+                name: ExecutionRouteNames.actionDetail,
                 builder: (context, state) => ExecutionActionDetailPage(
                   actionId: state.pathParameters['id'] ?? '',
                 ),
@@ -39,12 +38,12 @@ StatefulShellRoute executionShellRoute() {
         routes: [
           GoRoute(
             path: ExecutionRoutes.commitments,
-            name: AppRouteNames.executionCommitments,
+            name: ExecutionRouteNames.commitments,
             builder: (context, state) => const ExecutionCommitmentsPage(),
             routes: [
               GoRoute(
                 path: ':id',
-                name: AppRouteNames.executionCommitmentDetail,
+                name: ExecutionRouteNames.commitmentDetail,
                 builder: (context, state) => ExecutionCommitmentDetailPage(
                   commitmentId: state.pathParameters['id'] ?? '',
                 ),
@@ -57,7 +56,7 @@ StatefulShellRoute executionShellRoute() {
         routes: [
           GoRoute(
             path: ExecutionRoutes.review,
-            name: AppRouteNames.executionReview,
+            name: ExecutionRouteNames.review,
             builder: (context, state) => const ExecutionReviewPage(),
           ),
         ],

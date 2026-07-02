@@ -8,7 +8,6 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../app/domain_tabs_shell.dart';
-import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/knowledge_decision_detail_page.dart';
 import '../ui/knowledge_inbox_page.dart';
@@ -29,7 +28,7 @@ StatefulShellRoute knowledgeShellRoute() {
         routes: [
           GoRoute(
             path: KnowledgeRoutes.inbox,
-            name: AppRouteNames.knowledgeInbox,
+            name: KnowledgeRouteNames.inbox,
             builder: (context, state) => const KnowledgeInboxPage(),
           ),
         ],
@@ -38,19 +37,19 @@ StatefulShellRoute knowledgeShellRoute() {
         routes: [
           GoRoute(
             path: KnowledgeRoutes.library,
-            name: AppRouteNames.knowledgeLibrary,
+            name: KnowledgeRouteNames.library,
             builder: (context, state) => const KnowledgeLibraryPage(),
             routes: [
               GoRoute(
                 path: 'decision/:id',
-                name: AppRouteNames.knowledgeDecisionDetail,
+                name: KnowledgeRouteNames.decisionDetail,
                 builder: (context, state) => KnowledgeDecisionDetailPage(
                   decisionId: state.pathParameters['id'] ?? '',
                 ),
               ),
               GoRoute(
                 path: 'object/:kind/:id',
-                name: AppRouteNames.knowledgeObjectDetail,
+                name: KnowledgeRouteNames.objectDetail,
                 builder: (context, state) => KnowledgeObjectDetailPage(
                   kind: state.pathParameters['kind'] ?? '',
                   id: state.pathParameters['id'] ?? '',
@@ -64,7 +63,7 @@ StatefulShellRoute knowledgeShellRoute() {
         routes: [
           GoRoute(
             path: KnowledgeRoutes.review,
-            name: AppRouteNames.knowledgeReview,
+            name: KnowledgeRouteNames.review,
             builder: (context, state) => const KnowledgeReviewPage(),
           ),
         ],

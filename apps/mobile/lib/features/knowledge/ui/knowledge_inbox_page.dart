@@ -11,11 +11,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ask_ai.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
@@ -266,7 +266,7 @@ class _NoteCard extends StatelessWidget {
     final candidateKind = _extractCandidateKind(note.tags);
     return KnowledgeSection.item(
       onPress: () => context.pushNamed(
-        AppRouteNames.knowledgeObjectDetail,
+        KnowledgeRouteNames.objectDetail,
         pathParameters: {'kind': 'note', 'id': note.id},
       ),
       title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,

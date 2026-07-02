@@ -16,10 +16,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -494,7 +494,7 @@ List<Widget> _conceptSections(
             concept: c,
             relatedConcepts: relatedConcepts,
             onConceptPress: (concept) => context.pushNamed(
-              AppRouteNames.knowledgeObjectDetail,
+              KnowledgeRouteNames.objectDetail,
               pathParameters: {'kind': 'concept', 'id': concept.id},
             ),
           ),
@@ -508,7 +508,7 @@ List<Widget> _conceptSections(
               icon: FLucideIcons.folderTree,
               iconColor: KnowledgeTypeColors.concept,
               onPress: () => context.pushNamed(
-                AppRouteNames.knowledgeObjectDetail,
+                KnowledgeRouteNames.objectDetail,
                 pathParameters: {'kind': 'concept', 'id': concept.id},
               ),
             ),
@@ -761,7 +761,7 @@ List<Widget> _experimentSections(
             icon: FLucideIcons.lightbulb,
             iconColor: KnowledgeTypeColors.assumption,
             onPress: () => context.pushNamed(
-              AppRouteNames.knowledgeObjectDetail,
+              KnowledgeRouteNames.objectDetail,
               pathParameters: {'kind': 'assumption', 'id': targetAssumption.id},
             ),
           ),
@@ -900,7 +900,7 @@ List<Widget> _assumptionSections(
               icon: FLucideIcons.fileText,
               iconColor: context.theme.colors.mutedForeground,
               onPress: () => context.pushNamed(
-                AppRouteNames.knowledgeObjectDetail,
+                KnowledgeRouteNames.objectDetail,
                 pathParameters: {'kind': 'note', 'id': note.id},
               ),
             ),
@@ -923,7 +923,7 @@ List<Widget> _assumptionSections(
               icon: FLucideIcons.flaskConical,
               iconColor: KnowledgeTypeColors.experiment,
               onPress: () => context.pushNamed(
-                AppRouteNames.knowledgeObjectDetail,
+                KnowledgeRouteNames.objectDetail,
                 pathParameters: {'kind': 'experiment', 'id': experiment.id},
               ),
             ),
@@ -1095,7 +1095,7 @@ class _DecisionLinksSection extends StatelessWidget {
             icon: FLucideIcons.gitBranch,
             iconColor: context.theme.colors.primary,
             onPress: () => context.pushNamed(
-              AppRouteNames.knowledgeDecisionDetail,
+              KnowledgeRouteNames.decisionDetail,
               pathParameters: {'id': decision.id},
             ),
           ),
