@@ -21,8 +21,8 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/models/expense.dart';
-import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 
 import '../data/repositories/journal_entry_providers.dart';

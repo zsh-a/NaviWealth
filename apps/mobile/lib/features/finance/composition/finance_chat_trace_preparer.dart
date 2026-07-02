@@ -12,6 +12,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
 import 'package:naviwealth/core/ai/local/skills/skills.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/assets/data/deposit_maturity_insight_provider.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -21,7 +22,6 @@ import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_projection.dart'
     show FireScenarioTier;
-import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/contracts/contracts.dart';

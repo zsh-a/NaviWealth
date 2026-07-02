@@ -33,6 +33,7 @@ import 'package:naviwealth/features/finance/analytics/data/providers.dart'
     as analytics_data;
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_index.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
@@ -43,7 +44,6 @@ import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/liability.dart';
-import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';

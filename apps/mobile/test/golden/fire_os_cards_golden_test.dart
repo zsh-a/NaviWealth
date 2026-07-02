@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_action.dart';
@@ -13,7 +14,6 @@ import 'package:naviwealth/features/finance/fire/domain/fire_stress_test.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_buckets_card.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_state_hero_card.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_stress_tests_card.dart';
-import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
 import '_golden_setup.dart';

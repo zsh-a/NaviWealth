@@ -8,6 +8,7 @@ import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/passive_income_card.dart';
@@ -17,7 +18,6 @@ import 'package:naviwealth/features/finance/data/market/sync/price_sync_provider
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import 'data/dashboard_insights_provider.dart';
-import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
 import 'domain/insight_models.dart';
 import 'ui/activity_timeline_preview.dart';

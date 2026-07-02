@@ -175,7 +175,11 @@ Project lint gates:
 ```bash
 ./tool/lint-no-finance-in-core.sh
 ./tool/lint-no-feature-in-shared.sh
+./tool/lint-design-system-domain-neutral.sh
+./tool/lint-no-legacy-mobile-domain.sh
 ./tool/lint-cross-feature-imports.sh
+./tool/lint-finance-domain-model-path.sh
+./tool/lint-finance-dashboard-read-model-path.sh
 ./tool/lint-row-family-prefix.sh
 ./tool/lint-domain-neutral-contracts.sh
 ./tool/lint-frb-llm-entrypoints.sh

@@ -7,9 +7,9 @@ import 'package:naviwealth/core/ai/visual/ai_object_capsule.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../data/dashboard_providers.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
 import 'dashboard_chart_fullscreen.dart';

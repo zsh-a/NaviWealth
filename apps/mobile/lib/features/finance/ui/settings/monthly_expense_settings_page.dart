@@ -14,8 +14,8 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_report_providers.dart';
-import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 
 import '../../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../../design_system/design_system.dart';

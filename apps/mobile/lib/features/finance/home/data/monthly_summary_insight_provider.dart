@@ -9,9 +9,9 @@ library;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 
 import '../domain/dashboard_trend_builder.dart';
-import 'dashboard_providers.dart';
 
 class MonthlySummary {
   const MonthlySummary({
