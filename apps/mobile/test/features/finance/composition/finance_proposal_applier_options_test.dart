@@ -17,6 +17,7 @@ import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
+import 'package:naviwealth/features/finance/options_income/application/options_proposal_applier.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
@@ -92,8 +93,11 @@ void main() {
       accountRepo: accountRepo,
       manualAssetRepo: manualAssetRepo,
       liabilityRepo: liabilityRepo,
-      optionsProfileRepo: profileRepo,
-      tradeJournalRepo: journalRepo,
+      optionsApplier: OptionsProposalApplier(
+        profileRepo: profileRepo,
+        tradeJournalRepo: journalRepo,
+        currentUserId: () async => 'u-test',
+      ),
       currentUserId: () async => 'u-test',
       firePlanWriter: (after) async {
         firePlanAfter = after;
