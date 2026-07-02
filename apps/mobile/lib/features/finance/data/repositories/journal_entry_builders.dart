@@ -3,7 +3,9 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'journal_entry_repository.dart';
 
+part 'journal_entry_builders_balances.dart';
 part 'journal_entry_builders_cashflow.dart';
+part 'journal_entry_builders_corporate_actions.dart';
 part 'journal_entry_builders_helpers.dart';
 part 'journal_entry_builders_investment.dart';
 part 'journal_entry_builders_models.dart';
@@ -365,46 +367,18 @@ class JournalEntryBuilders {
     String? narration,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    if (addedQuantity == Decimal.zero) {
-      throw ArgumentError.value(
-        addedQuantity,
-        'addedQuantity',
-        'split must move at least one share',
-      );
-    }
-    final zero = Decimal.zero;
-    final cost = Cost(
-      perUnit: zero,
-      currency: quoteCurrency,
-      lotId: lotId,
-      acquiredOn: date,
-    );
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Split',
-        tagIds: _withAssetTag(tagIds, assetUnit),
-      ),
-      postings: <PostingDraft>[
-        PostingDraft(
-          position: 0,
-          accountId: accountId,
-          units: addedQuantity,
-          unit: assetUnit,
-          cost: cost,
-        ),
-        PostingDraft(
-          position: 1,
-          accountId: splitsEquityAccountId,
-          units: -addedQuantity,
-          unit: assetUnit,
-          cost: cost,
-        ),
-      ],
-    );
-  }
+  }) => _buildSplitJournalEntry(
+    date: date,
+    accountId: accountId,
+    splitsEquityAccountId: splitsEquityAccountId,
+    assetUnit: assetUnit,
+    quoteCurrency: quoteCurrency,
+    addedQuantity: addedQuantity,
+    lotId: lotId,
+    narration: narration,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   /// Replaces one open lot with its post-corporate-action shape while
   /// preserving total cost basis. Used for stock dividends and forward /
@@ -425,58 +399,22 @@ class JournalEntryBuilders {
     String? narration,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    _assertPositive(beforeQuantity, 'beforeQuantity');
-    _assertPositive(afterQuantity, 'afterQuantity');
-    if (beforeCostPerUnit < Decimal.zero) {
-      throw ArgumentError.value(
-        beforeCostPerUnit,
-        'beforeCostPerUnit',
-        'must be ≥ 0',
-      );
-    }
-    if (afterCostPerUnit < Decimal.zero) {
-      throw ArgumentError.value(
-        afterCostPerUnit,
-        'afterCostPerUnit',
-        'must be ≥ 0',
-      );
-    }
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Lot adjustment',
-        tagIds: _withAssetTag(tagIds, assetUnit),
-      ),
-      postings: <PostingDraft>[
-        PostingDraft(
-          position: 0,
-          accountId: accountId,
-          units: -beforeQuantity,
-          unit: assetUnit,
-          cost: Cost(
-            perUnit: beforeCostPerUnit,
-            currency: currency,
-            lotId: oldLotId,
-            acquiredOn: oldAcquiredOn,
-          ),
-        ),
-        PostingDraft(
-          position: 1,
-          accountId: accountId,
-          units: afterQuantity,
-          unit: assetUnit,
-          cost: Cost(
-            perUnit: afterCostPerUnit,
-            currency: currency,
-            lotId: newLotId,
-            acquiredOn: date,
-          ),
-        ),
-      ],
-    );
-  }
+  }) => _buildLotAdjustmentJournalEntry(
+    date: date,
+    accountId: accountId,
+    assetUnit: assetUnit,
+    currency: currency,
+    beforeQuantity: beforeQuantity,
+    beforeCostPerUnit: beforeCostPerUnit,
+    afterQuantity: afterQuantity,
+    afterCostPerUnit: afterCostPerUnit,
+    oldLotId: oldLotId,
+    oldAcquiredOn: oldAcquiredOn,
+    newLotId: newLotId,
+    narration: narration,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   // ---------- Opening balance ----------
 
@@ -497,37 +435,16 @@ class JournalEntryBuilders {
     String? narration,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    if (amount == Decimal.zero) {
-      throw ArgumentError.value(
-        amount,
-        'amount',
-        'openingBalance must move a non-zero amount',
-      );
-    }
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Opening balance',
-        tagIds: tagIds,
-      ),
-      postings: <PostingDraft>[
-        PostingDraft(
-          position: 0,
-          accountId: accountId,
-          units: amount,
-          unit: currency,
-        ),
-        PostingDraft(
-          position: 1,
-          accountId: openingBalanceAccountId,
-          units: -amount,
-          unit: currency,
-        ),
-      ],
-    );
-  }
+  }) => _buildOpeningBalanceJournalEntry(
+    date: date,
+    accountId: accountId,
+    openingBalanceAccountId: openingBalanceAccountId,
+    amount: amount,
+    currency: currency,
+    narration: narration,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   // ---------- Valuation adjust ----------
 
@@ -556,36 +473,16 @@ class JournalEntryBuilders {
     String? narration,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    if (newValuation <= Decimal.zero) {
-      throw ArgumentError.value(newValuation, 'newValuation', 'must be > 0');
-    }
-    // Cash-class: units=1 with price=newValuation (absolute value).
-    // Physical/security: units=quantity with price=newValuation (per-unit).
-    final legUnits = quantity.sign == 0 ? Decimal.one : quantity;
-    final totalValue = legUnits * newValuation;
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Valuation adjust',
-        tagIds: _withAssetTag(tagIds, assetUnit),
-      ),
-      postings: <PostingDraft>[
-        PostingDraft(
-          position: 0,
-          accountId: accountId,
-          units: legUnits,
-          unit: assetUnit,
-          price: Price(perUnit: newValuation, currency: currency),
-        ),
-        PostingDraft(
-          position: 1,
-          accountId: equityAccountId,
-          units: -totalValue,
-          unit: currency,
-        ),
-      ],
-    );
-  }
+  }) => _buildValuationAdjustJournalEntry(
+    date: date,
+    accountId: accountId,
+    equityAccountId: equityAccountId,
+    assetUnit: assetUnit,
+    quantity: quantity,
+    newValuation: newValuation,
+    currency: currency,
+    narration: narration,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 }
