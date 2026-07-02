@@ -13,6 +13,7 @@ import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../domain/knowledge_models.dart';
+import 'knowledge_row_mappers.dart';
 
 enum KnowledgeEntryKind {
   note('knowledge_notes'),
@@ -128,7 +129,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_noteFromRow).toList());
+    return q.watch().map((rows) => rows.map(knowledgeNoteFromRow).toList());
   }
 
   Future<List<KnowledgeNote>> listNotes({
@@ -144,7 +145,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ])
       ..limit(limit, offset: offset);
     final rows = await q.get();
-    return rows.map(_noteFromRow).toList();
+    return rows.map(knowledgeNoteFromRow).toList();
   }
 
   Future<KnowledgeNote?> findNote({
@@ -156,13 +157,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _noteFromRow(row);
+    return row == null ? null : knowledgeNoteFromRow(row);
   }
 
   Future<void> upsertNote(KnowledgeNote note) async {
     await _upsertAndEnqueue(
       _db.knowledgeNotes,
-      _noteCompanion(note),
+      knowledgeNoteCompanion(note),
       tableName: _notesTable,
       rowId: note.id,
     );
@@ -181,7 +182,9 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.declaredAt, mode: OrderingMode.desc),
       ]);
-    return q.watch().map((rows) => rows.map(_principleFromRow).toList());
+    return q.watch().map(
+      (rows) => rows.map(knowledgePrincipleFromRow).toList(),
+    );
   }
 
   Future<List<KnowledgePrinciple>> listPrinciples({
@@ -197,7 +200,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ])
       ..limit(limit, offset: offset);
     final rows = await q.get();
-    return rows.map(_principleFromRow).toList();
+    return rows.map(knowledgePrincipleFromRow).toList();
   }
 
   Future<List<KnowledgePrinciple>> listActivePrinciples({
@@ -208,7 +211,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..where((t) => t.deletedAt.isNull())
       ..where((t) => t.status.equals(PrincipleStatus.active.wire));
     final rows = await q.get();
-    return rows.map(_principleFromRow).toList();
+    return rows.map(knowledgePrincipleFromRow).toList();
   }
 
   Future<KnowledgePrinciple?> findPrinciple({
@@ -220,27 +223,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _principleFromRow(row);
+    return row == null ? null : knowledgePrincipleFromRow(row);
   }
 
   Future<void> upsertPrinciple(KnowledgePrinciple p) async {
-    final companion = KnowledgePrinciplesCompanion.insert(
-      id: p.id,
-      statement: p.statement,
-      rationaleMd: Value(p.rationaleMd),
-      scope: Value(p.scope),
-      status: Value(p.status.wire),
-      declaredAt: p.declaredAt,
-      mergedIntoId: Value(p.mergedIntoId),
-      ownerUserId: p.sync.ownerUserId,
-      updatedAt: p.sync.updatedAt,
-      updatedByDevice: p.sync.updatedByDevice,
-      hlc: p.sync.hlc,
-      deletedAt: Value(p.sync.deletedAt),
-    );
     await _upsertAndEnqueue(
       _db.knowledgePrinciples,
-      companion,
+      knowledgePrincipleCompanion(p),
       tableName: _principlesTable,
       rowId: p.id,
     );
@@ -259,7 +248,9 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.declaredAt, mode: OrderingMode.desc),
       ]);
-    return q.watch().map((rows) => rows.map(_assumptionFromRow).toList());
+    return q.watch().map(
+      (rows) => rows.map(knowledgeAssumptionFromRow).toList(),
+    );
   }
 
   Future<List<KnowledgeAssumption>> listAssumptions({
@@ -275,7 +266,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ])
       ..limit(limit, offset: offset);
     final rows = await q.get();
-    return rows.map(_assumptionFromRow).toList();
+    return rows.map(knowledgeAssumptionFromRow).toList();
   }
 
   Future<KnowledgeAssumption?> findAssumption({
@@ -287,7 +278,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _assumptionFromRow(row);
+    return row == null ? null : knowledgeAssumptionFromRow(row);
   }
 
   /// Open == status == active. Optionally filter by confidence ceiling
@@ -304,13 +295,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       q.where((t) => t.confidence.isSmallerOrEqualValue(confidenceMax));
     }
     final rows = await q.get();
-    return rows.map(_assumptionFromRow).toList();
+    return rows.map(knowledgeAssumptionFromRow).toList();
   }
 
   Future<void> upsertAssumption(KnowledgeAssumption a) async {
     await _upsertAndEnqueue(
       _db.knowledgeAssumptions,
-      _assumptionCompanion(a),
+      knowledgeAssumptionCompanion(a),
       tableName: _assumptionsTable,
       rowId: a.id,
     );
@@ -331,7 +322,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
         (t) => OrderingTerm(expression: t.decidedAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_decisionFromRow).toList());
+    return q.watch().map((rows) => rows.map(knowledgeDecisionFromRow).toList());
   }
 
   Future<List<KnowledgeDecision>> listDecisions({
@@ -355,7 +346,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ])
       ..limit(limit, offset: offset);
     final rows = await q.get();
-    return rows.map(_decisionFromRow).toList();
+    return rows.map(knowledgeDecisionFromRow).toList();
   }
 
   Future<List<KnowledgeDecision>> listDueReviews({
@@ -380,7 +371,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ])
       ..limit(limit);
     final rows = await q.get();
-    return rows.map(_decisionFromRow).toList();
+    return rows.map(knowledgeDecisionFromRow).toList();
   }
 
   Future<KnowledgeDecision?> findDecision({
@@ -392,35 +383,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _decisionFromRow(row);
+    return row == null ? null : knowledgeDecisionFromRow(row);
   }
 
   Future<void> upsertDecision(KnowledgeDecision d) async {
-    final companion = KnowledgeDecisionsCompanion.insert(
-      id: d.id,
-      question: d.question,
-      optionsJson: Value(DecisionOption.encode(d.options)),
-      selectedLabel: Value(d.selectedLabel),
-      rationaleMd: Value(d.rationaleMd),
-      principleIdsJson: Value(encodeStringList(d.principleIds)),
-      assumptionIdsJson: Value(encodeStringList(d.assumptionIds)),
-      expectedOutcome: Value(d.expectedOutcome),
-      reviewDate: Value(d.reviewDate),
-      actualOutcomeMd: Value(d.actualOutcomeMd),
-      status: Value(d.status.wire),
-      supersededByDecisionId: Value(d.supersededByDecisionId),
-      contextSnapshotJson: Value(encodeNullableJsonMap(d.contextSnapshot)),
-      decidedAt: d.decidedAt,
-      mergedIntoId: Value(d.mergedIntoId),
-      ownerUserId: d.sync.ownerUserId,
-      updatedAt: d.sync.updatedAt,
-      updatedByDevice: d.sync.updatedByDevice,
-      hlc: d.sync.hlc,
-      deletedAt: Value(d.sync.deletedAt),
-    );
     await _upsertAndEnqueue(
       _db.knowledgeDecisions,
-      companion,
+      knowledgeDecisionCompanion(d),
       tableName: _decisionsTable,
       rowId: d.id,
     );
@@ -435,7 +404,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm(expression: t.name)]);
-    return q.watch().map((rows) => rows.map(_conceptFromRow).toList());
+    return q.watch().map((rows) => rows.map(knowledgeConceptFromRow).toList());
   }
 
   Future<KnowledgeConcept?> findConcept({
@@ -447,27 +416,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _conceptFromRow(row);
+    return row == null ? null : knowledgeConceptFromRow(row);
   }
 
   Future<void> upsertConcept(KnowledgeConcept c) async {
-    final companion = KnowledgeConceptsCompanion.insert(
-      id: c.id,
-      name: c.name,
-      aliasesJson: Value(encodeStringList(c.aliases)),
-      summaryMd: Value(c.summaryMd),
-      relatedConceptIdsJson: Value(encodeStringList(c.relatedConceptIds)),
-      createdAt: c.createdAt,
-      mergedIntoId: Value(c.mergedIntoId),
-      ownerUserId: c.sync.ownerUserId,
-      updatedAt: c.sync.updatedAt,
-      updatedByDevice: c.sync.updatedByDevice,
-      hlc: c.sync.hlc,
-      deletedAt: Value(c.sync.deletedAt),
-    );
     await _upsertAndEnqueue(
       _db.knowledgeConcepts,
-      companion,
+      knowledgeConceptCompanion(c),
       tableName: _conceptsTable,
       rowId: c.id,
     );
@@ -486,7 +441,9 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.desc),
       ]);
-    return q.watch().map((rows) => rows.map(_experimentFromRow).toList());
+    return q.watch().map(
+      (rows) => rows.map(knowledgeExperimentFromRow).toList(),
+    );
   }
 
   Future<List<KnowledgeExperiment>> listExperiments({
@@ -502,7 +459,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ])
       ..limit(limit, offset: offset);
     final rows = await q.get();
-    return rows.map(_experimentFromRow).toList();
+    return rows.map(knowledgeExperimentFromRow).toList();
   }
 
   Future<KnowledgeExperiment?> findExperiment({
@@ -514,13 +471,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _experimentFromRow(row);
+    return row == null ? null : knowledgeExperimentFromRow(row);
   }
 
   Future<void> upsertExperiment(KnowledgeExperiment e) async {
     await _upsertAndEnqueue(
       _db.knowledgeExperiments,
-      _experimentCompanion(e),
+      knowledgeExperimentCompanion(e),
       tableName: _experimentsTable,
       rowId: e.id,
     );
@@ -599,7 +556,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       await _db
           .into(_db.knowledgeExperiments)
           .insert(
-            _experimentCompanion(completed),
+            knowledgeExperimentCompanion(completed),
             mode: InsertMode.insertOrReplace,
           );
       await _outbox.enqueue(table: _experimentsTable, rowId: completed.id);
@@ -608,7 +565,10 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       if (note != null) {
         await _db
             .into(_db.knowledgeNotes)
-            .insert(_noteCompanion(note), mode: InsertMode.insertOrReplace);
+            .insert(
+              knowledgeNoteCompanion(note),
+              mode: InsertMode.insertOrReplace,
+            );
         await _outbox.enqueue(table: _notesTable, rowId: note.id);
       }
 
@@ -617,7 +577,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
         await _db
             .into(_db.knowledgeAssumptions)
             .insert(
-              _assumptionCompanion(assumption),
+              knowledgeAssumptionCompanion(assumption),
               mode: InsertMode.insertOrReplace,
             );
         await _outbox.enqueue(table: _assumptionsTable, rowId: assumption.id);
@@ -640,7 +600,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)]);
-    return q.watch().map((rows) => rows.map(_routineFromRow).toList());
+    return q.watch().map((rows) => rows.map(knowledgeRoutineFromRow).toList());
   }
 
   /// Routines whose `nextDueAt <= asOf` and status == active. Ordered by
@@ -667,7 +627,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)])
       ..limit(limit);
     final rows = await q.get();
-    return rows.map(_routineFromRow).toList();
+    return rows.map(knowledgeRoutineFromRow).toList();
   }
 
   Future<List<KnowledgeRoutine>> listRoutines({
@@ -681,7 +641,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)])
       ..limit(limit, offset: offset);
     final rows = await q.get();
-    return rows.map(_routineFromRow).toList();
+    return rows.map(knowledgeRoutineFromRow).toList();
   }
 
   Future<KnowledgeRoutine?> findRoutine({
@@ -693,28 +653,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _routineFromRow(row);
+    return row == null ? null : knowledgeRoutineFromRow(row);
   }
 
   Future<void> upsertRoutine(KnowledgeRoutine r) async {
-    final companion = KnowledgeRoutinesCompanion.insert(
-      id: r.id,
-      statement: r.statement,
-      intervalDays: r.intervalDays,
-      lastDoneAt: Value(r.lastDoneAt),
-      nextDueAt: r.nextDueAt,
-      scope: Value(r.scope),
-      status: Value(r.status.wire),
-      createdAt: r.createdAt,
-      ownerUserId: r.sync.ownerUserId,
-      updatedAt: r.sync.updatedAt,
-      updatedByDevice: r.sync.updatedByDevice,
-      hlc: r.sync.hlc,
-      deletedAt: Value(r.sync.deletedAt),
-    );
     await _upsertAndEnqueue(
       _db.knowledgeRoutines,
-      companion,
+      knowledgeRoutineCompanion(r),
       tableName: _routinesTable,
       rowId: r.id,
     );
@@ -733,7 +678,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([(t) => OrderingTerm(expression: t.name)])
       ..limit(limit, offset: offset);
     final rows = await q.get();
-    return rows.map(_conceptFromRow).toList();
+    return rows.map(knowledgeConceptFromRow).toList();
   }
 
   /// Merge [duplicates] into [primary] (`docs/domains/knowledgeos-domain.md`
@@ -1338,64 +1283,6 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     ),
   );
 
-  KnowledgeNotesCompanion _noteCompanion(KnowledgeNote note) {
-    return KnowledgeNotesCompanion.insert(
-      id: note.id,
-      title: note.title,
-      bodyMd: note.bodyMd,
-      sourceUrl: Value(note.sourceUrl),
-      tagsJson: Value(encodeStringList(note.tags)),
-      projectTag: Value(note.projectTag),
-      createdAt: note.createdAt,
-      mergedIntoId: Value(note.mergedIntoId),
-      ownerUserId: note.sync.ownerUserId,
-      updatedAt: note.sync.updatedAt,
-      updatedByDevice: note.sync.updatedByDevice,
-      hlc: note.sync.hlc,
-      deletedAt: Value(note.sync.deletedAt),
-    );
-  }
-
-  KnowledgeAssumptionsCompanion _assumptionCompanion(KnowledgeAssumption a) {
-    return KnowledgeAssumptionsCompanion.insert(
-      id: a.id,
-      statement: a.statement,
-      confidence: Value(a.confidence),
-      scope: Value(a.scope),
-      evidenceIdsJson: Value(encodeStringList(a.evidenceIds)),
-      status: Value(a.status.wire),
-      lastVerifiedAt: Value(a.lastVerifiedAt),
-      declaredAt: a.declaredAt,
-      mergedIntoId: Value(a.mergedIntoId),
-      ownerUserId: a.sync.ownerUserId,
-      updatedAt: a.sync.updatedAt,
-      updatedByDevice: a.sync.updatedByDevice,
-      hlc: a.sync.hlc,
-      deletedAt: Value(a.sync.deletedAt),
-    );
-  }
-
-  KnowledgeExperimentsCompanion _experimentCompanion(KnowledgeExperiment e) {
-    return KnowledgeExperimentsCompanion.insert(
-      id: e.id,
-      hypothesis: e.hypothesis,
-      methodMd: Value(e.methodMd),
-      metricsJson: Value(encodeStringList(e.metrics)),
-      status: Value(e.status.wire),
-      resultMd: Value(e.resultMd),
-      conclusionMd: Value(e.conclusionMd),
-      targetAssumptionId: Value(e.targetAssumptionId),
-      startedAt: e.startedAt,
-      endedAt: Value(e.endedAt),
-      mergedIntoId: Value(e.mergedIntoId),
-      ownerUserId: e.sync.ownerUserId,
-      updatedAt: e.sync.updatedAt,
-      updatedByDevice: e.sync.updatedByDevice,
-      hlc: e.sync.hlc,
-      deletedAt: Value(e.sync.deletedAt),
-    );
-  }
-
   String _experimentConclusionNoteBody(KnowledgeExperiment e) {
     final parts = <String>[
       '## Hypothesis',
@@ -1414,145 +1301,4 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     ];
     return parts.join('\n');
   }
-
-  // ---------- Row → model ----------
-
-  KnowledgeNote _noteFromRow(KnowledgeNoteRow r) => KnowledgeNote(
-    id: r.id,
-    title: r.title,
-    bodyMd: r.bodyMd,
-    sourceUrl: r.sourceUrl,
-    tags: decodeStringList(r.tagsJson),
-    projectTag: r.projectTag,
-    createdAt: r.createdAt,
-    mergedIntoId: r.mergedIntoId,
-    sync: SyncMeta(
-      ownerUserId: r.ownerUserId,
-      updatedAt: r.updatedAt,
-      updatedByDevice: r.updatedByDevice,
-      hlc: r.hlc,
-      deletedAt: r.deletedAt,
-    ),
-  );
-
-  KnowledgePrinciple _principleFromRow(KnowledgePrincipleRow r) =>
-      KnowledgePrinciple(
-        id: r.id,
-        statement: r.statement,
-        rationaleMd: r.rationaleMd,
-        scope: r.scope,
-        status: PrincipleStatus.parse(r.status),
-        declaredAt: r.declaredAt,
-        mergedIntoId: r.mergedIntoId,
-        sync: SyncMeta(
-          ownerUserId: r.ownerUserId,
-          updatedAt: r.updatedAt,
-          updatedByDevice: r.updatedByDevice,
-          hlc: r.hlc,
-          deletedAt: r.deletedAt,
-        ),
-      );
-
-  KnowledgeAssumption _assumptionFromRow(KnowledgeAssumptionRow r) =>
-      KnowledgeAssumption(
-        id: r.id,
-        statement: r.statement,
-        confidence: r.confidence,
-        scope: r.scope,
-        evidenceIds: decodeStringList(r.evidenceIdsJson),
-        status: AssumptionStatus.parse(r.status),
-        declaredAt: r.declaredAt,
-        lastVerifiedAt: r.lastVerifiedAt,
-        mergedIntoId: r.mergedIntoId,
-        sync: SyncMeta(
-          ownerUserId: r.ownerUserId,
-          updatedAt: r.updatedAt,
-          updatedByDevice: r.updatedByDevice,
-          hlc: r.hlc,
-          deletedAt: r.deletedAt,
-        ),
-      );
-
-  KnowledgeDecision _decisionFromRow(KnowledgeDecisionRow r) =>
-      KnowledgeDecision(
-        id: r.id,
-        question: r.question,
-        options: DecisionOption.decode(r.optionsJson),
-        selectedLabel: r.selectedLabel,
-        rationaleMd: r.rationaleMd,
-        principleIds: decodeStringList(r.principleIdsJson),
-        assumptionIds: decodeStringList(r.assumptionIdsJson),
-        expectedOutcome: r.expectedOutcome,
-        reviewDate: r.reviewDate,
-        actualOutcomeMd: r.actualOutcomeMd,
-        status: DecisionStatus.parse(r.status),
-        supersededByDecisionId: r.supersededByDecisionId,
-        contextSnapshot: decodeNullableJsonMap(r.contextSnapshotJson),
-        decidedAt: r.decidedAt,
-        mergedIntoId: r.mergedIntoId,
-        sync: SyncMeta(
-          ownerUserId: r.ownerUserId,
-          updatedAt: r.updatedAt,
-          updatedByDevice: r.updatedByDevice,
-          hlc: r.hlc,
-          deletedAt: r.deletedAt,
-        ),
-      );
-
-  KnowledgeConcept _conceptFromRow(KnowledgeConceptRow r) => KnowledgeConcept(
-    id: r.id,
-    name: r.name,
-    aliases: decodeStringList(r.aliasesJson),
-    summaryMd: r.summaryMd,
-    relatedConceptIds: decodeStringList(r.relatedConceptIdsJson),
-    createdAt: r.createdAt,
-    mergedIntoId: r.mergedIntoId,
-    sync: SyncMeta(
-      ownerUserId: r.ownerUserId,
-      updatedAt: r.updatedAt,
-      updatedByDevice: r.updatedByDevice,
-      hlc: r.hlc,
-      deletedAt: r.deletedAt,
-    ),
-  );
-
-  KnowledgeRoutine _routineFromRow(KnowledgeRoutineRow r) => KnowledgeRoutine(
-    id: r.id,
-    statement: r.statement,
-    intervalDays: r.intervalDays,
-    lastDoneAt: r.lastDoneAt,
-    nextDueAt: r.nextDueAt,
-    scope: r.scope,
-    status: RoutineStatus.parse(r.status),
-    createdAt: r.createdAt,
-    sync: SyncMeta(
-      ownerUserId: r.ownerUserId,
-      updatedAt: r.updatedAt,
-      updatedByDevice: r.updatedByDevice,
-      hlc: r.hlc,
-      deletedAt: r.deletedAt,
-    ),
-  );
-
-  KnowledgeExperiment _experimentFromRow(KnowledgeExperimentRow r) =>
-      KnowledgeExperiment(
-        id: r.id,
-        hypothesis: r.hypothesis,
-        methodMd: r.methodMd,
-        metrics: decodeStringList(r.metricsJson),
-        status: ExperimentStatus.parse(r.status),
-        resultMd: r.resultMd,
-        conclusionMd: r.conclusionMd,
-        targetAssumptionId: r.targetAssumptionId,
-        startedAt: r.startedAt,
-        endedAt: r.endedAt,
-        mergedIntoId: r.mergedIntoId,
-        sync: SyncMeta(
-          ownerUserId: r.ownerUserId,
-          updatedAt: r.updatedAt,
-          updatedByDevice: r.updatedByDevice,
-          hlc: r.hlc,
-          deletedAt: r.deletedAt,
-        ),
-      );
 }
