@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ingest/data/bank_ingest_parser.dart';
+import 'package:naviwealth/features/finance/ingest/data/bank_ingest_parser.dart';
 
 void main() {
   group('parseBankCashLedger', () {

@@ -34,7 +34,6 @@ import '../../expense/ui/expense_list_page.dart';
 import '../../expense/ui/expense_report_page.dart';
 import '../../fire/presentation/fire_page.dart' deferred as fire_lib;
 import '../../home/home_page.dart';
-import '../../ingest/ui/ingest_review_page.dart';
 import '../../investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import '../../investment/presentation/dca_simulator_page.dart'
@@ -55,6 +54,7 @@ import '../accounts/journal_entry_list_page.dart';
 import '../accounts/transfer_form_page.dart';
 import '../activity/activity_page.dart';
 import '../activity/ui/activity_entry_detail_page.dart';
+import '../ingest/ui/ingest_review_page.dart';
 import '../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../ui/plan_hub_page.dart';
 import '../ui/wealth/wealth_hub_page.dart';

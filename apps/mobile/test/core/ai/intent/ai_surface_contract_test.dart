@@ -69,7 +69,7 @@ void main() {
     );
     expect(
       directAiChatPageConstructions.toSet(),
-      <String>{'lib/app/router_builder.dart:207'},
+      <String>{'lib/app/router_builder.dart:195'},
       reason:
           'AiChatPage is allowed only as the read-only /settings/ai-history '
           'route. Trigger surfaces should use the bottom-sheet invocation path.',
@@ -126,7 +126,7 @@ void main() {
     expect(ambientFeed, contains("source: 'home_insight_card'"));
 
     final ingestProjection = File(
-      'lib/features/ingest/data/ingest_queue_insight_provider.dart',
+      'lib/features/finance/ingest/data/ingest_queue_insight_provider.dart',
     ).readAsStringSync();
     expect(ingestProjection, contains('ingestQueueInsightProvider'));
     expect(ingestProjection, contains('pendingIngestDraftsProvider'));

@@ -15,7 +15,7 @@
 /// unit-testable. The caller maps the verdict to a user message.
 library;
 
-import '../../../core/ai/contracts/privacy_mode_provider.dart';
+import '../../../../core/ai/contracts/privacy_mode_provider.dart';
 import '../domain/ingest_models.dart';
 
 enum IngestGateVerdict {

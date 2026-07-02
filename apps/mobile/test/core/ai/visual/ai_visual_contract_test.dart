@@ -45,7 +45,7 @@ List<File> _contractFiles() {
     'lib/core/ai/visual',
     'lib/core/ai/write',
     'lib/features/ai_chat',
-    'lib/features/ingest',
+    'lib/features/finance/ingest',
   ];
 
   final files = <File>[];

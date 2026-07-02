@@ -26,12 +26,12 @@ import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
 import 'package:naviwealth/features/execution/agents/review_agent.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 import 'package:naviwealth/features/health/data/health_notification_preferences.dart';
-import 'package:naviwealth/features/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';

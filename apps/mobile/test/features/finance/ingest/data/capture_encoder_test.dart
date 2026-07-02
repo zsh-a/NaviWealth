@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:charset/charset.dart' as charset;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ingest/data/capture_encoder.dart';
-import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/data/capture_encoder.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 Uint8List _b(String s) => Uint8List.fromList(utf8.encode(s));
 

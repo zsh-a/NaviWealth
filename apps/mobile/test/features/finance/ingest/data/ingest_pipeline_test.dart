@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/local/skills/skills.dart';
-import 'package:naviwealth/features/ingest/data/ingest_pipeline.dart';
-import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_pipeline.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 void main() {
   var counter = 0;

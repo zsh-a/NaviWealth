@@ -110,7 +110,7 @@ void main() {
           Directory('${appRoot.path}/lib/features/fire'),
           Directory('${appRoot.path}/lib/features/analytics'),
           Directory('${appRoot.path}/lib/features/finance'),
-          Directory('${appRoot.path}/lib/features/ingest'),
+          Directory('${appRoot.path}/lib/features/finance/ingest'),
           Directory('${appRoot.path}/lib/features/investment'),
           Directory('${appRoot.path}/lib/features/finance/shared'),
           Directory('${appRoot.path}/lib/features/auth'),

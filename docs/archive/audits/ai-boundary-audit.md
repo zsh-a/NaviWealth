@@ -283,7 +283,7 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
 
 ## 5. 外部契约面（who imports `core/ai/`）
 
-外部消费者（除 `features/ai_chat/` 和 `features/ingest/`）主要落在四类导入：
+外部消费者（除 `features/ai_chat/` 和 `features/finance/ingest/`）主要落在四类导入：
 
 | 子系统 | 被谁用 | 性质 |
 |---|---|---|

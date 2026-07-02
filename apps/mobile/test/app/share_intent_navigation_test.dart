@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/router.dart';
 import 'package:naviwealth/app/share_intent_navigation.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/ingest/data/share_intent_navigation.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 
 void main() {

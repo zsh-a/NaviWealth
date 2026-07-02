@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_vision_parse.dart';
-import 'package:naviwealth/features/ingest/data/device_ingest_client.dart';
-import 'package:naviwealth/features/ingest/data/ingest_llm_client.dart';
-import 'package:naviwealth/features/ingest/data/vision_ingest_client.dart';
-import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/data/device_ingest_client.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
+import 'package:naviwealth/features/finance/ingest/data/vision_ingest_client.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 class _FakeIngest implements VisionIngestClient {
   _FakeIngest(this.tag);

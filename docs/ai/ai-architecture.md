@@ -28,7 +28,7 @@
 >
 > 累计净删约 4 400 行（四轮）。详见 [`ai-boundary-audit.md`](../archive/audits/ai-boundary-audit.md)。
 >
-> 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/`、`lib/features/ingest/`（Flutter）。
+> 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/`、`lib/features/finance/ingest/`（Flutter）。
 > 运行时事件契约见 [`ai-protocol.md`](./ai-protocol.md)。
 
 ---
@@ -288,7 +288,7 @@ AI 元素默认 surface tone（非 accent）；单色细线 sparkle（字号 ≤
 | 1 | 统一命令栏 | Cmd-K overlay / 移动端顶栏 pill | `core/command_palette/`（就地出结构化答案，不留对话历史）|
 | 2 | 内联上下文 Capsule | 图表 ⋯ / 卡片长按 → bottom sheet | §5.4 不变 |
 | 3 | 环境式洞察 | 主屏卡片三动作（展开/问一下/忽略）+ 偏好学习 | `ai_insight_feed.dart` |
-| 4 | 录入链路隐形 AI | 截图/文件/粘贴/分享自动解析 | `features/ingest/`（见 §5.10）|
+| 4 | 录入链路隐形 AI | 截图/文件/粘贴/分享自动解析 | `features/finance/ingest/`（见 §5.10）|
 
 拓扑结果：`/ai` tab 下线（FinanceOS 4-tab：Home/Activity/Wealth/Plan；Settings
 是全局 meta，不是 tab）；chat 迁 `/settings/ai-history`（只读回放）；
@@ -303,7 +303,7 @@ FIRE/Rebalance 迁 `/plan/{fire,rebalance}`，Portfolio Analytics 迁
 - 紫色渐变 / 彩虹色 / 机器人头像
 - **摄取草稿在用户确认前不得出现在 `journal_entries` / OpLog / 任何持久层**
 
-#### 5.10.x Layer 4 录入管道（`features/ingest/`）
+#### 5.10.x Layer 4 录入管道（`features/finance/ingest/`）
 
 无入口的隐形 AI：粘贴/拖拽/分享/截图 → 解析 → 复用端侧 `merchant_key`/`txn_classifier`
 归一 → 对 **Drift 真源**模糊去重 → 落本地 `ingest_drafts`/`ingest_attachments`
@@ -381,7 +381,7 @@ tool-result continuation、`ask_user` terminal pause、trace span 与 cancel par
 `/settings/ai-history` 只读 · `propose_card`（mode 三分支）· `tool_invocation_*`
 domain renderer · `ai_object_capsule` · `reply_chips` · `ai_transparency_badge`）。
 
-`lib/features/ingest/`：见 §5.10.x（生产 Vision provider 为 `FrbVisionIngestClient`）。
+`lib/features/finance/ingest/`：见 §5.10.x（生产 Vision provider 为 `FrbVisionIngestClient`）。
 
 `lib/app/`：`frb_llm_connectivity_probe.dart`、`domain_packs.dart` 与
 `domain_composition.dart` 在 app composition root 聚合 FRB LLM probe、domain tools、

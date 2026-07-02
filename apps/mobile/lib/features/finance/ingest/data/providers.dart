@@ -11,16 +11,16 @@ import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_inpu
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../core/ai/composition/proposal_applier.dart';
-import '../../../core/ai/contracts/ai_span.dart';
-import '../../../core/ai/contracts/ai_trace.dart';
-import '../../../core/ai/contracts/intent.dart';
-import '../../../core/ai/contracts/privacy_mode_provider.dart';
-import '../../../core/ai/local/skills/skills.dart';
-import '../../../core/ai/trace/ai_trace_builder.dart';
-import '../../../core/ai/trace/providers.dart';
-import '../../../core/auth/current_user.dart';
-import '../../../core/persistence/providers.dart';
+import '../../../../core/ai/composition/proposal_applier.dart';
+import '../../../../core/ai/contracts/ai_span.dart';
+import '../../../../core/ai/contracts/ai_trace.dart';
+import '../../../../core/ai/contracts/intent.dart';
+import '../../../../core/ai/contracts/privacy_mode_provider.dart';
+import '../../../../core/ai/local/skills/skills.dart';
+import '../../../../core/ai/trace/ai_trace_builder.dart';
+import '../../../../core/ai/trace/providers.dart';
+import '../../../../core/auth/current_user.dart';
+import '../../../../core/persistence/providers.dart';
 import '../domain/ingest_models.dart';
 import 'device_ingest_client.dart';
 import 'ingest_confirm_service.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
-import 'package:naviwealth/features/ingest/data/ingest_privacy_gate.dart';
-import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_privacy_gate.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 void main() {
   group('ingestPrivacyGate', () {

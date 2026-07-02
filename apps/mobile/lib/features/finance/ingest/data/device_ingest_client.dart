@@ -14,7 +14,7 @@
 /// Worker would break exactly that promise. The error surfaces instead.
 library;
 
-import '../../../core/ai/runtime/device/device_vision_parse.dart';
+import '../../../../core/ai/runtime/device/device_vision_parse.dart';
 import '../domain/ingest_models.dart';
 import 'ingest_llm_client.dart';
 import 'vision_ingest_client.dart';

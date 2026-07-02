@@ -7,7 +7,7 @@ import '../../core/ai/llm_credentials/providers.dart' as llm_credentials;
 import '../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import '../../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../../features/finance/activity/data/activity_entry_insight_client.dart';
-import '../../features/ingest/data/ingest_llm_client.dart';
+import '../../features/finance/ingest/data/ingest_llm_client.dart';
 import '../../features/knowledge/data/knowledge_llm_client.dart';
 import 'agent_runtime_catalog.dart';
 import 'agent_runtime_llm_bridge.dart';

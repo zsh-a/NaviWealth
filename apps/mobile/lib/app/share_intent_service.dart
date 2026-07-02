@@ -19,15 +19,15 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'package:uuid/uuid.dart';
 
-import '../../../core/auth/domain_scope.dart';
-import '../../../core/auth/providers.dart' as core_auth;
-import '../../../core/sync/mutation_context.dart';
-import '../../../core/sync/sync_meta.dart';
-import '../../knowledge/data/providers.dart' as know_data;
-import '../../knowledge/domain/knowledge_models.dart';
-import '../domain/ingest_models.dart';
-import 'ingest_capture_source.dart';
-import 'providers.dart';
+import '../core/auth/domain_scope.dart';
+import '../core/auth/providers.dart' as core_auth;
+import '../core/sync/mutation_context.dart';
+import '../core/sync/sync_meta.dart';
+import '../features/finance/ingest/data/ingest_capture_source.dart';
+import '../features/finance/ingest/data/providers.dart';
+import '../features/finance/ingest/domain/ingest_models.dart';
+import '../features/knowledge/data/providers.dart' as know_data;
+import '../features/knowledge/domain/knowledge_models.dart';
 import 'share_intent_navigation.dart';
 
 const _kShareUuid = Uuid();

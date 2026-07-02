@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ingest/data/statement_ingest_parser.dart';
+import 'package:naviwealth/features/finance/ingest/data/statement_ingest_parser.dart';
 
 void main() {
   group('statement provider detection', () {

@@ -8,13 +8,13 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-import 'package:naviwealth/features/ingest/data/ingest_draft_store.dart';
-import 'package:naviwealth/features/ingest/data/providers.dart';
-import 'package:naviwealth/features/ingest/data/vision_ingest_client.dart';
-import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
+import 'package:naviwealth/features/finance/ingest/data/providers.dart';
+import 'package:naviwealth/features/finance/ingest/data/vision_ingest_client.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../core/persistence/test_database.dart';
+import '../../../../core/persistence/test_database.dart';
 
 void main() {
   late SharedPreferences prefs;

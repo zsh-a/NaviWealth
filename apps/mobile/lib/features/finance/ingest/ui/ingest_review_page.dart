@@ -16,11 +16,11 @@ import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../core/ai/visual/visual.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/shared/account_l10n.dart';
-import '../../finance/shared/forms/forms.dart';
+import '../../../../core/ai/visual/visual.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
+import '../../shared/forms/forms.dart';
 import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';

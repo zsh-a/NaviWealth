@@ -9,7 +9,7 @@ library;
 
 import 'package:uuid/uuid.dart';
 
-import '../../../core/ai/local/skills/skills.dart';
+import '../../../../core/ai/local/skills/skills.dart';
 import '../domain/ingest_models.dart';
 import 'ingest_dedup.dart';
 import 'statement_ingest_parser.dart';

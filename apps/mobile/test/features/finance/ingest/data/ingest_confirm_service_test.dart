@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ingest/data/ingest_confirm_service.dart';
-import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 IngestDraft _draft({String? categoryHint, int amountMinor = -3850}) =>
     IngestDraft(

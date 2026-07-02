@@ -8,9 +8,9 @@ import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/state/ai_context.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
-import '../features/ingest/data/share_intent_service.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
+import 'share_intent_service.dart';
 
 /// Outer multi-domain shell (`docs/architecture/lifeos-shell.md` §3 Option B, D-2.3b).
 ///

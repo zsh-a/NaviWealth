@@ -570,16 +570,16 @@ void main() {
 
     test('device Vision ingest does not produce cloud-relay trace labels', () {
       final ingestGate = File(
-        '${appRoot.path}/lib/features/ingest/data/ingest_privacy_gate.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/ingest_privacy_gate.dart',
       );
       final ingestProviders = File(
-        '${appRoot.path}/lib/features/ingest/data/providers.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/providers.dart',
       );
       final visionClient = File(
-        '${appRoot.path}/lib/features/ingest/data/vision_ingest_client.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/vision_ingest_client.dart',
       );
       final oldCloudClient = File(
-        '${appRoot.path}/lib/features/ingest/data/cloud_ingest_client.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/cloud_ingest_client.dart',
       );
       final aiTrace = File(
         '${appRoot.path}/lib/core/ai/contracts/ai_trace.dart',
