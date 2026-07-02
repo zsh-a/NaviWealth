@@ -14,7 +14,6 @@ import 'package:naviwealth/features/finance/cashflow/ui/passive_income_card.dart
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordinator.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
-import 'package:naviwealth/features/settings/ui/ai_privacy_onboarding.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import 'data/dashboard_insights_provider.dart';
@@ -77,9 +76,6 @@ class HomePage extends ConsumerWidget {
             data: (snapshot) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // §5.10.5 — first-launch privacy onboarding sheet.
-                // Renders nothing once the user has confirmed.
-                const AiPrivacyOnboardingMount(),
                 CurrencyMismatchNotice(
                   mismatches: snapshot.currencyMismatches,
                   baseCurrency: snapshot.baseCurrency,

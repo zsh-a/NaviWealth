@@ -8,6 +8,7 @@ import '../core/ai/composition/ask_ai.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
+import '../features/settings/ui/ai_privacy_onboarding.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
 import 'share_intent_service.dart';
@@ -97,13 +98,31 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
 
     final showDock = ref.watch(domainDockVisibleProvider);
     final specs = ref.watch(activeDomainShellsProvider);
+    final shellChild = showDock
+        ? _DockChrome(specs: specs, activePath: location, child: widget.child)
+        : widget.child;
 
     return ExitConfirmingSystemBackScope(
       onBack: _handleSystemBackBeforeExit,
       disarmKey: location,
-      child: showDock
-          ? _DockChrome(specs: specs, activePath: location, child: widget.child)
-          : widget.child,
+      child: _ShellGlobalMounts(child: shellChild),
+    );
+  }
+}
+
+class _ShellGlobalMounts extends StatelessWidget {
+  const _ShellGlobalMounts({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        child,
+        const IgnorePointer(child: AiPrivacyOnboardingMount()),
+      ],
     );
   }
 }

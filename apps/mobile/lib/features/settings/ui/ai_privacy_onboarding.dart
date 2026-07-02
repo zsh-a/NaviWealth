@@ -1,9 +1,9 @@
 /// §5.10.5 — first-launch privacy onboarding.
 ///
-/// Mounted high in the widget tree (typically on the home page) so the
-/// sheet fires once after a fresh install, before the user has a chance
-/// to ask AI for anything cloud-bound. Writes a `shared_preferences`
-/// flag on dismissal so re-opens never re-trigger it.
+/// Mounted by the app composition root so the sheet fires once after a
+/// fresh install, before the user has a chance to ask AI for anything
+/// cloud-bound. Writes a `shared_preferences` flag on dismissal so
+/// re-opens never re-trigger it.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -127,26 +127,38 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
           onSelect: controller.setMode,
         ),
         const SizedBox(height: AppSpacing.s20),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: FButton(
-                onPress: () {
-                  Navigator.of(context).pop();
-                  context.goNamed(SettingsRouteNames.aiPrivacy);
-                },
-                variant: FButtonVariant.outline,
-                child: Text(l10n.aiPrivacyTitle),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: FButton(
-                onPress: () => Navigator.of(context).pop(),
-                child: Text(l10n.aiPrivacyOnboardingConfirm),
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final settingsButton = FButton(
+              onPress: () {
+                Navigator.of(context).pop();
+                context.goNamed(SettingsRouteNames.aiPrivacy);
+              },
+              variant: FButtonVariant.outline,
+              child: Text(l10n.aiPrivacyTitle),
+            );
+            final confirmButton = FButton(
+              onPress: () => Navigator.of(context).pop(),
+              child: Text(l10n.aiPrivacyOnboardingConfirm),
+            );
+            if (constraints.maxWidth < 360) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  settingsButton,
+                  const SizedBox(height: AppSpacing.s8),
+                  confirmButton,
+                ],
+              );
+            }
+            return Row(
+              children: <Widget>[
+                Expanded(child: settingsButton),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(child: confirmButton),
+              ],
+            );
+          },
         ),
       ],
     );

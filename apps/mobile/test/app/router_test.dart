@@ -120,7 +120,9 @@ Future<ProviderContainer> _pumpAt(
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({
+    'ai_privacy.onboarding_seen.v1': true,
+  });
   final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);

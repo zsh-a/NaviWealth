@@ -24,7 +24,9 @@ import 'core/persistence/test_database.dart';
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      'ai_privacy.onboarding_seen.v1': true,
+    });
   });
 
   testWidgets('NaviWealthApp boots into the home shell', (tester) async {
