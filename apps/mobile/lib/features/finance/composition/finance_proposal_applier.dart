@@ -8,26 +8,17 @@
 /// [financeProposalApplierProvider] in `bootstrap.dart`.
 library;
 
-import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/core/sync/hlc.dart';
-import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/application/finance_core_proposal_applier.dart';
+import 'package:naviwealth/features/finance/application/finance_trade_proposal_applier.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/finance/domain/models/asset.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart'
-    show AssetType;
 import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
-import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
-import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart'
-    show TradeDraft, TradeType;
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
@@ -55,9 +46,9 @@ const Set<String> kFinanceProposalAppliedTablePrefixes = {
 
 class FinanceProposalApplier implements ProposalApplier {
   FinanceProposalApplier({
-    required this.tradeEntryService,
+    required TradeEntryService tradeEntryService,
     required this.journalEntryRepo,
-    required this.priceRepo,
+    required PriceRepository priceRepo,
     required this.accountRepo,
     required this.manualAssetRepo,
     required LiabilityRepository liabilityRepo,
@@ -71,14 +62,19 @@ class FinanceProposalApplier implements ProposalApplier {
          manualAssetRepo: manualAssetRepo,
          liabilityRepo: liabilityRepo,
          currentUserId: currentUserId,
+       ),
+       tradeApplier = FinanceTradeProposalApplier(
+         tradeEntryService: tradeEntryService,
+         journalEntryRepo: journalEntryRepo,
+         priceRepo: priceRepo,
+         currentUserId: currentUserId,
        );
 
-  final TradeEntryService tradeEntryService;
   final JournalEntryRepository journalEntryRepo;
-  final PriceRepository priceRepo;
   final AccountRepository accountRepo;
   final ManualAssetRepository manualAssetRepo;
   final FinanceCoreProposalApplier coreApplier;
+  final FinanceTradeProposalApplier tradeApplier;
   final OptionsProposalApplier optionsApplier;
   final FireProposalApplier fireApplier;
 
@@ -128,7 +124,7 @@ class FinanceProposalApplier implements ProposalApplier {
     try {
       final at = DateTime.now().toUtc();
       final state = switch (plan.kind) {
-        'trade' => await _applyTrade(plan, at),
+        'trade' => await tradeApplier.applyTrade(plan, at),
         'expense' => await coreApplier.applyExpense(plan, at),
         'liability_payment' => await coreApplier.applyLiabilityPayment(
           plan,
@@ -187,260 +183,6 @@ class FinanceProposalApplier implements ProposalApplier {
       // never break the apply path. The mark is decorative.
     }
   }
-
-  Future<ProposalApplyState> _applyTrade(
-    ReadyProposalPlan plan,
-    DateTime at,
-  ) async {
-    final assetId = _requireString(plan, 'asset_id');
-    final accountId = _requireString(plan, 'account_id');
-    final qty = _requireDecimal(plan, 'quantity');
-    final currency = plan.get('currency') ?? 'USD';
-    final price = _optionalDecimal(plan, 'price');
-    final fee = _optionalDecimal(plan, 'fee');
-    final tax = _optionalDecimal(plan, 'tax');
-    final tradeDate = _parseDate(plan.get('trade_date')) ?? DateTime.now();
-    final note = plan.get('note');
-    final type = _parseTradeType(plan.get('type'));
-
-    final asset = Asset(
-      id: assetId,
-      type: AssetType.stock,
-      symbol: plan.get('asset_symbol') ?? assetId,
-      currency: plan.get('asset_currency') ?? currency,
-      name: plan.get('asset_name'),
-      sync: _placeholderSync(),
-    );
-    final draft = TradeDraft(
-      type: type,
-      asset: asset,
-      accountId: accountId,
-      quantity: qty,
-      price: price,
-      fee: fee,
-      tax: tax,
-      currency: currency,
-      tradeDate: tradeDate,
-      note: note,
-    );
-    final tradePlan = await tradeEntryService.buildPlan(
-      draft,
-      openLots: const <Lot>[],
-    );
-    final tx = tradePlan.trade;
-
-    if (type == TradeType.buy || type == TradeType.sell) {
-      final uid = await currentUserId();
-      final cashAccountId = plan.get('counter_account_id') ?? accountId;
-      final feeAccountId = AccountRepository.systemAccountIdForPath(
-        'expense:trading:fee',
-        ownerUserId: uid,
-      );
-      final taxAccountId = AccountRepository.systemAccountIdForPath(
-        'expense:trading:tax',
-        ownerUserId: uid,
-      );
-
-      if (type == TradeType.buy) {
-        final build = JournalEntryBuilders.buy(
-          date: tx.tradeDate,
-          accountId: accountId,
-          cashAccountId: cashAccountId,
-          assetUnit: tx.assetId,
-          qty: tx.quantity,
-          price: tx.price,
-          quoteCurrency: currency,
-          lotId: tradePlan.createdLot?.id,
-          acquiredOn: tradePlan.createdLot?.openedAt,
-          feeAmount: tx.fee,
-          feeAccountId: tx.fee != null ? feeAccountId : null,
-          feeCurrency: tx.fee != null ? currency : null,
-          taxAmount: tx.tax,
-          taxAccountId: tx.tax != null ? taxAccountId : null,
-          taxCurrency: tx.tax != null ? currency : null,
-          narration: note,
-        );
-        final stored = await journalEntryRepo.create(
-          entry: build.entry,
-          postings: build.postings,
-        );
-        await priceRepo.record(
-          unit: tx.assetId,
-          quoteCurrency: currency,
-          observedOn: tx.tradeDate,
-          perUnit: tx.price,
-          source: 'trade',
-        );
-        return ProposalApplyState(
-          status: ProposalApplyStatus.applied,
-          appliedEntityId: stored.entry.id,
-          appliedTable: 'journal_entries',
-          appliedAt: at,
-          shortLabel: 'Recorded ${plan.summaryZh}',
-        );
-      } else {
-        // Sell — cost basis from resolved lots.
-        final capGainsAccountId = AccountRepository.systemAccountIdForPath(
-          'income:capitalGains',
-          ownerUserId: uid,
-        );
-        final pnl = tradePlan.realizedPnL;
-        Decimal costPerUnit;
-        String costCurrency;
-        String? sellLotId;
-        DateTime? sellAcquiredOn;
-        if (pnl.isNotEmpty) {
-          final first = pnl.first;
-          costPerUnit = first.quantity.sign != 0
-              ? (first.costBasis / first.quantity).toDecimal(
-                  scaleOnInfinitePrecision: 16,
-                )
-              : tx.price;
-          costCurrency = first.currency;
-          sellLotId = first.lotId;
-          sellAcquiredOn = first.lotOpenedAt;
-        } else {
-          costPerUnit = tx.price;
-          costCurrency = currency;
-        }
-        final build = JournalEntryBuilders.sell(
-          date: tx.tradeDate,
-          accountId: accountId,
-          cashAccountId: cashAccountId,
-          capitalGainsAccountId: capGainsAccountId,
-          assetUnit: tx.assetId,
-          qty: tx.quantity,
-          price: tx.price,
-          quoteCurrency: currency,
-          costPerUnit: costPerUnit,
-          costCurrency: costCurrency,
-          lotId: sellLotId,
-          acquiredOn: sellAcquiredOn,
-          feeAmount: tx.fee,
-          feeAccountId: tx.fee != null ? feeAccountId : null,
-          feeCurrency: tx.fee != null ? currency : null,
-          taxAmount: tx.tax,
-          taxAccountId: tx.tax != null ? taxAccountId : null,
-          taxCurrency: tx.tax != null ? currency : null,
-          narration: note,
-        );
-        final stored = await journalEntryRepo.create(
-          entry: build.entry,
-          postings: build.postings,
-        );
-        await priceRepo.record(
-          unit: tx.assetId,
-          quoteCurrency: currency,
-          observedOn: tx.tradeDate,
-          perUnit: tx.price,
-          source: 'trade',
-        );
-        return ProposalApplyState(
-          status: ProposalApplyStatus.applied,
-          appliedEntityId: stored.entry.id,
-          appliedTable: 'journal_entries',
-          appliedAt: at,
-          shortLabel: 'Recorded ${plan.summaryZh}',
-        );
-      }
-    }
-
-    final uid = await currentUserId();
-    final equityAccountId = AccountRepository.systemAccountIdForPath(
-      'equity:adjustments',
-      ownerUserId: uid,
-    );
-    final build = JournalEntryBuilders.valuationAdjust(
-      date: tx.tradeDate,
-      accountId: accountId,
-      equityAccountId: equityAccountId,
-      assetUnit: tx.assetId,
-      quantity: tx.quantity,
-      newValuation: tx.price,
-      currency: currency,
-      narration: note,
-    );
-    final stored = await journalEntryRepo.create(
-      entry: build.entry,
-      postings: build.postings,
-    );
-    await priceRepo.record(
-      unit: tx.assetId,
-      quoteCurrency: currency,
-      observedOn: tx.tradeDate,
-      perUnit: tx.price,
-      source: 'manual',
-    );
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: stored.entry.id,
-      appliedTable: 'journal_entries',
-      appliedAt: at,
-      shortLabel: 'Recorded ${plan.summaryZh}',
-    );
-  }
-
-  // ─── parsing helpers ─────────────────────────────────────────────────
-
-  String _requireString(ReadyProposalPlan plan, String key) {
-    final v = plan.get(key);
-    if (v == null || v.isEmpty) {
-      throw ProposalApplyException('Missing field $key');
-    }
-    return v;
-  }
-
-  Decimal _requireDecimal(ReadyProposalPlan plan, String key) {
-    final raw = plan.payload[key];
-    if (raw == null) {
-      throw ProposalApplyException('Missing field $key');
-    }
-    final s = raw is String ? raw : raw.toString();
-    final d = Decimal.tryParse(s);
-    if (d == null) {
-      throw ProposalApplyException('Field $key is not a valid number: $s');
-    }
-    return d;
-  }
-
-  Decimal? _optionalDecimal(ReadyProposalPlan plan, String key) {
-    final raw = plan.payload[key];
-    if (raw == null) return null;
-    final s = raw is String ? raw : raw.toString();
-    if (s.isEmpty) return null;
-    final d = Decimal.tryParse(s);
-    // Normalise zero to null so JE builders' _normalizeOptionalAmount
-    // doesn't reject a backend-supplied "0" as an invalid positive amount.
-    if (d == null || d == Decimal.zero) return null;
-    return d;
-  }
-
-  DateTime? _parseDate(String? s) {
-    if (s == null || s.isEmpty) return null;
-    final parsed = DateTime.tryParse(s);
-    return parsed?.toLocal();
-  }
-
-  TradeType _parseTradeType(String? s) {
-    return switch (s) {
-      'buy' => TradeType.buy,
-      'sell' => TradeType.sell,
-      'valuationAdjust' => TradeType.valuationAdjust,
-      _ => throw ProposalApplyException('Unsupported trade type: $s'),
-    };
-  }
-
-  /// Asset domain model demands a non-null SyncMeta even when we don't
-  /// persist the asset. The trade-entry service consults the asset for
-  /// pricing / FX backfill but only reads `id`, `symbol`, `currency`,
-  /// `type`. The placeholder here is never written to disk; the assets
-  /// table row was already created by an earlier sync pull.
-  SyncMeta _placeholderSync() => SyncMeta(
-    ownerUserId: '',
-    updatedAt: DateTime.now().toUtc(),
-    updatedByDevice: '',
-    hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: ''),
-  );
 }
 
 /// Finance-domain applier wiring. Resolves all repositories +
