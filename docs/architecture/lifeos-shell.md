@@ -330,6 +330,7 @@ Run these when touching architecture boundaries:
 
 ```bash
 ./tool/lint-no-finance-in-core.sh
+./tool/lint-no-feature-in-shared.sh
 ./tool/lint-cross-feature-imports.sh
 ./tool/lint-row-family-prefix.sh
 ./tool/lint-domain-neutral-contracts.sh

@@ -21,6 +21,7 @@ on:
       - 'tool/check-tool-descriptors.sh'
       - 'tool/lint-money-display.sh'
       - 'tool/lint-no-finance-in-core.sh'
+      - 'tool/lint-no-feature-in-shared.sh'
       - 'tool/lint-cross-feature-imports.sh'
       - 'tool/lint-row-family-prefix.sh'
       - 'tool/lint-domain-neutral-contracts.sh'
@@ -48,6 +49,7 @@ on:
       - 'tool/check-tool-descriptors.sh'
       - 'tool/lint-money-display.sh'
       - 'tool/lint-no-finance-in-core.sh'
+      - 'tool/lint-no-feature-in-shared.sh'
       - 'tool/lint-cross-feature-imports.sh'
       - 'tool/lint-row-family-prefix.sh'
       - 'tool/lint-domain-neutral-contracts.sh'
@@ -126,8 +128,9 @@ jobs:
         #   - enum mirror: Dart↔Rust enums stay in sync (Wave 42)
         #   - money display: no naked toStringAsFixed (allowlisted)
         #   - LifeOS D-1 cross-domain shell boundaries (docs/lifeos-shell.md §11):
-        #       no Finance in core/ai/runtime/, no cross-feature imports in
-        #       ai_chat/, sync RowChange domain prefixes, domain-neutral contracts.
+        #       no Finance in core/ai/runtime/, no shared-layer feature imports,
+        #       no cross-feature imports in protected features, sync RowChange
+        #       domain prefixes, domain-neutral contracts.
         working-directory: ${{ github.workspace }}
         run: |
           ./tool/check-enum-mirror.sh
@@ -135,6 +138,7 @@ jobs:
           ./tool/check-tool-descriptors.sh
           ./tool/lint-money-display.sh --strict
           ./tool/lint-no-finance-in-core.sh
+          ./tool/lint-no-feature-in-shared.sh
           ./tool/lint-cross-feature-imports.sh
           ./tool/lint-row-family-prefix.sh
           ./tool/lint-domain-neutral-contracts.sh
