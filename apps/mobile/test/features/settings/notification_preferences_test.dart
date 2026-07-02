@@ -6,6 +6,7 @@ import 'package:naviwealth/core/notifications/notification_preferences.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/notifications/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/health/data/health_notification_preferences.dart';
 import 'package:naviwealth/features/settings/ui/notification_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';

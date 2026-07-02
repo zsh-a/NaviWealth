@@ -31,6 +31,7 @@ import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
+import 'package:naviwealth/features/health/data/health_notification_preferences.dart';
 import 'package:naviwealth/features/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
@@ -50,7 +51,7 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
-        SharedBoolPreferenceController.healthBriefingEnabledKey: false,
+        kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
       final native = FakeAgentRuntimeToolPlanBridge();
@@ -185,7 +186,7 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
-        SharedBoolPreferenceController.healthBriefingEnabledKey: false,
+        kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
       final native = FakeAgentRuntimeToolPlanBridge();
@@ -235,7 +236,7 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
-        SharedBoolPreferenceController.healthBriefingEnabledKey: false,
+        kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(

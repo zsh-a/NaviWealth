@@ -11,6 +11,7 @@ import '../../features/health/agents/briefing_synthesizer.dart';
 import '../../features/health/agents/morning_briefing_agent.dart';
 import '../../features/health/agents/recovery_alert_agent.dart';
 import '../../features/health/agents/weekly_summary_agent.dart';
+import '../../features/health/data/health_notification_preferences.dart';
 import '../../features/health/data/morning_briefing_preferences.dart';
 import 'agent_runtime_profile_turn_binding.dart';
 import 'agent_runtime_tool_plan_binding.dart';

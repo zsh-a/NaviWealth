@@ -19,15 +19,6 @@ final notificationsEnabledProvider =
       );
     });
 
-final healthBriefingNotificationsEnabledProvider =
-    StateNotifierProvider<SharedBoolPreferenceController, bool>((ref) {
-      return SharedBoolPreferenceController(
-        ref.watch(sharedPreferencesProvider),
-        key: SharedBoolPreferenceController.healthBriefingEnabledKey,
-        defaultValue: true,
-      );
-    });
-
 class SharedBoolPreferenceController extends StateNotifier<bool> {
   SharedBoolPreferenceController(
     this._prefs, {
@@ -36,8 +27,6 @@ class SharedBoolPreferenceController extends StateNotifier<bool> {
   }) : super(_prefs.getBool(key) ?? defaultValue);
 
   static const String notificationsEnabledKey = 'lifeos.notifications.enabled';
-  static const String healthBriefingEnabledKey =
-      'lifeos.notifications.health.briefing.enabled';
 
   final SharedPreferences _prefs;
   final String key;

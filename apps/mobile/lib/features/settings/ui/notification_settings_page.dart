@@ -6,6 +6,7 @@ import '../../../core/notifications/notification_preferences.dart';
 import '../../../core/notifications/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../health/data/health_notification_preferences.dart';
 import '../../health/data/morning_briefing_preferences.dart';
 import 'inline_setting_row.dart';
 import 'settings_page_frame.dart';

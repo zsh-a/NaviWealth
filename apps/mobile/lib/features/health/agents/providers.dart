@@ -22,6 +22,7 @@ import '../../../core/background/background_scheduler.dart';
 import '../../../core/background/providers.dart' as background_providers;
 import '../../../core/notifications/notification_preferences.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
+import '../data/health_notification_preferences.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
