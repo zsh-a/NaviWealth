@@ -1,0 +1,289 @@
+part of 'knowledge_review_page.dart';
+
+class _DueReviewsCard extends ConsumerWidget {
+  const _DueReviewsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return FutureBuilder<String>(
+      future: ref.watch(currentUserIdProvider)(),
+      builder: (context, ownerSnap) {
+        if (!ownerSnap.hasData) {
+          return KnowledgeSection.group(
+            title: l10n.knowledgeReviewDecisionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          );
+        }
+        final owner = ownerSnap.data!;
+        final repoAsync = ref.watch(knowledgeRepositoryProvider);
+        return repoAsync.when(
+          loading: () => KnowledgeSection.group(
+            title: l10n.knowledgeReviewDecisionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          ),
+          error: (e, _) => KnowledgeSection.group(
+            title: l10n.knowledgeReviewDecisionsTitle,
+            children: [
+              KnowledgeErrorState(
+                title: l10n.knowledgeReviewLoadFailed('$e'),
+                onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+                density: KnowledgeStateDensity.section,
+              ),
+            ],
+          ),
+          data: (repo) {
+            final tick = ref.watch(_reviewActionsRefreshProvider);
+            return FutureBuilder<List<KnowledgeDecision>>(
+              key: ValueKey<int>(tick),
+              future: repo.listDueReviews(
+                ownerUserId: owner,
+                asOf: DateTime.now().toUtc(),
+              ),
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return KnowledgeSection.group(
+                    title: l10n.knowledgeReviewDecisionsTitle,
+                    children: [
+                      KnowledgeErrorState(
+                        title: l10n.knowledgeReviewLoadFailed('${snap.error}'),
+                        density: KnowledgeStateDensity.section,
+                      ),
+                    ],
+                  );
+                }
+                final list = snap.data ?? const [];
+                final ordered = _orderedReviewItems<KnowledgeDecision>(
+                  items: list,
+                  order:
+                      ref
+                          .read(sharedPreferencesProvider)
+                          .getStringList(_kReviewDecisionOrderPrefsKey) ??
+                      const <String>[],
+                  idOf: (d) => d.id,
+                );
+                final visible = ordered
+                    .take(kReviewCardMaxItems)
+                    .toList(growable: false);
+                return KnowledgeSection.group(
+                  title: l10n.knowledgeReviewDecisionsTitle,
+                  trailing: list.isEmpty
+                      ? null
+                      : _ReviewBulkActionButton(
+                          label: l10n.knowledgeReviewMarkAllDecisionsReviewed,
+                          icon: FLucideIcons.calendarCheck,
+                          onPress: () => _markDecisionsReviewed(
+                            context: context,
+                            ref: ref,
+                            decisions: list,
+                          ),
+                        ),
+                  children: [
+                    if (list.isEmpty)
+                      KnowledgeEmptyState(
+                        icon: FLucideIcons.calendar,
+                        title: l10n.knowledgeReviewDecisionsEmpty,
+                        density: KnowledgeStateDensity.section,
+                      )
+                    else ...[
+                      _ReviewCountHint(
+                        visibleCount: visible.length,
+                        totalCount: list.length,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
+                      _ReviewSelectableList<KnowledgeDecision>(
+                        items: visible,
+                        idOf: (d) => d.id,
+                        itemBuilder: (d) => _DueDecisionRow(decision: d),
+                        actionLabel:
+                            l10n.knowledgeReviewMarkSelectedDecisionsReviewed,
+                        icon: FLucideIcons.calendarCheck,
+                        onBulkAction: (selected) => _markDecisionsReviewed(
+                          context: context,
+                          ref: ref,
+                          decisions: selected,
+                        ),
+                        orderPrefsKey: _kReviewDecisionOrderPrefsKey,
+                        onOrderChanged: (ids) => _persistReviewOrder(
+                          ref: ref,
+                          prefsKey: _kReviewDecisionOrderPrefsKey,
+                          visibleIds: ids,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _DueDecisionRow extends ConsumerStatefulWidget {
+  const _DueDecisionRow({required this.decision});
+
+  final KnowledgeDecision decision;
+
+  @override
+  ConsumerState<_DueDecisionRow> createState() => _DueDecisionRowState();
+}
+
+class _DueDecisionRowState extends ConsumerState<_DueDecisionRow> {
+  bool _busy = false;
+
+  Future<bool> _markReviewed() async {
+    if (_busy) return false;
+    setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final next = await _upsertDecisionReviewDate(
+        ref: ref,
+        decision: widget.decision,
+      );
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.knowledgeReviewDecisionNextReview(
+            knowledgeDate(context, next, long: true),
+          ),
+        );
+      }
+      return true;
+    } catch (e) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.knowledgeReviewDecisionReviewFailed('$e'),
+        );
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    final overdueDays =
+        widget.decision.daysOverdue(DateTime.now().toUtc()) ?? 0;
+    return _SwipeReviewAction(
+      dismissKey: ValueKey<String>('decision-review-${widget.decision.id}'),
+      label: l10n.knowledgeReviewDecisionReviewed,
+      icon: FLucideIcons.calendarCheck,
+      onComplete: _markReviewed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Row(
+          children: [
+            Icon(
+              FLucideIcons.calendar,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Expanded(
+              child: Text(
+                widget.decision.question,
+                style: typography.body.sm,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Text(
+              l10n.knowledgeReviewDecisionOverdueDays(overdueDays),
+              style: context.captionStyle,
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            _ReviewIconButton(
+              icon: FLucideIcons.calendarCheck,
+              busy: _busy,
+              tooltip: l10n.knowledgeReviewDecisionReviewed,
+              onPress: _markReviewed,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Future<DateTime> _upsertDecisionReviewDate({
+  required WidgetRef ref,
+  required KnowledgeDecision decision,
+}) async {
+  final repo = await ref.read(knowledgeRepositoryProvider.future);
+  final stamper = await ref.read(mutationStamperProvider.future);
+  final stamp = await stamper.stamp();
+  final nextReview = stamp.now
+      .add(const Duration(days: _kDecisionReviewRescheduleDays))
+      .toUtc();
+  await repo.upsertDecision(
+    KnowledgeDecision(
+      id: decision.id,
+      question: decision.question,
+      options: decision.options,
+      selectedLabel: decision.selectedLabel,
+      rationaleMd: decision.rationaleMd,
+      principleIds: decision.principleIds,
+      assumptionIds: decision.assumptionIds,
+      expectedOutcome: decision.expectedOutcome,
+      reviewDate: nextReview,
+      actualOutcomeMd: decision.actualOutcomeMd,
+      status: decision.status,
+      supersededByDecisionId: decision.supersededByDecisionId,
+      contextSnapshot: decision.contextSnapshot,
+      decidedAt: decision.decidedAt,
+      mergedIntoId: decision.mergedIntoId,
+      sync: SyncMeta(
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+      ),
+    ),
+  );
+  return nextReview;
+}
+
+Future<void> _markDecisionsReviewed({
+  required BuildContext context,
+  required WidgetRef ref,
+  required List<KnowledgeDecision> decisions,
+}) async {
+  if (decisions.isEmpty) return;
+  final l10n = AppLocalizations.of(context);
+  try {
+    for (final d in decisions) {
+      await _upsertDecisionReviewDate(ref: ref, decision: d);
+    }
+    ref.read(_reviewActionsRefreshProvider.notifier).state++;
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.knowledgeReviewDecisionsBulkReviewed(decisions.length),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.knowledgeReviewDecisionReviewFailed('$e'),
+      );
+    }
+  }
+}
