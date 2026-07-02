@@ -10,9 +10,9 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../app/domain_tabs_shell.dart';
-import '../../../app/route_error_page.dart';
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/page_transitions.dart';
+import '../../../core/shell/route_error_page.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../accounts/account_form_page.dart';
 import '../../accounts/accounts_page.dart';
