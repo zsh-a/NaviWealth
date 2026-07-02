@@ -109,7 +109,7 @@ if [[ -n "$legacy_vision_trace_constant_violations" ]]; then
 fi
 
 BOOTSTRAP="$LIB/app/bootstrap.dart"
-RUNTIME_OVERRIDES="$LIB/app/agent_runtime/agent_runtime_provider_overrides.dart"
+RUNTIME_WIRING="$LIB/app/agent_runtime"
 
 if ! grep -q '\.\.\.agentRuntimeProviderOverrides()' "$BOOTSTRAP"; then
   echo "✖ bootstrap does not install centralized FRB runtime overrides:" >&2
@@ -134,15 +134,15 @@ routineDueAgentProvider FrbRoutineDueReader
 
 while read -r provider frb_type; do
   [[ -z "$provider" ]] && continue
-  if ! grep -q "${provider}\.overrideWith" "$RUNTIME_OVERRIDES"; then
+  if ! grep -qr "${provider}\.overrideWith" "$RUNTIME_WIRING"; then
     echo "✖ production scheduled agent provider is not overridden in runtime wiring:" >&2
     echo "  $provider" >&2
     echo >&2
-    echo "Scheduled production agents must be wired in agent_runtime_provider_overrides.dart so" >&2
+    echo "Scheduled production agents must be wired under app/agent_runtime/ so" >&2
     echo "DomainPack agent registration receives FRB-backed seams." >&2
     exit 1
   fi
-  if ! grep -q "$frb_type" "$RUNTIME_OVERRIDES"; then
+  if ! grep -qr "$frb_type" "$RUNTIME_WIRING"; then
     echo "✖ production scheduled agent is missing its FRB seam in runtime wiring:" >&2
     echo "  $provider -> $frb_type" >&2
     echo >&2
@@ -162,7 +162,7 @@ for surface in \
   knowledge_inbox_triage \
   knowledge_contradiction \
   knowledge_routine_due; do
-  if ! grep -q "surface: '$surface'" "$RUNTIME_OVERRIDES"; then
+  if ! grep -qr "surface: '$surface'" "$RUNTIME_WIRING"; then
     echo "✖ production FRB scheduled agent is missing local trace capture:" >&2
     echo "  surface: $surface" >&2
     echo >&2

@@ -624,9 +624,13 @@ void main() {
       final runtimeOverrides = File(
         '${appRoot.path}/lib/app/agent_runtime/agent_runtime_provider_overrides.dart',
       );
+      final runtimeWiringDir = Directory(
+        '${appRoot.path}/lib/app/agent_runtime',
+      );
 
       expect(bootstrap.existsSync(), isTrue);
       expect(runtimeOverrides.existsSync(), isTrue);
+      expect(runtimeWiringDir.existsSync(), isTrue);
       expect(
         bootstrap.readAsStringSync(),
         contains('...agentRuntimeProviderOverrides()'),
@@ -635,7 +639,9 @@ void main() {
             'runtime override module.',
       );
 
-      final text = runtimeOverrides.readAsStringSync();
+      final text = _dartFiles(
+        runtimeWiringDir,
+      ).map((file) => file.readAsStringSync()).join('\n');
       final contracts = <String, String>{
         'executionReviewAgentProvider': 'FrbExecutionReviewReader',
         'morningBriefingAgentProvider': 'FrbBriefingSynthesizer',
