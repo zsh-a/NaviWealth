@@ -14,6 +14,10 @@ import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:uuid/uuid.dart';
 
+part 'journal_entry_repository_activity_feed.dart';
+part 'journal_entry_repository_mappers.dart';
+part 'journal_entry_repository_models.dart';
+
 /// Drift DAO for `journal_entries` + `postings`. Models a JE
 /// and its postings as one logical unit: every public mutation lives
 /// inside a single Drift transaction that writes the JE row, the
@@ -31,7 +35,7 @@ import 'package:uuid/uuid.dart';
 ///   - Run cost-basis selection (FIFO / LIFO) — `cost.lotId` is taken
 ///     verbatim from the caller.
 ///   - Refresh derived holdings; readers query postings directly.
-class JournalEntryRepository {
+class JournalEntryRepository with JournalEntryRepositoryActivityFeedMixin {
   JournalEntryRepository({
     required AppDatabase db,
     required OutboxStore outbox,
@@ -46,6 +50,7 @@ class JournalEntryRepository {
        _baseCurrency = baseCurrency,
        _uuid = uuid;
 
+  @override
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
@@ -61,6 +66,7 @@ class JournalEntryRepository {
   /// Live stream of every non-deleted JE ordered by `(date DESC, id ASC)`.
   /// The trailing id sort is a stable tiebreaker so two events on the
   /// same calendar day always resolve to the same render order.
+  @override
   Stream<List<JournalEntry>> watchAll() {
     final query = _db.select(_db.journalEntries)
       ..where((t) => t.deletedAt.isNull())
@@ -92,202 +98,6 @@ class JournalEntryRepository {
       entry: _journalToDomain(entryRow),
       postings: postingRows.map(_postingToDomain).toList(growable: false),
     );
-  }
-
-  /// Live stream of every non-deleted JE *with* its postings,
-  /// materialised as a grouped `List<JournalEntryWithPostings>`.
-  /// Drives the journal list page; subscribers re-render whenever
-  /// the JE list changes (insert / update / soft-delete a JE).
-  ///
-  /// Implementation: rides on top of the JE-list stream and pulls the
-  /// matching postings in a single `WHERE journal_entry_id IN (...)`
-  /// query per emission. This means a JE-write atomically (which is
-  /// the `JournalEntryRepository.create` contract — every
-  /// posting batch ships with its parent JE in one transaction) hits
-  /// the consumer with a fresh snapshot. Posting-only mutations (e.g.
-  /// a sync-borne posting update without its JE row changing) won't
-  /// re-emit by themselves; we accept that today because the local
-  /// write path always co-mutates both. A follow-up PR can pair the
-  /// JE watch with a posting-watch trigger if cross-device sync
-  /// surfaces lag here.
-  Stream<List<JournalEntryWithPostings>> watchAllWithPostings() {
-    return watchAll().asyncMap((entries) async {
-      if (entries.isEmpty) return const <JournalEntryWithPostings>[];
-      return _entriesWithPostings(entries);
-    });
-  }
-
-  /// Activity-feed read model: paged, newest-first, and backed by SQL
-  /// predicates for date/account filters. Kind filters are classified from
-  /// the fetched postings and account categories; when kind filtering is
-  /// active the query advances via a `(date DESC, id ASC)` keyset cursor in
-  /// bounded batches until it fills [pageSize] or exhausts the source rows.
-  Stream<ActivityFeedReadPage> watchActivityFeed({
-    DateTime? from,
-    DateTime? to,
-    Set<String> accountIds = const <String>{},
-    Set<EntryKind> kinds = const <EntryKind>{},
-    required Map<String, AccountSide> accountCategories,
-    int pageSize = 50,
-  }) {
-    final trigger = _db
-        .customSelect(
-          '''
-      SELECT
-        (SELECT COUNT(*) FROM journal_entries WHERE deleted_at IS NULL) AS je_count,
-        (SELECT COUNT(*) FROM postings WHERE deleted_at IS NULL) AS posting_count
-      ''',
-          readsFrom: {_db.journalEntries, _db.postings, _db.accounts},
-        )
-        .watch();
-    return trigger.asyncMap(
-      (_) => queryActivityFeed(
-        from: from,
-        to: to,
-        accountIds: accountIds,
-        kinds: kinds,
-        accountCategories: accountCategories,
-        pageSize: pageSize,
-      ),
-    );
-  }
-
-  Future<ActivityFeedReadPage> queryActivityFeed({
-    DateTime? from,
-    DateTime? to,
-    Set<String> accountIds = const <String>{},
-    Set<EntryKind> kinds = const <EntryKind>{},
-    required Map<String, AccountSide> accountCategories,
-    int pageSize = 50,
-  }) async {
-    final limit = pageSize.clamp(1, 500).toInt();
-    final batchSize = kinds.isEmpty ? limit + 1 : limit.clamp(50, 200);
-    final accepted = <JournalEntryWithPostings>[];
-    ActivityFeedCursor? cursor;
-    var sourceExhausted = false;
-
-    while (accepted.length < limit + 1 && !sourceExhausted) {
-      final rows = await _queryActivityEntryRows(
-        from: from,
-        to: to,
-        accountIds: accountIds,
-        after: cursor,
-        limit: batchSize,
-      );
-      if (rows.isEmpty) {
-        sourceExhausted = true;
-        break;
-      }
-
-      final entries = rows.map(_journalToDomain).toList(growable: false);
-      final page = await _entriesWithPostings(entries);
-      for (final item in page) {
-        if (kinds.isNotEmpty) {
-          final classification = classifyEntryKind(
-            postings: item.postings,
-            resolveCategory: (id) => accountCategories[id],
-          );
-          if (!kinds.contains(classification.kind)) {
-            continue;
-          }
-        }
-        accepted.add(item);
-        if (accepted.length > limit) break;
-      }
-
-      if (rows.length < batchSize) {
-        sourceExhausted = true;
-      }
-      final last = rows.last;
-      cursor = ActivityFeedCursor(date: last.date, id: last.id);
-    }
-
-    final hasMore = accepted.length > limit;
-    if (hasMore) accepted.removeLast();
-    return ActivityFeedReadPage(
-      entries: accepted,
-      hasMore: hasMore || !sourceExhausted,
-    );
-  }
-
-  Future<List<JournalEntryWithPostings>> _entriesWithPostings(
-    List<JournalEntry> entries,
-  ) async {
-    if (entries.isEmpty) return const <JournalEntryWithPostings>[];
-    final ids = entries.map((e) => e.id).toList(growable: false);
-    final postingRows =
-        await (_db.select(_db.postings)
-              ..where((t) => t.journalEntryId.isIn(ids))
-              ..where((t) => t.deletedAt.isNull())
-              ..orderBy([(t) => OrderingTerm(expression: t.position)]))
-            .get();
-    final byEntry = <String, List<Posting>>{};
-    for (final p in postingRows) {
-      byEntry
-          .putIfAbsent(p.journalEntryId, () => <Posting>[])
-          .add(_postingToDomain(p));
-    }
-    return entries
-        .map(
-          (e) => JournalEntryWithPostings(
-            entry: e,
-            postings: byEntry[e.id] ?? const <Posting>[],
-          ),
-        )
-        .toList(growable: false);
-  }
-
-  Future<List<JournalEntryRow>> _queryActivityEntryRows({
-    DateTime? from,
-    DateTime? to,
-    Set<String> accountIds = const <String>{},
-    ActivityFeedCursor? after,
-    required int limit,
-  }) async {
-    final where = <String>['je.deleted_at IS NULL'];
-    final variables = <Variable>[];
-    if (from != null) {
-      where.add('je.date >= ?');
-      variables.add(Variable<DateTime>(from));
-    }
-    if (to != null) {
-      where.add('je.date < ?');
-      variables.add(Variable<DateTime>(to));
-    }
-    if (after != null) {
-      where.add('(je.date < ? OR (je.date = ? AND je.id > ?))');
-      variables
-        ..add(Variable<DateTime>(after.date))
-        ..add(Variable<DateTime>(after.date))
-        ..add(Variable<String>(after.id));
-    }
-    if (accountIds.isNotEmpty) {
-      final placeholders = List.filled(accountIds.length, '?').join(', ');
-      where.add('''
-        EXISTS (
-          SELECT 1 FROM postings p
-          WHERE p.journal_entry_id = je.id
-            AND p.deleted_at IS NULL
-            AND p.account_id IN ($placeholders)
-        )
-      ''');
-      variables.addAll(accountIds.map((id) => Variable<String>(id)));
-    }
-    variables.add(Variable<int>(limit));
-    final rows = await _db
-        .customSelect(
-          '''
-          SELECT je.*
-          FROM journal_entries je
-          WHERE ${where.join(' AND ')}
-          ORDER BY je.date DESC, je.id ASC
-          LIMIT ?
-          ''',
-          variables: variables,
-          readsFrom: {_db.journalEntries, _db.postings},
-        )
-        .get();
-    return rows.map((row) => _db.journalEntries.map(row.data)).toList();
   }
 
   /// Live stream of every non-deleted [Posting] for a single account,
@@ -448,56 +258,6 @@ class JournalEntryRepository {
       }
       return out;
     });
-  }
-
-  /// Maps a JE + its expense-leg posting to an [Expense] domain object.
-  Expense? _postingToExpense(
-    JournalEntryRow jeRow,
-    PostingRow postingRow,
-    List<PostingRow> siblingPostings,
-  ) {
-    final tagIds = (jsonDecode(jeRow.tagIdsJson) as List<dynamic>)
-        .cast<String>();
-    final counterPosting = _expenseCounterPosting(
-      expensePosting: postingRow,
-      siblingPostings: siblingPostings,
-    );
-    return Expense(
-      id: jeRow.id,
-      expenseAccountId: postingRow.accountId,
-      fromAccountId: counterPosting?.accountId,
-      amount: postingRow.units.abs(),
-      currency: postingRow.unit,
-      tradeDate: jeRow.date,
-      tags: tagIds,
-      note: jeRow.narration,
-      sync: SyncMeta(
-        ownerUserId: jeRow.ownerUserId,
-        updatedAt: jeRow.updatedAt,
-        updatedByDevice: jeRow.updatedByDevice,
-        hlc: jeRow.hlc,
-        deletedAt: jeRow.deletedAt,
-      ),
-    );
-  }
-
-  PostingRow? _expenseCounterPosting({
-    required PostingRow expensePosting,
-    required List<PostingRow> siblingPostings,
-  }) {
-    for (final posting in siblingPostings) {
-      if (posting.accountId == expensePosting.accountId) continue;
-      if (posting.unit != expensePosting.unit) continue;
-      if (posting.units < Decimal.zero) return posting;
-    }
-    for (final posting in siblingPostings) {
-      if (posting.accountId == expensePosting.accountId) continue;
-      if (posting.units < Decimal.zero) return posting;
-    }
-    for (final posting in siblingPostings) {
-      if (posting.accountId != expensePosting.accountId) return posting;
-    }
-    return null;
   }
 
   // ---------- Writes ----------
@@ -755,186 +515,4 @@ class JournalEntryRepository {
       }
     });
   }
-
-  // ---------- Companion / op helpers ----------
-
-  JournalEntriesCompanion _journalCompanion(JournalEntry entry) {
-    return JournalEntriesCompanion.insert(
-      id: entry.id,
-      date: entry.date,
-      settledOn: Value(entry.settledOn),
-      narration: entry.narration,
-      payee: Value(entry.payee),
-      flag: Value(entry.flag),
-      tagIdsJson: Value(jsonEncode(entry.tagIds)),
-      ownerUserId: entry.sync.ownerUserId,
-      updatedAt: entry.sync.updatedAt,
-      updatedByDevice: entry.sync.updatedByDevice,
-      hlc: entry.sync.hlc,
-    );
-  }
-
-  PostingsCompanion _postingCompanion(Posting p) {
-    return PostingsCompanion.insert(
-      id: p.id,
-      journalEntryId: p.journalEntryId,
-      position: p.position,
-      accountId: p.accountId,
-      units: p.units,
-      unit: p.unit,
-      costPerUnit: Value(p.cost?.perUnit),
-      costCurrency: Value(p.cost?.currency),
-      costLotId: Value(p.cost?.lotId),
-      costAcquiredOn: Value(p.cost?.acquiredOn),
-      pricePerUnit: Value(p.price?.perUnit),
-      priceCurrency: Value(p.price?.currency),
-      ownerUserId: p.sync.ownerUserId,
-      updatedAt: p.sync.updatedAt,
-      updatedByDevice: p.sync.updatedByDevice,
-      hlc: p.sync.hlc,
-    );
-  }
-
-  // ---------- Row → domain ----------
-
-  JournalEntry _journalToDomain(JournalEntryRow row) {
-    final tagIds = (jsonDecode(row.tagIdsJson) as List<dynamic>).cast<String>();
-    return JournalEntry(
-      id: row.id,
-      date: row.date,
-      settledOn: row.settledOn,
-      narration: row.narration,
-      payee: row.payee,
-      tagIds: List.unmodifiable(tagIds),
-      flag: row.flag,
-      sync: SyncMeta(
-        ownerUserId: row.ownerUserId,
-        updatedAt: row.updatedAt,
-        updatedByDevice: row.updatedByDevice,
-        hlc: row.hlc,
-        deletedAt: row.deletedAt,
-      ),
-    );
-  }
-
-  Posting _postingToDomain(PostingRow row) {
-    Cost? cost;
-    if (row.costPerUnit != null && row.costCurrency != null) {
-      cost = Cost(
-        perUnit: row.costPerUnit!,
-        currency: row.costCurrency!,
-        lotId: row.costLotId,
-        acquiredOn: row.costAcquiredOn,
-      );
-    }
-    Price? price;
-    if (row.pricePerUnit != null && row.priceCurrency != null) {
-      price = Price(perUnit: row.pricePerUnit!, currency: row.priceCurrency!);
-    }
-    return Posting(
-      id: row.id,
-      journalEntryId: row.journalEntryId,
-      position: row.position,
-      accountId: row.accountId,
-      units: row.units,
-      unit: row.unit,
-      cost: cost,
-      price: price,
-      sync: SyncMeta(
-        ownerUserId: row.ownerUserId,
-        updatedAt: row.updatedAt,
-        updatedByDevice: row.updatedByDevice,
-        hlc: row.hlc,
-        deletedAt: row.deletedAt,
-      ),
-    );
-  }
-}
-
-class ActivityFeedCursor {
-  const ActivityFeedCursor({required this.date, required this.id});
-
-  final DateTime date;
-  final String id;
-}
-
-class ActivityFeedReadPage {
-  const ActivityFeedReadPage({required this.entries, required this.hasMore});
-
-  final List<JournalEntryWithPostings> entries;
-  final bool hasMore;
-}
-
-/// Lightweight draft: callers describe the JE without having to mint
-/// ids or stamp sync metadata. The repo fills both before the row hits
-/// SQLite.
-class JournalEntryDraft {
-  const JournalEntryDraft({
-    this.id,
-    required this.date,
-    this.settledOn,
-    required this.narration,
-    this.payee,
-    this.tagIds = const <String>[],
-    this.flag = EntryFlag.confirmed,
-  });
-
-  final String? id;
-  final DateTime date;
-  final DateTime? settledOn;
-  final String narration;
-  final String? payee;
-  final List<String> tagIds;
-  final EntryFlag flag;
-}
-
-class PostingDraft {
-  const PostingDraft({
-    this.id,
-    this.position,
-    required this.accountId,
-    required this.units,
-    required this.unit,
-    this.cost,
-    this.price,
-  });
-
-  final String? id;
-  final int? position;
-  final String accountId;
-  final Decimal units;
-  final String unit;
-  final Cost? cost;
-  final Price? price;
-}
-
-/// Materialised JE — the entry plus its postings in canonical order.
-class JournalEntryWithPostings {
-  const JournalEntryWithPostings({required this.entry, required this.postings});
-
-  final JournalEntry entry;
-  final List<Posting> postings;
-}
-
-/// Thrown by [JournalEntryRepository] when a JE write would violate the
-/// SUM(weight) = 0 invariant. Carries the structured report so callers
-/// can render targeted errors instead of a generic "won't save" toast.
-class JournalEntryUnbalancedException implements Exception {
-  const JournalEntryUnbalancedException(this.message, {this.report});
-
-  factory JournalEntryUnbalancedException.fromReport(
-    JournalEntryBalanceReport report,
-  ) {
-    final summary = report.problems.isEmpty
-        ? 'Σ(weight) = ${report.totalBaseWeight} '
-              'exceeds tolerance ±${report.tolerance}.'
-        : report.problems.map((p) => p.message).join('; ');
-    return JournalEntryUnbalancedException(summary, report: report);
-  }
-
-  final String message;
-  final JournalEntryBalanceReport? report;
-
-  @override
-  String toString() => 'JournalEntryUnbalancedException: $message';
 }
