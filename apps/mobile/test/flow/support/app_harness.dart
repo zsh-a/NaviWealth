@@ -35,7 +35,7 @@ import 'package:naviwealth/features/analytics/data/providers.dart'
     as analytics_data;
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
-import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';

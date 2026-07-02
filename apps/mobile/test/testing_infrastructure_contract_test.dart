@@ -178,8 +178,8 @@ void main() {
               minTestFiles: 1,
               minTestCases: 7,
             ),
-            'features/assets': (
-              testPath: 'test/features/assets',
+            'features/finance/assets': (
+              testPath: 'test/features/finance/assets',
               minTestFiles: 7,
               minTestCases: 30,
             ),
@@ -228,15 +228,15 @@ void main() {
       const requiredFiles = <String, int>{
         // Assets: keep provider, physical asset, depreciation, and UI list
         // model behavior covered directly.
-        'test/features/assets/assets_page_securities_test.dart': 2,
-        'test/features/assets/data/asset_detail_providers_test.dart': 4,
-        'test/features/assets/data/deposit_maturity_insight_provider_test.dart':
+        'test/features/finance/assets/assets_page_securities_test.dart': 2,
+        'test/features/finance/assets/data/asset_detail_providers_test.dart': 4,
+        'test/features/finance/assets/data/deposit_maturity_insight_provider_test.dart':
             2,
-        'test/features/assets/physical/data/physical_asset_repository_test.dart':
+        'test/features/finance/assets/physical/data/physical_asset_repository_test.dart':
             4,
-        'test/features/assets/physical/domain/vehicle_depreciation_test.dart':
+        'test/features/finance/assets/physical/domain/vehicle_depreciation_test.dart':
             3,
-        'test/features/assets/ui/assets_list_models_test.dart': 2,
+        'test/features/finance/assets/ui/assets_list_models_test.dart': 2,
 
         // Options income: scanner/application, repositories, scoring, AI, and
         // presentation should not collapse back into one broad smoke file.

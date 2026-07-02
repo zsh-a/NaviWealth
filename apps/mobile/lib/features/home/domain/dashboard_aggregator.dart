@@ -1,3 +1,4 @@
+import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -8,7 +9,6 @@ import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../../domain/values/price_confidence.dart';
-import '../../assets/physical/data/physical_asset.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import 'dashboard_models.dart';
 

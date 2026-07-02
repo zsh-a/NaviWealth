@@ -7,7 +7,7 @@ import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers
 import 'package:naviwealth/features/analytics/data/providers.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
-import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';

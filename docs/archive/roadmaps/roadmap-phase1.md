@@ -82,10 +82,10 @@
 - 需要新增 `rebalanceDriftInsightProvider` 在 `features/rebalance/data/`，返回 `Option<DriftSummary>`。
 
 ### 2. Upcoming deposit maturities（定期存款临近到期）
-- 数据源：`features/assets/` 中 deposit 类资产 + 到期日字段（已存在于 deposit form）。
+- 数据源：`features/finance/assets/` 中 deposit 类资产 + 到期日字段（已存在于 deposit form）。
 - 触发：14 天内将到期的定期存款。
 - 文案：`{count} 笔定期 {days}d 内到期`，多笔时取最近一笔的天数 → 跳转资产列表过滤到 deposit。
-- 需要 `depositMaturityInsightProvider` 在 `features/assets/data/`。
+- 需要 `depositMaturityInsightProvider` 在 `features/finance/assets/data/`。
 
 ### 3. Expense trend anomaly（支出异常）
 - 数据源：`features/finance/expense/domain/` 已有月度聚合。
@@ -105,7 +105,7 @@
 ### 文件改动
 - 修改：`lib/features/home/data/dashboard_insights_provider.dart`
 - 新增：`lib/features/rebalance/data/rebalance_drift_insight_provider.dart`
-- 新增：`lib/features/assets/data/deposit_maturity_insight_provider.dart`
+- 新增：`lib/features/finance/assets/data/deposit_maturity_insight_provider.dart`
 - 新增：`lib/features/finance/expense/data/expense_anomaly_insight_provider.dart`
 - 修改：`lib/l10n/app_en.arb`、`app_zh.arb`（新增 ~12 条 key）
 - 修改：`lib/features/home/ui/insight_strip.dart`（如果需要点击跳转支持）

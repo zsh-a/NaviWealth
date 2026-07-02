@@ -37,11 +37,11 @@ import 'package:naviwealth/features/analytics/data/providers.dart'
     as analytics_data;
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
-import 'package:naviwealth/features/assets/asset_detail_page.dart';
-import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/auth/presentation/devices_page.dart';
 import 'package:naviwealth/features/finance/activity/activity_page.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
+import 'package:naviwealth/features/finance/assets/asset_detail_page.dart';
+import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';

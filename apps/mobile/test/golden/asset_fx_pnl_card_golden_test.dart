@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/assets/ui/asset_fx_pnl_card.dart';
+import 'package:naviwealth/features/finance/assets/ui/asset_fx_pnl_card.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
 import 'package:naviwealth/features/investment/domain/reporting/holding_report.dart';

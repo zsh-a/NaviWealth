@@ -1,0 +1,200 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/ai/write/write.dart';
+import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/entities/symbol_info.dart';
+import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/investment/ui/event_timeline_section.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import 'asset_detail_sections.dart';
+
+/// Detail view for equity-type assets. Watches the repository so a successful
+/// metadata enrichment immediately reflects in the rendered card without a
+/// full route round-trip.
+class EquityAssetDetailPage extends ConsumerStatefulWidget {
+  const EquityAssetDetailPage({super.key, required this.assetId});
+
+  final String assetId;
+
+  @override
+  ConsumerState<EquityAssetDetailPage> createState() =>
+      _EquityAssetDetailPageState();
+}
+
+/// Only call yfinance for markets it actually services. US + HK stocks
+/// have dividend/split coverage; CN A-shares go through sina and don't
+/// publish events through the chart endpoint; crypto / FX never carry
+/// corporate actions. Gating saves a wasted HTTP round-trip per detail
+/// page open for assets the fetcher can't usefully answer for.
+bool _supportsCorporateActions(Asset asset) {
+  final market = assetMarketFromWire(asset.market);
+  return market == AssetMarket.usStock || market == AssetMarket.hkStock;
+}
+
+class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
+  Future<Asset?>? _assetFuture;
+  bool _syncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
+
+  void _reload() {
+    final repoFuture = ref.read(securitiesAssetRepositoryProvider.future);
+    _assetFuture = repoFuture.then((repo) => repo.findById(widget.assetId));
+  }
+
+  Future<void> _syncMetadata(Asset asset) async {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _syncing = true);
+    try {
+      final market = await ref.read(marketDataServiceProvider.future);
+      final assetMarket = assetMarketFromWire(asset.market);
+      final response = await market.searchSymbol(
+        asset.symbol,
+        market: (assetMarket == null || assetMarket == AssetMarket.unknown)
+            ? null
+            : assetMarket,
+      );
+      final SymbolInfo? best = _pickBest(response.data, asset);
+      if (best == null) {
+        if (!mounted) return;
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.assetDetailNoMetadataMatch,
+        );
+        return;
+      }
+
+      final repo = await ref.read(securitiesAssetRepositoryProvider.future);
+      final before = asset;
+      await repo.enrichMetadata(
+        id: asset.id,
+        name: best.name.isEmpty ? null : best.name,
+      );
+      if (!mounted) return;
+
+      final filledName = before.name == null && best.name.isNotEmpty;
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        filledName
+            ? l10n.assetDetailMetadataSynced
+            : l10n.assetDetailMetadataUpToDate,
+      );
+      setState(_reload);
+    } catch (_) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.assetDetailNetworkUnavailable,
+      );
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+    }
+  }
+
+  SymbolInfo? _pickBest(List<SymbolInfo> hits, Asset asset) {
+    if (hits.isEmpty) return null;
+    final wantSymbol = asset.symbol.toUpperCase();
+    final wantMarket = assetMarketFromWire(asset.market);
+    for (final h in hits) {
+      if (h.symbol.toUpperCase() == wantSymbol && h.market == wantMarket) {
+        return h;
+      }
+    }
+    for (final h in hits) {
+      if (h.symbol.toUpperCase() == wantSymbol) return h;
+    }
+    return hits.first;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FutureBuilder<Asset?>(
+      future: _assetFuture,
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return ObjectDetailScaffold(
+            title: l10n.assetDetailUnknown,
+            childPad: false,
+            child: const Center(child: FCircularProgress()),
+          );
+        }
+        final asset = snap.data;
+        if (asset == null) {
+          return ObjectDetailScaffold(
+            title: l10n.assetDetailUnknown,
+            childPad: false,
+            child: Center(child: Text(l10n.assetDetailNotFound)),
+          );
+        }
+        return ObjectDetailScaffold(
+          titleWidget: OptionalHero(
+            tag: 'asset-${asset.id}-name',
+            child: Text(asset.name ?? asset.symbol),
+          ),
+          actions: [
+            FHeaderAction(
+              icon: _syncing
+                  ? const SizedBox(
+                      width: AppIconSizes.h18,
+                      height: AppIconSizes.h18,
+                      child: FCircularProgress(),
+                    )
+                  : const Icon(FLucideIcons.refreshCw),
+              onPress: _syncing ? null : () => _syncMetadata(asset),
+            ),
+          ],
+          childPad: false,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            children: [
+              // AI provenance hint for stock/etf/crypto
+              // assets touched by `propose_asset_valuation`. Self-
+              // gating; absent when no recent touch on this id.
+              Align(
+                alignment: Alignment.centerLeft,
+                child: AiTouchMark(entityType: 'assets', entityId: asset.id),
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              AssetSummaryCard(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
+              AssetHoldingCard(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
+              AssetPnLCard(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
+              AssetFxPnlCard(assetId: asset.id),
+              const SizedBox(height: AppSpacing.s12),
+              AssetTrendMiniChartCard(asset: asset),
+              if (_supportsCorporateActions(asset)) ...[
+                const SizedBox(height: AppSpacing.s16),
+                EventTimelineSection(symbol: asset.symbol),
+              ],
+              const SizedBox(height: AppSpacing.s16),
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: () =>
+                    context.push(FinanceRoutes.tradeForAsset(asset.id)),
+                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                child: Text(l10n.assetDetailNewTradeLabel),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

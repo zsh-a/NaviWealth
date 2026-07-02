@@ -5,7 +5,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/assets/data/deposit_maturity_insight_provider.dart';
+import 'package:naviwealth/features/finance/assets/data/deposit_maturity_insight_provider.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
