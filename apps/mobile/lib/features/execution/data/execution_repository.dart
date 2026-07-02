@@ -8,10 +8,10 @@ library;
 import 'package:drift/drift.dart' hide Column;
 
 import '../../../core/persistence/app_database.dart';
-import '../../../core/sync/hlc.dart';
 import '../../../core/sync/op_outbox.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../domain/execution_models.dart';
+import 'execution_row_mappers.dart';
 
 enum ExecutionEntryKind {
   project('execution_projects'),
@@ -83,7 +83,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
   Stream<List<ExecutionProject>> watchActiveProjects({
@@ -104,7 +104,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_projectFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
   }
 
   Stream<List<ExecutionProject>> watchClosedProjects({
@@ -125,7 +125,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_projectFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
   }
 
   Future<List<ExecutionProject>> listActiveProjects({
@@ -147,7 +147,7 @@ class ExecutionRepository {
       ])
       ..limit(limit);
     final rows = await q.get();
-    return rows.map(_projectFromRow).toList();
+    return rows.map(executionProjectFromRow).toList();
   }
 
   Stream<List<ExecutionProject>> watchProjectsForMemoryIndex({
@@ -162,13 +162,13 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_projectFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
   }
 
   Future<void> upsertProject(ExecutionProject project) {
     return _upsertAndEnqueue(
       _db.executionProjects,
-      _projectCompanion(project),
+      executionProjectCompanion(project),
       tableName: _projectsTable,
       rowId: project.id,
     );
@@ -214,7 +214,7 @@ class ExecutionRepository {
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _projectFromRow(row);
+    return row == null ? null : executionProjectFromRow(row);
   }
 
   Future<List<ExecutionProject>> listProjectsByIds({
@@ -229,7 +229,7 @@ class ExecutionRepository {
             t.id.isIn(ids.toList(growable: false)),
       );
     final rows = await q.get();
-    return rows.map(_projectFromRow).toList(growable: false);
+    return rows.map(executionProjectFromRow).toList(growable: false);
   }
 
   Stream<List<ExecutionAction>> watchOpenActions({
@@ -258,7 +258,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
   Stream<List<ExecutionAction>> watchClosedActions({
@@ -279,7 +279,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
   Stream<List<ExecutionAction>> watchActionsForCommitment({
@@ -312,7 +312,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
   Future<List<ExecutionAction>> listOpenActions({
@@ -334,7 +334,7 @@ class ExecutionRepository {
       ])
       ..limit(limit);
     final rows = await q.get();
-    return rows.map(_actionFromRow).toList();
+    return rows.map(executionActionFromRow).toList();
   }
 
   Stream<List<ExecutionAction>> watchActionsForMemoryIndex({
@@ -349,7 +349,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_actionFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
   Future<ExecutionAction?> findAction({
@@ -361,7 +361,7 @@ class ExecutionRepository {
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _actionFromRow(row);
+    return row == null ? null : executionActionFromRow(row);
   }
 
   Stream<ExecutionAction?> watchActionById({
@@ -372,8 +372,9 @@ class ExecutionRepository {
       ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId))
       ..limit(1);
     return q.watchSingleOrNull().map(
-      (row) =>
-          row == null || row.deletedAt != null ? null : _actionFromRow(row),
+      (row) => row == null || row.deletedAt != null
+          ? null
+          : executionActionFromRow(row),
     );
   }
 
@@ -389,13 +390,13 @@ class ExecutionRepository {
             t.id.isIn(ids.toList(growable: false)),
       );
     final rows = await q.get();
-    return rows.map(_actionFromRow).toList(growable: false);
+    return rows.map(executionActionFromRow).toList(growable: false);
   }
 
   Future<void> upsertAction(ExecutionAction action) {
     return _upsertAndEnqueue(
       _db.executionActions,
-      _actionCompanion(action),
+      executionActionCompanion(action),
       tableName: _actionsTable,
       rowId: action.id,
     );
@@ -419,7 +420,10 @@ class ExecutionRepository {
     await _db.transaction(() async {
       await _db
           .into(_db.executionActions)
-          .insert(_actionCompanion(updated), mode: InsertMode.insertOrReplace);
+          .insert(
+            executionActionCompanion(updated),
+            mode: InsertMode.insertOrReplace,
+          );
       await _outbox.enqueue(table: _actionsTable, rowId: action.id);
       if (progressId != null &&
           progressNote != null &&
@@ -441,7 +445,7 @@ class ExecutionRepository {
         );
         await _db
             .into(_db.executionProgressEntries)
-            .insert(_progressCompanion(progress));
+            .insert(executionProgressCompanion(progress));
         await _outbox.enqueue(table: _progressTable, rowId: progress.id);
       }
     });
@@ -463,7 +467,7 @@ class ExecutionRepository {
       await _db
           .into(_db.executionProgressEntries)
           .insert(
-            _progressCompanion(progress),
+            executionProgressCompanion(progress),
             mode: InsertMode.insertOrReplace,
           );
       await _outbox.enqueue(table: _progressTable, rowId: progress.id);
@@ -471,7 +475,7 @@ class ExecutionRepository {
         await _db
             .into(_db.executionActions)
             .insert(
-              _actionCompanion(updatedAction),
+              executionActionCompanion(updatedAction),
               mode: InsertMode.insertOrReplace,
             );
         await _outbox.enqueue(table: _actionsTable, rowId: updatedAction.id);
@@ -497,7 +501,9 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_commitmentFromRow).toList());
+    return q.watch().map(
+      (rows) => rows.map(executionCommitmentFromRow).toList(),
+    );
   }
 
   Stream<List<ExecutionCommitment>> watchClosedCommitments({
@@ -518,7 +524,9 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_commitmentFromRow).toList());
+    return q.watch().map(
+      (rows) => rows.map(executionCommitmentFromRow).toList(),
+    );
   }
 
   Future<List<ExecutionCommitment>> listActiveCommitments({
@@ -540,7 +548,7 @@ class ExecutionRepository {
       ])
       ..limit(limit);
     final rows = await q.get();
-    return rows.map(_commitmentFromRow).toList();
+    return rows.map(executionCommitmentFromRow).toList();
   }
 
   Stream<List<ExecutionCommitment>> watchCommitmentsForMemoryIndex({
@@ -555,13 +563,15 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_commitmentFromRow).toList());
+    return q.watch().map(
+      (rows) => rows.map(executionCommitmentFromRow).toList(),
+    );
   }
 
   Future<void> upsertCommitment(ExecutionCommitment commitment) {
     return _upsertAndEnqueue(
       _db.executionCommitments,
-      _commitmentCompanion(commitment),
+      executionCommitmentCompanion(commitment),
       tableName: _commitmentsTable,
       rowId: commitment.id,
     );
@@ -608,7 +618,7 @@ class ExecutionRepository {
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _commitmentFromRow(row);
+    return row == null ? null : executionCommitmentFromRow(row);
   }
 
   Stream<ExecutionCommitment?> watchCommitmentById({
@@ -619,8 +629,9 @@ class ExecutionRepository {
       ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId))
       ..limit(1);
     return q.watchSingleOrNull().map(
-      (row) =>
-          row == null || row.deletedAt != null ? null : _commitmentFromRow(row),
+      (row) => row == null || row.deletedAt != null
+          ? null
+          : executionCommitmentFromRow(row),
     );
   }
 
@@ -636,7 +647,7 @@ class ExecutionRepository {
             t.id.isIn(ids.toList(growable: false)),
       );
     final rows = await q.get();
-    return rows.map(_commitmentFromRow).toList(growable: false);
+    return rows.map(executionCommitmentFromRow).toList(growable: false);
   }
 
   Stream<List<ExecutionProgressEntry>> watchRecentProgress({
@@ -650,7 +661,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_progressFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
   }
 
   Stream<List<ExecutionProgressEntry>> watchProgressForAction({
@@ -666,7 +677,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_progressFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
   }
 
   Stream<List<ExecutionProgressEntry>> watchProgressForCommitment({
@@ -682,7 +693,7 @@ class ExecutionRepository {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(_progressFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
   }
 
   Future<List<ExecutionProgressEntry>> listRecentProgress({
@@ -697,13 +708,13 @@ class ExecutionRepository {
       ])
       ..limit(limit);
     final rows = await q.get();
-    return rows.map(_progressFromRow).toList();
+    return rows.map(executionProgressFromRow).toList();
   }
 
   Future<void> upsertProgress(ExecutionProgressEntry progress) {
     return _upsertAndEnqueue(
       _db.executionProgressEntries,
-      _progressCompanion(progress),
+      executionProgressCompanion(progress),
       tableName: _progressTable,
       rowId: progress.id,
     );
@@ -805,214 +816,6 @@ class ExecutionRepository {
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : _progressFromRow(row);
-  }
-
-  ExecutionProjectsCompanion _projectCompanion(ExecutionProject project) {
-    return ExecutionProjectsCompanion.insert(
-      id: project.id,
-      title: project.title,
-      description: Value(project.description),
-      status: Value(project.status.wire),
-      horizon: Value(project.horizon.wire),
-      targetDate: Value(project.targetDate),
-      sourceDomain: Value(project.source.domain),
-      sourceRowFamily: Value(project.source.rowFamily),
-      sourceRowId: Value(project.source.rowId),
-      sourceLabelSnapshot: Value(project.source.labelSnapshot),
-      createdAt: project.createdAt,
-      completedAt: Value(project.completedAt),
-      ownerUserId: project.sync.ownerUserId,
-      updatedAt: project.sync.updatedAt,
-      updatedByDevice: project.sync.updatedByDevice,
-      hlc: project.sync.hlc,
-      deletedAt: Value(project.sync.deletedAt),
-    );
-  }
-
-  ExecutionActionsCompanion _actionCompanion(ExecutionAction action) {
-    return ExecutionActionsCompanion.insert(
-      id: action.id,
-      title: action.title,
-      note: Value(action.note),
-      status: Value(action.status.wire),
-      priority: Value(action.priority.wire),
-      dueAt: Value(action.dueAt),
-      scheduledFor: Value(action.scheduledFor),
-      projectId: Value(action.projectId),
-      commitmentId: Value(action.commitmentId),
-      sourceDomain: Value(action.source.domain),
-      sourceRowFamily: Value(action.source.rowFamily),
-      sourceRowId: Value(action.source.rowId),
-      sourceLabelSnapshot: Value(action.source.labelSnapshot),
-      createdAt: action.createdAt,
-      completedAt: Value(action.completedAt),
-      ownerUserId: action.sync.ownerUserId,
-      updatedAt: action.sync.updatedAt,
-      updatedByDevice: action.sync.updatedByDevice,
-      hlc: action.sync.hlc,
-      deletedAt: Value(action.sync.deletedAt),
-    );
-  }
-
-  ExecutionCommitmentsCompanion _commitmentCompanion(
-    ExecutionCommitment commitment,
-  ) {
-    return ExecutionCommitmentsCompanion.insert(
-      id: commitment.id,
-      title: commitment.title,
-      description: Value(commitment.description),
-      status: Value(commitment.status.wire),
-      horizon: Value(commitment.horizon.wire),
-      targetDate: Value(commitment.targetDate),
-      projectId: Value(commitment.projectId),
-      sourceDomain: Value(commitment.source.domain),
-      sourceRowFamily: Value(commitment.source.rowFamily),
-      sourceRowId: Value(commitment.source.rowId),
-      sourceLabelSnapshot: Value(commitment.source.labelSnapshot),
-      createdAt: commitment.createdAt,
-      completedAt: Value(commitment.completedAt),
-      ownerUserId: commitment.sync.ownerUserId,
-      updatedAt: commitment.sync.updatedAt,
-      updatedByDevice: commitment.sync.updatedByDevice,
-      hlc: commitment.sync.hlc,
-      deletedAt: Value(commitment.sync.deletedAt),
-    );
-  }
-
-  ExecutionProgressEntriesCompanion _progressCompanion(
-    ExecutionProgressEntry progress,
-  ) {
-    return ExecutionProgressEntriesCompanion.insert(
-      id: progress.id,
-      actionId: Value(progress.actionId),
-      projectId: Value(progress.projectId),
-      commitmentId: Value(progress.commitmentId),
-      kind: Value(progress.kind.wire),
-      note: progress.note,
-      createdAt: progress.createdAt,
-      ownerUserId: progress.sync.ownerUserId,
-      updatedAt: progress.sync.updatedAt,
-      updatedByDevice: progress.sync.updatedByDevice,
-      hlc: progress.sync.hlc,
-      deletedAt: Value(progress.sync.deletedAt),
-    );
-  }
-
-  ExecutionAction _actionFromRow(ExecutionActionRow r) {
-    return ExecutionAction(
-      id: r.id,
-      title: r.title,
-      note: r.note,
-      status: ExecutionActionStatus.parse(r.status),
-      priority: ExecutionPriority.parse(r.priority),
-      dueAt: r.dueAt,
-      scheduledFor: r.scheduledFor,
-      projectId: r.projectId,
-      commitmentId: r.commitmentId,
-      source: ExecutionSourceRef(
-        domain: r.sourceDomain,
-        rowFamily: r.sourceRowFamily,
-        rowId: r.sourceRowId,
-        labelSnapshot: r.sourceLabelSnapshot,
-      ),
-      createdAt: r.createdAt,
-      completedAt: r.completedAt,
-      sync: _syncFromRow(
-        ownerUserId: r.ownerUserId,
-        updatedAt: r.updatedAt,
-        updatedByDevice: r.updatedByDevice,
-        hlc: r.hlc,
-        deletedAt: r.deletedAt,
-      ),
-    );
-  }
-
-  ExecutionProject _projectFromRow(ExecutionProjectRow r) {
-    return ExecutionProject(
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      status: ExecutionProjectStatus.parse(r.status),
-      horizon: ExecutionHorizon.parse(r.horizon),
-      targetDate: r.targetDate,
-      source: ExecutionSourceRef(
-        domain: r.sourceDomain,
-        rowFamily: r.sourceRowFamily,
-        rowId: r.sourceRowId,
-        labelSnapshot: r.sourceLabelSnapshot,
-      ),
-      createdAt: r.createdAt,
-      completedAt: r.completedAt,
-      sync: _syncFromRow(
-        ownerUserId: r.ownerUserId,
-        updatedAt: r.updatedAt,
-        updatedByDevice: r.updatedByDevice,
-        hlc: r.hlc,
-        deletedAt: r.deletedAt,
-      ),
-    );
-  }
-
-  ExecutionCommitment _commitmentFromRow(ExecutionCommitmentRow r) {
-    return ExecutionCommitment(
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      status: ExecutionCommitmentStatus.parse(r.status),
-      horizon: ExecutionHorizon.parse(r.horizon),
-      targetDate: r.targetDate,
-      projectId: r.projectId,
-      source: ExecutionSourceRef(
-        domain: r.sourceDomain,
-        rowFamily: r.sourceRowFamily,
-        rowId: r.sourceRowId,
-        labelSnapshot: r.sourceLabelSnapshot,
-      ),
-      createdAt: r.createdAt,
-      completedAt: r.completedAt,
-      sync: _syncFromRow(
-        ownerUserId: r.ownerUserId,
-        updatedAt: r.updatedAt,
-        updatedByDevice: r.updatedByDevice,
-        hlc: r.hlc,
-        deletedAt: r.deletedAt,
-      ),
-    );
-  }
-
-  ExecutionProgressEntry _progressFromRow(ExecutionProgressEntryRow r) {
-    return ExecutionProgressEntry(
-      id: r.id,
-      actionId: r.actionId,
-      projectId: r.projectId,
-      commitmentId: r.commitmentId,
-      kind: ExecutionProgressKind.parse(r.kind),
-      note: r.note,
-      createdAt: r.createdAt,
-      sync: _syncFromRow(
-        ownerUserId: r.ownerUserId,
-        updatedAt: r.updatedAt,
-        updatedByDevice: r.updatedByDevice,
-        hlc: r.hlc,
-        deletedAt: r.deletedAt,
-      ),
-    );
-  }
-
-  SyncMeta _syncFromRow({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    required DateTime? deletedAt,
-  }) {
-    return SyncMeta(
-      ownerUserId: ownerUserId,
-      updatedAt: updatedAt,
-      updatedByDevice: updatedByDevice,
-      hlc: hlc,
-      deletedAt: deletedAt,
-    );
+    return row == null ? null : executionProgressFromRow(row);
   }
 }
