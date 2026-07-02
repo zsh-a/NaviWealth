@@ -29,22 +29,19 @@ import 'background_scheduler.dart';
 @pragma('vm:entry-point')
 void lifeosBackgroundCallback() {
   Workmanager().executeTask((taskName, inputData) async {
-    if (taskName != kMorningBriefingTaskName &&
-        taskName != kGarminSyncTaskName &&
-        taskName != kHealthPlatformSyncTaskName) {
+    final task = backgroundTaskSpecForName(taskName);
+    if (task == null) {
       return true;
     }
     try {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
-      final dueKey = switch (taskName) {
-        kGarminSyncTaskName => kGarminSyncDueAtKey,
-        kHealthPlatformSyncTaskName => kHealthPlatformSyncDueAtKey,
-        _ => kMorningBriefingDueAtKey,
-      };
-      await prefs.setInt(dueKey, now.toUtc().millisecondsSinceEpoch);
+      await prefs.setInt(
+        task.dueAtPreferenceKey,
+        now.toUtc().millisecondsSinceEpoch,
+      );
 
-      if (taskName == kMorningBriefingTaskName) {
+      if (task.name == kMorningBriefingTaskName) {
         final notifier = createNotificationService();
         if (await notifier.hasPermissions()) {
           await notifier.showNow(

@@ -46,9 +46,9 @@ final morningBriefingCronProvider = Provider<void>((ref) {
     try {
       if (!await scheduler.isAvailable()) return;
       if (healthEnabled && notificationsEnabled && briefingEnabled) {
-        await scheduler.registerMorningBriefing();
+        await scheduler.registerTask(kMorningBriefingBackgroundTask);
       } else {
-        await scheduler.cancelMorningBriefing();
+        await scheduler.cancelTask(kMorningBriefingBackgroundTask);
       }
     } on Object {
       // Swallow — logging here would require dragging AppLogger into
@@ -68,9 +68,9 @@ final garminSyncCronProvider = Provider<void>((ref) {
     try {
       if (!await scheduler.isAvailable()) return;
       if (healthEnabled) {
-        await scheduler.registerGarminSync();
+        await scheduler.registerTask(kGarminSyncBackgroundTask);
       } else {
-        await scheduler.cancelGarminSync();
+        await scheduler.cancelTask(kGarminSyncBackgroundTask);
       }
     } on Object {
       // Best-effort scheduler plumbing; foreground manual sync remains.
@@ -90,9 +90,9 @@ final healthPlatformSyncCronProvider = Provider<void>((ref) {
     try {
       if (!await scheduler.isAvailable()) return;
       if (healthEnabled) {
-        await scheduler.registerHealthPlatformSync();
+        await scheduler.registerTask(kHealthPlatformSyncBackgroundTask);
       } else {
-        await scheduler.cancelHealthPlatformSync();
+        await scheduler.cancelTask(kHealthPlatformSyncBackgroundTask);
       }
     } on Object {
       // Best-effort scheduler plumbing; foreground manual sync remains.
