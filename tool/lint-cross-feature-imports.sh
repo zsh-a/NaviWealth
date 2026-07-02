@@ -2,19 +2,20 @@
 # Boundary lint: `features/<A>/` may not import `features/<B>/`
 # (`docs/architecture/lifeos-shell.md` §4 + northstar §2.4, D-1.6 + D-1.6b).
 #
-# Scope today: enforce the clean multi-domain surfaces plus `ai_chat/`.
-# The rest of the features/ tree still has historical FinanceOS sibling
-# imports (settings → analytics/expense/fire/rebalance, home → cashflow/fire,
-# etc.); a tree-wide enforcement remains out of scope until those slices are
-# moved behind domain-local seams or a snapshot allowlist.
+# Scope today: enforce clean cross-domain/product surfaces:
+# `ai_chat/`, `auth/`, HealthOS, KnowledgeOS, and ExecutionOS. The rest of
+# the features/ tree still has historical FinanceOS sibling imports
+# (settings → analytics/expense/fire/rebalance, home → cashflow/fire, etc.);
+# a tree-wide enforcement remains out of scope until those slices are moved
+# behind domain-local seams or a snapshot allowlist.
 #
 # `features/shared/` is the cross-feature design-system shim and is
 # allowed everywhere.
 #
 # D-1.6b (2026-05-26) cleared all grandfathered files for `ai_chat/`.
 # Later shell cleanups also removed app/agent-runtime reverse dependencies
-# from HealthOS, KnowledgeOS, and ExecutionOS, so those domain features are
-# now protected from sibling-feature imports too.
+# from HealthOS, KnowledgeOS, and ExecutionOS; `auth/` is also sibling-free,
+# so these surfaces are protected from sibling-feature imports too.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -27,7 +28,7 @@ from pathlib import Path
 
 root = Path(os.environ["LINT_ROOT"]).resolve()
 features_root = root / "apps/mobile/lib/features"
-protected = {"ai_chat", "health", "knowledge", "execution"}
+protected = {"ai_chat", "auth", "health", "knowledge", "execution"}
 allowed_targets = {"shared"}
 import_re = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]")
 
