@@ -13,7 +13,7 @@ library;
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/expense/data/expense_anomaly_insight_provider.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight_provider.dart';
 
 class GetAnomalyFlagsTool implements DeviceTool {
   const GetAnomalyFlagsTool();

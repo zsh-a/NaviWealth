@@ -40,7 +40,6 @@ import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.d
 import 'package:naviwealth/features/assets/asset_detail_page.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/auth/presentation/devices_page.dart';
-import 'package:naviwealth/features/expense/ui/expense_list_page.dart';
 import 'package:naviwealth/features/finance/activity/activity_page.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
@@ -55,6 +54,7 @@ import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/features/finance/rebalance/ui/rebalance_page.dart';
 import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';

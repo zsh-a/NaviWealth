@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_report_providers.dart';
 
 import '../../../../core/forms/currency_picker.dart';
 import '../../../../core/shell/settings_route_paths.dart';
@@ -11,7 +12,6 @@ import '../../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../analytics/data/risk_threshold_preferences.dart';
-import '../../../expense/data/expense_report_providers.dart';
 import '../../../fire/data/fire_plan_preferences.dart';
 import '../../../fire/domain/fire_plan.dart';
 import '../../rebalance/data/rebalance_providers.dart';

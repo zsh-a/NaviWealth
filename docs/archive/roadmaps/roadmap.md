@@ -119,7 +119,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 2.1 预算与现金流（新模块 `features/budget/`）
 
-**现状**：仓库内**无任何预算 / 计划交易 / 告警实现**。`features/expense/` 只做实绩录入与月度报表。
+**现状**：仓库内**无任何预算 / 计划交易 / 告警实现**。`features/finance/expense/` 只做实绩录入与月度报表。
 
 **目标产出**：
 - `features/budget/`（新建，遵循 ui/data/domain 三层）

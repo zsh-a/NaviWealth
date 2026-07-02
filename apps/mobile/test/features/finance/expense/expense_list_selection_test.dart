@@ -5,11 +5,11 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/expense/ui/expense_list_content.dart';
-import 'package:naviwealth/features/expense/ui/expense_list_models.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_list_content.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_list_models.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {

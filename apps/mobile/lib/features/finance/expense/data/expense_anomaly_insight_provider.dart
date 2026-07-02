@@ -1,12 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/ai/contracts/task_context.dart'
+    show AnalyticalUpload;
+import 'package:naviwealth/domain/services/currency_converter.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-
-import '../../../core/ai/contracts/task_context.dart' show AnalyticalUpload;
-import '../../../domain/services/currency_converter.dart';
-import '../../../domain/values/money.dart';
-import '../../home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 
 const double kExpenseAnomalyThreshold = 0.25;
 

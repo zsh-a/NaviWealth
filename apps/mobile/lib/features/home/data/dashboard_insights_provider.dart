@@ -6,10 +6,10 @@ import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.da
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/home_cash_flow_metrics.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight_provider.dart';
 
 import '../../../core/shell/settings_route_paths.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
-import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../finance/ingest/data/ingest_queue_insight_provider.dart';
 import '../../finance/rebalance/data/rebalance_drift_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';

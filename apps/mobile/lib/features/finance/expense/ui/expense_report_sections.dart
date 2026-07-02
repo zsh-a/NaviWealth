@@ -1,14 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/format/formatters.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/shared/account_l10n.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../../../core/format/formatters.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../finance/shared/account_l10n.dart';
 import '../domain/expense_report.dart';
 import 'expense_category_visuals.dart';
 

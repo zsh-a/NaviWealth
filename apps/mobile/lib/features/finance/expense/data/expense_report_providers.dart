@@ -2,13 +2,13 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/domain/services/currency_converter.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../design_system/preferences/theme_preferences.dart';
-import '../../../domain/services/currency_converter.dart';
-import '../../../domain/values/money.dart';
-import '../../home/data/dashboard_providers.dart';
 import '../domain/expense_report.dart';
 import '../domain/expense_report_aggregator.dart';
 import '../domain/expense_report_range.dart';

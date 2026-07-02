@@ -98,7 +98,7 @@ void main() {
     _expectNoMatches(
       [
         ...[
-          Directory('${appRoot.path}/lib/features/expense'),
+          Directory('${appRoot.path}/lib/features/finance/expense'),
           Directory('${appRoot.path}/lib/features/health'),
           Directory('${appRoot.path}/lib/features/knowledge'),
           Directory('${appRoot.path}/lib/features/finance/cashflow'),

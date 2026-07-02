@@ -5,6 +5,12 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/ai/intent/intent.dart';
+import 'package:naviwealth/core/ai/write/write.dart';
+import 'package:naviwealth/core/haptics/haptics.dart';
+import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/ai_chat/ui/ai_hover_overlay.dart';
+import 'package:naviwealth/features/ai_chat/ui/ai_object_capsule.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -12,16 +18,9 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_buil
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-
-import '../../../core/ai/intent/intent.dart';
-import '../../../core/ai/write/write.dart';
-import '../../../core/haptics/haptics.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/ui/ai_hover_overlay.dart';
-import '../../ai_chat/ui/ai_object_capsule.dart';
-import '../../finance/shared/account_tree_picker.dart';
-import '../../finance/shared/forms/forms.dart';
+import 'package:naviwealth/features/finance/shared/account_tree_picker.dart';
+import 'package:naviwealth/features/finance/shared/forms/forms.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Quick-entry page for a single expense. Shared between create and
 /// edit flows — when [expenseId] is non-null we hydrate the form from

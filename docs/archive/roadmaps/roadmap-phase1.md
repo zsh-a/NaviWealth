@@ -88,10 +88,10 @@
 - 需要 `depositMaturityInsightProvider` 在 `features/assets/data/`。
 
 ### 3. Expense trend anomaly（支出异常）
-- 数据源：`features/expense/domain/` 已有月度聚合。
+- 数据源：`features/finance/expense/domain/` 已有月度聚合。
 - 触发：当月已发生支出 vs. 过去 3 个月同期投影偏差 ≥ 25%（按当前到月底的天数比例外推）。
 - 文案：高于阈值时 `本月支出预计 +{n}%`（warning 色），低于时 `本月支出预计 -{n}%`（neutral）。
-- 需要 `expenseAnomalyInsightProvider` 在 `features/expense/data/`。
+- 需要 `expenseAnomalyInsightProvider` 在 `features/finance/expense/data/`。
 
 ### 4. FIRE（已有）
 - 现有逻辑保留；调整 label 文案与 i18n 化（当前是硬编码英文 `'FIRE'` / `'Goal reached!'` / `'to go'`）。
@@ -106,7 +106,7 @@
 - 修改：`lib/features/home/data/dashboard_insights_provider.dart`
 - 新增：`lib/features/rebalance/data/rebalance_drift_insight_provider.dart`
 - 新增：`lib/features/assets/data/deposit_maturity_insight_provider.dart`
-- 新增：`lib/features/expense/data/expense_anomaly_insight_provider.dart`
+- 新增：`lib/features/finance/expense/data/expense_anomaly_insight_provider.dart`
 - 修改：`lib/l10n/app_en.arb`、`app_zh.arb`（新增 ~12 条 key）
 - 修改：`lib/features/home/ui/insight_strip.dart`（如果需要点击跳转支持）
 

@@ -4,8 +4,8 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/features/expense/domain/monthly_expense_derivation.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/expense/domain/monthly_expense_derivation.dart';
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',

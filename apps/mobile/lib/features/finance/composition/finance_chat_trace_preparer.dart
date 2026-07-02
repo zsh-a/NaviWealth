@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight_provider.dart';
 
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/contracts/contracts.dart';
@@ -22,7 +23,6 @@ import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../ai_chat/state/ai_context.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
-import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_projection.dart' show FireScenarioTier;
 import '../../home/data/dashboard_providers.dart';

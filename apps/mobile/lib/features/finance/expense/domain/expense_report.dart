@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
-import '../../../domain/values/money.dart';
+
 import 'expense_report_range.dart';
 
 /// One month bucket in the trend bar chart.

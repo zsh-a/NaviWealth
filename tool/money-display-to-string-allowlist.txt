@@ -26,7 +26,7 @@ apps/mobile/lib/features/ai_chat/ui/tool_invocation_renderers.dart	'${(sorted[i]
 apps/mobile/lib/features/ai_chat/ui/tool_invocation_renderers.dart	'${delta >= 0 ? '+' : ''}${(delta * 100).toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/analytics/ui/benchmark/benchmark_comparison_content.dart	return '$sign${pct.toStringAsFixed(2)}%';	percent-display
 apps/mobile/lib/features/assets/ui/manual_asset_tile.dart	.toStringAsFixed(2)	rate-percent-display
-apps/mobile/lib/features/expense/ui/expense_report_sections.dart	'${(percent * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/finance/expense/ui/expense_report_sections.dart	'${(percent * 100).toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/fire/domain/fire_bucket_allocator.dart	: Decimal.parse(pct.clamp(0.0, 1.0).toStringAsFixed(4));	decimal-rounding
 apps/mobile/lib/features/fire/domain/fire_bucket_allocator.dart	Decimal.parse(plan.riskSettings.oneOffShockAmount.toStringAsFixed(2));	decimal-rounding
 apps/mobile/lib/features/fire/domain/fire_calculator.dart	final f = Decimal.parse(factor.toStringAsFixed(4));	decimal-rounding

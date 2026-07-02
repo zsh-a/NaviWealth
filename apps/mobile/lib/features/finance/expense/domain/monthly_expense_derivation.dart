@@ -1,9 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
-
+import 'package:naviwealth/domain/services/currency_converter.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
-import '../../../domain/services/currency_converter.dart';
-import '../../../domain/values/money.dart';
 
 /// Auto-derived monthly expense average that the FIRE dashboard consumes for
 /// its "月支出" field.

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/expense/domain/expense_report_range.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_report_range.dart';
 
 void main() {
   group('ExpenseReportRange', () {

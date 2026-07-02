@@ -2,7 +2,7 @@
 /// projection.
 ///
 /// `MonthlyExpensePreferencesController` has lived in
-/// `features/expense/data/expense_report_providers.dart` since the FIRE
+/// `features/finance/expense/data/expense_report_providers.dart` since the FIRE
 /// projection first needed a "what monthly spend should I plan for?"
 /// signal. The setter API (`setWindow` / `setOverride` / `useAuto`)
 /// was always there — there just was no UI calling it. This page is
@@ -14,11 +14,11 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_report_providers.dart';
 
 import '../../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../expense/data/expense_report_providers.dart';
 import '../../../home/data/dashboard_providers.dart';
 
 class MonthlyExpenseSettingsPage extends ConsumerWidget {

@@ -16,10 +16,10 @@ import 'package:naviwealth/core/ai/local/skills/skills.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
-import 'package:naviwealth/features/expense/data/recurring_pattern_history_store.dart';
 import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/expense/data/recurring_pattern_history_store.dart';
 
 class GetRecurringPatternsTool implements DeviceTool {
   const GetRecurringPatternsTool();

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/local/skills/skills.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/features/expense/data/recurring_pattern_history_store.dart';
+import 'package:naviwealth/features/finance/expense/data/recurring_pattern_history_store.dart';
 
-import '../../../core/persistence/test_database.dart';
+import '../../../../core/persistence/test_database.dart';
 
 void main() {
   late AppDatabase db;
