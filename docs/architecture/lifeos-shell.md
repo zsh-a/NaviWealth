@@ -35,7 +35,7 @@ core/
   lifeos/domain_pack.dart        Domain registration contract
   shell/domain_shell.dart        Domain shell spec and tab ownership
   auth/domain_scope.dart         Domain opt-in enum and wire values
-  sync/sync_table_registry.dart  Row-family prefixes and sync table registry
+  sync/sync_table_registry.dart  Row-family prefixes and sync table metadata
   ai/composition/                Cross-domain AI seams
   ai/agents/                     Agent framework
   ai/local/memory/               Memory Runtime
@@ -254,6 +254,8 @@ Rules:
 
 - Local table names are unprefixed.
 - Prefixing and stripping happen at the sync boundary.
+- Sync table primary keys, owner-scope flags, and backfill eligibility are
+  registered in one place: `SyncTableRegistration`.
 - Backend store is generic and does not inspect domain payloads.
 - Local-only tables and derived data do not sync.
 

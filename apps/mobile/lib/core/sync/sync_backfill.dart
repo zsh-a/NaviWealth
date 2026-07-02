@@ -24,45 +24,13 @@ class SyncBackfill {
   final OutboxStore _outbox;
   final AuthSession _session;
 
-  /// Bumped to force a re-enqueue. v5 adds missing syncable tables
-  /// (fx_rates, tags, budgets, goals, devices, watchlist_items,
-  /// options_*, knowledge_*) and removes phantom `recurring_transactions`.
-  static const version = '5';
+  /// Bumped to force a re-enqueue. v6 derives the table list from the sync
+  /// registry and includes all owner-scoped sync tables.
+  static const version = '6';
 
-  /// Tables to backfill. Must match `kSyncableTables` where the historical
-  /// table has the sync owner columns.
-  /// Order is irrelevant — v2 rows are independent.
-  /// Excludes tables that lack the `SyncableTable` mixin (e.g. `fx_rates`).
+  /// Tables to backfill. Order is irrelevant — v2 rows are independent.
   /// Also used by [AuthController._migrateOwnerUserId] for mode switching.
-  static const tables = <String>[
-    'accounts',
-    'assets',
-    'liabilities',
-    // `fx_rates` intentionally excluded — no `owner_user_id` column.
-    'tags',
-    'budgets',
-    'goals',
-    'devices',
-    'amortization_entries',
-    'tag_links',
-    'categories',
-    'settings',
-    'users',
-    'journal_entries',
-    'postings',
-    'prices',
-    'watchlist_items',
-    'options_strategy_profile',
-    'approved_underlyings',
-    'options_trade_journal',
-    'knowledge_notes',
-    'knowledge_principles',
-    'knowledge_assumptions',
-    'knowledge_decisions',
-    'knowledge_concepts',
-    'knowledge_experiments',
-    'knowledge_routines',
-  ];
+  static final List<String> tables = kSyncBackfillTables;
 
   Future<int> enqueueMissingLocalRows() async {
     final key =
