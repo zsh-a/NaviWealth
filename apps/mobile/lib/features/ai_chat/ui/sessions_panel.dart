@@ -5,9 +5,9 @@ import 'package:forui/forui.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
+import '../../../core/forms/forms.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 

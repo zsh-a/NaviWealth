@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 /// ISO-4217 codes the app surfaces in the picker by default.
 const List<String> kCommonCurrencies = [

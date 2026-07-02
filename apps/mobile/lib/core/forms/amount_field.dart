@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 /// Decimal-precision amount entry built on [FTextFormField].
 ///

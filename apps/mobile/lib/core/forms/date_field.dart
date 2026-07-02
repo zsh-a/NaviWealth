@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/format/formatters.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
+import '../format/formatters.dart';
 
 /// Tap-to-pick date input rendered on top of [FTextFormField].
 class DateField extends StatefulWidget {

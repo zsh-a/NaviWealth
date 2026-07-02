@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
+import '../../../core/forms/currency_picker.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/entities/symbol_info.dart';
@@ -10,7 +11,6 @@ import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../features/finance/data/market/market_data_providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'currency_picker.dart';
 import 'symbol_field.dart';
 
 /// Bottom sheet for hand-adding a security that's missing from the local

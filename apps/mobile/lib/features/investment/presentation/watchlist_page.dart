@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/form_dirty_guard.dart';
 import '../../shared/forms/symbol_field.dart';
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';

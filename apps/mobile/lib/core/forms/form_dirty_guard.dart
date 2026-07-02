@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 // The pure dirty-tracking primitive lives in the design-system layer so
 // `showAppFormSheet` can consume it without a layering inversion. Re-

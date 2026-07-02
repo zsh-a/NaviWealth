@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/forms/currency_picker.dart';
 import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../design_system/design_system.dart';
@@ -14,7 +15,6 @@ import '../../fire/domain/fire_plan.dart';
 import '../../rebalance/data/rebalance_providers.dart';
 import '../../rebalance/domain/allocation_schemes.dart';
 import '../../rebalance/ui/target_allocation_editor_sheet.dart';
-import '../../shared/forms/currency_picker.dart';
 import '../data/base_currency_preference.dart';
 import '../data/risk_appetite_preferences.dart';
 

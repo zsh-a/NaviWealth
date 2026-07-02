@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../l10n/gen/app_localizations.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 /// Multiline note / 备注 entry. Uses [FTextFormField] so saved input
 /// survives scroll/focus state in the same way as the rest of the form.

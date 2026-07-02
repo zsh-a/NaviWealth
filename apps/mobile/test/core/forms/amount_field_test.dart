@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/features/shared/forms/forms.dart';
+import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Wrap the widget under test in a MaterialApp that resolves

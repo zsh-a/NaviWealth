@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/config/app_config.dart';
+import 'package:naviwealth/core/forms/optimistic_form_submit.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/logging/crash_reporter.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/shared/forms/optimistic_form_submit.dart';
 
 void main() {
   group('runOptimisticWrite', () {

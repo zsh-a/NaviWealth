@@ -3,16 +3,15 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../features/finance/data/securities_catalog/asset_search_hit.dart';
 import '../../../features/finance/data/securities_catalog/providers.dart';
 import '../../../features/finance/data/securities_catalog/securities_search_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'form_dirty_guard.dart';
 import 'manual_security_sheet.dart';
 
 /// Selection produced by [SymbolField].

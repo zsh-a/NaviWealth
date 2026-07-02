@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/shared/forms/form_dirty_guard.dart';
+import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 
 void main() {
   group('FormDirtyController', () {

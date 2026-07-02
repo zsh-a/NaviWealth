@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/logging/app_logger.dart';
-import '../../../core/logging/providers.dart';
-import '../../../design_system/design_system.dart';
+import '../../design_system/design_system.dart';
+import '../logging/app_logger.dart';
+import '../logging/providers.dart';
 
 /// Builds the toast text shown when an optimistic write fails. The
 /// underlying error is passed through so callers that want detail (e.g.
