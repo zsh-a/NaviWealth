@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../home/domain/dashboard_models.dart';
+import '../../../home/domain/dashboard_models.dart';
 import '../domain/rebalance_models.dart';
 import 'rebalance_providers.dart';
 

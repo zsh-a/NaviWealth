@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
-import '../../core/command_palette/command_palette_entry.dart';
-import '../../l10n/gen/app_localizations.dart';
+import '../../../core/command_palette/command_palette_entry.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'ui/target_allocation_editor_sheet.dart';
 
 List<CommandPaletteEntry> rebalanceCommandPaletteEntries(

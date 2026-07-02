@@ -188,8 +188,8 @@ void main() {
               minTestFiles: 8,
               minTestCases: 50,
             ),
-            'features/rebalance': (
-              testPath: 'test/features/rebalance',
+            'features/finance/rebalance': (
+              testPath: 'test/features/finance/rebalance',
               minTestFiles: 4,
               minTestCases: 15,
             ),
@@ -257,11 +257,13 @@ void main() {
 
         // Rebalance: engine behavior, insight provider, and both editing /
         // execution surfaces need separate regression coverage.
-        'test/features/rebalance/domain/rebalance_engine_test.dart': 5,
-        'test/features/rebalance/data/rebalance_drift_insight_provider_test.dart':
+        'test/features/finance/rebalance/domain/rebalance_engine_test.dart': 5,
+        'test/features/finance/rebalance/data/rebalance_drift_insight_provider_test.dart':
             2,
-        'test/features/rebalance/rebalance_execution_sheet_test.dart': 4,
-        'test/features/rebalance/target_allocation_editor_sheet_test.dart': 4,
+        'test/features/finance/rebalance/rebalance_execution_sheet_test.dart':
+            4,
+        'test/features/finance/rebalance/target_allocation_editor_sheet_test.dart':
+            4,
 
         // Persistence: schema verification alone is not enough; converters
         // and app database behavior must stay directly covered.

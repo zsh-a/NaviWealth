@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../domain/values/money.dart';
-import '../../home/domain/dashboard_models.dart';
+import '../../../../domain/values/money.dart';
+import '../../../home/domain/dashboard_models.dart';
 import 'rebalance_models.dart';
 
 /// Pure domain engine that computes drift and generates suggested trades.

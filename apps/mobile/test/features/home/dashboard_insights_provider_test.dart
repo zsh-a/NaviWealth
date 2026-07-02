@@ -11,11 +11,11 @@ import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
+import 'package:naviwealth/features/finance/rebalance/data/rebalance_drift_insight_provider.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
 import 'package:naviwealth/features/home/data/dashboard_insights_provider.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/domain/insight_models.dart';
-import 'package:naviwealth/features/rebalance/data/rebalance_drift_insight_provider.dart';
-import 'package:naviwealth/features/rebalance/domain/rebalance_models.dart';
 
 class _IdentityConverter implements CurrencyConverter {
   const _IdentityConverter();

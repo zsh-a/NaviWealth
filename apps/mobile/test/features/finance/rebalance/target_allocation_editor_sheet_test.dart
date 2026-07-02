@@ -5,17 +5,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/allocation_schemes.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
+import 'package:naviwealth/features/finance/rebalance/ui/rebalance_page.dart';
+import 'package:naviwealth/features/finance/rebalance/ui/target_allocation_editor_sheet.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/rebalance/data/rebalance_providers.dart';
-import 'package:naviwealth/features/rebalance/domain/allocation_schemes.dart';
-import 'package:naviwealth/features/rebalance/domain/rebalance_models.dart';
-import 'package:naviwealth/features/rebalance/ui/rebalance_page.dart';
-import 'package:naviwealth/features/rebalance/ui/target_allocation_editor_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/persistence/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 
 void main() {
   setUp(() {

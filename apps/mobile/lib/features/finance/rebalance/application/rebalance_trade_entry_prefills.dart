@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
-import '../../investment/domain/trade_entry/trade_draft.dart';
-import '../../investment/domain/trade_entry/trade_entry_prefill.dart';
+import '../../../investment/domain/trade_entry/trade_draft.dart';
+import '../../../investment/domain/trade_entry/trade_entry_prefill.dart';
 import '../domain/rebalance_models.dart';
 
 typedef RebalanceTradeNoteBuilder = String Function(SuggestedTrade trade);

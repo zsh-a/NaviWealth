@@ -1,4 +1,4 @@
-import '../../home/domain/dashboard_models.dart';
+import '../../../home/domain/dashboard_models.dart';
 import 'rebalance_models.dart';
 
 /// Built-in allocation scheme presets.

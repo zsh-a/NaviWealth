@@ -14,9 +14,9 @@ import '../../../analytics/data/risk_threshold_preferences.dart';
 import '../../../expense/data/expense_report_providers.dart';
 import '../../../fire/data/fire_plan_preferences.dart';
 import '../../../fire/domain/fire_plan.dart';
-import '../../../rebalance/data/rebalance_providers.dart';
-import '../../../rebalance/domain/allocation_schemes.dart';
-import '../../../rebalance/ui/target_allocation_editor_sheet.dart';
+import '../../rebalance/data/rebalance_providers.dart';
+import '../../rebalance/domain/allocation_schemes.dart';
+import '../../rebalance/ui/target_allocation_editor_sheet.dart';
 
 /// FinanceOS-specific settings shown inside LifeOS domain management.
 ///
