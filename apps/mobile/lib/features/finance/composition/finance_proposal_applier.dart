@@ -12,6 +12,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/finance/application/finance_core_proposal_applier.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -21,8 +22,7 @@ import 'package:naviwealth/features/finance/data/repositories/price_repository.d
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart'
-    show AccountCategory, AssetType;
-import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
+    show AssetType;
 import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
@@ -60,19 +60,25 @@ class FinanceProposalApplier implements ProposalApplier {
     required this.priceRepo,
     required this.accountRepo,
     required this.manualAssetRepo,
-    required this.liabilityRepo,
+    required LiabilityRepository liabilityRepo,
     required this.optionsApplier,
     required this.fireApplier,
     required this.currentUserId,
     this.aiTouchedStore,
-  });
+  }) : coreApplier = FinanceCoreProposalApplier(
+         journalEntryRepo: journalEntryRepo,
+         accountRepo: accountRepo,
+         manualAssetRepo: manualAssetRepo,
+         liabilityRepo: liabilityRepo,
+         currentUserId: currentUserId,
+       );
 
   final TradeEntryService tradeEntryService;
   final JournalEntryRepository journalEntryRepo;
   final PriceRepository priceRepo;
   final AccountRepository accountRepo;
   final ManualAssetRepository manualAssetRepo;
-  final LiabilityRepository liabilityRepo;
+  final FinanceCoreProposalApplier coreApplier;
   final OptionsProposalApplier optionsApplier;
   final FireProposalApplier fireApplier;
 
@@ -123,10 +129,13 @@ class FinanceProposalApplier implements ProposalApplier {
       final at = DateTime.now().toUtc();
       final state = switch (plan.kind) {
         'trade' => await _applyTrade(plan, at),
-        'expense' => await _applyExpense(plan, at),
-        'liability_payment' => await _applyLiabilityPayment(plan, at),
-        'account_create' => await _applyAccountCreate(plan, at),
-        'asset_valuation' => await _applyAssetValuation(plan, at),
+        'expense' => await coreApplier.applyExpense(plan, at),
+        'liability_payment' => await coreApplier.applyLiabilityPayment(
+          plan,
+          at,
+        ),
+        'account_create' => await coreApplier.applyAccountCreate(plan, at),
+        'asset_valuation' => await coreApplier.applyAssetValuation(plan, at),
         'fire_plan_update' => await fireApplier.applyPlanUpdate(plan, at),
         'fire_bucket_rule' => await fireApplier.applyBucketRule(plan, at),
         'options_profile_update' => await optionsApplier.applyProfileUpdate(
@@ -371,151 +380,6 @@ class FinanceProposalApplier implements ProposalApplier {
     );
   }
 
-  Future<ProposalApplyState> _applyExpense(
-    ReadyProposalPlan plan,
-    DateTime at,
-  ) async {
-    final fromAccountId = _requireString(plan, 'account_id');
-    final amount = _requireDecimal(plan, 'amount');
-    final currency = plan.get('currency') ?? 'CNY';
-    final tradeDate = _parseDate(plan.get('date')) ?? DateTime.now();
-    final note = plan.get('note');
-    final categorySlug = plan.get('category') ?? 'other';
-    if (!isExpenseCategorySlug(categorySlug)) {
-      throw ProposalApplyException('Unknown expense category: $categorySlug');
-    }
-    final ownerUserId = await currentUserId();
-    final expenseAccountId = AccountRepository.systemAccountIdForPath(
-      'expense:$categorySlug',
-      ownerUserId: ownerUserId,
-    );
-
-    final build = JournalEntryBuilders.expense(
-      date: tradeDate,
-      expenseAccountId: expenseAccountId,
-      fromAccountId: fromAccountId,
-      amount: amount,
-      currency: currency,
-      narration: note ?? plan.summaryZh,
-    );
-    final stored = await journalEntryRepo.create(
-      entry: build.entry,
-      postings: build.postings,
-    );
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: stored.entry.id,
-      appliedTable: 'journal_entries',
-      appliedAt: at,
-      shortLabel: 'Recorded ${plan.summaryZh}',
-    );
-  }
-
-  Future<ProposalApplyState> _applyLiabilityPayment(
-    ReadyProposalPlan plan,
-    DateTime at,
-  ) async {
-    final liabilityId = _requireString(plan, 'liability_id');
-    final fromAccountId = _requireString(plan, 'from_account_id');
-    final amount = _requireDecimal(plan, 'amount');
-    final currency = plan.get('currency') ?? 'CNY';
-    final date = _parseDate(plan.get('date')) ?? DateTime.now();
-    final note = plan.get('note');
-
-    final liability = await liabilityRepo.findById(liabilityId);
-    if (liability == null) {
-      throw ProposalApplyException('Liability $liabilityId does not exist');
-    }
-    final liabilityAccountId = liability.accountId;
-    if (liabilityAccountId == null) {
-      throw ProposalApplyException(
-        'Liability ${liability.name} is not linked to an account, so the '
-        'payment cannot be recorded',
-      );
-    }
-
-    final uid = await currentUserId();
-    // Interest leg is unused (interest = 0) but the builder requires a
-    // valid account id.  expense:trading:interest is the closest match.
-    final interestExpenseAccountId = AccountRepository.systemAccountIdForPath(
-      'expense:trading:interest',
-      ownerUserId: uid,
-    );
-
-    final build = JournalEntryBuilders.liabilityPayment(
-      date: date,
-      liabilityAccountId: liabilityAccountId,
-      fromAccountId: fromAccountId,
-      interestExpenseAccountId: interestExpenseAccountId,
-      principal: amount,
-      interest: Decimal.zero,
-      currency: currency,
-      narration: note ?? 'Liability ${liability.name} payment',
-    );
-    final stored = await journalEntryRepo.create(
-      entry: build.entry,
-      postings: build.postings,
-    );
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: stored.entry.id,
-      appliedTable: 'journal_entries',
-      appliedAt: at,
-      shortLabel: 'Applied ${plan.summaryZh}',
-    );
-  }
-
-  Future<ProposalApplyState> _applyAccountCreate(
-    ReadyProposalPlan plan,
-    DateTime at,
-  ) async {
-    final name = _requireString(plan, 'name');
-    final type = _parseAccountType(plan.get('type'));
-    final currency = plan.get('currency') ?? 'CNY';
-    final institution = plan.get('institution');
-    final note = plan.get('note');
-
-    final stored = await accountRepo.create(
-      type: type,
-      name: name,
-      currency: currency,
-      institution: institution,
-      note: note,
-    );
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: stored.id,
-      appliedTable: 'accounts',
-      appliedAt: at,
-      shortLabel: 'Created ${plan.summaryZh}',
-    );
-  }
-
-  Future<ProposalApplyState> _applyAssetValuation(
-    ReadyProposalPlan plan,
-    DateTime at,
-  ) async {
-    final assetId = _requireString(plan, 'asset_id');
-    final newValue = _requireDecimal(plan, 'new_value');
-    final existing = await manualAssetRepo.findById(assetId);
-    if (existing == null) {
-      throw ProposalApplyException(
-        'Asset $assetId does not exist or is not a manual-valuation type',
-      );
-    }
-    await manualAssetRepo.recordValuationAdjust(
-      assetId: assetId,
-      newValuation: newValue,
-    );
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: assetId,
-      appliedTable: 'assets',
-      appliedAt: at,
-      shortLabel: 'Updated ${plan.summaryZh}',
-    );
-  }
-
   // ─── parsing helpers ─────────────────────────────────────────────────
 
   String _requireString(ReadyProposalPlan plan, String key) {
@@ -563,20 +427,6 @@ class FinanceProposalApplier implements ProposalApplier {
       'sell' => TradeType.sell,
       'valuationAdjust' => TradeType.valuationAdjust,
       _ => throw ProposalApplyException('Unsupported trade type: $s'),
-    };
-  }
-
-  AccountCategory _parseAccountType(String? s) {
-    return switch (s) {
-      'brokerage' => AccountCategory.broker,
-      'bank' => AccountCategory.bank,
-      'cryptoWallet' => AccountCategory.crypto,
-      'realEstate' => AccountCategory.asset,
-      'vehicle' => AccountCategory.asset,
-      'liability' => AccountCategory.liability,
-      'cash' => AccountCategory.cash,
-      'other' => AccountCategory.asset,
-      _ => throw ProposalApplyException('Unsupported account type: $s'),
     };
   }
 
