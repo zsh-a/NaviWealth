@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 import '../domain/cash_flow_kind.dart';
 import '../domain/dividend_center.dart';

@@ -10,7 +10,7 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/investment/ui/event_timeline_section.dart';
+import 'package:naviwealth/features/finance/investment/ui/event_timeline_section.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import 'asset_detail_sections.dart';

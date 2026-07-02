@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'cash_flow_event.dart';
 
 typedef DividendAmountConverter =

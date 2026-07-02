@@ -18,7 +18,7 @@ import 'package:naviwealth/features/finance/data/repositories/account_repository
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 import 'support/integration_env.dart';
 

@@ -6,7 +6,7 @@ import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 class SecurityAssetTile extends StatelessWidget {

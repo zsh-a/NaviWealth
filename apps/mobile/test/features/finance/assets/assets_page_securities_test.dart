@@ -14,10 +14,10 @@ import 'package:naviwealth/features/finance/assets/physical/data/providers.dart'
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

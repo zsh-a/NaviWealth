@@ -232,7 +232,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
    - 批量提案与撤销属于后续端侧 runtime / sync E2E 范围。
 
 ### 文件改动
-- 维护：`apps/mobile/lib/features/investment/ai_tools/get_holdings_tool.dart` —
+- 维护：`apps/mobile/lib/features/finance/investment/ai_tools/get_holdings_tool.dart` —
   持仓输出、跨币种 evidence 和金额字段 shape。
 - 维护：`apps/mobile/lib/features/finance_ai_tools.dart` — Finance 工具注册清单。
 - 维护：`apps/mobile/lib/app/domain_composition.dart` — active `DomainPack`
@@ -322,7 +322,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 - `features/activity/`：已有 query、feed、kind filter、filter sheet 和 detail
   page 覆盖；后续可随分页/更多事件类型继续补测试。
 - `features/portfolio/`：当前不再是独立 feature 目录；组合分析覆盖在
-  `features/investment/` 与 `test/flow/portfolio_analysis_flow_test.dart`。
+  `features/finance/investment/` 与 `test/flow/portfolio_analysis_flow_test.dart`。
 
 不在 phase 1 强制补的：
 - `features/me/`、`features/more/` → 当前不再是 feature 目录。

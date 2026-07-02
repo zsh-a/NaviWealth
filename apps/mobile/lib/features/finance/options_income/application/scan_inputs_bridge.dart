@@ -10,7 +10,7 @@ import 'package:naviwealth/features/finance/accounts/domain/account_balances.dar
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 /// Bridge that derives the side inputs ScanController needs from the
 /// existing investment / accounts providers.

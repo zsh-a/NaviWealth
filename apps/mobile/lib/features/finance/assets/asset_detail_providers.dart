@@ -4,8 +4,8 @@ import 'package:naviwealth/domain/entities/historical_bar.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 /// Snapshot of [assetId] from the portfolio's holding pipeline at "now".
 ///

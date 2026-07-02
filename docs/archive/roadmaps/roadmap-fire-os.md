@@ -69,7 +69,7 @@ NaviWealth 已具备 FIRE OS 的底层条件：
 | FIRE 雏形 | `apps/mobile/lib/features/fire/` |
 | 仪表盘状态 | `features/home/data/dashboard_providers.dart` |
 | 现金流聚合 | `features/finance/cashflow/` |
-| 投资持仓 | `features/investment/data/providers.dart` |
+| 投资持仓 | `features/finance/investment/data/providers.dart` |
 | 本地 AI runtime | `core/ai/runtime/device/` |
 | AI 工具注册 | `features/finance_ai_tools.dart` + Finance `DomainPack` |
 | 同步 | Sync Protocol v1.0，HLC + OpLog + 行级 LWW |

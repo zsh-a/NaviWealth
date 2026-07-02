@@ -14,6 +14,8 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/features/fire/data/fire_goal_preferences.dart';
 import 'package:naviwealth/features/fire/data/fire_providers.dart';
@@ -24,8 +26,6 @@ import 'package:naviwealth/features/fire/presentation/fire_page.dart';
 import 'package:naviwealth/features/fire/presentation/fire_progress_gauge.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

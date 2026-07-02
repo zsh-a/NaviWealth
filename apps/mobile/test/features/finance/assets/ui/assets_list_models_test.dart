@@ -10,7 +10,7 @@ import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 void main() {
   group('buildAssetRows', () {

@@ -1,8 +1,8 @@
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/ai_tools/_shared/propose/proposal_plan.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/fire/domain/fire_bucket.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
 
 /// `propose_fire_bucket_rule` — propose assigning an asset (or
 /// account) to a FIRE bucket role.

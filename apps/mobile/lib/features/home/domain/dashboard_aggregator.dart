@@ -3,13 +3,13 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
 
 import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../../domain/values/price_confidence.dart';
-import '../../investment/domain/models/holding_snapshot.dart';
 import 'dashboard_models.dart';
 
 /// Top-level entry point for running the aggregation in a background isolate

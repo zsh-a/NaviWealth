@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart'
+    show holdingsSnapshotProvider;
 
 import '../../../core/persistence/providers.dart';
-import '../../investment/data/providers.dart' show holdingsSnapshotProvider;
 import '../domain/concentration_risk.dart';
 import '../domain/equity_allocation.dart';
 import '../domain/equity_classification.dart';

@@ -111,7 +111,7 @@ void main() {
           Directory('${appRoot.path}/lib/features/analytics'),
           Directory('${appRoot.path}/lib/features/finance'),
           Directory('${appRoot.path}/lib/features/finance/ingest'),
-          Directory('${appRoot.path}/lib/features/investment'),
+          Directory('${appRoot.path}/lib/features/finance/investment'),
           Directory('${appRoot.path}/lib/features/finance/shared'),
           Directory('${appRoot.path}/lib/features/auth'),
         ].expand(_dartFiles),

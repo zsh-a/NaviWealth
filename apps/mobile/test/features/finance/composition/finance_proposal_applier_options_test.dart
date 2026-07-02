@@ -12,15 +12,15 @@ import 'package:naviwealth/features/finance/data/repositories/account_repository
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
-import 'package:naviwealth/features/investment/domain/models/lot.dart';
-import 'package:naviwealth/features/investment/domain/trade_entry/trade_draft.dart';
-import 'package:naviwealth/features/investment/domain/trade_entry/trade_entry_plan.dart';
-import 'package:naviwealth/features/investment/domain/trade_entry/trade_entry_service.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../features/finance/data/repositories/_stub_stamper.dart';

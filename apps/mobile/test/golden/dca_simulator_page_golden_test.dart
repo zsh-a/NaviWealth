@@ -7,7 +7,7 @@ import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
-import 'package:naviwealth/features/investment/presentation/dca_simulator_page.dart';
+import 'package:naviwealth/features/finance/investment/presentation/dca_simulator_page.dart';
 
 import '_golden_setup.dart';
 

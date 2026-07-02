@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
-
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
+
 import '../../../domain/values/asset_market.dart';
-import '../../investment/domain/models/holding_snapshot.dart';
 import 'equity_classification.dart';
 
 /// Asset types whose holdings are surfaced on the equity analytics page.

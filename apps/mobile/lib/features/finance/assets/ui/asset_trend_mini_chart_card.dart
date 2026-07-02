@@ -6,7 +6,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/entities/historical_bar.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../asset_detail_providers.dart';

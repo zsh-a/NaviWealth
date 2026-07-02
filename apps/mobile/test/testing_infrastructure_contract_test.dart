@@ -528,7 +528,7 @@ void main() {
       );
       final backendAiDir = Directory('${repoRoot.path}/apps/backend/src/ai');
       final holdingsTool = File(
-        '${appRoot.path}/lib/features/investment/ai_tools/get_holdings_tool.dart',
+        '${appRoot.path}/lib/features/finance/investment/ai_tools/get_holdings_tool.dart',
       );
 
       expect(roadmap.existsSync(), isTrue);

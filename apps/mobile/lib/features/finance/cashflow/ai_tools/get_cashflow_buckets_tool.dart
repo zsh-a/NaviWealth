@@ -31,7 +31,7 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 class GetCashflowBucketsTool implements DeviceTool {
   const GetCashflowBucketsTool();

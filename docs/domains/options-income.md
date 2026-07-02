@@ -555,7 +555,7 @@ if (kIsWeb) return const SizedBox.shrink();
 
 | 耦合方 | 交互方式 |
 |---|---|
-| `features/investment` | `ExposureChecker` 读 holdings snapshot：covered call 要求 ≥100 股；cash-secured put 行权后单标的暴露 ≤ profile 上限。 |
+| `features/finance/investment` | `ExposureChecker` 读 holdings snapshot：covered call 要求 ≥100 股；cash-secured put 行权后单标的暴露 ≤ profile 上限。 |
 | `features/finance/accounts` + `cashflow` | 计算 `availableCashForOptions = cashAccounts - kCashReserveBuffer`，与 FIRE 现金桶规则相容。 |
 | `features/finance/rebalance` | **软约束**：covered call strike 高于 rebalance target sell price → 加分；sell put strike 低于 target buy price → 加分。**不阻塞** rebalance 计算。 |
 | `features/fire` | 期权 premium 入账后通过 `cashflow_buckets` 体现为 "options income"。FIRE engine 不感知期权语义。 |

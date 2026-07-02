@@ -7,7 +7,7 @@ import 'package:naviwealth/features/analytics/domain/equity_allocation.dart';
 import 'package:naviwealth/features/analytics/domain/equity_classification.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 const _user = 'user-1';
 const _baseCurrency = 'USD';

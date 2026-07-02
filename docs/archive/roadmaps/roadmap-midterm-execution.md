@@ -101,34 +101,34 @@ deleted_at_hlc TEXT;
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.2.M1.1 | P0 | M | Drift 表 `watchlist_items` + repo | — | `data/db/tables.dart`, `features/investment/watchlist/data/` |
-| MT-2.2.M1.2 | P0 | M | Watchlist provider 复用 `composite_market_data_service` + 限速器 | MT-2.2.M1.1 | `features/investment/watchlist/data/providers.dart` |
-| MT-2.2.M1.3 | P1 | M | UI：列表 + 添加搜索（复用现有 symbol search） | MT-2.2.M1.2 | `features/investment/watchlist/ui/` |
+| MT-2.2.M1.1 | P0 | M | Drift 表 `watchlist_items` + repo | — | `data/db/tables.dart`, `features/finance/investment/watchlist/data/` |
+| MT-2.2.M1.2 | P0 | M | Watchlist provider 复用 `composite_market_data_service` + 限速器 | MT-2.2.M1.1 | `features/finance/investment/watchlist/data/providers.dart` |
+| MT-2.2.M1.3 | P1 | M | UI：列表 + 添加搜索（复用现有 symbol search） | MT-2.2.M1.2 | `features/finance/investment/watchlist/ui/` |
 | MT-2.2.M1.4 | P1 | M | 简单告警规则（价格跌破 / 涨破 X）+ 本地通知触发 | MT-2.2.M1.2 | 同上 |
-| MT-2.2.M1.5 | P1 | M | 行情刷新策略：前台 5 min poll + cache 命中优先 | MT-2.2.M1.2 | `features/investment/watchlist/` |
-| MT-2.2.M1.6 | P0 | M | 测试：30 symbol 5s SLA bench + 限速器协作单测 | MT-2.2.M1.5 | `test/features/investment/watchlist/` |
+| MT-2.2.M1.5 | P1 | M | 行情刷新策略：前台 5 min poll + cache 命中优先 | MT-2.2.M1.2 | `features/finance/investment/watchlist/` |
+| MT-2.2.M1.6 | P0 | M | 测试：30 symbol 5s SLA bench + 限速器协作单测 | MT-2.2.M1.5 | `test/features/finance/investment/watchlist/` |
 
 ### M2 — 事件流 + 税务导出
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.2.M2.1 | P0 | M | 事件时间线投影：dividend / split / rights 由现有模型聚合 | — | `features/investment/domain/reporting/event_timeline.dart` |
-| MT-2.2.M2.2 | P1 | M | UI：持仓详情页加 "事件" tab | MT-2.2.M2.1 | `features/investment/presentation/holding_detail/` |
-| MT-2.2.M2.3 | P0 | L | 公司行动录入入口（拆股 / 配股 / DRIP）走 trade_entry | MT-2.2.M2.1 | `features/investment/domain/trade_entry/`, `features/investment/presentation/` |
-| MT-2.2.M2.4 | P0 | L | 税务报表生成器（CSV）：US / HK / CN 三 jurisdiction | — | `features/investment/domain/tax/export/` |
-| MT-2.2.M2.5 | P1 | M | UI：导出 dialog + 文件保存（Web 端走 `file_saver_web`） | MT-2.2.M2.4 | `features/investment/ui/tax_export_*` |
+| MT-2.2.M2.1 | P0 | M | 事件时间线投影：dividend / split / rights 由现有模型聚合 | — | `features/finance/investment/domain/reporting/event_timeline.dart` |
+| MT-2.2.M2.2 | P1 | M | UI：持仓详情页加 "事件" tab | MT-2.2.M2.1 | `features/finance/investment/presentation/holding_detail/` |
+| MT-2.2.M2.3 | P0 | L | 公司行动录入入口（拆股 / 配股 / DRIP）走 trade_entry | MT-2.2.M2.1 | `features/finance/investment/domain/trade_entry/`, `features/finance/investment/presentation/` |
+| MT-2.2.M2.4 | P0 | L | 税务报表生成器（CSV）：US / HK / CN 三 jurisdiction | — | `features/finance/investment/domain/tax/export/` |
+| MT-2.2.M2.5 | P1 | M | UI：导出 dialog + 文件保存（Web 端走 `file_saver_web`） | MT-2.2.M2.4 | `features/finance/investment/ui/tax_export_*` |
 | MT-2.2.M2.6 | P1 | S | 免责声明组件（导出页 + PDF 顶部固定） | MT-2.2.M2.5 | `design_system/widgets/legal_disclaimer.dart` |
-| MT-2.2.M2.7 | P0 | M | 税务导出与 `cost_basis_engine` 交叉验证测试 | MT-2.2.M2.4 | `test/features/investment/tax_export/` |
+| MT-2.2.M2.7 | P0 | M | 税务导出与 `cost_basis_engine` 交叉验证测试 | MT-2.2.M2.4 | `test/features/finance/investment/tax_export/` |
 
 ### M3 — DCA 模拟 + 回测
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.2.M3.1 | P0 | L | DCA 模型（symbol/篮子 + 频率 + 金额 + 窗口） | — | `features/investment/domain/dca/` |
+| MT-2.2.M3.1 | P0 | L | DCA 模型（symbol/篮子 + 频率 + 金额 + 窗口） | — | `features/finance/investment/domain/dca/` |
 | MT-2.2.M3.2 | P0 | M | 回测引擎（市场缓存 + 缺数标注） | MT-2.2.M3.1 | 同上 |
-| MT-2.2.M3.3 | P1 | M | UI：参数面板 + 结果图（累计收益、平均成本、回撤） | MT-2.2.M3.2 | `features/investment/ui/dca_*` |
+| MT-2.2.M3.3 | P1 | M | UI：参数面板 + 结果图（累计收益、平均成本、回撤） | MT-2.2.M3.2 | `features/finance/investment/ui/dca_*` |
 | MT-2.2.M3.4 | P1 | M | 与 §2.1 计划交易联动：导出 DCA 计划为 recurring_transactions | MT-2.2.M3.1, MT-2.1.M2.2 | 跨模块 |
-| MT-2.2.M3.5 | P0 | M | 60 月数据回测 < 1s bench | MT-2.2.M3.2 | `test/features/investment/dca/perf/` |
+| MT-2.2.M3.5 | P0 | M | 60 月数据回测 < 1s bench | MT-2.2.M3.2 | `test/features/finance/investment/dca/perf/` |
 
 ---
 
@@ -190,7 +190,7 @@ deleted_at_hlc TEXT;
 |---|---|---|---|---|---|
 | MT-2.4.M2.1 | P0 | M | accounts 列表页接入 master-detail | — | `features/finance/accounts/` |
 | MT-2.4.M2.2 | P0 | M | assets 列表页接入 | — | `features/finance/assets/` |
-| MT-2.4.M2.3 | P0 | M | investments 列表页接入 | — | `features/investment/presentation/` |
+| MT-2.4.M2.3 | P0 | M | investments 列表页接入 | — | `features/finance/investment/presentation/` |
 | MT-2.4.M2.4 | P0 | M | 详情子路由 deep link（不破坏 web routing 检查清单） | MT-2.4.M2.1, .2, .3 | `app/router.dart` |
 | MT-2.4.M2.5 | P1 | M | 列偏好持久化（宽度 / 排序） | MT-2.4.M2.* | `app/shell_preferences.dart` |
 | MT-2.4.M2.6 | P0 | S | web routing 检查清单 100% 通过 | MT-2.4.M2.4 | `docs/development/web-routing.md`, `web_smoke/` |

@@ -5,7 +5,7 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 import '../application/options_journal_ledger_service.dart';
 import '../application/scan_orchestrator.dart';

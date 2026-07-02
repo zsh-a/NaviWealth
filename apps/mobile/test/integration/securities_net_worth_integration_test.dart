@@ -21,8 +21,8 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
 
 import 'support/integration_env.dart';
 

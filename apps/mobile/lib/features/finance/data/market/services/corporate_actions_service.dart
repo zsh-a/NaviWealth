@@ -5,7 +5,7 @@ import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_actions.dart';
-import 'package:naviwealth/features/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 
 /// Fetch + cache for per-symbol corporate-action events
 /// (`docs/roadmap-next.md` §3.5).

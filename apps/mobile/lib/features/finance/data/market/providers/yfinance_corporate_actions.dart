@@ -3,7 +3,7 @@
 /// Pure function — no I/O, no logging. The provider layer (or any caller
 /// with sample JSON) decodes the wire body and hands the decoded map in;
 /// this module converts it into the domain shape that
-/// `features/investment/domain/reporting/event_timeline.dart` consumes.
+/// `features/finance/investment/domain/reporting/event_timeline.dart` consumes.
 ///
 /// The yfinance chart endpoint returns events under
 /// `chart.result[0].events.dividends` and `.events.splits`, each keyed by
@@ -15,7 +15,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/features/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 
 /// Parse all dividend + split corporate actions out of [responseBody]
 /// for [symbol]. Returns an empty list when the response has no events,

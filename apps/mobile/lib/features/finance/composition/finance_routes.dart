@@ -21,6 +21,15 @@ import 'package:naviwealth/features/finance/cashflow/ui/recurring_transactions_p
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_report_page.dart';
+import 'package:naviwealth/features/finance/investment/presentation/corporate_action_entry_route.dart'
+    deferred as corp_action_lib;
+import 'package:naviwealth/features/finance/investment/presentation/dca_simulator_page.dart'
+    deferred as dca_simulator_lib;
+import 'package:naviwealth/features/finance/investment/presentation/portfolio_hub_page.dart'
+    deferred as portfolio_hub_lib;
+import 'package:naviwealth/features/finance/investment/presentation/trade_entry_form_page.dart';
+import 'package:naviwealth/features/finance/investment/presentation/watchlist_page.dart'
+    deferred as watchlist_lib;
 import 'package:naviwealth/features/finance/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import 'package:naviwealth/features/finance/liabilities/ui/liability_detail_page.dart'
@@ -39,15 +48,6 @@ import '../../../core/shell/route_error_page.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../fire/presentation/fire_page.dart' deferred as fire_lib;
 import '../../home/home_page.dart';
-import '../../investment/presentation/corporate_action_entry_route.dart'
-    deferred as corp_action_lib;
-import '../../investment/presentation/dca_simulator_page.dart'
-    deferred as dca_simulator_lib;
-import '../../investment/presentation/portfolio_hub_page.dart'
-    deferred as portfolio_hub_lib;
-import '../../investment/presentation/trade_entry_form_page.dart';
-import '../../investment/presentation/watchlist_page.dart'
-    deferred as watchlist_lib;
 import '../accounts/account_form_page.dart';
 import '../accounts/accounts_page.dart';
 import '../accounts/journal_entry_list_page.dart';

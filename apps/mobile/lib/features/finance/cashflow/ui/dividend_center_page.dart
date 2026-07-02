@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/investment/domain/dividend_forecast.dart';
+import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/dividend_center_providers.dart';

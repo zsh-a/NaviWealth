@@ -7,11 +7,11 @@ import 'package:naviwealth/domain/services/net_worth_service.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/home/domain/dashboard_aggregator.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/home/domain/dashboard_trend_builder.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 
 class _MapConverter implements CurrencyConverter {
   const _MapConverter(this.rates);

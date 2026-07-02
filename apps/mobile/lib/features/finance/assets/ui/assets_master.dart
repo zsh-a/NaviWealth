@@ -7,9 +7,9 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
 
 import '../physical/data/providers.dart';
 import 'assets_list_body.dart';

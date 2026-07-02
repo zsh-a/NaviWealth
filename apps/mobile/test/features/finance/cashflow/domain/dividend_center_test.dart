@@ -10,7 +10,7 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 void main() {
   test('100 dividend JE fixture produces exact TTM gross and withholding', () {

@@ -8,7 +8,7 @@ import 'package:naviwealth/features/finance/data/market/http/market_http_client.
 import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/http/retry_policy.dart';
 import 'package:naviwealth/features/finance/data/market/services/corporate_actions_service.dart';
-import 'package:naviwealth/features/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 
 import '../canned_adapter.dart';
 

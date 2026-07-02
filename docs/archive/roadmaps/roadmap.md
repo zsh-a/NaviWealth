@@ -154,12 +154,12 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 2.2 投资进阶
 
-**现状（已具备）**：`features/investment/domain/` 已有 cost_basis 引擎、fx_pnl、tax_policy/jurisdiction_tax_policy、cash_dividend & corporate_actions 模型、holding_report、portfolio_return_service。`data/market/` 有 Yahoo/CoinGecko/Sina + 缓存 + 限流。
+**现状（已具备）**：`features/finance/investment/domain/` 已有 cost_basis 引擎、fx_pnl、tax_policy/jurisdiction_tax_policy、cash_dividend & corporate_actions 模型、holding_report、portfolio_return_service。`data/market/` 有 Yahoo/CoinGecko/Sina + 缓存 + 限流。
 **缺口**：UI 端无 watchlist；事件流（分红/拆股）只有模型未串成时间线；税务有数据但无导出；无 DCA 模拟器。
 
 **阶段拆分**：
 - **M1（月 1）— Watchlist α**
-  - 新增 `features/investment/watchlist/`，复用 `data/market/composite_market_data_service.dart` 的行情通道与限流器。
+  - 新增 `features/finance/investment/watchlist/`，复用 `data/market/composite_market_data_service.dart` 的行情通道与限流器。
   - Drift 表：`watchlist_items`（symbol, market, added_at, alert_rules_json）。
   - UI：列表 + 搜索添加 + 简单告警（价格跌破 / 涨破 X，告警通过 `core/logging/crash_reporter.dart` 同链路的本地通知通道展示）。
   - 不做：跨设备告警推送（依赖 §3.1 实时通道）。
@@ -365,7 +365,7 @@ session 已具备，但**无用户画像、无批量提案、无回滚**。
 
 | 债务 | 文件/位置 | 影响 |
 |------|----------|------|
-| 端侧 AI 持仓证据仍需扩展 | `lib/features/investment/ai_tools/get_holdings_tool.dart` | 成本基础已与客户端 read-model 对齐，但跨币种折算和 evidence 链接仍需补强 |
+| 端侧 AI 持仓证据仍需扩展 | `lib/features/finance/investment/ai_tools/get_holdings_tool.dart` | 成本基础已与客户端 read-model 对齐，但跨币种折算和 evidence 链接仍需补强 |
 | Web 端弱于原生的存储加密 | `core/db/connection_*.dart` | Web 端不应承诺与原生同等的安全等级 |
 | Activity Feed 业务深度仍可扩展 | `lib/features/activity/` | 已有 data/query/filter/detail 基础，后续可把 load-more 升级为 keyset pagination 并补更多事件类型 |
 | 单一后端路由表无 domain endpoint | `apps/backend/src/routes/` | 所有非 sync 查询走 oplog 物化，未来扩展可能撞瓶颈 |

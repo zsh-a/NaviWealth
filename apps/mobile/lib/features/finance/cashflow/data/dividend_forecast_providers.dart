@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/dividend_forecast.dart';
-import 'package:naviwealth/features/investment/domain/models/cash_dividend.dart';
-import 'package:naviwealth/features/investment/domain/models/corporate_actions.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/cash_dividend.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import '../domain/dividend_center.dart';
 import 'dividend_center_providers.dart';
 
