@@ -26,8 +26,6 @@ import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
-import '../features/cashflow/data/recurring_transaction_providers.dart';
-import '../features/finance/data/market/sync/price_sync_providers.dart';
 import 'agent_runtime/agent_runtime_provider_overrides.dart';
 import 'domain_bootstrap.dart';
 import 'domain_composition.dart';
@@ -231,12 +229,11 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     await container.read(authControllerProvider.future);
   }
 
-  // Start foreground data sync. PriceSyncCoordinator owns both quote
-  // warming and FX refresh so dashboard valuations have one startup path.
+  // Start foreground sync and active-domain Memory indexers once auth has
+  // settled. Domain-owned background jobs mount through DomainPack below.
   final authState = container.read(authControllerProvider).value;
   if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
     container.read(syncSchedulerBootstrapProvider);
-    container.read(priceSyncCoordinatorBootstrapProvider);
     _scheduleMemoryRuntimeStartupTasks(container: container, logger: logger);
     container.read(memoryLayerBootstrapProvider);
   } else {
@@ -247,16 +244,6 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // Mount domain-owned background bootstraps (scheduler registration and
   // pending native wakeup drains). DomainPack remains the startup inventory.
   container.read(domainBackgroundBootstrapProvider);
-  // Eager startup catch-up for due recurring transactions. This is a
-  // local-first finance job (it writes through the mutation stamper /
-  // journal repo, no cloud session needed — the same provider runs
-  // ungated from Home / CashFlow), so it must fire in local-only mode
-  // too, not just when a cloud session exists.
-  unawaited(
-    container.read(
-      recurringMaterialiseDueProvider(DateTime.now().toUtc()).future,
-    ),
-  );
 
   return container;
 }

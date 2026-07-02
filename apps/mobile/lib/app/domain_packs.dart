@@ -86,6 +86,7 @@ final DomainPack kFinancePack = DomainPack(
   // `aiContextProvider` aware that those routes belong to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
   memoryBootstrapBuilder: _financeMemoryBootstrap,
+  backgroundBootstrapBuilder: financeBackgroundBootstrap,
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
   providerOverridesBuilder: financeCompositionOverrides,
 );

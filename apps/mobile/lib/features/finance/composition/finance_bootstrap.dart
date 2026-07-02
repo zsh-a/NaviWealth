@@ -6,17 +6,24 @@
 /// `app/bootstrap.dart`.
 library;
 
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart' show Ref;
 import 'package:flutter_riverpod/misc.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/composition/chat_rail_provider.dart';
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/portfolio_snapshot.dart';
+import '../../../core/auth/auth_state.dart';
+import '../../../core/auth/providers.dart' as auth;
 import '../../../core/command_palette/local_query_result_pane_provider.dart';
+import '../../cashflow/data/recurring_transaction_providers.dart';
 import '../../home/composition/finance_chat_rail_provider.dart';
 import '../ai_tools/drift_query_plan_executor.dart';
 import '../command_palette/finance_ask_ai_result_pane.dart';
 import '../command_palette/finance_query_plan_executor_provider.dart';
+import '../data/market/sync/price_sync_providers.dart';
 import 'finance_ai_context_summary_provider.dart';
 import 'finance_chat_trace_preparer.dart';
 import 'finance_portfolio_snapshot.dart';
@@ -66,3 +73,19 @@ List<Override> financeCompositionOverrides() => [
   // FinanceOS exposes `financeProposalApplierProvider` and proposal specs for
   // `kFinancePack` to read instead of overriding those seams here.
 ];
+
+/// FinanceOS startup jobs owned by the Finance domain pack.
+///
+/// Price sync needs an active local or cloud session because it writes through
+/// the finance repositories. Recurring materialisation remains local-first and
+/// runs once on startup regardless of cloud auth, matching the previous app
+/// bootstrap behaviour.
+void financeBackgroundBootstrap(Ref ref) {
+  final authState = ref.read(auth.authStateProvider);
+  if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
+    ref.read(priceSyncCoordinatorBootstrapProvider);
+  }
+  unawaited(
+    ref.read(recurringMaterialiseDueProvider(DateTime.now().toUtc()).future),
+  );
+}

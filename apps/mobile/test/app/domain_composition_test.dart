@@ -341,6 +341,7 @@ void main() {
           .setEnabled(DomainScope.execution, true);
 
       expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
+      expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
       expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
         DomainScope.finance,
         DomainScope.health,
