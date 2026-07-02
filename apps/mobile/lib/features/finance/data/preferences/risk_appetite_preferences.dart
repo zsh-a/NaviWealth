@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/ai/contracts/base_context.dart'
     as ai
     show RiskPreference;
 import '../../../../design_system/preferences/theme_preferences.dart';
-import '../../../analytics/domain/concentration_risk.dart';
 
 /// User-declared appetite for investment risk. Single source of truth
 /// for everything downstream that needs a "how aggressive is this user"

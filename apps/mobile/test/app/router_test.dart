@@ -31,15 +31,15 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_chat_page.dart';
-import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
-import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
-import 'package:naviwealth/features/analytics/data/providers.dart'
-    as analytics_data;
-import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
-import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/auth/presentation/devices_page.dart';
 import 'package:naviwealth/features/finance/activity/activity_page.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
+import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_history_source.dart';
+import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_providers.dart';
+import 'package:naviwealth/features/finance/analytics/data/providers.dart'
+    as analytics_data;
+import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_comparison.dart';
+import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/finance/assets/asset_detail_page.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
