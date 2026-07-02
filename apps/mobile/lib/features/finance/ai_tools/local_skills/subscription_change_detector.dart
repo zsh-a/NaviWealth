@@ -15,7 +15,8 @@
 /// (future wave) we can switch to long-history comparison.
 library;
 
-import '../../contracts/task_context.dart' show AnalyticalUpload;
+import 'package:naviwealth/core/ai/contracts/task_context.dart'
+    show AnalyticalUpload;
 import 'recurring_detector.dart';
 import 'transaction_input.dart';
 

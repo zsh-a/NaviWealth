@@ -8,8 +8,8 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/core/ai/local/skills/duplicate_charge_detector.dart';
 import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/duplicate_charge_detector.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 

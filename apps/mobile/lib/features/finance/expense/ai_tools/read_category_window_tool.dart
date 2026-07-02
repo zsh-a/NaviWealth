@@ -29,13 +29,13 @@ library;
 
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/ai_tools/_shared/scoped/scoped_window.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
 
 class ReadCategoryWindowTool implements DeviceTool {
   const ReadCategoryWindowTool();

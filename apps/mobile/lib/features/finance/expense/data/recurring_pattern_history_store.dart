@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:naviwealth/core/ai/local/skills/skills.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/local_skills.dart';
 
 class RecurringPatternHistoryStore {
   RecurringPatternHistoryStore(this._db);

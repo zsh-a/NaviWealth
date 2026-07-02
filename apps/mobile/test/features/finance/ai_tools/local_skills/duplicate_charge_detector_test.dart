@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/local/skills/duplicate_charge_detector.dart';
-import 'package:naviwealth/core/ai/local/skills/transaction_input.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/duplicate_charge_detector.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/transaction_input.dart';
 
 TransactionInput _t({
   required String id,

@@ -6,7 +6,8 @@
 /// "transfer" and stop counting them as expense + income.
 library;
 
-import '../../contracts/task_context.dart' show AnalyticalUpload;
+import 'package:naviwealth/core/ai/contracts/task_context.dart'
+    show AnalyticalUpload;
 import 'transaction_input.dart';
 
 class TransferMatch {

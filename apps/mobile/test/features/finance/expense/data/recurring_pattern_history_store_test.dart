@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/local/skills/skills.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/local_skills.dart';
 import 'package:naviwealth/features/finance/expense/data/recurring_pattern_history_store.dart';
 
 import '../../../../core/persistence/test_database.dart';

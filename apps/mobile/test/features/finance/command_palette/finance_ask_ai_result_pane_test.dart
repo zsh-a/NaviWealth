@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/local/skills/transaction_input.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/transaction_input.dart';
 import 'package:naviwealth/features/finance/ai_tools/query_plan/query_plan.dart';
 import 'package:naviwealth/features/finance/command_palette/finance_ask_ai_result_pane.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';

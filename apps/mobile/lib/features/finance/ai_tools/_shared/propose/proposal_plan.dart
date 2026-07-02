@@ -9,10 +9,10 @@
 /// candidate shape `{id,name,type}`) are ported exactly.
 library;
 
-import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
 
 export 'package:naviwealth/core/ai/composition/proposal_envelope.dart'
     show needsClarification, proposalBadRequest, proposalNewId, readyPlan;

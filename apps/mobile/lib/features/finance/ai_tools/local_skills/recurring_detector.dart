@@ -8,7 +8,8 @@
 /// finance app.
 library;
 
-import '../../contracts/task_context.dart' show AnalyticalUpload;
+import 'package:naviwealth/core/ai/contracts/task_context.dart'
+    show AnalyticalUpload;
 import 'merchant_key.dart';
 import 'transaction_input.dart';
 

@@ -1,5 +1,5 @@
 /// Neutral input shape consumed by every rules skill in
-/// `lib/core/ai/local/skills/`.
+/// `features/finance/ai_tools/local_skills/`.
 ///
 /// Skills do not read from Drift or Riverpod directly. Feature code
 /// (typically a thin adapter living next to the relevant repository)

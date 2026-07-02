@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart' show DateRange;
-import 'package:naviwealth/core/ai/local/skills/transaction_input.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/transaction_input.dart';
 import 'package:naviwealth/features/finance/ai_tools/query_plan/query_plan.dart';
 
 void main() {

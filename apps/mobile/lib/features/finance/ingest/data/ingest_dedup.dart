@@ -8,7 +8,7 @@
 /// is the same reasoning as §4.2's freshness gate.
 library;
 
-import '../../../../core/ai/local/skills/skills.dart';
+import '../../ai_tools/local_skills/local_skills.dart';
 import '../domain/ingest_models.dart';
 
 /// Date proximity for two rows to be considered the same event. Covers

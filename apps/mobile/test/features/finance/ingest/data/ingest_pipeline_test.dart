@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/local/skills/skills.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/local_skills.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_pipeline.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 

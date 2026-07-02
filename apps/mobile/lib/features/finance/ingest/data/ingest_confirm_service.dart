@@ -15,7 +15,7 @@ import 'package:decimal/decimal.dart';
 import '../../../../core/ai/composition/proposal_applier.dart';
 import '../../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../../core/ai/composition/proposal_plan.dart';
-import '../../../../core/ai/local/skills/txn_classifier.dart'
+import '../../ai_tools/local_skills/txn_classifier.dart'
     show expenseCategorySlugForHint;
 import '../domain/ingest_models.dart';
 import 'ingest_draft_store.dart';

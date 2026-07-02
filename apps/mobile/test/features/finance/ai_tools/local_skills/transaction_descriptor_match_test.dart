@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/local/skills/transaction_descriptor_match.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/transaction_descriptor_match.dart';
 
 void main() {
   group('compareTransactionDescriptions', () {

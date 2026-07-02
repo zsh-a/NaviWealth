@@ -9,7 +9,7 @@
 /// analytics can still use finer descriptors when safely inferred.
 library;
 
-import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
+import '../../expense/domain/expense_category_taxonomy.dart';
 
 import 'merchant_key.dart';
 import 'transaction_input.dart';
