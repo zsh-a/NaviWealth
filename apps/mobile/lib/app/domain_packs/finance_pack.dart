@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/ai/composition/composite_proposal_applier.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../features/finance/composition/finance_bootstrap.dart';
@@ -15,6 +14,7 @@ import '../../features/finance_ai_tools.dart';
 import '../../features/finance_domain_shell.dart';
 import '../../features/options_income/data/trade_journal_memory_indexer.dart';
 import '../route_paths.dart';
+import 'proposal_applier_route.dart';
 
 final DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
@@ -22,7 +22,13 @@ final DomainPack kFinancePack = DomainPack(
   toolDescriptors: kFinanceToolDescriptors,
   intentDescriptors: kFinanceIntentDescriptors,
   proposalKinds: kFinanceProposalKinds,
-  proposalApplierRouteBuilder: _financeProposalApplierRoute,
+  proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
+    ref,
+    readApplier: (ref) =>
+        ref.watch(finance_proposals.financeProposalApplierProvider.future),
+    kinds: finance_proposals.kFinanceProposalAppliedKinds,
+    tablePrefixes: finance_proposals.kFinanceProposalAppliedTablePrefixes,
+  ),
   systemPromptBlock: kFinanceSystemPromptBlock,
   shellSpecBuilder: financeDomainShell,
   shellRouteBuilder: financeShellRoute,
@@ -45,15 +51,4 @@ final DomainPack kFinancePack = DomainPack(
 
 void _financeMemoryBootstrap(Ref ref) {
   ref.watch(tradeJournalMemoryIndexerProvider);
-}
-
-Future<ProposalApplierRoute> _financeProposalApplierRoute(Ref ref) async {
-  final applier = await ref.watch(
-    finance_proposals.financeProposalApplierProvider.future,
-  );
-  return ProposalApplierRoute(
-    applier: applier,
-    kinds: finance_proposals.kFinanceProposalAppliedKinds,
-    tablePrefixes: finance_proposals.kFinanceProposalAppliedTablePrefixes,
-  );
 }
