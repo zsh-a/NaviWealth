@@ -243,7 +243,7 @@
 | Gate | 关联 | 状态 / 决策 |
 |---|---|---|
 | ~~`me/` 与 `more/` 的最终去留~~ | §2 N-3 | ✅ **已关闭** (2026-05-24):IA migration (commits aacded4 / 3e37cfc) 后两个目录均不再存在,功能已挪进 Today / Settings。无遗留 caller |
-| ~~Plan tab 内 FIRE / Budget / Cashflow / Income 的二级 IA(平铺还是分组)~~ | §3.2 / §3.3 | ✅ **已关闭** (2026-05-24):`features/plan/ui/plan_hub_page.dart` 已落 flat tile grid (`_PlanSectionGrid`),按"决策面" tile 罗列;不引入二级 tabs,避免 IA 三层嵌套 |
+| ~~Plan tab 内 FIRE / Budget / Cashflow / Income 的二级 IA(平铺还是分组)~~ | §3.2 / §3.3 | ✅ **已关闭** (2026-05-24):`features/finance/ui/plan_hub_page.dart` 已落 flat tile grid (`_PlanSectionGrid`),按"决策面" tile 罗列;不引入二级 tabs,避免 IA 三层嵌套 |
 | Tax export 格式优先级(IRS Schedule D / 中国个税 / 通用 CSV) | §4 M-4 | ⏳ 待决:M-4 启动前需选定 |
 | ~~Crash reporter 后端(自托管 Sentry / Cloudflare D1 自存 / 第三方 SaaS)~~ | §3.6 | ✅ **已关闭** (2026-06-19):**Sentry SaaS** (sentry.io managed)。`sentry_flutter` + `SentryCrashReporter` 已接入;DSN 通过 `--dart-define=SENTRY_DSN=...` 注入,默认空且用户未 opt-in 时无远端上报。 |
 | Tradier OAuth 的 backend proxy 是否单独 Worker | §4 M-3 | ⏳ 待决:P5 启动前需选定 |

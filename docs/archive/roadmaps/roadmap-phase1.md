@@ -326,7 +326,8 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 
 不在 phase 1 强制补的：
 - `features/me/`、`features/more/` → 当前不再是 feature 目录。
-- `features/plan/`：保留为规划入口，并已有 `plan_hub_page_test.dart`。
+- `features/plan/`：当前不再是独立 feature 目录；规划入口归入
+  `features/finance/ui/plan_hub_page.dart`，并已有 `plan_hub_page_test.dart`。
 
 ---
 

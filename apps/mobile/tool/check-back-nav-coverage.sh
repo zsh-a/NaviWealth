@@ -32,8 +32,8 @@ cd "${REPO_ROOT}"
 TAB_PAGES=(
   "lib/features/home/home_page.dart"
   "lib/features/activity/activity_page.dart"
-  "lib/features/wealth/ui/wealth_hub_page.dart"
-  "lib/features/plan/ui/plan_hub_page.dart"
+  "lib/features/finance/ui/wealth/wealth_hub_page.dart"
+  "lib/features/finance/ui/plan_hub_page.dart"
 )
 
 # Files whose FHeader.nested is NOT a stranded pushed page:
