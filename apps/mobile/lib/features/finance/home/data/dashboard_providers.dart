@@ -7,7 +7,6 @@ import 'package:naviwealth/core/async/isolate_runner.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/domain/services/net_worth_service.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
@@ -24,6 +23,7 @@ import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
 
 import '../domain/dashboard_aggregator.dart';
+import '../domain/dashboard_granularity.dart';
 import '../domain/dashboard_models.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
@@ -57,10 +57,10 @@ final dashboardCurrencyMismatchesProvider = Provider<List<CurrencyMismatch>>((
 });
 
 /// Currency converter used for cross-currency conversion in the dashboard.
-/// [NetWorthService] expects an [FxRateLookup]-backed converter; the
-/// dashboard reads every recorded rate from the local `fx_rates` table
-/// so manually entered rates flow into the snapshot, the
-/// allocation pie, and the trend chart without a refresh.
+/// Dashboard aggregation expects an [FxRateLookup]-backed converter. It reads
+/// every recorded rate from the local `fx_rates` table so manually entered
+/// rates flow into the snapshot, the allocation pie, and the trend chart
+/// without a refresh.
 ///
 /// Same-currency conversions short-circuit, and callers (the aggregator +
 /// trend builder) drop rows whose FX rate is missing while reporting them

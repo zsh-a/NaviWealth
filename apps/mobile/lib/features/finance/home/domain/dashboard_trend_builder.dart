@@ -1,8 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/domain/services/liability_balance_source.dart';
-import 'package:naviwealth/domain/services/net_worth_service.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
@@ -11,8 +9,10 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
+import 'dashboard_granularity.dart';
 import 'dashboard_models.dart';
 import 'dashboard_time_range.dart';
+import 'liability_balance_source.dart';
 
 /// Top-level entry point for running the trend build in a background isolate
 /// via [Isolate.run]. All parameters are plain Dart objects — safe to send
@@ -95,13 +95,11 @@ class DashboardTrend {
 ///      products until valuation history lands; interpolated from
 ///      purchase-price → current-valuation for real estate / vehicles);
 ///   2. outstanding liability principal over time (walked through the
-///      persisted amortization schedule via the same logic
-///      [AmortizationLiabilitySource] uses inside [NetWorthService]);
+///      persisted amortization schedule via [AmortizationLiabilitySource]);
 ///   3. the difference of the two, expressed in [baseCurrency].
 ///
-/// The result type [DashboardTrend] is intentionally a strict subset
-/// of [NetWorthSeries] so callers can swap to `NetWorthService` if
-/// full replay is needed later.
+/// The result type [DashboardTrend] is intentionally narrow: it carries
+/// only the data the dashboard chart renders.
 class DashboardTrendBuilder {
   DashboardTrendBuilder({
     required this.converter,

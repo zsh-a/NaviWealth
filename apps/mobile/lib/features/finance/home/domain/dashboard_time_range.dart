@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:naviwealth/domain/services/net_worth_service.dart';
+import 'dashboard_granularity.dart';
 
 /// Preset time windows surfaced by the dashboard's net-worth trend chart.
 /// `custom` is filled in by the user via a date-range picker; the others are

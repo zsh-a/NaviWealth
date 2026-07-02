@@ -1,12 +1,12 @@
 import 'package:decimal/decimal.dart';
 
-import '../values/money.dart';
+import 'package:naviwealth/domain/values/money.dart';
 
 /// Outstanding-balance lookup for liabilities at a given historical date.
 ///
-/// [NetWorthService] calls [balancesOn] once per sample point, sums each
-/// returned [LiabilityBalance] (after FX conversion to the base currency),
-/// and subtracts the total from gross assets.
+/// The Finance dashboard trend builder calls [balancesOn] once per sample
+/// point, sums each returned [LiabilityBalance] after FX conversion to the
+/// base currency, and subtracts the total from gross assets.
 abstract class LiabilityBalanceSource {
   /// Iterable of liability balances effective at [on]. The "effective"
   /// rule: walk the amortization schedule and pick the entry with the
