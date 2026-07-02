@@ -3,7 +3,7 @@ import 'package:drift/drift.dart';
 import '../../core/persistence/app_database.dart';
 import '../auth/auth_session.dart';
 import 'op_outbox.dart';
-import 'row_applier.dart' show kSyncPkOverrides;
+import 'sync_table_registry.dart';
 
 /// Queues one dirty-pointer per pre-existing local row, so a device that
 /// accumulated data before sync was enabled (or before the v2 migration
@@ -29,10 +29,10 @@ class SyncBackfill {
   /// options_*, knowledge_*) and removes phantom `recurring_transactions`.
   static const version = '5';
 
-  /// Tables to backfill. Must match `kSyncableTables` in `row_applier.dart`.
+  /// Tables to backfill. Must match `kSyncableTables` where the historical
+  /// table has the sync owner columns.
   /// Order is irrelevant — v2 rows are independent.
-  /// Tables to backfill. Must match `kSyncableTables` in `row_applier.dart`,
-  /// minus tables that lack the `SyncableTable` mixin (e.g. `fx_rates`).
+  /// Excludes tables that lack the `SyncableTable` mixin (e.g. `fx_rates`).
   /// Also used by [AuthController._migrateOwnerUserId] for mode switching.
   static const tables = <String>[
     'accounts',
@@ -89,7 +89,7 @@ class SyncBackfill {
   }
 
   Future<int> _backfillTable(String table) async {
-    final pk = kSyncPkOverrides[table] ?? 'id';
+    final pk = syncPrimaryKeyForTable(table);
     // System accounts are seeded locally on every device — never sync them.
     final extra = table == 'accounts'
         ? " AND id NOT LIKE 'system-account:%'"

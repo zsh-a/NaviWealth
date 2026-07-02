@@ -5,7 +5,7 @@
 /// Memory Layer `kind='semantic'` records directly.
 ///
 /// All tables wear [SyncableTable] and carry the `know:` row family
-/// prefix on the wire (see `core/sync/domain_prefix.dart` and
+/// prefix on the wire (see `core/sync/sync_table_registry.dart` and
 /// `docs/architecture/lifeos-shell.md` §8). The local table names stay unprefixed —
 /// the prefix is applied at the sync boundary only.
 library;

@@ -35,7 +35,7 @@ core/
   lifeos/domain_pack.dart        Domain registration contract
   shell/domain_shell.dart        Domain shell spec and tab ownership
   auth/domain_scope.dart         Domain opt-in enum and wire values
-  sync/domain_prefix.dart        Row-family prefixes
+  sync/sync_table_registry.dart  Row-family prefixes and sync table registry
   ai/composition/                Cross-domain AI seams
   ai/agents/                     Agent framework
   ai/local/memory/               Memory Runtime
@@ -239,7 +239,7 @@ Location:
 
 - Client: `core/sync/`.
 - Backend: `apps/backend/src/sync/`.
-- Prefix helper: `core/sync/domain_prefix.dart`.
+- Prefix/table registry: `core/sync/sync_table_registry.dart`.
 
 Row-family prefixes:
 

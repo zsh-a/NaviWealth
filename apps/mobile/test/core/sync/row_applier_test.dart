@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/core/sync/domain_prefix.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
+import 'package:naviwealth/core/sync/sync_table_registry.dart';
 
 import '../../core/persistence/test_database.dart';
 

@@ -3,56 +3,8 @@ import 'package:naviwealth/core/sync/hlc.dart';
 
 import '../../core/persistence/app_database.dart';
 import '../logging/app_logger.dart';
-import 'domain_prefix.dart';
 import 'sync_api_client.dart';
-
-/// The closed set of tables that participate in sync (`docs/sync/sync-v2.md` §7.1).
-/// Adding a value is a data-model change only — the server's row store is
-/// schema-agnostic.
-const Set<String> kSyncableTables = {
-  'accounts',
-  'assets',
-  'liabilities',
-  'fx_rates',
-  'tags',
-  'budgets',
-  'goals',
-  'devices',
-  'amortization_entries',
-  'tag_links',
-  'categories',
-  'settings',
-  'users',
-  'journal_entries',
-  'postings',
-  'prices',
-  'corporate_actions',
-  'watchlist_items',
-  'options_strategy_profile',
-  'approved_underlyings',
-  'options_trade_journal',
-  'health_metrics',
-  // KnowledgeOS (`docs/domains/knowledgeos-domain.md` §9). All seven tables ride
-  // the row-state protocol with the `know:` row family prefix.
-  'knowledge_notes',
-  'knowledge_principles',
-  'knowledge_assumptions',
-  'knowledge_decisions',
-  'knowledge_concepts',
-  'knowledge_experiments',
-  'knowledge_routines',
-  // ExecutionOS Action Kernel.
-  'execution_projects',
-  'execution_actions',
-  'execution_commitments',
-  'execution_progress_entries',
-};
-
-/// Primary-key column for the tables whose PK is not `id`.
-const Map<String, String> kSyncPkOverrides = {
-  'settings': 'user_id',
-  'options_strategy_profile': 'user_id',
-};
+import 'sync_table_registry.dart';
 
 /// Applies pulled row-states to the local Drift tables with per-row LWW
 /// (`docs/sync/sync-v2.md` §7.3).
@@ -153,7 +105,7 @@ class RowApplier {
 
   Future<_ApplyOutcome> _apply(RowChange row, String table) async {
     final types = _columnTypes(table);
-    final pk = kSyncPkOverrides[table] ?? 'id';
+    final pk = syncPrimaryKeyForTable(table);
 
     // LWW guard — keep local state when its version is newer-or-equal.
     final existing = await _db

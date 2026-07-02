@@ -5,6 +5,7 @@ import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
+import 'package:naviwealth/core/sync/sync_table_registry.dart';
 
 import '../core/persistence/test_database.dart';
 import '../core/sync/_fake_api.dart';
@@ -84,7 +85,7 @@ class VirtualDevice {
     String rowId,
     Map<String, Object?> row,
   ) async {
-    final pk = kSyncPkOverrides[table] ?? 'id';
+    final pk = syncPrimaryKeyForTable(table);
     final ordered = <String, Object?>{...row};
     ordered[pk] = rowId;
     final cols = ordered.keys.toList(growable: false);
@@ -98,7 +99,7 @@ class VirtualDevice {
 
   /// Read the materialised state of a row, or `null` if absent.
   Future<Map<String, Object?>?> lookup(String table, String rowId) async {
-    final pk = kSyncPkOverrides[table] ?? 'id';
+    final pk = syncPrimaryKeyForTable(table);
     final row = await db
         .customSelect(
           'SELECT * FROM $table WHERE $pk = ?',

@@ -283,8 +283,8 @@ Every syncable Drift table already carries the metadata v2 needs, via the
 | `owner_user_id`, `updated_by_device`, `updated_at` | Author / audit metadata, carried in the payload. |
 
 Current syncable table inventory is pinned by
-`apps/mobile/lib/core/sync/row_applier.dart` and mirrored by
-`apps/mobile/test/core/sync/op_test.dart`:
+`apps/mobile/lib/core/sync/sync_table_registry.dart` and checked against this
+document by `apps/mobile/test/core/sync/sync_docs_inventory_test.dart`:
 
 | Row family | Tables |
 |------------|--------|

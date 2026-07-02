@@ -678,7 +678,7 @@ apps/mobile/lib/features/options_income/ai_tools/
 apps/mobile/lib/core/persistence/tables.dart       # +OptionsTradeJournal
 apps/mobile/lib/core/persistence/local_only_tables.dart # opportunity cache DDL
 apps/mobile/lib/core/persistence/app_database.dart # schemaVersion updates
-apps/mobile/lib/core/sync/row_applier.dart         # sync_rows table allow-list
+apps/mobile/lib/core/sync/sync_table_registry.dart # sync_rows table registry
 apps/mobile/lib/core/sync/providers.dart           # row-state sync providers
 apps/mobile/lib/features/finance_ai_tools.dart     # Income Planner tool registrations + descriptors
 apps/backend/migrations/0002_sync_schema.sql       # backend sync_rows store

@@ -6,7 +6,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import '../../core/persistence/app_database.dart';
 import '../logging/app_logger.dart';
 import '../sync/op_outbox.dart';
-import '../sync/row_applier.dart';
+import '../sync/sync_table_registry.dart';
 import 'backup_codec.dart';
 
 const _backupMagic = 'naviwealth.backup.v1';
@@ -315,12 +315,11 @@ class BackupService {
 
   /// Extract the primary key value from a row map.
   ///
-  /// Most tables use `id` as PK. `settings` uses `userId` (mapped to
-  /// `user_id` in SQL). We handle the known cases.
+  /// Most tables use `id` as PK. Singleton user-scoped tables use the sync
+  /// table registry's PK override.
   String _extractRowId(String tableName, Map<String, Object?> row) {
-    if (tableName == 'settings') {
-      return row['user_id'] as String? ?? row['userId'] as String? ?? '';
-    }
-    return row['id'] as String? ?? '';
+    final pk = syncPrimaryKeyForTable(tableName);
+    final value = row[pk] ?? (pk == 'user_id' ? row['userId'] : null);
+    return value?.toString() ?? '';
   }
 }

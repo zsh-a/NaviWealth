@@ -78,6 +78,52 @@ void main() {
     );
   }
 
+  Future<void> insertOptionsStrategyProfile(AppDatabase db) async {
+    final now = DateTime.utc(2026, 1, 1).toIso8601String();
+    const hlc = Hlc(
+      wallMillis: 1700000000002,
+      counter: 0,
+      nodeId: testDeviceId,
+    );
+    await db.customStatement(
+      'INSERT INTO options_strategy_profile '
+      '(user_id, mode, allowed_strategies_json, min_dte, max_dte, '
+      'delta_put_min, delta_put_max, delta_call_min, delta_call_max, '
+      'max_capital_per_trade_pct, max_underlying_exposure_pct, '
+      'min_annualized_yield, min_open_interest, min_volume, '
+      'max_bid_ask_spread_pct, avoid_earnings, avoid_macro_events, '
+      'only_on_approved_underlyings, risk_disclosure_ack_at, '
+      'owner_user_id, updated_at, updated_by_device, hlc, deleted_at) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        'user-1',
+        'balanced',
+        '["cash_secured_put","covered_call"]',
+        21,
+        45,
+        '-0.30',
+        '-0.15',
+        '0.15',
+        '0.30',
+        '0.05',
+        '0.20',
+        '0.12',
+        100,
+        10,
+        '0.08',
+        1,
+        1,
+        1,
+        null,
+        'user-1',
+        now,
+        testDeviceId,
+        hlc.toString(),
+        null,
+      ],
+    );
+  }
+
   /// Count rows in a table.
   Future<int> countRows(AppDatabase db, String table) async {
     final row = await db
@@ -296,6 +342,41 @@ void main() {
       final tableNames = ops.map((o) => o.table).toSet();
       expect(tableNames, containsAll(['accounts', 'tags']));
     });
+
+    test(
+      'restore enqueues singleton table pointers with registry primary keys',
+      () async {
+        final sourceDb = makeTestDatabase();
+        addTearDown(sourceDb.close);
+        await insertOptionsStrategyProfile(sourceDb);
+
+        service = makeService(sourceDb);
+        final bytes = await service.exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+        );
+
+        final targetDb = makeTestDatabase();
+        addTearDown(targetDb.close);
+
+        final restoreService = makeService(targetDb);
+        await restoreService.restoreBackup(
+          passphrase: testPassphrase,
+          fileBytes: bytes,
+        );
+
+        final rows = await targetDb
+            .customSelect('SELECT user_id FROM options_strategy_profile')
+            .get();
+        expect(rows.single.read<String>('user_id'), 'user-1');
+
+        final profileOps = outbox.queued
+            .where((op) => op.table == 'options_strategy_profile')
+            .toList();
+        expect(profileOps, hasLength(1));
+        expect(profileOps.single.rowId, 'user-1');
+      },
+    );
 
     test('soft-deleted rows (tombstones) are included in backup', () async {
       final sourceDb = makeTestDatabase();

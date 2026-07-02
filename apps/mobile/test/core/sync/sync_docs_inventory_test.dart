@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/sync/row_applier.dart';
+import 'package:naviwealth/core/sync/sync_table_registry.dart';
 
 void main() {
   test('sync-v2.md syncable table inventory matches kSyncableTables', () {
