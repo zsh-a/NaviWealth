@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/config/app_config.dart';
 import 'package:naviwealth/core/config/providers.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/domain_enums.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -15,12 +17,17 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.dart';
 import 'package:naviwealth/features/settings/ui/sync_status_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../core/persistence/test_database.dart';
 
 const _deviceId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const _financeDiagnosticsPack = DomainPack(
+  scope: DomainScope.finance,
+  localTableCountsBuilder: financeLocalTableCounts,
+);
 
 void main() {
   late AppDatabase db;
@@ -72,6 +79,7 @@ void main() {
     return ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWith((_) async => db),
+        activeDomainPacksProvider.overrideWithValue([_financeDiagnosticsPack]),
         syncStatusBusProvider.overrideWithValue(bus),
         authSessionProvider.overrideWith(
           (_) => AuthSession(

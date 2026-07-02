@@ -5,10 +5,10 @@ import 'package:forui/forui.dart';
 
 import '../../../core/auth/providers.dart';
 import '../../../core/config/providers.dart';
+import '../../../core/sync/local_table_counts.dart';
 import '../../../core/sync/providers.dart';
 import '../../../core/sync/sync_status.dart';
 import '../../../design_system/design_system.dart';
-import '../../../features/finance/data/diagnostics/local_table_counts.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// Diagnostic page surfacing the current sync engine state at a glance:
@@ -50,7 +50,7 @@ Future<void> _triggerSyncNow(WidgetRef ref) async {
   await scheduler?.triggerNow();
   ref.invalidate(syncCursorProvider);
   ref.invalidate(syncOutboxDepthProvider);
-  ref.invalidate(financeLocalTableCountsProvider);
+  ref.invalidate(localTableCountsProvider);
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +67,7 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final outboxAsync = ref.watch(syncOutboxDepthProvider);
     final cursorAsync = ref.watch(syncCursorProvider);
-    final countsAsync = ref.watch(financeLocalTableCountsProvider);
+    final countsAsync = ref.watch(localTableCountsProvider);
     final session = ref.watch(authSessionProvider);
     final config = ref.watch(appConfigProvider);
 
@@ -490,6 +490,8 @@ class _LocalCountsCard extends StatelessWidget {
       );
     }
 
+    final countIds = counts!.keys.toList(growable: false);
+
     Widget cell(String id) {
       final value = counts![id] ?? 0;
       return Padding(
@@ -536,13 +538,13 @@ class _LocalCountsCard extends StatelessWidget {
               style: context.captionStyle,
             ),
           ),
-          for (var i = 0; i < kFinanceLocalCountIds.length; i += 2)
+          for (var i = 0; i < countIds.length; i += 2)
             Row(
               children: [
-                Expanded(child: cell(kFinanceLocalCountIds[i])),
+                Expanded(child: cell(countIds[i])),
                 Expanded(
-                  child: i + 1 < kFinanceLocalCountIds.length
-                      ? cell(kFinanceLocalCountIds[i + 1])
+                  child: i + 1 < countIds.length
+                      ? cell(countIds[i + 1])
                       : const SizedBox.shrink(),
                 ),
               ],

@@ -71,6 +71,10 @@ typedef DomainBootstrapBuilder = void Function(Ref ref);
 /// seams that are not yet represented by a narrower [DomainPack] field.
 typedef DomainProviderOverridesBuilder = List<Override> Function();
 
+/// Builds diagnostic local row counts for one domain.
+typedef DomainLocalTableCountsBuilder =
+    Future<Map<String, int>> Function(Ref ref);
+
 /// Localized subtitle for the Settings → Domains toggle.
 typedef DomainSettingsSubtitleBuilder =
     String Function(AppLocalizations l10n, bool enabled);
@@ -127,6 +131,7 @@ class DomainPack {
     this.backgroundBootstrapBuilder,
     this.commandPaletteEntriesBuilder,
     this.providerOverridesBuilder,
+    this.localTableCountsBuilder,
     this.settingsSpec,
   });
 
@@ -206,6 +211,10 @@ class DomainPack {
   /// the build inventory; opt-in-gated work should still check opt-ins
   /// inside the contributing provider.
   final DomainProviderOverridesBuilder? providerOverridesBuilder;
+
+  /// Debug diagnostics for Settings → Sync. Domains own their table SQL;
+  /// the Settings page reads the domain-neutral aggregate provider.
+  final DomainLocalTableCountsBuilder? localTableCountsBuilder;
 
   /// Settings → Domains toggle metadata and optional domain detail route.
   /// Null when the domain is always-on or has no settings surface yet.

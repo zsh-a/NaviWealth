@@ -11,6 +11,7 @@ import '../../features/finance/composition/finance_proposal_applier.dart'
 import '../../features/finance/composition/finance_proposal_kinds.dart'
     show kFinanceProposalKinds;
 import '../../features/finance/composition/finance_routes.dart';
+import '../../features/finance/data/diagnostics/local_table_counts.dart';
 import '../../features/finance_ai_tools.dart';
 import '../../features/options_income/data/trade_journal_memory_indexer.dart';
 import '../route_paths.dart';
@@ -47,6 +48,7 @@ final DomainPack kFinancePack = DomainPack(
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
   providerOverridesBuilder: financeCompositionOverrides,
+  localTableCountsBuilder: financeLocalTableCounts,
 );
 
 void _financeMemoryBootstrap(Ref ref) {
