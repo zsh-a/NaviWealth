@@ -9,13 +9,13 @@
 # a tree-wide enforcement remains out of scope until those slices are moved
 # behind domain-local seams or a snapshot allowlist.
 #
-# `features/shared/` is the cross-feature design-system shim and is
-# allowed everywhere.
-#
 # D-1.6b (2026-05-26) cleared all grandfathered files for `ai_chat/`.
 # Later shell cleanups also removed app/agent-runtime reverse dependencies
 # from HealthOS, KnowledgeOS, and ExecutionOS; `auth/` is also sibling-free,
-# so these surfaces are protected from sibling-feature imports too.
+# so these surfaces are protected from sibling-feature imports too. The former
+# `features/shared/` bucket has been split into `core/forms/` and
+# `features/finance/shared/`; keep it empty so cross-feature "shared" code does
+# not grow back.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,7 +29,6 @@ from pathlib import Path
 root = Path(os.environ["LINT_ROOT"]).resolve()
 features_root = root / "apps/mobile/lib/features"
 protected = {"ai_chat", "auth", "health", "knowledge", "execution"}
-allowed_targets = {"shared"}
 import_re = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]")
 
 def feature_for_path(path):
@@ -40,6 +39,14 @@ def feature_for_path(path):
     return rel.parts[0] if rel.parts else None
 
 hits = []
+shared_root = features_root / "shared"
+for path in sorted(shared_root.rglob("*.dart")) if shared_root.exists() else []:
+    rel = path.relative_to(root)
+    hits.append(
+        f"{rel}: features/shared is retired; move domain-neutral code to core/ "
+        "or Finance-specific code to features/finance/shared/"
+    )
+
 for feature in sorted(protected):
     for path in sorted((features_root / feature).rglob("*.dart")):
         src_feature = feature_for_path(path)
@@ -59,7 +66,7 @@ for feature in sorted(protected):
                 target_feature = feature_for_path((path.parent / uri).resolve())
             if target_feature is None:
                 continue
-            if target_feature == src_feature or target_feature in allowed_targets:
+            if target_feature == src_feature:
                 continue
             rel = path.relative_to(root)
             hits.append(
