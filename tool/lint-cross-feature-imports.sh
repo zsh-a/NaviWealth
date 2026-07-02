@@ -2,68 +2,72 @@
 # Boundary lint: `features/<A>/` may not import `features/<B>/`
 # (`docs/architecture/lifeos-shell.md` §4 + northstar §2.4, D-1.6 + D-1.6b).
 #
-# Scope today: only `features/ai_chat/` is enforced — Phase D-1.6
-# targets the chat-context composition root. The rest of the
-# features/ tree has plenty of historical cross-feature imports
-# (settings → analytics/expense/fire/rebalance, home → cashflow/fire,
-# etc.); a tree-wide enforcement is out of scope for D-1 and would
-# require a snapshot-based allowlist with hundreds of entries. The
-# composition pattern proven by ai_chat will be extended to other
-# features in follow-up cleanup waves.
+# Scope today: enforce the clean multi-domain surfaces plus `ai_chat/`.
+# The rest of the features/ tree still has historical FinanceOS sibling
+# imports (settings → analytics/expense/fire/rebalance, home → cashflow/fire,
+# etc.); a tree-wide enforcement remains out of scope until those slices are
+# moved behind domain-local seams or a snapshot allowlist.
 #
 # `features/shared/` is the cross-feature design-system shim and is
 # allowed everywhere.
 #
-# D-1.6b (2026-05-26) cleared all grandfathered files: the chat
-# trace preparer + ai context summary + proposal applier + portfolio
-# snapshot all moved to `features/finance/composition/` behind
-# `core/ai/composition/` seams. `features/ai_chat/` no longer
-# imports any sibling feature.
+# D-1.6b (2026-05-26) cleared all grandfathered files for `ai_chat/`.
+# Later shell cleanups also removed app/agent-runtime reverse dependencies
+# from HealthOS, KnowledgeOS, and ExecutionOS, so those domain features are
+# now protected from sibling-feature imports too.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FEATURES="$ROOT/apps/mobile/lib/features/ai_chat"
+export LINT_ROOT="$ROOT"
 
-# No grandfathered files remain after D-1.6b.
-GRANDFATHERED_REGEX=""
+violations="$(python3 <<'PY'
+import os
+import re
+from pathlib import Path
 
-violations=""
-# Only an `../../<X>/` (exactly two-up, no more `..`) from a file in
-# `features/<A>/<sub>/` lands in `features/<X>/`. Three-up
-# (`../../../<X>/`) leaves the features/ tree entirely (core/, app/,
-# design_system/, l10n/) so it's not a cross-feature import.
-while IFS= read -r line; do
-  # `line` is `<path>:<lineno>:<text>` from grep -n.
-  path="${line%%:*}"
-  rest="${line#*:}"
+root = Path(os.environ["LINT_ROOT"]).resolve()
+features_root = root / "apps/mobile/lib/features"
+protected = {"ai_chat", "health", "knowledge", "execution"}
+allowed_targets = {"shared"}
+import_re = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]")
 
-  # Strip the shared/ allowlist directly in the grep pattern.
-  if [[ "$rest" =~ features/shared/ || "$rest" =~ \.\./shared/ ]]; then
-    continue
-  fi
-  # Skip files in the explicit grandfather list.
-  skip=0
-  while IFS= read -r pat; do
-    [[ -z "$pat" ]] && continue
-    if [[ "$path" =~ $pat ]]; then
-      skip=1
-      break
-    fi
-  done <<< "$GRANDFATHERED_REGEX"
-  if [[ $skip -eq 1 ]]; then continue; fi
+def feature_for_path(path):
+    try:
+        rel = path.resolve().relative_to(features_root.resolve())
+    except ValueError:
+        return None
+    return rel.parts[0] if rel.parts else None
 
-  # Match an import that goes exactly two levels up (so the second
-  # path segment is a sibling feature directory). Pattern:
-  # `'../../<X>/...'` where `<X>` is `[a-z_]+` and the prefix is
-  # NOT `'../../../` (three-up).
-  if [[ "$rest" =~ \'\.\./\.\./[a-z_]+/ && ! "$rest" =~ \'\.\./\.\./\.\./ ]]; then
-    src_feature="$(echo "$path" | sed -nE 's@.*features/([a-z_]+)/.*@\1@p')"
-    imp_feature="$(echo "$rest" | sed -nE "s@.*'\.\./\.\./([a-z_]+)/.*@\1@p")"
-    if [[ -n "$src_feature" && -n "$imp_feature" && "$src_feature" != "$imp_feature" ]]; then
-      violations+="$line"$'\n'
-    fi
-  fi
-done < <(grep -rnE --include='*.dart' "^import '\.\./\.\./" "$FEATURES" || true)
+hits = []
+for feature in sorted(protected):
+    for path in sorted((features_root / feature).rglob("*.dart")):
+        src_feature = feature_for_path(path)
+        if src_feature is None:
+            continue
+        for lineno, line in enumerate(path.read_text().splitlines(), start=1):
+            match = import_re.match(line)
+            if not match:
+                continue
+            uri = match.group(1)
+            target_feature = None
+            if uri.startswith("package:naviwealth/features/"):
+                parts = uri.split("/")
+                if len(parts) >= 3:
+                    target_feature = parts[2]
+            elif uri.startswith("."):
+                target_feature = feature_for_path((path.parent / uri).resolve())
+            if target_feature is None:
+                continue
+            if target_feature == src_feature or target_feature in allowed_targets:
+                continue
+            rel = path.relative_to(root)
+            hits.append(
+                f"{rel}:{lineno}: {src_feature} imports features/{target_feature}: {line.strip()}"
+            )
+
+print("\n".join(hits))
+PY
+)"
 
 if [[ -n "$violations" ]]; then
   echo "✖ cross-feature import detected (D-1.6 boundary):" >&2
@@ -71,4 +75,4 @@ if [[ -n "$violations" ]]; then
   exit 1
 fi
 
-echo "✓ features/<A>/ stays free of cross-feature imports (D-1.6)."
+echo "✓ protected features stay free of cross-feature imports (D-1.6)."

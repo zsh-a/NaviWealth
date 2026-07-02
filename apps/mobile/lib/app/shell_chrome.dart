@@ -17,6 +17,7 @@ import '../core/shell/settings_route_paths.dart';
 import '../core/shell/shell_chrome.dart';
 import '../core/shortcuts/shortcut_intents.dart';
 import '../design_system/design_system.dart';
+import '../features/ai_chat/ui/ask_ai.dart';
 import '../l10n/gen/app_localizations.dart';
 
 List<Override> appShellChromeOverrides() {
@@ -29,6 +30,7 @@ const ShellChromeBuilders appShellChromeBuilders = ShellChromeBuilders(
   leadingBuilder: _buildShellLeading,
   headerActionsBuilder: _buildShellGlobalActions,
   actionRowBuilder: _buildShellActionRow,
+  openAiAction: askAi,
 );
 
 Widget _buildShellLeading(BuildContext context, WidgetRef ref) {

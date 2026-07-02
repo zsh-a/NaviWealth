@@ -28,6 +28,13 @@ typedef ShellChromeHeaderActionsBuilder =
 typedef ShellChromeActionRowBuilder =
     Widget? Function(BuildContext context, WidgetRef ref);
 
+typedef ShellChromeOpenAiAction =
+    Future<void> Function(
+      BuildContext context,
+      WidgetRef ref, {
+      String? prefill,
+    });
+
 /// App-provided chrome builders for top-level domain tab pages.
 ///
 /// The default is intentionally empty so `core/shell` stays independent of
@@ -38,6 +45,7 @@ class ShellChromeBuilders {
     this.leadingBuilder,
     this.headerActionsBuilder,
     this.actionRowBuilder,
+    this.openAiAction,
   });
 
   static const empty = ShellChromeBuilders();
@@ -45,6 +53,7 @@ class ShellChromeBuilders {
   final ShellChromeLeadingBuilder? leadingBuilder;
   final ShellChromeHeaderActionsBuilder? headerActionsBuilder;
   final ShellChromeActionRowBuilder? actionRowBuilder;
+  final ShellChromeOpenAiAction? openAiAction;
 
   Widget? buildLeading(BuildContext context, WidgetRef ref) =>
       leadingBuilder?.call(context, ref);
@@ -54,6 +63,12 @@ class ShellChromeBuilders {
 
   Widget? buildActionRow(BuildContext context, WidgetRef ref) =>
       actionRowBuilder?.call(context, ref);
+
+  Future<void> openAi(BuildContext context, WidgetRef ref, {String? prefill}) {
+    final action = openAiAction;
+    if (action == null) return Future<void>.value();
+    return action(context, ref, prefill: prefill);
+  }
 }
 
 final shellChromeBuildersProvider = Provider<ShellChromeBuilders>(
