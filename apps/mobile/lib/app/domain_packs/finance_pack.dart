@@ -4,6 +4,7 @@ import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../features/finance/composition/finance_bootstrap.dart';
 import '../../features/finance/composition/finance_command_palette.dart';
+import '../../features/finance/composition/finance_domain_shell.dart';
 import '../../features/finance/composition/finance_intents.dart';
 import '../../features/finance/composition/finance_proposal_applier.dart'
     as finance_proposals;
@@ -11,7 +12,6 @@ import '../../features/finance/composition/finance_proposal_kinds.dart'
     show kFinanceProposalKinds;
 import '../../features/finance/composition/finance_routes.dart';
 import '../../features/finance_ai_tools.dart';
-import '../../features/finance_domain_shell.dart';
 import '../../features/options_income/data/trade_journal_memory_indexer.dart';
 import '../route_paths.dart';
 import 'proposal_applier_route.dart';

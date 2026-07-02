@@ -4,16 +4,15 @@
 /// FinanceOS is the seed domain, so this spec is always present and
 /// captures the 4-tab IA (Today / Activity / Wealth / Plan). Optional
 /// domains such as HealthOS, KnowledgeOS, and ExecutionOS register their own
-/// specs;
-/// bootstrap merges active specs through [activeDomainShellsProvider].
+/// specs; bootstrap merges active specs through [activeDomainShellsProvider].
 library;
 
 import 'package:forui/forui.dart';
 
-import '../app/route_paths.dart';
-import '../core/auth/domain_scope.dart';
-import '../core/shell/domain_shell.dart';
-import '../l10n/gen/app_localizations.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/shell/domain_shell.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import 'finance_route_paths.dart';
 
 DomainShellSpec financeDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
@@ -26,25 +25,25 @@ DomainShellSpec financeDomainShell(AppLocalizations l10n) {
         icon: FLucideIcons.layoutDashboard,
         selectedIcon: FLucideIcons.layoutDashboard,
         label: l10n.navToday,
-        routePath: AppRoutes.home,
+        routePath: FinanceRoutes.home,
       ),
       DomainShellTab(
         icon: FLucideIcons.receipt,
         selectedIcon: FLucideIcons.receipt,
         label: l10n.navActivity,
-        routePath: AppRoutes.activity,
+        routePath: FinanceRoutes.activity,
       ),
       DomainShellTab(
         icon: FLucideIcons.wallet,
         selectedIcon: FLucideIcons.wallet,
         label: l10n.navWealth,
-        routePath: AppRoutes.wealth,
+        routePath: FinanceRoutes.wealth,
       ),
       DomainShellTab(
         icon: FLucideIcons.lightbulb,
         selectedIcon: FLucideIcons.lightbulb,
         label: l10n.navPlan,
-        routePath: AppRoutes.plan,
+        routePath: FinanceRoutes.plan,
       ),
     ],
   );

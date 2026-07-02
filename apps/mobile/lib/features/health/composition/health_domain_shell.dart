@@ -1,7 +1,7 @@
 /// HealthOS `DomainShellSpec` registration (`docs/architecture/lifeos-shell.md`
 /// §3 + `docs/domains/healthos-domain.md` §5, D-2.3).
 ///
-/// Mirrors `features/finance_domain_shell.dart`. Tabs per HealthOS
+/// Mirrors `features/finance/composition/finance_domain_shell.dart`. Tabs per HealthOS
 /// IA contract: Today / Trend / Plan. Labels come from l10n so the
 /// shell stays consistent with the rest of the app chrome.
 library;

@@ -9,8 +9,6 @@ library;
 
 import 'package:go_router/go_router.dart';
 
-import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-
 import '../../../app/deferred_route.dart';
 import '../../../app/domain_tabs_shell.dart';
 import '../../../app/page_transitions.dart';
@@ -35,7 +33,6 @@ import '../../cashflow/ui/recurring_transactions_page.dart';
 import '../../expense/ui/expense_form_page.dart';
 import '../../expense/ui/expense_list_page.dart';
 import '../../expense/ui/expense_report_page.dart';
-import '../../finance_domain_shell.dart';
 import '../../fire/presentation/fire_page.dart' deferred as fire_lib;
 import '../../home/home_page.dart';
 import '../../ingest/ui/ingest_review_page.dart';
@@ -60,6 +57,8 @@ import '../../options_income/presentation/wheel_lifecycle_page.dart';
 import '../../plan/ui/plan_hub_page.dart';
 import '../../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../../wealth/ui/wealth_hub_page.dart';
+import 'finance_domain_shell.dart';
+import 'finance_route_paths.dart';
 
 /// FinanceOS `StatefulShellRoute`: 4 branches (Today / Activity / Wealth /
 /// Plan) backed by [DomainTabsShell]. Search + Settings are surfaced by the
