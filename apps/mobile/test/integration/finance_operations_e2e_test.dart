@@ -5,7 +5,6 @@
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/services/price_resolver.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/price_confidence.dart';
 import 'package:naviwealth/domain/values/resolved_price.dart';
@@ -14,6 +13,7 @@ import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/market/resolver/price_resolver.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';

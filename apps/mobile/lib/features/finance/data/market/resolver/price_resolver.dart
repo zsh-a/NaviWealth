@@ -1,5 +1,6 @@
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import '../values/resolved_price.dart';
+import 'package:naviwealth/domain/values/resolved_price.dart';
+
+import '../../domain/asset.dart';
 
 /// Unified entry point for "give me a price for this asset" across the
 /// synced `prices` ledger, the live `MarketDataService`, and any future

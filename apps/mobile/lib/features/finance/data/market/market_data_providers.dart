@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/services/price_resolver.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
@@ -23,6 +22,7 @@ import 'providers/sina_provider.dart';
 import 'providers/yahoo_crumb_session.dart';
 import 'providers/yfinance_provider.dart';
 import 'resolver/layered_price_resolver.dart';
+import 'resolver/price_resolver.dart';
 
 /// Per-app singleton clock — overrideable in tests.
 final clockProvider = Provider<Clock>((ref) => const SystemClock());

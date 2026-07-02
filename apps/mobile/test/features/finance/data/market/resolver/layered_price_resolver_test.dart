@@ -7,13 +7,13 @@ import 'package:naviwealth/domain/entities/historical_bar.dart';
 import 'package:naviwealth/domain/entities/quote.dart';
 import 'package:naviwealth/domain/entities/symbol_info.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/services/price_resolver.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/price_confidence.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/resolver/layered_price_resolver.dart';
+import 'package:naviwealth/features/finance/data/market/resolver/price_resolver.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 
 import '../../../../../core/persistence/test_database.dart';
