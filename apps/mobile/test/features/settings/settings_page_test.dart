@@ -130,6 +130,48 @@ void main() {
     );
   });
 
+  group('Settings → Domains', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('renders optional domain toggles from the shared spec list', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(await _wrap(prefs));
+      await tester.pumpAndSettle();
+
+      expect(find.text('HealthOS'), findsOneWidget);
+      expect(find.text('KnowledgeOS'), findsOneWidget);
+      expect(find.text('ExecutionOS'), findsOneWidget);
+      expect(find.text('Turn on AI tools and Memory indexing'), findsOneWidget);
+      expect(
+        find.text('Personal decisions and cognitive memory'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Turn decisions and plans into trackable actions.'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.text('HealthOS'));
+      await tester.pumpAndSettle();
+      final healthSwitch = find.descendant(
+        of: find.ancestor(
+          of: find.text('HealthOS'),
+          matching: find.byType(Row),
+        ),
+        matching: find.byType(FSwitch),
+      );
+      await tester.tap(healthSwitch.first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('AI tools and Memory indexing are enabled'),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('Settings → KnowledgeOS', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 

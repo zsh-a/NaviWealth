@@ -21,9 +21,6 @@ class DomainsSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
-    final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
-    final knowledgeEnabled = optIns?.contains(DomainScope.knowledge) ?? false;
-    final executionEnabled = optIns?.contains(DomainScope.execution) ?? false;
     final l10n = AppLocalizations.of(context);
 
     return AppPageScaffold(
@@ -32,39 +29,19 @@ class DomainsSettingsPage extends ConsumerWidget {
       child: SettingsPageFrame(
         children: [
           const FinanceDomainSettingsSection(),
-          const SizedBox(height: AppSpacing.s16),
-          _DomainToggleCard(
-            icon: FLucideIcons.heartPulse,
-            label: 'HealthOS',
-            subtitle: healthEnabled
-                ? l10n.settingsDomainsHealthEnabledSubtitle
-                : l10n.settingsDomainsHealthDisabledSubtitle,
-            value: healthEnabled,
-            onChanged: (v) =>
-                _setDomainEnabled(context, ref, DomainScope.health, v),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          _DomainToggleCard(
-            icon: FLucideIcons.brain,
-            label: 'KnowledgeOS',
-            subtitle: knowledgeEnabled
-                ? l10n.settingsDomainsKnowledgeEnabledSubtitle
-                : l10n.settingsDomainsKnowledgeDisabledSubtitle,
-            value: knowledgeEnabled,
-            onChanged: (v) =>
-                _setDomainEnabled(context, ref, DomainScope.knowledge, v),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          _DomainToggleCard(
-            icon: FLucideIcons.listTodo,
-            label: 'ExecutionOS',
-            subtitle: executionEnabled
-                ? l10n.settingsDomainsExecutionEnabledSubtitle
-                : l10n.settingsDomainsExecutionDisabledSubtitle,
-            value: executionEnabled,
-            onChanged: (v) =>
-                _setDomainEnabled(context, ref, DomainScope.execution, v),
-          ),
+          for (final spec in _kDomainToggleSpecs) ...[
+            const SizedBox(height: AppSpacing.s16),
+            _DomainToggleCard(
+              icon: spec.icon,
+              label: spec.label,
+              subtitle: spec.subtitle(
+                l10n,
+                optIns?.contains(spec.scope) ?? false,
+              ),
+              value: optIns?.contains(spec.scope) ?? false,
+              onChanged: (v) => _setDomainEnabled(context, ref, spec, v),
+            ),
+          ],
         ],
       ),
     );
@@ -73,31 +50,72 @@ class DomainsSettingsPage extends ConsumerWidget {
   Future<void> _setDomainEnabled(
     BuildContext context,
     WidgetRef ref,
-    DomainScope scope,
+    _DomainToggleSpec spec,
     bool enabled,
   ) async {
     await ref
         .read(auth_providers.domainOptInsProvider.notifier)
-        .setEnabled(scope, enabled);
+        .setEnabled(spec.scope, enabled);
     if (!context.mounted || enabled) return;
     final l10n = AppLocalizations.of(context);
     context.go(AppRoutes.settingsDomains);
     AppMessenger.show(
       context,
       ToastKind.info,
-      l10n.settingsDomainsDisabledToast(_domainLabel(scope)),
+      l10n.settingsDomainsDisabledToast(spec.label),
     );
   }
-
-  String _domainLabel(DomainScope scope) {
-    return switch (scope) {
-      DomainScope.finance => 'FinanceOS',
-      DomainScope.health => 'HealthOS',
-      DomainScope.knowledge => 'KnowledgeOS',
-      DomainScope.execution => 'ExecutionOS',
-    };
-  }
 }
+
+typedef _DomainToggleSubtitle =
+    String Function(AppLocalizations l10n, bool enabled);
+
+class _DomainToggleSpec {
+  const _DomainToggleSpec({
+    required this.scope,
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+  });
+
+  final DomainScope scope;
+  final IconData icon;
+  final String label;
+  final _DomainToggleSubtitle subtitle;
+}
+
+const List<_DomainToggleSpec> _kDomainToggleSpecs = <_DomainToggleSpec>[
+  _DomainToggleSpec(
+    scope: DomainScope.health,
+    icon: FLucideIcons.heartPulse,
+    label: 'HealthOS',
+    subtitle: _healthSubtitle,
+  ),
+  _DomainToggleSpec(
+    scope: DomainScope.knowledge,
+    icon: FLucideIcons.brain,
+    label: 'KnowledgeOS',
+    subtitle: _knowledgeSubtitle,
+  ),
+  _DomainToggleSpec(
+    scope: DomainScope.execution,
+    icon: FLucideIcons.listTodo,
+    label: 'ExecutionOS',
+    subtitle: _executionSubtitle,
+  ),
+];
+
+String _healthSubtitle(AppLocalizations l10n, bool enabled) => enabled
+    ? l10n.settingsDomainsHealthEnabledSubtitle
+    : l10n.settingsDomainsHealthDisabledSubtitle;
+
+String _knowledgeSubtitle(AppLocalizations l10n, bool enabled) => enabled
+    ? l10n.settingsDomainsKnowledgeEnabledSubtitle
+    : l10n.settingsDomainsKnowledgeDisabledSubtitle;
+
+String _executionSubtitle(AppLocalizations l10n, bool enabled) => enabled
+    ? l10n.settingsDomainsExecutionEnabledSubtitle
+    : l10n.settingsDomainsExecutionDisabledSubtitle;
 
 class _DomainToggleCard extends StatelessWidget {
   const _DomainToggleCard({
