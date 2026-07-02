@@ -3,6 +3,12 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 
 void main() {
   group('DomainScope', () {
+    test('wire values stay explicit and unique', () {
+      final wires = [for (final scope in DomainScope.values) scope.wire];
+      expect(wires, <String>['finance', 'health', 'knowledge', 'execution']);
+      expect(wires.toSet(), hasLength(wires.length));
+    });
+
     test('wire round-trips through tryParse', () {
       for (final scope in DomainScope.values) {
         expect(DomainScope.tryParse(scope.wire), scope);

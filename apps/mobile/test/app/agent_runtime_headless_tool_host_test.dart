@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_headless_tool_host.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 
 void main() {
@@ -13,7 +14,8 @@ void main() {
       DomainScope.knowledge,
       DomainScope.execution,
     ]);
-    expect(parseHeadlessDomains('all'), DomainScope.values);
+    final productionDomains = [for (final pack in kAllDomainPacks) pack.scope];
+    expect(parseHeadlessDomains('all'), productionDomains);
     expect(
       () => parseHeadlessDomains('finance,unknown'),
       throwsA(isA<ArgumentError>()),
@@ -22,7 +24,7 @@ void main() {
 
   test('headless host dispatches through the production tool graph', () async {
     final headless = await createAgentRuntimeHeadlessToolHost(
-      domains: DomainScope.values,
+      domains: parseHeadlessDomains('all'),
     );
     addTearDown(headless.dispose);
 

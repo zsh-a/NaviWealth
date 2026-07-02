@@ -115,14 +115,15 @@ List<DomainPack> _headlessDomainPacks(Set<DomainScope> domains) {
 }
 
 List<DomainScope> parseHeadlessDomains(String? raw) {
-  if (raw == null || raw.trim().isEmpty || raw == 'finance') {
+  final trimmed = raw?.trim();
+  if (trimmed == null || trimmed.isEmpty || trimmed == 'finance') {
     return const <DomainScope>[DomainScope.finance];
   }
-  if (raw.trim() == 'all') {
-    return DomainScope.values;
+  if (trimmed == 'all') {
+    return _productionDomainScopes();
   }
   final parsed = <DomainScope>{DomainScope.finance};
-  for (final part in raw.split(',')) {
+  for (final part in trimmed.split(',')) {
     final value = part.trim();
     if (value.isEmpty) continue;
     final scope = DomainScope.tryParse(value);
@@ -132,4 +133,8 @@ List<DomainScope> parseHeadlessDomains(String? raw) {
     parsed.add(scope);
   }
   return parsed.toList(growable: false);
+}
+
+List<DomainScope> _productionDomainScopes() {
+  return [for (final pack in kAllDomainPacks) pack.scope];
 }
