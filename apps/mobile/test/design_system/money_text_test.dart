@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
@@ -13,6 +12,9 @@ Widget _wrap(Widget child) => MaterialApp(
   locale: const Locale('en', 'US'),
   home: Scaffold(body: Center(child: child)),
 );
+
+DisplayMoney _money(String amount, String currency) =>
+    DisplayMoney(amount: Decimal.parse(amount), currency: currency);
 
 void main() {
   setUpAll(AppFormatters.ensureInitialized);
@@ -156,8 +158,8 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         DualMoneyText(
-          primaryAmount: Money.parse('1000.00', 'USD'),
-          originalAmount: Money.parse('7240.00', 'CNY'),
+          primaryAmount: _money('1000.00', 'USD'),
+          originalAmount: _money('7240.00', 'CNY'),
         ),
       ),
     );
@@ -173,8 +175,8 @@ void main() {
       await tester.pumpWidget(
         _wrap(
           DualMoneyText(
-            primaryAmount: Money.parse('1000.00', 'USD'),
-            originalAmount: Money.parse('1000.00', 'USD'),
+            primaryAmount: _money('1000.00', 'USD'),
+            originalAmount: _money('1000.00', 'USD'),
           ),
         ),
       );
@@ -189,7 +191,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      _wrap(DualMoneyText(primaryAmount: Money.parse('1000.00', 'USD'))),
+      _wrap(DualMoneyText(primaryAmount: _money('1000.00', 'USD'))),
     );
     expect(find.byType(Text), findsOneWidget);
   });
@@ -200,8 +202,8 @@ void main() {
       await tester.pumpWidget(
         _wrap(
           DualMoneyText(
-            primaryAmount: Money.parse('1000.00', 'USD'),
-            originalAmount: Money.parse('7240.00', 'CNY'),
+            primaryAmount: _money('1000.00', 'USD'),
+            originalAmount: _money('7240.00', 'CNY'),
             layout: DualMoneyLayout.stacked,
           ),
         ),
@@ -218,8 +220,8 @@ void main() {
       await tester.pumpWidget(
         _wrap(
           DualMoneyText(
-            primaryAmount: Money.parse('1000.00', 'USD'),
-            originalAmount: Money.parse('7240.00', 'CNY'),
+            primaryAmount: _money('1000.00', 'USD'),
+            originalAmount: _money('7240.00', 'CNY'),
           ),
         ),
       );

@@ -173,6 +173,7 @@ wrangler pages deploy --branch main
 ```bash
 ./tool/lint-no-finance-in-core.sh        # core/ 不含 finance 导入
 ./tool/lint-no-feature-in-shared.sh      # core/domain/design_system 不反向依赖 features
+./tool/lint-design-system-domain-neutral.sh # design_system 不依赖 domain 业务值对象
 ./tool/lint-cross-feature-imports.sh     # feature 间无跨域导入
 ./tool/lint-finance-domain-model-path.sh # Finance 核心模型不回流 data/domain
 ./tool/lint-row-family-prefix.sh         # sync 行族前缀正确
