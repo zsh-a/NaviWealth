@@ -10,11 +10,8 @@ library;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/ai/composition/device_tools_provider.dart';
-import '../../core/ai/composition/tool_descriptor_lookup.dart';
 import '../../core/auth/auth_state.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/auth/providers.dart' as auth;
@@ -48,6 +45,9 @@ class AgentRuntimeHeadlessToolHost {
 Future<AgentRuntimeHeadlessToolHost> createAgentRuntimeHeadlessToolHost({
   Iterable<DomainScope> domains = const <DomainScope>[DomainScope.finance],
 }) async {
+  final activeDomains = _activeHeadlessDomains(domains);
+  final activePacks = _headlessDomainPacks(activeDomains);
+
   // Headless CLI mode deliberately avoids platform plugin storage.
   // ignore: invalid_use_of_visible_for_testing_member
   SharedPreferences.setMockInitialValues(const <String, Object>{});
@@ -68,16 +68,12 @@ Future<AgentRuntimeHeadlessToolHost> createAgentRuntimeHeadlessToolHost({
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
       auth.authStateProvider.overrideWithValue(const AuthLocalOnly()),
-      auth.authTokenDomainsProvider.overrideWithValue(
-        _activeHeadlessDomains(domains).map((scope) => scope.wire).toList()
-          ..sort(),
-      ),
-      ..._headlessToolOverrides(domains),
+      ...lifeOsDomainCompositionOverrides(packs: activePacks),
     ],
   );
 
   await container.read(auth.domainOptInsProvider.future);
-  for (final domain in domains) {
+  for (final domain in activeDomains) {
     if (domain == DomainScope.finance) continue;
     await container
         .read(auth.domainOptInsProvider.notifier)
@@ -89,18 +85,6 @@ Future<AgentRuntimeHeadlessToolHost> createAgentRuntimeHeadlessToolHost({
     host: container.read(agentRuntimeToolHostProvider),
     database: db,
   );
-}
-
-List<Override> _headlessToolOverrides(Iterable<DomainScope> domains) {
-  final activeDomains = _activeHeadlessDomains(domains);
-  final packs = _headlessDomainPacks(activeDomains);
-  final descriptors = domainToolDescriptors(packs);
-  return <Override>[
-    deviceToolsProvider.overrideWithValue(domainDeviceTools(packs)),
-    toolDescriptorLookupProvider.overrideWithValue((name) {
-      return descriptors[name];
-    }),
-  ];
 }
 
 Set<DomainScope> _activeHeadlessDomains(Iterable<DomainScope> domains) {
