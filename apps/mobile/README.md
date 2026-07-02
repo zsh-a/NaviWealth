@@ -177,6 +177,7 @@ wrangler pages deploy --branch main
 ./tool/lint-no-legacy-mobile-domain.sh   # 顶层 lib/domain 旧入口不回流
 ./tool/lint-cross-feature-imports.sh     # feature 间无跨域导入
 ./tool/lint-finance-domain-model-path.sh # Finance 核心模型不回流 data/domain
+./tool/lint-finance-domain-data-imports.sh # Finance domain 不依赖 data/repository 层
 ./tool/lint-finance-dashboard-read-model-path.sh # dashboard 读模型不回流 home/data
 ./tool/lint-row-family-prefix.sh         # sync 行族前缀正确
 ./tool/lint-domain-neutral-contracts.sh  # 域中立契约不含域类型

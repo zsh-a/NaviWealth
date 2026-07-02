@@ -283,7 +283,7 @@ final dashboardSnapshotProvider = FutureProvider<DashboardSnapshot>((
       asOf: DateTime.now(),
       fxRates: fxRows,
       manualAssets: manualList,
-      physicalAssets: physicalList,
+      physicalAssets: dashboardPhysicalAssetsFrom(physicalList),
       liabilities: liabList,
       liabilitySummaries: summaryMap.values,
       securitiesHoldings: securities,
@@ -309,6 +309,27 @@ List<SecurityHolding> _buildSecurityHoldings({
     out.add((asset: asset, snapshot: entry.value));
   }
   return out;
+}
+
+List<DashboardPhysicalAsset> dashboardPhysicalAssetsFrom(
+  Iterable<PhysicalAsset> assets,
+) {
+  return [
+    for (final asset in assets)
+      DashboardPhysicalAsset(
+        id: asset.id,
+        name: asset.name,
+        currency: asset.currency,
+        type: asset.type,
+        currentValuation: asset.currentValuation,
+        purchaseDate: asset.purchaseDate,
+        purchasePrice: asset.purchasePrice,
+        lastValuationAt: asset.lastValuationAt,
+        address: asset.address,
+        autoDepreciation: asset.autoDepreciation,
+        annualResidualRate: asset.annualResidualRate,
+      ),
+  ];
 }
 
 /// Build historical price series for securities so the trend builder can
@@ -560,7 +581,7 @@ final dashboardTrendProvider = FutureProvider<DashboardTrend>((ref) async {
       baseCurrency: base,
       fxRates: fxRows,
       manualAssets: manualList,
-      physicalAssets: physicalList,
+      physicalAssets: dashboardPhysicalAssetsFrom(physicalList),
       liabilities: liabList,
       liabilitySchedules: schedules,
       securitiesHoldings: securities,
@@ -640,7 +661,7 @@ final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
     final trend = builder.build(
       range: range,
       manualAssets: manualList,
-      physicalAssets: physicalList,
+      physicalAssets: dashboardPhysicalAssetsFrom(physicalList),
       liabilities: liabList,
       liabilitySchedules: schedules,
       securitiesHoldings: securities,

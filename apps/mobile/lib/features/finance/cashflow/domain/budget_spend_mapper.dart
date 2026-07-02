@@ -4,10 +4,9 @@ import 'package:naviwealth/features/finance/domain/models/expense.dart';
 
 /// Build the realised spend map that [buildMonthlyBudgetSummary] expects.
 ///
-/// Expenses are keyed by their expense account id, which is the same value
-/// stored as `BudgetRow.categoryId`. Non-convertible foreign-currency
-/// expenses are skipped so a missing FX rate does not poison the whole
-/// budget signal.
+/// Expenses are keyed by their expense account id, which is the same opaque
+/// category id used by budget plans. Non-convertible foreign-currency expenses
+/// are skipped so a missing FX rate does not poison the whole budget signal.
 Map<String, Money> buildBudgetSpendByCategoryId({
   required String periodMonth,
   required Iterable<Expense> expenses,

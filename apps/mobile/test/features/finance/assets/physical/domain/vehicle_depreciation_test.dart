@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
+import 'package:naviwealth/features/finance/assets/physical/domain/physical_asset_valuation.dart';
 import 'package:naviwealth/features/finance/assets/physical/domain/vehicle_depreciation.dart';
 
 void main() {

@@ -1,20 +1,20 @@
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import 'cash_flow_event.dart';
 import 'cash_flow_kind.dart';
+import 'cash_flow_ledger_entry.dart';
 
 typedef CashFlowBaseAmountConverter =
     Decimal? Function(Decimal amount, String currency, DateTime date);
 
 CashFlowEvent? classifyCashFlowEvent(
-  JournalEntryWithPostings entryWithPostings, {
+  CashFlowLedgerEntry entry, {
   required Account? Function(String accountId) resolveAccount,
   CashFlowBaseAmountConverter? convertToBaseAmount,
 }) {
-  final postings = entryWithPostings.postings;
+  final postings = entry.postings;
   if (postings.isEmpty) return null;
 
   final accounts = <String, Account>{};
@@ -46,11 +46,7 @@ CashFlowEvent? classifyCashFlowEvent(
       if (leg.unit == primaryLeg.unit) signedAmount += leg.units;
       continue;
     }
-    final converted = convertToBaseAmount(
-      leg.units,
-      leg.unit,
-      entryWithPostings.entry.date,
-    );
+    final converted = convertToBaseAmount(leg.units, leg.unit, entry.date);
     if (converted == null) return null;
     signedAmount += converted;
   }
@@ -61,8 +57,8 @@ CashFlowEvent? classifyCashFlowEvent(
   }
 
   return CashFlowEvent(
-    journalEntryId: entryWithPostings.entry.id,
-    date: entryWithPostings.entry.date,
+    journalEntryId: entry.id,
+    date: entry.date,
     kind: kind,
     signedAmount: signedAmount,
     originalAmount: primaryLeg.units,

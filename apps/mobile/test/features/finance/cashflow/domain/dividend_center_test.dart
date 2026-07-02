@@ -4,17 +4,15 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_ledger_entry.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
-import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 void main() {
   test('100 dividend JE fixture produces exact TTM gross and withholding', () {
-    final entries = <String, JournalEntryWithPostings>{};
+    final entries = <String, CashFlowLedgerEntry>{};
     final events = <CashFlowEvent>[];
     for (var i = 0; i < 100; i++) {
       final assetId = i < 60 ? 'us:AAPL' : 'us:VOO';
@@ -160,7 +158,7 @@ CashFlowEvent _event({
   );
 }
 
-JournalEntryWithPostings _dividendEntry({
+CashFlowLedgerEntry _dividendEntry({
   required String id,
   required DateTime date,
   required String assetId,
@@ -169,38 +167,24 @@ JournalEntryWithPostings _dividendEntry({
   required String withholding,
   String currency = 'USD',
 }) {
-  return JournalEntryWithPostings(
-    entry: JournalEntry(
-      id: id,
-      date: date,
-      narration: 'Dividend',
-      tagIds: ['asset:$assetId'],
-      sync: _meta(),
-    ),
+  return CashFlowLedgerEntry(
+    id: id,
+    date: date,
+    tagIds: ['asset:$assetId'],
     postings: [
-      _posting('$id-cash', id, 0, 'cash', net, currency),
-      _posting('$id-income', id, 1, 'income', '-$gross', currency),
-      _posting('$id-tax', id, 2, 'tax', withholding, currency),
+      _posting('cash', net, currency),
+      _posting('income', '-$gross', currency),
+      _posting('tax', withholding, currency),
     ],
   );
 }
 
-Posting _posting(
-  String id,
-  String journalEntryId,
-  int position,
-  String accountId,
-  String units,
-  String unit,
-) => Posting(
-  id: id,
-  journalEntryId: journalEntryId,
-  position: position,
-  accountId: accountId,
-  units: Decimal.parse(units),
-  unit: unit,
-  sync: _meta(),
-);
+CashFlowLedgerPosting _posting(String accountId, String units, String unit) =>
+    CashFlowLedgerPosting(
+      accountId: accountId,
+      units: Decimal.parse(units),
+      unit: unit,
+    );
 
 HoldingSnapshot _holding(String assetId, {required String costBasis}) {
   final basis = Decimal.parse(costBasis);

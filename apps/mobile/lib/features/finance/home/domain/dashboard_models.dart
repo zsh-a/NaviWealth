@@ -22,6 +22,35 @@ enum AssetCategory {
   liability,
 }
 
+@immutable
+class DashboardPhysicalAsset {
+  const DashboardPhysicalAsset({
+    required this.id,
+    required this.name,
+    required this.currency,
+    required this.type,
+    required this.currentValuation,
+    required this.purchaseDate,
+    required this.purchasePrice,
+    this.lastValuationAt,
+    this.address,
+    this.autoDepreciation = false,
+    this.annualResidualRate,
+  });
+
+  final String id;
+  final String name;
+  final String currency;
+  final AssetType type;
+  final Decimal currentValuation;
+  final DateTime purchaseDate;
+  final Decimal purchasePrice;
+  final DateTime? lastValuationAt;
+  final String? address;
+  final bool autoDepreciation;
+  final Decimal? annualResidualRate;
+}
+
 /// One row in a category breakdown drill-down.
 @immutable
 class CategoryItem {

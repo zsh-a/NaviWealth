@@ -335,6 +335,7 @@ Run these when touching architecture boundaries:
 ./tool/lint-no-legacy-mobile-domain.sh
 ./tool/lint-cross-feature-imports.sh
 ./tool/lint-finance-domain-model-path.sh
+./tool/lint-finance-domain-data-imports.sh
 ./tool/lint-finance-dashboard-read-model-path.sh
 ./tool/lint-row-family-prefix.sh
 ./tool/lint-domain-neutral-contracts.sh

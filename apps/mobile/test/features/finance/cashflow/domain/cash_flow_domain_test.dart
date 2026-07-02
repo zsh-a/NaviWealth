@@ -6,11 +6,9 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_classifier.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_ledger_entry.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
-import 'package:naviwealth/features/finance/domain/models/posting.dart';
 
 void main() {
   group('CashFlow classifier', () {
@@ -28,7 +26,7 @@ void main() {
         account.id: account,
     };
 
-    CashFlowEvent? classify(JournalEntryWithPostings entry) {
+    CashFlowEvent? classify(CashFlowLedgerEntry entry) {
       return classifyCashFlowEvent(entry, resolveAccount: (id) => accounts[id]);
     }
 
@@ -164,29 +162,22 @@ Account _account(String id, String name, AccountSide side) => Account(
   sync: _meta(),
 );
 
-JournalEntryWithPostings _entry(String id, List<Posting> postings) {
-  return JournalEntryWithPostings(
-    entry: JournalEntry(
-      id: id,
-      date: DateTime.utc(2026, 1, 10),
-      narration: id,
-      sync: _meta(),
-    ),
-    postings: [
-      for (var i = 0; i < postings.length; i++)
-        postings[i].copyWith(position: i, journalEntryId: id),
-    ],
+CashFlowLedgerEntry _entry(String id, List<CashFlowLedgerPosting> postings) {
+  return CashFlowLedgerEntry(
+    id: id,
+    date: DateTime.utc(2026, 1, 10),
+    postings: postings,
   );
 }
 
-Posting _post(String accountId, String units, {String unit = 'USD'}) => Posting(
-  id: '$accountId-$units',
-  journalEntryId: 'pending',
-  position: 0,
+CashFlowLedgerPosting _post(
+  String accountId,
+  String units, {
+  String unit = 'USD',
+}) => CashFlowLedgerPosting(
   accountId: accountId,
   units: Decimal.parse(units),
   unit: unit,
-  sync: _meta(),
 );
 
 CashFlowEvent _event(String id, CashFlowKind kind, String date, String amount) {

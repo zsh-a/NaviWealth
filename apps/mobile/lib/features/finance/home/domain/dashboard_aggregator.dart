@@ -1,4 +1,3 @@
-import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
@@ -21,7 +20,7 @@ DashboardSnapshot aggregateDashboard({
   required DateTime asOf,
   required List<FxRate> fxRates,
   required Iterable<ManualAssetValuation> manualAssets,
-  required Iterable<PhysicalAsset> physicalAssets,
+  required Iterable<DashboardPhysicalAsset> physicalAssets,
   required Iterable<Liability> liabilities,
   required Iterable<LiabilitySummary> liabilitySummaries,
   Iterable<SecurityHolding> securitiesHoldings = const [],
@@ -74,7 +73,7 @@ class DashboardAggregator {
 
   DashboardSnapshot aggregate({
     required Iterable<ManualAssetValuation> manualAssets,
-    required Iterable<PhysicalAsset> physicalAssets,
+    required Iterable<DashboardPhysicalAsset> physicalAssets,
     required Iterable<Liability> liabilities,
     required Iterable<LiabilitySummary> liabilitySummaries,
     Iterable<SecurityHolding> securitiesHoldings = const [],
@@ -226,7 +225,7 @@ class DashboardAggregator {
     );
   }
 
-  CategoryItem? _itemForPhysicalAsset(PhysicalAsset asset) {
+  CategoryItem? _itemForPhysicalAsset(DashboardPhysicalAsset asset) {
     final value = asset.currentValuation;
     if (value.sign <= 0) return null;
     final converted = _tryConvert(asset.id, Money(value, asset.currency));

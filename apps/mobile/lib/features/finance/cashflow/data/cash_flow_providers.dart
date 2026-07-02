@@ -11,6 +11,7 @@ import '../domain/cash_flow_aggregator.dart';
 import '../domain/cash_flow_classifier.dart';
 import '../domain/cash_flow_event.dart';
 import '../domain/cash_flow_kind.dart';
+import 'cash_flow_ledger_adapters.dart';
 
 final cashFlowEventsProvider = StreamProvider.autoDispose<List<CashFlowEvent>>((
   ref,
@@ -31,7 +32,7 @@ final cashFlowEventsProvider = StreamProvider.autoDispose<List<CashFlowEvent>>((
   final events = <CashFlowEvent>[];
   for (final entry in entries) {
     final event = classifyCashFlowEvent(
-      entry,
+      entry.toCashFlowLedgerEntry(),
       resolveAccount: accountsById.get,
       convertToBaseAmount: (amount, currency, date) {
         if (currency.trim().toUpperCase() == baseCurrency) return amount;

@@ -6,6 +6,7 @@ import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 import '../domain/cash_flow_kind.dart';
 import '../domain/dividend_center.dart';
+import 'cash_flow_ledger_adapters.dart';
 import 'cash_flow_providers.dart';
 
 final dividendCenterNowProvider = Provider<DateTime>(
@@ -31,7 +32,10 @@ final dividendCenterSnapshotProvider =
 
       return buildDividendCenterSnapshot(
         dividendEvents: dividendEvents,
-        entriesById: {for (final entry in entries) entry.entry.id: entry},
+        entriesById: {
+          for (final entry in entries)
+            entry.entry.id: entry.toCashFlowLedgerEntry(),
+        },
         accountsById: {for (final account in accounts) account.id: account},
         holdings: holdings,
         baseCurrency: baseCurrency,

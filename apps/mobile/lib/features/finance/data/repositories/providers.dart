@@ -226,12 +226,22 @@ final monthlyBudgetSummaryProvider = Provider.autoDispose
       );
       final res = buildMonthlyBudgetSummary(
         periodMonth: periodMonth,
-        budgets: rows,
+        budgets: rows.map(_budgetCategoryPlanFromRow),
         spendByCategoryId: spendByCategoryId,
         targetCurrency: targetCurrency,
       );
       return AsyncValue.data(res);
     });
+
+BudgetCategoryPlan _budgetCategoryPlanFromRow(BudgetRow row) {
+  return BudgetCategoryPlan(
+    categoryId: row.categoryId,
+    periodMonth: row.periodMonth,
+    amount: row.amount,
+    currency: row.currency,
+    deletedAt: row.deletedAt,
+  );
+}
 
 /// Live stream of every recorded FX rate. The dashboard converter and the
 /// FX-rate management page both watch this so a manual rate insert

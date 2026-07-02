@@ -27,6 +27,7 @@ import 'package:naviwealth/features/finance/ai_tools/local_skills/local_skills.d
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_cashflow_buckets_tool.dart';
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_refund_links_tool.dart';
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_transfer_links_tool.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_ledger_entry.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart'
     show JournalEntryWithPostings;
 import 'package:naviwealth/features/finance/domain/models/account.dart';
@@ -96,6 +97,22 @@ Posting _post(String accountId, String unit, String units) => Posting(
   units: Decimal.parse(units),
   unit: unit,
   sync: _stamp(),
+);
+
+CashFlowLedgerEntry _cashflowEwp(
+  String id,
+  DateTime date,
+  List<CashFlowLedgerPosting> postings,
+) => CashFlowLedgerEntry(id: id, date: date, postings: postings);
+
+CashFlowLedgerPosting _cashflowPost(
+  String accountId,
+  String unit,
+  String units,
+) => CashFlowLedgerPosting(
+  accountId: accountId,
+  units: Decimal.parse(units),
+  unit: unit,
 );
 
 Asset _asset(
@@ -1567,7 +1584,7 @@ void main() {
   group('W-D4.2c — get_cashflow_buckets (cashflow_buckets parity)', () {
     final fixedNow = DateTime.utc(2026, 6, 15);
     Map<String, Object?> agg(
-      List<JournalEntryWithPostings> entries, {
+      List<CashFlowLedgerEntry> entries, {
       List<Asset> assets = const [],
       String? currency,
     }) => GetCashflowBucketsTool.shape(
@@ -1583,10 +1600,18 @@ void main() {
 
     test('splits inflow and outflow (backend parity)', () {
       final m = agg([
-        _ewp('salary', DateTime.utc(2026, 5, 1), [_post('a', 'USD', '5000')]),
-        _ewp('rent', DateTime.utc(2026, 5, 5), [_post('a', 'USD', '-1800')]),
-        _ewp('c1', DateTime.utc(2026, 5, 10), [_post('a', 'USD', '-5.5')]),
-        _ewp('c2', DateTime.utc(2026, 5, 12), [_post('a', 'USD', '-4')]),
+        _cashflowEwp('salary', DateTime.utc(2026, 5, 1), [
+          _cashflowPost('a', 'USD', '5000'),
+        ]),
+        _cashflowEwp('rent', DateTime.utc(2026, 5, 5), [
+          _cashflowPost('a', 'USD', '-1800'),
+        ]),
+        _cashflowEwp('c1', DateTime.utc(2026, 5, 10), [
+          _cashflowPost('a', 'USD', '-5.5'),
+        ]),
+        _cashflowEwp('c2', DateTime.utc(2026, 5, 12), [
+          _cashflowPost('a', 'USD', '-4'),
+        ]),
       ]);
       final r = series(m).single;
       expect(r['year_month'], '2026-05');
@@ -1600,8 +1625,12 @@ void main() {
 
     test('separates currencies (backend parity)', () {
       final m = agg([
-        _ewp('e_usd', DateTime.utc(2026, 5, 1), [_post('a', 'USD', '100')]),
-        _ewp('e_cny', DateTime.utc(2026, 5, 2), [_post('a', 'CNY', '-700')]),
+        _cashflowEwp('e_usd', DateTime.utc(2026, 5, 1), [
+          _cashflowPost('a', 'USD', '100'),
+        ]),
+        _cashflowEwp('e_cny', DateTime.utc(2026, 5, 2), [
+          _cashflowPost('a', 'CNY', '-700'),
+        ]),
       ]);
       final byCur = {for (final r in series(m)) r['currency'] as String: r};
       expect(byCur['USD']!['inflow_minor'], '10000');
@@ -1613,9 +1642,9 @@ void main() {
     test('ignores asset legs (backend parity)', () {
       final m = agg(
         [
-          _ewp('buy', DateTime.utc(2026, 4, 15), [
-            _post('brk', 'asset_aapl', '10'), // asset leg → skipped
-            _post('cash', 'USD', '-1500'),
+          _cashflowEwp('buy', DateTime.utc(2026, 4, 15), [
+            _cashflowPost('brk', 'asset_aapl', '10'), // asset leg -> skipped
+            _cashflowPost('cash', 'USD', '-1500'),
           ]),
         ],
         assets: [_asset('asset_aapl')],
@@ -1627,16 +1656,24 @@ void main() {
 
     test('ignores zero-units legs (backend parity)', () {
       final m = agg([
-        _ewp('z', DateTime.utc(2026, 4, 15), [_post('a', 'USD', '0')]),
+        _cashflowEwp('z', DateTime.utc(2026, 4, 15), [
+          _cashflowPost('a', 'USD', '0'),
+        ]),
       ]);
       expect(series(m), isEmpty);
     });
 
     test('sorts by (year_month, currency) (backend parity)', () {
       final m = agg([
-        _ewp('may_cny', DateTime.utc(2026, 5, 1), [_post('a', 'CNY', '100')]),
-        _ewp('apr_usd', DateTime.utc(2026, 4, 15), [_post('a', 'USD', '200')]),
-        _ewp('may_usd', DateTime.utc(2026, 5, 2), [_post('a', 'USD', '300')]),
+        _cashflowEwp('may_cny', DateTime.utc(2026, 5, 1), [
+          _cashflowPost('a', 'CNY', '100'),
+        ]),
+        _cashflowEwp('apr_usd', DateTime.utc(2026, 4, 15), [
+          _cashflowPost('a', 'USD', '200'),
+        ]),
+        _cashflowEwp('may_usd', DateTime.utc(2026, 5, 2), [
+          _cashflowPost('a', 'USD', '300'),
+        ]),
       ]);
       final keys = series(
         m,
@@ -1657,9 +1694,15 @@ void main() {
 
     test('months_back window clamps + exact uppercased currency filter', () {
       final entries = [
-        _ewp('old', DateTime.utc(2025, 1, 10), [_post('a', 'USD', '999')]),
-        _ewp('recent', DateTime.utc(2026, 5, 10), [_post('a', 'USD', '100')]),
-        _ewp('cny', DateTime.utc(2026, 5, 11), [_post('a', 'CNY', '-200')]),
+        _cashflowEwp('old', DateTime.utc(2025, 1, 10), [
+          _cashflowPost('a', 'USD', '999'),
+        ]),
+        _cashflowEwp('recent', DateTime.utc(2026, 5, 10), [
+          _cashflowPost('a', 'USD', '100'),
+        ]),
+        _cashflowEwp('cny', DateTime.utc(2026, 5, 11), [
+          _cashflowPost('a', 'CNY', '-200'),
+        ]),
       ];
       // months_back=3 ending 2026-06 → window [2026-04, 2026-06].
       final all = GetCashflowBucketsTool.shape(

@@ -27,9 +27,10 @@
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/features/finance/cashflow/data/cash_flow_ledger_adapters.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_ledger_entry.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
@@ -87,7 +88,7 @@ class GetCashflowBucketsTool implements DeviceTool {
     final assets = await ctx.ref.read(allAssetsStreamProvider.future);
 
     return shape(
-      entries,
+      [for (final entry in entries) entry.toCashFlowLedgerEntry()],
       assets: assets,
       monthsBack: monthsBack,
       currency: currency,
@@ -100,7 +101,7 @@ class GetCashflowBucketsTool implements DeviceTool {
   /// to the current UTC instant (injectable for deterministic tests,
   /// mirroring the backend's `Utc::now()`).
   static Map<String, Object?> shape(
-    List<JournalEntryWithPostings> entries, {
+    List<CashFlowLedgerEntry> entries, {
     required List<Asset> assets,
     required int monthsBack,
     String? currency,

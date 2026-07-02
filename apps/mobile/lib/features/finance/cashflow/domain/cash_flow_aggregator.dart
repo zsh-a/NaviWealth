@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 
 import 'cash_flow_event.dart';
 import 'cash_flow_kind.dart';
+import 'cash_flow_ledger_entry.dart';
 
 enum CashFlowPeriod { month, quarter, year }
 
@@ -105,7 +105,7 @@ CashFlowSummary aggregateCashFlow(
 }
 
 Map<String, Object?> aggregateLegacyCashflowBuckets({
-  required List<JournalEntryWithPostings> entries,
+  required List<CashFlowLedgerEntry> entries,
   required List<Asset> assets,
   required int monthsBack,
   String? currency,
@@ -113,9 +113,9 @@ Map<String, Object?> aggregateLegacyCashflowBuckets({
 }) {
   final assetIds = {for (final a in assets) a.id};
   final acc = <String, Map<String, List<BigInt>>>{};
-  for (final ewp in entries) {
-    final ym = _periodKey(ewp.entry.date.toUtc(), CashFlowPeriod.month);
-    for (final p in ewp.postings) {
+  for (final entry in entries) {
+    final ym = _periodKey(entry.date.toUtc(), CashFlowPeriod.month);
+    for (final p in entry.postings) {
       if (assetIds.contains(p.unit)) continue;
       if (p.units == Decimal.zero) continue;
       final minor = (p.units * Decimal.fromInt(100)).round().toBigInt();

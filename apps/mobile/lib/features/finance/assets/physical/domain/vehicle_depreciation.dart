@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import '../data/physical_asset.dart';
+import 'physical_asset_valuation.dart';
 
 /// Pure depreciation maths for vehicles.
 ///

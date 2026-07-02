@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
@@ -23,7 +22,7 @@ DashboardTrend buildDashboardTrend({
   required String baseCurrency,
   required List<FxRate> fxRates,
   required Iterable<ManualAssetValuation> manualAssets,
-  required Iterable<PhysicalAsset> physicalAssets,
+  required Iterable<DashboardPhysicalAsset> physicalAssets,
   required Iterable<Liability> liabilities,
   required Map<String, List<AmortizationEntry>> liabilitySchedules,
   Iterable<({Asset asset, HoldingSnapshot snapshot})> securitiesHoldings =
@@ -121,7 +120,7 @@ class DashboardTrendBuilder {
   DashboardTrend build({
     required DashboardTimeRange range,
     required Iterable<ManualAssetValuation> manualAssets,
-    required Iterable<PhysicalAsset> physicalAssets,
+    required Iterable<DashboardPhysicalAsset> physicalAssets,
     required Iterable<Liability> liabilities,
     required Map<String, List<AmortizationEntry>> liabilitySchedules,
     Iterable<({Asset asset, HoldingSnapshot snapshot})> securitiesHoldings =
@@ -196,7 +195,7 @@ class DashboardTrendBuilder {
   Money _valueAssets(
     DateTime date,
     List<ManualAssetValuation> manualAssets,
-    List<PhysicalAsset> physicalAssets,
+    List<DashboardPhysicalAsset> physicalAssets,
     List<({Asset asset, HoldingSnapshot snapshot})> securities,
     Map<String, List<ManualAssetValuePoint>> securityPrices,
     void Function(String id, String currency) report,
@@ -285,7 +284,7 @@ class DashboardTrendBuilder {
   /// Outside both anchors we clamp to the nearest endpoint — the alternative
   /// of extrapolating produced visible artifacts on the trend chart for
   /// new purchases.
-  Decimal _valueOfPhysicalAt(PhysicalAsset pa, DateTime date) {
+  Decimal _valueOfPhysicalAt(DashboardPhysicalAsset pa, DateTime date) {
     final t0 = pa.purchaseDate;
     final v0 = pa.purchasePrice;
     final t1 = pa.lastValuationAt;

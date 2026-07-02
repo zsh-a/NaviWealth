@@ -1,4 +1,4 @@
-/// Read-model joining a calendar month's [BudgetRow]s with the realised
+/// Read-model joining a calendar month's budget plans with the realised
 /// spend for that month (`docs/roadmap-next.md` §3.2). Pure domain — no
 /// I/O — so the FIRE engine and the Plan-tab dashboard can both consume
 /// the same shape without re-querying.
@@ -6,8 +6,23 @@ library;
 
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+
+class BudgetCategoryPlan {
+  const BudgetCategoryPlan({
+    required this.categoryId,
+    required this.periodMonth,
+    required this.amount,
+    required this.currency,
+    this.deletedAt,
+  });
+
+  final String categoryId;
+  final String periodMonth;
+  final Decimal amount;
+  final String currency;
+  final DateTime? deletedAt;
+}
 
 /// One category's budget posture: how much was set, how much was spent,
 /// and whether the user is on track / at risk / over.
@@ -109,7 +124,7 @@ class MonthlyBudgetSummary {
 ({MonthlyBudgetSummary summary, int mismatchedCount})
 buildMonthlyBudgetSummary({
   required String periodMonth,
-  required Iterable<BudgetRow> budgets,
+  required Iterable<BudgetCategoryPlan> budgets,
   required Map<String, Money> spendByCategoryId,
   required String targetCurrency,
 }) {

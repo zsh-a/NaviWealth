@@ -84,7 +84,9 @@ final benchmarkComparisonPortfolioSeriesProvider =
       final trend = builder.build(
         range: range,
         manualAssets: manual.value ?? const [],
-        physicalAssets: physical.value ?? const <PhysicalAsset>[],
+        physicalAssets: dashboardPhysicalAssetsFrom(
+          physical.value ?? const <PhysicalAsset>[],
+        ),
         liabilities: liab.value ?? const <Liability>[],
         liabilitySchedules: schedules,
       );

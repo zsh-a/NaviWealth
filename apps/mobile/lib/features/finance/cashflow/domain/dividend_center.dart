@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 import 'cash_flow_event.dart';
+import 'cash_flow_ledger_entry.dart';
 
 typedef DividendAmountConverter =
     Decimal? Function(Decimal amount, String currency, DateTime date);
@@ -102,7 +102,7 @@ class DividendCenterSnapshot {
 
 DividendCenterSnapshot buildDividendCenterSnapshot({
   required Iterable<CashFlowEvent> dividendEvents,
-  required Map<String, JournalEntryWithPostings> entriesById,
+  required Map<String, CashFlowLedgerEntry> entriesById,
   required Map<String, Account> accountsById,
   required Map<String, HoldingSnapshot> holdings,
   required String baseCurrency,
@@ -112,9 +112,7 @@ DividendCenterSnapshot buildDividendCenterSnapshot({
   final enriched = <DividendCenterEvent>[];
   for (final event in dividendEvents) {
     final source = entriesById[event.journalEntryId];
-    final assetId = source == null
-        ? null
-        : _assetIdFromTags(source.entry.tagIds);
+    final assetId = source == null ? null : _assetIdFromTags(source.tagIds);
     final withholding = source == null
         ? _Withholding.zero()
         : _withholdingFor(
@@ -232,7 +230,7 @@ List<DividendMonthGroup> _buildMonths(List<DividendCenterEvent> events) {
 }
 
 _Withholding _withholdingFor(
-  JournalEntryWithPostings entry, {
+  CashFlowLedgerEntry entry, {
   required Map<String, Account> accountsById,
   required String baseCurrency,
   DividendAmountConverter? convertToBaseAmount,
@@ -252,7 +250,7 @@ _Withholding _withholdingFor(
       final converted = convertToBaseAmount?.call(
         posting.units.abs(),
         postingCurrency,
-        entry.entry.date,
+        entry.date,
       );
       if (converted != null) inBase += converted;
     }
