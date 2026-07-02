@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import '../../../core/shell/auth_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/auth_controller.dart';
@@ -29,7 +29,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     try {
       await ref.read(authControllerProvider.notifier).chooseCloud();
       if (!mounted) return;
-      context.go(AppRoutes.login);
+      context.go(AuthRoutes.login);
     } finally {
       if (mounted) setState(() => _busyChoice = null);
     }

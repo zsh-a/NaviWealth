@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../core/shell/auth_route_paths.dart';
 import '../core/shell/settings_route_paths.dart';
 import '../features/execution/composition/execution_route_paths.dart';
 import '../features/finance/composition/finance_route_paths.dart';
@@ -43,8 +44,8 @@ import '../features/knowledge/composition/knowledge_route_paths.dart';
 /// re-introduce a targeted redirect.
 abstract final class AppRoutes {
   // ── Auth ────────────────────────────────────────────────────────────────
-  static const login = '/login';
-  static const onboarding = '/onboarding';
+  static const login = AuthRoutes.login;
+  static const onboarding = AuthRoutes.onboarding;
 
   // ── Primary tabs ────────────────────────────────────────────────────────
   static const home = FinanceRoutes.home;
@@ -166,8 +167,8 @@ abstract final class AppRoutes {
 /// Canonical GoRouter route names. Used by tests and named navigation
 /// helpers; mirrors the [AppRoutes] structure.
 abstract final class AppRouteNames {
-  static const login = 'login';
-  static const onboarding = 'onboarding';
+  static const login = AuthRouteNames.login;
+  static const onboarding = AuthRouteNames.onboarding;
   static const home = FinanceRouteNames.home;
   static const settings = SettingsRouteNames.root;
   static const devices = SettingsRouteNames.devices;

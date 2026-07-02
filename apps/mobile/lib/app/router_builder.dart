@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
+import '../core/shell/auth_route_paths.dart';
 import '../core/shell/settings_route_paths.dart';
 import '../design_system/widgets/system_back_scope.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
@@ -33,7 +34,6 @@ import 'domain_packs.dart';
 import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
-import 'route_paths.dart';
 
 /// Test-only: eagerly resolve every deferred-as library the router maps
 /// to a tab so subsequent [DeferredRoute] mounts see an already-completed
@@ -89,14 +89,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
     errorBuilder: (context, state) => RouteErrorPage(state: state),
     routes: [
       GoRoute(
-        path: AppRoutes.login,
-        name: AppRouteNames.login,
+        path: AuthRoutes.login,
+        name: AuthRouteNames.login,
         builder: (context, state) =>
             const ExitConfirmingSystemBackScope(child: LoginPage()),
       ),
       GoRoute(
-        path: AppRoutes.onboarding,
-        name: AppRouteNames.onboarding,
+        path: AuthRoutes.onboarding,
+        name: AuthRouteNames.onboarding,
         builder: (context, state) =>
             const ExitConfirmingSystemBackScope(child: OnboardingPage()),
       ),

@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
 import '../../../core/security/biometric_auth_service.dart';
 import '../../../core/security/biometric_lock_preferences.dart';
+import '../../../core/shell/auth_route_paths.dart';
 import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -310,7 +310,7 @@ class _AccountSection extends ConsumerWidget {
           size: AppIconSizes.h18,
           color: context.theme.colors.primary,
         ),
-        onTap: () => context.go('${AppRoutes.login}?mode=upgrade'),
+        onTap: () => context.go('${AuthRoutes.login}?mode=upgrade'),
       );
     }
     return Column(
