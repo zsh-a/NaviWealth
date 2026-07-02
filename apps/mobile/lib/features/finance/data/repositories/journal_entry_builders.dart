@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'journal_entry_repository.dart';
 
+part 'journal_entry_builders_cashflow.dart';
 part 'journal_entry_builders_helpers.dart';
 part 'journal_entry_builders_investment.dart';
 part 'journal_entry_builders_models.dart';
@@ -186,50 +187,19 @@ class JournalEntryBuilders {
     String? payee,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    _assertPositive(amount, 'amount');
-    if (toAmount != null) _assertPositive(toAmount, 'toAmount');
-
-    final destCcy = toCurrency ?? currency;
-    final destAmt = toAmount ?? amount;
-
-    // Beancount-style price annotation: "1 unit of destCcy is worth N
-    // of currency". `amount / destAmt` gives that exchange rate. We
-    // only attach when the currencies actually differ — same-currency
-    // transfers stay clean (no superfluous price row).
-    Price? destPrice;
-    if (destCcy != currency) {
-      destPrice = Price(
-        perUnit: (amount / destAmt).toDecimal(scaleOnInfinitePrecision: 12),
-        currency: currency,
-      );
-    }
-
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Transfer',
-        payee: payee,
-        tagIds: tagIds,
-      ),
-      postings: <PostingDraft>[
-        PostingDraft(
-          position: 0,
-          accountId: fromAccountId,
-          units: -amount,
-          unit: currency,
-        ),
-        PostingDraft(
-          position: 1,
-          accountId: toAccountId,
-          units: destAmt,
-          unit: destCcy,
-          price: destPrice,
-        ),
-      ],
-    );
-  }
+  }) => _buildTransferJournalEntry(
+    date: date,
+    fromAccountId: fromAccountId,
+    toAccountId: toAccountId,
+    amount: amount,
+    currency: currency,
+    toAmount: toAmount,
+    toCurrency: toCurrency,
+    narration: narration,
+    payee: payee,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   // ---------- Expense ----------
 
@@ -245,32 +215,17 @@ class JournalEntryBuilders {
     String? narration,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    _assertPositive(amount, 'amount');
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Expense',
-        payee: payee,
-        tagIds: tagIds,
-      ),
-      postings: <PostingDraft>[
-        PostingDraft(
-          position: 0,
-          accountId: expenseAccountId,
-          units: amount,
-          unit: currency,
-        ),
-        PostingDraft(
-          position: 1,
-          accountId: fromAccountId,
-          units: -amount,
-          unit: currency,
-        ),
-      ],
-    );
-  }
+  }) => _buildExpenseJournalEntry(
+    date: date,
+    expenseAccountId: expenseAccountId,
+    fromAccountId: fromAccountId,
+    amount: amount,
+    currency: currency,
+    payee: payee,
+    narration: narration,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   // ---------- Dividend ----------
 
@@ -295,52 +250,20 @@ class JournalEntryBuilders {
     String? payee,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    _assertPositive(amount, 'amount');
-    final withholding = _normalizeOptionalAmount(
-      withholdingAmount,
-      withholdingAccountId,
-      label: 'withholding',
-    );
-
-    final cashIn = withholding == null ? amount : amount - withholding;
-
-    final postings = <PostingDraft>[
-      PostingDraft(
-        position: 0,
-        accountId: cashAccountId,
-        units: cashIn,
-        unit: currency,
-      ),
-      PostingDraft(
-        position: 1,
-        accountId: incomeAccountId,
-        units: -amount,
-        unit: currency,
-      ),
-    ];
-    if (withholding != null) {
-      postings.add(
-        PostingDraft(
-          position: postings.length,
-          accountId: withholdingAccountId!,
-          units: withholding,
-          unit: currency,
-        ),
-      );
-    }
-
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Dividend',
-        payee: payee,
-        tagIds: assetUnit == null ? tagIds : _withAssetTag(tagIds, assetUnit),
-      ),
-      postings: postings,
-    );
-  }
+  }) => _buildDividendJournalEntry(
+    date: date,
+    cashAccountId: cashAccountId,
+    incomeAccountId: incomeAccountId,
+    amount: amount,
+    currency: currency,
+    withholdingAmount: withholdingAmount,
+    withholdingAccountId: withholdingAccountId,
+    assetUnit: assetUnit,
+    narration: narration,
+    payee: payee,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   /// Dividend Reinvestment Plan: gross dividend is credited to dividend
   /// income, withholding/fee land on expense accounts, and the remaining
@@ -365,69 +288,26 @@ class JournalEntryBuilders {
     String? payee,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    _assertPositive(grossAmount, 'grossAmount');
-    _assertPositive(reinvestedQuantity, 'reinvestedQuantity');
-    _assertPositive(pricePerUnit, 'pricePerUnit');
-    final withholding = _normalizeOptionalAmount(
-      withholdingAmount,
-      withholdingAccountId,
-      label: 'withholding',
-    );
-    final fee = _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');
-
-    final postings = <PostingDraft>[
-      PostingDraft(
-        position: 0,
-        accountId: accountId,
-        units: reinvestedQuantity,
-        unit: assetUnit,
-        cost: Cost(
-          perUnit: pricePerUnit,
-          currency: currency,
-          lotId: lotId,
-          acquiredOn: acquiredOn ?? date,
-        ),
-      ),
-      PostingDraft(
-        position: 1,
-        accountId: incomeAccountId,
-        units: -grossAmount,
-        unit: currency,
-      ),
-    ];
-    if (withholding != null) {
-      postings.add(
-        PostingDraft(
-          position: postings.length,
-          accountId: withholdingAccountId!,
-          units: withholding,
-          unit: currency,
-        ),
-      );
-    }
-    if (fee != null) {
-      postings.add(
-        PostingDraft(
-          position: postings.length,
-          accountId: feeAccountId!,
-          units: fee,
-          unit: currency,
-        ),
-      );
-    }
-
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Dividend reinvestment',
-        payee: payee,
-        tagIds: _withAssetTag(tagIds, assetUnit),
-      ),
-      postings: postings,
-    );
-  }
+  }) => _buildDripJournalEntry(
+    date: date,
+    accountId: accountId,
+    incomeAccountId: incomeAccountId,
+    assetUnit: assetUnit,
+    grossAmount: grossAmount,
+    reinvestedQuantity: reinvestedQuantity,
+    pricePerUnit: pricePerUnit,
+    currency: currency,
+    lotId: lotId,
+    acquiredOn: acquiredOn,
+    withholdingAmount: withholdingAmount,
+    withholdingAccountId: withholdingAccountId,
+    feeAmount: feeAmount,
+    feeAccountId: feeAccountId,
+    narration: narration,
+    payee: payee,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   // ---------- Liability payment ----------
 
@@ -449,71 +329,20 @@ class JournalEntryBuilders {
     String? payee,
     DateTime? settledOn,
     List<String> tagIds = const <String>[],
-  }) {
-    if (principal < Decimal.zero) {
-      throw ArgumentError.value(principal, 'principal', 'must be ≥ 0');
-    }
-    if (interest < Decimal.zero) {
-      throw ArgumentError.value(interest, 'interest', 'must be ≥ 0');
-    }
-    final total = principal + interest;
-    if (total == Decimal.zero) {
-      throw ArgumentError('liabilityPayment requires principal + interest > 0');
-    }
-
-    final postings = <PostingDraft>[
-      // Liability debit (paying down): +units = reducing the negative
-      // running balance toward zero. `kSign convention §6`.
-      PostingDraft(
-        position: 0,
-        accountId: liabilityAccountId,
-        units: principal,
-        unit: currency,
-      ),
-      // Cash outflow.
-      PostingDraft(
-        position: 2,
-        accountId: fromAccountId,
-        units: -total,
-        unit: currency,
-      ),
-    ];
-    if (interest > Decimal.zero) {
-      postings.insert(
-        1,
-        PostingDraft(
-          position: 1,
-          accountId: interestExpenseAccountId,
-          units: interest,
-          unit: currency,
-        ),
-      );
-    } else {
-      // No interest leg — squash the cash leg's position so the list
-      // is densely numbered.
-      postings[1] = PostingDraft(
-        position: 1,
-        accountId: postings[1].accountId,
-        units: postings[1].units,
-        unit: postings[1].unit,
-      );
-    }
-
-    final tags = amortizationEntryId == null
-        ? tagIds
-        : <String>[...tagIds, 'amort:$amortizationEntryId'];
-
-    return JournalEntryBuild(
-      entry: JournalEntryDraft(
-        date: date,
-        settledOn: settledOn,
-        narration: narration ?? 'Liability payment',
-        payee: payee,
-        tagIds: tags,
-      ),
-      postings: postings,
-    );
-  }
+  }) => _buildLiabilityPaymentJournalEntry(
+    date: date,
+    liabilityAccountId: liabilityAccountId,
+    fromAccountId: fromAccountId,
+    interestExpenseAccountId: interestExpenseAccountId,
+    principal: principal,
+    interest: interest,
+    currency: currency,
+    amortizationEntryId: amortizationEntryId,
+    narration: narration,
+    payee: payee,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
 
   // ---------- Split ----------
 
