@@ -67,8 +67,8 @@ Cross-domain Home / LifeOS dashboard:
 
 FinanceOS / Wealth:
 
-- `apps/mobile/lib/features/wealth/ui/wealth_hub_page.dart`
-- `apps/mobile/lib/features/wealth/ui/wealth_perspective_section.dart`
+- `apps/mobile/lib/features/finance/ui/wealth/wealth_hub_page.dart`
+- `apps/mobile/lib/features/finance/ui/wealth/wealth_perspective_section.dart`
 - `apps/mobile/lib/features/accounts/ui/account_grouped_sections.dart`
 - `apps/mobile/lib/features/cashflow/ui/passive_income_card.dart`
 - `apps/mobile/lib/features/cashflow/ui/cashflow_calendar_card.dart`
@@ -275,7 +275,7 @@ Target changes:
 
 Format:
 
-- `cd apps/mobile && rtk dart format lib/design_system lib/features/home lib/features/wealth lib/features/health lib/features/knowledge`
+- `cd apps/mobile && rtk dart format lib/design_system lib/features/home lib/features/finance/ui/wealth lib/features/health lib/features/knowledge`
 
 Static analysis:
 
@@ -345,4 +345,3 @@ Keep commits small enough to review:
 - Commit 3: Health.
 - Commit 4: Knowledge.
 - Commit 5: tests and final visual polish.
-

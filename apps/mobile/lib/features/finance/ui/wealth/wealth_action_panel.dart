@@ -1,12 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../assets/physical/ui/physical_asset_create_sheet.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../assets/physical/ui/physical_asset_create_sheet.dart';
+import '../../composition/finance_route_paths.dart';
+import '../../data/domain/enums.dart';
 
 /// Wealth-scoped quick-add panel.
 ///

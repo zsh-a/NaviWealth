@@ -8,7 +8,7 @@
 
 本文档撰写时 IA 还是 Home / Portfolio / Activity / Plan,后端 AI relay 尚未删除。之后两件事改变了部分前提:
 
-1. **IA contract migration**(commits 3e37cfc / aacded4): 主 tab 改为 Today / Activity / Wealth / Plan。`features/portfolio/` 和 `features/me/` / `features/more/` 已删除,`features/wealth/` 接管原 Portfolio 职责。
+1. **IA contract migration**(commits 3e37cfc / aacded4): 主 tab 改为 Today / Activity / Wealth / Plan。`features/portfolio/` 和 `features/me/` / `features/more/` 已删除，Wealth 入口现在归入 FinanceOS 的 `features/finance/ui/wealth/`。
 2. 后端 AI relay 已删除;持仓由端侧 `GetHoldingsTool` 计算。
 3. **E2E sync 5 case** (P1-G): 已在 `apps/mobile/test/e2e/sync_e2e_test.dart` 落地完毕(2026-05-24)。
 

@@ -104,7 +104,6 @@ void main() {
           Directory('${appRoot.path}/lib/features/cashflow'),
           Directory('${appRoot.path}/lib/features/ai_chat'),
           Directory('${appRoot.path}/lib/features/home'),
-          Directory('${appRoot.path}/lib/features/wealth'),
           Directory('${appRoot.path}/lib/features/activity'),
           Directory('${appRoot.path}/lib/features/accounts'),
           Directory('${appRoot.path}/lib/features/rebalance'),

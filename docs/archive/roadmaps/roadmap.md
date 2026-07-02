@@ -43,11 +43,12 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 1.1 补完占位模块
 - **历史 `features/me/`、`features/more/`、`features/portfolio/`**：已不再是当前
-  feature 目录；组合入口由 `features/wealth/` 承接，个人/更多入口并入
-  settings / command palette。
-- **`features/plan/`**：保留为规划入口，当前通过 Plan hub 聚合 FIRE /
-  analytics / rebalance / options income 等决策面，并已有直接测试。后续重点是
-  提升信息密度和目标驱动编排，而不是恢复历史占位模块。
+  feature 目录；组合入口由 FinanceOS 的 `features/finance/ui/wealth/` 承接，
+  个人/更多入口并入 settings / command palette。
+- **历史 `features/plan/`**：已不再是独立顶层 feature；规划入口归入
+  FinanceOS 的 `features/finance/ui/plan_hub_page.dart`，当前通过 Plan hub
+  聚合 FIRE / analytics / rebalance / options income 等决策面，并已有直接测试。
+  后续重点是提升信息密度和目标驱动编排，而不是恢复历史占位模块。
 
 ### 1.2 仪表盘洞察补全
 - `lib/features/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。

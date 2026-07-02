@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/ui/wealth/wealth_perspective_section.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/wealth/ui/wealth_perspective_section.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Money _cny(String amount) => Money(Decimal.parse(amount), 'CNY');

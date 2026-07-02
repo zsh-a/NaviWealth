@@ -15,7 +15,8 @@
 # so these surfaces are protected from sibling-feature imports too. The former
 # `features/shared/` bucket has been split into `core/forms/` and
 # `features/finance/shared/`; keep it empty so cross-feature "shared" code does
-# not grow back.
+# not grow back. `features/plan/` and `features/wealth/` were also folded
+# back into FinanceOS UI; keep those top-level pseudo-features empty too.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -39,13 +40,24 @@ def feature_for_path(path):
     return rel.parts[0] if rel.parts else None
 
 hits = []
-shared_root = features_root / "shared"
-for path in sorted(shared_root.rglob("*.dart")) if shared_root.exists() else []:
-    rel = path.relative_to(root)
-    hits.append(
-        f"{rel}: features/shared is retired; move domain-neutral code to core/ "
+retired_features = {
+    "shared": (
+        "features/shared is retired; move domain-neutral code to core/ "
         "or Finance-specific code to features/finance/shared/"
-    )
+    ),
+    "plan": (
+        "features/plan is retired; move Plan tab code to features/finance/ui/"
+    ),
+    "wealth": (
+        "features/wealth is retired; move Wealth tab code to "
+        "features/finance/ui/wealth/"
+    ),
+}
+for retired, message in retired_features.items():
+    retired_root = features_root / retired
+    for path in sorted(retired_root.rglob("*.dart")) if retired_root.exists() else []:
+        rel = path.relative_to(root)
+        hits.append(f"{rel}: {message}")
 
 for feature in sorted(protected):
     for path in sorted((features_root / feature).rglob("*.dart")):

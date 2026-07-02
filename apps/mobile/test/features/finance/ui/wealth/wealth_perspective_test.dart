@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/ui/wealth/wealth_perspective.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/wealth/domain/wealth_perspective.dart';
 
 Money _cny(String amount) => Money(Decimal.parse(amount), 'CNY');
 

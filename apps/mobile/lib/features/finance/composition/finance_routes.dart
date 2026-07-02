@@ -55,8 +55,8 @@ import '../../options_income/presentation/options_trade_stats_page.dart'
     deferred as options_stats_lib;
 import '../../options_income/presentation/wheel_lifecycle_page.dart';
 import '../../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
-import '../../wealth/ui/wealth_hub_page.dart';
 import '../ui/plan_hub_page.dart';
+import '../ui/wealth/wealth_hub_page.dart';
 import 'finance_domain_shell.dart';
 import 'finance_route_paths.dart';
 

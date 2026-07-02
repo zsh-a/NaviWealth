@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
-import '../../../core/format/providers.dart';
-import '../../../core/shell/shell_chrome.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../home/data/dashboard_providers.dart';
+import '../../../../core/format/providers.dart';
+import '../../../../core/shell/shell_chrome.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../home/data/dashboard_providers.dart';
+import '../../composition/finance_route_paths.dart';
 import 'wealth_action_panel.dart';
 import 'wealth_perspective_section.dart';
 

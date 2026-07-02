@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../domain/values/money.dart';
-import '../../home/domain/dashboard_models.dart';
+import '../../../../domain/values/money.dart';
+import '../../../home/domain/dashboard_models.dart';
 
 /// Dimensions the Wealth tab can group net-worth holdings under.
 ///

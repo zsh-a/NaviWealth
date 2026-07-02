@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/format/formatters.dart';
-import '../../../core/format/providers.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../home/data/dashboard_providers.dart';
-import '../../home/domain/dashboard_models.dart';
-import '../../home/ui/asset_category_visuals.dart';
-import '../domain/wealth_perspective.dart';
+import '../../../../core/format/formatters.dart';
+import '../../../../core/format/providers.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../home/data/dashboard_providers.dart';
+import '../../../home/domain/dashboard_models.dart';
+import '../../../home/ui/asset_category_visuals.dart';
+import 'wealth_perspective.dart';
 
 /// User's currently selected perspective on the Wealth allocation
 /// section. Stored as a [StateProvider] so the segmented control state

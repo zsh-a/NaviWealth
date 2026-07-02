@@ -500,7 +500,7 @@ void main() {
           text,
           contains('历史 `features/me/`、`features/more/`、`features/portfolio/`'),
         );
-        expect(text, contains('features/wealth/'));
+        expect(text, contains('features/finance/ui/wealth/'));
         expect(text, contains('Plan hub'));
         expect(text, isNot(contains('当前目录为空')));
         expect(text, isNot(contains('作为 `assets/` 的薄包装存在')));

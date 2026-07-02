@@ -56,6 +56,7 @@ import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
+import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/fire/domain/fire_goal.dart';
@@ -69,7 +70,6 @@ import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/features/rebalance/ui/rebalance_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
-import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

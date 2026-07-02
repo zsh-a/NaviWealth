@@ -68,7 +68,7 @@
 | N-1 | AI runtime polish | ✅ 已落地 (2026-05-24):`ToolDescriptor` 4 个新回归测试 + LLM profile model hint 引用 `kDefaultDeviceModel` 常量 | recent commits db1d472 / a5fc6e3 |
 | N-2 | E2E sync 5 case 补齐 | ✅ 已落地 (2026-05-24):补足 phase1 P1-G 缺的 E2E-3 / E2E-4 / E2E-5 | `apps/mobile/test/e2e/sync_e2e_test.dart` |
 | N-3 | 测试覆盖率提升 | ✅ 已落地 (2026-05-24):home/activity 空白补齐 — `currency_mismatch_banner` (3) + `ai_insight_feed` (3) + `activity_timeline_preview` (3) + `home_greeting_header` (4) + `activity_feed_filter_sheet` (4) + `activity_page_kind_filter` (3),共 20 个新 widget test;`flutter test test/features/{home,activity}/` 全绿(47/47)。 | [phase1 P1-H](./roadmap-phase1.md) |
-| N-4 | Wealth tab "多视角聚合" 重设计 | ✅ 已落地 (2026-05-24):`features/wealth/domain/wealth_perspective.dart` — `WealthPerspective{byCategory, byCurrency}` + `buildWealthAggregation` pure 聚合器(liability 排除 / 同币种合并 / 大小写归一 / 排序);UI 段控 `WealthPerspectiveSection` + `wealthPerspectiveProvider` 接到 `WealthHubPage`,新 l10n 6 个键 EN/ZH。"by account" 维度由 `AccountsGroupedSections` 在同一页继续承担,不重复。10 个测试(7 聚合 + 3 widget)。 | [phase1 P1-D 注记](./roadmap-phase1.md#状态注记2026-05-24) |
+| N-4 | Wealth tab "多视角聚合" 重设计 | ✅ 已落地 (2026-05-24):`features/finance/ui/wealth/wealth_perspective.dart` — `WealthPerspective{byCategory, byCurrency}` + `buildWealthAggregation` pure 聚合器(liability 排除 / 同币种合并 / 大小写归一 / 排序);UI 段控 `WealthPerspectiveSection` + `wealthPerspectiveProvider` 接到 `WealthHubPage`,新 l10n 6 个键 EN/ZH。"by account" 维度由 `AccountsGroupedSections` 在同一页继续承担,不重复。10 个测试(7 聚合 + 3 widget)。 | [phase1 P1-D 注记](./roadmap-phase1.md#状态注记2026-05-24) |
 
 > 注 — 以下 phase1 条目在最近的工作中已完成或作废,不再开放:
 > - ✅ **P1-A** (`me/`/`more/` 清理) — IA contract migration (commits aacded4 / 3e37cfc)
