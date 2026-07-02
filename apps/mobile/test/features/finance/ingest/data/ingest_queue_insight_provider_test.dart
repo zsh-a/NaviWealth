@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_insights_provider.dart';
+import 'package:naviwealth/features/finance/home/domain/insight_models.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_queue_insight_provider.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
-import 'package:naviwealth/features/home/data/dashboard_insights_provider.dart';
-import 'package:naviwealth/features/home/domain/insight_models.dart';
 
 IngestDraft _draft(String id, DedupVerdict verdict) => IngestDraft(
   draftId: id,

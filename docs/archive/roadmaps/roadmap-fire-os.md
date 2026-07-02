@@ -67,7 +67,7 @@ NaviWealth 已具备 FIRE OS 的底层条件：
 | 资产与账户 | `assets`、`accounts`、`liabilities` |
 | 经常性交易 | `recurring_transactions` |
 | FIRE 雏形 | `apps/mobile/lib/features/finance/fire/` |
-| 仪表盘状态 | `features/home/data/dashboard_providers.dart` |
+| 仪表盘状态 | `features/finance/home/data/dashboard_providers.dart` |
 | 现金流聚合 | `features/finance/cashflow/` |
 | 投资持仓 | `features/finance/investment/data/providers.dart` |
 | 本地 AI runtime | `core/ai/runtime/device/` |
@@ -428,7 +428,7 @@ fire_bucket_rules (
 | FIRE-OS-1.2 | 新增 `FireStateService`，接 dashboard snapshot + cashflow | `features/finance/fire/domain/`, `features/finance/fire/data/` |
 | FIRE-OS-1.3 | 计算提取率、年度支出、现金桶覆盖 | `features/finance/fire/domain/fire_state_service.dart` |
 | FIRE-OS-1.4 | FIRE 页面 Hero 从进度条升级为自由状态 | `features/finance/fire/presentation/` |
-| FIRE-OS-1.5 | Home insight 接入高提取率 / 现金桶不足 | `features/home/data/dashboard_insights_provider.dart` |
+| FIRE-OS-1.5 | Home insight 接入高提取率 / 现金桶不足 | `features/finance/home/data/dashboard_insights_provider.dart` |
 
 验收：
 

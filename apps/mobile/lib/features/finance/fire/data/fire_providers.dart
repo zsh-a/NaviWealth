@@ -5,8 +5,8 @@ import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
 import '../domain/fire_bucket_allocator.dart';
 import '../domain/fire_calculator.dart';

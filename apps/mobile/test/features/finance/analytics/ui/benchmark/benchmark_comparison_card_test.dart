@@ -8,7 +8,7 @@ import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_p
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/finance/analytics/ui/benchmark/benchmark_comparison_card.dart';
-import 'package:naviwealth/features/home/domain/dashboard_time_range.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 class _StubBenchmarkSource implements BenchmarkHistorySource {

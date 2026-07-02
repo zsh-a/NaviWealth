@@ -5,8 +5,8 @@ import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_hover_overlay.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/fire_providers.dart';

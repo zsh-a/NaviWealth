@@ -71,7 +71,7 @@
 
 ## P1-B · Dashboard Insights 扩展
 
-**现状**：`lib/features/home/data/dashboard_insights_provider.dart:41-44` 有明确 TODO，目前只展示 FIRE 一条洞察。
+**现状**：`lib/features/finance/home/data/dashboard_insights_provider.dart:41-44` 有明确 TODO，目前只展示 FIRE 一条洞察。
 
 **目标**：仪表盘 InsightStrip 在数据齐备时展示 1–4 条洞察，覆盖以下 4 类：
 
@@ -103,12 +103,12 @@
 - i18n：所有文案通过 `app_en.arb` / `app_zh.arb` 走，不留硬编码字符串。
 
 ### 文件改动
-- 修改：`lib/features/home/data/dashboard_insights_provider.dart`
+- 修改：`lib/features/finance/home/data/dashboard_insights_provider.dart`
 - 新增：`lib/features/rebalance/data/rebalance_drift_insight_provider.dart`
 - 新增：`lib/features/finance/assets/data/deposit_maturity_insight_provider.dart`
 - 新增：`lib/features/finance/expense/data/expense_anomaly_insight_provider.dart`
 - 修改：`lib/l10n/app_en.arb`、`app_zh.arb`（新增 ~12 条 key）
-- 修改：`lib/features/home/ui/insight_strip.dart`（如果需要点击跳转支持）
+- 修改：`lib/features/finance/home/ui/insight_strip.dart`（如果需要点击跳转支持）
 
 ### 验收
 - 4 类 insight 在有数据时正确展示；无数据时静默；
@@ -317,7 +317,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 
 按 codecov 60%/70% 阈值，原始空白项当前状态如下：
 
-- `features/home/`：已有 domain/data/widget 覆盖，包括 greeting、allocation、
+- `features/finance/home/`：已有 domain/data/widget 覆盖，包括 greeting、allocation、
   insight feed、timeline preview、currency mismatch 和 dashboard insights。
 - `features/activity/`：已有 query、feed、kind filter、filter sheet 和 detail
   page 覆盖；后续可随分页/更多事件类型继续补测试。

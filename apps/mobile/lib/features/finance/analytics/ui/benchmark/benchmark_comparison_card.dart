@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/home/domain/dashboard_time_range.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../data/benchmark/benchmark_providers.dart';

@@ -222,7 +222,7 @@ label 影响。**Privacy policy 永远优先于 source。**
 
 | 层级 | 触发者 | 形态 | 落地 |
 |------|--------|------|------|
-| **Ambient** | 系统/端侧 detector | Insight 卡片（展开/问一下/忽略）| `features/home/ui/ai_insight_feed.dart` |
+| **Ambient** | 系统/端侧 detector | Insight 卡片（展开/问一下/忽略）| `features/finance/home/ui/ai_insight_feed.dart` |
 | **Contextual** | 用户在某对象上 | Capsule → inline bottom sheet | `AiObjectCapsule` + `showAiBottomSheet` |
 | **Global** | 跨领域复杂任务 | 命令栏 overlay（**非** `/ai` tab）| `core/command_palette/` |
 

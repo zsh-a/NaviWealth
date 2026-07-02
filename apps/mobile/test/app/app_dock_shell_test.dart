@@ -24,9 +24,9 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
+import 'package:naviwealth/features/finance/home/home_page.dart';
 import 'package:naviwealth/features/health/composition/health_domain_shell.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
-import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

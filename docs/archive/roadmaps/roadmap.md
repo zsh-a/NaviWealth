@@ -51,7 +51,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
   后续重点是提升信息密度和目标驱动编排，而不是恢复历史占位模块。
 
 ### 1.2 仪表盘洞察补全
-- `lib/features/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。
+- `lib/features/finance/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。
 - 后续若接入真正的 AI 周报，应作为独立 device-only insight producer 落地，并继续复用 `InsightKind` / `InsightItem` / 本地化字符串约定。
 
 ### 1.3 端侧 AI 工具对齐

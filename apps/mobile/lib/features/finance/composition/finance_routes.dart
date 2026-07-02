@@ -23,6 +23,7 @@ import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_report_page.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_page.dart'
     deferred as fire_lib;
+import 'package:naviwealth/features/finance/home/home_page.dart';
 import 'package:naviwealth/features/finance/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import 'package:naviwealth/features/finance/investment/presentation/dca_simulator_page.dart'
@@ -48,7 +49,6 @@ import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../core/shell/page_transitions.dart';
 import '../../../core/shell/route_error_page.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../home/home_page.dart';
 import '../accounts/account_form_page.dart';
 import '../accounts/accounts_page.dart';
 import '../accounts/journal_entry_list_page.dart';

@@ -4,10 +4,10 @@ import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_time_range.dart';
-import 'package:naviwealth/features/home/domain/dashboard_trend_builder.dart';
 
 import '../../domain/benchmark/benchmark_comparison.dart';
 import '../../domain/benchmark/benchmark_index.dart';

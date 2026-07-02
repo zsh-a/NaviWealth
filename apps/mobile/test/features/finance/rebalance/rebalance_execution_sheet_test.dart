@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
 import 'package:naviwealth/features/finance/rebalance/application/rebalance_trade_entry_prefills.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
 
 void main() {

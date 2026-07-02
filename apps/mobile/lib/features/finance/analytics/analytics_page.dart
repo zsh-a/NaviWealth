@@ -11,7 +11,7 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator
 import 'package:naviwealth/features/finance/cashflow/domain/home_cash_flow_metrics.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_state.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'domain/equity_classification.dart';
 import 'ui/benchmark/benchmark_comparison_card.dart';

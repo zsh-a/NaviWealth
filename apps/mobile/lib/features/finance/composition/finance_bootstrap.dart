@@ -11,6 +11,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show Ref;
 import 'package:flutter_riverpod/misc.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
+import 'package:naviwealth/features/finance/home/composition/finance_chat_rail_provider.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/composition/chat_rail_provider.dart';
@@ -19,7 +20,6 @@ import '../../../core/ai/composition/portfolio_snapshot.dart';
 import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/providers.dart' as auth;
 import '../../../core/command_palette/local_query_result_pane_provider.dart';
-import '../../home/composition/finance_chat_rail_provider.dart';
 import '../ai_tools/drift_query_plan_executor.dart';
 import '../command_palette/finance_ask_ai_result_pane.dart';
 import '../command_palette/finance_query_plan_executor_provider.dart';

@@ -5,7 +5,7 @@ import 'package:naviwealth/features/finance/fire/domain/fire_bucket.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_bucket_allocator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
 CategoryItem _item(String id, String amount, {String currency = 'CNY'}) {
   return CategoryItem(

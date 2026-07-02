@@ -77,7 +77,7 @@ deleted_at_hlc TEXT;
 | MT-2.1.M2.1 | P0 | L | RRULE 子集 parser + expander（FREQ/INTERVAL/BYMONTHDAY） | — | `features/budget/domain/recurring/` |
 | MT-2.1.M2.2 | P0 | M | RecurringScheduler（前台触发，无后台任务） | MT-2.1.M2.1 | `features/budget/domain/recurring/scheduler.dart` |
 | MT-2.1.M2.3 | P1 | M | UI：计划交易 CRUD 页（频率 picker + 模板复用过往交易） | MT-2.1.M2.2 | `features/budget/ui/recurring_*` |
-| MT-2.1.M2.4 | P1 | M | Dashboard 卡片：本月预算进度 + 超支预警 | MT-2.1.M1.5 | `features/home/`, `features/budget/ui/` |
+| MT-2.1.M2.4 | P1 | M | Dashboard 卡片：本月预算进度 + 超支预警 | MT-2.1.M1.5 | `features/finance/home/`, `features/budget/ui/` |
 | MT-2.1.M2.5 | P1 | M | "下个月将到期"列表（订阅 / 还款 / 定投预演） | MT-2.1.M2.2 | `features/budget/ui/upcoming_page.dart` |
 | MT-2.1.M2.6 | P2 | S | 阈值偏好（80%/100% 默认 + 分类粒度覆写） | MT-2.1.M2.4 | `features/budget/data/` |
 | MT-2.1.M2.7 | P0 | M | RRULE expander 单测 ≥ 30 用例（含 DST、闰年、月末日 31 → 30/2 月） | MT-2.1.M2.1 | `test/features/budget/recurring/` |

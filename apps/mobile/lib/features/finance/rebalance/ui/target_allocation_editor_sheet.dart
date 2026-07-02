@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 
 import '../../../../core/forms/form_dirty_guard.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../home/data/dashboard_providers.dart';
-import '../../../home/domain/dashboard_models.dart';
-import '../../../home/ui/asset_category_visuals.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/rebalance_models.dart';
 import 'deviation_bar.dart';

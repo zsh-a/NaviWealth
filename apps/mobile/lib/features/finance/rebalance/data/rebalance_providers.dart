@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/preferences/theme_preferences.dart';
-import '../../../home/data/dashboard_providers.dart';
 import '../domain/allocation_schemes.dart';
 import '../domain/rebalance_engine.dart';
 import '../domain/rebalance_models.dart';

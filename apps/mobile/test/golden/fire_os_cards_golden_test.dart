@@ -13,8 +13,8 @@ import 'package:naviwealth/features/finance/fire/domain/fire_stress_test.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_buckets_card.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_state_hero_card.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_stress_tests_card.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
 import '_golden_setup.dart';
 

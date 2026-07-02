@@ -118,7 +118,7 @@ void main() {
     expect(contextualCapsule, contains('AiContextChipScope.contextMapOf'));
 
     final ambientFeed = File(
-      'lib/features/home/ui/ai_insight_feed.dart',
+      'lib/features/finance/home/ui/ai_insight_feed.dart',
     ).readAsStringSync();
     expect(ambientFeed, contains('class AiInsightFeed'));
     expect(ambientFeed, contains('AiObjectCapsule('));

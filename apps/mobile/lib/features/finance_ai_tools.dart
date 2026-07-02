@@ -29,6 +29,7 @@ import 'finance/fire/ai_tools/get_fire_stress_tests_tool.dart';
 import 'finance/fire/ai_tools/propose_fire_bucket_rule_tool.dart';
 import 'finance/fire/ai_tools/propose_fire_plan_update_tool.dart';
 import 'finance/fire/ai_tools/simulate_fire_plan_tool.dart';
+import 'finance/home/ai_tools/get_net_worth_summary_tool.dart';
 import 'finance/investment/ai_tools/breakdown_tools.dart';
 import 'finance/investment/ai_tools/get_asset_allocation_tool.dart';
 import 'finance/investment/ai_tools/get_holdings_tool.dart';
@@ -42,7 +43,6 @@ import 'finance/options_income/ai_tools/get_options_strategy_profile_tool.dart';
 import 'finance/options_income/ai_tools/get_wheel_lifecycle_tool.dart';
 import 'finance/options_income/ai_tools/propose_options_journal_entry_tool.dart';
 import 'finance/options_income/ai_tools/propose_options_profile_update_tool.dart';
-import 'home/ai_tools/get_net_worth_summary_tool.dart';
 
 /// FinanceOS device tools and policy metadata. Adding a Finance tool means
 /// adding one registration here; the runtime tool list and descriptor map

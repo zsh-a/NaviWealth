@@ -55,15 +55,15 @@ apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	(
 apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	((r.params.expenseShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
 apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	Decimal.parse(amount.toStringAsFixed(2)),	decimal-rounding-before-currency-formatter
 apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	((r.params.fxShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
-apps/mobile/lib/features/home/ui/ai_insight_feed.dart	item.driftPct?.toStringAsFixed(2) ?? '',	percent-display
-apps/mobile/lib/features/home/ui/ai_insight_feed.dart	item.anomalyPct?.toStringAsFixed(2) ?? '',	percent-display
-apps/mobile/lib/features/home/ui/allocation_card.dart	: '${(percent! * 100).toStringAsFixed(1)}%';	percent-display
-apps/mobile/lib/features/home/ui/allocation_detail_panel.dart	'${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',	percent-display
-apps/mobile/lib/features/home/ui/allocation_summary.dart	final pct = (segment.ratio * 100).clamp(0, 100).toStringAsFixed(1);	percent-display
-apps/mobile/lib/features/home/ui/home_greeting_header.dart	final absPct = (pct.abs() * 100).toStringAsFixed(1);	percent-display
-apps/mobile/lib/features/home/ui/insight_feed_strings.dart	((item.fireOsWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/home/ui/insight_feed_strings.dart	((item.fireOsSafeWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/home/ui/insight_feed_strings.dart	(item.fireOsCashBucketMonths ?? 0).toStringAsFixed(1),	duration-display
+apps/mobile/lib/features/finance/home/ui/ai_insight_feed.dart	item.driftPct?.toStringAsFixed(2) ?? '',	percent-display
+apps/mobile/lib/features/finance/home/ui/ai_insight_feed.dart	item.anomalyPct?.toStringAsFixed(2) ?? '',	percent-display
+apps/mobile/lib/features/finance/home/ui/allocation_card.dart	: '${(percent! * 100).toStringAsFixed(1)}%';	percent-display
+apps/mobile/lib/features/finance/home/ui/allocation_detail_panel.dart	'${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',	percent-display
+apps/mobile/lib/features/finance/home/ui/allocation_summary.dart	final pct = (segment.ratio * 100).clamp(0, 100).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/finance/home/ui/home_greeting_header.dart	final absPct = (pct.abs() * 100).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/finance/home/ui/insight_feed_strings.dart	((item.fireOsWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/home/ui/insight_feed_strings.dart	((item.fireOsSafeWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/home/ui/insight_feed_strings.dart	(item.fireOsCashBucketMonths ?? 0).toStringAsFixed(1),	duration-display
 apps/mobile/lib/features/finance/investment/presentation/dca_simulator_page.dart	return '${value.toStringAsFixed(1)}%';	percent-display
 apps/mobile/lib/features/finance/options_income/domain/services/opportunity_scorer.dart	final hundred = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/finance/options_income/presentation/income_planner_page.dart	final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display

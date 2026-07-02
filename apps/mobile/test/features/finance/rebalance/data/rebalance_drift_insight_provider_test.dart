@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_drift_insight_provider.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

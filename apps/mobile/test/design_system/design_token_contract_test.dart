@@ -103,7 +103,7 @@ void main() {
           Directory('${appRoot.path}/lib/features/knowledge'),
           Directory('${appRoot.path}/lib/features/finance/cashflow'),
           Directory('${appRoot.path}/lib/features/ai_chat'),
-          Directory('${appRoot.path}/lib/features/home'),
+          Directory('${appRoot.path}/lib/features/finance/home'),
           Directory('${appRoot.path}/lib/features/finance/activity'),
           Directory('${appRoot.path}/lib/features/finance/rebalance'),
           Directory('${appRoot.path}/lib/features/finance/options_income'),

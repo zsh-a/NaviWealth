@@ -58,12 +58,12 @@ Flutter adaptation rules:
 
 Cross-domain Home / LifeOS dashboard:
 
-- `apps/mobile/lib/features/home/home_page.dart`
-- `apps/mobile/lib/features/home/ui/home_greeting_header.dart`
-- `apps/mobile/lib/features/home/ui/ai_insight_feed.dart`
-- `apps/mobile/lib/features/home/ui/activity_timeline_preview.dart`
-- `apps/mobile/lib/features/home/ui/allocation_summary.dart`
-- `apps/mobile/lib/features/home/ui/trend_card.dart`
+- `apps/mobile/lib/features/finance/home/home_page.dart`
+- `apps/mobile/lib/features/finance/home/ui/home_greeting_header.dart`
+- `apps/mobile/lib/features/finance/home/ui/ai_insight_feed.dart`
+- `apps/mobile/lib/features/finance/home/ui/activity_timeline_preview.dart`
+- `apps/mobile/lib/features/finance/home/ui/allocation_summary.dart`
+- `apps/mobile/lib/features/finance/home/ui/trend_card.dart`
 
 FinanceOS / Wealth:
 
@@ -275,7 +275,7 @@ Target changes:
 
 Format:
 
-- `cd apps/mobile && rtk dart format lib/design_system lib/features/home lib/features/finance/ui/wealth lib/features/health lib/features/knowledge`
+- `cd apps/mobile && rtk dart format lib/design_system lib/features/finance/home lib/features/finance/ui/wealth lib/features/health lib/features/knowledge`
 
 Static analysis:
 

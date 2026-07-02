@@ -7,10 +7,10 @@ import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 
 import 'support/integration_env.dart';
 

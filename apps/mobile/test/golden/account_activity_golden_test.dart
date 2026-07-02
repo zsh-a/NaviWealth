@@ -17,9 +17,9 @@ import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 
 import '_golden_setup.dart';
 

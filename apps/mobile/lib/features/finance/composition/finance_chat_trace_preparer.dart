@@ -19,6 +19,7 @@ import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_projection.dart'
     show FireScenarioTier;
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/contracts/contracts.dart';
@@ -26,7 +27,6 @@ import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../ai_chat/state/ai_context.dart';
-import '../../home/data/dashboard_providers.dart';
 import '../ai_tools/query_plan/finance_query_plan.dart';
 import '../ai_tools/query_plan/nl_to_query_plan.dart';
 

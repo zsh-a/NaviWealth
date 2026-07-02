@@ -21,11 +21,11 @@ import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_projection.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_page.dart';
 import 'package:naviwealth/features/finance/fire/presentation/fire_progress_gauge.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -4,7 +4,7 @@ import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
 CashFlowBucket _bucket({
   required String key,

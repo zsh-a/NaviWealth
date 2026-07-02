@@ -16,9 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/assets/data/deposit_maturity_insight_provider.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight_provider.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
-import '../../home/data/dashboard_providers.dart';
 
 final financeAiContextSummaryProvider = Provider<AiContextSummaryBuilder>((
   ref,

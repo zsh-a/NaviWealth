@@ -6,7 +6,7 @@ import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/home/data/dashboard_providers.dart';
 
 const double kExpenseAnomalyThreshold = 0.25;
 
