@@ -27,7 +27,9 @@ import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
+import 'package:naviwealth/core/shell/entity_route_resolver.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -217,6 +219,38 @@ void main() {
         _healthPack,
       ], l10n).map((entry) => entry.id),
       ['finance', 'health'],
+    );
+  });
+
+  test('entity route resolver maps shell entity refs at the app boundary', () {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final c = _container(db: db);
+    addTearDown(c.dispose);
+
+    final resolver = c.read(entityRouteResolverProvider);
+
+    expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: EntityRouteTables.assets,
+          entityId: 'asset-1',
+        ),
+      ),
+      FinanceRoutes.wealthAsset('asset-1'),
+    );
+    expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: EntityRouteTables.journalEntries,
+          entityId: 'entry-1',
+        ),
+      ),
+      FinanceRoutes.activityEntry('entry-1'),
+    );
+    expect(
+      resolver(const EntityRouteRef(entityTable: 'unknown', entityId: 'id-1')),
+      isNull,
     );
   });
 

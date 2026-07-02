@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/route_paths.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../shell/settings_route_paths.dart';
 import '../shortcuts/shortcut_help_dialog.dart';
 import 'command_palette_entry.dart';
 
@@ -22,6 +22,9 @@ import 'command_palette_entry.dart';
 /// navigation so adding a new domain does not require editing this file.
 List<CommandPaletteEntry> defaultCommandPaletteEntries(
   AppLocalizations l10n, {
+  String homePath = '/',
+  String settingsPath = SettingsRoutes.root,
+  String aiHistoryPath = SettingsRoutes.aiHistory,
   VoidCallback? onToggleTheme,
   VoidCallback? onToggleColorMode,
   VoidCallback? onToggleLanguage,
@@ -35,13 +38,13 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       label: l10n.commandPaletteGoOverview,
       icon: FLucideIcons.layoutDashboard,
       keywords: <String>[
-        '/',
+        homePath,
         'today',
         'overview',
         'home',
         l10n.commandPaletteGoOverview,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.home),
+      run: (BuildContext ctx) => ctx.go(homePath),
     ),
     ...domainEntries,
     CommandPaletteEntry(
@@ -49,11 +52,11 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       label: l10n.commandPaletteGoSettings,
       icon: FLucideIcons.settings,
       keywords: <String>[
-        AppRoutes.settings,
+        settingsPath,
         'settings',
         l10n.commandPaletteGoSettings,
       ],
-      run: (BuildContext ctx) => ctx.push(AppRoutes.settings),
+      run: (BuildContext ctx) => ctx.push(settingsPath),
     ),
 
     // ── Cross-domain AI ──
@@ -76,13 +79,13 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       label: l10n.commandPaletteAiHistory,
       icon: FLucideIcons.bot,
       keywords: <String>[
-        AppRoutes.settingsAiHistory,
+        aiHistoryPath,
         'ai',
         'history',
         'sessions',
         l10n.commandPaletteAiHistory,
       ],
-      run: (BuildContext ctx) => ctx.push(AppRoutes.settingsAiHistory),
+      run: (BuildContext ctx) => ctx.push(aiHistoryPath),
     ),
 
     // ── System actions ──

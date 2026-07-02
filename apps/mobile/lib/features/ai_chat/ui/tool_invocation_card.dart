@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/evidence_anchor.dart';
+import '../../../core/shell/entity_route_resolver.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
@@ -20,9 +21,14 @@ import 'tool_invocation_renderers.dart';
 /// journal_entry_id, account_id), we surface a "跳到资产" / ledger
 /// chip so the user can jump straight to the relevant detail page.
 class ToolInvocationCard extends StatefulWidget {
-  const ToolInvocationCard({super.key, required this.invocation});
+  const ToolInvocationCard({
+    super.key,
+    required this.invocation,
+    this.routeResolver,
+  });
 
   final ToolInvocation invocation;
+  final EntityRouteResolver? routeResolver;
 
   @override
   State<ToolInvocationCard> createState() => _ToolInvocationCardState();
@@ -159,20 +165,21 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   }
 
   void _navigate(BuildContext context, _Jump jump) {
-    switch (jump.kind) {
-      case _JumpKind.asset:
-        pushFromAiSurface(context, AppRoutes.wealthAsset(jump.id));
-      case _JumpKind.account:
-        pushFromAiSurface(context, AppRoutes.wealthAccount(jump.id));
-      case _JumpKind.liability:
-        pushFromAiSurface(context, AppRoutes.wealthLiability(jump.id));
-      case _JumpKind.journalEntry:
-        pushFromAiSurface(context, AppRoutes.activityEntry(jump.id));
-      case _JumpKind.tradeJournal:
-        // No per-entry detail page yet; Income Planner is the closest
-        // surface that lists the same rows. The chip still carries the
-        // id so a future detail route can swap in without reparsing.
-        pushFromAiSurface(context, AppRoutes.planIncome);
+    final location = _entityRouteResolver(context)(_routeRefFor(jump));
+    if (location == null) return;
+    pushFromAiSurface(context, location);
+  }
+
+  EntityRouteResolver _entityRouteResolver(BuildContext context) {
+    final explicit = widget.routeResolver;
+    if (explicit != null) return explicit;
+    try {
+      return ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(entityRouteResolverProvider);
+    } on Object {
+      return (_) => null;
     }
   }
 
@@ -280,6 +287,19 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       ],
     );
   }
+}
+
+EntityRouteRef _routeRefFor(_Jump jump) {
+  return EntityRouteRef(
+    entityTable: switch (jump.kind) {
+      _JumpKind.asset => EntityRouteTables.assets,
+      _JumpKind.account => EntityRouteTables.accounts,
+      _JumpKind.liability => EntityRouteTables.liabilities,
+      _JumpKind.journalEntry => EntityRouteTables.journalEntries,
+      _JumpKind.tradeJournal => EntityRouteTables.optionsTradeJournal,
+    },
+    entityId: jump.id,
+  );
 }
 
 /// Monospace block with a subtle muted fill, used for raw JSON payloads.

@@ -31,8 +31,10 @@ import '../core/auth/providers.dart' as auth_providers;
 import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
+import '../core/shell/entity_route_resolver.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
+import '../features/finance/composition/finance_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
 import 'shell_chrome.dart';
@@ -79,6 +81,7 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       );
       return domainShellSpecs(ref.watch(activeDomainPacksProvider), l10n);
     }),
+    entityRouteResolverProvider.overrideWith((_) => appEntityRouteResolver),
     auth_providers.authTokenDomainsProvider.overrideWith((ref) {
       return (ref.watch(auth_providers.domainOptInsProvider).value ??
               DomainOptIns.financeOnly)
@@ -86,6 +89,21 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     }),
     ...domainProviderOverrides(resolvedPacks),
   ];
+}
+
+String? appEntityRouteResolver(EntityRouteRef ref) {
+  return switch (ref.entityTable) {
+    EntityRouteTables.assets => FinanceRoutes.wealthAsset(ref.entityId),
+    EntityRouteTables.accounts => FinanceRoutes.wealthAccount(ref.entityId),
+    EntityRouteTables.liabilities => FinanceRoutes.wealthLiability(
+      ref.entityId,
+    ),
+    EntityRouteTables.journalEntries => FinanceRoutes.activityEntry(
+      ref.entityId,
+    ),
+    EntityRouteTables.optionsTradeJournal => FinanceRoutes.planIncome,
+    _ => null,
+  };
 }
 
 Map<String, PersistedUndoReverter> appPersistedUndoReverters(Ref ref) {

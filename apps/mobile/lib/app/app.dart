@@ -126,6 +126,9 @@ class NaviWealthApp extends ConsumerWidget {
                       invokeCtx,
                       commands: defaultCommandPaletteEntries(
                         AppLocalizations.of(invokeCtx),
+                        homePath: AppRoutes.home,
+                        settingsPath: AppRoutes.settings,
+                        aiHistoryPath: AppRoutes.settingsAiHistory,
                         onToggleTheme: () {
                           final current = ref.read(themeModeProvider);
                           final next = current == ThemeMode.dark
