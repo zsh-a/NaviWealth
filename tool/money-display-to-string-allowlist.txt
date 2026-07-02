@@ -27,34 +27,34 @@ apps/mobile/lib/features/ai_chat/ui/tool_invocation_renderers.dart	'${delta >= 0
 apps/mobile/lib/features/analytics/ui/benchmark/benchmark_comparison_content.dart	return '$sign${pct.toStringAsFixed(2)}%';	percent-display
 apps/mobile/lib/features/finance/assets/ui/manual_asset_tile.dart	.toStringAsFixed(2)	rate-percent-display
 apps/mobile/lib/features/finance/expense/ui/expense_report_sections.dart	'${(percent * 100).toStringAsFixed(1)}%',	percent-display
-apps/mobile/lib/features/fire/domain/fire_bucket_allocator.dart	: Decimal.parse(pct.clamp(0.0, 1.0).toStringAsFixed(4));	decimal-rounding
-apps/mobile/lib/features/fire/domain/fire_bucket_allocator.dart	Decimal.parse(plan.riskSettings.oneOffShockAmount.toStringAsFixed(2));	decimal-rounding
-apps/mobile/lib/features/fire/domain/fire_calculator.dart	final f = Decimal.parse(factor.toStringAsFixed(4));	decimal-rounding
-apps/mobile/lib/features/fire/domain/fire_state_service.dart	final factor = Decimal.parse(trailingScale.toStringAsFixed(4));	decimal-rounding
-apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 - pct).toStringAsFixed(4));	decimal-rounding
-apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 + pct).toStringAsFixed(4));	decimal-rounding
-apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final shock = Decimal.parse(amount.toStringAsFixed(2));	decimal-rounding
-apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 - pct).toStringAsFixed(4));	decimal-rounding-fx-shock
-apps/mobile/lib/features/fire/presentation/fire_dashboard_content.dart	'(${(s.annualReturn * 100).toStringAsFixed(1)}%)',	percent-display
-apps/mobile/lib/features/fire/presentation/fire_dashboard_content.dart	(scenario.annualReturn * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_dashboard_content.dart	return Decimal.parse(value.toStringAsFixed(2));	decimal-rounding
-apps/mobile/lib/features/fire/presentation/fire_goal_form.dart	(_inflation * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_goal_form.dart	'${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',	percent-display
-apps/mobile/lib/features/fire/presentation/fire_review_card.dart	return l10n.fireOsReviewDiffWr(sign, pp.abs().toStringAsFixed(2));	percentage-point-display
-apps/mobile/lib/features/fire/presentation/fire_review_card.dart	((f.pct ?? 0) * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_review_card.dart	((f.pct ?? 0) * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_simulations_card.dart	ppDelta.abs().toStringAsFixed(2),	percentage-point-display
-apps/mobile/lib/features/fire/presentation/fire_simulations_card.dart	delta.abs().toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	final swrPct = (state.plan.safeWithdrawalRate * 100).toStringAsFixed(1);	percent-display
-apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	(state.withdrawalRate * 100).toStringAsFixed(2),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	state.cashBucketMonths.toStringAsFixed(1),	duration-display
-apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	(pct * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	(result.withdrawalRateAfter * 100).toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	result.cashBucketMonthsAfter.toStringAsFixed(1),	duration-display
-apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	((r.params.drawdownPct ?? 0) * 100).toStringAsFixed(0),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	((r.params.expenseShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
-apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	Decimal.parse(amount.toStringAsFixed(2)),	decimal-rounding-before-currency-formatter
-apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	((r.params.fxShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
+apps/mobile/lib/features/finance/fire/domain/fire_bucket_allocator.dart	: Decimal.parse(pct.clamp(0.0, 1.0).toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/finance/fire/domain/fire_bucket_allocator.dart	Decimal.parse(plan.riskSettings.oneOffShockAmount.toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/features/finance/fire/domain/fire_calculator.dart	final f = Decimal.parse(factor.toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/finance/fire/domain/fire_state_service.dart	final factor = Decimal.parse(trailingScale.toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/finance/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 - pct).toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/finance/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 + pct).toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/finance/fire/domain/fire_stress_test_engine.dart	final shock = Decimal.parse(amount.toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/features/finance/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 - pct).toStringAsFixed(4));	decimal-rounding-fx-shock
+apps/mobile/lib/features/finance/fire/presentation/fire_dashboard_content.dart	'(${(s.annualReturn * 100).toStringAsFixed(1)}%)',	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_dashboard_content.dart	(scenario.annualReturn * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_dashboard_content.dart	return Decimal.parse(value.toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/features/finance/fire/presentation/fire_goal_form.dart	(_inflation * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_goal_form.dart	'${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_review_card.dart	return l10n.fireOsReviewDiffWr(sign, pp.abs().toStringAsFixed(2));	percentage-point-display
+apps/mobile/lib/features/finance/fire/presentation/fire_review_card.dart	((f.pct ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_review_card.dart	((f.pct ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_simulations_card.dart	ppDelta.abs().toStringAsFixed(2),	percentage-point-display
+apps/mobile/lib/features/finance/fire/presentation/fire_simulations_card.dart	delta.abs().toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_state_hero_card.dart	final swrPct = (state.plan.safeWithdrawalRate * 100).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_state_hero_card.dart	(state.withdrawalRate * 100).toStringAsFixed(2),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_state_hero_card.dart	state.cashBucketMonths.toStringAsFixed(1),	duration-display
+apps/mobile/lib/features/finance/fire/presentation/fire_state_hero_card.dart	(pct * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	(result.withdrawalRateAfter * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	result.cashBucketMonthsAfter.toStringAsFixed(1),	duration-display
+apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	((r.params.drawdownPct ?? 0) * 100).toStringAsFixed(0),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	((r.params.expenseShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
+apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	Decimal.parse(amount.toStringAsFixed(2)),	decimal-rounding-before-currency-formatter
+apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	((r.params.fxShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
 apps/mobile/lib/features/home/ui/ai_insight_feed.dart	item.driftPct?.toStringAsFixed(2) ?? '',	percent-display
 apps/mobile/lib/features/home/ui/ai_insight_feed.dart	item.anomalyPct?.toStringAsFixed(2) ?? '',	percent-display
 apps/mobile/lib/features/home/ui/allocation_card.dart	: '${(percent! * 100).toStringAsFixed(1)}%';	percent-display
@@ -104,8 +104,8 @@ apps/mobile/lib/core/format/formatters.dart	Decimal.parse(v.toStringAsFixed(scal
 apps/mobile/lib/features/health/ui/health_today_page.dart	? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(l10n, m.capturedAt)}'	distance-display
 apps/mobile/lib/features/health/agents/briefing_synthesizer.dart	return 'HRV ${value.toStringAsFixed(0)}ms';	hrv-display
 apps/mobile/lib/features/health/agents/weekly_summary_agent.dart	if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';	compact-steps-label
-apps/mobile/lib/features/fire/ai_tools/propose_fire_bucket_rule_tool.dart	final pctPart = pct != null ? '(${(pct * 100).toStringAsFixed(0)}%)' : '';	percent-display
-apps/mobile/lib/features/fire/ai_tools/simulate_fire_plan_tool.dart	if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));	decimal-rounding-before-currency-formatter
+apps/mobile/lib/features/finance/fire/ai_tools/propose_fire_bucket_rule_tool.dart	final pctPart = pct != null ? '(${(pct * 100).toStringAsFixed(0)}%)' : '';	percent-display
+apps/mobile/lib/features/finance/fire/ai_tools/simulate_fire_plan_tool.dart	if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));	decimal-rounding-before-currency-formatter
 apps/mobile/lib/features/knowledge/ui/knowledge_review_page.dart	widget.assumption.confidence.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	'${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	value: a.confidence.toStringAsFixed(2),	confidence-score

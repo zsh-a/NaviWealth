@@ -24,6 +24,10 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_bucket_rules_preferences.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_bucket.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart'
@@ -44,10 +48,6 @@ import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/write/drift_ai_touched_store.dart';
 import '../../../core/ai/write/providers.dart';
 import '../../../core/auth/current_user.dart';
-import '../../fire/data/fire_bucket_rules_preferences.dart';
-import '../../fire/data/fire_providers.dart';
-import '../../fire/domain/fire_bucket.dart';
-import '../../fire/domain/fire_plan.dart';
 
 export 'finance_proposal_kinds.dart' show kFinanceProposalAppliedKinds;
 

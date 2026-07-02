@@ -8,12 +8,12 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator
 import 'package:naviwealth/features/finance/cashflow/domain/home_cash_flow_metrics.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight_provider.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_bucket.dart';
 
 import '../../../core/shell/settings_route_paths.dart';
 import '../../finance/ingest/data/ingest_queue_insight_provider.dart';
 import '../../finance/rebalance/data/rebalance_drift_insight_provider.dart';
-import '../../fire/data/fire_providers.dart';
-import '../../fire/domain/fire_bucket.dart';
 import '../domain/dashboard_models.dart';
 import '../domain/insight_models.dart';
 import 'dismissed_insights_store.dart';

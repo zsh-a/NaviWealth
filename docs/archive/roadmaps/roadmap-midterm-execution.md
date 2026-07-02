@@ -87,7 +87,7 @@ deleted_at_hlc TEXT;
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
 | MT-2.1.M3.1 | P0 | L | 现金流瀑布图 widget（季度/年度切换） | MT-2.1.M2.* | `design_system/charts/cashflow_waterfall.dart` |
-| MT-2.1.M3.2 | P1 | M | FIRE 模块拉取计划交易作为蒙特卡洛骨架 | MT-2.1.M2.2 | `features/fire/` |
+| MT-2.1.M3.2 | P1 | M | FIRE 模块拉取计划交易作为蒙特卡洛骨架 | MT-2.1.M2.2 | `features/finance/fire/` |
 | MT-2.1.M3.3 | P1 | M | 性能：12 个月 RRULE 展开 < 200ms 基准 + bench 测试 | MT-2.1.M2.1 | `test/features/budget/perf/` |
 | MT-2.1.M3.4 | P2 | S | 文档：`features/budget/README.md` | MT-2.1.M3.* | — |
 

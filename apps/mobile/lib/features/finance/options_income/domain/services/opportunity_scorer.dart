@@ -11,7 +11,7 @@ import '../options_strategy_profile.dart';
 /// Pure-Dart scorer for `OptionContract → OptionsOpportunity`.
 ///
 /// Form: nilpotent, no IO, replayable. Mirrors the shape of the FIRE engine
-/// in `lib/features/fire/domain/`. Hard filters reject; the soft score is a
+/// in `lib/features/finance/fire/domain/`. Hard filters reject; the soft score is a
 /// weighted linear combination of normalised sub-scores per
 /// `docs/domains/options-income.md` §7.
 class OpportunityScorer {

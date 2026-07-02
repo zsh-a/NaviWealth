@@ -107,7 +107,7 @@ void main() {
           Directory('${appRoot.path}/lib/features/finance/activity'),
           Directory('${appRoot.path}/lib/features/finance/rebalance'),
           Directory('${appRoot.path}/lib/features/finance/options_income'),
-          Directory('${appRoot.path}/lib/features/fire'),
+          Directory('${appRoot.path}/lib/features/finance/fire'),
           Directory('${appRoot.path}/lib/features/analytics'),
           Directory('${appRoot.path}/lib/features/finance'),
           Directory('${appRoot.path}/lib/features/finance/ingest'),
