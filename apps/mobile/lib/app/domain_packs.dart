@@ -61,6 +61,9 @@ import '../features/knowledge/data/knowledge_decision_memory_indexer.dart';
 import '../features/knowledge/data/knowledge_object_memory_indexers.dart';
 import '../features/knowledge_ai_tools.dart';
 import '../features/options_income/data/trade_journal_memory_indexer.dart';
+import 'agent_runtime/agent_runtime_execution_overrides.dart';
+import 'agent_runtime/agent_runtime_health_overrides.dart';
+import 'agent_runtime/agent_runtime_knowledge_overrides.dart';
 import 'route_paths.dart';
 
 final DomainPack kFinancePack = DomainPack(
@@ -108,6 +111,7 @@ final DomainPack kHealthPack = DomainPack(
   memoryBootstrapBuilder: _healthMemoryBootstrap,
   backgroundBootstrapBuilder: _healthBackgroundBootstrap,
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
+  providerOverridesBuilder: agentRuntimeHealthProviderOverrides,
 );
 
 final DomainPack kKnowledgePack = DomainPack(
@@ -127,6 +131,7 @@ final DomainPack kKnowledgePack = DomainPack(
   agentBuilder: _knowledgeAgents,
   memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
+  providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
 );
 
 final DomainPack kExecutionPack = DomainPack(
@@ -146,6 +151,7 @@ final DomainPack kExecutionPack = DomainPack(
   agentBuilder: _executionAgents,
   memoryBootstrapBuilder: _executionMemoryBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
+  providerOverridesBuilder: agentRuntimeExecutionProviderOverrides,
 );
 
 /// Production inventory. `bootstrap.dart` overrides

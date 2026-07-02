@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_bridge.dart';
@@ -45,7 +46,7 @@ import 'agent_runtime_tool_plan_test_harness.dart';
 
 void main() {
   test(
-    'agentRuntimeProviderOverrides wires FRB-backed app integrations',
+    'app runtime overrides and DomainPack provider overrides wire FRB integrations',
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
@@ -78,7 +79,11 @@ void main() {
           agentRuntimeTraceRecorderProvider.overrideWithValue(
             AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
           ),
-          ...agentRuntimeProviderOverrides(),
+          ..._runtimeOverridesWithDomains([
+            kHealthPack,
+            kKnowledgePack,
+            kExecutionPack,
+          ]),
         ],
       );
       addTearDown(container.dispose);
@@ -206,7 +211,7 @@ void main() {
           agentRuntimeTraceRecorderProvider.overrideWithValue(
             AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
           ),
-          ...agentRuntimeProviderOverrides(),
+          ..._runtimeOverridesWithDomains([kHealthPack, kKnowledgePack]),
         ],
       );
       addTearDown(container.dispose);
@@ -251,7 +256,11 @@ void main() {
           agentRuntimeTraceRecorderProvider.overrideWithValue(
             AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
           ),
-          ...agentRuntimeProviderOverrides(),
+          ..._runtimeOverridesWithDomains([
+            kHealthPack,
+            kKnowledgePack,
+            kExecutionPack,
+          ]),
         ],
       );
       addTearDown(container.dispose);
@@ -325,6 +334,11 @@ AgentRuntimeCatalog _catalog() {
     promptBlocks: const <AgentRuntimePromptBlockSpec>[],
   );
 }
+
+List<Override> _runtimeOverridesWithDomains(List<DomainPack> packs) => [
+  ...agentRuntimeProviderOverrides(),
+  ...domainProviderOverrides(packs),
+];
 
 class _NoopDispatcher implements DeviceToolDispatcher {
   const _NoopDispatcher();
