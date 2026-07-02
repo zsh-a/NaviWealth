@@ -7,7 +7,7 @@ library;
 
 import 'package:go_router/go_router.dart';
 
-import '../../../app/domain_tabs_shell.dart';
+import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/knowledge_decision_detail_page.dart';
 import '../ui/knowledge_inbox_page.dart';

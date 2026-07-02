@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 
-import '../../../app/domain_tabs_shell.dart';
+import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/execution_commitments_page.dart';
 import '../ui/execution_detail_page.dart';

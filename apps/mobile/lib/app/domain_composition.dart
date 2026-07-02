@@ -31,9 +31,11 @@ import '../core/auth/providers.dart' as auth_providers;
 import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
+import '../core/shell/domain_tabs_shell.dart';
 import '../core/shell/entity_route_resolver.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
+import '../features/ai_chat/ui/ask_ai.dart';
 import '../features/finance/composition/finance_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
@@ -45,6 +47,10 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
   return [
     ...appShellChromeOverrides(),
     ...appShareIntentNavigationOverrides(),
+    domainTabsCenterActionProvider.overrideWith(
+      (ref) =>
+          (context, widgetRef) => askAi(context, widgetRef),
+    ),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
