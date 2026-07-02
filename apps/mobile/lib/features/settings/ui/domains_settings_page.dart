@@ -9,7 +9,7 @@ import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'finance_domain_settings_section.dart';
+import '../../finance/ui/settings/finance_domain_settings_section.dart';
 
 /// `/settings/domains` — LifeOS domain management.
 ///

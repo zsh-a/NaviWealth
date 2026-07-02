@@ -15,11 +15,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/shell/settings_ui/settings_page_frame.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
-import '../../expense/data/expense_report_providers.dart';
-import '../../home/data/dashboard_providers.dart';
+import '../../../../core/shell/settings_ui/settings_page_frame.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../expense/data/expense_report_providers.dart';
+import '../../../home/data/dashboard_providers.dart';
 
 class MonthlyExpenseSettingsPage extends ConsumerWidget {
   const MonthlyExpenseSettingsPage({super.key});
