@@ -13,6 +13,9 @@ import '../../../core/sync/sync_meta.dart';
 import '../domain/execution_models.dart';
 import 'execution_row_mappers.dart';
 
+part 'execution_repository_commitments.dart';
+part 'execution_repository_projects.dart';
+
 enum ExecutionEntryKind {
   project('execution_projects'),
   action('execution_actions'),
@@ -23,11 +26,13 @@ enum ExecutionEntryKind {
   final String tableName;
 }
 
-class ExecutionRepository {
+class ExecutionRepository
+    with ExecutionProjectRepositoryMixin, ExecutionCommitmentRepositoryMixin {
   ExecutionRepository({required AppDatabase db, required OutboxStore outbox})
     : _db = db,
       _outbox = outbox;
 
+  @override
   final AppDatabase _db;
   final OutboxStore _outbox;
 
@@ -36,6 +41,7 @@ class ExecutionRepository {
   static const String _commitmentsTable = 'execution_commitments';
   static const String _progressTable = 'execution_progress_entries';
 
+  @override
   Future<void> _upsertAndEnqueue<R>(
     TableInfo<Table, R> table,
     Insertable<R> companion, {
@@ -84,152 +90,6 @@ class ExecutionRepository {
       ])
       ..limit(limit);
     return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
-  }
-
-  Stream<List<ExecutionProject>> watchActiveProjects({
-    required String ownerUserId,
-    int limit = 100,
-  }) {
-    final q = _db.select(_db.executionProjects)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where(
-        (t) => t.status.isIn(<String>[
-          ExecutionProjectStatus.active.wire,
-          ExecutionProjectStatus.paused.wire,
-        ]),
-      )
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
-  }
-
-  Stream<List<ExecutionProject>> watchClosedProjects({
-    required String ownerUserId,
-    int limit = 100,
-  }) {
-    final q = _db.select(_db.executionProjects)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where(
-        (t) => t.status.isIn(<String>[
-          ExecutionProjectStatus.completed.wire,
-          ExecutionProjectStatus.archived.wire,
-        ]),
-      )
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
-  }
-
-  Future<List<ExecutionProject>> listActiveProjects({
-    required String ownerUserId,
-    int limit = 100,
-  }) async {
-    final q = _db.select(_db.executionProjects)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where(
-        (t) => t.status.isIn(<String>[
-          ExecutionProjectStatus.active.wire,
-          ExecutionProjectStatus.paused.wire,
-        ]),
-      )
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    final rows = await q.get();
-    return rows.map(executionProjectFromRow).toList();
-  }
-
-  Stream<List<ExecutionProject>> watchProjectsForMemoryIndex({
-    required String ownerUserId,
-    int limit = 500,
-  }) {
-    final q = _db.select(_db.executionProjects)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
-  }
-
-  Future<void> upsertProject(ExecutionProject project) {
-    return _upsertAndEnqueue(
-      _db.executionProjects,
-      executionProjectCompanion(project),
-      tableName: _projectsTable,
-      rowId: project.id,
-    );
-  }
-
-  Future<void> softDeleteProject({
-    required ExecutionProject project,
-    required SyncMeta sync,
-  }) {
-    final tombstone = sync.copyWith(deletedAt: sync.updatedAt);
-    return upsertProject(
-      ExecutionProject(
-        id: project.id,
-        title: project.title,
-        description: project.description,
-        status: project.status,
-        horizon: project.horizon,
-        targetDate: project.targetDate,
-        source: project.source,
-        createdAt: project.createdAt,
-        completedAt: project.completedAt,
-        sync: tombstone,
-      ),
-    );
-  }
-
-  Future<void> updateProjectStatus({
-    required ExecutionProject project,
-    required ExecutionProjectStatus status,
-    required SyncMeta sync,
-  }) {
-    return upsertProject(
-      _projectWithStatus(project, status: status, sync: sync),
-    );
-  }
-
-  Future<ExecutionProject?> findProject({
-    required String ownerUserId,
-    required String id,
-  }) async {
-    final row =
-        await (_db.select(_db.executionProjects)..where(
-              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
-            ))
-            .getSingleOrNull();
-    return row == null ? null : executionProjectFromRow(row);
-  }
-
-  Future<List<ExecutionProject>> listProjectsByIds({
-    required String ownerUserId,
-    required Set<String> ids,
-  }) async {
-    if (ids.isEmpty) return const <ExecutionProject>[];
-    final q = _db.select(_db.executionProjects)
-      ..where(
-        (t) =>
-            t.ownerUserId.equals(ownerUserId) &
-            t.id.isIn(ids.toList(growable: false)),
-      );
-    final rows = await q.get();
-    return rows.map(executionProjectFromRow).toList(growable: false);
   }
 
   Stream<List<ExecutionAction>> watchOpenActions({
@@ -483,173 +343,6 @@ class ExecutionRepository {
     });
   }
 
-  Stream<List<ExecutionCommitment>> watchActiveCommitments({
-    required String ownerUserId,
-    int limit = 100,
-  }) {
-    final q = _db.select(_db.executionCommitments)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where(
-        (t) => t.status.isIn(<String>[
-          ExecutionCommitmentStatus.active.wire,
-          ExecutionCommitmentStatus.paused.wire,
-        ]),
-      )
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map(
-      (rows) => rows.map(executionCommitmentFromRow).toList(),
-    );
-  }
-
-  Stream<List<ExecutionCommitment>> watchClosedCommitments({
-    required String ownerUserId,
-    int limit = 100,
-  }) {
-    final q = _db.select(_db.executionCommitments)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where(
-        (t) => t.status.isIn(<String>[
-          ExecutionCommitmentStatus.completed.wire,
-          ExecutionCommitmentStatus.archived.wire,
-        ]),
-      )
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map(
-      (rows) => rows.map(executionCommitmentFromRow).toList(),
-    );
-  }
-
-  Future<List<ExecutionCommitment>> listActiveCommitments({
-    required String ownerUserId,
-    int limit = 100,
-  }) async {
-    final q = _db.select(_db.executionCommitments)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where(
-        (t) => t.status.isIn(<String>[
-          ExecutionCommitmentStatus.active.wire,
-          ExecutionCommitmentStatus.paused.wire,
-        ]),
-      )
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.targetDate, mode: OrderingMode.asc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    final rows = await q.get();
-    return rows.map(executionCommitmentFromRow).toList();
-  }
-
-  Stream<List<ExecutionCommitment>> watchCommitmentsForMemoryIndex({
-    required String ownerUserId,
-    int limit = 500,
-  }) {
-    final q = _db.select(_db.executionCommitments)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map(
-      (rows) => rows.map(executionCommitmentFromRow).toList(),
-    );
-  }
-
-  Future<void> upsertCommitment(ExecutionCommitment commitment) {
-    return _upsertAndEnqueue(
-      _db.executionCommitments,
-      executionCommitmentCompanion(commitment),
-      tableName: _commitmentsTable,
-      rowId: commitment.id,
-    );
-  }
-
-  Future<void> softDeleteCommitment({
-    required ExecutionCommitment commitment,
-    required SyncMeta sync,
-  }) {
-    final tombstone = _tombstone(sync);
-    return upsertCommitment(
-      ExecutionCommitment(
-        id: commitment.id,
-        title: commitment.title,
-        description: commitment.description,
-        status: commitment.status,
-        horizon: commitment.horizon,
-        targetDate: commitment.targetDate,
-        projectId: commitment.projectId,
-        source: commitment.source,
-        createdAt: commitment.createdAt,
-        completedAt: commitment.completedAt,
-        sync: tombstone,
-      ),
-    );
-  }
-
-  Future<void> updateCommitmentStatus({
-    required ExecutionCommitment commitment,
-    required ExecutionCommitmentStatus status,
-    required SyncMeta sync,
-  }) {
-    return upsertCommitment(
-      _commitmentWithStatus(commitment, status: status, sync: sync),
-    );
-  }
-
-  Future<ExecutionCommitment?> findCommitment({
-    required String ownerUserId,
-    required String id,
-  }) async {
-    final row =
-        await (_db.select(_db.executionCommitments)..where(
-              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
-            ))
-            .getSingleOrNull();
-    return row == null ? null : executionCommitmentFromRow(row);
-  }
-
-  Stream<ExecutionCommitment?> watchCommitmentById({
-    required String ownerUserId,
-    required String id,
-  }) {
-    final q = _db.select(_db.executionCommitments)
-      ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId))
-      ..limit(1);
-    return q.watchSingleOrNull().map(
-      (row) => row == null || row.deletedAt != null
-          ? null
-          : executionCommitmentFromRow(row),
-    );
-  }
-
-  Future<List<ExecutionCommitment>> listCommitmentsByIds({
-    required String ownerUserId,
-    required Set<String> ids,
-  }) async {
-    if (ids.isEmpty) return const <ExecutionCommitment>[];
-    final q = _db.select(_db.executionCommitments)
-      ..where(
-        (t) =>
-            t.ownerUserId.equals(ownerUserId) &
-            t.id.isIn(ids.toList(growable: false)),
-      );
-    final rows = await q.get();
-    return rows.map(executionCommitmentFromRow).toList(growable: false);
-  }
-
   Stream<List<ExecutionProgressEntry>> watchRecentProgress({
     required String ownerUserId,
     int limit = 100,
@@ -767,41 +460,6 @@ class ExecutionRepository {
       commitmentId: action.commitmentId,
       source: action.source,
       createdAt: action.createdAt,
-      completedAt: completedAt,
-      sync: sync,
-    );
-  }
-
-  ExecutionProject _projectWithStatus(
-    ExecutionProject project, {
-    required ExecutionProjectStatus status,
-    required SyncMeta sync,
-  }) {
-    final completedAt = switch (status) {
-      ExecutionProjectStatus.completed ||
-      ExecutionProjectStatus.archived => sync.updatedAt,
-      ExecutionProjectStatus.active || ExecutionProjectStatus.paused => null,
-    };
-    return project.copyWith(
-      status: status,
-      completedAt: completedAt,
-      sync: sync,
-    );
-  }
-
-  ExecutionCommitment _commitmentWithStatus(
-    ExecutionCommitment commitment, {
-    required ExecutionCommitmentStatus status,
-    required SyncMeta sync,
-  }) {
-    final completedAt = switch (status) {
-      ExecutionCommitmentStatus.completed ||
-      ExecutionCommitmentStatus.archived => sync.updatedAt,
-      ExecutionCommitmentStatus.active ||
-      ExecutionCommitmentStatus.paused => null,
-    };
-    return commitment.copyWith(
-      status: status,
       completedAt: completedAt,
       sync: sync,
     );
