@@ -2,13 +2,13 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
+import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/home_cash_flow_metrics.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
 import '../../../core/shell/settings_route_paths.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
-import '../../cashflow/data/cash_flow_providers.dart';
-import '../../cashflow/domain/cash_flow_aggregator.dart';
-import '../../cashflow/domain/home_cash_flow_metrics.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../finance/ingest/data/ingest_queue_insight_provider.dart';
 import '../../finance/rebalance/data/rebalance_drift_insight_provider.dart';

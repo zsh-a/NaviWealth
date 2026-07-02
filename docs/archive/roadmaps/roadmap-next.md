@@ -105,9 +105,9 @@
 
 - ✅ **数据层落地** (2026-05-24): `budgets` 表 (schema v15) + `BudgetRepository`,sync 走 row-state。9 个 repo 测试。
 - ✅ **Riverpod provider 接线** (2026-05-24): `budgetRepositoryProvider` / `budgetsStreamProvider` / `budgetsForMonthProvider` 在 `data/repositories/providers.dart`,可被任何 UI 消费。
-- ✅ **读模型 `MonthlyBudgetSummary`** (2026-05-24): `features/cashflow/domain/budget_summary.dart`,`buildMonthlyBudgetSummary` pure 聚合器(joins budgets × spend by categoryId,过滤异币种 / 跨月 / tombstone),输出 `rankedByStrain`,total over/under flag。7 个测试。
-- ✅ **`/plan/budget` page 落地** (2026-05-24): `features/cashflow/ui/budget_page.dart` 接 `budgetsForMonthProvider`,Plan hub 加 Budget tile + 路由注册 + l10n 双语。4 个 widget 测试(empty / populated / 跨月过滤 / tombstone drop)。
-- ✅ **Budget × FIRE 接口契约** (2026-05-24): `features/cashflow/domain/budget_signal.dart` — `BudgetSignal{noData, comfortable, strained, overBudget}` + `budgetSignalFor(summary)` pure 分类器(< 80% / 80–100% / > 100% bands + single-category overbudget bumps to strained);`monthlyBudgetSignalProvider(month)` family 让 FIRE / dashboard 单点订阅。8 个分类器测试。**FIRE service 改动作为单独 PR**(只需 watch 此 provider,无需引入 BudgetRepository 反向依赖)。
+- ✅ **读模型 `MonthlyBudgetSummary`** (2026-05-24): `features/finance/cashflow/domain/budget_summary.dart`,`buildMonthlyBudgetSummary` pure 聚合器(joins budgets × spend by categoryId,过滤异币种 / 跨月 / tombstone),输出 `rankedByStrain`,total over/under flag。7 个测试。
+- ✅ **`/plan/budget` page 落地** (2026-05-24): `features/finance/cashflow/ui/budget_page.dart` 接 `budgetsForMonthProvider`,Plan hub 加 Budget tile + 路由注册 + l10n 双语。4 个 widget 测试(empty / populated / 跨月过滤 / tombstone drop)。
+- ✅ **Budget × FIRE 接口契约** (2026-05-24): `features/finance/cashflow/domain/budget_signal.dart` — `BudgetSignal{noData, comfortable, strained, overBudget}` + `budgetSignalFor(summary)` pure 分类器(< 80% / 80–100% / > 100% bands + single-category overbudget bumps to strained);`monthlyBudgetSignalProvider(month)` family 让 FIRE / dashboard 单点订阅。8 个分类器测试。**FIRE service 改动作为单独 PR**(只需 watch 此 provider,无需引入 BudgetRepository 反向依赖)。
 - 详: [midterm 2.1 M1](./roadmap-midterm-execution.md)
 
 ### 3.3 Income Planner P4(Wheel/收益周期)

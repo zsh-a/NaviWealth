@@ -70,8 +70,8 @@ FinanceOS / Wealth:
 - `apps/mobile/lib/features/finance/ui/wealth/wealth_hub_page.dart`
 - `apps/mobile/lib/features/finance/ui/wealth/wealth_perspective_section.dart`
 - `apps/mobile/lib/features/finance/accounts/ui/account_grouped_sections.dart`
-- `apps/mobile/lib/features/cashflow/ui/passive_income_card.dart`
-- `apps/mobile/lib/features/cashflow/ui/cashflow_calendar_card.dart`
+- `apps/mobile/lib/features/finance/cashflow/ui/passive_income_card.dart`
+- `apps/mobile/lib/features/finance/cashflow/ui/cashflow_calendar_card.dart`
 
 HealthOS:
 

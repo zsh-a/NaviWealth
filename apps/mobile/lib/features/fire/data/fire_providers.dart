@@ -1,11 +1,11 @@
 import 'package:collection/collection.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
 
 import '../../../domain/values/money.dart';
-import '../../cashflow/data/cash_flow_providers.dart';
-import '../../cashflow/domain/cash_flow_aggregator.dart';
-import '../../cashflow/domain/cash_flow_kind.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../home/domain/dashboard_models.dart';
 import '../domain/fire_bucket_allocator.dart';

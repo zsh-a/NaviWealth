@@ -1,12 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:naviwealth/features/finance/cashflow/command_palette_contributions.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
 import '../../../core/command_palette/command_palette_entry.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../cashflow/command_palette_contributions.dart';
 import '../rebalance/command_palette_contributions.dart';
 
 /// FinanceOS contributions to the shared command palette.

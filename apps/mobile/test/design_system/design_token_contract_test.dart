@@ -101,7 +101,7 @@ void main() {
           Directory('${appRoot.path}/lib/features/expense'),
           Directory('${appRoot.path}/lib/features/health'),
           Directory('${appRoot.path}/lib/features/knowledge'),
-          Directory('${appRoot.path}/lib/features/cashflow'),
+          Directory('${appRoot.path}/lib/features/finance/cashflow'),
           Directory('${appRoot.path}/lib/features/ai_chat'),
           Directory('${appRoot.path}/lib/features/home'),
           Directory('${appRoot.path}/lib/features/finance/activity'),

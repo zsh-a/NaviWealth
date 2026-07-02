@@ -8,9 +8,9 @@
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/cashflow/data/dividend_center_providers.dart';
-import 'package:naviwealth/features/cashflow/data/dividend_forecast_providers.dart';
-import 'package:naviwealth/features/cashflow/domain/dividend_center.dart';
+import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';

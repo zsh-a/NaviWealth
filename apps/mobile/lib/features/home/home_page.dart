@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/passive_income_card.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 
 import '../../core/async/deferred_provider_snapshot.dart';
@@ -14,9 +16,6 @@ import '../../design_system/design_system.dart';
 import '../../features/finance/data/market/sync/price_sync_coordinator.dart';
 import '../../features/finance/data/market/sync/price_sync_providers.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../cashflow/data/recurring_transaction_providers.dart';
-import '../cashflow/ui/cashflow_calendar_card.dart';
-import '../cashflow/ui/passive_income_card.dart';
 import '../settings/ui/ai_privacy_onboarding.dart';
 import 'data/dashboard_insights_provider.dart';
 import 'data/dashboard_providers.dart';

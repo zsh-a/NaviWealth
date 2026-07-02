@@ -509,7 +509,7 @@ class Categories extends Table with SyncableTable {
 ///
 /// The aggregate "spent vs. budgeted" view is **not** stored here; it is a
 /// pure derivation over postings against the same category — see
-/// `features/cashflow/data/budget_progress_provider.dart`.
+/// `features/finance/cashflow/data/budget_progress_provider.dart`.
 @DataClassName('BudgetRow')
 class Budgets extends Table with SyncableTable {
   TextColumn get id => text()();

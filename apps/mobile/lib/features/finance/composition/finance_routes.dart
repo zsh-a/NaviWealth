@@ -8,6 +8,10 @@
 library;
 
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/budget_page.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/recurring_transactions_page.dart';
 import 'package:naviwealth/features/finance/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import 'package:naviwealth/features/finance/liabilities/ui/liability_detail_page.dart'
@@ -25,10 +29,6 @@ import '../../assets/deposit_form_page.dart';
 import '../../assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
 import '../../assets/wealth_product_form_page.dart';
-import '../../cashflow/ui/budget_page.dart';
-import '../../cashflow/ui/cashflow_page.dart';
-import '../../cashflow/ui/dividend_center_page.dart';
-import '../../cashflow/ui/recurring_transactions_page.dart';
 import '../../expense/ui/expense_form_page.dart';
 import '../../expense/ui/expense_list_page.dart';
 import '../../expense/ui/expense_report_page.dart';
