@@ -10,11 +10,11 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../core/format/formatters.dart';
-import '../../design_system/design_system.dart';
-import '../../l10n/gen/app_localizations.dart';
-import '../finance/shared/entry_kind_badge.dart';
-import '../finance/shared/postings_preview.dart';
+import '../../../core/format/formatters.dart';
+import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../shared/entry_kind_badge.dart';
+import '../shared/postings_preview.dart';
 
 /// Read surface for the `journal_entries` / `postings` stack.
 /// Lists every JE the user has written through any ledger form

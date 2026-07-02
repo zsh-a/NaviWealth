@@ -6,7 +6,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/accounts/journal_entry_list_page.dart';
+import 'package:naviwealth/features/finance/accounts/journal_entry_list_page.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';

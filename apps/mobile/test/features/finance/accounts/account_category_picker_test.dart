@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/accounts/ui/account_category_picker.dart';
+import 'package:naviwealth/features/finance/accounts/ui/account_category_picker.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 

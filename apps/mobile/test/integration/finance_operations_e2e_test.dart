@@ -9,7 +9,7 @@ import 'package:naviwealth/domain/services/price_resolver.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/price_confidence.dart';
 import 'package:naviwealth/domain/values/resolved_price.dart';
-import 'package:naviwealth/features/accounts/data/account_balances_provider.dart';
+import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';

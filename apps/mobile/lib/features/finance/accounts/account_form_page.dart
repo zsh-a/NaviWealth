@@ -8,14 +8,14 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../core/ai/write/write.dart';
-import '../../core/haptics/haptics.dart';
-import '../../design_system/design_system.dart';
-import '../../l10n/gen/app_localizations.dart';
-import '../finance/shared/account_color.dart';
-import '../finance/shared/account_icon_catalog.dart';
-import '../finance/shared/account_tree_picker.dart';
-import '../finance/shared/forms/forms.dart';
+import '../../../core/ai/write/write.dart';
+import '../../../core/haptics/haptics.dart';
+import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../shared/account_color.dart';
+import '../shared/account_icon_catalog.dart';
+import '../shared/account_tree_picker.dart';
+import '../shared/forms/forms.dart';
 import 'ui/account_category_picker.dart';
 
 /// Create / edit page for a single [Account].

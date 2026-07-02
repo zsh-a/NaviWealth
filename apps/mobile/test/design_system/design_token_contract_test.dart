@@ -105,7 +105,6 @@ void main() {
           Directory('${appRoot.path}/lib/features/ai_chat'),
           Directory('${appRoot.path}/lib/features/home'),
           Directory('${appRoot.path}/lib/features/activity'),
-          Directory('${appRoot.path}/lib/features/accounts'),
           Directory('${appRoot.path}/lib/features/rebalance'),
           Directory('${appRoot.path}/lib/features/options_income'),
           Directory('${appRoot.path}/lib/features/fire'),

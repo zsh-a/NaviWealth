@@ -1,5 +1,5 @@
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 
 /// Localised label for the wealth-container [AccountCategory] the user
 /// picks when creating an account. Reads as a noun phrase so it slots

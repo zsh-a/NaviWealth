@@ -188,7 +188,7 @@ deleted_at_hlc TEXT;
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.4.M2.1 | P0 | M | accounts 列表页接入 master-detail | — | `features/accounts/` |
+| MT-2.4.M2.1 | P0 | M | accounts 列表页接入 master-detail | — | `features/finance/accounts/` |
 | MT-2.4.M2.2 | P0 | M | assets 列表页接入 | — | `features/assets/` |
 | MT-2.4.M2.3 | P0 | M | investments 列表页接入 | — | `features/investment/presentation/` |
 | MT-2.4.M2.4 | P0 | M | 详情子路由 deep link（不破坏 web routing 检查清单） | MT-2.4.M2.1, .2, .3 | `app/router.dart` |

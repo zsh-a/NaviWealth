@@ -1,13 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' show innerJoin;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/features/finance/accounts/domain/account_balances.dart';
+
 import '../../../domain/values/money.dart';
-import '../../accounts/domain/account_balances.dart';
 import '../../finance/data/domain/asset.dart';
 import '../../finance/data/domain/enums.dart';
 import '../../finance/data/domain/manual_asset_metadata.dart';

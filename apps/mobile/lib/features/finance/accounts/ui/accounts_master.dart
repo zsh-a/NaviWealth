@@ -6,11 +6,11 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../core/shell/master_detail_layout.dart';
-import '../../../core/shell/selection_query.dart';
-import '../../../core/shortcuts/master_detail_shortcuts.dart';
-import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../../../core/shell/master_detail_layout.dart';
+import '../../../../core/shell/selection_query.dart';
+import '../../../../core/shortcuts/master_detail_shortcuts.dart';
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../data/account_balances_provider.dart';
 import '../domain/account_balances.dart';
 import 'account_grouped_sections.dart';

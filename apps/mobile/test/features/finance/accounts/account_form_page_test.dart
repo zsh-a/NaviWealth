@@ -13,7 +13,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/accounts/account_form_page.dart';
+import 'package:naviwealth/features/finance/accounts/account_form_page.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -22,9 +22,9 @@ import 'package:naviwealth/features/finance/shared/account_tree_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/persistence/test_database.dart';
-import '../../core/sync/_outbox_test_ext.dart';
-import '../../features/finance/data/repositories/_stub_stamper.dart';
+import '../../../core/persistence/test_database.dart';
+import '../../../core/sync/_outbox_test_ext.dart';
+import '../data/repositories/_stub_stamper.dart';
 
 class _Harness {
   _Harness({
