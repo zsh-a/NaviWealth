@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../design_system/preferences/theme_preferences.dart';
+import '../../../../design_system/preferences/theme_preferences.dart';
 
 /// Default base currency when none is persisted yet. Matches the legacy
 /// hardcoded value the dashboard used before the setting was surfaced.

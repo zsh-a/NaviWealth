@@ -33,7 +33,7 @@ class ContextCompressor {
     return BaseContext(
       preferredCurrency: currency,
       // The feature-layer adapter (chat repository) passes the user's
-      // declared appetite from features/settings/data/risk_appetite_preferences.dart.
+      // declared appetite from features/finance/data/preferences/risk_appetite_preferences.dart.
       // The `?? moderate` is for direct callers without access to that
       // SSOT — e.g. unit tests exercising the compressor in isolation.
       riskPreference: riskPreference ?? RiskPreference.moderate,

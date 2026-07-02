@@ -10,7 +10,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/biometric_auth_service.dart';
 import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';

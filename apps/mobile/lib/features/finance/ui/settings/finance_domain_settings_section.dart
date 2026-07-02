@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
+import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 
 import '../../../../core/forms/currency_picker.dart';
 import '../../../../core/shell/settings_route_paths.dart';
@@ -15,8 +17,6 @@ import '../../../fire/domain/fire_plan.dart';
 import '../../../rebalance/data/rebalance_providers.dart';
 import '../../../rebalance/domain/allocation_schemes.dart';
 import '../../../rebalance/ui/target_allocation_editor_sheet.dart';
-import '../../../settings/data/base_currency_preference.dart';
-import '../../../settings/data/risk_appetite_preferences.dart';
 
 /// FinanceOS-specific settings shown inside LifeOS domain management.
 ///

@@ -3,17 +3,17 @@
 # (`docs/architecture/lifeos-shell.md` §4 + northstar §2.4, D-1.6 + D-1.6b).
 #
 # Scope today: enforce clean cross-domain/product surfaces:
-# `ai_chat/`, `auth/`, HealthOS, KnowledgeOS, and ExecutionOS. The rest of
+# `ai_chat/`, `auth/`, `settings/`, HealthOS, KnowledgeOS, and ExecutionOS. The rest of
 # the features/ tree still has historical FinanceOS sibling imports
-# (settings → analytics/expense/fire/rebalance, home → cashflow/fire, etc.);
-# a tree-wide enforcement remains out of scope until those slices are moved
-# behind domain-local seams or a snapshot allowlist.
+# (home → cashflow/fire, finance → legacy finance slices, etc.); a tree-wide
+# enforcement remains out of scope until those slices are moved behind
+# domain-local seams or a snapshot allowlist.
 #
 # D-1.6b (2026-05-26) cleared all grandfathered files for `ai_chat/`.
 # Later shell cleanups also removed app/agent-runtime reverse dependencies
-# from HealthOS, KnowledgeOS, and ExecutionOS; `auth/` is also sibling-free,
-# so these surfaces are protected from sibling-feature imports too. The former
-# `features/shared/` bucket has been split into `core/forms/` and
+# from HealthOS, KnowledgeOS, and ExecutionOS; `auth/` and `settings/` are also
+# sibling-free, so these surfaces are protected from sibling-feature imports too.
+# The former `features/shared/` bucket has been split into `core/forms/` and
 # `features/finance/shared/`; keep it empty so cross-feature "shared" code does
 # not grow back. `features/plan/` and `features/wealth/` were also folded
 # back into FinanceOS UI; keep those top-level pseudo-features empty too.
@@ -29,7 +29,7 @@ from pathlib import Path
 
 root = Path(os.environ["LINT_ROOT"]).resolve()
 features_root = root / "apps/mobile/lib/features"
-protected = {"ai_chat", "auth", "health", "knowledge", "execution"}
+protected = {"ai_chat", "auth", "settings", "health", "knowledge", "execution"}
 import_re = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]")
 
 def feature_for_path(path):

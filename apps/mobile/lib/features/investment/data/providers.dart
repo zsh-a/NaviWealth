@@ -7,6 +7,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/ai/contracts/task_context.dart' show AnalyticalUpload;
@@ -16,7 +17,6 @@ import '../../../domain/entities/fx_rate.dart' as dom;
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../../features/finance/data/market/market_data_providers.dart';
-import '../../settings/data/base_currency_preference.dart';
 import '../domain/cost_basis/fifo_strategy.dart';
 import '../domain/cost_basis_engine.dart';
 import '../domain/fx_pnl/fx_pnl_breakdown.dart';

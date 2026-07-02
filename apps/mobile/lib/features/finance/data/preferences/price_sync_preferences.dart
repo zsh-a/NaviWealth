@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../design_system/preferences/theme_preferences.dart';
+import '../../../../design_system/preferences/theme_preferences.dart';
 
 /// Whether [PriceSyncCoordinator] writes daily-close snapshots into the
 /// synced `prices` ledger. Default ON — cross-device historical valuation

@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../core/ai/write/write.dart';
@@ -15,7 +16,6 @@ import '../finance/shared/account_color.dart';
 import '../finance/shared/account_icon_catalog.dart';
 import '../finance/shared/account_tree_picker.dart';
 import '../finance/shared/forms/forms.dart';
-import '../settings/data/base_currency_preference.dart';
 import 'ui/account_category_picker.dart';
 
 /// Create / edit page for a single [Account].

@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/async/isolate_runner.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
-import '../../settings/data/base_currency_preference.dart';
 import '../domain/cash_flow_aggregator.dart';
 import '../domain/cash_flow_classifier.dart';
 import '../domain/cash_flow_event.dart';

@@ -1,12 +1,12 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 
 import '../../../../core/format/providers.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../domain/entities/fx_rate.dart' as dom;
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../settings/data/base_currency_preference.dart';
 import '../../data/market/sync/fx_rate_sync_providers.dart';
 import '../../data/repositories/providers.dart';
 
