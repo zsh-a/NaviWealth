@@ -115,7 +115,7 @@ apps/mobile/lib/features/knowledge/ui/_object_writers.dart	'${_confidence.toStri
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	tooltipBuilder: (_, next) => Text(next.toStringAsFixed(2)),	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	next.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	child: Text(v.toStringAsFixed(2)),	confidence-score
-apps/mobile/lib/features/knowledge/ui/_decision_writer.dart	'${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',	confidence-score
+apps/mobile/lib/features/knowledge/ui/_decision_writer_references.dart	'${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	'confidence=${classification.confidence.toStringAsFixed(2)} '	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	suggestion.confidence.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/composition/knowledge_proposal_kinds.dart	confidence.toStringAsFixed(2),	confidence-score
