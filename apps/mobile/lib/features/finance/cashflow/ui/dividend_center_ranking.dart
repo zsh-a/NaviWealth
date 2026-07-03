@@ -1,0 +1,146 @@
+part of 'dividend_center_page.dart';
+
+class _RankingSection extends ConsumerWidget {
+  const _RankingSection({required this.snapshot});
+
+  final DividendCenterSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final rows = snapshot.ranking.take(8).toList();
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SectionHeading(
+            title: l10n.dividendCenterHoldingRanking,
+            trailing: l10n.dividendForecastStrategyTtm,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Five numeric columns need room; below ~520dp fall back to
+              // a two-line row instead of crushing every column.
+              final compact = constraints.maxWidth < 520;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final row in rows) ...[
+                    _RankRow(
+                      compact: compact,
+                      name: row.assetLabel,
+                      amount: formatters.currency(
+                        row.ttmGrossInBase,
+                        code: snapshot.baseCurrency,
+                      ),
+                      share: formatters.percent(row.portfolioShare),
+                      yieldOnCost: row.yieldOnCost == null
+                          ? l10n.commonNotAvailable
+                          : formatters.percent(row.yieldOnCost!),
+                      withholding: formatters.currency(
+                        row.withholdingInBase,
+                        code: snapshot.baseCurrency,
+                      ),
+                    ),
+                    if (row != rows.last)
+                      const SizedBox(height: AppSpacing.s16),
+                  ],
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankRow extends StatelessWidget {
+  const _RankRow({
+    required this.compact,
+    required this.name,
+    required this.amount,
+    required this.share,
+    required this.yieldOnCost,
+    required this.withholding,
+  });
+
+  final bool compact;
+  final String name;
+  final String amount;
+  final String share;
+  final String yieldOnCost;
+  final String withholding;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = context.theme.colors.mutedForeground;
+    if (compact) {
+      final detail = '$share · $yieldOnCost · $withholding';
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: context.theme.typography.body.sm,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Text(amount, style: context.strongLabelStyle),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              detail,
+              style: context.captionStyle.copyWith(color: muted),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      );
+    }
+    Widget cell(String text, int flex, {Color? color}) => Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        textAlign: TextAlign.end,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: color == null
+            ? null
+            : context.theme.typography.body.sm.copyWith(color: color),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              name,
+              style: context.theme.typography.body.sm,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          cell(amount, 3),
+          cell(share, 2),
+          cell(yieldOnCost, 2),
+          cell(withholding, 3, color: muted),
+        ],
+      ),
+    );
+  }
+}
