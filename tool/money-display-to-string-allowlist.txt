@@ -65,7 +65,7 @@ apps/mobile/lib/features/finance/home/ui/insight_feed_strings.dart	((item.fireOs
 apps/mobile/lib/features/finance/home/ui/insight_feed_strings.dart	((item.fireOsSafeWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
 apps/mobile/lib/features/finance/home/ui/insight_feed_strings.dart	(item.fireOsCashBucketMonths ?? 0).toStringAsFixed(1),	duration-display
 apps/mobile/lib/features/finance/investment/presentation/dca_simulator_page.dart	return '${value.toStringAsFixed(1)}%';	percent-display
-apps/mobile/lib/features/finance/options_income/domain/services/opportunity_scorer.dart	final hundred = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/finance/options_income/domain/services/opportunity_scorer_explanation.dart	final hundred = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/finance/options_income/presentation/income_planner_page.dart	final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/finance/options_income/presentation/opportunity_detail_sheet.dart	final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/finance/options_income/presentation/strategy_profile_sheet.dart	var fixed = value.toStringAsFixed(2);	percent-display
