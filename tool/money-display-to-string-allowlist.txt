@@ -78,12 +78,11 @@ apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	'${(plan.driftBeforePc
 apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	'${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),	percent-display
 apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	Text('${((0.05 + v * 0.25) * 100).toStringAsFixed(0)}%'),	percent-display
-apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	return value.toStringAsFixed(1);	percent-display
-apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	_totalPct.toStringAsFixed(1),	percent-display
-apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	semanticsLabel: '${totalPct.toStringAsFixed(1)}%',	percent-display
-apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	label: '${value.toStringAsFixed(1)}%',	percent-display
-apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	Text('${(next * 100).toStringAsFixed(1)}%'),	percent-display
-apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	'${(next * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/finance/rebalance/ui/target_allocation_editor_sheet.dart	return value.toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/finance/rebalance/ui/target_allocation_editor_sheet.dart	_totalPct.toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/finance/rebalance/ui/target_allocation_editor_sheet_widgets.dart	semanticsLabel: '${totalPct.toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/finance/rebalance/ui/target_allocation_editor_sheet_widgets.dart	Text('${(next * 100).toStringAsFixed(1)}%'),	percent-display
+apps/mobile/lib/features/finance/rebalance/ui/target_allocation_editor_sheet_widgets.dart	'${(next * 100).toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (cost != null) AiPill(label: '≈¥${cost.toStringAsFixed(4)}'),	ai-cost-diagnostic
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (n < 1000000) return '${(n / 1000).toStringAsFixed(1)}k';	compact-token-label
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	return '${(n / 1000000).toStringAsFixed(2)}M';	compact-token-label
