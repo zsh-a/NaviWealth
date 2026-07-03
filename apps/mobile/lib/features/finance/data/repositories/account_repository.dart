@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:uuid/uuid.dart';
 
 part 'account_repository_system_accounts.dart';
+part 'account_repository_system_account_seeds.dart';
 part 'account_repository_tree.dart';
 
 /// Read/write API for [Account] rows.
