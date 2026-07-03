@@ -170,7 +170,10 @@ pub async fn agent_runtime_start_profile_turn_step(
         run_id: None,
         input: steps::runtime_input_from_llm_response(&llm_response)?,
         user: None,
+        scope: None,
         trigger: agent_core::TriggerKind::Manual,
+        trigger_envelope: None,
+        workflow: None,
         metadata,
     };
     let step_json = steps::agent_runtime_start_run_step(

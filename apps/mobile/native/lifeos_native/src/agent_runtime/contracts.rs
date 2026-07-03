@@ -372,6 +372,17 @@ fn require_schedule_spec_contract(schedule: &ScheduleSpec, label: &str) -> Resul
                 anyhow::bail!("{label}.preferred_hour_local must be between 0 and 23");
             }
         }
+        ScheduleSpec::Cron {
+            expression,
+            timezone,
+        } => {
+            if expression.trim().is_empty() {
+                anyhow::bail!("{label}.expression must be a non-empty string");
+            }
+            if timezone.trim().is_empty() {
+                anyhow::bail!("{label}.timezone must be a non-empty string");
+            }
+        }
     }
     Ok(())
 }

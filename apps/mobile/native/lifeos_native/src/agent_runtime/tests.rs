@@ -96,6 +96,7 @@ fn chat_turn_finished_event_expands_to_chat_turn_events() {
             model: "mock-model".to_owned(),
             content: "done".to_owned(),
             finish_reason: agent_llm::LlmFinishReason::Stop,
+            object: None,
             usage: Some(agent_llm::LlmUsage {
                 input_tokens: 1,
                 output_tokens: 2,
@@ -312,6 +313,7 @@ fn llm_stream_event_contract_validates_finished_response() {
             model: "mock-model".to_owned(),
             content: "hello".to_owned(),
             finish_reason: agent_llm::LlmFinishReason::Stop,
+            object: None,
             usage: Some(agent_llm::LlmUsage {
                 input_tokens: 2,
                 output_tokens: 3,
