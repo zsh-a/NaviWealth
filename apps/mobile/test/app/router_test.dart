@@ -67,6 +67,10 @@ import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/features/finance/rebalance/ui/rebalance_page.dart';
 import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/fire_stress_settings_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/fx_rates_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/monthly_expense_settings_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
@@ -299,6 +303,10 @@ void main() {
         AppRoutes.planFire: FirePage,
         AppRoutes.settingsAiHistory: AiChatPage,
         AppRoutes.settingsDevices: DevicesPage,
+        AppRoutes.settingsFxRates: FxRatesPage,
+        AppRoutes.settingsRiskThresholds: RiskThresholdsPage,
+        AppRoutes.settingsStressTest: FireStressSettingsPage,
+        AppRoutes.settingsMonthlyExpense: MonthlyExpenseSettingsPage,
       };
 
       for (final entry in cases.entries) {

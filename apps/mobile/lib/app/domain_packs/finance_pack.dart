@@ -13,6 +13,7 @@ import '../../features/finance/composition/finance_proposal_applier.dart'
 import '../../features/finance/composition/finance_proposal_kinds.dart'
     show kFinanceProposalKinds;
 import '../../features/finance/composition/finance_routes.dart';
+import '../../features/finance/composition/finance_settings_routes.dart';
 import '../../features/finance/data/diagnostics/local_table_counts.dart';
 import '../../features/finance/options_income/data/trade_journal_memory_indexer.dart';
 import '../../features/finance/ui/settings/finance_domain_settings_section.dart';
@@ -53,6 +54,7 @@ final DomainPack kFinancePack = DomainPack(
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
   providerOverridesBuilder: financeCompositionOverrides,
   localTableCountsBuilder: financeLocalTableCounts,
+  settingsRoutesBuilder: financeSettingsRoutes,
   settingsSpec: const DomainSettingsSpec(
     icon: FLucideIcons.walletCards,
     label: 'FinanceOS',

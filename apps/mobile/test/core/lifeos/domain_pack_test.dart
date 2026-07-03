@@ -45,6 +45,7 @@ void main() {
       expect(empty.backgroundBootstrapBuilder, isNull);
       expect(empty.localTableCountsBuilder, isNull);
       expect(empty.notificationSettingsBuilder, isNull);
+      expect(empty.settingsRoutesBuilder, isNull);
       expect(empty.settingsSpec, isNull);
     });
   });

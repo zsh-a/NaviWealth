@@ -15,10 +15,6 @@ import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/onboarding_page.dart';
-import '../features/finance/ui/settings/fire_stress_settings_page.dart';
-import '../features/finance/ui/settings/fx_rates_page.dart';
-import '../features/finance/ui/settings/monthly_expense_settings_page.dart';
-import '../features/finance/ui/settings/risk_thresholds_page.dart';
 import '../features/settings/backup/backup_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
@@ -150,11 +146,6 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         ),
       ),
       GoRoute(
-        path: 'fx-rates',
-        name: SettingsRouteNames.fxRates,
-        builder: (context, state) => _backSafe(const FxRatesPage()),
-      ),
-      GoRoute(
         path: 'backup',
         name: SettingsRouteNames.backup,
         builder: (context, state) => _backSafe(const BackupPage()),
@@ -186,6 +177,7 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         builder: (context, state) => _backSafe(const DomainsSettingsPage()),
       ),
       ..._domainSettingsRoutes(packs),
+      ..._domainOwnedSettingsRoutes(packs),
       GoRoute(
         path: 'ai-history',
         name: SettingsRouteNames.aiHistory,
@@ -212,22 +204,6 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         builder: (context, state) => _backSafe(const AiModelsPage()),
       ),
       GoRoute(
-        path: 'risk-thresholds',
-        name: SettingsRouteNames.riskThresholds,
-        builder: (context, state) => _backSafe(const RiskThresholdsPage()),
-      ),
-      GoRoute(
-        path: 'stress-test',
-        name: SettingsRouteNames.stressTest,
-        builder: (context, state) => _backSafe(const FireStressSettingsPage()),
-      ),
-      GoRoute(
-        path: 'monthly-expense',
-        name: SettingsRouteNames.monthlyExpense,
-        builder: (context, state) =>
-            _backSafe(const MonthlyExpenseSettingsPage()),
-      ),
-      GoRoute(
         path: 'ai-transparency',
         name: SettingsRouteNames.aiTransparency,
         builder: (context, state) => _backSafe(const AiTransparencyPage()),
@@ -252,6 +228,14 @@ List<RouteBase> _domainSettingsRoutes(List<DomainPack> packs) {
     for (final pack in packs)
       if (pack.settingsSpec?.routeBuilder case final routeBuilder?)
         routeBuilder(_backSafe),
+  ];
+}
+
+List<RouteBase> _domainOwnedSettingsRoutes(List<DomainPack> packs) {
+  return [
+    for (final pack in packs)
+      if (pack.settingsRoutesBuilder case final routesBuilder?)
+        ...routesBuilder(_backSafe),
   ];
 }
 

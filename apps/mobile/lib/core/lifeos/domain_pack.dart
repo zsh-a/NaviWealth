@@ -88,6 +88,10 @@ typedef DomainSettingsSubtitleBuilder =
 /// Wraps settings pages in router-level chrome such as `SystemBackScope`.
 typedef DomainSettingsRouteWrapper = Widget Function(Widget child);
 
+/// Builds top-level Settings child routes owned by a domain.
+typedef DomainSettingsRoutesBuilder =
+    List<RouteBase> Function(DomainSettingsRouteWrapper wrap);
+
 /// Builds one domain's Settings → Domains detail route.
 typedef DomainSettingsRouteBuilder =
     RouteBase Function(DomainSettingsRouteWrapper wrap);
@@ -144,6 +148,7 @@ class DomainPack {
     this.providerOverridesBuilder,
     this.localTableCountsBuilder,
     this.notificationSettingsBuilder,
+    this.settingsRoutesBuilder,
     this.settingsSpec,
   });
 
@@ -232,6 +237,9 @@ class DomainPack {
   /// Global notification permission and master enablement stay in Settings;
   /// domain-specific notification toggles remain with the owning domain.
   final DomainNotificationSettingsBuilder? notificationSettingsBuilder;
+
+  /// Top-level Settings routes contributed by this domain.
+  final DomainSettingsRoutesBuilder? settingsRoutesBuilder;
 
   /// Settings → Domains toggle metadata and optional domain detail route.
   /// Null when the domain has no settings surface yet.
