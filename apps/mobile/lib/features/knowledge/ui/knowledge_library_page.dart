@@ -29,9 +29,11 @@ import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
+part 'knowledge_library_actions.dart';
 part 'knowledge_library_controls.dart';
 part 'knowledge_library_list.dart';
 part 'knowledge_library_model.dart';
+part 'knowledge_library_segment_list.dart';
 part 'knowledge_library_tiles.dart';
 
 class KnowledgeLibraryPage extends ConsumerStatefulWidget {
