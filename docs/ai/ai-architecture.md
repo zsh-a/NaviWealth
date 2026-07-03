@@ -73,7 +73,7 @@ Domain agent / business AI seam
 ```text
 ChatRepository
   → RuntimeRoutingAiChatApiClient   (features/ai_chat/data/)
-  → FrbChatRunner                   (app/frb_chat_runner.dart; bootstrap override)
+  → FrbChatRunner                   (app/agent_runtime/chat/frb_chat_runner.dart; bootstrap override)
   → AgentRuntimeLlmStreamBridge     (FRB primitive JSON event stream)
   → agent-llm native providers      (OpenAI-compatible / Anthropic)
   → AgentRuntimeToolHost            (Dart JSON-RPC tool dispatch)
@@ -117,7 +117,7 @@ ChatRepository
 
 端侧工具目录由 active `DomainPack`s 聚合：Shell core tools 来自
 `core/ai/runtime/device/tools/device_tool_registry.dart`，Finance / Health /
-Knowledge 工具分别由各自 `features/<domain>_ai_tools.dart` 和 domain-local
+Knowledge 工具分别由各自 `features/<domain>/<domain>_ai_tools.dart` 和 domain-local
 `ai_tools/` 暴露。完整生产诊断合集在
 `apps/mobile/lib/app/production_ai_catalog.dart`：
 `productionDeviceTools` 是 dispatch allow-list，
@@ -127,9 +127,9 @@ Knowledge 工具分别由各自 `features/<domain>_ai_tools.dart` 和 domain-loc
 | 域 | 工具来源 |
 |----|----------|
 | Shell | Memory Layer tools: `query_memory` · `build_context` · `ask_user` |
-| FinanceOS | `features/finance_ai_tools.dart`，含基础财务、FIRE、Options Income、scoped read / propose 工具 |
-| HealthOS | `features/health_ai_tools.dart` |
-| KnowledgeOS | `features/knowledge_ai_tools.dart` |
+| FinanceOS | `features/finance/finance_ai_tools.dart`，含基础财务、FIRE、Options Income、scoped read / propose 工具 |
+| HealthOS | `features/health/health_ai_tools.dart` |
+| KnowledgeOS | `features/knowledge/knowledge_ai_tools.dart` |
 
 数据源全部是**本机 Drift / 既有端侧 provider**（net worth / currency service /
 `holdingsSnapshotProvider` / `DriftQueryPlanExecutor` / 端侧 detector）。Scoped Detail
@@ -383,9 +383,9 @@ domain renderer · `ai_object_capsule` · `reply_chips` · `ai_transparency_badg
 
 `lib/features/finance/ingest/`：见 §5.10.x（生产 Vision provider 为 `FrbVisionIngestClient`）。
 
-`lib/app/`：`frb_llm_connectivity_probe.dart`、`domain_packs.dart` 与
-`domain_composition.dart` 在 app composition root 聚合 FRB LLM probe、domain tools、
-proposal routes 与 active domain packs。
+`lib/app/`：`agent_runtime/bridges/frb_llm_connectivity_probe.dart`、
+`domain_packs.dart` 与 `domain_composition.dart` 在 app composition root 聚合
+FRB LLM probe、domain tools、proposal routes 与 active domain packs。
 
 ### 6.2 Backend — **已删除**
 

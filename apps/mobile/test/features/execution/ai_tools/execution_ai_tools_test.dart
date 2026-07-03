@@ -22,7 +22,7 @@ import 'package:naviwealth/features/execution/composition/execution_proposal_app
 import 'package:naviwealth/features/execution/data/execution_repository.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
-import 'package:naviwealth/features/execution_ai_tools.dart';
+import 'package:naviwealth/features/execution/execution_ai_tools.dart';
 
 import '../../../core/persistence/test_database.dart';
 

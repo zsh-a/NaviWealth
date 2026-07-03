@@ -28,7 +28,7 @@ void main() {
 
     test('AI trace waterfall regression tests stay active', () {
       final file = File(
-        '${appRoot.path}/test/features/settings/ai_trace_waterfall_test.dart',
+        '${appRoot.path}/test/features/settings/ai/ai_trace_waterfall_test.dart',
       );
 
       expect(file.existsSync(), isTrue);
@@ -254,7 +254,7 @@ void main() {
             4,
         'test/features/finance/options_income/ai_tools/get_wheel_lifecycle_tool_test.dart':
             3,
-        'test/features/finance/options_income/presentation/wheel_lifecycle_page_test.dart':
+        'test/features/finance/options_income/ui/wheel_lifecycle_page_test.dart':
             1,
 
         // Rebalance: engine behavior, insight provider, and both editing /
@@ -309,7 +309,7 @@ void main() {
       const requiredFiles = <String, int>{
         // Recent AI transparency churn should keep both aggregate model and
         // widget coverage.
-        'test/features/settings/ai_transparency_page_test.dart': 3,
+        'test/features/settings/ai/ai_transparency_page_test.dart': 3,
 
         // Proposal kind registry refactors should keep both domain registries
         // pinned to their appliers/presentation contract.
@@ -324,7 +324,7 @@ void main() {
 
         // Sync status diagnostics were a recent golden churn hotspot; keep
         // direct responsive/widget coverage alongside the visual baseline.
-        'test/features/settings/sync_status_page_test.dart': 3,
+        'test/features/settings/sync/sync_status_page_test.dart': 3,
       };
 
       for (final entry in requiredFiles.entries) {
@@ -629,7 +629,7 @@ void main() {
     test('production runtime overrides keep scheduled agents on FRB seams', () {
       final bootstrap = File('${appRoot.path}/lib/app/bootstrap.dart');
       final runtimeOverrides = File(
-        '${appRoot.path}/lib/app/agent_runtime/agent_runtime_provider_overrides.dart',
+        '${appRoot.path}/lib/app/agent_runtime/overrides/agent_runtime_provider_overrides.dart',
       );
       final runtimeWiringDir = Directory(
         '${appRoot.path}/lib/app/agent_runtime',

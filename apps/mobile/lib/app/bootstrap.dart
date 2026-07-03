@@ -26,10 +26,10 @@ import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
-import 'agent_runtime/agent_runtime_provider_overrides.dart';
+import 'agent_runtime/overrides/agent_runtime_provider_overrides.dart';
 import 'domain_bootstrap.dart';
 import 'domain_composition.dart';
-import 'route_guard.dart';
+import 'routing/route_guard.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
 /// error pipeline (Flutter framework errors, async zone errors, and the

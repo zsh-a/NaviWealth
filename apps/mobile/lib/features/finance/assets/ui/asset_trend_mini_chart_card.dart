@@ -9,7 +9,7 @@ import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../asset_detail_providers.dart';
+import '../data/asset_detail_providers.dart';
 import 'asset_detail_common.dart';
 
 class AssetTrendMiniChartCard extends ConsumerWidget {

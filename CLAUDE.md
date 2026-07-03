@@ -16,10 +16,10 @@ Read these before changing architecture or cross-domain code:
 
 | Domain | Status | Main paths | Sync prefix |
 |---|---|---|---|
-| FinanceOS | Always on | `features/finance/`, finance feature slices, `features/finance_ai_tools.dart` | `fin:` |
-| HealthOS | User opt-in | `features/health/`, `features/health_ai_tools.dart` | `health:` |
-| KnowledgeOS | User opt-in | `features/knowledge/`, `features/knowledge_ai_tools.dart` | `know:` |
-| ExecutionOS | User opt-in | `features/execution/`, `features/execution_ai_tools.dart` | `exec:` |
+| FinanceOS | Always on | `features/finance/`, finance feature slices, `features/finance/finance_ai_tools.dart` | `fin:` |
+| HealthOS | User opt-in | `features/health/`, `features/health/health_ai_tools.dart` | `health:` |
+| KnowledgeOS | User opt-in | `features/knowledge/`, `features/knowledge/knowledge_ai_tools.dart` | `know:` |
+| ExecutionOS | User opt-in | `features/execution/`, `features/execution/execution_ai_tools.dart` | `exec:` |
 
 The production domain inventory is `apps/mobile/lib/app/domain_packs.dart`. Each domain contributes a `DomainPack`: tools, prompt block, shell route, shell spec, agents, command palette entries, and tab paths. Add a new domain by adding a real domain package and one registry entry; do not scatter one-off branching through bootstrap.
 
@@ -50,11 +50,10 @@ apps/mobile/lib/
     sync/               sync v2 row-state client and sync envelope types
   design_system/        tokens, themes, charts, reusable widgets
   features/
-    finance/            Finance composition, data root, domain values, and slices
+    finance/            Finance composition, tools, data root, domain values, and slices
     health/             HealthOS data, UI, AI tools, agents
     knowledge/          KnowledgeOS data, UI, AI tools, agents
     execution/          ExecutionOS data, UI, AI tools, agents
-    <finance slices>/   accounts, assets, cashflow, investment, options, etc.
   l10n/                 ARB files and generated localizations
 ```
 
@@ -75,7 +74,7 @@ apps/backend/src/
 - `core/` is domain-neutral. It must not import `features/<domain>/` or domain business entities.
 - Domain business code lives under `features/<domain>/`. Finance slices may be legacy sibling features, but new cross-domain work should use `features/finance/` composition seams or app-level composition.
 - `app/` is the composition root. It may import multiple domains to assemble routers, memory indexers, domain packs, AI tools, agents, and provider overrides.
-- AI contracts and runtime stay in `core/ai/`; concrete domain tools live in `features/<domain>/ai_tools/` and are exported by `<domain>_ai_tools.dart`.
+- AI contracts and runtime stay in `core/ai/`; concrete domain tools live in `features/<domain>/ai_tools/` and are exported by `features/<domain>/<domain>_ai_tools.dart`.
 - `core/persistence/` is the shared Drift adapter. Domain repositories own domain table access. Cross-domain infrastructure may use only its own tables.
 - Sync is v2 row-state: generic versioned blobs, last-writer-wins, one `POST /sync`. Do not rebuild sync as CRDT, event sourcing, or schema negotiation.
 - AI is device-only. There is no backend AI relay, no cloud fallback, and no `/ai/chat` endpoint. Users provide their own Anthropic or OpenAI-compatible profile on device.
@@ -145,7 +144,6 @@ apps/mobile/tool/build-latin-fonts.sh
 Native embedding runtime:
 
 ```bash
-cd apps/mobile
 rtk bash tool/build-lifeos-native.sh macos
 ```
 

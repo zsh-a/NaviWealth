@@ -14,7 +14,7 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
-import 'package:naviwealth/features/finance/shared/account_l10n.dart';
+import 'package:naviwealth/features/finance/shared/l10n/account_l10n.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import 'home_section.dart';

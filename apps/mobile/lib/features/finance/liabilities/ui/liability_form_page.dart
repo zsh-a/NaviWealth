@@ -10,7 +10,7 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/forms.dart';
+import '../../shared/ui/forms/forms.dart';
 import '../data/providers.dart';
 import 'liability_l10n.dart';
 

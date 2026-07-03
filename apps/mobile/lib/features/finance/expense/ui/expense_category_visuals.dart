@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/shared/account_color.dart';
+import 'package:naviwealth/features/finance/shared/ui/account_color.dart';
 
 /// UI-side visual lookup for expense [Account]s.
 ///

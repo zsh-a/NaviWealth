@@ -20,7 +20,7 @@ import 'ai_context_summary_header.dart';
 import 'chat_composer.dart';
 import 'chat_conversation_view.dart';
 import 'llm_profile_chip.dart';
-import 'sessions_panel.dart';
+import 'sessions/sessions_panel.dart';
 
 /// Top-level "AI 助手" surface.
 ///

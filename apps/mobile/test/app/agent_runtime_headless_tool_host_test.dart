@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_catalog.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_headless_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_headless_tool_host.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;

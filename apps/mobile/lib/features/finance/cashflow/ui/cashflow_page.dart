@@ -14,11 +14,11 @@ import '../data/recurring_transaction_providers.dart';
 import '../domain/cash_flow_aggregator.dart';
 import '../domain/cash_flow_kind.dart';
 
-part 'cashflow_page_charts.dart';
-part 'cashflow_page_content.dart';
-part 'cashflow_page_money.dart';
-part 'cashflow_page_states.dart';
-part 'cashflow_page_view_model.dart';
+part 'cashflow/charts.dart';
+part 'cashflow/content.dart';
+part 'cashflow/money.dart';
+part 'cashflow/states.dart';
+part 'cashflow/view_model.dart';
 
 class CashFlowPage extends ConsumerStatefulWidget {
   const CashFlowPage({super.key});

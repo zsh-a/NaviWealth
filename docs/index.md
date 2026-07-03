@@ -31,7 +31,7 @@ This documentation uses a docs-as-code structure:
 
 | Domain | Status | Code root | Sync prefix | SSOT |
 |---|---|---|---|---|
-| FinanceOS | Always on | `apps/mobile/lib/features/finance/` plus finance feature slices | `fin:` | [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
+| FinanceOS | Always on | `apps/mobile/lib/features/finance/` | `fin:` | [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
 | HealthOS | User opt-in | `apps/mobile/lib/features/health/` | `health:` | [HealthOS](domains/healthos-domain.md) |
 | KnowledgeOS | User opt-in | `apps/mobile/lib/features/knowledge/` | `know:` | [KnowledgeOS](domains/knowledgeos-domain.md) |
 | ExecutionOS | User opt-in | `apps/mobile/lib/features/execution/` | `exec:` | [ExecutionOS](domains/executionos-domain.md) |
@@ -48,13 +48,11 @@ apps/mobile/lib/
   app/                  bootstrap, router, domain packs, shell chrome
   core/                 domain-neutral AI, auth, sync, persistence, shell
   design_system/        tokens, themes, charts, reusable widgets
-  domain/               legacy finance-neutral values/services
   features/
-    finance/            FinanceOS composition and data root
+    finance/            FinanceOS composition, tools, data root, and slices
     health/             HealthOS data, UI, AI tools, agents
     knowledge/          KnowledgeOS data, UI, AI tools, agents
     execution/          ExecutionOS data, UI, AI tools, agents
-    <finance slices>/   accounts, assets, cashflow, investment, options, etc.
   l10n/                 generated localizations and ARB sources
 ```
 

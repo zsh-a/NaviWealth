@@ -10,7 +10,7 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_buil
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/shared/forms/forms.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/recurring_transaction_providers.dart';

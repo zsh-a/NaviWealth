@@ -2,25 +2,25 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../core/auth/domain_scope.dart';
-import '../../core/lifeos/domain_pack.dart';
-import '../../features/finance/composition/finance_bootstrap.dart';
-import '../../features/finance/composition/finance_command_palette.dart';
-import '../../features/finance/composition/finance_domain_shell.dart';
-import '../../features/finance/composition/finance_intents.dart';
-import '../../features/finance/composition/finance_proposal_applier.dart'
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/features/finance/composition/finance_bootstrap.dart';
+import 'package:naviwealth/features/finance/composition/finance_command_palette.dart';
+import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
+import 'package:naviwealth/features/finance/composition/finance_intents.dart';
+import 'package:naviwealth/features/finance/composition/finance_proposal_applier.dart'
     as finance_proposals;
-import '../../features/finance/composition/finance_proposal_kinds.dart'
+import 'package:naviwealth/features/finance/composition/finance_proposal_kinds.dart'
     show kFinanceProposalKinds;
-import '../../features/finance/composition/finance_routes.dart';
-import '../../features/finance/composition/finance_settings_routes.dart';
-import '../../features/finance/composition/finance_share_intent_handler.dart';
-import '../../features/finance/data/diagnostics/local_table_counts.dart';
-import '../../features/finance/options_income/data/trade_journal_memory_indexer.dart';
-import '../../features/finance/ui/settings/finance_domain_settings_section.dart';
-import '../../features/finance_ai_tools.dart';
-import '../../l10n/gen/app_localizations.dart';
-import '../route_paths.dart';
+import 'package:naviwealth/features/finance/composition/finance_routes.dart';
+import 'package:naviwealth/features/finance/composition/finance_settings_routes.dart';
+import 'package:naviwealth/features/finance/composition/finance_share_intent_handler.dart';
+import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.dart';
+import 'package:naviwealth/features/finance/finance_ai_tools.dart';
+import 'package:naviwealth/features/finance/options_income/data/trade_journal_memory_indexer.dart';
+import 'package:naviwealth/features/finance/ui/settings/finance_domain_settings_section.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import '../routing/route_paths.dart';
 import 'proposal_applier_route.dart';
 
 final DomainPack kFinancePack = DomainPack(

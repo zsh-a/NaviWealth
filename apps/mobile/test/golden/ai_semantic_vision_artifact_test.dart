@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
-import 'package:naviwealth/features/ai_chat/ui/tool_invocation_card.dart';
+import 'package:naviwealth/features/ai_chat/ui/tools/tool_invocation_card.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 const _surface = Size(360, 760);

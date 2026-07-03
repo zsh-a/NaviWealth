@@ -14,7 +14,7 @@ LIB="$ROOT/apps/mobile/lib"
 ALLOWLIST_REGEX='apps/mobile/lib/core/ai/runtime/'
 
 PATTERN='deviceLlmClientProvider|deviceLlmRuntimeProvider|DirectLlmConnectivityProbe|DeviceVisionIngestClient|LlmBriefingSynthesizer\(client:|DeviceLlmClient|DeviceLlmRuntime|runtime/device/(anthropic|openai)/.*_client\.dart'
-FEATURE_FRB_BRIDGE_PATTERN="app/agent_runtime_llm_bridge.dart|agentRuntimeLlmBridgeProvider"
+FEATURE_FRB_BRIDGE_PATTERN="app/agent_runtime/bridges/agent_runtime_llm_bridge.dart|agentRuntimeLlmBridgeProvider"
 APP_FEATURE_DEVICE_LOOP_PATTERN="runtime/device/device_agent_loop.dart|DeviceAgentLoop"
 RAW_DEVICE_UNAVAILABLE_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_unavailable['\"]"
 RAW_LEGACY_VISION_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_vision_direct['\"]"

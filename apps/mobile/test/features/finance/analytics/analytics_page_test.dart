@@ -7,12 +7,12 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/features/finance/analytics/analytics_page.dart';
 import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_history_source.dart';
 import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_providers.dart';
 import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_index.dart';
+import 'package:naviwealth/features/finance/analytics/ui/analytics_page.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart'

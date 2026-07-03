@@ -9,7 +9,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/backup/providers.dart';
-import 'package:naviwealth/features/settings/backup/backup_page.dart';
+import 'package:naviwealth/features/settings/ui/backup/backup_page.dart';
 
 import 'support/app_harness.dart';
 import 'support/page_objects.dart';

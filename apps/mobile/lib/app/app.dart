@@ -17,8 +17,8 @@ import '../core/update/native_update_banner.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_composition.dart';
-import 'route_paths.dart';
-import 'router.dart';
+import 'routing/route_paths.dart';
+import 'routing/router.dart';
 
 /// Vim-style `g`+key → route path mapping.
 ///

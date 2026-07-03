@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
-import 'package:naviwealth/features/finance/investment/presentation/trade_entry_form_page.dart';
+import 'package:naviwealth/features/finance/investment/ui/trade_entry_form_page.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';

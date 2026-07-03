@@ -69,12 +69,13 @@ Higher-level wrapper (implements the project's `Embedder` interface):
 `apps/mobile/lib/core/ai/local/embedding/rust_gemma_embedder.dart`.
 
 Agent runtime/chat wrappers live at the app layer:
-`apps/mobile/lib/app/agent_runtime/agent_runtime_llm_stream_bridge.dart` exposes the native
-stream as a ChatTurn stream, and `apps/mobile/lib/app/agent_runtime/frb_chat_runner.dart`
-maps those primitive events into the Flutter `AiChatEvent` vocabulary while
-Flutter still owns device tool dispatch. Tool continuation is Rust-owned:
-native stream events return a resumable `chat_state`, and Dart sends that state
-back with `tool_results` after host tool execution.
+`apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart`
+exposes the native stream as a ChatTurn stream, and
+`apps/mobile/lib/app/agent_runtime/chat/frb_chat_runner.dart` maps those
+primitive events into the Flutter `AiChatEvent` vocabulary while Flutter still
+owns device tool dispatch. Tool continuation is Rust-owned: native stream
+events return a resumable `chat_state`, and Dart sends that state back with
+`tool_results` after host tool execution.
 
 ## Build
 
@@ -106,7 +107,7 @@ cd apps/mobile && flutter_rust_bridge_codegen generate
 
 Then `flutter run` rebuilds the native lib automatically.
 
-### Out-of-Flutter build (optional `tool/build-lifeos-native.sh`)
+### Out-of-Flutter build (optional repo-root `tool/build-lifeos-native.sh`)
 
 The legacy `tool/build-lifeos-native.sh` is **only needed** when:
 

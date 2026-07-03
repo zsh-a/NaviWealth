@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_catalog.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_native_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_proposal_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_step_runner.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_tool_host.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime/proposals/agent_runtime_proposal_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
+import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';

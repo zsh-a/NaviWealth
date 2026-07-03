@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/features/health/composition/health_domain_shell.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';

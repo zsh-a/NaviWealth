@@ -11,8 +11,6 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/accounts/ai_tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/features/finance/accounts/ai_tools/propose_account_create_tool.dart';
 import 'package:naviwealth/features/finance/accounts/ai_tools/read_account_window_tool.dart';
-import 'package:naviwealth/features/finance/ai_tools/_shared/propose/proposal_plan.dart';
-import 'package:naviwealth/features/finance/ai_tools/_shared/scoped/scoped_window.dart';
 import 'package:naviwealth/features/finance/ai_tools/local_skills/local_skills.dart'
     show
         RecurringCadence,
@@ -24,6 +22,8 @@ import 'package:naviwealth/features/finance/ai_tools/local_skills/local_skills.d
         refundMatchToUpload,
         subscriptionChangeToUpload,
         transferMatchToUpload;
+import 'package:naviwealth/features/finance/ai_tools/shared/propose/proposal_plan.dart';
+import 'package:naviwealth/features/finance/ai_tools/shared/scoped/scoped_window.dart';
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_cashflow_buckets_tool.dart';
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_refund_links_tool.dart';
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_transfer_links_tool.dart';

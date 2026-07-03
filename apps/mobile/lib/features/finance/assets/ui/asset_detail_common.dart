@@ -10,7 +10,7 @@ import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 
-import '../asset_detail_providers.dart';
+import '../data/asset_detail_providers.dart';
 
 class AssetDetailMetricRow extends StatelessWidget {
   const AssetDetailMetricRow({

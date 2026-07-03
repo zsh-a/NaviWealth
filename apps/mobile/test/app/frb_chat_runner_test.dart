@@ -3,9 +3,9 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_llm_stream_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/frb_chat_runner.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/chat/frb_chat_runner.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/chat_agent.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';

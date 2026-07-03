@@ -7,7 +7,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../asset_detail_providers.dart';
+import '../data/asset_detail_providers.dart';
 import 'asset_detail_common.dart';
 
 class AssetPnLCard extends ConsumerWidget {

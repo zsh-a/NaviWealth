@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/app/router.dart';
-import 'package:naviwealth/app/share_intent_navigation.dart';
+import 'package:naviwealth/app/routing/router.dart';
+import 'package:naviwealth/app/share_intents/share_intent_navigation.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 

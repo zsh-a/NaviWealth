@@ -13,7 +13,6 @@
 # that are persisted into the chat timeline (DB). Migrating requires
 # either re-rendering at display time from a structured handle, or a
 # data migration of historical rows.
-lib/features/finance/composition/finance_proposal_applier.dart
 # chat_repository.dart owns the autotitle fallback ("新对话") and the
 # in-band system notice content stored in the messages table.
 lib/features/ai_chat/data/chat_repository.dart
@@ -21,18 +20,12 @@ lib/features/ai_chat/data/chat_repository.dart
 # tests; its UI consumers already route through AppLocalizations via
 # `proposalKindLabel(l10n, kind)` in propose_card.dart.
 lib/core/ai/composition/proposal_plan.dart
-# tool_invocation_renderers.dart landed on main via FIR-83 (per-tool
-# renderers). ~38 UI strings spread across const widgets and helper
-# switches; migration wants its own focused PR so the renderer test
-# suite can be ported in lockstep.
-lib/features/ai_chat/ui/tool_invocation_renderers.dart
 # AI chat surface strings and suggested prompts. These are user-facing and
 # should move to ARB in a focused AI-chat l10n pass; keep baselined so FIR-99
 # continues to block new CN literals elsewhere. (S5a.1 pruned three stale
 # entries the scanner had been flagging: ai_bottom_sheet.dart removed in
 # Wave 37; ai_object_capsule.dart + reply_chips.dart no longer hold CN.)
 lib/features/ai_chat/ui/ai_transparency_badge.dart
-lib/features/ai_chat/ui/propose_card.dart
 
 # ─── AI local semantics / prompt corpora (intentional for now) ───────
 # These strings are not simple display copy: they are user-query keywords,
@@ -52,54 +45,53 @@ lib/features/finance/expense/domain/expense_category_taxonomy.dart
 # display copy; keep them baselined pending a focused FIR-99 follow-up.
 lib/core/ai/llm_credentials/llm_connectivity.dart
 lib/core/ai/llm_credentials/llm_credentials.dart
-lib/core/ai/runtime/device/device_agent_loop.dart
 lib/core/ai/runtime/device/device_session.dart
 lib/core/ai/runtime/device/device_system_prompt.dart
 lib/core/ai/runtime/device/device_tool_dispatcher.dart
 lib/core/ai/runtime/device/device_user_profile_prompt.dart
 lib/core/ai/runtime/device/tools/device_tool_registry.dart
 # Per-feature AI device tools (moved out of core/ai/runtime/device/tools
-# into lib/features/<feature>/ai_tools/ during the Phase D feature-first
+# into lib/features/finance/<slice>/ai_tools/ during the Phase D feature-first
 # split). LLM-facing schemas + JSON descriptions + short proposal labels
 # persisted via the proposal_applier path; same FIR-99 follow-up applies
 # (restructure to enum codes + structured args rendered through
 # AppLocalizations at display time).
-lib/features/accounts/ai_tools/list_payment_accounts_tool.dart
-lib/features/accounts/ai_tools/propose_account_create_tool.dart
-lib/features/accounts/ai_tools/read_account_window_tool.dart
-lib/features/cashflow/ai_tools/get_cashflow_buckets_tool.dart
-lib/features/cashflow/ai_tools/get_refund_links_tool.dart
-lib/features/cashflow/ai_tools/get_transfer_links_tool.dart
-lib/features/expense/ai_tools/get_anomaly_flags_tool.dart
-lib/features/expense/ai_tools/get_recurring_patterns_tool.dart
-lib/features/expense/ai_tools/get_subscription_changes_tool.dart
-lib/features/expense/ai_tools/propose_expense_tool.dart
-lib/features/expense/ai_tools/read_category_window_tool.dart
-lib/features/home/ai_tools/get_net_worth_summary_tool.dart
-lib/features/investment/ai_tools/breakdown_tools.dart
-lib/features/investment/ai_tools/get_asset_allocation_tool.dart
-lib/features/investment/ai_tools/get_holdings_tool.dart
-lib/features/investment/ai_tools/get_investment_performance_tool.dart
-lib/features/investment/ai_tools/propose_asset_valuation_tool.dart
-lib/features/investment/ai_tools/propose_trade_tool.dart
-lib/features/investment/ai_tools/read_asset_window_tool.dart
-lib/features/liabilities/ai_tools/propose_liability_payment_tool.dart
+lib/features/finance/accounts/ai_tools/list_payment_accounts_tool.dart
+lib/features/finance/accounts/ai_tools/propose_account_create_tool.dart
+lib/features/finance/accounts/ai_tools/read_account_window_tool.dart
+lib/features/finance/cashflow/ai_tools/get_cashflow_buckets_tool.dart
+lib/features/finance/cashflow/ai_tools/get_refund_links_tool.dart
+lib/features/finance/cashflow/ai_tools/get_transfer_links_tool.dart
+lib/features/finance/expense/ai_tools/get_anomaly_flags_tool.dart
+lib/features/finance/expense/ai_tools/get_recurring_patterns_tool.dart
+lib/features/finance/expense/ai_tools/get_subscription_changes_tool.dart
+lib/features/finance/expense/ai_tools/propose_expense_tool.dart
+lib/features/finance/expense/ai_tools/read_category_window_tool.dart
+lib/features/finance/home/ai_tools/get_net_worth_summary_tool.dart
+lib/features/finance/investment/ai_tools/breakdown_tools.dart
+lib/features/finance/investment/ai_tools/get_asset_allocation_tool.dart
+lib/features/finance/investment/ai_tools/get_holdings_tool.dart
+lib/features/finance/investment/ai_tools/get_investment_performance_tool.dart
+lib/features/finance/investment/ai_tools/propose_asset_valuation_tool.dart
+lib/features/finance/investment/ai_tools/propose_trade_tool.dart
+lib/features/finance/investment/ai_tools/read_asset_window_tool.dart
+lib/features/finance/liabilities/ai_tools/propose_liability_payment_tool.dart
 # FIRE OS (roadmap-fire-os.md) + Income Planner (options-income.md) AI
 # device tools landed 2026-05-20 / 05-21. Identical category to the
 # device-tool entries above.
-lib/features/fire/ai_tools/get_fire_buckets_tool.dart
-lib/features/fire/ai_tools/get_fire_plan_tool.dart
-lib/features/fire/ai_tools/get_fire_review_tool.dart
-lib/features/fire/ai_tools/get_fire_state_tool.dart
-lib/features/fire/ai_tools/get_fire_stress_tests_tool.dart
-lib/features/fire/ai_tools/propose_fire_bucket_rule_tool.dart
-lib/features/fire/ai_tools/propose_fire_plan_update_tool.dart
-lib/features/fire/ai_tools/simulate_fire_plan_tool.dart
-lib/features/options_income/ai_tools/get_options_income_opportunities_tool.dart
-lib/features/options_income/ai_tools/get_options_strategy_profile_tool.dart
-lib/features/options_income/ai_tools/get_wheel_lifecycle_tool.dart
-lib/features/options_income/ai_tools/propose_options_journal_entry_tool.dart
-lib/features/options_income/ai_tools/propose_options_profile_update_tool.dart
+lib/features/finance/fire/ai_tools/get_fire_buckets_tool.dart
+lib/features/finance/fire/ai_tools/get_fire_plan_tool.dart
+lib/features/finance/fire/ai_tools/get_fire_review_tool.dart
+lib/features/finance/fire/ai_tools/get_fire_state_tool.dart
+lib/features/finance/fire/ai_tools/get_fire_stress_tests_tool.dart
+lib/features/finance/fire/ai_tools/propose_fire_bucket_rule_tool.dart
+lib/features/finance/fire/ai_tools/propose_fire_plan_update_tool.dart
+lib/features/finance/fire/ai_tools/simulate_fire_plan_tool.dart
+lib/features/finance/options_income/ai_tools/get_options_income_opportunities_tool.dart
+lib/features/finance/options_income/ai_tools/get_options_strategy_profile_tool.dart
+lib/features/finance/options_income/ai_tools/get_wheel_lifecycle_tool.dart
+lib/features/finance/options_income/ai_tools/propose_options_journal_entry_tool.dart
+lib/features/finance/options_income/ai_tools/propose_options_profile_update_tool.dart
 # HealthOS D-2.4 device tools landed 2026-05-27. Same category as the
 # device-tool entries above: LLM-facing schemas + CN descriptions tuned
 # for the agent prompt. Track as the same FIR-99 follow-up.
@@ -134,12 +126,11 @@ lib/features/finance/data/repositories/account_repository.dart
 # raw NL query before the command bar acts (§5.10.6). Same category as
 # the search aliases above: matching corpora, not display copy — the
 # token must equal what a CN user types regardless of app locale.
-lib/features/finance/command_palette/finance_ask_ai_result_pane.dart
+lib/features/finance/ui/command_palette/finance_ask_ai_result_pane.dart
 
 # ─── Remaining feature/data follow-up ────────────────────────────────
 # (ai_insight_feed.dart cleared in S5a.1 — fully routes through
 # insight_feed_strings/AppLocalizations; only English breadcrumbs left.)
-lib/features/activity/ui/activity_entry_detail_page.dart
 
 # ─── Layer 4 ingest pipeline (S5a.1 — §5.10.10) ─────────────────────
 # The UI (ingest_review_page.dart) was fully migrated to ARB in S5a.1
@@ -155,13 +146,13 @@ lib/features/activity/ui/activity_entry_detail_page.dart
 #      at the top (proposal_applier / chat_repository). A future pass
 #      restructures these to structured handles rendered at display
 #      time; tracked with the ai_chat data-layer follow-up.
-lib/features/ingest/data/vision_ingest_client.dart
-lib/features/ingest/data/csv_ingest_parser.dart
-lib/features/ingest/data/device_ingest_client.dart
-lib/features/ingest/data/ingest_confirm_service.dart
-lib/features/ingest/data/ingest_pipeline.dart
-lib/features/ingest/data/providers.dart
-lib/features/ingest/data/statement_ingest_parser.dart
+lib/features/finance/ingest/data/vision_ingest_client.dart
+lib/features/finance/ingest/data/csv_ingest_parser.dart
+lib/features/finance/ingest/data/device_ingest_client.dart
+lib/features/finance/ingest/data/ingest_confirm_service.dart
+lib/features/finance/ingest/data/ingest_pipeline.dart
+lib/features/finance/ingest/data/providers.dart
+lib/features/finance/ingest/data/statement_ingest_parser.dart
 
 # ─── Income Planner explanation strings (FIR-99 follow-up) ──────────
 # opportunity_scorer.dart produces OpportunityExplanation (summary /
@@ -176,7 +167,6 @@ lib/features/ingest/data/statement_ingest_parser.dart
 # carry enum codes + numeric args, rendered through AppLocalizations
 # at display time (plus a one-off cache wipe). Track as the same FIR-99
 # follow-up.
-lib/features/options_income/domain/services/opportunity_scorer.dart
 # ─── D-1.7c Memory Runtime tool catalog (FIR-99 follow-up) ────────────
 # ─── D-1.7c Memory Runtime tool catalog (FIR-99 follow-up) ────────────
 # `build_context` and `query_memory` are device-AI tools; their CN
@@ -194,14 +184,14 @@ lib/core/ai/local/embedding/model_manifest.dart
 
 # ─── Phase-D shell + per-domain AI device tools (FIR-99 follow-up) ────
 # Phase D split the device-AI tool catalog into per-domain facade files
-# (lib/features/<domain>_ai_tools.dart) and added the cross-decision
-# ask_user_tool. Same category as the per-feature ai_tools/ entries
+# (lib/features/<domain>/<domain>_ai_tools.dart) and added the cross-decision
+# ask_user_tool. Same category as the Finance slice ai_tools/ entries
 # above: LLM-facing schemas + CN descriptions tuned for the agent
 # prompt, not user-visible chrome. Track as the same FIR-99 follow-up.
 lib/core/ai/runtime/device/tools/ask_user_tool.dart
-lib/features/finance_ai_tools.dart
-lib/features/health_ai_tools.dart
-lib/features/knowledge_ai_tools.dart
+lib/features/finance/finance_ai_tools.dart
+lib/features/health/health_ai_tools.dart
+lib/features/knowledge/knowledge_ai_tools.dart
 # decision_card.dart renders the AskUser decision prompt in the chat
 # timeline; user-facing copy that should move to ARB with the broader
 # ai_chat l10n pass (same block as tool_invocation_renderers.dart above).
@@ -224,7 +214,7 @@ lib/features/health/composition/health_command_palette.dart
 #      should move to ARB in a focused KnowledgeOS l10n pass.
 #   2. AI tools + agents + classifiers + proposal appliers — LLM-facing
 #      schemas / prompts / persisted proposal labels, same path as the
-#      per-feature ai_tools/ block above (enum codes + structured args
+#      Finance slice ai_tools/ block above (enum codes + structured args
 #      rendered through AppLocalizations at display time).
 lib/features/knowledge/agents/contradiction_agent.dart
 lib/features/knowledge/agents/inbox_triage_agent.dart
@@ -249,7 +239,6 @@ lib/features/knowledge/composition/knowledge_proposal_applier.dart
 lib/features/knowledge/data/capture_classifier.dart
 lib/features/knowledge/data/contradiction_judge.dart
 lib/features/knowledge/data/inbox_triage_classifier.dart
-lib/features/knowledge/data/knowledge_search_service.dart
 lib/features/knowledge/data/llm_capture_classifier.dart
 lib/features/knowledge/data/llm_contradiction_judge.dart
 lib/features/knowledge/data/llm_inbox_triage_classifier.dart

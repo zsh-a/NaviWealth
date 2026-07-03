@@ -8,6 +8,7 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 import 'knowledge_route_paths.dart';
 
 class KnowledgeShareIntentHandler extends DomainShareIntentHandler {
@@ -30,9 +31,10 @@ class KnowledgeShareIntentHandler extends DomainShareIntentHandler {
         raw.startsWith('http://') ||
         raw.startsWith('https://');
     final firstLine = raw.split('\n').first.trim();
-    final title = firstLine.length > 80
-        ? '${firstLine.substring(0, 80)}…'
-        : firstLine;
+    final title = knowledgeExcerpt(
+      firstLine,
+      max: kKnowledgeSharedTitleMaxChars,
+    );
 
     await repo.upsertNote(
       KnowledgeNote(

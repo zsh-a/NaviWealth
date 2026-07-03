@@ -14,7 +14,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.dart';
-import 'package:naviwealth/features/settings/ui/sync_status_page.dart';
+import 'package:naviwealth/features/settings/ui/sync/sync_status_page.dart';
 
 import '../core/persistence/test_database.dart';
 import '_golden_setup.dart';

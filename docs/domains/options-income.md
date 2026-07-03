@@ -74,7 +74,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](../ai/ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
 | Backend 只做 sync_rows 存储 | [`sync-v2.md`](../sync/sync-v2.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
-| Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
+| Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
 | Modal 系统 | memory: modal_system | 详情面板用 `showAppFormSheet` + `AppSheetFooter`；CI 由 `tool/check-modal-helpers.sh` 守护。 |
@@ -140,7 +140,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ### 4.1 MVP：yfinance 非官方端点
 
-复用 `lib/data/market/providers/yfinance_provider.dart` 同款 `MarketHttpClient` + `RateLimiter`，新增 `lib/data/market/providers/options/yfinance_options_provider.dart`。
+复用 `features/finance/data/market/providers/yfinance_provider.dart` 同款 `MarketHttpClient` + `RateLimiter`，新增 `features/finance/data/market/providers/options/yfinance_options_provider.dart`。
 
 **配额策略**：
 
@@ -453,7 +453,7 @@ final_score =
 
 Income Planner tools are FinanceOS-owned device tools. Their implementations
 live under `features/finance/options_income/ai_tools/`; their registrations and
-`ToolDescriptor` metadata are exported through `features/finance_ai_tools.dart`
+`ToolDescriptor` metadata are exported through `features/finance/finance_ai_tools.dart`
 and merged into the production catalog by `kFinancePack`.
 
 **故意不加**：`propose_options_trade`（下单是 `SideEffect.externalCall`，不在本设计范围）。
@@ -514,7 +514,7 @@ LLM **不能**做的事（dispatcher 层不强制，但 system prompt 提示）�
 
 ### 9.1 入口
 
-主页面：`apps/mobile/lib/features/finance/options_income/presentation/pages/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
+主页面：`apps/mobile/lib/features/finance/options_income/ui/income_planner/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
 
 页内四 tab：
 
@@ -541,7 +541,7 @@ Watchlist Opportunities  关注标的机会
 - ApprovedUnderlyings 列表：增删 + 单个标的的 `allowPut` / `allowCall` / `maxBuyPrice` / `minSellPrice`。
 - 首次进入强制弹"期权风险披露"（基于 OCC ODD），用户确认后写入 `riskDisclosureAckAt`。
 
-**L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode`)的展示标签集中在 `presentation/income_planner_labels.dart` 的本地化辅助函数中,domain 层不依赖 `AppLocalizations`。
+**L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode`)的展示标签集中在 `ui/income_planner_labels.dart` 的本地化辅助函数中,domain 层不依赖 `AppLocalizations`。
 
 ### 9.3 web 行为
 
@@ -657,10 +657,12 @@ apps/mobile/lib/features/finance/options_income/
 │   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
 │   ├── services/opportunity_scorer.dart# P1/P2 — pure-Dart scorer
 │   └── trade_journal_entry.dart        # P3
-└── presentation/
+└── ui/
     ├── approved_underlying_form_sheet.dart
-    ├── income_planner_page.dart
-    ├── income_planner_strings.dart
+    ├── income_planner/
+    │   ├── income_planner_page.dart
+    │   └── income_planner_page_*.dart
+    ├── income_planner_labels.dart
     ├── occ_disclosure_sheet.dart
     ├── opportunity_detail_sheet.dart   # P1 — score breakdown, worst-case, log-trade CTA
     ├── strategy_profile_sheet.dart
@@ -682,7 +684,7 @@ apps/mobile/lib/core/persistence/local_only_tables.dart # opportunity cache DDL
 apps/mobile/lib/core/persistence/app_database.dart # schemaVersion updates
 apps/mobile/lib/core/sync/sync_table_registry.dart # sync_rows table registry
 apps/mobile/lib/core/sync/providers.dart           # row-state sync providers
-apps/mobile/lib/features/finance_ai_tools.dart     # Income Planner tool registrations + descriptors
+apps/mobile/lib/features/finance/finance_ai_tools.dart     # Income Planner tool registrations + descriptors
 apps/backend/migrations/0002_sync_schema.sql       # backend sync_rows store
 apps/backend/src/sync/store.rs                     # schema-agnostic row store
 ```

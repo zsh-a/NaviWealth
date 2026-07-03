@@ -9,7 +9,7 @@
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/finance/ai_tools/_shared/propose/proposal_plan.dart';
+import 'package:naviwealth/features/finance/ai_tools/shared/propose/proposal_plan.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 

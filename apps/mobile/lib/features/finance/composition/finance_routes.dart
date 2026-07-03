@@ -8,12 +8,12 @@
 library;
 
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/features/finance/assets/asset_detail_page.dart';
-import 'package:naviwealth/features/finance/assets/cash_form_page.dart';
-import 'package:naviwealth/features/finance/assets/deposit_form_page.dart';
 import 'package:naviwealth/features/finance/assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
-import 'package:naviwealth/features/finance/assets/wealth_product_form_page.dart';
+import 'package:naviwealth/features/finance/assets/ui/asset_detail_page.dart';
+import 'package:naviwealth/features/finance/assets/ui/cash_form_page.dart';
+import 'package:naviwealth/features/finance/assets/ui/deposit_form_page.dart';
+import 'package:naviwealth/features/finance/assets/ui/wealth_product_form_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/budget_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
@@ -21,40 +21,40 @@ import 'package:naviwealth/features/finance/cashflow/ui/recurring_transactions_p
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_report_page.dart';
-import 'package:naviwealth/features/finance/fire/presentation/fire_page.dart'
+import 'package:naviwealth/features/finance/fire/ui/fire_page.dart'
     deferred as fire_lib;
-import 'package:naviwealth/features/finance/home/home_page.dart';
-import 'package:naviwealth/features/finance/investment/presentation/corporate_action_entry_route.dart'
+import 'package:naviwealth/features/finance/home/ui/home_page.dart';
+import 'package:naviwealth/features/finance/investment/ui/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
-import 'package:naviwealth/features/finance/investment/presentation/dca_simulator_page.dart'
+import 'package:naviwealth/features/finance/investment/ui/dca_simulator_page.dart'
     deferred as dca_simulator_lib;
-import 'package:naviwealth/features/finance/investment/presentation/portfolio_hub_page.dart'
+import 'package:naviwealth/features/finance/investment/ui/portfolio_hub_page.dart'
     deferred as portfolio_hub_lib;
-import 'package:naviwealth/features/finance/investment/presentation/trade_entry_form_page.dart';
-import 'package:naviwealth/features/finance/investment/presentation/watchlist_page.dart'
+import 'package:naviwealth/features/finance/investment/ui/trade_entry_form_page.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart'
     deferred as watchlist_lib;
 import 'package:naviwealth/features/finance/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import 'package:naviwealth/features/finance/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
 import 'package:naviwealth/features/finance/liabilities/ui/liability_form_page.dart';
-import 'package:naviwealth/features/finance/options_income/presentation/income_planner_page.dart'
+import 'package:naviwealth/features/finance/options_income/ui/income_planner/income_planner_page.dart'
     deferred as income_planner_lib;
-import 'package:naviwealth/features/finance/options_income/presentation/options_trade_stats_page.dart'
+import 'package:naviwealth/features/finance/options_income/ui/options_trade_stats_page.dart'
     deferred as options_stats_lib;
-import 'package:naviwealth/features/finance/options_income/presentation/wheel_lifecycle_page.dart';
+import 'package:naviwealth/features/finance/options_income/ui/wheel_lifecycle_page.dart';
 
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../core/shell/page_transitions.dart';
 import '../../../core/shell/route_error_page.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../accounts/account_form_page.dart';
-import '../accounts/accounts_page.dart';
-import '../accounts/journal_entry_list_page.dart';
-import '../accounts/transfer_form_page.dart';
-import '../activity/activity_page.dart';
+import '../accounts/ui/account_form_page.dart';
+import '../accounts/ui/accounts_page.dart';
+import '../accounts/ui/journal_entry_list_page.dart';
+import '../accounts/ui/transfer_form_page.dart';
 import '../activity/ui/activity_entry_detail_page.dart';
+import '../activity/ui/activity_page.dart';
 import '../ingest/ui/ingest_review_page.dart';
 import '../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../ui/plan_hub_page.dart';

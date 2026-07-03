@@ -9,7 +9,7 @@ import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
-import 'package:naviwealth/features/auth/presentation/login_page.dart';
+import 'package:naviwealth/features/auth/ui/login_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 class _StubAuthApi implements AuthApiClient {

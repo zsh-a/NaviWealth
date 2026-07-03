@@ -18,7 +18,7 @@ import 'package:naviwealth/features/finance/investment/domain/cost_basis/fifo_st
 import 'package:naviwealth/features/finance/investment/domain/cost_basis_engine.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
-import 'package:naviwealth/features/finance/investment/presentation/corporate_action_entry_page.dart';
+import 'package:naviwealth/features/finance/investment/ui/corporate_action_entry_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';

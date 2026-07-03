@@ -4,15 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/domain_packs.dart';
-import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/biometric_auth_service.dart';
 import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
-import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
+import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

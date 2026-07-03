@@ -21,7 +21,7 @@ import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/realized_pnl.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/xirr_engine.dart';
-import 'package:naviwealth/features/finance/investment/presentation/portfolio_hub_page.dart';
+import 'package:naviwealth/features/finance/investment/ui/portfolio_hub_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';

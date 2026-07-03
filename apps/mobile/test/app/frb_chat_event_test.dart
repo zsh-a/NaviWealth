@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime/frb_chat_event.dart';
+import 'package:naviwealth/app/agent_runtime/chat/frb_chat_event.dart';
 
 void main() {
   test('parses FRB tool call end events', () {

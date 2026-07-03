@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/features/settings/settings_page.dart';
+import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';

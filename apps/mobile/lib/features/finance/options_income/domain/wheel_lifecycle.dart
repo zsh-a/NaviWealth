@@ -11,7 +11,7 @@ import 'trade_journal_entry.dart';
 ///
 /// `between` is the resting state immediately before the user has opened
 /// their first position on a symbol, or after every position on it has
-/// closed. The presentation layer typically renders it identically to
+/// closed. The UI layer typically renders it identically to
 /// `cashWaiting` but keeps them separate so the lifecycle never claims a
 /// position exists when it doesn't.
 enum WheelStage {

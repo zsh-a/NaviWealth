@@ -18,7 +18,7 @@ import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/finance/home/home_page.dart';
+import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';

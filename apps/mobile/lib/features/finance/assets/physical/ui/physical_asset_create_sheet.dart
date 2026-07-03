@@ -7,7 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/shared/forms/forms.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/physical_asset.dart';

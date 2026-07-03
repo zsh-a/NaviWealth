@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/features/finance/assets/asset_detail_page.dart';
+import 'package:naviwealth/features/finance/assets/ui/asset_detail_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';

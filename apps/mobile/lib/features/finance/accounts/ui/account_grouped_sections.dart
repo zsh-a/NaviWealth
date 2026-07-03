@@ -4,14 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/shared/account_l10n.dart';
+import 'package:naviwealth/features/finance/shared/l10n/account_l10n.dart';
 
 import '../../../../core/format/formatters.dart';
 import '../../../../core/format/providers.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../shared/account_color.dart';
-import '../../shared/account_icon_catalog.dart';
+import '../../shared/ui/account_color.dart';
+import '../../shared/ui/account_icon_catalog.dart';
 import '../domain/account_balances.dart';
 import 'account_labels.dart';
 

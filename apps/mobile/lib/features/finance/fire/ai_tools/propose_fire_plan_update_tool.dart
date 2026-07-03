@@ -1,5 +1,5 @@
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/finance/ai_tools/_shared/propose/proposal_plan.dart';
+import 'package:naviwealth/features/finance/ai_tools/shared/propose/proposal_plan.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 
 /// `propose_fire_plan_update` — propose changes to the FIRE plan.

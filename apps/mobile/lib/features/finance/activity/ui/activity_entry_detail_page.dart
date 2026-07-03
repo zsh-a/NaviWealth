@@ -17,8 +17,8 @@ import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../data/repositories/journal_entry_providers.dart';
 import '../../data/repositories/providers.dart';
-import '../../shared/account_l10n.dart';
-import '../../shared/entry_kind_labels.dart';
+import '../../shared/l10n/account_l10n.dart';
+import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_entry_insight_client.dart';
 
 part 'activity_entry_detail_helpers.dart';

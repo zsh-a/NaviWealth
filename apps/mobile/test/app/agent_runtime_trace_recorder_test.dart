@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_runner.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_step_runner.dart';
-import 'package:naviwealth/app/agent_runtime/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_runner.dart';
+import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
+import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 
 void main() {

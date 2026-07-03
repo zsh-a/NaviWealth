@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/share_intent_dispatcher.dart';
-import 'package:naviwealth/app/share_intent_navigation.dart';
+import 'package:naviwealth/app/share_intents/share_intent_dispatcher.dart';
+import 'package:naviwealth/app/share_intents/share_intent_navigation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/lifeos/share_intent.dart';

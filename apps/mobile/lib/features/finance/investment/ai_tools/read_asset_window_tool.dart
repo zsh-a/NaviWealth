@@ -12,7 +12,7 @@
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/finance/ai_tools/_shared/scoped/scoped_window.dart';
+import 'package:naviwealth/features/finance/ai_tools/shared/scoped/scoped_window.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 

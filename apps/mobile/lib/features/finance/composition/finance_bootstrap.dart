@@ -21,12 +21,12 @@ import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/providers.dart' as auth;
 import '../../../core/command_palette/local_query_result_pane_provider.dart';
 import '../ai_tools/drift_query_plan_executor.dart';
-import '../command_palette/finance_ask_ai_result_pane.dart';
-import '../command_palette/finance_query_plan_executor_provider.dart';
 import '../data/market/sync/price_sync_providers.dart';
+import '../ui/command_palette/finance_ask_ai_result_pane.dart';
 import 'finance_ai_context_summary_provider.dart';
 import 'finance_chat_trace_preparer.dart';
 import 'finance_portfolio_snapshot.dart';
+import 'finance_query_plan_executor_provider.dart';
 
 /// Every FinanceOS shell-seam override in one place. Each entry maps a
 /// `core/ai/composition/` provider to its Finance implementation; the

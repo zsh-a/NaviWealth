@@ -14,6 +14,9 @@ const int kKnowledgeHeadlineExcerptMaxChars = kKnowledgeExcerptMaxChars ~/ 3;
 const int kKnowledgeInlineExcerptMaxChars =
     kKnowledgeHeadlineExcerptMaxChars ~/ 2;
 
+/// Shared intent note title excerpt budget.
+const int kKnowledgeSharedTitleMaxChars = 80;
+
 /// Supporting-detail excerpt derived from the shared excerpt budget.
 const int kKnowledgeSupportingExcerptMaxChars =
     kKnowledgeExcerptMaxChars - kKnowledgeHeadlineExcerptMaxChars;

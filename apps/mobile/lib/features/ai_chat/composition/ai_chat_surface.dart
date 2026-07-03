@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/misc.dart';
 
 import '../../../core/ai/composition/ask_ai.dart';
 import '../../../core/ai/intent/ai_intent_invocation.dart';
-import '../ui/ai_sheet.dart';
+import '../ui/sheet/ai_sheet.dart';
 
 List<Override> aiChatSurfaceOverrides() {
   return [askAiSurfaceProvider.overrideWith((ref) => _openAiChatSurface)];

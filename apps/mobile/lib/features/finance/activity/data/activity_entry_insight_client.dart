@@ -13,7 +13,7 @@ import 'package:naviwealth/features/finance/domain/models/posting.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../data/repositories/journal_entry_repository.dart';
-import '../../shared/entry_kind_labels.dart';
+import '../../shared/l10n/entry_kind_labels.dart';
 
 abstract class ActivityEntryInsightClient {
   Future<String?> explain(

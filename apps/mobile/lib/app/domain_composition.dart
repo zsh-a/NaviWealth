@@ -40,8 +40,8 @@ import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/finance/composition/finance_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
-import 'share_intent_navigation.dart';
-import 'shell_chrome.dart';
+import 'share_intents/share_intent_navigation.dart';
+import 'shell/shell_chrome.dart';
 
 List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
   final resolvedPacks = packs ?? kAllDomainPacks;

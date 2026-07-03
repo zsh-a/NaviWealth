@@ -7,7 +7,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import 'decision_request.dart';
-import 'message_bubble.dart';
+import 'messages/message_bubble.dart';
 
 /// The conversation timeline — message list + follow-scroll + the
 /// loading / error / empty states — shared by every AI chat surface

@@ -65,7 +65,7 @@ Plan       /plan
 
 ## 2. 当前状态 (post-migration)
 
-`apps/mobile/lib/app/route_paths.dart` 当前 (`kPrimaryTabPaths`):
+`apps/mobile/lib/app/routing/route_paths.dart` 当前 (`primaryTabPathsProvider`):
 
 ```
 Today  /     Activity  /activity     Wealth  /wealth     Plan  /plan
@@ -167,7 +167,7 @@ Settings 在 `/settings`，不占主导航——通过 Today 顶栏 ⚙ 进入�
 
 ## 6. 路由原则
 
-- 所有业务导航通过 `lib/app/route_paths.dart` 中的常量或 helper，不允许字面量字符串散落在 UI。
+- 所有业务导航通过 `lib/app/routing/route_paths.dart` 中的常量或 helper，不允许字面量字符串散落在 UI。
 - 详情 ID 使用不透明字符串；展示前按路由 helper 编码 (`Uri.encodeComponent`)。
 - 列表选择状态使用 query string，例如 `/wealth/accounts?selected=<id>`。
 - 旧 `/accounts/*` 路径不再解析（Phase D 已删 redirect）。任何在 Phase A 之前生成、仍引用旧路径的外部链接 / AI chat `routeHint` 会 404；客户端按需重新生成会话。
@@ -221,7 +221,7 @@ Plan hub 上线 FIRE-progress hero（years-to-FIRE + 进度条 + 双 CTA）。To
 
 ## 9. 此文件与代码的关系
 
-- `lib/app/route_paths.dart` 顶部注释引用本文件作为 IA 权威；如二者冲突，**本文件赢**，请回头改 `route_paths.dart`。
-- `lib/app/app_shell.dart` 的 `_navDestinations` 必须与 §1 的四个 tab 一致。
+- `lib/app/routing/route_paths.dart` 顶部注释引用本文件作为 IA 权威；如二者冲突，**本文件赢**，请回头改 `route_paths.dart`。
+- `DomainPack.tabPaths` 与各 domain route builder 必须与 §1 的 tab 结构一致。
 - `lib/core/ai/` 任何新 AI 入口必须满足 §5 的"不做 tab"约束。
 - 改本文件应在 PR 描述里说明哪条规则变了，并 ping 任何当前在做导航相关工作的人。

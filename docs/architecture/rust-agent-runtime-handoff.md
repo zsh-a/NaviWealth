@@ -105,10 +105,10 @@ docs/architecture/rust-agent-runtime-mvp.md
 The mobile bridge commit added Flutter/Dart and native Rust integration pieces:
 
 ```text
-apps/mobile/lib/app/agent_runtime/agent_runtime_catalog.dart
-apps/mobile/lib/app/agent_runtime/agent_runtime_tool_host.dart
-apps/mobile/lib/app/agent_runtime/agent_runtime_headless_tool_host.dart
-apps/mobile/lib/app/agent_runtime/agent_runtime_native_bridge.dart
+apps/mobile/lib/app/agent_runtime/catalog/agent_runtime_catalog.dart
+apps/mobile/lib/app/agent_runtime/tools/agent_runtime_tool_host.dart
+apps/mobile/lib/app/agent_runtime/tools/agent_runtime_headless_tool_host.dart
+apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_native_bridge.dart
 apps/mobile/lib/src/rust/api/agent_runtime.dart
 apps/mobile/native/lifeos_native/src/api/agent_runtime.rs
 apps/mobile/bin/agent_runtime_tool_host.dart
@@ -184,10 +184,11 @@ Current bridge capabilities:
   agent: HealthOS Morning Briefing records successful FRB profile turns through
   `AgentRuntimeTraceRecorder.recordProfileTurn`.
 - Centralize production app wiring in
-  `app/agent_runtime_provider_overrides.dart`, keeping `app/bootstrap.dart`
-  focused on startup/auth/sync/domain/bootstrap concerns while FRB chat,
-  profile-completion clients, profile-turn synthesis, and migrated tool-plan
-  agents are composed through the shared runtime binding layer.
+  `app/agent_runtime/overrides/agent_runtime_provider_overrides.dart`, keeping
+  `app/bootstrap.dart` focused on startup/auth/sync/domain/bootstrap concerns
+  while FRB chat, profile-completion clients, profile-turn synthesis, and
+  migrated tool-plan agents are composed through the shared runtime binding
+  layer.
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnBinding` / `agentRuntimeProfileTurnBindingProvider`
   to run one FRB-backed active-profile turn and display the terminal native

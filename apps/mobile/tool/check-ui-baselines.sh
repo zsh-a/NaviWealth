@@ -28,5 +28,5 @@ flutter test \
   test/core/perf/frame_timing_collector_test.dart \
   test/core/perf/perf_trace_recorder_test.dart \
   test/design_system/charts/downsample_test.dart \
-  test/features/investment/domain/returns/xirr_engine_test.dart \
+test/features/finance/investment/domain/returns/xirr_engine_test.dart \
   --reporter=expanded

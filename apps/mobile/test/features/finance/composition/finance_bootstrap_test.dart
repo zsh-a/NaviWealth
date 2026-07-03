@@ -4,8 +4,8 @@ import 'package:naviwealth/core/auth/auth_state.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/features/finance/ai_tools/drift_query_plan_executor.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
-import 'package:naviwealth/features/finance/command_palette/finance_query_plan_executor_provider.dart';
 import 'package:naviwealth/features/finance/composition/finance_bootstrap.dart';
+import 'package:naviwealth/features/finance/composition/finance_query_plan_executor_provider.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
 
 void main() {

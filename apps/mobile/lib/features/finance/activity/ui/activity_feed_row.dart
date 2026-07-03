@@ -12,7 +12,7 @@ import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import '../../../../core/format/formatters.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../shared/account_l10n.dart';
+import '../../shared/l10n/account_l10n.dart';
 import 'activity_entry_detail_page.dart';
 
 /// One row in the unified Activity timeline (iOS Wallet style).

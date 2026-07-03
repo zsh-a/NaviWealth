@@ -22,7 +22,7 @@ import 'package:naviwealth/core/ai/regression/regression_corpus.dart';
 /// a renderer never requires touching this allowlist.
 Set<String> _renderersOnDisk() {
   final src = File(
-    'lib/features/ai_chat/ui/tool_invocation_renderers.dart',
+    'lib/features/ai_chat/ui/tools/renderers/tool_invocation_renderers.dart',
   ).readAsStringSync();
   // Match the switch arms in `renderToolOutput`: `'foo' => …` / `'foo' || 'bar' =>`.
   final out = <String>{};

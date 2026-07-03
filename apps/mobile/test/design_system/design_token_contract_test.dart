@@ -80,7 +80,7 @@ void main() {
     _expectNoMatches(
       _dartFiles(Directory('${appRoot.path}/lib/features')).where(
         (file) => !file.path.endsWith(
-          '/features/finance/shared/forms/manual_security_sheet.dart',
+          '/features/finance/shared/ui/forms/manual_security_sheet.dart',
         ),
       ),
       RegExp(r'showFDialog|FDialog\.raw|FDialog\('),

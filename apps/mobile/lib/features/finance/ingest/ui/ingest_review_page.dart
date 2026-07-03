@@ -19,16 +19,16 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../shared/account_l10n.dart';
-import '../../shared/forms/forms.dart';
+import '../../shared/l10n/account_l10n.dart';
+import '../../shared/ui/forms/forms.dart';
 import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
 import '../domain/ingest_models.dart';
 
-part 'ingest_review_page_draft_card.dart';
-part 'ingest_review_page_empty.dart';
-part 'ingest_review_page_processing.dart';
+part 'ingest_review/draft_card.dart';
+part 'ingest_review/empty.dart';
+part 'ingest_review/processing.dart';
 
 class IngestReviewPage extends ConsumerStatefulWidget {
   const IngestReviewPage({super.key});

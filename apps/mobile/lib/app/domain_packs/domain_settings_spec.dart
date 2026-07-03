@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/lifeos/domain_pack.dart';
-import '../../core/shell/settings_route_paths.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 
 DomainSettingsSpec domainSettingsSpec({
   required IconData icon,

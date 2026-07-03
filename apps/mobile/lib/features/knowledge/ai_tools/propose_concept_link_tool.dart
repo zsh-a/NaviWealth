@@ -4,7 +4,7 @@
 /// **Write semantics**: returns a proposal envelope; the user must
 /// confirm in the UI before the link lands. Matches the cross-domain
 /// `propose_*` pattern — see
-/// `lib/features/finance/ai_tools/_shared/propose/proposal_plan.dart`
+/// `lib/features/finance/ai_tools/shared/propose/proposal_plan.dart`
 /// (per the northstar 行为契约 / ai-architecture.md).
 library;
 

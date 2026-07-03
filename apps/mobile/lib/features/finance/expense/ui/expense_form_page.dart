@@ -18,8 +18,8 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
-import 'package:naviwealth/features/finance/shared/account_tree_picker.dart';
-import 'package:naviwealth/features/finance/shared/forms/forms.dart';
+import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Quick-entry page for a single expense. Shared between create and

@@ -107,15 +107,15 @@ apps/mobile/native/lifeos_native/src/api/agent_runtime.rs
   FRB-visible primitive JSON functions. Keep generated Dart bindings out of
   app code by routing through app-level bridges.
 
-apps/mobile/lib/app/
-  agent_runtime_catalog.dart          DomainPack -> runtime catalog export
-  agent_runtime_native_bridge.dart    Stable Dart map API over generated FRB
-  agent_runtime_tool_host.dart        Device tool JSON-RPC host adapter
-  agent_runtime_runner.dart           Profile turn + native step loop composition
-  agent_runtime_llm_bridge.dart       LlmProfile -> provider-neutral request
-  agent_runtime_llm_stream_bridge.dart ChatTurn streaming bridge over FRB JSON
-  frb_chat_runner.dart                ChatTurn event mapping and Flutter tool loop
-  agent_runtime_trace_recorder.dart   FRB result -> local AiTraceStore adapter
+apps/mobile/lib/app/agent_runtime/
+  catalog/agent_runtime_catalog.dart           DomainPack -> runtime catalog export
+  bridges/agent_runtime_native_bridge.dart     Stable Dart map API over generated FRB
+  tools/agent_runtime_tool_host.dart           Device tool JSON-RPC host adapter
+  runner/agent_runtime_runner.dart             Profile turn + native step loop composition
+  bridges/agent_runtime_llm_bridge.dart        LlmProfile -> provider-neutral request
+  bridges/agent_runtime_llm_stream_bridge.dart ChatTurn streaming bridge over FRB JSON
+  chat/frb_chat_runner.dart                    ChatTurn event mapping and Flutter tool loop
+  trace/agent_runtime_trace_recorder.dart      FRB result -> local AiTraceStore adapter
 ```
 
 ## Runtime Layers
@@ -167,12 +167,12 @@ TUI uses persistent natural input by default. Plain text runs the shared
 | Add or change a wire field | `schemas/`, `crates/agent-core/`, fixtures | schema validation tests, `rtk cargo test -p agent-cli` |
 | Change runner lifecycle | `crates/agent-runtime/src/lib.rs` | `rtk cargo test -p agent-runtime`, `rtk cargo test -p agent-cli` |
 | Change LLM provider behavior | `crates/agent-llm/src/providers/` | `rtk cargo test -p agent-llm`, native tests when FRB LLM bridge behavior changes |
-| Change ChatTurn behavior | `crates/agent-chat/`, `schemas/chat-turn-*.schema.json`, ChatTurn fixtures, `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli --test contracts`, native tests, Flutter chat bridge tests |
+| Change ChatTurn behavior | `crates/agent-chat/`, `schemas/chat-turn-*.schema.json`, ChatTurn fixtures, `apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart`, `apps/mobile/lib/app/agent_runtime/chat/frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli --test contracts`, native tests, Flutter chat bridge tests |
 | Change CLI command behavior | `crates/agent-cli/src/commands/` plus supporting module | focused command test, `rtk cargo test -p agent-cli` |
-| Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
+| Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime/tools/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |
 | Change FRB API | `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs` | FRB codegen, native API tests, Dart bridge tests |
-| Change AI Chat streaming | `agent_runtime_llm_stream_bridge.dart`, `frb_chat_runner.dart` | `frb_chat_runner_test.dart`, stream bridge test |
-| Change proposal apply behavior | `crates/agent-cli/src/proposal.rs`, `agent_runtime_proposal_bridge.dart` | proposal CLI tests, targeted Flutter proposal tests |
+| Change AI Chat streaming | `apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart`, `apps/mobile/lib/app/agent_runtime/chat/frb_chat_runner.dart` | `frb_chat_runner_test.dart`, stream bridge test |
+| Change proposal apply behavior | `crates/agent-cli/src/proposal.rs`, `apps/mobile/lib/app/agent_runtime/proposals/agent_runtime_proposal_bridge.dart` | proposal CLI tests, targeted Flutter proposal tests |
 
 ## Invariants
 

@@ -71,7 +71,7 @@ Finance is always active. Health, Knowledge, and Execution are enabled through
 Use this path for any domain-level change:
 
 1. Add or update domain code under `features/<domain>/`.
-2. Export tools through `features/<domain>_ai_tools.dart`.
+2. Export tools through `features/<domain>/<domain>_ai_tools.dart`.
 3. Add or update shell spec and route builder under `features/<domain>/composition/`.
 4. Add agents under `features/<domain>/agents/` and expose a builder provider if needed.
 5. Add command palette entries under `features/<domain>/composition/`.
@@ -90,8 +90,8 @@ The router uses a two-layer shell:
 
 Important files:
 
-- `app/router_builder.dart`
-- `app/app_dock_shell.dart`
+- `app/routing/router_builder.dart`
+- `app/shell/app_dock_shell.dart`
 - `core/shell/domain_shell.dart`
 - `features/finance/composition/finance_routes.dart`
 - `features/health/composition/health_routes.dart`
@@ -136,10 +136,10 @@ Aggregation:
 
 Domain exports:
 
-- Finance: `features/finance_ai_tools.dart`.
-- Health: `features/health_ai_tools.dart`.
-- Knowledge: `features/knowledge_ai_tools.dart`.
-- Execution: `features/execution_ai_tools.dart`.
+- Finance: `features/finance/finance_ai_tools.dart`.
+- Health: `features/health/health_ai_tools.dart`.
+- Knowledge: `features/knowledge/knowledge_ai_tools.dart`.
+- Execution: `features/execution/execution_ai_tools.dart`.
 
 Rules:
 
@@ -226,7 +226,7 @@ Current native runtime:
 - Dart adapter: `core/ai/local/embedding/rust_gemma_embedder.dart`.
 - Generated bindings: `apps/mobile/lib/src/rust/`.
 - Model installer: `core/ai/local/embedding/model_*`.
-- Build helper: `apps/mobile/tool/build-lifeos-native.sh`.
+- Build helper: `tool/build-lifeos-native.sh` from the repository root.
 
 Behavior:
 

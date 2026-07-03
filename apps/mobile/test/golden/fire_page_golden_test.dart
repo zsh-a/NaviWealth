@@ -4,7 +4,7 @@ import 'package:naviwealth/features/finance/assets/physical/data/providers.dart'
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
-import 'package:naviwealth/features/finance/fire/presentation/fire_page.dart';
+import 'package:naviwealth/features/finance/fire/ui/fire_page.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
