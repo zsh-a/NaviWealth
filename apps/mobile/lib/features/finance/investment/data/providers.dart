@@ -12,12 +12,14 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 
+import '../application/trade_entry_submission_service.dart';
 import '../domain/cost_basis/fifo_strategy.dart';
 import '../domain/cost_basis_engine.dart';
 import '../domain/fx_pnl/fx_pnl_breakdown.dart';

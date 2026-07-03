@@ -6,12 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/haptics/haptics.dart';
-import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
@@ -19,9 +15,9 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/shared/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../application/trade_entry_submission_service.dart';
 import '../data/providers.dart';
-import '../domain/models/lot.dart';
-import '../domain/trade_entry/trade_draft.dart' show TradeDraft, TradeType;
+import '../domain/trade_entry/trade_draft.dart' show TradeType;
 import '../domain/trade_entry/trade_entry_errors.dart';
 import '../domain/trade_entry/trade_entry_prefill.dart';
 
@@ -196,13 +192,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     }
 
     setState(() => _busy = true);
-    final securitiesRepo = await ref.read(
-      securitiesAssetRepositoryProvider.future,
+    final submissionService = await ref.read(
+      tradeEntrySubmissionServiceProvider.future,
     );
-    final tradeService = await ref.read(tradeEntryServiceProvider.future);
-    final jeRepo = await ref.read(journalEntryRepositoryProvider.future);
-    final priceRepo = await ref.read(priceRepositoryProvider.future);
-    final currentUserId = ref.read(currentUserIdProvider);
     if (!mounted) return;
 
     final type = _type;
@@ -234,7 +226,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       final cashOut =
           quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
       final cashAccountId = _cashAccountId ?? accountId;
-      final currentBalance = await jeRepo.balanceByAccountUnit(
+      final currentBalance = await submissionService.balanceByAccountUnit(
         cashAccountId,
         currency,
       );
@@ -278,159 +270,28 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       ),
       retryLabel: l10n.commonRetry,
       write: () async {
-        // Persist the catalog row into `assets` (or hand-entered row,
-        // if it came from the manual sheet). `upsertSecurity` is
-        // idempotent on (market, symbol), so re-recording trades on
-        // the same instrument does not bloat the outbox.
-        final asset = await securitiesRepo.upsertSecurity(
-          symbol: selected.symbol,
-          market: selected.market,
-          type: selected.type,
-          currency: selected.currency,
-          name: selected.name,
-          isin: selected.isin,
-        );
-        final draft = TradeDraft(
-          type: type,
-          asset: asset,
-          accountId: accountId,
-          quantity: quantity,
-          price: price,
-          currency: currency,
-          tradeDate: tradeDate,
-          fee: fee,
-          tax: tax,
-          note: note,
-        );
-        final plan = await tradeService.buildPlan(draft, openLots: <Lot>[]);
-        final tx = plan.trade;
-        final uid = await currentUserId();
-
-        if (type == TradeType.buy || type == TradeType.sell) {
-          final cashAcct = _cashAccountId ?? accountId;
-          final feeAccountId = AccountRepository.systemAccountIdForPath(
-            'expense:trading:fee',
-            ownerUserId: uid,
-          );
-          final taxAccountId = AccountRepository.systemAccountIdForPath(
-            'expense:trading:tax',
-            ownerUserId: uid,
-          );
-
-          // Auto-generate a human-readable narration when the user left the
-          // note field empty. The asset name is resolved from the catalog
-          // so the feed shows "Buy 10 AAPL (Apple Inc.)" instead of the
-          // raw asset unit ID.
-          final effectiveNarration = (note != null && note.trim().isNotEmpty)
-              ? note
-              : _tradeNarration(type, quantity, asset, l10n);
-
-          if (type == TradeType.buy) {
-            final build = JournalEntryBuilders.buy(
-              date: tx.tradeDate,
-              accountId: accountId,
-              cashAccountId: cashAcct,
-              assetUnit: tx.assetId,
-              qty: tx.quantity,
-              price: tx.price,
-              quoteCurrency: currency,
-              lotId: plan.createdLot?.id,
-              acquiredOn: plan.createdLot?.openedAt,
-              feeAmount: tx.fee,
-              feeAccountId: tx.fee != null ? feeAccountId : null,
-              feeCurrency: tx.fee != null ? currency : null,
-              taxAmount: tx.tax,
-              taxAccountId: tx.tax != null ? taxAccountId : null,
-              taxCurrency: tx.tax != null ? currency : null,
-              narration: effectiveNarration,
-            );
-            await jeRepo.create(entry: build.entry, postings: build.postings);
-            await priceRepo.record(
-              unit: tx.assetId,
-              quoteCurrency: currency,
-              observedOn: tx.tradeDate,
-              perUnit: tx.price,
-              source: 'trade',
-            );
-          } else {
-            // Sell — cost basis comes from the resolved lots.
-            final capGainsAccountId = AccountRepository.systemAccountIdForPath(
-              'income:capitalGains',
-              ownerUserId: uid,
-            );
-            final pnl = plan.realizedPnL;
-            Decimal costPerUnit;
-            String costCurrency;
-            String? sellLotId;
-            DateTime? sellAcquiredOn;
-            if (pnl.isNotEmpty) {
-              final first = pnl.first;
-              costPerUnit = first.quantity.sign != 0
-                  ? (first.costBasis / first.quantity).toDecimal(
-                      scaleOnInfinitePrecision: 16,
-                    )
-                  : tx.price;
-              costCurrency = first.currency;
-              sellLotId = first.lotId;
-              sellAcquiredOn = first.lotOpenedAt;
-            } else {
-              costPerUnit = tx.price;
-              costCurrency = currency;
-            }
-            final build = JournalEntryBuilders.sell(
-              date: tx.tradeDate,
-              accountId: accountId,
-              cashAccountId: cashAcct,
-              capitalGainsAccountId: capGainsAccountId,
-              assetUnit: tx.assetId,
-              qty: tx.quantity,
-              price: tx.price,
-              quoteCurrency: currency,
-              costPerUnit: costPerUnit,
-              costCurrency: costCurrency,
-              lotId: sellLotId,
-              acquiredOn: sellAcquiredOn,
-              feeAmount: tx.fee,
-              feeAccountId: tx.fee != null ? feeAccountId : null,
-              feeCurrency: tx.fee != null ? currency : null,
-              taxAmount: tx.tax,
-              taxAccountId: tx.tax != null ? taxAccountId : null,
-              taxCurrency: tx.tax != null ? currency : null,
-              narration: effectiveNarration,
-            );
-            await jeRepo.create(entry: build.entry, postings: build.postings);
-            await priceRepo.record(
-              unit: tx.assetId,
-              quoteCurrency: currency,
-              observedOn: tx.tradeDate,
-              perUnit: tx.price,
-              source: 'trade',
-            );
-          }
-        } else {
-          final equityAccountId = AccountRepository.systemAccountIdForPath(
-            'equity:adjustments',
-            ownerUserId: uid,
-          );
-          final build = JournalEntryBuilders.valuationAdjust(
-            date: tx.tradeDate,
+        await submissionService.submit(
+          TradeEntrySubmissionRequest(
+            symbol: selected.symbol,
+            market: selected.market,
+            assetType: selected.type,
+            assetCurrency: selected.currency,
+            assetName: selected.name,
+            isin: selected.isin,
+            type: type,
             accountId: accountId,
-            equityAccountId: equityAccountId,
-            assetUnit: tx.assetId,
-            quantity: tx.quantity,
-            newValuation: tx.price,
+            cashAccountId: _cashAccountId,
+            quantity: quantity,
+            price: price,
             currency: currency,
-            narration: note,
-          );
-          await jeRepo.create(entry: build.entry, postings: build.postings);
-          await priceRepo.record(
-            unit: tx.assetId,
-            quoteCurrency: currency,
-            observedOn: tx.tradeDate,
-            perUnit: tx.price,
-            source: 'manual',
-          );
-        }
+            tradeDate: tradeDate,
+            fee: fee,
+            tax: tax,
+            note: note,
+            defaultNarration: (asset) =>
+                _tradeNarration(type, quantity, asset, l10n),
+          ),
+        );
       },
     );
   }
