@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/async/deferred_provider_snapshot.dart';
 import 'package:naviwealth/core/format/providers.dart';
+import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -63,11 +64,12 @@ class HomePage extends ConsumerWidget {
       ),
     );
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-    return AppCanvasScaffold(
+    return ShellCanvasScaffold(
       // The home cockpit owns its hero greeting; we drop the static
       // "Overview" page title in favour of a personalized status line
-      // rendered inside [HomeGreetingHeader]. A bare scaffold (no
-      // FHeader) keeps the top of the page calm.
+      // rendered inside [HomeGreetingHeader]. ShellCanvasScaffold keeps
+      // this headerless tab root inside the shared shell contract while
+      // [ShellActionRow] injects the compact global chrome from the hero.
       childPad: false,
       child: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),
