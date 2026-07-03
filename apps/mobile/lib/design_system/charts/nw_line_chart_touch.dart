@@ -1,5 +1,134 @@
 part of 'nw_line_chart.dart';
 
+extension _NwLineChartInteraction on _NwLineChartState {
+  LineTouchData _buildTouchData(
+    BuildContext context,
+    ChartPalette palette,
+    List<ChartSeries> processed,
+  ) {
+    return LineTouchData(
+      enabled: true,
+      handleBuiltInTouches: false,
+      touchSpotThreshold: double.infinity,
+      touchTooltipData: LineTouchTooltipData(
+        getTooltipColor: (_) => Colors.transparent,
+        tooltipBorderRadius: BorderRadius.zero,
+        tooltipPadding: EdgeInsets.zero,
+        getTooltipItems: (spots) =>
+            List<LineTooltipItem?>.filled(spots.length, null),
+      ),
+      getTouchedSpotIndicator: (barData, spotIndexes) {
+        return spotIndexes.map((index) {
+          return TouchedSpotIndicatorData(
+            const FlLine(
+              color: Colors.transparent,
+              strokeWidth: AppStroke.none,
+            ),
+            FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                radius: 4,
+                color: bar.color ?? Colors.transparent,
+                strokeColor: palette.dotStroke,
+                strokeWidth: AppStroke.medium,
+              ),
+            ),
+          );
+        }).toList();
+      },
+      // Touch callback updates ValueNotifier instead of calling setState,
+      // so the main chart widget tree does NOT rebuild on touch events.
+      touchCallback: (event, response) {
+        if (event is FlLongPressStart || event is FlPanStartEvent) {
+          final touched = _primaryTouchedSpot(response);
+          _lastSpotIndex = -1;
+          _touchNotifier.value = touched == null
+              ? null
+              : _TouchState(
+                  spot: touched,
+                  spotIndex: -1,
+                  touchStartPoint: null,
+                );
+          _fireCrossingHaptic(response, processed);
+          HapticFeedback.selectionClick();
+          return;
+        }
+        if (event is FlLongPressMoveUpdate || event is FlPanUpdateEvent) {
+          final touched = _primaryTouchedSpot(response);
+          if (touched == null) _lastSpotIndex = -1;
+          _fireCrossingHaptic(response, processed);
+          return;
+        }
+        if (event is FlLongPressEnd || event is FlPanEndEvent) {
+          final dd = widget.drillDown;
+          final touched = response?.lineBarSpots;
+          if (touched != null && touched.isNotEmpty && dd is PointDrillDown) {
+            final s = processed[touched.first.barIndex];
+            final idx = touched.first.spotIndex.clamp(0, s.points.length - 1);
+            dd.onTap(s.points[idx]);
+          }
+          _lastSpotIndex = -1;
+          _touchNotifier.value = null;
+          return;
+        }
+        if (event is FlTapUpEvent) {
+          final dd = widget.drillDown;
+          final touched = response?.lineBarSpots;
+          if (touched != null && touched.isNotEmpty) {
+            final s = processed[touched.first.barIndex];
+            final idx = touched.first.spotIndex.clamp(0, s.points.length - 1);
+            final point = s.points[idx];
+            if (dd is PointDrillDown) {
+              if (dd.haptic) HapticFeedback.selectionClick();
+              dd.onTap(point);
+            } else if (dd is RangeDrillDown) {
+              dd.onRange(
+                ChartRangeSelection(
+                  start: point.x,
+                  end: point.x,
+                  points: [point],
+                ),
+              );
+            }
+          }
+          _lastSpotIndex = -1;
+          _touchNotifier.value = null;
+        }
+      },
+    );
+  }
+
+  TouchLineBarSpot? _primaryTouchedSpot(LineTouchResponse? response) {
+    final touched = response?.lineBarSpots;
+    if (touched == null || touched.isEmpty) return null;
+    return touched.firstWhere(
+      (spot) => spot.barIndex == 0,
+      orElse: () => touched.first,
+    );
+  }
+
+  void _fireCrossingHaptic(
+    LineTouchResponse? response,
+    List<ChartSeries> processed,
+  ) {
+    final touched = _primaryTouchedSpot(response);
+    if (touched == null) return;
+    final spotIndex = touched.spotIndex;
+    if (spotIndex != _lastSpotIndex && _lastSpotIndex >= 0) {
+      HapticFeedback.selectionClick();
+    }
+    _lastSpotIndex = spotIndex;
+    final s = processed[touched.barIndex];
+    final idx = spotIndex.clamp(0, s.points.length - 1);
+    final prev = _touchNotifier.value;
+    _touchNotifier.value = _TouchState(
+      spot: touched,
+      spotIndex: spotIndex,
+      touchStartPoint: prev?.touchStartPoint ?? s.points[idx],
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Crosshair painter — vertical dashed hairline + circle dot
 // ---------------------------------------------------------------------------
