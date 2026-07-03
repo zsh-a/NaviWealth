@@ -6,9 +6,8 @@
 /// only exists for inputs this parser structurally cannot read (images/PDF).
 library;
 
-import 'package:decimal/decimal.dart';
-
 import '../domain/ingest_models.dart';
+import 'delimited_ingest_scalars.dart';
 
 /// Header tokens (lower-cased, CJK included) that map a column to a role.
 const Map<String, _Col> _headerAliases = <String, _Col>{
@@ -120,7 +119,7 @@ List<ParsedTransaction> parseCsvLedger(
       .toList(growable: false);
   if (lines.isEmpty) return const <ParsedTransaction>[];
 
-  final delimiter = _detectDelimiter(lines);
+  final delimiter = detectIngestDelimiter(lines);
   final header = _findHeader(lines, delimiter);
   final mapping = header == null ? null : _headerMapping(header.cells);
   final dataStart = mapping != null ? header!.index + 1 : 0;
@@ -138,22 +137,12 @@ List<ParsedTransaction> parseCsvLedger(
   final out = <ParsedTransaction>[];
   for (var i = dataStart; i < lines.length; i++) {
     final line = lines[i];
-    if (_isPreambleLine(line)) continue;
-    final cells = _splitRow(line, delimiter);
+    if (isIngestPreambleLine(line)) continue;
+    final cells = splitIngestRow(line, delimiter);
     final txn = _rowToTransaction(cells, effective, defaultCurrency);
     if (txn != null) out.add(txn);
   }
   return out;
-}
-
-String _detectDelimiter(List<String> lines) {
-  final sample = lines.firstWhere(
-    (l) => !_isPreambleLine(l),
-    orElse: () => lines.first,
-  );
-  if (sample.contains('\t')) return '\t';
-  if (sample.contains(';') && !sample.contains(',')) return ';';
-  return ',';
 }
 
 ({int index, List<String> cells})? _findHeader(
@@ -161,50 +150,16 @@ String _detectDelimiter(List<String> lines) {
   String delimiter,
 ) {
   for (var i = 0; i < lines.length; i++) {
-    final cells = _splitRow(lines[i], delimiter);
+    final cells = splitIngestRow(lines[i], delimiter);
     if (_headerMapping(cells) != null) return (index: i, cells: cells);
   }
   return null;
 }
 
-bool _isPreambleLine(String line) {
-  final t = line.trim();
-  if (t.isEmpty) return true;
-  if (t.startsWith('#')) return true;
-  if (t.startsWith('----------------')) return true;
-  return false;
-}
-
-List<String> _splitRow(String line, String delimiter) {
-  // Minimal RFC-4180-ish handling: respect double-quoted fields so a
-  // memo containing the delimiter doesn't shift columns.
-  final cells = <String>[];
-  final buf = StringBuffer();
-  var inQuotes = false;
-  for (var i = 0; i < line.length; i++) {
-    final ch = line[i];
-    if (ch == '"') {
-      if (inQuotes && i + 1 < line.length && line[i + 1] == '"') {
-        buf.write('"');
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (ch == delimiter && !inQuotes) {
-      cells.add(buf.toString().trim());
-      buf.clear();
-    } else {
-      buf.write(ch);
-    }
-  }
-  cells.add(buf.toString().trim());
-  return cells;
-}
-
 Map<int, _Col>? _headerMapping(List<String> cells) {
   final mapping = <int, _Col>{};
   for (var i = 0; i < cells.length; i++) {
-    final key = _normalizeHeader(cells[i]);
+    final key = normalizeIngestHeader(cells[i]);
     final col = _headerAliases[key];
     if (col != null) mapping[i] = col;
   }
@@ -218,12 +173,6 @@ Map<int, _Col>? _headerMapping(List<String> cells) {
   return null;
 }
 
-String _normalizeHeader(String s) => _cleanCell(s)
-    .toLowerCase()
-    .replaceAll(RegExp(r'[\s_\-：:]+'), '')
-    .replaceAll('（', '(')
-    .replaceAll('）', ')');
-
 ParsedTransaction? _rowToTransaction(
   List<String> cells,
   Map<int, _Col> mapping,
@@ -232,22 +181,22 @@ ParsedTransaction? _rowToTransaction(
   String? cell(_Col c) {
     for (final e in mapping.entries) {
       if (e.value == c && e.key < cells.length) {
-        final v = _cleanCell(cells[e.key]);
+        final v = cleanIngestCell(cells[e.key]);
         if (v.isNotEmpty) return v;
       }
     }
     return null;
   }
 
-  final date = _parseDate(cell(_Col.date));
+  final date = parseIngestDate(cell(_Col.date));
   if (date == null) return null;
 
   if (_shouldSkipByStatus(cell(_Col.status))) return null;
 
   final direction = cell(_Col.direction);
-  final explicitExpense = _parseAmountMinor(cell(_Col.expenseAmount));
-  final explicitIncome = _parseAmountMinor(cell(_Col.incomeAmount));
-  final genericAmount = _parseAmountMinor(cell(_Col.amount));
+  final explicitExpense = parseIngestAmountMinor(cell(_Col.expenseAmount));
+  final explicitIncome = parseIngestAmountMinor(cell(_Col.incomeAmount));
+  final genericAmount = parseIngestAmountMinor(cell(_Col.amount));
   final minor = _resolveExpenseMinor(
     amount: genericAmount,
     expenseAmount: explicitExpense,
@@ -280,77 +229,6 @@ ParsedTransaction? _rowToTransaction(
     currency: currency.isEmpty ? defaultCurrency : currency,
     occurredAt: date,
   );
-}
-
-DateTime? _parseDate(String? s) {
-  if (s == null || s.isEmpty) return null;
-  final cleaned = _cleanCell(s);
-  final iso = DateTime.tryParse(cleaned);
-  if (iso != null) return DateTime.utc(iso.year, iso.month, iso.day);
-
-  final m = RegExp(
-    r'^(\d{1,4})[-/.](\d{1,2})[-/.](\d{1,4})',
-  ).firstMatch(cleaned);
-  final cm = RegExp(r'^(\d{4})年(\d{1,2})月(\d{1,2})日?').firstMatch(cleaned);
-  if (m == null && cm == null) return null;
-  if (cm != null) {
-    final y = int.parse(cm.group(1)!);
-    final mo = int.parse(cm.group(2)!);
-    final d = int.parse(cm.group(3)!);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-    return DateTime.utc(y, mo, d);
-  }
-  final a = int.parse(m!.group(1)!);
-  final b = int.parse(m.group(2)!);
-  final c = int.parse(m.group(3)!);
-  // yyyy-mm-dd when the first group is a 4-digit year, else mm/dd/yyyy.
-  final int y;
-  final int mo;
-  final int d;
-  if (a > 31) {
-    y = a;
-    mo = b;
-    d = c;
-  } else {
-    y = c < 100 ? 2000 + c : c;
-    mo = a;
-    d = b;
-  }
-  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-  return DateTime.utc(y, mo, d);
-}
-
-int? _parseAmountMinor(String? s) {
-  if (s == null || s.isEmpty) return null;
-  var t = _cleanCell(s);
-  if (t.isEmpty || t == '/' || t == '--' || t == '-') return null;
-  final negative = t.startsWith('-') || (t.startsWith('(') && t.endsWith(')'));
-  // Drop currency glyphs / letters / spaces / parens, keep digits, sign,
-  // separators. Then treat comma as a thousands separator.
-  t = t.replaceAll(RegExp(r'[^\d.,-]'), '');
-  if (t.contains(',') && t.contains('.')) {
-    t = t.replaceAll(',', '');
-  } else if (t.contains(',') && !t.contains('.')) {
-    // Ambiguous "1,234" → thousands; "1,23" (rare) also → drop comma.
-    t = t.replaceAll(',', '');
-  }
-  t = t.replaceAll(RegExp(r'(?!^)-'), '');
-  final dec = Decimal.tryParse(t.replaceAll('-', ''));
-  if (dec == null) return null;
-  final minor = (dec * Decimal.fromInt(100)).round().toBigInt().toInt();
-  return negative ? -minor : minor;
-}
-
-String _cleanCell(String s) {
-  var t = s
-      .replaceAll('\ufeff', '')
-      .replaceAll('\u200b', '')
-      .replaceAll('"', '')
-      .trim();
-  while (t.startsWith('`') || t.startsWith('\'')) {
-    t = t.substring(1).trimLeft();
-  }
-  return t;
 }
 
 bool _shouldSkipByStatus(String? status) {

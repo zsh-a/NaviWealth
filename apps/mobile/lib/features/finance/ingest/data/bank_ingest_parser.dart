@@ -8,9 +8,8 @@
 /// rows are skipped until ingest has typed income/transfer destinations.
 library;
 
-import 'package:decimal/decimal.dart';
-
 import '../domain/ingest_models.dart';
+import 'delimited_ingest_scalars.dart';
 
 part 'bank_ingest_headers.dart';
 part 'bank_ingest_rows.dart';
@@ -27,7 +26,7 @@ List<ParsedTransaction> parseBankCashLedger(
       .toList(growable: false);
   if (lines.isEmpty) return const <ParsedTransaction>[];
 
-  final delimiter = _detectDelimiter(lines);
+  final delimiter = detectIngestDelimiter(lines);
   final header = _findBankHeader(lines, delimiter);
   if (header == null) return const <ParsedTransaction>[];
   final mapping = _headerMapping(header.cells);
@@ -36,9 +35,9 @@ List<ParsedTransaction> parseBankCashLedger(
   final out = <ParsedTransaction>[];
   for (var i = header.index + 1; i < lines.length; i++) {
     final line = lines[i];
-    if (_isPreambleLine(line)) continue;
+    if (isIngestPreambleLine(line)) continue;
     final row = _rowToBankExpense(
-      _splitRow(line, delimiter),
+      splitIngestRow(line, delimiter),
       mapping,
       defaultCurrency,
     );

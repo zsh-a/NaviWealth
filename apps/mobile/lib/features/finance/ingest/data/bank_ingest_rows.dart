@@ -8,20 +8,20 @@ ParsedTransaction? _rowToBankExpense(
   String? cell(_BankCol col) {
     for (final entry in mapping.entries) {
       if (entry.value == col && entry.key < cells.length) {
-        final value = _cleanCell(cells[entry.key]);
+        final value = cleanIngestCell(cells[entry.key]);
         if (value.isNotEmpty) return value;
       }
     }
     return null;
   }
 
-  final date = _parseDate(cell(_BankCol.date));
+  final date = parseIngestDate(cell(_BankCol.date));
   if (date == null) return null;
   if (_shouldSkipByStatus(cell(_BankCol.status))) return null;
 
-  final debit = _parseAmountMinor(cell(_BankCol.debit));
-  final credit = _parseAmountMinor(cell(_BankCol.credit));
-  final amount = _parseAmountMinor(cell(_BankCol.amount));
+  final debit = parseIngestAmountMinor(cell(_BankCol.debit));
+  final credit = parseIngestAmountMinor(cell(_BankCol.credit));
+  final amount = parseIngestAmountMinor(cell(_BankCol.amount));
   final direction = cell(_BankCol.direction);
   final minor = _resolveExpenseMinor(
     amount: amount,
@@ -64,7 +64,7 @@ int? _resolveExpenseMinor({
   required int? credit,
   required String? direction,
 }) {
-  final dir = _normalizeText(direction ?? '');
+  final dir = normalizeIngestText(direction ?? '');
   if (dir.isNotEmpty) {
     if (_isCreditDirection(dir)) return null;
     if (_isDebitDirection(dir)) return (amount ?? debit)?.abs();
@@ -113,7 +113,7 @@ bool _isCreditDirection(String dir) {
 }
 
 String? _categoryHint(String description) {
-  final normalized = _normalizeText(description);
+  final normalized = normalizeIngestText(description);
   if (normalized.contains('地铁') ||
       normalized.contains('公交') ||
       normalized.contains('铁路') ||

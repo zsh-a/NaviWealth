@@ -122,7 +122,8 @@ const Map<String, _BankCol> _bankHeaderAliases = <String, _BankCol>{
 Map<int, _BankCol>? _headerMapping(List<String> cells) {
   final mapping = <int, _BankCol>{};
   for (var i = 0; i < cells.length; i++) {
-    final col = _bankHeaderAliases[_normalizeHeader(cells[i])];
+    final col =
+        _bankHeaderAliases[normalizeIngestHeader(cells[i], stripSlash: true)];
     if (col != null) mapping[i] = col;
   }
   final hasAmount =
