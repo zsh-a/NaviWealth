@@ -109,7 +109,7 @@ apps/mobile/lib/features/knowledge/ui/knowledge_review_page.dart	widget.assumpti
 apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	'${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	value: a.confidence.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_decision_detail_page.dart	'${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',	confidence-score
-apps/mobile/lib/features/knowledge/ui/knowledge_library_page.dart	a.confidence.toStringAsFixed(2),	confidence-score
+apps/mobile/lib/features/knowledge/ui/knowledge_library_model.dart	a.confidence.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_library_list.dart	a.confidence.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	'${_confidence.toStringAsFixed(2)}',	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	tooltipBuilder: (_, next) => Text(next.toStringAsFixed(2)),	confidence-score
