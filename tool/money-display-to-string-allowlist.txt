@@ -58,7 +58,7 @@ apps/mobile/lib/features/finance/fire/presentation/fire_stress_tests_card.dart	(
 apps/mobile/lib/features/finance/home/ui/ai_insight_feed.dart	item.driftPct?.toStringAsFixed(2) ?? '',	percent-display
 apps/mobile/lib/features/finance/home/ui/ai_insight_feed.dart	item.anomalyPct?.toStringAsFixed(2) ?? '',	percent-display
 apps/mobile/lib/features/finance/home/ui/allocation_card.dart	: '${(percent! * 100).toStringAsFixed(1)}%';	percent-display
-apps/mobile/lib/features/finance/home/ui/allocation_detail_panel.dart	'${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',	percent-display
+apps/mobile/lib/features/finance/home/ui/allocation_detail_panel_breakdown.dart	'${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',	percent-display
 apps/mobile/lib/features/finance/home/ui/allocation_summary.dart	final pct = (segment.ratio * 100).clamp(0, 100).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/finance/home/ui/home_greeting_header.dart	final absPct = (pct.abs() * 100).toStringAsFixed(1);	percent-display
 apps/mobile/lib/features/finance/home/ui/insight_feed_strings.dart	((item.fireOsWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
