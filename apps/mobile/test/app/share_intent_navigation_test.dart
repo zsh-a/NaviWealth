@@ -35,13 +35,13 @@ void main() {
 
     final sink = c.read(shareIntentNavigationSinkProvider);
 
-    sink(ShareIntentDestination.financeIngest);
+    sink(FinanceRoutes.activityIngest);
     expect(
       router.routeInformationProvider.value.uri.path,
       FinanceRoutes.activityIngest,
     );
 
-    sink(ShareIntentDestination.knowledgeInbox);
+    sink(KnowledgeRoutes.inbox);
     expect(
       router.routeInformationProvider.value.uri.path,
       KnowledgeRoutes.inbox,

@@ -14,6 +14,7 @@ import '../../features/knowledge/composition/knowledge_proposal_applier.dart'
 import '../../features/knowledge/composition/knowledge_proposal_kinds.dart'
     show kKnowledgeProposalKinds;
 import '../../features/knowledge/composition/knowledge_routes.dart';
+import '../../features/knowledge/composition/knowledge_share_intent_handler.dart';
 import '../../features/knowledge/data/knowledge_decision_memory_indexer.dart';
 import '../../features/knowledge/data/knowledge_object_memory_indexers.dart';
 import '../../features/knowledge/ui/knowledge_domain_settings_page.dart';
@@ -48,6 +49,7 @@ final DomainPack kKnowledgePack = DomainPack(
   memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
+  shareIntentHandlers: const [KnowledgeShareIntentHandler()],
   settingsSpec: domainSettingsSpec(
     icon: FLucideIcons.brain,
     label: 'KnowledgeOS',

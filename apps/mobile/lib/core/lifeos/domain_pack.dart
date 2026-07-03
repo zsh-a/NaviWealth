@@ -26,6 +26,7 @@ import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
 import '../command_palette/command_palette_entry.dart';
 import '../shell/domain_shell.dart';
+import 'share_intent.dart';
 
 /// Builds the per-turn list of [Agent]s a domain contributes. Receives
 /// [Ref] because most agents are themselves Riverpod-built (they depend
@@ -150,6 +151,7 @@ class DomainPack {
     this.notificationSettingsBuilder,
     this.settingsRoutesBuilder,
     this.settingsSpec,
+    this.shareIntentHandlers = const <DomainShareIntentHandler>[],
   });
 
   /// Opt-in scope this pack registers under.
@@ -244,6 +246,12 @@ class DomainPack {
   /// Settings → Domains toggle metadata and optional domain detail route.
   /// Null when the domain has no settings surface yet.
   final DomainSettingsSpec? settingsSpec;
+
+  /// Domain-owned handlers for OS share-sheet payloads.
+  ///
+  /// App code receives plugin events and converts them to [SharedIntentPayload].
+  /// Domains decide whether and how to persist payloads they understand.
+  final List<DomainShareIntentHandler> shareIntentHandlers;
 }
 
 /// Inventory of all known [DomainPack]s. Default empty; `bootstrap.dart`
@@ -268,3 +276,20 @@ final activeDomainPacksProvider = Provider<List<DomainPack>>((ref) {
       if (optIns.contains(p.scope)) p,
   ];
 });
+
+List<DomainShareIntentHandler> domainShareIntentHandlers(
+  List<DomainPack> packs,
+) {
+  var index = 0;
+  final indexed = <MapEntry<int, DomainShareIntentHandler>>[
+    for (final pack in packs)
+      for (final handler in pack.shareIntentHandlers)
+        MapEntry(index++, handler),
+  ];
+  indexed.sort((a, b) {
+    final priority = b.value.priority.compareTo(a.value.priority);
+    if (priority != 0) return priority;
+    return a.key.compareTo(b.key);
+  });
+  return [for (final entry in indexed) entry.value];
+}

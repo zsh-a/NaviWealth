@@ -10,6 +10,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/lifeos/share_intent.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 
@@ -47,7 +48,23 @@ void main() {
       expect(empty.notificationSettingsBuilder, isNull);
       expect(empty.settingsRoutesBuilder, isNull);
       expect(empty.settingsSpec, isNull);
+      expect(empty.shareIntentHandlers, isEmpty);
     });
+  });
+
+  test('share-intent handlers are sorted by priority and registry order', () {
+    const first = _FakeShareIntentHandler('first', priority: 0);
+    const second = _FakeShareIntentHandler('second', priority: 100);
+    const third = _FakeShareIntentHandler('third', priority: 0);
+
+    expect(
+      domainShareIntentHandlers(const [
+        DomainPack(scope: DomainScope.finance, shareIntentHandlers: [first]),
+        DomainPack(scope: DomainScope.knowledge, shareIntentHandlers: [second]),
+        DomainPack(scope: DomainScope.execution, shareIntentHandlers: [third]),
+      ]).map((handler) => (handler as _FakeShareIntentHandler).id),
+      ['second', 'first', 'third'],
+    );
   });
 
   group('domainPackRegistryProvider', () {
@@ -137,4 +154,18 @@ void main() {
       ]);
     });
   });
+}
+
+class _FakeShareIntentHandler extends DomainShareIntentHandler {
+  const _FakeShareIntentHandler(this.id, {super.priority});
+
+  final String id;
+
+  @override
+  Future<DomainShareIntentResult?> handle(
+    Ref ref,
+    SharedIntentPayload payload,
+  ) async {
+    return null;
+  }
 }
