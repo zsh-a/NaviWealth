@@ -30,6 +30,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 fastembed = { version = "5.17.2", default-features = false, features = ["ort-load-dynamic"] }
 anyhow = "1.0.102"
 agent-core = { path = "../../../../third_party/agent-runtime/crates/agent-core" }
+agent_runtime_upstream = { package = "agent-runtime", path = "../../../../third_party/agent-runtime/crates/agent-runtime" }
 agent-chat = { path = "../../../../third_party/agent-runtime/crates/agent-chat" }
 agent-llm = { path = "../../../../third_party/agent-runtime/crates/agent-llm" }
 futures = "0.3"

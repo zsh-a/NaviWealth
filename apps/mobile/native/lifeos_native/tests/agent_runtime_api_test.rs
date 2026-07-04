@@ -362,16 +362,18 @@ fn normalizes_trace_contract() {
     assert_eq!(trace["protocol_version"], "agent.v1");
     assert_eq!(trace["run_id"], "run_018f0000-0000-7000-8000-000000000000");
     assert_eq!(trace["events"][0]["kind"], "run_started");
-    assert_eq!(trace["events"][1]["kind"], "agent_runtime_step");
-    assert_eq!(trace["events"][1]["payload"]["tool_name"], "echo");
+    let step_event = trace["events"]
+        .as_array()
+        .expect("trace events should be an array")
+        .iter()
+        .find(|event| event["kind"] == "agent_runtime_step")
+        .expect("trace should contain an agent_runtime_step event");
+    assert_eq!(step_event["payload"]["tool_name"], "echo");
     assert_eq!(
-        trace["events"][1]["payload"]["run_state"]["terminal_reason"],
+        step_event["payload"]["run_state"]["terminal_reason"],
         "done"
     );
-    assert_eq!(
-        trace["events"][1]["payload"]["run_state"]["tool_result_count"],
-        1
-    );
+    assert_eq!(step_event["payload"]["run_state"]["tool_result_count"], 1);
 }
 
 #[test]
@@ -1117,7 +1119,7 @@ async fn start_profile_turn_step_completes_llm_and_starts_native_step() {
           "metadata": {"mock_response": "native turn response"}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
         r#"{"surface":"rust_test"}"#.to_owned(),
     )
     .await
@@ -1126,7 +1128,7 @@ async fn start_profile_turn_step_completes_llm_and_starts_native_step() {
 
     assert_eq!(turn["protocol_version"], "agent.v1");
     assert_eq!(turn["llm_response"]["content"], "native turn response");
-    assert_eq!(turn["step"]["agent_id"], "execution_review");
+    assert_eq!(turn["step"]["agent_id"], "ai_chat");
     assert_eq!(turn["step"]["status"], "completed");
     assert_eq!(turn["step"]["output"]["content"], "native turn response");
     assert_eq!(
@@ -1150,7 +1152,7 @@ async fn start_profile_turn_step_normalizes_null_run_metadata() {
           "metadata": {"mock_response": "native turn response"}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
         "null".to_owned(),
     )
     .await
@@ -1178,7 +1180,7 @@ async fn start_profile_turn_step_rejects_non_object_run_metadata() {
           "metadata": {"mock_response": "native turn response"}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
         "[]".to_owned(),
     )
     .await
@@ -1206,13 +1208,13 @@ fn start_run_step_requests_catalog_tool_call() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("start step should validate catalog and request");
     let step: Value = serde_json::from_str(&step_json).expect("step should be json");
 
     assert_eq!(step["protocol_version"], "agent.v1");
-    assert_eq!(step["agent_id"], "execution_review");
+    assert_eq!(step["agent_id"], "ai_chat");
     assert_eq!(step["status"], "tool_call_requested");
     assert_eq!(step["tool_call"]["name"], "propose_fake");
     assert_eq!(step["tool_call"]["input"]["value"], 7);
@@ -1244,7 +1246,7 @@ fn start_run_step_rejects_empty_tool_call_name() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("empty tool call name should fail");
 
@@ -1265,7 +1267,7 @@ fn start_run_step_rejects_non_object_run_request_input() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("non-object run request input should fail");
 
@@ -1291,7 +1293,7 @@ fn start_run_step_rejects_mismatched_run_request_protocol_version() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched run request protocol should fail");
 
@@ -1320,7 +1322,7 @@ fn start_run_step_rejects_mismatched_catalog_contract() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched catalog protocol should fail");
 
@@ -1347,7 +1349,7 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("start step should seed tool plan continuation");
     let step: Value = serde_json::from_str(&step_json).expect("step should be json");
@@ -1383,7 +1385,7 @@ fn start_run_step_rejects_non_object_tool_plan_item() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("non-object tool plan item should fail");
 
@@ -1409,7 +1411,7 @@ fn start_run_step_rejects_unknown_remaining_tool_plan_item() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("unknown remaining tool plan item should fail at start");
 
@@ -1435,7 +1437,7 @@ fn start_run_step_rejects_non_object_tool_call_input() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("non-object tool_call input should fail");
 
@@ -1462,7 +1464,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
           "metadata": {}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("start step should validate catalog and request");
     let first: Value = serde_json::from_str(&first_json).expect("first step should be json");
@@ -1479,7 +1481,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
             "result": {"accepted": true}
         })
         .to_string(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("continue step should accept tool result");
     let terminal: Value =
@@ -1489,7 +1491,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
         "protocol_version": "agent.v1",
         "runtime_version": "0.1.0",
         "run_id": "run_018f0000-0000-7000-8000-000000000123",
-        "agent_id": "execution_review",
+        "agent_id": "ai_chat",
         "agent_version": "0.1.0",
         "started_at": "2026-06-28T09:12:31Z",
         "finished_at": "2026-06-28T09:12:32Z",
@@ -1499,7 +1501,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
             {
                 "kind": "run_started",
                 "occurred_at": "2026-06-28T09:12:31Z",
-                "payload": {"agent_id": "execution_review"}
+                "payload": {"agent_id": "ai_chat"}
             },
             {
                 "kind": "agent_runtime_step",
@@ -1537,7 +1539,7 @@ fn continue_run_step_completes_with_tool_result() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -1559,13 +1561,13 @@ fn continue_run_step_completes_with_tool_result() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("continue step should accept tool result");
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
 
     assert_eq!(next["protocol_version"], "agent.v1");
-    assert_eq!(next["agent_id"], "execution_review");
+    assert_eq!(next["agent_id"], "ai_chat");
     assert_eq!(next["status"], "completed");
     assert_eq!(next["output"]["mode"], "frb_tool_step");
     assert_eq!(next["output"]["tool_result"]["accepted"], true);
@@ -1588,7 +1590,7 @@ fn continue_run_step_rejects_non_object_previous_tool_call_input() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -1605,7 +1607,7 @@ fn continue_run_step_rejects_non_object_previous_tool_call_input() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("non-object previous tool_call input should fail");
 
@@ -1625,7 +1627,7 @@ fn continue_run_step_rejects_mismatched_catalog_contract() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -1642,7 +1644,7 @@ fn continue_run_step_rejects_mismatched_catalog_contract() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched catalog version should fail");
 
@@ -1654,7 +1656,7 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -1684,7 +1686,7 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
           "result": {"accepted": true, "value": 1}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("continue step should request next planned tool");
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
@@ -1719,7 +1721,7 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
         r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -1744,7 +1746,7 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
       "result": {"accepted": true, "value": 1}
     }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("unknown remaining continuation tool plan item should fail");
 
@@ -1761,7 +1763,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
         r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -1783,7 +1785,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
       "result": {"accepted": true, "value": 1}
     }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("invalid continuation tool_plan should fail");
 
@@ -1800,7 +1802,7 @@ fn continue_run_step_rejects_missing_next_tool_plan_name() {
         r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -1824,7 +1826,7 @@ fn continue_run_step_rejects_missing_next_tool_plan_name() {
       "result": {"accepted": true, "value": 1}
     }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("missing next tool plan name should fail");
 
@@ -1836,7 +1838,7 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -1868,7 +1870,7 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
           "result": {"accepted": true, "value": 2}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("continue step should complete the native tool plan");
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
@@ -1890,7 +1892,7 @@ fn continue_run_step_fails_with_tool_error() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -1912,7 +1914,7 @@ fn continue_run_step_fails_with_tool_error() {
           "error": {"code": -32000, "message": "tool failed"}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("continue step should accept tool error");
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
@@ -1942,7 +1944,7 @@ fn continue_run_step_rejects_mismatched_tool_response_id() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -1959,7 +1961,7 @@ fn continue_run_step_rejects_mismatched_tool_response_id() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched tool response id should fail");
 
@@ -1976,7 +1978,7 @@ fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -1993,7 +1995,7 @@ fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("invalid JSON-RPC version should fail");
 
@@ -2010,7 +2012,7 @@ fn continue_run_step_rejects_non_object_tool_response() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2022,7 +2024,7 @@ fn continue_run_step_rejects_non_object_tool_response() {
         }"#
         .to_owned(),
         r#""bad""#.to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("non-object tool response should fail");
 
@@ -2039,7 +2041,7 @@ fn continue_run_step_rejects_empty_previous_run_id() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2056,7 +2058,7 @@ fn continue_run_step_rejects_empty_previous_run_id() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("empty previous run id should fail");
 
@@ -2073,7 +2075,7 @@ fn continue_run_step_rejects_missing_previous_step_index() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "status": "tool_call_requested",
           "tool_call": {
@@ -2089,7 +2091,7 @@ fn continue_run_step_rejects_missing_previous_step_index() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("missing previous step index should fail");
 
@@ -2106,7 +2108,7 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2124,7 +2126,7 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
           "error": {"code": -32000, "message": "also failed"}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("ambiguous tool response should fail");
 
@@ -2141,7 +2143,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2158,7 +2160,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
           "error": "failed"
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("JSON-RPC tool response with non-object error should fail");
 
@@ -2175,7 +2177,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2192,7 +2194,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
           "error": {"message": "failed"}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("JSON-RPC tool response error without code should fail");
 
@@ -2209,7 +2211,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code()
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2226,7 +2228,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code()
           "error": {"code": "failed", "message": "failed"}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("JSON-RPC tool response error with non-integer code should fail");
 
@@ -2243,7 +2245,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2260,7 +2262,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
           "error": {"code": -32000}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("JSON-RPC tool response error without message should fail");
 
@@ -2277,7 +2279,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2294,7 +2296,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message
           "error": {"code": -32000, "message": 11}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("JSON-RPC tool response error with non-string message should fail");
 
@@ -2311,7 +2313,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2327,7 +2329,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("JSON-RPC tool response without id should fail");
 
@@ -2344,7 +2346,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2360,7 +2362,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
           "id": "tool_expected"
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("JSON-RPC tool response without result or error should fail");
 
@@ -2394,7 +2396,7 @@ fn continue_run_step_rejects_mismatched_previous_agent() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched previous agent should fail");
 
@@ -2410,7 +2412,7 @@ fn continue_run_step_rejects_missing_previous_protocol_version() {
         .to_owned(),
         r#"{
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2427,7 +2429,7 @@ fn continue_run_step_rejects_missing_previous_protocol_version() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("missing previous protocol version should fail");
 
@@ -2444,7 +2446,7 @@ fn continue_run_step_rejects_mismatched_previous_protocol_version() {
         r#"{
           "protocol_version": "agent.v0",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2461,7 +2463,7 @@ fn continue_run_step_rejects_mismatched_previous_protocol_version() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched previous protocol version should fail");
 
@@ -2478,7 +2480,7 @@ fn continue_run_step_rejects_mismatched_previous_agent_version() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "old-version",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2495,7 +2497,7 @@ fn continue_run_step_rejects_mismatched_previous_agent_version() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched previous agent version should fail");
 
@@ -2512,7 +2514,7 @@ fn continue_run_step_rejects_missing_previous_agent_version() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "step_index": 0,
           "status": "tool_call_requested",
           "tool_call": {
@@ -2528,7 +2530,7 @@ fn continue_run_step_rejects_missing_previous_agent_version() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("missing previous agent version should fail");
 
@@ -2545,7 +2547,7 @@ fn continue_run_step_rejects_previous_tool_not_in_catalog() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2562,7 +2564,7 @@ fn continue_run_step_rejects_previous_tool_not_in_catalog() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("unknown previous tool should fail");
 
@@ -2579,7 +2581,7 @@ fn continue_run_step_rejects_missing_previous_tool_name() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2595,7 +2597,7 @@ fn continue_run_step_rejects_missing_previous_tool_name() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("missing previous tool name should fail");
 
@@ -2612,7 +2614,7 @@ fn continue_run_step_rejects_missing_previous_tool_call_id() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2628,7 +2630,7 @@ fn continue_run_step_rejects_missing_previous_tool_call_id() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("missing previous tool_call_id should fail");
 
@@ -2645,7 +2647,7 @@ fn continue_run_step_rejects_empty_previous_tool_call_id() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2662,7 +2664,7 @@ fn continue_run_step_rejects_empty_previous_tool_call_id() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("empty previous tool_call_id should fail");
 
@@ -2679,7 +2681,7 @@ fn continue_run_step_rejects_mismatched_previous_run_state() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2703,7 +2705,7 @@ fn continue_run_step_rejects_mismatched_previous_run_state() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched previous run_state should fail");
 
@@ -2720,7 +2722,7 @@ fn continue_run_step_rejects_mismatched_previous_trace_event() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2732,7 +2734,7 @@ fn continue_run_step_rejects_mismatched_previous_trace_event() {
           "trace_event": {
             "kind": "agent_runtime_step",
             "run_id": "run_wrong",
-            "agent_id": "execution_review",
+            "agent_id": "ai_chat",
             "status": "tool_call_requested",
             "step_index": 0,
             "tool_name": "propose_fake"
@@ -2745,7 +2747,7 @@ fn continue_run_step_rejects_mismatched_previous_trace_event() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched previous trace_event should fail");
 
@@ -2762,7 +2764,7 @@ fn continue_run_step_rejects_mismatched_continuation_next_step_index() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 3,
           "status": "tool_call_requested",
@@ -2786,7 +2788,7 @@ fn continue_run_step_rejects_mismatched_continuation_next_step_index() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched continuation next step index should fail");
 
@@ -2803,7 +2805,7 @@ fn continue_run_step_rejects_invalid_continuation_next_step_index() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 3,
           "status": "tool_call_requested",
@@ -2827,7 +2829,7 @@ fn continue_run_step_rejects_invalid_continuation_next_step_index() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("invalid continuation next step index should fail");
 
@@ -2844,7 +2846,7 @@ fn continue_run_step_rejects_missing_continuation_next_step_index() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2867,7 +2869,7 @@ fn continue_run_step_rejects_missing_continuation_next_step_index() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("missing continuation next step index should fail");
 
@@ -2884,7 +2886,7 @@ fn continue_run_step_rejects_non_object_continuation() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2902,7 +2904,7 @@ fn continue_run_step_rejects_non_object_continuation() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("non-object continuation should fail");
 
@@ -2919,7 +2921,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2941,7 +2943,7 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("invalid historical tool result should fail");
 
@@ -2958,7 +2960,7 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -2982,7 +2984,7 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("historical tool result without response should fail");
 
@@ -2999,7 +3001,7 @@ fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -3031,7 +3033,7 @@ fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("invalid historical tool response envelope should fail");
 
@@ -3049,7 +3051,7 @@ fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -3084,7 +3086,7 @@ fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("mismatched historical tool response id should fail");
 
@@ -3102,7 +3104,7 @@ fn continue_run_step_rejects_historical_tool_not_in_catalog() {
         r#"{
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
-          "agent_id": "execution_review",
+          "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
           "status": "tool_call_requested",
@@ -3129,7 +3131,7 @@ fn continue_run_step_rejects_historical_tool_not_in_catalog() {
           "result": {"accepted": true}
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect_err("historical unknown tool should fail");
 
@@ -3141,7 +3143,7 @@ fn continue_run_step_maps_result_payload_policy_denied() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
       "status": "tool_call_requested",
@@ -3171,7 +3173,7 @@ fn continue_run_step_maps_result_payload_policy_denied() {
           }
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("policy-denied result payload should terminate as policy_denied");
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
@@ -3191,7 +3193,7 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
-      "agent_id": "execution_review",
+      "agent_id": "ai_chat",
       "agent_version": "0.1.0",
       "step_index": 1,
       "status": "tool_call_requested",
@@ -3226,7 +3228,7 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
           }
         }"#
         .to_owned(),
-        "execution_review".to_owned(),
+        "ai_chat".to_owned(),
     )
     .expect("budget exhaustion should close the native step early");
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");

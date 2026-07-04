@@ -356,6 +356,50 @@ void main() {
   );
 
   test(
+    'AgentRuntimeNativeStepRunner dispatches native subagent effects',
+    () async {
+      final bridge = _SubagentBridge();
+      final dispatcher = _RecordingDispatcher();
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      );
+
+      final result = await runner.runUntilTerminalWithTrace(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'parent',
+        maxToolSteps: 2,
+      );
+
+      expect(result.terminalStep['status'], 'completed');
+      expect(bridge.startedAgents, <String>['parent', 'child']);
+      expect(bridge.startedRequests.last['run_id'], 'child_run');
+      expect(bridge.startedRequests.last['input'], <String, Object?>{
+        'from': 'parent',
+      });
+      expect(bridge.continuations, hasLength(1));
+      expect(
+        bridge.continuations.single.previousStep['status'],
+        'subagent_requested',
+      );
+      expect(
+        bridge.continuations.single.toolResponse,
+        containsPair('id', 'subagent_1'),
+      );
+      expect(
+        bridge.continuations.single.toolResponse['result'],
+        containsPair('agent_id', 'child'),
+      );
+      expect(
+        result.toolResponses.single['result'],
+        containsPair('terminal_step', containsPair('agent_id', 'child')),
+      );
+      expect(dispatcher.calls, isEmpty);
+    },
+  );
+
+  test(
     'AgentRuntimeNativeStepRunner lets native classify tool result errors',
     () async {
       final dispatcher = _RecordingDispatcher(
@@ -1077,6 +1121,70 @@ class _ToolPlanBridge extends _FakeBridge {
         'mode': 'frb_tool_loop',
         'tool_result': toolResponse['result'],
       },
+    };
+  }
+}
+
+class _SubagentBridge extends _FakeBridge {
+  _SubagentBridge();
+
+  final startedAgents = <String>[];
+  final startedRequests = <Map<String, Object?>>[];
+
+  @override
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    startedAgents.add(agentId);
+    startedRequests.add(request);
+    if (agentId == 'parent') {
+      return const <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'parent_run',
+        'agent_id': 'parent',
+        'step_index': 0,
+        'status': 'subagent_requested',
+        'subagent_call': <String, Object?>{
+          'subagent_call_id': 'subagent_1',
+          'agent_id': 'child',
+          'run_id': 'child_run',
+          'input': <String, Object?>{'from': 'parent'},
+          'metadata': <String, Object?>{'surface': 'test'},
+        },
+      };
+    }
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': request['run_id'] ?? 'generated_child_run',
+      'agent_id': agentId,
+      'step_index': 0,
+      'status': 'completed',
+      'output': <String, Object?>{
+        'child_input': request['input'],
+        'metadata': request['metadata'],
+      },
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> continueRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> previousStep,
+    required Map<String, Object?> toolResponse,
+    required String agentId,
+  }) async {
+    continuations.add(_Continuation(previousStep, toolResponse));
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': previousStep['run_id'],
+      'agent_id': agentId,
+      'step_index': 1,
+      'status': 'completed',
+      'subagent_call': previousStep['subagent_call'],
+      'subagent_response': toolResponse,
+      'output': <String, Object?>{'subagent_result': toolResponse['result']},
     };
   }
 }

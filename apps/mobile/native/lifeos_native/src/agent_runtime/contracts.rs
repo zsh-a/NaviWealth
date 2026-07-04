@@ -512,6 +512,7 @@ pub(super) fn require_step_status(object: &Map<String, Value>, field: &str) -> R
     match object.get(field).and_then(Value::as_str) {
         Some(
             "tool_call_requested"
+            | "subagent_requested"
             | "completed"
             | "failed"
             | "cancelled"
@@ -540,7 +541,7 @@ pub(super) fn require_terminal_reason(object: &Map<String, Value>, field: &str) 
 
 pub(super) fn require_terminal_reason_matches_status(object: &Map<String, Value>) -> Result<()> {
     let expected = match object.get("status").and_then(Value::as_str) {
-        Some("tool_call_requested") => None,
+        Some("tool_call_requested" | "subagent_requested") => None,
         Some("completed") => Some("done"),
         Some("failed") => Some("stream_error"),
         Some("cancelled") => Some("user_cancel"),
