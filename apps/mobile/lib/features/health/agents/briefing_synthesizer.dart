@@ -194,7 +194,7 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
             ],
             maxOutputTokens: maxTokens,
             metadata: <String, Object?>{'day_key': inputs.dayKey},
-            maxToolSteps: 0,
+            maxEffectSteps: 0,
           )
           .timeout(requestTimeout);
       final text = result.llmResponse['content']?.toString().trim();

@@ -40,7 +40,7 @@ void main() {
     );
     expect(
       trace.spans.first.attributes,
-      containsPair('dispatched_tool_count', 1),
+      containsPair('dispatched_effect_count', 1),
     );
   });
 
@@ -54,7 +54,7 @@ void main() {
       result: _result(
         stepRun: const AgentRuntimeNativeStepRunResult(
           terminalStep: <String, Object?>{'status': 'failed'},
-          dispatchedToolCount: 0,
+          dispatchedEffectCount: 0,
           budgetExhausted: true,
         ),
       ),
@@ -82,12 +82,12 @@ void main() {
           'run_state': <String, Object?>{
             'status': 'failed',
             'step_index': 1,
-            'remaining_tool_count': 0,
-            'tool_result_count': 1,
+            'remaining_effect_count': 0,
+            'effect_result_count': 1,
             'terminal_reason': 'stream_error',
           },
         },
-        dispatchedToolCount: 1,
+        dispatchedEffectCount: 1,
       ),
     );
 
@@ -118,13 +118,13 @@ void main() {
               'run_state': <String, Object?>{
                 'status': 'failed',
                 'step_index': 2,
-                'remaining_tool_count': 0,
-                'tool_result_count': 2,
+                'remaining_effect_count': 0,
+                'effect_result_count': 2,
                 'terminal_reason': 'stream_error',
               },
             },
           },
-          dispatchedToolCount: 2,
+          dispatchedEffectCount: 2,
         ),
       );
 
@@ -135,7 +135,7 @@ void main() {
       );
       expect(
         trace.spans.first.attributes,
-        containsPair('native_tool_result_count', 2),
+        containsPair('native_effect_result_count', 2),
       );
       expect(
         trace.spans.first.attributes,
@@ -156,7 +156,7 @@ void main() {
     },
   );
 
-  test('records native step-only tool plan runs', () async {
+  test('records native step-only effect loop runs', () async {
     final traces = <AiTrace>[];
     final recorder = AgentRuntimeTraceRecorder(
       appendTrace: (trace) async => traces.add(trace),
@@ -175,12 +175,12 @@ void main() {
           'run_state': <String, Object?>{
             'status': 'completed',
             'step_index': 4,
-            'remaining_tool_count': 0,
-            'tool_result_count': 1,
+            'remaining_effect_count': 0,
+            'effect_result_count': 1,
             'terminal_reason': 'done',
           },
         },
-        dispatchedToolCount: 1,
+        dispatchedEffectCount: 1,
         nativeTraceEvents: <Map<String, Object?>>[
           <String, Object?>{
             'kind': 'agent_runtime_step',
@@ -188,10 +188,10 @@ void main() {
             'step_index': 3,
             'tool_name': 'list_due_routines',
             'run_state': <String, Object?>{
-              'status': 'tool_call_requested',
+              'status': 'effect_requested',
               'step_index': 3,
-              'remaining_tool_count': 0,
-              'tool_result_count': 0,
+              'remaining_effect_count': 0,
+              'effect_result_count': 0,
               'terminal_reason': null,
             },
           },
@@ -200,16 +200,17 @@ void main() {
           <String, Object?>{
             'run_id': 'run_2',
             'step_index': 3,
-            'status': 'tool_call_requested',
-            'tool_call': <String, Object?>{
-              'tool_call_id': 'call_1',
+            'status': 'effect_requested',
+            'effect': <String, Object?>{
+              'kind': 'tool',
+              'effect_id': 'call_1',
               'name': 'list_due_routines',
               'input': <String, Object?>{'limit': 50},
             },
           },
           <String, Object?>{'run_id': 'run_2', 'status': 'completed'},
         ],
-        toolResponses: <Map<String, Object?>>[
+        effectResponses: <Map<String, Object?>>[
           <String, Object?>{
             'jsonrpc': '2.0',
             'id': 'call_1',
@@ -221,7 +222,7 @@ void main() {
 
     expect(traces.single, same(trace));
     expect(trace.requestId, 'agent-runtime:knowledge_routine_due:run_2');
-    expect(trace.routingReason, kFrbNativeToolPlanRoutingReason);
+    expect(trace.routingReason, kFrbNativeEffectLoopRoutingReason);
     expect(trace.intent.label, 'agent_runtime_step_run');
     expect(trace.llmRoundCount, 0);
     expect(trace.toolSpans.single.id, 'tool:4');
@@ -248,11 +249,11 @@ void main() {
     );
     expect(
       trace.toolSpans.single.attributes,
-      containsPair('native_trace_event_remaining_tool_count', 0),
+      containsPair('native_trace_event_remaining_effect_count', 0),
     );
     expect(
       trace.toolSpans.single.attributes,
-      containsPair('native_trace_event_tool_result_count', 0),
+      containsPair('native_trace_event_effect_result_count', 0),
     );
     expect(
       trace.spans.first.attributes,
@@ -272,7 +273,7 @@ void main() {
     );
     expect(
       trace.spans.first.attributes,
-      containsPair('native_tool_result_count', 1),
+      containsPair('native_effect_result_count', 1),
     );
     expect(
       trace.spans.first.attributes,
@@ -280,13 +281,13 @@ void main() {
     );
     expect(
       trace.spans.first.attributes,
-      containsPair('native_remaining_tool_count', 0),
+      containsPair('native_remaining_effect_count', 0),
     );
     expect(trace.spans.first.attributes, containsPair('native_step_index', 4));
   });
 
   test(
-    'aligns tool responses by tool-call ordinal, not native step index',
+    'aligns effect responses by host-effect ordinal, not native step index',
     () async {
       final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
 
@@ -299,14 +300,15 @@ void main() {
             'run_id': 'run_multi',
             'status': 'completed',
           },
-          dispatchedToolCount: 2,
+          dispatchedEffectCount: 2,
           steps: <Map<String, Object?>>[
             <String, Object?>{
               'run_id': 'run_multi',
               'step_index': 0,
-              'status': 'tool_call_requested',
-              'tool_call': <String, Object?>{
-                'tool_call_id': 'call_1',
+              'status': 'effect_requested',
+              'effect': <String, Object?>{
+                'kind': 'tool',
+                'effect_id': 'call_1',
                 'name': 'list_due_reviews',
               },
             },
@@ -318,9 +320,10 @@ void main() {
             <String, Object?>{
               'run_id': 'run_multi',
               'step_index': 2,
-              'status': 'tool_call_requested',
-              'tool_call': <String, Object?>{
-                'tool_call_id': 'call_2',
+              'status': 'effect_requested',
+              'effect': <String, Object?>{
+                'kind': 'tool',
+                'effect_id': 'call_2',
                 'name': 'list_open_assumptions',
               },
             },
@@ -330,7 +333,7 @@ void main() {
               'status': 'completed',
             },
           ],
-          toolResponses: <Map<String, Object?>>[
+          effectResponses: <Map<String, Object?>>[
             <String, Object?>{'jsonrpc': '2.0', 'id': 'call_1'},
             <String, Object?>{'jsonrpc': '2.0', 'id': 'call_2'},
           ],
@@ -452,20 +455,21 @@ AgentRuntimeProfileTurnResult _result({
           'status': 'completed',
           'output': <String, Object?>{'ok': true},
         },
-        dispatchedToolCount: 1,
+        dispatchedEffectCount: 1,
         steps: <Map<String, Object?>>[
           <String, Object?>{
             'run_id': 'run_1',
-            'status': 'tool_call_requested',
-            'tool_call': <String, Object?>{
-              'tool_call_id': 'call_1',
+            'status': 'effect_requested',
+            'effect': <String, Object?>{
+              'kind': 'tool',
+              'effect_id': 'call_1',
               'name': 'read_task',
               'input': <String, Object?>{'id': 'task_1'},
             },
           },
           <String, Object?>{'run_id': 'run_1', 'status': 'completed'},
         ],
-        toolResponses: <Map<String, Object?>>[
+        effectResponses: <Map<String, Object?>>[
           <String, Object?>{
             'jsonrpc': '2.0',
             'id': 'call_1',

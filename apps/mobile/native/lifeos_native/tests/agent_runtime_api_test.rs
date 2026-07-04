@@ -373,7 +373,7 @@ fn normalizes_trace_contract() {
         step_event["payload"]["run_state"]["terminal_reason"],
         "done"
     );
-    assert_eq!(step_event["payload"]["run_state"]["tool_result_count"], 1);
+    assert_eq!(step_event["payload"]["run_state"]["effect_result_count"], 1);
 }
 
 #[test]
@@ -690,10 +690,9 @@ fn normalizes_llm_response_tool_metadata() {
           "content": "hello",
           "finish_reason": "tool_call",
           "metadata": {
-            "tool_plan": [
-              {"name": "propose_fake"}
-            ],
-            "tool_call": {"name": "read_context"}
+            "effects": [
+              {"kind": "tool", "name": "propose_fake"}
+            ]
           }
         }"#
         .to_owned(),
@@ -701,8 +700,7 @@ fn normalizes_llm_response_tool_metadata() {
     .expect("LLM response tool metadata should normalize");
     let response: Value = serde_json::from_str(&response_json).expect("response should be json");
 
-    assert_eq!(response["metadata"]["tool_plan"][0]["input"], json!({}));
-    assert_eq!(response["metadata"]["tool_call"]["input"], json!({}));
+    assert_eq!(response["metadata"]["effects"][0]["input"], json!({}));
 }
 
 #[test]
@@ -789,13 +787,13 @@ fn validate_llm_response_rejects_malformed_tool_metadata() {
           "content": "hello",
           "finish_reason": "tool_call",
           "metadata": {
-            "tool_plan": {"name": "propose_fake"}
+            "effects": {"kind": "tool", "name": "propose_fake"}
           }
         }"#
         .to_owned(),
     )
-    .expect_err("non-array response tool_plan should fail");
-    assert!(plan_err.to_string().contains("metadata.tool_plan"));
+    .expect_err("non-array response effects should fail");
+    assert!(plan_err.to_string().contains("metadata.effects"));
 
     let item_err = agent_runtime_validate_llm_response(
         r#"{
@@ -805,15 +803,15 @@ fn validate_llm_response_rejects_malformed_tool_metadata() {
           "content": "hello",
           "finish_reason": "tool_call",
           "metadata": {
-            "tool_plan": [
-              {"name": "propose_fake", "input": "bad"}
+            "effects": [
+              {"kind": "tool", "name": "propose_fake", "input": "bad"}
             ]
           }
         }"#
         .to_owned(),
     )
-    .expect_err("non-object response tool_plan input should fail");
-    assert!(item_err.to_string().contains("metadata.tool_plan[0].input"));
+    .expect_err("non-object response effects input should fail");
+    assert!(item_err.to_string().contains("metadata.effects[0].input"));
 
     let call_err = agent_runtime_validate_llm_response(
         r#"{
@@ -823,13 +821,15 @@ fn validate_llm_response_rejects_malformed_tool_metadata() {
           "content": "hello",
           "finish_reason": "tool_call",
           "metadata": {
-            "tool_call": {"name": "read_context", "input": []}
+            "effects": [
+              {"kind": "tool", "name": "read_context", "input": []}
+            ]
           }
         }"#
         .to_owned(),
     )
-    .expect_err("non-object response tool_call input should fail");
-    assert!(call_err.to_string().contains("metadata.tool_call.input"));
+    .expect_err("non-object response effect input should fail");
+    assert!(call_err.to_string().contains("metadata.effects[0].input"));
 }
 
 #[test]
@@ -1190,7 +1190,7 @@ async fn start_profile_turn_step_rejects_non_object_run_metadata() {
 }
 
 #[test]
-fn start_run_step_requests_catalog_tool_call() {
+fn start_run_step_requests_catalog_effect() {
     let step_json = agent_runtime_start_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1199,7 +1199,8 @@ fn start_run_step_requests_catalog_tool_call() {
         r#"{
           "protocol_version": "agent.v1",
           "input": {
-            "tool_call": {
+            "effect": {
+              "kind": "tool",
               "name": "propose_fake",
               "input": {"value": 7}
             }
@@ -1215,20 +1216,20 @@ fn start_run_step_requests_catalog_tool_call() {
 
     assert_eq!(step["protocol_version"], "agent.v1");
     assert_eq!(step["agent_id"], "ai_chat");
-    assert_eq!(step["status"], "tool_call_requested");
-    assert_eq!(step["tool_call"]["name"], "propose_fake");
-    assert_eq!(step["tool_call"]["input"]["value"], 7);
-    assert_eq!(step["run_state"]["status"], "tool_call_requested");
+    assert_eq!(step["status"], "effect_requested");
+    assert_eq!(step["effect"]["name"], "propose_fake");
+    assert_eq!(step["effect"]["input"]["value"], 7);
+    assert_eq!(step["run_state"]["status"], "effect_requested");
     assert_eq!(step["run_state"]["step_index"], 0);
-    assert_eq!(step["run_state"]["remaining_tool_count"], 0);
-    assert_eq!(step["run_state"]["tool_result_count"], 0);
+    assert_eq!(step["run_state"]["remaining_effect_count"], 0);
+    assert_eq!(step["run_state"]["effect_result_count"], 0);
     assert!(step["run_state"]["terminal_reason"].is_null());
-    assert_eq!(step["trace_event"]["status"], "tool_call_requested");
+    assert_eq!(step["trace_event"]["status"], "effect_requested");
     assert_eq!(step["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]
-fn start_run_step_rejects_empty_tool_call_name() {
+fn start_run_step_rejects_empty_effect_name() {
     let err = agent_runtime_start_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1237,7 +1238,8 @@ fn start_run_step_rejects_empty_tool_call_name() {
         r#"{
           "protocol_version": "agent.v1",
           "input": {
-            "tool_call": {
+            "effect": {
+              "kind": "tool",
               "name": "",
               "input": {"value": 7}
             }
@@ -1248,9 +1250,9 @@ fn start_run_step_rejects_empty_tool_call_name() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("empty tool call name should fail");
+    .expect_err("empty effect name should fail");
 
-    assert!(err.to_string().contains("tool_call.name"));
+    assert!(err.to_string().contains("effect.name"));
 }
 
 #[test]
@@ -1284,7 +1286,8 @@ fn start_run_step_rejects_mismatched_run_request_protocol_version() {
         r#"{
           "protocol_version": "agent.v0",
           "input": {
-            "tool_call": {
+            "effect": {
+              "kind": "tool",
               "name": "propose_fake",
               "input": {"value": 7}
             }
@@ -1313,7 +1316,8 @@ fn start_run_step_rejects_mismatched_catalog_contract() {
         r#"{
           "protocol_version": "agent.v1",
           "input": {
-            "tool_call": {
+            "effect": {
+              "kind": "tool",
               "name": "propose_fake",
               "input": {"value": 7}
             }
@@ -1330,7 +1334,7 @@ fn start_run_step_rejects_mismatched_catalog_contract() {
 }
 
 #[test]
-fn start_run_step_seeds_native_tool_plan_continuation() {
+fn start_run_step_seeds_native_effects_continuation() {
     let step_json = agent_runtime_start_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1339,9 +1343,9 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
         r#"{
           "protocol_version": "agent.v1",
           "input": {
-            "tool_plan": [
-              {"name": "propose_fake", "input": {"value": 1}},
-              {"name": "propose_fake", "input": {"value": 2}}
+            "effects": [
+              {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
+              {"kind": "tool", "name": "propose_fake", "input": {"value": 2}}
             ],
             "llm_response": {"content": "use two tools"}
           },
@@ -1354,21 +1358,21 @@ fn start_run_step_seeds_native_tool_plan_continuation() {
     .expect("start step should seed tool plan continuation");
     let step: Value = serde_json::from_str(&step_json).expect("step should be json");
 
-    assert_eq!(step["status"], "tool_call_requested");
-    assert_eq!(step["tool_call"]["input"]["value"], 1);
-    assert_eq!(step["continuation"]["tool_plan"][0]["input"]["value"], 2);
+    assert_eq!(step["status"], "effect_requested");
+    assert_eq!(step["effect"]["input"]["value"], 1);
+    assert_eq!(step["continuation"]["effects"][0]["input"]["value"], 2);
     assert_eq!(
         step["continuation"]["llm_response"]["content"],
         "use two tools"
     );
-    assert_eq!(step["run_state"]["status"], "tool_call_requested");
-    assert_eq!(step["run_state"]["remaining_tool_count"], 1);
-    assert_eq!(step["run_state"]["tool_result_count"], 0);
+    assert_eq!(step["run_state"]["status"], "effect_requested");
+    assert_eq!(step["run_state"]["remaining_effect_count"], 1);
+    assert_eq!(step["run_state"]["effect_result_count"], 0);
     assert!(step["run_state"]["terminal_reason"].is_null());
 }
 
 #[test]
-fn start_run_step_rejects_non_object_tool_plan_item() {
+fn start_run_step_rejects_non_object_effects_item() {
     let err = agent_runtime_start_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1377,7 +1381,7 @@ fn start_run_step_rejects_non_object_tool_plan_item() {
         r#"{
           "protocol_version": "agent.v1",
           "input": {
-            "tool_plan": [
+            "effects": [
               "bad"
             ]
           },
@@ -1389,11 +1393,11 @@ fn start_run_step_rejects_non_object_tool_plan_item() {
     )
     .expect_err("non-object tool plan item should fail");
 
-    assert!(err.to_string().contains("tool_plan[0]"));
+    assert!(err.to_string().contains("effects[0]"));
 }
 
 #[test]
-fn start_run_step_rejects_unknown_remaining_tool_plan_item() {
+fn start_run_step_rejects_unknown_remaining_effects_item() {
     let err = agent_runtime_start_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1402,9 +1406,9 @@ fn start_run_step_rejects_unknown_remaining_tool_plan_item() {
         r#"{
           "protocol_version": "agent.v1",
           "input": {
-            "tool_plan": [
-              {"name": "propose_fake", "input": {"value": 1}},
-              {"name": "unknown_tool", "input": {"value": 2}}
+            "effects": [
+              {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
+              {"kind": "tool", "name": "unknown_tool", "input": {"value": 2}}
             ]
           },
           "trigger": "manual",
@@ -1415,11 +1419,11 @@ fn start_run_step_rejects_unknown_remaining_tool_plan_item() {
     )
     .expect_err("unknown remaining tool plan item should fail at start");
 
-    assert!(err.to_string().contains("continuation.tool_plan[0]"));
+    assert!(err.to_string().contains("continuation.effects[0]"));
 }
 
 #[test]
-fn start_run_step_rejects_non_object_tool_call_input() {
+fn start_run_step_rejects_non_object_effect_input() {
     let err = agent_runtime_start_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1428,7 +1432,8 @@ fn start_run_step_rejects_non_object_tool_call_input() {
         r#"{
           "protocol_version": "agent.v1",
           "input": {
-            "tool_call": {
+            "effect": {
+              "kind": "tool",
               "name": "propose_fake",
               "input": "bad"
             }
@@ -1439,9 +1444,9 @@ fn start_run_step_rejects_non_object_tool_call_input() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("non-object tool_call input should fail");
+    .expect_err("non-object effect input should fail");
 
-    assert!(err.to_string().contains("tool_call.input"));
+    assert!(err.to_string().contains("effect.input"));
 }
 
 #[test]
@@ -1455,7 +1460,8 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
           "protocol_version": "agent.v1",
           "run_id": "run_018f0000-0000-7000-8000-000000000123",
           "input": {
-            "tool_call": {
+            "effect": {
+              "kind": "tool",
               "name": "propose_fake",
               "input": {"value": 7}
             }
@@ -1477,7 +1483,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
         first.to_string(),
         json!({
             "jsonrpc": "2.0",
-            "id": first["tool_call"]["tool_call_id"].clone(),
+            "id": first["effect"]["effect_id"].clone(),
             "result": {"accepted": true}
         })
         .to_string(),
@@ -1495,7 +1501,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
         "agent_version": "0.1.0",
         "started_at": "2026-06-28T09:12:31Z",
         "finished_at": "2026-06-28T09:12:32Z",
-        "input": {"tool_call": {"name": "propose_fake", "input": {"value": 7}}},
+        "input": {"effect": {"kind": "tool", "name": "propose_fake", "input": {"value": 7}}},
         "output": terminal["output"].clone(),
         "events": [
             {
@@ -1521,7 +1527,7 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
     let normalized: Value = serde_json::from_str(&normalized).expect("trace should be json");
     assert_eq!(
         normalized["events"][1]["payload"]["status"],
-        "tool_call_requested"
+        "effect_requested"
     );
     assert_eq!(
         normalized["events"][1]["payload"]["run_state"]["terminal_reason"],
@@ -1535,16 +1541,17 @@ fn native_step_trace_events_validate_as_agent_trace_payloads() {
 }
 
 #[test]
-fn continue_run_step_completes_with_tool_result() {
+fn continue_run_step_completes_with_effect_result() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
         "name": "propose_fake",
         "input": {"value": 7}
       }
@@ -1569,19 +1576,19 @@ fn continue_run_step_completes_with_tool_result() {
     assert_eq!(next["protocol_version"], "agent.v1");
     assert_eq!(next["agent_id"], "ai_chat");
     assert_eq!(next["status"], "completed");
-    assert_eq!(next["output"]["mode"], "frb_tool_step");
-    assert_eq!(next["output"]["tool_result"]["accepted"], true);
-    assert_eq!(next["output"]["tool_call"]["name"], "propose_fake");
+    assert_eq!(next["output"]["mode"], "frb_effect_step");
+    assert_eq!(next["output"]["effect_result"]["accepted"], true);
+    assert_eq!(next["output"]["effect"]["name"], "propose_fake");
     assert_eq!(next["run_state"]["status"], "completed");
     assert_eq!(next["run_state"]["terminal_reason"], "done");
-    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
-    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["run_state"]["remaining_effect_count"], 0);
+    assert_eq!(next["run_state"]["effect_result_count"], 1);
     assert_eq!(next["trace_event"]["status"], "completed");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]
-fn continue_run_step_rejects_non_object_previous_tool_call_input() {
+fn continue_run_step_rejects_non_object_previous_effect_input() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1593,9 +1600,10 @@ fn continue_run_step_rejects_non_object_previous_tool_call_input() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
             "name": "propose_fake",
             "input": "bad"
           }
@@ -1609,9 +1617,9 @@ fn continue_run_step_rejects_non_object_previous_tool_call_input() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("non-object previous tool_call input should fail");
+    .expect_err("non-object previous effect input should fail");
 
-    assert!(err.to_string().contains("previous step tool_call.input"));
+    assert!(err.to_string().contains("previous step effect.input"));
 }
 
 #[test]
@@ -1630,9 +1638,10 @@ fn continue_run_step_rejects_mismatched_catalog_contract() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -1652,25 +1661,26 @@ fn continue_run_step_rejects_mismatched_catalog_contract() {
 }
 
 #[test]
-fn continue_run_step_requests_next_native_tool_plan_item() {
+fn continue_run_step_requests_next_native_effects_item() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
         "name": "propose_fake",
         "input": {"value": 1}
       },
       "continuation": {
         "next_step_index": 1,
-        "tool_plan": [
-          {"name": "propose_fake", "input": {"value": 2}}
+        "effects": [
+          {"kind": "tool", "name": "propose_fake", "input": {"value": 2}}
         ],
-        "tool_results": [],
+        "effect_results": [],
         "llm_response": {"content": "use two tools"}
       }
     }"#;
@@ -1691,28 +1701,25 @@ fn continue_run_step_requests_next_native_tool_plan_item() {
     .expect("continue step should request next planned tool");
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
 
-    assert_eq!(next["status"], "tool_call_requested");
-    assert_eq!(next["tool_call"]["name"], "propose_fake");
-    assert_eq!(next["tool_call"]["input"]["value"], 2);
+    assert_eq!(next["status"], "effect_requested");
+    assert_eq!(next["effect"]["name"], "propose_fake");
+    assert_eq!(next["effect"]["input"]["value"], 2);
+    assert_eq!(next["continuation"]["effects"].as_array().unwrap().len(), 0);
     assert_eq!(
-        next["continuation"]["tool_plan"].as_array().unwrap().len(),
-        0
-    );
-    assert_eq!(
-        next["continuation"]["tool_results"][0]["tool_response"]["result"]["value"],
+        next["continuation"]["effect_results"][0]["effect_response"]["result"]["value"],
         1
     );
-    assert_eq!(next["run_state"]["status"], "tool_call_requested");
+    assert_eq!(next["run_state"]["status"], "effect_requested");
     assert_eq!(next["run_state"]["step_index"], 1);
-    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
-    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["run_state"]["remaining_effect_count"], 0);
+    assert_eq!(next["run_state"]["effect_result_count"], 1);
     assert!(next["run_state"]["terminal_reason"].is_null());
-    assert_eq!(next["trace_event"]["status"], "tool_call_requested");
+    assert_eq!(next["trace_event"]["status"], "effect_requested");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]
-fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
+fn continue_run_step_rejects_unknown_remaining_effects_item() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1724,19 +1731,20 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
         "name": "propose_fake",
         "input": {"value": 1}
       },
       "continuation": {
         "next_step_index": 1,
-        "tool_plan": [
-          {"name": "propose_fake", "input": {"value": 2}},
-          {"name": "unknown_tool", "input": {"value": 3}}
+        "effects": [
+          {"kind": "tool", "name": "propose_fake", "input": {"value": 2}},
+          {"kind": "tool", "name": "unknown_tool", "input": {"value": 3}}
         ],
-        "tool_results": []
+        "effect_results": []
       }
     }"#
         .to_owned(),
@@ -1750,11 +1758,11 @@ fn continue_run_step_rejects_unknown_remaining_tool_plan_item() {
     )
     .expect_err("unknown remaining continuation tool plan item should fail");
 
-    assert!(err.to_string().contains("continuation.tool_plan[0]"));
+    assert!(err.to_string().contains("continuation.effects[0]"));
 }
 
 #[test]
-fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
+fn continue_run_step_rejects_invalid_continuation_effects_type() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1766,16 +1774,17 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
         "name": "propose_fake",
         "input": {"value": 1}
       },
       "continuation": {
         "next_step_index": 1,
-        "tool_plan": {"name": "propose_fake"},
-        "tool_results": []
+        "effects": {"kind": "tool", "name": "propose_fake"},
+        "effect_results": []
       }
     }"#
         .to_owned(),
@@ -1787,13 +1796,13 @@ fn continue_run_step_rejects_invalid_continuation_tool_plan_type() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("invalid continuation tool_plan should fail");
+    .expect_err("invalid continuation effects should fail");
 
-    assert!(err.to_string().contains("continuation.tool_plan"));
+    assert!(err.to_string().contains("continuation.effects"));
 }
 
 #[test]
-fn continue_run_step_rejects_missing_next_tool_plan_name() {
+fn continue_run_step_rejects_missing_next_effects_name() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1805,18 +1814,19 @@ fn continue_run_step_rejects_missing_next_tool_plan_name() {
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
         "name": "propose_fake",
         "input": {"value": 1}
       },
       "continuation": {
         "next_step_index": 1,
-        "tool_plan": [
-          {"input": {"value": 2}}
+        "effects": [
+          {"kind": "tool", "input": {"value": 2}}
         ],
-        "tool_results": []
+        "effect_results": []
       }
     }"#
         .to_owned(),
@@ -1830,30 +1840,31 @@ fn continue_run_step_rejects_missing_next_tool_plan_name() {
     )
     .expect_err("missing next tool plan name should fail");
 
-    assert!(err.to_string().contains("continuation.tool_plan[0].name"));
+    assert!(err.to_string().contains("continuation.effects[0].name"));
 }
 
 #[test]
-fn continue_run_step_completes_native_tool_plan_after_last_item() {
+fn continue_run_step_completes_native_effects_after_last_item() {
     let step_json = r#"{
       "protocol_version": "agent.v1",
       "run_id": "run_018f0000-0000-7000-8000-000000000000",
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000001",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000001",
         "name": "propose_fake",
         "input": {"value": 2}
       },
       "continuation": {
         "next_step_index": 1,
-        "tool_plan": [],
-        "tool_results": [
+        "effects": [],
+        "effect_results": [
           {
-            "tool_call": {"name": "propose_fake", "input": {"value": 1}},
-            "tool_response": {"result": {"accepted": true, "value": 1}}
+            "effect": {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
+            "effect_response": {"result": {"accepted": true, "value": 1}}
           }
         ]
       }
@@ -1876,13 +1887,16 @@ fn continue_run_step_completes_native_tool_plan_after_last_item() {
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
 
     assert_eq!(next["status"], "completed");
-    assert_eq!(next["output"]["mode"], "frb_tool_loop");
-    assert_eq!(next["output"]["tool_results"].as_array().unwrap().len(), 2);
-    assert_eq!(next["output"]["tool_result"]["value"], 2);
+    assert_eq!(next["output"]["mode"], "frb_effect_loop");
+    assert_eq!(
+        next["output"]["effect_results"].as_array().unwrap().len(),
+        2
+    );
+    assert_eq!(next["output"]["effect_result"]["value"], 2);
     assert_eq!(next["run_state"]["status"], "completed");
     assert_eq!(next["run_state"]["terminal_reason"], "done");
-    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
-    assert_eq!(next["run_state"]["tool_result_count"], 2);
+    assert_eq!(next["run_state"]["remaining_effect_count"], 0);
+    assert_eq!(next["run_state"]["effect_result_count"], 2);
     assert_eq!(next["trace_event"]["status"], "completed");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
@@ -1895,9 +1909,10 @@ fn continue_run_step_fails_with_tool_error() {
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
         "name": "propose_fake",
         "input": {"value": 7}
       }
@@ -1921,21 +1936,21 @@ fn continue_run_step_fails_with_tool_error() {
 
     assert_eq!(next["status"], "failed");
     assert_eq!(next["error"]["message"], "tool failed");
-    assert_eq!(next["tool_call"]["name"], "propose_fake");
-    assert_eq!(next["tool_results"].as_array().unwrap().len(), 1);
+    assert_eq!(next["effect"]["name"], "propose_fake");
+    assert_eq!(next["effect_results"].as_array().unwrap().len(), 1);
     assert_eq!(
-        next["tool_results"][0]["tool_response"]["error"]["message"],
+        next["effect_results"][0]["effect_response"]["error"]["message"],
         "tool failed"
     );
     assert_eq!(next["run_state"]["status"], "failed");
     assert_eq!(next["run_state"]["terminal_reason"], "stream_error");
-    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["run_state"]["effect_result_count"], 1);
     assert_eq!(next["trace_event"]["status"], "failed");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
 
 #[test]
-fn continue_run_step_rejects_mismatched_tool_response_id() {
+fn continue_run_step_rejects_mismatched_effect_response_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1947,9 +1962,10 @@ fn continue_run_step_rejects_mismatched_tool_response_id() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -1963,13 +1979,13 @@ fn continue_run_step_rejects_mismatched_tool_response_id() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("mismatched tool response id should fail");
+    .expect_err("mismatched effect response id should fail");
 
-    assert!(err.to_string().contains("tool response id"));
+    assert!(err.to_string().contains("effect response id"));
 }
 
 #[test]
-fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
+fn continue_run_step_rejects_invalid_effect_response_jsonrpc() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -1981,9 +1997,10 @@ fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2003,7 +2020,7 @@ fn continue_run_step_rejects_invalid_tool_response_jsonrpc() {
 }
 
 #[test]
-fn continue_run_step_rejects_non_object_tool_response() {
+fn continue_run_step_rejects_non_object_effect_response() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2015,9 +2032,10 @@ fn continue_run_step_rejects_non_object_tool_response() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2026,9 +2044,12 @@ fn continue_run_step_rejects_non_object_tool_response() {
         r#""bad""#.to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("non-object tool response should fail");
+    .expect_err("non-object effect response should fail");
 
-    assert!(err.to_string().contains("tool response must be an object"));
+    assert!(
+        err.to_string()
+            .contains("effect response must be an object")
+    );
 }
 
 #[test]
@@ -2044,9 +2065,10 @@ fn continue_run_step_rejects_empty_previous_run_id() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2077,9 +2099,10 @@ fn continue_run_step_rejects_missing_previous_step_index() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2099,7 +2122,7 @@ fn continue_run_step_rejects_missing_previous_step_index() {
 }
 
 #[test]
-fn continue_run_step_rejects_tool_response_with_result_and_error() {
+fn continue_run_step_rejects_effect_response_with_result_and_error() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2111,9 +2134,10 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2128,13 +2152,13 @@ fn continue_run_step_rejects_tool_response_with_result_and_error() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("ambiguous tool response should fail");
+    .expect_err("ambiguous effect response should fail");
 
     assert!(err.to_string().contains("both result and error"));
 }
 
 #[test]
-fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
+fn continue_run_step_rejects_jsonrpc_effect_response_with_non_object_error() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2146,9 +2170,10 @@ fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2162,13 +2187,13 @@ fn continue_run_step_rejects_jsonrpc_tool_response_with_non_object_error() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("JSON-RPC tool response with non-object error should fail");
+    .expect_err("JSON-RPC effect response with non-object error should fail");
 
     assert!(err.to_string().contains("error must be an object"));
 }
 
 #[test]
-fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
+fn continue_run_step_rejects_jsonrpc_effect_response_error_without_code() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2180,9 +2205,10 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2196,13 +2222,13 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_code() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("JSON-RPC tool response error without code should fail");
+    .expect_err("JSON-RPC effect response error without code should fail");
 
     assert!(err.to_string().contains("error.code must be an integer"));
 }
 
 #[test]
-fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code() {
+fn continue_run_step_rejects_jsonrpc_effect_response_error_with_non_integer_code() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2214,9 +2240,10 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code()
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2230,13 +2257,13 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_integer_code()
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("JSON-RPC tool response error with non-integer code should fail");
+    .expect_err("JSON-RPC effect response error with non-integer code should fail");
 
     assert!(err.to_string().contains("error.code must be an integer"));
 }
 
 #[test]
-fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
+fn continue_run_step_rejects_jsonrpc_effect_response_error_without_message() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2248,9 +2275,10 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2264,13 +2292,13 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_without_message() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("JSON-RPC tool response error without message should fail");
+    .expect_err("JSON-RPC effect response error without message should fail");
 
     assert!(err.to_string().contains("error.message must be a string"));
 }
 
 #[test]
-fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message() {
+fn continue_run_step_rejects_jsonrpc_effect_response_error_with_non_string_message() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2282,9 +2310,10 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2298,13 +2327,13 @@ fn continue_run_step_rejects_jsonrpc_tool_response_error_with_non_string_message
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("JSON-RPC tool response error with non-string message should fail");
+    .expect_err("JSON-RPC effect response error with non-string message should fail");
 
     assert!(err.to_string().contains("error.message must be a string"));
 }
 
 #[test]
-fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
+fn continue_run_step_rejects_jsonrpc_effect_response_without_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2316,9 +2345,10 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2331,13 +2361,13 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_id() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("JSON-RPC tool response without id should fail");
+    .expect_err("JSON-RPC effect response without id should fail");
 
     assert!(err.to_string().contains("id is required"));
 }
 
 #[test]
-fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
+fn continue_run_step_rejects_jsonrpc_effect_response_without_result_or_error() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2349,9 +2379,10 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2364,7 +2395,7 @@ fn continue_run_step_rejects_jsonrpc_tool_response_without_result_or_error() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("JSON-RPC tool response without result or error should fail");
+    .expect_err("JSON-RPC effect response without result or error should fail");
 
     assert!(err.to_string().contains("result or error"));
 }
@@ -2382,9 +2413,10 @@ fn continue_run_step_rejects_mismatched_previous_agent() {
           "agent_id": "other_agent",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2415,9 +2447,10 @@ fn continue_run_step_rejects_missing_previous_protocol_version() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2449,9 +2482,10 @@ fn continue_run_step_rejects_mismatched_previous_protocol_version() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2483,9 +2517,10 @@ fn continue_run_step_rejects_mismatched_previous_agent_version() {
           "agent_id": "ai_chat",
           "agent_version": "old-version",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2516,9 +2551,10 @@ fn continue_run_step_rejects_missing_previous_agent_version() {
           "run_id": "run_018f0000-0000-7000-8000-000000000000",
           "agent_id": "ai_chat",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2550,9 +2586,10 @@ fn continue_run_step_rejects_previous_tool_not_in_catalog() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_unknown",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_unknown",
             "name": "unknown_tool",
             "input": {"value": 7}
           }
@@ -2584,9 +2621,10 @@ fn continue_run_step_rejects_missing_previous_tool_name() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_missing_name",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_missing_name",
             "input": {"value": 7}
           }
         }"#
@@ -2601,11 +2639,11 @@ fn continue_run_step_rejects_missing_previous_tool_name() {
     )
     .expect_err("missing previous tool name should fail");
 
-    assert!(err.to_string().contains("tool_call.name"));
+    assert!(err.to_string().contains("effect.name"));
 }
 
 #[test]
-fn continue_run_step_rejects_missing_previous_tool_call_id() {
+fn continue_run_step_rejects_missing_previous_effect_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2617,8 +2655,9 @@ fn continue_run_step_rejects_missing_previous_tool_call_id() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2632,13 +2671,13 @@ fn continue_run_step_rejects_missing_previous_tool_call_id() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("missing previous tool_call_id should fail");
+    .expect_err("missing previous effect_id should fail");
 
-    assert!(err.to_string().contains("tool_call_id"));
+    assert!(err.to_string().contains("effect_id"));
 }
 
 #[test]
-fn continue_run_step_rejects_empty_previous_tool_call_id() {
+fn continue_run_step_rejects_empty_previous_effect_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2650,9 +2689,10 @@ fn continue_run_step_rejects_empty_previous_tool_call_id() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "",
             "name": "propose_fake",
             "input": {"value": 7}
           }
@@ -2666,9 +2706,9 @@ fn continue_run_step_rejects_empty_previous_tool_call_id() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("empty previous tool_call_id should fail");
+    .expect_err("empty previous effect_id should fail");
 
-    assert!(err.to_string().contains("tool_call_id"));
+    assert!(err.to_string().contains("effect_id"));
 }
 
 #[test]
@@ -2684,17 +2724,18 @@ fn continue_run_step_rejects_mismatched_previous_run_state() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           },
           "run_state": {
             "status": "completed",
             "step_index": 0,
-            "remaining_tool_count": 0,
-            "tool_result_count": 0,
+            "remaining_effect_count": 0,
+            "effect_result_count": 0,
             "terminal_reason": "done"
           }
         }"#
@@ -2725,9 +2766,10 @@ fn continue_run_step_rejects_mismatched_previous_trace_event() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           },
@@ -2735,7 +2777,7 @@ fn continue_run_step_rejects_mismatched_previous_trace_event() {
             "kind": "agent_runtime_step",
             "run_id": "run_wrong",
             "agent_id": "ai_chat",
-            "status": "tool_call_requested",
+            "status": "effect_requested",
             "step_index": 0,
             "tool_name": "propose_fake"
           }
@@ -2767,18 +2809,19 @@ fn continue_run_step_rejects_mismatched_continuation_next_step_index() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 3,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           },
           "continuation": {
             "next_step_index": 2,
-            "tool_plan": [
-              {"name": "propose_fake", "input": {"value": 8}}
+            "effects": [
+              {"kind": "tool", "name": "propose_fake", "input": {"value": 8}}
             ],
-            "tool_results": []
+            "effect_results": []
           }
         }"#
         .to_owned(),
@@ -2808,18 +2851,19 @@ fn continue_run_step_rejects_invalid_continuation_next_step_index() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 3,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           },
           "continuation": {
             "next_step_index": "4",
-            "tool_plan": [
-              {"name": "propose_fake", "input": {"value": 8}}
+            "effects": [
+              {"kind": "tool", "name": "propose_fake", "input": {"value": 8}}
             ],
-            "tool_results": []
+            "effect_results": []
           }
         }"#
         .to_owned(),
@@ -2849,17 +2893,18 @@ fn continue_run_step_rejects_missing_continuation_next_step_index() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           },
           "continuation": {
-            "tool_plan": [
-              {"name": "propose_fake", "input": {"value": 8}}
+            "effects": [
+              {"kind": "tool", "name": "propose_fake", "input": {"value": 8}}
             ],
-            "tool_results": []
+            "effect_results": []
           }
         }"#
         .to_owned(),
@@ -2889,9 +2934,10 @@ fn continue_run_step_rejects_non_object_continuation() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 7}
           },
@@ -2912,7 +2958,7 @@ fn continue_run_step_rejects_non_object_continuation() {
 }
 
 #[test]
-fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
+fn continue_run_step_rejects_invalid_continuation_effect_result_item() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2924,16 +2970,17 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 2}
           },
           "continuation": {
         "next_step_index": 1,
-            "tool_plan": [],
-            "tool_results": ["bad"]
+            "effects": [],
+            "effect_results": ["bad"]
           }
         }"#
         .to_owned(),
@@ -2947,11 +2994,11 @@ fn continue_run_step_rejects_invalid_continuation_tool_result_item() {
     )
     .expect_err("invalid historical tool result should fail");
 
-    assert!(err.to_string().contains("tool_results[0]"));
+    assert!(err.to_string().contains("effect_results[0]"));
 }
 
 #[test]
-fn continue_run_step_rejects_historical_tool_result_without_response() {
+fn continue_run_step_rejects_historical_effect_result_without_response() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -2963,17 +3010,18 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 2}
           },
           "continuation": {
         "next_step_index": 1,
-            "tool_plan": [],
-            "tool_results": [
-              {"tool_call": {"name": "propose_fake", "input": {"value": 1}}}
+            "effects": [],
+            "effect_results": [
+              {"effect": {"kind": "tool", "name": "propose_fake", "input": {"value": 1}}}
             ]
           }
         }"#
@@ -2988,11 +3036,11 @@ fn continue_run_step_rejects_historical_tool_result_without_response() {
     )
     .expect_err("historical tool result without response should fail");
 
-    assert!(err.to_string().contains("tool_response"));
+    assert!(err.to_string().contains("effect_response"));
 }
 
 #[test]
-fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
+fn continue_run_step_rejects_historical_effect_response_with_bad_envelope() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -3004,19 +3052,20 @@ fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 2}
           },
           "continuation": {
         "next_step_index": 1,
-            "tool_plan": [],
-            "tool_results": [
+            "effects": [],
+            "effect_results": [
               {
-                "tool_call": {"name": "propose_fake", "input": {"value": 1}},
-                "tool_response": {
+                "effect": {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
+                "effect_response": {
                   "jsonrpc": "2.0",
                   "id": "historical",
                   "result": {"accepted": true},
@@ -3035,14 +3084,17 @@ fn continue_run_step_rejects_historical_tool_response_with_bad_envelope() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("invalid historical tool response envelope should fail");
+    .expect_err("invalid historical effect response envelope should fail");
 
-    assert!(err.to_string().contains("tool_results[0].tool_response"));
+    assert!(
+        err.to_string()
+            .contains("effect_results[0].effect_response")
+    );
     assert!(err.to_string().contains("both result and error"));
 }
 
 #[test]
-fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
+fn continue_run_step_rejects_mismatched_historical_effect_response_id() {
     let err = agent_runtime_continue_run_step(
         include_str!(
             "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
@@ -3054,23 +3106,25 @@ fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 2}
           },
           "continuation": {
         "next_step_index": 1,
-            "tool_plan": [],
-            "tool_results": [
+            "effects": [],
+            "effect_results": [
               {
-                "tool_call": {
-                  "tool_call_id": "historical_expected",
+                "effect": {
+                  "kind": "tool",
+                  "effect_id": "historical_expected",
                   "name": "propose_fake",
                   "input": {"value": 1}
                 },
-                "tool_response": {
+                "effect_response": {
                   "jsonrpc": "2.0",
                   "id": "historical_wrong",
                   "result": {"accepted": true}
@@ -3088,10 +3142,13 @@ fn continue_run_step_rejects_mismatched_historical_tool_response_id() {
         .to_owned(),
         "ai_chat".to_owned(),
     )
-    .expect_err("mismatched historical tool response id should fail");
+    .expect_err("mismatched historical effect response id should fail");
 
-    assert!(err.to_string().contains("tool_results[0].tool_response"));
-    assert!(err.to_string().contains("tool response id"));
+    assert!(
+        err.to_string()
+            .contains("effect_results[0].effect_response")
+    );
+    assert!(err.to_string().contains("effect response id"));
 }
 
 #[test]
@@ -3107,19 +3164,20 @@ fn continue_run_step_rejects_historical_tool_not_in_catalog() {
           "agent_id": "ai_chat",
           "agent_version": "0.1.0",
           "step_index": 0,
-          "status": "tool_call_requested",
-          "tool_call": {
-            "tool_call_id": "tool_expected",
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
             "name": "propose_fake",
             "input": {"value": 2}
           },
           "continuation": {
         "next_step_index": 1,
-            "tool_plan": [],
-            "tool_results": [
+            "effects": [],
+            "effect_results": [
               {
-                "tool_call": {"name": "unknown_tool", "input": {"value": 1}},
-                "tool_response": {"result": {"accepted": true}}
+                "effect": {"kind": "tool", "name": "unknown_tool", "input": {"value": 1}},
+                "effect_response": {"result": {"accepted": true}}
               }
             ]
           }
@@ -3146,9 +3204,10 @@ fn continue_run_step_maps_result_payload_policy_denied() {
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
           "step_index": 0,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000000",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
         "name": "propose_fake",
         "input": {"value": 7}
       }
@@ -3180,10 +3239,10 @@ fn continue_run_step_maps_result_payload_policy_denied() {
 
     assert_eq!(next["status"], "policy_denied");
     assert_eq!(next["error"]["code"], "policy_denied");
-    assert_eq!(next["tool_results"].as_array().unwrap().len(), 1);
+    assert_eq!(next["effect_results"].as_array().unwrap().len(), 1);
     assert_eq!(next["run_state"]["status"], "policy_denied");
     assert_eq!(next["run_state"]["terminal_reason"], "policy_denied");
-    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["run_state"]["effect_result_count"], 1);
     assert_eq!(next["trace_event"]["status"], "policy_denied");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }
@@ -3196,19 +3255,20 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
       "agent_id": "ai_chat",
       "agent_version": "0.1.0",
       "step_index": 1,
-      "status": "tool_call_requested",
-      "tool_call": {
-        "tool_call_id": "tool_018f0000-0000-7000-8000-000000000001",
+      "status": "effect_requested",
+      "effect": {
+        "kind": "tool",
+        "effect_id": "tool_018f0000-0000-7000-8000-000000000001",
         "name": "propose_fake",
         "input": {"value": 2}
       },
       "continuation": {
         "next_step_index": 2,
-        "tool_plan": [],
-        "tool_results": [
+        "effects": [],
+        "effect_results": [
           {
-            "tool_call": {"name": "propose_fake", "input": {"value": 1}},
-            "tool_response": {"result": {"accepted": true, "value": 1}}
+            "effect": {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
+            "effect_response": {"result": {"accepted": true, "value": 1}}
           }
         ]
       }
@@ -3221,8 +3281,8 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
         step_json.to_owned(),
         r#"{
           "error": {
-            "code": "tool_call_budget_exhausted",
-            "message": "agent runtime tool-call budget exhausted",
+            "code": "effect_budget_exhausted",
+            "message": "agent runtime effect budget exhausted",
             "max_tool_steps": 1,
             "dispatched_tool_count": 1
           }
@@ -3234,12 +3294,12 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
     let next: Value = serde_json::from_str(&next_json).expect("next step should be json");
 
     assert_eq!(next["status"], "closed_early");
-    assert_eq!(next["error"]["code"], "tool_call_budget_exhausted");
-    assert_eq!(next["tool_results"].as_array().unwrap().len(), 1);
+    assert_eq!(next["error"]["code"], "effect_budget_exhausted");
+    assert_eq!(next["effect_results"].as_array().unwrap().len(), 1);
     assert_eq!(next["run_state"]["status"], "closed_early");
     assert_eq!(next["run_state"]["terminal_reason"], "closed_early");
-    assert_eq!(next["run_state"]["remaining_tool_count"], 0);
-    assert_eq!(next["run_state"]["tool_result_count"], 1);
+    assert_eq!(next["run_state"]["remaining_effect_count"], 0);
+    assert_eq!(next["run_state"]["effect_result_count"], 1);
     assert_eq!(next["trace_event"]["status"], "closed_early");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
 }

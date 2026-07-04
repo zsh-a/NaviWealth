@@ -42,7 +42,7 @@ import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'agent_runtime_tool_plan_test_harness.dart';
+import 'agent_runtime_effect_plan_test_harness.dart';
 
 void main() {
   test(
@@ -53,7 +53,7 @@ void main() {
         kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
-      final native = FakeAgentRuntimeToolPlanBridge();
+      final native = FakeAgentRuntimeEffectPlanBridge();
       final llmBridge = _llmBridge(native);
       final toolHost = AgentRuntimeToolHost(
         dispatcher: const _NoopDispatcher(),
@@ -188,7 +188,7 @@ void main() {
         kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
-      final native = FakeAgentRuntimeToolPlanBridge();
+      final native = FakeAgentRuntimeEffectPlanBridge();
       final llmBridge = _llmBridge(native);
       final toolHost = AgentRuntimeToolHost(
         dispatcher: const _NoopDispatcher(),
@@ -277,7 +277,7 @@ void main() {
   );
 
   test('chat runner construction does not read the runtime catalog', () async {
-    final native = FakeAgentRuntimeToolPlanBridge();
+    final native = FakeAgentRuntimeEffectPlanBridge();
     final llmBridge = _llmBridge(native);
     final container = ProviderContainer(
       overrides: [

@@ -3,12 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 
-import '../../../app/agent_runtime_tool_plan_test_harness.dart';
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 
 void main() {
   group('assumptionReviewItemsFromToolResult', () {
@@ -41,10 +41,10 @@ void main() {
 
   group('FrbAssumptionReviewReader', () {
     test(
-      'reads assumptions through FRB list_open_assumptions tool plan',
+      'reads assumptions through FRB list_open_assumptions effect loop',
       () async {
         final dispatcher = _AssumptionDispatcher();
-        final bridge = FakeAgentRuntimeToolPlanBridge();
+        final bridge = FakeAgentRuntimeEffectPlanBridge();
         final traces = <AgentRuntimeNativeStepRunResult>[];
         final reader = FrbAssumptionReviewReader(
           runtime: _runtime(
@@ -69,11 +69,11 @@ void main() {
           containsPair('surface', 'knowledge_assumption'),
         );
         expect(traces.single.terminalStep['status'], 'completed');
-        expect(traces.single.dispatchedToolCount, 1);
+        expect(traces.single.dispatchedEffectCount, 1);
       },
     );
 
-    test('falls back when FRB tool path fails', () async {
+    test('falls back when FRB effect path fails', () async {
       final fallback = _FallbackReader(const <AssumptionReviewItem>[
         AssumptionReviewItem(
           id: 'fallback_assumption',
@@ -83,7 +83,7 @@ void main() {
       ]);
       final reader = FrbAssumptionReviewReader(
         runtime: _runtime(
-          bridge: FailingAgentRuntimeToolPlanBridge(),
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
           dispatcher: _AssumptionDispatcher(),
         ),
         fallback: fallback,
@@ -107,7 +107,7 @@ void main() {
         ]);
         final reader = FrbAssumptionReviewReader(
           runtime: _runtime(
-            bridge: FakeAgentRuntimeToolPlanBridge(),
+            bridge: FakeAgentRuntimeEffectPlanBridge(),
             dispatcher: _AssumptionDispatcher(),
             recordTrace: (_) async =>
                 throw StateError('trace store unavailable'),
@@ -134,12 +134,12 @@ AgentContext _context() {
 
 final _refProvider = Provider<Ref>((ref) => ref);
 
-AgentRuntimeToolPlanBinding _runtime({
+AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {
-  return agentRuntimeToolPlanTestBinding(
+  return agentRuntimeEffectPlanTestBinding(
     agentId: kKnowledgeAssumptionAgentId,
     domain: 'knowledge',
     surface: 'knowledge_assumption',
@@ -179,7 +179,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _AssumptionDispatcher implements DeviceToolDispatcher {
-  final calls = <AgentRuntimeToolPlanToolCall>[];
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
 
   @override
   Future<Object?> dispatch(
@@ -187,7 +187,7 @@ class _AssumptionDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(AgentRuntimeToolPlanToolCall(name, input));
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
     return <String, Object?>{
       'assumptions': <Object?>[
         <String, Object?>{

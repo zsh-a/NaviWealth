@@ -37,7 +37,7 @@ void main() {
       expect(result.llmResponse['content'], 'Summarized result');
       expect(result.step['status'], 'completed');
       expect(result.stepRun.terminalStep['status'], 'completed');
-      expect(result.stepRun.dispatchedToolCount, 0);
+      expect(result.stepRun.dispatchedEffectCount, 0);
       expect(result.stepRun.steps.single['status'], 'completed');
       expect(native.llmRequests.single['provider'], 'openai');
       expect(native.turnRequests.single.agentId, 'execution_review');
@@ -68,11 +68,14 @@ void main() {
           'content': 'Use local tool',
           'finish_reason': 'stop',
           'metadata': <String, Object?>{
-            'tool_call': <String, Object?>{
-              'tool_call_id': 'call_1',
-              'name': 'read_task',
-              'input': <String, Object?>{'id': 'task_1'},
-            },
+            'effects': <Object?>[
+              <String, Object?>{
+                'kind': 'tool',
+                'effect_id': 'call_1',
+                'name': 'read_task',
+                'input': <String, Object?>{'id': 'task_1'},
+              },
+            ],
           },
         },
       );
@@ -84,16 +87,19 @@ void main() {
         messages: const <Map<String, Object?>>[
           <String, Object?>{'role': 'user', 'content': 'Check task'},
         ],
-        maxToolSteps: 1,
+        maxEffectSteps: 1,
       );
 
       expect(result.step['status'], 'completed');
-      expect(result.stepRun.dispatchedToolCount, 1);
-      expect(result.stepRun.toolResponses.single, containsPair('id', 'call_1'));
+      expect(result.stepRun.dispatchedEffectCount, 1);
+      expect(
+        result.stepRun.effectResponses.single,
+        containsPair('id', 'call_1'),
+      );
       expect(result.toJson()['step_run'], isA<Map<String, Object?>>());
       expect(
         result.step['output'],
-        containsPair('tool_result', <String, Object?>{
+        containsPair('effect_result', <String, Object?>{
           'tool': 'read_task',
           'input': <String, Object?>{'id': 'task_1'},
         }),
@@ -101,15 +107,16 @@ void main() {
       expect(dispatcher.calls.single.name, 'read_task');
       expect(dispatcher.calls.single.input, <String, Object?>{'id': 'task_1'});
       expect(
-        native.continuations.single.toolResponse,
+        native.continuations.single.effectResponse,
         containsPair('id', 'call_1'),
       );
-      final input = native.turnRequests.single.initialStep['tool_call'];
+      final input = native.turnRequests.single.initialStep['effect'];
       expect(input as Map<String, Object?>, containsPair('name', 'read_task'));
       expect(
         native.turnRequests.single.initialStep,
-        containsPair('tool_call', const <String, Object?>{
-          'tool_call_id': 'call_1',
+        containsPair('effect', const <String, Object?>{
+          'kind': 'tool',
+          'effect_id': 'call_1',
           'name': 'read_task',
           'input': <String, Object?>{'id': 'task_1'},
         }),
@@ -350,17 +357,20 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> continueRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
+    required Map<String, Object?> effectResponse,
     required String agentId,
   }) async {
-    continuations.add(_Continuation(previousStep, toolResponse));
+    continuations.add(_Continuation(previousStep, effectResponse));
     return <String, Object?>{
       'protocol_version': 'agent.v1',
       'run_id': previousStep['run_id'],
       'agent_id': agentId,
-      'status': toolResponse['error'] == null ? 'completed' : 'failed',
-      'tool_call': previousStep['tool_call'],
-      'output': <String, Object?>{'tool_result': toolResponse['result']},
+      'status': effectResponse['error'] == null ? 'completed' : 'failed',
+      'output': <String, Object?>{
+        'effect': previousStep['effect'],
+        'effect_result': effectResponse['result'],
+        'effect_response': effectResponse,
+      },
     };
   }
 
@@ -373,14 +383,14 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
     startRequests.add(_StartRequest(catalog, request, agentId));
     final input = request['input'];
     if (input is Map<String, Object?>) {
-      final toolCall = input['tool_call'];
-      if (toolCall is Map<String, Object?>) {
+      final effect = input['effect'];
+      if (effect is Map<String, Object?>) {
         return <String, Object?>{
           'protocol_version': 'agent.v1',
           'run_id': 'run_1',
           'agent_id': agentId,
-          'status': 'tool_call_requested',
-          'tool_call': toolCall,
+          'status': 'effect_requested',
+          'effect': effect,
         };
       }
     }
@@ -399,14 +409,17 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
   ) {
     final metadata = llmResponse['metadata'];
     if (metadata is Map<String, Object?>) {
-      final toolCall = metadata['tool_call'];
-      if (toolCall is Map<String, Object?>) {
+      final effects = metadata['effects'];
+      final effect = effects is List && effects.isNotEmpty
+          ? effects.first
+          : null;
+      if (effect is Map<String, Object?>) {
         return <String, Object?>{
           'protocol_version': 'agent.v1',
           'run_id': 'run_1',
           'agent_id': agentId,
-          'status': 'tool_call_requested',
-          'tool_call': toolCall,
+          'status': 'effect_requested',
+          'effect': effect,
         };
       }
     }
@@ -495,10 +508,10 @@ class _TurnRequest {
 }
 
 class _Continuation {
-  const _Continuation(this.previousStep, this.toolResponse);
+  const _Continuation(this.previousStep, this.effectResponse);
 
   final Map<String, Object?> previousStep;
-  final Map<String, Object?> toolResponse;
+  final Map<String, Object?> effectResponse;
 }
 
 class _ToolCall {

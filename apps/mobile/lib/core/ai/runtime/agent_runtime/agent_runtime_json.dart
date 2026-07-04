@@ -52,16 +52,16 @@ String agentRuntimeEncodeToolCallLine({
   });
 }
 
-Map<String, Object?> agentRuntimeToolBudgetExhaustedResponse({
-  required int maxToolSteps,
-  required int dispatchedToolCount,
+Map<String, Object?> agentRuntimeEffectBudgetExhaustedResponse({
+  required int maxEffectSteps,
+  required int dispatchedEffectCount,
 }) {
   return <String, Object?>{
     'error': <String, Object?>{
-      'code': 'tool_call_budget_exhausted',
-      'message': 'agent runtime tool-call budget exhausted',
-      'max_tool_steps': maxToolSteps,
-      'dispatched_tool_count': dispatchedToolCount,
+      'code': 'effect_budget_exhausted',
+      'message': 'agent runtime effect budget exhausted',
+      'max_effect_steps': maxEffectSteps,
+      'dispatched_effect_count': dispatchedEffectCount,
     },
   };
 }

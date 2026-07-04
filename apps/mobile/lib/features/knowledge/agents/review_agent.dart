@@ -12,8 +12,8 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
-import '../../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -172,28 +172,30 @@ class RepositoryReviewDueReader implements ReviewDueReader {
 
 class FrbReviewDueReader implements ReviewDueReader {
   const FrbReviewDueReader({
-    required AgentRuntimeToolPlanBinding runtime,
+    required AgentRuntimeEffectPlanBinding runtime,
     this.fallback = const RepositoryReviewDueReader(),
   }) : _runtime = runtime;
 
-  final AgentRuntimeToolPlanBinding _runtime;
+  final AgentRuntimeEffectPlanBinding _runtime;
   final ReviewDueReader fallback;
 
   @override
   Future<ReviewDueSnapshot> read(AgentContext ctx) async {
     final asOf = ctx.now.toUtc().toIso8601String();
-    return _runtime.readFromToolPlan(
-      toolPlan: <Map<String, Object?>>[
+    return _runtime.readFromEffectPlan(
+      effectPlan: <Map<String, Object?>>[
         <String, Object?>{
+          'kind': 'tool',
           'name': 'list_due_reviews',
           'input': <String, Object?>{'as_of': asOf, 'limit': 50},
         },
         const <String, Object?>{
+          'kind': 'tool',
           'name': 'list_open_assumptions',
           'input': <String, Object?>{'limit': 50},
         },
       ],
-      maxToolSteps: 2,
+      maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
       decode: (terminalStep) =>
           reviewDueSnapshotFromTerminalStep(terminalStep, now: ctx.now),
@@ -240,7 +242,7 @@ ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required DateTime now,
 }) {
-  final byTool = agentRuntimeTerminalToolResultsByName(step);
+  final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final reviews = reviewDecisionItemsFromToolResult(byTool['list_due_reviews']);
   final openAssumptions = _reviewAssumptionItemsFromToolResult(
     byTool['list_open_assumptions'],

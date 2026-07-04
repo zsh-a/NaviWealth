@@ -1,4 +1,4 @@
-/// Domain-facing binding for running native agent-runtime tool plans.
+/// Domain-facing binding for running native agent-runtime effect plans.
 library;
 
 import 'dart:async';
@@ -8,31 +8,31 @@ import 'agent_runtime_step_result.dart';
 
 export 'agent_runtime_step_result.dart' show AgentRuntimeNativeStepRunResult;
 
-abstract interface class AgentRuntimeToolPlanStepRunner {
+abstract interface class AgentRuntimeEffectStepRunner {
   Future<AgentRuntimeNativeStepRunResult> runUntilTerminalWithTrace({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   });
 }
 
-class AgentRuntimeToolPlanBinding {
-  AgentRuntimeToolPlanBinding({
+class AgentRuntimeEffectPlanBinding {
+  AgentRuntimeEffectPlanBinding({
     required this.agentId,
     required this.domain,
     required this.surface,
-    required AgentRuntimeToolPlanStepRunner stepRunner,
+    required AgentRuntimeEffectStepRunner stepRunner,
     required Map<String, Object?> catalogJson,
     this.recordTrace,
   }) : _stepRunnerReader = (() => stepRunner),
        _catalogJsonReader = (() => catalogJson);
 
-  AgentRuntimeToolPlanBinding.lazyCatalog({
+  AgentRuntimeEffectPlanBinding.lazyCatalog({
     required this.agentId,
     required this.domain,
     required this.surface,
-    required AgentRuntimeToolPlanStepRunner Function() stepRunnerReader,
+    required AgentRuntimeEffectStepRunner Function() stepRunnerReader,
     required Map<String, Object?> Function() catalogJsonReader,
     this.recordTrace,
   }) : _stepRunnerReader = stepRunnerReader,
@@ -43,24 +43,22 @@ class AgentRuntimeToolPlanBinding {
   final String surface;
   final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
   recordTrace;
-  final AgentRuntimeToolPlanStepRunner Function() _stepRunnerReader;
+  final AgentRuntimeEffectStepRunner Function() _stepRunnerReader;
   final Map<String, Object?> Function() _catalogJsonReader;
 
-  AgentRuntimeToolPlanStepRunner get stepRunner => _stepRunnerReader();
+  AgentRuntimeEffectStepRunner get stepRunner => _stepRunnerReader();
 
-  Future<AgentRuntimeNativeStepRunResult> runToolPlan({
-    required List<Map<String, Object?>> toolPlan,
+  Future<AgentRuntimeNativeStepRunResult> runEffectPlan({
+    required List<Map<String, Object?>> effectPlan,
     String trigger = 'manual',
     Map<String, Object?> metadata = const <String, Object?>{},
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     final stepRun = await _stepRunnerReader().runUntilTerminalWithTrace(
       catalog: _catalogJsonReader(),
       request: <String, Object?>{
         'protocol_version': kAgentRuntimeProtocolVersion,
-        'input': <String, Object?>{
-          'tool_plan': <Object?>[for (final toolCall in toolPlan) toolCall],
-        },
+        'input': <String, Object?>{'effects': effectPlan},
         'trigger': trigger,
         'metadata': <String, Object?>{
           'surface': surface,
@@ -69,26 +67,26 @@ class AgentRuntimeToolPlanBinding {
         },
       },
       agentId: agentId,
-      maxToolSteps: maxToolSteps,
+      maxEffectSteps: maxEffectSteps,
     );
     await recordStepRun(stepRun);
     return stepRun;
   }
 
-  Future<T> readFromToolPlan<T>({
-    required List<Map<String, Object?>> toolPlan,
+  Future<T> readFromEffectPlan<T>({
+    required List<Map<String, Object?>> effectPlan,
     required Future<T> Function() fallback,
     required FutureOr<T?> Function(Map<String, Object?> terminalStep) decode,
     String trigger = 'manual',
     Map<String, Object?> metadata = const <String, Object?>{},
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     try {
-      final stepRun = await runToolPlan(
-        toolPlan: toolPlan,
+      final stepRun = await runEffectPlan(
+        effectPlan: effectPlan,
         trigger: trigger,
         metadata: metadata,
-        maxToolSteps: maxToolSteps,
+        maxEffectSteps: maxEffectSteps,
       );
       final value = await decode(stepRun.terminalStep);
       if (value != null) return value;

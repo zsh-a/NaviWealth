@@ -2,9 +2,10 @@
 library;
 
 import 'package:flutter_riverpod/misc.dart' show Override;
-import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/notifications/notification_preferences.dart';
-import 'package:naviwealth/core/notifications/providers.dart' as notif_providers;
+import 'package:naviwealth/core/notifications/providers.dart'
+    as notif_providers;
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';
@@ -17,7 +18,7 @@ List<Override> agentRuntimeKnowledgeProviderOverrides() => <Override>[
   knowledge_agent_providers.reviewAgentProvider.overrideWith((ref) {
     return ReviewAgent(
       dueReader: FrbReviewDueReader(
-        runtime: agentRuntimeToolPlanBinding(
+        runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kKnowledgeReviewAgentId,
           domain: 'knowledge',
@@ -29,7 +30,7 @@ List<Override> agentRuntimeKnowledgeProviderOverrides() => <Override>[
   knowledge_agent_providers.assumptionAgentProvider.overrideWith((ref) {
     return AssumptionAgent(
       assumptionReader: FrbAssumptionReviewReader(
-        runtime: agentRuntimeToolPlanBinding(
+        runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kKnowledgeAssumptionAgentId,
           domain: 'knowledge',
@@ -41,7 +42,7 @@ List<Override> agentRuntimeKnowledgeProviderOverrides() => <Override>[
   knowledge_agent_providers.inboxTriageAgentProvider.overrideWith((ref) {
     return InboxTriageAgent(
       sourceReader: FrbInboxTriageSourceReader(
-        runtime: agentRuntimeToolPlanBinding(
+        runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kKnowledgeInboxTriageAgentId,
           domain: 'knowledge',
@@ -53,7 +54,7 @@ List<Override> agentRuntimeKnowledgeProviderOverrides() => <Override>[
   knowledge_agent_providers.contradictionAgentProvider.overrideWith((ref) {
     return ContradictionAgent(
       sourceReader: FrbContradictionSourceReader(
-        runtime: agentRuntimeToolPlanBinding(
+        runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kKnowledgeContradictionAgentId,
           domain: 'knowledge',
@@ -68,7 +69,7 @@ List<Override> agentRuntimeKnowledgeProviderOverrides() => <Override>[
           ? ref.watch(notif_providers.notificationServiceProvider)
           : null,
       dueReader: FrbRoutineDueReader(
-        runtime: agentRuntimeToolPlanBinding(
+        runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kKnowledgeRoutineAgentId,
           domain: 'knowledge',

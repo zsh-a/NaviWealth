@@ -31,10 +31,10 @@ const String kFrbAgentRuntimeProfileRoutingReason = 'frb_agent_runtime_profile';
 /// agent runtime traffic.
 const String kFrbChatRoutingReason = 'frb_chat';
 
-/// FRB/native agent runtime executed a tool-plan step loop. Dart may still run
-/// the requested local tool calls, but native owns the step sequencing and
-/// terminal run-state summary for this trace.
-const String kFrbNativeToolPlanRoutingReason = 'frb_native_tool_plan';
+/// FRB/native agent runtime executed an effect loop. Dart may still run local
+/// tool effects, but native owns the step sequencing and terminal run-state
+/// summary for this trace.
+const String kFrbNativeEffectLoopRoutingReason = 'frb_native_effect_loop';
 
 /// The requested device/FRB runtime was not usable for this turn. This remains
 /// a device-local failure path, not a cloud fallback.
@@ -108,7 +108,7 @@ enum TerminalReason {
   /// User explicitly cancelled (cancel button / navigated away).
   userCancel,
 
-  /// Policy denied dispatch — synthesised `tool_result {error: policy_denied}`.
+  /// Policy denied dispatch — synthesised tool-effect denial response.
   policyDenied,
 
   /// Stream closed before the `done` frame and no error fired (peer
@@ -158,8 +158,8 @@ class AiTrace {
   /// Short label for which runtime handled the turn — `device_llm_direct`
   /// (see [kDeviceLlmDirectRoutingReason]), `frb_agent_runtime_profile`
   /// (see [kFrbAgentRuntimeProfileRoutingReason]), `frb_chat`
-  /// (see [kFrbChatRoutingReason]), `frb_native_tool_plan` (see
-  /// [kFrbNativeToolPlanRoutingReason]), `device_unavailable` (see
+  /// (see [kFrbChatRoutingReason]), `frb_native_effect_loop` (see
+  /// [kFrbNativeEffectLoopRoutingReason]), `device_unavailable` (see
   /// [kDeviceUnavailableRoutingReason]), `frb_vision_ingest` (see
   /// [kFrbVisionIngestRoutingReason]), or legacy `device_vision_direct` (see
   /// [kDeviceVisionDirectRoutingReason]).

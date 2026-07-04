@@ -12,8 +12,8 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
-import '../../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
@@ -165,26 +165,27 @@ class RepositoryRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
 
 class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
   const FrbRecoveryAlertSignalReader({
-    required AgentRuntimeToolPlanBinding runtime,
+    required AgentRuntimeEffectPlanBinding runtime,
     this.fallback = const RepositoryRecoveryAlertSignalReader(),
   }) : _runtime = runtime;
 
-  final AgentRuntimeToolPlanBinding _runtime;
+  final AgentRuntimeEffectPlanBinding _runtime;
   final RecoveryAlertSignalReader fallback;
 
   @override
   Future<RecoveryAlertSignalRead> read(AgentContext ctx) async {
-    return _runtime.readFromToolPlan(
-      toolPlan: const <Map<String, Object?>>[
+    return _runtime.readFromEffectPlan(
+      effectPlan: const <Map<String, Object?>>[
         <String, Object?>{
+          'kind': 'tool',
           'name': 'get_hrv_trend',
           'input': <String, Object?>{'window_days': 14},
         },
       ],
-      maxToolSteps: 1,
+      maxEffectSteps: 1,
       fallback: () => fallback.read(ctx),
       decode: (terminalStep) {
-        final result = agentRuntimeTerminalToolResult(
+        final result = agentRuntimeTerminalEffectResultForTool(
           terminalStep,
           'get_hrv_trend',
         );

@@ -10,8 +10,8 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
-import '../../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../data/providers.dart';
@@ -258,31 +258,34 @@ class RepositoryWeeklySummaryReader implements WeeklySummaryReader {
 
 class FrbWeeklySummaryReader implements WeeklySummaryReader {
   const FrbWeeklySummaryReader({
-    required AgentRuntimeToolPlanBinding runtime,
+    required AgentRuntimeEffectPlanBinding runtime,
     this.fallback = const RepositoryWeeklySummaryReader(),
   }) : _runtime = runtime;
 
-  final AgentRuntimeToolPlanBinding _runtime;
+  final AgentRuntimeEffectPlanBinding _runtime;
   final WeeklySummaryReader fallback;
 
   @override
   Future<WeeklySummarySnapshot> read(AgentContext ctx) async {
-    return _runtime.readFromToolPlan(
-      toolPlan: const <Map<String, Object?>>[
+    return _runtime.readFromEffectPlan(
+      effectPlan: const <Map<String, Object?>>[
         <String, Object?>{
+          'kind': 'tool',
           'name': 'get_recovery_signal',
           'input': <String, Object?>{},
         },
         <String, Object?>{
+          'kind': 'tool',
           'name': 'get_recent_sleep_summary',
           'input': <String, Object?>{'days_back': 7},
         },
         <String, Object?>{
+          'kind': 'tool',
           'name': 'get_activity_summary',
           'input': <String, Object?>{'days_back': 7},
         },
       ],
-      maxToolSteps: 3,
+      maxEffectSteps: 3,
       fallback: () => fallback.read(ctx),
       decode: weeklySummarySnapshotFromTerminalStep,
     );
@@ -319,7 +322,7 @@ class WeeklySummarySnapshot {
 WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
   Map<String, Object?> step,
 ) {
-  final byTool = agentRuntimeTerminalToolResultsByName(step);
+  final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final recovery = byTool['get_recovery_signal'];
   final sleep = byTool['get_recent_sleep_summary'];
   final activity = byTool['get_activity_summary'];

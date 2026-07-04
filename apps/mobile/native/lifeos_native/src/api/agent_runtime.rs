@@ -104,13 +104,13 @@ pub fn agent_runtime_start_run_step(
 pub fn agent_runtime_continue_run_step(
     catalog_json: String,
     previous_step_json: String,
-    tool_response_json: String,
+    effect_response_json: String,
     agent_id: String,
 ) -> Result<String> {
     runtime::agent_runtime_continue_run_step(
         catalog_json,
         previous_step_json,
-        tool_response_json,
+        effect_response_json,
         agent_id,
     )
 }

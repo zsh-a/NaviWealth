@@ -3,26 +3,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
 
-import '../../../app/agent_runtime_tool_plan_test_harness.dart';
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 
 void main() {
-  group('review due tool-result parsing', () {
+  group('review due effect-result parsing', () {
     test('parses terminal multi-tool output and filters stale assumptions', () {
       final snapshot = reviewDueSnapshotFromTerminalStep(
         const <String, Object?>{
           'status': 'completed',
           'output': <String, Object?>{
-            'mode': 'frb_tool_loop',
-            'tool_results': <Object?>[
+            'mode': 'frb_effect_loop',
+            'effect_results': <Object?>[
               <String, Object?>{
-                'tool_call': <String, Object?>{'name': 'list_due_reviews'},
-                'tool_response': <String, Object?>{
+                'effect': <String, Object?>{
+                  'kind': 'tool',
+                  'name': 'list_due_reviews',
+                },
+                'effect_response': <String, Object?>{
                   'result': <String, Object?>{
                     'decisions': <Object?>[
                       <String, Object?>{
@@ -34,8 +37,11 @@ void main() {
                 },
               },
               <String, Object?>{
-                'tool_call': <String, Object?>{'name': 'list_open_assumptions'},
-                'tool_response': <String, Object?>{
+                'effect': <String, Object?>{
+                  'kind': 'tool',
+                  'name': 'list_open_assumptions',
+                },
+                'effect_response': <String, Object?>{
                   'result': <String, Object?>{
                     'assumptions': <Object?>[
                       <String, Object?>{
@@ -67,7 +73,7 @@ void main() {
       final snapshot = reviewDueSnapshotFromTerminalStep(
         const <String, Object?>{
           'status': 'completed',
-          'output': <String, Object?>{'tool_results': <Object?>[]},
+          'output': <String, Object?>{'effect_results': <Object?>[]},
         },
         now: DateTime.utc(2026, 6, 29),
       );
@@ -77,9 +83,9 @@ void main() {
   });
 
   group('FrbReviewDueReader', () {
-    test('reads review inputs through a two-step FRB tool plan', () async {
+    test('reads review inputs through a two-step FRB effect loop', () async {
       final dispatcher = _ReviewDispatcher();
-      final bridge = FakeAgentRuntimeToolPlanBridge();
+      final bridge = FakeAgentRuntimeEffectPlanBridge();
       final traces = <AgentRuntimeNativeStepRunResult>[];
       final reader = FrbReviewDueReader(
         runtime: _runtime(
@@ -107,7 +113,7 @@ void main() {
         containsPair('surface', 'knowledge_review'),
       );
       expect(traces.single.terminalStep['status'], 'completed');
-      expect(traces.single.dispatchedToolCount, 2);
+      expect(traces.single.dispatchedEffectCount, 2);
     });
 
     test('falls back when the FRB path fails', () async {
@@ -121,7 +127,7 @@ void main() {
       );
       final reader = FrbReviewDueReader(
         runtime: _runtime(
-          bridge: FailingAgentRuntimeToolPlanBridge(),
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
           dispatcher: _ReviewDispatcher(),
         ),
         fallback: fallback,
@@ -149,7 +155,7 @@ void main() {
         );
         final reader = FrbReviewDueReader(
           runtime: _runtime(
-            bridge: FakeAgentRuntimeToolPlanBridge(),
+            bridge: FakeAgentRuntimeEffectPlanBridge(),
             dispatcher: _ReviewDispatcher(),
             recordTrace: (_) async =>
                 throw StateError('trace store unavailable'),
@@ -176,12 +182,12 @@ AgentContext _context() {
 
 final _refProvider = Provider<Ref>((ref) => ref);
 
-AgentRuntimeToolPlanBinding _runtime({
+AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {
-  return agentRuntimeToolPlanTestBinding(
+  return agentRuntimeEffectPlanTestBinding(
     agentId: kKnowledgeReviewAgentId,
     domain: 'knowledge',
     surface: 'knowledge_review',
@@ -228,7 +234,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _ReviewDispatcher implements DeviceToolDispatcher {
-  final calls = <AgentRuntimeToolPlanToolCall>[];
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
 
   @override
   Future<Object?> dispatch(
@@ -236,7 +242,7 @@ class _ReviewDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(AgentRuntimeToolPlanToolCall(name, input));
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
     return switch (name) {
       'list_due_reviews' => <String, Object?>{
         'decisions': <Object?>[

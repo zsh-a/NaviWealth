@@ -35,34 +35,16 @@ pub(super) fn agent_runtime_continue_run_step(
 }
 
 pub(super) fn runtime_input_from_llm_response(response: &LlmResponse) -> Result<Value> {
-    if let Some(tool_plan) = response
-        .metadata
-        .get("effects")
-        .or_else(|| response.metadata.get("tool_plan"))
-        .or_else(|| response.metadata.get("tool_calls"))
-    {
-        let plan = tool_plan
+    if let Some(effects) = response.metadata.get("effects") {
+        let effects = effects
             .as_array()
-            .ok_or_else(|| anyhow::anyhow!("LLM metadata tool plan must be an array"))?;
-        if !plan.is_empty() {
+            .ok_or_else(|| anyhow::anyhow!("LLM metadata effects must be an array"))?;
+        if !effects.is_empty() {
             return Ok(json!({
-                "effects": plan,
-                "tool_plan": plan,
+                "effects": effects,
                 "llm_response": response,
             }));
         }
-    }
-    if let Some(subagent_call) = response.metadata.get("subagent_call") {
-        return Ok(json!({
-            "subagent_call": subagent_call,
-            "llm_response": response,
-        }));
-    }
-    if let Some(tool_call) = response.metadata.get("tool_call") {
-        return Ok(json!({
-            "tool_call": tool_call,
-            "llm_response": response,
-        }));
     }
     Ok(json!({
         "content": response.content,

@@ -231,7 +231,7 @@ pub(super) fn normalize_llm_response_contract(response: &mut LlmResponse) -> Res
     } else if !response.metadata.is_object() {
         anyhow::bail!("LLM response metadata must be a JSON object");
     }
-    normalize_llm_response_tool_metadata(&mut response.metadata)?;
+    normalize_llm_response_effect_metadata(&mut response.metadata)?;
     if let Some(usage) = &response.usage {
         let expected_total = usage
             .input_tokens
@@ -246,66 +246,66 @@ pub(super) fn normalize_llm_response_contract(response: &mut LlmResponse) -> Res
     Ok(())
 }
 
-fn normalize_llm_response_tool_metadata(metadata: &mut Value) -> Result<()> {
+fn normalize_llm_response_effect_metadata(metadata: &mut Value) -> Result<()> {
     let object = metadata
         .as_object_mut()
         .ok_or_else(|| anyhow::anyhow!("LLM response metadata must be a JSON object"))?;
-    for key in ["tool_plan", "tool_calls"] {
-        if let Some(tool_plan) = object.get_mut(key) {
-            let plan = tool_plan
-                .as_array()
-                .ok_or_else(|| anyhow::anyhow!("LLM response metadata.{key} must be an array"))?;
-            let normalized = plan
-                .iter()
-                .enumerate()
-                .map(|(index, value)| {
-                    let requested = parse_requested_tool_call(
-                        value,
-                        &format!("LLM response metadata.{key}[{index}]"),
-                    )?;
-                    Ok(serde_json::to_value(requested)?)
-                })
-                .collect::<Result<Vec<_>>>()?;
-            *tool_plan = Value::Array(normalized);
-        }
-    }
-    if let Some(tool_call) = object.get_mut("tool_call") {
-        let requested = parse_requested_tool_call(tool_call, "LLM response metadata.tool_call")?;
-        *tool_call = serde_json::to_value(requested)?;
+    if let Some(effects) = object.get_mut("effects") {
+        let plan = effects
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("LLM response metadata.effects must be an array"))?;
+        let normalized = plan
+            .iter()
+            .enumerate()
+            .map(|(index, value)| {
+                let requested = normalize_requested_effect(
+                    value,
+                    &format!("LLM response metadata.effects[{index}]"),
+                )?;
+                Ok(requested)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        *effects = Value::Array(normalized);
     }
     Ok(())
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub(super) struct RequestedToolCall {
-    pub(super) name: String,
-    #[serde(default)]
-    pub(super) input: Value,
-}
-
-pub(super) fn parse_requested_tool_call(value: &Value, label: &str) -> Result<RequestedToolCall> {
+pub(super) fn normalize_requested_effect(value: &Value, label: &str) -> Result<Value> {
     let object = value
         .as_object()
         .ok_or_else(|| anyhow::anyhow!("{label} must be an object"))?;
-    let name = object
-        .get("name")
+    let kind = object
+        .get("kind")
         .and_then(Value::as_str)
-        .filter(|value| !value.is_empty())
-        .ok_or_else(|| anyhow::anyhow!("{label}.name is required"))?
-        .to_owned();
+        .ok_or_else(|| anyhow::anyhow!("{label}.kind is required"))?;
+    match kind {
+        "tool" => {
+            object
+                .get("name")
+                .and_then(Value::as_str)
+                .filter(|value| !value.is_empty())
+                .ok_or_else(|| anyhow::anyhow!("{label}.name is required"))?;
+        }
+        "subagent" => {
+            object
+                .get("agent_id")
+                .and_then(Value::as_str)
+                .filter(|value| !value.trim().is_empty())
+                .ok_or_else(|| anyhow::anyhow!("{label}.agent_id is required"))?;
+        }
+        _ => anyhow::bail!("{label}.kind '{kind}' is not supported"),
+    }
     let input = match object.get("input") {
         Some(input) if input.is_object() => input.clone(),
         Some(_) => anyhow::bail!("{label}.input must be an object"),
         None => json!({}),
     };
-    Ok(RequestedToolCall { name, input })
-}
-
-pub(super) fn require_tool_call_input_object(tool_call: &Value, label: &str) -> Result<()> {
-    if matches!(tool_call.get("input"), Some(input) if !input.is_object()) {
-        anyhow::bail!("{label}.input must be an object");
+    let mut normalized = object.clone();
+    normalized.insert("input".to_owned(), input);
+    if matches!(normalized.get("metadata"), Some(metadata) if !metadata.is_object()) {
+        anyhow::bail!("{label}.metadata must be an object");
     }
-    Ok(())
+    Ok(Value::Object(normalized))
 }
 
 pub(super) fn normalize_llm_event_contract(event: &mut LlmEvent) -> Result<()> {
@@ -410,7 +410,10 @@ pub(super) fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Re
         require_matching_string(payload, "agent_id", &trace.agent_id)?;
         require_step_status(payload, "status")?;
         require_non_negative_integer(payload, "step_index")?;
+        require_nullable_non_empty_string(payload, "effect_id")?;
+        require_effect_kind(payload, "effect_kind")?;
         require_nullable_non_empty_string(payload, "tool_name")?;
+        require_nullable_non_empty_string(payload, "subagent_id")?;
         let run_state = payload
             .get("run_state")
             .and_then(Value::as_object)
@@ -426,8 +429,8 @@ pub(super) fn validate_agent_runtime_step_trace_events(trace: &AgentTrace) -> Re
         )?;
         require_nullable_non_negative_integer(run_state, "step_index")?;
         require_matching_nullable_integer(run_state, "step_index", payload, "step_index")?;
-        require_non_negative_integer(run_state, "remaining_tool_count")?;
-        require_non_negative_integer(run_state, "tool_result_count")?;
+        require_non_negative_integer(run_state, "remaining_effect_count")?;
+        require_non_negative_integer(run_state, "effect_result_count")?;
         require_terminal_reason(run_state, "terminal_reason")?;
         require_terminal_reason_matches_status(run_state)?;
     }
@@ -476,6 +479,14 @@ fn require_nullable_non_empty_string(object: &Map<String, Value>, field: &str) -
     }
 }
 
+fn require_effect_kind(object: &Map<String, Value>, field: &str) -> Result<()> {
+    match object.get(field) {
+        Some(Value::Null) => Ok(()),
+        Some(Value::String(value)) if matches!(value.as_str(), "tool" | "subagent") => Ok(()),
+        _ => anyhow::bail!("agent_runtime_step {field} must be null, tool, or subagent"),
+    }
+}
+
 pub(super) fn require_matching_nullable_string(
     object: &Map<String, Value>,
     field: &str,
@@ -511,14 +522,8 @@ fn require_matching_nullable_integer(
 pub(super) fn require_step_status(object: &Map<String, Value>, field: &str) -> Result<()> {
     match object.get(field).and_then(Value::as_str) {
         Some(
-            "tool_call_requested"
-            | "subagent_requested"
-            | "completed"
-            | "failed"
-            | "cancelled"
-            | "policy_denied"
-            | "closed_early"
-            | "timed_out",
+            "effect_requested" | "completed" | "failed" | "cancelled" | "policy_denied"
+            | "closed_early" | "timed_out",
         ) => Ok(()),
         _ => anyhow::bail!("agent_runtime_step {field} is not a supported status"),
     }
@@ -541,7 +546,7 @@ pub(super) fn require_terminal_reason(object: &Map<String, Value>, field: &str) 
 
 pub(super) fn require_terminal_reason_matches_status(object: &Map<String, Value>) -> Result<()> {
     let expected = match object.get("status").and_then(Value::as_str) {
-        Some("tool_call_requested" | "subagent_requested") => None,
+        Some("effect_requested") => None,
         Some("completed") => Some("done"),
         Some("failed") => Some("stream_error"),
         Some("cancelled") => Some("user_cancel"),

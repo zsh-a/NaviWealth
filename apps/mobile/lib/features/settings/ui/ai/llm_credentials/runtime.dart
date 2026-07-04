@@ -26,7 +26,7 @@ mixin _AiLlmCredentialsRuntimeMixin on _AiLlmCredentialsPageStateBase {
           },
         ],
         metadata: const <String, Object?>{'purpose': 'runtime_check'},
-        maxToolSteps: 0,
+        maxEffectSteps: 0,
       );
       if (!mounted) return;
       setState(() {

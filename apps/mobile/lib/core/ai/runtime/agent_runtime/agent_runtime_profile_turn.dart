@@ -90,7 +90,7 @@ abstract interface class AgentRuntimeProfileTurnRunner {
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   });
 }
 
@@ -145,7 +145,7 @@ class AgentRuntimeProfileTurnBinding {
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     final runner = _runnerReader();
     if (runner == null) {
@@ -162,7 +162,7 @@ class AgentRuntimeProfileTurnBinding {
         'agent_id': agentId,
         ...metadata,
       },
-      maxToolSteps: maxToolSteps,
+      maxEffectSteps: maxEffectSteps,
     );
     await recordProfileTurn(result);
     return result;

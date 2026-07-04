@@ -143,14 +143,14 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
     );
     final input = request['input'];
     if (input is Map<String, Object?>) {
-      final toolCall = input['tool_call'];
-      if (toolCall is Map<String, Object?>) {
+      final effect = input['effect'];
+      if (effect is Map<String, Object?>) {
         return <String, Object?>{
           'protocol_version': kAgentRuntimeProtocolVersion,
           'run_id': 'run_1',
           'agent_id': agentId,
-          'status': 'tool_call_requested',
-          'tool_call': toolCall,
+          'status': 'effect_requested',
+          'effect': effect,
         };
       }
     }
@@ -167,22 +167,25 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> continueRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
+    required Map<String, Object?> effectResponse,
     required String agentId,
   }) async {
     continuations.add(
       AgentRuntimeRunContinuation(
         previousStep: previousStep,
-        toolResponse: toolResponse,
+        effectResponse: effectResponse,
       ),
     );
     return <String, Object?>{
       'protocol_version': kAgentRuntimeProtocolVersion,
       'run_id': previousStep['run_id'],
       'agent_id': agentId,
-      'status': toolResponse['error'] == null ? 'completed' : 'failed',
-      'tool_call': previousStep['tool_call'],
-      'output': <String, Object?>{'tool_result': toolResponse['result']},
+      'status': effectResponse['error'] == null ? 'completed' : 'failed',
+      'output': <String, Object?>{
+        'effect': previousStep['effect'],
+        'effect_result': effectResponse['result'],
+        'effect_response': effectResponse,
+      },
     };
   }
 
@@ -192,14 +195,17 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   ) {
     final metadata = llmResponse['metadata'];
     if (metadata is Map<String, Object?>) {
-      final toolCall = metadata['tool_call'];
-      if (toolCall is Map<String, Object?>) {
+      final effects = metadata['effects'];
+      final effect = effects is List && effects.isNotEmpty
+          ? effects.first
+          : null;
+      if (effect is Map<String, Object?>) {
         return <String, Object?>{
           'protocol_version': kAgentRuntimeProtocolVersion,
           'run_id': 'run_1',
           'agent_id': agentId,
-          'status': 'tool_call_requested',
-          'tool_call': toolCall,
+          'status': 'effect_requested',
+          'effect': effect,
         };
       }
     }
@@ -247,9 +253,9 @@ class AgentRuntimeRunStartRequest {
 class AgentRuntimeRunContinuation {
   const AgentRuntimeRunContinuation({
     required this.previousStep,
-    required this.toolResponse,
+    required this.effectResponse,
   });
 
   final Map<String, Object?> previousStep;
-  final Map<String, Object?> toolResponse;
+  final Map<String, Object?> effectResponse;
 }

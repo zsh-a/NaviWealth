@@ -156,7 +156,7 @@ void main() {
         runner.calls.single.metadata,
         containsPair('day_key', '2026-05-27'),
       );
-      expect(runner.calls.single.maxToolSteps, 0);
+      expect(runner.calls.single.maxEffectSteps, 0);
       expect(
         runner.calls.single.messages.first,
         containsPair('role', 'system'),
@@ -228,14 +228,14 @@ class _FakeProfileTurnRunner implements AgentRuntimeProfileTurnRunner {
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     calls.add(
       _ProfileTurnCall(
         agentId: agentId,
         messages: messages,
         metadata: metadata,
-        maxToolSteps: maxToolSteps,
+        maxEffectSteps: maxEffectSteps,
       ),
     );
     if (shouldThrow) throw StateError('frb failed');
@@ -262,11 +262,11 @@ class _ProfileTurnCall {
     required this.agentId,
     required this.messages,
     required this.metadata,
-    required this.maxToolSteps,
+    required this.maxEffectSteps,
   });
 
   final String agentId;
   final List<Map<String, Object?>> messages;
   final Map<String, Object?> metadata;
-  final int? maxToolSteps;
+  final int? maxEffectSteps;
 }

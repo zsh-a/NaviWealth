@@ -112,7 +112,7 @@ abstract class RustLibApi extends BaseApi {
   Future<String> crateApiAgentRuntimeAgentRuntimeContinueRunStep({
     required String catalogJson,
     required String previousStepJson,
-    required String toolResponseJson,
+    required String effectResponseJson,
     required String agentId,
   });
 
@@ -492,7 +492,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<String> crateApiAgentRuntimeAgentRuntimeContinueRunStep({
     required String catalogJson,
     required String previousStepJson,
-    required String toolResponseJson,
+    required String effectResponseJson,
     required String agentId,
   }) {
     return handler.executeNormal(
@@ -501,7 +501,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(catalogJson, serializer);
           sse_encode_String(previousStepJson, serializer);
-          sse_encode_String(toolResponseJson, serializer);
+          sse_encode_String(effectResponseJson, serializer);
           sse_encode_String(agentId, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -515,7 +515,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiAgentRuntimeAgentRuntimeContinueRunStepConstMeta,
-        argValues: [catalogJson, previousStepJson, toolResponseJson, agentId],
+        argValues: [catalogJson, previousStepJson, effectResponseJson, agentId],
         apiImpl: this,
       ),
     );
@@ -527,7 +527,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         argNames: [
           "catalogJson",
           "previousStepJson",
-          "toolResponseJson",
+          "effectResponseJson",
           "agentId",
         ],
       );

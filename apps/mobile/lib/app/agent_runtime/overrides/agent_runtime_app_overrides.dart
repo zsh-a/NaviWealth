@@ -12,9 +12,11 @@ import 'package:naviwealth/app/agent_runtime/chat/frb_chat_runner.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
-import 'package:naviwealth/core/ai/llm_credentials/providers.dart' as llm_credentials;
+import 'package:naviwealth/core/ai/llm_credentials/providers.dart'
+    as llm_credentials;
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
-import 'package:naviwealth/features/ai_chat/data/providers.dart' as ai_chat_providers;
+import 'package:naviwealth/features/ai_chat/data/providers.dart'
+    as ai_chat_providers;
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';

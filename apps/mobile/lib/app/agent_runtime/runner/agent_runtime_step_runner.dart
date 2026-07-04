@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_dispatcher.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_protocol.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 
 export 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_step_result.dart'
     show AgentRuntimeNativeStepRunResult;
@@ -19,24 +19,24 @@ final agentRuntimeNativeStepRunnerProvider =
       );
     });
 
-class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
+class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
   AgentRuntimeNativeStepRunner({
     required AgentRuntimeNativeBridge bridge,
     required AgentRuntimeToolHost toolHost,
-    int defaultMaxToolSteps = 4,
+    int defaultMaxEffectSteps = 4,
   }) : _bridge = bridge,
        _toolDispatcher = AgentRuntimeToolDispatcher(
          handler: toolHost.handleLine,
        ),
-       _defaultMaxToolSteps = defaultMaxToolSteps;
+       _defaultMaxEffectSteps = defaultMaxEffectSteps;
 
   final AgentRuntimeNativeBridge _bridge;
   final AgentRuntimeToolDispatcher _toolDispatcher;
-  final int _defaultMaxToolSteps;
+  final int _defaultMaxEffectSteps;
 
   AgentRuntimeNativeBridge get bridge => _bridge;
 
-  Future<Map<String, Object?>> startAndDispatchFirstToolStep({
+  Future<Map<String, Object?>> startAndDispatchFirstEffectStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
@@ -45,7 +45,7 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
       catalog: catalog,
       request: request,
       agentId: agentId,
-      maxToolSteps: 1,
+      maxEffectSteps: 1,
     );
   }
 
@@ -53,13 +53,13 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     return (await runUntilTerminalWithTrace(
       catalog: catalog,
       request: request,
       agentId: agentId,
-      maxToolSteps: maxToolSteps,
+      maxEffectSteps: maxEffectSteps,
     )).terminalStep;
   }
 
@@ -68,7 +68,7 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     final step = await _bridge.startRunStep(
       catalog: catalog,
@@ -79,7 +79,7 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
       catalog: catalog,
       initialStep: step,
       agentId: agentId,
-      maxToolSteps: maxToolSteps,
+      maxEffectSteps: maxEffectSteps,
     );
   }
 
@@ -87,13 +87,13 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
     required Map<String, Object?> catalog,
     required Map<String, Object?> initialStep,
     required String agentId,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     return (await continueUntilTerminalWithTrace(
       catalog: catalog,
       initialStep: initialStep,
       agentId: agentId,
-      maxToolSteps: maxToolSteps,
+      maxEffectSteps: maxEffectSteps,
     )).terminalStep;
   }
 
@@ -101,17 +101,17 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
     required Map<String, Object?> catalog,
     required Map<String, Object?> initialStep,
     required String agentId,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
-    final limit = maxToolSteps ?? _defaultMaxToolSteps;
+    final limit = maxEffectSteps ?? _defaultMaxEffectSteps;
     if (limit < 0) {
-      throw RangeError.value(limit, 'maxToolSteps', 'must be non-negative');
+      throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
     }
 
     var step = initialStep;
     var dispatched = 0;
     final steps = <Map<String, Object?>>[step];
-    final toolResponses = <Map<String, Object?>>[];
+    final effectResponses = <Map<String, Object?>>[];
     var budgetExhausted = false;
 
     while (_isHostEffectRequested(step)) {
@@ -119,9 +119,9 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
         step = await _bridge.continueRunStep(
           catalog: catalog,
           previousStep: step,
-          toolResponse: agentRuntimeToolBudgetExhaustedResponse(
-            maxToolSteps: limit,
-            dispatchedToolCount: dispatched,
+          effectResponse: agentRuntimeEffectBudgetExhaustedResponse(
+            maxEffectSteps: limit,
+            dispatchedEffectCount: dispatched,
           ),
           agentId: agentId,
         );
@@ -130,9 +130,9 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
         return AgentRuntimeNativeStepRunResult(
           terminalStep: step,
           steps: steps,
-          toolResponses: toolResponses,
+          effectResponses: effectResponses,
           nativeTraceEvents: _nativeTraceEvents(steps),
-          dispatchedToolCount: dispatched,
+          dispatchedEffectCount: dispatched,
           budgetExhausted: budgetExhausted,
         );
       }
@@ -141,13 +141,13 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
       final response = await _dispatchHostEffect(
         step: step,
         catalog: catalog,
-        maxToolSteps: maxToolSteps,
+        maxEffectSteps: maxEffectSteps,
       );
-      toolResponses.add(response);
+      effectResponses.add(response);
       step = await _bridge.continueRunStep(
         catalog: catalog,
         previousStep: step,
-        toolResponse: response,
+        effectResponse: response,
         agentId: agentId,
       );
       steps.add(step);
@@ -156,9 +156,9 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
     return AgentRuntimeNativeStepRunResult(
       terminalStep: step,
       steps: steps,
-      toolResponses: toolResponses,
+      effectResponses: effectResponses,
       nativeTraceEvents: _nativeTraceEvents(steps),
-      dispatchedToolCount: dispatched,
+      dispatchedEffectCount: dispatched,
       budgetExhausted: budgetExhausted,
     );
   }
@@ -166,20 +166,20 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
   Future<Map<String, Object?>> _dispatchToolCall(
     Map<String, Object?> step,
   ) async {
-    final toolCall = agentRuntimeObject(
-      step['tool_call'],
-      label: 'native agent-runtime tool_call',
+    final effect = agentRuntimeObject(
+      step['effect'],
+      label: 'native agent-runtime effect',
     );
-    final name = toolCall['name'];
+    final name = effect['name'];
     if (name is! String || name.isEmpty) {
-      throw const FormatException('native tool_call.name is required');
+      throw const FormatException('native effect.name is required');
     }
 
     return (await _toolDispatcher.call(
       AgentRuntimeToolCall(
-        id: _toolCallId(toolCall, step),
+        id: _effectId(effect, step),
         name: name,
-        input: toolCall['input'],
+        input: effect['input'],
       ),
     )).response;
   }
@@ -187,18 +187,28 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
   Future<Map<String, Object?>> _dispatchHostEffect({
     required Map<String, Object?> step,
     required Map<String, Object?> catalog,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
-    return switch (step['status']) {
-      'tool_call_requested' => _dispatchToolCall(step),
-      'subagent_requested' => _dispatchSubagent(
-        step: step,
-        catalog: catalog,
-        maxToolSteps: maxToolSteps,
-      ),
-      _ => throw FormatException(
+    if (step['status'] != 'effect_requested') {
+      throw FormatException(
         'native agent-runtime host effect status is unsupported',
         step['status'],
+      );
+    }
+    final effect = agentRuntimeObject(
+      step['effect'],
+      label: 'native agent-runtime effect',
+    );
+    return switch (effect['kind']) {
+      'tool' => _dispatchToolCall(step),
+      'subagent' => _dispatchSubagent(
+        step: step,
+        catalog: catalog,
+        maxEffectSteps: maxEffectSteps,
+      ),
+      _ => throw FormatException(
+        'native agent-runtime effect kind is unsupported',
+        effect['kind'],
       ),
     };
   }
@@ -206,23 +216,23 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
   Future<Map<String, Object?>> _dispatchSubagent({
     required Map<String, Object?> step,
     required Map<String, Object?> catalog,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     final subagentCall = agentRuntimeObject(
-      step['subagent_call'],
-      label: 'native agent-runtime subagent_call',
+      step['effect'],
+      label: 'native agent-runtime effect',
     );
     final subagentId = agentRuntimeString(subagentCall['agent_id']);
     if (subagentId.isEmpty) {
-      throw const FormatException('native subagent_call.agent_id is required');
+      throw const FormatException('native effect.agent_id is required');
     }
-    final id = _subagentCallId(subagentCall, step);
+    final id = _effectId(subagentCall, step);
     try {
       final childRun = await runUntilTerminalWithTrace(
         catalog: catalog,
         request: _subagentRunRequest(subagentCall),
         agentId: subagentId,
-        maxToolSteps: maxToolSteps,
+        maxEffectSteps: maxEffectSteps,
       );
       return <String, Object?>{
         'jsonrpc': '2.0',
@@ -231,9 +241,9 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
           'agent_id': subagentId,
           'terminal_step': childRun.terminalStep,
           'steps': childRun.steps,
-          'tool_responses': childRun.toolResponses,
+          'effect_responses': childRun.effectResponses,
           'native_trace_events': childRun.nativeTraceEvents,
-          'dispatched_tool_count': childRun.dispatchedToolCount,
+          'dispatched_effect_count': childRun.dispatchedEffectCount,
           'budget_exhausted': childRun.budgetExhausted,
         },
       };
@@ -252,7 +262,7 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeToolPlanStepRunner {
 
 bool _isHostEffectRequested(Map<String, Object?> step) {
   return switch (step['status']) {
-    'tool_call_requested' || 'subagent_requested' => true,
+    'effect_requested' => true,
     _ => false,
   };
 }
@@ -265,23 +275,12 @@ List<Map<String, Object?>> _nativeTraceEvents(
   ];
 }
 
-Object _toolCallId(Map<String, Object?> toolCall, Map<String, Object?> step) {
-  final explicitId = toolCall['tool_call_id'];
+Object _effectId(Map<String, Object?> effect, Map<String, Object?> step) {
+  final explicitId = effect['effect_id'];
   if (explicitId is String && explicitId.isNotEmpty) return explicitId;
   final runId = step['run_id'];
   if (runId is String && runId.isNotEmpty) return runId;
-  return 'tool_call';
-}
-
-Object _subagentCallId(
-  Map<String, Object?> subagentCall,
-  Map<String, Object?> step,
-) {
-  final explicitId = subagentCall['subagent_call_id'];
-  if (explicitId is String && explicitId.isNotEmpty) return explicitId;
-  final runId = step['run_id'];
-  if (runId is String && runId.isNotEmpty) return runId;
-  return 'subagent_call';
+  return 'effect';
 }
 
 Map<String, Object?> _subagentRunRequest(Map<String, Object?> subagentCall) {

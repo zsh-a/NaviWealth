@@ -107,9 +107,8 @@ Implemented:
   at least one message, non-negative temperature, positive max output tokens,
   JSON-object request/message metadata, and tool specs; LLM responses validate
   non-empty provider/model, JSON-object metadata, syntactic
-  `metadata.tool_plan` / `metadata.tool_calls` / `metadata.tool_call`
-  requests with JSON-object inputs, and internally consistent usage token
-  totals
+  `metadata.effects` requests with explicit `kind` and JSON-object inputs, and
+  internally consistent usage token totals
 - Dart-side `AgentRuntimeLlmBridge` that maps the active on-device
   `LlmProfile` into the provider-neutral `agent-llm` request shape for FRB
 - FRB-facing profile-backed LLM completion via
@@ -124,15 +123,15 @@ Implemented:
 - FRB-first native run-step contract via `agentRuntimeStartRunStep`, which
   validates the active catalog/run request, including `RunRequest.protocol_version`
   and JSON-object `input`, `metadata`, and `user.metadata` fields, and returns
-  either a completed dry-run step or a `tool_call_requested` step for Dart-side
+  either a completed dry-run step or an `effect_requested` step for Dart-side
   device dispatch
 - FRB-first native continuation contract via `agentRuntimeContinueRunStep`,
-  which accepts the previous native step plus the Dart-side tool response,
+  which accepts the previous native step plus the Dart-side effect response,
   validates the continuation envelope, and returns the next native step or a
   terminal native step
 - Dart-side `AgentRuntimeNativeStepRunner` that performs a bounded embedded
-  tool loop: FRB start step -> Dart `AgentRuntimeToolHost` dispatch -> FRB
-  continuation step, repeated until a terminal native step or the tool-call
+  effect loop: FRB start step -> Dart host-effect dispatch -> FRB
+  continuation step, repeated until a terminal native step or the effect
   budget is exhausted
 - Dart-side `AgentRuntimeProposalBridge` that parses ready proposal envelopes
   from terminal FRB steps and, after an explicit caller confirmation, dispatches
@@ -147,35 +146,35 @@ Implemented:
   use the current domain composition without manually passing catalog JSON
 - Dart-side `AgentRuntimeProfileTurnRunner` and
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB
-  LLM completion with the bounded native FRB step/tool loop and return both the
+  LLM completion with the bounded native FRB effect loop and return both the
   LLM response and terminal native step; the runner rejects mismatched native
   turn protocol versions and malformed `llm_response` / `step` objects before
-  dispatching Dart tools
+  dispatching Dart host effects
 - FRB-facing native profile-turn step via
   `agentRuntimeStartProfileTurnStep`, which completes the active-profile LLM
   request in Rust, normalizes `null` run metadata to an object, rejects
   non-object run metadata, and starts the first native runtime step before Dart
-  resumes bounded tool dispatch
-- Native-planned FRB tool continuation: `agentRuntimeStartRunStep` can seed a
-  `tool_plan` from run input or LLM response metadata, and
-  `agentRuntimeContinueRunStep` consumes each Dart tool response before either
-  requesting the next catalog tool or returning a terminal `frb_tool_loop`
-  output
+  resumes bounded host-effect dispatch
+- Native FRB effect continuation: `agentRuntimeStartRunStep` seeds
+  `input.effects` from run input or LLM response metadata, and
+  `agentRuntimeContinueRunStep` consumes each Dart `effect_response` before
+  either requesting the next host effect or returning a terminal
+  `frb_effect_loop` output
 - Dart-side native step trace summary: `AgentRuntimeNativeStepRunner` now has
   trace-aware run/continue methods that return the terminal step, every native
-  step observed, every Dart tool response, dispatch count, and tool-budget
+  step observed, every Dart effect response, dispatch count, and effect-budget
   exhaustion state; `AgentRuntimeProfileTurnResult` surfaces this summary
-- Dart-side runtime binding layer: `AgentRuntimeToolPlanBinding` and
+- Dart-side runtime binding layer: `AgentRuntimeEffectPlanBinding` and
   `AgentRuntimeProfileTurnBinding` centralize agent id / domain / surface
   metadata, active catalog lookup, bounded runner invocation, and best-effort
   trace recording so feature agents receive one runtime dependency instead of
-  assembling FRB request envelopes directly. `AgentRuntimeToolPlanBinding`
-  also exposes `readFromToolPlan`, so business readers share the same
+  assembling FRB request envelopes directly. `AgentRuntimeEffectPlanBinding`
+  also exposes `readFromEffectPlan`, so business readers share the same
   run/decode/fallback control flow.
 - The shared trace fixture set includes a valid `closed_early`
-  `agent_runtime_step`; tool-budget exhaustion is now closed through the
+  `agent_runtime_step`; effect-budget exhaustion is now closed through the
   native FRB continuation path so Rust owns the terminal step/run_state/trace
-  shape while Dart only sends the structured budget-exhausted tool response
+  shape while Dart only sends the structured budget-exhausted effect response
 - `trace.schema.json` and the native FRB validator both enforce
   `agent_runtime_step.run_state.status` / `terminal_reason` consistency, so
   terminal state semantics are shared across CLI fixtures, native validation,
@@ -186,25 +185,25 @@ Implemented:
 - `agent_runtime_step.payload.tool_name` is constrained to `null` or a
   non-empty string in both JSON Schema and the native FRB validator, so trace
   consumers never receive an empty tool label
-- Native FRB tool continuations now validate the previous step and tool
+- Native FRB effect continuations now validate the previous step and effect
   response before mutating run state: previous `protocol_version`,
-  `agent_id` / `agent_version` / `run_id`, `step_index`, `tool_call_id`,
-  as a required current tool-call id, catalog-bound tool names, JSON-object
-  tool-call inputs, required continuation envelopes, `continuation.next_step_index`,
-  `continuation.tool_plan`, historical `continuation.tool_results`,
-  JSON-RPC tool response envelopes for current and historical results, and tool response
+  `agent_id` / `agent_version` / `run_id`, `step_index`, `effect_id`,
+  as a required current effect id, catalog-bound tool names, JSON-object
+  effect inputs, required continuation envelopes, `continuation.next_step_index`,
+  `continuation.effects`, historical `continuation.effect_results`,
+  JSON-RPC effect response envelopes for current and historical results, and effect response
   ids are rejected when malformed, mismatched, or ambiguous. Previous
   `run_state` and `trace_event` metadata, when present, must match the native
   step fields before Rust advances the continuation.
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
-- Production tool-plan trace persistence: HealthOS `RecoveryAlertAgent` /
+- Production effect-loop trace persistence: HealthOS `RecoveryAlertAgent` /
   `WeeklySummaryAgent`,
   KnowledgeOS `AssumptionAgent` / `ReviewAgent` / `RoutineDueAgent`, and
   ExecutionOS `ExecutionReviewAgent` now record successful FRB native
   step-only runs through
-  `AgentRuntimeTraceRecorder.recordStepRun`, so their device-tool loops appear
+  `AgentRuntimeTraceRecorder.recordStepRun`, so their host-effect loops appear
   in the same local `AiTraceStore`
 - Production profile-turn trace persistence: HealthOS `FrbBriefingSynthesizer`
   records successful Morning Briefing FRB profile turns through
@@ -213,7 +212,7 @@ Implemented:
 - Production app wiring is centralized in
   `app/agent_runtime/overrides/agent_runtime_provider_overrides.dart`: chat,
   FRB profile-completion clients, Morning Briefing profile-turn synthesis, and
-  migrated tool-plan agents are composed through the shared binding layer
+  migrated effect-loop agents are composed through the shared binding layer
   outside `app/bootstrap.dart`.
 - A user-facing FRB runtime check on Settings -> AI provider, which runs one
   active-profile turn through `AgentRuntimeProfileTurnBinding` /
@@ -280,7 +279,7 @@ Implemented:
 - KnowledgeOS FRB profile completions now record local `AiTrace` spans through
   the app-level `AgentRuntimeTraceRecorder`, so Inbox Triage / Contradiction /
   Capture classifier calls get the same local transparency trail as native
-  tool-plan runs without leaking app-level FRB types into KnowledgeOS feature
+  effect-loop runs without leaking app-level FRB types into KnowledgeOS feature
   code; profile-completion trace capture is best-effort and never changes the
   business result or masks the original provider error
 - Finance Activity entry insight now uses the FRB profile-backed LLM bridge
@@ -295,49 +294,49 @@ Implemented:
   `FrbIngestLlmProfileClient` records the underlying profile completion with
   routing reason `frb_vision_ingest`, while the ingest controller keeps the
   existing pipeline-level parse trace linked to staged drafts
-- First tool-using production agent migration onto the native-planned
+- First tool-using production agent migration onto the native effect
   continuation loop: HealthOS `RecoveryAlertAgent` now reads HRV trend data via
   `FrbRecoveryAlertSignalReader`, which asks Rust for a `get_hrv_trend`
-  `tool_plan` step and lets Dart execute the HealthOS device tool before the
+  tool effect and lets Dart execute the HealthOS device tool before the
   agent applies its existing sustained-HRV-decline policy
 - Additional tool-using production agent migration: KnowledgeOS
   `RoutineDueAgent` now reads due routines via `FrbRoutineDueReader`, which
-  requests `list_due_routines` through the same native-planned `tool_plan`
-  loop before falling back to direct repository reads
+  requests `list_due_routines` through the same native effect loop before
+  falling back to direct repository reads
 - Additional multi-tool production agent migration: KnowledgeOS `ReviewAgent`
   now reads due decisions and open assumptions via `FrbReviewDueReader`, which
   requests `list_due_reviews` and `list_open_assumptions` through a two-step
-  FRB `tool_plan`, then keeps stale-assumption filtering and memory writing in
+  FRB effect loop, then keeps stale-assumption filtering and memory writing in
   Dart with a repository fallback
 - Additional KnowledgeOS production agent migration: `AssumptionAgent` now
   reads open assumptions via `FrbAssumptionReviewReader`, which requests
-  `list_open_assumptions` through the FRB `tool_plan` loop while keeping the
+  `list_open_assumptions` through the FRB effect loop while keeping the
   90-day stale policy and memory writing in Dart
 - ExecutionOS production agent migration: `ExecutionReviewAgent` now reads
   open actions and progress summary via `FrbExecutionReviewReader`, which
   requests `list_open_actions` and `summarize_execution_progress` through a
-  two-step FRB `tool_plan`, then keeps today/due/blocked/weekly summarisation
+  two-step FRB effect loop, then keeps today/due/blocked/weekly summarisation
   and memory writing in Dart
 - Additional HealthOS production agent migration: `WeeklySummaryAgent` now
   reads recovery, sleep, and activity summaries via `FrbWeeklySummaryReader`,
   which requests `get_recovery_signal`, `get_recent_sleep_summary`, and
-  `get_activity_summary` through a three-step FRB `tool_plan`, then keeps
+  `get_activity_summary` through a three-step FRB effect loop, then keeps
   weekly summary composition and memory writing in Dart
 - Additional KnowledgeOS production agent migration: `InboxTriageAgent` now
   reads untriaged notes and decision context via `FrbInboxTriageSourceReader`,
   which requests `list_inbox_triage_candidates` and `list_triage_decisions`
-  through a two-step FRB `tool_plan`, then keeps classification and local
+  through a two-step FRB effect loop, then keeps classification and local
   side-table proposal persistence in Dart
 - Additional KnowledgeOS production agent migration: `ContradictionAgent` now
   reads decisions, active principles, and open assumptions via
   `FrbContradictionSourceReader`, which requests `list_triage_decisions`,
   `list_active_principles`, and `list_open_assumptions` through a three-step
-  FRB `tool_plan`, then keeps memory recall and contradiction judging in Dart
+  FRB effect loop, then keeps memory recall and contradiction judging in Dart
 
 Deferred:
 
-- complete embedded Rust runner loop beyond the current native-planned
-  `tool_plan` continuation contract, promoting richer agent policy/state/trace
+- complete embedded Rust runner loop beyond the current native effect
+  continuation contract, promoting richer agent policy/state/trace
   replay ownership into Rust while Dart keeps executing device tools
 - standalone app-backed process entry for data-backed tools. The
   library adapter works under Flutter tests, but `dart run` over Drift native
@@ -884,13 +883,13 @@ Flutter production integration is FRB-first. The bridge starts with
 `RunRequest`, and an agent id to the native Rust bridge. Rust validates the
 contract and returns a JSON step:
 
-- `completed` for a dry-run request without a tool call
-- `tool_call_requested` when the request asks for a catalog tool
+- `completed` for a dry-run request without host effects
+- `effect_requested` when the request asks for a catalog tool or subagent
 
-Dart remains responsible for executing device tools through
-`DeviceToolDispatcher` and will feed tool results back through future FRB
-continuation APIs. This keeps Rust responsible for runtime/protocol/trace
-contracts while Drift/Riverpod access stays in Flutter.
+Dart remains responsible for executing local host effects through
+`DeviceToolDispatcher` and will feed effect responses back through
+`agentRuntimeContinueRunStep`. This keeps Rust responsible for
+runtime/protocol/trace contracts while Drift/Riverpod access stays in Flutter.
 
 Flutter also has a library-level JSONL adapter for process-host smoke tests:
 
@@ -1008,8 +1007,8 @@ server-side counterpart to debug bundle `events.jsonl`; it gives TUI/Web/IDE
 clients a stable event-stream contract today and can be extended to live tailing
 when the runner keeps per-run sinks open. Frames follow
 `schemas/trace.schema.json`; `agent_runtime_step` frames include
-`payload.run_state` so native step status, remaining tool count, tool result
-count, and terminal reason are available to stream consumers without inspecting
+`payload.run_state` so native step status, remaining effect count, effect
+result count, and terminal reason are available to stream consumers without inspecting
 mobile-specific FRB envelopes.
 
 `agent metrics summary --store <path>` and `GET /metrics/summary` build metrics
@@ -1433,18 +1432,18 @@ OpenAI-compatible Chat Completions SSE and Anthropic Messages SSE for text
 deltas, reasoning/signature, tool-call deltas, usage, and the final response.
 The Flutter runner now provides the former parity gap:
 
-- tool results from Dart `AgentRuntimeToolHost`
-- bounded tool-result continuation rounds
+- effect responses from Dart host dispatch
+- bounded effect-response continuation rounds
 - terminal `ask_user` pause semantics
 - LLM/tool span events for `AiTraceBuilder`
 - cancellation/error semantics compatible with `ChatRepository`
-- native `step_index` / `trace_event` fields on FRB tool-plan steps, consumed
+- native `step_index` / `trace_event` fields on FRB effect steps, consumed
   by Dart trace recording so Rust owns step sequencing even while Dart executes
   local tools; Flutter now preserves those events in
   `AgentRuntimeNativeStepRunResult.nativeTraceEvents`; native step-only traces
-  use routing reason `frb_native_tool_plan`
+  use routing reason `frb_native_effect_loop`
 - native `run_state` summaries on FRB steps (`step_index`,
-  `remaining_tool_count`, `tool_result_count`, `terminal_reason`), surfaced as
+  `remaining_effect_count`, `effect_result_count`, `terminal_reason`), surfaced as
   scalar trace attributes by Flutter. `run_state` is mirrored into the native
   `trace_event` payload, and Flutter prefers `trace_event.run_state` over the
   legacy root-level `step.run_state` when deriving terminal reason and
@@ -1456,8 +1455,8 @@ The Flutter runner now provides the former parity gap:
   native trace events by `step_index` and surface per-step
   `trace_event.run_state` as `native_trace_event_step_index`,
   `native_trace_event_terminal_reason`,
-  `native_trace_event_remaining_tool_count`, and
-  `native_trace_event_tool_result_count`, so Rust-owned step state is visible
+  `native_trace_event_remaining_effect_count`, and
+  `native_trace_event_effect_result_count`, so Rust-owned step state is visible
   both at the turn and individual tool-span levels.
 
 The direct-Dart business adapters and legacy `DeviceLlmRuntime` have been

@@ -59,7 +59,7 @@ class AgentRuntimeProfileTurnRunner
     double? temperature,
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     final catalog = _catalogReader?.call() ?? _catalog!;
     final nativeTurn = await _stepRunner.bridge.startProfileTurnStep(
@@ -84,7 +84,7 @@ class AgentRuntimeProfileTurnRunner
       catalog: catalog.toJson(),
       initialStep: initialStep,
       agentId: agentId,
-      maxToolSteps: maxToolSteps,
+      maxEffectSteps: maxEffectSteps,
     );
     return core_profile_turn.AgentRuntimeProfileTurnResult(
       llmResponse: llmResponse,

@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
@@ -35,7 +35,7 @@ import 'package:naviwealth/features/knowledge/data/llm_inbox_triage_classifier.d
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 
-import '../../../app/agent_runtime_tool_plan_test_harness.dart';
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 import '../../../core/persistence/test_database.dart';
 
 const _owner = 'u-test';
@@ -377,9 +377,9 @@ void main() {
       expect(triagedIds, hasLength(kInboxTriageMaxNotesPerRun));
     });
 
-    test('reads triage source through FRB tool plan', () async {
+    test('reads triage source through FRB effect loop', () async {
       final dispatcher = _InboxTriageDispatcher();
-      final bridge = FakeAgentRuntimeToolPlanBridge();
+      final bridge = FakeAgentRuntimeEffectPlanBridge();
       final traces = <AgentRuntimeNativeStepRunResult>[];
       final reader = FrbInboxTriageSourceReader(
         runtime: _runtime(
@@ -403,7 +403,7 @@ void main() {
         containsPair('surface', 'knowledge_inbox_triage'),
       );
       expect(traces.single.terminalStep['status'], 'completed');
-      expect(traces.single.dispatchedToolCount, 2);
+      expect(traces.single.dispatchedEffectCount, 2);
     });
 
     test('falls back when FRB triage source read fails', () async {
@@ -419,7 +419,7 @@ void main() {
       );
       final reader = FrbInboxTriageSourceReader(
         runtime: _runtime(
-          bridge: FailingAgentRuntimeToolPlanBridge(),
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
           dispatcher: _InboxTriageDispatcher(),
         ),
         fallback: fallback,
@@ -489,12 +489,12 @@ AgentContext _context() {
 
 final _refProvider = Provider<Ref>((ref) => ref);
 
-AgentRuntimeToolPlanBinding _runtime({
+AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {
-  return agentRuntimeToolPlanTestBinding(
+  return agentRuntimeEffectPlanTestBinding(
     agentId: kKnowledgeInboxTriageAgentId,
     domain: 'knowledge',
     surface: 'knowledge_inbox_triage',
@@ -541,7 +541,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _InboxTriageDispatcher implements DeviceToolDispatcher {
-  final calls = <AgentRuntimeToolPlanToolCall>[];
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
 
   @override
   Future<Object?> dispatch(
@@ -549,7 +549,7 @@ class _InboxTriageDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(AgentRuntimeToolPlanToolCall(name, input));
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
     return switch (name) {
       'list_inbox_triage_candidates' => <String, Object?>{
         'notes': <Object?>[

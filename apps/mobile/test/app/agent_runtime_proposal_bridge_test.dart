@@ -12,7 +12,7 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 
 void main() {
-  test('parses ready proposal from terminal tool result', () {
+  test('parses ready proposal from terminal effect result', () {
     final bridge = AgentRuntimeProposalBridge(applier: _RecordingApplier());
 
     final plan = bridge.terminalReadyProposal(_terminalProposalStep());
@@ -57,7 +57,7 @@ void main() {
 
     final result = await bridge.applyTerminalReadyProposal(<String, Object?>{
       ..._terminalProposalStep(),
-      'status': 'tool_call_requested',
+      'status': 'effect_requested',
     });
 
     expect(result, containsPair('status', 'skipped'));
@@ -72,7 +72,7 @@ void main() {
     final result = await bridge.applyTerminalReadyProposal(<String, Object?>{
       'status': 'completed',
       'output': <String, Object?>{
-        'tool_result': <String, Object?>{
+        'effect_result': <String, Object?>{
           'proposal_id': 'proposal_2',
           'kind': 'execution_action',
           'status': 'needs_clarification',
@@ -247,8 +247,8 @@ Map<String, Object?> _terminalProposalStep() {
   return <String, Object?>{
     'status': 'completed',
     'output': <String, Object?>{
-      'mode': 'frb_tool_step',
-      'tool_result': <String, Object?>{
+      'mode': 'frb_effect_step',
+      'effect_result': <String, Object?>{
         'proposal_id': 'proposal_1',
         'kind': 'execution_action',
         'status': 'ready',
@@ -390,7 +390,7 @@ class _TerminalBridge implements AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> continueRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
+    required Map<String, Object?> effectResponse,
     required String agentId,
   }) async {
     return _step;

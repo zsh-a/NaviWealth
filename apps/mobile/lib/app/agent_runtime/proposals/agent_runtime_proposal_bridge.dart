@@ -30,7 +30,7 @@ final agentRuntimeConfirmedProposalRunProvider =
         catalog: request.catalog,
         request: request.request,
         agentId: request.agentId,
-        maxToolSteps: request.maxToolSteps,
+        maxEffectSteps: request.maxEffectSteps,
       );
     });
 
@@ -46,7 +46,7 @@ final agentRuntimeConfirmedProposalActiveCatalogRunProvider =
             catalog: catalog.toJson(),
             request: request.request,
             agentId: request.agentId,
-            maxToolSteps: request.maxToolSteps,
+            maxEffectSteps: request.maxEffectSteps,
           ),
         ).future,
       );
@@ -57,25 +57,25 @@ class AgentRuntimeConfirmedProposalRunRequest {
     required this.catalog,
     required this.request,
     required this.agentId,
-    this.maxToolSteps,
+    this.maxEffectSteps,
   });
 
   final Map<String, Object?> catalog;
   final Map<String, Object?> request;
   final String agentId;
-  final int? maxToolSteps;
+  final int? maxEffectSteps;
 }
 
 class AgentRuntimeConfirmedProposalActiveCatalogRunRequest {
   const AgentRuntimeConfirmedProposalActiveCatalogRunRequest({
     required this.request,
     required this.agentId,
-    this.maxToolSteps,
+    this.maxEffectSteps,
   });
 
   final Map<String, Object?> request;
   final String agentId;
-  final int? maxToolSteps;
+  final int? maxEffectSteps;
 }
 
 class AgentRuntimeConfirmedProposalRunner {
@@ -92,13 +92,13 @@ class AgentRuntimeConfirmedProposalRunner {
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
-    int? maxToolSteps,
+    int? maxEffectSteps,
   }) async {
     final step = await _stepRunner.runUntilTerminal(
       catalog: catalog,
       request: request,
       agentId: agentId,
-      maxToolSteps: maxToolSteps,
+      maxEffectSteps: maxEffectSteps,
     );
     final apply = await _proposalBridge.applyTerminalReadyProposal(step);
     return <String, Object?>{'step': step, 'proposal_apply': apply};

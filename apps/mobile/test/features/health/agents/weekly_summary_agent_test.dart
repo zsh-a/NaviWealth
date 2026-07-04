@@ -6,13 +6,13 @@ import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 
-import '../../../app/agent_runtime_tool_plan_test_harness.dart';
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 
 const _owner = 'u-health-weekly';
 
@@ -23,19 +23,23 @@ void main() {
         const <String, Object?>{
           'status': 'completed',
           'output': <String, Object?>{
-            'mode': 'frb_tool_loop',
-            'tool_results': <Object?>[
+            'mode': 'frb_effect_loop',
+            'effect_results': <Object?>[
               <String, Object?>{
-                'tool_call': <String, Object?>{'name': 'get_recovery_signal'},
-                'tool_response': <String, Object?>{
+                'effect': <String, Object?>{
+                  'kind': 'tool',
+                  'name': 'get_recovery_signal',
+                },
+                'effect_response': <String, Object?>{
                   'result': <String, Object?>{'score': 82, 'verdict': 'rested'},
                 },
               },
               <String, Object?>{
-                'tool_call': <String, Object?>{
+                'effect': <String, Object?>{
+                  'kind': 'tool',
                   'name': 'get_recent_sleep_summary',
                 },
-                'tool_response': <String, Object?>{
+                'effect_response': <String, Object?>{
                   'result': <String, Object?>{
                     'sessions': <Object?>[
                       <String, Object?>{
@@ -52,8 +56,11 @@ void main() {
                 },
               },
               <String, Object?>{
-                'tool_call': <String, Object?>{'name': 'get_activity_summary'},
-                'tool_response': <String, Object?>{
+                'effect': <String, Object?>{
+                  'kind': 'tool',
+                  'name': 'get_activity_summary',
+                },
+                'effect_response': <String, Object?>{
                   'result': <String, Object?>{
                     'days': <Object?>[
                       <String, Object?>{'date': '2026-06-28', 'steps': 9000},
@@ -84,7 +91,7 @@ void main() {
       final snapshot = weeklySummarySnapshotFromTerminalStep(
         const <String, Object?>{
           'status': 'completed',
-          'output': <String, Object?>{'tool_results': <Object?>[]},
+          'output': <String, Object?>{'effect_results': <Object?>[]},
         },
       );
 
@@ -93,37 +100,40 @@ void main() {
   });
 
   group('FrbWeeklySummaryReader', () {
-    test('reads weekly snapshot through a three-step FRB tool plan', () async {
-      final dispatcher = _WeeklySummaryDispatcher();
-      final bridge = FakeAgentRuntimeToolPlanBridge();
-      final traces = <AgentRuntimeNativeStepRunResult>[];
-      final reader = FrbWeeklySummaryReader(
-        runtime: _runtime(
-          bridge: bridge,
-          dispatcher: dispatcher,
-          recordTrace: (stepRun) async => traces.add(stepRun),
-        ),
-      );
+    test(
+      'reads weekly snapshot through a three-step FRB effect loop',
+      () async {
+        final dispatcher = _WeeklySummaryDispatcher();
+        final bridge = FakeAgentRuntimeEffectPlanBridge();
+        final traces = <AgentRuntimeNativeStepRunResult>[];
+        final reader = FrbWeeklySummaryReader(
+          runtime: _runtime(
+            bridge: bridge,
+            dispatcher: dispatcher,
+            recordTrace: (stepRun) async => traces.add(stepRun),
+          ),
+        );
 
-      final snapshot = await reader.read(_context());
+        final snapshot = await reader.read(_context());
 
-      expect(snapshot.recoveryScore, 82);
-      expect(snapshot.totalSteps, 42000);
-      expect(dispatcher.calls.map((c) => c.name), <String>[
-        'get_recovery_signal',
-        'get_recent_sleep_summary',
-        'get_activity_summary',
-      ]);
-      expect(bridge.startRequests.single.agentId, kWeeklySummaryAgentId);
-      expect(
-        bridge.startRequests.single.request['metadata'],
-        containsPair('surface', 'health_weekly_summary'),
-      );
-      expect(traces.single.terminalStep['status'], 'completed');
-      expect(traces.single.dispatchedToolCount, 3);
-    });
+        expect(snapshot.recoveryScore, 82);
+        expect(snapshot.totalSteps, 42000);
+        expect(dispatcher.calls.map((c) => c.name), <String>[
+          'get_recovery_signal',
+          'get_recent_sleep_summary',
+          'get_activity_summary',
+        ]);
+        expect(bridge.startRequests.single.agentId, kWeeklySummaryAgentId);
+        expect(
+          bridge.startRequests.single.request['metadata'],
+          containsPair('surface', 'health_weekly_summary'),
+        );
+        expect(traces.single.terminalStep['status'], 'completed');
+        expect(traces.single.dispatchedEffectCount, 3);
+      },
+    );
 
-    test('falls back when FRB tool path fails', () async {
+    test('falls back when FRB effect path fails', () async {
       final fallback = _FallbackReader(
         const WeeklySummarySnapshot(
           hasHealthData: true,
@@ -137,7 +147,7 @@ void main() {
       );
       final reader = FrbWeeklySummaryReader(
         runtime: _runtime(
-          bridge: FailingAgentRuntimeToolPlanBridge(),
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
           dispatcher: _WeeklySummaryDispatcher(),
         ),
         fallback: fallback,
@@ -165,7 +175,7 @@ void main() {
         );
         final reader = FrbWeeklySummaryReader(
           runtime: _runtime(
-            bridge: FakeAgentRuntimeToolPlanBridge(),
+            bridge: FakeAgentRuntimeEffectPlanBridge(),
             dispatcher: _WeeklySummaryDispatcher(),
             recordTrace: (_) async =>
                 throw StateError('trace store unavailable'),
@@ -226,12 +236,12 @@ AgentContext _context() {
 
 final _refProvider = Provider<Ref>((ref) => ref);
 
-AgentRuntimeToolPlanBinding _runtime({
+AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {
-  return agentRuntimeToolPlanTestBinding(
+  return agentRuntimeEffectPlanTestBinding(
     agentId: kWeeklySummaryAgentId,
     domain: 'health',
     surface: 'health_weekly_summary',
@@ -285,7 +295,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _WeeklySummaryDispatcher implements DeviceToolDispatcher {
-  final calls = <AgentRuntimeToolPlanToolCall>[];
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
 
   @override
   Future<Object?> dispatch(
@@ -293,7 +303,7 @@ class _WeeklySummaryDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(AgentRuntimeToolPlanToolCall(name, input));
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
     return switch (name) {
       'get_recovery_signal' => <String, Object?>{
         'score': 82,

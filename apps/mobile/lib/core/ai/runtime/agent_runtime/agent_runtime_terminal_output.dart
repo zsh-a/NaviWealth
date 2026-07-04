@@ -7,45 +7,47 @@ Map<String, Object?>? agentRuntimeTerminalOutput(Map<String, Object?> step) {
   return agentRuntimeObjectOrNull(step['output']);
 }
 
-Map<String, Map<String, Object?>> agentRuntimeTerminalToolResultsByName(
+Map<String, Map<String, Object?>> agentRuntimeTerminalEffectResultsByToolName(
   Map<String, Object?> step,
 ) {
   final output = agentRuntimeTerminalOutput(step);
   if (output == null) return const <String, Map<String, Object?>>{};
-  return agentRuntimeToolResultsByName(output);
+  return agentRuntimeEffectResultsByToolName(output);
 }
 
-Map<String, Object?>? agentRuntimeTerminalToolResult(
+Map<String, Object?>? agentRuntimeTerminalEffectResultForTool(
   Map<String, Object?> step,
   String toolName,
 ) {
   final output = agentRuntimeTerminalOutput(step);
   if (output == null) return null;
-  return agentRuntimeToolResultsByName(output)[toolName] ??
-      agentRuntimeObjectOrNull(output['tool_result']);
+  return agentRuntimeEffectResultsByToolName(output)[toolName];
 }
 
-Map<String, Map<String, Object?>> agentRuntimeToolResultsByName(
+Map<String, Map<String, Object?>> agentRuntimeEffectResultsByToolName(
   Map<String, Object?> output,
 ) {
   final byTool = <String, Map<String, Object?>>{};
-  final toolResults = output['tool_results'];
-  if (toolResults is List) {
-    for (final raw in toolResults) {
+  final effectResults = output['effect_results'];
+  if (effectResults is List) {
+    for (final raw in effectResults) {
       final item = agentRuntimeObjectOrNull(raw);
-      final call = agentRuntimeObjectOrNull(item?['tool_call']);
-      final response = agentRuntimeObjectOrNull(item?['tool_response']);
-      final name = call?['name'];
+      final effect = agentRuntimeObjectOrNull(item?['effect']);
+      if (effect?['kind'] != 'tool') continue;
+      final response = agentRuntimeObjectOrNull(item?['effect_response']);
+      final name = effect?['name'];
       final result = agentRuntimeObjectOrNull(response?['result']);
       if (name is String && result != null) byTool[name] = result;
     }
   }
 
-  final singleCall = agentRuntimeObjectOrNull(output['tool_call']);
-  final singleName = singleCall?['name'];
-  final singleResult = agentRuntimeObjectOrNull(output['tool_result']);
-  if (singleName is String && singleResult != null) {
-    byTool.putIfAbsent(singleName, () => singleResult);
+  final singleEffect = agentRuntimeObjectOrNull(output['effect']);
+  if (singleEffect != null && singleEffect['kind'] == 'tool') {
+    final singleName = singleEffect['name'];
+    final singleResult = agentRuntimeObjectOrNull(output['effect_result']);
+    if (singleName is String && singleResult != null) {
+      byTool.putIfAbsent(singleName, () => singleResult);
+    }
   }
   return byTool;
 }

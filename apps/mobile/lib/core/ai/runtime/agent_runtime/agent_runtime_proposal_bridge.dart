@@ -76,12 +76,12 @@ bool _isTerminalStep(Map<String, Object?> step) {
 
 Iterable<Object?> _proposalCandidates(Map<String, Object?> step) sync* {
   yield step['proposal'];
-  yield step['tool_result'];
+  yield step['effect_result'];
   final output = step['output'];
   if (output is Map) {
     final normalized = output.map((k, v) => MapEntry(k.toString(), v));
     yield normalized['proposal'];
-    yield normalized['tool_result'];
+    yield normalized['effect_result'];
     yield normalized;
   }
 }

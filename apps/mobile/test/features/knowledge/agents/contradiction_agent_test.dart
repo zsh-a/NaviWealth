@@ -23,7 +23,7 @@ import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart'
     show memoryRuntimeProvider;
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
@@ -39,7 +39,7 @@ import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../app/agent_runtime_tool_plan_test_harness.dart';
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 
 const _owner = 'u1';
 final _now = DateTime.utc(2026, 5, 30, 12);
@@ -399,9 +399,9 @@ void main() {
   });
 
   group('FrbContradictionSourceReader', () {
-    test('reads source rows through a three-step FRB tool plan', () async {
+    test('reads source rows through a three-step FRB effect loop', () async {
       final dispatcher = _ContradictionDispatcher();
-      final bridge = FakeAgentRuntimeToolPlanBridge();
+      final bridge = FakeAgentRuntimeEffectPlanBridge();
       final traces = <AgentRuntimeNativeStepRunResult>[];
       final reader = FrbContradictionSourceReader(
         runtime: _runtime(
@@ -430,7 +430,7 @@ void main() {
         containsPair('surface', 'knowledge_contradiction'),
       );
       expect(traces.single.terminalStep['status'], 'completed');
-      expect(traces.single.dispatchedToolCount, 3);
+      expect(traces.single.dispatchedEffectCount, 3);
     });
 
     test('falls back when FRB source read fails', () async {
@@ -449,7 +449,7 @@ void main() {
       );
       final reader = FrbContradictionSourceReader(
         runtime: _runtime(
-          bridge: FailingAgentRuntimeToolPlanBridge(),
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
           dispatcher: _ContradictionDispatcher(),
         ),
         fallback: fallback,
@@ -602,12 +602,12 @@ AgentContext _context() {
 
 final _refProvider = Provider<Ref>((ref) => ref);
 
-AgentRuntimeToolPlanBinding _runtime({
+AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {
-  return agentRuntimeToolPlanTestBinding(
+  return agentRuntimeEffectPlanTestBinding(
     agentId: kKnowledgeContradictionAgentId,
     domain: 'knowledge',
     surface: 'knowledge_contradiction',
@@ -661,7 +661,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _ContradictionDispatcher implements DeviceToolDispatcher {
-  final calls = <AgentRuntimeToolPlanToolCall>[];
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
 
   @override
   Future<Object?> dispatch(
@@ -669,7 +669,7 @@ class _ContradictionDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(AgentRuntimeToolPlanToolCall(name, input));
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
     return switch (name) {
       'list_triage_decisions' => <String, Object?>{
         'decisions': <Object?>[

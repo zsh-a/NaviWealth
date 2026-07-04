@@ -4,10 +4,11 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:naviwealth/app/agent_runtime/bindings/agent_runtime_profile_turn_binding.dart';
-import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/notifications/notification_preferences.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
-import 'package:naviwealth/core/notifications/providers.dart' as notif_providers;
+import 'package:naviwealth/core/notifications/providers.dart'
+    as notif_providers;
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
@@ -38,7 +39,7 @@ List<Override> agentRuntimeHealthProviderOverrides() => <Override>[
     return RecoveryAlertAgent(
       notifier: _briefingNotificationService(ref),
       signalReader: FrbRecoveryAlertSignalReader(
-        runtime: agentRuntimeToolPlanBinding(
+        runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kRecoveryAlertAgentId,
           domain: 'health',
@@ -50,7 +51,7 @@ List<Override> agentRuntimeHealthProviderOverrides() => <Override>[
   weeklySummaryAgentProvider.overrideWith((ref) {
     return WeeklySummaryAgent(
       summaryReader: FrbWeeklySummaryReader(
-        runtime: agentRuntimeToolPlanBinding(
+        runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kWeeklySummaryAgentId,
           domain: 'health',

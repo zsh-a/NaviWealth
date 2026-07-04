@@ -29,7 +29,7 @@
 
 use crate::api::embedder::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
+use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 
 // Section: boilerplate
@@ -412,7 +412,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_continue_run_step_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_catalog_json = <String>::sse_decode(&mut deserializer);
             let api_previous_step_json = <String>::sse_decode(&mut deserializer);
-            let api_tool_response_json = <String>::sse_decode(&mut deserializer);
+            let api_effect_response_json = <String>::sse_decode(&mut deserializer);
             let api_agent_id = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
@@ -421,7 +421,7 @@ fn wire__crate__api__agent_runtime__agent_runtime_continue_run_step_impl(
                         let output_ok = crate::api::agent_runtime::agent_runtime_continue_run_step(
                             api_catalog_json,
                             api_previous_step_json,
-                            api_tool_response_json,
+                            api_effect_response_json,
                             api_agent_id,
                         )?;
                         Ok(output_ok)
@@ -1884,7 +1884,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
+    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
@@ -1923,7 +1923,7 @@ mod web {
     };
     use flutter_rust_bridge::for_generated::wasm_bindgen;
     use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
-    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
+    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate

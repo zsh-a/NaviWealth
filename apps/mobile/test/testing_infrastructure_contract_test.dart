@@ -698,7 +698,7 @@ void main() {
       }
 
       expect(text, contains('agentRuntimeTraceRecorderProvider'));
-      expect(text, contains('agentRuntimeToolPlanBinding'));
+      expect(text, contains('agentRuntimeEffectPlanBinding'));
       expect(text, contains('agentRuntimeProfileTurnBinding'));
     });
 

@@ -3,12 +3,12 @@ import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart'
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 
 import 'agent_runtime_native_bridge_test_harness.dart';
 
-AgentRuntimeToolPlanBinding agentRuntimeToolPlanTestBinding({
+AgentRuntimeEffectPlanBinding agentRuntimeEffectPlanTestBinding({
   required String agentId,
   required String domain,
   required String surface,
@@ -17,7 +17,7 @@ AgentRuntimeToolPlanBinding agentRuntimeToolPlanTestBinding({
   required AgentRuntimeCatalog catalog,
   AgentRuntimeStepTraceRecorder? recordTrace,
 }) {
-  return AgentRuntimeToolPlanBinding(
+  return AgentRuntimeEffectPlanBinding(
     agentId: agentId,
     domain: domain,
     surface: surface,
@@ -30,8 +30,8 @@ AgentRuntimeToolPlanBinding agentRuntimeToolPlanTestBinding({
   );
 }
 
-class FakeAgentRuntimeToolPlanBridge extends FakeAgentRuntimeNativeBridge {
-  final startRequests = <AgentRuntimeToolPlanStartRequest>[];
+class FakeAgentRuntimeEffectPlanBridge extends FakeAgentRuntimeNativeBridge {
+  final startRequests = <AgentRuntimeEffectPlanStartRequest>[];
   var _plan = const <Object?>[];
   var _next = 0;
   final _responses = <Map<String, Object?>>[];
@@ -43,10 +43,10 @@ class FakeAgentRuntimeToolPlanBridge extends FakeAgentRuntimeNativeBridge {
     required String agentId,
   }) async {
     startRequests.add(
-      AgentRuntimeToolPlanStartRequest(request: request, agentId: agentId),
+      AgentRuntimeEffectPlanStartRequest(request: request, agentId: agentId),
     );
     final input = request['input']! as Map<String, Object?>;
-    _plan = input['tool_plan']! as List<Object?>;
+    _plan = input['effects']! as List<Object?>;
     _next = 0;
     _responses.clear();
     return _toolCallStep(agentId);
@@ -56,28 +56,30 @@ class FakeAgentRuntimeToolPlanBridge extends FakeAgentRuntimeNativeBridge {
   Future<Map<String, Object?>> continueRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
+    required Map<String, Object?> effectResponse,
     required String agentId,
   }) async {
     _responses.add(<String, Object?>{
-      'tool_call': previousStep['tool_call'],
-      'tool_response': toolResponse,
+      'effect': previousStep['effect'],
+      'effect_response': effectResponse,
     });
     _next += 1;
     if (_next < _plan.length) return _toolCallStep(agentId);
 
-    final toolResults = _toolResults();
+    final effectResults = _effectResults();
     return <String, Object?>{
       'protocol_version': 'agent.v1',
       'run_id': previousStep['run_id'],
       'agent_id': agentId,
       'status': 'completed',
       'output': <String, Object?>{
-        'mode': toolResults.length > 1 ? 'frb_tool_loop' : 'frb_tool_step',
-        'tool_call': previousStep['tool_call'],
-        'tool_result': toolResponse['result'],
-        'tool_response': toolResponse,
-        'tool_results': toolResults,
+        'mode': effectResults.length > 1
+            ? 'frb_effect_loop'
+            : 'frb_effect_step',
+        'effect': previousStep['effect'],
+        'effect_result': effectResponse['result'],
+        'effect_response': effectResponse,
+        'effect_results': effectResults,
       },
     };
   }
@@ -89,9 +91,10 @@ class FakeAgentRuntimeToolPlanBridge extends FakeAgentRuntimeNativeBridge {
       'protocol_version': 'agent.v1',
       'run_id': 'run_1',
       'agent_id': agentId,
-      'status': 'tool_call_requested',
-      'tool_call': <String, Object?>{
-        'tool_call_id': 'call_${_next + 1}',
+      'status': 'effect_requested',
+      'effect': <String, Object?>{
+        'kind': 'tool',
+        'effect_id': 'call_${_next + 1}',
         'name': item['name'],
         'input': item['input'],
       },
@@ -99,26 +102,27 @@ class FakeAgentRuntimeToolPlanBridge extends FakeAgentRuntimeNativeBridge {
     if (remaining.isNotEmpty || _responses.isNotEmpty) {
       step['continuation'] = <String, Object?>{
         'next_step_index': _next + 1,
-        'tool_plan': remaining,
-        'tool_results': _toolResults(),
+        'effects': remaining,
+        'effect_results': _effectResults(),
       };
     }
     return step;
   }
 
-  List<Map<String, Object?>> _toolResults() {
+  List<Map<String, Object?>> _effectResults() {
     return _responses
         .map(
           (response) => <String, Object?>{
-            'tool_call': response['tool_call'],
-            'tool_response': response['tool_response'],
+            'effect': response['effect'],
+            'effect_response': response['effect_response'],
           },
         )
         .toList(growable: false);
   }
 }
 
-class FailingAgentRuntimeToolPlanBridge extends FakeAgentRuntimeToolPlanBridge {
+class FailingAgentRuntimeEffectPlanBridge
+    extends FakeAgentRuntimeEffectPlanBridge {
   @override
   Future<Map<String, Object?>> startRunStep({
     required Map<String, Object?> catalog,
@@ -129,8 +133,8 @@ class FailingAgentRuntimeToolPlanBridge extends FakeAgentRuntimeToolPlanBridge {
   }
 }
 
-class AgentRuntimeToolPlanStartRequest {
-  const AgentRuntimeToolPlanStartRequest({
+class AgentRuntimeEffectPlanStartRequest {
+  const AgentRuntimeEffectPlanStartRequest({
     required this.request,
     required this.agentId,
   });
@@ -139,8 +143,8 @@ class AgentRuntimeToolPlanStartRequest {
   final String agentId;
 }
 
-class AgentRuntimeToolPlanToolCall {
-  const AgentRuntimeToolPlanToolCall(this.name, this.input);
+class AgentRuntimeEffectPlanToolEffect {
+  const AgentRuntimeEffectPlanToolEffect(this.name, this.input);
 
   final String name;
   final Object? input;

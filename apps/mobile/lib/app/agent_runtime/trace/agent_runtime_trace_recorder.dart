@@ -108,7 +108,7 @@ class AgentRuntimeTraceRecorder {
       domain: domain,
       surface: surface,
       label: 'agent_runtime_step_run',
-      routingReason: kFrbNativeToolPlanRoutingReason,
+      routingReason: kFrbNativeEffectLoopRoutingReason,
     );
     await _appendTrace(trace);
     return trace;
@@ -177,7 +177,7 @@ class AgentRuntimeTraceRecorder {
         'surface': surface,
         'agent_id': agentId,
         'terminal_status': _string(step['status']),
-        'dispatched_tool_count': stepRun.dispatchedToolCount,
+        'dispatched_effect_count': stepRun.dispatchedEffectCount,
         'budget_exhausted': stepRun.budgetExhausted,
         'native_trace_event_count': stepRun.nativeTraceEvents.length,
         'native_trace_event_kind': ?_string(nativeTraceEvent?['kind']),
@@ -187,10 +187,12 @@ class AgentRuntimeTraceRecorder {
         ),
         'native_step_index': ?_int(nativeRunState?['step_index']),
         'native_terminal_reason': ?_string(nativeRunState?['terminal_reason']),
-        'native_remaining_tool_count': ?_int(
-          nativeRunState?['remaining_tool_count'],
+        'native_remaining_effect_count': ?_int(
+          nativeRunState?['remaining_effect_count'],
         ),
-        'native_tool_result_count': ?_int(nativeRunState?['tool_result_count']),
+        'native_effect_result_count': ?_int(
+          nativeRunState?['effect_result_count'],
+        ),
       });
 
     final parentId = llmResponse == null ? kTurnSpanId : 'llm:profile';
@@ -212,10 +214,12 @@ class AgentRuntimeTraceRecorder {
       );
     }
 
-    var toolResponseIndex = 0;
+    var effectResponseIndex = 0;
     for (var i = 0; i < stepRun.steps.length; i++) {
       final step = stepRun.steps[i];
-      if (step['status'] != 'tool_call_requested') continue;
+      if (step['status'] != 'effect_requested') continue;
+      final effect = _object(step['effect']);
+      if (_string(effect?['kind']) != 'tool') continue;
       final nativeStepIndex = _int(step['step_index']);
       final spanOrdinal = nativeStepIndex ?? i;
       final nativeStepTraceEvent = _nativeTraceEventForStep(
@@ -223,12 +227,11 @@ class AgentRuntimeTraceRecorder {
         nativeStepIndex,
       );
       final nativeStepRunState = _object(nativeStepTraceEvent?['run_state']);
-      final toolCall = _object(step['tool_call']);
-      final name = _string(toolCall?['name']) ?? 'unknown';
-      final response = toolResponseIndex < stepRun.toolResponses.length
-          ? stepRun.toolResponses[toolResponseIndex]
+      final name = _string(effect?['name']) ?? 'unknown';
+      final response = effectResponseIndex < stepRun.effectResponses.length
+          ? stepRun.effectResponses[effectResponseIndex]
           : null;
-      toolResponseIndex++;
+      effectResponseIndex++;
       final error = _object(response?['error']);
       final spanStarted = _offsetTime(startedAt, 2 + spanOrdinal);
       builder.addSpan(
@@ -242,7 +245,7 @@ class AgentRuntimeTraceRecorder {
         errorCode: _string(error?['code']),
         errorMessage: _string(error?['message']),
         attributes: <String, Object?>{
-          'tool_call_id': _string(toolCall?['tool_call_id']),
+          'effect_id': _string(effect?['effect_id']),
           'native_step_index': ?nativeStepIndex,
           'native_step_status': _string(step['status']),
           'native_trace_event_kind': ?_string(nativeStepTraceEvent?['kind']),
@@ -258,11 +261,11 @@ class AgentRuntimeTraceRecorder {
           'native_trace_event_terminal_reason': ?_string(
             nativeStepRunState?['terminal_reason'],
           ),
-          'native_trace_event_remaining_tool_count': ?_int(
-            nativeStepRunState?['remaining_tool_count'],
+          'native_trace_event_remaining_effect_count': ?_int(
+            nativeStepRunState?['remaining_effect_count'],
           ),
-          'native_trace_event_tool_result_count': ?_int(
-            nativeStepRunState?['tool_result_count'],
+          'native_trace_event_effect_result_count': ?_int(
+            nativeStepRunState?['effect_result_count'],
           ),
           'response_id': _string(response?['id']),
         },

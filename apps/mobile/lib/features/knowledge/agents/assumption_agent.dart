@@ -12,8 +12,8 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
-import '../../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -135,26 +135,27 @@ class RepositoryAssumptionReviewReader implements AssumptionReviewReader {
 
 class FrbAssumptionReviewReader implements AssumptionReviewReader {
   const FrbAssumptionReviewReader({
-    required AgentRuntimeToolPlanBinding runtime,
+    required AgentRuntimeEffectPlanBinding runtime,
     this.fallback = const RepositoryAssumptionReviewReader(),
   }) : _runtime = runtime;
 
-  final AgentRuntimeToolPlanBinding _runtime;
+  final AgentRuntimeEffectPlanBinding _runtime;
   final AssumptionReviewReader fallback;
 
   @override
   Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
-    return _runtime.readFromToolPlan(
-      toolPlan: const <Map<String, Object?>>[
+    return _runtime.readFromEffectPlan(
+      effectPlan: const <Map<String, Object?>>[
         <String, Object?>{
+          'kind': 'tool',
           'name': 'list_open_assumptions',
           'input': <String, Object?>{'limit': 50},
         },
       ],
-      maxToolSteps: 1,
+      maxEffectSteps: 1,
       fallback: () => fallback.listOpen(ctx),
       decode: (terminalStep) {
-        final result = agentRuntimeTerminalToolResult(
+        final result = agentRuntimeTerminalEffectResultForTool(
           terminalStep,
           'list_open_assumptions',
         );

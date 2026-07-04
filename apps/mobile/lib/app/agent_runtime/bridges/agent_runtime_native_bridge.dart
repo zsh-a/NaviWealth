@@ -69,7 +69,7 @@ abstract interface class AgentRuntimeNativeApi {
   Future<String> continueRunStep({
     required String catalogJson,
     required String previousStepJson,
-    required String toolResponseJson,
+    required String effectResponseJson,
     required String agentId,
   });
 }
@@ -161,13 +161,13 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
   Future<String> continueRunStep({
     required String catalogJson,
     required String previousStepJson,
-    required String toolResponseJson,
+    required String effectResponseJson,
     required String agentId,
   }) {
     return rust.agentRuntimeContinueRunStep(
       catalogJson: catalogJson,
       previousStepJson: previousStepJson,
-      toolResponseJson: toolResponseJson,
+      effectResponseJson: effectResponseJson,
       agentId: agentId,
     );
   }
@@ -205,7 +205,7 @@ abstract interface class AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> continueRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
+    required Map<String, Object?> effectResponse,
     required String agentId,
   });
 }
@@ -355,14 +355,14 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   Future<Map<String, Object?>> continueRunStep({
     required Map<String, Object?> catalog,
     required Map<String, Object?> previousStep,
-    required Map<String, Object?> toolResponse,
+    required Map<String, Object?> effectResponse,
     required String agentId,
   }) async {
     await _ensureInitialized();
     final json = await _api.continueRunStep(
       catalogJson: jsonEncode(catalog),
       previousStepJson: jsonEncode(previousStep),
-      toolResponseJson: jsonEncode(toolResponse),
+      effectResponseJson: jsonEncode(effectResponse),
       agentId: agentId,
     );
     return _decodeObject(json);

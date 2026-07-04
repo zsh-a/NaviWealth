@@ -31,31 +31,34 @@ class RepositoryContradictionSourceReader implements ContradictionSourceReader {
 
 class FrbContradictionSourceReader implements ContradictionSourceReader {
   const FrbContradictionSourceReader({
-    required AgentRuntimeToolPlanBinding runtime,
+    required AgentRuntimeEffectPlanBinding runtime,
     this.fallback = const RepositoryContradictionSourceReader(),
   }) : _runtime = runtime;
 
-  final AgentRuntimeToolPlanBinding _runtime;
+  final AgentRuntimeEffectPlanBinding _runtime;
   final ContradictionSourceReader fallback;
 
   @override
   Future<ContradictionSourceSnapshot> read(AgentContext ctx) async {
-    return _runtime.readFromToolPlan(
-      toolPlan: const <Map<String, Object?>>[
+    return _runtime.readFromEffectPlan(
+      effectPlan: const <Map<String, Object?>>[
         <String, Object?>{
+          'kind': 'tool',
           'name': 'list_triage_decisions',
           'input': <String, Object?>{'limit': 200},
         },
         <String, Object?>{
+          'kind': 'tool',
           'name': 'list_active_principles',
           'input': <String, Object?>{'limit': 200},
         },
         <String, Object?>{
+          'kind': 'tool',
           'name': 'list_open_assumptions',
           'input': <String, Object?>{'limit': 200},
         },
       ],
-      maxToolSteps: 3,
+      maxEffectSteps: 3,
       fallback: () => fallback.read(ctx),
       decode: (terminalStep) async {
         final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
@@ -84,7 +87,7 @@ ContradictionSourceSnapshot? contradictionSourceSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required String ownerUserId,
 }) {
-  final byTool = agentRuntimeTerminalToolResultsByName(step);
+  final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final decisions = contradictionDecisionsFromToolResult(
     byTool['list_triage_decisions'],
     ownerUserId: ownerUserId,

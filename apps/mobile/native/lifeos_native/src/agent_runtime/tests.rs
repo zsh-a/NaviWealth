@@ -145,14 +145,14 @@ fn chat_turn_error_event_wraps_error_metadata() {
 }
 
 #[test]
-fn native_tool_plan_steps_own_step_index_and_trace_events() {
+fn native_effect_plan_steps_own_step_index_and_trace_events() {
     let request_json = json!({
         "protocol_version": "agent.v1",
         "run_id": "run_native_trace",
         "input": {
-            "tool_plan": [
-                {"name": "read_first", "input": {"id": "first"}},
-                {"name": "read_second", "input": {"id": "second"}}
+            "effects": [
+                {"kind": "tool", "name": "read_first", "input": {"id": "first"}},
+                {"kind": "tool", "name": "read_second", "input": {"id": "second"}}
             ]
         },
         "trigger": "manual",
@@ -165,56 +165,62 @@ fn native_tool_plan_steps_own_step_index_and_trace_events() {
             .expect("start step"),
     )
     .expect("first step json");
-    assert_eq!(first["status"], "tool_call_requested");
+    assert_eq!(first["status"], "effect_requested");
     assert_eq!(first["step_index"], 0);
-    assert_eq!(first["tool_call"]["name"], "read_first");
+    assert_eq!(first["effect"]["kind"], "tool");
+    assert_eq!(first["effect"]["name"], "read_first");
     assert_eq!(first["trace_event"]["kind"], "agent_runtime_step");
     assert_eq!(first["trace_event"]["step_index"], 0);
+    assert_eq!(first["trace_event"]["effect_kind"], "tool");
     assert_eq!(first["trace_event"]["tool_name"], "read_first");
-    assert_eq!(first["trace_event"]["run_state"]["remaining_tool_count"], 1);
-    assert_eq!(first["trace_event"]["run_state"]["tool_result_count"], 0);
-    assert_eq!(first["run_state"]["remaining_tool_count"], 1);
-    assert_eq!(first["run_state"]["tool_result_count"], 0);
+    assert_eq!(
+        first["trace_event"]["run_state"]["remaining_effect_count"],
+        1
+    );
+    assert_eq!(first["trace_event"]["run_state"]["effect_result_count"], 0);
+    assert_eq!(first["run_state"]["remaining_effect_count"], 1);
+    assert_eq!(first["run_state"]["effect_result_count"], 0);
     assert_eq!(first["run_state"]["terminal_reason"], Value::Null);
-    let first_tool_call_id = first["tool_call"]["tool_call_id"]
+    let first_effect_id = first["effect"]["effect_id"]
         .as_str()
-        .expect("first tool_call_id")
+        .expect("first effect_id")
         .to_owned();
 
     let second: Value = serde_json::from_str(
         &agent_runtime_continue_run_step(
             catalog_json(),
             first.to_string(),
-            json!({"jsonrpc": "2.0", "id": first_tool_call_id, "result": {"ok": true}}).to_string(),
+            json!({"jsonrpc": "2.0", "id": first_effect_id, "result": {"ok": true}}).to_string(),
             "execution_review".to_owned(),
         )
         .expect("second step"),
     )
     .expect("second step json");
-    assert_eq!(second["status"], "tool_call_requested");
+    assert_eq!(second["status"], "effect_requested");
     assert_eq!(second["step_index"], 1);
-    assert_eq!(second["tool_call"]["name"], "read_second");
+    assert_eq!(second["effect"]["kind"], "tool");
+    assert_eq!(second["effect"]["name"], "read_second");
     assert_eq!(second["trace_event"]["step_index"], 1);
+    assert_eq!(second["trace_event"]["effect_kind"], "tool");
     assert_eq!(second["trace_event"]["tool_name"], "read_second");
     assert_eq!(
-        second["trace_event"]["run_state"]["remaining_tool_count"],
+        second["trace_event"]["run_state"]["remaining_effect_count"],
         0
     );
-    assert_eq!(second["trace_event"]["run_state"]["tool_result_count"], 1);
-    assert_eq!(second["run_state"]["remaining_tool_count"], 0);
-    assert_eq!(second["run_state"]["tool_result_count"], 1);
+    assert_eq!(second["trace_event"]["run_state"]["effect_result_count"], 1);
+    assert_eq!(second["run_state"]["remaining_effect_count"], 0);
+    assert_eq!(second["run_state"]["effect_result_count"], 1);
     assert_eq!(second["run_state"]["terminal_reason"], Value::Null);
-    let second_tool_call_id = second["tool_call"]["tool_call_id"]
+    let second_effect_id = second["effect"]["effect_id"]
         .as_str()
-        .expect("second tool_call_id")
+        .expect("second effect_id")
         .to_owned();
 
     let terminal: Value = serde_json::from_str(
         &agent_runtime_continue_run_step(
             catalog_json(),
             second.to_string(),
-            json!({"jsonrpc": "2.0", "id": second_tool_call_id, "result": {"done": true}})
-                .to_string(),
+            json!({"jsonrpc": "2.0", "id": second_effect_id, "result": {"done": true}}).to_string(),
             "execution_review".to_owned(),
         )
         .expect("terminal step"),
@@ -228,20 +234,25 @@ fn native_tool_plan_steps_own_step_index_and_trace_events() {
         terminal["trace_event"]["run_state"]["terminal_reason"],
         "done"
     );
-    assert_eq!(terminal["trace_event"]["run_state"]["tool_result_count"], 2);
-    assert_eq!(terminal["output"]["mode"], "frb_tool_loop");
-    assert_eq!(terminal["run_state"]["remaining_tool_count"], 0);
-    assert_eq!(terminal["run_state"]["tool_result_count"], 2);
+    assert_eq!(
+        terminal["trace_event"]["run_state"]["effect_result_count"],
+        2
+    );
+    assert_eq!(terminal["output"]["mode"], "frb_effect_loop");
+    assert_eq!(terminal["run_state"]["remaining_effect_count"], 0);
+    assert_eq!(terminal["run_state"]["effect_result_count"], 2);
     assert_eq!(terminal["run_state"]["terminal_reason"], "done");
 }
 
 #[test]
-fn native_tool_response_errors_set_stream_error_terminal_reason() {
+fn native_effect_response_errors_set_stream_error_terminal_reason() {
     let request_json = json!({
         "protocol_version": "agent.v1",
         "run_id": "run_native_error_trace",
         "input": {
-            "tool_call": {"name": "read_first", "input": {"id": "first"}}
+            "effects": [
+                {"kind": "tool", "name": "read_first", "input": {"id": "first"}}
+            ]
         },
         "trigger": "manual",
         "metadata": {}
@@ -253,9 +264,9 @@ fn native_tool_response_errors_set_stream_error_terminal_reason() {
             .expect("start step"),
     )
     .expect("first step json");
-    let first_tool_call_id = first["tool_call"]["tool_call_id"]
+    let first_effect_id = first["effect"]["effect_id"]
         .as_str()
-        .expect("first tool_call_id")
+        .expect("first effect_id")
         .to_owned();
 
     let failed: Value = serde_json::from_str(
@@ -264,7 +275,7 @@ fn native_tool_response_errors_set_stream_error_terminal_reason() {
             first.to_string(),
             json!({
                 "jsonrpc": "2.0",
-                "id": first_tool_call_id,
+                "id": first_effect_id,
                 "error": {"code": -32000, "message": "no"}
             })
             .to_string(),
@@ -280,7 +291,7 @@ fn native_tool_response_errors_set_stream_error_terminal_reason() {
         failed["trace_event"]["run_state"]["terminal_reason"],
         "stream_error"
     );
-    assert_eq!(failed["trace_event"]["run_state"]["tool_result_count"], 1);
+    assert_eq!(failed["trace_event"]["run_state"]["effect_result_count"], 1);
     assert_eq!(failed["run_state"]["terminal_reason"], "stream_error");
 }
 

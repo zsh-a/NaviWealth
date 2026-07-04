@@ -5,7 +5,7 @@ import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart'
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
@@ -19,7 +19,7 @@ import 'package:naviwealth/features/execution/agents/review_agent.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 
-import '../../../app/agent_runtime_tool_plan_test_harness.dart';
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 import '../../../core/persistence/test_database.dart';
 
 const _userId = 'u-exec-agent';
@@ -174,11 +174,14 @@ void main() {
         const <String, Object?>{
           'status': 'completed',
           'output': <String, Object?>{
-            'mode': 'frb_tool_loop',
-            'tool_results': <Object?>[
+            'mode': 'frb_effect_loop',
+            'effect_results': <Object?>[
               <String, Object?>{
-                'tool_call': <String, Object?>{'name': 'list_open_actions'},
-                'tool_response': <String, Object?>{
+                'effect': <String, Object?>{
+                  'kind': 'tool',
+                  'name': 'list_open_actions',
+                },
+                'effect_response': <String, Object?>{
                   'result': <String, Object?>{
                     'actions': <Object?>[
                       <String, Object?>{
@@ -194,10 +197,11 @@ void main() {
                 },
               },
               <String, Object?>{
-                'tool_call': <String, Object?>{
+                'effect': <String, Object?>{
+                  'kind': 'tool',
                   'name': 'summarize_execution_progress',
                 },
-                'tool_response': <String, Object?>{
+                'effect_response': <String, Object?>{
                   'result': <String, Object?>{
                     'active_project_count': 1,
                     'active_commitment_count': 1,
@@ -236,7 +240,7 @@ void main() {
       final snapshot = executionReviewSnapshotFromTerminalStep(
         const <String, Object?>{
           'status': 'completed',
-          'output': <String, Object?>{'tool_results': <Object?>[]},
+          'output': <String, Object?>{'effect_results': <Object?>[]},
         },
       );
 
@@ -245,37 +249,40 @@ void main() {
   });
 
   group('FrbExecutionReviewReader', () {
-    test('reads execution snapshot through a two-step FRB tool plan', () async {
-      final dispatcher = _ExecutionDispatcher();
-      final bridge = FakeAgentRuntimeToolPlanBridge();
-      final traces = <AgentRuntimeNativeStepRunResult>[];
-      final reader = FrbExecutionReviewReader(
-        runtime: _runtime(
-          bridge: bridge,
-          dispatcher: dispatcher,
-          recordTrace: (stepRun) async => traces.add(stepRun),
-        ),
-      );
+    test(
+      'reads execution snapshot through a two-step FRB effect loop',
+      () async {
+        final dispatcher = _ExecutionDispatcher();
+        final bridge = FakeAgentRuntimeEffectPlanBridge();
+        final traces = <AgentRuntimeNativeStepRunResult>[];
+        final reader = FrbExecutionReviewReader(
+          runtime: _runtime(
+            bridge: bridge,
+            dispatcher: dispatcher,
+            recordTrace: (stepRun) async => traces.add(stepRun),
+          ),
+        );
 
-      final snapshot = await reader.read(_context());
+        final snapshot = await reader.read(_context());
 
-      expect(snapshot.openActions.single.id, 'action_1');
-      expect(snapshot.activeProjectCount, 1);
-      expect(dispatcher.calls.map((c) => c.name), <String>[
-        'list_open_actions',
-        'summarize_execution_progress',
-      ]);
-      expect(dispatcher.calls.first.input, containsPair('limit', 100));
-      expect(bridge.startRequests.single.agentId, kExecutionReviewAgentId);
-      expect(
-        bridge.startRequests.single.request['metadata'],
-        containsPair('surface', 'execution_review'),
-      );
-      expect(traces.single.terminalStep['status'], 'completed');
-      expect(traces.single.dispatchedToolCount, 2);
-    });
+        expect(snapshot.openActions.single.id, 'action_1');
+        expect(snapshot.activeProjectCount, 1);
+        expect(dispatcher.calls.map((c) => c.name), <String>[
+          'list_open_actions',
+          'summarize_execution_progress',
+        ]);
+        expect(dispatcher.calls.first.input, containsPair('limit', 100));
+        expect(bridge.startRequests.single.agentId, kExecutionReviewAgentId);
+        expect(
+          bridge.startRequests.single.request['metadata'],
+          containsPair('surface', 'execution_review'),
+        );
+        expect(traces.single.terminalStep['status'], 'completed');
+        expect(traces.single.dispatchedEffectCount, 2);
+      },
+    );
 
-    test('falls back when FRB tool path fails', () async {
+    test('falls back when FRB effect path fails', () async {
       final fallback = _FallbackReader(
         const ExecutionReviewSnapshot(
           openActions: <ExecutionReviewAction>[],
@@ -288,7 +295,7 @@ void main() {
       );
       final reader = FrbExecutionReviewReader(
         runtime: _runtime(
-          bridge: FailingAgentRuntimeToolPlanBridge(),
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
           dispatcher: _ExecutionDispatcher(),
         ),
         fallback: fallback,
@@ -315,7 +322,7 @@ void main() {
         );
         final reader = FrbExecutionReviewReader(
           runtime: _runtime(
-            bridge: FakeAgentRuntimeToolPlanBridge(),
+            bridge: FakeAgentRuntimeEffectPlanBridge(),
             dispatcher: _ExecutionDispatcher(),
             recordTrace: (_) async =>
                 throw StateError('trace store unavailable'),
@@ -342,12 +349,12 @@ AgentContext _context() {
 
 final _refProvider = Provider<Ref>((ref) => ref);
 
-AgentRuntimeToolPlanBinding _runtime({
+AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {
-  return agentRuntimeToolPlanTestBinding(
+  return agentRuntimeEffectPlanTestBinding(
     agentId: kExecutionReviewAgentId,
     domain: 'execution',
     surface: 'execution_review',
@@ -394,7 +401,7 @@ AgentRuntimeCatalog _catalog() {
 }
 
 class _ExecutionDispatcher implements DeviceToolDispatcher {
-  final calls = <AgentRuntimeToolPlanToolCall>[];
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
 
   @override
   Future<Object?> dispatch(
@@ -402,7 +409,7 @@ class _ExecutionDispatcher implements DeviceToolDispatcher {
     String name,
     Object? input,
   ) async {
-    calls.add(AgentRuntimeToolPlanToolCall(name, input));
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
     return switch (name) {
       'list_open_actions' => <String, Object?>{
         'actions': <Object?>[

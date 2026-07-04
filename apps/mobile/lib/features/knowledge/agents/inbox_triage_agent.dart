@@ -23,8 +23,8 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
-import '../../../core/ai/runtime/agent_runtime/agent_runtime_tool_plan_binding.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';
@@ -167,18 +167,19 @@ class RepositoryInboxTriageSourceReader implements InboxTriageSourceReader {
 
 class FrbInboxTriageSourceReader implements InboxTriageSourceReader {
   const FrbInboxTriageSourceReader({
-    required AgentRuntimeToolPlanBinding runtime,
+    required AgentRuntimeEffectPlanBinding runtime,
     this.fallback = const RepositoryInboxTriageSourceReader(),
   }) : _runtime = runtime;
 
-  final AgentRuntimeToolPlanBinding _runtime;
+  final AgentRuntimeEffectPlanBinding _runtime;
   final InboxTriageSourceReader fallback;
 
   @override
   Future<InboxTriageSourceSnapshot> read(AgentContext ctx) async {
-    return _runtime.readFromToolPlan(
-      toolPlan: const <Map<String, Object?>>[
+    return _runtime.readFromEffectPlan(
+      effectPlan: const <Map<String, Object?>>[
         <String, Object?>{
+          'kind': 'tool',
           'name': 'list_inbox_triage_candidates',
           'input': <String, Object?>{
             'limit': kInboxTriageMaxNotesPerRun,
@@ -186,11 +187,12 @@ class FrbInboxTriageSourceReader implements InboxTriageSourceReader {
           },
         },
         <String, Object?>{
+          'kind': 'tool',
           'name': 'list_triage_decisions',
           'input': <String, Object?>{'limit': 200},
         },
       ],
-      maxToolSteps: 2,
+      maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
       decode: (terminalStep) async {
         final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
@@ -217,7 +219,7 @@ InboxTriageSourceSnapshot? inboxTriageSourceSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required String ownerUserId,
 }) {
-  final byTool = agentRuntimeTerminalToolResultsByName(step);
+  final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final notes = inboxTriageNotesFromToolResult(
     byTool['list_inbox_triage_candidates'],
     ownerUserId: ownerUserId,
