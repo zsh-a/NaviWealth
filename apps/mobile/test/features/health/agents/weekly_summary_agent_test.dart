@@ -268,6 +268,15 @@ void main() {
       );
       expect(artifact.evidence.single.type, 'health_week');
       expect(artifact.actions.single.objectId, result.artifactId);
+
+      final outcomeFailures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'health.weekly_summary.ready',
+        ),
+        result: result,
+        artifact: artifact,
+      );
+      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
     },
   );
 

@@ -150,6 +150,22 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedStatus: AgentOutcomeRegressionStatus.noFinding,
   ),
   AgentOutcomeRegressionCase(
+    id: 'health.weekly_summary.ready',
+    agentId: 'weekly_summary',
+    domain: 'health',
+    snapshotId: 'health.weekly_summary.active_week',
+    expectedStatus: AgentOutcomeRegressionStatus.ready,
+    expectedArtifactKind: AgentArtifactKind.review,
+    expectedSeverity: AgentArtifactSeverity.info,
+    expectedTopInsightTitles: <String>{
+      'Recovery',
+      'Sleep',
+      'Activity',
+      'Workouts',
+    },
+    expectedEvidenceTypes: <String>{'health_week'},
+  ),
+  AgentOutcomeRegressionCase(
     id: 'knowledge.assumption.ready',
     agentId: 'knowledge_assumption',
     domain: 'knowledge',
