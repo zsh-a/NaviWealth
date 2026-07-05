@@ -91,6 +91,7 @@ class InboxTriageAgent implements Agent {
         startedAt: start,
         finishedAt: finished,
         reason: 'no untriaged notes',
+        traceId: source.traceId,
       );
     }
 
@@ -143,6 +144,7 @@ class InboxTriageAgent implements Agent {
           scannedNotes: untriaged.length,
           emittedProposals: emitted,
           items: artifactItems,
+          traceId: source.traceId,
         ),
       );
     }
@@ -155,8 +157,10 @@ class InboxTriageAgent implements Agent {
       payload: <String, Object?>{
         'scanned_notes': untriaged.length,
         'emitted_proposals': emitted,
+        if (source.traceId != null) 'trace_id': source.traceId,
       },
       artifactId: artifactId,
+      traceId: source.traceId,
     );
   }
 
@@ -168,6 +172,7 @@ class InboxTriageAgent implements Agent {
     required int scannedNotes,
     required int emittedProposals,
     required List<_InboxTriageArtifactItem> items,
+    required String? traceId,
   }) {
     final byKind = <InboxProposalKind, int>{};
     for (final item in items) {
@@ -229,6 +234,7 @@ class InboxTriageAgent implements Agent {
           objectType: kAgentArtifactObjectType,
         ),
       ],
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
@@ -309,6 +315,7 @@ class FrbInboxTriageSourceReader implements InboxTriageSourceReader {
         return inboxTriageSourceSnapshotFromTerminalStep(
           stepRun.terminalStep,
           ownerUserId: ownerUserId,
+          traceId: stepRun.traceId,
         );
       },
     );
@@ -319,15 +326,18 @@ class InboxTriageSourceSnapshot {
   const InboxTriageSourceSnapshot({
     required this.untriagedNotes,
     required this.decisions,
+    this.traceId,
   });
 
   final List<KnowledgeNote> untriagedNotes;
   final List<KnowledgeDecision> decisions;
+  final String? traceId;
 }
 
 InboxTriageSourceSnapshot? inboxTriageSourceSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required String ownerUserId,
+  String? traceId,
 }) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final notes = inboxTriageNotesFromToolResult(
@@ -339,7 +349,11 @@ InboxTriageSourceSnapshot? inboxTriageSourceSnapshotFromTerminalStep(
     ownerUserId: ownerUserId,
   );
   if (notes == null || decisions == null) return null;
-  return InboxTriageSourceSnapshot(untriagedNotes: notes, decisions: decisions);
+  return InboxTriageSourceSnapshot(
+    untriagedNotes: notes,
+    decisions: decisions,
+    traceId: traceId,
+  );
 }
 
 List<KnowledgeNote>? inboxTriageNotesFromToolResult(

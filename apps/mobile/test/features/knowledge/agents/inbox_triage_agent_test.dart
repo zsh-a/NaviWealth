@@ -289,6 +289,48 @@ void main() {
       expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
     });
 
+    test('persists source trace id onto result and artifact', () async {
+      final c = container();
+      final agent = InboxTriageAgent(
+        sourceReader: _FallbackSourceReader(
+          InboxTriageSourceSnapshot(
+            untriagedNotes: <KnowledgeNote>[
+              _note(id: 'n-trace', title: 'Trace source', body: 'short'),
+            ],
+            decisions: const <KnowledgeDecision>[],
+            traceId: 'trace-inbox-source-1',
+          ),
+        ),
+        classifier: _FixedInboxTriageClassifier(
+          proposals: <InboxProposal>[
+            InboxProposal(
+              kind: InboxProposalKind.classification,
+              summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
+              payload: const <String, Object?>{
+                'note_id': 'n-trace',
+                'kind': 'decision_candidate',
+                'confidence': 0.9,
+                'reason': 'x',
+              },
+              status: InboxProposalStatus.pending,
+            ),
+          ],
+        ),
+      );
+
+      final res = await runAgent(c, agent);
+
+      expect(res.status, AgentRunStatus.completed);
+      expect(res.traceId, 'trace-inbox-source-1');
+      expect(res.payload['trace_id'], 'trace-inbox-source-1');
+
+      final artifactStore = await c.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final artifact = await artifactStore.read(res.artifactId!);
+      expect(artifact?.traceId, 'trace-inbox-source-1');
+    });
+
     test(
       'snooze hides pending proposals until due and stores feedback',
       () async {
@@ -414,6 +456,7 @@ void main() {
 
       expect(snapshot.untriagedNotes.single.id, 'n-frb');
       expect(snapshot.decisions.single.id, 'd-frb');
+      expect(snapshot.traceId, 'agent-runtime:knowledge_inbox_triage:run_1');
       expect(dispatcher.calls.map((call) => call.name), <String>[
         'list_inbox_triage_candidates',
         'list_triage_decisions',
