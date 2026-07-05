@@ -69,6 +69,31 @@ void main() {
     );
   });
 
+  test('knowledge routine notification payload deep-links to artifact', () {
+    final payload = KnowledgeNotifications.payloadForRoutineDigest(
+      artifactId: 'knowledge_routine_due:2026-07-05',
+    );
+
+    expect(
+      payload,
+      '/knowledge/review?agent_artifact_id=knowledge_routine_due%3A2026-07-05',
+    );
+    expect(
+      KnowledgeNotifications.routineArtifactIdFromPayload(payload),
+      'knowledge_routine_due:2026-07-05',
+    );
+    expect(
+      KnowledgeNotifications.routineArtifactIdFromPayload(
+        '/knowledge/review?agent_artifact_id=',
+      ),
+      isNull,
+    );
+    expect(
+      KnowledgeNotifications.routineArtifactIdFromPayload('/knowledge'),
+      isNull,
+    );
+  });
+
   test('notification ids stay within Android signed int range', () {
     final representativeDays = [DateTime(2026, 1, 1), DateTime(2099, 12, 31)];
 

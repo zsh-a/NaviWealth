@@ -153,7 +153,13 @@ class RoutineDueAgent implements Agent {
             agentId: kKnowledgeRoutineAgentId,
           );
       if (agentNotificationsEnabled) {
-        await _maybeNotify(start.toLocal(), l10n, summary, n);
+        await _maybeNotify(
+          start.toLocal(),
+          l10n,
+          summary,
+          n,
+          artifactId: artifactId,
+        );
       }
     }
 
@@ -303,15 +309,18 @@ class RoutineDueAgent implements Agent {
     DateTime localDay,
     AppLocalizations l10n,
     String summary,
-    NotificationService n,
-  ) async {
+    NotificationService n, {
+    required String artifactId,
+  }) async {
     try {
       if (!await n.hasPermissions()) return;
       await n.showNow(
         id: KnowledgeNotifications.idForRoutineDigest(localDay),
         title: l10n.knowledgeAgentRoutineTitle,
         body: summary,
-        payload: kKnowledgeRoutineAgentId,
+        payload: KnowledgeNotifications.payloadForRoutineDigest(
+          artifactId: artifactId,
+        ),
         channel: kKnowledgeReviewNotificationChannel,
       );
     } on Object {

@@ -269,6 +269,56 @@ void main() {
       expect(notifier.showCount, 0);
     },
   );
+
+  test('run posts routine notification with artifact route payload', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runtime = _FakeMemoryRuntime();
+    final preferences = InMemoryAgentPreferenceStore();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+        agent_providers.agentPreferenceStoreProvider.overrideWith(
+          (ref) async => preferences,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final notifier = _RecordingNotificationService();
+    final agent = RoutineDueAgent(
+      notifier: notifier,
+      dueReader: _FixedRoutineReader(
+        RoutineDueSnapshot(
+          due: <RoutineDueItem>[
+            RoutineDueItem(
+              id: 'routine-overdue',
+              statement: 'Activate bank card',
+              nextDueAt: DateTime.utc(2026, 7, 4, 8),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 8),
+    );
+
+    expect(result.artifactId, '$kKnowledgeRoutineAgentId:2026-07-05');
+    expect(notifier.showCount, 1);
+    expect(
+      notifier.lastPayload,
+      '/knowledge/review?agent_artifact_id=knowledge_routine_due%3A2026-07-05',
+    );
+  });
 }
 
 AgentContext _context() {
@@ -400,6 +450,7 @@ class _FakeMemoryRuntime implements MemoryRuntime {
 
 class _RecordingNotificationService implements NotificationService {
   var showCount = 0;
+  String? lastPayload;
 
   @override
   Future<void> cancel(int id) async {}
@@ -422,5 +473,6 @@ class _RecordingNotificationService implements NotificationService {
     String? payload,
   }) async {
     showCount += 1;
+    lastPayload = payload;
   }
 }

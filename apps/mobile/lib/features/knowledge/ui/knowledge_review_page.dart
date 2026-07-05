@@ -12,6 +12,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/shell/shell_chrome.dart';
@@ -98,7 +99,9 @@ Future<void> _persistReviewOrder({
 }
 
 class KnowledgeReviewPage extends ConsumerStatefulWidget {
-  const KnowledgeReviewPage({super.key});
+  const KnowledgeReviewPage({super.key, this.initialAgentArtifactId});
+
+  final String? initialAgentArtifactId;
 
   @override
   ConsumerState<KnowledgeReviewPage> createState() =>
@@ -107,8 +110,11 @@ class KnowledgeReviewPage extends ConsumerStatefulWidget {
 
 class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
     with KnowledgeFabScrollHideMixin {
+  String? _openedInitialArtifactId;
+
   @override
   Widget build(BuildContext context) {
+    _maybeOpenInitialArtifactSheet();
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.knowledgeReviewTitle,
@@ -151,6 +157,37 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
         ],
       ),
     );
+  }
+
+  void _maybeOpenInitialArtifactSheet() {
+    final artifactId = widget.initialAgentArtifactId;
+    if (artifactId == null ||
+        artifactId.isEmpty ||
+        _openedInitialArtifactId == artifactId) {
+      return;
+    }
+    _openedInitialArtifactId = artifactId;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final store = await ref.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final artifact = await store.read(artifactId);
+      if (!mounted || artifact == null) return;
+      final l10n = AppLocalizations.of(context);
+      final metaLabel = _knowledgeAgentArtifactUpdated(
+        l10n,
+        artifact.createdAt,
+      );
+      await showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: metaLabel,
+        onVisibilityChanged: () => ref.invalidate(
+          knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+        ),
+      );
+    });
   }
 }
 
