@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/auth/current_user.dart';
@@ -71,6 +73,44 @@ void main() {
 
     expect(scheduler.calls.last, 'cancel:$kExecutionReviewTaskName');
   });
+
+  test(
+    'pending execution review run consumes flag through shared catch-up',
+    () async {
+      final dueAt = DateTime.utc(2026, 7, 5, 8);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        kExecutionReviewDueAtKey: dueAt.millisecondsSinceEpoch,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final controller = _RecordingAgentRunController();
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (_) async => InMemoryAgentPreferenceStore(),
+          ),
+          agentRunControllerProvider.overrideWith((_) async => controller),
+        ],
+      );
+      addTearDown(c.dispose);
+      await c.read(auth.domainOptInsProvider.future);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.execution, true);
+
+      final result = await c.read(pendingExecutionReviewRunProvider.future);
+
+      expect(result?.status, AgentRunStatus.completed);
+      expect(controller.calls.single.agentId, kExecutionReviewAgentId);
+      expect(controller.calls.single.now, dueAt);
+      expect(controller.calls.single.trigger, AgentRunTrigger.backgroundDue);
+      expect(prefs.getInt(kExecutionReviewDueAtKey), isNull);
+    },
+  );
 
   test('execution review providers read latest artifact and run', () async {
     final db = makeTestDatabase();
@@ -167,5 +207,47 @@ class _RecordingScheduler implements BackgroundScheduler {
     Duration? interval,
   }) async {
     calls.add('register:${task.name}');
+  }
+}
+
+class _RunCall {
+  const _RunCall({
+    required this.agentId,
+    required this.now,
+    required this.trigger,
+  });
+
+  final String agentId;
+  final DateTime? now;
+  final AgentRunTrigger trigger;
+}
+
+class _RecordingAgentRunController implements AgentRunController {
+  final List<_RunCall> calls = <_RunCall>[];
+
+  @override
+  Future<AgentRunResult> runOnceById(
+    String agentId, {
+    DateTime? now,
+    AgentRunTrigger trigger = AgentRunTrigger.manual,
+  }) async {
+    calls.add(_RunCall(agentId: agentId, now: now, trigger: trigger));
+    final startedAt = now ?? DateTime.utc(2026, 7, 5, 8);
+    return AgentRunResult(
+      agentId: agentId,
+      status: AgentRunStatus.completed,
+      startedAt: startedAt,
+      finishedAt: startedAt.add(const Duration(milliseconds: 1)),
+      summary: 'background catch-up complete',
+    );
+  }
+
+  @override
+  Future<List<AgentRunResult>> tick({
+    DateTime? now,
+    Iterable<String>? onlyAgentIds,
+    AgentRunTrigger trigger = AgentRunTrigger.schedule,
+  }) async {
+    throw UnimplementedError('tick is not used by this provider test');
   }
 }
