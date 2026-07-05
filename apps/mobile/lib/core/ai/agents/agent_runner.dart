@@ -53,6 +53,18 @@ class AgentRunner {
     AgentRunTrigger trigger = AgentRunTrigger.manual,
   }) async {
     final start = ctx.now;
+    final enabled = await _preferenceStore.isEnabled(
+      ownerUserId: ownerUserId,
+      agentId: agent.id,
+    );
+    if (!enabled) {
+      return AgentRunResult.skipped(
+        agentId: agent.id,
+        startedAt: start,
+        finishedAt: start,
+        reason: 'agent disabled',
+      );
+    }
     await _runStore.markRunning(
       ownerUserId: ownerUserId,
       agent: agent,

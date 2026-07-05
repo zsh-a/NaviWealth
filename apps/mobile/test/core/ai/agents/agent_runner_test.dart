@@ -141,6 +141,40 @@ void main() {
     expect(events.single.payload['trace_id'], 'trace-1');
   });
 
+  test('runOnce skips disabled agents without writing run history', () async {
+    final rt = _runtime();
+    final preferences = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    await preferences.setEnabled(
+      ownerUserId: 'u',
+      agentId: 'disabled',
+      enabled: false,
+      updatedAt: now,
+    );
+    final runner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: runStore,
+      preferenceStore: preferences,
+    );
+    final agent = _StubAgent(id: 'disabled');
+
+    final result = await runner.runOnce(agent, _context(rt, now));
+
+    expect(result.status, AgentRunStatus.skipped);
+    expect(result.summary, 'agent disabled');
+    expect(agent.runCount, 0);
+    expect(
+      await runStore.latestForAgent(ownerUserId: 'u', agentId: 'disabled'),
+      isNull,
+    );
+    final events = await rt.recentEvents(
+      ownerUserId: 'u',
+      window: const Duration(days: 9999),
+    );
+    expect(events, isEmpty);
+  });
+
   test('runOnce captures throws as failed result', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
