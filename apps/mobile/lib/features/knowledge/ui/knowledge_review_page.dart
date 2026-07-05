@@ -216,13 +216,13 @@ class _KnowledgeReviewAgentRunStatusCard extends StatelessWidget {
   }
 }
 
-class _KnowledgeReviewAgentResultCard extends StatelessWidget {
+class _KnowledgeReviewAgentResultCard extends ConsumerWidget {
   const _KnowledgeReviewAgentResultCard({required this.artifact});
 
   final AgentArtifact artifact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
     return AgentResultCard(
@@ -232,6 +232,9 @@ class _KnowledgeReviewAgentResultCard extends StatelessWidget {
         context: context,
         artifact: artifact,
         subtitle: metaLabel,
+        onVisibilityChanged: () => ref.invalidate(
+          knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+        ),
       ),
     );
   }

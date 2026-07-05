@@ -257,6 +257,7 @@ Future<void> showAgentArtifactSheet({
   required BuildContext context,
   required AgentArtifact artifact,
   String? subtitle,
+  FutureOr<void> Function()? onVisibilityChanged,
 }) {
   return showAppSheet<void>(
     context: context,
@@ -265,14 +266,22 @@ Future<void> showAgentArtifactSheet({
         subtitle ??
         _artifactKindLabel(AppLocalizations.of(context), artifact.kind),
     maxHeightFactor: 0.88,
-    builder: (_) => AgentArtifactDetailBody(artifact: artifact),
+    builder: (_) => AgentArtifactDetailBody(
+      artifact: artifact,
+      onVisibilityChanged: onVisibilityChanged,
+    ),
   );
 }
 
 class AgentArtifactDetailBody extends ConsumerWidget {
-  const AgentArtifactDetailBody({super.key, required this.artifact});
+  const AgentArtifactDetailBody({
+    super.key,
+    required this.artifact,
+    this.onVisibilityChanged,
+  });
 
   final AgentArtifact artifact;
+  final FutureOr<void> Function()? onVisibilityChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -442,6 +451,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       id: artifact.id,
       until: DateTime.now().toUtc().add(const Duration(days: 1)),
     );
+    await onVisibilityChanged?.call();
     if (context.mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }
@@ -457,6 +467,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       id: artifact.id,
       dismissedAt: DateTime.now().toUtc(),
     );
+    await onVisibilityChanged?.call();
     if (context.mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }

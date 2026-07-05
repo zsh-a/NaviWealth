@@ -231,10 +231,14 @@ void main() {
     tester,
   ) async {
     final store = _FakeArtifactStore();
+    var visibilityChanges = 0;
     await tester.pumpWidget(
       _wrap(
         SingleChildScrollView(
-          child: AgentArtifactDetailBody(artifact: _artifact()),
+          child: AgentArtifactDetailBody(
+            artifact: _artifact(),
+            onVisibilityChanged: () => visibilityChanges += 1,
+          ),
         ),
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
@@ -252,6 +256,7 @@ void main() {
     expect(store.snoozedOwnerUserId, 'user-1');
     expect(store.snoozedUntil, isNotNull);
     expect(store.snoozedUntil!.isAfter(DateTime.now().toUtc()), isTrue);
+    expect(visibilityChanges, 1);
 
     final dismiss = find.text('Dismiss').last;
     await tester.ensureVisible(dismiss);
@@ -261,6 +266,7 @@ void main() {
     expect(store.dismissedId, 'artifact-1');
     expect(store.dismissedOwnerUserId, 'user-1');
     expect(store.dismissedAt, isNotNull);
+    expect(visibilityChanges, 2);
   });
 
   testWidgets('run status card renders failed status and retry action', (

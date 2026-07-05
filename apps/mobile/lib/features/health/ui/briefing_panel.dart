@@ -55,6 +55,12 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
                 artifact: artifact,
                 running: _running,
                 onRun: _run,
+                onVisibilityChanged: () {
+                  ref.invalidate(
+                    health_agent_providers
+                        .latestMorningBriefingArtifactProvider,
+                  );
+                },
               );
             }
             return memoryAsync.when(
@@ -84,11 +90,13 @@ class _BriefingArtifactCard extends StatelessWidget {
     required this.artifact,
     required this.running,
     required this.onRun,
+    required this.onVisibilityChanged,
   });
 
   final AgentArtifact artifact;
   final bool running;
   final VoidCallback onRun;
+  final VoidCallback onVisibilityChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +106,7 @@ class _BriefingArtifactCard extends StatelessWidget {
         context: context,
         artifact: artifact,
         subtitle: l10n.healthBriefingUpdated(_ago(l10n, artifact.createdAt)),
+        onVisibilityChanged: onVisibilityChanged,
       );
     }
 

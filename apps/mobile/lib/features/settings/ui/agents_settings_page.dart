@@ -252,6 +252,8 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                   onPress: () => showAgentArtifactSheet(
                     context: context,
                     artifact: row.latestArtifact!,
+                    onVisibilityChanged: () =>
+                        ref.invalidate(_agentSettingsRowsProvider),
                   ),
                   prefix: const Icon(
                     FLucideIcons.externalLink,

@@ -153,6 +153,10 @@ class _WeeklyWealthReviewPanel extends ConsumerWidget {
                 ref,
                 artifact.createdAt,
               ),
+              onVisibilityChanged: () => ref.invalidate(
+                finance_agent_providers
+                    .latestWeeklyWealthReviewArtifactProvider,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.s20),
