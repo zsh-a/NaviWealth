@@ -554,10 +554,19 @@ void main() {
         for (final regressionCase in agentOutcomeRegressionCorpus)
           regressionCase.agentId,
       };
+      final readyCorpusKeys = {
+        for (final regressionCase in agentOutcomeRegressionCorpus)
+          if (regressionCase.expectedStatus ==
+              AgentOutcomeRegressionStatus.ready)
+            '${regressionCase.domain}:${regressionCase.agentId}',
+      };
 
       expect(specs.keys.toSet(), agentIds);
       expect(corpusAgentIds, containsAll(agentIds));
       for (final registration in registrations) {
+        final corpusKey =
+            '${registration.domain.wire}:${registration.agent.id}';
+        expect(readyCorpusKeys, contains(corpusKey), reason: corpusKey);
         expect(
           specs[registration.agent.id]?.domain,
           registration.domain,
