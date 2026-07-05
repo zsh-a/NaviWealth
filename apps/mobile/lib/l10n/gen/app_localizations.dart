@@ -9765,6 +9765,18 @@ abstract class AppLocalizations {
   /// **'Reviews on-device monthly spending anomalies.'**
   String get agentPresentationCashflowAnomalyReviewDescription;
 
+  /// Presentation label for the FinanceOS FIRE plan drift monitor agent.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE Plan Drift Monitor'**
+  String get agentPresentationFirePlanDriftMonitorLabel;
+
+  /// Presentation description for the FinanceOS FIRE plan drift monitor agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews withdrawal rate, cash runway, plan ETA, and stress-test drift.'**
+  String get agentPresentationFirePlanDriftMonitorDescription;
+
   /// Presentation label for the HealthOS morning briefing agent.
   ///
   /// In en, this message translates to:

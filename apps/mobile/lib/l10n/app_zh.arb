@@ -1698,6 +1698,8 @@
   "agentPresentationWeeklyWealthReviewDescription": "复盘净资产、配置集中度、价格新鲜度与汇率覆盖。",
   "agentPresentationCashflowAnomalyReviewLabel": "现金流异常复盘",
   "agentPresentationCashflowAnomalyReviewDescription": "复盘端侧检测到的月度支出异常。",
+  "agentPresentationFirePlanDriftMonitorLabel": "FIRE 计划漂移监控",
+  "agentPresentationFirePlanDriftMonitorDescription": "复盘提款率、现金安全垫、计划 ETA 与压力测试漂移。",
   "agentPresentationMorningBriefingLabel": "早间简报",
   "agentPresentationMorningBriefingDescription": "基于最近的健康与财务信号生成每日简报。",
   "agentPresentationRecoveryAlertLabel": "恢复提醒",

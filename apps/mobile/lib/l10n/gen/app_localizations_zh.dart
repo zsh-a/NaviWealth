@@ -5460,6 +5460,13 @@ class AppLocalizationsZh extends AppLocalizations {
       '复盘端侧检测到的月度支出异常。';
 
   @override
+  String get agentPresentationFirePlanDriftMonitorLabel => 'FIRE 计划漂移监控';
+
+  @override
+  String get agentPresentationFirePlanDriftMonitorDescription =>
+      '复盘提款率、现金安全垫、计划 ETA 与压力测试漂移。';
+
+  @override
   String get agentPresentationMorningBriefingLabel => '早间简报';
 
   @override

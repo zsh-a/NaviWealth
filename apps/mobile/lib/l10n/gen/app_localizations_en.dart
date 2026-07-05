@@ -5716,6 +5716,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reviews on-device monthly spending anomalies.';
 
   @override
+  String get agentPresentationFirePlanDriftMonitorLabel =>
+      'FIRE Plan Drift Monitor';
+
+  @override
+  String get agentPresentationFirePlanDriftMonitorDescription =>
+      'Reviews withdrawal rate, cash runway, plan ETA, and stress-test drift.';
+
+  @override
   String get agentPresentationMorningBriefingLabel => 'Morning Briefing';
 
   @override

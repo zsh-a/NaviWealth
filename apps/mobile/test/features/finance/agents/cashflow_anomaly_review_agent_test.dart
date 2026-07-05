@@ -13,6 +13,7 @@ import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
+import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
@@ -123,6 +124,7 @@ void main() {
       expect(agents.map((agent) => agent.id), [
         kWeeklyWealthReviewAgentId,
         kCashflowAnomalyReviewAgentId,
+        kFirePlanDriftMonitorAgentId,
       ]);
       expect(artifacts.map((artifact) => artifact.id), [
         'cashflow-anomaly',

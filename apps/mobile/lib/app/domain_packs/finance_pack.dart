@@ -9,6 +9,8 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart'
     show kCashflowAnomalyReviewAgentId;
+import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart'
+    show kFirePlanDriftMonitorAgentId;
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart'
@@ -80,6 +82,14 @@ final DomainPack kFinancePack = DomainPack(
       description: _cashflowAnomalyReviewDescription,
       placement: AgentResultPlacement.domainHome,
     ),
+    AgentPresentationSpec(
+      agentId: kFirePlanDriftMonitorAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.flame,
+      label: _firePlanDriftMonitorLabel,
+      description: _firePlanDriftMonitorDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
   ],
   memoryBootstrapBuilder: _financeMemoryBootstrap,
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
@@ -119,3 +129,9 @@ String _cashflowAnomalyReviewLabel(AppLocalizations l10n) =>
 
 String _cashflowAnomalyReviewDescription(AppLocalizations l10n) =>
     l10n.agentPresentationCashflowAnomalyReviewDescription;
+
+String _firePlanDriftMonitorLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationFirePlanDriftMonitorLabel;
+
+String _firePlanDriftMonitorDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationFirePlanDriftMonitorDescription;

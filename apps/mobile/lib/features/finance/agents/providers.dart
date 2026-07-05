@@ -9,10 +9,15 @@ import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
 import 'cashflow_anomaly_review_agent.dart';
+import 'fire_plan_drift_monitor_agent.dart';
 import 'weekly_wealth_review_agent.dart';
 
 final cashflowAnomalyReviewAgentProvider = Provider<CashflowAnomalyReviewAgent>(
   (ref) => const CashflowAnomalyReviewAgent(),
+);
+
+final firePlanDriftMonitorAgentProvider = Provider<FirePlanDriftMonitorAgent>(
+  (ref) => const FirePlanDriftMonitorAgent(),
 );
 
 final weeklyWealthReviewAgentProvider = Provider<WeeklyWealthReviewAgent>(
@@ -23,6 +28,7 @@ final financeAgentsProvider = Provider<List<Agent>>((ref) {
   return <Agent>[
     ref.watch(weeklyWealthReviewAgentProvider),
     ref.watch(cashflowAnomalyReviewAgentProvider),
+    ref.watch(firePlanDriftMonitorAgentProvider),
   ];
 });
 
