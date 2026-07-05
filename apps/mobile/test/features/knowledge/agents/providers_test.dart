@@ -12,6 +12,7 @@ import 'package:naviwealth/core/background/background_scheduler.dart';
 import 'package:naviwealth/core/background/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/providers.dart';
 import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
@@ -82,6 +83,13 @@ void main() {
     await artifactStore.save(
       _knowledgeArtifact(id: 'knowledge-review-1', createdAt: startedAt),
     );
+    await artifactStore.save(
+      _knowledgeArtifact(
+        id: 'knowledge-assumption-1',
+        agentId: kKnowledgeAssumptionAgentId,
+        createdAt: startedAt.add(const Duration(minutes: 5)),
+      ),
+    );
     await runStore.finishRun(
       ownerUserId: 'user-1',
       agent: const ReviewAgent(),
@@ -113,18 +121,30 @@ void main() {
     await c.read(auth.domainOptInsProvider.future);
 
     expect(await c.read(latestKnowledgeReviewArtifactProvider.future), isNull);
+    expect(
+      await c.read(latestKnowledgeReviewArtifactsProvider.future),
+      isEmpty,
+    );
     expect(await c.read(latestKnowledgeReviewRunProvider.future), isNull);
 
     await c
         .read(auth.domainOptInsProvider.notifier)
         .setEnabled(DomainScope.knowledge, true);
     c.invalidate(latestKnowledgeReviewArtifactProvider);
+    c.invalidate(latestKnowledgeReviewArtifactsProvider);
     c.invalidate(latestKnowledgeReviewRunProvider);
 
     final artifact = await c.read(latestKnowledgeReviewArtifactProvider.future);
+    final artifacts = await c.read(
+      latestKnowledgeReviewArtifactsProvider.future,
+    );
     final run = await c.read(latestKnowledgeReviewRunProvider.future);
 
     expect(artifact?.id, 'knowledge-review-1');
+    expect(artifacts.map((artifact) => artifact.id), [
+      'knowledge-assumption-1',
+      'knowledge-review-1',
+    ]);
     expect(run?.status, AgentRunLifecycleStatus.ready);
     expect(run?.traceId, 'trace-knowledge-review');
   });
@@ -133,11 +153,12 @@ void main() {
 AgentArtifact _knowledgeArtifact({
   required String id,
   required DateTime createdAt,
+  String agentId = kKnowledgeReviewAgentId,
 }) {
   return AgentArtifact(
     id: id,
     ownerUserId: 'user-1',
-    agentId: kKnowledgeReviewAgentId,
+    agentId: agentId,
     domain: 'knowledge',
     kind: AgentArtifactKind.review,
     severity: AgentArtifactSeverity.info,

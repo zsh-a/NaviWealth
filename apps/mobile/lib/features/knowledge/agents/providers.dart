@@ -140,6 +140,28 @@ final latestKnowledgeReviewArtifactProvider =
       return artifacts.isEmpty ? null : artifacts.single;
     });
 
+/// Latest visible KnowledgeOS agent artifacts for the Review tab.
+///
+/// Knowledge contributes several review-placement agents (review, assumptions,
+/// contradictions, inbox triage, routine due). The Review page renders this
+/// list so all user-visible outputs share the same result card surface.
+final latestKnowledgeReviewArtifactsProvider =
+    FutureProvider.autoDispose<List<AgentArtifact>>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.knowledge)) {
+        return const <AgentArtifact>[];
+      }
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      return store.latestForDomain(
+        ownerUserId: ownerUserId,
+        domain: 'knowledge',
+        limit: 5,
+      );
+    });
+
 final latestKnowledgeReviewRunProvider =
     FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
       final optIns = ref.watch(core_auth.domainOptInsProvider).value;

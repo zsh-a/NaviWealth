@@ -183,9 +183,14 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
         context: context,
         artifact: artifact,
         subtitle: metaLabel,
-        onVisibilityChanged: () => ref.invalidate(
-          knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
-        ),
+        onVisibilityChanged: () {
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+          );
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+          );
+        },
       );
     });
   }
@@ -196,6 +201,9 @@ Future<void> _refreshReview(WidgetRef ref) async {
   ref.invalidate(inboxTriageRepositoryProvider);
   ref.invalidate(
     knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+  );
+  ref.invalidate(
+    knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
   );
   ref.invalidate(knowledge_agent_providers.latestKnowledgeReviewRunProvider);
   ref.read(aiSuggestionsRefreshProvider.notifier).state++;
@@ -212,7 +220,7 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final artifactAsync = ref.watch(
-      knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+      knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
     );
     final runAsync = ref.watch(
       knowledge_agent_providers.latestKnowledgeReviewRunProvider,
@@ -220,9 +228,9 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
     return artifactAsync.when(
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
-      data: (artifact) {
-        if (artifact != null) {
-          return _KnowledgeReviewAgentResultCard(artifact: artifact);
+      data: (artifacts) {
+        if (artifacts.isNotEmpty) {
+          return _KnowledgeReviewAgentResultList(artifacts: artifacts);
         }
         return runAsync.when(
           loading: () => const SizedBox.shrink(),
@@ -233,6 +241,25 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _KnowledgeReviewAgentResultList extends StatelessWidget {
+  const _KnowledgeReviewAgentResultList({required this.artifacts});
+
+  final List<AgentArtifact> artifacts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < artifacts.length; i++) ...[
+          _KnowledgeReviewAgentResultCard(artifact: artifacts[i]),
+          if (i != artifacts.length - 1) const SizedBox(height: AppSpacing.s8),
+        ],
+      ],
     );
   }
 }
@@ -269,9 +296,14 @@ class _KnowledgeReviewAgentResultCard extends ConsumerWidget {
         context: context,
         artifact: artifact,
         subtitle: metaLabel,
-        onVisibilityChanged: () => ref.invalidate(
-          knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
-        ),
+        onVisibilityChanged: () {
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+          );
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+          );
+        },
       ),
     );
   }
