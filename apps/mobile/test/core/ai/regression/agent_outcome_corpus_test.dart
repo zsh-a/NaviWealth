@@ -51,6 +51,25 @@ void main() {
       );
     });
 
+    test('FinanceOS first-batch agents have ready outcome coverage', () {
+      final financeReadyAgentIds = {
+        for (final c in agentOutcomeRegressionCorpus)
+          if (c.domain == 'finance' &&
+              c.expectedStatus == AgentOutcomeRegressionStatus.ready)
+            c.agentId,
+      };
+
+      expect(
+        financeReadyAgentIds,
+        containsAll(<String>{
+          'weekly_wealth_review',
+          'cashflow_anomaly_review',
+          'fire_plan_drift_monitor',
+          'options_income_risk_review',
+        }),
+      );
+    });
+
     test('ready cases declare artifact shape, evidence, and top insights', () {
       for (final c in agentOutcomeRegressionCorpus.where(
         (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
