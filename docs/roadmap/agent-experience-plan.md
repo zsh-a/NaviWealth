@@ -50,6 +50,7 @@ Agent 的产品体验应当是：
 - Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution / Knowledge 的真实 agent fixture；`knowledge_routine_due.domain_opt_out` 已接到生产 domain opt-in composition 层面的可执行 no-run eval，`execution.review.budget_exhausted` 已接到真实 runner failed-outcome eval。
 - Health Morning Briefing 已接入 agent outcome corpus 和 evaluator，覆盖 briefing artifact 的 insight / evidence / severity contract。
 - Health Weekly Summary ready outcome 已接入 agent outcome corpus 和 evaluator，覆盖 weekly review artifact 的 insight / evidence / severity contract；noFinding 仍覆盖 empty-week fixture。
+- Knowledge Contradiction ready outcome 已接入 agent outcome corpus 和 evaluator，覆盖 invalidated-assumption alert artifact 的 insight / evidence / severity contract；prompt-injection guard 仍覆盖 noFinding eval。
 - Knowledge Assumption 和 Routine Due ready outcomes 已接入 agent outcome corpus 和 evaluator，覆盖 stale assumption 与 due routine artifact contracts。
 
 ## 体验模型

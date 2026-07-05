@@ -316,6 +316,15 @@ void main() {
     expect(artifact.insights.single.title, 'Invalidated assumptions');
     expect(artifact.evidence.single.id, 'd1');
     expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'knowledge.contradiction.ready',
+      ),
+      result: result,
+      artifact: artifact,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
   });
 
   test('persists source trace id onto result, artifact, and memory', () async {

@@ -190,6 +190,17 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
+    id: 'knowledge.contradiction.ready',
+    agentId: 'knowledge_contradiction',
+    domain: 'knowledge',
+    snapshotId: 'knowledge.contradiction.invalidated_assumption',
+    expectedStatus: AgentOutcomeRegressionStatus.ready,
+    expectedArtifactKind: AgentArtifactKind.alert,
+    expectedSeverity: AgentArtifactSeverity.warning,
+    expectedTopInsightTitles: <String>{'Invalidated assumptions'},
+    expectedEvidenceTypes: <String>{'knowledge_decision'},
+  ),
+  AgentOutcomeRegressionCase(
     id: 'knowledge.contradiction.prompt_injection_guard',
     agentId: 'knowledge_contradiction',
     domain: 'knowledge',
