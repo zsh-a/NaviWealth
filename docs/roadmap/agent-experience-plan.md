@@ -22,21 +22,23 @@ Agent 的产品体验应当是：
 | 能力 | 当前入口 | 现状 |
 |---|---|---|
 | Agent 抽象 | `apps/mobile/lib/core/ai/agents/agent.dart` | 有 `Agent`、`AgentRunResult`、schedule |
-| Agent 运行 | `apps/mobile/lib/core/ai/agents/agent_runner.dart` | 可 `runOnce` / `tick`，但 last-run 只在内存 |
+| Agent 运行 | `apps/mobile/lib/core/ai/agents/agent_runner.dart` + `agent_run_store.dart` | `runOnce` / `tick` 写入 `AgentRunStore`，调度读取 last non-failed run |
 | Agent 注册 | `apps/mobile/lib/app/domain_composition.dart` + `DomainPack.agentBuilder` | active domain scoped |
+| Agent 结果 | `apps/mobile/lib/core/ai/agents/agent_artifact.dart` + `agent_artifact_store.dart` | 统一 artifact contract，domain home/settings 可复用 |
+| Agent 展示 | `AgentPresentationSpec` + `AgentResultCard` / `AgentRunStatusCard` | DomainPack 贡献展示元数据，UI 不理解 agent 私有 payload |
+| Agent 管理 | `apps/mobile/lib/features/settings/ui/agents_settings_page.dart` | 可查看状态、手动运行、打开最近 artifact 和 run history |
 | Native runtime | `apps/mobile/lib/app/agent_runtime/` | FRB step runner、tool host、trace recorder 已接入 |
 | AI 入口 | `apps/mobile/lib/core/ai/composition/ask_ai.dart` | UI 调用已收敛到 `askAi()` |
 | Intent envelope | `apps/mobile/lib/core/ai/intent/ai_intent_invocation.dart` | 有 source / intent / object / domain |
 | Proposal 应用 | `apps/mobile/lib/core/ai/composition/` + domain appliers | 已按 active `DomainPack` 聚合 |
 | Memory / event | `apps/mobile/lib/core/ai/local/memory/` | Agent 可写 event 和 memory |
+| Regression | `apps/mobile/lib/core/ai/regression/agent_outcome_corpus.dart` | 有 agent outcome corpus contract test |
 
-主要缺口：
+剩余缺口：
 
-- Agent run 状态未持久化，重启后 `_lastRunAt` 丢失。
-- Agent 结果没有统一的 UI artifact 契约，领域页面各自读取 memory / event。
-- HealthOS 的后台 due flag 模式没有沉淀为跨域通用 scheduler。
-- Settings 缺少统一 agent 管理面。
-- FinanceOS 作为 always-on seed domain 还没有 agent 结果体验。
+- `agent.showEvidence` / `agent.createPlanFromResult` 的 follow-up UI 覆盖还不如 `agent.explainResult` 完整。
+- Agent artifact detail 的 trace / transparency entry 仍可加强成统一入口。
+- Regression corpus 已有 contract test，但还没有覆盖每个 FinanceOS agent 的固定输入快照。
 
 ## 体验模型
 
