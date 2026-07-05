@@ -30,6 +30,7 @@ import '../data/health_notification_preferences.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
+import 'recovery_alert_agent.dart';
 import 'weekly_summary_agent.dart';
 
 /// Shorter lookback for periodic foreground catch-up after a background wake.
@@ -290,6 +291,23 @@ final latestMorningBriefingArtifactProvider =
       final artifacts = await store.latestForAgent(
         ownerUserId: ownerUserId,
         agentId: kMorningBriefingAgentId,
+        limit: 1,
+      );
+      return artifacts.isEmpty ? null : artifacts.single;
+    });
+
+/// Most recent user-visible Recovery Alert artifact for Health Today.
+final latestRecoveryAlertArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final artifacts = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kRecoveryAlertAgentId,
         limit: 1,
       );
       return artifacts.isEmpty ? null : artifacts.single;

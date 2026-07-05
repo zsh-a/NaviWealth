@@ -79,6 +79,9 @@ class HealthTodayPage extends ConsumerWidget {
             health_agent_providers.latestMorningBriefingArtifactProvider,
           );
           ref.invalidate(
+            health_agent_providers.latestRecoveryAlertArtifactProvider,
+          );
+          ref.invalidate(
             health_agent_providers.latestWeeklySummaryArtifactProvider,
           );
           ref.invalidate(health_agent_providers.latestWeeklySummaryRunProvider);
@@ -91,6 +94,7 @@ class HealthTodayPage extends ConsumerWidget {
             FadeSlideIn(child: _DataSourcePanel()),
             SizedBox(height: AppSpacing.s16),
             FadeSlideIn(child: _RecoveryHero()),
+            FadeSlideIn(child: _RecoveryAlertPanel()),
             SizedBox(height: AppSpacing.s16),
             FadeSlideIn(child: _MetricGrid()),
             SizedBox(height: AppSpacing.s16),

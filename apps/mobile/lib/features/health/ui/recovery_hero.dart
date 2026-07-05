@@ -93,6 +93,37 @@ class _RecoveryHero extends ConsumerWidget {
   }
 }
 
+class _RecoveryAlertPanel extends ConsumerWidget {
+  const _RecoveryAlertPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final artifact = ref
+        .watch(health_agent_providers.latestRecoveryAlertArtifactProvider)
+        .value;
+    if (artifact == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final metaLabel = l10n.healthBriefingUpdated(
+      _ago(l10n, artifact.createdAt),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
+      child: AgentResultCard(
+        artifact: artifact,
+        metaLabel: metaLabel,
+        onOpen: () => showAgentArtifactSheet(
+          context: context,
+          artifact: artifact,
+          subtitle: metaLabel,
+          onVisibilityChanged: () => ref.invalidate(
+            health_agent_providers.latestRecoveryAlertArtifactProvider,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// 7-day HRV sparkline shown beneath the recovery card.
 class _RecoverySparkline extends ConsumerWidget {
   const _RecoverySparkline();

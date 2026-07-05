@@ -14,6 +14,11 @@ import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_pl
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart' as auth;
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/features/health/agents/providers.dart'
+    as health_agent_providers;
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
@@ -199,6 +204,47 @@ void main() {
       expect(artifact.actions.single.objectType, kAgentArtifactObjectType);
     },
   );
+
+  test(
+    'latest recovery alert artifact provider returns newest alert',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(auth.domainOptInsProvider.future);
+      await container
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+      await store.save(
+        _recoveryArtifact(
+          id: 'recovery-old',
+          createdAt: DateTime.utc(2026, 6, 28, 8),
+        ),
+      );
+      await store.save(
+        _recoveryArtifact(
+          id: 'recovery-new',
+          createdAt: DateTime.utc(2026, 6, 29, 8),
+        ),
+      );
+
+      final artifact = await container.read(
+        health_agent_providers.latestRecoveryAlertArtifactProvider.future,
+      );
+
+      expect(artifact?.id, 'recovery-new');
+    },
+  );
 }
 
 AgentContext _context() {
@@ -209,6 +255,23 @@ AgentContext _context() {
 }
 
 final _refProvider = Provider<Ref>((ref) => ref);
+
+AgentArtifact _recoveryArtifact({
+  required String id,
+  required DateTime createdAt,
+}) {
+  return AgentArtifact(
+    id: id,
+    ownerUserId: _owner,
+    agentId: kRecoveryAlertAgentId,
+    domain: 'health',
+    kind: AgentArtifactKind.alert,
+    severity: AgentArtifactSeverity.attention,
+    title: 'Recovery Alert',
+    summary: 'HRV has been below baseline.',
+    createdAt: createdAt,
+  );
+}
 
 AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,
