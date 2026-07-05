@@ -86,7 +86,7 @@ void main() {
       id: 'weekly_wealth_review:2026-07-05',
       dismissedAt: DateTime.utc(2026, 7, 5, 10),
     );
-    final container = _container(db);
+    final container = _container(db, agents: const <Agent>[_FakeAgent()]);
 
     final output = await _withRef(
       container,
@@ -164,7 +164,7 @@ void main() {
           createdAt: DateTime.utc(2026, 7, 5),
         ),
       );
-      final container = _container(db);
+      final container = _container(db, agents: const <Agent>[_HealthAgent()]);
       await container.read(auth.domainOptInsProvider.future);
       await container
           .read(auth.domainOptInsProvider.notifier)
@@ -184,6 +184,74 @@ void main() {
       expect(artifact['id'], 'weekly_summary:2026-07-05');
     },
   );
+
+  test('get_agent_artifacts hides artifacts for unregistered agents', () async {
+    final store = SqliteAgentArtifactStore(db: db);
+    await store.save(
+      AgentArtifact(
+        id: 'retired_health_agent:2026-07-04',
+        ownerUserId: _owner,
+        agentId: 'retired_health_agent',
+        domain: 'health',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Retired Agent',
+        summary: 'Historical result from an unregistered agent.',
+        createdAt: DateTime.utc(2026, 7, 4),
+      ),
+    );
+    await store.save(
+      AgentArtifact(
+        id: 'weekly_summary:2026-07-05',
+        ownerUserId: _owner,
+        agentId: 'weekly_summary',
+        domain: 'health',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Weekly Summary',
+        summary: 'Registered result.',
+        createdAt: DateTime.utc(2026, 7, 5),
+      ),
+    );
+    final container = _container(db, agents: const <Agent>[_HealthAgent()]);
+    await container.read(auth.domainOptInsProvider.future);
+    await container
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.health, true);
+
+    final byId = await _withRef(
+      container,
+      (ref) => const GetAgentArtifactsTool().invoke(_ctx(ref), {
+        'artifact_id': 'retired_health_agent:2026-07-04',
+      }),
+    );
+    final byAgent = await _withRef(
+      container,
+      (ref) => const GetAgentArtifactsTool().invoke(_ctx(ref), {
+        'agent_id': 'retired_health_agent',
+      }),
+    );
+    final byDomain = await _withRef(
+      container,
+      (ref) => const GetAgentArtifactsTool().invoke(_ctx(ref), {
+        'domain': 'health',
+        'limit': 5,
+      }),
+    );
+
+    final byIdJson = byId! as Map<String, Object?>;
+    final byAgentJson = byAgent! as Map<String, Object?>;
+    final byDomainJson = byDomain! as Map<String, Object?>;
+    expect(byIdJson['artifacts'], isEmpty);
+    expect(byAgentJson['artifacts'], isEmpty);
+    expect(byAgentJson['guidance'], contains('agent 当前未注册'));
+    final domainArtifacts = byDomainJson['artifacts']! as List<Object?>;
+    expect(domainArtifacts, hasLength(1));
+    expect(
+      (domainArtifacts.single! as Map<String, Object?>)['id'],
+      'weekly_summary:2026-07-05',
+    );
+  });
 
   test('get_agent_runs reads latest run by agent id', () async {
     final runStore = SqliteAgentRunStore(db: db);

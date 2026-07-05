@@ -57,6 +57,9 @@ class GetAgentArtifactsTool implements DeviceTool {
     final store = await ctx.ref.read(agentArtifactStoreProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final domainOptIns = await ctx.ref.read(auth.domainOptInsProvider.future);
+    final activeAgentIds = {
+      for (final agent in ctx.ref.read(agentRegistryProvider)) agent.id,
+    };
     final artifactId = _trimmed(input['artifact_id']);
     final agentId = _trimmed(input['agent_id']);
     final domain = _trimmed(input['domain']);
@@ -67,10 +70,17 @@ class GetAgentArtifactsTool implements DeviceTool {
       final artifact = await store.read(artifactId);
       if (artifact != null &&
           artifact.ownerUserId == ownerUserId &&
-          _domainIsActive(artifact.domain, domainOptIns)) {
+          _artifactIsReadable(artifact, domainOptIns, activeAgentIds)) {
         artifacts.add(artifact);
       }
     } else if (agentId != null) {
+      if (!activeAgentIds.contains(agentId)) {
+        return <String, Object?>{
+          'artifacts': const <Map<String, Object?>>[],
+          'guidance':
+              '该 agent 当前未注册或所属 domain 未启用。不要读取或解释未注册 agent 的 artifact；请先确认对应 domain 和 agent 仍可用。',
+        };
+      }
       final rows = await store.latestForAgent(
         ownerUserId: ownerUserId,
         agentId: agentId,
@@ -78,7 +88,8 @@ class GetAgentArtifactsTool implements DeviceTool {
       );
       artifacts.addAll(
         rows.where(
-          (artifact) => _domainIsActive(artifact.domain, domainOptIns),
+          (artifact) =>
+              _artifactIsReadable(artifact, domainOptIns, activeAgentIds),
         ),
       );
     } else if (domain != null) {
@@ -90,10 +101,13 @@ class GetAgentArtifactsTool implements DeviceTool {
         };
       }
       artifacts.addAll(
-        await store.latestForDomain(
+        (await store.latestForDomain(
           ownerUserId: ownerUserId,
           domain: domain,
           limit: limit,
+        )).where(
+          (artifact) =>
+              _artifactIsReadable(artifact, domainOptIns, activeAgentIds),
         ),
       );
     } else {
@@ -175,6 +189,15 @@ class GetAgentRunsTool implements DeviceTool {
 bool _domainIsActive(String wire, DomainOptIns optIns) {
   final scope = DomainScope.tryParse(wire);
   return scope != null && optIns.contains(scope);
+}
+
+bool _artifactIsReadable(
+  AgentArtifact artifact,
+  DomainOptIns optIns,
+  Set<String> activeAgentIds,
+) {
+  return activeAgentIds.contains(artifact.agentId) &&
+      _domainIsActive(artifact.domain, optIns);
 }
 
 Map<String, Object?> _artifactToWire(AgentArtifact artifact) {

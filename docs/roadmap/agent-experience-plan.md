@@ -44,7 +44,7 @@ Agent 的产品体验应当是：
 - `AgentRunStore` 已有 focused SQLite store 测试覆盖 running row、completed/skipped/failed lifecycle 映射，以及 failed 不推进 last non-failed run。
 - Intent policy 已覆盖 active-domain catalog、off-catalog debug assert、以及 asserts-off fallback prompt，确保 agent follow-up 不因未注册 intent 破坏生产兜底。
 - Agent artifact detail 已提供 local transparency trace entry，点击后进入 `SettingsRoutes.aiTransparencyDetail(traceId)`；组件测试覆盖 route handoff。
-- Agent result read tools 已按当前 domain opt-in / active agent registry 过滤 artifact 与 run；inactive domain 的历史结果不会被 AI follow-up 工具读取或解释。
+- Agent result read tools 已按当前 domain opt-in / active agent registry 过滤 artifact 与 run；`artifact_id` / `agent_id` / `domain` 三条 artifact 读取路径都会拒绝未注册 agent 或 inactive domain 的历史结果，避免 AI follow-up 工具读取或解释已下线 surface。
 - Agent artifact store 已覆盖 deterministic artifact upsert 会保留本地 dismissed / snoozed visibility state，防止 agent 重跑把用户关闭的结果重新顶回页面。
 - Agent persistence 已覆盖 fresh schema 的 `agent_runs.trace_id` / artifact visibility columns，并有 v31→current 迁移测试验证旧 agent run/artifact 数据保留且补齐 trace / dismissed / snoozed 列；testing infrastructure contract 锁住该迁移用例。
 - Agent run / artifact / preference 表保持 local-only；sync 和 backup registry 都有负向 contract 防止 agent lifecycle 表进入云同步或备份面。
