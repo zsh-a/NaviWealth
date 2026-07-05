@@ -239,13 +239,9 @@ void main() {
   });
 
   test('runIfDue bypasses normal schedule gate for due flags', () async {
+    final dueAt = DateTime.utc(2026, 7, 5, 8);
     SharedPreferences.setMockInitialValues(<String, Object>{
-      _task.dueAtPreferenceKey: DateTime.utc(
-        2026,
-        7,
-        5,
-        8,
-      ).millisecondsSinceEpoch,
+      _task.dueAtPreferenceKey: dueAt.millisecondsSinceEpoch,
     });
     final prefs = await SharedPreferences.getInstance();
     final db = makeTestDatabase();
@@ -268,7 +264,7 @@ void main() {
       runStore: runStore,
       preferenceStore: preferences,
     );
-    final previous = DateTime.now().toUtc();
+    final previous = dueAt.subtract(const Duration(days: 1));
     await runStore.markRunning(
       ownerUserId: 'u',
       agent: agent,
