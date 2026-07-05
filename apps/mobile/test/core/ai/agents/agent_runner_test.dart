@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_runner.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -52,6 +54,10 @@ class _StubAgent implements Agent {
 
 MemoryRuntime _runtime() {
   final db = makeTestDatabase();
+  return _runtimeForDb(db);
+}
+
+MemoryRuntime _runtimeForDb(AppDatabase db) {
   return MemoryRuntime(
     embedder: StubEmbedder(),
     memoryStore: SqliteMemoryStore(db: db),
@@ -113,9 +119,9 @@ void main() {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
     final agent = _StubAgent(id: 'stub');
-    expect(runner.lastRunAt('stub'), isNull);
+    expect(await runner.lastRunAt('stub'), isNull);
     await runner.runOnce(agent, _context(rt, now));
-    expect(runner.lastRunAt('stub'), now);
+    expect(await runner.lastRunAt('stub'), now);
   });
 
   test('failed runs do NOT advance lastRunAt', () async {
@@ -123,7 +129,7 @@ void main() {
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
     final agent = _StubAgent(id: 'boom', throws: 'nope');
     await runner.runOnce(agent, _context(rt, now));
-    expect(runner.lastRunAt('boom'), isNull);
+    expect(await runner.lastRunAt('boom'), isNull);
   });
 
   test('skipped runs advance lastRunAt so tick does not loop', () async {
@@ -140,7 +146,7 @@ void main() {
     );
 
     await runner.runOnce(agent, _context(rt, now));
-    expect(runner.lastRunAt('quiet'), now);
+    expect(await runner.lastRunAt('quiet'), now);
 
     final tooSoon = await runner.tick(
       agents: [agent],
@@ -148,6 +154,44 @@ void main() {
     );
     expect(tooSoon, isEmpty);
     expect(agent.runCount, 1);
+  });
+
+  test('persisted run store gates a new runner instance', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentRunStore(db: db);
+    final rt = _runtimeForDb(db);
+    final firstRunner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: store,
+    );
+    final secondRunner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: store,
+    );
+    final agent = _StubAgent(
+      id: 'persisted',
+      schedule: const AgentSchedule(interval: Duration(hours: 1)),
+    );
+
+    await firstRunner.tick(agents: [agent], context: _context(rt, now));
+    expect(agent.runCount, 1);
+
+    final tooSoon = await secondRunner.tick(
+      agents: [agent],
+      context: _context(rt, now.add(const Duration(minutes: 30))),
+    );
+
+    expect(tooSoon, isEmpty);
+    expect(agent.runCount, 1);
+    final latest = await store.latestForAgent(
+      ownerUserId: 'u',
+      agentId: 'persisted',
+    );
+    expect(latest?.status, AgentRunLifecycleStatus.ready);
+    expect(latest?.trigger, AgentRunTrigger.schedule);
   });
 
   test('tick fires every agent whose schedule says yes', () async {

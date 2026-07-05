@@ -17,10 +17,12 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/current_user.dart';
+import '../../persistence/providers.dart';
 import '../contracts/event_record.dart';
 import '../local/memory/memory_runtime.dart';
 import '../local/memory/providers.dart';
 import 'agent.dart';
+import 'agent_run_store.dart';
 
 /// Source label used for the `EventRecord` of every agent run.
 const String kAgentRunEventSource = 'agent_run';
@@ -29,21 +31,30 @@ const String kAgentRunEventTypeSkipped = 'agent_run_skipped';
 const String kAgentRunEventTypeFailed = 'agent_run_failed';
 
 class AgentRunner {
-  AgentRunner({required this.runtime, required this.ownerUserId});
+  AgentRunner({
+    required this.runtime,
+    required this.ownerUserId,
+    AgentRunStore? runStore,
+  }) : _runStore = runStore ?? InMemoryAgentRunStore();
 
   final MemoryRuntime runtime;
   final String ownerUserId;
-
-  /// Tracks each agent's last non-failed run so [tick] can apply the
-  /// schedule's interval gate. Lives in-memory because cron persistence
-  /// is platform-side (D-2.5 follow-up); MVP relies on the app being
-  /// open at the schedule moment.
-  final Map<String, DateTime> _lastRunAt = <String, DateTime>{};
+  final AgentRunStore _runStore;
 
   /// Fire [agent] right now, regardless of schedule. Used by manual
   /// "Run X now" affordances and by tests.
-  Future<AgentRunResult> runOnce(Agent agent, AgentContext ctx) async {
+  Future<AgentRunResult> runOnce(
+    Agent agent,
+    AgentContext ctx, {
+    AgentRunTrigger trigger = AgentRunTrigger.manual,
+  }) async {
     final start = ctx.now;
+    await _runStore.markRunning(
+      ownerUserId: ownerUserId,
+      agent: agent,
+      startedAt: start,
+      trigger: trigger,
+    );
     AgentRunResult result;
     try {
       result = await agent.run(ctx);
@@ -55,9 +66,13 @@ class AgentRunner {
         error: e.toString(),
       );
     }
-    if (result.status != AgentRunStatus.failed) {
-      _lastRunAt[agent.id] = result.startedAt;
-    }
+    await _runStore.finishRun(
+      ownerUserId: ownerUserId,
+      agent: agent,
+      runStartedAt: start,
+      result: result,
+      trigger: trigger,
+    );
     await _recordRunEvent(agent, result);
     return result;
   }
@@ -70,14 +85,18 @@ class AgentRunner {
   Future<List<AgentRunResult>> tick({
     required List<Agent> agents,
     required AgentContext context,
+    AgentRunTrigger trigger = AgentRunTrigger.schedule,
   }) async {
     final results = <AgentRunResult>[];
     for (final agent in agents) {
-      final last = _lastRunAt[agent.id];
+      final last = await _runStore.lastNonFailedRunAt(
+        ownerUserId: ownerUserId,
+        agentId: agent.id,
+      );
       if (!agent.schedule.shouldFire(now: context.now, lastRunAt: last)) {
         continue;
       }
-      final result = await runOnce(agent, context);
+      final result = await runOnce(agent, context, trigger: trigger);
       results.add(result);
     }
     return results;
@@ -85,7 +104,12 @@ class AgentRunner {
 
   /// When the last non-failed run was. Returns `null` if the agent
   /// hasn't run in this process.
-  DateTime? lastRunAt(String agentId) => _lastRunAt[agentId];
+  Future<DateTime?> lastRunAt(String agentId) {
+    return _runStore.lastNonFailedRunAt(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+    );
+  }
 
   Future<void> _recordRunEvent(Agent agent, AgentRunResult result) async {
     final type = switch (result.status) {
@@ -130,6 +154,11 @@ class AgentRunner {
 /// (with a fresh `_lastRunAt` map) is built.
 final agentRunnerProvider = FutureProvider<AgentRunner>((ref) async {
   final runtime = await ref.watch(memoryRuntimeProvider.future);
+  final db = await ref.watch(appDatabaseProvider.future);
   final ownerUserId = await ref.read(currentUserIdProvider)();
-  return AgentRunner(runtime: runtime, ownerUserId: ownerUserId);
+  return AgentRunner(
+    runtime: runtime,
+    ownerUserId: ownerUserId,
+    runStore: SqliteAgentRunStore(db: db),
+  );
 });

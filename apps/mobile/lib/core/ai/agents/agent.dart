@@ -54,6 +54,7 @@ class AgentRunResult {
     this.summary,
     this.payload = const <String, Object?>{},
     this.memoryId,
+    this.artifactId,
     this.error,
   });
 
@@ -104,6 +105,11 @@ class AgentRunResult {
   /// If the agent wrote a memory record, this is its id (so callers
   /// can re-read it). `null` for skipped / failed runs.
   final String? memoryId;
+
+  /// If the agent produced a user-visible artifact, this is its id.
+  /// `null` for skipped / failed runs and for legacy agents that only
+  /// write memory/events.
+  final String? artifactId;
 
   final String? error;
 

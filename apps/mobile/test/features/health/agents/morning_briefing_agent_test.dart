@@ -1,10 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
 
@@ -62,6 +65,10 @@ EventRecord _financeEvent({
 
 MemoryRuntime _runtime() {
   final db = makeTestDatabase();
+  return _runtimeForDb(db);
+}
+
+MemoryRuntime _runtimeForDb(AppDatabase db) {
   return MemoryRuntime(
     embedder: StubEmbedder(),
     memoryStore: SqliteMemoryStore(db: db),
@@ -112,6 +119,58 @@ void main() {
         expect(out.memoryId, isNotNull);
         expect(out.payload['health_event_count'], 2);
         expect(out.payload['finance_event_count'], 2);
+      },
+    );
+
+    test(
+      'persists a unified briefing artifact when a store is provided',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final rt = _runtimeForDb(db);
+        final store = SqliteAgentArtifactStore(db: db);
+
+        final out = await MorningBriefingAgent.synthesize(
+          events: [
+            _sleepEvent(
+              id: 'h1',
+              at: yesterdayEvening,
+              seconds: 4.5 * 3600.0,
+              extraEntities: {'short_sleep'},
+            ),
+            _hrvEvent(id: 'h2', at: yesterdayEvening, ms: 44),
+            _financeEvent(id: 'f1', at: yesterdayEvening, type: 'trade_opened'),
+          ],
+          ownerUserId: 'u',
+          startedAt: now,
+          finishedAt: now.add(const Duration(milliseconds: 50)),
+          runtime: rt,
+          artifactStore: store,
+        );
+
+        expect(out.status, AgentRunStatus.completed);
+        expect(out.artifactId, '$kMorningBriefingAgentId:2026-05-27');
+
+        final artifact = await store.read(out.artifactId!);
+        expect(artifact, isNotNull);
+        expect(artifact!.kind, AgentArtifactKind.briefing);
+        expect(artifact.domain, 'health');
+        expect(artifact.severity, AgentArtifactSeverity.attention);
+        expect(artifact.memoryId, out.memoryId);
+        expect(artifact.summary, out.summary);
+        expect(
+          artifact.insights.map((insight) => insight.title),
+          containsAll(['Sleep', 'HRV', 'Finance']),
+        );
+        expect(
+          artifact.evidence.map((evidence) => evidence.id),
+          contains('h1'),
+        );
+        expect(
+          artifact.evidence.map((evidence) => evidence.id),
+          contains('f1'),
+        );
+        expect(artifact.actions.single.kind, 'review');
       },
     );
 

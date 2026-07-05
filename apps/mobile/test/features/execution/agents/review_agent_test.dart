@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -137,6 +139,7 @@ void main() {
 
     expect(result.status, AgentRunStatus.completed);
     expect(result.memoryId, '$kExecutionReviewMemorySource:2026-06-05');
+    expect(result.artifactId, '$kExecutionReviewAgentId:2026-06-05');
     expect(result.summary, contains('1 blocked'));
     expect(result.summary, contains('1 active commitments'));
 
@@ -154,6 +157,26 @@ void main() {
       hits.single.record.entities,
       contains('execution_action:action-review'),
     );
+
+    final artifact = await SqliteAgentArtifactStore(
+      db: db,
+    ).read('$kExecutionReviewAgentId:2026-06-05');
+    expect(artifact, isNotNull);
+    expect(artifact!.agentId, kExecutionReviewAgentId);
+    expect(artifact.domain, 'execution');
+    expect(artifact.kind, AgentArtifactKind.review);
+    expect(artifact.severity, AgentArtifactSeverity.attention);
+    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.summary, result.summary);
+    expect(
+      artifact.insights.map((insight) => insight.title),
+      containsAll(['Today focus', 'Blocked work', 'Due work']),
+    );
+    expect(
+      artifact.evidence.map((evidence) => evidence.id),
+      contains('action-review'),
+    );
+    expect(artifact.actions.single.kind, 'review');
   });
 
   test('skips when there is nothing to review', () async {

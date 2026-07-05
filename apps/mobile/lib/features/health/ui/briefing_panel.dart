@@ -24,6 +24,9 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
         health_agent_providers.manualMorningBriefingRunProvider.future,
       );
       ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
+      ref.invalidate(
+        health_agent_providers.latestMorningBriefingArtifactProvider,
+      );
     } on Object catch (e) {
       setState(() => _errorMessage = e.toString());
     } finally {
@@ -33,18 +36,34 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(
+    final artifactAsync = ref.watch(
+      health_agent_providers.latestMorningBriefingArtifactProvider,
+    );
+    final memoryAsync = ref.watch(
       health_agent_providers.latestMorningBriefingProvider,
     );
     final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        async.when(
+        artifactAsync.when(
           loading: () => const _BriefingSkeleton(),
           error: (e, _) => _BriefingError(message: '$e'),
-          data: (record) =>
-              _BriefingCard(record: record, running: _running, onRun: _run),
+          data: (artifact) {
+            if (artifact != null) {
+              return _BriefingArtifactCard(
+                artifact: artifact,
+                running: _running,
+                onRun: _run,
+              );
+            }
+            return memoryAsync.when(
+              loading: () => const _BriefingSkeleton(),
+              error: (e, _) => _BriefingError(message: '$e'),
+              data: (record) =>
+                  _BriefingCard(record: record, running: _running, onRun: _run),
+            );
+          },
         ),
         if (_errorMessage != null) ...[
           const SizedBox(height: AppSpacing.s8),
@@ -56,6 +75,57 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _BriefingArtifactCard extends StatelessWidget {
+  const _BriefingArtifactCard({
+    required this.artifact,
+    required this.running,
+    required this.onRun,
+  });
+
+  final AgentArtifact artifact;
+  final bool running;
+  final VoidCallback onRun;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    void openArtifact() {
+      showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: l10n.healthBriefingUpdated(_ago(l10n, artifact.createdAt)),
+      );
+    }
+
+    return AgentResultCard(
+      artifact: artifact,
+      metaLabel: l10n.healthBriefingUpdated(_ago(l10n, artifact.createdAt)),
+      footer: Wrap(
+        spacing: AppSpacing.s8,
+        runSpacing: AppSpacing.s8,
+        children: [
+          AppQuietButton(
+            label: 'Review',
+            onPress: openArtifact,
+            prefix: const Icon(
+              FLucideIcons.externalLink,
+              size: AppIconSizes.xs,
+            ),
+          ),
+          AppQuietButton(
+            label: running
+                ? l10n.healthBriefingGenerating
+                : l10n.healthBriefingUpdate,
+            onPress: running ? null : onRun,
+            prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+            busy: running,
+          ),
+        ],
+      ),
     );
   }
 }

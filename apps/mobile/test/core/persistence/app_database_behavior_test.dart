@@ -552,6 +552,10 @@ void main() {
             'idx_recurring_pattern_obs_series',
             'knowledge_inbox_triage',
             'idx_knowledge_inbox_triage_owner_triaged',
+            'agent_runs',
+            'idx_agent_runs_agent_started',
+            'agent_artifacts',
+            'idx_agent_artifacts_domain_created',
             'securities_catalog_fts'
           )
           ''').get();
@@ -577,6 +581,10 @@ void main() {
         'idx_recurring_pattern_obs_series',
         'knowledge_inbox_triage',
         'idx_knowledge_inbox_triage_owner_triaged',
+        'agent_runs',
+        'idx_agent_runs_agent_started',
+        'agent_artifacts',
+        'idx_agent_artifacts_domain_created',
         'securities_catalog_fts',
       ]),
     );

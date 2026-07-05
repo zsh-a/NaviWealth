@@ -18,6 +18,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
@@ -70,6 +72,9 @@ class HealthTodayPage extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(healthTodaySnapshotProvider);
           ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
+          ref.invalidate(
+            health_agent_providers.latestMorningBriefingArtifactProvider,
+          );
           await ref.read(healthTodaySnapshotProvider.future);
         },
         child: ListView(

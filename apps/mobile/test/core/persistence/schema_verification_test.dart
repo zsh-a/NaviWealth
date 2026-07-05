@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 29', () {
-      expect(db.schemaVersion, 29);
+    test('is 31', () {
+      expect(db.schemaVersion, 31);
     });
   });
 
@@ -267,6 +267,57 @@ void main() {
           'reasoning_text',
           'usage_json',
           'progress_json',
+        ]),
+      );
+    });
+
+    test('agent_runs table has lifecycle columns', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(agent_runs)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'owner_user_id',
+          'agent_id',
+          'agent_name',
+          'status',
+          'trigger',
+          'started_at',
+          'finished_at',
+          'summary',
+          'error',
+          'memory_id',
+          'artifact_id',
+        ]),
+      );
+    });
+
+    test('agent_artifacts table has result columns', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(agent_artifacts)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'owner_user_id',
+          'agent_id',
+          'domain',
+          'kind',
+          'severity',
+          'title',
+          'summary',
+          'insights_json',
+          'evidence_json',
+          'actions_json',
+          'memory_id',
+          'trace_id',
+          'created_at',
+          'expires_at',
         ]),
       );
     });

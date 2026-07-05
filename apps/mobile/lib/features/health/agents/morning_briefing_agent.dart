@@ -21,7 +21,10 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
@@ -84,6 +87,9 @@ class MorningBriefingAgent implements Agent {
       startedAt: start,
       finishedAt: DateTime.now().toUtc(),
       runtime: runtime,
+      artifactStore: await ctx.ref.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      ),
     );
 
     if (result.status == AgentRunStatus.completed && notifier != null) {
@@ -101,6 +107,7 @@ class MorningBriefingAgent implements Agent {
     required DateTime finishedAt,
     required MemoryRuntime runtime,
     BriefingSynthesizer synthesizer = const ProgrammaticBriefingSynthesizer(),
+    AgentArtifactStore? artifactStore,
   }) {
     final agent = MorningBriefingAgent(synthesizer: synthesizer);
     return agent._synthesizeAndPersist(
@@ -109,6 +116,7 @@ class MorningBriefingAgent implements Agent {
       startedAt: startedAt,
       finishedAt: finishedAt,
       runtime: runtime,
+      artifactStore: artifactStore,
     );
   }
 
@@ -118,6 +126,7 @@ class MorningBriefingAgent implements Agent {
     required DateTime startedAt,
     required DateTime finishedAt,
     required MemoryRuntime runtime,
+    AgentArtifactStore? artifactStore,
   }) async {
     final healthEvents = events
         .where((e) => e.source.startsWith('health'))
@@ -158,6 +167,7 @@ class MorningBriefingAgent implements Agent {
     }
 
     final memoryId = '$kMorningBriefingMemorySource:$dayKey';
+    final artifactId = '$kMorningBriefingAgentId:$dayKey';
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
@@ -180,6 +190,7 @@ class MorningBriefingAgent implements Agent {
           'finance_summary': ?output.financeLine,
           'synthesis_source': output.source.name,
         },
+        'artifact_id': artifactId,
       },
       entities: <String>{'morning_briefing', 'briefing', dayKey},
       importance: 0.6,
@@ -189,6 +200,17 @@ class MorningBriefingAgent implements Agent {
       updatedAt: finishedAt.toUtc(),
     );
     await runtime.remember(memory);
+    await artifactStore?.save(
+      _artifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        memoryId: memoryId,
+        createdAt: startedAt,
+        output: output,
+        healthEvents: healthEvents,
+        financeEvents: financeEvents,
+      ),
+    );
 
     return AgentRunResult(
       agentId: kMorningBriefingAgentId,
@@ -202,6 +224,78 @@ class MorningBriefingAgent implements Agent {
         'synthesis_source': output.source.name,
       },
       memoryId: memoryId,
+      artifactId: artifactStore == null ? null : artifactId,
+    );
+  }
+
+  static AgentArtifact _artifact({
+    required String id,
+    required String ownerUserId,
+    required String memoryId,
+    required DateTime createdAt,
+    required BriefingOutput output,
+    required List<EventRecord> healthEvents,
+    required List<EventRecord> financeEvents,
+  }) {
+    final shortSleep = output.sleepLine?.contains('(short)') ?? false;
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kMorningBriefingAgentId,
+      domain: 'health',
+      kind: AgentArtifactKind.briefing,
+      severity: shortSleep
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+      title: 'Morning Briefing',
+      summary: output.summary,
+      insights: <AgentInsight>[
+        if (output.sleepLine != null)
+          AgentInsight(
+            title: 'Sleep',
+            body: output.sleepLine!,
+            severity: shortSleep
+                ? AgentArtifactSeverity.attention
+                : AgentArtifactSeverity.info,
+          ),
+        if (output.hrvLine != null)
+          AgentInsight(title: 'HRV', body: output.hrvLine!),
+        if (output.financeLine != null)
+          AgentInsight(title: 'Finance', body: output.financeLine!),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final event in healthEvents.take(8))
+          AgentEvidenceRef(
+            type: 'health_event',
+            id: event.id,
+            label: event.summary,
+            payload: <String, Object?>{
+              'event_type': event.type,
+              'source': event.source,
+            },
+          ),
+        for (final event in financeEvents.take(5))
+          AgentEvidenceRef(
+            type: 'finance_event',
+            id: event.id,
+            label: event.summary,
+            payload: <String, Object?>{
+              'event_type': event.type,
+              'source': event.source,
+            },
+          ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'review',
+          label: 'Review briefing',
+          objectType: 'agent_artifact',
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
   }
 

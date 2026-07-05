@@ -66,6 +66,18 @@ Future<void> _createDomainEventLog(AppDatabase db) async {
   }
 }
 
+Future<void> _createAgentRuns(AppDatabase db) async {
+  for (final stmt in agentRunDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createAgentArtifacts(AppDatabase db) async {
+  for (final stmt in agentArtifactDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createIndexes(AppDatabase db) async {
   const stmts = <String>[
     'CREATE INDEX IF NOT EXISTS idx_accounts_owner_hlc '

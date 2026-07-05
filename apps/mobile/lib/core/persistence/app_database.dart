@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 29;
+  int get schemaVersion => 31;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -100,6 +100,8 @@ class AppDatabase extends _$AppDatabase {
       await _createRecurringPatternObservations(this);
       await _createMemoryRuntime(this);
       await _createKnowledgeInboxTriage(this);
+      await _createAgentRuns(this);
+      await _createAgentArtifacts(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -457,6 +459,25 @@ class AppDatabase extends _$AppDatabase {
           definition: 'TEXT',
         );
         await _createExecutionIndexes(this);
+      }
+      // v29 -> v30: local-only lifecycle state for scheduled LifeOS agents.
+      // Agent state belongs to the Dart agent framework, not the native
+      // runtime; this table lets schedule gates survive app restarts without
+      // syncing derived device state.
+      if (from < 30) {
+        await _createAgentRuns(this);
+      }
+      // v30 -> v31: local-only user-visible outputs for the unified agent
+      // experience. These are derived briefing/review/alert artifacts, not
+      // synced source-of-truth rows.
+      if (from < 31) {
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_runs',
+          column: 'artifact_id',
+          definition: 'TEXT',
+        );
+        await _createAgentArtifacts(this);
       }
     },
     beforeOpen: (details) async {

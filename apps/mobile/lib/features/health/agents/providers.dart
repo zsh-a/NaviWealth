@@ -12,7 +12,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart' as memory_providers;
 import '../../../core/auth/current_user.dart';
@@ -256,3 +258,24 @@ final latestMorningBriefingProvider = FutureProvider.autoDispose<MemoryRecord?>(
     return hits.first.record;
   },
 );
+
+/// Most recent user-visible Morning Briefing artifact. This is the unified
+/// agent-result surface backing; the legacy memory provider remains for the
+/// existing Health Today card until the UI migrates to artifact rendering.
+final latestMorningBriefingArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      ref.watch(manualMorningBriefingRunProvider);
+      ref.watch(pendingBriefingRunProvider);
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final artifacts = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kMorningBriefingAgentId,
+        limit: 1,
+      );
+      return artifacts.isEmpty ? null : artifacts.single;
+    });
