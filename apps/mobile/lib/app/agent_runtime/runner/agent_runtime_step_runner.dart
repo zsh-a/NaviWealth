@@ -24,15 +24,18 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     required AgentRuntimeNativeBridge bridge,
     required AgentRuntimeToolHost toolHost,
     int defaultMaxEffectSteps = 4,
+    int defaultMaxSubagentDepth = 4,
   }) : _bridge = bridge,
        _toolDispatcher = AgentRuntimeToolDispatcher(
          handler: toolHost.handleLine,
        ),
-       _defaultMaxEffectSteps = defaultMaxEffectSteps;
+       _defaultMaxEffectSteps = defaultMaxEffectSteps,
+       _defaultMaxSubagentDepth = defaultMaxSubagentDepth;
 
   final AgentRuntimeNativeBridge _bridge;
   final AgentRuntimeToolDispatcher _toolDispatcher;
   final int _defaultMaxEffectSteps;
+  final int _defaultMaxSubagentDepth;
 
   AgentRuntimeNativeBridge get bridge => _bridge;
 
@@ -107,42 +110,65 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     if (limit < 0) {
       throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
     }
+    final budget = _EffectRunBudget(limit);
+    return _continueUntilTerminalWithTrace(
+      catalog: catalog,
+      initialStep: initialStep,
+      agentId: agentId,
+      budget: budget,
+      depth: 0,
+    );
+  }
 
+  Future<AgentRuntimeNativeStepRunResult> _continueUntilTerminalWithTrace({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> initialStep,
+    required String agentId,
+    required _EffectRunBudget budget,
+    required int depth,
+  }) async {
     var step = initialStep;
-    var dispatched = 0;
     final steps = <Map<String, Object?>>[step];
     final effectResponses = <Map<String, Object?>>[];
-    var budgetExhausted = false;
+    var subagentDepthExceeded = false;
 
     while (_isHostEffectRequested(step)) {
-      if (dispatched >= limit) {
+      if (!budget.canDispatch) {
+        budget.markExhausted();
         step = await _bridge.continueRunStep(
           catalog: catalog,
           previousStep: step,
           effectResponse: agentRuntimeEffectBudgetExhaustedResponse(
-            maxEffectSteps: limit,
-            dispatchedEffectCount: dispatched,
+            maxEffectSteps: budget.max,
+            dispatchedEffectCount: budget.dispatched,
           ),
           agentId: agentId,
         );
         steps.add(step);
-        budgetExhausted = true;
         return AgentRuntimeNativeStepRunResult(
           terminalStep: step,
           steps: steps,
           effectResponses: effectResponses,
           nativeTraceEvents: _nativeTraceEvents(steps),
-          dispatchedEffectCount: dispatched,
-          budgetExhausted: budgetExhausted,
+          dispatchedEffectCount: budget.dispatched,
+          budgetExhausted: true,
+          maxEffectSteps: budget.max,
+          remainingEffectSteps: budget.remaining,
+          maxSubagentDepth: _defaultMaxSubagentDepth,
+          subagentDepthExceeded: subagentDepthExceeded,
         );
       }
-      dispatched += 1;
+      budget.markDispatched();
 
-      final response = await _dispatchHostEffect(
+      final dispatch = await _dispatchHostEffect(
         step: step,
         catalog: catalog,
-        maxEffectSteps: maxEffectSteps,
+        budget: budget,
+        depth: depth,
       );
+      subagentDepthExceeded =
+          subagentDepthExceeded || dispatch.subagentDepthExceeded;
+      final response = dispatch.response;
       effectResponses.add(response);
       step = await _bridge.continueRunStep(
         catalog: catalog,
@@ -158,8 +184,12 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       steps: steps,
       effectResponses: effectResponses,
       nativeTraceEvents: _nativeTraceEvents(steps),
-      dispatchedEffectCount: dispatched,
-      budgetExhausted: budgetExhausted,
+      dispatchedEffectCount: budget.dispatched,
+      budgetExhausted: budget.exhausted,
+      maxEffectSteps: budget.max,
+      remainingEffectSteps: budget.remaining,
+      maxSubagentDepth: _defaultMaxSubagentDepth,
+      subagentDepthExceeded: subagentDepthExceeded,
     );
   }
 
@@ -184,10 +214,11 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     )).response;
   }
 
-  Future<Map<String, Object?>> _dispatchHostEffect({
+  Future<_HostEffectDispatch> _dispatchHostEffect({
     required Map<String, Object?> step,
     required Map<String, Object?> catalog,
-    int? maxEffectSteps,
+    required _EffectRunBudget budget,
+    required int depth,
   }) async {
     if (step['status'] != 'effect_requested') {
       throw FormatException(
@@ -200,11 +231,14 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       label: 'native agent-runtime effect',
     );
     return switch (effect['kind']) {
-      'tool' => _dispatchToolCall(step),
+      'tool' => _dispatchToolCall(
+        step,
+      ).then((response) => _HostEffectDispatch(response)),
       'subagent' => _dispatchSubagent(
         step: step,
         catalog: catalog,
-        maxEffectSteps: maxEffectSteps,
+        budget: budget,
+        depth: depth,
       ),
       _ => throw FormatException(
         'native agent-runtime effect kind is unsupported',
@@ -213,10 +247,11 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     };
   }
 
-  Future<Map<String, Object?>> _dispatchSubagent({
+  Future<_HostEffectDispatch> _dispatchSubagent({
     required Map<String, Object?> step,
     required Map<String, Object?> catalog,
-    int? maxEffectSteps,
+    required _EffectRunBudget budget,
+    required int depth,
   }) async {
     final subagentCall = agentRuntimeObject(
       step['effect'],
@@ -227,14 +262,31 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       throw const FormatException('native effect.agent_id is required');
     }
     final id = _effectId(subagentCall, step);
+    if (depth >= _defaultMaxSubagentDepth) {
+      return _HostEffectDispatch(<String, Object?>{
+        'jsonrpc': '2.0',
+        'id': id,
+        'error': <String, Object?>{
+          'code': 'subagent_depth_exceeded',
+          'message':
+              'subagent depth exceeded '
+              '($_defaultMaxSubagentDepth)',
+        },
+      }, subagentDepthExceeded: true);
+    }
     try {
-      final childRun = await runUntilTerminalWithTrace(
+      final childRun = await _continueUntilTerminalWithTrace(
         catalog: catalog,
-        request: _subagentRunRequest(subagentCall),
+        initialStep: await _bridge.startRunStep(
+          catalog: catalog,
+          request: _subagentRunRequest(subagentCall),
+          agentId: subagentId,
+        ),
         agentId: subagentId,
-        maxEffectSteps: maxEffectSteps,
+        budget: budget,
+        depth: depth + 1,
       );
-      return <String, Object?>{
+      return _HostEffectDispatch(<String, Object?>{
         'jsonrpc': '2.0',
         'id': id,
         'result': <String, Object?>{
@@ -245,19 +297,53 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
           'native_trace_events': childRun.nativeTraceEvents,
           'dispatched_effect_count': childRun.dispatchedEffectCount,
           'budget_exhausted': childRun.budgetExhausted,
+          'max_effect_steps': childRun.maxEffectSteps,
+          'remaining_effect_steps': childRun.remainingEffectSteps,
+          'max_subagent_depth': childRun.maxSubagentDepth,
+          'subagent_depth_exceeded': childRun.subagentDepthExceeded,
         },
-      };
+      }, subagentDepthExceeded: childRun.subagentDepthExceeded);
     } catch (error) {
-      return <String, Object?>{
+      return _HostEffectDispatch(<String, Object?>{
         'jsonrpc': '2.0',
         'id': id,
         'error': <String, Object?>{
           'code': 'subagent_run_failed',
           'message': error.toString(),
         },
-      };
+      });
     }
   }
+}
+
+class _EffectRunBudget {
+  _EffectRunBudget(this.max) : remaining = max;
+
+  final int max;
+  int remaining;
+  bool exhausted = false;
+
+  int get dispatched => max - remaining;
+
+  bool get canDispatch => remaining > 0;
+
+  void markDispatched() {
+    remaining -= 1;
+  }
+
+  void markExhausted() {
+    exhausted = true;
+  }
+}
+
+class _HostEffectDispatch {
+  const _HostEffectDispatch(
+    this.response, {
+    this.subagentDepthExceeded = false,
+  });
+
+  final Map<String, Object?> response;
+  final bool subagentDepthExceeded;
 }
 
 bool _isHostEffectRequested(Map<String, Object?> step) {

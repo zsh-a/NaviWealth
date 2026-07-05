@@ -99,6 +99,42 @@ void main() {
     );
   });
 
+  test('records effect-plan fallback reason in turn attributes', () async {
+    final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+    final trace = await recorder.recordStepRun(
+      agentId: 'knowledge_review',
+      startedAt: DateTime.utc(2026, 6, 29, 8),
+      finishedAt: DateTime.utc(2026, 6, 29, 8),
+      stepRun: const AgentRuntimeNativeStepRunResult(
+        terminalStep: <String, Object?>{
+          'run_id': 'fallback_1',
+          'status': 'failed',
+          'output': <String, Object?>{
+            'fallback_reason': 'effect_plan_failed',
+            'fallback_error': 'native unavailable',
+          },
+          'run_state': <String, Object?>{
+            'status': 'failed',
+            'step_index': 0,
+            'remaining_effect_count': 0,
+            'effect_result_count': 0,
+            'terminal_reason': 'stream_error',
+          },
+        },
+      ),
+    );
+
+    expect(trace.terminalReason, TerminalReason.streamError);
+    expect(
+      trace.spans.first.attributes,
+      containsPair('fallback_reason', 'effect_plan_failed'),
+    );
+    expect(
+      trace.spans.first.attributes,
+      containsPair('fallback_error', 'native unavailable'),
+    );
+  });
+
   test(
     'uses FRB trace event run state when root run state is absent',
     () async {

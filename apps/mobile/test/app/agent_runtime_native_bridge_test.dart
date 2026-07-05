@@ -404,6 +404,59 @@ void main() {
   );
 
   test(
+    'AgentRuntimeNativeStepRunner rejects subagents over max depth',
+    () async {
+      final bridge = _SubagentBridge();
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: _RecordingDispatcher()),
+        defaultMaxSubagentDepth: 0,
+      );
+
+      final result = await runner.runUntilTerminalWithTrace(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'parent',
+        maxEffectSteps: 2,
+      );
+
+      expect(result.subagentDepthExceeded, isTrue);
+      expect(bridge.startedAgents, <String>['parent']);
+      final response = bridge.continuations.single.effectResponse;
+      expect(
+        response['error'],
+        containsPair('code', 'subagent_depth_exceeded'),
+      );
+    },
+  );
+
+  test(
+    'AgentRuntimeNativeStepRunner shares effect budget with subagents',
+    () async {
+      final bridge = _SubagentBudgetBridge();
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: _RecordingDispatcher()),
+      );
+
+      final result = await runner.runUntilTerminalWithTrace(
+        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+        request: const <String, Object?>{'input': <String, Object?>{}},
+        agentId: 'parent',
+        maxEffectSteps: 1,
+      );
+
+      expect(result.budgetExhausted, isTrue);
+      expect(result.dispatchedEffectCount, 1);
+      expect(bridge.startedAgents, <String>['parent', 'child']);
+      final childResult =
+          result.effectResponses.single['result'] as Map<String, Object?>;
+      expect(childResult['budget_exhausted'], true);
+      expect(childResult['remaining_effect_steps'], 0);
+    },
+  );
+
+  test(
     'AgentRuntimeNativeStepRunner lets native classify effect response errors',
     () async {
       final dispatcher = _RecordingDispatcher(
@@ -1204,6 +1257,47 @@ class _SubagentBridge extends _FakeBridge {
       'effect': previousStep['effect'],
       'effect_response': effectResponse,
       'output': <String, Object?>{'effect_result': effectResponse['result']},
+    };
+  }
+}
+
+class _SubagentBudgetBridge extends _SubagentBridge {
+  @override
+  Future<Map<String, Object?>> startRunStep({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+  }) async {
+    startedAgents.add(agentId);
+    startedRequests.add(request);
+    if (agentId == 'parent') {
+      return const <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'parent_run',
+        'agent_id': 'parent',
+        'step_index': 0,
+        'status': 'effect_requested',
+        'effect': <String, Object?>{
+          'kind': 'subagent',
+          'effect_id': 'subagent_1',
+          'agent_id': 'child',
+          'run_id': 'child_run',
+          'input': <String, Object?>{'from': 'parent'},
+        },
+      };
+    }
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'run_id': request['run_id'] ?? 'child_run',
+      'agent_id': agentId,
+      'step_index': 0,
+      'status': 'effect_requested',
+      'effect': const <String, Object?>{
+        'kind': 'tool',
+        'effect_id': 'child_tool_1',
+        'name': 'read_child',
+        'input': <String, Object?>{'id': 'child'},
+      },
     };
   }
 }

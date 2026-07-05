@@ -171,6 +171,7 @@ class AgentRuntimeTraceRecorder {
     );
     final nativeTraceEvent = _nativeTraceEvent(step, stepRun);
     final nativeRunState = _nativeRunState(step, stepRun);
+    final output = _object(step['output']);
     final builder = AiTraceBuilder.fromSeed(seed, capturePayloads: false)
       ..addTurnAttributes(<String, Object?>{
         'runtime': 'frb_agent_runtime',
@@ -179,6 +180,10 @@ class AgentRuntimeTraceRecorder {
         'terminal_status': _string(step['status']),
         'dispatched_effect_count': stepRun.dispatchedEffectCount,
         'budget_exhausted': stepRun.budgetExhausted,
+        'max_effect_steps': ?stepRun.maxEffectSteps,
+        'remaining_effect_steps': ?stepRun.remainingEffectSteps,
+        'max_subagent_depth': ?stepRun.maxSubagentDepth,
+        'subagent_depth_exceeded': stepRun.subagentDepthExceeded,
         'native_trace_event_count': stepRun.nativeTraceEvents.length,
         'native_trace_event_kind': ?_string(nativeTraceEvent?['kind']),
         'native_trace_event_status': ?_string(nativeTraceEvent?['status']),
@@ -193,6 +198,8 @@ class AgentRuntimeTraceRecorder {
         'native_effect_result_count': ?_int(
           nativeRunState?['effect_result_count'],
         ),
+        'fallback_reason': ?_string(output?['fallback_reason']),
+        'fallback_error': ?_string(output?['fallback_error']),
       });
 
     final parentId = llmResponse == null ? kTurnSpanId : 'llm:profile';

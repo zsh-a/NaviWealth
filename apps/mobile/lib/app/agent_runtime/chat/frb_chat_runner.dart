@@ -330,45 +330,68 @@ class FrbChatRunner implements ChatAgent {
       final dispatcher = AgentRuntimeToolDispatcher(handler: toolLineHandler);
       final resultBlocks = <Map<String, Object?>>[];
       var awaitingUser = false;
+      final readOnlyTools = _readOnlyToolNames(tools);
+      final readOnlyBatch = <AgentRuntimeToolCall>[];
       for (final call in state.requiredToolCalls) {
         if (cancelToken?.isCancelled == true) {
           yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
           return;
         }
+        if (_canParallelizeTool(call, readOnlyTools)) {
+          readOnlyBatch.add(call);
+          continue;
+        }
+        if (readOnlyBatch.isNotEmpty) {
+          final outcomes = <Future<_ToolDispatchOutcome>>[];
+          for (final batchCall in readOnlyBatch) {
+            final toolStart = DateTime.now().toUtc();
+            yield _toolProgress(batchCall, toolStart);
+            outcomes.add(
+              _dispatchChatTool(
+                dispatcher: dispatcher,
+                call: batchCall,
+                startedAt: toolStart,
+              ),
+            );
+          }
+          for (final outcome in await Future.wait(outcomes)) {
+            yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
+            yield _toolResult(outcome);
+            resultBlocks.add(outcome.result.toChatToolResult());
+          }
+          readOnlyBatch.clear();
+        }
         final toolStart = DateTime.now().toUtc();
-        yield ProgressEvent(
-          LongTaskProgress(
-            id: 'tool:${call.stringId}',
-            label: 'tool',
-            detail: call.name,
-            startedAt: toolStart,
-          ),
-        );
-        final result = await dispatcher.call(call);
-        yield SpanEvent(
-          id: 'tool:${call.stringId}',
-          parentId: roundId,
-          kind: AiSpanKind.tool,
-          name: 'tool:${call.name}',
+        yield _toolProgress(call, toolStart);
+        final outcome = await _dispatchChatTool(
+          dispatcher: dispatcher,
+          call: call,
           startedAt: toolStart,
-          endedAt: DateTime.now().toUtc(),
-          status: result.isError ? AiSpanStatus.error : AiSpanStatus.ok,
-          errorCode: result.errorCode,
-          input: call.input,
-          output: result.output,
-          attributes: <String, Object?>{
-            'round': roundsUsed,
-            'tool_use_id': call.id,
-          },
         );
-        yield ToolResultEvent(
-          id: call.stringId,
-          name: call.name,
-          output: result.output,
-        );
-        resultBlocks.add(result.toChatToolResult());
-        if (call.name == kAskUserToolName && !result.isError) {
+        yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
+        yield _toolResult(outcome);
+        resultBlocks.add(outcome.result.toChatToolResult());
+        if (call.name == kAskUserToolName && !outcome.result.isError) {
           awaitingUser = true;
+        }
+      }
+      if (readOnlyBatch.isNotEmpty) {
+        final outcomes = <Future<_ToolDispatchOutcome>>[];
+        for (final batchCall in readOnlyBatch) {
+          final toolStart = DateTime.now().toUtc();
+          yield _toolProgress(batchCall, toolStart);
+          outcomes.add(
+            _dispatchChatTool(
+              dispatcher: dispatcher,
+              call: batchCall,
+              startedAt: toolStart,
+            ),
+          );
+        }
+        for (final outcome in await Future.wait(outcomes)) {
+          yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
+          yield _toolResult(outcome);
+          resultBlocks.add(outcome.result.toChatToolResult());
         }
       }
       if (awaitingUser) {
@@ -378,6 +401,87 @@ class FrbChatRunner implements ChatAgent {
       toolResults = resultBlocks;
     }
   }
+}
+
+Set<String> _readOnlyToolNames(List<Map<String, Object?>> tools) {
+  return {
+    for (final tool in tools)
+      if (tool['risk'] == 'read_only')
+        if (tool['name'] case final String name) name,
+  };
+}
+
+bool _canParallelizeTool(AgentRuntimeToolCall call, Set<String> readOnlyTools) {
+  return call.name != kAskUserToolName && readOnlyTools.contains(call.name);
+}
+
+ProgressEvent _toolProgress(AgentRuntimeToolCall call, DateTime startedAt) {
+  return ProgressEvent(
+    LongTaskProgress(
+      id: 'tool:${call.stringId}',
+      label: 'tool',
+      detail: call.name,
+      startedAt: startedAt,
+    ),
+  );
+}
+
+Future<_ToolDispatchOutcome> _dispatchChatTool({
+  required AgentRuntimeToolDispatcher dispatcher,
+  required AgentRuntimeToolCall call,
+  required DateTime startedAt,
+}) async {
+  final result = await dispatcher.call(call);
+  return _ToolDispatchOutcome(
+    call: call,
+    result: result,
+    startedAt: startedAt,
+    endedAt: DateTime.now().toUtc(),
+  );
+}
+
+SpanEvent _toolSpan(
+  _ToolDispatchOutcome outcome, {
+  required String parentId,
+  required int round,
+}) {
+  final result = outcome.result;
+  final call = outcome.call;
+  return SpanEvent(
+    id: 'tool:${call.stringId}',
+    parentId: parentId,
+    kind: AiSpanKind.tool,
+    name: 'tool:${call.name}',
+    startedAt: outcome.startedAt,
+    endedAt: outcome.endedAt,
+    status: result.isError ? AiSpanStatus.error : AiSpanStatus.ok,
+    errorCode: result.errorCode,
+    input: call.input,
+    output: result.output,
+    attributes: <String, Object?>{'round': round, 'tool_use_id': call.id},
+  );
+}
+
+ToolResultEvent _toolResult(_ToolDispatchOutcome outcome) {
+  return ToolResultEvent(
+    id: outcome.call.stringId,
+    name: outcome.call.name,
+    output: outcome.result.output,
+  );
+}
+
+class _ToolDispatchOutcome {
+  const _ToolDispatchOutcome({
+    required this.call,
+    required this.result,
+    required this.startedAt,
+    required this.endedAt,
+  });
+
+  final AgentRuntimeToolCall call;
+  final AgentRuntimeToolResult result;
+  final DateTime startedAt;
+  final DateTime endedAt;
 }
 
 Stream<Map<String, Object?>> _cancelableFrbStream(

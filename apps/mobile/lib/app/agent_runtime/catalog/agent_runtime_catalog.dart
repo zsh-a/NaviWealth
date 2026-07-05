@@ -82,7 +82,7 @@ const AgentRuntimeAgentSpec kSettingsLlmRuntimeCheckAgent =
     );
 
 class AgentRuntimeCatalog {
-  const AgentRuntimeCatalog({
+  AgentRuntimeCatalog({
     required this.generatedAt,
     required this.activeDomains,
     required this.agents,
@@ -98,16 +98,30 @@ class AgentRuntimeCatalog {
   final List<AgentRuntimeProposalKindSpec> proposalKinds;
   final List<AgentRuntimePromptBlockSpec> promptBlocks;
 
-  Map<String, Object?> toJson() => <String, Object?>{
+  late final Map<String, Object?> _json = Map.unmodifiable(<String, Object?>{
     'protocol_version': kAgentRuntimeProtocolVersion,
     'catalog_version': kAgentRuntimeCatalogVersion,
     'generated_at': generatedAt.toUtc().toIso8601String(),
-    'active_domains': activeDomains,
-    'agents': [for (final agent in agents) agent.toJson()],
-    'tools': [for (final tool in tools) tool.toJson()],
-    'proposal_kinds': [for (final kind in proposalKinds) kind.toJson()],
-    'prompt_blocks': [for (final block in promptBlocks) block.toJson()],
-  };
+    'active_domains': List<String>.unmodifiable(activeDomains),
+    'agents': List<Map<String, Object?>>.unmodifiable([
+      for (final agent in agents)
+        Map<String, Object?>.unmodifiable(agent.toJson()),
+    ]),
+    'tools': List<Map<String, Object?>>.unmodifiable([
+      for (final tool in tools)
+        Map<String, Object?>.unmodifiable(tool.toJson()),
+    ]),
+    'proposal_kinds': List<Map<String, Object?>>.unmodifiable([
+      for (final kind in proposalKinds)
+        Map<String, Object?>.unmodifiable(kind.toJson()),
+    ]),
+    'prompt_blocks': List<Map<String, Object?>>.unmodifiable([
+      for (final block in promptBlocks)
+        Map<String, Object?>.unmodifiable(block.toJson()),
+    ]),
+  });
+
+  Map<String, Object?> toJson() => _json;
 }
 
 class AgentRuntimeAgentSpec {

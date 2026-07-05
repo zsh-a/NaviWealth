@@ -237,6 +237,83 @@ void main() {
     ]);
   });
 
+  test('dispatches consecutive read-only FRB tool calls in parallel', () async {
+    final bridge = _FakeLlmBridge();
+    final streamBridge = _streamBridgeBatches(
+      bridge,
+      eventBatches: const <List<String>>[
+        <String>[
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"metadata":{"status":"requires_tool_results","chat_state":{"round":1},"tool_calls":[{"id":"call_1","name":"read_first","input":{"id":"first"}},{"id":"call_2","name":"read_second","input":{"id":"second"}}]}}',
+        ],
+        <String>[
+          '{"kind":"round_finished","response":{"content":"done","finish_reason":"stop"},"metadata":{"status":"completed"}}',
+        ],
+      ],
+    );
+    var active = 0;
+    var maxActive = 0;
+    final runner = FrbChatRunner(
+      streamBridge: streamBridge,
+      tools: const <Map<String, Object?>>[
+        <String, Object?>{
+          'name': 'read_first',
+          'description': 'Read first',
+          'input_schema': <String, Object?>{'type': 'object'},
+          'risk': 'read_only',
+        },
+        <String, Object?>{
+          'name': 'read_second',
+          'description': 'Read second',
+          'input_schema': <String, Object?>{'type': 'object'},
+          'risk': 'read_only',
+        },
+      ],
+      toolLineHandler: (line) async {
+        active += 1;
+        if (active > maxActive) maxActive = active;
+        final request = jsonDecode(line) as Map<String, Object?>;
+        final params = request['params'] as Map<String, Object?>;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        active -= 1;
+        return jsonEncode(<String, Object?>{
+          'jsonrpc': '2.0',
+          'id': request['id'],
+          'result': <String, Object?>{'name': params['name']},
+        });
+      },
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Read both'),
+          ],
+        )
+        .toList();
+
+    expect(maxActive, 2);
+    expect(
+      events.whereType<ToolResultEvent>().map((event) => event.name),
+      <String>['read_first', 'read_second'],
+    );
+    final secondMetadata =
+        streamBridge.requests[1]['metadata'] as Map<String, Object?>;
+    expect(secondMetadata['tool_results'], <Object?>[
+      <String, Object?>{
+        'tool_call_id': 'call_1',
+        'tool_name': 'read_first',
+        'output': <String, Object?>{'name': 'read_first'},
+        'is_error': false,
+      },
+      <String, Object?>{
+        'tool_call_id': 'call_2',
+        'tool_name': 'read_second',
+        'output': <String, Object?>{'name': 'read_second'},
+        'is_error': false,
+      },
+    ]);
+  });
+
   test('reports a missing FRB tool host without continuing', () async {
     final bridge = _FakeLlmBridge();
     final streamBridge = _streamBridge(

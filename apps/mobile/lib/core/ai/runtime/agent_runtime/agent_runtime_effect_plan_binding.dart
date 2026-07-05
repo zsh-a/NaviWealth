@@ -86,6 +86,9 @@ abstract interface class AgentRuntimeEffectStepRunner {
   });
 }
 
+typedef AgentRuntimeTraceRecordErrorHandler =
+    void Function(Object error, StackTrace stackTrace);
+
 class AgentRuntimeEffectPlanBinding {
   AgentRuntimeEffectPlanBinding({
     required this.agentId,
@@ -94,6 +97,7 @@ class AgentRuntimeEffectPlanBinding {
     required AgentRuntimeEffectStepRunner stepRunner,
     required Map<String, Object?> catalogJson,
     this.recordTrace,
+    this.onRecordTraceError,
   }) : _stepRunnerReader = (() => stepRunner),
        _catalogJsonReader = (() => catalogJson);
 
@@ -104,6 +108,7 @@ class AgentRuntimeEffectPlanBinding {
     required AgentRuntimeEffectStepRunner Function() stepRunnerReader,
     required Map<String, Object?> Function() catalogJsonReader,
     this.recordTrace,
+    this.onRecordTraceError,
   }) : _stepRunnerReader = stepRunnerReader,
        _catalogJsonReader = catalogJsonReader;
 
@@ -112,6 +117,7 @@ class AgentRuntimeEffectPlanBinding {
   final String surface;
   final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
   recordTrace;
+  final AgentRuntimeTraceRecordErrorHandler? onRecordTraceError;
   final AgentRuntimeEffectStepRunner Function() _stepRunnerReader;
   final Map<String, Object?> Function() _catalogJsonReader;
 
@@ -159,8 +165,17 @@ class AgentRuntimeEffectPlanBinding {
       );
       final value = await decode(stepRun.terminalStep);
       if (value != null) return value;
-    } on Object {
-      // Fall through to the repository/programmatic path below.
+      await recordStepRun(
+        _fallbackStepRun(reason: 'decode_returned_null', metadata: metadata),
+      );
+    } on Object catch (error) {
+      await recordStepRun(
+        _fallbackStepRun(
+          reason: 'effect_plan_failed',
+          error: error,
+          metadata: metadata,
+        ),
+      );
     }
     return fallback();
   }
@@ -170,8 +185,49 @@ class AgentRuntimeEffectPlanBinding {
     if (recorder == null) return;
     try {
       await recorder(stepRun);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      onRecordTraceError?.call(error, stackTrace);
       // Best-effort diagnostics; never fail the production agent.
     }
+  }
+
+  AgentRuntimeNativeStepRunResult _fallbackStepRun({
+    required String reason,
+    required Map<String, Object?> metadata,
+    Object? error,
+  }) {
+    final runId = 'fallback:${DateTime.now().toUtc().microsecondsSinceEpoch}';
+    final errorText = error?.toString();
+    final traceEvent = <String, Object?>{
+      'kind': 'agent_runtime_fallback',
+      'run_id': runId,
+      'agent_id': agentId,
+      'status': 'failed',
+      'fallback_reason': reason,
+      'fallback_error': ?errorText,
+    };
+    final terminalStep = <String, Object?>{
+      'protocol_version': kAgentRuntimeProtocolVersion,
+      'run_id': runId,
+      'agent_id': agentId,
+      'status': 'failed',
+      'output': <String, Object?>{
+        'fallback_reason': reason,
+        'fallback_error': ?errorText,
+        'metadata': metadata,
+      },
+      'run_state': const <String, Object?>{
+        'status': 'failed',
+        'step_index': 0,
+        'remaining_effect_count': 0,
+        'effect_result_count': 0,
+        'terminal_reason': 'stream_error',
+      },
+      'trace_event': traceEvent,
+    };
+    return AgentRuntimeNativeStepRunResult(
+      terminalStep: terminalStep,
+      nativeTraceEvents: <Map<String, Object?>>[traceEvent],
+    );
   }
 }

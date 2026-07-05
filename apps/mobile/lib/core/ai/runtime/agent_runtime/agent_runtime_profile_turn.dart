@@ -26,6 +26,9 @@ typedef AgentRuntimeProfileTurnTraceRecorderFactory =
       required String surface,
     });
 
+typedef AgentRuntimeProfileTurnTraceRecordErrorHandler =
+    void Function(Object error, StackTrace stackTrace);
+
 final agentRuntimeProfileTurnRunnerProvider =
     Provider<AgentRuntimeProfileTurnRunner?>((ref) => null);
 
@@ -52,6 +55,7 @@ AgentRuntimeProfileTurnBinding? agentRuntimeProfileTurnBinding(
   required String domain,
   required String surface,
   bool resolveAvailability = true,
+  AgentRuntimeProfileTurnTraceRecordErrorHandler? onRecordTraceError,
 }) {
   final recorderFactory = ref.read(
     agentRuntimeProfileTurnTraceRecorderFactoryProvider,
@@ -68,6 +72,7 @@ AgentRuntimeProfileTurnBinding? agentRuntimeProfileTurnBinding(
       surface: surface,
       runnerReader: () => ref.read(agentRuntimeProfileTurnRunnerProvider),
       recordTrace: recorder,
+      onRecordTraceError: onRecordTraceError,
     );
   }
 
@@ -79,6 +84,7 @@ AgentRuntimeProfileTurnBinding? agentRuntimeProfileTurnBinding(
     surface: surface,
     runner: runner,
     recordTrace: recorder,
+    onRecordTraceError: onRecordTraceError,
   );
 }
 
@@ -121,6 +127,7 @@ class AgentRuntimeProfileTurnBinding {
     required this.surface,
     required AgentRuntimeProfileTurnRunner runner,
     this.recordTrace,
+    this.onRecordTraceError,
   }) : _runnerReader = (() => runner);
 
   AgentRuntimeProfileTurnBinding.lazyRunner({
@@ -129,12 +136,14 @@ class AgentRuntimeProfileTurnBinding {
     required this.surface,
     required AgentRuntimeProfileTurnRunner? Function() runnerReader,
     this.recordTrace,
+    this.onRecordTraceError,
   }) : _runnerReader = runnerReader;
 
   final String agentId;
   final String domain;
   final String surface;
   final AgentRuntimeProfileTurnTraceRecorder? recordTrace;
+  final AgentRuntimeProfileTurnTraceRecordErrorHandler? onRecordTraceError;
   final AgentRuntimeProfileTurnRunner? Function() _runnerReader;
 
   AgentRuntimeProfileTurnRunner? get runner => _runnerReader();
@@ -173,7 +182,8 @@ class AgentRuntimeProfileTurnBinding {
     if (recorder == null) return;
     try {
       await recorder(result);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      onRecordTraceError?.call(error, stackTrace);
       // Best-effort diagnostics; never fail the production agent.
     }
   }
