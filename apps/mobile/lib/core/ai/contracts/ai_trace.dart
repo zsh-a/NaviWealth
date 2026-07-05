@@ -50,6 +50,11 @@ const String kFrbVisionIngestRoutingReason = 'frb_vision_ingest';
 /// ingest was relabelled as an FRB-backed production path.
 const String kDeviceVisionDirectRoutingReason = 'device_vision_direct';
 
+/// A deterministic on-device agent produced the result without calling an LLM.
+/// Used for transparency rows that should still be inspectable even though no
+/// provider request or tool loop happened.
+const String kDeterministicAgentRoutingReason = 'deterministic_agent';
+
 /// True when [routingReason] used a user-owned provider credential directly
 /// from the device/FRB runtime and therefore should disclose "no NaviWealth
 /// server" on transparency surfaces.

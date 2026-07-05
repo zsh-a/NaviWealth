@@ -14,9 +14,12 @@ import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
+import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/ai/trace/ai_trace_store.dart';
+import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../application/read_models/dashboard_providers.dart';
@@ -51,6 +54,7 @@ class WeeklyWealthReviewAgent implements Agent {
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
+    final traceStore = ctx.ref.read(aiTraceStoreProvider);
     final snapshot = await reader.read(ctx);
     return synthesize(
       snapshot: snapshot,
@@ -59,6 +63,7 @@ class WeeklyWealthReviewAgent implements Agent {
       finishedAt: DateTime.now().toUtc(),
       runtime: runtime,
       artifactStore: artifactStore,
+      traceStore: traceStore,
     );
   }
 
@@ -69,6 +74,7 @@ class WeeklyWealthReviewAgent implements Agent {
     required DateTime finishedAt,
     required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
+    AiTraceStore? traceStore,
   }) async {
     if (snapshot.isEmpty &&
         snapshot.netWorth.isZero &&
@@ -86,6 +92,7 @@ class WeeklyWealthReviewAgent implements Agent {
     final dayKey = AppFormatters.utcDayKey(startedAt);
     final memoryId = '$kWeeklyWealthReviewMemorySource:$dayKey';
     final artifactId = '$kWeeklyWealthReviewAgentId:$dayKey';
+    final traceId = '$kWeeklyWealthReviewAgentId:trace:$dayKey';
     final summary = analysis.summary;
     final memory = MemoryRecord(
       id: memoryId,
@@ -101,6 +108,7 @@ class WeeklyWealthReviewAgent implements Agent {
             'weekly wealth review run at ${startedAt.toUtc().toIso8601String()}',
         'outcome': analysis.toPayload(),
         'artifact_id': artifactId,
+        if (traceStore != null) 'trace_id': traceId,
       },
       entities: <String>{
         'finance',
@@ -119,11 +127,20 @@ class WeeklyWealthReviewAgent implements Agent {
       updatedAt: finishedAt.toUtc(),
     );
     await runtime.remember(memory);
+    await traceStore?.append(
+      analysis.toTrace(
+        requestId: traceId,
+        startedAt: startedAt,
+        finishedAt: finishedAt,
+        artifactId: artifactId,
+      ),
+    );
     await artifactStore?.save(
       analysis.toArtifact(
         id: artifactId,
         ownerUserId: ownerUserId,
         memoryId: memoryId,
+        traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
       ),
     );
@@ -137,6 +154,7 @@ class WeeklyWealthReviewAgent implements Agent {
       payload: analysis.toPayload(),
       memoryId: memoryId,
       artifactId: artifactStore == null ? null : artifactId,
+      traceId: traceStore == null ? null : traceId,
     );
   }
 }
@@ -234,6 +252,7 @@ class WealthReviewAnalysis {
     required String id,
     required String ownerUserId,
     required String memoryId,
+    required String? traceId,
     required DateTime createdAt,
   }) {
     final top = topAllocation;
@@ -326,8 +345,57 @@ class WealthReviewAnalysis {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
+    );
+  }
+
+  AiTrace toTrace({
+    required String requestId,
+    required DateTime startedAt,
+    required DateTime finishedAt,
+    required String artifactId,
+  }) {
+    final durationMs = finishedAt
+        .toUtc()
+        .difference(startedAt.toUtc())
+        .inMilliseconds
+        .clamp(0, 1 << 31)
+        .toInt();
+    return AiTrace(
+      requestId: requestId,
+      startedAtIso: startedAt.toUtc().toIso8601String(),
+      intent: const IntentHint(
+        capability: Capability.summarize,
+        risk: RiskLevel.info,
+        label: 'weekly_wealth_review',
+        domain: kDomainFinance,
+      ),
+      backend: Backend.device,
+      budgetTier: BudgetTier.small,
+      routingReason: kDeterministicAgentRoutingReason,
+      totalDurationMs: durationMs,
+      spans: <AiSpan>[
+        AiSpan(
+          id: kTurnSpanId,
+          kind: AiSpanKind.turn,
+          name: 'turn',
+          startOffsetMs: 0,
+          durationMs: durationMs,
+          attributes: <String, Object?>{
+            'agent_id': kWeeklyWealthReviewAgentId,
+            'surface': 'finance_home',
+            'artifact_id': artifactId,
+            'deterministic': true,
+            'base_currency': snapshot.baseCurrency,
+            'allocation_count': snapshot.allocations.length,
+            'evidence_count': evidenceItems.length,
+            'stale_holding_count': snapshot.staleHoldingCount,
+            'currency_mismatch_count': snapshot.currencyMismatches.length,
+          },
+        ),
+      ],
     );
   }
 }

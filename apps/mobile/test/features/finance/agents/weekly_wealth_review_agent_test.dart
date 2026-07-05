@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
@@ -38,6 +40,7 @@ void main() {
     addTearDown(db.close);
     final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
+    final traceStore = InMemoryAiTraceStore();
 
     final result = await WeeklyWealthReviewAgent.synthesize(
       snapshot: _snapshot(),
@@ -46,11 +49,13 @@ void main() {
       finishedAt: now.add(const Duration(milliseconds: 20)),
       runtime: runtime,
       artifactStore: store,
+      traceStore: traceStore,
     );
 
     expect(result.status, AgentRunStatus.completed);
     expect(result.memoryId, '$kWeeklyWealthReviewMemorySource:2026-07-05');
     expect(result.artifactId, '$kWeeklyWealthReviewAgentId:2026-07-05');
+    expect(result.traceId, '$kWeeklyWealthReviewAgentId:trace:2026-07-05');
     expect(result.summary, contains('Net worth 8000 CNY'));
     expect(result.payload['top_allocation_category'], AssetCategory.stock.name);
 
@@ -60,6 +65,7 @@ void main() {
     expect(artifact.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.warning);
     expect(artifact.memoryId, result.memoryId);
+    expect(artifact.traceId, result.traceId);
     expect(
       artifact.insights.map((insight) => insight.title),
       containsAll([
@@ -74,6 +80,17 @@ void main() {
       containsAll(['aapl', 'fx1']),
     );
     expect(artifact.actions.single.intent, 'finance.reviewWealth');
+
+    final trace = await traceStore.findByRequestId(result.traceId!);
+    expect(trace, isNotNull);
+    expect(trace!.routingReason, kDeterministicAgentRoutingReason);
+    expect(trace.intent.domain, kDomainFinance);
+    expect(trace.intent.label, 'weekly_wealth_review');
+    expect(trace.spans.single.attributes, containsPair('deterministic', true));
+    expect(
+      trace.spans.single.attributes,
+      containsPair('artifact_id', result.artifactId),
+    );
   });
 }
 
