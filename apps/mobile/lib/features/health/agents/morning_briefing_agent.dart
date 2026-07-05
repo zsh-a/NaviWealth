@@ -93,7 +93,12 @@ class MorningBriefingAgent implements Agent {
     );
 
     if (result.status == AgentRunStatus.completed && notifier != null) {
-      await _maybeNotify(start.toLocal(), result.summary ?? '');
+      await _maybeNotify(
+        ctx,
+        ownerUserId,
+        start.toLocal(),
+        result.summary ?? '',
+      );
     }
     return result;
   }
@@ -303,9 +308,23 @@ class MorningBriefingAgent implements Agent {
     );
   }
 
-  Future<void> _maybeNotify(DateTime localDay, String summary) async {
+  Future<void> _maybeNotify(
+    AgentContext ctx,
+    String ownerUserId,
+    DateTime localDay,
+    String summary,
+  ) async {
     final n = notifier!;
     try {
+      final preferenceStore = await ctx.ref.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      final notificationsEnabled = await preferenceStore
+          .areNotificationsEnabled(
+            ownerUserId: ownerUserId,
+            agentId: kMorningBriefingAgentId,
+          );
+      if (!notificationsEnabled) return;
       if (!await n.hasPermissions()) return;
       await n.showNow(
         id: HealthNotifications.idForBriefing(localDay),

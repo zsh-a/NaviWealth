@@ -126,7 +126,15 @@ class RecoveryAlertAgent implements Agent {
     // Notify.
     if (notifier != null) {
       try {
-        if (await notifier!.hasPermissions()) {
+        final preferenceStore = await ctx.ref.read(
+          agent_providers.agentPreferenceStoreProvider.future,
+        );
+        final notificationsEnabled = await preferenceStore
+            .areNotificationsEnabled(
+              ownerUserId: ownerUserId,
+              agentId: kRecoveryAlertAgentId,
+            );
+        if (notificationsEnabled && await notifier!.hasPermissions()) {
           await notifier!.showNow(
             id: HealthNotifications.idForRecoveryAlert(start.toLocal()),
             title: 'Recovery Alert',
@@ -144,10 +152,28 @@ class RecoveryAlertAgent implements Agent {
       }
     }
 
+    return _completedResult(
+      startedAt: start,
+      summary: summary,
+      memoryId: memoryId,
+      artifactId: artifactId,
+      signal: signal,
+      alert: alert,
+    );
+  }
+
+  static AgentRunResult _completedResult({
+    required DateTime startedAt,
+    required String summary,
+    required String memoryId,
+    required String artifactId,
+    required RecoveryAlertSignalRead signal,
+    required RecoveryAlertSignal alert,
+  }) {
     return AgentRunResult(
       agentId: kRecoveryAlertAgentId,
       status: AgentRunStatus.completed,
-      startedAt: start,
+      startedAt: startedAt,
       finishedAt: DateTime.now().toUtc(),
       summary: summary,
       payload: <String, Object?>{

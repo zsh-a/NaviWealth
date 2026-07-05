@@ -1,13 +1,19 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
@@ -70,11 +76,12 @@ MemoryRuntime _runtime() {
   return _runtimeForDb(db);
 }
 
-MemoryRuntime _runtimeForDb(AppDatabase db) {
+MemoryRuntime _runtimeForDb(AppDatabase db, {DateTime Function()? clock}) {
   return MemoryRuntime(
     embedder: StubEmbedder(),
     memoryStore: SqliteMemoryStore(db: db),
     eventStore: SqliteEventStore(db: db),
+    clock: clock,
   );
 }
 
@@ -281,7 +288,51 @@ void main() {
     expect(agent.schedule.preferredHourLocal, 7);
     expect(agent.schedule.interval, const Duration(days: 1));
   });
+
+  test(
+    'run skips local notification when agent notifications are off',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final rt = _runtimeForDb(db, clock: () => now);
+      await rt.recordEvent(
+        _sleepEvent(id: 'h1', at: yesterdayEvening, seconds: 7.5 * 3600.0),
+      );
+      final store = SqliteAgentArtifactStore(db: db);
+      final preferences = InMemoryAgentPreferenceStore();
+      await preferences.setNotificationsEnabled(
+        ownerUserId: 'u',
+        agentId: kMorningBriefingAgentId,
+        enabled: false,
+        updatedAt: now,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'u'),
+          memoryRuntimeProvider.overrideWith((ref) async => rt),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferences,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final notifier = _RecordingNotificationService();
+
+      final result = await MorningBriefingAgent(
+        notifier: notifier,
+      ).run(AgentContext(ref: container.read(_refProvider), now: now));
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(await store.read(result.artifactId!), isNotNull);
+      expect(notifier.showCount, 0);
+    },
+  );
 }
+
+final _refProvider = Provider<Ref>((ref) => ref);
 
 class _TraceBriefingSynthesizer implements BriefingSynthesizer {
   const _TraceBriefingSynthesizer();
@@ -294,5 +345,38 @@ class _TraceBriefingSynthesizer implements BriefingSynthesizer {
       source: BriefingSource.llm,
       traceId: 'trace-health-1',
     );
+  }
+}
+
+class _RecordingNotificationService implements NotificationService {
+  int showCount = 0;
+
+  @override
+  Stream<String> get payloads => const Stream<String>.empty();
+
+  @override
+  Future<void> cancel(int id) async {}
+
+  @override
+  Future<bool> hasPermissions() async => true;
+
+  @override
+  Future<String?> initialPayload() async => null;
+
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<bool> requestPermissions() async => true;
+
+  @override
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+    required NotificationChannelSpec channel,
+    String? payload,
+  }) async {
+    showCount += 1;
   }
 }

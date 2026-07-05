@@ -6,6 +6,7 @@ import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -149,6 +150,7 @@ void main() {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final store = SqliteAgentArtifactStore(db: db);
+      final preferences = InMemoryAgentPreferenceStore();
       final runtime = _FakeMemoryRuntime();
       final container = ProviderContainer(
         overrides: [
@@ -156,6 +158,9 @@ void main() {
           memoryRuntimeProvider.overrideWith((ref) async => runtime),
           agent_providers.agentArtifactStoreProvider.overrideWith(
             (ref) async => store,
+          ),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferences,
           ),
         ],
       );
@@ -219,6 +224,60 @@ void main() {
         notifier.lastPayload,
         '/health?agent_artifact_id=recovery_alert%3A2026-06-29',
       );
+    },
+  );
+
+  test(
+    'skips local notification when recovery alert notifications are off',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final preferences = InMemoryAgentPreferenceStore();
+      await preferences.setNotificationsEnabled(
+        ownerUserId: _owner,
+        agentId: kRecoveryAlertAgentId,
+        enabled: false,
+        updatedAt: DateTime.utc(2026, 6, 29, 8),
+      );
+      final runtime = _FakeMemoryRuntime();
+      final container = ProviderContainer(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferences,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final ref = container.read(_refProvider);
+      final notifier = _RecordingNotificationService();
+      final agent = RecoveryAlertAgent(
+        notifier: notifier,
+        signalReader: _FallbackReader(
+          RecoveryAlertSignalRead.alert(
+            source: 'test',
+            alert: const RecoveryAlertSignal(
+              avgBaselineMs: 50,
+              avgRecentMs: 40,
+              declinePct: 20,
+              consecutiveDays: 3,
+            ),
+          ),
+        ),
+      );
+
+      final result = await agent.run(
+        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 8)),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(await store.read(result.artifactId!), isNotNull);
+      expect(notifier.showCount, 0);
     },
   );
 
