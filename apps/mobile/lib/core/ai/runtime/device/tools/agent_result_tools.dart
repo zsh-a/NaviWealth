@@ -169,6 +169,10 @@ Map<String, Object?> _artifactToWire(AgentArtifact artifact) {
     'created_at': artifact.createdAt.toUtc().toIso8601String(),
     if (artifact.expiresAt != null)
       'expires_at': artifact.expiresAt!.toUtc().toIso8601String(),
+    if (artifact.dismissedAt != null)
+      'dismissed_at': artifact.dismissedAt!.toUtc().toIso8601String(),
+    if (artifact.snoozedUntil != null)
+      'snoozed_until': artifact.snoozedUntil!.toUtc().toIso8601String(),
   };
 }
 

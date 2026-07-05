@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 33;
+  int get schemaVersion => 34;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -494,6 +494,22 @@ class AppDatabase extends _$AppDatabase {
           table: 'agent_runs',
           column: 'trace_id',
           definition: 'TEXT',
+        );
+      }
+      // v33 -> v34: local visibility state for unified agent artifacts.
+      // Dismiss/snooze hides the current result without deleting history.
+      if (from < 34) {
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_artifacts',
+          column: 'dismissed_at',
+          definition: 'INTEGER',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_artifacts',
+          column: 'snoozed_until',
+          definition: 'INTEGER',
         );
       }
     },

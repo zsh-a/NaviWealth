@@ -60,6 +60,8 @@ void main() {
     expect(saved?.actions.single.intent, 'health.explainRecoveryAlert');
     expect(saved?.memoryId, 'memory-1');
     expect(saved?.traceId, 'trace-1');
+    expect(saved?.dismissedAt, isNull);
+    expect(saved?.snoozedUntil, isNull);
   });
 
   test(
@@ -125,6 +127,81 @@ void main() {
       expect(byDomain.map((artifact) => artifact.id), [
         'new-health',
         'old-health',
+      ]);
+    },
+  );
+
+  test(
+    'SqliteAgentArtifactStore hides dismissed snoozed and expired artifacts',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final now = DateTime.utc(2026, 7, 5, 12);
+
+      Future<void> save({
+        required String id,
+        int minutesAgo = 1,
+        DateTime? expiresAt,
+      }) {
+        return store.save(
+          AgentArtifact(
+            id: id,
+            ownerUserId: 'user-1',
+            agentId: 'weekly_summary',
+            domain: 'health',
+            kind: AgentArtifactKind.review,
+            severity: AgentArtifactSeverity.info,
+            title: id,
+            summary: id,
+            createdAt: now.subtract(Duration(minutes: minutesAgo)),
+            expiresAt: expiresAt,
+          ),
+        );
+      }
+
+      await save(id: 'visible', minutesAgo: 4);
+      await save(id: 'dismissed', minutesAgo: 3);
+      await save(id: 'snoozed', minutesAgo: 2);
+      await save(
+        id: 'expired',
+        minutesAgo: 1,
+        expiresAt: now.subtract(const Duration(days: 1)),
+      );
+
+      await store.dismiss(
+        ownerUserId: 'user-1',
+        id: 'dismissed',
+        dismissedAt: now,
+      );
+      await store.snooze(
+        ownerUserId: 'user-1',
+        id: 'snoozed',
+        until: now.add(const Duration(hours: 2)),
+      );
+
+      final latest = await store.latestForAgent(
+        ownerUserId: 'user-1',
+        agentId: 'weekly_summary',
+        visibleAt: now,
+      );
+      expect(latest.map((artifact) => artifact.id), ['visible']);
+
+      final dismissed = await store.read('dismissed');
+      final snoozed = await store.read('snoozed');
+      expect(dismissed?.dismissedAt, now);
+      expect(dismissed?.isVisibleAt(now), isFalse);
+      expect(snoozed?.snoozedUntil, now.add(const Duration(hours: 2)));
+      expect(snoozed?.isVisibleAt(now), isFalse);
+
+      final afterSnooze = await store.latestForDomain(
+        ownerUserId: 'user-1',
+        domain: 'health',
+        visibleAt: now.add(const Duration(hours: 3)),
+      );
+      expect(afterSnooze.map((artifact) => artifact.id), [
+        'snoozed',
+        'visible',
       ]);
     },
   );

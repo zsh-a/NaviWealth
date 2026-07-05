@@ -5,6 +5,7 @@
 ///   should not sync.
 /// - `agent_artifacts` — user-visible briefing/review/alert records produced
 ///   by agents. Local-only, with evidence/actions encoded as compact JSON.
+///   Dismiss/snooze state hides the current result without deleting history.
 /// - `agent_preferences` — per-user local agent toggles and notification
 ///   preferences. These are product preferences, not synced source data.
 /// - `options_opportunity_cache` — scoring engine output. Each device
@@ -75,7 +76,9 @@ CREATE TABLE IF NOT EXISTS agent_artifacts (
   memory_id      TEXT,
   trace_id       TEXT,
   created_at     INTEGER NOT NULL,  -- millis since epoch (UTC)
-  expires_at     INTEGER
+  expires_at     INTEGER,
+  dismissed_at   INTEGER,
+  snoozed_until  INTEGER
 )
 ''';
 

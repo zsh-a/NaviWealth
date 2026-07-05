@@ -11,16 +11,30 @@ abstract interface class AgentArtifactStore {
 
   Future<AgentArtifact?> read(String id);
 
+  Future<void> dismiss({
+    required String ownerUserId,
+    required String id,
+    required DateTime dismissedAt,
+  });
+
+  Future<void> snooze({
+    required String ownerUserId,
+    required String id,
+    required DateTime until,
+  });
+
   Future<List<AgentArtifact>> latestForAgent({
     required String ownerUserId,
     required String agentId,
     int limit = 10,
+    DateTime? visibleAt,
   });
 
   Future<List<AgentArtifact>> latestForDomain({
     required String ownerUserId,
     required String domain,
     int limit = 20,
+    DateTime? visibleAt,
   });
 }
 
@@ -48,8 +62,25 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         memory_id,
         trace_id,
         created_at,
-        expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        expires_at,
+        dismissed_at,
+        snoozed_until
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
+      ON CONFLICT(id) DO UPDATE SET
+        owner_user_id = excluded.owner_user_id,
+        agent_id = excluded.agent_id,
+        domain = excluded.domain,
+        kind = excluded.kind,
+        severity = excluded.severity,
+        title = excluded.title,
+        summary = excluded.summary,
+        insights_json = excluded.insights_json,
+        evidence_json = excluded.evidence_json,
+        actions_json = excluded.actions_json,
+        memory_id = excluded.memory_id,
+        trace_id = excluded.trace_id,
+        created_at = excluded.created_at,
+        expires_at = excluded.expires_at
       ''',
       <Object?>[
         artifact.id,
@@ -83,24 +114,65 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
   }
 
   @override
+  Future<void> dismiss({
+    required String ownerUserId,
+    required String id,
+    required DateTime dismissedAt,
+  }) async {
+    await _db.customStatement(
+      '''
+      UPDATE agent_artifacts
+      SET dismissed_at = ?, snoozed_until = NULL
+      WHERE owner_user_id = ? AND id = ?
+      ''',
+      <Object?>[dismissedAt.toUtc().millisecondsSinceEpoch, ownerUserId, id],
+    );
+  }
+
+  @override
+  Future<void> snooze({
+    required String ownerUserId,
+    required String id,
+    required DateTime until,
+  }) async {
+    await _db.customStatement(
+      '''
+      UPDATE agent_artifacts
+      SET snoozed_until = ?
+      WHERE owner_user_id = ? AND id = ? AND dismissed_at IS NULL
+      ''',
+      <Object?>[until.toUtc().millisecondsSinceEpoch, ownerUserId, id],
+    );
+  }
+
+  @override
   Future<List<AgentArtifact>> latestForAgent({
     required String ownerUserId,
     required String agentId,
     int limit = 10,
+    DateTime? visibleAt,
   }) async {
     if (limit <= 0) return const <AgentArtifact>[];
+    final atMillis = (visibleAt ?? DateTime.now())
+        .toUtc()
+        .millisecondsSinceEpoch;
     final rows = await _db
         .customSelect(
           '''
           SELECT *
           FROM agent_artifacts
           WHERE owner_user_id = ? AND agent_id = ?
+            AND dismissed_at IS NULL
+            AND (snoozed_until IS NULL OR snoozed_until <= ?)
+            AND (expires_at IS NULL OR expires_at > ?)
           ORDER BY created_at DESC
           LIMIT $limit
           ''',
           variables: [
             Variable.withString(ownerUserId),
             Variable.withString(agentId),
+            Variable.withInt(atMillis),
+            Variable.withInt(atMillis),
           ],
         )
         .get();
@@ -112,20 +184,29 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
     required String ownerUserId,
     required String domain,
     int limit = 20,
+    DateTime? visibleAt,
   }) async {
     if (limit <= 0) return const <AgentArtifact>[];
+    final atMillis = (visibleAt ?? DateTime.now())
+        .toUtc()
+        .millisecondsSinceEpoch;
     final rows = await _db
         .customSelect(
           '''
           SELECT *
           FROM agent_artifacts
           WHERE owner_user_id = ? AND domain = ?
+            AND dismissed_at IS NULL
+            AND (snoozed_until IS NULL OR snoozed_until <= ?)
+            AND (expires_at IS NULL OR expires_at > ?)
           ORDER BY created_at DESC
           LIMIT $limit
           ''',
           variables: [
             Variable.withString(ownerUserId),
             Variable.withString(domain),
+            Variable.withInt(atMillis),
+            Variable.withInt(atMillis),
           ],
         )
         .get();
@@ -135,6 +216,8 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
 
 AgentArtifact _rowToArtifact(QueryRow row) {
   final expiresAtMillis = row.read<int?>('expires_at');
+  final dismissedAtMillis = row.read<int?>('dismissed_at');
+  final snoozedUntilMillis = row.read<int?>('snoozed_until');
   return AgentArtifact(
     id: row.read<String>('id'),
     ownerUserId: row.read<String>('owner_user_id'),
@@ -156,5 +239,11 @@ AgentArtifact _rowToArtifact(QueryRow row) {
     expiresAt: expiresAtMillis == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(expiresAtMillis, isUtc: true),
+    dismissedAt: dismissedAtMillis == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(dismissedAtMillis, isUtc: true),
+    snoozedUntil: snoozedUntilMillis == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(snoozedUntilMillis, isUtc: true),
   );
 }

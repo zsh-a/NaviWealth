@@ -77,6 +77,11 @@ void main() {
         createdAt: DateTime.utc(2026, 7, 5),
       ),
     );
+    await store.dismiss(
+      ownerUserId: _owner,
+      id: 'weekly_wealth_review:2026-07-05',
+      dismissedAt: DateTime.utc(2026, 7, 5, 10),
+    );
     final container = _container(db);
 
     final output = await _withRef(
@@ -94,6 +99,7 @@ void main() {
     expect(artifact['severity'], 'attention');
     expect(artifact['trace_id'], 'trace-1');
     expect(artifact['memory_id'], 'memory-1');
+    expect(artifact['dismissed_at'], '2026-07-05T10:00:00.000Z');
     final evidence = artifact['evidence']! as List<Object?>;
     expect(
       (evidence.single! as Map<String, Object?>)['type'],

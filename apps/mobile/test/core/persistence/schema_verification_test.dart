@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 32', () {
-      expect(db.schemaVersion, 32);
+    test('is 34', () {
+      expect(db.schemaVersion, 34);
     });
   });
 
@@ -318,6 +318,8 @@ void main() {
           'trace_id',
           'created_at',
           'expires_at',
+          'dismissed_at',
+          'snoozed_until',
         ]),
       );
     });

@@ -61,6 +61,8 @@ class AgentArtifact {
     this.traceId,
     required this.createdAt,
     this.expiresAt,
+    this.dismissedAt,
+    this.snoozedUntil,
   });
 
   final String id;
@@ -78,6 +80,15 @@ class AgentArtifact {
   final String? traceId;
   final DateTime createdAt;
   final DateTime? expiresAt;
+  final DateTime? dismissedAt;
+  final DateTime? snoozedUntil;
+
+  bool isVisibleAt(DateTime now) {
+    final at = now.toUtc();
+    return dismissedAt == null &&
+        (snoozedUntil == null || !snoozedUntil!.toUtc().isAfter(at)) &&
+        (expiresAt == null || expiresAt!.toUtc().isAfter(at));
+  }
 
   String encodeInsights() =>
       jsonEncode([for (final insight in insights) insight.toJson()]);
