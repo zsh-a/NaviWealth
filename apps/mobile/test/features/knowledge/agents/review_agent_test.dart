@@ -95,9 +95,7 @@ void main() {
     ]);
     expect(artifact?.actions.single.intent, 'knowledge.reviewDueItems');
     final outcomeFailures = evaluateAgentOutcomeCase(
-      regressionCase: agentOutcomeRegressionCaseById(
-        'knowledge.review.tool_failure_fallback',
-      ),
+      regressionCase: agentOutcomeRegressionCaseById('knowledge.review.ready'),
       result: result,
       artifact: artifact,
     );
@@ -232,6 +230,64 @@ void main() {
 
       expect(snapshot.dueReviews.single.id, 'fallback_decision');
       expect(fallback.calls, 1);
+    });
+
+    test('run persists fallback artifact when the FRB path fails', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final artifactStore = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => artifactStore,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final fallback = _FallbackReader(
+        const ReviewDueSnapshot(
+          dueReviews: <ReviewDecisionItem>[
+            ReviewDecisionItem(id: 'fallback_decision', question: 'Fallback?'),
+          ],
+          staleAssumptions: <ReviewAssumptionItem>[
+            ReviewAssumptionItem(
+              id: 'fallback_assumption',
+              statement: 'Fallback assumption',
+            ),
+          ],
+        ),
+      );
+      final agent = ReviewAgent(
+        dueReader: FrbReviewDueReader(
+          runtime: _runtime(
+            bridge: FailingAgentRuntimeEffectPlanBridge(),
+            dispatcher: _ReviewDispatcher(),
+          ),
+          fallback: fallback,
+        ),
+      );
+
+      final result = await _runAgent(
+        container,
+        agent,
+        DateTime.utc(2026, 7, 5, 9),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(fallback.calls, 1);
+      final artifact = await artifactStore.read(result.artifactId!);
+      final outcomeFailures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'knowledge.review.tool_failure_fallback',
+        ),
+        result: result,
+        artifact: artifact,
+      );
+      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
     });
 
     test(

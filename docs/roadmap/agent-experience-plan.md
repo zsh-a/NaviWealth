@@ -51,6 +51,7 @@ Agent 的产品体验应当是：
 - Health Morning Briefing 已接入 agent outcome corpus 和 evaluator，覆盖 briefing artifact 的 insight / evidence / severity contract。
 - Health Weekly Summary ready outcome 已接入 agent outcome corpus 和 evaluator，覆盖 weekly review artifact 的 insight / evidence / severity contract；noFinding 仍覆盖 empty-week fixture。
 - Knowledge Contradiction ready outcome 已接入 agent outcome corpus 和 evaluator，覆盖 invalidated-assumption alert artifact 的 insight / evidence / severity contract；prompt-injection guard 仍覆盖 noFinding eval。
+- Knowledge Review ready outcome 已从 tool-failure fallback case 拆出独立 corpus fixture，正常 due-review 主路径与 FRB failure fallback 分别接入 evaluator。
 - Knowledge Assumption 和 Routine Due ready outcomes 已接入 agent outcome corpus 和 evaluator，覆盖 stale assumption 与 due routine artifact contracts。
 
 ## 体验模型

@@ -209,6 +209,20 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     tags: <String>{kAgentOutcomePromptInjectionTag},
   ),
   AgentOutcomeRegressionCase(
+    id: 'knowledge.review.ready',
+    agentId: 'knowledge_review',
+    domain: 'knowledge',
+    snapshotId: 'knowledge.review.due_decision_and_stale_assumption',
+    expectedStatus: AgentOutcomeRegressionStatus.ready,
+    expectedArtifactKind: AgentArtifactKind.review,
+    expectedSeverity: AgentArtifactSeverity.attention,
+    expectedTopInsightTitles: <String>{'Decisions due', 'Stale assumptions'},
+    expectedEvidenceTypes: <String>{
+      'knowledge_decision',
+      'knowledge_assumption',
+    },
+  ),
+  AgentOutcomeRegressionCase(
     id: 'knowledge.review.tool_failure_fallback',
     agentId: 'knowledge_review',
     domain: 'knowledge',
