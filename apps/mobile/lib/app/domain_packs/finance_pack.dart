@@ -11,6 +11,8 @@ import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent
     show kCashflowAnomalyReviewAgentId;
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart'
     show kFirePlanDriftMonitorAgentId;
+import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart'
+    show kOptionsIncomeRiskReviewAgentId;
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart'
@@ -90,6 +92,14 @@ final DomainPack kFinancePack = DomainPack(
       description: _firePlanDriftMonitorDescription,
       placement: AgentResultPlacement.domainHome,
     ),
+    AgentPresentationSpec(
+      agentId: kOptionsIncomeRiskReviewAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.shieldAlert,
+      label: _optionsIncomeRiskReviewLabel,
+      description: _optionsIncomeRiskReviewDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
   ],
   memoryBootstrapBuilder: _financeMemoryBootstrap,
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
@@ -135,3 +145,9 @@ String _firePlanDriftMonitorLabel(AppLocalizations l10n) =>
 
 String _firePlanDriftMonitorDescription(AppLocalizations l10n) =>
     l10n.agentPresentationFirePlanDriftMonitorDescription;
+
+String _optionsIncomeRiskReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationOptionsIncomeRiskReviewLabel;
+
+String _optionsIncomeRiskReviewDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationOptionsIncomeRiskReviewDescription;

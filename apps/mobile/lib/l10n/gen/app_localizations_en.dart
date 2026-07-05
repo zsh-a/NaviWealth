@@ -5724,6 +5724,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reviews withdrawal rate, cash runway, plan ETA, and stress-test drift.';
 
   @override
+  String get agentPresentationOptionsIncomeRiskReviewLabel =>
+      'Options Income Risk Review';
+
+  @override
+  String get agentPresentationOptionsIncomeRiskReviewDescription =>
+      'Reviews scan freshness, quote quality, concentration, and contract risk.';
+
+  @override
   String get agentPresentationMorningBriefingLabel => 'Morning Briefing';
 
   @override

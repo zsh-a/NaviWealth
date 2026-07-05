@@ -15,6 +15,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
+import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
@@ -167,6 +168,7 @@ void main() {
       kWeeklyWealthReviewAgentId,
       kCashflowAnomalyReviewAgentId,
       kFirePlanDriftMonitorAgentId,
+      kOptionsIncomeRiskReviewAgentId,
     ]);
     expect(artifacts.map((artifact) => artifact.id), [
       'fire-drift',

@@ -1700,6 +1700,8 @@
   "agentPresentationCashflowAnomalyReviewDescription": "复盘端侧检测到的月度支出异常。",
   "agentPresentationFirePlanDriftMonitorLabel": "FIRE 计划漂移监控",
   "agentPresentationFirePlanDriftMonitorDescription": "复盘提款率、现金安全垫、计划 ETA 与压力测试漂移。",
+  "agentPresentationOptionsIncomeRiskReviewLabel": "期权收入风险复盘",
+  "agentPresentationOptionsIncomeRiskReviewDescription": "复盘扫描时效、报价质量、标的集中度与合约风险。",
   "agentPresentationMorningBriefingLabel": "早间简报",
   "agentPresentationMorningBriefingDescription": "基于最近的健康与财务信号生成每日简报。",
   "agentPresentationRecoveryAlertLabel": "恢复提醒",

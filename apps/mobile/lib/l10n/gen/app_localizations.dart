@@ -9777,6 +9777,18 @@ abstract class AppLocalizations {
   /// **'Reviews withdrawal rate, cash runway, plan ETA, and stress-test drift.'**
   String get agentPresentationFirePlanDriftMonitorDescription;
 
+  /// Presentation label for the FinanceOS options income risk review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Options Income Risk Review'**
+  String get agentPresentationOptionsIncomeRiskReviewLabel;
+
+  /// Presentation description for the FinanceOS options income risk review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews scan freshness, quote quality, concentration, and contract risk.'**
+  String get agentPresentationOptionsIncomeRiskReviewDescription;
+
   /// Presentation label for the HealthOS morning briefing agent.
   ///
   /// In en, this message translates to:

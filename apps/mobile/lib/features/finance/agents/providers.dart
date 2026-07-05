@@ -10,6 +10,7 @@ import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
 import 'cashflow_anomaly_review_agent.dart';
 import 'fire_plan_drift_monitor_agent.dart';
+import 'options_income_risk_review_agent.dart';
 import 'weekly_wealth_review_agent.dart';
 
 final cashflowAnomalyReviewAgentProvider = Provider<CashflowAnomalyReviewAgent>(
@@ -20,6 +21,11 @@ final firePlanDriftMonitorAgentProvider = Provider<FirePlanDriftMonitorAgent>(
   (ref) => const FirePlanDriftMonitorAgent(),
 );
 
+final optionsIncomeRiskReviewAgentProvider =
+    Provider<OptionsIncomeRiskReviewAgent>(
+      (ref) => const OptionsIncomeRiskReviewAgent(),
+    );
+
 final weeklyWealthReviewAgentProvider = Provider<WeeklyWealthReviewAgent>(
   (ref) => const WeeklyWealthReviewAgent(),
 );
@@ -29,6 +35,7 @@ final financeAgentsProvider = Provider<List<Agent>>((ref) {
     ref.watch(weeklyWealthReviewAgentProvider),
     ref.watch(cashflowAnomalyReviewAgentProvider),
     ref.watch(firePlanDriftMonitorAgentProvider),
+    ref.watch(optionsIncomeRiskReviewAgentProvider),
   ];
 });
 
@@ -41,7 +48,7 @@ final latestFinanceAgentArtifactsProvider =
       return store.latestForDomain(
         ownerUserId: ownerUserId,
         domain: 'finance',
-        limit: 3,
+        limit: 4,
       );
     });
 

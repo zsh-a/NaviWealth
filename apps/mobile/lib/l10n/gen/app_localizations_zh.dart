@@ -5467,6 +5467,13 @@ class AppLocalizationsZh extends AppLocalizations {
       '复盘提款率、现金安全垫、计划 ETA 与压力测试漂移。';
 
   @override
+  String get agentPresentationOptionsIncomeRiskReviewLabel => '期权收入风险复盘';
+
+  @override
+  String get agentPresentationOptionsIncomeRiskReviewDescription =>
+      '复盘扫描时效、报价质量、标的集中度与合约风险。';
+
+  @override
   String get agentPresentationMorningBriefingLabel => '早间简报';
 
   @override
