@@ -80,7 +80,17 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         memory_id = excluded.memory_id,
         trace_id = excluded.trace_id,
         created_at = excluded.created_at,
-        expires_at = excluded.expires_at
+        expires_at = excluded.expires_at,
+        dismissed_at = CASE
+          WHEN agent_artifacts.owner_user_id = excluded.owner_user_id
+          THEN agent_artifacts.dismissed_at
+          ELSE NULL
+        END,
+        snoozed_until = CASE
+          WHEN agent_artifacts.owner_user_id = excluded.owner_user_id
+          THEN agent_artifacts.snoozed_until
+          ELSE NULL
+        END
       ''',
       <Object?>[
         artifact.id,
