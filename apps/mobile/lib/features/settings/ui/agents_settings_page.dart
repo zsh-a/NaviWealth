@@ -4,6 +4,7 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
@@ -18,6 +19,7 @@ import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -92,6 +94,14 @@ class AgentsSettingsPage extends ConsumerWidget {
                   icon: FLucideIcons.bot,
                   title: l10n.agentSettingsNoActiveTitle,
                   message: l10n.agentSettingsNoActiveMessage,
+                  action: AppQuietButton(
+                    label: l10n.agentSettingsManageDomains,
+                    onPress: () => context.goNamed(SettingsRouteNames.domains),
+                    prefix: const Icon(
+                      FLucideIcons.settings2,
+                      size: AppIconSizes.xs,
+                    ),
+                  ),
                 );
               }
               return SoftCard(

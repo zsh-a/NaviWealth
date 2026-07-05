@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
@@ -19,6 +20,7 @@ import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/agents_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -29,6 +31,27 @@ void main() {
   testWidgets('renders empty state when no active domain registers agents', (
     tester,
   ) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+        GoRoute(
+          path: SettingsRoutes.domains,
+          name: SettingsRouteNames.domains,
+          builder: (context, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const Text('Domain management route'),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -44,14 +67,11 @@ void main() {
             (ref) async => InMemoryAgentRunStore(),
           ),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: FTheme(
-            data: FThemes.slate.light.desktop,
-            child: const AgentsSettingsPage(),
-          ),
+          routerConfig: router,
         ),
       ),
     );
@@ -67,6 +87,11 @@ void main() {
       find.byKey(const ValueKey<String>('agent-enabled-fake_agent')),
       findsNothing,
     );
+
+    await tester.tap(find.text('Manage domains'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Domain management route'), findsOneWidget);
   });
 
   testWidgets('renders agent rows from presentation metadata', (tester) async {

@@ -2918,6 +2918,8 @@
   "@agentSettingsNoActiveTitle": { "description": "Empty state title when no active domain has registered agents." },
   "agentSettingsNoActiveMessage": "Enable a LifeOS domain to see its agents here.",
   "@agentSettingsNoActiveMessage": { "description": "Empty state message when no active domain has registered agents." },
+  "agentSettingsManageDomains": "Manage domains",
+  "@agentSettingsManageDomains": { "description": "Button label from the Agents settings empty state to open LifeOS domain management." },
   "agentSettingsManagedBadge": "Managed",
   "@agentSettingsManagedBadge": { "description": "Badge for non-toggleable managed agents." },
   "agentSettingsRunNow": "Run now",

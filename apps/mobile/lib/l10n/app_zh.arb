@@ -1625,6 +1625,7 @@
   "agentSettingsSubtitle": "管理当前已启用 LifeOS 域在本设备上的定时 Agent。",
   "agentSettingsNoActiveTitle": "暂无可用 Agent",
   "agentSettingsNoActiveMessage": "启用一个 LifeOS 域后，可在这里查看它的 Agent。",
+  "agentSettingsManageDomains": "管理域",
   "agentSettingsManagedBadge": "托管",
   "agentSettingsRunNow": "立即运行",
   "agentSettingsViewResult": "查看结果",

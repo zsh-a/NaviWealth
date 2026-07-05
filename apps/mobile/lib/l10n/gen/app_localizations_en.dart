@@ -5467,6 +5467,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enable a LifeOS domain to see its agents here.';
 
   @override
+  String get agentSettingsManageDomains => 'Manage domains';
+
+  @override
   String get agentSettingsManagedBadge => 'Managed';
 
   @override

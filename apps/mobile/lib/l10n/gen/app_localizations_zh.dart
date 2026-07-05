@@ -5218,6 +5218,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsNoActiveMessage => '启用一个 LifeOS 域后，可在这里查看它的 Agent。';
 
   @override
+  String get agentSettingsManageDomains => '管理域';
+
+  @override
   String get agentSettingsManagedBadge => '托管';
 
   @override

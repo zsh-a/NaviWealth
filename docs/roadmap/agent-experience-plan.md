@@ -47,7 +47,7 @@ Agent 的产品体验应当是：
 - Agent run / artifact / preference 表保持 local-only；sync 和 backup registry 都有负向 contract 防止 agent lifecycle 表进入云同步或备份面。
 - Agent settings page 已覆盖 active agent row、notification preference、enabled toggle、Run now manual run、latest artifact 和 run history，确保用户控制入口不与通知偏好混淆。
 - Agent settings page 已覆盖 disabled agent 的 Run now 手动触发不可达，确保用户关闭 agent 后不会从设置页绕过偏好继续运行。
-- Agent settings page 已覆盖 active registry 为空时的 empty state，确保 inactive domain 的 agent 不会以不可运行 row 泄漏到用户控制面。
+- Agent settings page 已覆盖 active registry 为空时的 empty state 和 domain-management CTA，确保 inactive domain 的 agent 不会以不可运行 row 泄漏到用户控制面，同时给用户启用 domain 的路径。
 - Production DomainPack composition 已覆盖 active agent registry 与 `AgentPresentationSpec` 的一一对应关系，防止新增 agent 后缺失统一设置/展示元数据。
 - Agent background catch-up binding 已声明所属 domain，core runner 会在消费 due flag 后统一拒绝 inactive domain，避免 stale background flag 越过 domain opt-in。
 - Knowledge Routine Due 和 Execution Review 的 pending background providers 已覆盖 foreground catch-up 组合路径，验证 due flag 会被消费并以 `background_due` trigger 调用共享 AgentRunController。

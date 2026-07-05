@@ -9327,6 +9327,12 @@ abstract class AppLocalizations {
   /// **'Enable a LifeOS domain to see its agents here.'**
   String get agentSettingsNoActiveMessage;
 
+  /// Button label from the Agents settings empty state to open LifeOS domain management.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage domains'**
+  String get agentSettingsManageDomains;
+
   /// Badge for non-toggleable managed agents.
   ///
   /// In en, this message translates to:
