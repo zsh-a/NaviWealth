@@ -182,6 +182,68 @@ void main() {
     expect(find.text('Disabled'), findsOneWidget);
   });
 
+  testWidgets('disabled agents cannot be run manually from settings', (
+    tester,
+  ) async {
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    await preferenceStore.setEnabled(
+      ownerUserId: 'user-1',
+      agentId: 'fake_agent',
+      enabled: false,
+      updatedAt: DateTime.utc(2026, 7, 5),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistryProvider.overrideWithValue(const <Agent>[_FakeAgent()]),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+          agentRunControllerProvider.overrideWith((ref) async {
+            throw StateError('disabled agents should not reach Run now');
+          }),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Disabled'), findsOneWidget);
+    await tester.tap(find.text('Run now'));
+    await tester.pumpAndSettle();
+
+    expect(
+      await runStore.latestForAgent(
+        ownerUserId: 'user-1',
+        agentId: 'fake_agent',
+      ),
+      isNull,
+    );
+  });
+
   testWidgets('run now writes a manual run through the controller', (
     tester,
   ) async {
