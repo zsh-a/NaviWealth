@@ -89,6 +89,36 @@ IntentCopyResolver localizedIntentCopyResolver(AppLocalizations l10n) {
       label: l10n.aiIntentSuggestFireActionsLabel,
       promptTemplate: l10n.aiIntentSuggestFireActionsPrompt,
     ),
+    'agent.explainResult' => const IntentCopy(
+      label: 'Explain result',
+      promptTemplate:
+          'Explain {{object_label}}, summarize the evidence, and call out any caveats.',
+    ),
+    'agent.showEvidence' => const IntentCopy(
+      label: 'Show evidence',
+      promptTemplate:
+          'Show the evidence behind {{object_label}}, identify which claims each evidence item supports, and note any missing evidence.',
+    ),
+    'agent.createPlanFromResult' => const IntentCopy(
+      label: 'Create plan',
+      promptTemplate:
+          'Turn {{object_label}} into a short action plan. Use existing evidence, separate proposed actions from facts, and avoid applying changes without confirmation.',
+    ),
+    'health.explainRecoveryAlert' => const IntentCopy(
+      label: 'Explain recovery alert',
+      promptTemplate:
+          'Explain {{object_label}} using the attached recovery alert and HRV trend evidence. State why the alert fired, how strong the signal is, and what caveats matter.',
+    ),
+    'finance.reviewWealth' => const IntentCopy(
+      label: 'Review wealth',
+      promptTemplate:
+          'Review {{object_label}} with the attached net-worth, allocation, price freshness, and FX evidence.',
+    ),
+    'knowledge.reviewDueItems' => const IntentCopy(
+      label: 'Review knowledge items',
+      promptTemplate:
+          'Review {{object_label}} and help prioritize the due decisions and stale assumptions.',
+    ),
     _ => fallbackIntentCopy(desc),
   };
 }
@@ -197,14 +227,17 @@ String renderPromptFor(
   IntentCatalog catalog = IntentCatalog.empty,
   String? fallbackObjectLabel,
   String? fallbackPromptTemplate,
+  bool debugAssertOnOffCatalog = true,
 }) {
   final desc = lookupIntent(invocation.intent, catalog: catalog);
   if (desc == null) {
-    assert(
-      false,
-      'AiIntentInvocation uses unregistered intent "${invocation.intent}". '
-      'Add it to the owning DomainPack intent catalog or use suggestedPrompt.',
-    );
+    if (debugAssertOnOffCatalog) {
+      assert(
+        false,
+        'AiIntentInvocation uses unregistered intent "${invocation.intent}". '
+        'Add it to the owning DomainPack intent catalog or use suggestedPrompt.',
+      );
+    }
     final label = objectLabel ?? fallbackObjectLabel ?? 'current object';
     return invocation.suggestedPrompt ??
         (fallbackPromptTemplate ?? 'Analyze {{object_label}}.').replaceAll(

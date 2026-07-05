@@ -9,12 +9,16 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -55,7 +59,8 @@ class AssumptionAgent implements Agent {
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
-    final open = await assumptionReader.listOpen(ctx);
+    final snapshot = await assumptionReader.listOpen(ctx);
+    final open = snapshot.open;
     final stale = open
         .where((a) => a.daysSinceVerify >= kAssumptionStaleDays)
         .toList(growable: false);
@@ -67,10 +72,13 @@ class AssumptionAgent implements Agent {
         startedAt: start,
         finishedAt: finished,
         reason: l10n.knowledgeAgentAssumptionNoStale,
+        traceId: snapshot.traceId,
       );
     }
 
     final summary = _summarize(l10n, stale.length, stale.first.statement);
+    final dayKey = AppFormatters.utcDayKey(start);
+    final artifactId = '$kKnowledgeAssumptionAgentId:$dayKey';
     final built = buildAgentMemory(
       source: kKnowledgeAssumptionMemorySource,
       kind: MemoryKind.episodic,
@@ -82,12 +90,28 @@ class AssumptionAgent implements Agent {
       payload: <String, Object?>{
         'stale_assumption_ids': stale.map((a) => a.id).toList(growable: false),
         'threshold_days': kAssumptionStaleDays,
+        'artifact_id': artifactId,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       entities: <String>{'knowledge_assumption', 'assumption_review'},
       importance: 0.6,
       confidence: 0.9,
     );
     await runtime.remember(built.record);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _buildArtifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        createdAt: finished,
+        summary: summary,
+        memoryId: built.memoryId,
+        stale: stale,
+        traceId: snapshot.traceId,
+      ),
+    );
 
     return AgentRunResult(
       agentId: kKnowledgeAssumptionAgentId,
@@ -95,8 +119,73 @@ class AssumptionAgent implements Agent {
       startedAt: start,
       finishedAt: finished,
       summary: summary,
-      payload: <String, Object?>{'stale_count': stale.length},
+      payload: <String, Object?>{
+        'stale_count': stale.length,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
+      },
       memoryId: built.memoryId,
+      artifactId: artifactId,
+      traceId: snapshot.traceId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String id,
+    required String ownerUserId,
+    required DateTime createdAt,
+    required String summary,
+    required String memoryId,
+    required List<AssumptionReviewItem> stale,
+    required String? traceId,
+  }) {
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeAssumptionAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.review,
+      severity: AgentArtifactSeverity.attention,
+      title: 'Assumption Review',
+      summary: summary,
+      insights: <AgentInsight>[
+        AgentInsight(
+          title: 'Stale assumptions',
+          body:
+              '${stale.length} assumption${stale.length == 1 ? '' : 's'}'
+              ' crossed the $kAssumptionStaleDays day verification window.',
+          severity: AgentArtifactSeverity.attention,
+          payload: <String, Object?>{
+            'count': stale.length,
+            'threshold_days': kAssumptionStaleDays,
+            'first_id': stale.first.id,
+          },
+        ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final assumption in stale)
+          AgentEvidenceRef(
+            type: 'knowledge_assumption',
+            id: assumption.id,
+            label: assumption.statement,
+            payload: <String, Object?>{
+              'reason': 'stale_assumption',
+              'days_since_verify': assumption.daysSinceVerify,
+            },
+          ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review assumptions',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      traceId: traceId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
   }
 
@@ -116,20 +205,22 @@ class AssumptionAgent implements Agent {
 }
 
 abstract class AssumptionReviewReader {
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx);
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx);
 }
 
 class RepositoryAssumptionReviewReader implements AssumptionReviewReader {
   const RepositoryAssumptionReviewReader();
 
   @override
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx) async {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
-    return open
-        .map((a) => AssumptionReviewItem.fromAssumption(a, now: ctx.now))
-        .toList(growable: false);
+    return AssumptionReviewSnapshot(
+      open: open
+          .map((a) => AssumptionReviewItem.fromAssumption(a, now: ctx.now))
+          .toList(growable: false),
+    );
   }
 }
 
@@ -143,7 +234,7 @@ class FrbAssumptionReviewReader implements AssumptionReviewReader {
   final AssumptionReviewReader fallback;
 
   @override
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
       effectPlan: const <AgentRuntimeEffect>[
         AgentRuntimeEffect.tool(
@@ -153,15 +244,24 @@ class FrbAssumptionReviewReader implements AssumptionReviewReader {
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.listOpen(ctx),
-      decode: (terminalStep) {
+      decode: (stepRun) {
         final result = agentRuntimeTerminalEffectResultForTool(
-          terminalStep,
+          stepRun.terminalStep,
           'list_open_assumptions',
         );
-        return assumptionReviewItemsFromToolResult(result);
+        final items = assumptionReviewItemsFromToolResult(result);
+        if (items == null) return null;
+        return AssumptionReviewSnapshot(open: items, traceId: stepRun.traceId);
       },
     );
   }
+}
+
+class AssumptionReviewSnapshot {
+  const AssumptionReviewSnapshot({required this.open, this.traceId});
+
+  final List<AssumptionReviewItem> open;
+  final String? traceId;
 }
 
 class AssumptionReviewItem {

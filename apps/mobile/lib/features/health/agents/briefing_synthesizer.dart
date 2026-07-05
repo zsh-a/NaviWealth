@@ -45,6 +45,7 @@ class BriefingOutput {
     this.hrvLine,
     this.financeLine,
     this.source = BriefingSource.programmatic,
+    this.traceId,
   });
 
   /// Empty-summary sentinel — caller treats this as "no usable signals"
@@ -67,6 +68,9 @@ class BriefingOutput {
   /// the memory `outcome` payload so a future "which synth" UI can
   /// surface it without re-running.
   final BriefingSource source;
+
+  /// Transparency trace produced by the FRB profile-turn runtime, when used.
+  final String? traceId;
 
   bool get isEmpty => summary.isEmpty;
 }
@@ -205,6 +209,7 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
         hrvLine: baseline.hrvLine,
         financeLine: baseline.financeLine,
         source: BriefingSource.llm,
+        traceId: result.traceId,
       );
     } on Object {
       return baseline;

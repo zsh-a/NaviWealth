@@ -44,6 +44,13 @@ enum AgentRunStatus {
   failed,
 }
 
+/// Product-facing status for a finished [AgentRunResult].
+///
+/// This intentionally excludes `running`: an [AgentRunResult] is emitted only
+/// after a run has finished, while the persistent run store owns in-flight
+/// lifecycle rows.
+enum AgentRunUserVisibleStatus { ready, noFinding, failed }
+
 /// One agent run's outcome — what the runner persists.
 class AgentRunResult {
   const AgentRunResult({
@@ -54,6 +61,8 @@ class AgentRunResult {
     this.summary,
     this.payload = const <String, Object?>{},
     this.memoryId,
+    this.artifactId,
+    this.traceId,
     this.error,
   });
 
@@ -62,12 +71,14 @@ class AgentRunResult {
     required DateTime startedAt,
     required DateTime finishedAt,
     String? reason,
+    String? traceId,
   }) => AgentRunResult(
     agentId: agentId,
     status: AgentRunStatus.skipped,
     startedAt: startedAt,
     finishedAt: finishedAt,
     summary: reason,
+    traceId: traceId,
   );
 
   factory AgentRunResult.failed({
@@ -75,12 +86,14 @@ class AgentRunResult {
     required DateTime startedAt,
     required DateTime finishedAt,
     required String error,
+    String? traceId,
   }) => AgentRunResult(
     agentId: agentId,
     status: AgentRunStatus.failed,
     startedAt: startedAt,
     finishedAt: finishedAt,
     error: error,
+    traceId: traceId,
   );
 
   /// `[Agent.id]` of the agent that produced this result. Stable
@@ -105,9 +118,24 @@ class AgentRunResult {
   /// can re-read it). `null` for skipped / failed runs.
   final String? memoryId;
 
+  /// If the agent produced a user-visible artifact, this is its id.
+  /// `null` for skipped / failed runs and for legacy agents that only
+  /// write memory/events.
+  final String? artifactId;
+
+  /// AI/runtime trace associated with this run, when the agent used the
+  /// runtime trace recorder.
+  final String? traceId;
+
   final String? error;
 
   Duration get duration => finishedAt.difference(startedAt);
+
+  AgentRunUserVisibleStatus get userVisibleStatus => switch (status) {
+    AgentRunStatus.completed => AgentRunUserVisibleStatus.ready,
+    AgentRunStatus.skipped => AgentRunUserVisibleStatus.noFinding,
+    AgentRunStatus.failed => AgentRunUserVisibleStatus.failed,
+  };
 }
 
 /// One scheduled agent. Concrete implementations live in domain

@@ -12,7 +12,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_background_scheduler.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart' as memory_providers;
 import '../../../core/auth/current_user.dart';
@@ -26,6 +30,8 @@ import '../data/health_notification_preferences.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
+import 'recovery_alert_agent.dart';
+import 'weekly_summary_agent.dart';
 
 /// Shorter lookback for periodic foreground catch-up after a background wake.
 /// Manual sync and Morning Briefing still use [kDefaultHealthSyncWindow].
@@ -43,10 +49,28 @@ final morningBriefingCronProvider = Provider<void>((ref) {
   final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
   final notificationsEnabled = ref.watch(notificationsEnabledProvider);
   final briefingEnabled = ref.watch(healthBriefingNotificationsEnabledProvider);
+  ref.watch(agent_providers.agentPreferenceRevisionProvider);
   unawaited(() async {
     try {
       if (!await scheduler.isAvailable()) return;
-      if (healthEnabled && notificationsEnabled && briefingEnabled) {
+      if (!healthEnabled || !notificationsEnabled || !briefingEnabled) {
+        await scheduler.cancelTask(kMorningBriefingBackgroundTask);
+        return;
+      }
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final preferenceStore = await ref.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      final agentEnabled = await preferenceStore.isEnabled(
+        ownerUserId: ownerUserId,
+        agentId: kMorningBriefingAgentId,
+      );
+      final agentNotificationsEnabled = await preferenceStore
+          .areNotificationsEnabled(
+            ownerUserId: ownerUserId,
+            agentId: kMorningBriefingAgentId,
+          );
+      if (agentEnabled && agentNotificationsEnabled) {
         await scheduler.registerTask(kMorningBriefingBackgroundTask);
       } else {
         await scheduler.cancelTask(kMorningBriefingBackgroundTask);
@@ -110,10 +134,6 @@ final pendingBriefingRunProvider = FutureProvider.autoDispose<AgentRunResult?>((
 ) async {
   final optIns = await ref.read(core_auth.domainOptInsProvider.future);
   if (!optIns.contains(DomainScope.health)) return null;
-  final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
-  final due = prefs.getInt(kMorningBriefingDueAtKey);
-  if (due == null) return null;
-  await prefs.remove(kMorningBriefingDueAtKey);
   return runDueMorningBriefingTick(ref);
 });
 
@@ -176,12 +196,15 @@ final manualMorningBriefingRunProvider =
 Future<AgentRunResult?> runDueMorningBriefingTick(Ref ref) async {
   final link = ref.keepAlive();
   try {
-    await _syncHealthBeforeBriefing(ref);
-    final controller = await ref.read(agentRunControllerProvider.future);
-    final results = await controller.tick(
-      onlyAgentIds: const <String>[kMorningBriefingAgentId],
+    final catchUp = await ref.read(agentBackgroundCatchUpRunnerProvider.future);
+    return catchUp.runIfDue(
+      binding: const AgentBackgroundTaskBinding(
+        agentId: kMorningBriefingAgentId,
+        domain: DomainScope.health,
+        task: kMorningBriefingBackgroundTask,
+      ),
+      beforeRun: () => _syncHealthBeforeBriefing(ref),
     );
-    return results.isEmpty ? null : results.single;
   } finally {
     link.close();
   }
@@ -256,3 +279,73 @@ final latestMorningBriefingProvider = FutureProvider.autoDispose<MemoryRecord?>(
     return hits.first.record;
   },
 );
+
+/// Most recent user-visible Morning Briefing artifact. This is the unified
+/// agent-result surface backing; the legacy memory provider remains for the
+/// existing Health Today card until the UI migrates to artifact rendering.
+final latestMorningBriefingArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      ref.watch(manualMorningBriefingRunProvider);
+      ref.watch(pendingBriefingRunProvider);
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final artifacts = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kMorningBriefingAgentId,
+        limit: 1,
+      );
+      return artifacts.isEmpty ? null : artifacts.single;
+    });
+
+/// Most recent user-visible Recovery Alert artifact for Health Today.
+final latestRecoveryAlertArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final artifacts = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kRecoveryAlertAgentId,
+        limit: 1,
+      );
+      return artifacts.isEmpty ? null : artifacts.single;
+    });
+
+/// Most recent user-visible Weekly Summary artifact for the Health Today page.
+final latestWeeklySummaryArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final artifacts = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kWeeklySummaryAgentId,
+        limit: 1,
+      );
+      return artifacts.isEmpty ? null : artifacts.single;
+    });
+
+/// Most recent Weekly Summary run status for Health Today fallback UI.
+final latestWeeklySummaryRunProvider =
+    FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final store = await ref.watch(
+        agent_providers.agentRunStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      return store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kWeeklySummaryAgentId,
+      );
+    });

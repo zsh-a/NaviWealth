@@ -552,6 +552,12 @@ void main() {
             'idx_recurring_pattern_obs_series',
             'knowledge_inbox_triage',
             'idx_knowledge_inbox_triage_owner_triaged',
+            'agent_runs',
+            'idx_agent_runs_agent_started',
+            'agent_artifacts',
+            'idx_agent_artifacts_domain_created',
+            'agent_preferences',
+            'idx_agent_preferences_owner',
             'securities_catalog_fts'
           )
           ''').get();
@@ -577,6 +583,12 @@ void main() {
         'idx_recurring_pattern_obs_series',
         'knowledge_inbox_triage',
         'idx_knowledge_inbox_triage_owner_triaged',
+        'agent_runs',
+        'idx_agent_runs_agent_started',
+        'agent_artifacts',
+        'idx_agent_artifacts_domain_created',
+        'agent_preferences',
+        'idx_agent_preferences_owner',
         'securities_catalog_fts',
       ]),
     );
@@ -1018,6 +1030,175 @@ void main() {
     expect(row.read<String>('content'), 'Working');
     expect(row.read<String?>('progress_json'), null);
   });
+
+  test(
+    'migrates v31 agent tables through trace and visibility additions',
+    () async {
+      final dir = await Directory.systemTemp.createTemp(
+        'naviwealth_migration_',
+      );
+      addTearDown(() async {
+        if (await dir.exists()) await dir.delete(recursive: true);
+      });
+      final file = File('${dir.path}/naviwealth.db');
+
+      final legacy = sqlite3.open(file.path);
+      try {
+        legacy
+          ..execute('''
+          CREATE TABLE agent_runs (
+            id            TEXT PRIMARY KEY,
+            owner_user_id TEXT NOT NULL,
+            agent_id      TEXT NOT NULL,
+            agent_name    TEXT NOT NULL,
+            status        TEXT NOT NULL,
+            trigger       TEXT NOT NULL,
+            started_at    INTEGER NOT NULL,
+            finished_at   INTEGER,
+            summary       TEXT,
+            error         TEXT,
+            memory_id     TEXT,
+            artifact_id   TEXT
+          )
+        ''')
+          ..execute('''
+          CREATE TABLE agent_artifacts (
+            id             TEXT PRIMARY KEY,
+            owner_user_id  TEXT NOT NULL,
+            agent_id       TEXT NOT NULL,
+            domain         TEXT NOT NULL,
+            kind           TEXT NOT NULL,
+            severity       TEXT NOT NULL,
+            title          TEXT NOT NULL,
+            summary        TEXT NOT NULL,
+            insights_json  TEXT NOT NULL,
+            evidence_json  TEXT NOT NULL,
+            actions_json   TEXT NOT NULL,
+            memory_id      TEXT,
+            trace_id       TEXT,
+            created_at     INTEGER NOT NULL,
+            expires_at     INTEGER
+          )
+        ''')
+          ..execute(
+            '''
+          INSERT INTO agent_runs (
+            id,
+            owner_user_id,
+            agent_id,
+            agent_name,
+            status,
+            trigger,
+            started_at,
+            finished_at,
+            summary,
+            memory_id,
+            artifact_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+            [
+              'weekly_wealth_review:1',
+              'u1',
+              'weekly_wealth_review',
+              'Weekly Wealth Review',
+              'ready',
+              'schedule',
+              1,
+              2,
+              'Ready',
+              'memory-1',
+              'artifact-1',
+            ],
+          )
+          ..execute(
+            '''
+          INSERT INTO agent_artifacts (
+            id,
+            owner_user_id,
+            agent_id,
+            domain,
+            kind,
+            severity,
+            title,
+            summary,
+            insights_json,
+            evidence_json,
+            actions_json,
+            memory_id,
+            trace_id,
+            created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+            [
+              'artifact-1',
+              'u1',
+              'weekly_wealth_review',
+              'finance',
+              'review',
+              'info',
+              'Weekly Wealth Review',
+              'Ready',
+              '[]',
+              '[]',
+              '[]',
+              'memory-1',
+              'trace-1',
+              1,
+            ],
+          )
+          ..execute('PRAGMA user_version = 31');
+      } finally {
+        legacy.close();
+      }
+
+      final db = AppDatabase(
+        DatabaseConnection(NativeDatabase(file, logStatements: false)),
+      );
+      addTearDown(db.close);
+
+      Future<Set<String>> columns(String table) async {
+        final rows = await db.customSelect('PRAGMA table_info($table)').get();
+        return rows.map((row) => row.read<String>('name')).toSet();
+      }
+
+      expect(await columns('agent_runs'), contains('trace_id'));
+      expect(
+        await columns('agent_artifacts'),
+        containsAll(['dismissed_at', 'snoozed_until']),
+      );
+
+      final run = await db
+          .customSelect(
+            '''
+          SELECT summary, artifact_id, trace_id
+          FROM agent_runs
+          WHERE id = ?
+          ''',
+            variables: [Variable.withString('weekly_wealth_review:1')],
+          )
+          .getSingle();
+      expect(run.read<String>('summary'), 'Ready');
+      expect(run.read<String>('artifact_id'), 'artifact-1');
+      expect(run.read<String?>('trace_id'), null);
+
+      final artifact = await db
+          .customSelect(
+            '''
+          SELECT trace_id, dismissed_at, snoozed_until
+          FROM agent_artifacts
+          WHERE id = ?
+          ''',
+            variables: [Variable.withString('artifact-1')],
+          )
+          .getSingle();
+      expect(artifact.read<String>('trace_id'), 'trace-1');
+      expect(artifact.read<int?>('dismissed_at'), null);
+      expect(artifact.read<int?>('snoozed_until'), null);
+
+      final version = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(version.read<int>('user_version'), db.schemaVersion);
+    },
+  );
 
   test('migrates v23 options journal rows through v26 additions', () async {
     final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');

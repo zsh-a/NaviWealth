@@ -2,8 +2,21 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart'
+    show kCashflowAnomalyReviewAgentId;
+import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart'
+    show kFirePlanDriftMonitorAgentId;
+import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart'
+    show kOptionsIncomeRiskReviewAgentId;
+import 'package:naviwealth/features/finance/agents/providers.dart'
+    as finance_agent_providers;
+import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart'
+    show kWeeklyWealthReviewAgentId;
 import 'package:naviwealth/features/finance/composition/finance_bootstrap.dart';
 import 'package:naviwealth/features/finance/composition/finance_command_palette.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
@@ -27,7 +40,10 @@ final DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: kFinanceDeviceTools,
   toolDescriptors: kFinanceToolDescriptors,
-  intentDescriptors: kFinanceIntentDescriptors,
+  intentDescriptors: [
+    ...kFinanceIntentDescriptors,
+    ...kFinanceAgentIntentDescriptors,
+  ],
   proposalKinds: kFinanceProposalKinds,
   proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
     ref,
@@ -50,6 +66,41 @@ final DomainPack kFinancePack = DomainPack(
   // recurring + dividends) but isn't a primary tab. It is surfaced through
   // Wealth / Plan navigation, but route ownership still belongs to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
+  agentBuilder: _financeAgents,
+  agentPresentationSpecs: const [
+    AgentPresentationSpec(
+      agentId: kWeeklyWealthReviewAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.walletCards,
+      label: _weeklyWealthReviewLabel,
+      description: _weeklyWealthReviewDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
+    AgentPresentationSpec(
+      agentId: kCashflowAnomalyReviewAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.triangleAlert,
+      label: _cashflowAnomalyReviewLabel,
+      description: _cashflowAnomalyReviewDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
+    AgentPresentationSpec(
+      agentId: kFirePlanDriftMonitorAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.flame,
+      label: _firePlanDriftMonitorLabel,
+      description: _firePlanDriftMonitorDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
+    AgentPresentationSpec(
+      agentId: kOptionsIncomeRiskReviewAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.shieldAlert,
+      label: _optionsIncomeRiskReviewLabel,
+      description: _optionsIncomeRiskReviewDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
+  ],
   memoryBootstrapBuilder: _financeMemoryBootstrap,
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
@@ -65,6 +116,9 @@ final DomainPack kFinancePack = DomainPack(
   ),
 );
 
+List<Agent> _financeAgents(Ref ref) =>
+    ref.watch(finance_agent_providers.financeAgentsProvider);
+
 void _financeMemoryBootstrap(Ref ref) {
   ref.watch(tradeJournalMemoryIndexerProvider);
 }
@@ -73,3 +127,27 @@ String _financeSettingsSubtitle(AppLocalizations l10n, bool _) =>
     l10n.settingsDomainsFinanceSubtitle;
 
 Widget _financeSettingsSection() => const FinanceDomainSettingsSection();
+
+String _weeklyWealthReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationWeeklyWealthReviewLabel;
+
+String _weeklyWealthReviewDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationWeeklyWealthReviewDescription;
+
+String _cashflowAnomalyReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationCashflowAnomalyReviewLabel;
+
+String _cashflowAnomalyReviewDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationCashflowAnomalyReviewDescription;
+
+String _firePlanDriftMonitorLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationFirePlanDriftMonitorLabel;
+
+String _firePlanDriftMonitorDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationFirePlanDriftMonitorDescription;
+
+String _optionsIncomeRiskReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationOptionsIncomeRiskReviewLabel;
+
+String _optionsIncomeRiskReviewDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationOptionsIncomeRiskReviewDescription;

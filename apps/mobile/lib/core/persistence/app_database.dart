@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 29;
+  int get schemaVersion => 34;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -100,6 +100,9 @@ class AppDatabase extends _$AppDatabase {
       await _createRecurringPatternObservations(this);
       await _createMemoryRuntime(this);
       await _createKnowledgeInboxTriage(this);
+      await _createAgentRuns(this);
+      await _createAgentArtifacts(this);
+      await _createAgentPreferences(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -457,6 +460,57 @@ class AppDatabase extends _$AppDatabase {
           definition: 'TEXT',
         );
         await _createExecutionIndexes(this);
+      }
+      // v29 -> v30: local-only lifecycle state for scheduled LifeOS agents.
+      // Agent state belongs to the Dart agent framework, not the native
+      // runtime; this table lets schedule gates survive app restarts without
+      // syncing derived device state.
+      if (from < 30) {
+        await _createAgentRuns(this);
+      }
+      // v30 -> v31: local-only user-visible outputs for the unified agent
+      // experience. These are derived briefing/review/alert artifacts, not
+      // synced source-of-truth rows.
+      if (from < 31) {
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_runs',
+          column: 'artifact_id',
+          definition: 'TEXT',
+        );
+        await _createAgentArtifacts(this);
+      }
+      // v31 -> v32: local per-user agent preferences. These control
+      // scheduling/notification behavior but remain local product state.
+      if (from < 32) {
+        await _createAgentPreferences(this);
+      }
+      // v32 -> v33: retain the runtime transparency trace associated with a
+      // product-level agent run. Artifacts already have `trace_id`; this keeps
+      // lifecycle/history surfaces linked to the same local trace.
+      if (from < 33) {
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_runs',
+          column: 'trace_id',
+          definition: 'TEXT',
+        );
+      }
+      // v33 -> v34: local visibility state for unified agent artifacts.
+      // Dismiss/snooze hides the current result without deleting history.
+      if (from < 34) {
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_artifacts',
+          column: 'dismissed_at',
+          definition: 'INTEGER',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_artifacts',
+          column: 'snoozed_until',
+          definition: 'INTEGER',
+        );
       }
     },
     beforeOpen: (details) async {

@@ -66,12 +66,13 @@ void main() {
     );
     expect(showAiSheetCallSites, hasLength(1));
     expect(
-      directAiChatPageConstructions.toSet(),
-      <String>{'lib/app/routing/router_builder.dart:186'},
+      directAiChatPageConstructions.map(_filePathOnly).toSet(),
+      <String>{'lib/app/routing/router_builder.dart'},
       reason:
           'AiChatPage is allowed only as the read-only /settings/ai-history '
           'route. Trigger surfaces should use the bottom-sheet invocation path.',
     );
+    expect(directAiChatPageConstructions, hasLength(1));
   });
 
   test('AI surface copy avoids generic Ask AI labels', () {

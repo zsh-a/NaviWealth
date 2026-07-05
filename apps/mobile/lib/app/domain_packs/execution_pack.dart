@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
+import 'package:naviwealth/features/execution/agents/review_agent.dart'
+    show kExecutionReviewAgentId;
 import 'package:naviwealth/features/execution/composition/execution_command_palette.dart';
 import 'package:naviwealth/features/execution/composition/execution_domain_shell.dart';
 import 'package:naviwealth/features/execution/composition/execution_proposal_applier.dart'
@@ -27,6 +33,7 @@ final DomainPack kExecutionPack = DomainPack(
   scope: DomainScope.execution,
   deviceTools: kExecutionDeviceTools,
   toolDescriptors: kExecutionToolDescriptors,
+  intentDescriptors: kExecutionAgentIntentDescriptors,
   proposalKinds: kExecutionProposalKinds,
   proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
     ref,
@@ -44,7 +51,19 @@ final DomainPack kExecutionPack = DomainPack(
     AppRoutes.executionReview,
   ],
   agentBuilder: _executionAgents,
+  agentPresentationSpecs: const [
+    AgentPresentationSpec(
+      agentId: kExecutionReviewAgentId,
+      domain: DomainScope.execution,
+      icon: FLucideIcons.listChecks,
+      label: _executionReviewLabel,
+      description: _executionReviewDescription,
+      notificationsSupported: true,
+      placement: AgentResultPlacement.domainReview,
+    ),
+  ],
   memoryBootstrapBuilder: _executionMemoryBootstrap,
+  backgroundBootstrapBuilder: _executionBackgroundBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeExecutionProviderOverrides,
   settingsSpec: domainSettingsSpec(
@@ -64,7 +83,22 @@ void _executionMemoryBootstrap(Ref ref) {
   ref.watch(executionMemoryIndexerProvider);
 }
 
+void _executionBackgroundBootstrap(Ref ref) {
+  ref.watch(execution_agent_providers.executionReviewCronProvider);
+  unawaited(
+    ref.read(
+      execution_agent_providers.pendingExecutionReviewRunProvider.future,
+    ),
+  );
+}
+
 String _executionSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
     enabled
     ? l10n.settingsDomainsExecutionEnabledSubtitle
     : l10n.settingsDomainsExecutionDisabledSubtitle;
+
+String _executionReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationExecutionReviewLabel;
+
+String _executionReviewDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationExecutionReviewDescription;

@@ -3,16 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart' as auth;
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/features/health/agents/providers.dart'
+    as health_agent_providers;
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 const _owner = 'u-health-weekly';
 
@@ -76,10 +87,12 @@ void main() {
             ],
           },
         },
+        traceId: 'trace-parser-1',
       );
 
       expect(snapshot, isNotNull);
-      expect(snapshot!.recoveryScore, 82);
+      expect(snapshot!.traceId, 'trace-parser-1');
+      expect(snapshot.recoveryScore, 82);
       expect(snapshot.recoveryVerdict, 'rested');
       expect(snapshot.avgSleepHours, 7.5);
       expect(snapshot.totalSteps, 42000);
@@ -117,6 +130,7 @@ void main() {
         final snapshot = await reader.read(_context());
 
         expect(snapshot.recoveryScore, 82);
+        expect(snapshot.traceId, 'agent-runtime:weekly_summary:run_1');
         expect(snapshot.totalSteps, 42000);
         expect(dispatcher.calls.map((c) => c.name), <String>[
           'get_recovery_signal',
@@ -192,38 +206,201 @@ void main() {
     );
   });
 
-  test('writes weekly summary memory from reader snapshot', () async {
-    final runtime = _FakeMemoryRuntime();
+  test(
+    'writes weekly summary memory and artifact from reader snapshot',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final container = ProviderContainer(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final ref = container.read(_refProvider);
+      final agent = WeeklySummaryAgent(
+        summaryReader: _FallbackReader(
+          const WeeklySummarySnapshot(
+            hasHealthData: true,
+            recoveryScore: 82,
+            recoveryVerdict: 'rested',
+            avgSleepHours: 7.5,
+            totalSteps: 42000,
+            workoutCount: 3,
+            workoutMinutes: 95,
+            traceId: 'trace-weekly-summary-1',
+          ),
+        ),
+      );
+
+      final result = await agent.run(
+        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 20)),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(result.summary, contains('Recovery 82/100 (rested)'));
+      expect(result.summary, contains('42.0k steps'));
+      expect(result.artifactId, '$kWeeklySummaryAgentId:2026-06-29');
+      expect(result.traceId, 'trace-weekly-summary-1');
+      expect(runtime.remembered?.source, kWeeklySummaryMemorySource);
+      expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+      expect(runtime.remembered?.payload['trace_id'], 'trace-weekly-summary-1');
+      final outcome = runtime.remembered?.payload['outcome'] as Map?;
+      expect(outcome?['trace_id'], 'trace-weekly-summary-1');
+
+      final artifact = await store.read(result.artifactId!);
+      expect(artifact, isNotNull);
+      expect(artifact!.kind, AgentArtifactKind.review);
+      expect(artifact.domain, 'health');
+      expect(artifact.severity, AgentArtifactSeverity.info);
+      expect(artifact.memoryId, result.memoryId);
+      expect(artifact.traceId, 'trace-weekly-summary-1');
+      expect(artifact.summary, result.summary);
+      expect(
+        artifact.insights.map((insight) => insight.title),
+        containsAll(['Recovery', 'Sleep', 'Activity', 'Workouts']),
+      );
+      expect(artifact.evidence.single.type, 'health_week');
+      expect(artifact.actions.single.objectId, result.artifactId);
+
+      final outcomeFailures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'health.weekly_summary.ready',
+        ),
+        result: result,
+        artifact: artifact,
+      );
+      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+    },
+  );
+
+  test(
+    'latest weekly summary artifact provider returns newest health artifact',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(auth.domainOptInsProvider.future);
+      await container
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+      await store.save(
+        _weeklyArtifact(
+          id: 'weekly-old',
+          createdAt: DateTime.utc(2026, 6, 22, 20),
+        ),
+      );
+      await store.save(
+        _weeklyArtifact(
+          id: 'weekly-new',
+          createdAt: DateTime.utc(2026, 6, 29, 20),
+        ),
+      );
+
+      final artifact = await container.read(
+        health_agent_providers.latestWeeklySummaryArtifactProvider.future,
+      );
+
+      expect(artifact?.id, 'weekly-new');
+    },
+  );
+
+  test(
+    'latest weekly summary artifact provider respects Health opt-in',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(auth.domainOptInsProvider.future);
+      await store.save(
+        _weeklyArtifact(
+          id: 'weekly-hidden',
+          createdAt: DateTime.utc(2026, 6, 29, 20),
+        ),
+      );
+
+      final artifact = await container.read(
+        health_agent_providers.latestWeeklySummaryArtifactProvider.future,
+      );
+
+      expect(artifact, isNull);
+    },
+  );
+
+  test('latest weekly summary run provider returns last health run', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final runStore = SqliteAgentRunStore(db: db);
+    final startedAt = DateTime.utc(2026, 6, 29, 20);
+    final result = AgentRunResult.skipped(
+      agentId: kWeeklySummaryAgentId,
+      startedAt: startedAt,
+      finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+      reason: 'no health data this week',
+      traceId: 'trace-weekly-empty',
+    );
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'health.weekly_summary.no_finding',
+      ),
+      result: result,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+    await runStore.finishRun(
+      ownerUserId: _owner,
+      agent: const WeeklySummaryAgent(),
+      runStartedAt: startedAt,
+      result: result,
+      trigger: AgentRunTrigger.schedule,
+    );
     final container = ProviderContainer(
       overrides: [
+        appDatabaseProvider.overrideWith((_) async => db),
         currentUserIdProvider.overrideWithValue(() async => _owner),
-        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentRunStoreProvider.overrideWith(
+          (ref) async => runStore,
+        ),
       ],
     );
     addTearDown(container.dispose);
-    final ref = container.read(_refProvider);
-    final agent = WeeklySummaryAgent(
-      summaryReader: _FallbackReader(
-        const WeeklySummarySnapshot(
-          hasHealthData: true,
-          recoveryScore: 82,
-          recoveryVerdict: 'rested',
-          avgSleepHours: 7.5,
-          totalSteps: 42000,
-          workoutCount: 3,
-          workoutMinutes: 95,
-        ),
-      ),
+    await container.read(auth.domainOptInsProvider.future);
+    await container
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.health, true);
+
+    final run = await container.read(
+      health_agent_providers.latestWeeklySummaryRunProvider.future,
     );
 
-    final result = await agent.run(
-      AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 20)),
-    );
-
-    expect(result.status, AgentRunStatus.completed);
-    expect(result.summary, contains('Recovery 82/100 (rested)'));
-    expect(result.summary, contains('42.0k steps'));
-    expect(runtime.remembered?.source, kWeeklySummaryMemorySource);
+    expect(run?.status, AgentRunLifecycleStatus.noFinding);
+    expect(run?.summary, 'no health data this week');
+    expect(run?.traceId, 'trace-weekly-empty');
   });
 }
 
@@ -235,6 +412,23 @@ AgentContext _context() {
 }
 
 final _refProvider = Provider<Ref>((ref) => ref);
+
+AgentArtifact _weeklyArtifact({
+  required String id,
+  required DateTime createdAt,
+}) {
+  return AgentArtifact(
+    id: id,
+    ownerUserId: _owner,
+    agentId: kWeeklySummaryAgentId,
+    domain: 'health',
+    kind: AgentArtifactKind.review,
+    severity: AgentArtifactSeverity.info,
+    title: 'Weekly Summary',
+    summary: 'Weekly health summary',
+    createdAt: createdAt,
+  );
+}
 
 AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,

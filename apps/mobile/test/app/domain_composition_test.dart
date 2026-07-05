@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/composition/composite_proposal_applier.dart';
@@ -19,6 +21,8 @@ import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
@@ -71,6 +75,28 @@ const _healthIntent = IntentDescriptor(
   domain: kDomainHealth,
 );
 
+const _sharedFinanceIntent = IntentDescriptor(
+  name: 'fake_shared_intent',
+  allowedObjectTypes: <String>{'shared_object'},
+  preferredCapabilities: <AiCapability>{AiCapability.chat},
+  domain: kDomainFinance,
+);
+
+const _sharedHealthIntent = IntentDescriptor(
+  name: 'fake_shared_intent',
+  allowedObjectTypes: <String>{'shared_object'},
+  preferredCapabilities: <AiCapability>{AiCapability.chat},
+  domain: kDomainHealth,
+);
+
+const _financeAgentPresentation = AgentPresentationSpec(
+  agentId: 'domain_agent',
+  domain: DomainScope.finance,
+  icon: Icons.account_balance,
+  label: _fakeFinanceAgentLabel,
+  description: _fakeFinanceAgentDescription,
+);
+
 const _financePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: [_tool],
@@ -90,6 +116,7 @@ const _financePack = DomainPack(
   systemPromptBlock: 'Finance block',
   commandPaletteEntriesBuilder: _financeEntries,
   agentBuilder: _financeAgents,
+  agentPresentationSpecs: [_financeAgentPresentation],
 );
 
 const _healthPack = DomainPack(
@@ -113,6 +140,9 @@ const _healthPack = DomainPack(
 
 String _fakeFinanceProposalLabel(AppLocalizations l10n) => 'Fake finance';
 String _fakeHealthProposalLabel(AppLocalizations l10n) => 'Fake health';
+String _fakeFinanceAgentLabel(AppLocalizations l10n) => 'Fake finance agent';
+String _fakeFinanceAgentDescription(AppLocalizations l10n) =>
+    'Runs fake finance work.';
 
 Future<ProposalApplierRoute> _fakeFinanceProposalRoute(Ref ref) async =>
     const ProposalApplierRoute(
@@ -272,6 +302,17 @@ void main() {
     expect(c.read(agentsProvider).single.id, 'domain_agent');
   });
 
+  test('agent presentation specs are aggregated by active packs', () {
+    final specs = domainAgentPresentationSpecs(const [_financePack]);
+
+    expect(specs, contains('domain_agent'));
+    expect(specs['domain_agent']?.domain, DomainScope.finance);
+    expect(
+      specs['domain_agent']?.label(lookupAppLocalizations(const Locale('en'))),
+      'Fake finance agent',
+    );
+  });
+
   test('tool descriptor lookup follows active domain opt-ins', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
@@ -306,6 +347,24 @@ void main() {
         .setEnabled(DomainScope.health, true);
     catalog = c.read(intentCatalogProvider);
     expect(catalog.lookup('fake_health_intent'), _healthIntent);
+  });
+
+  test('intent catalog de-duplicates active descriptors by name', () {
+    const financePack = DomainPack(
+      scope: DomainScope.finance,
+      intentDescriptors: [_sharedFinanceIntent],
+    );
+    const healthPack = DomainPack(
+      scope: DomainScope.health,
+      intentDescriptors: [_sharedHealthIntent],
+    );
+
+    final catalog = domainIntentCatalog(const [financePack, healthPack]);
+
+    expect(catalog.descriptors.map((descriptor) => descriptor.name), [
+      'fake_shared_intent',
+    ]);
+    expect(catalog.lookup('fake_shared_intent')?.domain, kDomainFinance);
   });
 
   test('composition bundle includes domain provider overrides', () {
@@ -376,6 +435,9 @@ void main() {
 
       expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
       expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
+      expect(kHealthPack.backgroundBootstrapBuilder, isNotNull);
+      expect(kKnowledgePack.backgroundBootstrapBuilder, isNotNull);
+      expect(kExecutionPack.backgroundBootstrapBuilder, isNotNull);
       expect(
         kAllDomainPacks
             .where((pack) => pack.settingsSpec != null)
@@ -408,11 +470,165 @@ void main() {
       expect(
         c.read(agentRegistryProvider).map((agent) => agent.id),
         containsAll(<String>[
+          'weekly_wealth_review',
           'morning_briefing',
           'knowledge_review',
           'execution_review',
         ]),
       );
+      expect(
+        c.read(agentPresentationSpecsProvider).keys,
+        containsAll(<String>[
+          'weekly_wealth_review',
+          'morning_briefing',
+          'knowledge_review',
+          'execution_review',
+        ]),
+      );
+      final catalog = c.read(intentCatalogProvider);
+      for (final intentName in const <String>[
+        kAgentExplainResultIntent,
+        kAgentShowEvidenceIntent,
+        kAgentCreatePlanFromResultIntent,
+      ]) {
+        expect(catalog.lookup(intentName), isNotNull);
+        expect(
+          catalog.descriptors.where(
+            (descriptor) => descriptor.name == intentName,
+          ),
+          hasLength(1),
+        );
+      }
+      expect(catalog.lookup(kFinanceReviewWealthIntent), isNotNull);
+      expect(catalog.lookup(kKnowledgeReviewDueItemsIntent), isNotNull);
+      expect(
+        kExecutionAgentIntentDescriptors.map((descriptor) => descriptor.name),
+        containsAll(<String>[
+          kAgentExplainResultIntent,
+          kAgentShowEvidenceIntent,
+          kAgentCreatePlanFromResultIntent,
+        ]),
+      );
+    },
+  );
+
+  test(
+    'production agent registry and presentation specs stay in parity',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final registrationsProvider = Provider<List<DomainAgentRegistration>>((
+        ref,
+      ) {
+        return domainAgentRegistrations(
+          ref,
+          ref.watch(activeDomainPacksProvider),
+        );
+      });
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          ...lifeOsDomainCompositionOverrides(),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(auth.domainOptInsProvider.future);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.knowledge, true);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.execution, true);
+
+      final registrations = c.read(registrationsProvider);
+      final specs = c.read(agentPresentationSpecsProvider);
+      final agentIds = {for (final r in registrations) r.agent.id};
+      final corpusAgentIds = {
+        for (final regressionCase in agentOutcomeRegressionCorpus)
+          regressionCase.agentId,
+      };
+      final readyCorpusKeys = {
+        for (final regressionCase in agentOutcomeRegressionCorpus)
+          if (regressionCase.expectedStatus ==
+              AgentOutcomeRegressionStatus.ready)
+            '${regressionCase.domain}:${regressionCase.agentId}',
+      };
+
+      expect(specs.keys.toSet(), agentIds);
+      expect(corpusAgentIds, containsAll(agentIds));
+      for (final registration in registrations) {
+        final corpusKey =
+            '${registration.domain.wire}:${registration.agent.id}';
+        expect(readyCorpusKeys, contains(corpusKey), reason: corpusKey);
+        expect(
+          specs[registration.agent.id]?.domain,
+          registration.domain,
+          reason: registration.agent.id,
+        );
+      }
+      expect(
+        {
+          for (final entry in specs.entries)
+            if (entry.value.notificationsSupported) entry.key,
+        },
+        <String>{
+          'morning_briefing',
+          'recovery_alert',
+          'knowledge_routine_due',
+          'execution_review',
+        },
+      );
+      expect(
+        specs.values.map((spec) => spec.placement),
+        everyElement(isNot(AgentResultPlacement.settingsOnly)),
+      );
+    },
+  );
+
+  test(
+    'production composition treats disabled KnowledgeOS agents as no-run outcomes',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          ...lifeOsDomainCompositionOverrides(),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(auth.domainOptInsProvider.future);
+
+      expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
+        DomainScope.finance,
+      ]);
+      expect(
+        c.read(agentRegistryProvider).map((agent) => agent.id),
+        isNot(contains('knowledge_routine_due')),
+      );
+      expect(
+        c.read(agentPresentationSpecsProvider),
+        isNot(contains('knowledge_routine_due')),
+      );
+
+      final failures = evaluateAgentOutcomeCaseWithoutRun(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'knowledge.routine_due.domain_opt_out',
+        ),
+        reason: 'domain_not_enabled',
+      );
+      expect(failures, isEmpty);
     },
   );
 }

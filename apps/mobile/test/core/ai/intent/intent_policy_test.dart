@@ -181,6 +181,61 @@ void main() {
     expect(prompt, contains('最近 30 天'));
   });
 
+  test('renderPromptFor asserts for off-catalog intents in debug', () {
+    const inv = AiIntentInvocation(
+      source: 'agent_card',
+      intent: 'agent.unregisteredFollowUp',
+      object: AiObjectRef(type: 'agent_artifact', id: 'artifact-1'),
+      suggestedPrompt: 'Explain this artifact.',
+      domain: kDomainFinance,
+    );
+
+    expect(
+      () => renderPromptFor(inv, catalog: _catalog),
+      throwsA(isA<AssertionError>()),
+    );
+  });
+
+  test(
+    'renderPromptFor falls back for off-catalog intents when asserts are off',
+    () {
+      const inv = AiIntentInvocation(
+        source: 'agent_card',
+        intent: 'agent.unregisteredFollowUp',
+        object: AiObjectRef(type: 'agent_artifact', id: 'artifact-1'),
+        suggestedPrompt: 'Explain this artifact.',
+        domain: kDomainFinance,
+      );
+
+      final prompt = renderPromptFor(
+        inv,
+        catalog: _catalog,
+        debugAssertOnOffCatalog: false,
+      );
+
+      expect(prompt, 'Explain this artifact.');
+    },
+  );
+
+  test('renderPromptFor substitutes fallback object label off catalog', () {
+    const inv = AiIntentInvocation(
+      source: 'agent_card',
+      intent: 'agent.unregisteredFollowUp',
+      object: AiObjectRef(type: 'agent_artifact', id: 'artifact-1'),
+      domain: kDomainFinance,
+    );
+
+    final prompt = renderPromptFor(
+      inv,
+      catalog: _catalog,
+      objectLabel: 'Morning Briefing',
+      fallbackPromptTemplate: 'Review {{object_label}} safely.',
+      debugAssertOnOffCatalog: false,
+    );
+
+    expect(prompt, 'Review Morning Briefing safely.');
+  });
+
   test('single-domain intent: domains resolves to just its home domain', () {
     const d = IntentDescriptor(
       name: 'explain_change',

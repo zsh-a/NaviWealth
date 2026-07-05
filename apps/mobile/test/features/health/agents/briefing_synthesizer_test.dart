@@ -9,6 +9,7 @@
 //     the runner to script the happy path and fallback behavior.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
@@ -138,13 +139,17 @@ void main() {
       final synth = FrbBriefingSynthesizer(
         runtime: _profileRuntime(
           runner: runner,
-          recordTrace: (result) async => traces.add(result),
+          recordTrace: (result) async {
+            traces.add(result);
+            return _trace('trace-briefing-1');
+          },
         ),
       );
       final out = await synth.synthesize(baselineInputs);
 
       expect(out.source, BriefingSource.llm);
       expect(out.summary, 'You slept 7.5h and HRV was 48ms.');
+      expect(out.traceId, 'trace-briefing-1');
       expect(out.sleepLine, 'Slept 7.5h');
       expect(out.hrvLine, 'HRV 48ms');
       expect(runner.calls.single.agentId, 'morning_briefing');
@@ -176,6 +181,25 @@ void main() {
       expect(out.summary, 'Slept 7.5h · HRV 48ms');
     });
 
+    test('attaches recorded trace id to profile-turn result', () async {
+      final runner = _FakeProfileTurnRunner(
+        content: 'You slept 7.5h and HRV was 48ms.',
+      );
+      final runtime = _profileRuntime(
+        runner: runner,
+        recordTrace: (_) async => _trace('trace-profile-1'),
+      );
+
+      final result = await runtime.run(
+        messages: const [
+          <String, Object?>{'role': 'user', 'content': 'brief me'},
+        ],
+      );
+
+      expect(result.traceId, 'trace-profile-1');
+      expect(result.toJson(), containsPair('trace_id', 'trace-profile-1'));
+    });
+
     test(
       'ignores trace recording failures after a successful FRB turn',
       () async {
@@ -200,9 +224,26 @@ void main() {
   });
 }
 
+AiTrace _trace(String requestId) {
+  return AiTrace(
+    requestId: requestId,
+    startedAtIso: DateTime.utc(2026, 5, 27, 7).toIso8601String(),
+    intent: const IntentHint(
+      capability: Capability.analyze,
+      risk: RiskLevel.info,
+      label: 'test_profile_turn',
+      domain: 'health',
+    ),
+    backend: Backend.device,
+    budgetTier: BudgetTier.standard,
+    routingReason: 'test',
+    totalDurationMs: 1,
+  );
+}
+
 AgentRuntimeProfileTurnBinding _profileRuntime({
   required AgentRuntimeProfileTurnRunner runner,
-  Future<void> Function(AgentRuntimeProfileTurnResult result)? recordTrace,
+  AgentRuntimeProfileTurnTraceRecorder? recordTrace,
 }) {
   return AgentRuntimeProfileTurnBinding(
     agentId: 'morning_briefing',

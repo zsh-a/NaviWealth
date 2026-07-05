@@ -17,6 +17,7 @@ import '../core/update/native_update_banner.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_composition.dart';
+import 'notifications/notification_payload_router.dart';
 import 'routing/route_paths.dart';
 import 'routing/router.dart';
 
@@ -175,7 +176,10 @@ class NaviWealthApp extends ConsumerWidget {
                   child: BiometricLockGate(
                     child: NativeUpdateBanner(
                       child: PwaUpdateBanner(
-                        child: child ?? const SizedBox.shrink(),
+                        child: NotificationPayloadRouteListener(
+                          router: router,
+                          child: child ?? const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                   ),

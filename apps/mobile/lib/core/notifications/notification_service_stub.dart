@@ -13,6 +13,12 @@ class _UnsupportedNotificationService implements NotificationService {
   const _UnsupportedNotificationService();
 
   @override
+  Stream<String> get payloads => const Stream<String>.empty();
+
+  @override
+  Future<String?> initialPayload() async => null;
+
+  @override
   Future<bool> isAvailable() async => false;
 
   @override

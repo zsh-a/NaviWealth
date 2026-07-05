@@ -21,6 +21,12 @@ import workmanager_apple  // HealthOS background task scheduling
       withIdentifier: "com.naviwealth.morningBriefing"
     )
     WorkmanagerPlugin.registerBGProcessingTask(
+      withIdentifier: "com.naviwealth.knowledgeRoutineDue"
+    )
+    WorkmanagerPlugin.registerBGProcessingTask(
+      withIdentifier: "com.naviwealth.executionReview"
+    )
+    WorkmanagerPlugin.registerBGProcessingTask(
       withIdentifier: "com.naviwealth.garminSync"
     )
     WorkmanagerPlugin.registerBGProcessingTask(

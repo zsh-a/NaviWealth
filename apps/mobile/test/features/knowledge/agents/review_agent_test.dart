@@ -3,15 +3,105 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart'
+    show memoryRuntimeProvider;
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 void main() {
+  late SharedPreferences prefs;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    prefs = await SharedPreferences.getInstance();
+  });
+
+  test('run persists a weekly review artifact with evidence', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runtime = _FakeMemoryRuntime();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    const agent = ReviewAgent(
+      dueReader: _FixedReviewDueReader(
+        ReviewDueSnapshot(
+          dueReviews: [
+            ReviewDecisionItem(
+              id: 'decision-1',
+              question: 'Revisit portfolio hedge?',
+            ),
+          ],
+          staleAssumptions: [
+            ReviewAssumptionItem(
+              id: 'assumption-1',
+              statement: 'Rates stay high',
+            ),
+          ],
+          traceId: 'trace-knowledge-review-1',
+        ),
+      ),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 9),
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.memoryId, '$kKnowledgeReviewMemorySource:2026-07-05');
+    expect(result.artifactId, 'knowledge_review:2026-07-05');
+    expect(result.traceId, 'trace-knowledge-review-1');
+    expect(runtime.remembered?.id, result.memoryId);
+    expect(runtime.remembered?.payload['trace_id'], 'trace-knowledge-review-1');
+
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact?.kind, AgentArtifactKind.review);
+    expect(artifact?.severity, AgentArtifactSeverity.attention);
+    expect(artifact?.memoryId, result.memoryId);
+    expect(artifact?.traceId, 'trace-knowledge-review-1');
+    expect(artifact?.insights.map((insight) => insight.title), [
+      'Decisions due',
+      'Stale assumptions',
+    ]);
+    expect(artifact?.evidence.map((ref) => ref.id), [
+      'decision-1',
+      'assumption-1',
+    ]);
+    expect(artifact?.actions.single.intent, 'knowledge.reviewDueItems');
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById('knowledge.review.ready'),
+      result: result,
+      artifact: artifact,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+  });
+
   group('review due effect-result parsing', () {
     test('parses terminal multi-tool output and filters stale assumptions', () {
       final snapshot = reviewDueSnapshotFromTerminalStep(
@@ -62,10 +152,12 @@ void main() {
           },
         },
         now: DateTime.utc(2026, 6, 29),
+        traceId: 'trace-parser-1',
       );
 
       expect(snapshot, isNotNull);
-      expect(snapshot!.dueReviews.single.id, 'decision_1');
+      expect(snapshot!.traceId, 'trace-parser-1');
+      expect(snapshot.dueReviews.single.id, 'decision_1');
       expect(snapshot.staleAssumptions.single.id, 'assumption_stale');
     });
 
@@ -98,6 +190,7 @@ void main() {
       final snapshot = await reader.read(_context());
 
       expect(snapshot.dueReviews.single.question, 'Revisit portfolio hedge?');
+      expect(snapshot.traceId, 'agent-runtime:knowledge_review:run_1');
       expect(snapshot.staleAssumptions.single.statement, 'Rates stay high');
       expect(dispatcher.calls.map((c) => c.name), <String>[
         'list_due_reviews',
@@ -137,6 +230,64 @@ void main() {
 
       expect(snapshot.dueReviews.single.id, 'fallback_decision');
       expect(fallback.calls, 1);
+    });
+
+    test('run persists fallback artifact when the FRB path fails', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final artifactStore = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => artifactStore,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final fallback = _FallbackReader(
+        const ReviewDueSnapshot(
+          dueReviews: <ReviewDecisionItem>[
+            ReviewDecisionItem(id: 'fallback_decision', question: 'Fallback?'),
+          ],
+          staleAssumptions: <ReviewAssumptionItem>[
+            ReviewAssumptionItem(
+              id: 'fallback_assumption',
+              statement: 'Fallback assumption',
+            ),
+          ],
+        ),
+      );
+      final agent = ReviewAgent(
+        dueReader: FrbReviewDueReader(
+          runtime: _runtime(
+            bridge: FailingAgentRuntimeEffectPlanBridge(),
+            dispatcher: _ReviewDispatcher(),
+          ),
+          fallback: fallback,
+        ),
+      );
+
+      final result = await _runAgent(
+        container,
+        agent,
+        DateTime.utc(2026, 7, 5, 9),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(fallback.calls, 1);
+      final artifact = await artifactStore.read(result.artifactId!);
+      final outcomeFailures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'knowledge.review.tool_failure_fallback',
+        ),
+        result: result,
+        artifact: artifact,
+      );
+      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
     });
 
     test(
@@ -283,4 +434,38 @@ class _FallbackReader implements ReviewDueReader {
     calls += 1;
     return result;
   }
+}
+
+Future<AgentRunResult> _runAgent(
+  ProviderContainer container,
+  ReviewAgent agent,
+  DateTime now,
+) {
+  final probe = FutureProvider<AgentRunResult>(
+    (ref) => agent.run(AgentContext(ref: ref, now: now)),
+  );
+  container.listen(probe, (_, _) {});
+  return container.read(probe.future);
+}
+
+class _FixedReviewDueReader implements ReviewDueReader {
+  const _FixedReviewDueReader(this.snapshot);
+
+  final ReviewDueSnapshot snapshot;
+
+  @override
+  Future<ReviewDueSnapshot> read(AgentContext ctx) async => snapshot;
+}
+
+class _FakeMemoryRuntime implements MemoryRuntime {
+  MemoryRecord? remembered;
+
+  @override
+  Future<void> remember(MemoryRecord record) async {
+    remembered = record;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }

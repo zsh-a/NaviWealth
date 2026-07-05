@@ -21,7 +21,11 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_store.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
@@ -84,10 +88,18 @@ class MorningBriefingAgent implements Agent {
       startedAt: start,
       finishedAt: DateTime.now().toUtc(),
       runtime: runtime,
+      artifactStore: await ctx.ref.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      ),
     );
 
     if (result.status == AgentRunStatus.completed && notifier != null) {
-      await _maybeNotify(start.toLocal(), result.summary ?? '');
+      await _maybeNotify(
+        ctx,
+        ownerUserId,
+        start.toLocal(),
+        result.summary ?? '',
+      );
     }
     return result;
   }
@@ -101,6 +113,7 @@ class MorningBriefingAgent implements Agent {
     required DateTime finishedAt,
     required MemoryRuntime runtime,
     BriefingSynthesizer synthesizer = const ProgrammaticBriefingSynthesizer(),
+    AgentArtifactStore? artifactStore,
   }) {
     final agent = MorningBriefingAgent(synthesizer: synthesizer);
     return agent._synthesizeAndPersist(
@@ -109,6 +122,7 @@ class MorningBriefingAgent implements Agent {
       startedAt: startedAt,
       finishedAt: finishedAt,
       runtime: runtime,
+      artifactStore: artifactStore,
     );
   }
 
@@ -118,6 +132,7 @@ class MorningBriefingAgent implements Agent {
     required DateTime startedAt,
     required DateTime finishedAt,
     required MemoryRuntime runtime,
+    AgentArtifactStore? artifactStore,
   }) async {
     final healthEvents = events
         .where((e) => e.source.startsWith('health'))
@@ -158,6 +173,7 @@ class MorningBriefingAgent implements Agent {
     }
 
     final memoryId = '$kMorningBriefingMemorySource:$dayKey';
+    final artifactId = '$kMorningBriefingAgentId:$dayKey';
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
@@ -179,7 +195,10 @@ class MorningBriefingAgent implements Agent {
           'hrv_summary': ?output.hrvLine,
           'finance_summary': ?output.financeLine,
           'synthesis_source': output.source.name,
+          if (output.traceId != null) 'trace_id': output.traceId,
         },
+        'artifact_id': artifactId,
+        if (output.traceId != null) 'trace_id': output.traceId,
       },
       entities: <String>{'morning_briefing', 'briefing', dayKey},
       importance: 0.6,
@@ -189,6 +208,17 @@ class MorningBriefingAgent implements Agent {
       updatedAt: finishedAt.toUtc(),
     );
     await runtime.remember(memory);
+    await artifactStore?.save(
+      _artifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        memoryId: memoryId,
+        createdAt: startedAt,
+        output: output,
+        healthEvents: healthEvents,
+        financeEvents: financeEvents,
+      ),
+    );
 
     return AgentRunResult(
       agentId: kMorningBriefingAgentId,
@@ -202,12 +232,101 @@ class MorningBriefingAgent implements Agent {
         'synthesis_source': output.source.name,
       },
       memoryId: memoryId,
+      artifactId: artifactStore == null ? null : artifactId,
+      traceId: output.traceId,
     );
   }
 
-  Future<void> _maybeNotify(DateTime localDay, String summary) async {
+  static AgentArtifact _artifact({
+    required String id,
+    required String ownerUserId,
+    required String memoryId,
+    required DateTime createdAt,
+    required BriefingOutput output,
+    required List<EventRecord> healthEvents,
+    required List<EventRecord> financeEvents,
+  }) {
+    final shortSleep = output.sleepLine?.contains('(short)') ?? false;
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kMorningBriefingAgentId,
+      domain: 'health',
+      kind: AgentArtifactKind.briefing,
+      severity: shortSleep
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+      title: 'Morning Briefing',
+      summary: output.summary,
+      insights: <AgentInsight>[
+        if (output.sleepLine != null)
+          AgentInsight(
+            title: 'Sleep',
+            body: output.sleepLine!,
+            severity: shortSleep
+                ? AgentArtifactSeverity.attention
+                : AgentArtifactSeverity.info,
+          ),
+        if (output.hrvLine != null)
+          AgentInsight(title: 'HRV', body: output.hrvLine!),
+        if (output.financeLine != null)
+          AgentInsight(title: 'Finance', body: output.financeLine!),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final event in healthEvents.take(8))
+          AgentEvidenceRef(
+            type: 'health_event',
+            id: event.id,
+            label: event.summary,
+            payload: <String, Object?>{
+              'event_type': event.type,
+              'source': event.source,
+            },
+          ),
+        for (final event in financeEvents.take(5))
+          AgentEvidenceRef(
+            type: 'finance_event',
+            id: event.id,
+            label: event.summary,
+            payload: <String, Object?>{
+              'event_type': event.type,
+              'source': event.source,
+            },
+          ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'review',
+          label: 'Review briefing',
+          intent: kAgentExplainResultIntent,
+          objectType: kAgentArtifactObjectType,
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      traceId: output.traceId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
+    );
+  }
+
+  Future<void> _maybeNotify(
+    AgentContext ctx,
+    String ownerUserId,
+    DateTime localDay,
+    String summary,
+  ) async {
     final n = notifier!;
     try {
+      final preferenceStore = await ctx.ref.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      final notificationsEnabled = await preferenceStore
+          .areNotificationsEnabled(
+            ownerUserId: ownerUserId,
+            agentId: kMorningBriefingAgentId,
+          );
+      if (!notificationsEnabled) return;
       if (!await n.hasPermissions()) return;
       await n.showNow(
         id: HealthNotifications.idForBriefing(localDay),

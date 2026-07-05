@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'agent.dart';
 import 'agent_registry.dart';
+import 'agent_run_store.dart';
 import 'agent_runner.dart';
 
 final agentRunControllerProvider = FutureProvider<AgentRunController>((
@@ -35,16 +36,22 @@ class AgentRunController {
   final List<Agent> _agents;
   final Ref _ref;
 
-  Future<AgentRunResult> runOnceById(String agentId, {DateTime? now}) {
+  Future<AgentRunResult> runOnceById(
+    String agentId, {
+    DateTime? now,
+    AgentRunTrigger trigger = AgentRunTrigger.manual,
+  }) {
     return _runner.runOnce(
       _agentById(agentId),
       AgentContext(ref: _ref, now: (now ?? DateTime.now()).toUtc()),
+      trigger: trigger,
     );
   }
 
   Future<List<AgentRunResult>> tick({
     DateTime? now,
     Iterable<String>? onlyAgentIds,
+    AgentRunTrigger trigger = AgentRunTrigger.schedule,
   }) {
     final idFilter = onlyAgentIds?.toSet();
     final selected = onlyAgentIds == null
@@ -56,6 +63,7 @@ class AgentRunController {
     return _runner.tick(
       agents: selected,
       context: AgentContext(ref: _ref, now: (now ?? DateTime.now()).toUtc()),
+      trigger: trigger,
     );
   }
 

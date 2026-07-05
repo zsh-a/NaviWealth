@@ -18,6 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_access.dart';
+import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
@@ -26,6 +31,7 @@ import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
+import '../agents/weekly_summary_agent.dart' show kWeeklySummaryAgentId;
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
@@ -45,11 +51,21 @@ part 'metric_grid_primitives.dart';
 part 'recovery_hero.dart';
 part 'weekly_summary_panel.dart';
 
-class HealthTodayPage extends ConsumerWidget {
-  const HealthTodayPage({super.key});
+class HealthTodayPage extends ConsumerStatefulWidget {
+  const HealthTodayPage({super.key, this.initialAgentArtifactId});
+
+  final String? initialAgentArtifactId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HealthTodayPage> createState() => _HealthTodayPageState();
+}
+
+class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
+  String? _openedInitialArtifactId;
+
+  @override
+  Widget build(BuildContext context) {
+    _maybeOpenInitialArtifactSheet();
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.healthTodayTitle,
@@ -70,6 +86,16 @@ class HealthTodayPage extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(healthTodaySnapshotProvider);
           ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
+          ref.invalidate(
+            health_agent_providers.latestMorningBriefingArtifactProvider,
+          );
+          ref.invalidate(
+            health_agent_providers.latestRecoveryAlertArtifactProvider,
+          );
+          ref.invalidate(
+            health_agent_providers.latestWeeklySummaryArtifactProvider,
+          );
+          ref.invalidate(health_agent_providers.latestWeeklySummaryRunProvider);
           await ref.read(healthTodaySnapshotProvider.future);
         },
         child: ListView(
@@ -79,6 +105,7 @@ class HealthTodayPage extends ConsumerWidget {
             FadeSlideIn(child: _DataSourcePanel()),
             SizedBox(height: AppSpacing.s16),
             FadeSlideIn(child: _RecoveryHero()),
+            FadeSlideIn(child: _RecoveryAlertPanel()),
             SizedBox(height: AppSpacing.s16),
             FadeSlideIn(child: _MetricGrid()),
             SizedBox(height: AppSpacing.s16),
@@ -89,6 +116,45 @@ class HealthTodayPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _maybeOpenInitialArtifactSheet() {
+    final artifactId = widget.initialAgentArtifactId;
+    if (artifactId == null ||
+        artifactId.isEmpty ||
+        _openedInitialArtifactId == artifactId) {
+      return;
+    }
+    _openedInitialArtifactId = artifactId;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final artifact = await readActiveAgentArtifactFromWidgetRef(
+        ref,
+        artifactId: artifactId,
+        expectedDomain: DomainScope.health.wire,
+      );
+      if (!mounted || artifact == null) return;
+      final l10n = AppLocalizations.of(context);
+      final metaLabel = l10n.healthBriefingUpdated(
+        _ago(l10n, artifact.createdAt),
+      );
+      await showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: metaLabel,
+        onVisibilityChanged: () {
+          ref.invalidate(
+            health_agent_providers.latestMorningBriefingArtifactProvider,
+          );
+          ref.invalidate(
+            health_agent_providers.latestRecoveryAlertArtifactProvider,
+          );
+          ref.invalidate(
+            health_agent_providers.latestWeeklySummaryArtifactProvider,
+          );
+        },
+      );
+    });
   }
 }
 

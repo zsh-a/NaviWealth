@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 
 import '../core/ai/agents/agent.dart';
+import '../core/ai/agents/agent_presentation.dart';
 import '../core/ai/agents/agent_registry.dart';
 import '../core/ai/composition/ask_ai.dart';
 import '../core/ai/composition/batch_proposal_undo.dart';
@@ -84,6 +85,10 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     ),
     agentRegistryProvider.overrideWith(
       (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
+    ),
+    agentPresentationSpecsProvider.overrideWith(
+      (ref) =>
+          domainAgentPresentationSpecs(ref.watch(activeDomainPacksProvider)),
     ),
     activeDomainShellsProvider.overrideWith((ref) {
       final l10n = lookupAppLocalizations(
@@ -185,7 +190,13 @@ List<ProposalKindMeta> domainProposalKinds(List<DomainPack> packs) {
 }
 
 IntentCatalog domainIntentCatalog(List<DomainPack> packs) {
-  return IntentCatalog([for (final p in packs) ...p.intentDescriptors]);
+  final descriptorsByName = <String, IntentDescriptor>{};
+  for (final pack in packs) {
+    for (final descriptor in pack.intentDescriptors) {
+      descriptorsByName.putIfAbsent(descriptor.name, () => descriptor);
+    }
+  }
+  return IntentCatalog(descriptorsByName.values.toList(growable: false));
 }
 
 Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
@@ -224,6 +235,15 @@ List<DomainAgentRegistration> domainAgentRegistrations(
         for (final agent in p.agentBuilder!(ref))
           DomainAgentRegistration(agent: agent, domain: p.scope),
   ];
+}
+
+Map<String, AgentPresentationSpec> domainAgentPresentationSpecs(
+  List<DomainPack> packs,
+) {
+  return <String, AgentPresentationSpec>{
+    for (final pack in packs)
+      for (final spec in pack.agentPresentationSpecs) spec.agentId: spec,
+  };
 }
 
 void domainMemoryBootstraps(Ref ref, List<DomainPack> packs) {

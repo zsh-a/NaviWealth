@@ -13,12 +13,16 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -69,7 +73,8 @@ class RoutineDueAgent implements Agent {
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
-    final due = await dueReader.listDue(ctx);
+    final snapshot = await dueReader.listDue(ctx);
+    final due = snapshot.due;
     final finished = DateTime.now().toUtc();
 
     if (due.isEmpty) {
@@ -78,6 +83,7 @@ class RoutineDueAgent implements Agent {
         startedAt: start,
         finishedAt: finished,
         reason: l10n.knowledgeAgentRoutineNoneDue(kRoutineDueLookahead.inDays),
+        traceId: snapshot.traceId,
       );
     }
 
@@ -93,6 +99,8 @@ class RoutineDueAgent implements Agent {
       first: due.first,
       now: start,
     );
+    final dayKey = AppFormatters.utcDayKey(start);
+    final artifactId = '$kKnowledgeRoutineAgentId:$dayKey';
 
     final built = buildAgentMemory(
       source: kKnowledgeRoutineMemorySource,
@@ -110,16 +118,50 @@ class RoutineDueAgent implements Agent {
             .map((r) => r.id)
             .toList(growable: false),
         'lookahead_days': kRoutineDueLookahead.inDays,
+        'artifact_id': artifactId,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       entities: <String>{'knowledge_routine', 'routine_due'},
       importance: overdue.isNotEmpty ? 0.75 : 0.5,
       confidence: 0.95,
     );
     await runtime.remember(built.record);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _buildArtifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        createdAt: finished,
+        summary: summary,
+        memoryId: built.memoryId,
+        now: start,
+        overdue: overdue,
+        upcoming: upcoming,
+        traceId: snapshot.traceId,
+      ),
+    );
 
     final n = notifier;
     if (n != null) {
-      await _maybeNotify(start.toLocal(), l10n, summary, n);
+      final preferenceStore = await ctx.ref.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      final agentNotificationsEnabled = await preferenceStore
+          .areNotificationsEnabled(
+            ownerUserId: ownerUserId,
+            agentId: kKnowledgeRoutineAgentId,
+          );
+      if (agentNotificationsEnabled) {
+        await _maybeNotify(
+          start.toLocal(),
+          l10n,
+          summary,
+          n,
+          artifactId: artifactId,
+        );
+      }
     }
 
     return AgentRunResult(
@@ -131,8 +173,99 @@ class RoutineDueAgent implements Agent {
       payload: <String, Object?>{
         'overdue_count': overdue.length,
         'upcoming_count': upcoming.length,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       memoryId: built.memoryId,
+      artifactId: artifactId,
+      traceId: snapshot.traceId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String id,
+    required String ownerUserId,
+    required DateTime createdAt,
+    required String summary,
+    required String memoryId,
+    required DateTime now,
+    required List<RoutineDueItem> overdue,
+    required List<RoutineDueItem> upcoming,
+    required String? traceId,
+  }) {
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeRoutineAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.reminder,
+      severity: overdue.isNotEmpty
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+      title: 'Routine Due',
+      summary: summary,
+      insights: <AgentInsight>[
+        if (overdue.isNotEmpty)
+          AgentInsight(
+            title: 'Overdue routines',
+            body:
+                '${overdue.length} routine${overdue.length == 1 ? '' : 's'}'
+                ' are overdue.',
+            severity: AgentArtifactSeverity.attention,
+            payload: <String, Object?>{
+              'count': overdue.length,
+              'first_id': overdue.first.id,
+            },
+          ),
+        if (upcoming.isNotEmpty)
+          AgentInsight(
+            title: 'Upcoming routines',
+            body:
+                '${upcoming.length} routine${upcoming.length == 1 ? '' : 's'}'
+                ' are due within ${kRoutineDueLookahead.inDays} days.',
+            payload: <String, Object?>{
+              'count': upcoming.length,
+              'lookahead_days': kRoutineDueLookahead.inDays,
+              'first_id': upcoming.first.id,
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final routine in overdue)
+          AgentEvidenceRef(
+            type: 'knowledge_routine',
+            id: routine.id,
+            label: routine.statement,
+            payload: <String, Object?>{
+              'reason': 'overdue',
+              'days_until_due': routine.daysUntilDue(now),
+              'next_due_at': routine.nextDueAt.toUtc().toIso8601String(),
+            },
+          ),
+        for (final routine in upcoming)
+          AgentEvidenceRef(
+            type: 'knowledge_routine',
+            id: routine.id,
+            label: routine.statement,
+            payload: <String, Object?>{
+              'reason': 'upcoming',
+              'days_until_due': routine.daysUntilDue(now),
+              'next_due_at': routine.nextDueAt.toUtc().toIso8601String(),
+            },
+          ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review routines',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      traceId: traceId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
   }
 
@@ -178,15 +311,18 @@ class RoutineDueAgent implements Agent {
     DateTime localDay,
     AppLocalizations l10n,
     String summary,
-    NotificationService n,
-  ) async {
+    NotificationService n, {
+    required String artifactId,
+  }) async {
     try {
       if (!await n.hasPermissions()) return;
       await n.showNow(
         id: KnowledgeNotifications.idForRoutineDigest(localDay),
         title: l10n.knowledgeAgentRoutineTitle,
         body: summary,
-        payload: kKnowledgeRoutineAgentId,
+        payload: KnowledgeNotifications.payloadForRoutineDigest(
+          artifactId: artifactId,
+        ),
         channel: kKnowledgeReviewNotificationChannel,
       );
     } on Object {
@@ -197,14 +333,14 @@ class RoutineDueAgent implements Agent {
 }
 
 abstract class RoutineDueReader {
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx);
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx);
 }
 
 class RepositoryRoutineDueReader implements RoutineDueReader {
   const RepositoryRoutineDueReader();
 
   @override
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final due = await repo.listDueRoutines(
@@ -212,7 +348,9 @@ class RepositoryRoutineDueReader implements RoutineDueReader {
       asOf: ctx.now.add(kRoutineDueLookahead),
       excludeDoneSince: _startOfLocalDay(ctx.now),
     );
-    return due.map(RoutineDueItem.fromRoutine).toList(growable: false);
+    return RoutineDueSnapshot(
+      due: due.map(RoutineDueItem.fromRoutine).toList(growable: false),
+    );
   }
 }
 
@@ -226,7 +364,7 @@ class FrbRoutineDueReader implements RoutineDueReader {
   final RoutineDueReader fallback;
 
   @override
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async {
     final asOf = ctx.now.add(kRoutineDueLookahead).toUtc().toIso8601String();
     return _runtime.readFromEffectPlan(
       effectPlan: <AgentRuntimeEffect>[
@@ -237,15 +375,24 @@ class FrbRoutineDueReader implements RoutineDueReader {
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.listDue(ctx),
-      decode: (terminalStep) {
+      decode: (stepRun) {
         final result = agentRuntimeTerminalEffectResultForTool(
-          terminalStep,
+          stepRun.terminalStep,
           'list_due_routines',
         );
-        return routineDueItemsFromToolResult(result);
+        final items = routineDueItemsFromToolResult(result);
+        if (items == null) return null;
+        return RoutineDueSnapshot(due: items, traceId: stepRun.traceId);
       },
     );
   }
+}
+
+class RoutineDueSnapshot {
+  const RoutineDueSnapshot({required this.due, this.traceId});
+
+  final List<RoutineDueItem> due;
+  final String? traceId;
 }
 
 class RoutineDueItem {

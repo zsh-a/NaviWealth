@@ -22,10 +22,14 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../data/inbox_triage_classifier.dart' show InboxTriageClassifier;
@@ -88,10 +92,12 @@ class InboxTriageAgent implements Agent {
         startedAt: start,
         finishedAt: finished,
         reason: 'no untriaged notes',
+        traceId: source.traceId,
       );
     }
 
     var emitted = 0;
+    final artifactItems = <_InboxTriageArtifactItem>[];
     for (final note in untriaged) {
       final proposals = await activeClassifier.triage(note, source.decisions);
       if (proposals.isEmpty) {
@@ -117,11 +123,32 @@ class InboxTriageAgent implements Agent {
         ),
       );
       emitted += proposals.length;
+      artifactItems.add(_InboxTriageArtifactItem(note, proposals));
     }
 
     final summary = emitted == 0
         ? '看了 ${untriaged.length} 条 note,没找到值得提议的'
         : '为 ${untriaged.length} 条 note 生成了 $emitted 条建议';
+    String? artifactId;
+    if (emitted > 0) {
+      final dayKey = AppFormatters.utcDayKey(start);
+      artifactId = '$kKnowledgeInboxTriageAgentId:$dayKey';
+      final artifactStore = await ctx.ref.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      await artifactStore.save(
+        _buildArtifact(
+          id: artifactId,
+          ownerUserId: ownerUserId,
+          createdAt: finished,
+          summary: summary,
+          scannedNotes: untriaged.length,
+          emittedProposals: emitted,
+          items: artifactItems,
+          traceId: source.traceId,
+        ),
+      );
+    }
     return AgentRunResult(
       agentId: kKnowledgeInboxTriageAgentId,
       status: AgentRunStatus.completed,
@@ -131,10 +158,103 @@ class InboxTriageAgent implements Agent {
       payload: <String, Object?>{
         'scanned_notes': untriaged.length,
         'emitted_proposals': emitted,
+        if (source.traceId != null) 'trace_id': source.traceId,
       },
+      artifactId: artifactId,
+      traceId: source.traceId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String id,
+    required String ownerUserId,
+    required DateTime createdAt,
+    required String summary,
+    required int scannedNotes,
+    required int emittedProposals,
+    required List<_InboxTriageArtifactItem> items,
+    required String? traceId,
+  }) {
+    final byKind = <InboxProposalKind, int>{};
+    for (final item in items) {
+      for (final proposal in item.proposals) {
+        byKind.update(proposal.kind, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeInboxTriageAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.review,
+      severity: AgentArtifactSeverity.info,
+      title: 'Inbox Triage',
+      summary: summary,
+      insights: <AgentInsight>[
+        AgentInsight(
+          title: 'New suggestions',
+          body:
+              '$emittedProposals suggestion${emittedProposals == 1 ? '' : 's'}'
+              ' across ${items.length} note${items.length == 1 ? '' : 's'}.',
+          payload: <String, Object?>{
+            'scanned_notes': scannedNotes,
+            'emitted_proposals': emittedProposals,
+            'notes_with_suggestions': items.length,
+          },
+        ),
+        for (final entry in byKind.entries)
+          AgentInsight(
+            title: _proposalKindLabel(entry.key),
+            body:
+                '${entry.value} ${entry.value == 1 ? 'suggestion' : 'suggestions'}.',
+            payload: <String, Object?>{
+              'proposal_kind': entry.key.wire,
+              'count': entry.value,
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final item in items)
+          AgentEvidenceRef(
+            type: 'knowledge_note',
+            id: item.note.id,
+            label: item.note.title.isEmpty ? 'Untitled note' : item.note.title,
+            payload: <String, Object?>{
+              'proposal_count': item.proposals.length,
+              'proposal_kinds': item.proposals
+                  .map((proposal) => proposal.kind.wire)
+                  .toList(growable: false),
+            },
+          ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review inbox suggestions',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+          objectId: id,
+        ),
+      ],
+      traceId: traceId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
   }
 }
+
+class _InboxTriageArtifactItem {
+  const _InboxTriageArtifactItem(this.note, this.proposals);
+
+  final KnowledgeNote note;
+  final List<InboxProposal> proposals;
+}
+
+String _proposalKindLabel(InboxProposalKind kind) => switch (kind) {
+  InboxProposalKind.classification => 'Classification',
+  InboxProposalKind.tags => 'Tags',
+  InboxProposalKind.linkToDecision => 'Decision links',
+};
 
 abstract class InboxTriageSourceReader {
   Future<InboxTriageSourceSnapshot> read(AgentContext ctx);
@@ -192,11 +312,12 @@ class FrbInboxTriageSourceReader implements InboxTriageSourceReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: (terminalStep) async {
+      decode: (stepRun) async {
         final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
         return inboxTriageSourceSnapshotFromTerminalStep(
-          terminalStep,
+          stepRun.terminalStep,
           ownerUserId: ownerUserId,
+          traceId: stepRun.traceId,
         );
       },
     );
@@ -207,15 +328,18 @@ class InboxTriageSourceSnapshot {
   const InboxTriageSourceSnapshot({
     required this.untriagedNotes,
     required this.decisions,
+    this.traceId,
   });
 
   final List<KnowledgeNote> untriagedNotes;
   final List<KnowledgeDecision> decisions;
+  final String? traceId;
 }
 
 InboxTriageSourceSnapshot? inboxTriageSourceSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required String ownerUserId,
+  String? traceId,
 }) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final notes = inboxTriageNotesFromToolResult(
@@ -227,7 +351,11 @@ InboxTriageSourceSnapshot? inboxTriageSourceSnapshotFromTerminalStep(
     ownerUserId: ownerUserId,
   );
   if (notes == null || decisions == null) return null;
-  return InboxTriageSourceSnapshot(untriagedNotes: notes, decisions: decisions);
+  return InboxTriageSourceSnapshot(
+    untriagedNotes: notes,
+    decisions: decisions,
+    traceId: traceId,
+  );
 }
 
 List<KnowledgeNote>? inboxTriageNotesFromToolResult(

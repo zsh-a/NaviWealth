@@ -9,12 +9,16 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -87,12 +91,27 @@ class ReviewAgent implements Agent {
             .map((a) => a.id)
             .toList(growable: false),
         'assumption_threshold_days': kAssumptionStaleDays,
+        if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
       },
       entities: <String>{'knowledge_review', 'weekly_review'},
       importance: 0.7,
       confidence: 0.95,
     );
     await runtime.remember(built.record);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    final artifact = _buildArtifact(
+      ownerUserId: ownerUserId,
+      start: start,
+      finished: finished,
+      summary: summary,
+      memoryId: built.memoryId,
+      due: due,
+      staleAssumptions: staleAssumptions,
+      traceId: dueSnapshot.traceId,
+    );
+    await artifactStore.save(artifact);
 
     return AgentRunResult(
       agentId: kKnowledgeReviewAgentId,
@@ -103,8 +122,94 @@ class ReviewAgent implements Agent {
       payload: <String, Object?>{
         'due_count': due.length,
         'stale_assumption_count': staleAssumptions.length,
+        if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
       },
       memoryId: built.memoryId,
+      artifactId: artifact.id,
+      traceId: dueSnapshot.traceId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String ownerUserId,
+    required DateTime start,
+    required DateTime finished,
+    required String summary,
+    required String memoryId,
+    required List<ReviewDecisionItem> due,
+    required List<ReviewAssumptionItem> staleAssumptions,
+    required String? traceId,
+  }) {
+    final dayKey = AppFormatters.utcDayKey(start);
+    final hasStaleAssumptions = staleAssumptions.isNotEmpty;
+    final artifactId = '$kKnowledgeReviewAgentId:$dayKey';
+    return AgentArtifact(
+      id: artifactId,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeReviewAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.review,
+      severity: hasStaleAssumptions
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+      title: 'Weekly Knowledge Review',
+      summary: summary,
+      insights: <AgentInsight>[
+        if (due.isNotEmpty)
+          AgentInsight(
+            title: 'Decisions due',
+            body:
+                '${due.length} decision review${due.length == 1 ? '' : 's'}'
+                ' need attention.',
+            severity: AgentArtifactSeverity.info,
+            payload: <String, Object?>{
+              'count': due.length,
+              'first_id': due.first.id,
+            },
+          ),
+        if (staleAssumptions.isNotEmpty)
+          AgentInsight(
+            title: 'Stale assumptions',
+            body:
+                '${staleAssumptions.length} assumption${staleAssumptions.length == 1 ? '' : 's'}'
+                ' crossed the $kAssumptionStaleDays day verification window.',
+            severity: AgentArtifactSeverity.attention,
+            payload: <String, Object?>{
+              'count': staleAssumptions.length,
+              'threshold_days': kAssumptionStaleDays,
+              'first_id': staleAssumptions.first.id,
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final decision in due)
+          AgentEvidenceRef(
+            type: 'knowledge_decision',
+            id: decision.id,
+            label: decision.question,
+            payload: const <String, Object?>{'reason': 'review_due'},
+          ),
+        for (final assumption in staleAssumptions)
+          AgentEvidenceRef(
+            type: 'knowledge_assumption',
+            id: assumption.id,
+            label: assumption.statement,
+            payload: const <String, Object?>{'reason': 'stale_assumption'},
+          ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review knowledge items',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+          objectId: artifactId,
+        ),
+      ],
+      memoryId: memoryId,
+      traceId: traceId,
+      createdAt: finished.toUtc(),
+      expiresAt: finished.toUtc().add(const Duration(days: 14)),
     );
   }
 
@@ -195,8 +300,11 @@ class FrbReviewDueReader implements ReviewDueReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: (terminalStep) =>
-          reviewDueSnapshotFromTerminalStep(terminalStep, now: ctx.now),
+      decode: (stepRun) => reviewDueSnapshotFromTerminalStep(
+        stepRun.terminalStep,
+        now: ctx.now,
+        traceId: stepRun.traceId,
+      ),
     );
   }
 }
@@ -205,10 +313,12 @@ class ReviewDueSnapshot {
   const ReviewDueSnapshot({
     required this.dueReviews,
     required this.staleAssumptions,
+    this.traceId,
   });
 
   final List<ReviewDecisionItem> dueReviews;
   final List<ReviewAssumptionItem> staleAssumptions;
+  final String? traceId;
 }
 
 class ReviewDecisionItem {
@@ -239,6 +349,7 @@ class ReviewAssumptionItem {
 ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required DateTime now,
+  String? traceId,
 }) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final reviews = reviewDecisionItemsFromToolResult(byTool['list_due_reviews']);
@@ -254,6 +365,7 @@ ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
   return ReviewDueSnapshot(
     dueReviews: reviews,
     staleAssumptions: staleAssumptions,
+    traceId: traceId,
   );
 }
 

@@ -46,5 +46,19 @@ void main() {
         );
       }
     });
+
+    test('agent lifecycle tables are not backed up', () {
+      const agentLocalOnlyTables = <String>{
+        'agent_runs',
+        'agent_artifacts',
+        'agent_preferences',
+      };
+
+      for (final table in agentLocalOnlyTables) {
+        expect(kBackupTables, isNot(contains(table)));
+        expect(isBackupTable(table), isFalse);
+        expect(shouldEnqueueRestoreOpForBackupTable(table), isFalse);
+      }
+    });
   });
 }

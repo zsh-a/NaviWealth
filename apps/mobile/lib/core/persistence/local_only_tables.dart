@@ -1,5 +1,13 @@
 /// Raw-SQL DDL for local-only tables that never ride the sync protocol.
 ///
+/// - `agent_runs` — product-level lifecycle state for scheduled LifeOS
+///   agents. This is local device state; agent output can be regenerated and
+///   should not sync.
+/// - `agent_artifacts` — user-visible briefing/review/alert records produced
+///   by agents. Local-only, with evidence/actions encoded as compact JSON.
+///   Dismiss/snooze state hides the current result without deleting history.
+/// - `agent_preferences` — per-user local agent toggles and notification
+///   preferences. These are product preferences, not synced source data.
 /// - `options_opportunity_cache` — scoring engine output. Each device
 ///   computes its own opportunities from its own chain pull
 ///   (`docs/domains/options-income.md` §6.2).
@@ -13,6 +21,103 @@
 ///
 /// See also the parallel pattern in `event_log_tables.dart`.
 library;
+
+// ----------------------------------------------------------------------
+// Agent framework state
+// ----------------------------------------------------------------------
+
+const String createAgentRuns = '''
+CREATE TABLE IF NOT EXISTS agent_runs (
+  id            TEXT PRIMARY KEY,
+  owner_user_id TEXT NOT NULL,
+  agent_id      TEXT NOT NULL,
+  agent_name    TEXT NOT NULL,
+  status        TEXT NOT NULL,     -- running|ready|no_finding|failed
+  trigger       TEXT NOT NULL,     -- manual|schedule|background_due|catch_up
+  started_at    INTEGER NOT NULL,  -- millis since epoch (UTC)
+  finished_at   INTEGER,
+  summary       TEXT,
+  error         TEXT,
+  memory_id     TEXT,
+  artifact_id   TEXT,
+  trace_id      TEXT
+)
+''';
+
+const String createAgentRunsAgentStartedIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_runs_agent_started
+  ON agent_runs(owner_user_id, agent_id, started_at DESC)
+''';
+
+const String createAgentRunsStatusIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_runs_owner_status
+  ON agent_runs(owner_user_id, status, started_at DESC)
+''';
+
+const List<String> agentRunDdl = [
+  createAgentRuns,
+  createAgentRunsAgentStartedIndex,
+  createAgentRunsStatusIndex,
+];
+
+const String createAgentArtifacts = '''
+CREATE TABLE IF NOT EXISTS agent_artifacts (
+  id             TEXT PRIMARY KEY,
+  owner_user_id  TEXT NOT NULL,
+  agent_id       TEXT NOT NULL,
+  domain         TEXT NOT NULL,
+  kind           TEXT NOT NULL,     -- briefing|review|alert|reminder
+  severity       TEXT NOT NULL,     -- info|attention|warning
+  title          TEXT NOT NULL,
+  summary        TEXT NOT NULL,
+  insights_json  TEXT NOT NULL,
+  evidence_json  TEXT NOT NULL,
+  actions_json   TEXT NOT NULL,
+  memory_id      TEXT,
+  trace_id       TEXT,
+  created_at     INTEGER NOT NULL,  -- millis since epoch (UTC)
+  expires_at     INTEGER,
+  dismissed_at   INTEGER,
+  snoozed_until  INTEGER
+)
+''';
+
+const String createAgentArtifactsAgentCreatedIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_artifacts_agent_created
+  ON agent_artifacts(owner_user_id, agent_id, created_at DESC)
+''';
+
+const String createAgentArtifactsDomainCreatedIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_artifacts_domain_created
+  ON agent_artifacts(owner_user_id, domain, created_at DESC)
+''';
+
+const List<String> agentArtifactDdl = [
+  createAgentArtifacts,
+  createAgentArtifactsAgentCreatedIndex,
+  createAgentArtifactsDomainCreatedIndex,
+];
+
+const String createAgentPreferences = '''
+CREATE TABLE IF NOT EXISTS agent_preferences (
+  owner_user_id         TEXT NOT NULL,
+  agent_id              TEXT NOT NULL,
+  enabled               INTEGER NOT NULL DEFAULT 1,
+  notifications_enabled INTEGER NOT NULL DEFAULT 1,
+  updated_at            INTEGER NOT NULL,
+  PRIMARY KEY (owner_user_id, agent_id)
+)
+''';
+
+const String createAgentPreferencesOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_preferences_owner
+  ON agent_preferences(owner_user_id, agent_id)
+''';
+
+const List<String> agentPreferenceDdl = [
+  createAgentPreferences,
+  createAgentPreferencesOwnerIndex,
+];
 
 const String createOptionsOpportunityCache = '''
 CREATE TABLE IF NOT EXISTS options_opportunity_cache (

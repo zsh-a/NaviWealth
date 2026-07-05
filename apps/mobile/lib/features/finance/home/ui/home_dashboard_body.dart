@@ -84,6 +84,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                     secondary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const FinanceAgentResultsPanel(),
                         if (insights.isNotEmpty) ...[
                           AiInsightFeed(insights: insights),
                           const SizedBox(height: AppSpacing.s20),
@@ -103,6 +104,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
                         const _HomeQuickActions(),
+                        const FinanceAgentResultsPanel(),
                         if (insights.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.s20),
                           AiInsightFeed(insights: insights),
@@ -123,6 +125,95 @@ class _DashboardBodyContent extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class FinanceAgentResultsPanel extends ConsumerWidget {
+  const FinanceAgentResultsPanel({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final artifacts = ref
+        .watch(finance_agent_providers.latestFinanceAgentArtifactsProvider)
+        .value;
+    if (artifacts != null && artifacts.isNotEmpty) {
+      final primary = artifacts.first;
+      final secondary = artifacts.skip(1).toList(growable: false);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AgentResultCard(
+            artifact: primary,
+            metaLabel: _financeAgentMetaLabel(context, ref, primary.createdAt),
+            onOpen: () => _openFinanceAgentArtifact(context, ref, primary),
+          ),
+          if (secondary.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            for (var i = 0; i < secondary.length; i++) ...[
+              AgentCompactResultRow(
+                artifact: secondary[i],
+                metaLabel: _financeAgentMetaLabel(
+                  context,
+                  ref,
+                  secondary[i].createdAt,
+                ),
+                onOpen: () =>
+                    _openFinanceAgentArtifact(context, ref, secondary[i]),
+              ),
+              if (i != secondary.length - 1)
+                const SizedBox(height: AppSpacing.s6),
+            ],
+          ],
+          const SizedBox(height: AppSpacing.s20),
+        ],
+      );
+    }
+
+    final run = ref
+        .watch(finance_agent_providers.latestWeeklyWealthReviewRunProvider)
+        .value;
+    if (run == null) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AgentRunStatusCard(
+          record: run,
+          metaLabel: _financeAgentMetaLabel(context, ref, run.startedAt),
+          onRetry: () async {
+            final controller = await ref.read(
+              agentRunControllerProvider.future,
+            );
+            await controller.runOnceById(kWeeklyWealthReviewAgentId);
+            ref.invalidate(
+              finance_agent_providers.latestFinanceAgentArtifactsProvider,
+            );
+            ref.invalidate(
+              finance_agent_providers.latestWeeklyWealthReviewArtifactProvider,
+            );
+            ref.invalidate(
+              finance_agent_providers.latestWeeklyWealthReviewRunProvider,
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.s20),
+      ],
+    );
+  }
+
+  void _openFinanceAgentArtifact(
+    BuildContext context,
+    WidgetRef ref,
+    AgentArtifact artifact,
+  ) {
+    final metaLabel = _financeAgentMetaLabel(context, ref, artifact.createdAt);
+    showAgentArtifactSheet(
+      context: context,
+      artifact: artifact,
+      subtitle: metaLabel,
+      onVisibilityChanged: () => ref.invalidate(
+        finance_agent_providers.latestFinanceAgentArtifactsProvider,
+      ),
     );
   }
 }
@@ -156,4 +247,13 @@ class _CashFlowCardsGrid extends StatelessWidget {
       },
     );
   }
+}
+
+String _financeAgentMetaLabel(
+  BuildContext context,
+  WidgetRef ref,
+  DateTime at,
+) {
+  final formatters = context.formatters(ref);
+  return 'FinanceOS · ${formatters.date(at.toLocal())}';
 }

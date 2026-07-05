@@ -5453,6 +5453,111 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get agentSettingsTitle => 'Agents';
+
+  @override
+  String get agentSettingsSubtitle =>
+      'Control scheduled LifeOS agents for active domains on this device.';
+
+  @override
+  String get agentSettingsNoActiveTitle => 'No active agents';
+
+  @override
+  String get agentSettingsNoActiveMessage =>
+      'Enable a LifeOS domain to see its agents here.';
+
+  @override
+  String get agentSettingsManageDomains => 'Manage domains';
+
+  @override
+  String get agentSettingsManagedBadge => 'Managed';
+
+  @override
+  String get agentSettingsRunNow => 'Run now';
+
+  @override
+  String get agentSettingsViewResult => 'View result';
+
+  @override
+  String get agentSettingsViewHistory => 'History';
+
+  @override
+  String agentSettingsHistoryTitle(String agentName) {
+    return '$agentName history';
+  }
+
+  @override
+  String get agentSettingsHistoryEmptyTitle => 'No runs yet';
+
+  @override
+  String get agentSettingsHistoryEmptyMessage =>
+      'Run this agent once to start its local history.';
+
+  @override
+  String get agentSettingsRunning => 'Running';
+
+  @override
+  String get agentSettingsEnabled => 'Enabled';
+
+  @override
+  String get agentSettingsDisabled => 'Disabled';
+
+  @override
+  String get agentSettingsNotifications => 'Notifications';
+
+  @override
+  String get agentSettingsNeverRun => 'Never run';
+
+  @override
+  String agentSettingsLastRunAt(String date) {
+    return 'Last run $date';
+  }
+
+  @override
+  String agentSettingsAroundTime(String time) {
+    return 'around $time';
+  }
+
+  @override
+  String agentSettingsEveryHours(int hours) {
+    return 'Every $hours hour(s)';
+  }
+
+  @override
+  String get agentSettingsCadenceDaily => 'Daily';
+
+  @override
+  String get agentSettingsCadenceWeekly => 'Weekly';
+
+  @override
+  String get agentSettingsCadenceMonthly => 'Monthly';
+
+  @override
+  String get agentSettingsCadenceYearly => 'Yearly';
+
+  @override
+  String agentSettingsRunFinished(String agentName) {
+    return '$agentName finished';
+  }
+
+  @override
+  String agentSettingsStatusWithDetail(String status, String detail) {
+    return '$status · $detail';
+  }
+
+  @override
+  String get agentSettingsTriggerManual => 'Manual';
+
+  @override
+  String get agentSettingsTriggerSchedule => 'Scheduled';
+
+  @override
+  String get agentSettingsTriggerBackgroundDue => 'Background due';
+
+  @override
+  String get agentSettingsTriggerCatchUp => 'Catch-up';
+
+  @override
   String get settingsAdvancedSection => 'Diagnostics';
 
   @override
@@ -5497,6 +5602,201 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiLlmRuntimeCheckStatus(String status) {
     return 'Native step: $status';
   }
+
+  @override
+  String get agentResultReviewAction => 'Review';
+
+  @override
+  String get agentResultRetryAction => 'Retry';
+
+  @override
+  String get agentResultAskAction => 'Ask';
+
+  @override
+  String get agentResultKindBriefing => 'Briefing';
+
+  @override
+  String get agentResultKindReview => 'Review';
+
+  @override
+  String get agentResultKindAlert => 'Alert';
+
+  @override
+  String get agentResultKindReminder => 'Reminder';
+
+  @override
+  String get agentResultSeverityAttention => 'Attention';
+
+  @override
+  String get agentResultSeverityWarning => 'Warning';
+
+  @override
+  String get agentRunStatusRunning => 'Running';
+
+  @override
+  String get agentRunStatusNoFinding => 'No finding';
+
+  @override
+  String get agentRunStatusReady => 'Ready';
+
+  @override
+  String get agentRunStatusFailed => 'Failed';
+
+  @override
+  String get agentResultInsightsSection => 'Insights';
+
+  @override
+  String get agentResultEvidenceSection => 'Evidence';
+
+  @override
+  String get agentResultTraceSection => 'Trace';
+
+  @override
+  String get agentResultTraceTitle => 'Runtime trace';
+
+  @override
+  String get agentResultTraceBody =>
+      'Review the AI call chain and tool activity.';
+
+  @override
+  String get agentResultTraceAction => 'Open';
+
+  @override
+  String get agentResultActionsSection => 'Actions';
+
+  @override
+  String get agentResultAskFollowUpTitle => 'Ask follow-up';
+
+  @override
+  String get agentResultAskFollowUpBody =>
+      'Explain this result and its evidence.';
+
+  @override
+  String get agentResultShowEvidenceTitle => 'Show evidence';
+
+  @override
+  String get agentResultShowEvidenceBody =>
+      'Map the evidence to the claims in this result.';
+
+  @override
+  String get agentResultCreatePlanTitle => 'Create plan';
+
+  @override
+  String get agentResultCreatePlanBody =>
+      'Turn this result into proposed next steps.';
+
+  @override
+  String get agentResultSnoozeTitle => 'Snooze';
+
+  @override
+  String get agentResultSnoozeBody => 'Hide this result until tomorrow.';
+
+  @override
+  String get agentResultSnoozeAction => 'Snooze';
+
+  @override
+  String get agentResultDismissTitle => 'Dismiss';
+
+  @override
+  String get agentResultDismissBody => 'Hide this result from active surfaces.';
+
+  @override
+  String get agentResultDismissAction => 'Dismiss';
+
+  @override
+  String get agentPresentationWeeklyWealthReviewLabel => 'Weekly Wealth Review';
+
+  @override
+  String get agentPresentationWeeklyWealthReviewDescription =>
+      'Reviews net worth, allocation concentration, price freshness, and FX coverage.';
+
+  @override
+  String get agentPresentationCashflowAnomalyReviewLabel =>
+      'Cashflow Anomaly Review';
+
+  @override
+  String get agentPresentationCashflowAnomalyReviewDescription =>
+      'Reviews on-device monthly spending anomalies.';
+
+  @override
+  String get agentPresentationFirePlanDriftMonitorLabel =>
+      'FIRE Plan Drift Monitor';
+
+  @override
+  String get agentPresentationFirePlanDriftMonitorDescription =>
+      'Reviews withdrawal rate, cash runway, plan ETA, and stress-test drift.';
+
+  @override
+  String get agentPresentationOptionsIncomeRiskReviewLabel =>
+      'Options Income Risk Review';
+
+  @override
+  String get agentPresentationOptionsIncomeRiskReviewDescription =>
+      'Reviews scan freshness, quote quality, concentration, and contract risk.';
+
+  @override
+  String get agentPresentationMorningBriefingLabel => 'Morning Briefing';
+
+  @override
+  String get agentPresentationMorningBriefingDescription =>
+      'Builds a daily briefing from recent Health and Finance signals.';
+
+  @override
+  String get agentPresentationRecoveryAlertLabel => 'Recovery Alert';
+
+  @override
+  String get agentPresentationRecoveryAlertDescription =>
+      'Flags short sleep, low HRV, and recovery signals that need attention.';
+
+  @override
+  String get agentPresentationWeeklySummaryLabel => 'Weekly Summary';
+
+  @override
+  String get agentPresentationWeeklySummaryDescription =>
+      'Reviews the week across sleep, activity, recovery, and trend evidence.';
+
+  @override
+  String get agentPresentationKnowledgeReviewLabel => 'Knowledge Review';
+
+  @override
+  String get agentPresentationKnowledgeReviewDescription =>
+      'Reviews due decisions and stale assumptions.';
+
+  @override
+  String get agentPresentationKnowledgeAssumptionLabel => 'Assumption Review';
+
+  @override
+  String get agentPresentationKnowledgeAssumptionDescription =>
+      'Finds assumptions that need revalidation.';
+
+  @override
+  String get agentPresentationKnowledgeContradictionLabel =>
+      'Contradiction Review';
+
+  @override
+  String get agentPresentationKnowledgeContradictionDescription =>
+      'Looks for conflicting notes, decisions, and assumptions.';
+
+  @override
+  String get agentPresentationKnowledgeInboxTriageLabel => 'Inbox Triage';
+
+  @override
+  String get agentPresentationKnowledgeInboxTriageDescription =>
+      'Surfaces captured notes that need classification or follow-up.';
+
+  @override
+  String get agentPresentationKnowledgeRoutineLabel => 'Routine Due';
+
+  @override
+  String get agentPresentationKnowledgeRoutineDescription =>
+      'Checks knowledge routines due for review.';
+
+  @override
+  String get agentPresentationExecutionReviewLabel => 'Execution Review';
+
+  @override
+  String get agentPresentationExecutionReviewDescription =>
+      'Reviews today actions, blocked work, commitments, and weekly progress.';
 
   @override
   String aiLlmRuntimeProposalTitle(String kind) {

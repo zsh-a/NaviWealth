@@ -10,6 +10,14 @@
 library;
 
 abstract class NotificationService {
+  /// Payloads emitted when the user taps a notification while the app is
+  /// already alive. Payload interpretation belongs to app composition.
+  Stream<String> get payloads;
+
+  /// Notification payload that launched the app, if any. Implementations may
+  /// return the same payload on repeated calls; callers should consume it once.
+  Future<String?> initialPayload();
+
   /// `true` when the platform supports local notifications at all.
   /// `false` on web / desktop.
   Future<bool> isAvailable();

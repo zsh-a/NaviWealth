@@ -14,6 +14,7 @@ import '../../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../../features/auth/ui/devices_page.dart' deferred as devices_lib;
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/onboarding_page.dart';
+import '../../features/settings/ui/agents_settings_page.dart';
 import '../../features/settings/ui/ai/ai_llm_credentials_page.dart';
 import '../../features/settings/ui/ai/ai_models_page.dart';
 import '../../features/settings/ui/ai/ai_privacy_page.dart';
@@ -201,6 +202,11 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         path: 'ai-models',
         name: SettingsRouteNames.aiModels,
         builder: (context, state) => _backSafe(const AiModelsPage()),
+      ),
+      GoRoute(
+        path: 'agents',
+        name: SettingsRouteNames.agents,
+        builder: (context, state) => _backSafe(const AgentsSettingsPage()),
       ),
       GoRoute(
         path: 'ai-transparency',

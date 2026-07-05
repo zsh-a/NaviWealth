@@ -18,6 +18,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -218,6 +222,9 @@ void main() {
           currentUserIdProvider.overrideWithValue(() async => _owner),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           inboxTriageRepositoryProvider.overrideWith((ref) async => triage),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => SqliteAgentArtifactStore(db: db),
+          ),
         ],
       );
       addTearDown(c.dispose);
@@ -260,12 +267,78 @@ void main() {
 
       final res = await runAgent(c, agent);
       expect(res.status, AgentRunStatus.completed);
+      expect(res.artifactId, '$kKnowledgeInboxTriageAgentId:2026-01-01');
 
       final rec = await triage.findForNote('n1');
       expect(rec, isNotNull);
       expect(rec!.proposals, hasLength(1));
       expect(rec.proposals.single.kind, InboxProposalKind.classification);
       expect(rec.proposals.single.payload['kind'], 'decision_candidate');
+
+      final artifactStore = await c.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final artifact = await artifactStore.read(res.artifactId!);
+      expect(artifact, isNotNull);
+      expect(artifact!.kind, AgentArtifactKind.review);
+      expect(artifact.severity, AgentArtifactSeverity.info);
+      expect(artifact.insights.map((insight) => insight.title), [
+        'New suggestions',
+        'Classification',
+      ]);
+      expect(artifact.evidence.single.id, 'n1');
+      expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+      final outcomeFailures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'knowledge.inbox_triage.ready',
+        ),
+        result: res,
+        artifact: artifact,
+        proposalKinds: const <String>{'classification'},
+      );
+      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+    });
+
+    test('persists source trace id onto result and artifact', () async {
+      final c = container();
+      final agent = InboxTriageAgent(
+        sourceReader: _FallbackSourceReader(
+          InboxTriageSourceSnapshot(
+            untriagedNotes: <KnowledgeNote>[
+              _note(id: 'n-trace', title: 'Trace source', body: 'short'),
+            ],
+            decisions: const <KnowledgeDecision>[],
+            traceId: 'trace-inbox-source-1',
+          ),
+        ),
+        classifier: _FixedInboxTriageClassifier(
+          proposals: <InboxProposal>[
+            InboxProposal(
+              kind: InboxProposalKind.classification,
+              summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
+              payload: const <String, Object?>{
+                'note_id': 'n-trace',
+                'kind': 'decision_candidate',
+                'confidence': 0.9,
+                'reason': 'x',
+              },
+              status: InboxProposalStatus.pending,
+            ),
+          ],
+        ),
+      );
+
+      final res = await runAgent(c, agent);
+
+      expect(res.status, AgentRunStatus.completed);
+      expect(res.traceId, 'trace-inbox-source-1');
+      expect(res.payload['trace_id'], 'trace-inbox-source-1');
+
+      final artifactStore = await c.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final artifact = await artifactStore.read(res.artifactId!);
+      expect(artifact?.traceId, 'trace-inbox-source-1');
     });
 
     test(
@@ -393,6 +466,7 @@ void main() {
 
       expect(snapshot.untriagedNotes.single.id, 'n-frb');
       expect(snapshot.decisions.single.id, 'd-frb');
+      expect(snapshot.traceId, 'agent-runtime:knowledge_inbox_triage:run_1');
       expect(dispatcher.calls.map((call) => call.name), <String>[
         'list_inbox_triage_candidates',
         'list_triage_decisions',

@@ -7,7 +7,10 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -85,6 +88,7 @@ class ExecutionReviewAgent implements Agent {
     final finishedAt = DateTime.now().toUtc();
     final dayKey = AppFormatters.utcDayKey(startedAt);
     final memoryId = '$kExecutionReviewMemorySource:$dayKey';
+    final artifactId = '$kExecutionReviewAgentId:$dayKey';
     final summary = _summary(
       todayActions: todayActions,
       openActions: openActions,
@@ -114,6 +118,7 @@ class ExecutionReviewAgent implements Agent {
           'active_project_count': snapshot.activeProjectCount,
           'active_commitment_count': snapshot.activeCommitmentCount,
           'weekly_progress_count': weeklyProgress.length,
+          if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
         },
         'sample_action_ids': todayActions
             .take(5)
@@ -127,6 +132,8 @@ class ExecutionReviewAgent implements Agent {
             .take(5)
             .map((commitment) => commitment.id)
             .toList(growable: false),
+        'artifact_id': artifactId,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       entities: <String>{
         'execution',
@@ -148,6 +155,26 @@ class ExecutionReviewAgent implements Agent {
       updatedAt: finishedAt,
     );
     await runtime.remember(memory);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _artifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        memoryId: memoryId,
+        createdAt: startedAt,
+        summary: summary,
+        todayActions: todayActions,
+        openActions: openActions,
+        blockedActions: blockedActions,
+        dueActions: dueActions,
+        projects: projects,
+        commitments: commitments,
+        weeklyProgress: weeklyProgress,
+        traceId: snapshot.traceId,
+      ),
+    );
 
     return AgentRunResult(
       agentId: kExecutionReviewAgentId,
@@ -157,6 +184,119 @@ class ExecutionReviewAgent implements Agent {
       summary: summary,
       payload: memory.payload,
       memoryId: memoryId,
+      artifactId: artifactId,
+      traceId: snapshot.traceId,
+    );
+  }
+
+  static AgentArtifact _artifact({
+    required String id,
+    required String ownerUserId,
+    required String memoryId,
+    required DateTime createdAt,
+    required String summary,
+    required List<ExecutionReviewAction> todayActions,
+    required List<ExecutionReviewAction> openActions,
+    required List<ExecutionReviewAction> blockedActions,
+    required List<ExecutionReviewAction> dueActions,
+    required List<ExecutionReviewRef> projects,
+    required List<ExecutionReviewRef> commitments,
+    required List<ExecutionReviewProgress> weeklyProgress,
+    required String? traceId,
+  }) {
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kExecutionReviewAgentId,
+      domain: 'execution',
+      kind: AgentArtifactKind.review,
+      severity: blockedActions.isNotEmpty || dueActions.isNotEmpty
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+      title: 'Execution review',
+      summary: summary,
+      insights: <AgentInsight>[
+        AgentInsight(
+          title: 'Today focus',
+          body:
+              '${todayActions.length} today-worthy actions out of '
+              '${openActions.length} open actions.',
+          severity: todayActions.isEmpty
+              ? AgentArtifactSeverity.info
+              : AgentArtifactSeverity.attention,
+          payload: <String, Object?>{
+            'today_action_count': todayActions.length,
+            'open_action_count': openActions.length,
+          },
+        ),
+        if (blockedActions.isNotEmpty)
+          AgentInsight(
+            title: 'Blocked work',
+            body: '${blockedActions.length} actions are blocked.',
+            severity: AgentArtifactSeverity.warning,
+            payload: <String, Object?>{
+              'blocked_action_count': blockedActions.length,
+              'blocked_action_ids': blockedActions
+                  .take(5)
+                  .map((action) => action.id)
+                  .toList(growable: false),
+            },
+          ),
+        if (dueActions.isNotEmpty)
+          AgentInsight(
+            title: 'Due work',
+            body: '${dueActions.length} actions are due.',
+            severity: AgentArtifactSeverity.attention,
+            payload: <String, Object?>{
+              'due_action_count': dueActions.length,
+              'due_action_ids': dueActions
+                  .take(5)
+                  .map((action) => action.id)
+                  .toList(growable: false),
+            },
+          ),
+        AgentInsight(
+          title: 'Weekly progress',
+          body:
+              '${weeklyProgress.length} progress entries across '
+              '${projects.length} active projects and '
+              '${commitments.length} active commitments.',
+          payload: <String, Object?>{
+            'weekly_progress_count': weeklyProgress.length,
+            'active_project_count': projects.length,
+            'active_commitment_count': commitments.length,
+          },
+        ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final action in todayActions.take(8))
+          AgentEvidenceRef(
+            type: 'execution_action',
+            id: action.id,
+            label: action.title,
+            payload: <String, Object?>{
+              'status': action.status.wire,
+              'priority': action.priority.wire,
+            },
+          ),
+        for (final project in projects.take(5))
+          AgentEvidenceRef(type: 'execution_project', id: project.id),
+        for (final commitment in commitments.take(5))
+          AgentEvidenceRef(type: 'execution_commitment', id: commitment.id),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'review',
+          label: 'Review execution',
+          intent: kAgentExplainResultIntent,
+          objectType: kAgentArtifactObjectType,
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      traceId: traceId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
   }
 
@@ -258,7 +398,10 @@ class FrbExecutionReviewReader implements ExecutionReviewReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: executionReviewSnapshotFromTerminalStep,
+      decode: (stepRun) => executionReviewSnapshotFromTerminalStep(
+        stepRun.terminalStep,
+        traceId: stepRun.traceId,
+      ),
     );
   }
 }
@@ -271,6 +414,7 @@ class ExecutionReviewSnapshot {
     required this.recentProgress,
     required this.activeProjectCount,
     required this.activeCommitmentCount,
+    this.traceId,
   });
 
   final List<ExecutionReviewAction> openActions;
@@ -279,6 +423,7 @@ class ExecutionReviewSnapshot {
   final List<ExecutionReviewProgress> recentProgress;
   final int activeProjectCount;
   final int activeCommitmentCount;
+  final String? traceId;
 }
 
 class ExecutionReviewAction {
@@ -333,8 +478,9 @@ class ExecutionReviewProgress {
 }
 
 ExecutionReviewSnapshot? executionReviewSnapshotFromTerminalStep(
-  Map<String, Object?> step,
-) {
+  Map<String, Object?> step, {
+  String? traceId,
+}) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final actions = executionReviewActionsFromToolResult(
     byTool['list_open_actions'],
@@ -360,6 +506,7 @@ ExecutionReviewSnapshot? executionReviewSnapshotFromTerminalStep(
     recentProgress: progress,
     activeProjectCount: projectCount,
     activeCommitmentCount: commitmentCount,
+    traceId: traceId,
   );
 }
 

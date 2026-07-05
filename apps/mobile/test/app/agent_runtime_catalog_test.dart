@@ -2,16 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
+import 'package:naviwealth/core/ai/composition/system_prompt_blocks.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../core/persistence/test_database.dart';
 
 const _readTool = _FakeTool(
   name: 'read_fake',
@@ -162,6 +172,133 @@ void main() {
       contains('propose_fake'),
     );
   });
+
+  test('buildAgentRuntimeCatalog ignores inactive agent registrations', () {
+    final catalog = buildAgentRuntimeCatalog(
+      packs: [_pack],
+      agentRegistrations: [
+        DomainAgentRegistration(agent: _agent, domain: DomainScope.finance),
+        DomainAgentRegistration(
+          agent: _FakeAgent(
+            id: 'stale_health_agent',
+            name: 'Stale Health Agent',
+            schedule: AgentSchedule.daily(hourLocal: 8),
+          ),
+          domain: DomainScope.health,
+        ),
+      ],
+      generatedAt: DateTime.utc(2026, 7, 5),
+    ).toJson();
+
+    expect(
+      (catalog['agents']! as List<Object?>).cast<Map<String, Object?>>().map(
+        (agent) => agent['id'],
+      ),
+      ['settings_llm_runtime_check', 'execution_review'],
+    );
+    expect(catalog['active_domains'], ['finance']);
+  });
+
+  test(
+    'production runtime catalog mirrors active domain composition',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final registrationsProvider = Provider<List<DomainAgentRegistration>>((
+        ref,
+      ) {
+        return domainAgentRegistrations(
+          ref,
+          ref.watch(activeDomainPacksProvider),
+        );
+      });
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          ...lifeOsDomainCompositionOverrides(),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(auth.domainOptInsProvider.future);
+      await container
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+      await container
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.knowledge, true);
+      await container
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.execution, true);
+
+      final activePacks = container.read(activeDomainPacksProvider);
+      final catalog = container.read(agentRuntimeCatalogProvider).toJson();
+      final runtimeAgents = (catalog['agents']! as List<Object?>)
+          .cast<Map<String, Object?>>();
+      final scheduledRuntimeAgents = [
+        for (final agent in runtimeAgents)
+          if (agent['id'] != kSettingsLlmRuntimeCheckAgentId) agent,
+      ];
+      final runtimeAgentsById = {
+        for (final agent in scheduledRuntimeAgents)
+          agent['id']! as String: agent,
+      };
+      final registeredAgents = container.read(agentRegistryProvider);
+      final registeredAgentIds = {
+        for (final agent in registeredAgents) agent.id,
+      };
+      final registrationDomains = {
+        for (final registration in container.read(registrationsProvider))
+          registration.agent.id: registration.domain.wire,
+      };
+
+      expect(container.read(domainPackRegistryProvider), kAllDomainPacks);
+      expect(catalog['active_domains'], [
+        for (final pack in activePacks) pack.scope.wire,
+      ]);
+      expect(runtimeAgentsById.keys.toSet(), registeredAgentIds);
+      for (final entry in runtimeAgentsById.entries) {
+        final metadata = entry.value['metadata']! as Map<String, Object?>;
+        expect(metadata['domain'], registrationDomains[entry.key]);
+        expect(metadata['dart_type'], isA<String>());
+        expect(entry.value['capabilities'], ['scheduled_agent']);
+        expect(entry.value['version'], isNotEmpty);
+        expect(
+          (entry.value['schedule']! as Map<String, Object?>)['every_seconds'],
+          greaterThan(0),
+          reason: entry.key,
+        );
+      }
+
+      expect(
+        (catalog['tools']! as List<Object?>)
+            .cast<Map<String, Object?>>()
+            .map((tool) => tool['name'])
+            .toSet(),
+        {for (final tool in domainDeviceTools(activePacks)) tool.name},
+      );
+      expect(
+        (catalog['proposal_kinds']! as List<Object?>)
+            .cast<Map<String, Object?>>()
+            .map((proposal) => proposal['kind'])
+            .toSet(),
+        {
+          for (final proposal in domainProposalKinds(activePacks))
+            proposal.kind,
+        },
+      );
+      expect(
+        (catalog['prompt_blocks']! as List<Object?>)
+            .cast<Map<String, Object?>>()
+            .map((block) => block['text'])
+            .toList(),
+        container.read(systemPromptBlocksProvider),
+      );
+    },
+  );
 }
 
 class _FakeTool implements DeviceTool {

@@ -3,14 +3,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/notifications/notification_service.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/knowledge/agents/knowledge_notifications.dart';
 import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 void main() {
+  late SharedPreferences prefs;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    prefs = await SharedPreferences.getInstance();
+  });
+
   group('routineDueItemsFromToolResult', () {
     test('parses list_due_routines output', () {
       final items = routineDueItemsFromToolResult(const <String, Object?>{
@@ -40,6 +61,46 @@ void main() {
     });
   });
 
+  group('KnowledgeNotifications routine payloads', () {
+    test('round-trip artifact id to Knowledge Review route', () {
+      final payload = KnowledgeNotifications.payloadForRoutineDigest(
+        artifactId: 'knowledge_routine_due:2026-07-05',
+      );
+
+      expect(
+        payload,
+        '/knowledge/review?agent_artifact_id=knowledge_routine_due%3A2026-07-05',
+      );
+      expect(
+        KnowledgeNotifications.routineArtifactIdFromPayload(payload),
+        'knowledge_routine_due:2026-07-05',
+      );
+    });
+
+    test('rejects chat external and non-review routes', () {
+      expect(KnowledgeNotifications.routineArtifactIdFromPayload(null), isNull);
+      expect(KnowledgeNotifications.routineArtifactIdFromPayload(''), isNull);
+      expect(
+        KnowledgeNotifications.routineArtifactIdFromPayload(
+          '/ai?agent_artifact_id=knowledge_routine_due:2026-07-05',
+        ),
+        isNull,
+      );
+      expect(
+        KnowledgeNotifications.routineArtifactIdFromPayload(
+          '/knowledge/library?agent_artifact_id=knowledge_routine_due:2026-07-05',
+        ),
+        isNull,
+      );
+      expect(
+        KnowledgeNotifications.routineArtifactIdFromPayload(
+          'https://example.com/knowledge/review?agent_artifact_id=knowledge_routine_due:2026-07-05',
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('FrbRoutineDueReader', () {
     test('reads routines through FRB list_due_routines effect loop', () async {
       final dispatcher = _RoutineDispatcher();
@@ -53,11 +114,12 @@ void main() {
         ),
       );
 
-      final due = await reader.listDue(_context());
+      final snapshot = await reader.listDue(_context());
 
-      expect(due, hasLength(1));
-      expect(due.single.id, 'routine_1');
-      expect(due.single.statement, 'Activate bank card');
+      expect(snapshot.due, hasLength(1));
+      expect(snapshot.due.single.id, 'routine_1');
+      expect(snapshot.due.single.statement, 'Activate bank card');
+      expect(snapshot.traceId, 'agent-runtime:knowledge_routine_due:run_1');
       expect(dispatcher.calls.single.name, 'list_due_routines');
       expect(dispatcher.calls.single.input, containsPair('limit', 50));
       expect(bridge.startRequests.single.agentId, kKnowledgeRoutineAgentId);
@@ -70,13 +132,17 @@ void main() {
     });
 
     test('falls back when FRB effect path fails', () async {
-      final fallback = _FallbackReader(<RoutineDueItem>[
-        RoutineDueItem(
-          id: 'fallback_routine',
-          statement: 'Fallback routine',
-          nextDueAt: DateTime.utc(2026, 6, 30),
+      final fallback = _FallbackReader(
+        RoutineDueSnapshot(
+          due: <RoutineDueItem>[
+            RoutineDueItem(
+              id: 'fallback_routine',
+              statement: 'Fallback routine',
+              nextDueAt: DateTime.utc(2026, 6, 30),
+            ),
+          ],
         ),
-      ]);
+      );
       final reader = FrbRoutineDueReader(
         runtime: _runtime(
           bridge: FailingAgentRuntimeEffectPlanBridge(),
@@ -85,22 +151,26 @@ void main() {
         fallback: fallback,
       );
 
-      final due = await reader.listDue(_context());
+      final snapshot = await reader.listDue(_context());
 
-      expect(due.single.id, 'fallback_routine');
+      expect(snapshot.due.single.id, 'fallback_routine');
       expect(fallback.calls, 1);
     });
 
     test(
       'ignores trace recording failures after a successful FRB read',
       () async {
-        final fallback = _FallbackReader(<RoutineDueItem>[
-          RoutineDueItem(
-            id: 'fallback_routine',
-            statement: 'Fallback routine',
-            nextDueAt: DateTime.utc(2026, 6, 30),
+        final fallback = _FallbackReader(
+          RoutineDueSnapshot(
+            due: <RoutineDueItem>[
+              RoutineDueItem(
+                id: 'fallback_routine',
+                statement: 'Fallback routine',
+                nextDueAt: DateTime.utc(2026, 6, 30),
+              ),
+            ],
           ),
-        ]);
+        );
         final reader = FrbRoutineDueReader(
           runtime: _runtime(
             bridge: FakeAgentRuntimeEffectPlanBridge(),
@@ -111,12 +181,192 @@ void main() {
           fallback: fallback,
         );
 
-        final due = await reader.listDue(_context());
+        final snapshot = await reader.listDue(_context());
 
-        expect(due, hasLength(1));
-        expect(due.single.id, 'routine_1');
+        expect(snapshot.due, hasLength(1));
+        expect(snapshot.due.single.id, 'routine_1');
+        expect(snapshot.traceId, isNull);
         expect(fallback.calls, 0);
       },
+    );
+  });
+
+  test('run persists a routine reminder artifact with evidence', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runtime = _FakeMemoryRuntime();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final agent = RoutineDueAgent(
+      dueReader: _FixedRoutineReader(
+        RoutineDueSnapshot(
+          due: <RoutineDueItem>[
+            RoutineDueItem(
+              id: 'routine-overdue',
+              statement: 'Activate bank card',
+              nextDueAt: DateTime.utc(2026, 7, 4, 8),
+            ),
+            RoutineDueItem(
+              id: 'routine-upcoming',
+              statement: 'Review notes',
+              nextDueAt: DateTime.utc(2026, 7, 9, 8),
+            ),
+          ],
+          traceId: 'trace-routine-1',
+        ),
+      ),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 8),
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.memoryId, '$kKnowledgeRoutineMemorySource:2026-07-05');
+    expect(result.artifactId, '$kKnowledgeRoutineAgentId:2026-07-05');
+    expect(result.traceId, 'trace-routine-1');
+    expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+    expect(runtime.remembered?.payload['trace_id'], 'trace-routine-1');
+
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact, isNotNull);
+    expect(artifact!.kind, AgentArtifactKind.reminder);
+    expect(artifact.severity, AgentArtifactSeverity.attention);
+    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.traceId, 'trace-routine-1');
+    expect(artifact.insights.map((insight) => insight.title), [
+      'Overdue routines',
+      'Upcoming routines',
+    ]);
+    expect(artifact.evidence.map((ref) => ref.id), [
+      'routine-overdue',
+      'routine-upcoming',
+    ]);
+    expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'knowledge.routine_due.ready',
+      ),
+      result: result,
+      artifact: artifact,
+    );
+    expect(outcomeFailures, isEmpty);
+  });
+
+  test(
+    'run skips local notification when agent notifications are off',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final artifactStore = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final preferences = InMemoryAgentPreferenceStore();
+      await preferences.setNotificationsEnabled(
+        ownerUserId: 'user-1',
+        agentId: kKnowledgeRoutineAgentId,
+        enabled: false,
+        updatedAt: DateTime.utc(2026, 7, 5, 7),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => artifactStore,
+          ),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferences,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final notifier = _RecordingNotificationService();
+      final agent = RoutineDueAgent(
+        notifier: notifier,
+        dueReader: _FixedRoutineReader(
+          RoutineDueSnapshot(
+            due: <RoutineDueItem>[
+              RoutineDueItem(
+                id: 'routine-overdue',
+                statement: 'Activate bank card',
+                nextDueAt: DateTime.utc(2026, 7, 4, 8),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final result = await _runAgent(
+        container,
+        agent,
+        DateTime.utc(2026, 7, 5, 8),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(notifier.showCount, 0);
+    },
+  );
+
+  test('run posts routine notification with artifact route payload', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runtime = _FakeMemoryRuntime();
+    final preferences = InMemoryAgentPreferenceStore();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+        agent_providers.agentPreferenceStoreProvider.overrideWith(
+          (ref) async => preferences,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final notifier = _RecordingNotificationService();
+    final agent = RoutineDueAgent(
+      notifier: notifier,
+      dueReader: _FixedRoutineReader(
+        RoutineDueSnapshot(
+          due: <RoutineDueItem>[
+            RoutineDueItem(
+              id: 'routine-overdue',
+              statement: 'Activate bank card',
+              nextDueAt: DateTime.utc(2026, 7, 4, 8),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 8),
+    );
+
+    expect(result.artifactId, '$kKnowledgeRoutineAgentId:2026-07-05');
+    expect(notifier.showCount, 1);
+    expect(
+      notifier.lastPayload,
+      '/knowledge/review?agent_artifact_id=knowledge_routine_due%3A2026-07-05',
     );
   });
 }
@@ -204,12 +454,81 @@ class _RoutineDispatcher implements DeviceToolDispatcher {
 class _FallbackReader implements RoutineDueReader {
   _FallbackReader(this.result);
 
-  final List<RoutineDueItem> result;
+  final RoutineDueSnapshot result;
   var calls = 0;
 
   @override
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async {
     calls += 1;
     return result;
+  }
+}
+
+Future<AgentRunResult> _runAgent(
+  ProviderContainer container,
+  RoutineDueAgent agent,
+  DateTime now,
+) {
+  final probe = FutureProvider<AgentRunResult>(
+    (ref) => agent.run(AgentContext(ref: ref, now: now)),
+  );
+  container.listen(probe, (_, _) {});
+  return container.read(probe.future);
+}
+
+class _FixedRoutineReader implements RoutineDueReader {
+  const _FixedRoutineReader(this.result);
+
+  final RoutineDueSnapshot result;
+
+  @override
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async => result;
+}
+
+class _FakeMemoryRuntime implements MemoryRuntime {
+  MemoryRecord? remembered;
+
+  @override
+  Future<void> remember(MemoryRecord record) async {
+    remembered = record;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
+}
+
+class _RecordingNotificationService implements NotificationService {
+  var showCount = 0;
+  String? lastPayload;
+
+  @override
+  Stream<String> get payloads => const Stream<String>.empty();
+
+  @override
+  Future<String?> initialPayload() async => null;
+
+  @override
+  Future<void> cancel(int id) async {}
+
+  @override
+  Future<bool> hasPermissions() async => true;
+
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<bool> requestPermissions() async => true;
+
+  @override
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+    required NotificationChannelSpec channel,
+    String? payload,
+  }) async {
+    showCount += 1;
+    lastPayload = payload;
   }
 }

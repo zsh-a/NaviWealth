@@ -1,13 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_runner.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -52,6 +55,10 @@ class _StubAgent implements Agent {
 
 MemoryRuntime _runtime() {
   final db = makeTestDatabase();
+  return _runtimeForDb(db);
+}
+
+MemoryRuntime _runtimeForDb(AppDatabase db) {
   return MemoryRuntime(
     embedder: StubEmbedder(),
     memoryStore: SqliteMemoryStore(db: db),
@@ -74,10 +81,49 @@ AgentContext _context(MemoryRuntime rt, DateTime now) {
 void main() {
   final now = DateTime.utc(2026, 5, 27, 14);
 
+  test('AgentRunResult exposes user-visible status', () {
+    final finishedAt = now.add(const Duration(milliseconds: 10));
+
+    final completed = AgentRunResult(
+      agentId: 'completed',
+      status: AgentRunStatus.completed,
+      startedAt: now,
+      finishedAt: finishedAt,
+    );
+    final skipped = AgentRunResult.skipped(
+      agentId: 'skipped',
+      startedAt: now,
+      finishedAt: finishedAt,
+      reason: 'nothing new',
+    );
+    final failed = AgentRunResult.failed(
+      agentId: 'failed',
+      startedAt: now,
+      finishedAt: finishedAt,
+      error: 'boom',
+    );
+
+    expect(completed.userVisibleStatus, AgentRunUserVisibleStatus.ready);
+    expect(skipped.userVisibleStatus, AgentRunUserVisibleStatus.noFinding);
+    expect(failed.userVisibleStatus, AgentRunUserVisibleStatus.failed);
+  });
+
   test('runOnce returns completed result + writes one event', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
-    final agent = _StubAgent(id: 'stub');
+    final agent = _StubAgent(
+      id: 'stub',
+      onRun: (ctx) => AgentRunResult(
+        agentId: 'stub',
+        status: AgentRunStatus.completed,
+        startedAt: ctx.now,
+        finishedAt: ctx.now.add(const Duration(milliseconds: 10)),
+        summary: 'ok',
+        memoryId: 'memory-1',
+        artifactId: 'artifact-1',
+        traceId: 'trace-1',
+      ),
+    );
 
     final result = await runner.runOnce(agent, _context(rt, now));
     expect(result.status, AgentRunStatus.completed);
@@ -90,6 +136,43 @@ void main() {
     expect(events, hasLength(1));
     expect(events.single.type, kAgentRunEventTypeCompleted);
     expect(events.single.payload['agent_id'], 'stub');
+    expect(events.single.payload['memory_id'], 'memory-1');
+    expect(events.single.payload['artifact_id'], 'artifact-1');
+    expect(events.single.payload['trace_id'], 'trace-1');
+  });
+
+  test('runOnce skips disabled agents without writing run history', () async {
+    final rt = _runtime();
+    final preferences = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    await preferences.setEnabled(
+      ownerUserId: 'u',
+      agentId: 'disabled',
+      enabled: false,
+      updatedAt: now,
+    );
+    final runner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: runStore,
+      preferenceStore: preferences,
+    );
+    final agent = _StubAgent(id: 'disabled');
+
+    final result = await runner.runOnce(agent, _context(rt, now));
+
+    expect(result.status, AgentRunStatus.skipped);
+    expect(result.summary, 'agent disabled');
+    expect(agent.runCount, 0);
+    expect(
+      await runStore.latestForAgent(ownerUserId: 'u', agentId: 'disabled'),
+      isNull,
+    );
+    final events = await rt.recentEvents(
+      ownerUserId: 'u',
+      window: const Duration(days: 9999),
+    );
+    expect(events, isEmpty);
   });
 
   test('runOnce captures throws as failed result', () async {
@@ -113,9 +196,12 @@ void main() {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
     final agent = _StubAgent(id: 'stub');
-    expect(runner.lastRunAt('stub'), isNull);
+    expect(await runner.lastRunAt('stub'), isNull);
     await runner.runOnce(agent, _context(rt, now));
-    expect(runner.lastRunAt('stub'), now);
+    expect(
+      await runner.lastRunAt('stub'),
+      now.add(const Duration(milliseconds: 10)),
+    );
   });
 
   test('failed runs do NOT advance lastRunAt', () async {
@@ -123,7 +209,7 @@ void main() {
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
     final agent = _StubAgent(id: 'boom', throws: 'nope');
     await runner.runOnce(agent, _context(rt, now));
-    expect(runner.lastRunAt('boom'), isNull);
+    expect(await runner.lastRunAt('boom'), isNull);
   });
 
   test('skipped runs advance lastRunAt so tick does not loop', () async {
@@ -140,7 +226,10 @@ void main() {
     );
 
     await runner.runOnce(agent, _context(rt, now));
-    expect(runner.lastRunAt('quiet'), now);
+    expect(
+      await runner.lastRunAt('quiet'),
+      now.add(const Duration(milliseconds: 10)),
+    );
 
     final tooSoon = await runner.tick(
       agents: [agent],
@@ -148,6 +237,119 @@ void main() {
     );
     expect(tooSoon, isEmpty);
     expect(agent.runCount, 1);
+  });
+
+  test('persisted run store gates a new runner instance', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentRunStore(db: db);
+    final rt = _runtimeForDb(db);
+    final firstRunner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: store,
+    );
+    final secondRunner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: store,
+    );
+    final agent = _StubAgent(
+      id: 'persisted',
+      schedule: const AgentSchedule(interval: Duration(hours: 1)),
+      onRun: (ctx) => AgentRunResult(
+        agentId: 'persisted',
+        status: AgentRunStatus.completed,
+        startedAt: ctx.now,
+        finishedAt: ctx.now.add(const Duration(minutes: 45)),
+        summary: 'persisted ok',
+        artifactId: 'artifact-persisted',
+        traceId: 'trace-persisted',
+      ),
+    );
+
+    await firstRunner.tick(agents: [agent], context: _context(rt, now));
+    expect(agent.runCount, 1);
+
+    final tooSoon = await secondRunner.tick(
+      agents: [agent],
+      context: _context(rt, now.add(const Duration(hours: 1, minutes: 30))),
+    );
+
+    expect(tooSoon, isEmpty);
+    expect(agent.runCount, 1);
+    final latest = await store.latestForAgent(
+      ownerUserId: 'u',
+      agentId: 'persisted',
+    );
+    expect(latest?.status, AgentRunLifecycleStatus.ready);
+    expect(latest?.trigger, AgentRunTrigger.schedule);
+    expect(latest?.artifactId, 'artifact-persisted');
+    expect(latest?.traceId, 'trace-persisted');
+  });
+
+  test('persisted run store lists agent history newest first', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentRunStore(db: db);
+    final agent = _StubAgent(id: 'history');
+    final first = DateTime.utc(2026, 5, 27, 9);
+    final second = DateTime.utc(2026, 5, 28, 9);
+
+    await store.markRunning(
+      ownerUserId: 'u',
+      agent: agent,
+      startedAt: first,
+      trigger: AgentRunTrigger.schedule,
+    );
+    await store.finishRun(
+      ownerUserId: 'u',
+      agent: agent,
+      runStartedAt: first,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: first,
+        finishedAt: first.add(const Duration(milliseconds: 10)),
+        summary: 'first',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await store.markRunning(
+      ownerUserId: 'u',
+      agent: agent,
+      startedAt: second,
+      trigger: AgentRunTrigger.manual,
+    );
+    await store.finishRun(
+      ownerUserId: 'u',
+      agent: agent,
+      runStartedAt: second,
+      result: AgentRunResult.skipped(
+        agentId: agent.id,
+        startedAt: second,
+        finishedAt: second.add(const Duration(milliseconds: 10)),
+        reason: 'second',
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+
+    final history = await store.listForAgent(
+      ownerUserId: 'u',
+      agentId: agent.id,
+    );
+    final limited = await store.listForAgent(
+      ownerUserId: 'u',
+      agentId: agent.id,
+      limit: 1,
+    );
+
+    expect(history.map((run) => run.summary), ['second', 'first']);
+    expect(history.map((run) => run.trigger), [
+      AgentRunTrigger.manual,
+      AgentRunTrigger.schedule,
+    ]);
+    expect(limited.map((run) => run.summary), ['second']);
   });
 
   test('tick fires every agent whose schedule says yes', () async {
@@ -194,6 +396,34 @@ void main() {
     );
     expect(later, hasLength(1));
     expect(hourly.runCount, 2);
+  });
+
+  test('tick skips agents disabled in preferences', () async {
+    final rt = _runtime();
+    final preferences = InMemoryAgentPreferenceStore();
+    final runner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      preferenceStore: preferences,
+    );
+    final agent = _StubAgent(
+      id: 'disabled',
+      schedule: const AgentSchedule(interval: Duration(hours: 1)),
+    );
+    await preferences.setEnabled(
+      ownerUserId: 'u',
+      agentId: 'disabled',
+      enabled: false,
+      updatedAt: now,
+    );
+
+    final results = await runner.tick(
+      agents: [agent],
+      context: _context(rt, now),
+    );
+
+    expect(results, isEmpty);
+    expect(agent.runCount, 0);
   });
 
   test('AgentRunController runs registered agent by id', () async {

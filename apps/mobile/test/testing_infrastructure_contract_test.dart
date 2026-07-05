@@ -303,6 +303,14 @@ void main() {
       expect(text, contains("'real-estate': (type: 'asset'"));
       expect(text, contains("'vehicle': (type: 'asset'"));
       expect(text, contains("'other-asset': (type: 'asset'"));
+      expect(
+        text,
+        contains(
+          'migrates v31 agent tables through trace and visibility additions',
+        ),
+      );
+      expect(text, contains('SELECT summary, artifact_id, trace_id'));
+      expect(text, contains('SELECT trace_id, dismissed_at, snoozed_until'));
     });
 
     test('recent regression-risk surfaces keep focused coverage', () {

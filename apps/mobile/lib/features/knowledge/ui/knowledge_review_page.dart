@@ -10,12 +10,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_access.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/ui/agent_result_card.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/format/formatters.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/assumption_agent.dart';
+import '../agents/providers.dart' as knowledge_agent_providers;
 import '../agents/routine_due_agent.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -93,7 +100,9 @@ Future<void> _persistReviewOrder({
 }
 
 class KnowledgeReviewPage extends ConsumerStatefulWidget {
-  const KnowledgeReviewPage({super.key});
+  const KnowledgeReviewPage({super.key, this.initialAgentArtifactId});
+
+  final String? initialAgentArtifactId;
 
   @override
   ConsumerState<KnowledgeReviewPage> createState() =>
@@ -102,8 +111,11 @@ class KnowledgeReviewPage extends ConsumerStatefulWidget {
 
 class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
     with KnowledgeFabScrollHideMixin {
+  String? _openedInitialArtifactId;
+
   @override
   Widget build(BuildContext context) {
+    _maybeOpenInitialArtifactSheet();
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.knowledgeReviewTitle,
@@ -121,6 +133,8 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
                     bottom: AppSpacing.s64 + AppSpacing.s16,
                   ),
                   children: const <Widget>[
+                    _KnowledgeReviewAgentResultPanel(),
+                    SizedBox(height: AppSpacing.s16),
                     KnowledgeAiSuggestionsCard(),
                     SizedBox(height: AppSpacing.s16),
                     _DueRoutinesCard(),
@@ -145,17 +159,192 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
       ),
     );
   }
+
+  void _maybeOpenInitialArtifactSheet() {
+    final artifactId = widget.initialAgentArtifactId;
+    if (artifactId == null ||
+        artifactId.isEmpty ||
+        _openedInitialArtifactId == artifactId) {
+      return;
+    }
+    _openedInitialArtifactId = artifactId;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final artifact = await readActiveAgentArtifactFromWidgetRef(
+        ref,
+        artifactId: artifactId,
+        expectedDomain: DomainScope.knowledge.wire,
+      );
+      if (!mounted || artifact == null) return;
+      final l10n = AppLocalizations.of(context);
+      final metaLabel = _knowledgeAgentArtifactUpdated(
+        l10n,
+        artifact.createdAt,
+      );
+      await showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: metaLabel,
+        onVisibilityChanged: () {
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+          );
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+          );
+        },
+      );
+    });
+  }
 }
 
 Future<void> _refreshReview(WidgetRef ref) async {
   ref.invalidate(knowledgeRepositoryProvider);
   ref.invalidate(inboxTriageRepositoryProvider);
+  ref.invalidate(
+    knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+  );
+  ref.invalidate(
+    knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+  );
+  ref.invalidate(knowledge_agent_providers.latestKnowledgeReviewRunProvider);
   ref.read(aiSuggestionsRefreshProvider.notifier).state++;
   ref.read(_reviewActionsRefreshProvider.notifier).state++;
   await Future.wait([
     ref.read(knowledgeRepositoryProvider.future),
     ref.read(inboxTriageRepositoryProvider.future),
   ]);
+}
+
+class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
+  const _KnowledgeReviewAgentResultPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final artifactAsync = ref.watch(
+      knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+    );
+    final runAsync = ref.watch(
+      knowledge_agent_providers.latestKnowledgeReviewRunProvider,
+    );
+    return artifactAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (artifacts) {
+        if (artifacts.isNotEmpty) {
+          return _KnowledgeReviewAgentResultList(artifacts: artifacts);
+        }
+        return runAsync.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (record) {
+            if (record == null) return const SizedBox.shrink();
+            return _KnowledgeReviewAgentRunStatusCard(record: record);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _KnowledgeReviewAgentResultList extends StatelessWidget {
+  const _KnowledgeReviewAgentResultList({required this.artifacts});
+
+  final List<AgentArtifact> artifacts;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = artifacts.first;
+    final secondary = artifacts.skip(1).toList(growable: false);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _KnowledgeReviewAgentResultCard(artifact: primary),
+        if (secondary.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s8),
+          for (var i = 0; i < secondary.length; i++) ...[
+            _KnowledgeReviewAgentResultRow(artifact: secondary[i]),
+            if (i != secondary.length - 1)
+              const SizedBox(height: AppSpacing.s6),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _KnowledgeReviewAgentRunStatusCard extends StatelessWidget {
+  const _KnowledgeReviewAgentRunStatusCard({required this.record});
+
+  final AgentRunRecord record;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final reference = record.finishedAt ?? record.startedAt;
+    return AgentRunStatusCard(
+      record: record,
+      metaLabel: _knowledgeAgentArtifactUpdated(l10n, reference),
+    );
+  }
+}
+
+class _KnowledgeReviewAgentResultCard extends ConsumerWidget {
+  const _KnowledgeReviewAgentResultCard({required this.artifact});
+
+  final AgentArtifact artifact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
+    return AgentResultCard(
+      artifact: artifact,
+      metaLabel: metaLabel,
+      onOpen: () => showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: metaLabel,
+        onVisibilityChanged: () {
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+          );
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _KnowledgeReviewAgentResultRow extends ConsumerWidget {
+  const _KnowledgeReviewAgentResultRow({required this.artifact});
+
+  final AgentArtifact artifact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
+    return AgentCompactResultRow(
+      artifact: artifact,
+      metaLabel: metaLabel,
+      onOpen: () => showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: metaLabel,
+        onVisibilityChanged: () {
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+          );
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+          );
+        },
+      ),
+    );
+  }
 }
 
 /// Icon-only FAB that opens the review batch-actions sheet.
@@ -289,4 +478,19 @@ Future<List<KnowledgeAssumption>> _loadReviewAssumptions(WidgetRef ref) async {
 
 void _toggleReviewSelection(Set<String> selectedIds, String id) {
   if (!selectedIds.add(id)) selectedIds.remove(id);
+}
+
+String _knowledgeAgentArtifactUpdated(AppLocalizations l10n, DateTime when) {
+  return AppFormatters.relativeTime(
+    when,
+    justNow: l10n.aiChatRelativeJustNow,
+    minutesAgo: l10n.aiChatRelativeMinutesAgo,
+    hoursAgo: l10n.aiChatRelativeHoursAgo,
+    daysAgo: l10n.aiChatRelativeDaysAgo,
+    dateFallback: (d) {
+      final mm = d.month.toString().padLeft(2, '0');
+      final dd = d.day.toString().padLeft(2, '0');
+      return '$mm-$dd';
+    },
+  );
 }

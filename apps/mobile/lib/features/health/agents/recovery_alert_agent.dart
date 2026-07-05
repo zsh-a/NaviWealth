@@ -9,7 +9,10 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -68,6 +71,7 @@ class RecoveryAlertAgent implements Agent {
         'HRV has been below your baseline for ${alert.consecutiveDays} days '
         '(${_round(alert.avgRecentMs)} ms vs ${_round(alert.avgBaselineMs)} ms average, '
         '${_round(alert.declinePct)}% decline). Consider lighter activity today.';
+    final artifactId = '$kRecoveryAlertAgentId:$dayKey';
 
     // Persist memory.
     final memoryId = '$kRecoveryAlertMemorySource:$dayKey';
@@ -90,7 +94,10 @@ class RecoveryAlertAgent implements Agent {
           'decline_pct': _round(alert.declinePct),
           'consecutive_days': alert.consecutiveDays,
           'signal_source': signal.source,
+          if (signal.traceId != null) 'trace_id': signal.traceId,
         },
+        'artifact_id': artifactId,
+        if (signal.traceId != null) 'trace_id': signal.traceId,
       },
       entities: <String>{'recovery_alert', 'hrv_decline', dayKey},
       importance: 0.7,
@@ -100,18 +107,43 @@ class RecoveryAlertAgent implements Agent {
       updatedAt: DateTime.now().toUtc(),
     );
     await runtime.remember(memory);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _artifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        memoryId: memoryId,
+        createdAt: start,
+        source: signal.source,
+        traceId: signal.traceId,
+        alert: alert,
+        summary: summary,
+      ),
+    );
 
     // Notify.
     if (notifier != null) {
       try {
-        if (await notifier!.hasPermissions()) {
+        final preferenceStore = await ctx.ref.read(
+          agent_providers.agentPreferenceStoreProvider.future,
+        );
+        final notificationsEnabled = await preferenceStore
+            .areNotificationsEnabled(
+              ownerUserId: ownerUserId,
+              agentId: kRecoveryAlertAgentId,
+            );
+        if (notificationsEnabled && await notifier!.hasPermissions()) {
           await notifier!.showNow(
             id: HealthNotifications.idForRecoveryAlert(start.toLocal()),
             title: 'Recovery Alert',
             body:
                 'HRV down ${_round(alert.declinePct)}% over ${alert.consecutiveDays} days. '
                 'Consider lighter activity today.',
-            payload: 'recovery_alert',
+            payload: HealthNotifications.payloadForRecoveryAlert(
+              artifactId: artifactId,
+            ),
             channel: kHealthBriefingNotificationChannel,
           );
         }
@@ -120,10 +152,28 @@ class RecoveryAlertAgent implements Agent {
       }
     }
 
+    return _completedResult(
+      startedAt: start,
+      summary: summary,
+      memoryId: memoryId,
+      artifactId: artifactId,
+      signal: signal,
+      alert: alert,
+    );
+  }
+
+  static AgentRunResult _completedResult({
+    required DateTime startedAt,
+    required String summary,
+    required String memoryId,
+    required String artifactId,
+    required RecoveryAlertSignalRead signal,
+    required RecoveryAlertSignal alert,
+  }) {
     return AgentRunResult(
       agentId: kRecoveryAlertAgentId,
       status: AgentRunStatus.completed,
-      startedAt: start,
+      startedAt: startedAt,
       finishedAt: DateTime.now().toUtc(),
       summary: summary,
       payload: <String, Object?>{
@@ -134,6 +184,77 @@ class RecoveryAlertAgent implements Agent {
         'signal_source': signal.source,
       },
       memoryId: memoryId,
+      artifactId: artifactId,
+      traceId: signal.traceId,
+    );
+  }
+
+  static AgentArtifact _artifact({
+    required String id,
+    required String ownerUserId,
+    required String memoryId,
+    required DateTime createdAt,
+    required String source,
+    required String? traceId,
+    required RecoveryAlertSignal alert,
+    required String summary,
+  }) {
+    final severity = alert.declinePct >= 20
+        ? AgentArtifactSeverity.warning
+        : AgentArtifactSeverity.attention;
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kRecoveryAlertAgentId,
+      domain: 'health',
+      kind: AgentArtifactKind.alert,
+      severity: severity,
+      title: 'Recovery Alert',
+      summary: summary,
+      insights: <AgentInsight>[
+        AgentInsight(
+          title: 'HRV decline',
+          body:
+              '${alert.consecutiveDays} days below baseline; '
+              '${_round(alert.declinePct)}% lower than usual.',
+          severity: severity,
+          payload: <String, Object?>{
+            'decline_pct': _round(alert.declinePct),
+            'consecutive_days': alert.consecutiveDays,
+          },
+        ),
+        const AgentInsight(
+          title: 'Suggested adjustment',
+          body: 'Consider lighter activity today and watch recovery tomorrow.',
+        ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        AgentEvidenceRef(
+          type: 'health_metric_trend',
+          id: '$source:$id',
+          label: 'HRV trend',
+          payload: <String, Object?>{
+            'baseline_avg_ms': _round(alert.avgBaselineMs),
+            'recent_avg_ms': _round(alert.avgRecentMs),
+            'decline_pct': _round(alert.declinePct),
+            'consecutive_days': alert.consecutiveDays,
+            'source': source,
+          },
+        ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'review',
+          label: 'Review recovery alert',
+          intent: kHealthExplainRecoveryAlertIntent,
+          objectType: kAgentArtifactObjectType,
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      traceId: traceId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
   }
 
@@ -183,9 +304,9 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.read(ctx),
-      decode: (terminalStep) {
+      decode: (stepRun) {
         final result = agentRuntimeTerminalEffectResultForTool(
-          terminalStep,
+          stepRun.terminalStep,
           'get_hrv_trend',
         );
         final points = _hrvPointsFromToolResult(result);
@@ -193,6 +314,7 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
         return recoveryAlertSignalFromValues(
           points,
           source: 'frb_tool:get_hrv_trend',
+          traceId: stepRun.traceId,
         );
       },
     );
@@ -204,25 +326,37 @@ class RecoveryAlertSignalRead {
     required this.source,
     this.alert,
     this.skipReason,
+    this.traceId,
   });
 
   factory RecoveryAlertSignalRead.alert({
     required String source,
     required RecoveryAlertSignal alert,
+    String? traceId,
   }) {
-    return RecoveryAlertSignalRead._(source: source, alert: alert);
+    return RecoveryAlertSignalRead._(
+      source: source,
+      alert: alert,
+      traceId: traceId,
+    );
   }
 
   factory RecoveryAlertSignalRead.skipped({
     required String source,
     required String reason,
+    String? traceId,
   }) {
-    return RecoveryAlertSignalRead._(source: source, skipReason: reason);
+    return RecoveryAlertSignalRead._(
+      source: source,
+      skipReason: reason,
+      traceId: traceId,
+    );
   }
 
   final String source;
   final RecoveryAlertSignal? alert;
   final String? skipReason;
+  final String? traceId;
 }
 
 class RecoveryAlertSignal {
@@ -249,11 +383,13 @@ class RecoveryAlertHrvPoint {
 RecoveryAlertSignalRead recoveryAlertSignalFromValues(
   List<RecoveryAlertHrvPoint> points, {
   required String source,
+  String? traceId,
 }) {
   if (points.length < 4) {
     return RecoveryAlertSignalRead.skipped(
       source: source,
       reason: 'insufficient HRV data (${points.length} points)',
+      traceId: traceId,
     );
   }
 
@@ -269,6 +405,7 @@ RecoveryAlertSignalRead recoveryAlertSignalFromValues(
     return RecoveryAlertSignalRead.skipped(
       source: source,
       reason: 'no sustained HRV decline detected',
+      traceId: traceId,
     );
   }
 
@@ -283,6 +420,7 @@ RecoveryAlertSignalRead recoveryAlertSignalFromValues(
       declinePct: declinePct,
       consecutiveDays: recent.length,
     ),
+    traceId: traceId,
   );
 }
 

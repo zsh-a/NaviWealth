@@ -19,10 +19,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart'
     show memoryRuntimeProvider;
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -40,6 +44,7 @@ import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 const _owner = 'u1';
 final _now = DateTime.utc(2026, 5, 30, 12);
@@ -238,12 +243,18 @@ void main() {
     required _FakeRuntime runtime,
     bool heuristicProviderJudge = false,
   }) {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
     final c = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(_prefs),
         currentUserIdProvider.overrideWithValue(() async => _owner),
         knowledgeRepositoryProvider.overrideWith((ref) async => repo),
         memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
         // The no-LLM provider path yields HeuristicContradictionJudge.
         // We pin that directly (rather than overriding deviceLlmClient to
         // null) so the test doesn't have to stand up the whole
@@ -286,11 +297,71 @@ void main() {
     final result = await runAgent(container, agent);
 
     expect(result.status, AgentRunStatus.completed);
+    expect(result.artifactId, '$kKnowledgeContradictionAgentId:2026-05-30');
     expect(result.payload['issue_count'], 1);
+    expect(runtime.remembered!.payload['artifact_id'], result.artifactId);
     final issues = runtime.remembered!.payload['issues']! as List<Object?>;
     final issue = issues.single! as Map<String, Object?>;
     expect(issue['kind'], 'assumption_invalidated');
     expect(issue['reference_id'], 'a-stale');
+
+    final artifactStore = await container.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact, isNotNull);
+    expect(artifact!.kind, AgentArtifactKind.alert);
+    expect(artifact.severity, AgentArtifactSeverity.warning);
+    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.insights.single.title, 'Invalidated assumptions');
+    expect(artifact.evidence.single.id, 'd1');
+    expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'knowledge.contradiction.ready',
+      ),
+      result: result,
+      artifact: artifact,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+  });
+
+  test('persists source trace id onto result, artifact, and memory', () async {
+    final runtime = _FakeRuntime(const {});
+    final container = makeContainer(repo: _FakeRepo(), runtime: runtime);
+    final agent = ContradictionAgent(
+      judgeOverride: _ThrowingJudge(),
+      sourceReader: _FallbackSourceReader(
+        ContradictionSourceSnapshot(
+          decisions: <KnowledgeDecision>[
+            _decision(
+              'd-trace',
+              question: 'Trace contradiction?',
+              assumptionIds: ['a-stale'],
+            ),
+          ],
+          principles: const <KnowledgePrinciple>[],
+          openAssumptions: <KnowledgeAssumption>[
+            _assumption('a-open', 'Still open'),
+          ],
+          traceId: 'trace-contradiction-1',
+        ),
+      ),
+    );
+
+    final result = await runAgent(container, agent);
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.traceId, 'trace-contradiction-1');
+    expect(result.payload['trace_id'], 'trace-contradiction-1');
+    expect(runtime.remembered?.payload['trace_id'], 'trace-contradiction-1');
+
+    final artifactStore = await container.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact?.traceId, 'trace-contradiction-1');
   });
 
   test('check-2: LLM judge confirms a real contradiction -> flag with the '
@@ -339,6 +410,13 @@ void main() {
     expect(judge.calls, 1);
     expect(result.status, AgentRunStatus.skipped);
     expect(runtime.remembered, isNull);
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'knowledge.contradiction.prompt_injection_guard',
+      ),
+      result: result,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
   });
 
   test('check-2: low confidence (<0.6) -> no flag', () async {
@@ -414,6 +492,7 @@ void main() {
       final snapshot = await reader.read(_context());
 
       expect(snapshot.decisions.single.assumptionIds, <String>['a-frb']);
+      expect(snapshot.traceId, 'agent-runtime:knowledge_contradiction:run_1');
       expect(snapshot.principles.single.id, 'p-frb');
       expect(snapshot.openAssumptions.single.id, 'a-open');
       expect(dispatcher.calls.map((call) => call.name), <String>[

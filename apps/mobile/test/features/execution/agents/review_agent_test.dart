@@ -3,8 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_runner.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -137,6 +143,7 @@ void main() {
 
     expect(result.status, AgentRunStatus.completed);
     expect(result.memoryId, '$kExecutionReviewMemorySource:2026-06-05');
+    expect(result.artifactId, '$kExecutionReviewAgentId:2026-06-05');
     expect(result.summary, contains('1 blocked'));
     expect(result.summary, contains('1 active commitments'));
 
@@ -154,6 +161,81 @@ void main() {
       hits.single.record.entities,
       contains('execution_action:action-review'),
     );
+
+    final artifact = await SqliteAgentArtifactStore(
+      db: db,
+    ).read('$kExecutionReviewAgentId:2026-06-05');
+    expect(artifact, isNotNull);
+    expect(artifact!.agentId, kExecutionReviewAgentId);
+    expect(artifact.domain, 'execution');
+    expect(artifact.kind, AgentArtifactKind.review);
+    expect(artifact.severity, AgentArtifactSeverity.attention);
+    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.summary, result.summary);
+    expect(
+      artifact.insights.map((insight) => insight.title),
+      containsAll(['Today focus', 'Blocked work', 'Due work']),
+    );
+    expect(
+      artifact.evidence.map((evidence) => evidence.id),
+      contains('action-review'),
+    );
+    expect(artifact.actions.single.kind, 'review');
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById('execution.review.ready'),
+      result: result,
+      artifact: artifact,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+  });
+
+  test('persists review trace id onto result, artifact, and memory', () async {
+    final result = await _withRef(
+      container,
+      (ref) => ExecutionReviewAgent(
+        reviewReader: _FallbackReader(
+          ExecutionReviewSnapshot(
+            openActions: [
+              ExecutionReviewAction(
+                id: 'action-trace',
+                title: 'Trace execution review',
+                status: ExecutionActionStatus.doing,
+                priority: ExecutionPriority.high,
+                dueAt: DateTime.utc(2026, 6, 5),
+              ),
+            ],
+            activeProjects: const [ExecutionReviewRef(id: 'project-trace')],
+            activeCommitments: const [
+              ExecutionReviewRef(id: 'commitment-trace'),
+            ],
+            recentProgress: const [],
+            activeProjectCount: 1,
+            activeCommitmentCount: 1,
+            traceId: 'trace-execution-1',
+          ),
+        ),
+      ).run(AgentContext(ref: ref, now: DateTime.utc(2026, 6, 5, 17))),
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.traceId, 'trace-execution-1');
+
+    final artifact = await SqliteAgentArtifactStore(
+      db: db,
+    ).read('$kExecutionReviewAgentId:2026-06-05');
+    expect(artifact?.traceId, 'trace-execution-1');
+
+    final runtime = await container.read(memoryRuntimeProvider.future);
+    final hits = await runtime.recall(
+      ownerUserId: _userId,
+      queryText: 'trace execution review',
+      kinds: const {MemoryKind.episodic},
+      source: kExecutionReviewMemorySource,
+      topK: 1,
+    );
+    expect(hits.single.record.payload['trace_id'], 'trace-execution-1');
+    final outcome = hits.single.record.payload['outcome'] as Map;
+    expect(outcome['trace_id'], 'trace-execution-1');
   });
 
   test('skips when there is nothing to review', () async {
@@ -166,6 +248,39 @@ void main() {
 
     expect(result.status, AgentRunStatus.skipped);
     expect(result.summary, 'no execution signals to review');
+  });
+
+  test('budget exhausted runtime failure matches outcome corpus', () async {
+    final runtime = await container.read(memoryRuntimeProvider.future);
+    final runStore = SqliteAgentRunStore(db: db);
+    final runner = AgentRunner(
+      runtime: runtime,
+      ownerUserId: _userId,
+      runStore: runStore,
+      preferenceStore: InMemoryAgentPreferenceStore(),
+    );
+
+    final result = await _withRef(
+      container,
+      (ref) => runner.runOnce(
+        ExecutionReviewAgent(
+          reviewReader: _ThrowingReader(StateError('effect_budget_exhausted')),
+        ),
+        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 5, 17)),
+      ),
+    );
+
+    expect(result.status, AgentRunStatus.failed);
+    expect(result.error, contains('effect_budget_exhausted'));
+    expect(result.artifactId, isNull);
+
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'execution.review.budget_exhausted',
+      ),
+      result: result,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
   });
 
   group('executionReviewSnapshotFromTerminalStep', () {
@@ -223,13 +338,12 @@ void main() {
             ],
           },
         },
+        traceId: 'trace-parser-1',
       );
 
       expect(snapshot, isNotNull);
-      expect(
-        snapshot!.openActions.single.status,
-        ExecutionActionStatus.blocked,
-      );
+      expect(snapshot!.traceId, 'trace-parser-1');
+      expect(snapshot.openActions.single.status, ExecutionActionStatus.blocked);
       expect(snapshot.openActions.single.priority, ExecutionPriority.high);
       expect(snapshot.activeProjectCount, 1);
       expect(snapshot.activeProjects.single.id, 'project_1');
@@ -266,6 +380,7 @@ void main() {
         final snapshot = await reader.read(_context());
 
         expect(snapshot.openActions.single.id, 'action_1');
+        expect(snapshot.traceId, 'agent-runtime:execution_review:run_1');
         expect(snapshot.activeProjectCount, 1);
         expect(dispatcher.calls.map((c) => c.name), <String>[
           'list_open_actions',
@@ -456,5 +571,16 @@ class _FallbackReader implements ExecutionReviewReader {
   Future<ExecutionReviewSnapshot> read(AgentContext ctx) async {
     calls += 1;
     return result;
+  }
+}
+
+class _ThrowingReader implements ExecutionReviewReader {
+  const _ThrowingReader(this.error);
+
+  final Object error;
+
+  @override
+  Future<ExecutionReviewSnapshot> read(AgentContext ctx) async {
+    throw error;
   }
 }
