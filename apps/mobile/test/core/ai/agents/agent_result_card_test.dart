@@ -46,6 +46,7 @@ AgentArtifact _artifact() {
     actions: const [
       AgentAction(kind: 'review', label: 'Review plan', intent: 'open_plan'),
     ],
+    traceId: 'trace-1',
     createdAt: DateTime.utc(2026, 7, 5, 8),
   );
 }
@@ -106,6 +107,9 @@ void main() {
     expect(find.text('Insights'), findsOneWidget);
     expect(find.text('Evidence'), findsOneWidget);
     expect(find.text('Sleep session'), findsOneWidget);
+    expect(find.text('Trace'), findsOneWidget);
+    expect(find.text('Runtime trace'), findsOneWidget);
+    expect(find.text('trace-1'), findsOneWidget);
     expect(find.text('Actions'), findsOneWidget);
     expect(find.text('Ask follow-up'), findsOneWidget);
     expect(find.text('Review plan'), findsOneWidget);
@@ -142,6 +146,7 @@ void main() {
     expect(capturedInvocation?.object?.type, 'agent_artifact');
     expect(capturedInvocation?.object?.id, 'artifact-1');
     expect(capturedInvocation?.context['agent_id'], 'agent-1');
+    expect(capturedInvocation?.context['trace_id'], 'trace-1');
     expect(capturedObjectLabel, 'Morning Briefing');
   });
 

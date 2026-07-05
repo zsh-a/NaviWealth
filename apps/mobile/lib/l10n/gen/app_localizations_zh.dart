@@ -5342,6 +5342,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentResultEvidenceSection => '证据';
 
   @override
+  String get agentResultTraceSection => '链路';
+
+  @override
+  String get agentResultTraceTitle => '运行 trace';
+
+  @override
+  String get agentResultTraceBody => '查看 AI 调用链路和工具活动。';
+
+  @override
+  String get agentResultTraceAction => '打开';
+
+  @override
   String get agentResultActionsSection => '操作';
 
   @override

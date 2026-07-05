@@ -5592,6 +5592,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentResultEvidenceSection => 'Evidence';
 
   @override
+  String get agentResultTraceSection => 'Trace';
+
+  @override
+  String get agentResultTraceTitle => 'Runtime trace';
+
+  @override
+  String get agentResultTraceBody =>
+      'Review the AI call chain and tool activity.';
+
+  @override
+  String get agentResultTraceAction => 'Open';
+
+  @override
   String get agentResultActionsSection => 'Actions';
 
   @override

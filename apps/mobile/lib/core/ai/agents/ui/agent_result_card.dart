@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../shell/settings_route_paths.dart';
 import '../../composition/ask_ai.dart';
 import '../../intent/ai_intent_invocation.dart';
 import '../agent_artifact.dart';
@@ -322,6 +326,19 @@ class AgentArtifactDetailBody extends ConsumerWidget {
             ],
           ),
         ],
+        if (artifact.traceId != null) ...[
+          const SizedBox(height: AppSpacing.s16),
+          _DetailSection(
+            title: l10n.agentResultTraceSection,
+            children: [
+              _TraceEntryTile(
+                traceId: artifact.traceId!,
+                title: l10n.agentResultTraceTitle,
+                body: l10n.agentResultTraceBody,
+              ),
+            ],
+          ),
+        ],
         if (artifact.actions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
@@ -609,6 +626,86 @@ class _ActionIntentTile extends StatelessWidget {
               onPress: onPress,
               prefix: const Icon(
                 FLucideIcons.messageCircle,
+                size: AppIconSizes.xs,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TraceEntryTile extends StatelessWidget {
+  const _TraceEntryTile({
+    required this.traceId,
+    required this.title,
+    required this.body,
+  });
+
+  final String traceId;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final route = SettingsRoutes.aiTransparencyDetail(traceId);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              FLucideIcons.network,
+              size: AppIconSizes.h18,
+              color: colors.primary,
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: context.captionLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(body, style: context.captionStyle),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    traceId,
+                    style: context.captionStyle.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            AppQuietButton(
+              label: AppLocalizations.of(context).agentResultTraceAction,
+              onPress: () {
+                final router = GoRouter.of(context);
+                if (appSheetOverlayDepthListenable.value > 0) {
+                  unawaited(
+                    closeSheetThen(context, () => router.push<void>(route)),
+                  );
+                } else {
+                  unawaited(router.push<void>(route));
+                }
+              },
+              prefix: const Icon(
+                FLucideIcons.externalLink,
                 size: AppIconSizes.xs,
               ),
             ),

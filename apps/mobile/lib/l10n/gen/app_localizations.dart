@@ -9549,6 +9549,30 @@ abstract class AppLocalizations {
   /// **'Evidence'**
   String get agentResultEvidenceSection;
 
+  /// Agent detail section title for the linked AI transparency trace.
+  ///
+  /// In en, this message translates to:
+  /// **'Trace'**
+  String get agentResultTraceSection;
+
+  /// Agent detail trace entry title.
+  ///
+  /// In en, this message translates to:
+  /// **'Runtime trace'**
+  String get agentResultTraceTitle;
+
+  /// Agent detail trace entry description.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the AI call chain and tool activity.'**
+  String get agentResultTraceBody;
+
+  /// Button label that opens the AI transparency trace for an agent result.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get agentResultTraceAction;
+
   /// Agent detail section title for actions.
   ///
   /// In en, this message translates to:
