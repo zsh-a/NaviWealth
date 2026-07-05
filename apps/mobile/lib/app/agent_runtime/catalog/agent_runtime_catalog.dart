@@ -42,16 +42,19 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
 }) {
   final descriptors = domainToolDescriptors(packs);
   final promptBlocks = domainSystemPromptBlocks(packs);
+  final activeDomains = [for (final pack in packs) pack.scope.wire];
+  final activeDomainSet = activeDomains.toSet();
   return AgentRuntimeCatalog(
     generatedAt: generatedAt.toUtc(),
-    activeDomains: [for (final pack in packs) pack.scope.wire],
+    activeDomains: activeDomains,
     agents: [
       kSettingsLlmRuntimeCheckAgent,
       for (final registration in agentRegistrations)
-        AgentRuntimeAgentSpec.fromAgent(
-          registration.agent,
-          domain: registration.domain.wire,
-        ),
+        if (activeDomainSet.contains(registration.domain.wire))
+          AgentRuntimeAgentSpec.fromAgent(
+            registration.agent,
+            domain: registration.domain.wire,
+          ),
     ],
     tools: [
       for (final tool in domainDeviceTools(packs))

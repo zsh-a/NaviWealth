@@ -56,6 +56,7 @@ Agent 的产品体验应当是：
 - Agent settings page 已覆盖 active registry 为空时的 empty state 和 domain-management CTA，确保 inactive domain 的 agent 不会以不可运行 row 泄漏到用户控制面，同时给用户启用 domain 的路径。
 - Production DomainPack composition 已覆盖 active agent registry 与 `AgentPresentationSpec` 的一一对应关系，并锁住 notification-capable agent 元数据和非 `settingsOnly` placement，防止新增 agent 后缺失统一设置/展示元数据或领域页展示位置。
 - Production DomainPack composition 已覆盖所有 active production agent 必须在 agent outcome corpus 中有同域 ready outcome，防止新增 agent 进入用户界面但没有真实可见结果回归。
+- Agent runtime catalog 已覆盖 active-domain agent filtering，并以生产 DomainPack 校验 runtime 暴露的 agent / tool / proposal kind / prompt block 与 active composition 一致，防止 native/runtime 看到 stale agent 或漂移的注册表。
 - Agent background catch-up binding 已声明所属 domain，core runner 会在消费 due flag 后统一拒绝 inactive domain，避免 stale background flag 越过 domain opt-in。
 - Knowledge Routine Due 和 Execution Review 的 pending background providers 已覆盖 foreground catch-up 组合路径，验证 due flag 会被消费并以 `background_due` trigger 调用共享 AgentRunController；重复读取 catch-up provider 不会在 flag 已消费后再次运行 agent。
 - Knowledge Routine Due notification payload 已覆盖只 deep link 到 Knowledge Review 的 agent artifact route，拒绝 chat / external / non-review payload。
