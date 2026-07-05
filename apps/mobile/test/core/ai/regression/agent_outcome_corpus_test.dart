@@ -93,6 +93,39 @@ void main() {
       }
     });
 
+    test('all corpus agent ids point at executable fixture files', () {
+      const executableFixturePaths = <String, String>{
+        'weekly_wealth_review':
+            'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
+        'cashflow_anomaly_review':
+            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'fire_plan_drift_monitor':
+            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'options_income_risk_review':
+            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+        'recovery_alert':
+            'test/features/health/agents/recovery_alert_agent_test.dart',
+        'weekly_summary':
+            'test/features/health/agents/weekly_summary_agent_test.dart',
+        'knowledge_inbox_triage':
+            'test/features/knowledge/agents/inbox_triage_agent_test.dart',
+        'knowledge_contradiction':
+            'test/features/knowledge/agents/contradiction_agent_test.dart',
+        'knowledge_review':
+            'test/features/knowledge/agents/review_agent_test.dart',
+        'knowledge_routine_due':
+            'test/features/knowledge/agents/routine_due_agent_test.dart',
+        'execution_review':
+            'test/features/execution/agents/review_agent_test.dart',
+      };
+
+      for (final c in agentOutcomeRegressionCorpus) {
+        final path = executableFixturePaths[c.agentId];
+        expect(path, isNotNull, reason: c.id);
+        expect(File(path!).existsSync(), isTrue, reason: c.id);
+      }
+    });
+
     test('ready cases declare artifact shape, evidence, and top insights', () {
       for (final c in agentOutcomeRegressionCorpus.where(
         (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,

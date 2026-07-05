@@ -10,6 +10,7 @@ import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -205,6 +206,14 @@ void main() {
       expect(artifact.actions.single.objectId, result.artifactId);
       expect(artifact.actions.single.intent, kHealthExplainRecoveryAlertIntent);
       expect(artifact.actions.single.objectType, kAgentArtifactObjectType);
+      final outcomeFailures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'health.recovery_alert.ready',
+        ),
+        result: result,
+        artifact: artifact,
+      );
+      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
       expect(notifier.showCount, 1);
       expect(
         notifier.lastPayload,

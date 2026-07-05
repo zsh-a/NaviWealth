@@ -128,8 +128,8 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.alert,
         expectedSeverity: AgentArtifactSeverity.warning,
-        expectedTopInsightTitles: <String>{'Recovery pressure'},
-        expectedEvidenceTypes: <String>{'health_recovery'},
+        expectedTopInsightTitles: <String>{'HRV decline'},
+        expectedEvidenceTypes: <String>{'health_metric_trend'},
       ),
       AgentOutcomeRegressionCase(
         id: 'health.weekly_summary.no_finding',

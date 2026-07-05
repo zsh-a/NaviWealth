@@ -38,7 +38,7 @@ Agent 的产品体验应当是：
 
 - `agent.showEvidence` / `agent.createPlanFromResult` 的 follow-up UI 覆盖还不如 `agent.explainResult` 完整。
 - Agent artifact detail 的 trace / transparency entry 仍可加强成统一入口。
-- Regression corpus 已覆盖 FinanceOS 首批 agent，并通过 domain-neutral evaluator 接入真实 agent fixture；下一步是把 evaluator 扩大到 Health / Knowledge / Execution fixtures。
+- Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution 的真实 agent fixture；下一步是把 evaluator 扩大到 Knowledge fixtures。
 
 ## 体验模型
 

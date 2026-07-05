@@ -10,6 +10,7 @@ import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -348,17 +349,25 @@ void main() {
     addTearDown(db.close);
     final runStore = SqliteAgentRunStore(db: db);
     final startedAt = DateTime.utc(2026, 6, 29, 20);
+    final result = AgentRunResult.skipped(
+      agentId: kWeeklySummaryAgentId,
+      startedAt: startedAt,
+      finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+      reason: 'no health data this week',
+      traceId: 'trace-weekly-empty',
+    );
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'health.weekly_summary.no_finding',
+      ),
+      result: result,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
     await runStore.finishRun(
       ownerUserId: _owner,
       agent: const WeeklySummaryAgent(),
       runStartedAt: startedAt,
-      result: AgentRunResult.skipped(
-        agentId: kWeeklySummaryAgentId,
-        startedAt: startedAt,
-        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
-        reason: 'no health data this week',
-        traceId: 'trace-weekly-empty',
-      ),
+      result: result,
       trigger: AgentRunTrigger.schedule,
     );
     final container = ProviderContainer(
