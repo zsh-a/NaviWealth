@@ -5629,6 +5629,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn this result into proposed next steps.';
 
   @override
+  String get agentResultSnoozeTitle => 'Snooze';
+
+  @override
+  String get agentResultSnoozeBody => 'Hide this result until tomorrow.';
+
+  @override
+  String get agentResultSnoozeAction => 'Snooze';
+
+  @override
+  String get agentResultDismissTitle => 'Dismiss';
+
+  @override
+  String get agentResultDismissBody => 'Hide this result from active surfaces.';
+
+  @override
+  String get agentResultDismissAction => 'Dismiss';
+
+  @override
   String get agentPresentationWeeklyWealthReviewLabel => 'Weekly Wealth Review';
 
   @override

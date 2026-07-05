@@ -7,12 +7,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../auth/current_user.dart';
 import '../../../shell/settings_route_paths.dart';
 import '../../composition/ask_ai.dart';
 import '../../intent/ai_intent_invocation.dart';
 import '../agent_artifact.dart';
 import '../agent_intents.dart';
 import '../agent_run_store.dart';
+import '../providers.dart' as agent_providers;
 
 /// Domain-neutral presentation for user-visible agent output.
 ///
@@ -345,6 +347,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
             title: l10n.agentResultActionsSection,
             children: [
               ..._standardFollowUpActions(context, ref),
+              ..._localVisibilityActions(context, ref),
               for (final action in artifact.actions)
                 if (action.intent != null)
                   _ActionIntentTile(
@@ -367,7 +370,10 @@ class AgentArtifactDetailBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
             title: l10n.agentResultActionsSection,
-            children: _standardFollowUpActions(context, ref),
+            children: [
+              ..._standardFollowUpActions(context, ref),
+              ..._localVisibilityActions(context, ref),
+            ],
           ),
         ],
       ],
@@ -401,6 +407,59 @@ class AgentArtifactDetailBody extends ConsumerWidget {
         onPress: () => _createPlanFromArtifact(context, ref),
       ),
     ];
+  }
+
+  List<Widget> _localVisibilityActions(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    return [
+      _LocalActionTile(
+        icon: FLucideIcons.clock3,
+        title: l10n.agentResultSnoozeTitle,
+        body: l10n.agentResultSnoozeBody,
+        color: colors.primary,
+        actionLabel: l10n.agentResultSnoozeAction,
+        onPress: () => unawaited(_snoozeArtifact(context, ref)),
+      ),
+      _LocalActionTile(
+        icon: FLucideIcons.x,
+        title: l10n.agentResultDismissTitle,
+        body: l10n.agentResultDismissBody,
+        color: colors.mutedForeground,
+        actionLabel: l10n.agentResultDismissAction,
+        onPress: () => unawaited(_dismissArtifact(context, ref)),
+      ),
+    ];
+  }
+
+  Future<void> _snoozeArtifact(BuildContext context, WidgetRef ref) async {
+    final ownerUserId = await ref.read(currentUserIdProvider)();
+    final store = await ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await store.snooze(
+      ownerUserId: ownerUserId,
+      id: artifact.id,
+      until: DateTime.now().toUtc().add(const Duration(days: 1)),
+    );
+    if (context.mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _dismissArtifact(BuildContext context, WidgetRef ref) async {
+    final ownerUserId = await ref.read(currentUserIdProvider)();
+    final store = await ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await store.dismiss(
+      ownerUserId: ownerUserId,
+      id: artifact.id,
+      dismissedAt: DateTime.now().toUtc(),
+    );
+    if (context.mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _askAboutArtifact(BuildContext context, WidgetRef ref) {
@@ -675,6 +734,66 @@ class _ActionIntentTile extends StatelessWidget {
                 FLucideIcons.messageCircle,
                 size: AppIconSizes.xs,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LocalActionTile extends StatelessWidget {
+  const _LocalActionTile({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.color,
+    required this.actionLabel,
+    required this.onPress,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final Color color;
+  final String actionLabel;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: AppIconSizes.h18, color: color),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: context.captionLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(body, style: context.captionStyle),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            AppQuietButton(
+              label: actionLabel,
+              onPress: onPress,
+              prefix: Icon(icon, size: AppIconSizes.xs),
             ),
           ],
         ),

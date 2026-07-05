@@ -5375,6 +5375,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentResultCreatePlanBody => '把这份结果转成建议的下一步。';
 
   @override
+  String get agentResultSnoozeTitle => '稍后提醒';
+
+  @override
+  String get agentResultSnoozeBody => '把这份结果隐藏到明天。';
+
+  @override
+  String get agentResultSnoozeAction => '稍后';
+
+  @override
+  String get agentResultDismissTitle => '关闭';
+
+  @override
+  String get agentResultDismissBody => '从当前页面隐藏这份结果。';
+
+  @override
+  String get agentResultDismissAction => '关闭';
+
+  @override
   String get agentPresentationWeeklyWealthReviewLabel => '每周财富复盘';
 
   @override

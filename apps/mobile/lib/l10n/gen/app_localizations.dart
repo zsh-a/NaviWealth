@@ -9615,6 +9615,42 @@ abstract class AppLocalizations {
   /// **'Turn this result into proposed next steps.'**
   String get agentResultCreatePlanBody;
 
+  /// Agent detail action title for snoozing an agent result.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze'**
+  String get agentResultSnoozeTitle;
+
+  /// Agent detail action description for snoozing an agent result.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this result until tomorrow.'**
+  String get agentResultSnoozeBody;
+
+  /// Button label that snoozes an agent result.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze'**
+  String get agentResultSnoozeAction;
+
+  /// Agent detail action title for dismissing an agent result.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get agentResultDismissTitle;
+
+  /// Agent detail action description for dismissing an agent result.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this result from active surfaces.'**
+  String get agentResultDismissBody;
+
+  /// Button label that dismisses an agent result.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get agentResultDismissAction;
+
   /// Presentation label for the FinanceOS weekly wealth review agent.
   ///
   /// In en, this message translates to:
