@@ -4,6 +4,7 @@
 /// and so a web build can swap it out via conditional import.
 library;
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -17,8 +18,13 @@ class _LocalNotificationService implements NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  final StreamController<String> _payloads =
+      StreamController<String>.broadcast();
   bool _initialized = false;
   final Set<String> _createdAndroidChannelIds = <String>{};
+
+  @override
+  Stream<String> get payloads => _payloads.stream;
 
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
@@ -33,8 +39,16 @@ class _LocalNotificationService implements NotificationService {
         android: androidInit,
         iOS: darwinInit,
       ),
+      onDidReceiveNotificationResponse: (response) =>
+          _emitPayload(response.payload),
     );
     _initialized = true;
+  }
+
+  void _emitPayload(String? payload) {
+    final value = payload?.trim();
+    if (value == null || value.isEmpty) return;
+    _payloads.add(value);
   }
 
   Future<void> _ensureAndroidChannel(NotificationChannelSpec channel) async {
@@ -57,6 +71,15 @@ class _LocalNotificationService implements NotificationService {
 
   @override
   Future<bool> isAvailable() async => Platform.isIOS || Platform.isAndroid;
+
+  @override
+  Future<String?> initialPayload() async {
+    if (!await isAvailable()) return null;
+    await _ensureInitialized();
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    final payload = details?.notificationResponse?.payload?.trim();
+    return payload == null || payload.isEmpty ? null : payload;
+  }
 
   @override
   Future<bool> hasPermissions() async {

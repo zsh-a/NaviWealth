@@ -118,6 +118,8 @@ void main() {
     expect(await service.isAvailable(), isFalse);
     expect(await service.hasPermissions(), isFalse);
     expect(await service.requestPermissions(), isFalse);
+    expect(await service.initialPayload(), isNull);
+    await expectLater(service.payloads, emitsDone);
     await service.showNow(
       id: 1,
       title: 'Title',

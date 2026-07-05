@@ -111,6 +111,12 @@ class _FakeNotificationService implements NotificationService {
   final bool granted;
 
   @override
+  Stream<String> get payloads => const Stream<String>.empty();
+
+  @override
+  Future<String?> initialPayload() async => null;
+
+  @override
   Future<bool> isAvailable() async => available;
 
   @override

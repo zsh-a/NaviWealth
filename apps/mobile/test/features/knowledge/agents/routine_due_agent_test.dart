@@ -453,6 +453,12 @@ class _RecordingNotificationService implements NotificationService {
   String? lastPayload;
 
   @override
+  Stream<String> get payloads => const Stream<String>.empty();
+
+  @override
+  Future<String?> initialPayload() async => null;
+
+  @override
   Future<void> cancel(int id) async {}
 
   @override
