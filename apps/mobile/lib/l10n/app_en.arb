@@ -2934,6 +2934,29 @@
   "@agentSettingsNotifications": { "description": "Badge for agents that support notifications." },
   "agentSettingsNeverRun": "Never run",
   "@agentSettingsNeverRun": { "description": "Subtitle when an agent has no run history." },
+  "agentSettingsLastRunAt": "Last run {date}",
+  "@agentSettingsLastRunAt": {
+    "description": "Badge showing when an agent last ran.",
+    "placeholders": { "date": { "type": "String", "example": "7/5/2026 9:00 AM" } }
+  },
+  "agentSettingsAroundTime": "around {time}",
+  "@agentSettingsAroundTime": {
+    "description": "Schedule hint for agents with a preferred local run time.",
+    "placeholders": { "time": { "type": "String", "example": "07:00" } }
+  },
+  "agentSettingsEveryHours": "Every {hours} hour(s)",
+  "@agentSettingsEveryHours": {
+    "description": "Schedule cadence for agents that run every N hours.",
+    "placeholders": { "hours": { "type": "int", "example": "6" } }
+  },
+  "agentSettingsCadenceDaily": "Daily",
+  "@agentSettingsCadenceDaily": { "description": "Agent schedule cadence label for once per day." },
+  "agentSettingsCadenceWeekly": "Weekly",
+  "@agentSettingsCadenceWeekly": { "description": "Agent schedule cadence label for once per week." },
+  "agentSettingsCadenceMonthly": "Monthly",
+  "@agentSettingsCadenceMonthly": { "description": "Agent schedule cadence label for once per month." },
+  "agentSettingsCadenceYearly": "Yearly",
+  "@agentSettingsCadenceYearly": { "description": "Agent schedule cadence label for once per year." },
   "agentSettingsRunFinished": "{agentName} finished",
   "@agentSettingsRunFinished": {
     "description": "Toast fallback after an agent run finishes without a summary.",

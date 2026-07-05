@@ -61,6 +61,7 @@ void main() {
 
     expect(find.text('Presented Agent'), findsOneWidget);
     expect(find.text('Presented description.'), findsOneWidget);
+    expect(find.text('Daily · around 08:00'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Run now'), findsOneWidget);
 
@@ -161,6 +162,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('View result'), findsOneWidget);
+    expect(find.textContaining('Last run'), findsOneWidget);
 
     await tester.tap(find.text('View result'));
     await tester.pumpAndSettle();
@@ -185,7 +187,7 @@ class _FakeAgent implements Agent {
 
   @override
   AgentSchedule get schedule =>
-      const AgentSchedule(interval: Duration(days: 1));
+      const AgentSchedule(interval: Duration(days: 1), preferredHourLocal: 8);
 
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {

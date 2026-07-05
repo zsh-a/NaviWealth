@@ -5242,6 +5242,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsNeverRun => '尚未运行';
 
   @override
+  String agentSettingsLastRunAt(String date) {
+    return '上次运行 $date';
+  }
+
+  @override
+  String agentSettingsAroundTime(String time) {
+    return '约 $time';
+  }
+
+  @override
+  String agentSettingsEveryHours(int hours) {
+    return '每 $hours 小时';
+  }
+
+  @override
+  String get agentSettingsCadenceDaily => '每日';
+
+  @override
+  String get agentSettingsCadenceWeekly => '每周';
+
+  @override
+  String get agentSettingsCadenceMonthly => '每月';
+
+  @override
+  String get agentSettingsCadenceYearly => '每年';
+
+  @override
   String agentSettingsRunFinished(String agentName) {
     return '$agentName 已完成';
   }

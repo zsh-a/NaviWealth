@@ -12,9 +12,11 @@ import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_registry.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/providers.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -208,6 +210,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     final enabled = row.preference.enabled;
     final label = presentation?.label(l10n) ?? row.agent.name;
     final description = presentation?.description(l10n);
+    final formatters = context.formatters(ref);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
@@ -289,6 +292,19 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                 size: AppBadgeSize.compact,
                 tone: enabled ? AppBadgeTone.accent : AppBadgeTone.neutral,
               ),
+              AppBadge(
+                label: _scheduleLabel(l10n, row.agent.schedule),
+                size: AppBadgeSize.compact,
+                tone: AppBadgeTone.neutral,
+              ),
+              if (row.latestRun != null)
+                AppBadge(
+                  label: l10n.agentSettingsLastRunAt(
+                    formatters.dateTime(row.latestRun!.startedAt.toLocal()),
+                  ),
+                  size: AppBadgeSize.compact,
+                  tone: AppBadgeTone.neutral,
+                ),
               if (presentation?.notificationsSupported ?? false)
                 _AgentNotificationToggle(
                   agentId: row.agent.id,
@@ -319,6 +335,30 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
         ? status
         : l10n.agentSettingsStatusWithDetail(status, detail);
   }
+}
+
+String _scheduleLabel(AppLocalizations l10n, AgentSchedule schedule) {
+  final cadence = _intervalLabel(l10n, schedule.interval);
+  final hour = schedule.preferredHourLocal;
+  if (hour == null) return cadence;
+  final time = '${hour.toString().padLeft(2, '0')}:00';
+  return '$cadence · ${l10n.agentSettingsAroundTime(time)}';
+}
+
+String _intervalLabel(AppLocalizations l10n, Duration interval) {
+  if (interval.inDays > 0 && interval.inHours == interval.inDays * 24) {
+    final days = interval.inDays;
+    if (days == 365) return l10n.agentSettingsCadenceYearly;
+    if (days % 365 == 0) return l10n.recurringEveryYear(days ~/ 365);
+    if (days == 30) return l10n.agentSettingsCadenceMonthly;
+    if (days % 30 == 0) return l10n.recurringEveryMonth(days ~/ 30);
+    if (days == 7) return l10n.agentSettingsCadenceWeekly;
+    if (days % 7 == 0) return l10n.recurringEveryWeek(days ~/ 7);
+    if (days == 1) return l10n.agentSettingsCadenceDaily;
+    return l10n.recurringEveryDay(days);
+  }
+  final hours = interval.inHours <= 0 ? 1 : interval.inHours;
+  return l10n.agentSettingsEveryHours(hours);
 }
 
 class _AgentNotificationToggle extends StatelessWidget {

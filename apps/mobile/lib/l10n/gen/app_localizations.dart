@@ -9375,6 +9375,48 @@ abstract class AppLocalizations {
   /// **'Never run'**
   String get agentSettingsNeverRun;
 
+  /// Badge showing when an agent last ran.
+  ///
+  /// In en, this message translates to:
+  /// **'Last run {date}'**
+  String agentSettingsLastRunAt(String date);
+
+  /// Schedule hint for agents with a preferred local run time.
+  ///
+  /// In en, this message translates to:
+  /// **'around {time}'**
+  String agentSettingsAroundTime(String time);
+
+  /// Schedule cadence for agents that run every N hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {hours} hour(s)'**
+  String agentSettingsEveryHours(int hours);
+
+  /// Agent schedule cadence label for once per day.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get agentSettingsCadenceDaily;
+
+  /// Agent schedule cadence label for once per week.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get agentSettingsCadenceWeekly;
+
+  /// Agent schedule cadence label for once per month.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get agentSettingsCadenceMonthly;
+
+  /// Agent schedule cadence label for once per year.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get agentSettingsCadenceYearly;
+
   /// Toast fallback after an agent run finishes without a summary.
   ///
   /// In en, this message translates to:

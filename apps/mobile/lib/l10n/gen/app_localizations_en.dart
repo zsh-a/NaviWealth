@@ -5491,6 +5491,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSettingsNeverRun => 'Never run';
 
   @override
+  String agentSettingsLastRunAt(String date) {
+    return 'Last run $date';
+  }
+
+  @override
+  String agentSettingsAroundTime(String time) {
+    return 'around $time';
+  }
+
+  @override
+  String agentSettingsEveryHours(int hours) {
+    return 'Every $hours hour(s)';
+  }
+
+  @override
+  String get agentSettingsCadenceDaily => 'Daily';
+
+  @override
+  String get agentSettingsCadenceWeekly => 'Weekly';
+
+  @override
+  String get agentSettingsCadenceMonthly => 'Monthly';
+
+  @override
+  String get agentSettingsCadenceYearly => 'Yearly';
+
+  @override
   String agentSettingsRunFinished(String agentName) {
     return '$agentName finished';
   }
