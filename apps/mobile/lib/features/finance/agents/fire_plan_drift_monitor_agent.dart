@@ -412,5 +412,5 @@ String _rate(double value) {
 
 String _months(double value) {
   if (!value.isFinite) return 'n/a';
-  return value.toStringAsFixed(1);
+  return Fmt.number(value, decimalDigits: 1);
 }
