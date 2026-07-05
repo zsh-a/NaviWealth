@@ -71,17 +71,11 @@ class AgentBackgroundCatchUpRunner {
       agentId: binding.agentId,
     );
     if (!enabled) return null;
-    final notificationsEnabled = await _preferences.areNotificationsEnabled(
-      ownerUserId: ownerUserId,
-      agentId: binding.agentId,
-    );
-    if (!notificationsEnabled) return null;
     if (beforeRun != null) await beforeRun();
-    final results = await _controller.tick(
-      onlyAgentIds: <String>[binding.agentId],
+    return _controller.runOnceById(
+      binding.agentId,
       trigger: AgentRunTrigger.backgroundDue,
     );
-    return results.isEmpty ? null : results.single;
   }
 }
 

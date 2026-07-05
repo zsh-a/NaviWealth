@@ -25,6 +25,10 @@ const _task = BackgroundTaskSpec(
 final _refProvider = Provider<Ref>((ref) => ref);
 
 class _StubAgent implements Agent {
+  _StubAgent({
+    this.schedule = const AgentSchedule(interval: Duration(hours: 1)),
+  });
+
   @override
   String get id => 'agent-1';
 
@@ -32,8 +36,7 @@ class _StubAgent implements Agent {
   String get name => 'Agent One';
 
   @override
-  AgentSchedule get schedule =>
-      const AgentSchedule(interval: Duration(hours: 1));
+  final AgentSchedule schedule;
 
   var runCount = 0;
 
@@ -183,61 +186,136 @@ void main() {
     expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
   });
 
-  test(
-    'runIfDue consumes flag but skips notification-disabled agents',
-    () async {
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        _task.dueAtPreferenceKey: DateTime.utc(
-          2026,
-          7,
-          5,
-          8,
-        ).millisecondsSinceEpoch,
-      });
-      final prefs = await SharedPreferences.getInstance();
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final runtime = MemoryRuntime(
-        embedder: StubEmbedder(),
-        memoryStore: SqliteMemoryStore(db: db),
-        eventStore: SqliteEventStore(db: db),
-      );
-      final preferences = InMemoryAgentPreferenceStore();
-      await preferences.setNotificationsEnabled(
+  test('runIfDue still runs notification-disabled agents', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      _task.dueAtPreferenceKey: DateTime.utc(
+        2026,
+        7,
+        5,
+        8,
+      ).millisecondsSinceEpoch,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final runtime = MemoryRuntime(
+      embedder: StubEmbedder(),
+      memoryStore: SqliteMemoryStore(db: db),
+      eventStore: SqliteEventStore(db: db),
+    );
+    final preferences = InMemoryAgentPreferenceStore();
+    await preferences.setNotificationsEnabled(
+      ownerUserId: 'u',
+      agentId: 'agent-1',
+      enabled: false,
+      updatedAt: DateTime.utc(2026, 7, 5, 8),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final agent = _StubAgent();
+    final controller = AgentRunController(
+      runner: AgentRunner(
+        runtime: runtime,
         ownerUserId: 'u',
+        preferenceStore: preferences,
+      ),
+      agents: [agent],
+      ref: container.read(_refProvider),
+    );
+    final catchUp = AgentBackgroundCatchUpRunner(
+      dueFlags: AgentDueFlagStore(prefs: prefs),
+      preferences: preferences,
+      controller: controller,
+      currentUserId: () async => 'u',
+    );
+
+    final result = await catchUp.runIfDue(
+      binding: const AgentBackgroundTaskBinding(
         agentId: 'agent-1',
-        enabled: false,
-        updatedAt: DateTime.utc(2026, 7, 5, 8),
-      );
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final agent = _StubAgent();
-      final controller = AgentRunController(
-        runner: AgentRunner(
-          runtime: runtime,
-          ownerUserId: 'u',
-          preferenceStore: preferences,
-        ),
-        agents: [agent],
-        ref: container.read(_refProvider),
-      );
-      final catchUp = AgentBackgroundCatchUpRunner(
-        dueFlags: AgentDueFlagStore(prefs: prefs),
-        preferences: preferences,
-        controller: controller,
-        currentUserId: () async => 'u',
-      );
+        task: _task,
+      ),
+    );
 
-      final result = await catchUp.runIfDue(
-        binding: const AgentBackgroundTaskBinding(
-          agentId: 'agent-1',
-          task: _task,
-        ),
-      );
+    expect(result?.status, AgentRunStatus.completed);
+    expect(agent.runCount, 1);
+    expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
+  });
 
-      expect(result, isNull);
-      expect(agent.runCount, 0);
-      expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
-    },
-  );
+  test('runIfDue bypasses normal schedule gate for due flags', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      _task.dueAtPreferenceKey: DateTime.utc(
+        2026,
+        7,
+        5,
+        8,
+      ).millisecondsSinceEpoch,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final runtime = MemoryRuntime(
+      embedder: StubEmbedder(),
+      memoryStore: SqliteMemoryStore(db: db),
+      eventStore: SqliteEventStore(db: db),
+    );
+    final runStore = SqliteAgentRunStore(db: db);
+    final preferences = InMemoryAgentPreferenceStore();
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final agent = _StubAgent(
+      schedule: const AgentSchedule(interval: Duration(days: 365)),
+    );
+    final runner = AgentRunner(
+      runtime: runtime,
+      ownerUserId: 'u',
+      runStore: runStore,
+      preferenceStore: preferences,
+    );
+    final previous = DateTime.now().toUtc();
+    await runStore.markRunning(
+      ownerUserId: 'u',
+      agent: agent,
+      startedAt: previous,
+      trigger: AgentRunTrigger.schedule,
+    );
+    await runStore.finishRun(
+      ownerUserId: 'u',
+      agent: agent,
+      runStartedAt: previous,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: previous,
+        finishedAt: previous.add(const Duration(milliseconds: 1)),
+        summary: 'previous',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    final controller = AgentRunController(
+      runner: runner,
+      agents: [agent],
+      ref: container.read(_refProvider),
+    );
+    final catchUp = AgentBackgroundCatchUpRunner(
+      dueFlags: AgentDueFlagStore(prefs: prefs),
+      preferences: preferences,
+      controller: controller,
+      currentUserId: () async => 'u',
+    );
+
+    final result = await catchUp.runIfDue(
+      binding: const AgentBackgroundTaskBinding(
+        agentId: 'agent-1',
+        task: _task,
+      ),
+    );
+
+    expect(result?.status, AgentRunStatus.completed);
+    expect(agent.runCount, 1);
+    final latest = await runStore.latestForAgent(
+      ownerUserId: 'u',
+      agentId: 'agent-1',
+    );
+    expect(latest?.trigger, AgentRunTrigger.backgroundDue);
+  });
 }
