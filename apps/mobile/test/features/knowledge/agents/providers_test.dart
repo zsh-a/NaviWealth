@@ -25,56 +25,76 @@ import '../../../core/persistence/test_database.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('routine due cron follows agent notification preference', () async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final prefs = await SharedPreferences.getInstance();
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final scheduler = _RecordingScheduler();
-    final c = ProviderContainer(
-      overrides: [
-        appDatabaseProvider.overrideWith((_) async => db),
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        backgroundSchedulerProvider.overrideWithValue(scheduler),
-        currentUserIdProvider.overrideWith(
-          (_) =>
-              () async => 'user-1',
-        ),
-      ],
-    );
-    addTearDown(c.dispose);
-    await c.read(auth.domainOptInsProvider.future);
-    await c
-        .read(auth.domainOptInsProvider.notifier)
-        .setEnabled(DomainScope.knowledge, true);
+  test(
+    'routine due cron follows agent enabled and notification preferences',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final scheduler = _RecordingScheduler();
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          backgroundSchedulerProvider.overrideWithValue(scheduler),
+          currentUserIdProvider.overrideWith(
+            (_) =>
+                () async => 'user-1',
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+      await c.read(auth.domainOptInsProvider.future);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.knowledge, true);
 
-    final sub = c.listen<void>(
-      knowledgeRoutineDueCronProvider,
-      (_, _) {},
-      fireImmediately: true,
-    );
-    addTearDown(sub.close);
-    await pumpEventQueue(times: 4);
+      final sub = c.listen<void>(
+        knowledgeRoutineDueCronProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+      await pumpEventQueue(times: 4);
 
-    expect(scheduler.calls.last, 'register:$kKnowledgeRoutineDueTaskName');
+      expect(scheduler.calls.last, 'register:$kKnowledgeRoutineDueTaskName');
 
-    final preferenceStore = await c.read(
-      agent_providers.agentPreferenceStoreProvider.future,
-    );
-    await preferenceStore.setNotificationsEnabled(
-      ownerUserId: 'user-1',
-      agentId: kKnowledgeRoutineAgentId,
-      enabled: false,
-      updatedAt: DateTime.utc(2026, 7, 5, 9),
-    );
-    final revision = c.read(
-      agent_providers.agentPreferenceRevisionProvider.notifier,
-    );
-    revision.state = revision.state + 1;
-    await pumpEventQueue(times: 4);
+      final preferenceStore = await c.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      await preferenceStore.setNotificationsEnabled(
+        ownerUserId: 'user-1',
+        agentId: kKnowledgeRoutineAgentId,
+        enabled: false,
+        updatedAt: DateTime.utc(2026, 7, 5, 9),
+      );
+      final revision = c.read(
+        agent_providers.agentPreferenceRevisionProvider.notifier,
+      );
+      revision.state = revision.state + 1;
+      await pumpEventQueue(times: 4);
 
-    expect(scheduler.calls.last, 'cancel:$kKnowledgeRoutineDueTaskName');
-  });
+      expect(scheduler.calls.last, 'cancel:$kKnowledgeRoutineDueTaskName');
+
+      await preferenceStore.setNotificationsEnabled(
+        ownerUserId: 'user-1',
+        agentId: kKnowledgeRoutineAgentId,
+        enabled: true,
+        updatedAt: DateTime.utc(2026, 7, 5, 10),
+      );
+      await preferenceStore.setEnabled(
+        ownerUserId: 'user-1',
+        agentId: kKnowledgeRoutineAgentId,
+        enabled: false,
+        updatedAt: DateTime.utc(2026, 7, 5, 10),
+      );
+      revision.state = revision.state + 1;
+      await pumpEventQueue(times: 4);
+
+      expect(scheduler.calls.last, 'cancel:$kKnowledgeRoutineDueTaskName');
+    },
+  );
 
   test(
     'pending routine due run consumes flag through shared catch-up',

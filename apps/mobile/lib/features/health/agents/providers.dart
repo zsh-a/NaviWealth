@@ -61,12 +61,16 @@ final morningBriefingCronProvider = Provider<void>((ref) {
       final preferenceStore = await ref.read(
         agent_providers.agentPreferenceStoreProvider.future,
       );
+      final agentEnabled = await preferenceStore.isEnabled(
+        ownerUserId: ownerUserId,
+        agentId: kMorningBriefingAgentId,
+      );
       final agentNotificationsEnabled = await preferenceStore
           .areNotificationsEnabled(
             ownerUserId: ownerUserId,
             agentId: kMorningBriefingAgentId,
           );
-      if (agentNotificationsEnabled) {
+      if (agentEnabled && agentNotificationsEnabled) {
         await scheduler.registerTask(kMorningBriefingBackgroundTask);
       } else {
         await scheduler.cancelTask(kMorningBriefingBackgroundTask);

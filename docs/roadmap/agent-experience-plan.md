@@ -52,6 +52,7 @@ Agent 的产品体验应当是：
 - Agent settings page 已覆盖 disabled agent 的 Run now 手动触发和 notification preference toggle 都不可达，确保用户关闭 agent 后不会从设置页绕过偏好继续运行或误开通知。
 - AgentRunner 已在 `runOnce` 底层检查 agent enabled preference；disabled agent 即使经由 domain retry / manual run 入口调用 controller，也不会执行、写 run history 或记录 agent event。
 - Health notification-capable agents 已在运行时读取 per-agent notification preference；Morning Briefing 和 Recovery Alert 关闭通知后仍产出 artifact / memory，但不会发本地通知。
+- Cross-domain agent background registration 已同时读取 agent enabled preference 与 notification preference；用户关闭 Morning Briefing、Knowledge Routine Due 或 Execution Review 后，对应 native due task 会取消而不是只在 catch-up 时被动跳过。
 - Agent settings page 已覆盖 active registry 为空时的 empty state 和 domain-management CTA，确保 inactive domain 的 agent 不会以不可运行 row 泄漏到用户控制面，同时给用户启用 domain 的路径。
 - Production DomainPack composition 已覆盖 active agent registry 与 `AgentPresentationSpec` 的一一对应关系，并锁住 notification-capable agent 元数据和非 `settingsOnly` placement，防止新增 agent 后缺失统一设置/展示元数据或领域页展示位置。
 - Agent background catch-up binding 已声明所属 domain，core runner 会在消费 due flag 后统一拒绝 inactive domain，避免 stale background flag 越过 domain opt-in。

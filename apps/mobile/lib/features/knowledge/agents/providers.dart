@@ -85,12 +85,16 @@ final knowledgeRoutineDueCronProvider = Provider<void>((ref) {
       final preferenceStore = await ref.read(
         agent_providers.agentPreferenceStoreProvider.future,
       );
+      final agentEnabled = await preferenceStore.isEnabled(
+        ownerUserId: ownerUserId,
+        agentId: kKnowledgeRoutineAgentId,
+      );
       final agentNotificationsEnabled = await preferenceStore
           .areNotificationsEnabled(
             ownerUserId: ownerUserId,
             agentId: kKnowledgeRoutineAgentId,
           );
-      if (agentNotificationsEnabled) {
+      if (agentEnabled && agentNotificationsEnabled) {
         await scheduler.registerTask(kKnowledgeRoutineDueBackgroundTask);
       } else {
         await scheduler.cancelTask(kKnowledgeRoutineDueBackgroundTask);
