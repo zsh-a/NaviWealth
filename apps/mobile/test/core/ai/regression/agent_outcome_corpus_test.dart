@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 
 void main() {
@@ -149,6 +150,28 @@ void main() {
         expect(c.expectedSeverity, isNull, reason: c.id);
         expect(c.expectedTopInsightTitles, isEmpty, reason: c.id);
         expect(c.expectedEvidenceTypes, isEmpty, reason: c.id);
+        expect(c.expectedActionIntents, isEmpty, reason: c.id);
+      }
+    });
+
+    test('FinanceOS agent actions stay follow-up only', () {
+      const financeFollowUpIntents = <String>{
+        kAgentExplainResultIntent,
+        kFinanceReviewWealthIntent,
+      };
+
+      for (final c in agentOutcomeRegressionCorpus.where(
+        (c) =>
+            c.domain == 'finance' &&
+            c.expectedStatus == AgentOutcomeRegressionStatus.ready,
+      )) {
+        expect(c.expectedActionIntents, isNotEmpty, reason: c.id);
+        expect(
+          financeFollowUpIntents.containsAll(c.expectedActionIntents),
+          isTrue,
+          reason: c.id,
+        );
+        expect(c.expectedProposalKinds, isEmpty, reason: c.id);
       }
     });
 

@@ -8,6 +8,7 @@
 library;
 
 import '../agents/agent_artifact.dart';
+import '../agents/agent_intents.dart';
 
 enum AgentOutcomeRegressionStatus { ready, noFinding, failed }
 
@@ -22,6 +23,7 @@ class AgentOutcomeRegressionCase {
     this.expectedSeverity,
     this.expectedTopInsightTitles = const <String>{},
     this.expectedEvidenceTypes = const <String>{},
+    this.expectedActionIntents = const <String>{},
     this.expectedProposalKinds = const <String>{},
     this.tags = const <String>{},
   });
@@ -45,6 +47,7 @@ class AgentOutcomeRegressionCase {
   final AgentArtifactSeverity? expectedSeverity;
   final Set<String> expectedTopInsightTitles;
   final Set<String> expectedEvidenceTypes;
+  final Set<String> expectedActionIntents;
 
   /// Proposal kinds expected to be created or referenced by the outcome.
   /// Empty means the agent should not emit a proposal in this fixture.
@@ -73,6 +76,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
     expectedEvidenceTypes: <String>{'finance_holding'},
+    expectedActionIntents: <String>{kFinanceReviewWealthIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.weekly_wealth_review.no_llm_profile_fallback',
@@ -84,6 +88,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
     expectedEvidenceTypes: <String>{'finance_holding'},
+    expectedActionIntents: <String>{kFinanceReviewWealthIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
@@ -99,6 +104,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Detector source',
     },
     expectedEvidenceTypes: <String>{'anomaly_flag'},
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.cashflow_anomaly_review.no_llm_profile_fallback',
@@ -113,6 +119,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Detector source',
     },
     expectedEvidenceTypes: <String>{'anomaly_flag'},
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
@@ -128,6 +135,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Plan snapshot',
     },
     expectedEvidenceTypes: <String>{'fire_review', 'fire_finding'},
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.fire_plan_drift_monitor.no_llm_profile_fallback',
@@ -142,6 +150,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Plan snapshot',
     },
     expectedEvidenceTypes: <String>{'fire_review', 'fire_finding'},
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
@@ -161,6 +170,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'options_income_scan',
       'options_opportunity',
     },
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.options_income_risk_review.no_llm_profile_fallback',
@@ -179,6 +189,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'options_income_scan',
       'options_opportunity',
     },
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(

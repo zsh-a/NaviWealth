@@ -112,6 +112,21 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
     );
   }
 
+  final actionIntents = {
+    for (final action in artifact.actions)
+      if (action.intent != null) action.intent!,
+  };
+  final missingActionIntents = regressionCase.expectedActionIntents.difference(
+    actionIntents,
+  );
+  if (missingActionIntents.isNotEmpty) {
+    add(
+      'artifact.actions.intent',
+      regressionCase.expectedActionIntents,
+      actionIntents,
+    );
+  }
+
   final missingProposals = regressionCase.expectedProposalKinds.difference(
     proposalKinds,
   );

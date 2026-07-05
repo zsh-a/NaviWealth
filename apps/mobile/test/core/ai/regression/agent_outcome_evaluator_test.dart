@@ -39,6 +39,13 @@ void main() {
           evidence: const <AgentEvidenceRef>[
             AgentEvidenceRef(type: 'anomaly_flag', id: 'flag-1'),
           ],
+          actions: const <AgentAction>[
+            AgentAction(
+              kind: 'review',
+              label: 'Ask',
+              intent: 'agent.explainResult',
+            ),
+          ],
           createdAt: DateTime.utc(2026, 7, 5),
         ),
       );
@@ -78,6 +85,7 @@ void main() {
           'artifact.severity',
           'artifact.insights',
           'artifact.evidence',
+          'artifact.actions.intent',
         ]),
       );
     });
