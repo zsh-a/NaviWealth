@@ -70,7 +70,7 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
         snapshotId: 'finance.weekly_wealth_review.baseline_portfolio',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
-        expectedSeverity: AgentArtifactSeverity.attention,
+        expectedSeverity: AgentArtifactSeverity.warning,
         expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
         expectedEvidenceTypes: <String>{'finance_holding'},
       ),
