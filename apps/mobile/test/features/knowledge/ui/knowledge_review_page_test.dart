@@ -1,10 +1,28 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/design_system/theme/app_theme.dart';
+import 'package:naviwealth/features/knowledge/agents/providers.dart'
+    as knowledge_agent_providers;
+import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
+import 'package:naviwealth/features/knowledge/data/inbox_triage_repository.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
+import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_review_page.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   KnowledgeRoutine routine({
     required DateTime nextDueAt,
     DateTime? lastDoneAt,
@@ -83,4 +101,131 @@ void main() {
       );
     });
   });
+
+  testWidgets('review page renders latest agent artifact cards first', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeReviewPage(),
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider
+              .overrideWith((ref) async => <AgentArtifact>[_artifact()]),
+          knowledge_agent_providers.latestKnowledgeReviewRunProvider
+              .overrideWith((ref) async => null),
+          knowledgeRepositoryProvider.overrideWith(
+            (ref) async => _FakeKnowledgeRepository(),
+          ),
+          inboxTriageRepositoryProvider.overrideWith(
+            (ref) async => _FakeInboxTriageRepository(),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Knowledge Review'), findsOneWidget);
+    expect(find.text('Review due decisions and assumptions.'), findsOneWidget);
+    expect(find.text('Decisions due'), findsOneWidget);
+    expect(find.text('Review'), findsWidgets);
+  });
+}
+
+Widget _wrap(Widget child, {required List<Override> overrides}) {
+  return ProviderScope(
+    overrides: overrides,
+    child: MaterialApp(
+      theme: AppTheme.light(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en', 'US'),
+      home: FTheme(data: FThemes.slate.light.desktop, child: child),
+    ),
+  );
+}
+
+AgentArtifact _artifact() {
+  return AgentArtifact(
+    id: 'knowledge-review-1',
+    ownerUserId: 'user-1',
+    agentId: kKnowledgeReviewAgentId,
+    domain: 'knowledge',
+    kind: AgentArtifactKind.review,
+    severity: AgentArtifactSeverity.attention,
+    title: 'Knowledge Review',
+    summary: 'Review due decisions and assumptions.',
+    insights: const <AgentInsight>[
+      AgentInsight(title: 'Decisions due', body: 'One decision is due.'),
+    ],
+    evidence: const <AgentEvidenceRef>[
+      AgentEvidenceRef(type: 'knowledge_decision', id: 'decision-1'),
+    ],
+    createdAt: DateTime.utc(2026, 7, 5, 9),
+  );
+}
+
+class _FakeKnowledgeRepository implements KnowledgeRepository {
+  @override
+  Stream<List<KnowledgeRoutine>> watchRoutines({required String ownerUserId}) =>
+      Stream<List<KnowledgeRoutine>>.value(const <KnowledgeRoutine>[]);
+
+  @override
+  Stream<List<KnowledgeDecision>> watchDecisions({
+    required String ownerUserId,
+    int limit = 200,
+  }) => Stream<List<KnowledgeDecision>>.value(const <KnowledgeDecision>[]);
+
+  @override
+  Stream<List<KnowledgeAssumption>> watchAssumptions({
+    required String ownerUserId,
+  }) => Stream<List<KnowledgeAssumption>>.value(const <KnowledgeAssumption>[]);
+
+  @override
+  Future<List<KnowledgeRoutine>> listDueRoutines({
+    required String ownerUserId,
+    required DateTime asOf,
+    DateTime? excludeDoneSince,
+    int limit = 50,
+  }) async => const <KnowledgeRoutine>[];
+
+  @override
+  Future<List<KnowledgeDecision>> listDueReviews({
+    required String ownerUserId,
+    required DateTime asOf,
+    int limit = 100,
+  }) async => const <KnowledgeDecision>[];
+
+  @override
+  Future<List<KnowledgeAssumption>> listOpenAssumptions({
+    required String ownerUserId,
+    double? confidenceMax,
+  }) async => const <KnowledgeAssumption>[];
+
+  @override
+  Future<KnowledgeNote?> findNote({
+    required String ownerUserId,
+    required String id,
+  }) async => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
+}
+
+class _FakeInboxTriageRepository implements InboxTriageRepository {
+  @override
+  Future<List<InboxTriageRecord>> listPending({
+    required String ownerUserId,
+    int limit = 20,
+  }) async => const <InboxTriageRecord>[];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }
