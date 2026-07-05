@@ -179,6 +179,55 @@ void main() {
     expect(artifact.actions.single.kind, 'review');
   });
 
+  test('persists review trace id onto result, artifact, and memory', () async {
+    final result = await _withRef(
+      container,
+      (ref) => ExecutionReviewAgent(
+        reviewReader: _FallbackReader(
+          ExecutionReviewSnapshot(
+            openActions: [
+              ExecutionReviewAction(
+                id: 'action-trace',
+                title: 'Trace execution review',
+                status: ExecutionActionStatus.doing,
+                priority: ExecutionPriority.high,
+                dueAt: DateTime.utc(2026, 6, 5),
+              ),
+            ],
+            activeProjects: const [ExecutionReviewRef(id: 'project-trace')],
+            activeCommitments: const [
+              ExecutionReviewRef(id: 'commitment-trace'),
+            ],
+            recentProgress: const [],
+            activeProjectCount: 1,
+            activeCommitmentCount: 1,
+            traceId: 'trace-execution-1',
+          ),
+        ),
+      ).run(AgentContext(ref: ref, now: DateTime.utc(2026, 6, 5, 17))),
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.traceId, 'trace-execution-1');
+
+    final artifact = await SqliteAgentArtifactStore(
+      db: db,
+    ).read('$kExecutionReviewAgentId:2026-06-05');
+    expect(artifact?.traceId, 'trace-execution-1');
+
+    final runtime = await container.read(memoryRuntimeProvider.future);
+    final hits = await runtime.recall(
+      ownerUserId: _userId,
+      queryText: 'trace execution review',
+      kinds: const {MemoryKind.episodic},
+      source: kExecutionReviewMemorySource,
+      topK: 1,
+    );
+    expect(hits.single.record.payload['trace_id'], 'trace-execution-1');
+    final outcome = hits.single.record.payload['outcome'] as Map;
+    expect(outcome['trace_id'], 'trace-execution-1');
+  });
+
   test('skips when there is nothing to review', () async {
     final result = await _withRef(
       container,
@@ -246,13 +295,12 @@ void main() {
             ],
           },
         },
+        traceId: 'trace-parser-1',
       );
 
       expect(snapshot, isNotNull);
-      expect(
-        snapshot!.openActions.single.status,
-        ExecutionActionStatus.blocked,
-      );
+      expect(snapshot!.traceId, 'trace-parser-1');
+      expect(snapshot.openActions.single.status, ExecutionActionStatus.blocked);
       expect(snapshot.openActions.single.priority, ExecutionPriority.high);
       expect(snapshot.activeProjectCount, 1);
       expect(snapshot.activeProjects.single.id, 'project_1');
@@ -289,6 +337,7 @@ void main() {
         final snapshot = await reader.read(_context());
 
         expect(snapshot.openActions.single.id, 'action_1');
+        expect(snapshot.traceId, 'agent-runtime:execution_review:run_1');
         expect(snapshot.activeProjectCount, 1);
         expect(dispatcher.calls.map((c) => c.name), <String>[
           'list_open_actions',

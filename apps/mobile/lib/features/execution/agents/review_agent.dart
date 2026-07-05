@@ -117,6 +117,7 @@ class ExecutionReviewAgent implements Agent {
           'active_project_count': snapshot.activeProjectCount,
           'active_commitment_count': snapshot.activeCommitmentCount,
           'weekly_progress_count': weeklyProgress.length,
+          if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
         },
         'sample_action_ids': todayActions
             .take(5)
@@ -131,6 +132,7 @@ class ExecutionReviewAgent implements Agent {
             .map((commitment) => commitment.id)
             .toList(growable: false),
         'artifact_id': artifactId,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       entities: <String>{
         'execution',
@@ -169,6 +171,7 @@ class ExecutionReviewAgent implements Agent {
         projects: projects,
         commitments: commitments,
         weeklyProgress: weeklyProgress,
+        traceId: snapshot.traceId,
       ),
     );
 
@@ -181,6 +184,7 @@ class ExecutionReviewAgent implements Agent {
       payload: memory.payload,
       memoryId: memoryId,
       artifactId: artifactId,
+      traceId: snapshot.traceId,
     );
   }
 
@@ -197,6 +201,7 @@ class ExecutionReviewAgent implements Agent {
     required List<ExecutionReviewRef> projects,
     required List<ExecutionReviewRef> commitments,
     required List<ExecutionReviewProgress> weeklyProgress,
+    required String? traceId,
   }) {
     return AgentArtifact(
       id: id,
@@ -287,6 +292,7 @@ class ExecutionReviewAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
@@ -390,8 +396,10 @@ class FrbExecutionReviewReader implements ExecutionReviewReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: (stepRun) =>
-          executionReviewSnapshotFromTerminalStep(stepRun.terminalStep),
+      decode: (stepRun) => executionReviewSnapshotFromTerminalStep(
+        stepRun.terminalStep,
+        traceId: stepRun.traceId,
+      ),
     );
   }
 }
@@ -404,6 +412,7 @@ class ExecutionReviewSnapshot {
     required this.recentProgress,
     required this.activeProjectCount,
     required this.activeCommitmentCount,
+    this.traceId,
   });
 
   final List<ExecutionReviewAction> openActions;
@@ -412,6 +421,7 @@ class ExecutionReviewSnapshot {
   final List<ExecutionReviewProgress> recentProgress;
   final int activeProjectCount;
   final int activeCommitmentCount;
+  final String? traceId;
 }
 
 class ExecutionReviewAction {
@@ -466,8 +476,9 @@ class ExecutionReviewProgress {
 }
 
 ExecutionReviewSnapshot? executionReviewSnapshotFromTerminalStep(
-  Map<String, Object?> step,
-) {
+  Map<String, Object?> step, {
+  String? traceId,
+}) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final actions = executionReviewActionsFromToolResult(
     byTool['list_open_actions'],
@@ -493,6 +504,7 @@ ExecutionReviewSnapshot? executionReviewSnapshotFromTerminalStep(
     recentProgress: progress,
     activeProjectCount: projectCount,
     activeCommitmentCount: commitmentCount,
+    traceId: traceId,
   );
 }
 
