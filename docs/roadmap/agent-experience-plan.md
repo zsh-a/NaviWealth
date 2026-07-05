@@ -39,6 +39,7 @@ Agent 的产品体验应当是：
 - `agent.explainResult` / `agent.showEvidence` / `agent.createPlanFromResult` 都已通过 `AgentArtifactDetailBody` 走统一 `askAi()` follow-up 入口，并有 widget test 覆盖 intent、object、context 和 proposal capability。
 - `AgentRunStatusCard` 已覆盖 running / noFinding / ready / failed 四类统一状态，`AgentResultCard` 已覆盖 summary、preview insights、review open action。
 - `AgentRunStore` 已有 focused SQLite store 测试覆盖 running row、completed/skipped/failed lifecycle 映射，以及 failed 不推进 last non-failed run。
+- Intent policy 已覆盖 active-domain catalog、off-catalog debug assert、以及 asserts-off fallback prompt，确保 agent follow-up 不因未注册 intent 破坏生产兜底。
 - Agent artifact detail 已提供 local transparency trace entry，点击后进入 `SettingsRoutes.aiTransparencyDetail(traceId)`；组件测试覆盖 route handoff。
 - Agent result read tools 已按当前 domain opt-in 过滤 artifact，inactive domain 的 artifact 不会被 AI follow-up 工具读取或解释。
 - Agent run / artifact / preference 表保持 local-only；sync 和 backup registry 都有负向 contract 防止 agent lifecycle 表进入云同步或备份面。

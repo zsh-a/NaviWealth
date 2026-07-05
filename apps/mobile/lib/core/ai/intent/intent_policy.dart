@@ -227,14 +227,17 @@ String renderPromptFor(
   IntentCatalog catalog = IntentCatalog.empty,
   String? fallbackObjectLabel,
   String? fallbackPromptTemplate,
+  bool debugAssertOnOffCatalog = true,
 }) {
   final desc = lookupIntent(invocation.intent, catalog: catalog);
   if (desc == null) {
-    assert(
-      false,
-      'AiIntentInvocation uses unregistered intent "${invocation.intent}". '
-      'Add it to the owning DomainPack intent catalog or use suggestedPrompt.',
-    );
+    if (debugAssertOnOffCatalog) {
+      assert(
+        false,
+        'AiIntentInvocation uses unregistered intent "${invocation.intent}". '
+        'Add it to the owning DomainPack intent catalog or use suggestedPrompt.',
+      );
+    }
     final label = objectLabel ?? fallbackObjectLabel ?? 'current object';
     return invocation.suggestedPrompt ??
         (fallbackPromptTemplate ?? 'Analyze {{object_label}}.').replaceAll(
