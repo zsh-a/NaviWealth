@@ -304,10 +304,10 @@ class FrbInboxTriageSourceReader implements InboxTriageSourceReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: (terminalStep) async {
+      decode: (stepRun) async {
         final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
         return inboxTriageSourceSnapshotFromTerminalStep(
-          terminalStep,
+          stepRun.terminalStep,
           ownerUserId: ownerUserId,
         );
       },

@@ -390,7 +390,8 @@ class FrbExecutionReviewReader implements ExecutionReviewReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: executionReviewSnapshotFromTerminalStep,
+      decode: (stepRun) =>
+          executionReviewSnapshotFromTerminalStep(stepRun.terminalStep),
     );
   }
 }

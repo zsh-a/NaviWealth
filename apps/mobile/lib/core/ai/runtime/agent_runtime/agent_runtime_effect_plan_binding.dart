@@ -144,14 +144,15 @@ class AgentRuntimeEffectPlanBinding {
       agentId: agentId,
       maxEffectSteps: maxEffectSteps,
     );
-    await recordStepRun(stepRun);
-    return stepRun;
+    final traceId = await recordStepRun(stepRun);
+    return stepRun.withTraceId(traceId);
   }
 
   Future<T> readFromEffectPlan<T>({
     required List<AgentRuntimeEffect> effectPlan,
     required Future<T> Function() fallback,
-    required FutureOr<T?> Function(Map<String, Object?> terminalStep) decode,
+    required FutureOr<T?> Function(AgentRuntimeNativeStepRunResult stepRun)
+    decode,
     String trigger = 'manual',
     Map<String, Object?> metadata = const <String, Object?>{},
     int? maxEffectSteps,
@@ -163,7 +164,7 @@ class AgentRuntimeEffectPlanBinding {
         metadata: metadata,
         maxEffectSteps: maxEffectSteps,
       );
-      final value = await decode(stepRun.terminalStep);
+      final value = await decode(stepRun);
       if (value != null) return value;
       await recordStepRun(
         _fallbackStepRun(reason: 'decode_returned_null', metadata: metadata),
@@ -180,14 +181,16 @@ class AgentRuntimeEffectPlanBinding {
     return fallback();
   }
 
-  Future<void> recordStepRun(AgentRuntimeNativeStepRunResult stepRun) async {
+  Future<String?> recordStepRun(AgentRuntimeNativeStepRunResult stepRun) async {
     final recorder = recordTrace;
-    if (recorder == null) return;
+    if (recorder == null) return null;
     try {
       await recorder(stepRun);
+      return _traceIdFor(stepRun);
     } on Object catch (error, stackTrace) {
       onRecordTraceError?.call(error, stackTrace);
       // Best-effort diagnostics; never fail the production agent.
+      return null;
     }
   }
 
@@ -230,4 +233,16 @@ class AgentRuntimeEffectPlanBinding {
       nativeTraceEvents: <Map<String, Object?>>[traceEvent],
     );
   }
+}
+
+String? _traceIdFor(AgentRuntimeNativeStepRunResult stepRun) {
+  final rawRunId = stepRun.terminalStep['run_id'];
+  final runId = rawRunId is String && rawRunId.isNotEmpty ? rawRunId : null;
+  if (runId == null) return null;
+  final rawAgentId = stepRun.terminalStep['agent_id'];
+  final agentId = rawAgentId is String && rawAgentId.isNotEmpty
+      ? rawAgentId
+      : null;
+  if (agentId == null) return null;
+  return 'agent-runtime:$agentId:$runId';
 }

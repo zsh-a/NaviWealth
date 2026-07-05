@@ -230,9 +230,9 @@ class FrbAssumptionReviewReader implements AssumptionReviewReader {
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.listOpen(ctx),
-      decode: (terminalStep) {
+      decode: (stepRun) {
         final result = agentRuntimeTerminalEffectResultForTool(
-          terminalStep,
+          stepRun.terminalStep,
           'list_open_assumptions',
         );
         return assumptionReviewItemsFromToolResult(result);

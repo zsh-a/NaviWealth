@@ -93,8 +93,10 @@ class RecoveryAlertAgent implements Agent {
           'decline_pct': _round(alert.declinePct),
           'consecutive_days': alert.consecutiveDays,
           'signal_source': signal.source,
+          if (signal.traceId != null) 'trace_id': signal.traceId,
         },
         'artifact_id': artifactId,
+        if (signal.traceId != null) 'trace_id': signal.traceId,
       },
       entities: <String>{'recovery_alert', 'hrv_decline', dayKey},
       importance: 0.7,
@@ -114,6 +116,7 @@ class RecoveryAlertAgent implements Agent {
         memoryId: memoryId,
         createdAt: start,
         source: signal.source,
+        traceId: signal.traceId,
         alert: alert,
         summary: summary,
       ),
@@ -153,6 +156,7 @@ class RecoveryAlertAgent implements Agent {
       },
       memoryId: memoryId,
       artifactId: artifactId,
+      traceId: signal.traceId,
     );
   }
 
@@ -162,6 +166,7 @@ class RecoveryAlertAgent implements Agent {
     required String memoryId,
     required DateTime createdAt,
     required String source,
+    required String? traceId,
     required RecoveryAlertSignal alert,
     required String summary,
   }) {
@@ -217,6 +222,7 @@ class RecoveryAlertAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
@@ -268,9 +274,9 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.read(ctx),
-      decode: (terminalStep) {
+      decode: (stepRun) {
         final result = agentRuntimeTerminalEffectResultForTool(
-          terminalStep,
+          stepRun.terminalStep,
           'get_hrv_trend',
         );
         final points = _hrvPointsFromToolResult(result);
@@ -278,6 +284,7 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
         return recoveryAlertSignalFromValues(
           points,
           source: 'frb_tool:get_hrv_trend',
+          traceId: stepRun.traceId,
         );
       },
     );
@@ -289,25 +296,37 @@ class RecoveryAlertSignalRead {
     required this.source,
     this.alert,
     this.skipReason,
+    this.traceId,
   });
 
   factory RecoveryAlertSignalRead.alert({
     required String source,
     required RecoveryAlertSignal alert,
+    String? traceId,
   }) {
-    return RecoveryAlertSignalRead._(source: source, alert: alert);
+    return RecoveryAlertSignalRead._(
+      source: source,
+      alert: alert,
+      traceId: traceId,
+    );
   }
 
   factory RecoveryAlertSignalRead.skipped({
     required String source,
     required String reason,
+    String? traceId,
   }) {
-    return RecoveryAlertSignalRead._(source: source, skipReason: reason);
+    return RecoveryAlertSignalRead._(
+      source: source,
+      skipReason: reason,
+      traceId: traceId,
+    );
   }
 
   final String source;
   final RecoveryAlertSignal? alert;
   final String? skipReason;
+  final String? traceId;
 }
 
 class RecoveryAlertSignal {
@@ -334,11 +353,13 @@ class RecoveryAlertHrvPoint {
 RecoveryAlertSignalRead recoveryAlertSignalFromValues(
   List<RecoveryAlertHrvPoint> points, {
   required String source,
+  String? traceId,
 }) {
   if (points.length < 4) {
     return RecoveryAlertSignalRead.skipped(
       source: source,
       reason: 'insufficient HRV data (${points.length} points)',
+      traceId: traceId,
     );
   }
 
@@ -354,6 +375,7 @@ RecoveryAlertSignalRead recoveryAlertSignalFromValues(
     return RecoveryAlertSignalRead.skipped(
       source: source,
       reason: 'no sustained HRV decline detected',
+      traceId: traceId,
     );
   }
 
@@ -368,6 +390,7 @@ RecoveryAlertSignalRead recoveryAlertSignalFromValues(
       declinePct: declinePct,
       consecutiveDays: recent.length,
     ),
+    traceId: traceId,
   );
 }
 

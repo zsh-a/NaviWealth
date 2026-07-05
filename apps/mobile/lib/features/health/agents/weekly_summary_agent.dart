@@ -394,7 +394,8 @@ class FrbWeeklySummaryReader implements WeeklySummaryReader {
       ],
       maxEffectSteps: 3,
       fallback: () => fallback.read(ctx),
-      decode: weeklySummarySnapshotFromTerminalStep,
+      decode: (stepRun) =>
+          weeklySummarySnapshotFromTerminalStep(stepRun.terminalStep),
     );
   }
 }

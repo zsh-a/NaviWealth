@@ -344,9 +344,9 @@ class FrbRoutineDueReader implements RoutineDueReader {
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.listDue(ctx),
-      decode: (terminalStep) {
+      decode: (stepRun) {
         final result = agentRuntimeTerminalEffectResultForTool(
-          terminalStep,
+          stepRun.terminalStep,
           'list_due_routines',
         );
         return routineDueItemsFromToolResult(result);

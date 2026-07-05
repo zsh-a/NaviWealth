@@ -57,10 +57,10 @@ class FrbContradictionSourceReader implements ContradictionSourceReader {
       ],
       maxEffectSteps: 3,
       fallback: () => fallback.read(ctx),
-      decode: (terminalStep) async {
+      decode: (stepRun) async {
         final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
         return contradictionSourceSnapshotFromTerminalStep(
-          terminalStep,
+          stepRun.terminalStep,
           ownerUserId: ownerUserId,
         );
       },

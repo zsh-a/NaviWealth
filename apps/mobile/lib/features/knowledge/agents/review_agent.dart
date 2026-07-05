@@ -291,8 +291,8 @@ class FrbReviewDueReader implements ReviewDueReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: (terminalStep) =>
-          reviewDueSnapshotFromTerminalStep(terminalStep, now: ctx.now),
+      decode: (stepRun) =>
+          reviewDueSnapshotFromTerminalStep(stepRun.terminalStep, now: ctx.now),
     );
   }
 }

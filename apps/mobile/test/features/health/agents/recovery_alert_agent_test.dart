@@ -71,6 +71,7 @@ void main() {
 
       expect(result.source, 'frb_tool:get_hrv_trend');
       expect(result.alert, isNotNull);
+      expect(result.traceId, 'agent-runtime:recovery_alert:run_1');
       expect(result.alert!.consecutiveDays, 3);
       expect(dispatcher.calls.single.name, 'get_hrv_trend');
       expect(dispatcher.calls.single.input, containsPair('window_days', 14));
@@ -162,6 +163,7 @@ void main() {
               declinePct: 20,
               consecutiveDays: 3,
             ),
+            traceId: 'trace-recovery-1',
           ),
         ),
       );
@@ -172,7 +174,11 @@ void main() {
 
       expect(result.status, AgentRunStatus.completed);
       expect(result.artifactId, '$kRecoveryAlertAgentId:2026-06-29');
+      expect(result.traceId, 'trace-recovery-1');
       expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+      expect(runtime.remembered?.payload['trace_id'], 'trace-recovery-1');
+      final outcome = runtime.remembered?.payload['outcome'] as Map;
+      expect(outcome['trace_id'], 'trace-recovery-1');
 
       final artifact = await store.read(result.artifactId!);
       expect(artifact, isNotNull);
@@ -180,6 +186,7 @@ void main() {
       expect(artifact.domain, 'health');
       expect(artifact.severity, AgentArtifactSeverity.warning);
       expect(artifact.memoryId, result.memoryId);
+      expect(artifact.traceId, 'trace-recovery-1');
       expect(artifact.summary, result.summary);
       expect(
         artifact.insights.map((insight) => insight.title),
