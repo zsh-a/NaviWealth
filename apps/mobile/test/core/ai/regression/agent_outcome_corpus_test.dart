@@ -184,6 +184,7 @@ void main() {
         expect(c.expectedTopInsightTitles, isNotEmpty, reason: c.id);
         expect(c.expectedEvidenceTypes, isNotEmpty, reason: c.id);
         expect(c.expectedActionKinds, isNotEmpty, reason: c.id);
+        expect(c.expectedActionIntents, isNotEmpty, reason: c.id);
       }
     });
 
