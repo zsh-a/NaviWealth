@@ -16,6 +16,7 @@ void main() {
           startedAt: DateTime.utc(2026, 7, 5),
           finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
           artifactId: 'artifact-1',
+          traceId: 'trace-1',
         ),
         artifact: AgentArtifact(
           id: 'artifact-1',
@@ -46,6 +47,7 @@ void main() {
               intent: 'agent.explainResult',
             ),
           ],
+          traceId: 'trace-1',
           createdAt: DateTime.utc(2026, 7, 5),
         ),
       );
@@ -63,6 +65,7 @@ void main() {
           status: AgentRunStatus.skipped,
           startedAt: DateTime.utc(2026, 7, 5),
           finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+          traceId: 'trace-1',
         ),
         artifact: AgentArtifact(
           id: 'artifact-1',
@@ -73,6 +76,7 @@ void main() {
           severity: AgentArtifactSeverity.info,
           title: 'Options Income Risk Review',
           summary: 'Clean scan.',
+          traceId: 'trace-1',
           createdAt: DateTime.utc(2026, 7, 5),
         ),
       );
@@ -102,6 +106,7 @@ void main() {
           startedAt: DateTime.utc(2026, 7, 5),
           finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
           artifactId: 'artifact-1',
+          traceId: 'trace-1',
         ),
         artifact: AgentArtifact(
           id: 'artifact-1',
@@ -132,6 +137,7 @@ void main() {
               intent: 'agent.explainResult',
             ),
           ],
+          traceId: 'trace-1',
           createdAt: DateTime.utc(2026, 7, 5),
         ),
         proposalKinds: const <String>{'journal_entry'},
@@ -151,6 +157,7 @@ void main() {
           startedAt: DateTime.utc(2026, 7, 5),
           finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
           artifactId: 'artifact-1',
+          traceId: 'trace-1',
         ),
         artifact: AgentArtifact(
           id: 'artifact-1',
@@ -186,6 +193,7 @@ void main() {
               intent: 'finance.createTransaction',
             ),
           ],
+          traceId: 'trace-1',
           createdAt: DateTime.utc(2026, 7, 5),
         ),
       );
@@ -198,6 +206,67 @@ void main() {
         ]),
       );
     });
+
+    test(
+      'requires ready result and artifact trace ids to match when present',
+      () {
+        final noTraceFailures = evaluateAgentOutcomeCase(
+          regressionCase: agentOutcomeRegressionCaseById(
+            'finance.cashflow_anomaly_review.ready',
+          ),
+          result: AgentRunResult(
+            agentId: 'cashflow_anomaly_review',
+            status: AgentRunStatus.completed,
+            startedAt: DateTime.utc(2026, 7, 5),
+            finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+            artifactId: 'artifact-1',
+          ),
+          artifact: _matchingCashflowArtifact(traceId: null),
+        );
+
+        expect(noTraceFailures, isEmpty);
+
+        final oneSidedTraceFailures = evaluateAgentOutcomeCase(
+          regressionCase: agentOutcomeRegressionCaseById(
+            'finance.cashflow_anomaly_review.ready',
+          ),
+          result: AgentRunResult(
+            agentId: 'cashflow_anomaly_review',
+            status: AgentRunStatus.completed,
+            startedAt: DateTime.utc(2026, 7, 5),
+            finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+            artifactId: 'artifact-1',
+            traceId: 'trace-run',
+          ),
+          artifact: _matchingCashflowArtifact(traceId: null),
+        );
+
+        expect(
+          oneSidedTraceFailures.map((failure) => failure.field),
+          contains('artifact.traceId'),
+        );
+
+        final mismatchedTraceFailures = evaluateAgentOutcomeCase(
+          regressionCase: agentOutcomeRegressionCaseById(
+            'finance.cashflow_anomaly_review.ready',
+          ),
+          result: AgentRunResult(
+            agentId: 'cashflow_anomaly_review',
+            status: AgentRunStatus.completed,
+            startedAt: DateTime.utc(2026, 7, 5),
+            finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+            artifactId: 'artifact-1',
+            traceId: 'trace-run',
+          ),
+          artifact: _matchingCashflowArtifact(traceId: 'trace-artifact'),
+        );
+
+        expect(
+          mismatchedTraceFailures.map((failure) => failure.field),
+          contains('artifact.traceId'),
+        );
+      },
+    );
 
     test('rejects artifacts for no-finding outcomes', () {
       final failures = evaluateAgentOutcomeCase(
@@ -248,4 +317,35 @@ void main() {
       expect(failures.map((failure) => failure.field), contains('status'));
     });
   });
+}
+
+AgentArtifact _matchingCashflowArtifact({required String? traceId}) {
+  return AgentArtifact(
+    id: 'artifact-1',
+    ownerUserId: 'u',
+    agentId: 'cashflow_anomaly_review',
+    domain: 'finance',
+    kind: AgentArtifactKind.alert,
+    severity: AgentArtifactSeverity.warning,
+    title: 'Cashflow Anomaly Review',
+    summary: 'Projected monthly spending is elevated.',
+    insights: const <AgentInsight>[
+      AgentInsight(
+        title: 'Monthly spending projection',
+        body: 'Current month spending is projected higher.',
+      ),
+      AgentInsight(
+        title: 'Detector source',
+        body: 'On-device anomaly detector.',
+      ),
+    ],
+    evidence: const <AgentEvidenceRef>[
+      AgentEvidenceRef(type: 'anomaly_flag', id: 'flag-1'),
+    ],
+    actions: const <AgentAction>[
+      AgentAction(kind: 'review', label: 'Ask', intent: 'agent.explainResult'),
+    ],
+    traceId: traceId,
+    createdAt: DateTime.utc(2026, 7, 5),
+  );
 }

@@ -73,6 +73,11 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
   if (artifact.domain != regressionCase.domain) {
     add('artifact.domain', regressionCase.domain, artifact.domain);
   }
+  final resultTraceId = _nonEmpty(result.traceId);
+  final artifactTraceId = _nonEmpty(artifact.traceId);
+  if (resultTraceId != artifactTraceId) {
+    add('artifact.traceId', resultTraceId, artifactTraceId);
+  }
   if (artifact.kind != regressionCase.expectedArtifactKind) {
     add('artifact.kind', regressionCase.expectedArtifactKind, artifact.kind);
   }
@@ -216,6 +221,11 @@ AgentOutcomeRegressionStatus _statusFromResult(AgentRunResult result) {
       AgentOutcomeRegressionStatus.noFinding,
     AgentRunUserVisibleStatus.failed => AgentOutcomeRegressionStatus.failed,
   };
+}
+
+String? _nonEmpty(String? value) {
+  if (value == null || value.isEmpty) return null;
+  return value;
 }
 
 AgentOutcomeRegressionCase agentOutcomeRegressionCaseById(String id) {
