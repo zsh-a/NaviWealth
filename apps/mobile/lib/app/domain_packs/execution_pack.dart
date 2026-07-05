@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -60,6 +62,7 @@ final DomainPack kExecutionPack = DomainPack(
     ),
   ],
   memoryBootstrapBuilder: _executionMemoryBootstrap,
+  backgroundBootstrapBuilder: _executionBackgroundBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeExecutionProviderOverrides,
   settingsSpec: domainSettingsSpec(
@@ -77,6 +80,15 @@ List<Agent> _executionAgents(Ref ref) =>
 
 void _executionMemoryBootstrap(Ref ref) {
   ref.watch(executionMemoryIndexerProvider);
+}
+
+void _executionBackgroundBootstrap(Ref ref) {
+  ref.watch(execution_agent_providers.executionReviewCronProvider);
+  unawaited(
+    ref.read(
+      execution_agent_providers.pendingExecutionReviewRunProvider.future,
+    ),
+  );
 }
 
 String _executionSettingsSubtitle(AppLocalizations l10n, bool enabled) =>

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -103,6 +105,7 @@ final DomainPack kKnowledgePack = DomainPack(
     ),
   ],
   memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
+  backgroundBootstrapBuilder: _knowledgeBackgroundBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
   shareIntentHandlers: const [KnowledgeShareIntentHandler()],
@@ -127,6 +130,15 @@ void _knowledgeMemoryBootstrap(Ref ref) {
   ref.watch(knowledgeConceptMemoryIndexerProvider);
   ref.watch(knowledgeExperimentMemoryIndexerProvider);
   ref.watch(knowledgeRoutineMemoryIndexerProvider);
+}
+
+void _knowledgeBackgroundBootstrap(Ref ref) {
+  ref.watch(knowledge_agent_providers.knowledgeRoutineDueCronProvider);
+  unawaited(
+    ref.read(
+      knowledge_agent_providers.pendingKnowledgeRoutineDueRunProvider.future,
+    ),
+  );
 }
 
 String _knowledgeSettingsSubtitle(AppLocalizations l10n, bool enabled) =>

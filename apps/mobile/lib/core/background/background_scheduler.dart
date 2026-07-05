@@ -24,6 +24,17 @@ import '../notifications/notification_service.dart';
 /// **never** rename one without updating both.
 const String kMorningBriefingTaskName = 'com.naviwealth.morningBriefing';
 
+/// Stable workmanager task name for KnowledgeOS routine reminders.
+/// The background isolate only stamps a due flag; foreground catch-up runs
+/// `knowledge_routine_due` through the shared agent controller.
+const String kKnowledgeRoutineDueTaskName =
+    'com.naviwealth.knowledgeRoutineDue';
+
+/// Stable workmanager task name for ExecutionOS weekly review catch-up.
+/// Foreground catch-up runs `execution_review` through the shared agent
+/// controller after this task stamps its due flag.
+const String kExecutionReviewTaskName = 'com.naviwealth.executionReview';
+
 /// Stable workmanager task name for best-effort Garmin background sync.
 /// Mirrors iOS native task registration and Info.plist identifiers.
 const String kGarminSyncTaskName = 'com.naviwealth.garminSync';
@@ -38,6 +49,14 @@ const String kHealthPlatformSyncTaskName = 'com.naviwealth.healthPlatformSync';
 /// triggers an in-process scheduled-agent tick if found (the background
 /// isolate can't run the full agent — no ProviderContainer / Drift access).
 const String kMorningBriefingDueAtKey = 'lifeos.health.briefing.dueAt';
+
+/// SharedPreferences key set by the background callback when KnowledgeOS
+/// routine reminders should catch up in the foreground process.
+const String kKnowledgeRoutineDueAtKey = 'lifeos.knowledge.routineDue.dueAt';
+
+/// SharedPreferences key set by the background callback when ExecutionOS
+/// review should catch up in the foreground process.
+const String kExecutionReviewDueAtKey = 'lifeos.execution.review.dueAt';
 
 /// SharedPreferences key set by the background callback when Garmin data
 /// should be refreshed in-process on next foreground launch/resume.
@@ -72,6 +91,19 @@ const BackgroundTaskSpec kMorningBriefingBackgroundTask = BackgroundTaskSpec(
   defaultInterval: Duration(hours: 24),
 );
 
+const BackgroundTaskSpec kKnowledgeRoutineDueBackgroundTask =
+    BackgroundTaskSpec(
+      name: kKnowledgeRoutineDueTaskName,
+      dueAtPreferenceKey: kKnowledgeRoutineDueAtKey,
+      defaultInterval: Duration(hours: 24),
+    );
+
+const BackgroundTaskSpec kExecutionReviewBackgroundTask = BackgroundTaskSpec(
+  name: kExecutionReviewTaskName,
+  dueAtPreferenceKey: kExecutionReviewDueAtKey,
+  defaultInterval: Duration(days: 7),
+);
+
 const NotificationChannelSpec kMorningBriefingWakeNotificationChannel =
     NotificationChannelSpec(
       id: 'lifeos.health.briefing',
@@ -96,6 +128,8 @@ const BackgroundTaskSpec kHealthPlatformSyncBackgroundTask = BackgroundTaskSpec(
 
 const List<BackgroundTaskSpec> kBackgroundTaskSpecs = <BackgroundTaskSpec>[
   kMorningBriefingBackgroundTask,
+  kKnowledgeRoutineDueBackgroundTask,
+  kExecutionReviewBackgroundTask,
   kGarminSyncBackgroundTask,
   kHealthPlatformSyncBackgroundTask,
 ];

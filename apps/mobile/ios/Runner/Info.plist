@@ -57,6 +57,8 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.naviwealth.morningBriefing</string>
+		<string>com.naviwealth.knowledgeRoutineDue</string>
+		<string>com.naviwealth.executionReview</string>
 		<string>com.naviwealth.garminSync</string>
 		<string>com.naviwealth.healthPlatformSync</string>
 	</array>

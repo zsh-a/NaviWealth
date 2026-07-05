@@ -18,9 +18,13 @@ void main() {
       expect(await scheduler.isAvailable(), isFalse);
       await scheduler.initialize();
       await scheduler.registerTask(kMorningBriefingBackgroundTask);
+      await scheduler.registerTask(kKnowledgeRoutineDueBackgroundTask);
+      await scheduler.registerTask(kExecutionReviewBackgroundTask);
       await scheduler.registerTask(kGarminSyncBackgroundTask);
       await scheduler.registerTask(kHealthPlatformSyncBackgroundTask);
       await scheduler.cancelTask(kMorningBriefingBackgroundTask);
+      await scheduler.cancelTask(kKnowledgeRoutineDueBackgroundTask);
+      await scheduler.cancelTask(kExecutionReviewBackgroundTask);
       await scheduler.cancelTask(kGarminSyncBackgroundTask);
       await scheduler.cancelTask(kHealthPlatformSyncBackgroundTask);
     },

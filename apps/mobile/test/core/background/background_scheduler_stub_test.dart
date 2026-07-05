@@ -17,6 +17,31 @@ void main() {
       kMorningBriefingBackgroundTask.defaultInterval,
       const Duration(hours: 24),
     );
+    expect(kKnowledgeRoutineDueTaskName, 'com.naviwealth.knowledgeRoutineDue');
+    expect(kKnowledgeRoutineDueAtKey, 'lifeos.knowledge.routineDue.dueAt');
+    expect(
+      kKnowledgeRoutineDueBackgroundTask.name,
+      kKnowledgeRoutineDueTaskName,
+    );
+    expect(
+      kKnowledgeRoutineDueBackgroundTask.dueAtPreferenceKey,
+      kKnowledgeRoutineDueAtKey,
+    );
+    expect(
+      kKnowledgeRoutineDueBackgroundTask.defaultInterval,
+      const Duration(hours: 24),
+    );
+    expect(kExecutionReviewTaskName, 'com.naviwealth.executionReview');
+    expect(kExecutionReviewDueAtKey, 'lifeos.execution.review.dueAt');
+    expect(kExecutionReviewBackgroundTask.name, kExecutionReviewTaskName);
+    expect(
+      kExecutionReviewBackgroundTask.dueAtPreferenceKey,
+      kExecutionReviewDueAtKey,
+    );
+    expect(
+      kExecutionReviewBackgroundTask.defaultInterval,
+      const Duration(days: 7),
+    );
     expect(kGarminSyncTaskName, 'com.naviwealth.garminSync');
     expect(kGarminSyncDueAtKey, 'lifeos.health.garminSync.dueAt');
     expect(kGarminSyncBackgroundTask.name, kGarminSyncTaskName);
@@ -35,9 +60,19 @@ void main() {
     );
     expect(kBackgroundTaskSpecs.map((spec) => spec.name), <String>[
       kMorningBriefingTaskName,
+      kKnowledgeRoutineDueTaskName,
+      kExecutionReviewTaskName,
       kGarminSyncTaskName,
       kHealthPlatformSyncTaskName,
     ]);
+    expect(
+      backgroundTaskSpecForName(kKnowledgeRoutineDueTaskName),
+      kKnowledgeRoutineDueBackgroundTask,
+    );
+    expect(
+      backgroundTaskSpecForName(kExecutionReviewTaskName),
+      kExecutionReviewBackgroundTask,
+    );
     expect(
       backgroundTaskSpecForName(kGarminSyncTaskName),
       kGarminSyncBackgroundTask,
@@ -59,9 +94,13 @@ void main() {
 
     expect(infoPlist, contains('BGTaskSchedulerPermittedIdentifiers'));
     expect(infoPlist, contains(kMorningBriefingTaskName));
+    expect(infoPlist, contains(kKnowledgeRoutineDueTaskName));
+    expect(infoPlist, contains(kExecutionReviewTaskName));
     expect(infoPlist, contains(kGarminSyncTaskName));
     expect(infoPlist, contains(kHealthPlatformSyncTaskName));
     expect(appDelegate, contains(kMorningBriefingTaskName));
+    expect(appDelegate, contains(kKnowledgeRoutineDueTaskName));
+    expect(appDelegate, contains(kExecutionReviewTaskName));
     expect(appDelegate, contains(kGarminSyncTaskName));
     expect(appDelegate, contains(kHealthPlatformSyncTaskName));
     expect(callback, contains("@pragma('vm:entry-point')"));
@@ -80,6 +119,16 @@ void main() {
       kMorningBriefingBackgroundTask,
       interval: const Duration(minutes: 15),
     );
+    await scheduler.registerTask(kKnowledgeRoutineDueBackgroundTask);
+    await scheduler.registerTask(
+      kKnowledgeRoutineDueBackgroundTask,
+      interval: const Duration(minutes: 15),
+    );
+    await scheduler.registerTask(kExecutionReviewBackgroundTask);
+    await scheduler.registerTask(
+      kExecutionReviewBackgroundTask,
+      interval: const Duration(minutes: 15),
+    );
     await scheduler.registerTask(kGarminSyncBackgroundTask);
     await scheduler.registerTask(
       kGarminSyncBackgroundTask,
@@ -91,6 +140,8 @@ void main() {
       interval: const Duration(minutes: 15),
     );
     await scheduler.cancelTask(kMorningBriefingBackgroundTask);
+    await scheduler.cancelTask(kKnowledgeRoutineDueBackgroundTask);
+    await scheduler.cancelTask(kExecutionReviewBackgroundTask);
     await scheduler.cancelTask(kGarminSyncBackgroundTask);
     await scheduler.cancelTask(kHealthPlatformSyncBackgroundTask);
   });

@@ -5,13 +5,20 @@
 /// opted into the Knowledge domain.
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_background_scheduler.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/auth/providers.dart' as core_auth;
+import '../../../core/background/background_scheduler.dart';
+import '../../../core/background/providers.dart' as background_providers;
 import '../../../core/notifications/notification_preferences.dart';
 import '../../../core/notifications/providers.dart' as notif_providers;
 import 'assumption_agent.dart';
@@ -57,6 +64,47 @@ final knowledgeAgentsProvider = Provider<List<Agent>>((ref) {
     ref.watch(routineDueAgentProvider),
   ];
 });
+
+/// Registers/cancels the KnowledgeOS routine-due background wake-up. The
+/// callback only stamps [kKnowledgeRoutineDueAtKey]; foreground catch-up runs
+/// the real agent through [AgentBackgroundCatchUpRunner].
+final knowledgeRoutineDueCronProvider = Provider<void>((ref) {
+  final scheduler = ref.watch(background_providers.backgroundSchedulerProvider);
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  final knowledgeEnabled = optIns?.contains(DomainScope.knowledge) ?? false;
+  unawaited(() async {
+    try {
+      if (!await scheduler.isAvailable()) return;
+      if (knowledgeEnabled) {
+        await scheduler.registerTask(kKnowledgeRoutineDueBackgroundTask);
+      } else {
+        await scheduler.cancelTask(kKnowledgeRoutineDueBackgroundTask);
+      }
+    } on Object {
+      // Best-effort scheduler plumbing. Foreground/manual review remains.
+    }
+  }());
+});
+
+final pendingKnowledgeRoutineDueRunProvider =
+    FutureProvider.autoDispose<AgentRunResult?>((ref) async {
+      final link = ref.keepAlive();
+      try {
+        final optIns = await ref.read(core_auth.domainOptInsProvider.future);
+        if (!optIns.contains(DomainScope.knowledge)) return null;
+        final catchUp = await ref.read(
+          agentBackgroundCatchUpRunnerProvider.future,
+        );
+        return catchUp.runIfDue(
+          binding: const AgentBackgroundTaskBinding(
+            agentId: kKnowledgeRoutineAgentId,
+            task: kKnowledgeRoutineDueBackgroundTask,
+          ),
+        );
+      } finally {
+        link.close();
+      }
+    });
 
 /// Most recent user-visible Knowledge Review artifact for the Review tab.
 final latestKnowledgeReviewArtifactProvider =

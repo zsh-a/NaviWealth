@@ -401,6 +401,9 @@ void main() {
 
       expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
       expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
+      expect(kHealthPack.backgroundBootstrapBuilder, isNotNull);
+      expect(kKnowledgePack.backgroundBootstrapBuilder, isNotNull);
+      expect(kExecutionPack.backgroundBootstrapBuilder, isNotNull);
       expect(
         kAllDomainPacks
             .where((pack) => pack.settingsSpec != null)
