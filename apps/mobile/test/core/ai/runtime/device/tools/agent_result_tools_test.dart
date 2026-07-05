@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -31,11 +32,12 @@ DeviceToolContext _ctx(Ref ref) {
   return DeviceToolContext(ref: ref, session: const DeviceToolSession());
 }
 
-ProviderContainer _container(AppDatabase db) {
+ProviderContainer _container(AppDatabase db, {List<Agent> agents = const []}) {
   final container = ProviderContainer(
     overrides: [
       appDatabaseProvider.overrideWith((ref) async => db),
       currentUserIdProvider.overrideWithValue(() async => _owner),
+      agentRegistryProvider.overrideWithValue(agents),
     ],
   );
   addTearDown(container.dispose);
@@ -203,7 +205,7 @@ void main() {
         traceId: 'trace-1',
       ),
     );
-    final container = _container(db);
+    final container = _container(db, agents: const <Agent>[agent]);
 
     final output = await _withRef(
       container,
@@ -219,6 +221,37 @@ void main() {
     expect(run['trigger'], 'manual');
     expect(run['artifact_id'], 'artifact-1');
     expect(run['trace_id'], 'trace-1');
+  });
+
+  test('get_agent_runs hides runs for inactive domains', () async {
+    final runStore = SqliteAgentRunStore(db: db);
+    const agent = _HealthAgent();
+    final startedAt = DateTime.utc(2026, 7, 5, 9);
+    await runStore.finishRun(
+      ownerUserId: _owner,
+      agent: agent,
+      runStartedAt: startedAt,
+      trigger: AgentRunTrigger.backgroundDue,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(seconds: 3)),
+        summary: 'Health result',
+        artifactId: 'weekly_summary:2026-07-05',
+      ),
+    );
+    final container = _container(db);
+
+    final output = await _withRef(
+      container,
+      (ref) =>
+          const GetAgentRunsTool().invoke(_ctx(ref), {'agent_id': agent.id}),
+    );
+
+    final json = output! as Map<String, Object?>;
+    expect(json['runs'], isEmpty);
+    expect(json['guidance'], contains('所属 domain 未启用'));
   });
 
   test('tools return invalid input errors instead of throwing', () async {
@@ -246,6 +279,24 @@ class _FakeAgent implements Agent {
 
   @override
   String get name => 'Weekly Wealth Review';
+
+  @override
+  AgentSchedule get schedule => AgentSchedule.everyHours(24);
+
+  @override
+  Future<AgentRunResult> run(AgentContext ctx) {
+    throw UnimplementedError();
+  }
+}
+
+class _HealthAgent implements Agent {
+  const _HealthAgent();
+
+  @override
+  String get id => 'weekly_summary';
+
+  @override
+  String get name => 'Weekly Summary';
 
   @override
   AgentSchedule get schedule => AgentSchedule.everyHours(24);

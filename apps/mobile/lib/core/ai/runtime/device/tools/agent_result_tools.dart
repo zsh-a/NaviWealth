@@ -6,6 +6,7 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 
 import '../../../agents/agent_artifact.dart';
+import '../../../agents/agent_registry.dart';
 import '../../../agents/agent_run_store.dart';
 import '../../../agents/providers.dart';
 import 'device_tool.dart';
@@ -149,6 +150,16 @@ class GetAgentRunsTool implements DeviceTool {
     }
     final store = await ctx.ref.read(agentRunStoreProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final activeAgentIds = {
+      for (final agent in ctx.ref.read(agentRegistryProvider)) agent.id,
+    };
+    if (!activeAgentIds.contains(agentId)) {
+      return <String, Object?>{
+        'runs': const <Map<String, Object?>>[],
+        'guidance':
+            '该 agent 当前未注册或所属 domain 未启用。不要读取或解释未启用 domain 的 agent run；请让用户先在 Domains 设置中启用对应 domain。',
+      };
+    }
     final run = await store.latestForAgent(
       ownerUserId: ownerUserId,
       agentId: agentId,
