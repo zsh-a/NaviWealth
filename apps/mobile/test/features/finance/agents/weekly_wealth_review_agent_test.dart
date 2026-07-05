@@ -1,15 +1,21 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/features/finance/agents/providers.dart'
+    as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
@@ -92,6 +98,61 @@ void main() {
       containsPair('artifact_id', result.artifactId),
     );
   });
+
+  test('finance agent providers read latest artifact and run', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runStore = SqliteAgentRunStore(db: db);
+    await artifactStore.save(
+      _financeArtifact(id: 'wealth-review-old', createdAt: now),
+    );
+    await artifactStore.save(
+      _financeArtifact(
+        id: 'wealth-review-new',
+        createdAt: now.add(const Duration(days: 7)),
+      ),
+    );
+    await runStore.finishRun(
+      ownerUserId: 'u',
+      agent: const WeeklyWealthReviewAgent(),
+      runStartedAt: now,
+      result: AgentRunResult(
+        agentId: kWeeklyWealthReviewAgentId,
+        status: AgentRunStatus.completed,
+        startedAt: now,
+        finishedAt: now.add(const Duration(milliseconds: 20)),
+        summary: 'Net worth 8000 CNY',
+        artifactId: 'wealth-review-new',
+        traceId: 'trace-new',
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        currentUserIdProvider.overrideWithValue(() async => 'u'),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+        agent_providers.agentRunStoreProvider.overrideWith(
+          (ref) async => runStore,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final artifact = await container.read(
+      finance_agent_providers.latestWeeklyWealthReviewArtifactProvider.future,
+    );
+    final run = await container.read(
+      finance_agent_providers.latestWeeklyWealthReviewRunProvider.future,
+    );
+
+    expect(artifact?.id, 'wealth-review-new');
+    expect(run?.status, AgentRunLifecycleStatus.ready);
+    expect(run?.artifactId, 'wealth-review-new');
+    expect(run?.traceId, 'trace-new');
+  });
 }
 
 MemoryRuntime _runtimeForDb(AppDatabase db) {
@@ -156,5 +217,22 @@ DashboardSnapshot _snapshot() {
     netWorth: Money(Decimal.parse('8000'), currency),
     currencyMismatches: const [CurrencyMismatch(id: 'fx1', currency: 'USD')],
     staleHoldingCount: 1,
+  );
+}
+
+AgentArtifact _financeArtifact({
+  required String id,
+  required DateTime createdAt,
+}) {
+  return AgentArtifact(
+    id: id,
+    ownerUserId: 'u',
+    agentId: kWeeklyWealthReviewAgentId,
+    domain: 'finance',
+    kind: AgentArtifactKind.review,
+    severity: AgentArtifactSeverity.info,
+    title: 'Weekly Wealth Review',
+    summary: 'Net worth 8000 CNY',
+    createdAt: createdAt,
   );
 }
