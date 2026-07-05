@@ -13,6 +13,9 @@ on:
     paths:
       - 'apps/mobile/integration_test/**'
       - 'apps/mobile/lib/core/persistence/**'
+      - 'apps/mobile/native/lifeos_native/**'
+      - '.gitmodules'
+      - 'third_party/agent-runtime'
       - '.github/workflows/integration-device.yml'
   schedule:
     - cron: '45 2 * * *'
@@ -31,6 +34,8 @@ jobs:
         working-directory: apps/mobile
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
