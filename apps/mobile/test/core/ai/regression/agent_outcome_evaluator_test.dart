@@ -91,6 +91,55 @@ void main() {
       );
     });
 
+    test('rejects unexpected proposal kinds for follow-up-only outcomes', () {
+      final failures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'finance.cashflow_anomaly_review.ready',
+        ),
+        result: AgentRunResult(
+          agentId: 'cashflow_anomaly_review',
+          status: AgentRunStatus.completed,
+          startedAt: DateTime.utc(2026, 7, 5),
+          finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+          artifactId: 'artifact-1',
+        ),
+        artifact: AgentArtifact(
+          id: 'artifact-1',
+          ownerUserId: 'u',
+          agentId: 'cashflow_anomaly_review',
+          domain: 'finance',
+          kind: AgentArtifactKind.alert,
+          severity: AgentArtifactSeverity.warning,
+          title: 'Cashflow Anomaly Review',
+          summary: 'Projected monthly spending is elevated.',
+          insights: const <AgentInsight>[
+            AgentInsight(
+              title: 'Monthly spending projection',
+              body: 'Current month spending is projected higher.',
+            ),
+            AgentInsight(
+              title: 'Detector source',
+              body: 'On-device anomaly detector.',
+            ),
+          ],
+          evidence: const <AgentEvidenceRef>[
+            AgentEvidenceRef(type: 'anomaly_flag', id: 'flag-1'),
+          ],
+          actions: const <AgentAction>[
+            AgentAction(
+              kind: 'review',
+              label: 'Ask',
+              intent: 'agent.explainResult',
+            ),
+          ],
+          createdAt: DateTime.utc(2026, 7, 5),
+        ),
+        proposalKinds: const <String>{'journal_entry'},
+      );
+
+      expect(failures.map((failure) => failure.field), ['proposalKinds']);
+    });
+
     test('rejects artifacts for no-finding outcomes', () {
       final failures = evaluateAgentOutcomeCase(
         regressionCase: agentOutcomeRegressionCaseById(

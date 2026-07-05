@@ -63,7 +63,7 @@ Agent 的产品体验应当是：
 - Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution / Knowledge 的真实 agent fixture；`knowledge_routine_due.domain_opt_out` 已接到生产 domain opt-in composition 层面的可执行 no-run eval，`execution.review.budget_exhausted` 已接到真实 runner failed-outcome eval。
 - Regression evaluator 已覆盖 ready artifact 的统一 action kind，防止各 domain agent 产出无动作或私有动作模型。
 - FinanceOS 首批 deterministic agents 均已接入 `no_llm_profile` corpus case，锁住 Finance agent 在无 LLM profile 时仍可产出本地计算结果的 fallback 契约。
-- FinanceOS 首批 agent artifact action intents 已进入 regression evaluator，确保 agent 结果只暴露 review/follow-up action，不绕过 proposal confirmation surface。
+- FinanceOS 首批 agent artifact action intents 已进入 regression evaluator；evaluator 会拒绝 unexpected proposal kinds，确保 agent 结果只暴露 review/follow-up action，不绕过 proposal confirmation surface。
 - Health Morning Briefing 已接入 agent outcome corpus 和 evaluator，覆盖 briefing artifact 的 insight / evidence / severity contract。
 - Health Weekly Summary ready outcome 已接入 agent outcome corpus 和 evaluator，覆盖 weekly review artifact 的 insight / evidence / severity contract；noFinding 仍覆盖 empty-week fixture。
 - Knowledge Contradiction ready outcome 已接入 agent outcome corpus 和 evaluator，覆盖 invalidated-assumption alert artifact 的 insight / evidence / severity contract；prompt-injection guard 仍覆盖 noFinding eval。

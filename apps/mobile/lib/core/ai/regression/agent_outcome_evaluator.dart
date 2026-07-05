@@ -144,6 +144,13 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
   );
   if (missingProposals.isNotEmpty) {
     add('proposalKinds', regressionCase.expectedProposalKinds, proposalKinds);
+  } else {
+    final unexpectedProposals = proposalKinds.difference(
+      regressionCase.expectedProposalKinds,
+    );
+    if (unexpectedProposals.isNotEmpty) {
+      add('proposalKinds', regressionCase.expectedProposalKinds, proposalKinds);
+    }
   }
 
   return failures;
