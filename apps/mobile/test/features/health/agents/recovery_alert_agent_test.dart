@@ -5,6 +5,7 @@ import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart'
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -194,6 +195,8 @@ void main() {
       );
       expect(artifact.evidence.single.type, 'health_metric_trend');
       expect(artifact.actions.single.objectId, result.artifactId);
+      expect(artifact.actions.single.intent, kHealthExplainRecoveryAlertIntent);
+      expect(artifact.actions.single.objectType, kAgentArtifactObjectType);
     },
   );
 }

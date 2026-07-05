@@ -10,6 +10,7 @@ const String kAgentExplainResultIntent = 'agent.explainResult';
 const String kAgentShowEvidenceIntent = 'agent.showEvidence';
 const String kAgentCreatePlanFromResultIntent = 'agent.createPlanFromResult';
 const String kFinanceReviewWealthIntent = 'finance.reviewWealth';
+const String kHealthExplainRecoveryAlertIntent = 'health.explainRecoveryAlert';
 const String kKnowledgeReviewDueItemsIntent = 'knowledge.reviewDueItems';
 
 const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
@@ -56,7 +57,19 @@ const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
   ),
 ];
 
-const kHealthAgentIntentDescriptors = <IntentDescriptor>[];
+const kHealthAgentIntentDescriptors = <IntentDescriptor>[
+  IntentDescriptor(
+    name: kHealthExplainRecoveryAlertIntent,
+    domain: kDomainHealth,
+    allowedObjectTypes: <String>{kAgentArtifactObjectType},
+    preferredCapabilities: <AiCapability>{AiCapability.chat},
+    preferredReadModels: <String>[
+      'agent_artifacts',
+      'hrv_trend',
+      'recovery_signal',
+    ],
+  ),
+];
 
 const kKnowledgeAgentIntentDescriptors = <IntentDescriptor>[
   IntentDescriptor(

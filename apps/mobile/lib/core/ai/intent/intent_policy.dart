@@ -104,6 +104,11 @@ IntentCopyResolver localizedIntentCopyResolver(AppLocalizations l10n) {
       promptTemplate:
           'Turn {{object_label}} into a short action plan. Use existing evidence, separate proposed actions from facts, and avoid applying changes without confirmation.',
     ),
+    'health.explainRecoveryAlert' => const IntentCopy(
+      label: 'Explain recovery alert',
+      promptTemplate:
+          'Explain {{object_label}} using the attached recovery alert and HRV trend evidence. State why the alert fired, how strong the signal is, and what caveats matter.',
+    ),
     'finance.reviewWealth' => const IntentCopy(
       label: 'Review wealth',
       promptTemplate:

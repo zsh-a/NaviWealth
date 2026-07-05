@@ -99,6 +99,9 @@ const Set<String> jsonOnlyRenderTools = <String>{
   // narrate the summary/evidence in prose while raw JSON remains available.
   'get_agent_artifacts',
   'get_agent_runs',
+  // Health trend tools return compact time-series JSON; agent follow-up
+  // answers should narrate the signal rather than render a bespoke card.
+  'get_hrv_trend',
 };
 
 const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
@@ -126,6 +129,14 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     expectedTools: <String>{'get_agent_artifacts', 'get_agent_runs'},
     objectType: 'agent_artifact',
     objectId: 'execution_review:2026-07-05',
+  ),
+  RegressionPrompt(
+    id: 'health.explainRecoveryAlert.hrv_decline',
+    intent: 'health.explainRecoveryAlert',
+    userPrompt: '解释这份 recovery alert 为什么触发，以及 HRV 证据有多强。',
+    expectedTools: <String>{'get_agent_artifacts', 'get_hrv_trend'},
+    objectType: 'agent_artifact',
+    objectId: 'recovery_alert:2026-07-05',
   ),
   RegressionPrompt(
     id: 'finance.reviewWealth.weekly_wealth_review',

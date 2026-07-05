@@ -246,6 +246,8 @@ void main() {
         'build_context',
         'find_similar_knowledge',
         'get_activity_summary',
+        'get_agent_artifacts',
+        'get_agent_runs',
         'get_anomaly_flags',
         'get_asset_allocation',
         'get_body_battery_trend',
