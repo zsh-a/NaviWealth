@@ -5,6 +5,7 @@ import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart'
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -13,6 +14,7 @@ import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_pl
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -212,6 +214,61 @@ void main() {
     ]);
     expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
   });
+
+  test(
+    'run skips local notification when agent notifications are off',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final artifactStore = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final preferences = InMemoryAgentPreferenceStore();
+      await preferences.setNotificationsEnabled(
+        ownerUserId: 'user-1',
+        agentId: kKnowledgeRoutineAgentId,
+        enabled: false,
+        updatedAt: DateTime.utc(2026, 7, 5, 7),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => artifactStore,
+          ),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferences,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final notifier = _RecordingNotificationService();
+      final agent = RoutineDueAgent(
+        notifier: notifier,
+        dueReader: _FixedRoutineReader(
+          RoutineDueSnapshot(
+            due: <RoutineDueItem>[
+              RoutineDueItem(
+                id: 'routine-overdue',
+                statement: 'Activate bank card',
+                nextDueAt: DateTime.utc(2026, 7, 4, 8),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final result = await _runAgent(
+        container,
+        agent,
+        DateTime.utc(2026, 7, 5, 8),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(notifier.showCount, 0);
+    },
+  );
 }
 
 AgentContext _context() {
@@ -339,4 +396,31 @@ class _FakeMemoryRuntime implements MemoryRuntime {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} not stubbed');
+}
+
+class _RecordingNotificationService implements NotificationService {
+  var showCount = 0;
+
+  @override
+  Future<void> cancel(int id) async {}
+
+  @override
+  Future<bool> hasPermissions() async => true;
+
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<bool> requestPermissions() async => true;
+
+  @override
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+    required NotificationChannelSpec channel,
+    String? payload,
+  }) async {
+    showCount += 1;
+  }
 }

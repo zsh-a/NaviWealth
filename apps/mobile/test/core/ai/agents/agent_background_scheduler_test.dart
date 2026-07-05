@@ -182,4 +182,62 @@ void main() {
     expect(agent.runCount, 0);
     expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
   });
+
+  test(
+    'runIfDue consumes flag but skips notification-disabled agents',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        _task.dueAtPreferenceKey: DateTime.utc(
+          2026,
+          7,
+          5,
+          8,
+        ).millisecondsSinceEpoch,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final runtime = MemoryRuntime(
+        embedder: StubEmbedder(),
+        memoryStore: SqliteMemoryStore(db: db),
+        eventStore: SqliteEventStore(db: db),
+      );
+      final preferences = InMemoryAgentPreferenceStore();
+      await preferences.setNotificationsEnabled(
+        ownerUserId: 'u',
+        agentId: 'agent-1',
+        enabled: false,
+        updatedAt: DateTime.utc(2026, 7, 5, 8),
+      );
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final agent = _StubAgent();
+      final controller = AgentRunController(
+        runner: AgentRunner(
+          runtime: runtime,
+          ownerUserId: 'u',
+          preferenceStore: preferences,
+        ),
+        agents: [agent],
+        ref: container.read(_refProvider),
+      );
+      final catchUp = AgentBackgroundCatchUpRunner(
+        dueFlags: AgentDueFlagStore(prefs: prefs),
+        preferences: preferences,
+        controller: controller,
+        currentUserId: () async => 'u',
+      );
+
+      final result = await catchUp.runIfDue(
+        binding: const AgentBackgroundTaskBinding(
+          agentId: 'agent-1',
+          task: _task,
+        ),
+      );
+
+      expect(result, isNull);
+      expect(agent.runCount, 0);
+      expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
+    },
+  );
 }

@@ -46,10 +46,24 @@ final morningBriefingCronProvider = Provider<void>((ref) {
   final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
   final notificationsEnabled = ref.watch(notificationsEnabledProvider);
   final briefingEnabled = ref.watch(healthBriefingNotificationsEnabledProvider);
+  ref.watch(agent_providers.agentPreferenceRevisionProvider);
   unawaited(() async {
     try {
       if (!await scheduler.isAvailable()) return;
-      if (healthEnabled && notificationsEnabled && briefingEnabled) {
+      if (!healthEnabled || !notificationsEnabled || !briefingEnabled) {
+        await scheduler.cancelTask(kMorningBriefingBackgroundTask);
+        return;
+      }
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final preferenceStore = await ref.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      final agentNotificationsEnabled = await preferenceStore
+          .areNotificationsEnabled(
+            ownerUserId: ownerUserId,
+            agentId: kMorningBriefingAgentId,
+          );
+      if (agentNotificationsEnabled) {
         await scheduler.registerTask(kMorningBriefingBackgroundTask);
       } else {
         await scheduler.cancelTask(kMorningBriefingBackgroundTask);

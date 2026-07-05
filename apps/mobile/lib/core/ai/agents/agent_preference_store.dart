@@ -35,6 +35,11 @@ abstract interface class AgentPreferenceStore {
     required String agentId,
   });
 
+  Future<bool> areNotificationsEnabled({
+    required String ownerUserId,
+    required String agentId,
+  });
+
   Future<void> setEnabled({
     required String ownerUserId,
     required String agentId,
@@ -80,6 +85,18 @@ class InMemoryAgentPreferenceStore implements AgentPreferenceStore {
       agentId: agentId,
     );
     return pref.enabled;
+  }
+
+  @override
+  Future<bool> areNotificationsEnabled({
+    required String ownerUserId,
+    required String agentId,
+  }) async {
+    final pref = await preferenceFor(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+    );
+    return pref.notificationsEnabled;
   }
 
   @override
@@ -179,6 +196,18 @@ class SqliteAgentPreferenceStore implements AgentPreferenceStore {
       agentId: agentId,
     );
     return pref.enabled;
+  }
+
+  @override
+  Future<bool> areNotificationsEnabled({
+    required String ownerUserId,
+    required String agentId,
+  }) async {
+    final pref = await preferenceFor(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+    );
+    return pref.notificationsEnabled;
   }
 
   @override

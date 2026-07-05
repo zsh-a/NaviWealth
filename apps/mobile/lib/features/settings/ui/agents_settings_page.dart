@@ -150,6 +150,10 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       enabled: enabled,
       updatedAt: DateTime.now().toUtc(),
     );
+    final revision = ref.read(
+      agent_providers.agentPreferenceRevisionProvider.notifier,
+    );
+    revision.state = revision.state + 1;
     ref.invalidate(_agentSettingsRowsProvider);
   }
 
@@ -164,6 +168,10 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       enabled: enabled,
       updatedAt: DateTime.now().toUtc(),
     );
+    final revision = ref.read(
+      agent_providers.agentPreferenceRevisionProvider.notifier,
+    );
+    revision.state = revision.state + 1;
     ref.invalidate(_agentSettingsRowsProvider);
   }
 

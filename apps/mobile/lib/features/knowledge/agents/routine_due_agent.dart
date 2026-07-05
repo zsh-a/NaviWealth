@@ -144,7 +144,17 @@ class RoutineDueAgent implements Agent {
 
     final n = notifier;
     if (n != null) {
-      await _maybeNotify(start.toLocal(), l10n, summary, n);
+      final preferenceStore = await ctx.ref.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      final agentNotificationsEnabled = await preferenceStore
+          .areNotificationsEnabled(
+            ownerUserId: ownerUserId,
+            agentId: kKnowledgeRoutineAgentId,
+          );
+      if (agentNotificationsEnabled) {
+        await _maybeNotify(start.toLocal(), l10n, summary, n);
+      }
     }
 
     return AgentRunResult(

@@ -72,10 +72,25 @@ final knowledgeRoutineDueCronProvider = Provider<void>((ref) {
   final scheduler = ref.watch(background_providers.backgroundSchedulerProvider);
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   final knowledgeEnabled = optIns?.contains(DomainScope.knowledge) ?? false;
+  final notificationsEnabled = ref.watch(notificationsEnabledProvider);
+  ref.watch(agent_providers.agentPreferenceRevisionProvider);
   unawaited(() async {
     try {
       if (!await scheduler.isAvailable()) return;
-      if (knowledgeEnabled) {
+      if (!knowledgeEnabled || !notificationsEnabled) {
+        await scheduler.cancelTask(kKnowledgeRoutineDueBackgroundTask);
+        return;
+      }
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final preferenceStore = await ref.read(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      final agentNotificationsEnabled = await preferenceStore
+          .areNotificationsEnabled(
+            ownerUserId: ownerUserId,
+            agentId: kKnowledgeRoutineAgentId,
+          );
+      if (agentNotificationsEnabled) {
         await scheduler.registerTask(kKnowledgeRoutineDueBackgroundTask);
       } else {
         await scheduler.cancelTask(kKnowledgeRoutineDueBackgroundTask);
