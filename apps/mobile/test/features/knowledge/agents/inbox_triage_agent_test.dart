@@ -21,6 +21,7 @@ import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -287,6 +288,15 @@ void main() {
       ]);
       expect(artifact.evidence.single.id, 'n1');
       expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+      final outcomeFailures = evaluateAgentOutcomeCase(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'knowledge.inbox_triage.ready',
+        ),
+        result: res,
+        artifact: artifact,
+        proposalKinds: const <String>{'classification'},
+      );
+      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
     });
 
     test('persists source trace id onto result and artifact', () async {
