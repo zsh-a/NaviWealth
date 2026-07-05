@@ -181,7 +181,15 @@ void main() {
             c.tags.contains(kAgentOutcomeNoLlmProfileTag),
       );
 
-      expect(financeNoLlmCases, isNotEmpty);
+      expect(
+        financeNoLlmCases.map((c) => c.agentId),
+        containsAll(<String>{
+          'weekly_wealth_review',
+          'cashflow_anomaly_review',
+          'fire_plan_drift_monitor',
+          'options_income_risk_review',
+        }),
+      );
       expect(
         financeNoLlmCases.map((c) => c.expectedStatus),
         everyElement(AgentOutcomeRegressionStatus.ready),
@@ -211,6 +219,12 @@ void main() {
       const fixturePathsByCaseId = <String, String>{
         'finance.weekly_wealth_review.no_llm_profile_fallback':
             'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
+        'finance.cashflow_anomaly_review.no_llm_profile_fallback':
+            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'finance.fire_plan_drift_monitor.no_llm_profile_fallback':
+            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'finance.options_income_risk_review.no_llm_profile_fallback':
+            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
         'knowledge.inbox_triage.ready':
             'test/features/knowledge/agents/inbox_triage_agent_test.dart',
         'knowledge.contradiction.prompt_injection_guard':
