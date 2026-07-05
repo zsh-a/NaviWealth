@@ -84,7 +84,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                     secondary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const _FinanceAgentResultsPanel(),
+                        const FinanceAgentResultsPanel(),
                         if (insights.isNotEmpty) ...[
                           AiInsightFeed(insights: insights),
                           const SizedBox(height: AppSpacing.s20),
@@ -104,7 +104,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
                         const _HomeQuickActions(),
-                        const _FinanceAgentResultsPanel(),
+                        const FinanceAgentResultsPanel(),
                         if (insights.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.s20),
                           AiInsightFeed(insights: insights),
@@ -129,8 +129,8 @@ class _DashboardBodyContent extends ConsumerWidget {
   }
 }
 
-class _FinanceAgentResultsPanel extends ConsumerWidget {
-  const _FinanceAgentResultsPanel();
+class FinanceAgentResultsPanel extends ConsumerWidget {
+  const FinanceAgentResultsPanel({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
