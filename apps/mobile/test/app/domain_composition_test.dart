@@ -506,6 +506,22 @@ void main() {
           reason: registration.agent.id,
         );
       }
+      expect(
+        {
+          for (final entry in specs.entries)
+            if (entry.value.notificationsSupported) entry.key,
+        },
+        <String>{
+          'morning_briefing',
+          'recovery_alert',
+          'knowledge_routine_due',
+          'execution_review',
+        },
+      );
+      expect(
+        specs.values.map((spec) => spec.placement),
+        everyElement(isNot(AgentResultPlacement.settingsOnly)),
+      );
     },
   );
 

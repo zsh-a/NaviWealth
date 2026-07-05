@@ -58,6 +58,7 @@ final DomainPack kExecutionPack = DomainPack(
       icon: FLucideIcons.listChecks,
       label: _executionReviewLabel,
       description: _executionReviewDescription,
+      notificationsSupported: true,
       placement: AgentResultPlacement.domainReview,
     ),
   ],
