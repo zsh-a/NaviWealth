@@ -153,6 +153,20 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     ref.invalidate(_agentSettingsRowsProvider);
   }
 
+  Future<void> _setNotificationsEnabled(bool enabled) async {
+    final ownerUserId = await ref.read(currentUserIdProvider)();
+    final store = await ref.read(
+      agent_providers.agentPreferenceStoreProvider.future,
+    );
+    await store.setNotificationsEnabled(
+      ownerUserId: ownerUserId,
+      agentId: widget.row.agent.id,
+      enabled: enabled,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    ref.invalidate(_agentSettingsRowsProvider);
+  }
+
   Future<void> _runNow() async {
     if (_running) return;
     setState(() => _running = true);
@@ -268,10 +282,12 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                 tone: enabled ? AppBadgeTone.accent : AppBadgeTone.neutral,
               ),
               if (presentation?.notificationsSupported ?? false)
-                AppBadge(
+                _AgentNotificationToggle(
+                  agentId: row.agent.id,
                   label: l10n.agentSettingsNotifications,
-                  size: AppBadgeSize.compact,
-                  tone: AppBadgeTone.info,
+                  value: row.preference.notificationsEnabled,
+                  enabled: enabled,
+                  onChange: _setNotificationsEnabled,
                 ),
             ],
           ),
@@ -294,5 +310,49 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     return detail == null
         ? status
         : l10n.agentSettingsStatusWithDetail(status, detail);
+  }
+}
+
+class _AgentNotificationToggle extends StatelessWidget {
+  const _AgentNotificationToggle({
+    required this.agentId,
+    required this.label,
+    required this.value,
+    required this.enabled,
+    required this.onChange,
+  });
+
+  final String agentId;
+  final String label;
+  final bool value;
+  final bool enabled;
+  final ValueChanged<bool> onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.theme.colors.muted.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s6,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: context.captionStyle),
+            const SizedBox(width: AppSpacing.s8),
+            FSwitch(
+              key: ValueKey<String>('agent-notifications-$agentId'),
+              value: value,
+              onChange: enabled ? onChange : null,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

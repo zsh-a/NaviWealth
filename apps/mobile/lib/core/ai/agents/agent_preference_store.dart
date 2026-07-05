@@ -42,6 +42,13 @@ abstract interface class AgentPreferenceStore {
     required DateTime updatedAt,
   });
 
+  Future<void> setNotificationsEnabled({
+    required String ownerUserId,
+    required String agentId,
+    required bool enabled,
+    required DateTime updatedAt,
+  });
+
   Future<List<AgentPreference>> listForOwner({required String ownerUserId});
 }
 
@@ -82,11 +89,35 @@ class InMemoryAgentPreferenceStore implements AgentPreferenceStore {
     required bool enabled,
     required DateTime updatedAt,
   }) async {
+    final current = await preferenceFor(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+    );
     _preferences[_key(ownerUserId, agentId)] = AgentPreference(
       ownerUserId: ownerUserId,
       agentId: agentId,
       enabled: enabled,
-      notificationsEnabled: true,
+      notificationsEnabled: current.notificationsEnabled,
+      updatedAt: updatedAt.toUtc(),
+    );
+  }
+
+  @override
+  Future<void> setNotificationsEnabled({
+    required String ownerUserId,
+    required String agentId,
+    required bool enabled,
+    required DateTime updatedAt,
+  }) async {
+    final current = await preferenceFor(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+    );
+    _preferences[_key(ownerUserId, agentId)] = AgentPreference(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+      enabled: current.enabled,
+      notificationsEnabled: enabled,
       updatedAt: updatedAt.toUtc(),
     );
   }
@@ -175,6 +206,40 @@ class SqliteAgentPreferenceStore implements AgentPreferenceStore {
         agentId,
         enabled ? 1 : 0,
         1,
+        updatedAt.toUtc().millisecondsSinceEpoch,
+      ],
+    );
+  }
+
+  @override
+  Future<void> setNotificationsEnabled({
+    required String ownerUserId,
+    required String agentId,
+    required bool enabled,
+    required DateTime updatedAt,
+  }) async {
+    final current = await preferenceFor(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+    );
+    await _db.customStatement(
+      '''
+      INSERT INTO agent_preferences (
+        owner_user_id,
+        agent_id,
+        enabled,
+        notifications_enabled,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(owner_user_id, agent_id) DO UPDATE SET
+        notifications_enabled = excluded.notifications_enabled,
+        updated_at = excluded.updated_at
+      ''',
+      <Object?>[
+        ownerUserId,
+        agentId,
+        current.enabled ? 1 : 0,
+        enabled ? 1 : 0,
         updatedAt.toUtc().millisecondsSinceEpoch,
       ],
     );

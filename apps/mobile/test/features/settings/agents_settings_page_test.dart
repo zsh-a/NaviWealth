@@ -63,6 +63,18 @@ void main() {
     expect(find.text('Presented description.'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Run now'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('agent-notifications-fake_agent')),
+    );
+    await tester.pumpAndSettle();
+
+    final pref = await preferenceStore.preferenceFor(
+      ownerUserId: 'user-1',
+      agentId: 'fake_agent',
+    );
+    expect(pref.notificationsEnabled, isFalse);
+    expect(pref.enabled, isTrue);
   });
 
   testWidgets('opens latest agent artifact from settings', (tester) async {
