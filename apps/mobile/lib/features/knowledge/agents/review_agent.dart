@@ -9,7 +9,9 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -93,6 +95,19 @@ class ReviewAgent implements Agent {
       confidence: 0.95,
     );
     await runtime.remember(built.record);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    final artifact = _buildArtifact(
+      ownerUserId: ownerUserId,
+      start: start,
+      finished: finished,
+      summary: summary,
+      memoryId: built.memoryId,
+      due: due,
+      staleAssumptions: staleAssumptions,
+    );
+    await artifactStore.save(artifact);
 
     return AgentRunResult(
       agentId: kKnowledgeReviewAgentId,
@@ -105,6 +120,86 @@ class ReviewAgent implements Agent {
         'stale_assumption_count': staleAssumptions.length,
       },
       memoryId: built.memoryId,
+      artifactId: artifact.id,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String ownerUserId,
+    required DateTime start,
+    required DateTime finished,
+    required String summary,
+    required String memoryId,
+    required List<ReviewDecisionItem> due,
+    required List<ReviewAssumptionItem> staleAssumptions,
+  }) {
+    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+    final hasStaleAssumptions = staleAssumptions.isNotEmpty;
+    return AgentArtifact(
+      id: '$kKnowledgeReviewAgentId:$dayKey',
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeReviewAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.review,
+      severity: hasStaleAssumptions
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+      title: 'Weekly Knowledge Review',
+      summary: summary,
+      insights: <AgentInsight>[
+        if (due.isNotEmpty)
+          AgentInsight(
+            title: 'Decisions due',
+            body:
+                '${due.length} decision review${due.length == 1 ? '' : 's'}'
+                ' need attention.',
+            severity: AgentArtifactSeverity.info,
+            payload: <String, Object?>{
+              'count': due.length,
+              'first_id': due.first.id,
+            },
+          ),
+        if (staleAssumptions.isNotEmpty)
+          AgentInsight(
+            title: 'Stale assumptions',
+            body:
+                '${staleAssumptions.length} assumption${staleAssumptions.length == 1 ? '' : 's'}'
+                ' crossed the $kAssumptionStaleDays day verification window.',
+            severity: AgentArtifactSeverity.attention,
+            payload: <String, Object?>{
+              'count': staleAssumptions.length,
+              'threshold_days': kAssumptionStaleDays,
+              'first_id': staleAssumptions.first.id,
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final decision in due)
+          AgentEvidenceRef(
+            type: 'knowledge_decision',
+            id: decision.id,
+            label: decision.question,
+            payload: const <String, Object?>{'reason': 'review_due'},
+          ),
+        for (final assumption in staleAssumptions)
+          AgentEvidenceRef(
+            type: 'knowledge_assumption',
+            id: assumption.id,
+            label: assumption.statement,
+            payload: const <String, Object?>{'reason': 'stale_assumption'},
+          ),
+      ],
+      actions: const <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review knowledge items',
+          intent: 'knowledge.reviewDueItems',
+          objectType: 'agent_artifact',
+        ),
+      ],
+      memoryId: memoryId,
+      createdAt: finished.toUtc(),
+      expiresAt: finished.toUtc().add(const Duration(days: 14)),
     );
   }
 

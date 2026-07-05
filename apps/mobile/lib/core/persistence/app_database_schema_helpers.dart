@@ -78,6 +78,12 @@ Future<void> _createAgentArtifacts(AppDatabase db) async {
   }
 }
 
+Future<void> _createAgentPreferences(AppDatabase db) async {
+  for (final stmt in agentPreferenceDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createIndexes(AppDatabase db) async {
   const stmts = <String>[
     'CREATE INDEX IF NOT EXISTS idx_accounts_owner_hlc '

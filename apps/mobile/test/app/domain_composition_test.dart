@@ -408,6 +408,7 @@ void main() {
       expect(
         c.read(agentRegistryProvider).map((agent) => agent.id),
         containsAll(<String>[
+          'weekly_wealth_review',
           'morning_briefing',
           'knowledge_review',
           'execution_review',

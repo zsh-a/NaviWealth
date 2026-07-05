@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 31', () {
-      expect(db.schemaVersion, 31);
+    test('is 32', () {
+      expect(db.schemaVersion, 32);
     });
   });
 
@@ -318,6 +318,23 @@ void main() {
           'trace_id',
           'created_at',
           'expires_at',
+        ]),
+      );
+    });
+
+    test('agent_preferences table has preference columns', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(agent_preferences)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'owner_user_id',
+          'agent_id',
+          'enabled',
+          'notifications_enabled',
+          'updated_at',
         ]),
       );
     });

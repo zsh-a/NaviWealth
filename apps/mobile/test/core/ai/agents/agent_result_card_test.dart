@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
@@ -97,5 +98,39 @@ void main() {
     expect(find.text('Sleep session'), findsOneWidget);
     expect(find.text('Actions'), findsOneWidget);
     expect(find.text('Review plan'), findsOneWidget);
+  });
+
+  testWidgets('run status card renders failed status and retry action', (
+    tester,
+  ) async {
+    var retried = false;
+    await tester.pumpWidget(
+      _wrap(
+        AgentRunStatusCard(
+          record: AgentRunRecord(
+            id: 'run-1',
+            ownerUserId: 'user-1',
+            agentId: 'agent-1',
+            agentName: 'Weekly Review',
+            status: AgentRunLifecycleStatus.failed,
+            trigger: AgentRunTrigger.manual,
+            startedAt: DateTime.utc(2026, 7, 5, 8),
+            finishedAt: DateTime.utc(2026, 7, 5, 8, 1),
+            error: 'Runtime unavailable',
+          ),
+          metaLabel: 'Updated just now',
+          onRetry: () => retried = true,
+        ),
+      ),
+    );
+
+    expect(find.text('Weekly Review'), findsOneWidget);
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('Runtime unavailable'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(retried, isTrue);
   });
 }

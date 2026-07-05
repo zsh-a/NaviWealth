@@ -84,6 +84,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                     secondary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const _WeeklyWealthReviewPanel(),
                         if (insights.isNotEmpty) ...[
                           AiInsightFeed(insights: insights),
                           const SizedBox(height: AppSpacing.s20),
@@ -103,6 +104,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
                         const _HomeQuickActions(),
+                        const _WeeklyWealthReviewPanel(),
                         if (insights.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.s20),
                           AiInsightFeed(insights: insights),
@@ -123,6 +125,66 @@ class _DashboardBodyContent extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _WeeklyWealthReviewPanel extends ConsumerWidget {
+  const _WeeklyWealthReviewPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final artifactAsync = ref.watch(
+      finance_agent_providers.latestWeeklyWealthReviewArtifactProvider,
+    );
+    final artifact = artifactAsync.value;
+    if (artifact != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AgentResultCard(
+            artifact: artifact,
+            metaLabel: _financeAgentMetaLabel(context, ref, artifact.createdAt),
+            onOpen: () => showAgentArtifactSheet(
+              context: context,
+              artifact: artifact,
+              subtitle: _financeAgentMetaLabel(
+                context,
+                ref,
+                artifact.createdAt,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s20),
+        ],
+      );
+    }
+
+    final run = ref
+        .watch(finance_agent_providers.latestWeeklyWealthReviewRunProvider)
+        .value;
+    if (run == null) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AgentRunStatusCard(
+          record: run,
+          metaLabel: _financeAgentMetaLabel(context, ref, run.startedAt),
+          onRetry: () async {
+            final controller = await ref.read(
+              agentRunControllerProvider.future,
+            );
+            await controller.runOnceById(kWeeklyWealthReviewAgentId);
+            ref.invalidate(
+              finance_agent_providers.latestWeeklyWealthReviewArtifactProvider,
+            );
+            ref.invalidate(
+              finance_agent_providers.latestWeeklyWealthReviewRunProvider,
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.s20),
+      ],
     );
   }
 }
@@ -156,4 +218,13 @@ class _CashFlowCardsGrid extends StatelessWidget {
       },
     );
   }
+}
+
+String _financeAgentMetaLabel(
+  BuildContext context,
+  WidgetRef ref,
+  DateTime at,
+) {
+  final formatters = context.formatters(ref);
+  return 'FinanceOS · ${formatters.date(at.toLocal())}';
 }

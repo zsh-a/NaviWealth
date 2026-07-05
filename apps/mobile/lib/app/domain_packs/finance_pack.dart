@@ -2,8 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/features/finance/agents/providers.dart'
+    as finance_agent_providers;
 import 'package:naviwealth/features/finance/composition/finance_bootstrap.dart';
 import 'package:naviwealth/features/finance/composition/finance_command_palette.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
@@ -50,6 +53,7 @@ final DomainPack kFinancePack = DomainPack(
   // recurring + dividends) but isn't a primary tab. It is surfaced through
   // Wealth / Plan navigation, but route ownership still belongs to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
+  agentBuilder: _financeAgents,
   memoryBootstrapBuilder: _financeMemoryBootstrap,
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
@@ -64,6 +68,9 @@ final DomainPack kFinancePack = DomainPack(
     sectionBuilder: _financeSettingsSection,
   ),
 );
+
+List<Agent> _financeAgents(Ref ref) =>
+    ref.watch(finance_agent_providers.financeAgentsProvider);
 
 void _financeMemoryBootstrap(Ref ref) {
   ref.watch(tradeJournalMemoryIndexerProvider);

@@ -8,6 +8,10 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
+import '../../../core/auth/current_user.dart';
 import '../../../core/notifications/notification_preferences.dart';
 import '../../../core/notifications/providers.dart' as notif_providers;
 import 'assumption_agent.dart';
@@ -53,3 +57,30 @@ final knowledgeAgentsProvider = Provider<List<Agent>>((ref) {
     ref.watch(routineDueAgentProvider),
   ];
 });
+
+/// Most recent user-visible Knowledge Review artifact for the Review tab.
+final latestKnowledgeReviewArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final artifacts = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kKnowledgeReviewAgentId,
+        limit: 1,
+      );
+      return artifacts.isEmpty ? null : artifacts.single;
+    });
+
+final latestKnowledgeReviewRunProvider =
+    FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
+      final store = await ref.watch(
+        agent_providers.agentRunStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      return store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kKnowledgeReviewAgentId,
+      );
+    });

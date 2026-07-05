@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 31;
+  int get schemaVersion => 32;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +102,7 @@ class AppDatabase extends _$AppDatabase {
       await _createKnowledgeInboxTriage(this);
       await _createAgentRuns(this);
       await _createAgentArtifacts(this);
+      await _createAgentPreferences(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -478,6 +479,11 @@ class AppDatabase extends _$AppDatabase {
           definition: 'TEXT',
         );
         await _createAgentArtifacts(this);
+      }
+      // v31 -> v32: local per-user agent preferences. These control
+      // scheduling/notification behavior but remain local product state.
+      if (from < 32) {
+        await _createAgentPreferences(this);
       }
     },
     beforeOpen: (details) async {

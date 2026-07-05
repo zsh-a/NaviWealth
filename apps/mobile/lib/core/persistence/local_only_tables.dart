@@ -5,6 +5,8 @@
 ///   should not sync.
 /// - `agent_artifacts` — user-visible briefing/review/alert records produced
 ///   by agents. Local-only, with evidence/actions encoded as compact JSON.
+/// - `agent_preferences` — per-user local agent toggles and notification
+///   preferences. These are product preferences, not synced source data.
 /// - `options_opportunity_cache` — scoring engine output. Each device
 ///   computes its own opportunities from its own chain pull
 ///   (`docs/domains/options-income.md` §6.2).
@@ -90,6 +92,27 @@ const List<String> agentArtifactDdl = [
   createAgentArtifacts,
   createAgentArtifactsAgentCreatedIndex,
   createAgentArtifactsDomainCreatedIndex,
+];
+
+const String createAgentPreferences = '''
+CREATE TABLE IF NOT EXISTS agent_preferences (
+  owner_user_id         TEXT NOT NULL,
+  agent_id              TEXT NOT NULL,
+  enabled               INTEGER NOT NULL DEFAULT 1,
+  notifications_enabled INTEGER NOT NULL DEFAULT 1,
+  updated_at            INTEGER NOT NULL,
+  PRIMARY KEY (owner_user_id, agent_id)
+)
+''';
+
+const String createAgentPreferencesOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_preferences_owner
+  ON agent_preferences(owner_user_id, agent_id)
+''';
+
+const List<String> agentPreferenceDdl = [
+  createAgentPreferences,
+  createAgentPreferencesOwnerIndex,
 ];
 
 const String createOptionsOpportunityCache = '''

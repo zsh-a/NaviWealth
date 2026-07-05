@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_background_scheduler.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
@@ -112,10 +113,6 @@ final pendingBriefingRunProvider = FutureProvider.autoDispose<AgentRunResult?>((
 ) async {
   final optIns = await ref.read(core_auth.domainOptInsProvider.future);
   if (!optIns.contains(DomainScope.health)) return null;
-  final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
-  final due = prefs.getInt(kMorningBriefingDueAtKey);
-  if (due == null) return null;
-  await prefs.remove(kMorningBriefingDueAtKey);
   return runDueMorningBriefingTick(ref);
 });
 
@@ -178,12 +175,14 @@ final manualMorningBriefingRunProvider =
 Future<AgentRunResult?> runDueMorningBriefingTick(Ref ref) async {
   final link = ref.keepAlive();
   try {
-    await _syncHealthBeforeBriefing(ref);
-    final controller = await ref.read(agentRunControllerProvider.future);
-    final results = await controller.tick(
-      onlyAgentIds: const <String>[kMorningBriefingAgentId],
+    final catchUp = await ref.read(agentBackgroundCatchUpRunnerProvider.future);
+    return catchUp.runIfDue(
+      binding: const AgentBackgroundTaskBinding(
+        agentId: kMorningBriefingAgentId,
+        task: kMorningBriefingBackgroundTask,
+      ),
+      beforeRun: () => _syncHealthBeforeBriefing(ref),
     );
-    return results.isEmpty ? null : results.single;
   } finally {
     link.close();
   }

@@ -17,12 +17,13 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/current_user.dart';
-import '../../persistence/providers.dart';
 import '../contracts/event_record.dart';
 import '../local/memory/memory_runtime.dart';
 import '../local/memory/providers.dart';
 import 'agent.dart';
+import 'agent_preference_store.dart';
 import 'agent_run_store.dart';
+import 'providers.dart' as agent_providers;
 
 /// Source label used for the `EventRecord` of every agent run.
 const String kAgentRunEventSource = 'agent_run';
@@ -35,11 +36,14 @@ class AgentRunner {
     required this.runtime,
     required this.ownerUserId,
     AgentRunStore? runStore,
-  }) : _runStore = runStore ?? InMemoryAgentRunStore();
+    AgentPreferenceStore? preferenceStore,
+  }) : _runStore = runStore ?? InMemoryAgentRunStore(),
+       _preferenceStore = preferenceStore ?? InMemoryAgentPreferenceStore();
 
   final MemoryRuntime runtime;
   final String ownerUserId;
   final AgentRunStore _runStore;
+  final AgentPreferenceStore _preferenceStore;
 
   /// Fire [agent] right now, regardless of schedule. Used by manual
   /// "Run X now" affordances and by tests.
@@ -89,6 +93,11 @@ class AgentRunner {
   }) async {
     final results = <AgentRunResult>[];
     for (final agent in agents) {
+      final enabled = await _preferenceStore.isEnabled(
+        ownerUserId: ownerUserId,
+        agentId: agent.id,
+      );
+      if (!enabled) continue;
       final last = await _runStore.lastNonFailedRunAt(
         ownerUserId: ownerUserId,
         agentId: agent.id,
@@ -154,11 +163,17 @@ class AgentRunner {
 /// (with a fresh `_lastRunAt` map) is built.
 final agentRunnerProvider = FutureProvider<AgentRunner>((ref) async {
   final runtime = await ref.watch(memoryRuntimeProvider.future);
-  final db = await ref.watch(appDatabaseProvider.future);
+  final runStore = await ref.watch(
+    agent_providers.agentRunStoreProvider.future,
+  );
+  final preferenceStore = await ref.watch(
+    agent_providers.agentPreferenceStoreProvider.future,
+  );
   final ownerUserId = await ref.read(currentUserIdProvider)();
   return AgentRunner(
     runtime: runtime,
     ownerUserId: ownerUserId,
-    runStore: SqliteAgentRunStore(db: db),
+    runStore: runStore,
+    preferenceStore: preferenceStore,
   );
 });

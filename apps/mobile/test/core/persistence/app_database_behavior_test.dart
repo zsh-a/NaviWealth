@@ -556,6 +556,8 @@ void main() {
             'idx_agent_runs_agent_started',
             'agent_artifacts',
             'idx_agent_artifacts_domain_created',
+            'agent_preferences',
+            'idx_agent_preferences_owner',
             'securities_catalog_fts'
           )
           ''').get();
@@ -585,6 +587,8 @@ void main() {
         'idx_agent_runs_agent_started',
         'agent_artifacts',
         'idx_agent_artifacts_domain_created',
+        'agent_preferences',
+        'idx_agent_preferences_owner',
         'securities_catalog_fts',
       ]),
     );

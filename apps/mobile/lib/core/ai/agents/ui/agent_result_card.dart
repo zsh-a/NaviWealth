@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../agent_artifact.dart';
+import '../agent_run_store.dart';
 
 /// Domain-neutral presentation for user-visible agent output.
 ///
@@ -118,6 +119,116 @@ class AgentResultCard extends StatelessWidget {
                 onPress: onOpen,
                 prefix: const Icon(
                   FLucideIcons.externalLink,
+                  size: AppIconSizes.xs,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class AgentRunStatusCard extends StatelessWidget {
+  const AgentRunStatusCard({
+    super.key,
+    required this.record,
+    required this.metaLabel,
+    this.onRetry,
+  });
+
+  final AgentRunRecord record;
+  final String metaLabel;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final accent = _accentColorForRun(context, record.status);
+    final summary =
+        record.error ?? record.summary ?? _statusLabel(record.status);
+
+    return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: true,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AppIconTile(
+                icon: _iconForRunStatus(record.status),
+                color: accent,
+                size: 36,
+                iconSize: AppIconSizes.h18,
+                backgroundOpacity: AppOpacity.medium,
+                foregroundOpacity: 1,
+              ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      record.agentName,
+                      style: context.labelStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      metaLabel,
+                      style: context.captionStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              AppBadge(
+                label: _statusLabel(record.status),
+                tone: _badgeToneForRun(record.status),
+                size: AppBadgeSize.compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.muted.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Text(
+                summary,
+                style: typography.body.sm.copyWith(height: 1.45),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          if (record.status == AgentRunLifecycleStatus.running) ...[
+            const SizedBox(height: AppSpacing.s12),
+            const SizedBox(
+              width: AppIconSizes.sm,
+              height: AppIconSizes.sm,
+              child: FCircularProgress(),
+            ),
+          ] else if (record.status == AgentRunLifecycleStatus.failed &&
+              onRetry != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AppQuietButton(
+                label: 'Retry',
+                onPress: onRetry,
+                prefix: const Icon(
+                  FLucideIcons.refreshCw,
                   size: AppIconSizes.xs,
                 ),
               ),
@@ -376,5 +487,38 @@ Color _accentColor(BuildContext context, AgentArtifactSeverity severity) {
     AgentArtifactSeverity.info => colors.primary,
     AgentArtifactSeverity.attention => semantic.warning,
     AgentArtifactSeverity.warning => semantic.danger,
+  };
+}
+
+IconData _iconForRunStatus(AgentRunLifecycleStatus status) => switch (status) {
+  AgentRunLifecycleStatus.running => FLucideIcons.loaderCircle,
+  AgentRunLifecycleStatus.noFinding => FLucideIcons.circleCheck,
+  AgentRunLifecycleStatus.ready => FLucideIcons.sparkles,
+  AgentRunLifecycleStatus.failed => FLucideIcons.triangleAlert,
+};
+
+String _statusLabel(AgentRunLifecycleStatus status) => switch (status) {
+  AgentRunLifecycleStatus.running => 'Running',
+  AgentRunLifecycleStatus.noFinding => 'No finding',
+  AgentRunLifecycleStatus.ready => 'Ready',
+  AgentRunLifecycleStatus.failed => 'Failed',
+};
+
+AppBadgeTone _badgeToneForRun(AgentRunLifecycleStatus status) =>
+    switch (status) {
+      AgentRunLifecycleStatus.running => AppBadgeTone.info,
+      AgentRunLifecycleStatus.noFinding => AppBadgeTone.neutral,
+      AgentRunLifecycleStatus.ready => AppBadgeTone.accent,
+      AgentRunLifecycleStatus.failed => AppBadgeTone.error,
+    };
+
+Color _accentColorForRun(BuildContext context, AgentRunLifecycleStatus status) {
+  final colors = context.theme.colors;
+  final semantic = SemanticColors.of(context);
+  return switch (status) {
+    AgentRunLifecycleStatus.running => semantic.info,
+    AgentRunLifecycleStatus.noFinding => colors.mutedForeground,
+    AgentRunLifecycleStatus.ready => colors.primary,
+    AgentRunLifecycleStatus.failed => semantic.danger,
   };
 }

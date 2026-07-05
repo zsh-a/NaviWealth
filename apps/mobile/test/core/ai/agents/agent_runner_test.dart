@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_runner.dart';
@@ -238,6 +239,34 @@ void main() {
     );
     expect(later, hasLength(1));
     expect(hourly.runCount, 2);
+  });
+
+  test('tick skips agents disabled in preferences', () async {
+    final rt = _runtime();
+    final preferences = InMemoryAgentPreferenceStore();
+    final runner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      preferenceStore: preferences,
+    );
+    final agent = _StubAgent(
+      id: 'disabled',
+      schedule: const AgentSchedule(interval: Duration(hours: 1)),
+    );
+    await preferences.setEnabled(
+      ownerUserId: 'u',
+      agentId: 'disabled',
+      enabled: false,
+      updatedAt: now,
+    );
+
+    final results = await runner.tick(
+      agents: [agent],
+      context: _context(rt, now),
+    );
+
+    expect(results, isEmpty);
+    expect(agent.runCount, 0);
   });
 
   test('AgentRunController runs registered agent by id', () async {
