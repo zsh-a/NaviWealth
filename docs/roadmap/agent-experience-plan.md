@@ -38,6 +38,7 @@ Agent 的产品体验应当是：
 
 - `agent.explainResult` / `agent.showEvidence` / `agent.createPlanFromResult` 都已通过 `AgentArtifactDetailBody` 走统一 `askAi()` follow-up 入口，并有 widget test 覆盖 intent、object、context 和 proposal capability。
 - Agent artifact 自定义 action 已覆盖通过 action intent / object / payload 进入统一 `askAi()`，防止 domain action 绕过 intent envelope。
+- `showAgentArtifactSheet` 已有 compact viewport widget test 覆盖真实 sheet chrome、kind subtitle 和 detail body 渲染，防止领域页打开结果时绕过统一 bottom sheet 或在小屏溢出。
 - `AgentRunStatusCard` 已覆盖 running / noFinding / ready / failed 四类统一状态，`AgentResultCard` 已覆盖 summary、preview insights、review open action。
 - `AgentRunStore` 已有 focused SQLite store 测试覆盖 running row、completed/skipped/failed lifecycle 映射，以及 failed 不推进 last non-failed run。
 - Intent policy 已覆盖 active-domain catalog、off-catalog debug assert、以及 asserts-off fallback prompt，确保 agent follow-up 不因未注册 intent 破坏生产兜底。

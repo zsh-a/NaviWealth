@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -141,6 +143,43 @@ void main() {
     expect(find.text('Snooze'), findsWidgets);
     expect(find.text('Dismiss'), findsWidgets);
     expect(find.text('Review plan'), findsOneWidget);
+  });
+
+  testWidgets('artifact sheet constrains detail body on a compact viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () => unawaited(
+              showAgentArtifactSheet(context: context, artifact: _artifact()),
+            ),
+            child: const Text('Open artifact'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open artifact'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Briefing'), findsOneWidget);
+    expect(find.byType(AgentArtifactDetailBody), findsOneWidget);
+    expect(
+      find.text('Sleep debt is elevated; keep the first block light.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('detail follow-up opens askAi invocation for artifact', (
@@ -297,8 +336,16 @@ void main() {
             data: FThemes.slate.light.desktop,
             child: FScaffold(
               childPad: false,
-              child: SingleChildScrollView(
-                child: AgentArtifactDetailBody(artifact: _artifact()),
+              child: Center(
+                child: FButton(
+                  onPress: () => unawaited(
+                    showAgentArtifactSheet(
+                      context: context,
+                      artifact: _artifact(),
+                    ),
+                  ),
+                  child: const Text('Open artifact'),
+                ),
               ),
             ),
           ),
@@ -318,6 +365,9 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(_wrapWithRouter(router));
+
+    await tester.tap(find.text('Open artifact'));
+    await tester.pumpAndSettle();
 
     final openTrace = find.text('Open');
     await tester.ensureVisible(openTrace);
