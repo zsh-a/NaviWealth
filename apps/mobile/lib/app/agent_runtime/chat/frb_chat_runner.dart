@@ -63,6 +63,8 @@ class FrbChatRunner implements ChatAgent {
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,
+    double? temperature,
+    int? maxOutputTokens,
     CancelToken? cancelToken,
   }) {
     return _runRequest(
@@ -74,6 +76,8 @@ class FrbChatRunner implements ChatAgent {
         portfolioSnapshot: portfolioSnapshot,
         contextPack: contextPack,
         model: model,
+        temperature: temperature,
+        maxOutputTokens: maxOutputTokens,
         cancelToken: cancelToken,
       ),
     );
@@ -121,6 +125,8 @@ class FrbChatRunner implements ChatAgent {
         streamBridge.streamChatTurn(
           messages: initialMessages,
           tools: tools,
+          temperature: request.temperature,
+          maxOutputTokens: request.maxOutputTokens,
           metadata: <String, Object?>{
             ...request.metadata,
             'turn_id': ?request.turnId,

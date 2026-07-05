@@ -29,6 +29,8 @@ class ChatAgentTurnRequest {
     this.contextPack,
     this.metadata = const <String, Object?>{},
     this.model,
+    this.temperature,
+    this.maxOutputTokens,
     this.cancelToken,
   });
 
@@ -43,6 +45,8 @@ class ChatAgentTurnRequest {
   final ContextPack? contextPack;
   final Map<String, Object?> metadata;
   final String? model;
+  final double? temperature;
+  final int? maxOutputTokens;
   final CancelToken? cancelToken;
 }
 

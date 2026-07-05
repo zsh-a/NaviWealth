@@ -183,6 +183,27 @@ Finance ledger convergence are proven together. `sync_e2e_test.dart` carries
 the P1-G E2E-1..5 markers; `docs/sync/sync-protocol-tests.md` remains the broader
 case matrix. This is the canonical Task #5 coverage.
 
+`test/e2e/agent_runtime_finance_memory_e2e_test.dart` is a gated real-LLM
+runtime scenario. It is present in the suite by default, but the provider-backed
+path only runs when `RUN_REAL_LLM_E2E=1` and `E2E_LLM_API_KEY` are set. The
+scenario exercises a 14-day agent-runtime validation task that combines
+FinanceOS budget checks, ExecutionOS planning/progress proposals, KnowledgeOS
+capture, memory recall/write, ChatTurn tool continuation, and FRB/native LLM
+streaming. The domain tool specs are selected from the same FinanceOS,
+ExecutionOS, and KnowledgeOS registrations used by `DomainPack` composition,
+while the test dispatcher supplies deterministic scenario data. Use
+`E2E_LLM_PROVIDER`, `E2E_LLM_MODEL`, `E2E_LLM_BASE_URL`,
+`E2E_LIFEOS_NATIVE_LIBRARY_PATH`, `E2E_LLM_MAX_TOOL_ROUNDS`, and
+`E2E_LLM_TIMEOUT_SECONDS` to pin the provider/model/runtime for manual release
+gates or nightly smoke runs. The provider-backed test has a 10-minute
+Flutter test timeout; `E2E_LLM_TIMEOUT_SECONDS` controls each turn's stream
+timeout inside that outer test window. `test/e2e/agent_runtime_e2e_support_test.dart`
+keeps the reusable real-LLM gate and DomainPack tool-subset export behavior
+pinned without calling a provider. When the real provider path runs, the test
+prints live `[real-llm-e2e]` progress lines for turn start, tool calls/results,
+LLM spans, usage, text-character counts, errors, and done events without dumping
+full prompts, tool payloads, or provider secrets.
+
 ### AI exploratory + semantic (~1%, nightly, non-blocking)
 `.github/workflows/ai-semantic.yml` runs the deterministic surrogate nightly
 and on manual dispatch via `apps/mobile/tool/check-ai-semantic-surfaces.sh`.

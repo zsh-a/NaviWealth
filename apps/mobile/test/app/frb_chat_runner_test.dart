@@ -90,6 +90,8 @@ void main() {
             agentId: 'ai_chat',
             mode: 'chat',
             metadata: <String, Object?>{'source': 'test'},
+            temperature: 0,
+            maxOutputTokens: 64,
           ),
         )
         .toList();
@@ -101,6 +103,8 @@ void main() {
     expect(request['surface'], 'ai_chat');
     expect(request['agent_id'], 'ai_chat');
     expect(request['mode'], 'chat');
+    expect(request['temperature'], 0);
+    expect(request['max_output_tokens'], 64);
     final metadata = request['metadata'] as Map<String, Object?>;
     expect(metadata['source'], 'test');
     expect(metadata['turn_id'], 'turn_1');
@@ -696,6 +700,8 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
   }) {
     return <String, Object?>{
       'messages': messages,
+      'temperature': ?temperature,
+      'max_output_tokens': ?maxOutputTokens,
       'tools': tools,
       'metadata': metadata,
     };
