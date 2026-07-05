@@ -13,7 +13,10 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -93,6 +96,8 @@ class RoutineDueAgent implements Agent {
       first: due.first,
       now: start,
     );
+    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+    final artifactId = '$kKnowledgeRoutineAgentId:$dayKey';
 
     final built = buildAgentMemory(
       source: kKnowledgeRoutineMemorySource,
@@ -110,12 +115,28 @@ class RoutineDueAgent implements Agent {
             .map((r) => r.id)
             .toList(growable: false),
         'lookahead_days': kRoutineDueLookahead.inDays,
+        'artifact_id': artifactId,
       },
       entities: <String>{'knowledge_routine', 'routine_due'},
       importance: overdue.isNotEmpty ? 0.75 : 0.5,
       confidence: 0.95,
     );
     await runtime.remember(built.record);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _buildArtifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        createdAt: finished,
+        summary: summary,
+        memoryId: built.memoryId,
+        now: start,
+        overdue: overdue,
+        upcoming: upcoming,
+      ),
+    );
 
     final n = notifier;
     if (n != null) {
@@ -133,6 +154,92 @@ class RoutineDueAgent implements Agent {
         'upcoming_count': upcoming.length,
       },
       memoryId: built.memoryId,
+      artifactId: artifactId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String id,
+    required String ownerUserId,
+    required DateTime createdAt,
+    required String summary,
+    required String memoryId,
+    required DateTime now,
+    required List<RoutineDueItem> overdue,
+    required List<RoutineDueItem> upcoming,
+  }) {
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeRoutineAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.reminder,
+      severity: overdue.isNotEmpty
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+      title: 'Routine Due',
+      summary: summary,
+      insights: <AgentInsight>[
+        if (overdue.isNotEmpty)
+          AgentInsight(
+            title: 'Overdue routines',
+            body:
+                '${overdue.length} routine${overdue.length == 1 ? '' : 's'}'
+                ' are overdue.',
+            severity: AgentArtifactSeverity.attention,
+            payload: <String, Object?>{
+              'count': overdue.length,
+              'first_id': overdue.first.id,
+            },
+          ),
+        if (upcoming.isNotEmpty)
+          AgentInsight(
+            title: 'Upcoming routines',
+            body:
+                '${upcoming.length} routine${upcoming.length == 1 ? '' : 's'}'
+                ' are due within ${kRoutineDueLookahead.inDays} days.',
+            payload: <String, Object?>{
+              'count': upcoming.length,
+              'lookahead_days': kRoutineDueLookahead.inDays,
+              'first_id': upcoming.first.id,
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final routine in overdue)
+          AgentEvidenceRef(
+            type: 'knowledge_routine',
+            id: routine.id,
+            label: routine.statement,
+            payload: <String, Object?>{
+              'reason': 'overdue',
+              'days_until_due': routine.daysUntilDue(now),
+              'next_due_at': routine.nextDueAt.toUtc().toIso8601String(),
+            },
+          ),
+        for (final routine in upcoming)
+          AgentEvidenceRef(
+            type: 'knowledge_routine',
+            id: routine.id,
+            label: routine.statement,
+            payload: <String, Object?>{
+              'reason': 'upcoming',
+              'days_until_due': routine.daysUntilDue(now),
+              'next_due_at': routine.nextDueAt.toUtc().toIso8601String(),
+            },
+          ),
+      ],
+      actions: const <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review routines',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+        ),
+      ],
+      memoryId: memoryId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
   }
 

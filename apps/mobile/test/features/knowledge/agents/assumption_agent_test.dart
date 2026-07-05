@@ -3,14 +3,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 void main() {
+  late SharedPreferences prefs;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    prefs = await SharedPreferences.getInstance();
+  });
+
   group('assumptionReviewItemsFromToolResult', () {
     test('parses list_open_assumptions output', () {
       final items = assumptionReviewItemsFromToolResult(const <String, Object?>{
@@ -123,6 +140,58 @@ void main() {
       },
     );
   });
+
+  test('run persists a stale-assumption artifact with evidence', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runtime = _FakeMemoryRuntime();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    const agent = AssumptionAgent(
+      assumptionReader: _FixedAssumptionReader(<AssumptionReviewItem>[
+        AssumptionReviewItem(
+          id: 'assumption-stale',
+          statement: 'Rates stay high',
+          daysSinceVerify: kAssumptionStaleDays,
+        ),
+        AssumptionReviewItem(
+          id: 'assumption-fresh',
+          statement: 'Demand holds',
+          daysSinceVerify: 7,
+        ),
+      ]),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 8),
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.memoryId, '$kKnowledgeAssumptionMemorySource:2026-07-05');
+    expect(result.artifactId, '$kKnowledgeAssumptionAgentId:2026-07-05');
+    expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact, isNotNull);
+    expect(artifact!.kind, AgentArtifactKind.review);
+    expect(artifact.severity, AgentArtifactSeverity.attention);
+    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.insights.single.title, 'Stale assumptions');
+    expect(artifact.evidence.map((ref) => ref.id), ['assumption-stale']);
+    expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+  });
 }
 
 AgentContext _context() {
@@ -216,4 +285,38 @@ class _FallbackReader implements AssumptionReviewReader {
     calls += 1;
     return result;
   }
+}
+
+Future<AgentRunResult> _runAgent(
+  ProviderContainer container,
+  AssumptionAgent agent,
+  DateTime now,
+) {
+  final probe = FutureProvider<AgentRunResult>(
+    (ref) => agent.run(AgentContext(ref: ref, now: now)),
+  );
+  container.listen(probe, (_, _) {});
+  return container.read(probe.future);
+}
+
+class _FixedAssumptionReader implements AssumptionReviewReader {
+  const _FixedAssumptionReader(this.result);
+
+  final List<AssumptionReviewItem> result;
+
+  @override
+  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async => result;
+}
+
+class _FakeMemoryRuntime implements MemoryRuntime {
+  MemoryRecord? remembered;
+
+  @override
+  Future<void> remember(MemoryRecord record) async {
+    remembered = record;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }

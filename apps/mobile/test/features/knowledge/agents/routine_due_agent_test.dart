@@ -3,14 +3,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 void main() {
+  late SharedPreferences prefs;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    prefs = await SharedPreferences.getInstance();
+  });
+
   group('routineDueItemsFromToolResult', () {
     test('parses list_due_routines output', () {
       final items = routineDueItemsFromToolResult(const <String, Object?>{
@@ -119,6 +136,64 @@ void main() {
       },
     );
   });
+
+  test('run persists a routine reminder artifact with evidence', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runtime = _FakeMemoryRuntime();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final agent = RoutineDueAgent(
+      dueReader: _FixedRoutineReader(<RoutineDueItem>[
+        RoutineDueItem(
+          id: 'routine-overdue',
+          statement: 'Activate bank card',
+          nextDueAt: DateTime.utc(2026, 7, 4, 8),
+        ),
+        RoutineDueItem(
+          id: 'routine-upcoming',
+          statement: 'Review notes',
+          nextDueAt: DateTime.utc(2026, 7, 9, 8),
+        ),
+      ]),
+    );
+
+    final result = await _runAgent(
+      container,
+      agent,
+      DateTime.utc(2026, 7, 5, 8),
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.memoryId, '$kKnowledgeRoutineMemorySource:2026-07-05');
+    expect(result.artifactId, '$kKnowledgeRoutineAgentId:2026-07-05');
+    expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact, isNotNull);
+    expect(artifact!.kind, AgentArtifactKind.reminder);
+    expect(artifact.severity, AgentArtifactSeverity.attention);
+    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.insights.map((insight) => insight.title), [
+      'Overdue routines',
+      'Upcoming routines',
+    ]);
+    expect(artifact.evidence.map((ref) => ref.id), [
+      'routine-overdue',
+      'routine-upcoming',
+    ]);
+    expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+  });
 }
 
 AgentContext _context() {
@@ -212,4 +287,38 @@ class _FallbackReader implements RoutineDueReader {
     calls += 1;
     return result;
   }
+}
+
+Future<AgentRunResult> _runAgent(
+  ProviderContainer container,
+  RoutineDueAgent agent,
+  DateTime now,
+) {
+  final probe = FutureProvider<AgentRunResult>(
+    (ref) => agent.run(AgentContext(ref: ref, now: now)),
+  );
+  container.listen(probe, (_, _) {});
+  return container.read(probe.future);
+}
+
+class _FixedRoutineReader implements RoutineDueReader {
+  const _FixedRoutineReader(this.result);
+
+  final List<RoutineDueItem> result;
+
+  @override
+  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async => result;
+}
+
+class _FakeMemoryRuntime implements MemoryRuntime {
+  MemoryRecord? remembered;
+
+  @override
+  Future<void> remember(MemoryRecord record) async {
+    remembered = record;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }

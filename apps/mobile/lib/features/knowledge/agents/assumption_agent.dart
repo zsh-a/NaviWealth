@@ -9,7 +9,10 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -71,6 +74,8 @@ class AssumptionAgent implements Agent {
     }
 
     final summary = _summarize(l10n, stale.length, stale.first.statement);
+    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+    final artifactId = '$kKnowledgeAssumptionAgentId:$dayKey';
     final built = buildAgentMemory(
       source: kKnowledgeAssumptionMemorySource,
       kind: MemoryKind.episodic,
@@ -82,12 +87,26 @@ class AssumptionAgent implements Agent {
       payload: <String, Object?>{
         'stale_assumption_ids': stale.map((a) => a.id).toList(growable: false),
         'threshold_days': kAssumptionStaleDays,
+        'artifact_id': artifactId,
       },
       entities: <String>{'knowledge_assumption', 'assumption_review'},
       importance: 0.6,
       confidence: 0.9,
     );
     await runtime.remember(built.record);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _buildArtifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        createdAt: finished,
+        summary: summary,
+        memoryId: built.memoryId,
+        stale: stale,
+      ),
+    );
 
     return AgentRunResult(
       agentId: kKnowledgeAssumptionAgentId,
@@ -97,6 +116,64 @@ class AssumptionAgent implements Agent {
       summary: summary,
       payload: <String, Object?>{'stale_count': stale.length},
       memoryId: built.memoryId,
+      artifactId: artifactId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String id,
+    required String ownerUserId,
+    required DateTime createdAt,
+    required String summary,
+    required String memoryId,
+    required List<AssumptionReviewItem> stale,
+  }) {
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeAssumptionAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.review,
+      severity: AgentArtifactSeverity.attention,
+      title: 'Assumption Review',
+      summary: summary,
+      insights: <AgentInsight>[
+        AgentInsight(
+          title: 'Stale assumptions',
+          body:
+              '${stale.length} assumption${stale.length == 1 ? '' : 's'}'
+              ' crossed the $kAssumptionStaleDays day verification window.',
+          severity: AgentArtifactSeverity.attention,
+          payload: <String, Object?>{
+            'count': stale.length,
+            'threshold_days': kAssumptionStaleDays,
+            'first_id': stale.first.id,
+          },
+        ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final assumption in stale)
+          AgentEvidenceRef(
+            type: 'knowledge_assumption',
+            id: assumption.id,
+            label: assumption.statement,
+            payload: <String, Object?>{
+              'reason': 'stale_assumption',
+              'days_since_verify': assumption.daysSinceVerify,
+            },
+          ),
+      ],
+      actions: const <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review assumptions',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+        ),
+      ],
+      memoryId: memoryId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
   }
 
