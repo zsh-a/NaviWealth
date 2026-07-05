@@ -9,7 +9,9 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -68,6 +70,7 @@ class RecoveryAlertAgent implements Agent {
         'HRV has been below your baseline for ${alert.consecutiveDays} days '
         '(${_round(alert.avgRecentMs)} ms vs ${_round(alert.avgBaselineMs)} ms average, '
         '${_round(alert.declinePct)}% decline). Consider lighter activity today.';
+    final artifactId = '$kRecoveryAlertAgentId:$dayKey';
 
     // Persist memory.
     final memoryId = '$kRecoveryAlertMemorySource:$dayKey';
@@ -91,6 +94,7 @@ class RecoveryAlertAgent implements Agent {
           'consecutive_days': alert.consecutiveDays,
           'signal_source': signal.source,
         },
+        'artifact_id': artifactId,
       },
       entities: <String>{'recovery_alert', 'hrv_decline', dayKey},
       importance: 0.7,
@@ -100,6 +104,20 @@ class RecoveryAlertAgent implements Agent {
       updatedAt: DateTime.now().toUtc(),
     );
     await runtime.remember(memory);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _artifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        memoryId: memoryId,
+        createdAt: start,
+        source: signal.source,
+        alert: alert,
+        summary: summary,
+      ),
+    );
 
     // Notify.
     if (notifier != null) {
@@ -134,6 +152,73 @@ class RecoveryAlertAgent implements Agent {
         'signal_source': signal.source,
       },
       memoryId: memoryId,
+      artifactId: artifactId,
+    );
+  }
+
+  static AgentArtifact _artifact({
+    required String id,
+    required String ownerUserId,
+    required String memoryId,
+    required DateTime createdAt,
+    required String source,
+    required RecoveryAlertSignal alert,
+    required String summary,
+  }) {
+    final severity = alert.declinePct >= 20
+        ? AgentArtifactSeverity.warning
+        : AgentArtifactSeverity.attention;
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kRecoveryAlertAgentId,
+      domain: 'health',
+      kind: AgentArtifactKind.alert,
+      severity: severity,
+      title: 'Recovery Alert',
+      summary: summary,
+      insights: <AgentInsight>[
+        AgentInsight(
+          title: 'HRV decline',
+          body:
+              '${alert.consecutiveDays} days below baseline; '
+              '${_round(alert.declinePct)}% lower than usual.',
+          severity: severity,
+          payload: <String, Object?>{
+            'decline_pct': _round(alert.declinePct),
+            'consecutive_days': alert.consecutiveDays,
+          },
+        ),
+        const AgentInsight(
+          title: 'Suggested adjustment',
+          body: 'Consider lighter activity today and watch recovery tomorrow.',
+        ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        AgentEvidenceRef(
+          type: 'health_metric_trend',
+          id: '$source:$id',
+          label: 'HRV trend',
+          payload: <String, Object?>{
+            'baseline_avg_ms': _round(alert.avgBaselineMs),
+            'recent_avg_ms': _round(alert.avgRecentMs),
+            'decline_pct': _round(alert.declinePct),
+            'consecutive_days': alert.consecutiveDays,
+            'source': source,
+          },
+        ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'review',
+          label: 'Review recovery alert',
+          objectType: 'agent_artifact',
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
   }
 

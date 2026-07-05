@@ -7,7 +7,9 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -89,6 +91,7 @@ class WeeklySummaryAgent implements Agent {
     final summary = 'This week: ${parts.join(' · ')}.';
     final dayKey = AppFormatters.utcDayKey(start);
     final memoryId = '$kWeeklySummaryMemorySource:$dayKey';
+    final artifactId = '$kWeeklySummaryAgentId:$dayKey';
 
     final memory = MemoryRecord(
       id: memoryId,
@@ -109,6 +112,7 @@ class WeeklySummaryAgent implements Agent {
           'workout_count': weekWorkouts,
           'workout_minutes': _round(weekWorkoutMin),
         },
+        'artifact_id': artifactId,
       },
       entities: <String>{'weekly_summary', 'health', dayKey},
       importance: 0.6,
@@ -118,6 +122,19 @@ class WeeklySummaryAgent implements Agent {
       updatedAt: DateTime.now().toUtc(),
     );
     await runtime.remember(memory);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _artifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        memoryId: memoryId,
+        createdAt: start,
+        snapshot: snapshot,
+        summary: summary,
+      ),
+    );
 
     return AgentRunResult(
       agentId: kWeeklySummaryAgentId,
@@ -131,6 +148,102 @@ class WeeklySummaryAgent implements Agent {
         'workout_count': weekWorkouts,
       },
       memoryId: memoryId,
+      artifactId: artifactId,
+    );
+  }
+
+  static AgentArtifact _artifact({
+    required String id,
+    required String ownerUserId,
+    required String memoryId,
+    required DateTime createdAt,
+    required WeeklySummarySnapshot snapshot,
+    required String summary,
+  }) {
+    final recoveryScore = snapshot.recoveryScore;
+    final severity = recoveryScore == null
+        ? AgentArtifactSeverity.info
+        : recoveryScore < 60
+        ? AgentArtifactSeverity.warning
+        : recoveryScore < 75
+        ? AgentArtifactSeverity.attention
+        : AgentArtifactSeverity.info;
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kWeeklySummaryAgentId,
+      domain: 'health',
+      kind: AgentArtifactKind.review,
+      severity: severity,
+      title: 'Weekly Summary',
+      summary: summary,
+      insights: <AgentInsight>[
+        if (snapshot.recoveryScore != null)
+          AgentInsight(
+            title: 'Recovery',
+            body:
+                '${snapshot.recoveryScore}/100'
+                '${snapshot.recoveryVerdict == null ? '' : ' (${snapshot.recoveryVerdict})'}',
+            severity: severity == AgentArtifactSeverity.info ? null : severity,
+            payload: <String, Object?>{
+              'score': snapshot.recoveryScore,
+              'verdict': snapshot.recoveryVerdict,
+            },
+          ),
+        if (snapshot.avgSleepHours != null)
+          AgentInsight(
+            title: 'Sleep',
+            body: 'Average ${_round(snapshot.avgSleepHours!)}h per night.',
+            payload: <String, Object?>{
+              'avg_sleep_hours': _round(snapshot.avgSleepHours!),
+            },
+          ),
+        if (snapshot.totalSteps > 0)
+          AgentInsight(
+            title: 'Activity',
+            body: '${_formatSteps(snapshot.totalSteps)} steps this week.',
+            payload: <String, Object?>{'total_steps': snapshot.totalSteps},
+          ),
+        if (snapshot.workoutCount > 0)
+          AgentInsight(
+            title: 'Workouts',
+            body:
+                '${snapshot.workoutCount} workouts, '
+                '${_round(snapshot.workoutMinutes)} minutes total.',
+            payload: <String, Object?>{
+              'workout_count': snapshot.workoutCount,
+              'workout_minutes': _round(snapshot.workoutMinutes),
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        AgentEvidenceRef(
+          type: 'health_week',
+          id: id,
+          label: 'Weekly health rollup',
+          payload: <String, Object?>{
+            'recovery_score': snapshot.recoveryScore,
+            'recovery_verdict': snapshot.recoveryVerdict,
+            'avg_sleep_hours': snapshot.avgSleepHours == null
+                ? null
+                : _round(snapshot.avgSleepHours!),
+            'total_steps': snapshot.totalSteps,
+            'workout_count': snapshot.workoutCount,
+            'workout_minutes': _round(snapshot.workoutMinutes),
+          },
+        ),
+      ],
+      actions: <AgentAction>[
+        AgentAction(
+          kind: 'review',
+          label: 'Review weekly summary',
+          objectType: 'agent_artifact',
+          objectId: id,
+        ),
+      ],
+      memoryId: memoryId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
   }
 

@@ -3,12 +3,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
+
+const _owner = 'u-health-recovery';
 
 void main() {
   group('recoveryAlertSignalFromValues', () {
@@ -123,6 +133,62 @@ void main() {
       },
     );
   });
+
+  test(
+    'writes a unified recovery alert artifact from an alert signal',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final container = ProviderContainer(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final ref = container.read(_refProvider);
+      final agent = RecoveryAlertAgent(
+        signalReader: _FallbackReader(
+          RecoveryAlertSignalRead.alert(
+            source: 'test',
+            alert: const RecoveryAlertSignal(
+              avgBaselineMs: 50,
+              avgRecentMs: 40,
+              declinePct: 20,
+              consecutiveDays: 3,
+            ),
+          ),
+        ),
+      );
+
+      final result = await agent.run(
+        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 8)),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(result.artifactId, '$kRecoveryAlertAgentId:2026-06-29');
+      expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+
+      final artifact = await store.read(result.artifactId!);
+      expect(artifact, isNotNull);
+      expect(artifact!.kind, AgentArtifactKind.alert);
+      expect(artifact.domain, 'health');
+      expect(artifact.severity, AgentArtifactSeverity.warning);
+      expect(artifact.memoryId, result.memoryId);
+      expect(artifact.summary, result.summary);
+      expect(
+        artifact.insights.map((insight) => insight.title),
+        contains('HRV decline'),
+      );
+      expect(artifact.evidence.single.type, 'health_metric_trend');
+      expect(artifact.actions.single.objectId, result.artifactId);
+    },
+  );
 }
 
 AgentContext _context() {
@@ -214,4 +280,17 @@ class _FallbackReader implements RecoveryAlertSignalReader {
     calls += 1;
     return result;
   }
+}
+
+class _FakeMemoryRuntime implements MemoryRuntime {
+  MemoryRecord? remembered;
+
+  @override
+  Future<void> remember(MemoryRecord record) async {
+    remembered = record;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }

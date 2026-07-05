@@ -3,6 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
@@ -13,6 +16,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 const _owner = 'u-health-weekly';
 
@@ -192,39 +196,64 @@ void main() {
     );
   });
 
-  test('writes weekly summary memory from reader snapshot', () async {
-    final runtime = _FakeMemoryRuntime();
-    final container = ProviderContainer(
-      overrides: [
-        currentUserIdProvider.overrideWithValue(() async => _owner),
-        memoryRuntimeProvider.overrideWith((ref) async => runtime),
-      ],
-    );
-    addTearDown(container.dispose);
-    final ref = container.read(_refProvider);
-    final agent = WeeklySummaryAgent(
-      summaryReader: _FallbackReader(
-        const WeeklySummarySnapshot(
-          hasHealthData: true,
-          recoveryScore: 82,
-          recoveryVerdict: 'rested',
-          avgSleepHours: 7.5,
-          totalSteps: 42000,
-          workoutCount: 3,
-          workoutMinutes: 95,
+  test(
+    'writes weekly summary memory and artifact from reader snapshot',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final container = ProviderContainer(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final ref = container.read(_refProvider);
+      final agent = WeeklySummaryAgent(
+        summaryReader: _FallbackReader(
+          const WeeklySummarySnapshot(
+            hasHealthData: true,
+            recoveryScore: 82,
+            recoveryVerdict: 'rested',
+            avgSleepHours: 7.5,
+            totalSteps: 42000,
+            workoutCount: 3,
+            workoutMinutes: 95,
+          ),
         ),
-      ),
-    );
+      );
 
-    final result = await agent.run(
-      AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 20)),
-    );
+      final result = await agent.run(
+        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 20)),
+      );
 
-    expect(result.status, AgentRunStatus.completed);
-    expect(result.summary, contains('Recovery 82/100 (rested)'));
-    expect(result.summary, contains('42.0k steps'));
-    expect(runtime.remembered?.source, kWeeklySummaryMemorySource);
-  });
+      expect(result.status, AgentRunStatus.completed);
+      expect(result.summary, contains('Recovery 82/100 (rested)'));
+      expect(result.summary, contains('42.0k steps'));
+      expect(result.artifactId, '$kWeeklySummaryAgentId:2026-06-29');
+      expect(runtime.remembered?.source, kWeeklySummaryMemorySource);
+      expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+
+      final artifact = await store.read(result.artifactId!);
+      expect(artifact, isNotNull);
+      expect(artifact!.kind, AgentArtifactKind.review);
+      expect(artifact.domain, 'health');
+      expect(artifact.severity, AgentArtifactSeverity.info);
+      expect(artifact.memoryId, result.memoryId);
+      expect(artifact.summary, result.summary);
+      expect(
+        artifact.insights.map((insight) => insight.title),
+        containsAll(['Recovery', 'Sleep', 'Activity', 'Workouts']),
+      );
+      expect(artifact.evidence.single.type, 'health_week');
+      expect(artifact.actions.single.objectId, result.artifactId);
+    },
+  );
 }
 
 AgentContext _context() {
