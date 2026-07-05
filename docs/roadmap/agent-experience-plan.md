@@ -51,6 +51,7 @@ Agent 的产品体验应当是：
 - Production DomainPack composition 已覆盖 active agent registry 与 `AgentPresentationSpec` 的一一对应关系，防止新增 agent 后缺失统一设置/展示元数据。
 - Agent background catch-up binding 已声明所属 domain，core runner 会在消费 due flag 后统一拒绝 inactive domain，避免 stale background flag 越过 domain opt-in。
 - Knowledge Routine Due 和 Execution Review 的 pending background providers 已覆盖 foreground catch-up 组合路径，验证 due flag 会被消费并以 `background_due` trigger 调用共享 AgentRunController。
+- Knowledge Routine Due notification payload 已覆盖只 deep link 到 Knowledge Review 的 agent artifact route，拒绝 chat / external / non-review payload。
 - Execution Review 页面已覆盖 latest agent artifact 以统一 `AgentResultCard` 出现在 Review tab 顶部，锁住 ExecutionOS 的 domainReview placement。
 - Knowledge Review 页面已覆盖 latest domainReview artifacts 以统一 `AgentResultCard` 出现在 Review tab 顶部，锁住多 agent artifact list 的页面级展示。
 - Health Today 页面已覆盖 Morning Briefing、Recovery Alert、Weekly Summary 三类 latest agent artifact 均以统一 `AgentResultCard` 展示，锁住 HealthOS 首页 agent surface。

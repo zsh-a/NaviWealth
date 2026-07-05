@@ -29,6 +29,7 @@ abstract final class KnowledgeNotifications {
     if (payload == null || payload.isEmpty) return null;
     final uri = Uri.tryParse(payload);
     if (uri == null || uri.path != KnowledgeRoutes.review) return null;
+    if (uri.hasScheme || uri.hasAuthority) return null;
     final artifactId = uri.queryParameters[kKnowledgeAgentArtifactQueryParam];
     return artifactId == null || artifactId.isEmpty ? null : artifactId;
   }
