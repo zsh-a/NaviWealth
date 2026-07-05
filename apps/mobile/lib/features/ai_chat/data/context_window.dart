@@ -39,12 +39,13 @@ ContextWindow buildContextWindow({
   int charBudget = kDefaultContextCharBudget,
   int minKept = kMinKeptTurns,
 }) {
-  final eligible = <ChatMessage>[];
+  final eligible = <WireMessage>[];
   for (final m in history) {
     if (m.role != ChatRole.user && m.role != ChatRole.assistant) continue;
     if (m.status != ChatMessageStatus.complete) continue;
-    if (m.content.trim().isEmpty) continue;
-    eligible.add(m);
+    final content = _historyContentForRuntime(m);
+    if (content == null) continue;
+    eligible.add(WireMessage(role: m.role.wire, content: content));
   }
 
   final pendingWire = WireMessage(role: 'user', content: pending);
@@ -58,7 +59,7 @@ ContextWindow buildContextWindow({
     final cost = msg.content.length;
     final overBudget = used + cost > charBudget;
     if (overBudget && keptCount >= minKept) break;
-    kept.add(WireMessage(role: msg.role.wire, content: msg.content));
+    kept.add(msg);
     used += cost;
     keptCount += 1;
   }
@@ -66,4 +67,105 @@ ContextWindow buildContextWindow({
   final wire = <WireMessage>[...kept.reversed, pendingWire];
   final droppedTurns = eligible.length - keptCount;
   return ContextWindow(wire: wire, droppedTurns: droppedTurns);
+}
+
+String? _historyContentForRuntime(ChatMessage message) {
+  final text = message.content.trim();
+  final toolTranscript = _toolTranscriptForRuntime(message.toolCalls);
+  if (text.isEmpty) return toolTranscript;
+  if (toolTranscript == null) return text;
+  return '$text\n\n$toolTranscript';
+}
+
+String? _toolTranscriptForRuntime(List<ToolInvocation> toolCalls) {
+  final lines = <String>[];
+  for (final tool in toolCalls) {
+    if (tool.name != 'ask_user') continue;
+    final request = _DecisionTranscript.tryParse(tool.output);
+    if (request == null) continue;
+    lines.add(request.render(tool.decisionSelection));
+  }
+  if (lines.isEmpty) return null;
+  return lines.join('\n\n');
+}
+
+class _DecisionTranscript {
+  const _DecisionTranscript({
+    required this.title,
+    required this.context,
+    required this.options,
+  });
+
+  final String title;
+  final String context;
+  final List<_DecisionOptionTranscript> options;
+
+  static _DecisionTranscript? tryParse(Object? output) {
+    if (output is! Map) return null;
+    final map = output.map((k, v) => MapEntry(k.toString(), v));
+    if (map['type'] != 'decision_request') return null;
+    final title = (map['title'] as String?)?.trim();
+    final rawOptions = map['options'];
+    if (title == null || title.isEmpty || rawOptions is! List) return null;
+    final options = <_DecisionOptionTranscript>[];
+    for (final raw in rawOptions) {
+      final option = _DecisionOptionTranscript.tryParse(raw);
+      if (option != null) options.add(option);
+    }
+    if (options.length < 2) return null;
+    return _DecisionTranscript(
+      title: title,
+      context: (map['context'] as String?)?.trim() ?? '',
+      options: options,
+    );
+  }
+
+  String render(DecisionSelection? selection) {
+    final buffer = StringBuffer('Decision requested: $title');
+    if (context.isNotEmpty) buffer.write('\nContext: $context');
+    buffer.write('\nOptions:');
+    for (final option in options) {
+      buffer.write('\n- ${option.id}: ${option.label}');
+      if (option.description.isNotEmpty) {
+        buffer.write(' — ${option.description}');
+      }
+      if (option.recommended) buffer.write(' (recommended)');
+    }
+    if (selection != null) {
+      buffer
+        ..write('\nSelected option: ${selection.optionId}')
+        ..write(' (${selection.label})')
+        ..write('\nUser reply: ${selection.reply}');
+    }
+    return buffer.toString();
+  }
+}
+
+class _DecisionOptionTranscript {
+  const _DecisionOptionTranscript({
+    required this.id,
+    required this.label,
+    required this.description,
+    required this.recommended,
+  });
+
+  final String id;
+  final String label;
+  final String description;
+  final bool recommended;
+
+  static _DecisionOptionTranscript? tryParse(Object? output) {
+    if (output is! Map) return null;
+    final map = output.map((k, v) => MapEntry(k.toString(), v));
+    final label = (map['label'] as String?)?.trim();
+    if (label == null || label.isEmpty) return null;
+    return _DecisionOptionTranscript(
+      id: (map['id'] as String?)?.trim().isNotEmpty == true
+          ? (map['id'] as String).trim()
+          : label,
+      label: label,
+      description: (map['description'] as String?)?.trim() ?? '',
+      recommended: map['recommended'] == true,
+    );
+  }
 }

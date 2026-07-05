@@ -10,14 +10,14 @@ library;
 
 import 'package:go_router/go_router.dart';
 
-import '../../../app/deferred_route.dart';
-import '../../../app/domain_tabs_shell.dart';
-import '../../../app/route_paths.dart';
+import '../../../core/shell/deferred_route.dart';
+import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/health_plan_page.dart' deferred as plan_lib;
 import '../ui/health_today_page.dart' deferred as today_lib;
 import '../ui/health_trend_page.dart' deferred as trend_lib;
 import 'health_domain_shell.dart';
+import 'health_route_paths.dart';
 
 /// HealthOS `StatefulShellRoute`: 3 branches (Today / Trend / Plan)
 /// backed by [DomainTabsShell]. HealthOS command/search entries are
@@ -32,8 +32,8 @@ StatefulShellRoute healthShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.healthToday,
-            name: AppRouteNames.healthToday,
+            path: HealthRoutes.today,
+            name: HealthRouteNames.today,
             builder: (context, state) => DeferredRoute(
               load: today_lib.loadLibrary,
               builder: (_) => today_lib.HealthTodayPage(),
@@ -44,8 +44,8 @@ StatefulShellRoute healthShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.healthTrend,
-            name: AppRouteNames.healthTrend,
+            path: HealthRoutes.trend,
+            name: HealthRouteNames.trend,
             builder: (context, state) {
               final query = state.uri.queryParameters;
               return DeferredRoute(
@@ -59,8 +59,8 @@ StatefulShellRoute healthShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.healthPlan,
-            name: AppRouteNames.healthPlan,
+            path: HealthRoutes.plan,
+            name: HealthRouteNames.plan,
             builder: (context, state) => DeferredRoute(
               load: plan_lib.loadLibrary,
               builder: (_) => plan_lib.HealthPlanPage(),

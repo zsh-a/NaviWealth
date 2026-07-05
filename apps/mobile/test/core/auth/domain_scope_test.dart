@@ -3,6 +3,12 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 
 void main() {
   group('DomainScope', () {
+    test('wire values stay explicit and unique', () {
+      final wires = [for (final scope in DomainScope.values) scope.wire];
+      expect(wires, <String>['finance', 'health', 'knowledge', 'execution']);
+      expect(wires.toSet(), hasLength(wires.length));
+    });
+
     test('wire round-trips through tryParse', () {
       for (final scope in DomainScope.values) {
         expect(DomainScope.tryParse(scope.wire), scope);
@@ -24,14 +30,18 @@ void main() {
     });
 
     test('finance is the seed domain — cannot be opted out', () {
-      final opts = DomainOptIns.financeOnly
-          .withScope(DomainScope.finance, enabled: false);
+      final opts = DomainOptIns.financeOnly.withScope(
+        DomainScope.finance,
+        enabled: false,
+      );
       expect(opts.contains(DomainScope.finance), isTrue);
     });
 
     test('withScope adds and removes secondary domains', () {
-      final on = DomainOptIns.financeOnly
-          .withScope(DomainScope.health, enabled: true);
+      final on = DomainOptIns.financeOnly.withScope(
+        DomainScope.health,
+        enabled: true,
+      );
       expect(on.contains(DomainScope.health), isTrue);
       expect(on.toWire(), <String>['finance', 'health']);
 

@@ -52,16 +52,16 @@ the user authenticates needs no extra round-trip.
 
 | Current route     | Entry file / feature                         | Trigger                    |
 | ----------------- | -------------------------------------------- | -------------------------- |
-| `/portfolio`      | `features/portfolio/portfolio_page.dart`     | Open Investment Portfolio  |
-| `/plan/analytics` | `features/analytics/analytics_page.dart`     | Open Planning > Analytics  |
-| `/plan/fire`      | `features/fire/presentation/fire_page.dart`  | Open Planning > FIRE       |
-| `/plan/rebalance` | `features/rebalance/ui/rebalance_page.dart`  | Open Planning > Rebalance  |
+| `/portfolio`      | `features/finance/investment/presentation/portfolio_hub_page.dart` | Open Investment Portfolio  |
+| `/plan/analytics` | `features/finance/analytics/analytics_page.dart` | Open Planning > Analytics  |
+| `/plan/fire`      | `features/finance/fire/presentation/fire_page.dart` | Open Planning > FIRE       |
+| `/plan/rebalance` | `features/finance/rebalance/ui/rebalance_page.dart` | Open Planning > Rebalance  |
 | `/ai`             | `features/ai_chat/ui/ai_chat_page.dart`      | Open AI assistant          |
-| `/settings`       | `features/settings/settings_page.dart`       | Open Settings              |
+| `/settings`       | `features/settings/ui/settings_page.dart`    | Open Settings              |
 
 > The numeric suffix dart2js assigns to part files is not stable across builds;
 > identify parts by content (or by the entry file in
-> `lib/app/router.dart`) when comparing across CI runs.
+> `lib/app/routing/router.dart`) when comparing across CI runs.
 
 `/settings` is heavy relative to its 149-line source because the page pulls
 in `SegmentedButton` + `PopupMenuButton` + theme-preference Riverpod
@@ -106,8 +106,9 @@ wins come from keeping expensive feature dependencies deferred:
 - the analytics route (`fl_chart`, multi-series breakdowns).
 - the rebalance route (optimization and transaction preview).
 
-These are already wired through `DeferredRoute` in `lib/app/router.dart`, so
-route-level bundle boundaries should stay visible during future changes.
+These are already wired through `DeferredRoute` in
+`lib/app/routing/router.dart`, so route-level bundle boundaries should stay
+visible during future changes.
 
 ## Source maps
 

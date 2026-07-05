@@ -7,7 +7,7 @@
 // and strategy preferences before any scan or journal workflow.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/options_income/data/providers.dart';
+import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 
 import 'support/app_harness.dart';
 import 'support/page_objects.dart';

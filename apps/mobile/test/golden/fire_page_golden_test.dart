@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/domain/entities/fx_rate.dart';
-import 'package:naviwealth/features/assets/physical/data/providers.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/fire/presentation/fire_page.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
-import 'package:naviwealth/features/liabilities/data/providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/fire/ui/fire_page.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';

@@ -23,10 +23,15 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/sync/hlc.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../data/inbox_triage_classifier.dart' show InboxTriageClassifier;
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
+import '../domain/knowledge_models.dart';
 
 const String kKnowledgeInboxTriageAgentId = 'knowledge_inbox_triage';
 
@@ -43,9 +48,13 @@ class InboxTriageAgent implements Agent {
   /// configured and the pure-Dart heuristic otherwise. Resolving in
   /// `run()` (rather than at construction) keeps `knowledgeAgentsProvider`
   /// synchronous while still picking up the async LLM client.
-  const InboxTriageAgent({this.classifier});
+  const InboxTriageAgent({
+    this.classifier,
+    this.sourceReader = const RepositoryInboxTriageSourceReader(),
+  });
 
   final InboxTriageClassifier? classifier;
+  final InboxTriageSourceReader sourceReader;
 
   @override
   String get id => kKnowledgeInboxTriageAgentId;
@@ -63,19 +72,14 @@ class InboxTriageAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final triage = await ctx.ref.read(inboxTriageRepositoryProvider.future);
     // Test override wins; otherwise resolve the LLM-vs-heuristic seam.
     final pinned = classifier;
     final InboxTriageClassifier activeClassifier =
         pinned ?? await ctx.ref.read(inboxTriageClassifierProvider.future);
 
-    final notes = await repo.listNotes(ownerUserId: ownerUserId, limit: 200);
-    final triagedIds = await triage.triagedNoteIds(ownerUserId: ownerUserId);
-    final untriaged = notes
-        .where((n) => !triagedIds.contains(n.id))
-        .take(kInboxTriageMaxNotesPerRun)
-        .toList(growable: false);
+    final source = await sourceReader.read(ctx);
+    final untriaged = source.untriagedNotes;
 
     final finished = DateTime.now().toUtc();
     if (untriaged.isEmpty) {
@@ -87,16 +91,9 @@ class InboxTriageAgent implements Agent {
       );
     }
 
-    // Pull decisions once (used by link_to_decision heuristic) rather
-    // than per-note — the candidate set is usually tiny.
-    final decisions = await repo.listDecisions(
-      ownerUserId: ownerUserId,
-      limit: 200,
-    );
-
     var emitted = 0;
     for (final note in untriaged) {
-      final proposals = await activeClassifier.triage(note, decisions);
+      final proposals = await activeClassifier.triage(note, source.decisions);
       if (proposals.isEmpty) {
         // Still record an empty row so we don't re-scan the same note
         // every 15 min — the absence of pending entries means "looked
@@ -137,4 +134,188 @@ class InboxTriageAgent implements Agent {
       },
     );
   }
+}
+
+abstract class InboxTriageSourceReader {
+  Future<InboxTriageSourceSnapshot> read(AgentContext ctx);
+}
+
+class RepositoryInboxTriageSourceReader implements InboxTriageSourceReader {
+  const RepositoryInboxTriageSourceReader();
+
+  @override
+  Future<InboxTriageSourceSnapshot> read(AgentContext ctx) async {
+    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+    final triage = await ctx.ref.read(inboxTriageRepositoryProvider.future);
+    final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final notes = await repo.listNotes(ownerUserId: ownerUserId, limit: 200);
+    final triagedIds = await triage.triagedNoteIds(ownerUserId: ownerUserId);
+    final untriaged = notes
+        .where((n) => !triagedIds.contains(n.id))
+        .take(kInboxTriageMaxNotesPerRun)
+        .toList(growable: false);
+    final decisions = await repo.listDecisions(
+      ownerUserId: ownerUserId,
+      limit: 200,
+    );
+    return InboxTriageSourceSnapshot(
+      untriagedNotes: untriaged,
+      decisions: decisions,
+    );
+  }
+}
+
+class FrbInboxTriageSourceReader implements InboxTriageSourceReader {
+  const FrbInboxTriageSourceReader({
+    required AgentRuntimeEffectPlanBinding runtime,
+    this.fallback = const RepositoryInboxTriageSourceReader(),
+  }) : _runtime = runtime;
+
+  final AgentRuntimeEffectPlanBinding _runtime;
+  final InboxTriageSourceReader fallback;
+
+  @override
+  Future<InboxTriageSourceSnapshot> read(AgentContext ctx) async {
+    return _runtime.readFromEffectPlan(
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_inbox_triage_candidates',
+          input: <String, Object?>{
+            'limit': kInboxTriageMaxNotesPerRun,
+            'scan_limit': 200,
+          },
+        ),
+        AgentRuntimeEffect.tool(
+          name: 'list_triage_decisions',
+          input: <String, Object?>{'limit': 200},
+        ),
+      ],
+      maxEffectSteps: 2,
+      fallback: () => fallback.read(ctx),
+      decode: (terminalStep) async {
+        final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+        return inboxTriageSourceSnapshotFromTerminalStep(
+          terminalStep,
+          ownerUserId: ownerUserId,
+        );
+      },
+    );
+  }
+}
+
+class InboxTriageSourceSnapshot {
+  const InboxTriageSourceSnapshot({
+    required this.untriagedNotes,
+    required this.decisions,
+  });
+
+  final List<KnowledgeNote> untriagedNotes;
+  final List<KnowledgeDecision> decisions;
+}
+
+InboxTriageSourceSnapshot? inboxTriageSourceSnapshotFromTerminalStep(
+  Map<String, Object?> step, {
+  required String ownerUserId,
+}) {
+  final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
+  final notes = inboxTriageNotesFromToolResult(
+    byTool['list_inbox_triage_candidates'],
+    ownerUserId: ownerUserId,
+  );
+  final decisions = inboxTriageDecisionsFromToolResult(
+    byTool['list_triage_decisions'],
+    ownerUserId: ownerUserId,
+  );
+  if (notes == null || decisions == null) return null;
+  return InboxTriageSourceSnapshot(untriagedNotes: notes, decisions: decisions);
+}
+
+List<KnowledgeNote>? inboxTriageNotesFromToolResult(
+  Map<String, Object?>? result, {
+  required String ownerUserId,
+}) {
+  final rawNotes = result?['notes'];
+  if (rawNotes is! List) return null;
+  final out = <KnowledgeNote>[];
+  for (final raw in rawNotes) {
+    final note = _asObject(raw);
+    final id = note?['id'];
+    final title = note?['title'];
+    final body = note?['body_md'];
+    final createdAt = DateTime.tryParse((note?['created_at'] as String?) ?? '');
+    if (id is! String || title is! String || body is! String) return null;
+    out.add(
+      KnowledgeNote(
+        id: id,
+        title: title,
+        bodyMd: body,
+        tags: _stringList(note?['tags']),
+        projectTag: note?['project_tag'] as String?,
+        createdAt:
+            createdAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        sync: _syntheticSync(ownerUserId),
+      ),
+    );
+  }
+  return out;
+}
+
+List<KnowledgeDecision>? inboxTriageDecisionsFromToolResult(
+  Map<String, Object?>? result, {
+  required String ownerUserId,
+}) {
+  final rawDecisions = result?['decisions'];
+  if (rawDecisions is! List) return null;
+  final out = <KnowledgeDecision>[];
+  for (final raw in rawDecisions) {
+    final decision = _asObject(raw);
+    final id = decision?['id'];
+    final question = decision?['question'];
+    final selected = decision?['selected'];
+    final status = decision?['status'];
+    final decidedAt = DateTime.tryParse(
+      (decision?['decided_at'] as String?) ?? '',
+    );
+    if (id is! String || question is! String) return null;
+    out.add(
+      KnowledgeDecision(
+        id: id,
+        question: question,
+        options: const <DecisionOption>[],
+        selectedLabel: selected is String ? selected : '',
+        rationaleMd: '',
+        principleIds: const <String>[],
+        assumptionIds: const <String>[],
+        status: status is String
+            ? DecisionStatus.parse(status)
+            : DecisionStatus.active,
+        decidedAt:
+            decidedAt ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        sync: _syntheticSync(ownerUserId),
+      ),
+    );
+  }
+  return out;
+}
+
+Map<String, Object?>? _asObject(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return null;
+}
+
+List<String> _stringList(Object? value) {
+  if (value is! List) return const <String>[];
+  return value.whereType<String>().toList(growable: false);
+}
+
+SyncMeta _syntheticSync(String ownerUserId) {
+  return SyncMeta(
+    ownerUserId: ownerUserId,
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    updatedByDevice: 'frb-agent-runtime',
+    hlc: Hlc.zero('frb-agent-runtime'),
+  );
 }

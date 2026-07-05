@@ -1,10 +1,11 @@
-import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/ai_runtime.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
+import 'package:naviwealth/features/ai_chat/data/providers.dart';
 import 'package:naviwealth/features/ai_chat/data/runtime_routing_api_client.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_transparency_badge.dart';
 
@@ -31,19 +32,15 @@ AuthSession _session() => AuthSession(
   deviceId: 'd',
 );
 
-class _ScriptedDevice implements DeviceChatRunner {
-  _ScriptedDevice(this._events, {this.throwAfter});
+class _ScriptedAgent implements ChatAgent {
+  _ScriptedAgent(this._events, {this.throwAfter});
   final List<AiChatEvent> _events;
   final int? throwAfter; // throw after N yielded events (null = never)
+  ChatAgentTurnRequest? lastRequest;
 
   @override
-  Stream<AiChatEvent> run({
-    required List<WireMessage> messages,
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
-    String? model,
-    CancelToken? cancelToken,
-  }) async* {
+  Stream<AiChatEvent> runTurn(ChatAgentTurnRequest request) async* {
+    lastRequest = request;
     var n = 0;
     for (final e in _events) {
       if (throwAfter != null && n == throwAfter) {
@@ -68,6 +65,10 @@ Future<List<AiChatEvent>> _run(RuntimeRoutingAiChatApiClient c) => c
 void main() {
   group('formatAiTraceBadge — device-direct text (W-D6)', () {
     test('device + device_llm_direct → "未经我方服务器"', () {
+      expect(
+        isDirectProviderRoutingReason(kDeviceLlmDirectRoutingReason),
+        true,
+      );
       final s = formatAiTraceBadge(
         _trace(
           backend: Backend.device,
@@ -78,8 +79,48 @@ void main() {
       expect(s, contains('未经我方服务器'));
     });
 
+    test('device + frb_agent_runtime_profile → "未经我方服务器"', () {
+      expect(
+        isDirectProviderRoutingReason(kFrbAgentRuntimeProfileRoutingReason),
+        true,
+      );
+      final s = formatAiTraceBadge(
+        _trace(
+          backend: Backend.device,
+          routingReason: kFrbAgentRuntimeProfileRoutingReason,
+        ),
+      );
+      expect(s, contains('端侧直连模型'));
+      expect(s, contains('未经我方服务器'));
+    });
+
+    test('device + frb_chat → "未经我方服务器"', () {
+      expect(isDirectProviderRoutingReason(kFrbChatRoutingReason), true);
+      final s = formatAiTraceBadge(
+        _trace(backend: Backend.device, routingReason: kFrbChatRoutingReason),
+      );
+      expect(s, contains('端侧直连模型'));
+      expect(s, contains('未经我方服务器'));
+    });
+
     test('device without that reason stays "全部本地处理"', () {
+      expect(isDirectProviderRoutingReason('capability_classify'), false);
       final s = formatAiTraceBadge(_trace(backend: Backend.device));
+      expect(s, contains('全部本地处理'));
+      expect(s, isNot(contains('未经我方服务器')));
+    });
+
+    test('device_unavailable is not disclosed as provider direct routing', () {
+      expect(
+        isDirectProviderRoutingReason(kDeviceUnavailableRoutingReason),
+        false,
+      );
+      final s = formatAiTraceBadge(
+        _trace(
+          backend: Backend.device,
+          routingReason: kDeviceUnavailableRoutingReason,
+        ),
+      );
       expect(s, contains('全部本地处理'));
       expect(s, isNot(contains('未经我方服务器')));
     });
@@ -107,24 +148,43 @@ void main() {
         },
       );
 
+      test(
+        'feature default stays unavailable until bootstrap injects FRB chat',
+        () async {
+          final container = ProviderContainer();
+          addTearDown(container.dispose);
+
+          final api = container.read(aiChatApiClientProvider);
+          final out = await api
+              .chat(
+                session: _session(),
+                messages: const [WireMessage(role: 'user', content: 'hi')],
+              )
+              .toList();
+
+          expect((out.first as ErrorEvent).code, 'device_unavailable');
+          expect((out.last as DoneEvent).rounds, 0);
+        },
+      );
+
       test('device produces content → passed through unchanged', () async {
-        final c = RuntimeRoutingAiChatApiClient(
-          device: _ScriptedDevice(const [
-            TextEvent('device-answer'),
-            DoneEvent(stopReason: 'end_turn', rounds: 1),
-          ]),
-        );
+        final agent = _ScriptedAgent(const [
+          TextEvent('device-answer'),
+          DoneEvent(stopReason: 'end_turn', rounds: 1),
+        ]);
+        final c = RuntimeRoutingAiChatApiClient(agent: agent);
         expect(c.usesDevice, isTrue);
         final out = await _run(c);
         expect((out.first as TextEvent).text, 'device-answer');
         expect(out.last, isA<DoneEvent>());
+        expect(agent.lastRequest?.messages.single.content, 'hi');
       });
 
       test(
         'device error passes through verbatim (no cloud suppression)',
         () async {
           final c = RuntimeRoutingAiChatApiClient(
-            device: _ScriptedDevice(const [
+            agent: _ScriptedAgent(const [
               ErrorEvent('bad api key', code: 'provider_error'),
               DoneEvent(stopReason: 'error', rounds: 1),
             ]),
@@ -137,7 +197,7 @@ void main() {
 
       test('device throws → propagates (no failover)', () async {
         final c = RuntimeRoutingAiChatApiClient(
-          device: _ScriptedDevice(const [TextEvent('partial')], throwAfter: 1),
+          agent: _ScriptedAgent(const [TextEvent('partial')], throwAfter: 1),
         );
         expect(_run(c), throwsA(isA<StateError>()));
       });
@@ -212,12 +272,15 @@ void main() {
         'get_subscription_changes',
         'get_transfer_links',
         'get_wheel_lifecycle',
+        'list_active_principles',
         'list_blocked_actions',
         'list_due_reviews',
         'list_due_routines',
+        'list_inbox_triage_candidates',
         'list_open_actions',
         'list_open_assumptions',
         'list_payment_accounts',
+        'list_triage_decisions',
         'propose_account_create',
         'propose_action',
         'propose_action_status_update',

@@ -3,21 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/biometric_auth_service.dart';
 import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
-import 'package:naviwealth/features/settings/settings_page.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
-import 'package:naviwealth/features/settings/ui/knowledge_domain_settings_page.dart';
+import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/test_database.dart';
 
-GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
+GoRouter _router({
+  String initialLocation = AppRoutes.settingsDomains,
+  List<DomainPack>? packs,
+}) {
+  final resolvedPacks = packs ?? kAllDomainPacks;
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -30,11 +35,9 @@ GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
             name: AppRouteNames.domains,
             builder: (_, _) => const DomainsSettingsPage(),
           ),
-          GoRoute(
-            path: 'domains/knowledge',
-            name: AppRouteNames.domainsKnowledge,
-            builder: (_, _) => const KnowledgeDomainSettingsPage(),
-          ),
+          for (final pack in resolvedPacks)
+            if (pack.settingsSpec?.routeBuilder != null)
+              pack.settingsSpec!.routeBuilder!((child) => child),
         ],
       ),
     ],
@@ -51,6 +54,7 @@ Future<Widget> _wrap(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
+      domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
     ],
     child: MaterialApp.router(
       theme: AppTheme.light(),
@@ -91,6 +95,7 @@ void main() {
             overrides: [
               sharedPreferencesProvider.overrideWithValue(prefs),
               appDatabaseProvider.overrideWith((_) async => db),
+              domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
             ],
             child: MaterialApp.router(
               theme: AppTheme.light(),
@@ -124,6 +129,48 @@ void main() {
     );
   });
 
+  group('Settings → Domains', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('renders optional domain toggles from the shared spec list', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(await _wrap(prefs));
+      await tester.pumpAndSettle();
+
+      expect(find.text('HealthOS'), findsOneWidget);
+      expect(find.text('KnowledgeOS'), findsOneWidget);
+      expect(find.text('ExecutionOS'), findsOneWidget);
+      expect(find.text('Turn on AI tools and Memory indexing'), findsOneWidget);
+      expect(
+        find.text('Personal decisions and cognitive memory'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Turn decisions and plans into trackable actions.'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.text('HealthOS'));
+      await tester.pumpAndSettle();
+      final healthSwitch = find.descendant(
+        of: find.ancestor(
+          of: find.text('HealthOS'),
+          matching: find.byType(Row),
+        ),
+        matching: find.byType(FSwitch),
+      );
+      await tester.tap(healthSwitch.first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('AI tools and Memory indexing are enabled'),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('Settings → KnowledgeOS', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -140,6 +187,24 @@ void main() {
       expect(find.text('KnowledgeOS · Library'), findsOneWidget);
       expect(find.text('KnowledgeOS · Review'), findsOneWidget);
       expect(find.text('KnowledgeOS Memory'), findsOneWidget);
+    });
+  });
+
+  group('Settings → ExecutionOS', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('surfaces today, commitments, and review settings', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settingsDomainsExecution),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ExecutionOS · Today'), findsOneWidget);
+      expect(find.text('ExecutionOS · Commitments'), findsOneWidget);
+      expect(find.text('ExecutionOS · Review'), findsOneWidget);
     });
   });
 

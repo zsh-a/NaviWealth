@@ -1,5 +1,5 @@
-import 'package:naviwealth/domain/values/asset_market.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 /// Where a [AssetSearchHit] came from. Drives the UI grouping in the
 /// trade-entry picker (owned rows render under a "我的资产" header,

@@ -41,11 +41,7 @@ EventRecord _hrvEvent({
   source: kHealthSource,
   ownerUserId: 'u',
   summary: 'hrv',
-  payload: <String, Object?>{
-    'kind': 'hrv_daily',
-    'value': ms,
-    'unit': 'ms',
-  },
+  payload: <String, Object?>{'kind': 'hrv_daily', 'value': ms, 'unit': 'ms'},
   entities: <String>{'health', 'hrv_daily'},
 );
 
@@ -82,11 +78,7 @@ void main() {
       final rt = _runtime();
       final out = await MorningBriefingAgent.synthesize(
         events: [
-          _financeEvent(
-            id: 'f1',
-            at: yesterdayEvening,
-            type: 'trade_opened',
-          ),
+          _financeEvent(id: 'f1', at: yesterdayEvening, type: 'trade_opened'),
         ],
         ownerUserId: 'u',
         startedAt: now,
@@ -97,41 +89,31 @@ void main() {
       expect(out.memoryId, isNull);
     });
 
-    test('with sleep + hrv + finance events produces a multi-segment summary',
-        () async {
-      final rt = _runtime();
-      final out = await MorningBriefingAgent.synthesize(
-        events: [
-          _sleepEvent(
-            id: 'h1',
-            at: yesterdayEvening,
-            seconds: 7.5 * 3600.0,
-          ),
-          _hrvEvent(id: 'h2', at: yesterdayEvening, ms: 52),
-          _financeEvent(
-            id: 'f1',
-            at: yesterdayEvening,
-            type: 'trade_opened',
-          ),
-          _financeEvent(
-            id: 'f2',
-            at: yesterdayEvening,
-            type: 'trade_opened',
-          ),
-        ],
-        ownerUserId: 'u',
-        startedAt: now,
-        finishedAt: now.add(const Duration(milliseconds: 50)),
-        runtime: rt,
-      );
-      expect(out.status, AgentRunStatus.completed);
-      expect(out.summary, contains('Slept 7.5h'));
-      expect(out.summary, contains('HRV 52ms'));
-      expect(out.summary, contains('2 trade opened'));
-      expect(out.memoryId, isNotNull);
-      expect(out.payload['health_event_count'], 2);
-      expect(out.payload['finance_event_count'], 2);
-    });
+    test(
+      'with sleep + hrv + finance events produces a multi-segment summary',
+      () async {
+        final rt = _runtime();
+        final out = await MorningBriefingAgent.synthesize(
+          events: [
+            _sleepEvent(id: 'h1', at: yesterdayEvening, seconds: 7.5 * 3600.0),
+            _hrvEvent(id: 'h2', at: yesterdayEvening, ms: 52),
+            _financeEvent(id: 'f1', at: yesterdayEvening, type: 'trade_opened'),
+            _financeEvent(id: 'f2', at: yesterdayEvening, type: 'trade_opened'),
+          ],
+          ownerUserId: 'u',
+          startedAt: now,
+          finishedAt: now.add(const Duration(milliseconds: 50)),
+          runtime: rt,
+        );
+        expect(out.status, AgentRunStatus.completed);
+        expect(out.summary, contains('Slept 7.5h'));
+        expect(out.summary, contains('HRV 52ms'));
+        expect(out.summary, contains('2 trade opened'));
+        expect(out.memoryId, isNotNull);
+        expect(out.payload['health_event_count'], 2);
+        expect(out.payload['finance_event_count'], 2);
+      },
+    );
 
     test('annotates short sleep when the indexer tagged short_sleep', () async {
       final rt = _runtime();
@@ -152,35 +134,37 @@ void main() {
       expect(out.summary, contains('(short)'));
     });
 
-    test('memory is upserted by day key so two runs same day stay 1 record',
-        () async {
-      final rt = _runtime();
-      Future<void> runOnceAt(DateTime at) async {
-        await MorningBriefingAgent.synthesize(
-          events: [
-            _sleepEvent(
-              id: 'h${at.hour}',
-              at: at.subtract(const Duration(hours: 8)),
-              seconds: 7 * 3600.0,
-            ),
-          ],
-          ownerUserId: 'u',
-          startedAt: at,
-          finishedAt: at.add(const Duration(milliseconds: 50)),
-          runtime: rt,
-        );
-      }
+    test(
+      'memory is upserted by day key so two runs same day stay 1 record',
+      () async {
+        final rt = _runtime();
+        Future<void> runOnceAt(DateTime at) async {
+          await MorningBriefingAgent.synthesize(
+            events: [
+              _sleepEvent(
+                id: 'h${at.hour}',
+                at: at.subtract(const Duration(hours: 8)),
+                seconds: 7 * 3600.0,
+              ),
+            ],
+            ownerUserId: 'u',
+            startedAt: at,
+            finishedAt: at.add(const Duration(milliseconds: 50)),
+            runtime: rt,
+          );
+        }
 
-      await runOnceAt(now);
-      await runOnceAt(now.add(const Duration(hours: 1)));
-      final hits = await rt.recall(
-        ownerUserId: 'u',
-        entityFilter: const {'morning_briefing'},
-        validAt: now.add(const Duration(hours: 2)),
-        topK: 5,
-      );
-      expect(hits, hasLength(1));
-    });
+        await runOnceAt(now);
+        await runOnceAt(now.add(const Duration(hours: 1)));
+        final hits = await rt.recall(
+          ownerUserId: 'u',
+          entityFilter: const {'morning_briefing'},
+          validAt: now.add(const Duration(hours: 2)),
+          topK: 5,
+        );
+        expect(hits, hasLength(1));
+      },
+    );
   });
 
   test('agent advertises the contract', () {

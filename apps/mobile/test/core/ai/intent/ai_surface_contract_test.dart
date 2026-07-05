@@ -58,18 +58,16 @@ void main() {
           'trigger surfaces must go through AiIntentInvocation.',
     );
     expect(
-      showAiSheetCallSites.toSet(),
-      <String>{
-        'lib/features/ai_chat/ui/ask_ai.dart:51',
-        'lib/features/ai_chat/ui/ask_ai.dart:55',
-      },
+      showAiSheetCallSites.map(_filePathOnly).toSet(),
+      <String>{'lib/features/ai_chat/composition/ai_chat_surface.dart'},
       reason:
           'showAiSheet is the renderer, not the public trigger seam. External '
           'surfaces should call askAi(), which constructs AiIntentInvocation.',
     );
+    expect(showAiSheetCallSites, hasLength(1));
     expect(
       directAiChatPageConstructions.toSet(),
-      <String>{'lib/app/router_builder.dart:206'},
+      <String>{'lib/app/routing/router_builder.dart:186'},
       reason:
           'AiChatPage is allowed only as the read-only /settings/ai-history '
           'route. Trigger surfaces should use the bottom-sheet invocation path.',
@@ -110,7 +108,7 @@ void main() {
     expect(globalPalette, contains('commandPaletteOpenAi'));
 
     final contextualCapsule = File(
-      'lib/features/ai_chat/ui/ai_object_capsule.dart',
+      'lib/core/ai/visual/ai_object_capsule.dart',
     ).readAsStringSync();
     expect(contextualCapsule, contains('class AiObjectCapsule'));
     expect(contextualCapsule, contains('askAi('));
@@ -118,7 +116,7 @@ void main() {
     expect(contextualCapsule, contains('AiContextChipScope.contextMapOf'));
 
     final ambientFeed = File(
-      'lib/features/home/ui/ai_insight_feed.dart',
+      'lib/features/finance/home/ui/ai_insight_feed.dart',
     ).readAsStringSync();
     expect(ambientFeed, contains('class AiInsightFeed'));
     expect(ambientFeed, contains('AiObjectCapsule('));
@@ -126,7 +124,7 @@ void main() {
     expect(ambientFeed, contains("source: 'home_insight_card'"));
 
     final ingestProjection = File(
-      'lib/features/ingest/data/ingest_queue_insight_provider.dart',
+      'lib/features/finance/ingest/data/ingest_queue_insight_provider.dart',
     ).readAsStringSync();
     expect(ingestProjection, contains('ingestQueueInsightProvider'));
     expect(ingestProjection, contains('pendingIngestDraftsProvider'));
@@ -171,3 +169,5 @@ String _stripLineComment(String line) {
   final index = line.indexOf('//');
   return index == -1 ? line : line.substring(0, index);
 }
+
+String _filePathOnly(String location) => location.split(':').first;

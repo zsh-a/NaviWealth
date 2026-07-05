@@ -5,16 +5,12 @@
 //     summarisation behaviour. Mirrors the existing static-synthesise
 //     coverage in `morning_briefing_agent_test.dart` so a refactor to
 //     the agent can't silently regress the line shapes.
-//   * LlmBriefingSynthesizer — wraps a DeviceLlmClient. We fake the
-//     client to script the happy path and several failure modes;
-//     every failure must fall back to the programmatic baseline.
+//   * FrbBriefingSynthesizer — wraps the FRB profile-turn runner. We fake
+//     the runner to script the happy path and fallback behavior.
 
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
 
@@ -35,81 +31,33 @@ EventRecord _sleepEvent({
   importance: 0.5,
 );
 
-EventRecord _hrvEvent({
-  required DateTime when,
-  required double valueMs,
-}) => EventRecord(
-  id: 'hrv-${when.toIso8601String()}',
-  type: kEventHrvRecorded,
-  timestamp: when,
-  source: kHealthSource,
-  ownerUserId: 'u-test',
-  title: 'hrv',
-  summary: 'hrv',
-  payload: <String, Object?>{'value': valueMs, 'unit': 'ms'},
-  entities: const <String>{},
-  importance: 0.55,
-);
-
-EventRecord _financeEvent({
-  required DateTime when,
-  required String type,
-}) => EventRecord(
-  id: 'fin-$type-${when.toIso8601String()}',
-  type: type,
-  timestamp: when,
-  source: 'options_trade_journal',
-  ownerUserId: 'u-test',
-  title: type,
-  summary: type,
-  payload: const <String, Object?>{},
-  entities: const <String>{},
-  importance: 0.5,
-);
-
-class _FakeLlmConfig implements DeviceLlmConfig {
-  const _FakeLlmConfig();
-  @override
-  String get model => 'fake-model';
-}
-
-class _FakeLlmClient implements DeviceLlmClient {
-  _FakeLlmClient({this.scriptedText, this.shouldThrow = false});
-  final String? scriptedText;
-  final bool shouldThrow;
-  int completeCalls = 0;
-
-  @override
-  DeviceLlmConfig get config => const _FakeLlmConfig();
-
-  @override
-  Future<AnthropicCompletion> complete(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async {
-    completeCalls++;
-    if (shouldThrow) {
-      throw const LlmRequestException(statusCode: 500, message: 'boom');
-    }
-    final text = scriptedText;
-    if (text == null) {
-      return const AnthropicCompletion(content: <Object?>[]);
-    }
-    return AnthropicCompletion(
-      content: <Object?>[
-        <String, Object?>{'type': 'text', 'text': text},
-      ],
+EventRecord _hrvEvent({required DateTime when, required double valueMs}) =>
+    EventRecord(
+      id: 'hrv-${when.toIso8601String()}',
+      type: kEventHrvRecorded,
+      timestamp: when,
+      source: kHealthSource,
+      ownerUserId: 'u-test',
+      title: 'hrv',
+      summary: 'hrv',
+      payload: <String, Object?>{'value': valueMs, 'unit': 'ms'},
+      entities: const <String>{},
+      importance: 0.55,
     );
-  }
 
-  @override
-  Stream<LlmStreamEvent> streamMessages(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async* {
-    throw UnsupportedError('streamMessages not used by briefing synthesizer');
-  }
-}
+EventRecord _financeEvent({required DateTime when, required String type}) =>
+    EventRecord(
+      id: 'fin-$type-${when.toIso8601String()}',
+      type: type,
+      timestamp: when,
+      source: 'options_trade_journal',
+      ownerUserId: 'u-test',
+      title: type,
+      summary: type,
+      payload: const <String, Object?>{},
+      entities: const <String>{},
+      importance: 0.5,
+    );
 
 void main() {
   group('ProgrammaticBriefingSynthesizer', () {
@@ -143,7 +91,10 @@ void main() {
           ],
         ),
       );
-      expect(out.summary, 'Slept 7.5h · HRV 48ms · Finance: 2 trade opened, 1 dividend received');
+      expect(
+        out.summary,
+        'Slept 7.5h · HRV 48ms · Finance: 2 trade opened, 1 dividend received',
+      );
       expect(out.sleepLine, 'Slept 7.5h');
       expect(out.hrvLine, 'HRV 48ms');
       expect(out.financeLine, 'Finance: 2 trade opened, 1 dividend received');
@@ -168,7 +119,7 @@ void main() {
     });
   });
 
-  group('LlmBriefingSynthesizer', () {
+  group('FrbBriefingSynthesizer', () {
     final now = DateTime.utc(2026, 5, 27, 7);
     final baselineInputs = BriefingInputs(
       dayKey: '2026-05-27',
@@ -179,49 +130,143 @@ void main() {
       financeEvents: const <EventRecord>[],
     );
 
-    test('uses LLM output when the call succeeds', () async {
-      final client = _FakeLlmClient(
-        scriptedText: 'You slept 7.5h with HRV 48ms — calm baseline morning.',
+    test('runs Morning Briefing through the FRB profile-turn runner', () async {
+      final runner = _FakeProfileTurnRunner(
+        content: 'You slept 7.5h and HRV was 48ms.',
       );
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(baselineInputs);
-      expect(out.source, BriefingSource.llm);
-      expect(out.summary, contains('7.5h'));
-      // Structured lines are still surfaced — agent embeds them in the
-      // memory `outcome` payload regardless of source.
-      expect(out.sleepLine, 'Slept 7.5h');
-      expect(out.hrvLine, 'HRV 48ms');
-      expect(client.completeCalls, 1);
-    });
-
-    test('falls back to programmatic when the LLM call throws', () async {
-      final client = _FakeLlmClient(shouldThrow: true);
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(baselineInputs);
-      expect(out.source, BriefingSource.programmatic);
-      expect(out.summary, 'Slept 7.5h · HRV 48ms');
-    });
-
-    test('falls back when the LLM returns empty content', () async {
-      final client = _FakeLlmClient(scriptedText: null);
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(baselineInputs);
-      expect(out.source, BriefingSource.programmatic);
-      expect(out.summary, 'Slept 7.5h · HRV 48ms');
-    });
-
-    test('skips the LLM call when baseline already empty', () async {
-      final client = _FakeLlmClient(scriptedText: 'something');
-      final synth = LlmBriefingSynthesizer(client: client);
-      final out = await synth.synthesize(
-        const BriefingInputs(
-          dayKey: '2026-05-27',
-          healthEvents: <EventRecord>[],
-          financeEvents: <EventRecord>[],
+      final traces = <AgentRuntimeProfileTurnResult>[];
+      final synth = FrbBriefingSynthesizer(
+        runtime: _profileRuntime(
+          runner: runner,
+          recordTrace: (result) async => traces.add(result),
         ),
       );
-      expect(out.isEmpty, isTrue);
-      expect(client.completeCalls, 0);
+      final out = await synth.synthesize(baselineInputs);
+
+      expect(out.source, BriefingSource.llm);
+      expect(out.summary, 'You slept 7.5h and HRV was 48ms.');
+      expect(out.sleepLine, 'Slept 7.5h');
+      expect(out.hrvLine, 'HRV 48ms');
+      expect(runner.calls.single.agentId, 'morning_briefing');
+      expect(
+        runner.calls.single.metadata,
+        containsPair('surface', 'health_morning_briefing'),
+      );
+      expect(
+        runner.calls.single.metadata,
+        containsPair('day_key', '2026-05-27'),
+      );
+      expect(runner.calls.single.maxEffectSteps, 0);
+      expect(
+        runner.calls.single.messages.first,
+        containsPair('role', 'system'),
+      );
+      expect(traces.single.llmResponse['content'], out.summary);
+      expect(traces.single.step['status'], 'completed');
     });
+
+    test('falls back when the FRB runner throws', () async {
+      final runner = _FakeProfileTurnRunner(shouldThrow: true);
+      final synth = FrbBriefingSynthesizer(
+        runtime: _profileRuntime(runner: runner),
+      );
+      final out = await synth.synthesize(baselineInputs);
+
+      expect(out.source, BriefingSource.programmatic);
+      expect(out.summary, 'Slept 7.5h · HRV 48ms');
+    });
+
+    test(
+      'ignores trace recording failures after a successful FRB turn',
+      () async {
+        final runner = _FakeProfileTurnRunner(
+          content: 'You slept 7.5h and HRV was 48ms.',
+        );
+        final synth = FrbBriefingSynthesizer(
+          runtime: _profileRuntime(
+            runner: runner,
+            recordTrace: (_) async =>
+                throw StateError('trace store unavailable'),
+          ),
+        );
+
+        final out = await synth.synthesize(baselineInputs);
+
+        expect(out.source, BriefingSource.llm);
+        expect(out.summary, 'You slept 7.5h and HRV was 48ms.');
+        expect(runner.calls.single.agentId, 'morning_briefing');
+      },
+    );
   });
+}
+
+AgentRuntimeProfileTurnBinding _profileRuntime({
+  required AgentRuntimeProfileTurnRunner runner,
+  Future<void> Function(AgentRuntimeProfileTurnResult result)? recordTrace,
+}) {
+  return AgentRuntimeProfileTurnBinding(
+    agentId: 'morning_briefing',
+    domain: 'health',
+    surface: 'health_morning_briefing',
+    runner: runner,
+    recordTrace: recordTrace,
+  );
+}
+
+class _FakeProfileTurnRunner implements AgentRuntimeProfileTurnRunner {
+  _FakeProfileTurnRunner({this.content, this.shouldThrow = false});
+
+  final String? content;
+  final bool shouldThrow;
+  final calls = <_ProfileTurnCall>[];
+
+  @override
+  Future<AgentRuntimeProfileTurnResult> run({
+    required String agentId,
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+    int? maxEffectSteps,
+  }) async {
+    calls.add(
+      _ProfileTurnCall(
+        agentId: agentId,
+        messages: messages,
+        metadata: metadata,
+        maxEffectSteps: maxEffectSteps,
+      ),
+    );
+    if (shouldThrow) throw StateError('frb failed');
+    return AgentRuntimeProfileTurnResult(
+      llmResponse: <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'provider': 'openai',
+        'model': 'gpt-test',
+        'content': content,
+        'finish_reason': 'stop',
+      },
+      step: const <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'run_1',
+        'agent_id': 'morning_briefing',
+        'status': 'completed',
+      },
+    );
+  }
+}
+
+class _ProfileTurnCall {
+  const _ProfileTurnCall({
+    required this.agentId,
+    required this.messages,
+    required this.metadata,
+    required this.maxEffectSteps,
+  });
+
+  final String agentId;
+  final List<Map<String, Object?>> messages;
+  final Map<String, Object?> metadata;
+  final int? maxEffectSteps;
 }

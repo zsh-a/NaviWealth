@@ -11,33 +11,35 @@
 /// - the cosine floor filters off-topic candidates before the judge;
 /// - empty recall → the agent skips;
 /// - the heuristic fallback + no-LLM provider parity;
-/// - [LlmContradictionJudge] in isolation (parse / fallback paths).
+/// - [FrbContradictionJudge] in isolation (parse / fallback paths).
 library;
 
-import 'dart:async';
-
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart'
     show memoryRuntimeProvider;
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
 import 'package:naviwealth/features/knowledge/data/contradiction_judge.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/llm_contradiction_judge.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 
 const _owner = 'u1';
 final _now = DateTime.utc(2026, 5, 30, 12);
@@ -149,43 +151,6 @@ class _ThrowingJudge implements ContradictionJudge {
     required String principleStatement,
     required String memoryText,
   }) async => throw StateError('boom');
-}
-
-/// Canned-completion fake (same shape as the inbox-triage test fake).
-class _FakeConfig implements DeviceLlmConfig {
-  const _FakeConfig();
-  @override
-  String get model => 'test-model';
-}
-
-class _FakeDeviceLlmClient implements DeviceLlmClient {
-  _FakeDeviceLlmClient({this.responseText, this.error});
-
-  final String? responseText;
-  final Object? error;
-
-  @override
-  DeviceLlmConfig get config => const _FakeConfig();
-
-  @override
-  Stream<LlmStreamEvent> streamMessages(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) => throw UnimplementedError();
-
-  @override
-  Future<AnthropicCompletion> complete(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async {
-    if (error != null) throw error!;
-    return AnthropicCompletion(
-      content: <Object?>[
-        if (responseText != null)
-          <String, Object?>{'type': 'text', 'text': responseText},
-      ],
-    );
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -433,6 +398,72 @@ void main() {
     expect(result.summary, contains('No contradictions'));
   });
 
+  group('FrbContradictionSourceReader', () {
+    test('reads source rows through a three-step FRB effect loop', () async {
+      final dispatcher = _ContradictionDispatcher();
+      final bridge = FakeAgentRuntimeEffectPlanBridge();
+      final traces = <AgentRuntimeNativeStepRunResult>[];
+      final reader = FrbContradictionSourceReader(
+        runtime: _runtime(
+          bridge: bridge,
+          dispatcher: dispatcher,
+          recordTrace: (stepRun) async => traces.add(stepRun),
+        ),
+      );
+
+      final snapshot = await reader.read(_context());
+
+      expect(snapshot.decisions.single.assumptionIds, <String>['a-frb']);
+      expect(snapshot.principles.single.id, 'p-frb');
+      expect(snapshot.openAssumptions.single.id, 'a-open');
+      expect(dispatcher.calls.map((call) => call.name), <String>[
+        'list_triage_decisions',
+        'list_active_principles',
+        'list_open_assumptions',
+      ]);
+      expect(
+        bridge.startRequests.single.agentId,
+        kKnowledgeContradictionAgentId,
+      );
+      expect(
+        bridge.startRequests.single.request['metadata'],
+        containsPair('surface', 'knowledge_contradiction'),
+      );
+      expect(traces.single.terminalStep['status'], 'completed');
+      expect(traces.single.dispatchedEffectCount, 3);
+    });
+
+    test('falls back when FRB source read fails', () async {
+      final fallback = _FallbackSourceReader(
+        ContradictionSourceSnapshot(
+          decisions: <KnowledgeDecision>[
+            _decision('fallback-decision', question: 'Fallback?'),
+          ],
+          principles: <KnowledgePrinciple>[
+            _principle('fallback-principle', 'Fallback principle'),
+          ],
+          openAssumptions: <KnowledgeAssumption>[
+            _assumption('fallback-assumption', 'Fallback assumption'),
+          ],
+        ),
+      );
+      final reader = FrbContradictionSourceReader(
+        runtime: _runtime(
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
+          dispatcher: _ContradictionDispatcher(),
+        ),
+        fallback: fallback,
+      );
+
+      final snapshot = await reader.read(_context());
+
+      expect(snapshot.decisions.single.id, 'fallback-decision');
+      expect(snapshot.principles.single.id, 'fallback-principle');
+      expect(snapshot.openAssumptions.single.id, 'fallback-assumption');
+      expect(fallback.calls, 1);
+    });
+  });
+
   group('fallback / parity', () {
     test(
       'HeuristicContradictionJudge: marker token -> contradiction',
@@ -482,65 +513,243 @@ void main() {
     });
 
     test(
-      'LlmContradictionJudge falls back to heuristic on malformed JSON',
+      'FrbContradictionJudge parses a genuine contradiction verdict',
       () async {
-        final judge = LlmContradictionJudge(
-          client: _FakeDeviceLlmClient(responseText: 'not json'),
+        final bridge = _FakeLlmBridge(
+          responseText:
+              '{"is_contradiction": true, "confidence": 0.9, '
+              '"reason_zh": "方向相反"}',
         );
-        final v = await judge.judge(
-          principleStatement: '长期持有',
-          memoryText: '该决定违反了长期持有',
-        );
-        expect(v.isContradiction, isTrue); // heuristic caught the marker
-      },
-    );
+        final judge = FrbContradictionJudge(llmClient: bridge);
 
-    test('LlmContradictionJudge falls back when the client throws', () async {
-      final judge = LlmContradictionJudge(
-        client: _FakeDeviceLlmClient(error: StateError('boom')),
-      );
-      final v = await judge.judge(
-        principleStatement: '长期持有',
-        memoryText: '复盘了长期持有,无异常', // no marker -> heuristic says none
-      );
-      expect(v.isContradiction, isFalse);
-    });
-
-    test(
-      'LlmContradictionJudge parses a genuine-contradiction verdict',
-      () async {
-        final judge = LlmContradictionJudge(
-          client: _FakeDeviceLlmClient(
-            responseText:
-                '{"is_contradiction": true, "confidence": 0.9, '
-                '"reason_zh": "方向相反"}',
-          ),
-        );
         final v = await judge.judge(
           principleStatement: '长期持有',
           memoryText: '决定开始高频波段',
         );
+
+        expect(bridge.calls, 1);
+        expect(bridge.lastMessages.first['role'], 'system');
+        expect(bridge.lastMessages.last['role'], 'user');
+        expect(bridge.lastMetadata['surface'], 'knowledge_contradiction');
         expect(v.isContradiction, isTrue);
         expect(v.reasonZh, '方向相反');
       },
     );
 
     test(
-      'LlmContradictionJudge drops a low-confidence positive verdict',
+      'FrbContradictionJudge falls back to heuristic on malformed JSON',
       () async {
-        final judge = LlmContradictionJudge(
-          client: _FakeDeviceLlmClient(
+        final judge = FrbContradictionJudge(
+          llmClient: _FakeLlmBridge(responseText: 'not json'),
+        );
+
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '该决定违反了长期持有',
+        );
+
+        expect(v.isContradiction, isTrue); // heuristic caught the marker
+      },
+    );
+
+    test(
+      'FrbContradictionJudge falls back when FRB completion throws',
+      () async {
+        final judge = FrbContradictionJudge(
+          llmClient: _FakeLlmBridge(error: StateError('native unavailable')),
+        );
+
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '该决定违反了长期持有',
+        );
+
+        expect(v.isContradiction, isTrue);
+        expect(v.reasonZh, contains('违反'));
+      },
+    );
+
+    test(
+      'FrbContradictionJudge drops a low-confidence positive verdict',
+      () async {
+        final judge = FrbContradictionJudge(
+          llmClient: _FakeLlmBridge(
             responseText:
                 '{"is_contradiction": true, "confidence": 0.3, '
                 '"reason_zh": "不确定"}',
           ),
         );
+
         final v = await judge.judge(
           principleStatement: '长期持有',
-          memoryText: '一些无关内容', // no marker so fallback also says none
+          memoryText: '一些无关内容',
         );
+
         expect(v.isContradiction, isFalse);
       },
     );
   });
+}
+
+AgentContext _context() {
+  final container = ProviderContainer(
+    overrides: [currentUserIdProvider.overrideWithValue(() async => _owner)],
+  );
+  addTearDown(container.dispose);
+  final ref = container.read(_refProvider);
+  return AgentContext(ref: ref, now: _now);
+}
+
+final _refProvider = Provider<Ref>((ref) => ref);
+
+AgentRuntimeEffectPlanBinding _runtime({
+  required AgentRuntimeNativeBridge bridge,
+  required DeviceToolDispatcher dispatcher,
+  Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
+}) {
+  return agentRuntimeEffectPlanTestBinding(
+    agentId: kKnowledgeContradictionAgentId,
+    domain: 'knowledge',
+    surface: 'knowledge_contradiction',
+    bridge: bridge,
+    dispatcher: dispatcher,
+    catalog: _catalog(),
+    recordTrace: recordTrace,
+  );
+}
+
+AgentRuntimeCatalog _catalog() {
+  return AgentRuntimeCatalog(
+    generatedAt: _now,
+    activeDomains: const <String>['knowledge'],
+    agents: const <AgentRuntimeAgentSpec>[
+      AgentRuntimeAgentSpec(
+        id: kKnowledgeContradictionAgentId,
+        name: 'Contradiction Check',
+        version: '0.1.0',
+        schedule: AgentRuntimeScheduleSpec.interval(everySeconds: 21600),
+        capabilities: <String>['scheduled_agent'],
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+    ],
+    tools: const <AgentRuntimeToolSpec>[
+      AgentRuntimeToolSpec(
+        name: 'list_triage_decisions',
+        description: 'List triage decisions',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+      AgentRuntimeToolSpec(
+        name: 'list_active_principles',
+        description: 'List active principles',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+      AgentRuntimeToolSpec(
+        name: 'list_open_assumptions',
+        description: 'List open assumptions',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+    ],
+    proposalKinds: const <AgentRuntimeProposalKindSpec>[],
+    promptBlocks: const <AgentRuntimePromptBlockSpec>[],
+  );
+}
+
+class _ContradictionDispatcher implements DeviceToolDispatcher {
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
+
+  @override
+  Future<Object?> dispatch(
+    DeviceToolSession session,
+    String name,
+    Object? input,
+  ) async {
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
+    return switch (name) {
+      'list_triage_decisions' => <String, Object?>{
+        'decisions': <Object?>[
+          <String, Object?>{
+            'id': 'd-frb',
+            'question': 'Should I hold BOXX?',
+            'selected': 'yes',
+            'status': 'active',
+            'principle_ids': const <String>['p-frb'],
+            'assumption_ids': const <String>['a-frb'],
+            'decided_at': _now.toIso8601String(),
+          },
+        ],
+      },
+      'list_active_principles' => <String, Object?>{
+        'principles': <Object?>[
+          <String, Object?>{
+            'id': 'p-frb',
+            'statement': '长期持有',
+            'rationale_md': '',
+            'scope': '*',
+            'declared_at': _now.toIso8601String(),
+          },
+        ],
+      },
+      'list_open_assumptions' => <String, Object?>{
+        'assumptions': <Object?>[
+          <String, Object?>{
+            'id': 'a-open',
+            'statement': 'Open assumption',
+            'confidence': 0.7,
+            'scope': '*',
+            'last_verified_at': _now.toIso8601String(),
+          },
+        ],
+      },
+      _ => throw StateError('unexpected tool $name'),
+    };
+  }
+}
+
+class _FallbackSourceReader implements ContradictionSourceReader {
+  _FallbackSourceReader(this.result);
+
+  final ContradictionSourceSnapshot result;
+  var calls = 0;
+
+  @override
+  Future<ContradictionSourceSnapshot> read(AgentContext ctx) async {
+    calls += 1;
+    return result;
+  }
+}
+
+class _FakeLlmBridge implements KnowledgeLlmProfileClient {
+  _FakeLlmBridge({this.responseText, this.error});
+
+  final String? responseText;
+  final Object? error;
+  var calls = 0;
+  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
+  Map<String, Object?> lastMetadata = const <String, Object?>{};
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    calls += 1;
+    lastMessages = messages;
+    lastMetadata = metadata;
+    final e = error;
+    if (e != null) throw e;
+    return <String, Object?>{
+      'provider': 'mock',
+      'model': 'test-model',
+      'content': responseText ?? '',
+    };
+  }
 }

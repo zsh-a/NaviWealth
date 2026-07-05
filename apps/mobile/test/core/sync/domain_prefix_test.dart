@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/sync/domain_prefix.dart';
-import 'package:naviwealth/core/sync/row_applier.dart';
+import 'package:naviwealth/core/sync/sync_table_registry.dart';
 
 void main() {
   group('D-1.4 sync domain prefix', () {

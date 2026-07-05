@@ -14,7 +14,8 @@ import 'support/page_objects.dart';
 
 void main() {
   group('Task: navigate primary destinations', () {
-    // FinanceOS bottom-nav destinations (lib/features/finance_domain_shell.dart).
+    // FinanceOS bottom-nav destinations
+    // (lib/features/finance/composition/finance_domain_shell.dart).
     const primaryTabs = ['Today', 'Activity', 'Wealth', 'Plan'];
 
     testWidgets('every primary tab resolves and keeps the shell mounted', (

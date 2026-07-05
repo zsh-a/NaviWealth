@@ -74,11 +74,15 @@ class GetBodyBatteryTrendTool implements DeviceTool {
     required DateTime now,
   }) {
     final fromInstant = now.subtract(Duration(days: windowDays));
-    final inWindow = rows
-        .where((m) =>
-            !m.capturedAt.isBefore(fromInstant) && !m.capturedAt.isAfter(now))
-        .toList()
-      ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
+    final inWindow =
+        rows
+            .where(
+              (m) =>
+                  !m.capturedAt.isBefore(fromInstant) &&
+                  !m.capturedAt.isAfter(now),
+            )
+            .toList()
+          ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
 
     final points = <Map<String, Object?>>[];
     for (final m in inWindow) {
@@ -147,7 +151,8 @@ class GetBodyBatteryTrendTool implements DeviceTool {
       'points': points,
       'summary': ?summary,
       if (points.isEmpty)
-        'note': 'No Body Battery data yet. Connect a Garmin device in HealthOS.',
+        'note':
+            'No Body Battery data yet. Connect a Garmin device in HealthOS.',
       if (points.isNotEmpty && points.length < 4)
         'note': 'Fewer than 4 samples — trend (delta_pct) is not meaningful.',
     };

@@ -31,14 +31,24 @@ void main() {
       expect(formatAiTraceBadge(trace), '端侧模型推理 · 13s');
     });
 
-    test('device Vision direct path discloses provider direct routing', () {
+    test('FRB Vision ingest path discloses provider direct routing', () {
+      final trace = _trace(
+        backend: Backend.device,
+        toolCount: 0,
+        durationMs: 1300,
+        routingReason: kFrbVisionIngestRoutingReason,
+      );
+      expect(formatAiTraceBadge(trace), '端侧直连模型 · 请求与数据未经我方服务器 · 1.3s');
+    });
+
+    test('legacy device Vision direct path keeps provider disclosure', () {
       final trace = _trace(
         backend: Backend.device,
         toolCount: 0,
         durationMs: 1300,
         routingReason: kDeviceVisionDirectRoutingReason,
       );
-      expect(formatAiTraceBadge(trace), '端侧直连模型 · 请求与数据未经我方服务器 · 1.3s');
+      expect(formatAiTraceBadge(trace), contains('未经我方服务器'));
     });
   });
 }

@@ -9,8 +9,9 @@
 ///
 /// Note on background fidelity: the workmanager periodic task fires
 /// at OS-discretion windows (≈24h, no wall-clock guarantee). The
-/// preferred hour is honoured by the in-process `AgentRunner.tick`
-/// gate; the background-flag path runs whenever the OS wakes us.
+/// preferred hour is honoured by the in-process scheduled-agent tick;
+/// an OS wake outside the hour window records no briefing and waits for
+/// the next due tick.
 library;
 
 import 'package:flutter_riverpod/legacy.dart';
@@ -22,7 +23,9 @@ const int kDefaultMorningBriefingHourLocal = 7;
 
 final morningBriefingHourProvider =
     StateNotifierProvider<MorningBriefingHourController, int>((ref) {
-      return MorningBriefingHourController(ref.watch(sharedPreferencesProvider));
+      return MorningBriefingHourController(
+        ref.watch(sharedPreferencesProvider),
+      );
     });
 
 class MorningBriefingHourController extends StateNotifier<int> {

@@ -145,7 +145,7 @@ while IFS= read -r path; do
     apps/mobile/lib/features/health/*)
       area="HealthOS"
       ;;
-    apps/mobile/lib/features/finance/*|apps/mobile/lib/features/accounts/*|apps/mobile/lib/features/assets/*|apps/mobile/lib/features/investment/*|apps/mobile/lib/features/options_income/*)
+    apps/mobile/lib/features/finance/*|apps/mobile/lib/features/finance/assets/*|apps/mobile/lib/features/finance/investment/*|apps/mobile/lib/features/finance/options_income/*)
       area="FinanceOS"
       ;;
     apps/mobile/*)

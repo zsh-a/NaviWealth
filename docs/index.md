@@ -22,6 +22,7 @@ This documentation uses a docs-as-code structure:
 | Change architecture or cross-domain code | [Architecture Northstar](architecture/lifeos-architecture-northstar.md), [LifeOS Shell](architecture/lifeos-shell.md) |
 | Add or modify a domain | [LifeOS Shell](architecture/lifeos-shell.md), then the owning domain SSOT |
 | Work on device AI | [Device AI Architecture](ai/ai-architecture.md), [Runtime Event Contract](ai/ai-protocol.md) |
+| Work on Rust agent runtime | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md), [Rust Agent Runtime MVP](architecture/rust-agent-runtime-mvp.md), [Rust Agent Runtime Design](architecture/rust-agent-runtime-design.md) |
 | Work on sync | [Sync v2 Protocol](sync/sync-v2.md), [Protocol Test Catalogue](sync/sync-protocol-tests.md) |
 | Run or test locally | [Local Development](development/local-development.md), [Testing Strategy](development/testing-strategy.md) |
 | Plan product work | [LifeOS Roadmap](roadmap/roadmap-lifeos.md), [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
@@ -30,7 +31,7 @@ This documentation uses a docs-as-code structure:
 
 | Domain | Status | Code root | Sync prefix | SSOT |
 |---|---|---|---|---|
-| FinanceOS | Always on | `apps/mobile/lib/features/finance/` plus finance feature slices | `fin:` | [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
+| FinanceOS | Always on | `apps/mobile/lib/features/finance/` | `fin:` | [FinanceOS Roadmap](roadmap/roadmap-finance.md) |
 | HealthOS | User opt-in | `apps/mobile/lib/features/health/` | `health:` | [HealthOS](domains/healthos-domain.md) |
 | KnowledgeOS | User opt-in | `apps/mobile/lib/features/knowledge/` | `know:` | [KnowledgeOS](domains/knowledgeos-domain.md) |
 | ExecutionOS | User opt-in | `apps/mobile/lib/features/execution/` | `exec:` | [ExecutionOS](domains/executionos-domain.md) |
@@ -47,13 +48,11 @@ apps/mobile/lib/
   app/                  bootstrap, router, domain packs, shell chrome
   core/                 domain-neutral AI, auth, sync, persistence, shell
   design_system/        tokens, themes, charts, reusable widgets
-  domain/               legacy finance-neutral values/services
   features/
-    finance/            FinanceOS composition and data root
+    finance/            FinanceOS composition, tools, data root, and slices
     health/             HealthOS data, UI, AI tools, agents
     knowledge/          KnowledgeOS data, UI, AI tools, agents
     execution/          ExecutionOS data, UI, AI tools, agents
-    <finance slices>/   accounts, assets, cashflow, investment, options, etc.
   l10n/                 generated localizations and ARB sources
 ```
 

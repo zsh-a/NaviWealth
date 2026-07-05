@@ -5,14 +5,14 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
-import 'package:naviwealth/domain/entities/fx_rate.dart' as dom;
-import 'package:naviwealth/domain/services/currency_converter.dart';
-import 'package:naviwealth/features/cashflow/domain/budget_signal.dart';
-import 'package:naviwealth/features/cashflow/domain/budget_spend_mapper.dart';
-import 'package:naviwealth/features/cashflow/domain/budget_summary.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_spend_mapper.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_summary.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import 'account_repository.dart';
 import 'budget_repository.dart';
@@ -226,12 +226,22 @@ final monthlyBudgetSummaryProvider = Provider.autoDispose
       );
       final res = buildMonthlyBudgetSummary(
         periodMonth: periodMonth,
-        budgets: rows,
+        budgets: rows.map(_budgetCategoryPlanFromRow),
         spendByCategoryId: spendByCategoryId,
         targetCurrency: targetCurrency,
       );
       return AsyncValue.data(res);
     });
+
+BudgetCategoryPlan _budgetCategoryPlanFromRow(BudgetRow row) {
+  return BudgetCategoryPlan(
+    categoryId: row.categoryId,
+    periodMonth: row.periodMonth,
+    amount: row.amount,
+    currency: row.currency,
+    deletedAt: row.deletedAt,
+  );
+}
 
 /// Live stream of every recorded FX rate. The dashboard converter and the
 /// FX-rate management page both watch this so a manual rate insert

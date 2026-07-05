@@ -1,20 +1,20 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/fire/data/fire_providers.dart';
-import 'package:naviwealth/features/fire/domain/fire_action.dart';
-import 'package:naviwealth/features/fire/domain/fire_bucket.dart';
-import 'package:naviwealth/features/fire/domain/fire_bucket_allocator.dart';
-import 'package:naviwealth/features/fire/domain/fire_goal.dart';
-import 'package:naviwealth/features/fire/domain/fire_plan.dart';
-import 'package:naviwealth/features/fire/domain/fire_state.dart';
-import 'package:naviwealth/features/fire/domain/fire_stress_test.dart';
-import 'package:naviwealth/features/fire/presentation/fire_buckets_card.dart';
-import 'package:naviwealth/features/fire/presentation/fire_state_hero_card.dart';
-import 'package:naviwealth/features/fire/presentation/fire_stress_tests_card.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_action.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_bucket.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_bucket_allocator.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_state.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_stress_test.dart';
+import 'package:naviwealth/features/finance/fire/ui/fire_buckets_card.dart';
+import 'package:naviwealth/features/finance/fire/ui/fire_state_hero_card.dart';
+import 'package:naviwealth/features/finance/fire/ui/fire_stress_tests_card.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
 import '_golden_setup.dart';
 

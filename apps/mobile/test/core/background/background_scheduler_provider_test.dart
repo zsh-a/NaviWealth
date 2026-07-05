@@ -17,12 +17,12 @@ void main() {
       expect(scheduler, isA<BackgroundScheduler>());
       expect(await scheduler.isAvailable(), isFalse);
       await scheduler.initialize();
-      await scheduler.registerMorningBriefing();
-      await scheduler.registerGarminSync();
-      await scheduler.registerHealthPlatformSync();
-      await scheduler.cancelMorningBriefing();
-      await scheduler.cancelGarminSync();
-      await scheduler.cancelHealthPlatformSync();
+      await scheduler.registerTask(kMorningBriefingBackgroundTask);
+      await scheduler.registerTask(kGarminSyncBackgroundTask);
+      await scheduler.registerTask(kHealthPlatformSyncBackgroundTask);
+      await scheduler.cancelTask(kMorningBriefingBackgroundTask);
+      await scheduler.cancelTask(kGarminSyncBackgroundTask);
+      await scheduler.cancelTask(kHealthPlatformSyncBackgroundTask);
     },
     skip: Platform.isIOS || Platform.isAndroid
         ? 'Host-only provider safety check.'

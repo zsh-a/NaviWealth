@@ -5,13 +5,13 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import '../logging/app_logger.dart';
 import 'clock.dart';
 import 'cursor_store.dart';
-import 'domain_prefix.dart';
 import 'errors.dart';
 import 'op_outbox.dart';
 import 'retry.dart';
 import 'row_applier.dart';
 import 'sync_api_client.dart';
 import 'sync_status.dart';
+import 'sync_table_registry.dart';
 
 /// SyncEngine state — exposed for tests and status display.
 enum EngineState { idle, syncing, backoff, halted }

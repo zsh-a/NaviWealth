@@ -84,7 +84,7 @@ class _FormPickerRowState extends State<FormPickerRow> {
                       const SizedBox(height: AppSpacing.s2),
                       Text(
                         widget.value,
-                        style: context.theme.typography.sm,
+                        style: context.theme.typography.body.sm,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

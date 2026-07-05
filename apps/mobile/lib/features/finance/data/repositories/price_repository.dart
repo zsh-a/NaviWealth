@@ -4,7 +4,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/features/finance/data/domain/price_observation.dart';
+import 'package:naviwealth/features/finance/domain/models/price_observation.dart';
 import 'package:uuid/uuid.dart';
 
 /// DAO for the append-only `prices` time-series. Every price update

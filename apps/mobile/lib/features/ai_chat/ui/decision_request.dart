@@ -94,6 +94,24 @@ class DecisionOption {
   }
 
   static List<String> _stringList(Object? v) => v is List
-      ? v.whereType<String>().map((s) => s.trim()).where((s) => s.isNotEmpty).toList()
+      ? v
+            .whereType<String>()
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList()
       : const <String>[];
+}
+
+class DecisionSelectionRequest {
+  const DecisionSelectionRequest({
+    required this.messageId,
+    required this.toolInvocationId,
+    required this.option,
+    required this.reply,
+  });
+
+  final String messageId;
+  final String toolInvocationId;
+  final DecisionOption option;
+  final String reply;
 }

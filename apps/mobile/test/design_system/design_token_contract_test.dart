@@ -32,7 +32,7 @@ void main() {
       libFiles.where((file) => !file.path.endsWith('/text_style_presets.dart')),
       RegExp(r'(?:context\.theme\.)?typography\.xs\.copyWith\('),
       'Use context.captionStyle / captionLabelStyle / microCaptionStyle as '
-      'the base for xs text instead of rebuilding typography.xs.copyWith.',
+      'the base for xs text instead of rebuilding typography.body.xs.copyWith.',
     );
 
     _expectNoMatches(
@@ -80,7 +80,7 @@ void main() {
     _expectNoMatches(
       _dartFiles(Directory('${appRoot.path}/lib/features')).where(
         (file) => !file.path.endsWith(
-          '/features/shared/forms/manual_security_sheet.dart',
+          '/features/finance/shared/ui/forms/manual_security_sheet.dart',
         ),
       ),
       RegExp(r'showFDialog|FDialog\.raw|FDialog\('),
@@ -98,23 +98,21 @@ void main() {
     _expectNoMatches(
       [
         ...[
-          Directory('${appRoot.path}/lib/features/expense'),
+          Directory('${appRoot.path}/lib/features/finance/expense'),
           Directory('${appRoot.path}/lib/features/health'),
           Directory('${appRoot.path}/lib/features/knowledge'),
-          Directory('${appRoot.path}/lib/features/cashflow'),
+          Directory('${appRoot.path}/lib/features/finance/cashflow'),
           Directory('${appRoot.path}/lib/features/ai_chat'),
-          Directory('${appRoot.path}/lib/features/home'),
-          Directory('${appRoot.path}/lib/features/wealth'),
-          Directory('${appRoot.path}/lib/features/activity'),
-          Directory('${appRoot.path}/lib/features/accounts'),
-          Directory('${appRoot.path}/lib/features/rebalance'),
-          Directory('${appRoot.path}/lib/features/options_income'),
-          Directory('${appRoot.path}/lib/features/fire'),
-          Directory('${appRoot.path}/lib/features/analytics'),
+          Directory('${appRoot.path}/lib/features/finance/home'),
+          Directory('${appRoot.path}/lib/features/finance/activity'),
+          Directory('${appRoot.path}/lib/features/finance/rebalance'),
+          Directory('${appRoot.path}/lib/features/finance/options_income'),
+          Directory('${appRoot.path}/lib/features/finance/fire'),
+          Directory('${appRoot.path}/lib/features/finance/analytics'),
           Directory('${appRoot.path}/lib/features/finance'),
-          Directory('${appRoot.path}/lib/features/ingest'),
-          Directory('${appRoot.path}/lib/features/investment'),
-          Directory('${appRoot.path}/lib/features/shared'),
+          Directory('${appRoot.path}/lib/features/finance/ingest'),
+          Directory('${appRoot.path}/lib/features/finance/investment'),
+          Directory('${appRoot.path}/lib/features/finance/shared'),
           Directory('${appRoot.path}/lib/features/auth'),
         ].expand(_dartFiles),
       ].where((file) => file.existsSync()),

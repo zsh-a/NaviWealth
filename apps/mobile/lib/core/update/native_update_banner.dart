@@ -57,7 +57,7 @@ class NativeUpdateBanner extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             l10n.nativeUpdateAvailable(state.latestVersion),
-                            style: context.theme.typography.sm.copyWith(
+                            style: context.theme.typography.body.sm.copyWith(
                               color: colors.background,
                             ),
                           ),

@@ -131,13 +131,12 @@ class ErrorEvent extends AiChatEvent {
   final String? code;
 }
 
-/// Observability-only frame: one finished execution span (an LLM
-/// round or a tool dispatch). **Additive** — emitted by
-/// `DeviceAgentLoop` after the unit completes, consumed solely by the
-/// trace builder. Message-state consumers ignore it (it never mutates
-/// the assistant turn). Carries absolute wall-clock `startedAt` /
-/// `endedAt`; `AiTraceBuilder` anchors them to the trace start to get
-/// the waterfall offset.
+/// Observability-only frame: one finished execution span (an LLM round or a
+/// tool dispatch). **Additive** — emitted by the active chat runner after the
+/// unit completes, consumed solely by the trace builder. Message-state
+/// consumers ignore it (it never mutates the assistant turn). Carries absolute
+/// wall-clock `startedAt` / `endedAt`; `AiTraceBuilder` anchors them to the
+/// trace start to get the waterfall offset.
 class SpanEvent extends AiChatEvent {
   const SpanEvent({
     required this.id,

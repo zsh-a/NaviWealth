@@ -20,6 +20,13 @@ library;
 
 import 'dart:convert';
 
+/// Default model when a profile does not specify an override.
+///
+/// The user can replace this per profile. Keep the default in the credentials
+/// seam so settings/app composition do not import provider-specific wire types
+/// just to prefill the model field.
+const String kDefaultDeviceModel = 'claude-sonnet-4-6';
+
 /// Which provider wire dialect the device adapter speaks. Most
 /// "providers" users actually want (official Anthropic, OpenAI,
 /// OpenRouter, DeepSeek-compatible endpoints, a self-hosted relay, a

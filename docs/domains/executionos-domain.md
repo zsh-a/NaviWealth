@@ -36,7 +36,7 @@ Contributions:
 - Shell: `features/execution/composition/execution_domain_shell.dart`.
 - Routes: `features/execution/composition/execution_routes.dart`.
 - Tabs: Today, Commitments, Review.
-- Tools: `features/execution_ai_tools.dart`.
+- Tools: `features/execution/execution_ai_tools.dart`.
 - Command palette: `features/execution/composition/execution_command_palette.dart`.
 - Proposal kinds: `features/execution/composition/execution_proposal_kinds.dart`.
 - Proposal applier: `features/execution/composition/execution_proposal_applier.dart`.
@@ -106,7 +106,7 @@ It must not import sibling domain business entities.
 
 ## AI Tools
 
-Tool barrel: `features/execution_ai_tools.dart`.
+Tool barrel: `features/execution/execution_ai_tools.dart`.
 
 Read tools:
 

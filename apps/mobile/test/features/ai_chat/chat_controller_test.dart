@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart';
+import 'package:naviwealth/features/ai_chat/domain/chat_turn_metadata.dart';
 import 'package:naviwealth/features/ai_chat/state/chat_controller.dart';
 
 void main() {
@@ -149,7 +150,7 @@ class _FakeChatRepository implements ChatRepository {
     String? systemContext,
     String? model,
     CancelToken? cancelToken,
-    Map<String, Object?>? invocationTrace,
+    ChatTurnMetadata turnMetadata = const ChatTurnMetadata.empty(),
   }) async {
     sendCount += 1;
     lastSessionId = sessionId;

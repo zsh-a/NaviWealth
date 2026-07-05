@@ -6,11 +6,10 @@
 /// inputs from feature providers lives separately so this layer has
 /// no `core → features` import dependency.
 ///
-/// The feature-layer adapter in `features/ai_chat/data/providers.dart`
-/// (`_prepareChatTrace`) is responsible for pulling values out of
-/// Riverpod and passing them through the typed parameters here. The
-/// downstream [ContextPack.assertBudget] keeps the output well below
-/// the 16KB standard tier even when every signal is present.
+/// Feature-layer adapters are responsible for pulling values out of Riverpod
+/// and passing them through the typed parameters here. The downstream
+/// [ContextPack.assertBudget] keeps the output well below the 16KB standard
+/// tier even when every signal is present.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,9 +32,9 @@ class ContextCompressor {
     return BaseContext(
       preferredCurrency: currency,
       // The feature-layer adapter (chat repository) passes the user's
-      // declared appetite from features/settings/data/risk_appetite_preferences.dart.
-      // The `?? moderate` is for direct callers without access to that
-      // SSOT — e.g. unit tests exercising the compressor in isolation.
+      // declared appetite. The `?? moderate` is for direct callers without
+      // access to that SSOT, e.g. unit tests exercising the compressor in
+      // isolation.
       riskPreference: riskPreference ?? RiskPreference.moderate,
       accounts: accountSummary,
       // Keep the prompt grounding small here; richer cashflow detail

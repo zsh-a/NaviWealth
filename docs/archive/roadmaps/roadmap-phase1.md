@@ -8,7 +8,7 @@
 
 本文档撰写时 IA 还是 Home / Portfolio / Activity / Plan,后端 AI relay 尚未删除。之后两件事改变了部分前提:
 
-1. **IA contract migration**(commits 3e37cfc / aacded4): 主 tab 改为 Today / Activity / Wealth / Plan。`features/portfolio/` 和 `features/me/` / `features/more/` 已删除,`features/wealth/` 接管原 Portfolio 职责。
+1. **IA contract migration**(commits 3e37cfc / aacded4): 主 tab 改为 Today / Activity / Wealth / Plan。`features/portfolio/` 和 `features/me/` / `features/more/` 已删除，Wealth 入口现在归入 FinanceOS 的 `features/finance/ui/wealth/`。
 2. 后端 AI relay 已删除;持仓由端侧 `GetHoldingsTool` 计算。
 3. **E2E sync 5 case** (P1-G): 已在 `apps/mobile/test/e2e/sync_e2e_test.dart` 落地完毕(2026-05-24)。
 
@@ -71,7 +71,7 @@
 
 ## P1-B · Dashboard Insights 扩展
 
-**现状**：`lib/features/home/data/dashboard_insights_provider.dart:41-44` 有明确 TODO，目前只展示 FIRE 一条洞察。
+**现状**：`lib/features/finance/home/data/dashboard_insights_provider.dart:41-44` 有明确 TODO，目前只展示 FIRE 一条洞察。
 
 **目标**：仪表盘 InsightStrip 在数据齐备时展示 1–4 条洞察，覆盖以下 4 类：
 
@@ -82,16 +82,16 @@
 - 需要新增 `rebalanceDriftInsightProvider` 在 `features/rebalance/data/`，返回 `Option<DriftSummary>`。
 
 ### 2. Upcoming deposit maturities（定期存款临近到期）
-- 数据源：`features/assets/` 中 deposit 类资产 + 到期日字段（已存在于 deposit form）。
+- 数据源：`features/finance/assets/` 中 deposit 类资产 + 到期日字段（已存在于 deposit form）。
 - 触发：14 天内将到期的定期存款。
 - 文案：`{count} 笔定期 {days}d 内到期`，多笔时取最近一笔的天数 → 跳转资产列表过滤到 deposit。
-- 需要 `depositMaturityInsightProvider` 在 `features/assets/data/`。
+- 需要 `depositMaturityInsightProvider` 在 `features/finance/assets/data/`。
 
 ### 3. Expense trend anomaly（支出异常）
-- 数据源：`features/expense/domain/` 已有月度聚合。
+- 数据源：`features/finance/expense/domain/` 已有月度聚合。
 - 触发：当月已发生支出 vs. 过去 3 个月同期投影偏差 ≥ 25%（按当前到月底的天数比例外推）。
 - 文案：高于阈值时 `本月支出预计 +{n}%`（warning 色），低于时 `本月支出预计 -{n}%`（neutral）。
-- 需要 `expenseAnomalyInsightProvider` 在 `features/expense/data/`。
+- 需要 `expenseAnomalyInsightProvider` 在 `features/finance/expense/data/`。
 
 ### 4. FIRE（已有）
 - 现有逻辑保留；调整 label 文案与 i18n 化（当前是硬编码英文 `'FIRE'` / `'Goal reached!'` / `'to go'`）。
@@ -103,12 +103,12 @@
 - i18n：所有文案通过 `app_en.arb` / `app_zh.arb` 走，不留硬编码字符串。
 
 ### 文件改动
-- 修改：`lib/features/home/data/dashboard_insights_provider.dart`
+- 修改：`lib/features/finance/home/data/dashboard_insights_provider.dart`
 - 新增：`lib/features/rebalance/data/rebalance_drift_insight_provider.dart`
-- 新增：`lib/features/assets/data/deposit_maturity_insight_provider.dart`
-- 新增：`lib/features/expense/data/expense_anomaly_insight_provider.dart`
+- 新增：`lib/features/finance/assets/data/deposit_maturity_insight_provider.dart`
+- 新增：`lib/features/finance/expense/data/expense_anomaly_insight_provider.dart`
 - 修改：`lib/l10n/app_en.arb`、`app_zh.arb`（新增 ~12 条 key）
-- 修改：`lib/features/home/ui/insight_strip.dart`（如果需要点击跳转支持）
+- 修改：`lib/features/finance/home/ui/insight_strip.dart`（如果需要点击跳转支持）
 
 ### 验收
 - 4 类 insight 在有数据时正确展示；无数据时静默；
@@ -232,7 +232,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
    - 批量提案与撤销属于后续端侧 runtime / sync E2E 范围。
 
 ### 文件改动
-- 维护：`apps/mobile/lib/features/investment/ai_tools/get_holdings_tool.dart` —
+- 维护：`apps/mobile/lib/features/finance/investment/ai_tools/get_holdings_tool.dart` —
   持仓输出、跨币种 evidence 和金额字段 shape。
 - 维护：`apps/mobile/lib/features/finance_ai_tools.dart` — Finance 工具注册清单。
 - 维护：`apps/mobile/lib/app/domain_composition.dart` — active `DomainPack`
@@ -317,16 +317,17 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 
 按 codecov 60%/70% 阈值，原始空白项当前状态如下：
 
-- `features/home/`：已有 domain/data/widget 覆盖，包括 greeting、allocation、
+- `features/finance/home/`：已有 domain/data/widget 覆盖，包括 greeting、allocation、
   insight feed、timeline preview、currency mismatch 和 dashboard insights。
 - `features/activity/`：已有 query、feed、kind filter、filter sheet 和 detail
   page 覆盖；后续可随分页/更多事件类型继续补测试。
 - `features/portfolio/`：当前不再是独立 feature 目录；组合分析覆盖在
-  `features/investment/` 与 `test/flow/portfolio_analysis_flow_test.dart`。
+  `features/finance/investment/` 与 `test/flow/portfolio_analysis_flow_test.dart`。
 
 不在 phase 1 强制补的：
 - `features/me/`、`features/more/` → 当前不再是 feature 目录。
-- `features/plan/`：保留为规划入口，并已有 `plan_hub_page_test.dart`。
+- `features/plan/`：当前不再是独立 feature 目录；规划入口归入
+  `features/finance/ui/plan_hub_page.dart`，并已有 `plan_hub_page_test.dart`。
 
 ---
 

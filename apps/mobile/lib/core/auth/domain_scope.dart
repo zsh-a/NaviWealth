@@ -22,20 +22,14 @@ enum DomainScope {
 
   /// Wire / storage form. Matches the JWT `domains` claim value and
   /// the row-family prefix `<scope>:`.
-  String get wire => switch (this) {
-    DomainScope.finance => 'finance',
-    DomainScope.health => 'health',
-    DomainScope.knowledge => 'knowledge',
-    DomainScope.execution => 'execution',
-  };
+  String get wire => name;
 
-  static DomainScope? tryParse(String value) => switch (value) {
-    'finance' => DomainScope.finance,
-    'health' => DomainScope.health,
-    'knowledge' => DomainScope.knowledge,
-    'execution' => DomainScope.execution,
-    _ => null,
-  };
+  static DomainScope? tryParse(String value) {
+    for (final scope in DomainScope.values) {
+      if (scope.wire == value) return scope;
+    }
+    return null;
+  }
 }
 
 /// The set of domains a user has opted into. FinanceOS is included on

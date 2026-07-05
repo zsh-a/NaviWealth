@@ -47,8 +47,9 @@ String logicalParentOf(String location) {
 bool hasSelectedDetail(BuildContext context) {
   final router = GoRouter.maybeOf(context);
   if (router == null) return false;
-  return router.routeInformationProvider.value.uri.queryParameters
-      .containsKey(kSelectedQueryKey);
+  return router.routeInformationProvider.value.uri.queryParameters.containsKey(
+    kSelectedQueryKey,
+  );
 }
 
 /// If the current location carries a `?selected=` query, drop just that

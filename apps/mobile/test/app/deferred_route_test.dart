@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/app/deferred_route.dart';
+import 'package:naviwealth/core/shell/deferred_route.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {

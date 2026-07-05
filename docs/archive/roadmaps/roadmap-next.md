@@ -68,7 +68,7 @@
 | N-1 | AI runtime polish | ✅ 已落地 (2026-05-24):`ToolDescriptor` 4 个新回归测试 + LLM profile model hint 引用 `kDefaultDeviceModel` 常量 | recent commits db1d472 / a5fc6e3 |
 | N-2 | E2E sync 5 case 补齐 | ✅ 已落地 (2026-05-24):补足 phase1 P1-G 缺的 E2E-3 / E2E-4 / E2E-5 | `apps/mobile/test/e2e/sync_e2e_test.dart` |
 | N-3 | 测试覆盖率提升 | ✅ 已落地 (2026-05-24):home/activity 空白补齐 — `currency_mismatch_banner` (3) + `ai_insight_feed` (3) + `activity_timeline_preview` (3) + `home_greeting_header` (4) + `activity_feed_filter_sheet` (4) + `activity_page_kind_filter` (3),共 20 个新 widget test;`flutter test test/features/{home,activity}/` 全绿(47/47)。 | [phase1 P1-H](./roadmap-phase1.md) |
-| N-4 | Wealth tab "多视角聚合" 重设计 | ✅ 已落地 (2026-05-24):`features/wealth/domain/wealth_perspective.dart` — `WealthPerspective{byCategory, byCurrency}` + `buildWealthAggregation` pure 聚合器(liability 排除 / 同币种合并 / 大小写归一 / 排序);UI 段控 `WealthPerspectiveSection` + `wealthPerspectiveProvider` 接到 `WealthHubPage`,新 l10n 6 个键 EN/ZH。"by account" 维度由 `AccountsGroupedSections` 在同一页继续承担,不重复。10 个测试(7 聚合 + 3 widget)。 | [phase1 P1-D 注记](./roadmap-phase1.md#状态注记2026-05-24) |
+| N-4 | Wealth tab "多视角聚合" 重设计 | ✅ 已落地 (2026-05-24):`features/finance/ui/wealth/wealth_perspective.dart` — `WealthPerspective{byCategory, byCurrency}` + `buildWealthAggregation` pure 聚合器(liability 排除 / 同币种合并 / 大小写归一 / 排序);UI 段控 `WealthPerspectiveSection` + `wealthPerspectiveProvider` 接到 `WealthHubPage`,新 l10n 6 个键 EN/ZH。"by account" 维度由 `AccountsGroupedSections` 在同一页继续承担,不重复。10 个测试(7 聚合 + 3 widget)。 | [phase1 P1-D 注记](./roadmap-phase1.md#状态注记2026-05-24) |
 
 > 注 — 以下 phase1 条目在最近的工作中已完成或作废,不再开放:
 > - ✅ **P1-A** (`me/`/`more/` 清理) — IA contract migration (commits aacded4 / 3e37cfc)
@@ -105,9 +105,9 @@
 
 - ✅ **数据层落地** (2026-05-24): `budgets` 表 (schema v15) + `BudgetRepository`,sync 走 row-state。9 个 repo 测试。
 - ✅ **Riverpod provider 接线** (2026-05-24): `budgetRepositoryProvider` / `budgetsStreamProvider` / `budgetsForMonthProvider` 在 `data/repositories/providers.dart`,可被任何 UI 消费。
-- ✅ **读模型 `MonthlyBudgetSummary`** (2026-05-24): `features/cashflow/domain/budget_summary.dart`,`buildMonthlyBudgetSummary` pure 聚合器(joins budgets × spend by categoryId,过滤异币种 / 跨月 / tombstone),输出 `rankedByStrain`,total over/under flag。7 个测试。
-- ✅ **`/plan/budget` page 落地** (2026-05-24): `features/cashflow/ui/budget_page.dart` 接 `budgetsForMonthProvider`,Plan hub 加 Budget tile + 路由注册 + l10n 双语。4 个 widget 测试(empty / populated / 跨月过滤 / tombstone drop)。
-- ✅ **Budget × FIRE 接口契约** (2026-05-24): `features/cashflow/domain/budget_signal.dart` — `BudgetSignal{noData, comfortable, strained, overBudget}` + `budgetSignalFor(summary)` pure 分类器(< 80% / 80–100% / > 100% bands + single-category overbudget bumps to strained);`monthlyBudgetSignalProvider(month)` family 让 FIRE / dashboard 单点订阅。8 个分类器测试。**FIRE service 改动作为单独 PR**(只需 watch 此 provider,无需引入 BudgetRepository 反向依赖)。
+- ✅ **读模型 `MonthlyBudgetSummary`** (2026-05-24): `features/finance/cashflow/domain/budget_summary.dart`,`buildMonthlyBudgetSummary` pure 聚合器(joins budgets × spend by categoryId,过滤异币种 / 跨月 / tombstone),输出 `rankedByStrain`,total over/under flag。7 个测试。
+- ✅ **`/plan/budget` page 落地** (2026-05-24): `features/finance/cashflow/ui/budget_page.dart` 接 `budgetsForMonthProvider`,Plan hub 加 Budget tile + 路由注册 + l10n 双语。4 个 widget 测试(empty / populated / 跨月过滤 / tombstone drop)。
+- ✅ **Budget × FIRE 接口契约** (2026-05-24): `features/finance/cashflow/domain/budget_signal.dart` — `BudgetSignal{noData, comfortable, strained, overBudget}` + `budgetSignalFor(summary)` pure 分类器(< 80% / 80–100% / > 100% bands + single-category overbudget bumps to strained);`monthlyBudgetSignalProvider(month)` family 让 FIRE / dashboard 单点订阅。8 个分类器测试。**FIRE service 改动作为单独 PR**(只需 watch 此 provider,无需引入 BudgetRepository 反向依赖)。
 - 详: [midterm 2.1 M1](./roadmap-midterm-execution.md)
 
 ### 3.3 Income Planner P4(Wheel/收益周期)
@@ -115,8 +115,8 @@
 > P0–P3 已完成。P4 是 state machine,纯设备端,**不**触碰后端。
 
 - ✅ **State machine 落地** (2026-05-24): `wheel_lifecycle.dart`,9 个 stage(between / cashWaiting / shortPut / putExpired / putAssigned / sharesHeld / shortCall / callExpired / callCalled)+ `buildWheelLifecycle` pure function 从 trade journal 派生。10 个测试覆盖完整状态转换。
-- ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
-- ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `features/options_income/ai_tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。通过 FinanceOS tool barrel / `DomainPack` 注册到生产 device tool catalog。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
+- ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/finance/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
+- ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `features/finance/options_income/ai_tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。通过 FinanceOS tool barrel / `DomainPack` 注册到生产 device tool catalog。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
 - 详: [options-income P4](../../domains/options-income.md)
 
 ### 3.4 AI Copilot M1: user profile + evidence
@@ -131,12 +131,12 @@
 
 ### 3.5 Watchlist + Event timeline(M1/M2)
 
-- ✅ **Watchlist** — 已有(`features/investment/data/watchlist_*`、`presentation/watchlist_page.dart`)
-- ✅ **Event timeline 域** (2026-05-24): `features/investment/domain/reporting/event_timeline.dart`,`CorporateActionEvent` + `buildEventTimeline`(symbol filter / 时间窗 / chronological sort / dedup)。9 个测试。
+- ✅ **Watchlist** — 已有(`features/finance/investment/data/watchlist_*`、`presentation/watchlist_page.dart`)
+- ✅ **Event timeline 域** (2026-05-24): `features/finance/investment/domain/reporting/event_timeline.dart`,`CorporateActionEvent` + `buildEventTimeline`(symbol filter / 时间窗 / chronological sort / dedup)。9 个测试。
 - ✅ **yfinance parser** (2026-05-24): `data/market/providers/yfinance_corporate_actions.dart` `parseYahooCorporateActions()` pure 函数,从 yfinance `chart.result[0].events.{dividends,splits}` JSON 提取 `CorporateActionEvent` 列表;defensive,malformed row 丢弃不抛;事件 id 稳定(`div_SYMBOL_YYYY-MM-DD` / `split_SYMBOL_YYYY-MM-DD`)。7 个测试。
-- ✅ **EventTimelineSection embeddable widget + provider** (2026-05-24): `features/investment/ui/event_timeline_section.dart` 接 `upcomingEventsForSymbolProvider(symbol)` family,按时间排序渲染分红 / 拆股 / 配股 / DRIP 行。5 个 widget 测试 + 新 l10n。
+- ✅ **EventTimelineSection embeddable widget + provider** (2026-05-24): `features/finance/investment/ui/event_timeline_section.dart` 接 `upcomingEventsForSymbolProvider(symbol)` family,按时间排序渲染分红 / 拆股 / 配股 / DRIP 行。5 个 widget 测试 + 新 l10n。
 - ✅ **yfinance 网络抓取 wire-up** (2026-05-24): `data/market/services/corporate_actions_service.dart` — 调用 yfinance `chart` 端点 `events=div,splits`,经 `parseYahooCorporateActions` 解析。12 小时 TTL in-memory 缓存 + 15 分钟 error TTL(防故障期间反复打);concurrent calls 同 symbol 自动 dedup;404/500 → 空列表 + 日志(best-effort,UI 静默)。`event_timeline_providers.dart` 升级到 FutureProvider 接服务,`EventTimelineSection` 通过 `AsyncValue.value ?? []` 优雅降级。8 个服务测试(快乐路径 / 缓存 / dedup / 多 symbol / HTTP 失败缓存 / invalidate / 空 symbol / 货币 fallback)。
-- ✅ **EquityAssetDetailPage 嵌入** (2026-05-24): `features/assets/ui/equity_asset_detail_page.dart` 在 trend chart 卡片之后渲染 `EventTimelineSection(symbol: asset.symbol)`;`_supportsCorporateActions(asset)` predicate 仅对 US/HK 股票触发(yfinance 覆盖范围),crypto / FX / A 股不打无效请求。
+- ✅ **EquityAssetDetailPage 嵌入** (2026-05-24): `features/finance/assets/ui/equity_asset_detail_page.dart` 在 trend chart 卡片之后渲染 `EventTimelineSection(symbol: asset.symbol)`;`_supportsCorporateActions(asset)` predicate 仅对 US/HK 股票触发(yfinance 覆盖范围),crypto / FX / A 股不打无效请求。
 - 详: [midterm 2.2 M1/M2](./roadmap-midterm-execution.md)
 
 ### 3.6 Crash reporting opt-in(M1)
@@ -162,7 +162,7 @@
 | M-1 | Desktop shell master-detail | ✅ **已基本落地**:`app/master_detail_layout.dart` 两栏带 splitter + URL-driven 选择 crossfade,接到 `_DesktopShell`(`AppRootShell` ≥ 1240dp 分支)+ accounts / assets / ai_chat master 列表;5 个 layout test。后续如出现新 master-list 域,直接复用该 widget,不再当 M-1 条目计 |
 | M-2 | AI Copilot M2 | **Contract 层已落地** (2026-05-24):`core/ai/contracts/proposal_envelope.dart` 新增 `BatchProposal` sealed subtype + `BatchUndoToken`(拒绝 external / 拒绝嵌套 / 空 children 触发 assert);`interaction_mode.dart` 加 `_deriveBatchMode`(最保守-子项胜出,oneTap<swipe<confirmDiff,batch 永不到 typed)。`core/ai/progress/long_task_progress.dart` — 进度描述符(id/label/detail/ratio/cancelable + 钳位 + elapsed)。新增 12 个单测(6 envelope+mode / 6 progress)。**UI wire-up 是后续 PR**(`propose_card.dart` 路由 BatchProposal + DriftUndoStack 加 `batch_undo` kind + 长任务进度条 widget) |
 | M-3 | Income Planner P5 | 🚧 **被决策门阻塞**(§8:Tradier OAuth backend proxy 单独 Worker 与否未定);Tradier OAuth + 真 greeks。**Backend proxy 必须 schema-agnostic**,走 `sync_rows`,不在 Worker 里写业务逻辑。决策出来前不动 |
-| M-4 | Investment advanced M2/M3 | DCA simulator ✅ **已落地** (`features/investment/domain/dca/dca_simulator.dart` + `presentation/dca_simulator_page.dart`,挂在 `/plan/dca`,带 golden + engine 测试)。Event timeline ✅ **MVP 已闭合**(§3.5,12hr cache + EquityAssetDetailPage 嵌入)。**Tax export 🚧 被决策门阻塞**(§8:IRS / 中国个税 / 通用 CSV 优先级未定);domain 层 `features/investment/domain/tax/` 已有 `tax_policy` / `jurisdiction_tax_policy` / `tax_jurisdiction` 骨架,export pipeline 等格式决策后单独 PR |
+| M-4 | Investment advanced M2/M3 | DCA simulator ✅ **已落地** (`features/finance/investment/domain/dca/dca_simulator.dart` + `presentation/dca_simulator_page.dart`,挂在 `/plan/dca`,带 golden + engine 测试)。Event timeline ✅ **MVP 已闭合**(§3.5,12hr cache + EquityAssetDetailPage 嵌入)。**Tax export 🚧 被决策门阻塞**(§8:IRS / 中国个税 / 通用 CSV 优先级未定);domain 层 `features/finance/investment/domain/tax/` 已有 `tax_policy` / `jurisdiction_tax_policy` / `tax_jurisdiction` 骨架,export pipeline 等格式决策后单独 PR |
 | M-5 | Performance traces | ✅ **harness 已落地** (2026-05-24):`core/perf/frame_timing_collector.dart` 接 `SchedulerBinding.addTimingsCallback` 维护 600 帧 ring buffer + p50/p95/jank 统计;`perf_trace_recorder.dart` 暴露 `begin/end/measure` 名义窗口,基于 vsync 时间戳过滤而非 wall clock,保证多窗口不互相串扰;`providers.dart` 在 `frameTimingCollectorProvider` 首读时 attach,bootstrap eager init。10 个单测(ring 容量 / 空状态 / jank 计数 / p50+p95 插值 / 窗口过滤 / begin-end / 嵌套报错 / measure 抛异常仍释放)。后续如需 UI 看板可单建 dev surface,不阻塞 M-5 关闭 |
 | M-6 | Command palette + 快捷键 | ✅ **已落地**:`core/command_palette/` 保留 domain-neutral palette shell，Finance 的 AI 结果面板和查询计划执行器已下沉到 `features/finance/command_palette/`;`core/shortcuts/` 完整(global/scope/master-detail 三层 + 帮助对话框 + 键位平台适配)。Desktop shell 接 `GlobalShortcutsScope` 已 wire |
 
@@ -173,15 +173,15 @@
 > 这些**有设计**但**不进开发计划**。只有"触发条件"成立时才动。
 > 在触发之前出现"顺手做一点"的 PR,**拒绝**。
 >
-> **2026-05-24 现状盘点**:盘点 §5 各条在仓库的真实落地度后,**Sync v2 提前以"全量切换"形态落地**(见下表注释),其余条目仍是触发性。`features/ingest/` 的通用 CSV / 共享意图 / provider Vision 通道也已构建完成,只是 provider-specific 解析器没做。其他条目均未启动。
+> **2026-05-24 现状盘点**:盘点 §5 各条在仓库的真实落地度后,**Sync v2 提前以"全量切换"形态落地**(见下表注释),其余条目仍是触发性。`features/finance/ingest/` 的通用 CSV / 共享意图 / provider Vision 通道也已构建完成,只是 provider-specific 解析器没做。其他条目均未启动。
 
 | 轨道 | 触发条件 | 落地度 | 设计参考 |
 |---|---|---|---|
-| **FIRE OS Phase 6 sync** | 出现 ≥1 例用户报告的跨端 FIRE plan 不一致 | ❌ **未启动**(`features/fire/data/*_preferences.dart` 显式注释 "Phase 6 will migrate to a `fire_plans` table",当前 FIRE plan 留在 SharedPreferences 不走 sync) | [roadmap-fire-os.md Phase 6](./roadmap-fire-os.md),memory `fire_os_design.md` |
+| **FIRE OS Phase 6 sync** | 出现 ≥1 例用户报告的跨端 FIRE plan 不一致 | ❌ **未启动**(`features/finance/fire/data/*_preferences.dart` 显式注释 "Phase 6 will migrate to a `fire_plans` table",当前 FIRE plan 留在 SharedPreferences 不走 sync) | [roadmap-fire-os.md Phase 6](./roadmap-fire-os.md),memory `fire_os_design.md` |
 | **Sync v2 切换** | v1 polling 在生产中出现可测量的延迟痛点(>10s 中位数);**或**多设备用户达到 ≥3 个 | ✅ **已全量切换**(触发前完成):`apps/backend/src/sync/store.rs` 是 v2 row-state 通用 store,`apps/mobile/lib/core/sync/sync_engine.dart` 是 v2 cycle(单 `POST /sync` push+pull),v1 OpLog 代码已全部下线(grep 不到任何 `/sync/push` / `/sync/pull` / `oplog`)。CLAUDE.md 也已标 v2 active。**§5 这条等同于历史档案,不再触发**| [sync-v2.md](../../sync/sync-v2.md) |
 | **Sync v2 E2EE** | v2 切换完成 ≥1 个月稳定后 | ❌ **未启动**(`core/sync/` 下无 encrypt / E2EE / libsodium 代码)。v2 已切换日期可作为窗口起点;若 ≥1 月生产稳定,可触发 | [sync-v2.md](../../sync/sync-v2.md) §安全 |
 | **Memory Layer 深度使用** | 至少出现 1 个具名 Finance caller(例如 AI Copilot 需要长期偏好检索) | 🟡 **运行时/索引器已落地,Finance 深度使用未触发**:`core/ai/local/memory/` 已有 MemoryRuntime + ContextBuilder,Health/Knowledge/Options Income 已有生产 indexer 和 `build_context` / `query_memory` 工具;待触发的是 Finance 主路径长期偏好/决策记忆的明确 caller | 北极星 §2.6 |
-| **数据导入生态(支付宝/微信/券商对账单)** | 用户实际反馈现有手工录入瓶颈 | ⚠️ **基础设施已就绪,provider-specific 解析器未做**:`features/ingest/` 已有 `csv_ingest_parser`(CJK 表头别名)/ `ingest_pipeline` / `ingest_dedup` / `ingest_draft_store` / provider Vision (`vision_ingest_client`) / `share_intent_service` / 隐私门 / Review 页 + 9 个 ingest test 文件。**待触发的是 alipay/wechat/券商对账单**的命名解析器层 | [roadmap.md Phase 3](./roadmap.md) |
+| **数据导入生态(支付宝/微信/券商对账单)** | 用户实际反馈现有手工录入瓶颈 | ⚠️ **基础设施已就绪,provider-specific 解析器未做**:`features/finance/ingest/` 已有 `csv_ingest_parser`(CJK 表头别名)/ `ingest_pipeline` / `ingest_dedup` / `ingest_draft_store` / provider Vision (`vision_ingest_client`) / `share_intent_service` / 隐私门 / Review 页 + 9 个 ingest test 文件。**待触发的是 alipay/wechat/券商对账单**的命名解析器层 | [roadmap.md Phase 3](./roadmap.md) |
 | **i18n 扩展(ja/zh-Hant/ko)** | 出现非中文用户群 | ❌ **未启动**(`lib/l10n/` 只有 `app_en.arb` + `app_zh.arb`) | [roadmap.md Phase 3](./roadmap.md) |
 | **多用户/家庭账本** | 用户实际请求 + 设计审 | ❌ **未启动**(`lib/features/` 下无 household / family / multi_user 目录) | [roadmap.md Phase 3](./roadmap.md) |
 
@@ -243,7 +243,7 @@
 | Gate | 关联 | 状态 / 决策 |
 |---|---|---|
 | ~~`me/` 与 `more/` 的最终去留~~ | §2 N-3 | ✅ **已关闭** (2026-05-24):IA migration (commits aacded4 / 3e37cfc) 后两个目录均不再存在,功能已挪进 Today / Settings。无遗留 caller |
-| ~~Plan tab 内 FIRE / Budget / Cashflow / Income 的二级 IA(平铺还是分组)~~ | §3.2 / §3.3 | ✅ **已关闭** (2026-05-24):`features/plan/ui/plan_hub_page.dart` 已落 flat tile grid (`_PlanSectionGrid`),按"决策面" tile 罗列;不引入二级 tabs,避免 IA 三层嵌套 |
+| ~~Plan tab 内 FIRE / Budget / Cashflow / Income 的二级 IA(平铺还是分组)~~ | §3.2 / §3.3 | ✅ **已关闭** (2026-05-24):`features/finance/ui/plan_hub_page.dart` 已落 flat tile grid (`_PlanSectionGrid`),按"决策面" tile 罗列;不引入二级 tabs,避免 IA 三层嵌套 |
 | Tax export 格式优先级(IRS Schedule D / 中国个税 / 通用 CSV) | §4 M-4 | ⏳ 待决:M-4 启动前需选定 |
 | ~~Crash reporter 后端(自托管 Sentry / Cloudflare D1 自存 / 第三方 SaaS)~~ | §3.6 | ✅ **已关闭** (2026-06-19):**Sentry SaaS** (sentry.io managed)。`sentry_flutter` + `SentryCrashReporter` 已接入;DSN 通过 `--dart-define=SENTRY_DSN=...` 注入,默认空且用户未 opt-in 时无远端上报。 |
 | Tradier OAuth 的 backend proxy 是否单独 Worker | §4 M-3 | ⏳ 待决:P5 启动前需选定 |

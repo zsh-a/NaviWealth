@@ -11,7 +11,32 @@ NEW_PATH=`echo $PATH | tr ":" "\n" | grep -v "Contents/Developer/" | tr "\n" ":"
 
 export PATH=${NEW_PATH%?} # remove trailing :
 
-env
+# Cargo builds host proc-macro crates while cross-compiling the Rust library.
+# Xcode injects deployment-target variables for the app target; with recent
+# macOS/Xcode beta toolchains those variables can leak into host crate builds
+# and make proc-macro crates such as `time_macros` undiscoverable. Preserve the
+# app target's minimum macOS version for target-specific flags, but keep Cargo's
+# ambient host environment clean.
+SAVED_MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET
+unset MACOSX_DEPLOYMENT_TARGET
+unset IPHONEOS_DEPLOYMENT_TARGET
+unset TVOS_DEPLOYMENT_TARGET
+unset WATCHOS_DEPLOYMENT_TARGET
+
+if [[ "$PLATFORM_NAME" == "macosx" && -n "$SAVED_MACOSX_DEPLOYMENT_TARGET" ]]; then
+  MACOS_MIN_FLAG="-mmacosx-version-min=$SAVED_MACOSX_DEPLOYMENT_TARGET"
+  for rust_target in aarch64-apple-darwin x86_64-apple-darwin
+  do
+    env_target=$(echo "$rust_target" | tr '[:lower:]-' '[:upper:]_')
+    cc_target=$(echo "$rust_target" | tr '-' '_')
+    rustflags_key="CARGO_TARGET_${env_target}_RUSTFLAGS"
+    cflags_key="CFLAGS_${cc_target}"
+    cxxflags_key="CXXFLAGS_${cc_target}"
+    export "$rustflags_key=${!rustflags_key:+${!rustflags_key} }-C link-arg=$MACOS_MIN_FLAG"
+    export "$cflags_key=${!cflags_key:+${!cflags_key} }$MACOS_MIN_FLAG"
+    export "$cxxflags_key=${!cxxflags_key:+${!cxxflags_key} }$MACOS_MIN_FLAG"
+  done
+fi
 
 # Platform name (macosx, iphoneos, iphonesimulator)
 export CARGOKIT_DARWIN_PLATFORM_NAME=$PLATFORM_NAME

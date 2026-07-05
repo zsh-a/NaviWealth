@@ -12,6 +12,7 @@ The shell owns cross-domain infrastructure:
 - Memory Runtime and indexer bootstrap.
 - Sync v2 row-family namespace.
 - Shared persistence adapter.
+- Encrypted local backup and restore.
 - Background jobs and notifications.
 
 Domain business behavior belongs in the domain SSOT:
@@ -29,13 +30,14 @@ app/
   domain_packs.dart              Production domain inventory
   router_builder.dart            Outer dock shell plus domain routes
   app_dock_shell.dart            Multi-domain chrome
-  memory_indexers_bootstrap.dart Domain indexer startup
+  domain_bootstrap.dart          Domain indexer/background startup
 
 core/
   lifeos/domain_pack.dart        Domain registration contract
   shell/domain_shell.dart        Domain shell spec and tab ownership
   auth/domain_scope.dart         Domain opt-in enum and wire values
-  sync/domain_prefix.dart        Row-family prefixes
+  backup/backup_table_registry.dart  Encrypted backup table metadata
+  sync/sync_table_registry.dart  Row-family prefixes and sync table metadata
   ai/composition/                Cross-domain AI seams
   ai/agents/                     Agent framework
   ai/local/memory/               Memory Runtime
@@ -69,12 +71,12 @@ Finance is always active. Health, Knowledge, and Execution are enabled through
 Use this path for any domain-level change:
 
 1. Add or update domain code under `features/<domain>/`.
-2. Export tools through `features/<domain>_ai_tools.dart`.
+2. Export tools through `features/<domain>/<domain>_ai_tools.dart`.
 3. Add or update shell spec and route builder under `features/<domain>/composition/`.
 4. Add agents under `features/<domain>/agents/` and expose a builder provider if needed.
 5. Add command palette entries under `features/<domain>/composition/`.
 6. Register the domain once in `app/domain_packs.dart`.
-7. Add domain memory indexers to `app/memory_indexers_bootstrap.dart` only when they have a real source stream.
+7. Add domain memory/background bootstraps through the owning `DomainPack` only when they have a real source stream or startup task.
 8. Add tests for opt-in behavior, route ownership, tool registration, and domain-specific repositories.
 
 Do not add custom opt-in checks to every consumer. Consumers should derive from `activeDomainPacksProvider` or from a domain-owned provider that already observes the opt-in.
@@ -88,8 +90,8 @@ The router uses a two-layer shell:
 
 Important files:
 
-- `app/router_builder.dart`
-- `app/app_dock_shell.dart`
+- `app/routing/router_builder.dart`
+- `app/shell/app_dock_shell.dart`
 - `core/shell/domain_shell.dart`
 - `features/finance/composition/finance_routes.dart`
 - `features/health/composition/health_routes.dart`
@@ -134,10 +136,10 @@ Aggregation:
 
 Domain exports:
 
-- Finance: `features/finance_ai_tools.dart`.
-- Health: `features/health_ai_tools.dart`.
-- Knowledge: `features/knowledge_ai_tools.dart`.
-- Execution: `features/execution_ai_tools.dart`.
+- Finance: `features/finance/finance_ai_tools.dart`.
+- Health: `features/health/health_ai_tools.dart`.
+- Knowledge: `features/knowledge/knowledge_ai_tools.dart`.
+- Execution: `features/execution/execution_ai_tools.dart`.
 
 Rules:
 
@@ -189,7 +191,7 @@ Location:
 
 - `core/ai/local/memory/`
 - `core/ai/local/embedding/`
-- `app/memory_indexers_bootstrap.dart`
+- `app/domain_bootstrap.dart`
 
 Core types:
 
@@ -211,6 +213,8 @@ Rules:
 
 - `core/ai/local/memory/` does not import domains.
 - Domain indexers live in domain `data/`.
+- Domain indexers are contributed through `DomainPack.memoryBootstrapBuilder`;
+  the app bootstrap only loops active packs.
 - Memory embeddings are derived local data and can be rebuilt.
 - `build_context` is the preferred LLM retrieval tool for contextual answers; `query_memory` remains a flat fallback.
 
@@ -222,7 +226,7 @@ Current native runtime:
 - Dart adapter: `core/ai/local/embedding/rust_gemma_embedder.dart`.
 - Generated bindings: `apps/mobile/lib/src/rust/`.
 - Model installer: `core/ai/local/embedding/model_*`.
-- Build helper: `apps/mobile/tool/build-lifeos-native.sh`.
+- Build helper: `tool/build-lifeos-native.sh` from the repository root.
 
 Behavior:
 
@@ -237,7 +241,7 @@ Location:
 
 - Client: `core/sync/`.
 - Backend: `apps/backend/src/sync/`.
-- Prefix helper: `core/sync/domain_prefix.dart`.
+- Prefix/table registry: `core/sync/sync_table_registry.dart`.
 
 Row-family prefixes:
 
@@ -252,6 +256,8 @@ Rules:
 
 - Local table names are unprefixed.
 - Prefixing and stripping happen at the sync boundary.
+- Sync table primary keys, owner-scope flags, and backfill eligibility are
+  registered in one place: `SyncTableRegistration`.
 - Backend store is generic and does not inspect domain payloads.
 - Local-only tables and derived data do not sync.
 
@@ -272,6 +278,21 @@ Rules:
 - Ownership remains per domain even when table declarations live in `core/persistence/`.
 - Repositories are the domain boundary for business reads and writes.
 - Generated Drift files are never edited by hand.
+
+## Backup And Restore
+
+Location:
+
+- `core/backup/`
+- `core/backup/backup_table_registry.dart`
+
+Rules:
+
+- Backup/restore uses `kBackupTables`, not `kSyncableTables`.
+- Backup table primary keys and restore outbox enqueue behavior are explicit
+  in `BackupTableRegistration`.
+- Syncable tables are not automatically backup tables unless their table
+  metadata opts into backup coverage.
 
 ## Background And Notifications
 
@@ -309,9 +330,16 @@ Run these when touching architecture boundaries:
 
 ```bash
 ./tool/lint-no-finance-in-core.sh
+./tool/lint-no-feature-in-shared.sh
+./tool/lint-design-system-domain-neutral.sh
+./tool/lint-no-legacy-mobile-domain.sh
 ./tool/lint-cross-feature-imports.sh
+./tool/lint-finance-domain-model-path.sh
+./tool/lint-finance-domain-data-imports.sh
+./tool/lint-finance-dashboard-read-model-path.sh
 ./tool/lint-row-family-prefix.sh
 ./tool/lint-domain-neutral-contracts.sh
+./tool/lint-frb-llm-entrypoints.sh
 ./tool/check-tool-descriptors.sh
 ```
 
@@ -319,6 +347,10 @@ Expected guarantees:
 
 - `core/ai/runtime/` does not import domain features.
 - `features/ai_chat/` does not import sibling features directly.
+- `design_system/` stays free of domain business value objects.
+- The retired top-level mobile `domain/` package does not return.
+- Finance core models stay under `features/finance/domain/models/`, not the
+  data-layer repository directory.
 - Row change literals in sync code carry domain prefixes.
 - Domain-neutral contracts do not mention domain business types.
 - Tool descriptors mirror registered tools.

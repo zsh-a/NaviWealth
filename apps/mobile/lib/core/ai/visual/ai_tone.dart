@@ -2,7 +2,7 @@
 ///
 /// AI surfaces use **four** color roles. Material's `tertiary` /
 /// `secondary` are forbidden inside `lib/features/ai_chat/`,
-/// `lib/features/settings/ui/ai_*`, and `lib/core/ai/*`: when a new
+/// `lib/features/settings/ui/ai/ai_*`, and `lib/core/ai/*`: when a new
 /// status needs visual distinction, encode it with **iconography** or
 /// **typography weight**, not a new hue.
 ///

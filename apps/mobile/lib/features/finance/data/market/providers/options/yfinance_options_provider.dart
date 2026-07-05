@@ -1,15 +1,20 @@
 import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
-import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yahoo_crumb_session.dart';
-import 'package:naviwealth/features/options_income/domain/option_contract.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
 
 import 'options_chain_provider.dart';
+
+part 'yfinance_options_models.dart';
+part 'yfinance_options_normalization.dart';
+part 'yfinance_options_parsing.dart';
+part 'yfinance_options_projection.dart';
 
 /// Yahoo Finance options-chain adapter.
 ///
@@ -17,7 +22,12 @@ import 'options_chain_provider.dart';
 /// endpoint as the `yfinance` (Python) library. Yahoo TOS bars commercial
 /// redistribution — see `docs/market-data-providers.md`; the data is
 /// consumed locally and never written to a synced table.
-class YFinanceOptionsProvider implements OptionsChainProvider {
+class YFinanceOptionsProvider
+    with
+        YFinanceOptionsNormalizationMixin,
+        YFinanceOptionsParsingMixin,
+        YFinanceOptionsProjectionMixin
+    implements OptionsChainProvider {
   YFinanceOptionsProvider({
     required MarketHttpClient http,
     required YahooCrumbSession session,
@@ -28,6 +38,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
 
   final MarketHttpClient _http;
   final YahooCrumbSession _session;
+  @override
   final Clock _clock;
 
   /// Per-symbol-per-expiration throttle. Maps "AAPL:2026-06-20" to its
@@ -88,6 +99,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
   /// Sends a chain request with the cached crumb + cookie attached. On
   /// 401 (Yahoo rotates crumbs aggressively) the session is invalidated
   /// and the call retried once with a fresh handshake.
+  @override
   Future<Response<Map<String, dynamic>>> _sendAuthed(
     String symbol, {
     int? expirationEpoch,
@@ -121,348 +133,5 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
       _session.invalidate();
       return attempt();
     }
-  }
-
-  Future<_RawChain> _fetchOnce(String symbol, {int? expirationEpoch}) async {
-    final response = await _sendAuthed(
-      symbol,
-      expirationEpoch: expirationEpoch,
-    );
-    final body = response.data;
-    if (body is! Map<String, dynamic>) {
-      throw ProviderResponseException(
-        'options response not an object',
-        provider: name,
-      );
-    }
-    final envelope = body['optionChain'];
-    if (envelope is! Map<String, dynamic>) {
-      throw ProviderResponseException(
-        'optionChain envelope missing',
-        provider: name,
-      );
-    }
-    final err = envelope['error'];
-    if (err is Map<String, dynamic>) {
-      final code = (err['code'] as String?) ?? 'unknown';
-      final desc = (err['description'] as String?) ?? '';
-      if (code.toLowerCase().contains('not')) {
-        throw SymbolNotFoundException('$symbol: $desc', provider: name);
-      }
-      throw ProviderResponseException('$code: $desc', provider: name);
-    }
-    final results = (envelope['result'] as List?) ?? const [];
-    if (results.isEmpty) {
-      throw SymbolNotFoundException(
-        '$symbol returned no option chain result',
-        provider: name,
-      );
-    }
-    final result = _expectMap(results.first, 'optionChain.result[0]');
-    final quote = _expectMap(result['quote'], 'quote');
-    final currency = (quote['currency'] as String?)?.toUpperCase() ?? 'USD';
-    final underlyingPriceRaw =
-        (quote['regularMarketPrice'] as num?)?.toString() ??
-        (quote['ask'] as num?)?.toString() ??
-        (quote['bid'] as num?)?.toString();
-    if (underlyingPriceRaw == null) {
-      throw ProviderResponseException(
-        'quote.regularMarketPrice missing for $symbol',
-        provider: name,
-      );
-    }
-
-    final expirations = ((result['expirationDates'] as List?) ?? const [])
-        .whereType<num>()
-        .map((n) => n.toInt())
-        .toList();
-    final options = (result['options'] as List?) ?? const [];
-    final contracts = <OptionContract>[];
-    int? firstExpirationEpoch;
-    if (options.isNotEmpty) {
-      final expSlice = _expectMap(options.first, 'options[0]');
-      final expEpoch = (expSlice['expirationDate'] as num?)?.toInt();
-      firstExpirationEpoch = expEpoch;
-      final expiration = expEpoch == null
-          ? null
-          : DateTime.fromMillisecondsSinceEpoch(expEpoch * 1000, isUtc: true);
-      if (expiration != null) {
-        final calls = ((expSlice['calls'] as List?) ?? const [])
-            .whereType<Map<String, dynamic>>();
-        final puts = ((expSlice['puts'] as List?) ?? const [])
-            .whereType<Map<String, dynamic>>();
-        final callRows = calls.toList(growable: false);
-        final putRows = puts.toList(growable: false);
-        _logRawSliceDiagnostics(
-          symbol: symbol,
-          expiration: expiration,
-          calls: callRows,
-          puts: putRows,
-        );
-        final underlyingMoney = Money.parse(underlyingPriceRaw, currency);
-        for (final raw in callRows) {
-          final c = _normalize(
-            raw: raw,
-            type: OptionType.call,
-            underlying: symbol,
-            currency: currency,
-            expiration: expiration,
-            underlyingPrice: underlyingMoney,
-            fetchedAt: _clock.now().toUtc(),
-          );
-          if (c != null) contracts.add(c);
-        }
-        for (final raw in putRows) {
-          final c = _normalize(
-            raw: raw,
-            type: OptionType.put,
-            underlying: symbol,
-            currency: currency,
-            expiration: expiration,
-            underlyingPrice: underlyingMoney,
-            fetchedAt: _clock.now().toUtc(),
-          );
-          if (c != null) contracts.add(c);
-        }
-      }
-    }
-    return _RawChain(
-      currency: currency,
-      underlyingPriceRaw: underlyingPriceRaw,
-      expirations: expirations,
-      firstExpirationEpoch: firstExpirationEpoch,
-      contracts: contracts,
-    );
-  }
-
-  OptionContract? _normalize({
-    required Map<String, dynamic> raw,
-    required OptionType type,
-    required String underlying,
-    required String currency,
-    required DateTime expiration,
-    required Money underlyingPrice,
-    required DateTime fetchedAt,
-  }) {
-    final symbol = raw['contractSymbol'];
-    final strikeRaw = raw['strike'];
-    final bidRaw = raw['bid'];
-    final askRaw = raw['ask'];
-    if (symbol is! String || strikeRaw is! num) return null;
-    final strike = Money(_decimal(strikeRaw), currency);
-    final bid = Money(_decimal(_safeNum(bidRaw)), currency);
-    final ask = Money(_decimal(_safeNum(askRaw)), currency);
-    final mid = _midpoint(bid: bid, ask: ask, lastFallback: raw['lastPrice']);
-    final spread = _spreadPct(
-      bid: bid.amount,
-      ask: ask.amount,
-      mid: mid.amount,
-    );
-    final dte = expiration
-        .toUtc()
-        .difference(DateTime(fetchedAt.year, fetchedAt.month, fetchedAt.day))
-        .inDays;
-    return OptionContract(
-      underlying: underlying,
-      market: AssetMarket.usStock,
-      optionSymbol: symbol,
-      type: type,
-      expiration: DateTime.utc(
-        expiration.year,
-        expiration.month,
-        expiration.day,
-      ),
-      dte: dte < 0 ? 0 : dte,
-      strike: strike,
-      bid: bid,
-      ask: ask,
-      mid: mid,
-      volume: (raw['volume'] as num?)?.toInt() ?? 0,
-      openInterest: (raw['openInterest'] as num?)?.toInt() ?? 0,
-      impliedVolatility: (raw['impliedVolatility'] as num?) == null
-          ? null
-          : _decimal(raw['impliedVolatility'] as num),
-      delta: null, // yfinance does not return greeks.
-      underlyingPrice: underlyingPrice,
-      bidAskSpreadPct: spread,
-      fetchedAt: fetchedAt,
-    );
-  }
-
-  Money _midpoint({
-    required Money bid,
-    required Money ask,
-    required Object? lastFallback,
-  }) {
-    final hasBid = bid.amount > Decimal.zero;
-    final hasAsk = ask.amount > Decimal.zero;
-    if (hasBid && hasAsk) {
-      final sum = bid.amount + ask.amount;
-      final midAmount = (sum / Decimal.fromInt(2)).toDecimal(
-        scaleOnInfinitePrecision: 6,
-      );
-      return Money(midAmount, bid.currency).rounded();
-    }
-    if (hasAsk) return ask;
-    if (hasBid) return bid;
-    if (lastFallback is num && lastFallback > 0) {
-      return Money(_decimal(lastFallback), bid.currency);
-    }
-    return Money.zero(bid.currency);
-  }
-
-  Decimal _spreadPct({
-    required Decimal bid,
-    required Decimal ask,
-    required Decimal mid,
-  }) {
-    if (mid <= Decimal.zero) return Decimal.one;
-    if (bid <= Decimal.zero || ask <= Decimal.zero) return Decimal.one;
-    final diff = ask - bid;
-    final dec = (diff / mid).toDecimal(scaleOnInfinitePrecision: 6);
-    if (dec < Decimal.zero) return Decimal.zero;
-    if (dec > Decimal.one) return Decimal.one;
-    return dec;
-  }
-
-  List<int> _pickExpirations({
-    required List<int> expirations,
-    required int minDte,
-    required int maxDte,
-    required DateTime asOf,
-  }) {
-    final today = DateTime.utc(asOf.year, asOf.month, asOf.day);
-    final candidates = <({int epoch, int dte})>[];
-    for (final epoch in expirations) {
-      final exp = DateTime.fromMillisecondsSinceEpoch(
-        epoch * 1000,
-        isUtc: true,
-      );
-      final dte = DateTime.utc(
-        exp.year,
-        exp.month,
-        exp.day,
-      ).difference(today).inDays;
-      if (dte < minDte || dte > maxDte) continue;
-      candidates.add((epoch: epoch, dte: dte));
-    }
-    final preferredDte = ((minDte + maxDte) / 2).round();
-    candidates.sort((a, b) {
-      final aDistance = (a.dte - preferredDte).abs();
-      final bDistance = (b.dte - preferredDte).abs();
-      if (aDistance != bDistance) return aDistance.compareTo(bDistance);
-      return a.dte.compareTo(b.dte);
-    });
-    final picked = candidates.take(_maxExpirationSlices).toList()
-      ..sort((a, b) => a.dte.compareTo(b.dte));
-    return [for (final c in picked) c.epoch];
-  }
-
-  OptionsChainSnapshot _projection(
-    _CachedChainPayload payload,
-    OptionsChainRequest request,
-  ) {
-    final filtered = payload.contracts
-        .where((c) => c.dte >= request.minDte && c.dte <= request.maxDte)
-        .toList(growable: false);
-    return OptionsChainSnapshot(
-      underlying: request.underlying.toUpperCase(),
-      underlyingPriceRaw: payload.underlyingPriceRaw,
-      currency: payload.currency,
-      contracts: filtered,
-      fetchedAt: payload.fetchedAt,
-    );
-  }
-
-  Map<String, dynamic> _expectMap(dynamic value, String path) {
-    if (value is Map<String, dynamic>) return value;
-    throw ProviderResponseException(
-      '$path expected object, got ${value.runtimeType}',
-      provider: name,
-    );
-  }
-
-  Decimal _decimal(num value) => Decimal.parse(value.toString());
-
-  num _safeNum(Object? value) => value is num ? value : 0;
-
-  void _logRawSliceDiagnostics({
-    required String symbol,
-    required DateTime expiration,
-    required List<Map<String, dynamic>> calls,
-    required List<Map<String, dynamic>> puts,
-  }) {
-    final rows = [...calls, ...puts];
-    final positiveBid = rows.where((r) => _safeNum(r['bid']) > 0).length;
-    final positiveAsk = rows.where((r) => _safeNum(r['ask']) > 0).length;
-    final positiveLast = rows.where((r) => _safeNum(r['lastPrice']) > 0).length;
-    final positiveOi = rows
-        .where((r) => _safeNum(r['openInterest']) > 0)
-        .length;
-    final positiveVolume = rows.where((r) => _safeNum(r['volume']) > 0).length;
-    final samples = rows.take(3).map(_rawSample).join(' | ');
-    AppLogger.instance.d(
-      'options-income yfinance: raw slice '
-      '$symbol exp=${expiration.toIso8601String().substring(0, 10)} '
-      'calls=${calls.length} puts=${puts.length} '
-      'positiveBid=$positiveBid/${rows.length} '
-      'positiveAsk=$positiveAsk/${rows.length} '
-      'positiveLast=$positiveLast/${rows.length} '
-      'positiveOI=$positiveOi/${rows.length} '
-      'positiveVolume=$positiveVolume/${rows.length} '
-      'samples=$samples',
-    );
-  }
-
-  String _rawSample(Map<String, dynamic> raw) {
-    return [
-      raw['contractSymbol'] ?? '?',
-      'strike=${raw['strike']}',
-      'bid=${raw['bid']}',
-      'ask=${raw['ask']}',
-      'last=${raw['lastPrice']}',
-      'oi=${raw['openInterest']}',
-      'vol=${raw['volume']}',
-    ].join(' ');
-  }
-}
-
-class _CachedChainPayload {
-  const _CachedChainPayload({
-    required this.currency,
-    required this.underlyingPriceRaw,
-    required this.fetchedAt,
-    required this.contracts,
-  });
-
-  final String currency;
-  final String underlyingPriceRaw;
-  final DateTime fetchedAt;
-  final List<OptionContract> contracts;
-}
-
-class _RawChain {
-  const _RawChain({
-    required this.currency,
-    required this.underlyingPriceRaw,
-    required this.expirations,
-    required this.firstExpirationEpoch,
-    required this.contracts,
-  });
-
-  final String currency;
-  final String underlyingPriceRaw;
-  final List<int> expirations;
-  final int? firstExpirationEpoch;
-  final List<OptionContract> contracts;
-}
-
-extension on Money {
-  /// Rounds the amount to 4 decimal places. yfinance returns float strike
-  /// prices like `190.0000000000001`; we keep four digits for display.
-  Money rounded() {
-    final raw = amount;
-    final rounded = Decimal.parse(raw.toStringAsFixed(4));
-    return Money(rounded, currency);
   }
 }

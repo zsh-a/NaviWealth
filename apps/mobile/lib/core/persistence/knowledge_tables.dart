@@ -5,7 +5,7 @@
 /// Memory Layer `kind='semantic'` records directly.
 ///
 /// All tables wear [SyncableTable] and carry the `know:` row family
-/// prefix on the wire (see `core/sync/domain_prefix.dart` and
+/// prefix on the wire (see `core/sync/sync_table_registry.dart` and
 /// `docs/architecture/lifeos-shell.md` §8). The local table names stay unprefixed —
 /// the prefix is applied at the sync boundary only.
 library;
@@ -93,7 +93,8 @@ class KnowledgeDecisions extends Table with SyncableTable {
   TextColumn get selectedLabel => text().withDefault(const Constant(''))();
   TextColumn get rationaleMd => text().withDefault(const Constant(''))();
   TextColumn get principleIdsJson => text().withDefault(const Constant('[]'))();
-  TextColumn get assumptionIdsJson => text().withDefault(const Constant('[]'))();
+  TextColumn get assumptionIdsJson =>
+      text().withDefault(const Constant('[]'))();
   TextColumn get expectedOutcome => text().nullable()();
   DateTimeColumn get reviewDate => dateTime().nullable()();
   TextColumn get actualOutcomeMd => text().nullable()();

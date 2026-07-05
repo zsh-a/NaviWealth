@@ -1,18 +1,34 @@
-# NaviWealth AI Runtime Event Contract
+# NaviWealth AI Chat Event Contract
 
 The cloud AI backend and the `/ai/chat` SSE endpoint were removed. The active
-chat path is device-only:
+interactive chat path is device-only and runs through the FRB/native streaming
+runtime:
 
 ```text
 ChatRepository
   -> RuntimeRoutingAiChatApiClient
-  -> DeviceLlmRuntime
-  -> AnthropicClient + DriftDeviceToolDispatcher
+  -> FrbChatRunner
+  -> AgentRuntimeLlmStreamBridge (ChatTurn stream/resume) + AgentRuntimeToolHost
+  -> agent-chat / agent-llm native provider + Dart device-tool dispatch
 ```
+
+The Flutter bridge and TUI now share the ChatTurn request/message/tool shape.
+TUI executes the shared Rust `agent-chat` continuation loop directly; Flutter
+maps primitive ChatTurn-style FRB stream frames into the existing
+`AiChatEvent` vocabulary, dispatches device tools in Dart, then resumes the
+Rust-owned loop with `chat_state` and `tool_results`.
 
 The repository/UI contract still uses the old event vocabulary so chat history,
 stream rendering, cancellation, and trace capture did not need a rewrite. These
-events are now in-process Dart stream events, not backend SSE frames.
+events are now in-process Dart stream events mapped from FRB primitive JSON
+stream frames, not backend SSE frames.
+
+Production domain agents, profile-turn business seams, Settings connectivity
+probing, Vision ingest, and interactive AI Chat use the FRB/native runtime path described in
+[`ai-architecture.md`](./ai-architecture.md) and
+[`../architecture/rust-agent-runtime-mvp.md`](../architecture/rust-agent-runtime-mvp.md).
+This file defines the interactive AI Chat streaming event vocabulary retained by
+that FRB runner.
 
 ## Events
 
@@ -56,6 +72,8 @@ DoneEvent(stopReason: "error", rounds: 0)
 ```
 
 The UI should guide the user to configure a provider profile in Settings.
+Settings profile tests use `FrbLlmConnectivityProbe`; the `device_unavailable`
+events above are specific to the interactive chat client.
 
 ## Tool Catalog
 
@@ -109,6 +127,39 @@ Flow:
 4. The user's pick is written back as the next user turn
    (`我选择「…」。请在此方案下继续。`) and the agent continues under that
    constraint.
+
+The Host must also make the decision visible to the next model turn. Flutter
+persists the selected option on the original `ToolInvocation` as
+`decision_selection` and `buildContextWindow` serializes completed `ask_user`
+tool calls into a compact assistant transcript:
+
+```text
+Decision requested: <title>
+Context: <context>
+Options:
+- <id>: <label> — <description> (recommended)
+Selected option: <id> (<label>)
+User reply: <reply>
+```
+
+This prevents a follow-up such as "我选择 A" from losing the original option
+set when the prior assistant turn had no visible text body.
+
+Turn-scoped metadata is typed in Flutter as `ChatTurnMetadata`. It is converted
+to runtime JSON only at the `AiChatApiClient` boundary:
+
+| field | runtime metadata |
+| --- | --- |
+| `decision.selection` | `decision` |
+| `decision.messageId` | `decision_message_id` |
+| `decision.toolInvocationId` | `decision_tool_invocation_id` |
+| `invocationTrace` | `invocation` |
+
+The TUI consumes the same `ChatTurnEvent` stream. When it sees a
+`tool_result` from `ask_user` with `type: "decision_request"`, it renders a
+numbered terminal decision list instead of raw JSON, then waits for the user's
+next natural-language input. The shared fixture is
+`docs/fixtures/agent_chat_ask_user_turn_events.json`.
 
 Policy for *when* to ask lives in `kDeviceSystemPromptBase` (clauses 12–14).
 This supersedes the earlier markdown-menu string parsing.

@@ -69,7 +69,7 @@ class _RecoveryHero extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.s8),
                     Text(
                       scoreText,
-                      style: context.theme.typography.sm.copyWith(
+                      style: context.theme.typography.body.sm.copyWith(
                         color: color.withValues(alpha: AppOpacity.strong),
                       ),
                     ),

@@ -1,7 +1,8 @@
 # NaviWealth AI 架构
 
-> **现状一句话**: AI 是 **device-only**。端侧 agent runtime 用**用户自带的 LLM key**
-> 直连用户选定的 provider（Anthropic 或 OpenAI 兼容端点），后端**完全不参与 AI**。
+> **现状一句话**: AI 是 **device-only**。生产 domain agent / profile-turn 路径通过
+> **flutter_rust_bridge (FRB)** 进入 native agent runtime，再用**用户自带的 LLM key**
+> 直连用户选定的 provider（Anthropic 或 OpenAI 兼容端点）；后端**完全不参与 AI**。
 > `apps/backend/src/ai/` 与 `/ai/chat`、`/ingest/parse` 路由已删除；backend 只剩
 > auth / sync / D1。Web 无 AI。
 >
@@ -27,7 +28,7 @@
 >
 > 累计净删约 4 400 行（四轮）。详见 [`ai-boundary-audit.md`](../archive/audits/ai-boundary-audit.md)。
 >
-> 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/`、`lib/features/ingest/`（Flutter）。
+> 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/`、`lib/features/finance/ingest/`（Flutter）。
 > 运行时事件契约见 [`ai-protocol.md`](./ai-protocol.md)。
 
 ---
@@ -51,22 +52,39 @@
 4. **透明可见**: 每次应答生成 `AiTrace`（本地存储，不同步），用户可见徽章
    「端侧直连模型 · 未经我方服务器」。
 
-## 2. Runtime（`lib/core/ai/runtime/`）
+## 2. Runtime（`lib/core/ai/runtime/` + native FRB runtime）
 
 ### 2.1 调用链
+
+生产 domain agent / profile-turn / 非流式业务 LLM 路径：
+
+```text
+Domain agent / business AI seam
+  → AgentRuntimeProfileTurnRunner | AgentRuntimeLlmBridge
+  → flutter_rust_bridge generated API
+  → native lifeos_native::agent_runtime / agent-llm
+  → Anthropic | OpenAI-compatible provider
+  → Dart AgentRuntimeToolHost / proposal confirmation seam as needed
+```
+
+交互式 AI Chat 已切到 FRB streaming runtime，同时保留既有 `AiChatEvent`
+词汇表给 UI 使用（增量文本、tool-call delta、取消与 trace 捕获语义不改）：
 
 ```text
 ChatRepository
   → RuntimeRoutingAiChatApiClient   (features/ai_chat/data/)
-  → DeviceLlmRuntime                (runtime/ai_runtime.dart + runtime/device/)
-  → AnthropicClient | OpenAiClient  (runtime/device/{anthropic,openai}/)
-  → DriftDeviceToolDispatcher       (runtime/device/device_tool_dispatcher.dart)
+  → FrbChatRunner                   (app/agent_runtime/chat/frb_chat_runner.dart; bootstrap override)
+  → AgentRuntimeLlmStreamBridge     (FRB primitive JSON event stream)
+  → agent-llm native providers      (OpenAI-compatible / Anthropic)
+  → AgentRuntimeToolHost            (Dart JSON-RPC tool dispatch)
 ```
 
-- `DeviceAgentLoop`（`runtime/device/device_agent_loop.dart`）= 端侧 agent loop：
-  prompt 组装 / provider 调用 / tool dispatch / proposal 全在端侧，对 provider 无感。
-- provider 客户端统一翻译为 provider-neutral `LlmStreamEvent`（含 `tool_use`），
-  由 active `LlmProfile.provider` 决定走哪个 client。
+- `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner` 是当前生产业务 agent 的首选入口：
+  它们把 active `LlmProfile` 映射为 provider-neutral native request，经 FRB 调 native
+  runtime，并把 native effect request / proposal result 回接到 Dart host。
+- 旧 direct-Dart streaming loop / provider HTTP client 已从 Flutter `lib/` 删除。
+  生产 interactive chat 只有 `FrbChatRunner` 一个入口，provider SSE 解析与 ChatTurn
+  续轮由 native runtime 承接。
 - 事件词表（`TextEvent` / `ToolCall*` / `SpanEvent` / `DoneEvent` …）见
   [`ai-protocol.md`](./ai-protocol.md)——repository/UI 仍用旧事件词表，故 chat 历史 /
   流式渲染 / 取消 / trace 捕获无需重写，只是事件改为进程内 Dart stream。
@@ -79,7 +97,9 @@ ChatRepository
   同等对待——**绝不**进 OpLog / 云同步 / 明文备份。
 - **无 opt-in 开关**（`enabled` 已删除）：无云回落，active profile 即意图
   （`isUsable = active?.hasKey`）。设置页是 profile 卡片列表（切换/编辑/删除 + 连通性测试）。
-- `LlmConnectivityProbe`（`llm_connectivity.dart`）走与真实 chat 同一路径发 1-token ping，
+- `LlmConnectivityProbe`（`llm_connectivity.dart`）在 app bootstrap 中由
+  `FrbLlmConnectivityProbe` 覆盖，走 FRB/native provider path 发 1-token ping；
+  默认 provider fail-closed，不再保留 direct-Dart connectivity probe。
   `classifyLlmProbeException` 把结果分为 ok / 鉴权失败 / 端点不存在 / 限流 / 被拒 / 网络不可达。
 
 ### 2.3 平台门控与降级
@@ -97,7 +117,7 @@ ChatRepository
 
 端侧工具目录由 active `DomainPack`s 聚合：Shell core tools 来自
 `core/ai/runtime/device/tools/device_tool_registry.dart`，Finance / Health /
-Knowledge 工具分别由各自 `features/<domain>_ai_tools.dart` 和 domain-local
+Knowledge 工具分别由各自 `features/<domain>/<domain>_ai_tools.dart` 和 domain-local
 `ai_tools/` 暴露。完整生产诊断合集在
 `apps/mobile/lib/app/production_ai_catalog.dart`：
 `productionDeviceTools` 是 dispatch allow-list，
@@ -107,9 +127,9 @@ Knowledge 工具分别由各自 `features/<domain>_ai_tools.dart` 和 domain-loc
 | 域 | 工具来源 |
 |----|----------|
 | Shell | Memory Layer tools: `query_memory` · `build_context` · `ask_user` |
-| FinanceOS | `features/finance_ai_tools.dart`，含基础财务、FIRE、Options Income、scoped read / propose 工具 |
-| HealthOS | `features/health_ai_tools.dart` |
-| KnowledgeOS | `features/knowledge_ai_tools.dart` |
+| FinanceOS | `features/finance/finance_ai_tools.dart`，含基础财务、FIRE、Options Income、scoped read / propose 工具 |
+| HealthOS | `features/health/health_ai_tools.dart` |
+| KnowledgeOS | `features/knowledge/knowledge_ai_tools.dart` |
 
 数据源全部是**本机 Drift / 既有端侧 provider**（net worth / currency service /
 `holdingsSnapshotProvider` / `DriftQueryPlanExecutor` / 端侧 detector）。Scoped Detail
@@ -171,13 +191,18 @@ label 影响。**Privacy policy 永远优先于 source。**
 - **§4.5 ProposalEnvelope**：见 §3.3（`CloudProposal` 子类已在 2026-05-24 audit 中删除）。
 - **§4.6 Device LLM Runtime（当前架构的落地决策——代码大量引用 §4.6.N）**：
   1. **用户自带 key** — `SecureKeyStore`，绝不进 OpLog/同步/明文备份。
-  2. **`DeviceLlmRuntime` 直连 provider** — 多 provider 客户端，统一 `LlmStreamEvent`；
-     provider 由 active `LlmProfile.provider` 决定。
+  2. **FRB/native 为生产业务 LLM 默认入口** — interactive AI Chat、domain agent、
+     profile-turn、连通性探测、Vision ingest 与已迁移的 classifier/synthesizer 通过
+     `FrbChatRunner` / `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner`
+     进入 native runtime。legacy direct-Dart `DeviceLlmRuntime` 已删除；Dart 侧只保留
+     `DeviceChatRunner` seam 供路由客户端与测试注入 FRB runner。
   3. **工具读 Drift 本地真源** — §4.2 freshness gate 已物理删除；`ScopedDisclosure`
      协议（DisclosureRequest/Response/LedgerField/UserConsent）也已删除，只保留
      `DisclosurePurpose` enum 用作 window tool 参数校验。
-  4. **Vision 端侧直发** — 图像 base64 → content block，用户 key 直发 provider，
-     原图不出设备（比已删除的 Worker 中转更私密）。
+  4. **Vision 端侧直发走 FRB** — 图像/PDF content block + tool schema 经
+     `FrbVisionIngestClient` / `AgentRuntimeLlmBridge` 发送到 native provider path；
+     原图不经我方服务器（比已删除的 Worker 中转更私密）。direct-Dart Vision adapter
+     已删除，只保留共享的 prompt/schema/extraction helpers。
   5. **平台边界 = 全部原生平台，仅排除 Web**（门控 `!kIsWeb`，见 §2.3）。
   - 无 device→cloud 失效转移（见 §2.3 降级）。
 
@@ -197,7 +222,7 @@ label 影响。**Privacy policy 永远优先于 source。**
 
 | 层级 | 触发者 | 形态 | 落地 |
 |------|--------|------|------|
-| **Ambient** | 系统/端侧 detector | Insight 卡片（展开/问一下/忽略）| `features/home/ui/ai_insight_feed.dart` |
+| **Ambient** | 系统/端侧 detector | Insight 卡片（展开/问一下/忽略）| `features/finance/home/ui/ai_insight_feed.dart` |
 | **Contextual** | 用户在某对象上 | Capsule → inline bottom sheet | `AiObjectCapsule` + `showAiBottomSheet` |
 | **Global** | 跨领域复杂任务 | 命令栏 overlay（**非** `/ai` tab）| `core/command_palette/` |
 
@@ -263,7 +288,7 @@ AI 元素默认 surface tone（非 accent）；单色细线 sparkle（字号 ≤
 | 1 | 统一命令栏 | Cmd-K overlay / 移动端顶栏 pill | `core/command_palette/`（就地出结构化答案，不留对话历史）|
 | 2 | 内联上下文 Capsule | 图表 ⋯ / 卡片长按 → bottom sheet | §5.4 不变 |
 | 3 | 环境式洞察 | 主屏卡片三动作（展开/问一下/忽略）+ 偏好学习 | `ai_insight_feed.dart` |
-| 4 | 录入链路隐形 AI | 截图/文件/粘贴/分享自动解析 | `features/ingest/`（见 §5.10）|
+| 4 | 录入链路隐形 AI | 截图/文件/粘贴/分享自动解析 | `features/finance/ingest/`（见 §5.10）|
 
 拓扑结果：`/ai` tab 下线（FinanceOS 4-tab：Home/Activity/Wealth/Plan；Settings
 是全局 meta，不是 tab）；chat 迁 `/settings/ai-history`（只读回放）；
@@ -278,7 +303,7 @@ FIRE/Rebalance 迁 `/plan/{fire,rebalance}`，Portfolio Analytics 迁
 - 紫色渐变 / 彩虹色 / 机器人头像
 - **摄取草稿在用户确认前不得出现在 `journal_entries` / OpLog / 任何持久层**
 
-#### 5.10.x Layer 4 录入管道（`features/ingest/`）
+#### 5.10.x Layer 4 录入管道（`features/finance/ingest/`）
 
 无入口的隐形 AI：粘贴/拖拽/分享/截图 → 解析 → 复用端侧 `merchant_key`/`txn_classifier`
 归一 → 对 **Drift 真源**模糊去重 → 落本地 `ingest_drafts`/`ingest_attachments`
@@ -288,8 +313,8 @@ FIRE/Rebalance 迁 `/plan/{fire,rebalance}`，Portfolio Analytics 迁
 - 端侧解析（CSV / paste）零联网，落地可用。
 - **后端 Vision relay 已删除**：原 `POST /ingest/parse` 与
   `apps/backend/src/ai/ingest/` 随后端 AI 一并删除。图片/PDF 的 Vision 解析改为
-  **端侧直发**（`DeviceVisionIngestClient` + `core/ai/runtime/device/device_vision_parse.dart`，
-  用户 key，§4.6 决策 4，原图不出设备）；无可用端侧 runtime 时
+  **FRB 端侧直发**（`FrbVisionIngestClient` + `AgentRuntimeLlmBridge` + native
+  `agent-llm`，用户 key，§4.6 决策 4，原图不经我方服务器）；无可用端侧 runtime 时
   `VisionIngestClient` 槽位降级为 `UnavailableVisionIngestClient` stub，回
   「去设置加 key」而非打死端点。
 - 隐私门 `ingest_privacy_gate.dart` 仍在：`amountsLocal` 拒绝 provider Vision
@@ -303,26 +328,33 @@ FIRE/Rebalance 迁 `/plan/{fire,rebalance}`，Portfolio Analytics 迁
 contracts/   intent · privacy_budget · task_context(route/intent/signals) ·
              base_context · context_pack · scoped_disclosure(DisclosurePurpose only) ·
              tool_descriptor(no allowed_runtimes/read_model_layer) ·
+             tool_schema(provider-neutral DeviceToolSchema) ·
              proposal_envelope(3 subclasses, no CloudProposal) ·
              ai_span · ai_trace(no usedCloud/usedRawLedger/disclosures/staleReadModelNames) ·
              privacy_mode_provider(no amountAnonymization) ·
              AnalyticalUpload(tool 输出 shape, not pre-injected)
-runtime/
-  ai_runtime.dart                DeviceLlmRuntime + DeviceChatRunner
-                                 （boundary audit 删 RuntimeRegistry / RuntimeId /
-                                 AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime）
-  device/
-    device_agent_loop.dart       端侧 agent loop
-    device_session.dart          per-turn session
+	runtime/
+	  agent_runtime_*.dart           FRB/native agent runtime bridge, profile-turn runner,
+	                                 LLM bridge, tool host, trace recorder
+	  ai_runtime.dart                DeviceChatRunner seam only
+                                 （production bound to FrbChatRunner in app/bootstrap.dart）
+	                                 （boundary audit 删 RuntimeRegistry / RuntimeId /
+	                                 AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime /
+	                                 DeviceLlmRuntime）
+	agents/
+	  agent_run_controller.dart      run_once by agent id + scheduled tick entry
+	  agent_runner.dart              shared run event recording + schedule gates
+	  device/
+    device_session.dart          provider-neutral tool/session context
+    device_tool_session.dart     provider-neutral tool execution context
     device_system_prompt.dart    端侧 system prompt + 硬限额
     device_tool_dispatcher.dart  只广告 active DomainPack 聚合出的工具
-    device_vision_parse.dart     端侧 Vision 抽取
-    llm_stream_event.dart        provider-neutral 事件
-    anthropic/                   AnthropicClient + SSE decoder + wire
-    openai/                      OpenAiClient + SSE decoder
+    device_vision_parse.dart     Vision prompt/schema/extraction helpers
+    anthropic/anthropic_wire.dart
+                                 provider-neutral Anthropic-shaped message/tool schema
     tools/                       Shell core tools + DeviceToolRegistry
 llm_credentials/                 LlmCredentials/LlmProfile + SecureKeyStore +
-                                 连通性探测 + providers   (§2.2)
+                                 FRB-backed connectivity probe seam   (§2.2)
 trace/                           AiTraceStore / DriftAiTraceStore / builder /
                                  capture preference / providers
 write/                           ProposalEnvelope 应用（3 子类）· InteractionMode ·
@@ -340,12 +372,20 @@ regression/                      regression_corpus（静态契约测试）
 (已删除子目录: freshness/ · router/  —— 2026-05-24 boundary audit)
 ```
 
-`lib/features/ai_chat/`：`runtime_routing_api_client.dart`（→ DeviceLlmRuntime，无回落）·
+`lib/features/ai_chat/`：`runtime_routing_api_client.dart`（无 cloud 回落；
+production 由 app composition root 覆盖到 `FrbChatRunner` +
+`AgentRuntimeLlmStreamBridge`，消费 FRB primitive LLM event stream；OpenAI-compatible
+与 Anthropic text/usage/tool/reasoning SSE 已 provider-real，并支持 Dart
+ChatTurn result continuation、`ask_user` terminal pause、trace span 与 cancel parity）·
 `chat_repository.dart` · `proposal_applier.dart` · ui/（`ai_chat_page` 现为
 `/settings/ai-history` 只读 · `propose_card`（mode 三分支）· `tool_invocation_*`
 domain renderer · `ai_object_capsule` · `reply_chips` · `ai_transparency_badge`）。
 
-`lib/features/ingest/`：见 §5.10.x。
+`lib/features/finance/ingest/`：见 §5.10.x（生产 Vision provider 为 `FrbVisionIngestClient`）。
+
+`lib/app/`：`agent_runtime/bridges/frb_llm_connectivity_probe.dart`、
+`domain_packs.dart` 与 `domain_composition.dart` 在 app composition root 聚合
+FRB LLM probe、domain tools、proposal routes 与 active domain packs。
 
 ### 6.2 Backend — **已删除**
 
@@ -355,15 +395,30 @@ read model projection、ContextPack ingest。backend router（`lib.rs`）只剩
 `migrations/` 内 `0003_ai_rate_limit` / `0006_ai_read_models` / `0007_holdings_snapshot`
 等仅作 schema 历史保留，不再写入/查询。`ANTHROPIC_API_KEY` 不再是后端 secret。
 
-## 7. 数据流（device runtime）
+## 7. 数据流
+
+生产 domain agent / profile-turn：
+
+```text
+Domain agent / business AI request
+  → AgentRuntimeProfileTurnRunner or AgentRuntimeLlmBridge
+  → FRB generated API
+  → native lifeos_native::agent_runtime / agent-llm
+     - provider request 使用 active LlmProfile（用户 key）
+     - native step 可产 effect request / proposal envelope / trace metadata
+  → Dart AgentRuntimeToolHost dispatch / proposal bridge
+  → AgentRuntimeTraceRecorder 写 AiTraceStore
+```
+
+交互式 AI Chat streaming：
 
 ```
 Chat → providers.dart _prepareChatTrace(ref, requestId)
   → ContextCompressor.compress() 编 ContextPack（端侧派生信号 + 偏好）
-  → RuntimeRoutingAiChatApiClient → DeviceLlmRuntime
-     - Anthropic/OpenAiClient 直连用户 provider（用户 key）
-     - DriftDeviceToolDispatcher 仅广告 active DomainPack 聚合出的工具
-     - 每个 tool_call 直接读本机 Drift / 端侧 provider，数据不经我方服务器
+  → RuntimeRoutingAiChatApiClient → FrbChatRunner（bootstrap 注入）
+     - AgentRuntimeLlmStreamBridge 经 FRB 调 native `agent-llm` provider（用户 key）
+     - AgentRuntimeToolHost 仅广告 active DomainPack 聚合出的工具
+     - 每个 tool_call 通过 Dart JSON-RPC host 读本机 Drift / 端侧 provider，数据不经我方服务器
   → Dart stream events 回流，端侧渲染
   → AiTraceBuilder 记录 turn / llm / tool spans
   → AiTraceStore.append(trace.finalize())
@@ -378,10 +433,11 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | 端侧 contracts / trace / skills / NL→QueryPlan / SemanticMemory(stub) | ✅ |
 | §5 Interaction Grammar（§5.1–5.9 契约 + 四层拓扑 + 命令栏主入口 + Layer 2/3）| ✅ |
 | §5.10 Layer 4 录入：CSV/paste 端侧解析 + 草稿队列 + 确认链 + 隐私门 + 文件/相机/拖拽/分享捕获 | ✅ |
-| 端侧 Vision 直发（图片/PDF 摄取，`DeviceVisionIngestClient`，替代已删除的 Worker 中转）| ✅ |
+| FRB 端侧 Vision 直发（图片/PDF 摄取，`FrbVisionIngestClient`，替代已删除的 Worker 中转）| ✅ |
 | AiTrace span 可观测性（Opik 瀑布树，取代旧 flat 格式，不向后兼容）| ✅ |
-| 多 provider profile + 切换 + 连通性测试（无 opt-in 开关）| ✅ |
-| §4.6 Device LLM Runtime（用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
+| 多 provider profile + 切换 + FRB 连通性测试（无 opt-in 开关）| ✅ |
+| §4.6 Device LLM Runtime（用户自带 key · FRB/native 生产业务入口 · FRB chat streaming seam · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
+| FRB LLM entrypoint guardrail（`tool/lint-frb-llm-entrypoints.sh`）| ✅ |
 | Boundary audit 2026-05-24（四轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AllowedRuntime/AnonymizationLevel/usedCloud/analyticalUploads 字段/l10n orphans（累计净删 ~4 400 行）| ✅ |
 | UI 测试准出 P1 | A11y baseline / 性能预算已接入 `tool/check-ui-baselines.sh` 与 mobile CI | ✅ |
 | 长历史 subscription_changes | `recurring_pattern_observations` local-only Drift observation log 持久化 detector 输出，跨会话比较 old-vs-new stable median | ✅ |

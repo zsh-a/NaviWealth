@@ -8,13 +8,9 @@ library;
 
 import 'dart:convert';
 
-/// Default model when the request doesn't override it.
-///
-/// The backend default is a ModelScope gateway model; the device path
-/// uses the user's own Anthropic key, so default to a current Claude
-/// assistant model (cost/quality balance for routine chat — the user
-/// can override later).
-const String kDefaultDeviceModel = 'claude-sonnet-4-6';
+import '../../../contracts/tool_schema.dart';
+
+export '../../../llm_credentials/llm_credentials.dart' show kDefaultDeviceModel;
 
 /// One Messages API message. `role` is `user` or `assistant`; system
 /// instructions ride on [AnthropicRequest.system]. `content` is either
@@ -41,23 +37,7 @@ class AnthropicChatMessage {
 
 /// Tool schema as Anthropic expects it. `inputSchema` is a JSON Schema
 /// object (ported verbatim from the backend tool registry).
-class AnthropicToolSchema {
-  const AnthropicToolSchema({
-    required this.name,
-    required this.description,
-    required this.inputSchema,
-  });
-
-  final String name;
-  final String description;
-  final Map<String, Object?> inputSchema;
-
-  Map<String, Object?> toJson() => {
-    'name': name,
-    'description': description,
-    'input_schema': inputSchema,
-  };
-}
+typedef AnthropicToolSchema = DeviceToolSchema;
 
 class AnthropicRequest {
   const AnthropicRequest({
@@ -73,7 +53,7 @@ class AnthropicRequest {
   final int maxTokens;
   final String system;
   final List<AnthropicChatMessage> messages;
-  final List<AnthropicToolSchema> tools;
+  final List<DeviceToolSchema> tools;
   final bool stream;
 
   Map<String, Object?> toJson() => {

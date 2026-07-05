@@ -37,7 +37,7 @@ Contributions:
 - Shell: `features/knowledge/composition/knowledge_domain_shell.dart`.
 - Routes: `features/knowledge/composition/knowledge_routes.dart`.
 - Tabs: Inbox, Library, Review.
-- Tools: `features/knowledge_ai_tools.dart`.
+- Tools: `features/knowledge/knowledge_ai_tools.dart`.
 - Agents: `features/knowledge/agents/providers.dart`.
 - Command palette: `features/knowledge/composition/knowledge_command_palette.dart`.
 - Proposal kinds: `features/knowledge/composition/knowledge_proposal_kinds.dart`.
@@ -110,7 +110,7 @@ Capture rule: saving to Inbox must remain fast and offline. Do not call the LLM 
 
 ## AI Tools
 
-Tool barrel: `features/knowledge_ai_tools.dart`.
+Tool barrel: `features/knowledge/knowledge_ai_tools.dart`.
 
 Read tools:
 

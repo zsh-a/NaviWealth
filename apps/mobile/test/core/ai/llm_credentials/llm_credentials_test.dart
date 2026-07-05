@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/llm_credentials/llm_connectivity.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credential_store.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
@@ -37,6 +38,19 @@ ProviderContainer _container(
 }
 
 void main() {
+  test(
+    'connectivity probe default fails closed until bootstrap overrides FRB',
+    () async {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+
+      final result = await c.read(llmConnectivityProbeProvider).probe(_p('a'));
+
+      expect(result.status, LlmProbeStatus.unknown);
+      expect(result.message, contains('AI 运行时'));
+    },
+  );
+
   group('LlmCredentials model', () {
     test('v2 encode/decode roundtrip preserves profiles + active', () {
       final c = LlmCredentials(

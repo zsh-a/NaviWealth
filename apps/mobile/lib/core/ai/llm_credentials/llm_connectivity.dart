@@ -7,13 +7,6 @@
 /// profile the user is still editing and hasn't saved.
 library;
 
-import 'dart:async';
-
-import 'package:dio/dio.dart';
-
-import '../runtime/device/anthropic/anthropic_client.dart';
-import '../runtime/device/anthropic/anthropic_wire.dart';
-import '../runtime/device/openai/openai_client.dart';
 import 'llm_credentials.dart';
 
 enum LlmProbeStatus {
@@ -62,69 +55,56 @@ class LlmProbeResult {
       status == LlmProbeStatus.notFound;
 }
 
-class LlmConnectivityProbe {
-  LlmConnectivityProbe({Dio Function()? dioFactory})
-    : _dioFactory = dioFactory ?? _defaultDio;
+abstract class LlmConnectivityProbe {
+  const LlmConnectivityProbe();
 
-  final Dio Function() _dioFactory;
+  Future<LlmProbeResult> probe(
+    LlmProfile profile, {
+    Duration timeout = const Duration(seconds: 20),
+  });
+}
 
-  static Dio _defaultDio() => Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 20),
-    ),
-  );
+class UnavailableLlmConnectivityProbe implements LlmConnectivityProbe {
+  const UnavailableLlmConnectivityProbe();
 
-  /// Send a 1-token "ping" and classify the outcome.
+  @override
   Future<LlmProbeResult> probe(
     LlmProfile profile, {
     Duration timeout = const Duration(seconds: 20),
   }) async {
-    if (!profile.hasKey) {
-      return const LlmProbeResult(LlmProbeStatus.authFailed, '请先填入 API Key');
-    }
-    final dio = _dioFactory();
-    final (client, model) = switch (profile.provider) {
-      LlmProvider.anthropic => (
-        AnthropicClient(dio: dio, config: LlmConfig.fromProfile(profile)),
-        LlmConfig.fromProfile(profile).model,
-      ),
-      LlmProvider.openai => (
-        OpenAiClient(dio: dio, config: OpenAiConfig.fromProfile(profile)),
-        OpenAiConfig.fromProfile(profile).model,
-      ),
-    };
-    final request = AnthropicRequest(
-      model: model,
-      maxTokens: 1,
-      system: '',
-      messages: const [AnthropicChatMessage(role: 'user', content: 'ping')],
-      stream: false,
-    );
-    try {
-      await client.complete(request).timeout(timeout);
-      return const LlmProbeResult(LlmProbeStatus.ok, '连通正常 · 配置可用');
-    } on TimeoutException {
-      return const LlmProbeResult(
-        LlmProbeStatus.network,
-        '请求超时 · 检查网络或 Base URL',
-      );
-    } on LlmRequestException catch (e) {
-      return classifyLlmProbeException(e);
-    } catch (e) {
-      return LlmProbeResult(LlmProbeStatus.unknown, '测试失败：$e');
-    }
+    return const LlmProbeResult(LlmProbeStatus.unknown, 'AI 运行时尚未初始化，请稍后重试');
   }
+}
+
+/// Minimal provider failure shape used by connectivity UX.
+///
+/// Kept in the credentials seam so app/settings code does not import the
+/// low-level direct-Dart provider clients merely to classify FRB errors.
+class LlmProbeException implements Exception {
+  const LlmProbeException({required this.statusCode, required this.message});
+
+  final int statusCode;
+  final String message;
+
+  @override
+  String toString() => 'LlmProbeException($statusCode): $message';
 }
 
 /// Pure mapping HTTP failure → user-facing probe result. Top-level so
 /// it's unit-testable without a network.
-LlmProbeResult classifyLlmProbeException(LlmRequestException e) {
-  final s = e.statusCode;
+LlmProbeResult classifyLlmProbeException(LlmProbeException e) {
+  return classifyLlmProbeFailure(statusCode: e.statusCode, message: e.message);
+}
+
+LlmProbeResult classifyLlmProbeFailure({
+  required int statusCode,
+  required String message,
+}) {
+  final s = statusCode;
   return switch (s) {
     0 => LlmProbeResult(
       LlmProbeStatus.network,
-      '无法连接 · 检查网络或 Base URL（${e.message}）',
+      '无法连接 · 检查网络或 Base URL（$message）',
     ),
     401 || 403 => LlmProbeResult(
       LlmProbeStatus.authFailed,
@@ -143,12 +123,12 @@ LlmProbeResult classifyLlmProbeException(LlmRequestException e) {
     ),
     400 => LlmProbeResult(
       LlmProbeStatus.badRequest,
-      '已连通，但请求被拒（400）· 多为模型名无效：${e.message}',
+      '已连通，但请求被拒（400）· 多为模型名无效：$message',
       httpStatus: s,
     ),
     _ => LlmProbeResult(
       LlmProbeStatus.unknown,
-      '测试失败（HTTP $s）：${e.message}',
+      '测试失败（HTTP $s）：$message',
       httpStatus: s,
     ),
   };

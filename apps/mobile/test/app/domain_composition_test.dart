@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
+import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/composition/composite_proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/device_tools_provider.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
@@ -25,13 +27,16 @@ import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
+import 'package:naviwealth/core/shell/entity_route_resolver.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
 
 const _tool = _FakeTool('domain_tool');
+const _agent = _FakeAgent('domain_agent');
 
 final _domainSeamProvider = Provider<int>((ref) => 0);
 
@@ -84,6 +89,7 @@ const _financePack = DomainPack(
   proposalApplierRouteBuilder: _fakeFinanceProposalRoute,
   systemPromptBlock: 'Finance block',
   commandPaletteEntriesBuilder: _financeEntries,
+  agentBuilder: _financeAgents,
 );
 
 const _healthPack = DomainPack(
@@ -130,6 +136,8 @@ List<CommandPaletteEntry> _financeEntries(AppLocalizations l10n) => [
     run: (_) {},
   ),
 ];
+
+List<Agent> _financeAgents(Ref ref) => const <Agent>[_agent];
 
 List<CommandPaletteEntry> _healthEntries(AppLocalizations l10n) => [
   CommandPaletteEntry(
@@ -214,6 +222,56 @@ void main() {
     );
   });
 
+  test('entity route resolver maps shell entity refs at the app boundary', () {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final c = _container(db: db);
+    addTearDown(c.dispose);
+
+    final resolver = c.read(entityRouteResolverProvider);
+
+    expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: EntityRouteTables.assets,
+          entityId: 'asset-1',
+        ),
+      ),
+      FinanceRoutes.wealthAsset('asset-1'),
+    );
+    expect(
+      resolver(
+        const EntityRouteRef(
+          entityTable: EntityRouteTables.journalEntries,
+          entityId: 'entry-1',
+        ),
+      ),
+      FinanceRoutes.activityEntry('entry-1'),
+    );
+    expect(
+      resolver(const EntityRouteRef(entityTable: 'unknown', entityId: 'id-1')),
+      isNull,
+    );
+  });
+
+  test('agent registrations attach the owning pack scope', () {
+    final registrationsProvider = Provider<List<DomainAgentRegistration>>(
+      (ref) => domainAgentRegistrations(ref, const [_financePack]),
+    );
+    final agentsProvider = Provider<List<Agent>>(
+      (ref) => domainAgents(ref, const [_financePack]),
+    );
+    final c = ProviderContainer();
+    addTearDown(c.dispose);
+
+    final registrations = c.read(registrationsProvider);
+
+    expect(registrations, hasLength(1));
+    expect(registrations.single.agent.id, 'domain_agent');
+    expect(registrations.single.domain, DomainScope.finance);
+    expect(c.read(agentsProvider).single.id, 'domain_agent');
+  });
+
   test('tool descriptor lookup follows active domain opt-ins', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
@@ -265,6 +323,30 @@ void main() {
     expect(c.read(_domainSeamProvider), 42);
   });
 
+  test('domain bootstraps are contributed by packs', () {
+    var memoryBootstrapCount = 0;
+    var backgroundBootstrapCount = 0;
+    final pack = DomainPack(
+      scope: DomainScope.finance,
+      memoryBootstrapBuilder: (_) => memoryBootstrapCount++,
+      backgroundBootstrapBuilder: (_) => backgroundBootstrapCount++,
+    );
+    final memoryBootstrapProvider = Provider<void>(
+      (ref) => domainMemoryBootstraps(ref, [pack]),
+    );
+    final backgroundBootstrapProvider = Provider<void>(
+      (ref) => domainBackgroundBootstraps(ref, [pack]),
+    );
+    final c = ProviderContainer();
+    addTearDown(c.dispose);
+
+    c.read(memoryBootstrapProvider);
+    c.read(backgroundBootstrapProvider);
+
+    expect(memoryBootstrapCount, 1);
+    expect(backgroundBootstrapCount, 1);
+  });
+
   test(
     'production four-domain packs derive active tools prompts shells and agents',
     () async {
@@ -293,6 +375,13 @@ void main() {
           .setEnabled(DomainScope.execution, true);
 
       expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
+      expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
+      expect(
+        kAllDomainPacks
+            .where((pack) => pack.settingsSpec != null)
+            .map((pack) => pack.settingsSpec!.label),
+        ['FinanceOS', 'HealthOS', 'KnowledgeOS', 'ExecutionOS'],
+      );
       expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
         DomainScope.finance,
         DomainScope.health,
@@ -364,4 +453,28 @@ class _FakeProposalApplier implements ProposalApplier {
 
   @override
   Future<void> undo(ProposalApplyState state) async {}
+}
+
+class _FakeAgent implements Agent {
+  const _FakeAgent(this.id);
+
+  @override
+  final String id;
+
+  @override
+  String get name => 'Fake agent';
+
+  @override
+  AgentSchedule get schedule =>
+      const AgentSchedule(interval: Duration(hours: 1));
+
+  @override
+  Future<AgentRunResult> run(AgentContext ctx) async {
+    return AgentRunResult.skipped(
+      agentId: id,
+      startedAt: ctx.now,
+      finishedAt: ctx.now,
+      reason: 'test',
+    );
+  }
 }

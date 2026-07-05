@@ -60,7 +60,7 @@ class AppStatusBanner extends StatelessWidget {
                     message,
                     style: compact
                         ? context.captionStyle
-                        : context.theme.typography.sm.copyWith(
+                        : context.theme.typography.body.sm.copyWith(
                             color: colors.foreground,
                           ),
                     maxLines: compact ? 2 : null,

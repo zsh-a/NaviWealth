@@ -18,11 +18,10 @@ class AgentSchedule {
   });
 
   /// Build a daily schedule.
-  factory AgentSchedule.daily({int hourLocal = 7}) =>
-      AgentSchedule(
-        interval: const Duration(days: 1),
-        preferredHourLocal: hourLocal,
-      );
+  factory AgentSchedule.daily({int hourLocal = 7}) => AgentSchedule(
+    interval: const Duration(days: 1),
+    preferredHourLocal: hourLocal,
+  );
 
   /// Build an N-hours-apart schedule with no preferred wall-clock
   /// anchor. Useful for non-user-facing maintenance agents.
@@ -60,8 +59,8 @@ class AgentSchedule {
     // local 06:55–07:05.
     final localHour = now.toLocal().hour;
     final localMinute = now.toLocal().minute;
-    final secondsFromTarget =
-        ((localHour - hour) * 3600 + localMinute * 60).abs();
+    final secondsFromTarget = ((localHour - hour) * 3600 + localMinute * 60)
+        .abs();
     return secondsFromTarget <= jitter.inSeconds;
   }
 

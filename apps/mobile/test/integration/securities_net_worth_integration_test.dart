@@ -13,16 +13,16 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
-import 'package:naviwealth/domain/services/price_resolver.dart';
-import 'package:naviwealth/domain/values/price_confidence.dart';
-import 'package:naviwealth/domain/values/resolved_price.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/market/resolver/price_resolver.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
+import 'package:naviwealth/features/finance/market/domain/resolved_price.dart';
 
 import 'support/integration_env.dart';
 
@@ -36,13 +36,13 @@ class _FixedPriceResolver implements PriceResolver {
   final DateTime asOf;
 
   ResolvedPrice _p() => ResolvedPrice(
-        value: price,
-        currency: currency,
-        confidence: PriceConfidence.realTime,
-        source: 'test',
-        asOf: asOf,
-        fetchedAt: asOf,
-      );
+    value: price,
+    currency: currency,
+    confidence: PriceConfidence.realTime,
+    source: 'test',
+    asOf: asOf,
+    fetchedAt: asOf,
+  );
 
   @override
   Future<ResolvedPrice?> resolve(Asset asset, {DateTime? asOf}) async => _p();
@@ -51,60 +51,58 @@ class _FixedPriceResolver implements PriceResolver {
   Future<Map<String, ResolvedPrice?>> resolveMany(
     Iterable<Asset> assets, {
     DateTime? asOf,
-  }) async =>
-      {for (final a in assets) a.id: _p()};
+  }) async => {for (final a in assets) a.id: _p()};
 }
 
 void main() {
   group('Integration: securities trade moves net worth (real Drift)', () {
-    test(
-      'buying 100 shares @ 20 CNY drives net worth to +2000',
-      () async {
-        final env = await IntegrationEnv.create(
-          extraOverrides: [
-            priceResolverProvider.overrideWith(
-              (ref) async =>
-                  _FixedPriceResolver(Decimal.fromInt(20), 'CNY', DateTime(2026)),
-            ),
-          ],
-        );
+    test('buying 100 shares @ 20 CNY drives net worth to +2000', () async {
+      final env = await IntegrationEnv.create(
+        extraOverrides: [
+          priceResolverProvider.overrideWith(
+            (ref) async =>
+                _FixedPriceResolver(Decimal.fromInt(20), 'CNY', DateTime(2026)),
+          ),
+        ],
+      );
 
-        await _seedLedger(env.db);
+      await _seedLedger(env.db);
 
-        // Record the buy through the real journal-entry repository.
-        final jeRepo =
-            await env.container.read(journalEntryRepositoryProvider.future);
-        final build = JournalEntryBuilders.buy(
-          date: DateTime.utc(2026, 1, 10),
-          accountId: 'broker',
-          cashAccountId: 'cash',
-          assetUnit: 'NASDAQ:AAPL',
-          qty: Decimal.fromInt(100),
-          price: Decimal.fromInt(20),
-          quoteCurrency: 'CNY',
-        );
-        await jeRepo.create(entry: build.entry, postings: build.postings);
+      // Record the buy through the real journal-entry repository.
+      final jeRepo = await env.container.read(
+        journalEntryRepositoryProvider.future,
+      );
+      final build = JournalEntryBuilders.buy(
+        date: DateTime.utc(2026, 1, 10),
+        accountId: 'broker',
+        cashAccountId: 'cash',
+        assetUnit: 'NASDAQ:AAPL',
+        qty: Decimal.fromInt(100),
+        price: Decimal.fromInt(20),
+        quoteCurrency: 'CNY',
+      );
+      await jeRepo.create(entry: build.entry, postings: build.postings);
 
-        env.keepAlive(allAssetsStreamProvider);
-        env.keepAlive(holdingsSnapshotProvider);
-        env.keepAlive(dashboardSnapshotProvider);
+      env.keepAlive(allAssetsStreamProvider);
+      env.keepAlive(holdingsSnapshotProvider);
+      env.keepAlive(dashboardSnapshotProvider);
 
-        // Holding reconstructed from the ledger, valued by the fake source.
-        final holdings =
-            await env.container.read(holdingsSnapshotProvider.future);
-        final aapl = holdings['NASDAQ:AAPL'];
-        expect(aapl, isNotNull, reason: 'buy should produce an AAPL holding');
-        expect(aapl!.quantity.toDouble(), 100.0);
-        expect(aapl.marketValueInBase.toDouble(), 2000.0);
+      // Holding reconstructed from the ledger, valued by the fake source.
+      final holdings = await env.container.read(
+        holdingsSnapshotProvider.future,
+      );
+      final aapl = holdings['NASDAQ:AAPL'];
+      expect(aapl, isNotNull, reason: 'buy should produce an AAPL holding');
+      expect(aapl!.quantity.toDouble(), 100.0);
+      expect(aapl.marketValueInBase.toDouble(), 2000.0);
 
-        // ...and it flows through to dashboard net worth.
-        final snapshot =
-            await env.container.read(dashboardSnapshotProvider.future);
-        expect(snapshot.totalAssets.amount.toDouble(), 2000.0);
-        expect(snapshot.netWorth.amount.toDouble(), 2000.0);
-      },
-      tags: 'integration',
-    );
+      // ...and it flows through to dashboard net worth.
+      final snapshot = await env.container.read(
+        dashboardSnapshotProvider.future,
+      );
+      expect(snapshot.totalAssets.amount.toDouble(), 2000.0);
+      expect(snapshot.netWorth.amount.toDouble(), 2000.0);
+    }, tags: 'integration');
   });
 }
 
@@ -113,7 +111,9 @@ void main() {
 /// double-entry account sides are explicit.
 Future<void> _seedLedger(AppDatabase db) async {
   Future<void> account(String id, AccountCategory type, AccountSide side) {
-    return db.into(db.accounts).insert(
+    return db
+        .into(db.accounts)
+        .insert(
           AccountsCompanion.insert(
             id: id,
             type: type,
@@ -131,7 +131,9 @@ Future<void> _seedLedger(AppDatabase db) async {
   await account('broker', AccountCategory.broker, AccountSide.asset);
   await account('cash', AccountCategory.bank, AccountSide.asset);
 
-  await db.into(db.assets).insert(
+  await db
+      .into(db.assets)
+      .insert(
         AssetsCompanion.insert(
           id: 'NASDAQ:AAPL',
           type: AssetType.stock,

@@ -29,11 +29,7 @@ void main() {
       childPad: false,
       resizeToAvoidBottomInset: false,
       child: AppFormScaffoldBody(
-        action: SizedBox(
-          key: actionKey,
-          height: 48,
-          width: double.infinity,
-        ),
+        action: SizedBox(key: actionKey, height: 48, width: double.infinity),
         children: [SizedBox(height: 1200)], // tall enough to scroll
       ),
     );

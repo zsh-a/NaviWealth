@@ -1,0 +1,60 @@
+name: agent-runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.gitmodules'
+      - 'third_party/agent-runtime'
+      - 'apps/mobile/native/lifeos_native/**'
+      - 'docs/architecture/agent-runtime-current.md'
+      - 'docs/architecture/rust-agent-runtime-mvp.md'
+      - '.github/workflows/agent-runtime.yml'
+  pull_request:
+    paths:
+      - '.gitmodules'
+      - 'third_party/agent-runtime'
+      - 'apps/mobile/native/lifeos_native/**'
+      - 'docs/architecture/agent-runtime-current.md'
+      - 'docs/architecture/rust-agent-runtime-mvp.md'
+      - '.github/workflows/agent-runtime.yml'
+
+concurrency:
+  group: agent-runtime-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  runtime-submodule:
+    name: agent-runtime submodule
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: third_party/agent-runtime
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: third_party/agent-runtime
+      - run: cargo fmt --all -- --check
+      - run: cargo test --workspace
+
+  native-bridge:
+    name: lifeos_native Rust workspace
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile/native/lifeos_native
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/mobile/native/lifeos_native
+      - run: cargo test

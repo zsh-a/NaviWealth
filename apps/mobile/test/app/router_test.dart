@@ -21,55 +21,59 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/app/app.dart';
-import 'package:naviwealth/app/desktop_sidebar.dart';
 import 'package:naviwealth/app/domain_composition.dart';
-import 'package:naviwealth/app/route_error_page.dart';
-import 'package:naviwealth/app/route_paths.dart';
-import 'package:naviwealth/app/router.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/shell/desktop_sidebar.dart';
+import 'package:naviwealth/core/shell/route_error_page.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/activity/activity_page.dart';
-import 'package:naviwealth/features/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_chat_page.dart';
-import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
-import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
-import 'package:naviwealth/features/analytics/data/providers.dart'
+import 'package:naviwealth/features/auth/ui/devices_page.dart';
+import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
+import 'package:naviwealth/features/finance/activity/ui/activity_page.dart';
+import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_history_source.dart';
+import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_providers.dart';
+import 'package:naviwealth/features/finance/analytics/data/providers.dart'
     as analytics_data;
-import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
-import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
-import 'package:naviwealth/features/assets/asset_detail_page.dart';
-import 'package:naviwealth/features/assets/physical/data/providers.dart';
-import 'package:naviwealth/features/auth/presentation/devices_page.dart';
-import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
-import 'package:naviwealth/features/cashflow/data/dividend_center_providers.dart';
-import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
-import 'package:naviwealth/features/cashflow/domain/dividend_center.dart';
-import 'package:naviwealth/features/cashflow/ui/cashflow_page.dart';
-import 'package:naviwealth/features/cashflow/ui/dividend_center_page.dart';
-import 'package:naviwealth/features/expense/ui/expense_list_page.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/expense.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_comparison.dart';
+import 'package:naviwealth/features/finance/analytics/domain/benchmark/benchmark_index.dart';
+import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/finance/assets/ui/asset_detail_page.dart';
+import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
+import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/fire/data/fire_providers.dart';
-import 'package:naviwealth/features/fire/domain/fire_calculator.dart';
-import 'package:naviwealth/features/fire/domain/fire_goal.dart';
-import 'package:naviwealth/features/fire/presentation/fire_page.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/expense.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
+import 'package:naviwealth/features/finance/expense/ui/expense_list_page.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
+import 'package:naviwealth/features/finance/fire/ui/fire_page.dart';
+import 'package:naviwealth/features/finance/home/ui/home_page.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
+import 'package:naviwealth/features/finance/rebalance/ui/rebalance_page.dart';
+import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/fire_stress_settings_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/fx_rates_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/monthly_expense_settings_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dart';
+import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
-import 'package:naviwealth/features/home/home_page.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/holding_service.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
-import 'package:naviwealth/features/investment/domain/models/lot.dart';
-import 'package:naviwealth/features/liabilities/data/providers.dart';
-import 'package:naviwealth/features/plan/ui/plan_hub_page.dart';
-import 'package:naviwealth/features/rebalance/ui/rebalance_page.dart';
-import 'package:naviwealth/features/settings/settings_page.dart';
-import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
+import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -120,7 +124,9 @@ Future<ProviderContainer> _pumpAt(
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({
+    'ai_privacy.onboarding_seen.v1': true,
+  });
   final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);
@@ -297,6 +303,10 @@ void main() {
         AppRoutes.planFire: FirePage,
         AppRoutes.settingsAiHistory: AiChatPage,
         AppRoutes.settingsDevices: DevicesPage,
+        AppRoutes.settingsFxRates: FxRatesPage,
+        AppRoutes.settingsRiskThresholds: RiskThresholdsPage,
+        AppRoutes.settingsStressTest: FireStressSettingsPage,
+        AppRoutes.settingsMonthlyExpense: MonthlyExpenseSettingsPage,
       };
 
       for (final entry in cases.entries) {

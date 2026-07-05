@@ -18,26 +18,11 @@ class _UnsupportedBackgroundScheduler implements BackgroundScheduler {
   Future<void> initialize() async {}
 
   @override
-  Future<void> registerMorningBriefing({
-    Duration interval = const Duration(hours: 24),
+  Future<void> registerTask(
+    BackgroundTaskSpec task, {
+    Duration? interval,
   }) async {}
 
   @override
-  Future<void> registerGarminSync({
-    Duration interval = const Duration(hours: 6),
-  }) async {}
-
-  @override
-  Future<void> registerHealthPlatformSync({
-    Duration interval = const Duration(hours: 6),
-  }) async {}
-
-  @override
-  Future<void> cancelMorningBriefing() async {}
-
-  @override
-  Future<void> cancelGarminSync() async {}
-
-  @override
-  Future<void> cancelHealthPlatformSync() async {}
+  Future<void> cancelTask(BackgroundTaskSpec task) async {}
 }

@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
-import 'package:naviwealth/features/accounts/data/account_balances_provider.dart';
+import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/fire/data/fire_providers.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/home/domain/dashboard_models.dart';
-import 'package:naviwealth/features/plan/ui/plan_hub_page.dart';
-import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
+import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {

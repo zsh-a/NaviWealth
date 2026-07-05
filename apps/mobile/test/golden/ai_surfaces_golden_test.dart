@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:naviwealth/core/ai/visual/visual.dart';
-import 'package:naviwealth/features/ai_chat/ui/tool_invocation_renderers.dart';
+import 'package:naviwealth/features/ai_chat/ui/tools/renderers/tool_invocation_renderers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '_golden_setup.dart';

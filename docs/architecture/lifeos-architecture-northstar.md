@@ -149,7 +149,7 @@ Domain indexers convert domain rows into events and memories:
 - Health metric indexer.
 - Knowledge object and decision indexers.
 
-New indexers belong in the owning domain and are watched by `app/memory_indexers_bootstrap.dart`. Do not make `core/ai/local/memory/` import a domain.
+New indexers belong in the owning domain and are contributed through the owning `DomainPack.memoryBootstrapBuilder`; `app/domain_bootstrap.dart` only loops active packs. Do not make `core/ai/local/memory/` import a domain.
 
 ## Rust Boundary
 
@@ -164,9 +164,15 @@ Current Rust surface:
 
 - `apps/mobile/native/lifeos_native/`
 - EmbeddingGemma embedder via fastembed and ONNX Runtime.
+- Native agent-runtime / `agent-llm` / `agent-chat` FRB bridge for
+  device-only provider calls, ChatTurn request contracts, and runtime JSON
+  contract normalization.
+- Native Health provider primitives where platform/runtime behavior requires
+  Rust.
 - Generated FRB bindings under `apps/mobile/lib/src/rust/`.
 
-Do not move business logic, Money math, market fetchers, SQL access, or local LLM inference into Rust.
+Do not move business logic, Money math, market fetchers, SQL access, domain
+repositories, or local LLM model inference into Rust.
 
 ## Review Checklist
 

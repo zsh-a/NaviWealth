@@ -3,9 +3,9 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
-import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../../../core/sync/_outbox_test_ext.dart';

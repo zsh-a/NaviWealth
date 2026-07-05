@@ -1,4 +1,4 @@
-import 'package:naviwealth/features/options_income/domain/option_contract.dart';
+import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
 
 /// Abstract chain provider. Distinct from `MarketProvider` because:
 ///   * options requests are user-initiated, never on a render path;

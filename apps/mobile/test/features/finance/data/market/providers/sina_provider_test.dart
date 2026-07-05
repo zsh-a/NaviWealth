@@ -3,12 +3,12 @@ import 'dart:typed_data';
 import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/domain/entities/historical_bar.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/http/retry_policy.dart';
 import 'package:naviwealth/features/finance/data/market/providers/sina_provider.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 
 import '../canned_adapter.dart';
 import '../fake_clock.dart';

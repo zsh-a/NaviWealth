@@ -43,14 +43,15 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 1.1 补完占位模块
 - **历史 `features/me/`、`features/more/`、`features/portfolio/`**：已不再是当前
-  feature 目录；组合入口由 `features/wealth/` 承接，个人/更多入口并入
-  settings / command palette。
-- **`features/plan/`**：保留为规划入口，当前通过 Plan hub 聚合 FIRE /
-  analytics / rebalance / options income 等决策面，并已有直接测试。后续重点是
-  提升信息密度和目标驱动编排，而不是恢复历史占位模块。
+  feature 目录；组合入口由 FinanceOS 的 `features/finance/ui/wealth/` 承接，
+  个人/更多入口并入 settings / command palette。
+- **历史 `features/plan/`**：已不再是独立顶层 feature；规划入口归入
+  FinanceOS 的 `features/finance/ui/plan_hub_page.dart`，当前通过 Plan hub
+  聚合 FIRE / analytics / rebalance / options income 等决策面，并已有直接测试。
+  后续重点是提升信息密度和目标驱动编排，而不是恢复历史占位模块。
 
 ### 1.2 仪表盘洞察补全
-- `lib/features/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。
+- `lib/features/finance/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。
 - 后续若接入真正的 AI 周报，应作为独立 device-only insight producer 落地，并继续复用 `InsightKind` / `InsightItem` / 本地化字符串约定。
 
 ### 1.3 端侧 AI 工具对齐
@@ -118,7 +119,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 2.1 预算与现金流（新模块 `features/budget/`）
 
-**现状**：仓库内**无任何预算 / 计划交易 / 告警实现**。`features/expense/` 只做实绩录入与月度报表。
+**现状**：仓库内**无任何预算 / 计划交易 / 告警实现**。`features/finance/expense/` 只做实绩录入与月度报表。
 
 **目标产出**：
 - `features/budget/`（新建，遵循 ui/data/domain 三层）
@@ -153,12 +154,12 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 2.2 投资进阶
 
-**现状（已具备）**：`features/investment/domain/` 已有 cost_basis 引擎、fx_pnl、tax_policy/jurisdiction_tax_policy、cash_dividend & corporate_actions 模型、holding_report、portfolio_return_service。`data/market/` 有 Yahoo/CoinGecko/Sina + 缓存 + 限流。
+**现状（已具备）**：`features/finance/investment/domain/` 已有 cost_basis 引擎、fx_pnl、tax_policy/jurisdiction_tax_policy、cash_dividend & corporate_actions 模型、holding_report、portfolio_return_service。`data/market/` 有 Yahoo/CoinGecko/Sina + 缓存 + 限流。
 **缺口**：UI 端无 watchlist；事件流（分红/拆股）只有模型未串成时间线；税务有数据但无导出；无 DCA 模拟器。
 
 **阶段拆分**：
 - **M1（月 1）— Watchlist α**
-  - 新增 `features/investment/watchlist/`，复用 `data/market/composite_market_data_service.dart` 的行情通道与限流器。
+  - 新增 `features/finance/investment/watchlist/`，复用 `data/market/composite_market_data_service.dart` 的行情通道与限流器。
   - Drift 表：`watchlist_items`（symbol, market, added_at, alert_rules_json）。
   - UI：列表 + 搜索添加 + 简单告警（价格跌破 / 涨破 X，告警通过 `core/logging/crash_reporter.dart` 同链路的本地通知通道展示）。
   - 不做：跨设备告警推送（依赖 §3.1 实时通道）。
@@ -186,7 +187,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 2.3 多币种与汇率体验
 
-**现状**：`features/settings/fx_rates/fx_rate_sync_service.dart` 已存在；`domain/services/currency_converter.dart` 已统一汇率换算；`data/repositories/fx_rate_repository.dart` 持久化。
+**现状**：`features/finance/data/market/sync/fx_rate_sync_service.dart` 已存在；`domain/services/currency_converter.dart` 已统一汇率换算；`features/finance/data/repositories/fx_rate_repository.dart` 持久化。
 **缺口**：UI 端金额展示零散（部分显示原币、部分显示折算、部分仅 base），无历史曲线，base currency 切换需重启。
 
 **阶段拆分**：
@@ -196,7 +197,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
   - Lint 规则（custom analyzer 或 grep PR check）：禁止直接拼接 `.toStringAsFixed` 显示 Money；依赖全量替换完成后再强制接入 CI，迁移期只允许 advisory/report 模式。
 - **M2（月 3）— 历史汇率 + 自动拉取**
   - `fx_rate_sync_service` 升级为周期任务（前台 + 进入相关页面时触发），存历史快照（按日，HLC 标记来源 = `auto`/`manual`）。
-  - 历史曲线 mini chart（在 settings/fx_rates 页 + 资产折算溢价提示中复用）。
+  - 历史曲线 mini chart（在 FinanceOS 的 `/settings/fx-rates` 页 + 资产折算溢价提示中复用）。
   - 数据源：开放免费 API（exchangerate.host 或 ECB Frankfurter，避免商用 key）；有 fallback；离线读取最后已知。
 - **M3（月 6）— base currency 全局切换**
   - 切换 base 不重启 app：所有 provider 监听 `baseCurrencyProvider`，受影响范围（dashboard、analytics、FIRE）触发 rebuild。
@@ -364,7 +365,7 @@ session 已具备，但**无用户画像、无批量提案、无回滚**。
 
 | 债务 | 文件/位置 | 影响 |
 |------|----------|------|
-| 端侧 AI 持仓证据仍需扩展 | `lib/features/investment/ai_tools/get_holdings_tool.dart` | 成本基础已与客户端 read-model 对齐，但跨币种折算和 evidence 链接仍需补强 |
+| 端侧 AI 持仓证据仍需扩展 | `lib/features/finance/investment/ai_tools/get_holdings_tool.dart` | 成本基础已与客户端 read-model 对齐，但跨币种折算和 evidence 链接仍需补强 |
 | Web 端弱于原生的存储加密 | `core/db/connection_*.dart` | Web 端不应承诺与原生同等的安全等级 |
 | Activity Feed 业务深度仍可扩展 | `lib/features/activity/` | 已有 data/query/filter/detail 基础，后续可把 load-more 升级为 keyset pagination 并补更多事件类型 |
 | 单一后端路由表无 domain endpoint | `apps/backend/src/routes/` | 所有非 sync 查询走 oplog 物化，未来扩展可能撞瓶颈 |

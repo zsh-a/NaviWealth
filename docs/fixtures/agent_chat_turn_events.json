@@ -1,0 +1,76 @@
+[
+  {
+    "kind": "started",
+    "round": 1,
+    "metadata": {
+      "provider": "openai",
+      "model": "gpt-test"
+    }
+  },
+  {
+    "kind": "delta",
+    "round": 1,
+    "content": "Checking ",
+    "metadata": {}
+  },
+  {
+    "kind": "tool_call_start",
+    "round": 1,
+    "tool_call_id": "call_1",
+    "tool_name": "get_holdings",
+    "metadata": {}
+  },
+  {
+    "kind": "tool_call_delta",
+    "round": 1,
+    "tool_call_id": "call_1",
+    "partial_input_json": "{\"as_of\":\"today\"}",
+    "metadata": {}
+  },
+  {
+    "kind": "tool_call_end",
+    "round": 1,
+    "tool_call_id": "call_1",
+    "tool_name": "get_holdings",
+    "tool_input": {
+      "as_of": "today"
+    },
+    "metadata": {}
+  },
+  {
+    "kind": "usage",
+    "round": 1,
+    "usage": {
+      "input_tokens": 11,
+      "output_tokens": 7,
+      "total_tokens": 18
+    },
+    "metadata": {}
+  },
+  {
+    "kind": "round_finished",
+    "round": 1,
+    "response": {
+      "provider": "openai",
+      "model": "gpt-test",
+      "content": "Checking holdings.",
+      "finish_reason": "tool_call",
+      "metadata": {}
+    },
+    "metadata": {
+      "status": "requires_tool_results",
+      "chat_state": {
+        "round": 1
+      },
+      "tool_calls": [
+        {
+          "id": "call_1",
+          "name": "get_holdings",
+          "input": {
+            "as_of": "today"
+          }
+        }
+      ]
+    }
+  }
+]

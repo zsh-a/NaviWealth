@@ -83,11 +83,12 @@ void main() {
         if (text.contains('_ErrorState')) {
           offenders.add('$path: legacy _ErrorState');
         }
-        if (!path.endsWith('/_widgets.dart') &&
+        if (!_isCentralKnowledgeWidgetsFile(path) &&
             text.contains('AppEmptyState')) {
           offenders.add('$path: direct AppEmptyState');
         }
-        if (!path.endsWith('/_widgets.dart') && text.contains('SoftCard(')) {
+        if (!_isCentralKnowledgeWidgetsFile(path) &&
+            text.contains('SoftCard(')) {
           offenders.add('$path: direct SoftCard');
         }
       }
@@ -122,4 +123,9 @@ void main() {
       expect(offenders, isEmpty);
     });
   });
+}
+
+bool _isCentralKnowledgeWidgetsFile(String path) {
+  if (path.endsWith('/_widgets.dart')) return true;
+  return RegExp(r'/ui/knowledge_[a-z_]+_widgets\.dart$').hasMatch(path);
 }

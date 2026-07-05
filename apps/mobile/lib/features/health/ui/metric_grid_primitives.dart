@@ -1,0 +1,257 @@
+part of 'health_today_page.dart';
+
+class _MetricCard extends ConsumerWidget {
+  const _MetricCard({
+    required this.icon,
+    required this.label,
+    required this.child,
+    required this.accent,
+    this.trendKind,
+  });
+  final IconData icon;
+  final String label;
+  final Widget child;
+  final Color accent;
+  final HealthMetricKind? trendKind;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: true,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      onPress: trendKind == null
+          ? null
+          : () => context.go(healthTrendPath(metricKind: trendKind)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 140),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _MetricCardHeader(
+              icon: icon,
+              title: label,
+              color: accent,
+              showChevron: trendKind != null,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCardHeader extends StatelessWidget {
+  const _MetricCardHeader({
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.showChevron,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color color;
+  final bool showChevron;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Row(
+      children: [
+        AppIconTile(icon: icon, color: color),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(
+          child: Text(
+            title,
+            style: context.mutedLabelStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (showChevron)
+          Icon(
+            FLucideIcons.chevronRight,
+            size: AppIconSizes.h18,
+            color: colors.mutedForeground.withValues(
+              alpha: AppOpacity.disabled,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ValueBig extends StatelessWidget {
+  const _ValueBig({
+    required this.value,
+    required this.sub,
+    this.unit,
+    this.trend,
+    this.metric,
+  });
+  final String value;
+  final String sub;
+  final String? unit;
+  final MetricTrend? trend;
+  final HealthMetric? metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final source = metric == null ? null : sourceForHealthMetric(metric!);
+    final sourceLabel = source == null || source == HealthMetricSource.unknown
+        ? null
+        : source.label;
+    final hasMeta = trend != null || sourceLabel != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Line 1: value + unit inline (unit smaller).
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Flexible(
+              fit: FlexFit.loose,
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.strongTitleStyle,
+              ),
+            ),
+            if (unit != null && unit!.isNotEmpty) ...[
+              const SizedBox(width: AppSpacing.s2),
+              Text(unit!, style: context.captionMediumStyle),
+            ],
+          ],
+        ),
+        // Line 2: trend + source chip (if any).
+        if (hasMeta) ...[
+          const SizedBox(height: AppSpacing.s2),
+          Row(
+            children: [
+              if (trend != null) _TrendBadge(trend: trend!),
+              if (trend != null && sourceLabel != null)
+                const SizedBox(width: AppSpacing.s6),
+              if (sourceLabel != null) _SourceChip(label: sourceLabel),
+            ],
+          ),
+        ],
+        const SizedBox(height: AppSpacing.s2),
+        Text(sub, style: context.captionStyle),
+      ],
+    );
+  }
+}
+
+class _SourceChip extends StatelessWidget {
+  const _SourceChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Flexible(
+      child: AppBadge(label: label, size: AppBadgeSize.compact),
+    );
+  }
+}
+
+class _TrendBadge extends StatelessWidget {
+  const _TrendBadge({required this.trend});
+  final MetricTrend trend;
+
+  @override
+  Widget build(BuildContext context) {
+    final dir = trend.direction;
+    if (dir == TrendDirection.flat) return const SizedBox.shrink();
+    final colors = context.theme.colors;
+    final isUp = dir == TrendDirection.up;
+    final color = isUp ? colors.primary : colors.destructive;
+    final arrow = isUp ? '↑' : '↓';
+    final pct = trend.deltaPct.abs().round();
+    return Text(
+      '$arrow$pct%',
+      style: context.captionLabelStyle.copyWith(color: color),
+    );
+  }
+}
+
+class _ValueDash extends StatelessWidget {
+  const _ValueDash();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '—',
+          style: context.strongTitleStyle.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s2),
+        Text(
+          AppLocalizations.of(context).healthNoData,
+          style: context.captionStyle,
+        ),
+      ],
+    );
+  }
+}
+
+class _ValueSkeleton extends StatelessWidget {
+  const _ValueSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SkeletonBox(width: 56, height: 20),
+        SizedBox(height: AppSpacing.s6),
+        SkeletonBox(width: 40, height: 10),
+      ],
+    );
+  }
+}
+
+double _secondsToHours(double value, String unit) => switch (unit) {
+  's' => value / 3600.0,
+  'min' => value / 60.0,
+  'h' => value,
+  _ => value / 3600.0,
+};
+
+double _round(double v) => (v * 100).round() / 100.0;
+
+Map<String, dynamic> _parseJsonMap(String? json) {
+  if (json == null || json.isEmpty) return const {};
+  try {
+    return jsonDecode(json) as Map<String, dynamic>;
+  } catch (_) {
+    return const {};
+  }
+}
+
+String _utcDayKey(DateTime t) => AppFormatters.utcDayKey(t);
+
+String _formatSteps(double v) => Fmt.number(v.round());
+
+String _ago(AppLocalizations l10n, DateTime when) => AppFormatters.relativeTime(
+  when,
+  justNow: l10n.aiChatRelativeJustNow,
+  minutesAgo: l10n.aiChatRelativeMinutesAgo,
+  hoursAgo: l10n.aiChatRelativeHoursAgo,
+  daysAgo: l10n.aiChatRelativeDaysAgo,
+  dateFallback: (d) {
+    final mm = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return '$mm-$dd';
+  },
+);

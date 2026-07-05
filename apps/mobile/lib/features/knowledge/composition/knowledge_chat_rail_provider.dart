@@ -10,11 +10,11 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/composition/chat_rail_content.dart';
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_text.dart';
+import 'knowledge_route_paths.dart';
 
 /// Build the rail content for the active user. Async because the repo
 /// future has to resolve; consumers should treat an empty list as the
@@ -47,7 +47,7 @@ final knowledgeChatRailContentProvider = FutureProvider<List<ChatRailContent>>((
                   max: kKnowledgeSupportingExcerptMaxChars,
                 ),
           icon: FLucideIcons.brain,
-          route: AppRoutes.knowledgeLibrary,
+          route: KnowledgeRoutes.library,
         ),
       )
       .toList(growable: false);

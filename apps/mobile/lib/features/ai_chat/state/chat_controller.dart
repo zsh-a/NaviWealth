@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
+import '../domain/chat_models.dart';
+import '../domain/chat_turn_metadata.dart';
 
 /// Phases of the user's outgoing turn:
 ///  - [idle]: composer enabled, no work in flight
@@ -44,7 +46,11 @@ class ChatController extends StateNotifier<ChatTurnState> {
   /// Send [content] as the next user turn. Concurrent calls are
   /// rejected — the UI disables the send button while the pipeline is
   /// running.
-  Future<void> send(String content, {String? systemContext}) async {
+  Future<void> send(
+    String content, {
+    String? systemContext,
+    ChatTurnMetadata turnMetadata = const ChatTurnMetadata.empty(),
+  }) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty || state.isBusy) return;
 
@@ -67,6 +73,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
         ownerUserId: ownerUserId,
         content: trimmed,
         systemContext: systemContext,
+        turnMetadata: turnMetadata,
         cancelToken: cancelToken,
       );
     } finally {
@@ -74,6 +81,33 @@ class ChatController extends StateNotifier<ChatTurnState> {
         state = const ChatTurnState();
       }
     }
+  }
+
+  Future<void> chooseDecision({
+    required String messageId,
+    required String toolInvocationId,
+    required DecisionSelection selection,
+    String? systemContext,
+    Map<String, Object?>? invocationTrace,
+  }) async {
+    if (state.isBusy) return;
+    final repo = await ref.read(chatRepositoryProvider.future);
+    await repo.recordDecisionSelection(
+      sessionId: sessionId,
+      messageId: messageId,
+      toolInvocationId: toolInvocationId,
+      selection: selection,
+    );
+    await send(
+      selection.reply,
+      systemContext: systemContext,
+      turnMetadata: ChatTurnMetadata.forDecision(
+        selection: selection,
+        messageId: messageId,
+        toolInvocationId: toolInvocationId,
+        invocationTrace: invocationTrace,
+      ),
+    );
   }
 
   /// Branch-replace a past user turn: discards the message + every

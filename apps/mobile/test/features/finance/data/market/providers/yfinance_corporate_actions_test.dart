@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_actions.dart';
-import 'package:naviwealth/features/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 
 const _exDivTs1 = 1714521600; // 2024-05-01 UTC
 const _exDivTs2 = 1722470400; // 2024-08-01 UTC

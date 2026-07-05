@@ -77,7 +77,7 @@ deleted_at_hlc TEXT;
 | MT-2.1.M2.1 | P0 | L | RRULE 子集 parser + expander（FREQ/INTERVAL/BYMONTHDAY） | — | `features/budget/domain/recurring/` |
 | MT-2.1.M2.2 | P0 | M | RecurringScheduler（前台触发，无后台任务） | MT-2.1.M2.1 | `features/budget/domain/recurring/scheduler.dart` |
 | MT-2.1.M2.3 | P1 | M | UI：计划交易 CRUD 页（频率 picker + 模板复用过往交易） | MT-2.1.M2.2 | `features/budget/ui/recurring_*` |
-| MT-2.1.M2.4 | P1 | M | Dashboard 卡片：本月预算进度 + 超支预警 | MT-2.1.M1.5 | `features/home/`, `features/budget/ui/` |
+| MT-2.1.M2.4 | P1 | M | Dashboard 卡片：本月预算进度 + 超支预警 | MT-2.1.M1.5 | `features/finance/home/`, `features/budget/ui/` |
 | MT-2.1.M2.5 | P1 | M | "下个月将到期"列表（订阅 / 还款 / 定投预演） | MT-2.1.M2.2 | `features/budget/ui/upcoming_page.dart` |
 | MT-2.1.M2.6 | P2 | S | 阈值偏好（80%/100% 默认 + 分类粒度覆写） | MT-2.1.M2.4 | `features/budget/data/` |
 | MT-2.1.M2.7 | P0 | M | RRULE expander 单测 ≥ 30 用例（含 DST、闰年、月末日 31 → 30/2 月） | MT-2.1.M2.1 | `test/features/budget/recurring/` |
@@ -87,7 +87,7 @@ deleted_at_hlc TEXT;
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
 | MT-2.1.M3.1 | P0 | L | 现金流瀑布图 widget（季度/年度切换） | MT-2.1.M2.* | `design_system/charts/cashflow_waterfall.dart` |
-| MT-2.1.M3.2 | P1 | M | FIRE 模块拉取计划交易作为蒙特卡洛骨架 | MT-2.1.M2.2 | `features/fire/` |
+| MT-2.1.M3.2 | P1 | M | FIRE 模块拉取计划交易作为蒙特卡洛骨架 | MT-2.1.M2.2 | `features/finance/fire/` |
 | MT-2.1.M3.3 | P1 | M | 性能：12 个月 RRULE 展开 < 200ms 基准 + bench 测试 | MT-2.1.M2.1 | `test/features/budget/perf/` |
 | MT-2.1.M3.4 | P2 | S | 文档：`features/budget/README.md` | MT-2.1.M3.* | — |
 
@@ -101,34 +101,34 @@ deleted_at_hlc TEXT;
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.2.M1.1 | P0 | M | Drift 表 `watchlist_items` + repo | — | `data/db/tables.dart`, `features/investment/watchlist/data/` |
-| MT-2.2.M1.2 | P0 | M | Watchlist provider 复用 `composite_market_data_service` + 限速器 | MT-2.2.M1.1 | `features/investment/watchlist/data/providers.dart` |
-| MT-2.2.M1.3 | P1 | M | UI：列表 + 添加搜索（复用现有 symbol search） | MT-2.2.M1.2 | `features/investment/watchlist/ui/` |
+| MT-2.2.M1.1 | P0 | M | Drift 表 `watchlist_items` + repo | — | `data/db/tables.dart`, `features/finance/investment/watchlist/data/` |
+| MT-2.2.M1.2 | P0 | M | Watchlist provider 复用 `composite_market_data_service` + 限速器 | MT-2.2.M1.1 | `features/finance/investment/watchlist/data/providers.dart` |
+| MT-2.2.M1.3 | P1 | M | UI：列表 + 添加搜索（复用现有 symbol search） | MT-2.2.M1.2 | `features/finance/investment/watchlist/ui/` |
 | MT-2.2.M1.4 | P1 | M | 简单告警规则（价格跌破 / 涨破 X）+ 本地通知触发 | MT-2.2.M1.2 | 同上 |
-| MT-2.2.M1.5 | P1 | M | 行情刷新策略：前台 5 min poll + cache 命中优先 | MT-2.2.M1.2 | `features/investment/watchlist/` |
-| MT-2.2.M1.6 | P0 | M | 测试：30 symbol 5s SLA bench + 限速器协作单测 | MT-2.2.M1.5 | `test/features/investment/watchlist/` |
+| MT-2.2.M1.5 | P1 | M | 行情刷新策略：前台 5 min poll + cache 命中优先 | MT-2.2.M1.2 | `features/finance/investment/watchlist/` |
+| MT-2.2.M1.6 | P0 | M | 测试：30 symbol 5s SLA bench + 限速器协作单测 | MT-2.2.M1.5 | `test/features/finance/investment/watchlist/` |
 
 ### M2 — 事件流 + 税务导出
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.2.M2.1 | P0 | M | 事件时间线投影：dividend / split / rights 由现有模型聚合 | — | `features/investment/domain/reporting/event_timeline.dart` |
-| MT-2.2.M2.2 | P1 | M | UI：持仓详情页加 "事件" tab | MT-2.2.M2.1 | `features/investment/presentation/holding_detail/` |
-| MT-2.2.M2.3 | P0 | L | 公司行动录入入口（拆股 / 配股 / DRIP）走 trade_entry | MT-2.2.M2.1 | `features/investment/domain/trade_entry/`, `features/investment/presentation/` |
-| MT-2.2.M2.4 | P0 | L | 税务报表生成器（CSV）：US / HK / CN 三 jurisdiction | — | `features/investment/domain/tax/export/` |
-| MT-2.2.M2.5 | P1 | M | UI：导出 dialog + 文件保存（Web 端走 `file_saver_web`） | MT-2.2.M2.4 | `features/investment/ui/tax_export_*` |
+| MT-2.2.M2.1 | P0 | M | 事件时间线投影：dividend / split / rights 由现有模型聚合 | — | `features/finance/investment/domain/reporting/event_timeline.dart` |
+| MT-2.2.M2.2 | P1 | M | UI：持仓详情页加 "事件" tab | MT-2.2.M2.1 | `features/finance/investment/presentation/holding_detail/` |
+| MT-2.2.M2.3 | P0 | L | 公司行动录入入口（拆股 / 配股 / DRIP）走 trade_entry | MT-2.2.M2.1 | `features/finance/investment/domain/trade_entry/`, `features/finance/investment/presentation/` |
+| MT-2.2.M2.4 | P0 | L | 税务报表生成器（CSV）：US / HK / CN 三 jurisdiction | — | `features/finance/investment/domain/tax/export/` |
+| MT-2.2.M2.5 | P1 | M | UI：导出 dialog + 文件保存（Web 端走 `file_saver_web`） | MT-2.2.M2.4 | `features/finance/investment/ui/tax_export_*` |
 | MT-2.2.M2.6 | P1 | S | 免责声明组件（导出页 + PDF 顶部固定） | MT-2.2.M2.5 | `design_system/widgets/legal_disclaimer.dart` |
-| MT-2.2.M2.7 | P0 | M | 税务导出与 `cost_basis_engine` 交叉验证测试 | MT-2.2.M2.4 | `test/features/investment/tax_export/` |
+| MT-2.2.M2.7 | P0 | M | 税务导出与 `cost_basis_engine` 交叉验证测试 | MT-2.2.M2.4 | `test/features/finance/investment/tax_export/` |
 
 ### M3 — DCA 模拟 + 回测
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.2.M3.1 | P0 | L | DCA 模型（symbol/篮子 + 频率 + 金额 + 窗口） | — | `features/investment/domain/dca/` |
+| MT-2.2.M3.1 | P0 | L | DCA 模型（symbol/篮子 + 频率 + 金额 + 窗口） | — | `features/finance/investment/domain/dca/` |
 | MT-2.2.M3.2 | P0 | M | 回测引擎（市场缓存 + 缺数标注） | MT-2.2.M3.1 | 同上 |
-| MT-2.2.M3.3 | P1 | M | UI：参数面板 + 结果图（累计收益、平均成本、回撤） | MT-2.2.M3.2 | `features/investment/ui/dca_*` |
+| MT-2.2.M3.3 | P1 | M | UI：参数面板 + 结果图（累计收益、平均成本、回撤） | MT-2.2.M3.2 | `features/finance/investment/ui/dca_*` |
 | MT-2.2.M3.4 | P1 | M | 与 §2.1 计划交易联动：导出 DCA 计划为 recurring_transactions | MT-2.2.M3.1, MT-2.1.M2.2 | 跨模块 |
-| MT-2.2.M3.5 | P0 | M | 60 月数据回测 < 1s bench | MT-2.2.M3.2 | `test/features/investment/dca/perf/` |
+| MT-2.2.M3.5 | P0 | M | 60 月数据回测 < 1s bench | MT-2.2.M3.2 | `test/features/finance/investment/dca/perf/` |
 
 ---
 
@@ -154,10 +154,10 @@ deleted_at_hlc TEXT;
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
 | MT-2.3.M2.1 | P0 | M | `fx_rates` 表加 `source` 字段（`auto`/`manual`）+ 迁移 | — | `data/db/tables.dart`, `data/repositories/fx_rate_repository.dart` |
-| MT-2.3.M2.2 | P0 | M | `FxRateSyncService` 升级：周期任务 + 多源 fallback（exchangerate.host / Frankfurter） | MT-2.3.M2.1 | `features/settings/fx_rates/fx_rate_sync_service.dart` |
-| MT-2.3.M2.3 | P1 | M | mini chart 组件 + settings 页历史曲线 | MT-2.3.M2.1 | `features/settings/fx_rates/` |
+| MT-2.3.M2.2 | P0 | M | `FxRateSyncService` 升级：周期任务 + 多源 fallback（exchangerate.host / Frankfurter） | MT-2.3.M2.1 | `features/finance/data/market/sync/fx_rate_sync_service.dart` |
+| MT-2.3.M2.3 | P1 | M | mini chart 组件 + settings 页历史曲线 | MT-2.3.M2.1 | `features/finance/ui/settings/fx_rates_page.dart` |
 | MT-2.3.M2.4 | P1 | S | 离线 fallback：读最后已知 + 标注 stale | MT-2.3.M2.2 | 同上 |
-| MT-2.3.M2.5 | P0 | M | 24h 至少 1 次成功率 > 99% 集成测试（mock 多源） | MT-2.3.M2.2 | `test/features/settings/fx_rates/` |
+| MT-2.3.M2.5 | P0 | M | 24h 至少 1 次成功率 > 99% 集成测试（mock 多源） | MT-2.3.M2.2 | `test/features/finance/data/market/sync/` |
 
 ### M3 — base currency 全局热切换
 
@@ -188,9 +188,9 @@ deleted_at_hlc TEXT;
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.4.M2.1 | P0 | M | accounts 列表页接入 master-detail | — | `features/accounts/` |
-| MT-2.4.M2.2 | P0 | M | assets 列表页接入 | — | `features/assets/` |
-| MT-2.4.M2.3 | P0 | M | investments 列表页接入 | — | `features/investment/presentation/` |
+| MT-2.4.M2.1 | P0 | M | accounts 列表页接入 master-detail | — | `features/finance/accounts/` |
+| MT-2.4.M2.2 | P0 | M | assets 列表页接入 | — | `features/finance/assets/` |
+| MT-2.4.M2.3 | P0 | M | investments 列表页接入 | — | `features/finance/investment/presentation/` |
 | MT-2.4.M2.4 | P0 | M | 详情子路由 deep link（不破坏 web routing 检查清单） | MT-2.4.M2.1, .2, .3 | `app/router.dart` |
 | MT-2.4.M2.5 | P1 | M | 列偏好持久化（宽度 / 排序） | MT-2.4.M2.* | `app/shell_preferences.dart` |
 | MT-2.4.M2.6 | P0 | S | web routing 检查清单 100% 通过 | MT-2.4.M2.4 | `docs/development/web-routing.md`, `web_smoke/` |

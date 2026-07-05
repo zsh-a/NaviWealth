@@ -5463,6 +5463,81 @@ class AppLocalizationsEn extends AppLocalizations {
       'Download and manage the local EmbeddingGemma model';
 
   @override
+  String get aiLlmRuntimeCheckTitle => 'Agent runtime';
+
+  @override
+  String get aiLlmRuntimeCheckReady =>
+      'Runs a short active-profile turn through FRB, then completes a native runtime step.';
+
+  @override
+  String get aiLlmRuntimeCheckNoProfile =>
+      'Save and activate a provider profile before checking the agent runtime.';
+
+  @override
+  String get aiLlmRuntimeCheckAction => 'Check runtime';
+
+  @override
+  String get aiLlmRuntimeCheckRunning => 'Checking…';
+
+  @override
+  String get aiLlmRuntimeCheckPrompt =>
+      'Reply with one short sentence confirming the NaviWealth agent runtime is reachable.';
+
+  @override
+  String aiLlmRuntimeCheckSucceeded(String status) {
+    return 'Agent runtime step finished: $status';
+  }
+
+  @override
+  String aiLlmRuntimeCheckFailed(String error) {
+    return 'Agent runtime check failed: $error';
+  }
+
+  @override
+  String aiLlmRuntimeCheckStatus(String status) {
+    return 'Native step: $status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalTitle(String kind) {
+    return 'Ready proposal · $kind';
+  }
+
+  @override
+  String aiLlmRuntimeProposalWarning(String warning) {
+    return 'Warning: $warning';
+  }
+
+  @override
+  String get aiLlmRuntimeProposalApply => 'Apply proposal';
+
+  @override
+  String get aiLlmRuntimeProposalApplying => 'Applying…';
+
+  @override
+  String get aiLlmRuntimeProposalConfirmTitle => 'Apply this proposal?';
+
+  @override
+  String aiLlmRuntimeProposalConfirmBody(String summary) {
+    return '$summary\n\nThis writes through the same local proposal applier used by AI chat.';
+  }
+
+  @override
+  String aiLlmRuntimeProposalApplied(String status) {
+    return 'Proposal apply finished: $status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalStatus(String status) {
+    return 'Proposal apply: $status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalFailed(String error) {
+    return 'Proposal apply failed: $error';
+  }
+
+  @override
   String get settingsBadgeAuto => 'Auto';
 
   @override

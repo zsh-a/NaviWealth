@@ -1,14 +1,11 @@
 /// Device-only [AiChatApiClient].
 ///
 /// The seam that lets `ChatRepository` "go through the registry"
-/// unchanged: same [AiChatApiClient] surface, but every turn is
-/// dispatched to the on-device [DeviceLlmRuntime]. The cloud relay
-/// (`/ai/chat`) was removed, so there is no device→cloud
-/// failover anymore — when no device runtime exists (web platform / no
-/// user key / opted out) AI is unavailable and the turn surfaces a
-/// single explanatory `ErrorEvent` + `DoneEvent` guiding the user to
-/// configure a key (§4.6.4, revised: "cloud relay 删除后，无 key 即禁用
-/// AI 并引导填 key").
+/// unchanged: same [AiChatApiClient] surface, with app-level composition
+/// injecting the active device runner. Production injects the FRB-backed
+/// runner; with no injected runner (web platform / no user key / partial test
+/// container) AI is unavailable and the turn surfaces a single explanatory
+/// `ErrorEvent` + `DoneEvent`. There is no device-to-cloud failover.
 library;
 
 import 'package:dio/dio.dart';
@@ -24,32 +21,47 @@ import 'ai_chat_api_client.dart';
 const String kDeviceUnavailableMessage = 'device_unavailable';
 
 class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
-  const RuntimeRoutingAiChatApiClient({DeviceChatRunner? device})
-    : _device = device;
+  const RuntimeRoutingAiChatApiClient({ChatAgent? agent}) : _agent = agent;
 
-  final DeviceChatRunner? _device;
+  final ChatAgent? _agent;
 
   /// Which runtime a turn would hit — surfaced for the transparency
   /// badge / trace label. Always device or unavailable now.
-  bool get usesDevice => _device != null;
+  bool get usesDevice => _agent != null;
 
   @override
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    String? turnId,
+    String? sessionId,
+    String? threadId,
+    String? surface,
+    String? agentId,
+    String? mode,
+    Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   }) {
-    final device = _device;
-    if (device == null) return _unavailable();
-    return device.run(
-      messages: messages,
-      portfolioSnapshot: portfolioSnapshot,
-      contextPack: contextPack,
-      model: model,
-      cancelToken: cancelToken,
+    final agent = _agent;
+    if (agent == null) return _unavailable();
+    return agent.runTurn(
+      ChatAgentTurnRequest(
+        messages: messages,
+        turnId: turnId,
+        sessionId: sessionId,
+        threadId: threadId,
+        surface: surface,
+        agentId: agentId,
+        mode: mode,
+        portfolioSnapshot: portfolioSnapshot,
+        contextPack: contextPack,
+        metadata: metadata,
+        model: model,
+        cancelToken: cancelToken,
+      ),
     );
   }
 

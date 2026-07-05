@@ -10,8 +10,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
-import 'package:naviwealth/core/ai/local/skills/skills.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/local_skills.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 
 void main() {
   group('Expense → TransactionInput (mirrors providers.dart)', () {

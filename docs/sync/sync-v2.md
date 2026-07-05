@@ -273,7 +273,7 @@ client bug, not adversarial.
 
 ### 7.1 Syncable-table columns
 
-Every syncable Drift table already carries the metadata v2 needs, via the
+Owner-scoped syncable Drift tables carry the metadata v2 needs, via the
 `SyncableTable` mixin:
 
 | Column | Meaning |
@@ -282,9 +282,12 @@ Every syncable Drift table already carries the metadata v2 needs, via the
 | `deleted_at` | Tombstone — non-null ⇒ `deleted`. |
 | `owner_user_id`, `updated_by_device`, `updated_at` | Author / audit metadata, carried in the payload. |
 
+Tables that do not carry owner-scoped sync metadata are explicitly marked in
+`sync_table_registry.dart` and excluded from owner migration/backfill.
+
 Current syncable table inventory is pinned by
-`apps/mobile/lib/core/sync/row_applier.dart` and mirrored by
-`apps/mobile/test/core/sync/op_test.dart`:
+`apps/mobile/lib/core/sync/sync_table_registry.dart` and checked against this
+document by `apps/mobile/test/core/sync/sync_docs_inventory_test.dart`:
 
 | Row family | Tables |
 |------------|--------|
@@ -360,7 +363,9 @@ HLC stamp state lives under `sync.local_hlc`. No per-table appliers.
 
 First sync is `since = 0`; it pulls the **final state** of every row in one
 paged drain — no op replay. Promoting a local-only install to synced enqueues
-one pending entry per existing row once (the backfill pass).
+one pending entry per existing owner-scoped row once (the backfill pass).
+Backfill eligibility and non-`id` primary keys are registered alongside the
+syncable table inventory in `sync_table_registry.dart`.
 
 ## 8. Server responsibilities
 

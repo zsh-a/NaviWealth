@@ -28,7 +28,7 @@
 
 - **设计 Token + 组件库**：本文档以 Token 名（如 `color.fg.primary`、`type.body.md`、`space.4`）引用；代码中对应到 `lib/design_system/`。
 - **图表封装**：已选 `fl_chart` 作为底层渲染器，统一封装在 `lib/design_system/charts/`；详见 [14-charts.md](./14-charts.md)。所有业务页面（分析、FIRE、再平衡）通过 `Nw*Chart` 系列消费，不直接 import `fl_chart`。
-- **路由与 Shell**：响应式策略与路由结构对齐 `lib/app/route_paths.dart`、`lib/app/router.dart` 与 `lib/app/app_shell.dart`。
+- **路由与 Shell**：响应式策略与路由结构对齐 `lib/app/routing/route_paths.dart`、`lib/app/routing/router.dart` 与 `lib/app/shell/app_dock_shell.dart`。
 
 ## 标记约定
 

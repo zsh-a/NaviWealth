@@ -28,7 +28,7 @@ void main() {
 
     test('AI trace waterfall regression tests stay active', () {
       final file = File(
-        '${appRoot.path}/test/features/settings/ai_trace_waterfall_test.dart',
+        '${appRoot.path}/test/features/settings/ai/ai_trace_waterfall_test.dart',
       );
 
       expect(file.existsSync(), isTrue);
@@ -173,23 +173,23 @@ void main() {
               minTestFiles: 2,
               minTestCases: 5,
             ),
-            'features/plan': (
-              testPath: 'test/features/plan',
+            'features/finance/ui': (
+              testPath: 'test/features/finance/ui',
               minTestFiles: 1,
               minTestCases: 7,
             ),
-            'features/assets': (
-              testPath: 'test/features/assets',
+            'features/finance/assets': (
+              testPath: 'test/features/finance/assets',
               minTestFiles: 7,
               minTestCases: 30,
             ),
-            'features/options_income': (
-              testPath: 'test/features/options_income',
+            'features/finance/options_income': (
+              testPath: 'test/features/finance/options_income',
               minTestFiles: 8,
               minTestCases: 50,
             ),
-            'features/rebalance': (
-              testPath: 'test/features/rebalance',
+            'features/finance/rebalance': (
+              testPath: 'test/features/finance/rebalance',
               minTestFiles: 4,
               minTestCases: 15,
             ),
@@ -228,40 +228,44 @@ void main() {
       const requiredFiles = <String, int>{
         // Assets: keep provider, physical asset, depreciation, and UI list
         // model behavior covered directly.
-        'test/features/assets/assets_page_securities_test.dart': 2,
-        'test/features/assets/data/asset_detail_providers_test.dart': 4,
-        'test/features/assets/data/deposit_maturity_insight_provider_test.dart':
+        'test/features/finance/assets/assets_page_securities_test.dart': 2,
+        'test/features/finance/assets/data/asset_detail_providers_test.dart': 4,
+        'test/features/finance/assets/data/deposit_maturity_insight_provider_test.dart':
             2,
-        'test/features/assets/physical/data/physical_asset_repository_test.dart':
+        'test/features/finance/assets/physical/data/physical_asset_repository_test.dart':
             4,
-        'test/features/assets/physical/domain/vehicle_depreciation_test.dart':
+        'test/features/finance/assets/physical/domain/vehicle_depreciation_test.dart':
             3,
-        'test/features/assets/ui/assets_list_models_test.dart': 2,
+        'test/features/finance/assets/ui/assets_list_models_test.dart': 2,
 
         // Options income: scanner/application, repositories, scoring, AI, and
         // presentation should not collapse back into one broad smoke file.
-        'test/features/options_income/application/scan_inputs_bridge_test.dart':
+        'test/features/finance/options_income/application/scan_inputs_bridge_test.dart':
             3,
-        'test/features/options_income/application/scan_orchestrator_test.dart':
+        'test/features/finance/options_income/application/scan_orchestrator_test.dart':
             3,
-        'test/features/options_income/data/options_income_repositories_test.dart':
+        'test/features/finance/options_income/data/options_income_repositories_test.dart':
             6,
-        'test/features/options_income/data/options_opportunity_cache_repository_test.dart':
+        'test/features/finance/options_income/data/options_opportunity_cache_repository_test.dart':
             3,
-        'test/features/options_income/domain/opportunity_scorer_test.dart': 8,
-        'test/features/options_income/domain/wheel_lifecycle_test.dart': 4,
-        'test/features/options_income/ai_tools/get_wheel_lifecycle_tool_test.dart':
+        'test/features/finance/options_income/domain/opportunity_scorer_test.dart':
+            8,
+        'test/features/finance/options_income/domain/wheel_lifecycle_test.dart':
+            4,
+        'test/features/finance/options_income/ai_tools/get_wheel_lifecycle_tool_test.dart':
             3,
-        'test/features/options_income/presentation/wheel_lifecycle_page_test.dart':
+        'test/features/finance/options_income/ui/wheel_lifecycle_page_test.dart':
             1,
 
         // Rebalance: engine behavior, insight provider, and both editing /
         // execution surfaces need separate regression coverage.
-        'test/features/rebalance/domain/rebalance_engine_test.dart': 5,
-        'test/features/rebalance/data/rebalance_drift_insight_provider_test.dart':
+        'test/features/finance/rebalance/domain/rebalance_engine_test.dart': 5,
+        'test/features/finance/rebalance/data/rebalance_drift_insight_provider_test.dart':
             2,
-        'test/features/rebalance/rebalance_execution_sheet_test.dart': 4,
-        'test/features/rebalance/target_allocation_editor_sheet_test.dart': 4,
+        'test/features/finance/rebalance/rebalance_execution_sheet_test.dart':
+            4,
+        'test/features/finance/rebalance/target_allocation_editor_sheet_test.dart':
+            4,
 
         // Persistence: schema verification alone is not enough; converters
         // and app database behavior must stay directly covered.
@@ -305,7 +309,7 @@ void main() {
       const requiredFiles = <String, int>{
         // Recent AI transparency churn should keep both aggregate model and
         // widget coverage.
-        'test/features/settings/ai_transparency_page_test.dart': 3,
+        'test/features/settings/ai/ai_transparency_page_test.dart': 3,
 
         // Proposal kind registry refactors should keep both domain registries
         // pinned to their appliers/presentation contract.
@@ -320,7 +324,7 @@ void main() {
 
         // Sync status diagnostics were a recent golden churn hotspot; keep
         // direct responsive/widget coverage alongside the visual baseline.
-        'test/features/settings/sync_status_page_test.dart': 3,
+        'test/features/settings/sync/sync_status_page_test.dart': 3,
       };
 
       for (final entry in requiredFiles.entries) {
@@ -466,7 +470,10 @@ void main() {
           .readAsStringSync();
 
       for (final text in [roadmapText, phase1Text]) {
-        expect(text, isNot(contains('lib/features/activity/data/` 是空目录')));
+        expect(
+          text,
+          isNot(contains('lib/features/finance/activity/data/` 是空目录')),
+        );
         expect(text, isNot(contains('缺 data/repository 层')));
       }
       expect(roadmapText, contains('ActivityFeedQuery'));
@@ -500,7 +507,7 @@ void main() {
           text,
           contains('历史 `features/me/`、`features/more/`、`features/portfolio/`'),
         );
-        expect(text, contains('features/wealth/'));
+        expect(text, contains('features/finance/ui/wealth/'));
         expect(text, contains('Plan hub'));
         expect(text, isNot(contains('当前目录为空')));
         expect(text, isNot(contains('作为 `assets/` 的薄包装存在')));
@@ -521,7 +528,7 @@ void main() {
       );
       final backendAiDir = Directory('${repoRoot.path}/apps/backend/src/ai');
       final holdingsTool = File(
-        '${appRoot.path}/lib/features/investment/ai_tools/get_holdings_tool.dart',
+        '${appRoot.path}/lib/features/finance/investment/ai_tools/get_holdings_tool.dart',
       );
 
       expect(roadmap.existsSync(), isTrue);
@@ -565,16 +572,16 @@ void main() {
 
     test('device Vision ingest does not produce cloud-relay trace labels', () {
       final ingestGate = File(
-        '${appRoot.path}/lib/features/ingest/data/ingest_privacy_gate.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/ingest_privacy_gate.dart',
       );
       final ingestProviders = File(
-        '${appRoot.path}/lib/features/ingest/data/providers.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/providers.dart',
       );
       final visionClient = File(
-        '${appRoot.path}/lib/features/ingest/data/vision_ingest_client.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/vision_ingest_client.dart',
       );
       final oldCloudClient = File(
-        '${appRoot.path}/lib/features/ingest/data/cloud_ingest_client.dart',
+        '${appRoot.path}/lib/features/finance/ingest/data/cloud_ingest_client.dart',
       );
       final aiTrace = File(
         '${appRoot.path}/lib/core/ai/contracts/ai_trace.dart',
@@ -597,7 +604,7 @@ void main() {
       expect(combinedText, isNot(contains('layer4_cloud_vision')));
       expect(combinedText, contains('VisionIngestClient'));
       expect(combinedText, contains('providerVisionAllowed'));
-      expect(combinedText, contains('kDeviceVisionDirectRoutingReason'));
+      expect(combinedText, contains('kFrbVisionIngestRoutingReason'));
       expect(combinedText, contains('backend: Backend.device'));
     });
 
@@ -619,6 +626,82 @@ void main() {
       }
     });
 
+    test('production runtime overrides keep scheduled agents on FRB seams', () {
+      final bootstrap = File('${appRoot.path}/lib/app/bootstrap.dart');
+      final runtimeOverrides = File(
+        '${appRoot.path}/lib/app/agent_runtime/overrides/agent_runtime_provider_overrides.dart',
+      );
+      final runtimeWiringDir = Directory(
+        '${appRoot.path}/lib/app/agent_runtime',
+      );
+
+      expect(bootstrap.existsSync(), isTrue);
+      expect(runtimeOverrides.existsSync(), isTrue);
+      expect(runtimeWiringDir.existsSync(), isTrue);
+      expect(
+        bootstrap.readAsStringSync(),
+        contains('...agentRuntimeProviderOverrides()'),
+        reason:
+            'bootstrap should delegate FRB runtime wiring to the centralized '
+            'runtime override module.',
+      );
+
+      final text = _dartFiles(
+        runtimeWiringDir,
+      ).map((file) => file.readAsStringSync()).join('\n');
+      final contracts = <String, String>{
+        'executionReviewAgentProvider': 'FrbExecutionReviewReader',
+        'morningBriefingAgentProvider': 'FrbBriefingSynthesizer',
+        'recoveryAlertAgentProvider': 'FrbRecoveryAlertSignalReader',
+        'weeklySummaryAgentProvider': 'FrbWeeklySummaryReader',
+        'reviewAgentProvider': 'FrbReviewDueReader',
+        'assumptionAgentProvider': 'FrbAssumptionReviewReader',
+        'inboxTriageAgentProvider': 'FrbInboxTriageSourceReader',
+        'contradictionAgentProvider': 'FrbContradictionSourceReader',
+        'routineDueAgentProvider': 'FrbRoutineDueReader',
+      };
+
+      for (final entry in contracts.entries) {
+        final overrideIndex = text.indexOf('${entry.key}.overrideWith');
+        final frbIndex = text.indexOf(entry.value, overrideIndex);
+        expect(
+          overrideIndex,
+          isNot(-1),
+          reason:
+              '${entry.key} must be overridden in production runtime wiring',
+        );
+        expect(
+          frbIndex,
+          greaterThan(overrideIndex),
+          reason:
+              '${entry.key} production runtime override must inject '
+              '${entry.value}',
+        );
+      }
+
+      for (final surface in <String>[
+        'execution_review',
+        'health_morning_briefing',
+        'health_recovery_alert',
+        'health_weekly_summary',
+        'knowledge_review',
+        'knowledge_assumption',
+        'knowledge_inbox_triage',
+        'knowledge_contradiction',
+        'knowledge_routine_due',
+      ]) {
+        expect(
+          text,
+          contains("surface: '$surface'"),
+          reason: 'FRB agent surface $surface should record local AI traces',
+        );
+      }
+
+      expect(text, contains('agentRuntimeTraceRecorderProvider'));
+      expect(text, contains('agentRuntimeEffectPlanBinding'));
+      expect(text, contains('agentRuntimeProfileTurnBinding'));
+    });
+
     test('AI architecture docs use current Vision ingest naming', () {
       final repoRoot = appRoot.parent.parent;
       final architecture = File('${repoRoot.path}/docs/ai/ai-architecture.md');
@@ -638,6 +721,32 @@ void main() {
       expect(ingestSection, isNot(contains('UnavailableCloudIngestClient')));
       expect(ingestSection, isNot(contains('拒云端摄取')));
     });
+
+    test(
+      'AI architecture docs keep direct-Dart streaming out of production paths',
+      () {
+        final repoRoot = appRoot.parent.parent;
+        final architecture = File(
+          '${repoRoot.path}/docs/ai/ai-architecture.md',
+        );
+
+        expect(architecture.existsSync(), isTrue);
+        final text = architecture.readAsStringSync();
+        final runtimeSection = _sectionBetween(
+          text,
+          '## 2. Runtime',
+          '## 3. Local Skills / Tools / Memory',
+        );
+
+        expect(runtimeSection, contains('FrbChatRunner'));
+        expect(runtimeSection, contains('旧 direct-Dart streaming'));
+        expect(runtimeSection, contains('已从 Flutter `lib/` 删除'));
+        expect(runtimeSection, isNot(contains('DeviceAgentLoop')));
+        expect(runtimeSection, isNot(contains('LlmStreamEvent')));
+        expect(runtimeSection, isNot(contains('AnthropicClient')));
+        expect(runtimeSection, isNot(contains('OpenAiClient')));
+      },
+    );
   });
 }
 

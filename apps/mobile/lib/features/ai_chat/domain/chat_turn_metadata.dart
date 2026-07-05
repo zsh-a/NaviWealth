@@ -1,0 +1,62 @@
+import 'chat_models.dart';
+
+class ChatTurnMetadata {
+  const ChatTurnMetadata({
+    this.decision,
+    this.invocationTrace,
+    this.extra = const <String, Object?>{},
+  });
+
+  const ChatTurnMetadata.empty()
+    : decision = null,
+      invocationTrace = null,
+      extra = const <String, Object?>{};
+
+  factory ChatTurnMetadata.forDecision({
+    required DecisionSelection selection,
+    required String messageId,
+    required String toolInvocationId,
+    Map<String, Object?>? invocationTrace,
+    Map<String, Object?> extra = const <String, Object?>{},
+  }) {
+    return ChatTurnMetadata(
+      decision: ChatDecisionMetadata(
+        selection: selection,
+        messageId: messageId,
+        toolInvocationId: toolInvocationId,
+      ),
+      invocationTrace: invocationTrace,
+      extra: extra,
+    );
+  }
+
+  final ChatDecisionMetadata? decision;
+  final Map<String, Object?>? invocationTrace;
+  final Map<String, Object?> extra;
+
+  bool get hasInvocationTrace => invocationTrace != null;
+
+  Map<String, Object?> toAgentMetadata() => <String, Object?>{
+    ...extra,
+    if (decision case final decision?) ...decision.toAgentMetadata(),
+    'invocation': ?invocationTrace,
+  };
+}
+
+class ChatDecisionMetadata {
+  const ChatDecisionMetadata({
+    required this.selection,
+    required this.messageId,
+    required this.toolInvocationId,
+  });
+
+  final DecisionSelection selection;
+  final String messageId;
+  final String toolInvocationId;
+
+  Map<String, Object?> toAgentMetadata() => <String, Object?>{
+    'decision': selection.toJson(),
+    'decision_message_id': messageId,
+    'decision_tool_invocation_id': toolInvocationId,
+  };
+}

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/route_guard.dart';
+import 'package:naviwealth/app/routing/route_guard.dart';
 import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/auth/auth_errors.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';

@@ -6,21 +6,23 @@ import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/composition/finance_proposal_applier.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/invariants.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
-import 'package:naviwealth/features/investment/domain/models/lot.dart';
-import 'package:naviwealth/features/investment/domain/trade_entry/trade_draft.dart';
-import 'package:naviwealth/features/investment/domain/trade_entry/trade_entry_plan.dart';
-import 'package:naviwealth/features/investment/domain/trade_entry/trade_entry_service.dart';
-import 'package:naviwealth/features/liabilities/data/liability_repository.dart';
-import 'package:naviwealth/features/options_income/data/options_strategy_profile_repository.dart';
-import 'package:naviwealth/features/options_income/data/trade_journal_repository.dart';
-import 'package:naviwealth/features/options_income/domain/options_strategy_profile.dart';
-import 'package:naviwealth/features/options_income/domain/trade_journal_entry.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/fire/application/fire_proposal_applier.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
+import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
+import 'package:naviwealth/features/finance/options_income/application/options_proposal_applier.dart';
+import 'package:naviwealth/features/finance/options_income/data/options_strategy_profile_repository.dart';
+import 'package:naviwealth/features/finance/options_income/data/trade_journal_repository.dart';
+import 'package:naviwealth/features/finance/options_income/domain/options_strategy_profile.dart';
+import 'package:naviwealth/features/finance/options_income/domain/trade_journal_entry.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../features/finance/data/repositories/_stub_stamper.dart';
@@ -92,16 +94,21 @@ void main() {
       accountRepo: accountRepo,
       manualAssetRepo: manualAssetRepo,
       liabilityRepo: liabilityRepo,
-      optionsProfileRepo: profileRepo,
-      tradeJournalRepo: journalRepo,
+      optionsApplier: OptionsProposalApplier(
+        profileRepo: profileRepo,
+        tradeJournalRepo: journalRepo,
+        currentUserId: () async => 'u-test',
+      ),
+      fireApplier: FireProposalApplier(
+        planWriter: (after) async {
+          firePlanAfter = after;
+        },
+        bucketRuleWriter: (payload) async {
+          fireBucketPayload = payload;
+          return payload['target_id'] as String;
+        },
+      ),
       currentUserId: () async => 'u-test',
-      firePlanWriter: (after) async {
-        firePlanAfter = after;
-      },
-      fireBucketRuleWriter: (payload) async {
-        fireBucketPayload = payload;
-        return payload['target_id'] as String;
-      },
     );
   });
 

@@ -8,6 +8,10 @@
 
 pub mod api;
 
+// Internal agent runtime implementation — outside `api/` so FRB codegen sees
+// only the primitive wrapper in `api/agent_runtime.rs`.
+pub(crate) mod agent_runtime;
+
 // Internal health implementation — outside `api/` so FRB codegen
 // doesn't scan it. The thin FRB surface is at `api/health.rs`.
 pub(crate) mod health;

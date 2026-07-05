@@ -1,16 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
+import '../../../core/lifeos/domain_pack.dart';
+import '../../../core/shell/settings_route_paths.dart';
+import '../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'finance_domain_settings_section.dart';
-import 'inline_setting_row.dart';
-import 'settings_page_frame.dart';
 
 /// `/settings/domains` — LifeOS domain management.
 ///
@@ -21,81 +20,71 @@ class DomainsSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
-    final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
-    final knowledgeEnabled = optIns?.contains(DomainScope.knowledge) ?? false;
-    final executionEnabled = optIns?.contains(DomainScope.execution) ?? false;
     final l10n = AppLocalizations.of(context);
 
     return AppPageScaffold(
       title: l10n.settingsDomainsTitle,
       childPad: false,
       child: SettingsPageFrame(
-        children: [
-          const FinanceDomainSettingsSection(),
-          const SizedBox(height: AppSpacing.s16),
-          _DomainToggleCard(
-            icon: FLucideIcons.heartPulse,
-            label: 'HealthOS',
-            subtitle: healthEnabled
-                ? l10n.settingsDomainsHealthEnabledSubtitle
-                : l10n.settingsDomainsHealthDisabledSubtitle,
-            value: healthEnabled,
-            onChanged: (v) =>
-                _setDomainEnabled(context, ref, DomainScope.health, v),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          _DomainToggleCard(
-            icon: FLucideIcons.brain,
-            label: 'KnowledgeOS',
-            subtitle: knowledgeEnabled
-                ? l10n.settingsDomainsKnowledgeEnabledSubtitle
-                : l10n.settingsDomainsKnowledgeDisabledSubtitle,
-            value: knowledgeEnabled,
-            onChanged: (v) =>
-                _setDomainEnabled(context, ref, DomainScope.knowledge, v),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          _DomainToggleCard(
-            icon: FLucideIcons.listTodo,
-            label: 'ExecutionOS',
-            subtitle: executionEnabled
-                ? l10n.settingsDomainsExecutionEnabledSubtitle
-                : l10n.settingsDomainsExecutionDisabledSubtitle,
-            value: executionEnabled,
-            onChanged: (v) =>
-                _setDomainEnabled(context, ref, DomainScope.execution, v),
-          ),
-        ],
+        children: _domainSettingSections(
+          context: context,
+          ref: ref,
+          optIns: optIns,
+          l10n: l10n,
+        ),
       ),
     );
+  }
+
+  List<Widget> _domainSettingSections({
+    required BuildContext context,
+    required WidgetRef ref,
+    required DomainOptIns? optIns,
+    required AppLocalizations l10n,
+  }) {
+    final sections = <Widget>[];
+    for (final pack in ref.watch(domainPackRegistryProvider)) {
+      final spec = pack.settingsSpec;
+      if (spec == null) continue;
+      if (sections.isNotEmpty) {
+        sections.add(const SizedBox(height: AppSpacing.s16));
+      }
+      final sectionBuilder = spec.sectionBuilder;
+      if (sectionBuilder != null) {
+        sections.add(sectionBuilder());
+        continue;
+      }
+      sections.add(
+        _DomainToggleCard(
+          icon: spec.icon,
+          label: spec.label,
+          subtitle: spec.subtitle(l10n, optIns?.contains(pack.scope) ?? false),
+          value: optIns?.contains(pack.scope) ?? false,
+          onChanged: (v) => _setDomainEnabled(context, ref, pack, v),
+        ),
+      );
+    }
+    return sections;
   }
 
   Future<void> _setDomainEnabled(
     BuildContext context,
     WidgetRef ref,
-    DomainScope scope,
+    DomainPack pack,
     bool enabled,
   ) async {
     await ref
         .read(auth_providers.domainOptInsProvider.notifier)
-        .setEnabled(scope, enabled);
+        .setEnabled(pack.scope, enabled);
     if (!context.mounted || enabled) return;
     final l10n = AppLocalizations.of(context);
-    context.go(AppRoutes.settingsDomains);
+    final label = pack.settingsSpec?.label ?? pack.scope.wire;
+    context.go(SettingsRoutes.domains);
     AppMessenger.show(
       context,
       ToastKind.info,
-      l10n.settingsDomainsDisabledToast(_domainLabel(scope)),
+      l10n.settingsDomainsDisabledToast(label),
     );
-  }
-
-  String _domainLabel(DomainScope scope) {
-    return switch (scope) {
-      DomainScope.finance => 'FinanceOS',
-      DomainScope.health => 'HealthOS',
-      DomainScope.knowledge => 'KnowledgeOS',
-      DomainScope.execution => 'ExecutionOS',
-    };
   }
 }
 

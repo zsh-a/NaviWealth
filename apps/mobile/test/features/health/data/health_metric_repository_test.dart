@@ -76,21 +76,25 @@ void main() {
   });
 
   test('upsert with same id replaces the row in-place', () async {
-    await repo.upsert(_metric(
-      id: 'm-1',
-      kind: HealthMetricKind.hrvDaily,
-      value: 45,
-      unit: 'ms',
-      capturedAt: DateTime.utc(2026, 5, 25),
-    ));
-    await repo.upsert(_metric(
-      id: 'm-1',
-      kind: HealthMetricKind.hrvDaily,
-      value: 52, // corrected reading
-      unit: 'ms',
-      capturedAt: DateTime.utc(2026, 5, 25),
-      counter: 1,
-    ));
+    await repo.upsert(
+      _metric(
+        id: 'm-1',
+        kind: HealthMetricKind.hrvDaily,
+        value: 45,
+        unit: 'ms',
+        capturedAt: DateTime.utc(2026, 5, 25),
+      ),
+    );
+    await repo.upsert(
+      _metric(
+        id: 'm-1',
+        kind: HealthMetricKind.hrvDaily,
+        value: 52, // corrected reading
+        unit: 'ms',
+        capturedAt: DateTime.utc(2026, 5, 25),
+        counter: 1,
+      ),
+    );
     final fetched = await repo.findById('m-1');
     expect(fetched?.value, 52, reason: 'second upsert wins');
     expect(await outbox.depth(), 2, reason: 'each upsert enqueues');
@@ -99,23 +103,27 @@ void main() {
   test('listByKind returns only matching kind, newest first', () async {
     final base = DateTime.utc(2026, 5, 20);
     for (var i = 0; i < 3; i++) {
-      await repo.upsert(_metric(
-        id: 'hrv-$i',
-        kind: HealthMetricKind.hrvDaily,
-        value: 40.0 + i,
-        unit: 'ms',
-        capturedAt: base.add(Duration(days: i)),
-        counter: i,
-      ));
+      await repo.upsert(
+        _metric(
+          id: 'hrv-$i',
+          kind: HealthMetricKind.hrvDaily,
+          value: 40.0 + i,
+          unit: 'ms',
+          capturedAt: base.add(Duration(days: i)),
+          counter: i,
+        ),
+      );
     }
-    await repo.upsert(_metric(
-      id: 'steps-1',
-      kind: HealthMetricKind.stepsDaily,
-      value: 9000,
-      unit: 'count',
-      capturedAt: base,
-      counter: 10,
-    ));
+    await repo.upsert(
+      _metric(
+        id: 'steps-1',
+        kind: HealthMetricKind.stepsDaily,
+        value: 9000,
+        unit: 'count',
+        capturedAt: base,
+        counter: 10,
+      ),
+    );
 
     final hrv = await repo.listByKind(
       ownerUserId: _userA,
@@ -191,22 +199,26 @@ void main() {
   );
 
   test('listByKind partitions by owner', () async {
-    await repo.upsert(_metric(
-      id: 'a-1',
-      kind: HealthMetricKind.hrvDaily,
-      value: 40,
-      unit: 'ms',
-      capturedAt: DateTime.utc(2026, 5, 20),
-      ownerUserId: _userA,
-    ));
-    await repo.upsert(_metric(
-      id: 'b-1',
-      kind: HealthMetricKind.hrvDaily,
-      value: 50,
-      unit: 'ms',
-      capturedAt: DateTime.utc(2026, 5, 20),
-      ownerUserId: _userB,
-    ));
+    await repo.upsert(
+      _metric(
+        id: 'a-1',
+        kind: HealthMetricKind.hrvDaily,
+        value: 40,
+        unit: 'ms',
+        capturedAt: DateTime.utc(2026, 5, 20),
+        ownerUserId: _userA,
+      ),
+    );
+    await repo.upsert(
+      _metric(
+        id: 'b-1',
+        kind: HealthMetricKind.hrvDaily,
+        value: 50,
+        unit: 'ms',
+        capturedAt: DateTime.utc(2026, 5, 20),
+        ownerUserId: _userB,
+      ),
+    );
     final forA = await repo.listByKind(
       ownerUserId: _userA,
       kind: HealthMetricKind.hrvDaily,
@@ -219,39 +231,42 @@ void main() {
     expect(forB.map((m) => m.id), ['b-1']);
   });
 
-  test('tombstoned (deletedAt) rows are excluded from list and watch', () async {
-    final alive = _metric(
-      id: 'alive',
-      kind: HealthMetricKind.weight,
-      value: 70.5,
-      unit: 'kg',
-      capturedAt: DateTime.utc(2026, 5, 26),
-    );
-    final dead = _metric(
-      id: 'dead',
-      kind: HealthMetricKind.weight,
-      value: 72.0,
-      unit: 'kg',
-      capturedAt: DateTime.utc(2026, 5, 25),
-      deletedAt: DateTime.utc(2026, 5, 26),
-      counter: 1,
-    );
-    await repo.upsert(alive);
-    await repo.upsert(dead);
+  test(
+    'tombstoned (deletedAt) rows are excluded from list and watch',
+    () async {
+      final alive = _metric(
+        id: 'alive',
+        kind: HealthMetricKind.weight,
+        value: 70.5,
+        unit: 'kg',
+        capturedAt: DateTime.utc(2026, 5, 26),
+      );
+      final dead = _metric(
+        id: 'dead',
+        kind: HealthMetricKind.weight,
+        value: 72.0,
+        unit: 'kg',
+        capturedAt: DateTime.utc(2026, 5, 25),
+        deletedAt: DateTime.utc(2026, 5, 26),
+        counter: 1,
+      );
+      await repo.upsert(alive);
+      await repo.upsert(dead);
 
-    final list = await repo.listByKind(
-      ownerUserId: _userA,
-      kind: HealthMetricKind.weight,
-    );
-    expect(list.map((m) => m.id), ['alive']);
+      final list = await repo.listByKind(
+        ownerUserId: _userA,
+        kind: HealthMetricKind.weight,
+      );
+      expect(list.map((m) => m.id), ['alive']);
 
-    final stream = repo.watchRecent(
-      ownerUserId: _userA,
-      kind: HealthMetricKind.weight,
-    );
-    final firstEmit = await stream.first;
-    expect(firstEmit.map((m) => m.id), ['alive']);
-  });
+      final stream = repo.watchRecent(
+        ownerUserId: _userA,
+        kind: HealthMetricKind.weight,
+      );
+      final firstEmit = await stream.first;
+      expect(firstEmit.map((m) => m.id), ['alive']);
+    },
+  );
 
   test('watchRecent emits on insert', () async {
     final stream = repo.watchRecent(
@@ -260,13 +275,15 @@ void main() {
     );
     expect(await stream.first, isEmpty);
 
-    await repo.upsert(_metric(
-      id: 'steps-1',
-      kind: HealthMetricKind.stepsDaily,
-      value: 10500,
-      unit: 'count',
-      capturedAt: DateTime.utc(2026, 5, 26),
-    ));
+    await repo.upsert(
+      _metric(
+        id: 'steps-1',
+        kind: HealthMetricKind.stepsDaily,
+        value: 10500,
+        unit: 'count',
+        capturedAt: DateTime.utc(2026, 5, 26),
+      ),
+    );
     final after = await stream.first;
     expect(after.single.id, 'steps-1');
     expect(after.single.value, 10500);
@@ -275,23 +292,25 @@ void main() {
   test('parses unknown kind safely', () async {
     // Simulate a wire kind the client hasn't been taught yet — write
     // directly via Drift companion bypassing the typed wrapper.
-    await db.into(db.healthMetrics).insert(
-      HealthMetricsCompanion.insert(
-        id: 'future-kind',
-        capturedAt: DateTime.utc(2026, 5, 26),
-        kind: 'glucose_daily', // not in the enum
-        value: 95,
-        unit: 'mg/dl',
-        ownerUserId: _userA,
-        updatedAt: DateTime.utc(2026, 5, 26),
-        updatedByDevice: _device,
-        hlc: const Hlc(
-          wallMillis: 1_700_000_000_005,
-          counter: 0,
-          nodeId: _device,
-        ),
-      ),
-    );
+    await db
+        .into(db.healthMetrics)
+        .insert(
+          HealthMetricsCompanion.insert(
+            id: 'future-kind',
+            capturedAt: DateTime.utc(2026, 5, 26),
+            kind: 'glucose_daily', // not in the enum
+            value: 95,
+            unit: 'mg/dl',
+            ownerUserId: _userA,
+            updatedAt: DateTime.utc(2026, 5, 26),
+            updatedByDevice: _device,
+            hlc: const Hlc(
+              wallMillis: 1_700_000_000_005,
+              counter: 0,
+              nodeId: _device,
+            ),
+          ),
+        );
     final fetched = await repo.findById('future-kind');
     expect(fetched, isNotNull);
     expect(fetched!.kind, HealthMetricKind.unknown);

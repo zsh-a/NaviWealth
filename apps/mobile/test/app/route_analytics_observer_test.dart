@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/route_analytics_observer.dart';
+import 'package:naviwealth/app/routing/route_analytics_observer.dart';
 
 class _RecordingSink implements PageViewSink {
   final List<PageViewEvent> events = <PageViewEvent>[];

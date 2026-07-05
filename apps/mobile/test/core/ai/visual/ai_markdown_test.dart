@@ -21,7 +21,9 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
     MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: Padding(padding: const EdgeInsets.all(8), child: child)),
+      home: Scaffold(
+        body: Padding(padding: const EdgeInsets.all(8), child: child),
+      ),
     ),
   );
 }
@@ -50,7 +52,9 @@ List<(String, TextStyle?)> _flatten(InlineSpan root) {
 /// content even when blocks are split into separate widgets.
 String _allText(WidgetTester tester) {
   final buf = StringBuffer();
-  for (final t in tester.widgetList<SelectableText>(find.byType(SelectableText))) {
+  for (final t in tester.widgetList<SelectableText>(
+    find.byType(SelectableText),
+  )) {
     final span = t.textSpan;
     if (span == null) continue;
     for (final p in _flatten(span)) {
@@ -82,23 +86,21 @@ void main() {
     });
 
     testWidgets('renders headings with bold weight', (tester) async {
-      await _pump(
-        tester,
-        const AiMarkdown(text: '# Title\n\nbody text'),
-      );
+      await _pump(tester, const AiMarkdown(text: '# Title\n\nbody text'));
       // Two SelectableText subtrees: heading + paragraph.
       expect(find.byType(SelectableText), findsNWidgets(2));
-      final st = tester.widgetList<SelectableText>(find.byType(SelectableText)).toList();
+      final st = tester
+          .widgetList<SelectableText>(find.byType(SelectableText))
+          .toList();
       final headingFlat = _flatten(st.first.textSpan!);
       expect(headingFlat.first.$1, 'Title');
       expect(headingFlat.first.$2!.fontWeight, FontWeight.w600);
     });
 
-    testWidgets('renders unordered lists with a bullet per item', (tester) async {
-      await _pump(
-        tester,
-        const AiMarkdown(text: '- one\n- two\n- three'),
-      );
+    testWidgets('renders unordered lists with a bullet per item', (
+      tester,
+    ) async {
+      await _pump(tester, const AiMarkdown(text: '- one\n- two\n- three'));
       expect(_allText(tester), contains('one'));
       expect(_allText(tester), contains('two'));
       expect(_allText(tester), contains('three'));
@@ -106,7 +108,9 @@ void main() {
       expect(find.byType(SelectableText), findsNWidgets(3));
     });
 
-    testWidgets('renders ordered lists with the model\'s own numbering', (tester) async {
+    testWidgets('renders ordered lists with the model\'s own numbering', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AiMarkdown(text: '1. alpha\n2. beta\n5. delta'),
@@ -130,10 +134,7 @@ void main() {
     });
 
     testWidgets('renders a horizontal rule between blocks', (tester) async {
-      await _pump(
-        tester,
-        const AiMarkdown(text: 'one\n\n---\n\ntwo'),
-      );
+      await _pump(tester, const AiMarkdown(text: 'one\n\n---\n\ntwo'));
       expect(_allText(tester), contains('one'));
       expect(_allText(tester), contains('two'));
     });
@@ -287,7 +288,10 @@ void main() {
           .toList();
       // At least one row must have a non-zero left inset (the children).
       expect(paddings, isNotEmpty);
-      expect(paddings.reduce((a, b) => a > b ? a : b), greaterThanOrEqualTo(16));
+      expect(
+        paddings.reduce((a, b) => a > b ? a : b),
+        greaterThanOrEqualTo(16),
+      );
     });
 
     testWidgets('ordered+unordered can mix inside one list block', (
@@ -354,7 +358,9 @@ void main() {
       expect(bold.$2!.fontWeight, FontWeight.w600);
     });
 
-    testWidgets('italic emits an italic span when properly flanked', (tester) async {
+    testWidgets('italic emits an italic span when properly flanked', (
+      tester,
+    ) async {
       await _pump(tester, const AiMarkdown(text: 'plain *em* plain'));
       final st = tester.widget<SelectableText>(find.byType(SelectableText));
       final flat = _flatten(st.textSpan!);
@@ -380,10 +386,7 @@ void main() {
     });
 
     testWidgets('strikethrough emits a line-through span', (tester) async {
-      await _pump(
-        tester,
-        const AiMarkdown(text: 'keep ~~drop this~~ rest'),
-      );
+      await _pump(tester, const AiMarkdown(text: 'keep ~~drop this~~ rest'));
       final st = tester.widget<SelectableText>(find.byType(SelectableText));
       final flat = _flatten(st.textSpan!);
       final drop = flat.firstWhere((p) => p.$1 == 'drop this');
@@ -455,9 +458,7 @@ void main() {
       // We expect at least three differently-styled fragments:
       // comment, string, number. We don't pin specific colors — only
       // that they DIFFER from each other and from the base.
-      final comment = flat
-          .firstWhere((p) => p.$1.contains('// hello'))
-          .$2!;
+      final comment = flat.firstWhere((p) => p.$1.contains('// hello')).$2!;
       final stringSpan = flat.firstWhere((p) => p.$1.contains('"abc"')).$2!;
       final numberSpan = flat.firstWhere((p) => p.$1 == '42').$2!;
       // Comments are italic by design.
@@ -470,10 +471,7 @@ void main() {
     testWidgets('identifier-prefixed digit is not tinted as a number', (
       tester,
     ) async {
-      await _pump(
-        tester,
-        const AiMarkdown(text: '```dart\nvar x10 = 1;\n```'),
-      );
+      await _pump(tester, const AiMarkdown(text: '```dart\nvar x10 = 1;\n```'));
       final st = tester.widget<SelectableText>(find.byType(SelectableText));
       final flat = _flatten(st.textSpan!);
       // The `10` in `x10` belongs to the identifier and must NOT be
@@ -525,18 +523,12 @@ void main() {
     ) async {
       // Streaming halfway through the separator — the parser must not
       // commit to a table block on `---` alone.
-      await _pump(
-        tester,
-        const AiMarkdown(text: '| h1 | h2 |\n| --- |'),
-      );
+      await _pump(tester, const AiMarkdown(text: '| h1 | h2 |\n| --- |'));
       expect(find.byType(Table), findsNothing);
     });
 
     testWidgets('a very long code line does not soft-wrap', (tester) async {
-      await _pump(
-        tester,
-        AiMarkdown(text: '```dart\n${'x' * 200}\n```'),
-      );
+      await _pump(tester, AiMarkdown(text: '```dart\n${'x' * 200}\n```'));
       // Long line should not crash; horizontal scroll is the only
       // way it stays on one logical line.
       final hScroll = tester
@@ -548,14 +540,18 @@ void main() {
   });
 
   group('AiMarkdown — streaming safety', () {
-    testWidgets('unclosed bold still renders the trailing text', (tester) async {
+    testWidgets('unclosed bold still renders the trailing text', (
+      tester,
+    ) async {
       await _pump(tester, const AiMarkdown(text: 'open **bold tail'));
       final all = _allText(tester);
       expect(all, contains('open'));
       expect(all, contains('bold tail'));
     });
 
-    testWidgets('unclosed fence renders the partial code block', (tester) async {
+    testWidgets('unclosed fence renders the partial code block', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AiMarkdown(text: '```python\nx = 1\nstill streaming'),
@@ -575,7 +571,9 @@ void main() {
         tester,
         const AiMarkdown(
           text: '',
-          trailing: WidgetSpan(child: SizedBox(key: caretKey, width: 6, height: 14)),
+          trailing: WidgetSpan(
+            child: SizedBox(key: caretKey, width: 6, height: 14),
+          ),
         ),
       );
       expect(find.byKey(caretKey), findsOneWidget);
@@ -612,20 +610,24 @@ void main() {
         tester,
         const AiMarkdown(
           text: '# Title\n\nbody one\n\nbody two',
-          trailing: WidgetSpan(child: SizedBox(key: caretKey, width: 6, height: 14)),
+          trailing: WidgetSpan(
+            child: SizedBox(key: caretKey, width: 6, height: 14),
+          ),
         ),
       );
       expect(find.byKey(caretKey), findsOneWidget);
       // The caret sits inside the *last* SelectableText (the third
       // block — `body two`).
-      final selectables = tester.widgetList<SelectableText>(find.byType(SelectableText)).toList();
+      final selectables = tester
+          .widgetList<SelectableText>(find.byType(SelectableText))
+          .toList();
       final lastSpans = _flatten(selectables.last.textSpan!);
       // The very last span in the last block is the caret WidgetSpan.
       // We can detect this by looking for the body's text + no caret
       // text in earlier blocks.
-      final firstSpanText = _flatten(selectables.first.textSpan!)
-          .map((e) => e.$1)
-          .join();
+      final firstSpanText = _flatten(
+        selectables.first.textSpan!,
+      ).map((e) => e.$1).join();
       expect(firstSpanText, isNot(contains('SizedBox')));
       // Caret span has no `text`, so check by looking at children
       // count in the last block: the last block should contain at
@@ -669,7 +671,8 @@ void main() {
       await _pump(
         tester,
         const AiMarkdown(
-          text: '```flow\nstep: Start\ndecision: OK?\n  yes: Go\n  no: Stop\n```',
+          text:
+              '```flow\nstep: Start\ndecision: OK?\n  yes: Go\n  no: Stop\n```',
         ),
       );
       final txt = _allText(tester);
@@ -681,23 +684,19 @@ void main() {
 
     testWidgets('invalid flow falls back to code block', (tester) async {
       // Empty flow block should fall back to _MdCode.
-      await _pump(
-        tester,
-        const AiMarkdown(text: '```flow\n\n```'),
-      );
+      await _pump(tester, const AiMarkdown(text: '```flow\n\n```'));
       expect(find.byType(FlowDiagramWidget), findsNothing);
     });
 
     testWidgets('regular code blocks are unaffected', (tester) async {
-      await _pump(
-        tester,
-        const AiMarkdown(text: '```dart\nprint("hi");\n```'),
-      );
+      await _pump(tester, const AiMarkdown(text: '```dart\nprint("hi");\n```'));
       expect(find.byType(FlowDiagramWidget), findsNothing);
       expect(_allText(tester), contains('print'));
     });
 
-    testWidgets('flow block coexists with other markdown blocks', (tester) async {
+    testWidgets('flow block coexists with other markdown blocks', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AiMarkdown(

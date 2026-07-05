@@ -12,6 +12,7 @@
 - [Architecture Northstar](docs/architecture/lifeos-architecture-northstar.md): Hard boundaries and non-goals.
 - [LifeOS Shell](docs/architecture/lifeos-shell.md): Domain registration, routing, AI, memory, sync, persistence seams.
 - [Device AI Architecture](docs/ai/ai-architecture.md): Device-only runtime design.
+- [Agent Runtime Current Architecture](docs/architecture/agent-runtime-current.md): Current Rust runtime code map, invariants, and maintenance guide.
 - [AI Runtime Event Contract](docs/ai/ai-protocol.md): Stream event and tool contract.
 - [Sync v2 Protocol](docs/sync/sync-v2.md): Active row-state sync protocol.
 - [Testing Strategy](docs/development/testing-strategy.md): Test pyramid, task spine, CI gate expectations.

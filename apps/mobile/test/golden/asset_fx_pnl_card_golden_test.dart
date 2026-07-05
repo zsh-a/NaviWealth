@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/assets/ui/asset_fx_pnl_card.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
-import 'package:naviwealth/features/investment/domain/reporting/holding_report.dart';
+import 'package:naviwealth/features/finance/assets/ui/asset_fx_pnl_card.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
+import 'package:naviwealth/features/finance/investment/domain/reporting/holding_report.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';

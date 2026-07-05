@@ -6,19 +6,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../core/ai/composition/ask_ai.dart';
 import '../core/command_palette/command_palette.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/security/biometric_lock_gate.dart';
+import '../core/shell/shell_preferences.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../core/update/native_update_banner.dart';
 import '../design_system/design_system.dart';
-import '../features/ai_chat/ui/ask_ai.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_composition.dart';
-import 'route_paths.dart';
-import 'router.dart';
-import 'shell_preferences.dart';
+import 'routing/route_paths.dart';
+import 'routing/router.dart';
 
 /// Vim-style `g`+key → route path mapping.
 ///
@@ -126,6 +126,9 @@ class NaviWealthApp extends ConsumerWidget {
                       invokeCtx,
                       commands: defaultCommandPaletteEntries(
                         AppLocalizations.of(invokeCtx),
+                        homePath: AppRoutes.home,
+                        settingsPath: AppRoutes.settings,
+                        aiHistoryPath: AppRoutes.settingsAiHistory,
                         onToggleTheme: () {
                           final current = ref.read(themeModeProvider);
                           final next = current == ThemeMode.dark

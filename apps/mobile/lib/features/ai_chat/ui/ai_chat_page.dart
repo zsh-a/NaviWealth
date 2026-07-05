@@ -1,17 +1,18 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
-import '../../../app/master_detail_layout.dart';
-import '../../../app/route_paths.dart';
-import '../../../app/selection_query.dart';
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/shell/master_detail_layout.dart';
+import '../../../core/shell/selection_query.dart';
+import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
-import '../state/ai_context.dart';
+import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
 import 'ai_action_cards_rail.dart';
@@ -19,7 +20,7 @@ import 'ai_context_summary_header.dart';
 import 'chat_composer.dart';
 import 'chat_conversation_view.dart';
 import 'llm_profile_chip.dart';
-import 'sessions_panel.dart';
+import 'sessions/sessions_panel.dart';
 
 /// Top-level "AI 助手" surface.
 ///
@@ -138,7 +139,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   setState(() => _selectedSessionId = id);
                   replaceSelectedQuery(
                     context,
-                    path: AppRoutes.settingsAiHistory,
+                    path: SettingsRoutes.aiHistory,
                     selected: id,
                   );
                 },
@@ -227,6 +228,21 @@ class _ChatPane extends ConsumerWidget {
             Expanded(
               child: ChatConversationView(
                 sessionId: sessionId,
+                onDecisionSelect: (selection) {
+                  ref
+                      .read(chatControllerProvider(sessionId).notifier)
+                      .chooseDecision(
+                        messageId: selection.messageId,
+                        toolInvocationId: selection.toolInvocationId,
+                        selection: DecisionSelection(
+                          optionId: selection.option.id,
+                          label: selection.option.label,
+                          reply: selection.reply,
+                          selectedAt: DateTime.now().toUtc(),
+                        ),
+                        systemContext: systemContext,
+                      );
+                },
                 loadingBuilder: (_) => const AiChatSkeleton(),
                 emptyBuilder: (_) => _EmptyConversation(onSuggest: send),
               ),
@@ -398,7 +414,7 @@ class _SuggestionTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: colors.foreground,
                   ),
                 ),
@@ -463,7 +479,7 @@ class _BootstrapErrorPane extends StatelessWidget {
             Text(
               l10n.commonLoadError(error.toString()),
               textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
+              style: context.theme.typography.body.sm.copyWith(
                 color: context.theme.colors.foreground,
               ),
             ),
@@ -501,7 +517,7 @@ class _LoginRequired extends StatelessWidget {
             const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.aiChatLoginRequired,
-              style: context.theme.typography.md.copyWith(
+              style: context.theme.typography.body.md.copyWith(
                 color: context.theme.colors.foreground,
               ),
             ),

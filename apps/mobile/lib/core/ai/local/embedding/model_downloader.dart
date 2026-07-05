@@ -30,8 +30,7 @@ class ChecksumMismatch implements Exception {
   final String expected;
   final String actual;
   @override
-  String toString() =>
-      'ChecksumMismatch: expected $expected, got $actual';
+  String toString() => 'ChecksumMismatch: expected $expected, got $actual';
 }
 
 /// Cancellation handle the caller can flip to abort an in-flight
@@ -79,10 +78,10 @@ class ModelDownloader {
       // Poll the cancellation flag; cheap enough vs. download time.
       cancelWatcher = Stream<void>.periodic(const Duration(milliseconds: 200))
           .listen((_) {
-        if (cancel.isCancelled && !cancelToken.isCancelled) {
-          cancelToken.cancel('user cancelled');
-        }
-      });
+            if (cancel.isCancelled && !cancelToken.isCancelled) {
+              cancelToken.cancel('user cancelled');
+            }
+          });
     }
 
     try {

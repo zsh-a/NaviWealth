@@ -78,6 +78,8 @@ build_macos() {
       "$DIST_DIR/macos/${LIB_BASENAME}.dylib"
   fi
 
+  fix_macos_linkedit_alignment "$DIST_DIR/macos/${LIB_BASENAME}.dylib"
+
   # Fetch the matching ORT dylib alongside (ort 2.0.0-rc.12 → ORT 1.24.2;
   # `ort-load-dynamic` discovers via ORT_DYLIB_PATH at runtime).
   local host_arch
@@ -92,6 +94,111 @@ build_macos() {
   echo "macOS dylib: $DIST_DIR/macos/${LIB_BASENAME}.dylib"
   ls -lh "$DIST_DIR/macos/${LIB_BASENAME}.dylib" \
         "$DIST_DIR/macos/libonnxruntime.dylib"
+}
+
+fix_macos_linkedit_alignment() {
+  local dylib="$1"
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "WARNING: python3 not found; skipping Mach-O LINKEDIT alignment fix" >&2
+    return 0
+  fi
+  if ! command -v codesign >/dev/null 2>&1; then
+    echo "WARNING: codesign not found; skipping Mach-O re-sign" >&2
+    return 0
+  fi
+
+  python3 - "$dylib" <<'PY'
+import struct
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = bytearray(path.read_bytes())
+
+
+def u32(offset, endian="<"):
+    return struct.unpack_from(f"{endian}I", data, offset)[0]
+
+
+def write_u32(offset, value, endian="<"):
+    struct.pack_into(f"{endian}I", data, offset, value)
+
+
+def slices():
+    magic_be = u32(0, ">")
+    if magic_be == 0xCAFEBABE:
+        nfat = u32(4, ">")
+        offset = 8
+        for _ in range(nfat):
+            arch_offset = u32(offset + 8, ">")
+            arch_size = u32(offset + 12, ">")
+            yield arch_offset, arch_size
+            offset += 20
+        return
+    if magic_be == 0xCAFEBABF:
+        nfat = u32(4, ">")
+        offset = 8
+        for _ in range(nfat):
+            arch_offset = struct.unpack_from(">Q", data, offset + 8)[0]
+            arch_size = struct.unpack_from(">Q", data, offset + 16)[0]
+            yield arch_offset, arch_size
+            offset += 32
+        return
+    yield 0, len(data)
+
+
+def patch_slice(base, size):
+    if u32(base) != 0xFEEDFACF:
+        return False
+
+    ncmds = u32(base + 16)
+    command = base + 32
+    symtab_command = None
+    stroff = None
+    strsize = None
+    code_signature_dataoff = None
+
+    for _ in range(ncmds):
+        cmd = u32(command)
+        cmdsize = u32(command + 4)
+        if cmd == 0x2:  # LC_SYMTAB
+            symtab_command = command
+            stroff = u32(command + 16)
+            strsize = u32(command + 20)
+        elif cmd == 0x1D:  # LC_CODE_SIGNATURE
+            code_signature_dataoff = u32(command + 8)
+        command += cmdsize
+
+    if stroff is None or strsize is None or code_signature_dataoff is None:
+        return False
+
+    pad = (-stroff) % 8
+    if pad == 0:
+        return False
+    if stroff + strsize + pad > code_signature_dataoff:
+        raise SystemExit(
+            f"{path}: cannot align LINKEDIT string pool; "
+            f"stroff={stroff} strsize={strsize} code_signature={code_signature_dataoff}"
+        )
+
+    start = base + stroff
+    code_signature = base + code_signature_dataoff
+    data[start + pad : code_signature] = data[start : code_signature - pad]
+    data[start : start + pad] = b"\0" * pad
+    write_u32(symtab_command + 16, stroff + pad)
+    return True
+
+
+patched = False
+for base, size in slices():
+    patched = patch_slice(base, size) or patched
+
+if patched:
+    path.write_bytes(data)
+    print(f"==> Aligned Mach-O LINKEDIT string pool: {path}")
+PY
+
+  codesign --force --sign - "$dylib" >/dev/null 2>&1
 }
 
 build_ios() {

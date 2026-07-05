@@ -10,11 +10,11 @@
 library;
 
 import 'package:naviwealth/core/ai/contracts/contracts.dart' show DateRange;
-import 'package:naviwealth/core/ai/local/skills/merchant_key.dart';
-import 'package:naviwealth/core/ai/local/skills/recurring_detector.dart';
-import 'package:naviwealth/core/ai/local/skills/refund_matcher.dart';
-import 'package:naviwealth/core/ai/local/skills/transaction_input.dart';
-import 'package:naviwealth/core/ai/local/skills/txn_classifier.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/merchant_key.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/recurring_detector.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/refund_matcher.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/transaction_input.dart';
+import 'package:naviwealth/features/finance/ai_tools/local_skills/txn_classifier.dart';
 
 import 'finance_query_plan.dart';
 

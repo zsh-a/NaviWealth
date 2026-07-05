@@ -79,11 +79,15 @@ class GetHrvTrendTool implements DeviceTool {
     final fromInstant = now.subtract(Duration(days: windowDays));
     // Window-filter, then sort oldest-first so the JSON `points`
     // array reads chronologically (the repo returns newest-first).
-    final inWindow = rows
-        .where((m) =>
-            !m.capturedAt.isBefore(fromInstant) && !m.capturedAt.isAfter(now))
-        .toList()
-      ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
+    final inWindow =
+        rows
+            .where(
+              (m) =>
+                  !m.capturedAt.isBefore(fromInstant) &&
+                  !m.capturedAt.isAfter(now),
+            )
+            .toList()
+          ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
 
     final points = <Map<String, Object?>>[];
     for (final m in inWindow) {

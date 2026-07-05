@@ -244,7 +244,7 @@ class TypographyTokens {
       bodyMedium.copyWith(color: onSurfaceVariant);
 
   /// Material 3 [TextTheme] composed from the tokens above. Used by
-  /// `AppTheme` so that `context.theme.typography.md` resolves to
+  /// `AppTheme` so that `context.theme.typography.body.md` resolves to
   /// the design-system value.
   static TextTheme textTheme() {
     return TextTheme(

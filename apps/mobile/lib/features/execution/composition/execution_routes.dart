@@ -1,13 +1,13 @@
 import 'package:go_router/go_router.dart';
 
-import '../../../app/domain_tabs_shell.dart';
-import '../../../app/route_paths.dart';
+import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/execution_commitments_page.dart';
 import '../ui/execution_detail_page.dart';
 import '../ui/execution_review_page.dart';
 import '../ui/execution_today_page.dart';
 import 'execution_domain_shell.dart';
+import 'execution_route_paths.dart';
 
 StatefulShellRoute executionShellRoute() {
   return StatefulShellRoute.indexedStack(
@@ -19,13 +19,13 @@ StatefulShellRoute executionShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.executionToday,
-            name: AppRouteNames.executionToday,
+            path: ExecutionRoutes.today,
+            name: ExecutionRouteNames.today,
             builder: (context, state) => const ExecutionTodayPage(),
             routes: [
               GoRoute(
                 path: 'action/:id',
-                name: AppRouteNames.executionActionDetail,
+                name: ExecutionRouteNames.actionDetail,
                 builder: (context, state) => ExecutionActionDetailPage(
                   actionId: state.pathParameters['id'] ?? '',
                 ),
@@ -37,13 +37,13 @@ StatefulShellRoute executionShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.executionCommitments,
-            name: AppRouteNames.executionCommitments,
+            path: ExecutionRoutes.commitments,
+            name: ExecutionRouteNames.commitments,
             builder: (context, state) => const ExecutionCommitmentsPage(),
             routes: [
               GoRoute(
                 path: ':id',
-                name: AppRouteNames.executionCommitmentDetail,
+                name: ExecutionRouteNames.commitmentDetail,
                 builder: (context, state) => ExecutionCommitmentDetailPage(
                   commitmentId: state.pathParameters['id'] ?? '',
                 ),
@@ -55,8 +55,8 @@ StatefulShellRoute executionShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: AppRoutes.executionReview,
-            name: AppRouteNames.executionReview,
+            path: ExecutionRoutes.review,
+            name: ExecutionRouteNames.review,
             builder: (context, state) => const ExecutionReviewPage(),
           ),
         ],

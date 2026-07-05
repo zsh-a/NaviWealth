@@ -8,10 +8,10 @@ library;
 
 import 'package:forui/forui.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/shell/domain_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'knowledge_route_paths.dart';
 
 DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
@@ -24,19 +24,19 @@ DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
         icon: FLucideIcons.inbox,
         selectedIcon: FLucideIcons.inbox,
         label: l10n.knowledgeTabInbox,
-        routePath: AppRoutes.knowledgeInbox,
+        routePath: KnowledgeRoutes.inbox,
       ),
       DomainShellTab(
         icon: FLucideIcons.bookOpen,
         selectedIcon: FLucideIcons.bookOpen,
         label: l10n.knowledgeTabLibrary,
-        routePath: AppRoutes.knowledgeLibrary,
+        routePath: KnowledgeRoutes.library,
       ),
       DomainShellTab(
         icon: FLucideIcons.clipboardCheck,
         selectedIcon: FLucideIcons.clipboardCheck,
         label: l10n.knowledgeTabReview,
-        routePath: AppRoutes.knowledgeReview,
+        routePath: KnowledgeRoutes.review,
       ),
     ],
   );

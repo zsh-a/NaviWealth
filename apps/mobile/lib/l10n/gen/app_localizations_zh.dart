@@ -5215,6 +5215,81 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiModelsSubtitle => '下载与管理本地 EmbeddingGemma 模型';
 
   @override
+  String get aiLlmRuntimeCheckTitle => 'Agent Runtime';
+
+  @override
+  String get aiLlmRuntimeCheckReady =>
+      '通过 FRB 运行一次短的 active profile 回合，然后完成 native runtime step。';
+
+  @override
+  String get aiLlmRuntimeCheckNoProfile =>
+      '请先保存并启用一个 provider profile，再检查 agent runtime。';
+
+  @override
+  String get aiLlmRuntimeCheckAction => '检查 runtime';
+
+  @override
+  String get aiLlmRuntimeCheckRunning => '检查中…';
+
+  @override
+  String get aiLlmRuntimeCheckPrompt =>
+      '请用一句简短的话确认 NaviWealth agent runtime 可以访问。';
+
+  @override
+  String aiLlmRuntimeCheckSucceeded(String status) {
+    return 'Agent runtime step 已完成：$status';
+  }
+
+  @override
+  String aiLlmRuntimeCheckFailed(String error) {
+    return 'Agent runtime 检查失败：$error';
+  }
+
+  @override
+  String aiLlmRuntimeCheckStatus(String status) {
+    return 'Native step：$status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalTitle(String kind) {
+    return '待确认提案 · $kind';
+  }
+
+  @override
+  String aiLlmRuntimeProposalWarning(String warning) {
+    return '警告：$warning';
+  }
+
+  @override
+  String get aiLlmRuntimeProposalApply => '应用提案';
+
+  @override
+  String get aiLlmRuntimeProposalApplying => '应用中…';
+
+  @override
+  String get aiLlmRuntimeProposalConfirmTitle => '应用这个提案？';
+
+  @override
+  String aiLlmRuntimeProposalConfirmBody(String summary) {
+    return '$summary\n\n这会通过 AI Chat 相同的本地 proposal applier 写入。';
+  }
+
+  @override
+  String aiLlmRuntimeProposalApplied(String status) {
+    return '提案应用完成：$status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalStatus(String status) {
+    return '提案应用：$status';
+  }
+
+  @override
+  String aiLlmRuntimeProposalFailed(String error) {
+    return '提案应用失败：$error';
+  }
+
+  @override
   String get settingsBadgeAuto => '自动';
 
   @override

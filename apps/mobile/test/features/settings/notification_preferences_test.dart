@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/notifications/notification_preferences.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/notifications/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/health/data/health_notification_preferences.dart';
 import 'package:naviwealth/features/settings/ui/notification_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -62,6 +65,7 @@ void main() {
             notificationServiceProvider.overrideWithValue(
               const _FakeNotificationService(available: true, granted: true),
             ),
+            activeDomainPacksProvider.overrideWithValue([kHealthPack]),
           ],
           child: MaterialApp(
             theme: AppTheme.light(),
@@ -120,8 +124,8 @@ class _FakeNotificationService implements NotificationService {
     required int id,
     required String title,
     required String body,
+    required NotificationChannelSpec channel,
     String? payload,
-    NotificationChannelSpec channel = NotificationChannelSpec.healthBriefing,
   }) async {}
 
   @override

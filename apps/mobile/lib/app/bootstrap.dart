@@ -21,23 +21,15 @@ import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/sentry_crash_reporter.dart';
-import '../core/notifications/notification_preferences.dart';
-import '../core/notifications/providers.dart' as notif_providers;
 import '../core/perf/providers.dart';
 import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
-import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
-import '../features/cashflow/data/recurring_transaction_providers.dart';
-import '../features/finance/data/market/sync/price_sync_providers.dart';
-import '../features/health/agents/briefing_synthesizer.dart';
-import '../features/health/agents/morning_briefing_agent.dart';
-import '../features/health/agents/providers.dart' as health_agent_providers;
-import '../features/health/data/morning_briefing_preferences.dart';
+import 'agent_runtime/overrides/agent_runtime_provider_overrides.dart';
+import 'domain_bootstrap.dart';
 import 'domain_composition.dart';
-import 'memory_indexers_bootstrap.dart';
-import 'route_guard.dart';
+import 'routing/route_guard.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
 /// error pipeline (Flutter framework errors, async zone errors, and the
@@ -94,6 +86,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           ref.watch(domainOptInRouteGuardProvider),
         ],
       ),
+      ...agentRuntimeProviderOverrides(),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
       // closes over Riverpod's container, so token rotation is picked up
@@ -123,6 +116,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
       ),
+      core_auth.switchToLocalOnlyProvider.overrideWith(
+        (ref) =>
+            () => ref.read(authControllerProvider.notifier).switchToLocalOnly(),
+      ),
       core_auth.domainOptInTokenRefreshProvider.overrideWith(
         (ref) => () async {
           await ref.read(authControllerProvider.notifier).refreshIfPossible();
@@ -133,31 +130,6 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // specs, domain provider seams, and the registry all derive from
       // the DomainPack list.
       ...lifeOsDomainCompositionOverrides(),
-      // Wire the Morning Briefing with the LLM synthesizer
-      // (falling back to programmatic when no device LLM is configured)
-      // and the local notification service so each successful run can
-      // surface a toast even when the app is backgrounded. The agent
-      // itself stays composition-blind; this is the seam where the
-      // shell decides "use which synthesis + which notifier".
-      morningBriefingAgentProvider.overrideWith((ref) {
-        final runtime = ref.watch(ai_chat_providers.deviceLlmRuntimeProvider);
-        final notificationsEnabled = ref.watch(notificationsEnabledProvider);
-        final briefingNotificationsEnabled = ref.watch(
-          healthBriefingNotificationsEnabledProvider,
-        );
-        final notifier = notificationsEnabled && briefingNotificationsEnabled
-            ? ref.watch(notif_providers.notificationServiceProvider)
-            : null;
-        final hourLocal = ref.watch(morningBriefingHourProvider);
-        final BriefingSynthesizer synth = runtime != null
-            ? LlmBriefingSynthesizer(client: runtime.client)
-            : const ProgrammaticBriefingSynthesizer();
-        return MorningBriefingAgent(
-          synthesizer: synth,
-          notifier: notifier,
-          hourLocal: hourLocal,
-        );
-      }),
       // Swap in the Rust
       // EmbeddingGemma embedder when the user has configured a model
       // directory. Loading is async (FRB init + ONNX session warm-up
@@ -261,12 +233,11 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     await container.read(authControllerProvider.future);
   }
 
-  // Start foreground data sync. PriceSyncCoordinator owns both quote
-  // warming and FX refresh so dashboard valuations have one startup path.
+  // Start foreground sync and active-domain Memory indexers once auth has
+  // settled. Domain-owned background jobs mount through DomainPack below.
   final authState = container.read(authControllerProvider).value;
   if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
     container.read(syncSchedulerBootstrapProvider);
-    container.read(priceSyncCoordinatorBootstrapProvider);
     _scheduleMemoryRuntimeStartupTasks(container: container, logger: logger);
     container.read(memoryLayerBootstrapProvider);
   } else {
@@ -274,38 +245,9 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     logger.i('Memory Runtime startup tasks skipped until auth is ready');
     logger.i('Memory Layer indexers skipped until auth is ready');
   }
-  // Drive the platform background scheduler from the
-  // Health domain opt-in. Eager-read so the provider mounts now
-  // and reacts to subsequent toggles (workmanager register / cancel
-  // happens inside the provider build, see `morningBriefingCronProvider`).
-  container.read(health_agent_providers.morningBriefingCronProvider);
-  container.read(health_agent_providers.garminSyncCronProvider);
-  container.read(health_agent_providers.healthPlatformSyncCronProvider);
-  // When the workmanager callback fired while the app was
-  // backgrounded it stamped `kMorningBriefingDueAtKey`. Kick off the
-  // in-process run so the freshest summary lands in Memory + the
-  // notification gets refined to the actual content.
-  unawaited(
-    container.read(health_agent_providers.pendingBriefingRunProvider.future),
-  );
-  unawaited(
-    container.read(health_agent_providers.pendingGarminSyncRunProvider.future),
-  );
-  unawaited(
-    container.read(
-      health_agent_providers.pendingHealthPlatformSyncRunProvider.future,
-    ),
-  );
-  // Eager startup catch-up for due recurring transactions. This is a
-  // local-first finance job (it writes through the mutation stamper /
-  // journal repo, no cloud session needed — the same provider runs
-  // ungated from Home / CashFlow), so it must fire in local-only mode
-  // too, not just when a cloud session exists.
-  unawaited(
-    container.read(
-      recurringMaterialiseDueProvider(DateTime.now().toUtc()).future,
-    ),
-  );
+  // Mount domain-owned background bootstraps (scheduler registration and
+  // pending native wakeup drains). DomainPack remains the startup inventory.
+  container.read(domainBackgroundBootstrapProvider);
 
   return container;
 }

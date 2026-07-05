@@ -13,10 +13,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_decision_lifecycle_sheet.dart';
@@ -217,7 +217,7 @@ class _BodyState extends ConsumerState<_Body> {
                             opt.label,
                             style: opt.label == d.selectedLabel
                                 ? context.labelStyle
-                                : typography.sm.copyWith(
+                                : typography.body.sm.copyWith(
                                     fontWeight: FontWeight.w400,
                                   ),
                             maxLines: 2,
@@ -258,7 +258,7 @@ class _BodyState extends ConsumerState<_Body> {
                   icon: FLucideIcons.badgeCheck,
                   iconColor: KnowledgeTypeColors.principle,
                   onPress: () => context.pushNamed(
-                    AppRouteNames.knowledgeObjectDetail,
+                    KnowledgeRouteNames.objectDetail,
                     pathParameters: {'kind': 'principle', 'id': p.id},
                   ),
                 ),
@@ -278,7 +278,7 @@ class _BodyState extends ConsumerState<_Body> {
                   icon: FLucideIcons.lightbulb,
                   iconColor: KnowledgeTypeColors.assumption,
                   onPress: () => context.pushNamed(
-                    AppRouteNames.knowledgeObjectDetail,
+                    KnowledgeRouteNames.objectDetail,
                     pathParameters: {'kind': 'assumption', 'id': a.id},
                   ),
                 ),
@@ -291,7 +291,7 @@ class _BodyState extends ConsumerState<_Body> {
             title: AppLocalizations.of(
               context,
             ).knowledgeDetailExpectedOutcomeTitle,
-            children: [Text(d.expectedOutcome!, style: typography.sm)],
+            children: [Text(d.expectedOutcome!, style: typography.body.sm)],
           ),
         ],
         if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
@@ -333,7 +333,7 @@ class _BodyState extends ConsumerState<_Body> {
                       Expanded(
                         child: Text(
                           '${_chain[i].question}（${_chain[i].status.wire}）',
-                          style: typography.sm,
+                          style: typography.body.sm,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -399,7 +399,7 @@ class _RelatedKnowledgeLink extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: typography.sm,
+                    style: typography.body.sm,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -459,13 +459,19 @@ class _ContextSnapshotSection extends StatelessWidget {
           style: context.bodyCaptionStyle,
         ),
       if (finance.isNotEmpty) ...[
-        Text(l10n.knowledgeDetailContextSnapshotFinance, style: typography.xs),
+        Text(
+          l10n.knowledgeDetailContextSnapshotFinance,
+          style: typography.body.xs,
+        ),
         for (final raw in finance.whereType<Map<Object?, Object?>>())
           _SnapshotRow(map: raw.cast<String, Object?>()),
         const SizedBox(height: AppSpacing.s4),
       ],
       if (health.isNotEmpty) ...[
-        Text(l10n.knowledgeDetailContextSnapshotHealth, style: typography.xs),
+        Text(
+          l10n.knowledgeDetailContextSnapshotHealth,
+          style: typography.body.xs,
+        ),
         for (final raw in health.whereType<Map<Object?, Object?>>())
           _SnapshotRow(map: raw.cast<String, Object?>()),
       ],
@@ -513,7 +519,7 @@ class _SnapshotRow extends StatelessWidget {
           Expanded(
             child: Text(
               title.isEmpty ? summary : '$title — $summary',
-              style: typography.sm,
+              style: typography.body.sm,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),

@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_vision_parse.dart';
-import 'package:naviwealth/features/ingest/data/device_ingest_client.dart';
-import 'package:naviwealth/features/ingest/data/vision_ingest_client.dart';
-import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/data/device_ingest_client.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
+import 'package:naviwealth/features/finance/ingest/data/vision_ingest_client.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 class _FakeIngest implements VisionIngestClient {
   _FakeIngest(this.tag);
@@ -167,4 +168,98 @@ void main() {
       expect(out.single.description, 'fallback');
     });
   });
+
+  group('FrbVisionIngestClient', () {
+    test(
+      'sends multimodal content and parses raw Anthropic tool_use blocks',
+      () async {
+        final bridge = _FakeLlmBridge(
+          anthropicContent: [
+            {
+              'type': 'tool_use',
+              'name': kVisionEmitTool,
+              'input': {
+                'transactions': [
+                  {
+                    'description': 'Coffee',
+                    'amount_minor': -450,
+                    'currency': 'usd',
+                    'occurred_at': '2026-06-01',
+                  },
+                ],
+              },
+            },
+          ],
+        );
+        final client = FrbVisionIngestClient(llmClient: bridge);
+
+        final rows = await client.parse(
+          kind: IngestSourceKind.receiptImage,
+          mime: 'image/png',
+          contentBase64: 'ZmFrZQ==',
+          currencyHint: 'USD',
+        );
+
+        expect(bridge.calls, 1);
+        expect(bridge.lastMessages.first['role'], 'system');
+        final userContent = bridge.lastMessages.last['content']! as List;
+        expect((userContent.first as Map)['type'], 'image');
+        expect(bridge.lastTools.single['name'], kVisionEmitTool);
+        expect(bridge.lastTools.single['risk'], 'read_only');
+        expect(bridge.lastMetadata['surface'], 'finance_vision_ingest');
+        expect(rows.single.description, 'Coffee');
+        expect(rows.single.amountMinor, -450);
+        expect(rows.single.currency, 'USD');
+        expect(rows.single.occurredAt, DateTime.utc(2026, 6, 1));
+      },
+    );
+
+    test(
+      'throws a user-facing ingest error when FRB has no tool_use block',
+      () {
+        final client = FrbVisionIngestClient(
+          llmClient: _FakeLlmBridge(anthropicContent: const <Object?>[]),
+        );
+
+        expect(
+          () => client.parse(
+            kind: IngestSourceKind.receiptImage,
+            mime: 'image/png',
+            contentBase64: 'ZmFrZQ==',
+          ),
+          throwsA(isA<VisionIngestException>()),
+        );
+      },
+    );
+  });
+}
+
+class _FakeLlmBridge implements IngestLlmProfileClient {
+  _FakeLlmBridge({required this.anthropicContent});
+
+  final List<Object?> anthropicContent;
+  var calls = 0;
+  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
+  List<Map<String, Object?>> lastTools = const <Map<String, Object?>>[];
+  Map<String, Object?> lastMetadata = const <String, Object?>{};
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    calls += 1;
+    lastMessages = messages;
+    lastTools = tools;
+    lastMetadata = metadata;
+    return <String, Object?>{
+      'provider': 'mock',
+      'model': 'test-model',
+      'content': '',
+      'metadata': <String, Object?>{'anthropic_content': anthropicContent},
+    };
+  }
 }

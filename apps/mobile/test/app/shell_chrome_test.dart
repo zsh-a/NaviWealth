@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/shell_chrome.dart';
+import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 void main() {

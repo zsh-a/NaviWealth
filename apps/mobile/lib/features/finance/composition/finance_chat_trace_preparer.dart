@@ -10,22 +10,23 @@ library;
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
+import 'package:naviwealth/core/ai/local/skills/skills.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/assets/data/deposit_maturity_insight_provider.dart';
+import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight_provider.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_projection.dart'
+    show FireScenarioTier;
 
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
-import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/trace/trace.dart';
-import '../../ai_chat/state/ai_context.dart';
-import '../../assets/data/deposit_maturity_insight_provider.dart';
-import '../../expense/data/expense_anomaly_insight_provider.dart';
-import '../../fire/data/fire_providers.dart';
-import '../../fire/domain/fire_projection.dart' show FireScenarioTier;
-import '../../home/data/dashboard_providers.dart';
-import '../../settings/data/risk_appetite_preferences.dart';
 import '../ai_tools/query_plan/finance_query_plan.dart';
 import '../ai_tools/query_plan/nl_to_query_plan.dart';
 
@@ -94,8 +95,8 @@ Future<ChatTracePrepResult> _prepareChatTrace(
       backend: Backend.device,
       budgetTier: pack.budget.tier,
       routingReason: deviceUsable
-          ? kDeviceLlmDirectRoutingReason
-          : 'device_unavailable',
+          ? kFrbChatRoutingReason
+          : kDeviceUnavailableRoutingReason,
       totalDurationMs: 0,
     );
 

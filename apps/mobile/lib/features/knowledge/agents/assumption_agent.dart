@@ -12,9 +12,12 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
 import '_agent_memory.dart';
 
@@ -27,7 +30,11 @@ const String kKnowledgeAssumptionMemorySource = 'agent:knowledge_assumption';
 const int kAssumptionStaleDays = 90;
 
 class AssumptionAgent implements Agent {
-  const AssumptionAgent();
+  const AssumptionAgent({
+    this.assumptionReader = const RepositoryAssumptionReviewReader(),
+  });
+
+  final AssumptionReviewReader assumptionReader;
 
   @override
   String get id => kKnowledgeAssumptionAgentId;
@@ -45,13 +52,12 @@ class AssumptionAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
-    final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
+    final open = await assumptionReader.listOpen(ctx);
     final stale = open
-        .where((a) => a.daysSinceVerify(start) >= kAssumptionStaleDays)
+        .where((a) => a.daysSinceVerify >= kAssumptionStaleDays)
         .toList(growable: false);
     final finished = DateTime.now().toUtc();
 
@@ -107,4 +113,109 @@ class AssumptionAgent implements Agent {
       first,
     );
   }
+}
+
+abstract class AssumptionReviewReader {
+  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx);
+}
+
+class RepositoryAssumptionReviewReader implements AssumptionReviewReader {
+  const RepositoryAssumptionReviewReader();
+
+  @override
+  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
+    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+    final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
+    return open
+        .map((a) => AssumptionReviewItem.fromAssumption(a, now: ctx.now))
+        .toList(growable: false);
+  }
+}
+
+class FrbAssumptionReviewReader implements AssumptionReviewReader {
+  const FrbAssumptionReviewReader({
+    required AgentRuntimeEffectPlanBinding runtime,
+    this.fallback = const RepositoryAssumptionReviewReader(),
+  }) : _runtime = runtime;
+
+  final AgentRuntimeEffectPlanBinding _runtime;
+  final AssumptionReviewReader fallback;
+
+  @override
+  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
+    return _runtime.readFromEffectPlan(
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_open_assumptions',
+          input: <String, Object?>{'limit': 50},
+        ),
+      ],
+      maxEffectSteps: 1,
+      fallback: () => fallback.listOpen(ctx),
+      decode: (terminalStep) {
+        final result = agentRuntimeTerminalEffectResultForTool(
+          terminalStep,
+          'list_open_assumptions',
+        );
+        return assumptionReviewItemsFromToolResult(result);
+      },
+    );
+  }
+}
+
+class AssumptionReviewItem {
+  const AssumptionReviewItem({
+    required this.id,
+    required this.statement,
+    required this.daysSinceVerify,
+  });
+
+  factory AssumptionReviewItem.fromAssumption(
+    KnowledgeAssumption assumption, {
+    required DateTime now,
+  }) {
+    return AssumptionReviewItem(
+      id: assumption.id,
+      statement: assumption.statement,
+      daysSinceVerify: assumption.daysSinceVerify(now),
+    );
+  }
+
+  final String id;
+  final String statement;
+  final int daysSinceVerify;
+}
+
+List<AssumptionReviewItem>? assumptionReviewItemsFromToolResult(
+  Map<String, Object?>? result,
+) {
+  final rawAssumptions = result?['assumptions'];
+  if (rawAssumptions is! List) return null;
+  final items = <AssumptionReviewItem>[];
+  for (final raw in rawAssumptions) {
+    final assumption = _asObject(raw);
+    final id = assumption?['id'];
+    final statement = assumption?['statement'];
+    final daysSinceVerify = assumption?['days_since_verify'];
+    if (id is! String || statement is! String || daysSinceVerify is! num) {
+      return null;
+    }
+    items.add(
+      AssumptionReviewItem(
+        id: id,
+        statement: statement,
+        daysSinceVerify: daysSinceVerify.toInt(),
+      ),
+    );
+  }
+  return items;
+}
+
+Map<String, Object?>? _asObject(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return null;
 }

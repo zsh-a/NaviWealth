@@ -86,8 +86,8 @@ class HeuristicContradictionJudge implements ContradictionJudge {
     );
   }
 
-  /// Synchronous entry point — also used by [LlmContradictionJudge] as
-  /// its fallback so the LLM path degrades to the exact same verdict.
+  /// Synchronous entry point — also used by the FRB-backed judge fallback so
+  /// provider failures degrade to the exact same verdict.
   static ContradictionVerdict verdict({
     required String principleStatement,
     required String memoryText,

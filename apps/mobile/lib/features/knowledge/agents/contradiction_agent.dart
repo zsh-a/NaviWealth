@@ -31,7 +31,11 @@ import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/sync/hlc.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../data/contradiction_judge.dart';
 import '../data/knowledge_object_memory_indexers.dart'
     show kKnowledgeDecisionMemorySource, kKnowledgeNoteMemorySource;
@@ -39,6 +43,9 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
 import '_agent_memory.dart';
+
+part 'contradiction_agent_models.dart';
+part 'contradiction_agent_source_reader.dart';
 
 const String kKnowledgeContradictionAgentId = 'knowledge_contradiction';
 const String kKnowledgeContradictionMemorySource =
@@ -57,13 +64,17 @@ const int _kCandidatesPerPrinciple = 4;
 const double _kCandidateCosineFloor = 0.55;
 
 class ContradictionAgent implements Agent {
-  const ContradictionAgent({this.judgeOverride});
+  const ContradictionAgent({
+    this.judgeOverride,
+    this.sourceReader = const RepositoryContradictionSourceReader(),
+  });
 
   /// Test seam — when null the agent resolves the judge from
   /// [contradictionJudgeProvider] per run (the production path, same
   /// constraint as [InboxTriageAgent]: the agent list is sync-constructed
   /// but the LLM client is async).
   final ContradictionJudge? judgeOverride;
+  final ContradictionSourceReader sourceReader;
 
   @override
   String get id => kKnowledgeContradictionAgentId;
@@ -81,22 +92,15 @@ class ContradictionAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
     final ContradictionJudge activeJudge =
         judgeOverride ?? await ctx.ref.read(contradictionJudgeProvider.future);
 
-    final decisions = await repo.listDecisions(
-      ownerUserId: ownerUserId,
-      limit: 200,
-    );
-    final principles = await repo.listActivePrinciples(
-      ownerUserId: ownerUserId,
-    );
-    final openAssumptions = await repo.listOpenAssumptions(
-      ownerUserId: ownerUserId,
-    );
+    final source = await sourceReader.read(ctx);
+    final decisions = source.decisions;
+    final principles = source.principles;
+    final openAssumptions = source.openAssumptions;
 
     final issues = <_Contradiction>[];
 
@@ -320,35 +324,4 @@ class ContradictionAgent implements Agent {
     final union = (<String>{...a, ...b}).length;
     return union == 0 ? 0 : inter / union;
   }
-}
-
-class _Contradiction {
-  const _Contradiction({
-    required this.decisionId,
-    required this.decisionQuestion,
-    required this.kind,
-    required this.referenceId,
-    required this.detail,
-  });
-  final String decisionId;
-  final String decisionQuestion;
-  final String kind;
-  final String referenceId;
-  final String detail;
-}
-
-/// A cosine-recalled candidate memory for check-2, pre-judge.
-class _Candidate {
-  const _Candidate({
-    required this.referenceId,
-    required this.question,
-    required this.text,
-    required this.cosine,
-    required this.overlap,
-  });
-  final String referenceId;
-  final String question;
-  final String text;
-  final double cosine;
-  final double overlap;
 }

@@ -65,7 +65,7 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
                       Expanded(
                         child: Text(
                           l10n.pwaUpdateAvailable,
-                          style: context.theme.typography.sm.copyWith(
+                          style: context.theme.typography.body.sm.copyWith(
                             color: colors.background,
                           ),
                         ),

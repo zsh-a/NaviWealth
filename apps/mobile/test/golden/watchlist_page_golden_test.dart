@@ -1,12 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/domain/entities/quote.dart';
-import 'package:naviwealth/domain/services/market_data_service.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
-import 'package:naviwealth/features/investment/data/watchlist_providers.dart';
-import 'package:naviwealth/features/investment/data/watchlist_repository.dart';
-import 'package:naviwealth/features/investment/presentation/watchlist_page.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
 
 import '_golden_setup.dart';
 

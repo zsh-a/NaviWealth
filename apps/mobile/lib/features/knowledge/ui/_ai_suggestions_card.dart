@@ -497,7 +497,7 @@ class _ProposalDetailsPanel extends StatelessWidget {
                   Expanded(
                     child: Text(
                       _formatPayloadValue(entry.value),
-                      style: typography.xs,
+                      style: typography.body.xs,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),

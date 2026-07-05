@@ -17,12 +17,12 @@ import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/data/providers.dart' show deviceLlmClientProvider;
 import '../domain/knowledge_models.dart';
 import 'capture_classifier.dart';
 import 'contradiction_judge.dart';
 import 'inbox_triage_classifier.dart';
 import 'inbox_triage_repository.dart';
+import 'knowledge_llm_client.dart';
 import 'knowledge_repository.dart';
 import 'knowledge_search_service.dart';
 import 'llm_capture_classifier.dart';
@@ -97,22 +97,22 @@ final inboxTriageClassifierProvider = FutureProvider<InboxTriageClassifier>((
   ref,
 ) async {
   final logger = ref.watch(loggerProvider);
-  final client = ref.watch(deviceLlmClientProvider);
-  if (client == null) {
+  final llmClient = ref.watch(knowledgeLlmProfileClientProvider);
+  if (llmClient == null) {
     logger.i(
       '[inbox-triage] classifier=heuristic — ${_diagnoseLlmUnavailable(ref)}',
     );
     return const HeuristicInboxTriageClassifier();
   }
-  logger.i('[inbox-triage] classifier=llm model=${client.config.model}');
-  return LlmInboxTriageClassifier(client: client, logger: logger);
+  logger.i('[inbox-triage] classifier=frb-llm');
+  return FrbInboxTriageClassifier(llmClient: llmClient, logger: logger);
 });
 
 /// Contradiction-judge seam (§14.2 "ContradictionAgent cosine + LLM
-/// judge 路径"). Returns the LLM-backed judge when a device LLM profile
-/// is configured, the pure-Dart marker heuristic otherwise. The LLM path
-/// degrades silently to the same heuristic on any per-pair failure (no
-/// profile / network / timeout / parse / low confidence), so the no-LLM
+/// judge 路径"). Returns the FRB profile-backed judge when an active device LLM
+/// profile is configured, the pure-Dart marker heuristic otherwise. The FRB
+/// LLM path degrades silently to the same heuristic on any per-pair failure
+/// (no profile / network / timeout / parse / low confidence), so the no-LLM
 /// (Web / no key) path stays deterministic. Resolved by
 /// [ContradictionAgent.run] via `ctx.ref` so the agent stays
 /// synchronously constructible (the agent list is sync, the client is
@@ -121,22 +121,22 @@ final contradictionJudgeProvider = FutureProvider<ContradictionJudge>((
   ref,
 ) async {
   final logger = ref.watch(loggerProvider);
-  final client = ref.watch(deviceLlmClientProvider);
-  if (client == null) {
+  final llmClient = ref.watch(knowledgeLlmProfileClientProvider);
+  if (llmClient == null) {
     logger.i(
       '[contradiction] judge=heuristic — ${_diagnoseLlmUnavailable(ref)}',
     );
     return const HeuristicContradictionJudge();
   }
-  logger.i('[contradiction] judge=llm model=${client.config.model}');
-  return LlmContradictionJudge(client: client, logger: logger);
+  logger.i('[contradiction] judge=frb-llm');
+  return FrbContradictionJudge(llmClient: llmClient, logger: logger);
 });
 
-/// Capture classifier seam. Returns the LLM-driven classifier when a
-/// device LLM profile is configured; falls back to the deterministic
-/// heuristic otherwise. The LLM classifier internally degrades to the
-/// same heuristic on any per-call failure (network / timeout / parse),
-/// so call sites never observe an exception out of `classify`.
+/// Capture classifier seam. Returns the FRB profile-backed LLM classifier when
+/// an active device LLM profile is configured; falls back to the deterministic
+/// heuristic otherwise. The FRB LLM classifier internally degrades to the same
+/// heuristic on any per-call failure (network / timeout / parse), so call sites
+/// never observe an exception out of `classify`.
 ///
 /// CaptureSheet + `propose_capture` tool both read this provider, so
 /// the AI-native upgrade UX and the AI tool surface share one
@@ -147,13 +147,8 @@ final contradictionJudgeProvider = FutureProvider<ContradictionJudge>((
 /// LLM is actually engaged.
 final captureClassifierProvider = Provider<CaptureClassifier>((ref) {
   final logger = ref.watch(loggerProvider);
-  // Depend on the client, NOT the full runtime: the `propose_capture`
-  // tool reads this provider through the runtime's dispatcher `ref`, and
-  // depending on `deviceLlmRuntimeProvider` here would make the runtime
-  // transitively depend on itself (CircularDependencyError). The client
-  // provider carries no dispatcher/tools, so the graph stays acyclic.
-  final client = ref.watch(deviceLlmClientProvider);
-  if (client == null) {
+  final llmClient = ref.watch(knowledgeLlmProfileClientProvider);
+  if (llmClient == null) {
     // Drill into the gate chain so the log line tells the user which of
     // the 4 possible reasons fired (web platform / credentials still
     // loading / no active profile / active profile has empty key).
@@ -161,8 +156,8 @@ final captureClassifierProvider = Provider<CaptureClassifier>((ref) {
     logger.i('[capture] classifier=heuristic — $reason');
     return const HeuristicCaptureClassifier();
   }
-  logger.i('[capture] classifier=llm model=${client.config.model}');
-  return LlmCaptureClassifier(client: client, logger: logger);
+  logger.i('[capture] classifier=frb-llm');
+  return FrbCaptureClassifier(llmClient: llmClient, logger: logger);
 });
 
 String _diagnoseLlmUnavailable(Ref ref) {

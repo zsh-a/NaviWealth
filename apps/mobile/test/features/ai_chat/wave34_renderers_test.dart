@@ -9,7 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ai_chat/ui/tool_invocation_renderers.dart';
+import 'package:naviwealth/features/ai_chat/ui/tools/renderers/tool_invocation_renderers.dart';
 
 Future<Widget?> renderVia(
   WidgetTester tester,

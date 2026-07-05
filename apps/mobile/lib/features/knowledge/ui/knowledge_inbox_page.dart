@@ -11,11 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
-import '../../../app/shell_chrome.dart';
+import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/ui/ask_ai.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
@@ -109,24 +108,28 @@ class _AiAssistantBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
+    final chrome = ref.watch(shellChromeBuildersProvider);
     final actions = [
       DomainAiPromptAction(
         label: l10n.knowledgeAiDedupeAction,
         icon: FLucideIcons.gitMerge,
-        onPress: () =>
-            askAi(context, ref, prefill: l10n.knowledgeAiDedupePrompt),
+        onPress: () {
+          chrome.openAi(context, ref, prefill: l10n.knowledgeAiDedupePrompt);
+        },
       ),
       DomainAiPromptAction(
         label: l10n.knowledgeAiWeeklyAction,
         icon: FLucideIcons.lightbulb,
-        onPress: () =>
-            askAi(context, ref, prefill: l10n.knowledgeAiWeeklyPrompt),
+        onPress: () {
+          chrome.openAi(context, ref, prefill: l10n.knowledgeAiWeeklyPrompt);
+        },
       ),
       DomainAiPromptAction(
         label: l10n.knowledgeAiSearchAction,
         icon: FLucideIcons.search,
-        onPress: () =>
-            askAi(context, ref, prefill: l10n.knowledgeAiSearchPrompt),
+        onPress: () {
+          chrome.openAi(context, ref, prefill: l10n.knowledgeAiSearchPrompt);
+        },
       ),
     ];
     return Padding(
@@ -144,7 +147,9 @@ class _AiAssistantBar extends ConsumerWidget {
                 button: true,
                 label: l10n.knowledgeAiPromptHint,
                 child: FTappable(
-                  onPress: () => askAi(context, ref, prefill: ''),
+                  onPress: () {
+                    chrome.openAi(context, ref, prefill: '');
+                  },
                   child: SizedBox(
                     height: AppSpacing.s40,
                     child: Row(
@@ -266,7 +271,7 @@ class _NoteCard extends StatelessWidget {
     final candidateKind = _extractCandidateKind(note.tags);
     return KnowledgeSection.item(
       onPress: () => context.pushNamed(
-        AppRouteNames.knowledgeObjectDetail,
+        KnowledgeRouteNames.objectDetail,
         pathParameters: {'kind': 'note', 'id': note.id},
       ),
       title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,

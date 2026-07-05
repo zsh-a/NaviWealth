@@ -22,7 +22,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
-import 'package:naviwealth/features/settings/backup/backup_page.dart';
+import 'package:naviwealth/features/settings/ui/backup/backup_page.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 

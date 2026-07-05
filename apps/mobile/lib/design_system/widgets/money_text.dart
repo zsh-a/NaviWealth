@@ -4,7 +4,6 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/format/formatters.dart';
-import '../../domain/values/money.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/typography_tokens.dart';
 import 'amount_privacy_placeholder.dart';
@@ -20,6 +19,15 @@ enum MoneySymbolStyle {
 
   /// Don't render any symbol.
   none,
+}
+
+/// UI-only money amount for display widgets that need Decimal precision
+/// without depending on a domain value object.
+class DisplayMoney {
+  const DisplayMoney({required this.amount, required this.currency});
+
+  final Decimal amount;
+  final String currency;
 }
 
 /// Renders a monetary amount with consistent typography (lining tabular
@@ -339,11 +347,11 @@ class DualMoneyText extends StatelessWidget {
 
   /// The amount the caller wants to surface first (usually base currency).
   /// `null` renders the standard "no data" placeholder.
-  final Money? primaryAmount;
+  final DisplayMoney? primaryAmount;
 
   /// The original-currency value. When `null` or in the same currency as
   /// [primaryAmount], the caption is hidden.
-  final Money? originalAmount;
+  final DisplayMoney? originalAmount;
 
   final MoneySymbolStyle primarySymbolStyle;
   final MoneySymbolStyle captionSymbolStyle;

@@ -92,7 +92,7 @@ Contributions:
 - Shell: `features/health/composition/health_domain_shell.dart`.
 - Routes: `features/health/composition/health_routes.dart`.
 - Tabs: Today, Trend, Plan.
-- Tools: `features/health_ai_tools.dart`.
+- Tools: `features/health/health_ai_tools.dart`.
 - Agent: `MorningBriefingAgent`.
 - Command palette: `features/health/composition/health_command_palette.dart`.
 
@@ -115,7 +115,7 @@ Key files:
 
 ## AI Tools
 
-Tool barrel: `features/health_ai_tools.dart`.
+Tool barrel: `features/health/health_ai_tools.dart`.
 
 | Tool | Access | Purpose |
 |---|---|---|

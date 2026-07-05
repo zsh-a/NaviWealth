@@ -4,10 +4,10 @@ import 'package:naviwealth/core/audit/domain_event.dart';
 import 'package:naviwealth/core/audit/event_log_reader.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '_stub_stamper.dart';

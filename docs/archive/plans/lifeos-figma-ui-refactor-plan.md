@@ -58,20 +58,20 @@ Flutter adaptation rules:
 
 Cross-domain Home / LifeOS dashboard:
 
-- `apps/mobile/lib/features/home/home_page.dart`
-- `apps/mobile/lib/features/home/ui/home_greeting_header.dart`
-- `apps/mobile/lib/features/home/ui/ai_insight_feed.dart`
-- `apps/mobile/lib/features/home/ui/activity_timeline_preview.dart`
-- `apps/mobile/lib/features/home/ui/allocation_summary.dart`
-- `apps/mobile/lib/features/home/ui/trend_card.dart`
+- `apps/mobile/lib/features/finance/home/home_page.dart`
+- `apps/mobile/lib/features/finance/home/ui/home_greeting_header.dart`
+- `apps/mobile/lib/features/finance/home/ui/ai_insight_feed.dart`
+- `apps/mobile/lib/features/finance/home/ui/activity_timeline_preview.dart`
+- `apps/mobile/lib/features/finance/home/ui/allocation_summary.dart`
+- `apps/mobile/lib/features/finance/home/ui/trend_card.dart`
 
 FinanceOS / Wealth:
 
-- `apps/mobile/lib/features/wealth/ui/wealth_hub_page.dart`
-- `apps/mobile/lib/features/wealth/ui/wealth_perspective_section.dart`
-- `apps/mobile/lib/features/accounts/ui/account_grouped_sections.dart`
-- `apps/mobile/lib/features/cashflow/ui/passive_income_card.dart`
-- `apps/mobile/lib/features/cashflow/ui/cashflow_calendar_card.dart`
+- `apps/mobile/lib/features/finance/ui/wealth/wealth_hub_page.dart`
+- `apps/mobile/lib/features/finance/ui/wealth/wealth_perspective_section.dart`
+- `apps/mobile/lib/features/finance/accounts/ui/account_grouped_sections.dart`
+- `apps/mobile/lib/features/finance/cashflow/ui/passive_income_card.dart`
+- `apps/mobile/lib/features/finance/cashflow/ui/cashflow_calendar_card.dart`
 
 HealthOS:
 
@@ -275,7 +275,7 @@ Target changes:
 
 Format:
 
-- `cd apps/mobile && rtk dart format lib/design_system lib/features/home lib/features/wealth lib/features/health lib/features/knowledge`
+- `cd apps/mobile && rtk dart format lib/design_system lib/features/finance/home lib/features/finance/ui/wealth lib/features/health lib/features/knowledge`
 
 Static analysis:
 
@@ -345,4 +345,3 @@ Keep commits small enough to review:
 - Commit 3: Health.
 - Commit 4: Knowledge.
 - Commit 5: tests and final visual polish.
-

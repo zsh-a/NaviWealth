@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/format/providers.dart';
+import '../../../core/forms/forms.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
 import 'health_today_providers.dart';
@@ -133,8 +133,8 @@ class _BodyMeasurementEntrySheetState
             const SizedBox(height: AppSpacing.s12),
             FDateField.calendar(
               label: Text(l10n.commonDate),
-              control: FDateFieldControl.lifted(
-                date: _calendarDay(_capturedAt),
+              selectionControl: FDateSelectionControl.managedSingle(
+                initial: _calendarDay(_capturedAt),
                 onChange: _saving
                     ? (_) {}
                     : (date) {
@@ -142,15 +142,19 @@ class _BodyMeasurementEntrySheetState
                         setState(() => _capturedAt = _dayAnchor(date));
                         widget.dirty.markDirty();
                       },
-                validator: (date) =>
-                    date == null ? l10n.formDateFieldRequired : null,
               ),
               enabled: !_saving,
               clearable: false,
-              start: _firstCapturedAt,
-              end: today.add(const Duration(days: 1)),
-              today: today,
+              calendar: FDateFieldGridCalendarProperties(
+                control: FGridCalendarControl(
+                  start: _firstCapturedAt,
+                  end: today.add(const Duration(days: 1)),
+                  today: today,
+                ),
+              ),
               format: (context, value, format) => formatter.date(value),
+              validator: (date) =>
+                  date == null ? l10n.formDateFieldRequired : null,
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(

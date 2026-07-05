@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/app/nav.dart';
+import 'package:naviwealth/app/routing/nav.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 void main() {

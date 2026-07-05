@@ -2,13 +2,15 @@
 ///
 /// Each LifeOS domain (Finance / Health / Knowledge / future) declares
 /// itself once as a [DomainPack] and registers into
-/// [domainPackRegistryProvider]. The four shell aggregators that used
+/// [domainPackRegistryProvider]. The shell aggregators that used
 /// to repeat the same opt-in branching (device tools, system-prompt
-/// blocks, proposal kinds, proposal applier routes, shell specs, agent list) all read
-/// [activeDomainPacksProvider] instead — adding a new domain is now a
-/// single entry in the registry, not scattered edits in `bootstrap.dart`.
+/// blocks, proposal kinds, proposal applier routes, shell specs, agent list,
+/// memory indexers, background jobs, settings surfaces) all read this registry seam instead —
+/// adding a new domain is now a single entry in the registry, not scattered
+/// edits in `bootstrap.dart`.
 library;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:go_router/go_router.dart';
@@ -24,11 +26,21 @@ import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
 import '../command_palette/command_palette_entry.dart';
 import '../shell/domain_shell.dart';
+import 'share_intent.dart';
 
 /// Builds the per-turn list of [Agent]s a domain contributes. Receives
 /// [Ref] because most agents are themselves Riverpod-built (they depend
 /// on runtime services like the LLM client or notification service).
 typedef DomainAgentBuilder = List<Agent> Function(Ref ref);
+
+/// Agent plus the domain that registered it. Runtime metadata exporters use
+/// this instead of guessing ownership from agent ids.
+class DomainAgentRegistration {
+  const DomainAgentRegistration({required this.agent, required this.domain});
+
+  final Agent agent;
+  final DomainScope domain;
+}
 
 /// Returns the top-level [StatefulShellRoute] the domain mounts under
 /// the dock shell. Called once during router construction.
@@ -51,9 +63,66 @@ typedef DomainCommandPaletteBuilder =
 typedef DomainProposalApplierRouteBuilder =
     Future<ProposalApplierRoute> Function(Ref ref);
 
+/// Builds one domain-owned section for Settings -> Domains.
+typedef DomainSettingsSectionBuilder = Widget Function();
+
+/// Builds domain-owned rows for Settings -> Notifications.
+typedef DomainNotificationSettingsBuilder = List<Widget> Function();
+
+/// Side-effecting bootstrap hook contributed by a domain. Use for app-start
+/// provider reads that must stay alive for as long as the app container lives
+/// (memory indexers, background scheduler registration, pending wakeup drains).
+typedef DomainBootstrapBuilder = void Function(Ref ref);
+
 /// Build-level provider overrides a domain contributes to composition
 /// seams that are not yet represented by a narrower [DomainPack] field.
 typedef DomainProviderOverridesBuilder = List<Override> Function();
+
+/// Builds diagnostic local row counts for one domain.
+typedef DomainLocalTableCountsBuilder =
+    Future<Map<String, int>> Function(Ref ref);
+
+/// Localized subtitle for the Settings → Domains toggle.
+typedef DomainSettingsSubtitleBuilder =
+    String Function(AppLocalizations l10n, bool enabled);
+
+/// Wraps settings pages in router-level chrome such as `SystemBackScope`.
+typedef DomainSettingsRouteWrapper = Widget Function(Widget child);
+
+/// Builds top-level Settings child routes owned by a domain.
+typedef DomainSettingsRoutesBuilder =
+    List<RouteBase> Function(DomainSettingsRouteWrapper wrap);
+
+/// Builds one domain's Settings → Domains detail route.
+typedef DomainSettingsRouteBuilder =
+    RouteBase Function(DomainSettingsRouteWrapper wrap);
+
+/// Optional Settings → Domains contribution for an opt-in domain.
+class DomainSettingsSpec {
+  const DomainSettingsSpec({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    this.sectionBuilder,
+    this.routeBuilder,
+  });
+
+  /// Icon shown on the Settings → Domains toggle row.
+  final IconData icon;
+
+  /// User-facing domain label, e.g. `HealthOS`.
+  final String label;
+
+  /// Toggle subtitle that can vary with enabled state.
+  final DomainSettingsSubtitleBuilder subtitle;
+
+  /// Optional fully-owned section shown on Settings -> Domains. Use this for
+  /// always-on domains whose settings are richer than an opt-in toggle.
+  final DomainSettingsSectionBuilder? sectionBuilder;
+
+  /// Optional per-domain settings detail page route.
+  final DomainSettingsRouteBuilder? routeBuilder;
+}
 
 /// Static description of one LifeOS domain's shell contributions. Held
 /// next to the domain's tool barrel, so the inventory list in
@@ -74,8 +143,15 @@ class DomainPack {
     this.tabPaths = const <String>[],
     this.additionalPathPrefixes = const <String>[],
     this.agentBuilder,
+    this.memoryBootstrapBuilder,
+    this.backgroundBootstrapBuilder,
     this.commandPaletteEntriesBuilder,
     this.providerOverridesBuilder,
+    this.localTableCountsBuilder,
+    this.notificationSettingsBuilder,
+    this.settingsRoutesBuilder,
+    this.settingsSpec,
+    this.shareIntentHandlers = const <DomainShareIntentHandler>[],
   });
 
   /// Opt-in scope this pack registers under.
@@ -135,6 +211,14 @@ class DomainPack {
   /// composition-blind.
   final DomainAgentBuilder? agentBuilder;
 
+  /// Eager Memory Runtime indexer bootstrap. Null when the domain has no
+  /// memory indexers with source streams.
+  final DomainBootstrapBuilder? memoryBootstrapBuilder;
+
+  /// Eager background-job bootstrap. Null when the domain has no startup
+  /// background scheduler or pending wakeup drain.
+  final DomainBootstrapBuilder? backgroundBootstrapBuilder;
+
   /// Cmd-K command palette contributions. Null when the domain has no
   /// palette entries yet. Non-null builders are invoked with the active
   /// locale's [AppLocalizations] and their entries are concatenated into
@@ -146,6 +230,28 @@ class DomainPack {
   /// the build inventory; opt-in-gated work should still check opt-ins
   /// inside the contributing provider.
   final DomainProviderOverridesBuilder? providerOverridesBuilder;
+
+  /// Debug diagnostics for Settings → Sync. Domains own their table SQL;
+  /// the Settings page reads the domain-neutral aggregate provider.
+  final DomainLocalTableCountsBuilder? localTableCountsBuilder;
+
+  /// Rows contributed to Settings → Notifications when this domain is active.
+  /// Global notification permission and master enablement stay in Settings;
+  /// domain-specific notification toggles remain with the owning domain.
+  final DomainNotificationSettingsBuilder? notificationSettingsBuilder;
+
+  /// Top-level Settings routes contributed by this domain.
+  final DomainSettingsRoutesBuilder? settingsRoutesBuilder;
+
+  /// Settings → Domains toggle metadata and optional domain detail route.
+  /// Null when the domain has no settings surface yet.
+  final DomainSettingsSpec? settingsSpec;
+
+  /// Domain-owned handlers for OS share-sheet payloads.
+  ///
+  /// App code receives plugin events and converts them to [SharedIntentPayload].
+  /// Domains decide whether and how to persist payloads they understand.
+  final List<DomainShareIntentHandler> shareIntentHandlers;
 }
 
 /// Inventory of all known [DomainPack]s. Default empty; `bootstrap.dart`
@@ -170,3 +276,20 @@ final activeDomainPacksProvider = Provider<List<DomainPack>>((ref) {
       if (optIns.contains(p.scope)) p,
   ];
 });
+
+List<DomainShareIntentHandler> domainShareIntentHandlers(
+  List<DomainPack> packs,
+) {
+  var index = 0;
+  final indexed = <MapEntry<int, DomainShareIntentHandler>>[
+    for (final pack in packs)
+      for (final handler in pack.shareIntentHandlers)
+        MapEntry(index++, handler),
+  ];
+  indexed.sort((a, b) {
+    final priority = b.value.priority.compareTo(a.value.priority);
+    if (priority != 0) return priority;
+    return a.key.compareTo(b.key);
+  });
+  return [for (final entry in indexed) entry.value];
+}

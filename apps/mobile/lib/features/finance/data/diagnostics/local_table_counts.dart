@@ -1,14 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/persistence/providers.dart';
+import '../../../../core/sync/local_table_counts.dart';
 import '../../../../core/sync/providers.dart';
 
 /// Per-table row counts from local Finance tables, for the Sync Status
 /// page. Lives in `features/finance/` because the table names are
 /// Finance schema; HealthOS / KnowledgeOS will add their own diagnostic
 /// providers alongside this one (the Settings page composes the result).
-typedef LocalTableCounts = Map<String, int>;
-
 /// Wire identifiers for the diagnostic counters, in display order.
 const List<String> kFinanceLocalCountIds = [
   'accounts_user',
@@ -40,7 +39,11 @@ final financeLocalTableCountsProvider = FutureProvider<LocalTableCounts>((
   ref,
 ) async {
   ref.watch(syncStatusEventStreamProvider);
+  return financeLocalTableCounts(ref);
+});
+
+Future<LocalTableCounts> financeLocalTableCounts(Ref ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   final rows = await db.customSelect(_kLocalCountsSql).get();
   return {for (final r in rows) r.read<String>('t'): r.read<int>('c')};
-});
+}

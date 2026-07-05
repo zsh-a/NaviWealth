@@ -6,9 +6,9 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 import '../../../core/ai/composition/portfolio_snapshot.dart';
-import '../../investment/data/providers.dart';
 
 final financePortfolioSnapshotReaderProvider =
     Provider<PortfolioSnapshotReader>((ref) {

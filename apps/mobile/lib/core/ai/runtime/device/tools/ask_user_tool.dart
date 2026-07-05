@@ -3,11 +3,11 @@
 /// The Claude-Code / Codex interaction pattern: when the model reaches a
 /// high-impact or genuinely ambiguous fork it should NOT guess and keep
 /// going, nor bury the options in prose. It calls `ask_user` with a typed
-/// [DecisionRequest]; the agent loop treats this as a **terminal** action
-/// (it pauses the loop — see `device_agent_loop.dart`), the Host renders
-/// the options as an interactive card, and the user's pick is written back
-/// as the next turn's input. This replaces the old "parse a markdown menu
-/// out of free text" heuristic with a first-class, extensible contract.
+/// [DecisionRequest]; the runtime treats this as a **terminal** action, the
+/// Host renders the options as an interactive card, and the user's pick is
+/// written back as the next turn's input. This replaces the old "parse a
+/// markdown menu out of free text" heuristic with a first-class, extensible
+/// contract.
 ///
 /// `invoke` validates + normalises the request and echoes it back as the
 /// tool result — that echoed value is both the loop's `tool_result` and
@@ -17,7 +17,7 @@ library;
 import '../../../contracts/tool_descriptor.dart' show kDomainShell;
 import 'device_tool.dart';
 
-/// Wire tool name — referenced by the agent loop's terminal-tool check.
+/// Wire tool name — referenced by the runtime terminal-tool check.
 const String kAskUserToolName = 'ask_user';
 
 class AskUserTool implements DeviceTool {
@@ -130,6 +130,8 @@ class AskUserTool implements DeviceTool {
             .toList()
       : const <String>[];
 
-  static Map<String, Object?> _bad(String msg) =>
-      <String, Object?>{'error': msg, 'code': 'bad_request'};
+  static Map<String, Object?> _bad(String msg) => <String, Object?>{
+    'error': msg,
+    'code': 'bad_request',
+  };
 }

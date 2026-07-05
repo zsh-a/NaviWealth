@@ -28,24 +28,11 @@ class _WorkmanagerScheduler implements BackgroundScheduler {
   }
 
   @override
-  Future<void> registerMorningBriefing({
-    Duration interval = const Duration(hours: 24),
+  Future<void> registerTask(
+    BackgroundTaskSpec task, {
+    Duration? interval,
   }) async {
-    return _registerTask(kMorningBriefingTaskName, interval: interval);
-  }
-
-  @override
-  Future<void> registerGarminSync({
-    Duration interval = const Duration(hours: 6),
-  }) {
-    return _registerTask(kGarminSyncTaskName, interval: interval);
-  }
-
-  @override
-  Future<void> registerHealthPlatformSync({
-    Duration interval = const Duration(hours: 6),
-  }) {
-    return _registerTask(kHealthPlatformSyncTaskName, interval: interval);
+    return _registerTask(task.name, interval: interval ?? task.defaultInterval);
   }
 
   Future<void> _registerTask(
@@ -81,18 +68,8 @@ class _WorkmanagerScheduler implements BackgroundScheduler {
   }
 
   @override
-  Future<void> cancelMorningBriefing() async {
-    return _cancelTask(kMorningBriefingTaskName);
-  }
-
-  @override
-  Future<void> cancelGarminSync() async {
-    return _cancelTask(kGarminSyncTaskName);
-  }
-
-  @override
-  Future<void> cancelHealthPlatformSync() async {
-    return _cancelTask(kHealthPlatformSyncTaskName);
+  Future<void> cancelTask(BackgroundTaskSpec task) async {
+    return _cancelTask(task.name);
   }
 
   Future<void> _cancelTask(String taskName) async {

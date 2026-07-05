@@ -7,9 +7,9 @@
 // Tagged `integration` so the suite can be split from the unit gate.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import 'support/integration_env.dart';
 
@@ -37,7 +37,9 @@ void main() {
 
         // ...and through the production stream-provider chain the UI watches.
         env.keepAlive(accountsStreamProvider);
-        final streamed = await env.container.read(accountsStreamProvider.future);
+        final streamed = await env.container.read(
+          accountsStreamProvider.future,
+        );
         expect(
           streamed.map((a) => a.name),
           contains('Schwab'),
@@ -55,7 +57,9 @@ void main() {
         // Exercises the full read model: stream providers → currency
         // converter → DashboardAggregator, all against the real DB.
         env.keepAlive(dashboardSnapshotProvider);
-        final snapshot = await env.container.read(dashboardSnapshotProvider.future);
+        final snapshot = await env.container.read(
+          dashboardSnapshotProvider.future,
+        );
 
         expect(snapshot.netWorth.amount.toDouble(), 0.0);
         expect(snapshot.totalAssets.amount.toDouble(), 0.0);

@@ -15,6 +15,13 @@ class _NoopApi implements AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    String? turnId,
+    String? sessionId,
+    String? threadId,
+    String? surface,
+    String? agentId,
+    String? mode,
+    Map<String, Object?> metadata = const <String, Object?>{},
     Map<String, Object?>? portfolioSnapshot,
     ContextPack? contextPack,
     String? model,
@@ -74,6 +81,12 @@ void main() {
         name: 'propose_trade',
         input: const <String, Object?>{'symbol': 'AAPL'},
         output: const <String, Object?>{'kind': 'trade'},
+        decisionSelection: DecisionSelection(
+          optionId: 'a',
+          label: '方案 A',
+          reply: '我选择「方案 A」。请在此方案下继续。',
+          selectedAt: DateTime.utc(2026, 5, 1),
+        ),
         applyState: ProposalApplyState(
           status: ProposalApplyStatus.applied,
           appliedEntityId: 'je-1',
@@ -88,6 +101,8 @@ void main() {
       expect(decoded.single.applyState, isNotNull);
       expect(decoded.single.applyState!.status, ProposalApplyStatus.applied);
       expect(decoded.single.applyState!.appliedEntityId, 'je-1');
+      expect(decoded.single.decisionSelection?.optionId, 'a');
+      expect(decoded.single.decisionSelection?.label, '方案 A');
     });
 
     test('decoder handles legacy payload without apply_state field', () {

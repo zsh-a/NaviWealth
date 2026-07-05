@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_runner.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
@@ -94,8 +95,10 @@ void main() {
   test('runOnce captures throws as failed result', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
-    final agent =
-        _StubAgent(id: 'boom', throws: StateError('upstream offline'));
+    final agent = _StubAgent(
+      id: 'boom',
+      throws: StateError('upstream offline'),
+    );
     final result = await runner.runOnce(agent, _context(rt, now));
     expect(result.status, AgentRunStatus.failed);
     expect(result.error, contains('upstream offline'));
@@ -121,6 +124,30 @@ void main() {
     final agent = _StubAgent(id: 'boom', throws: 'nope');
     await runner.runOnce(agent, _context(rt, now));
     expect(runner.lastRunAt('boom'), isNull);
+  });
+
+  test('skipped runs advance lastRunAt so tick does not loop', () async {
+    final rt = _runtime();
+    final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
+    final agent = _StubAgent(
+      id: 'quiet',
+      onRun: (ctx) => AgentRunResult.skipped(
+        agentId: 'quiet',
+        startedAt: ctx.now,
+        finishedAt: ctx.now.add(const Duration(milliseconds: 10)),
+        reason: 'nothing new',
+      ),
+    );
+
+    await runner.runOnce(agent, _context(rt, now));
+    expect(runner.lastRunAt('quiet'), now);
+
+    final tooSoon = await runner.tick(
+      agents: [agent],
+      context: _context(rt, now.add(const Duration(minutes: 30))),
+    );
+    expect(tooSoon, isEmpty);
+    expect(agent.runCount, 1);
   });
 
   test('tick fires every agent whose schedule says yes', () async {
@@ -153,12 +180,8 @@ void main() {
       schedule: const AgentSchedule(interval: Duration(hours: 1)),
     );
 
-    await runner.tick(
-      agents: [hourly],
-      context: _context(rt, now),
-    );
-    final tooSoon =
-        await runner.tick(
+    await runner.tick(agents: [hourly], context: _context(rt, now));
+    final tooSoon = await runner.tick(
       agents: [hourly],
       context: _context(rt, now.add(const Duration(minutes: 30))),
     );
@@ -171,5 +194,54 @@ void main() {
     );
     expect(later, hasLength(1));
     expect(hourly.runCount, 2);
+  });
+
+  test('AgentRunController runs registered agent by id', () async {
+    final rt = _runtime();
+    final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
+    final agent = _StubAgent(id: 'registered');
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final ref = container.read(_refProvider);
+    final controller = AgentRunController(
+      runner: runner,
+      agents: [agent],
+      ref: ref,
+    );
+
+    final result = await controller.runOnceById('registered', now: now);
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(agent.runCount, 1);
+  });
+
+  test('AgentRunController ticks only selected registered agents', () async {
+    final rt = _runtime();
+    final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
+    final hourly = _StubAgent(
+      id: 'hourly',
+      schedule: const AgentSchedule(interval: Duration(hours: 1)),
+    );
+    final other = _StubAgent(
+      id: 'other',
+      schedule: const AgentSchedule(interval: Duration(hours: 1)),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final ref = container.read(_refProvider);
+    final controller = AgentRunController(
+      runner: runner,
+      agents: [hourly, other],
+      ref: ref,
+    );
+
+    final results = await controller.tick(
+      now: now,
+      onlyAgentIds: const <String>['hourly'],
+    );
+
+    expect(results.map((result) => result.agentId), ['hourly']);
+    expect(hourly.runCount, 1);
+    expect(other.runCount, 0);
   });
 }

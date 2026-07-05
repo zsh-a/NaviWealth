@@ -74,7 +74,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](../ai/ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
 | Backend 只做 sync_rows 存储 | [`sync-v2.md`](../sync/sync-v2.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
-| Device tool descriptor catalog | `features/options_income/ai_tools/` + `features/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
+| Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
 | Modal 系统 | memory: modal_system | 详情面板用 `showAppFormSheet` + `AppSheetFooter`；CI 由 `tool/check-modal-helpers.sh` 守护。 |
@@ -140,7 +140,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ### 4.1 MVP：yfinance 非官方端点
 
-复用 `lib/data/market/providers/yfinance_provider.dart` 同款 `MarketHttpClient` + `RateLimiter`，新增 `lib/data/market/providers/options/yfinance_options_provider.dart`。
+复用 `features/finance/data/market/providers/yfinance_provider.dart` 同款 `MarketHttpClient` + `RateLimiter`，新增 `features/finance/data/market/providers/options/yfinance_options_provider.dart`。
 
 **配额策略**：
 
@@ -173,7 +173,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ## 5. 领域层
 
-位置：`apps/mobile/lib/features/options_income/domain/`。
+位置：`apps/mobile/lib/features/finance/options_income/domain/`。
 
 ### 5.1 实体
 
@@ -257,7 +257,9 @@ class OpportunityExplanation with _$OpportunityExplanation {
 
 - `Money` 不允许跨币种相加（已有）。`cashRequired = strike * 100` 走 `Money.scale(int)`，**不是** `Money + Money`。
 - `Decimal` 用于 delta / IV / 百分比 / 评分。
-- `IntRange` / `DecimalRange` 在 `lib/domain/values/` 已有或新增。
+- `Money` 等金额/汇率计算值对象归 Finance 域所有；新增 Options
+  Income 专属值对象放在 `features/finance/options_income/domain/`，只有真正
+  跨域中立的 primitive 才进入 `core/`。
 
 ---
 
@@ -382,8 +384,8 @@ cache 表有 TTL：单批保留 24 小时，新批扫描时清除超过 1 周的
 
 ## 7. 评分引擎
 
-位置：`apps/mobile/lib/features/options_income/domain/services/opportunity_scorer.dart`。
-形态参考 FIRE engine（`lib/features/fire/domain/`）——**纯函数、无 IO、可重放**。
+位置：`apps/mobile/lib/features/finance/options_income/domain/services/opportunity_scorer.dart`。
+形态参考 FIRE engine（`lib/features/finance/fire/domain/`）——**纯函数、无 IO、可重放**。
 
 ### 7.1 硬过滤（Hard Filters）
 
@@ -450,8 +452,8 @@ final_score =
 ### 8.2 Tool 注册
 
 Income Planner tools are FinanceOS-owned device tools. Their implementations
-live under `features/options_income/ai_tools/`; their registrations and
-`ToolDescriptor` metadata are exported through `features/finance_ai_tools.dart`
+live under `features/finance/options_income/ai_tools/`; their registrations and
+`ToolDescriptor` metadata are exported through `features/finance/finance_ai_tools.dart`
 and merged into the production catalog by `kFinancePack`.
 
 **故意不加**：`propose_options_trade`（下单是 `SideEffect.externalCall`，不在本设计范围）。
@@ -461,7 +463,7 @@ and merged into the production catalog by `kFinancePack`.
 文件落点：
 
 ```
-lib/features/options_income/ai_tools/
+lib/features/finance/options_income/ai_tools/
 ├── get_options_income_opportunities_tool.dart
 ├── get_options_strategy_profile_tool.dart
 ├── get_wheel_lifecycle_tool.dart
@@ -512,7 +514,7 @@ LLM **不能**做的事（dispatcher 层不强制，但 system prompt 提示）�
 
 ### 9.1 入口
 
-主页面：`apps/mobile/lib/features/options_income/presentation/pages/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
+主页面：`apps/mobile/lib/features/finance/options_income/ui/income_planner/income_planner_page.dart`，命名 **Income Planner / 期权现金流规划**。
 
 页内四 tab：
 
@@ -539,7 +541,7 @@ Watchlist Opportunities  关注标的机会
 - ApprovedUnderlyings 列表：增删 + 单个标的的 `allowPut` / `allowCall` / `maxBuyPrice` / `minSellPrice`。
 - 首次进入强制弹"期权风险披露"（基于 OCC ODD），用户确认后写入 `riskDisclosureAckAt`。
 
-**L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode`)的展示标签集中在 `presentation/income_planner_labels.dart` 的本地化辅助函数中,domain 层不依赖 `AppLocalizations`。
+**L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode`)的展示标签集中在 `ui/income_planner_labels.dart` 的本地化辅助函数中,domain 层不依赖 `AppLocalizations`。
 
 ### 9.3 web 行为
 
@@ -555,11 +557,11 @@ if (kIsWeb) return const SizedBox.shrink();
 
 | 耦合方 | 交互方式 |
 |---|---|
-| `features/investment` | `ExposureChecker` 读 holdings snapshot：covered call 要求 ≥100 股；cash-secured put 行权后单标的暴露 ≤ profile 上限。 |
-| `features/accounts` + `cashflow` | 计算 `availableCashForOptions = cashAccounts - kCashReserveBuffer`，与 FIRE 现金桶规则相容。 |
-| `features/rebalance` | **软约束**：covered call strike 高于 rebalance target sell price → 加分；sell put strike 低于 target buy price → 加分。**不阻塞** rebalance 计算。 |
-| `features/fire` | 期权 premium 入账后通过 `cashflow_buckets` 体现为 "options income"。FIRE engine 不感知期权语义。 |
-| `features/activity` | `OptionsTradeJournalTable` 写入触发 domain event log，进 activity timeline。 |
+| `features/finance/investment` | `ExposureChecker` 读 holdings snapshot：covered call 要求 ≥100 股；cash-secured put 行权后单标的暴露 ≤ profile 上限。 |
+| `features/finance/accounts` + `cashflow` | 计算 `availableCashForOptions = cashAccounts - kCashReserveBuffer`，与 FIRE 现金桶规则相容。 |
+| `features/finance/rebalance` | **软约束**：covered call strike 高于 rebalance target sell price → 加分；sell put strike 低于 target buy price → 加分。**不阻塞** rebalance 计算。 |
+| `features/finance/fire` | 期权 premium 入账后通过 `cashflow_buckets` 体现为 "options income"。FIRE engine 不感知期权语义。 |
+| `features/finance/activity` | `OptionsTradeJournalTable` 写入触发 domain event log，进 activity timeline。 |
 | `features/ai_chat` | 通过 §8 注册的 tool 读 cache。无新 chat 入口。 |
 
 ---
@@ -612,7 +614,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](../sync
 - ❌ 不让 AI tool 触发实时扫描。
 - ❌ 不在 web 构建出现 Income Planner 入口。
 - ❌ 不绕过 `OptionsApprovedUnderlyings` 给"陌生标的"打分。
-- ❌ 不引入新的 chat 入口或新的 AI runtime——所有 LLM 调用走现有 `DeviceAgentLoop`。
+- ❌ 不引入新的 chat 入口或新的 AI runtime——所有 LLM 调用走现有 FRB/native runtime。
 - ❌ MVP 不接券商交易 API；不存在 `propose_options_trade` 工具。
 
 ---
@@ -626,7 +628,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](../sync
 | 2026-05-21 | 评分引擎在端侧（纯 Dart） | 在 Worker 上 | 与 device-only 原则一致；评分逻辑不下放 server |
 | 2026-05-21 | opportunity cache 不上同步 | 走 sync_rows | 派生数据，重算成本低；跨设备各自扫描更新鲜 |
 | 2026-05-21 | profile / approved / journal 走 sync_rows | 仅本地 | 用户状态，跨设备一致性必要 |
-| 2026-05-21 | 模块为独立 feature `options_income/` | 塞进 `investment/` | 跨 investment / accounts / fire / rebalance，独立 feature 避免双向依赖 |
+| 2026-05-21 | 模块为 FinanceOS 子 feature `features/finance/options_income/` | 塞进 `investment/` | 跨 investment / accounts / fire / rebalance，保持独立 FinanceOS slice 避免双向依赖 |
 | 2026-05-21 | 命名 "Income Planner" | "Options Scanner" | 避免被识别成交易终端；与 NaviWealth 财富管理定位一致 |
 
 ---
@@ -636,7 +638,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](../sync
 P0–P3 已落地（2026-05-21）：
 
 ```
-apps/mobile/lib/features/options_income/
+apps/mobile/lib/features/finance/options_income/
 ├── application/
 │   ├── scan_controller.dart            # P1 — StateNotifier driving refresh button
 │   ├── scan_inputs_bridge.dart         # P1 — holdings/cash bridge from portfolio
@@ -655,10 +657,12 @@ apps/mobile/lib/features/options_income/
 │   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
 │   ├── services/opportunity_scorer.dart# P1/P2 — pure-Dart scorer
 │   └── trade_journal_entry.dart        # P3
-└── presentation/
+└── ui/
     ├── approved_underlying_form_sheet.dart
-    ├── income_planner_page.dart
-    ├── income_planner_strings.dart
+    ├── income_planner/
+    │   ├── income_planner_page.dart
+    │   └── income_planner_page_*.dart
+    ├── income_planner_labels.dart
     ├── occ_disclosure_sheet.dart
     ├── opportunity_detail_sheet.dart   # P1 — score breakdown, worst-case, log-trade CTA
     ├── strategy_profile_sheet.dart
@@ -668,7 +672,7 @@ apps/mobile/lib/data/market/providers/options/
 ├── options_chain_provider.dart         # P1 abstract chain provider
 └── yfinance_options_provider.dart      # P1 — yfinance options chain adapter
 
-apps/mobile/lib/features/options_income/ai_tools/
+apps/mobile/lib/features/finance/options_income/ai_tools/
 ├── get_options_income_opportunities_tool.dart  # P1 — cache-read tool
 ├── get_options_strategy_profile_tool.dart      # P1 — profile read tool
 ├── get_wheel_lifecycle_tool.dart               # P4 — wheel lifecycle read tool
@@ -678,9 +682,9 @@ apps/mobile/lib/features/options_income/ai_tools/
 apps/mobile/lib/core/persistence/tables.dart       # +OptionsTradeJournal
 apps/mobile/lib/core/persistence/local_only_tables.dart # opportunity cache DDL
 apps/mobile/lib/core/persistence/app_database.dart # schemaVersion updates
-apps/mobile/lib/core/sync/row_applier.dart         # sync_rows table allow-list
+apps/mobile/lib/core/sync/sync_table_registry.dart # sync_rows table registry
 apps/mobile/lib/core/sync/providers.dart           # row-state sync providers
-apps/mobile/lib/features/finance_ai_tools.dart     # Income Planner tool registrations + descriptors
+apps/mobile/lib/features/finance/finance_ai_tools.dart     # Income Planner tool registrations + descriptors
 apps/backend/migrations/0002_sync_schema.sql       # backend sync_rows store
 apps/backend/src/sync/store.rs                     # schema-agnostic row store
 ```
@@ -688,6 +692,6 @@ apps/backend/src/sync/store.rs                     # schema-agnostic row store
 后续阶段会落地：
 
 ```
-P4: features/options_income/application/wheel_state_machine.dart   # Wheel / income cycle
+P4: features/finance/options_income/application/wheel_state_machine.dart   # Wheel / income cycle
 P5: apps/backend/src/routes/market/options.rs                       # Tradier OAuth proxy
 ```

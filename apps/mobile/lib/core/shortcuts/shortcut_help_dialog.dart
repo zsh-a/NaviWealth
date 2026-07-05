@@ -66,9 +66,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(_descriptionFor(l10n, b.descriptionKey)),
-                ),
+                Expanded(child: Text(_descriptionFor(l10n, b.descriptionKey))),
                 _ActivatorBadge(activator: b.activator),
               ],
             ),
@@ -106,7 +104,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
       case 'shortcutSwitchTab2':
         return l10n.shortcutSwitchTab(3, l10n.navAccounts);
       case 'shortcutSwitchTab3':
-        return l10n.shortcutSwitchTab(4, l10n.navSettings);
+        return l10n.shortcutSwitchTab(4, l10n.navPlan);
     }
     return key;
   }
@@ -142,7 +140,7 @@ class _ActivatorBadge extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: context.theme.typography.xs2.copyWith(
+              style: context.theme.typography.body.xs2.copyWith(
                 fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
               ),
             ),
@@ -192,7 +190,7 @@ class _KeyLabelBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: context.theme.typography.xs2.copyWith(
+        style: context.theme.typography.body.xs2.copyWith(
           fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
         ),
       ),

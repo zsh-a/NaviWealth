@@ -22,6 +22,9 @@ typedef AuthSessionReader = AuthSession? Function();
 /// the local session has been cleared and retry would be futile.
 typedef AuthOnUnauthorized = Future<bool> Function();
 
+/// Switches the current cloud session into local-only mode.
+typedef SwitchToLocalOnly = Future<void> Function();
+
 /// Persistent token storage. Backed by the same [SecureKeyStore] used for
 /// the SQLCipher master key.
 final tokenStoreProvider = Provider<TokenStore>(
@@ -111,6 +114,14 @@ final authStateProvider = Provider<AuthState?>((ref) {
 final authOnUnauthorizedProvider = Provider<AuthOnUnauthorized>(
   (ref) =>
       () async => false,
+);
+
+/// Cross-feature command hook used by Settings. The concrete auth feature
+/// binds this to `AuthController.switchToLocalOnly` in app bootstrap.
+final switchToLocalOnlyProvider = Provider<SwitchToLocalOnly>(
+  (ref) =>
+      () async =>
+          throw StateError('switchToLocalOnlyProvider is not configured'),
 );
 
 /// Per-user opt-in store backing the Settings → Domains toggle and the

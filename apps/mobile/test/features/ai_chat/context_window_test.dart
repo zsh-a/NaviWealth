@@ -6,6 +6,7 @@ ChatMessage _msg({
   required ChatRole role,
   required String content,
   ChatMessageStatus status = ChatMessageStatus.complete,
+  List<ToolInvocation> toolCalls = const <ToolInvocation>[],
 }) => ChatMessage(
   id: 'id-${DateTime.now().microsecondsSinceEpoch}-${content.hashCode}',
   sessionId: 'sess',
@@ -14,6 +15,7 @@ ChatMessage _msg({
   content: content,
   status: status,
   createdAt: DateTime.utc(2026, 1, 1),
+  toolCalls: toolCalls,
 );
 
 void main() {
@@ -89,5 +91,63 @@ void main() {
       expect(ctx.wire.map((m) => m.content), ['real-1', 'real-2', 'next']);
       expect(ctx.droppedTurns, 0);
     });
+
+    test(
+      'keeps ask_user decision transcript even when assistant text is empty',
+      () {
+        final history = [
+          _msg(role: ChatRole.user, content: '接下来怎么实现？'),
+          _msg(
+            role: ChatRole.assistant,
+            content: '',
+            toolCalls: [
+              ToolInvocation(
+                id: 'decision-1',
+                name: 'ask_user',
+                input: <String, Object?>{},
+                output: <String, Object?>{
+                  'type': 'decision_request',
+                  'title': '实现路径选择',
+                  'context': '需要在通用 chat agent 架构下继续推进。',
+                  'options': <Object?>[
+                    <String, Object?>{
+                      'id': 'a',
+                      'label': '先补上下文',
+                      'description': '确保用户选择能被下一轮模型看到。',
+                      'recommended': true,
+                    },
+                    <String, Object?>{
+                      'id': 'b',
+                      'label': '先做 UI',
+                      'description': '先优化展示层。',
+                    },
+                  ],
+                },
+                decisionSelection: DecisionSelection(
+                  optionId: 'a',
+                  label: '先补上下文',
+                  reply: '我选择「先补上下文」。请在此方案下继续。',
+                  selectedAt: DateTime.utc(2026, 6, 30),
+                ),
+              ),
+            ],
+          ),
+        ];
+
+        final ctx = buildContextWindow(
+          history: history,
+          pending: '继续',
+          charBudget: 1000,
+        );
+
+        expect(ctx.droppedTurns, 0);
+        expect(ctx.wire.map((m) => m.role), ['user', 'assistant', 'user']);
+        final transcript = ctx.wire[1].content;
+        expect(transcript, contains('Decision requested: 实现路径选择'));
+        expect(transcript, contains('a: 先补上下文'));
+        expect(transcript, contains('Selected option: a (先补上下文)'));
+        expect(transcript, contains('User reply: 我选择「先补上下文」。请在此方案下继续。'));
+      },
+    );
   });
 }

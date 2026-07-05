@@ -3,9 +3,9 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:uuid/uuid.dart';
 
 /// Read/write API for securities-class [Asset] rows — stocks, ETFs, mutual

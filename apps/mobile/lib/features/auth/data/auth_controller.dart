@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/route_guard.dart';
 import '../../../core/auth/auth_errors.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/auth_state.dart';
@@ -11,6 +10,7 @@ import '../../../core/auth/providers.dart';
 import '../../../core/auth/token_store.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/persistence/providers.dart';
+import '../../../core/shell/route_guard.dart';
 import '../../../core/sync/sync_backfill.dart' show SyncBackfill;
 import 'app_mode_store.dart';
 

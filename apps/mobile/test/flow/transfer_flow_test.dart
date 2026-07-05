@@ -5,8 +5,8 @@
 // verifies the two ledger legs were persisted.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import 'support/app_harness.dart';
 import 'support/page_objects.dart';

@@ -1,12 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
-
-import 'package:naviwealth/domain/entities/historical_bar.dart';
-import 'package:naviwealth/domain/entities/quote.dart';
-import 'package:naviwealth/domain/entities/symbol_info.dart';
-import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
+import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
+
 import 'market_provider.dart';
 
 /// Yahoo Finance adapter using the public `query1`/`query2` chart and search

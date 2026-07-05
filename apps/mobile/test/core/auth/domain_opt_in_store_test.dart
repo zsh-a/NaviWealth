@@ -18,8 +18,10 @@ void main() {
       addTearDown(db.close);
       final store = DomainOptInStore(db);
 
-      final updated = DomainOptIns.financeOnly
-          .withScope(DomainScope.health, enabled: true);
+      final updated = DomainOptIns.financeOnly.withScope(
+        DomainScope.health,
+        enabled: true,
+      );
       await store.write(updated);
 
       expect(await store.read(), updated);

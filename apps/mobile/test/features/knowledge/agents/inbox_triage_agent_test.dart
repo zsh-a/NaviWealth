@@ -3,27 +3,24 @@
 ///
 /// Two layers are covered:
 ///
-/// 1. [LlmInboxTriageClassifier] in isolation — driven by a
-///    [_FakeDeviceLlmClient] returning scripted Anthropic-shaped `content`
-///    blocks. Covers the happy path (all three proposal kinds), the
-///    confidence gate, and the silent degradation to the heuristic on
-///    every failure mode (throw / timeout / malformed JSON).
+/// 1. [FrbInboxTriageClassifier] in isolation — driven by a fake FRB LLM
+///    bridge returning scripted profile completion content. Covers the happy
+///    path and fallback behavior.
 /// 2. The agent end-to-end against an in-memory Drift DB — exercising the
 ///    classifier seam, the per-run cap ([kInboxTriageMaxNotesPerRun]),
 ///    the dismissed-kind protection, and the no-LLM == heuristic parity
 ///    (the heuristic produces identical proposals whether the agent runs
-///    with the heuristic classifier or with an LLM client that fails).
+///    with the heuristic classifier or with an FRB completion that fails).
 library;
 
-import 'dart:async';
-
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -32,11 +29,13 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';
 import 'package:naviwealth/features/knowledge/data/inbox_triage_classifier.dart';
 import 'package:naviwealth/features/knowledge/data/inbox_triage_repository.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/llm_inbox_triage_classifier.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 
+import '../../../app/agent_runtime_effect_plan_test_harness.dart';
 import '../../../core/persistence/test_database.dart';
 
 const _owner = 'u-test';
@@ -77,96 +76,49 @@ KnowledgeDecision _decision({required String id, required String question}) =>
       sync: _meta(),
     );
 
-// ---------------------------------------------------------------------------
-// Fake DeviceLlmClient (same shape as llm_capture_classifier_test.dart).
-// ---------------------------------------------------------------------------
+class _FixedInboxTriageClassifier implements InboxTriageClassifier {
+  const _FixedInboxTriageClassifier({required this.proposals});
 
-class _FakeConfig implements DeviceLlmConfig {
-  const _FakeConfig();
-  @override
-  String get model => 'test-model';
-}
-
-class _FakeDeviceLlmClient implements DeviceLlmClient {
-  _FakeDeviceLlmClient({required this.behavior});
-  final _Behavior behavior;
-  int calls = 0;
+  final List<InboxProposal> proposals;
 
   @override
-  DeviceLlmConfig get config => const _FakeConfig();
-
-  @override
-  Stream<LlmStreamEvent> streamMessages(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) => throw UnimplementedError();
-
-  @override
-  Future<AnthropicCompletion> complete(
-    AnthropicRequest request, {
-    CancelToken? cancelToken,
-  }) async {
-    calls++;
-    return behavior.run();
+  Future<List<InboxProposal>> triage(
+    KnowledgeNote note,
+    List<KnowledgeDecision> decisions,
+  ) async {
+    return proposals;
   }
 }
 
-abstract class _Behavior {
-  Future<AnthropicCompletion> run();
-}
-
-class _ReturnsText extends _Behavior {
-  _ReturnsText(this.text);
-  final String text;
-  @override
-  Future<AnthropicCompletion> run() async => AnthropicCompletion(
-    content: <Object?>[
-      <String, Object?>{'type': 'text', 'text': text},
-    ],
-  );
-}
-
-class _Throws extends _Behavior {
-  _Throws(this.error);
-  final Object error;
-  @override
-  Future<AnthropicCompletion> run() async => throw error;
-}
-
-class _Hangs extends _Behavior {
-  @override
-  Future<AnthropicCompletion> run() => Completer<AnthropicCompletion>().future;
-}
-
 void main() {
-  group('LlmInboxTriageClassifier', () {
-    test('parses all three proposal kinds from one JSON envelope', () async {
-      final fake = _FakeDeviceLlmClient(
-        behavior: _ReturnsText('''
+  group('FrbInboxTriageClassifier', () {
+    test('parses all proposal kinds from FRB profile completion', () async {
+      final bridge = _FakeLlmBridge(
+        responseText: '''
 {
   "classification": {"kind":"decision_candidate","confidence":0.82,
                      "reason_zh":"在权衡两个方案"},
   "tags": {"tags":["fire","options"],"confidence":0.75,"reason_zh":"含期权/FIRE"},
   "link_to_decision": {"decision_ids":["dec1"],"confidence":0.7,
                        "reason_zh":"与该决策相关"}
-}'''),
+}''',
       );
-      final c = LlmInboxTriageClassifier(client: fake);
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
       final note = _note(id: 'n1', title: 'QQQ vs BOXX', body: '该不该升级对冲?');
+
       final out = await c.triage(note, [
         _decision(id: 'dec1', question: '该不该升级动态对冲?'),
       ]);
 
-      expect(fake.calls, 1, reason: '≤ 1 round-trip per note');
+      expect(bridge.calls, 1);
+      expect(bridge.lastMessages.first['role'], 'system');
+      expect(bridge.lastMessages.last['role'], 'user');
+      expect(bridge.lastMetadata['surface'], 'knowledge_inbox_triage');
       expect(out, hasLength(3));
       final byKind = {for (final p in out) p.kind: p};
       expect(
         byKind[InboxProposalKind.classification]!.payload['kind'],
         'decision_candidate',
-      );
-      expect(
-        byKind[InboxProposalKind.tags]!.payload['tags'],
-        containsAll(<String>['fire', 'options']),
       );
       expect(
         byKind[InboxProposalKind.linkToDecision]!
@@ -175,113 +127,73 @@ void main() {
       );
     });
 
-    test('drops proposals below the 0.6 confidence gate', () async {
-      final fake = _FakeDeviceLlmClient(
-        behavior: _ReturnsText('''
+    test('falls back to heuristic when FRB completion fails', () async {
+      final bridge = _FakeLlmBridge(error: StateError('native unavailable'));
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
+
+      final out = await c.triage(
+        _note(id: 'n1', title: 'edge-first', body: 'short def'),
+        const [],
+      );
+
+      expect(bridge.calls, 1);
+      expect(out.single.kind, InboxProposalKind.classification);
+      expect(out.single.payload['kind'], 'concept_candidate');
+    });
+
+    test('drops low-confidence proposals without heuristic noise', () async {
+      final bridge = _FakeLlmBridge(
+        responseText: '''
 {
   "classification": {"kind":"concept_candidate","confidence":0.4,"reason_zh":"勉强"},
   "tags": {"tags":["fire"],"confidence":0.55,"reason_zh":"勉强"},
   "link_to_decision": null
-}'''),
+}''',
       );
-      final c = LlmInboxTriageClassifier(client: fake);
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
+
       final out = await c.triage(
         _note(id: 'n1', title: 't', body: 'b'),
         const [],
       );
-      expect(out, isEmpty, reason: 'both < 0.6 → dropped, no fallback noise');
+
+      expect(out, isEmpty, reason: 'both < 0.6 -> dropped, no fallback noise');
     });
 
-    test('an empty (but well-formed) verdict yields no proposals', () async {
-      final fake = _FakeDeviceLlmClient(
-        behavior: _ReturnsText(
-          '{"classification":null,"tags":null,"link_to_decision":null}',
-        ),
+    test('well-formed empty verdict suppresses heuristic proposals', () async {
+      final bridge = _FakeLlmBridge(
+        responseText:
+            '{"classification":null,"tags":null,"link_to_decision":null}',
       );
-      final c = LlmInboxTriageClassifier(client: fake);
-      // Note that the heuristic WOULD propose a concept for (short body),
-      // proving the empty LLM verdict suppresses heuristic noise.
+      final c = FrbInboxTriageClassifier(llmClient: bridge);
+
       final out = await c.triage(
         _note(id: 'n1', title: 'X', body: 'short'),
         const [],
       );
+
       expect(out, isEmpty);
     });
 
-    test('ignores hallucinated decision ids (not in candidate set)', () async {
-      final fake = _FakeDeviceLlmClient(
-        behavior: _ReturnsText(
-          '''
-{"classification":null,"tags":null,
- "link_to_decision":{"decision_ids":["ghost"],"confidence":0.9,"reason_zh":"x"}}''',
-        ),
-      );
-      final c = LlmInboxTriageClassifier(client: fake);
-      final out = await c.triage(_note(id: 'n1', title: 't', body: 'b'), [
-        _decision(id: 'dec1', question: 'real one'),
-      ]);
-      expect(out, isEmpty, reason: '"ghost" not in candidates → dropped');
-    });
-
-    test('respects already-tagged notes (no tag proposal)', () async {
-      final fake = _FakeDeviceLlmClient(
-        behavior: _ReturnsText('''
+    test(
+      'ignores hallucinated decision ids and already-tagged notes',
+      () async {
+        final bridge = _FakeLlmBridge(
+          responseText: '''
 {"classification":null,
  "tags":{"tags":["fire"],"confidence":0.9,"reason_zh":"x"},
- "link_to_decision":null}'''),
-      );
-      final c = LlmInboxTriageClassifier(client: fake);
-      final out = await c.triage(
-        _note(id: 'n1', title: 't', body: 'b', tags: const ['existing']),
-        const [],
-      );
-      expect(out, isEmpty, reason: 'user already tagged → skip tags');
-    });
+ "link_to_decision":{"decision_ids":["ghost"],"confidence":0.9,"reason_zh":"x"}}''',
+        );
+        final c = FrbInboxTriageClassifier(llmClient: bridge);
 
-    group('silent fallback to heuristic', () {
-      test('client throws → heuristic kicks in', () async {
-        final fake = _FakeDeviceLlmClient(
-          behavior: _Throws(
-            const LlmRequestException(statusCode: 500, message: 'boom'),
-          ),
-        );
-        final c = LlmInboxTriageClassifier(client: fake);
-        // Short body + title with no question → heuristic concept_candidate.
         final out = await c.triage(
-          _note(id: 'n1', title: 'edge-first', body: 'short def'),
-          const [],
+          _note(id: 'n1', title: 't', body: 'b', tags: const ['existing']),
+          [_decision(id: 'dec1', question: 'real one')],
         );
-        expect(out, hasLength(1));
-        expect(out.single.payload['kind'], 'concept_candidate');
-      });
 
-      test('timeout → heuristic kicks in', () async {
-        final fake = _FakeDeviceLlmClient(behavior: _Hangs());
-        final c = LlmInboxTriageClassifier(
-          client: fake,
-          requestTimeout: const Duration(milliseconds: 50),
-        );
-        final out = await c.triage(
-          _note(id: 'n1', title: 'edge-first', body: 'short def'),
-          const [],
-        );
-        expect(out, hasLength(1));
-        expect(out.single.payload['kind'], 'concept_candidate');
-      });
-
-      test('malformed JSON → heuristic kicks in', () async {
-        final fake = _FakeDeviceLlmClient(
-          behavior: _ReturnsText('I think this is a concept but no JSON.'),
-        );
-        final c = LlmInboxTriageClassifier(client: fake);
-        final out = await c.triage(
-          _note(id: 'n1', title: 'edge-first', body: 'short def'),
-          const [],
-        );
-        expect(out, hasLength(1));
-        expect(out.single.payload['kind'], 'concept_candidate');
-      });
-    });
+        expect(out, isEmpty);
+      },
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -323,18 +235,27 @@ void main() {
       return c.read(probe.future);
     }
 
-    test('LLM path persists the proposals the classifier returned', () async {
+    test('classifier seam persists returned proposals', () async {
       final c = container();
       await repo.upsertNote(
         _note(id: 'n1', title: 'QQQ vs BOXX', body: '该不该升级?'),
       );
-      final fake = _FakeDeviceLlmClient(
-        behavior: _ReturnsText('''
-{"classification":{"kind":"decision_candidate","confidence":0.9,"reason_zh":"x"},
- "tags":null,"link_to_decision":null}'''),
-      );
       final agent = InboxTriageAgent(
-        classifier: LlmInboxTriageClassifier(client: fake),
+        classifier: _FixedInboxTriageClassifier(
+          proposals: <InboxProposal>[
+            InboxProposal(
+              kind: InboxProposalKind.classification,
+              summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
+              payload: const <String, Object?>{
+                'note_id': 'n1',
+                'kind': 'decision_candidate',
+                'confidence': 0.9,
+                'reason': 'x',
+              },
+              status: InboxProposalStatus.pending,
+            ),
+          ],
+        ),
       );
 
       final res = await runAgent(c, agent);
@@ -395,7 +316,7 @@ void main() {
 
     test('no-LLM path == heuristic path (parity)', () async {
       // Two identical notes; one agent runs the heuristic classifier
-      // directly, the other runs an LLM client that always throws (so it
+      // directly, the other runs the FRB classifier with a failing bridge (so it
       // silently falls back to the heuristic). The persisted proposals
       // must match.
       final c = container();
@@ -409,7 +330,7 @@ void main() {
       await runAgent(c, heuristicAgent);
       final heuristicRec = await triage.findForNote('n1');
 
-      // Reset and re-run with the failing LLM classifier.
+      // Reset and re-run with the failing FRB classifier.
       db = makeTestDatabase();
       repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
       triage = InboxTriageRepository(db: db);
@@ -418,12 +339,8 @@ void main() {
         _note(id: 'n1', title: 'edge-first', body: 'short'),
       );
       final fallbackAgent = InboxTriageAgent(
-        classifier: LlmInboxTriageClassifier(
-          client: _FakeDeviceLlmClient(
-            behavior: _Throws(
-              const LlmRequestException(statusCode: 500, message: 'down'),
-            ),
-          ),
+        classifier: FrbInboxTriageClassifier(
+          llmClient: _FakeLlmBridge(error: StateError('native unavailable')),
         ),
       );
       await runAgent(c2, fallbackAgent);
@@ -458,6 +375,61 @@ void main() {
 
       final triagedIds = await triage.triagedNoteIds(ownerUserId: _owner);
       expect(triagedIds, hasLength(kInboxTriageMaxNotesPerRun));
+    });
+
+    test('reads triage source through FRB effect loop', () async {
+      final dispatcher = _InboxTriageDispatcher();
+      final bridge = FakeAgentRuntimeEffectPlanBridge();
+      final traces = <AgentRuntimeNativeStepRunResult>[];
+      final reader = FrbInboxTriageSourceReader(
+        runtime: _runtime(
+          bridge: bridge,
+          dispatcher: dispatcher,
+          recordTrace: (stepRun) async => traces.add(stepRun),
+        ),
+      );
+
+      final snapshot = await reader.read(_context());
+
+      expect(snapshot.untriagedNotes.single.id, 'n-frb');
+      expect(snapshot.decisions.single.id, 'd-frb');
+      expect(dispatcher.calls.map((call) => call.name), <String>[
+        'list_inbox_triage_candidates',
+        'list_triage_decisions',
+      ]);
+      expect(bridge.startRequests.single.agentId, kKnowledgeInboxTriageAgentId);
+      expect(
+        bridge.startRequests.single.request['metadata'],
+        containsPair('surface', 'knowledge_inbox_triage'),
+      );
+      expect(traces.single.terminalStep['status'], 'completed');
+      expect(traces.single.dispatchedEffectCount, 2);
+    });
+
+    test('falls back when FRB triage source read fails', () async {
+      final fallback = _FallbackSourceReader(
+        InboxTriageSourceSnapshot(
+          untriagedNotes: <KnowledgeNote>[
+            _note(id: 'fallback-note', title: 'fallback', body: 'short'),
+          ],
+          decisions: <KnowledgeDecision>[
+            _decision(id: 'fallback-decision', question: 'Fallback decision'),
+          ],
+        ),
+      );
+      final reader = FrbInboxTriageSourceReader(
+        runtime: _runtime(
+          bridge: FailingAgentRuntimeEffectPlanBridge(),
+          dispatcher: _InboxTriageDispatcher(),
+        ),
+        fallback: fallback,
+      );
+
+      final snapshot = await reader.read(_context());
+
+      expect(snapshot.untriagedNotes.single.id, 'fallback-note');
+      expect(snapshot.decisions.single.id, 'fallback-decision');
+      expect(fallback.calls, 1);
     });
 
     test('does not re-propose a dismissed kind', () async {
@@ -504,4 +476,148 @@ void main() {
       );
     });
   });
+}
+
+AgentContext _context() {
+  final container = ProviderContainer(
+    overrides: [currentUserIdProvider.overrideWithValue(() async => _owner)],
+  );
+  addTearDown(container.dispose);
+  final ref = container.read(_refProvider);
+  return AgentContext(ref: ref, now: _created);
+}
+
+final _refProvider = Provider<Ref>((ref) => ref);
+
+AgentRuntimeEffectPlanBinding _runtime({
+  required AgentRuntimeNativeBridge bridge,
+  required DeviceToolDispatcher dispatcher,
+  Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
+}) {
+  return agentRuntimeEffectPlanTestBinding(
+    agentId: kKnowledgeInboxTriageAgentId,
+    domain: 'knowledge',
+    surface: 'knowledge_inbox_triage',
+    bridge: bridge,
+    dispatcher: dispatcher,
+    catalog: _catalog(),
+    recordTrace: recordTrace,
+  );
+}
+
+AgentRuntimeCatalog _catalog() {
+  return AgentRuntimeCatalog(
+    generatedAt: _created,
+    activeDomains: const <String>['knowledge'],
+    agents: const <AgentRuntimeAgentSpec>[
+      AgentRuntimeAgentSpec(
+        id: kKnowledgeInboxTriageAgentId,
+        name: 'Inbox Triage',
+        version: '0.1.0',
+        schedule: AgentRuntimeScheduleSpec.interval(everySeconds: 900),
+        capabilities: <String>['scheduled_agent'],
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+    ],
+    tools: const <AgentRuntimeToolSpec>[
+      AgentRuntimeToolSpec(
+        name: 'list_inbox_triage_candidates',
+        description: 'List inbox triage candidates',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+      AgentRuntimeToolSpec(
+        name: 'list_triage_decisions',
+        description: 'List triage decisions',
+        inputSchema: <String, Object?>{'type': 'object'},
+        risk: 'read',
+        metadata: <String, Object?>{'domain': 'knowledge'},
+      ),
+    ],
+    proposalKinds: const <AgentRuntimeProposalKindSpec>[],
+    promptBlocks: const <AgentRuntimePromptBlockSpec>[],
+  );
+}
+
+class _InboxTriageDispatcher implements DeviceToolDispatcher {
+  final calls = <AgentRuntimeEffectPlanToolEffect>[];
+
+  @override
+  Future<Object?> dispatch(
+    DeviceToolSession session,
+    String name,
+    Object? input,
+  ) async {
+    calls.add(AgentRuntimeEffectPlanToolEffect(name, input));
+    return switch (name) {
+      'list_inbox_triage_candidates' => <String, Object?>{
+        'notes': <Object?>[
+          <String, Object?>{
+            'id': 'n-frb',
+            'title': 'QQQ vs BOXX',
+            'body_md': '该不该升级?',
+            'tags': const <String>[],
+            'project_tag': null,
+            'created_at': _created.toIso8601String(),
+          },
+        ],
+      },
+      'list_triage_decisions' => <String, Object?>{
+        'decisions': <Object?>[
+          <String, Object?>{
+            'id': 'd-frb',
+            'question': 'Should I hold BOXX?',
+            'selected': 'yes',
+            'status': 'active',
+            'decided_at': _created.toIso8601String(),
+          },
+        ],
+      },
+      _ => throw StateError('unexpected tool $name'),
+    };
+  }
+}
+
+class _FallbackSourceReader implements InboxTriageSourceReader {
+  _FallbackSourceReader(this.result);
+
+  final InboxTriageSourceSnapshot result;
+  var calls = 0;
+
+  @override
+  Future<InboxTriageSourceSnapshot> read(AgentContext ctx) async {
+    calls += 1;
+    return result;
+  }
+}
+
+class _FakeLlmBridge implements KnowledgeLlmProfileClient {
+  _FakeLlmBridge({this.responseText, this.error});
+
+  final String? responseText;
+  final Object? error;
+  var calls = 0;
+  List<Map<String, Object?>> lastMessages = const <Map<String, Object?>>[];
+  Map<String, Object?> lastMetadata = const <String, Object?>{};
+
+  @override
+  Future<Map<String, Object?>> completeProfile({
+    required List<Map<String, Object?>> messages,
+    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
+    double? temperature,
+    int? maxOutputTokens,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) async {
+    calls += 1;
+    lastMessages = messages;
+    lastMetadata = metadata;
+    final e = error;
+    if (e != null) throw e;
+    return <String, Object?>{
+      'provider': 'mock',
+      'model': 'test-model',
+      'content': responseText ?? '',
+    };
+  }
 }

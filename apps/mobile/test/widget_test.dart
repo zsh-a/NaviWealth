@@ -5,26 +5,28 @@ import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/domain/entities/fx_rate.dart';
-import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/assets/physical/data/providers.dart';
-import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
-import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
-import 'package:naviwealth/features/home/data/dashboard_providers.dart';
-import 'package:naviwealth/features/investment/data/providers.dart';
-import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
-import 'package:naviwealth/features/liabilities/data/providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/liability.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/persistence/test_database.dart';
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      'ai_privacy.onboarding_seen.v1': true,
+    });
   });
 
   testWidgets('NaviWealthApp boots into the home shell', (tester) async {

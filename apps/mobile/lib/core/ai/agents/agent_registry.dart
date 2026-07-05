@@ -13,6 +13,4 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'agent.dart';
 
-final agentRegistryProvider = Provider<List<Agent>>(
-  (ref) => const <Agent>[],
-);
+final agentRegistryProvider = Provider<List<Agent>>((ref) => const <Agent>[]);

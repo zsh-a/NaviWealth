@@ -19,11 +19,50 @@ import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 /// path so the transparency badge can say "未经我方服务器".
 const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 
-/// §5.10.10 — device Vision ingest used the user's own key and called the
-/// provider directly from the device runtime. This is not the deleted cloud
-/// relay; the transparency surface should disclose the same "no NaviWealth
-/// server" property as chat turns.
+/// FRB/native agent runtime handled a profile turn on device using the user's
+/// own provider credentials. Distinct from the legacy Dart direct-client label
+/// so trace dashboards can separate FRB runtime traffic from older device LLM
+/// paths while preserving the same "no NaviWealth server" disclosure.
+const String kFrbAgentRuntimeProfileRoutingReason = 'frb_agent_runtime_profile';
+
+/// Interactive AI Chat was routed through the app-level FRB chat runner. The
+/// request still uses the user's own provider credentials from the device, but
+/// trace dashboards can now distinguish chat traffic from scheduled/profile
+/// agent runtime traffic.
+const String kFrbChatRoutingReason = 'frb_chat';
+
+/// FRB/native agent runtime executed an effect loop. Dart may still run local
+/// tool effects, but native owns the step sequencing and terminal run-state
+/// summary for this trace.
+const String kFrbNativeEffectLoopRoutingReason = 'frb_native_effect_loop';
+
+/// The requested device/FRB runtime was not usable for this turn. This remains
+/// a device-local failure path, not a cloud fallback.
+const String kDeviceUnavailableRoutingReason = 'device_unavailable';
+
+/// §5.10.10 — Vision ingest was routed through the embedded FRB/native
+/// profile bridge using the user's own provider credentials. This is not the
+/// deleted cloud relay; the transparency surface should disclose the same
+/// "no NaviWealth server" property as chat turns.
+const String kFrbVisionIngestRoutingReason = 'frb_vision_ingest';
+
+/// Legacy routing reason kept for old local trace rows written before Vision
+/// ingest was relabelled as an FRB-backed production path.
 const String kDeviceVisionDirectRoutingReason = 'device_vision_direct';
+
+/// True when [routingReason] used a user-owned provider credential directly
+/// from the device/FRB runtime and therefore should disclose "no NaviWealth
+/// server" on transparency surfaces.
+bool isDirectProviderRoutingReason(String routingReason) {
+  return switch (routingReason) {
+    kDeviceLlmDirectRoutingReason ||
+    kFrbAgentRuntimeProfileRoutingReason ||
+    kFrbChatRoutingReason ||
+    kFrbVisionIngestRoutingReason ||
+    kDeviceVisionDirectRoutingReason => true,
+    _ => false,
+  };
+}
 
 /// Where the turn was executed.
 ///
@@ -69,7 +108,7 @@ enum TerminalReason {
   /// User explicitly cancelled (cancel button / navigated away).
   userCancel,
 
-  /// Policy denied dispatch — synthesised `tool_result {error: policy_denied}`.
+  /// Policy denied dispatch — synthesised tool-effect denial response.
   policyDenied,
 
   /// Stream closed before the `done` frame and no error fired (peer
@@ -117,8 +156,13 @@ class AiTrace {
   final BudgetTier budgetTier;
 
   /// Short label for which runtime handled the turn — `device_llm_direct`
-  /// (see [kDeviceLlmDirectRoutingReason]), `device_vision_direct`
-  /// (see [kDeviceVisionDirectRoutingReason]), or `device_unavailable`.
+  /// (see [kDeviceLlmDirectRoutingReason]), `frb_agent_runtime_profile`
+  /// (see [kFrbAgentRuntimeProfileRoutingReason]), `frb_chat`
+  /// (see [kFrbChatRoutingReason]), `frb_native_effect_loop` (see
+  /// [kFrbNativeEffectLoopRoutingReason]), `device_unavailable` (see
+  /// [kDeviceUnavailableRoutingReason]), `frb_vision_ingest` (see
+  /// [kFrbVisionIngestRoutingReason]), or legacy `device_vision_direct` (see
+  /// [kDeviceVisionDirectRoutingReason]).
   /// Free-form for now.
   final String routingReason;
 

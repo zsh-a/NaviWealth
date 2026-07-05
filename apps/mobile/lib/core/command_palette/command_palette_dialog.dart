@@ -358,7 +358,7 @@ class _CommandRow extends StatelessWidget {
                       style:
                           (selected
                                   ? context.labelStyle
-                                  : typography.sm.copyWith(
+                                  : typography.body.sm.copyWith(
                                       fontWeight: FontWeight.w400,
                                     ))
                               .copyWith(color: labelColor),

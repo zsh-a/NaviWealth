@@ -14,19 +14,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_packs.dart';
-import 'package:naviwealth/app/route_paths.dart';
-import 'package:naviwealth/app/router.dart';
-import 'package:naviwealth/app/shell_chrome.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/app/routing/router.dart';
+import 'package:naviwealth/app/shell/shell_chrome.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance_domain_shell.dart';
+import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
+import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/features/health/composition/health_domain_shell.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
-import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,7 +45,9 @@ Future<ProviderContainer> _pumpAt(
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({
+    'ai_privacy.onboarding_seen.v1': true,
+  });
   final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);
@@ -56,6 +58,7 @@ Future<ProviderContainer> _pumpAt(
     overrides: [
       appDatabaseProvider.overrideWith((_) async => db),
       sharedPreferencesProvider.overrideWithValue(prefs),
+      ...appShellChromeOverrides(),
       // Register the production pack inventory so the router has routes
       // to mount under the dock shell. Tests still control dock UI by
       // overriding `activeDomainShellsProvider` below.

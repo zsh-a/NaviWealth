@@ -18,9 +18,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
-import 'package:naviwealth/app/route_guard.dart';
-import 'package:naviwealth/app/route_paths.dart';
-import 'package:naviwealth/app/router.dart';
+import 'package:naviwealth/app/routing/route_guard.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -33,7 +33,9 @@ Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   tester.view.physicalSize = const Size(400, 800);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({
+    'ai_privacy.onboarding_seen.v1': true,
+  });
   final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);

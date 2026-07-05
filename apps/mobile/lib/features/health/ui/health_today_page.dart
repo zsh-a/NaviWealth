@@ -18,11 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/shell_chrome.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/format/formatters.dart';
+import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
@@ -38,10 +38,12 @@ import 'health_today_providers.dart';
 import 'health_trend_page.dart' show healthTrendPath;
 import 'recovery_verdict.dart';
 
-part 'recovery_hero.dart';
-part 'metric_grid.dart';
-part 'weekly_summary_panel.dart';
 part 'briefing_panel.dart';
+part 'metric_grid.dart';
+part 'metric_grid_cards.dart';
+part 'metric_grid_primitives.dart';
+part 'recovery_hero.dart';
+part 'weekly_summary_panel.dart';
 
 class HealthTodayPage extends ConsumerWidget {
   const HealthTodayPage({super.key});

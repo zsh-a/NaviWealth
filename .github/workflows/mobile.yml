@@ -12,14 +12,25 @@ on:
       - 'docs/ai-protocol.md'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v2_*.json'
+      - 'apps/mobile/tool/check-back-nav-coverage.sh'
+      - 'apps/mobile/tool/check-l10n-parity.sh'
+      - 'apps/mobile/tool/check-ui-baselines.sh'
       - 'tool/check-ai-contract-wire-enums.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/check-sync-client-wire-fixtures.sh'
+      - 'tool/check-tool-descriptors.sh'
       - 'tool/lint-money-display.sh'
       - 'tool/lint-no-finance-in-core.sh'
+      - 'tool/lint-no-feature-in-shared.sh'
+      - 'tool/lint-design-system-domain-neutral.sh'
+      - 'tool/lint-no-legacy-mobile-domain.sh'
       - 'tool/lint-cross-feature-imports.sh'
+      - 'tool/lint-finance-domain-model-path.sh'
+      - 'tool/lint-finance-domain-data-imports.sh'
+      - 'tool/lint-finance-dashboard-read-model-path.sh'
       - 'tool/lint-row-family-prefix.sh'
       - 'tool/lint-domain-neutral-contracts.sh'
+      - 'tool/lint-frb-llm-entrypoints.sh'
       - 'tool/money-display-to-string-allowlist.txt'
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
@@ -34,14 +45,25 @@ on:
       - 'docs/ai-protocol.md'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v2_*.json'
+      - 'apps/mobile/tool/check-back-nav-coverage.sh'
+      - 'apps/mobile/tool/check-l10n-parity.sh'
+      - 'apps/mobile/tool/check-ui-baselines.sh'
       - 'tool/check-ai-contract-wire-enums.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/check-sync-client-wire-fixtures.sh'
+      - 'tool/check-tool-descriptors.sh'
       - 'tool/lint-money-display.sh'
       - 'tool/lint-no-finance-in-core.sh'
+      - 'tool/lint-no-feature-in-shared.sh'
+      - 'tool/lint-design-system-domain-neutral.sh'
+      - 'tool/lint-no-legacy-mobile-domain.sh'
       - 'tool/lint-cross-feature-imports.sh'
+      - 'tool/lint-finance-domain-model-path.sh'
+      - 'tool/lint-finance-domain-data-imports.sh'
+      - 'tool/lint-finance-dashboard-read-model-path.sh'
       - 'tool/lint-row-family-prefix.sh'
       - 'tool/lint-domain-neutral-contracts.sh'
+      - 'tool/lint-frb-llm-entrypoints.sh'
       - 'tool/money-display-to-string-allowlist.txt'
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
@@ -109,22 +131,33 @@ jobs:
         # budgets. Full flutter test still runs below with the known-failure
         # footprint pinning.
         run: ./tool/check-ui-baselines.sh
+      - name: Back navigation coverage
+        run: ./tool/check-back-nav-coverage.sh
       - name: Contract & boundary lints
         # High-value architecture gates, run from the repo root:
         #   - enum mirror: Dart↔Rust enums stay in sync (Wave 42)
         #   - money display: no naked toStringAsFixed (allowlisted)
         #   - LifeOS D-1 cross-domain shell boundaries (docs/lifeos-shell.md §11):
-        #       no Finance in core/ai/runtime/, no cross-feature imports in
-        #       ai_chat/, sync RowChange domain prefixes, domain-neutral contracts.
+        #       no Finance in core/ai/runtime/, no shared-layer feature imports,
+        #       no cross-feature imports in protected features, sync RowChange
+        #       domain prefixes, domain-neutral contracts.
         working-directory: ${{ github.workspace }}
         run: |
           ./tool/check-enum-mirror.sh
           ./tool/check-sync-client-wire-fixtures.sh
+          ./tool/check-tool-descriptors.sh
           ./tool/lint-money-display.sh --strict
           ./tool/lint-no-finance-in-core.sh
+          ./tool/lint-no-feature-in-shared.sh
+          ./tool/lint-design-system-domain-neutral.sh
+          ./tool/lint-no-legacy-mobile-domain.sh
           ./tool/lint-cross-feature-imports.sh
+          ./tool/lint-finance-domain-model-path.sh
+          ./tool/lint-finance-domain-data-imports.sh
+          ./tool/lint-finance-dashboard-read-model-path.sh
           ./tool/lint-row-family-prefix.sh
           ./tool/lint-domain-neutral-contracts.sh
+          ./tool/lint-frb-llm-entrypoints.sh
 
   test-shards:
     name: test shard ${{ matrix.shard }} / 3

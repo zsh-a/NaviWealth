@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/misc.dart';
 
 import '../core/ai/agents/agent.dart';
 import '../core/ai/agents/agent_registry.dart';
+import '../core/ai/composition/ask_ai.dart';
 import '../core/ai/composition/batch_proposal_undo.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/ai/composition/device_tools_provider.dart';
@@ -31,14 +32,27 @@ import '../core/auth/providers.dart' as auth_providers;
 import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
+import '../core/shell/domain_tabs_shell.dart';
+import '../core/shell/entity_route_resolver.dart';
 import '../design_system/preferences/theme_preferences.dart';
+import '../features/ai_chat/composition/ai_chat_surface.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
+import '../features/finance/composition/finance_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
+import 'share_intents/share_intent_navigation.dart';
+import 'shell/shell_chrome.dart';
 
 List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
   final resolvedPacks = packs ?? kAllDomainPacks;
   return [
+    ...appShellChromeOverrides(),
+    ...appShareIntentNavigationOverrides(),
+    ...aiChatSurfaceOverrides(),
+    domainTabsCenterActionProvider.overrideWith(
+      (ref) =>
+          (context, widgetRef) => askAi(context, widgetRef),
+    ),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
@@ -77,6 +91,7 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       );
       return domainShellSpecs(ref.watch(activeDomainPacksProvider), l10n);
     }),
+    entityRouteResolverProvider.overrideWith((_) => appEntityRouteResolver),
     auth_providers.authTokenDomainsProvider.overrideWith((ref) {
       return (ref.watch(auth_providers.domainOptInsProvider).value ??
               DomainOptIns.financeOnly)
@@ -84,6 +99,21 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     }),
     ...domainProviderOverrides(resolvedPacks),
   ];
+}
+
+String? appEntityRouteResolver(EntityRouteRef ref) {
+  return switch (ref.entityTable) {
+    EntityRouteTables.assets => FinanceRoutes.wealthAsset(ref.entityId),
+    EntityRouteTables.accounts => FinanceRoutes.wealthAccount(ref.entityId),
+    EntityRouteTables.liabilities => FinanceRoutes.wealthLiability(
+      ref.entityId,
+    ),
+    EntityRouteTables.journalEntries => FinanceRoutes.activityEntry(
+      ref.entityId,
+    ),
+    EntityRouteTables.optionsTradeJournal => FinanceRoutes.planIncome,
+    _ => null,
+  };
 }
 
 Map<String, PersistedUndoReverter> appPersistedUndoReverters(Ref ref) {
@@ -179,9 +209,33 @@ List<String> domainSystemPromptBlocks(List<DomainPack> packs) {
 
 List<Agent> domainAgents(Ref ref, List<DomainPack> packs) {
   return [
-    for (final p in packs)
-      if (p.agentBuilder != null) ...p.agentBuilder!(ref),
+    for (final registration in domainAgentRegistrations(ref, packs))
+      registration.agent,
   ];
+}
+
+List<DomainAgentRegistration> domainAgentRegistrations(
+  Ref ref,
+  List<DomainPack> packs,
+) {
+  return [
+    for (final p in packs)
+      if (p.agentBuilder != null)
+        for (final agent in p.agentBuilder!(ref))
+          DomainAgentRegistration(agent: agent, domain: p.scope),
+  ];
+}
+
+void domainMemoryBootstraps(Ref ref, List<DomainPack> packs) {
+  for (final p in packs) {
+    p.memoryBootstrapBuilder?.call(ref);
+  }
+}
+
+void domainBackgroundBootstraps(Ref ref, List<DomainPack> packs) {
+  for (final p in packs) {
+    p.backgroundBootstrapBuilder?.call(ref);
+  }
 }
 
 List<DomainShellSpec> domainShellSpecs(

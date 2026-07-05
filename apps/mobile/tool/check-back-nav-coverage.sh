@@ -30,10 +30,10 @@ cd "${REPO_ROOT}"
 # Top-level tab pages — these intentionally have NO back arrow because
 # they are the back target of every other page.
 TAB_PAGES=(
-  "lib/features/home/home_page.dart"
-  "lib/features/activity/activity_page.dart"
-  "lib/features/wealth/ui/wealth_hub_page.dart"
-  "lib/features/plan/ui/plan_hub_page.dart"
+  "lib/features/finance/home/ui/home_page.dart"
+  "lib/features/finance/activity/ui/activity_page.dart"
+  "lib/features/finance/ui/wealth/wealth_hub_page.dart"
+  "lib/features/finance/ui/plan_hub_page.dart"
 )
 
 # Files whose FHeader.nested is NOT a stranded pushed page:
@@ -42,9 +42,9 @@ TAB_PAGES=(
 #   * fullscreen modals that surface their own × close icon instead of
 #     the arrow.
 EMBEDDED_HEADERS=(
-  "lib/features/assets/ui/assets_list_body.dart"
+  "lib/features/finance/assets/ui/assets_list_body.dart"
   # Fullscreen chart modal — wires Navigator.pop directly on Icons.close.
-  "lib/features/home/ui/dashboard_chart_fullscreen.dart"
+  "lib/features/finance/home/ui/dashboard_chart_fullscreen.dart"
   # accounts_master.dart hosts both a sub-page scaffold (with back) and
   # the master-detail empty pane (no back); the file passes the grep
   # because the sub-page scaffold imports the back primitive.
@@ -70,9 +70,9 @@ done < <(grep -rl 'FHeader\.nested(' lib/features lib/app 2>/dev/null | sort)
 # Also: any page wired into the router as a top-level (off-shell) push
 # target — Settings is the canonical example — MUST have back coverage.
 # Same check, just makes the intent obvious in the failure message.
-SETTINGS_PAGE="lib/features/settings/settings_page.dart"
+SETTINGS_PAGE="lib/features/settings/ui/settings_page.dart"
 if [[ -f "${SETTINGS_PAGE}" ]] && \
-   ! grep -qE 'backHeaderAction|appSubPageHeader' "${SETTINGS_PAGE}"; then
+   ! grep -qE 'backHeaderAction|appSubPageHeader|AppPageScaffold' "${SETTINGS_PAGE}"; then
   missing+=("${SETTINGS_PAGE} (off-shell root — back is critical)")
 fi
 

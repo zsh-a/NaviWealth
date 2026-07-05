@@ -31,10 +31,9 @@ final inboxTriageAgentProvider = Provider<InboxTriageAgent>(
 );
 
 /// RoutineDueAgent is wired with the shared notification service so the
-/// daily run can post a local toast on the Knowledge Review channel. The
-/// provider stays Knowledge-local — bootstrap doesn't need a special
-/// override the way MorningBriefingAgent does because we don't swap in
-/// an LLM synthesizer here.
+/// daily run can post a local toast on the Knowledge Review channel. Bootstrap
+/// may override this provider to route reads through the FRB runtime while
+/// keeping the same Knowledge-local agent contract.
 final routineDueAgentProvider = Provider<RoutineDueAgent>((ref) {
   final notificationsEnabled = ref.watch(notificationsEnabledProvider);
   final notifier = notificationsEnabled

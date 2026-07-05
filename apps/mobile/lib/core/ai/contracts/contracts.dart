@@ -17,3 +17,4 @@ export 'proposal_envelope.dart';
 export 'scoped_disclosure.dart';
 export 'task_context.dart';
 export 'tool_descriptor.dart';
+export 'tool_schema.dart';

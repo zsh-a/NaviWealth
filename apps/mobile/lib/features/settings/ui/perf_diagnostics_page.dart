@@ -129,7 +129,7 @@ class _MetricRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: context.theme.typography.sm.copyWith(
+              style: context.theme.typography.body.sm.copyWith(
                 color: context.theme.colors.foreground,
               ),
             ),

@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../app/shell_chrome.dart';
+import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'health_metric_colors.dart';
@@ -107,7 +107,7 @@ class _ActionPlanCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: AppSpacing.s4),
                     child: Text(
                       action.text,
-                      style: typography.sm,
+                      style: typography.body.sm,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

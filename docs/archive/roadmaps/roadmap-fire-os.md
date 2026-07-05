@@ -66,10 +66,10 @@ NaviWealth 已具备 FIRE OS 的底层条件：
 | 本地账本 | `journal_entries` + `postings` + `prices` |
 | 资产与账户 | `assets`、`accounts`、`liabilities` |
 | 经常性交易 | `recurring_transactions` |
-| FIRE 雏形 | `apps/mobile/lib/features/fire/` |
-| 仪表盘状态 | `features/home/data/dashboard_providers.dart` |
-| 现金流聚合 | `features/cashflow/` |
-| 投资持仓 | `features/investment/data/providers.dart` |
+| FIRE 雏形 | `apps/mobile/lib/features/finance/fire/` |
+| 仪表盘状态 | `features/finance/home/data/dashboard_providers.dart` |
+| 现金流聚合 | `features/finance/cashflow/` |
+| 投资持仓 | `features/finance/investment/data/providers.dart` |
 | 本地 AI runtime | `core/ai/runtime/device/` |
 | AI 工具注册 | `features/finance_ai_tools.dart` + Finance `DomainPack` |
 | 同步 | Sync Protocol v1.0，HLC + OpLog + 行级 LWW |
@@ -151,7 +151,7 @@ MVP 可继续使用本地偏好存储；进入多设备同步阶段后，应迁�
 新增或扩展以下模块：
 
 ```text
-apps/mobile/lib/features/fire/domain/
+apps/mobile/lib/features/finance/fire/domain/
   fire_state.dart
   fire_state_service.dart
   fire_plan.dart
@@ -279,7 +279,7 @@ propose_fire_bucket_rule
 落点：
 
 ```text
-apps/mobile/lib/features/fire/ai_tools/
+apps/mobile/lib/features/finance/fire/ai_tools/
 apps/mobile/lib/features/finance_ai_tools.dart
 apps/mobile/lib/core/ai/contracts/tool_descriptor.dart
 ```
@@ -416,7 +416,7 @@ fire_bucket_rules (
 |----|------|-----|
 | FIRE-OS-0.1 | 确认 FIRE OS 产品边界 | 本文档合入并在 roadmap 引用。 |
 | FIRE-OS-0.2 | 审视现有 FIRE 页面与 provider | 标出可复用 provider 与需替换的模型。 |
-| FIRE-OS-0.3 | 定义 `FireState` schema | `features/fire/domain/fire_state.dart` + `fire_state_service_test.dart`。 |
+| FIRE-OS-0.3 | 定义 `FireState` schema | `features/finance/fire/domain/fire_state.dart` + `fire_state_service_test.dart`。 |
 
 ### Phase 1：FIRE State MVP  ✅ Shipped
 
@@ -424,11 +424,11 @@ fire_bucket_rules (
 
 | ID | 任务 | 主要文件 |
 |----|------|----------|
-| FIRE-OS-1.1 | 新增 `FireState` / `FireSafetyLevel` / `FireAction` | `features/fire/domain/` |
-| FIRE-OS-1.2 | 新增 `FireStateService`，接 dashboard snapshot + cashflow | `features/fire/domain/`, `features/fire/data/` |
-| FIRE-OS-1.3 | 计算提取率、年度支出、现金桶覆盖 | `features/fire/domain/fire_state_service.dart` |
-| FIRE-OS-1.4 | FIRE 页面 Hero 从进度条升级为自由状态 | `features/fire/presentation/` |
-| FIRE-OS-1.5 | Home insight 接入高提取率 / 现金桶不足 | `features/home/data/dashboard_insights_provider.dart` |
+| FIRE-OS-1.1 | 新增 `FireState` / `FireSafetyLevel` / `FireAction` | `features/finance/fire/domain/` |
+| FIRE-OS-1.2 | 新增 `FireStateService`，接 dashboard snapshot + cashflow | `features/finance/fire/domain/`, `features/finance/fire/data/` |
+| FIRE-OS-1.3 | 计算提取率、年度支出、现金桶覆盖 | `features/finance/fire/domain/fire_state_service.dart` |
+| FIRE-OS-1.4 | FIRE 页面 Hero 从进度条升级为自由状态 | `features/finance/fire/presentation/` |
+| FIRE-OS-1.5 | Home insight 接入高提取率 / 现金桶不足 | `features/finance/home/data/dashboard_insights_provider.dart` |
 
 验收：
 
@@ -442,9 +442,9 @@ fire_bucket_rules (
 
 | ID | 任务 | 主要文件 |
 |----|------|----------|
-| FIRE-OS-2.1 | 新增 `FireBucketRole` / `FireBucketRule` / `FireBucketState` | `features/fire/domain/fire_bucket.dart` |
+| FIRE-OS-2.1 | 新增 `FireBucketRole` / `FireBucketRule` / `FireBucketState` | `features/finance/fire/domain/fire_bucket.dart` |
 | FIRE-OS-2.2 | 默认桶分类规则：现金、短债、股票 ETF、风险储备 | `fire_bucket_allocator.dart` |
-| FIRE-OS-2.3 | 桶映射编辑 UI | `features/fire/presentation/` |
+| FIRE-OS-2.3 | 桶映射编辑 UI | `features/finance/fire/presentation/` |
 | FIRE-OS-2.4 | 现金桶目标月份设置 | `fire_plan.dart`, UI form |
 | FIRE-OS-2.5 | 桶偏差 insight | Home + FIRE page |
 
@@ -460,12 +460,12 @@ fire_bucket_rules (
 
 | ID | 任务 | 主要文件 |
 |----|------|----------|
-| FIRE-OS-3.1 | 新增 `FireStressTestEngine` | `features/fire/domain/fire_stress_test.dart` |
+| FIRE-OS-3.1 | 新增 `FireStressTestEngine` | `features/finance/fire/domain/fire_stress_test.dart` |
 | FIRE-OS-3.2 | 实现市场下跌场景 | 同上 |
 | FIRE-OS-3.3 | 实现支出 +20% 场景 | 同上 |
 | FIRE-OS-3.4 | 实现医疗/家庭支援一次性支出场景 | 同上 |
 | FIRE-OS-3.5 | 实现汇率冲击场景 | 同上 |
-| FIRE-OS-3.6 | FIRE 页面新增 Stress Tests section | `features/fire/presentation/` |
+| FIRE-OS-3.6 | FIRE 页面新增 Stress Tests section | `features/finance/fire/presentation/` |
 
 验收：
 
@@ -479,7 +479,7 @@ fire_bucket_rules (
 
 | ID | 任务 | 主要文件 |
 |----|------|----------|
-| FIRE-OS-4.1 | 新增 `FireReview` 模型 | `features/fire/domain/fire_review.dart` |
+| FIRE-OS-4.1 | 新增 `FireReview` 模型 | `features/finance/fire/domain/fire_review.dart` |
 | FIRE-OS-4.2 | 月度 Review：支出偏差、提取率、桶偏差、行动建议 | `fire_review_engine.dart` |
 | FIRE-OS-4.3 | 季度 Review：压力测试与风险登记簿 | 同上 |
 | FIRE-OS-4.4 | 年度 Review：下一年支出计划与生活模式 | 同上 |
@@ -503,7 +503,7 @@ fire_bucket_rules (
 | FIRE-OS-5.4 | 新增 `propose_fire_plan_update` | ProposalEnvelope |
 | FIRE-OS-5.5 | 新增 `propose_fire_bucket_rule` | ProposalEnvelope |
 | FIRE-OS-5.6 | 注册 FIRE intents | `core/ai/intent/intent_policy.dart` |
-| FIRE-OS-5.7 | FIRE 页面接入 contextual AI bottom sheet | `features/fire/presentation/` |
+| FIRE-OS-5.7 | FIRE 页面接入 contextual AI bottom sheet | `features/finance/fire/presentation/` |
 
 验收：
 
@@ -642,8 +642,8 @@ risk_settings{}` 的多字段聚合体。挤进 KV 会把 schema 演化挪到 JS
 =======
 # Roadmap — AI-native FIRE OS
 
-> **类型**: 路线图（方向，非承诺）。`features/fire/` 的形态升级计划，**不是新 app、不新增主 tab**。
-> **现状基线**: `features/fire/` 是确定性计算器——`FireCalculator` 把 `FireGoal` + 当前净值 +
+> **类型**: 路线图（方向，非承诺）。`features/finance/fire/` 的形态升级计划，**不是新 app、不新增主 tab**。
+> **现状基线**: `features/finance/fire/` 是确定性计算器——`FireCalculator` 把 `FireGoal` + 当前净值 +
 > 三档年化投影成 `FireDashboardView`（FV-of-annuity + 4% 规则 + ±20% 敏感度）。
 > `FireGoal` 当前存 SharedPreferences（`fire_goal_preferences.dart`，FIR-73）。
 > **目标**: 演进为持续回答「我的资产/现金流/风险是否还撑得起想要的自由生活」的系统。
@@ -670,9 +670,9 @@ withdrawalRate, runwayMonths, stress }`，净资产只是它的输入。建议�
 
 ```
 UI    /accounts/fire hub：状态/桶/规划/风险/报表（FCard/AppSpacing/AppRadius，复用现有图表）
-State features/fire/data：fireStateSnapshotProvider 等（设备端 read-model，不上 D1）
+State features/finance/fire/data：fireStateSnapshotProvider 等（设备端 read-model，不上 D1）
 AI    Finance DomainPack 中的 FIRE 工具 + ToolDescriptor 策略门 + system prompt 注入
-Engine features/fire/domain/{models,engine,policies,reports}（纯 Dart，无 IO）
+Engine features/finance/fire/domain/{models,engine,policies,reports}（纯 Dart，无 IO）
 Data  Drift +5 表（SyncableTable，OpLog 同步）+ 复用 dashboard/expense/cashflow/RebalanceEngine
 ```
 

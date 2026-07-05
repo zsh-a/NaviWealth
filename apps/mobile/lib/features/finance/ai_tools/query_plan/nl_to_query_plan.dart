@@ -18,7 +18,7 @@
 library;
 
 import 'package:naviwealth/core/ai/contracts/contracts.dart' show DateRange;
-import 'package:naviwealth/core/ai/local/skills/txn_classifier.dart'
+import 'package:naviwealth/features/finance/ai_tools/local_skills/txn_classifier.dart'
     show categoryHintsForText;
 
 import 'finance_query_plan.dart';

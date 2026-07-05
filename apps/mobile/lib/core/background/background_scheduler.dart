@@ -1,10 +1,10 @@
 /// Cross-platform background-task scheduler for autonomous agents
 /// (`docs/architecture/lifeos-shell.md` §7.3, D-2.5b).
 ///
-/// Narrow surface: register / cancel HealthOS background tasks. The actual
-/// platform driver (Android WorkManager, iOS BGTaskScheduler) sits in
-/// [createBackgroundScheduler]'s io impl and goes through
-/// `package:workmanager`.
+/// Narrow surface: register / cancel named background task specs. Domain
+/// providers own which specs should be active; the actual platform driver
+/// (Android WorkManager, iOS BGTaskScheduler) sits in
+/// [createBackgroundScheduler]'s io impl and goes through `package:workmanager`.
 ///
 /// **iOS caveats** (BGTaskScheduler reality, not a code bug):
 ///   * minimum effective frequency ≈ 15 min;
@@ -15,6 +15,8 @@
 ///
 /// **Web / desktop** get a no-op stub via conditional import.
 library;
+
+import '../notifications/notification_service.dart';
 
 /// Stable workmanager task name for the daily Morning Briefing.
 /// Mirrors the `Info.plist::BGTaskSchedulerPermittedIdentifiers`
@@ -33,8 +35,8 @@ const String kHealthPlatformSyncTaskName = 'com.naviwealth.healthPlatformSync';
 
 /// SharedPreferences key set by the background callback when the OS
 /// fires the periodic task. The foreground app reads it on launch and
-/// triggers an in-process agent run if found (the background isolate
-/// can't run the full agent — no ProviderContainer / Drift access).
+/// triggers an in-process scheduled-agent tick if found (the background
+/// isolate can't run the full agent — no ProviderContainer / Drift access).
 const String kMorningBriefingDueAtKey = 'lifeos.health.briefing.dueAt';
 
 /// SharedPreferences key set by the background callback when Garmin data
@@ -46,6 +48,65 @@ const String kGarminSyncDueAtKey = 'lifeos.health.garminSync.dueAt';
 /// foreground launch/resume.
 const String kHealthPlatformSyncDueAtKey = 'lifeos.health.platformSync.dueAt';
 
+class BackgroundTaskSpec {
+  const BackgroundTaskSpec({
+    required this.name,
+    required this.dueAtPreferenceKey,
+    required this.defaultInterval,
+  });
+
+  /// Stable workmanager task identifier.
+  final String name;
+
+  /// SharedPreferences key stamped by the background isolate when this task
+  /// wakes. The foreground app owns the real work.
+  final String dueAtPreferenceKey;
+
+  /// Requested cadence when callers do not provide a narrower interval.
+  final Duration defaultInterval;
+}
+
+const BackgroundTaskSpec kMorningBriefingBackgroundTask = BackgroundTaskSpec(
+  name: kMorningBriefingTaskName,
+  dueAtPreferenceKey: kMorningBriefingDueAtKey,
+  defaultInterval: Duration(hours: 24),
+);
+
+const NotificationChannelSpec kMorningBriefingWakeNotificationChannel =
+    NotificationChannelSpec(
+      id: 'lifeos.health.briefing',
+      name: 'Morning Briefing',
+      description: 'Daily HealthOS morning briefing summaries.',
+    );
+
+int morningBriefingWakeNotificationId(DateTime localDay) =>
+    localDay.year * 10000 + localDay.month * 100 + localDay.day;
+
+const BackgroundTaskSpec kGarminSyncBackgroundTask = BackgroundTaskSpec(
+  name: kGarminSyncTaskName,
+  dueAtPreferenceKey: kGarminSyncDueAtKey,
+  defaultInterval: Duration(hours: 6),
+);
+
+const BackgroundTaskSpec kHealthPlatformSyncBackgroundTask = BackgroundTaskSpec(
+  name: kHealthPlatformSyncTaskName,
+  dueAtPreferenceKey: kHealthPlatformSyncDueAtKey,
+  defaultInterval: Duration(hours: 6),
+);
+
+const List<BackgroundTaskSpec> kBackgroundTaskSpecs = <BackgroundTaskSpec>[
+  kMorningBriefingBackgroundTask,
+  kGarminSyncBackgroundTask,
+  kHealthPlatformSyncBackgroundTask,
+];
+
+BackgroundTaskSpec? backgroundTaskSpecForName(String taskName) {
+  for (final spec in kBackgroundTaskSpecs) {
+    if (spec.name == taskName) return spec;
+  }
+  return null;
+}
+
 abstract class BackgroundScheduler {
   /// `true` when the platform supports background tasks at all.
   /// `false` on web (no service worker for this) / desktop.
@@ -55,34 +116,11 @@ abstract class BackgroundScheduler {
   /// from every cold start. No-op on web / desktop.
   Future<void> initialize();
 
-  /// Schedule the Morning Briefing wake-up. Uses [interval] as the
-  /// requested cadence (default 24h, but iOS may collapse to the
-  /// minimum allowed). Replacing a previous schedule is safe — the
-  /// underlying workmanager API uses the unique name to dedupe.
-  Future<void> registerMorningBriefing({
-    Duration interval = const Duration(hours: 24),
-  });
+  /// Schedule [task]. Uses [interval] when supplied, otherwise
+  /// [BackgroundTaskSpec.defaultInterval]. Replacing a previous schedule is
+  /// safe because the underlying workmanager API dedupes by [task.name].
+  Future<void> registerTask(BackgroundTaskSpec task, {Duration? interval});
 
-  /// Schedule best-effort Garmin data sync. The callback only stamps a due
-  /// flag; the foreground app runs the real Rust/secure-storage sync.
-  Future<void> registerGarminSync({
-    Duration interval = const Duration(hours: 6),
-  });
-
-  /// Schedule best-effort HealthKit / Health Connect sync. The callback only
-  /// stamps a due flag; the foreground app runs the real Drift-backed sync.
-  Future<void> registerHealthPlatformSync({
-    Duration interval = const Duration(hours: 6),
-  });
-
-  /// Cancel the previously-registered Morning Briefing task. Called
-  /// when the user toggles HealthOS off so we don't keep waking the
-  /// device for a domain they've disabled.
-  Future<void> cancelMorningBriefing();
-
-  /// Cancel the previously-registered Garmin sync task.
-  Future<void> cancelGarminSync();
-
-  /// Cancel the previously-registered HealthKit / Health Connect sync task.
-  Future<void> cancelHealthPlatformSync();
+  /// Cancel the previously-registered [task].
+  Future<void> cancelTask(BackgroundTaskSpec task);
 }

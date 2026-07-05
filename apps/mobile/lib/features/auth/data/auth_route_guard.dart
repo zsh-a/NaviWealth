@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_guard.dart';
+import '../../../core/shell/route_guard.dart';
 import 'app_mode_store.dart';
 import 'auth_controller.dart';
 

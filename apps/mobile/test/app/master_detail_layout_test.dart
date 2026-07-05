@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/master_detail_layout.dart';
-import 'package:naviwealth/app/shell_preferences.dart';
+import 'package:naviwealth/core/shell/master_detail_layout.dart';
+import 'package:naviwealth/core/shell/shell_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

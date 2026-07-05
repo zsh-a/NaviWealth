@@ -1,6 +1,6 @@
 # Garmin Connect Integration — Implementation Plan
 
-> **Status**: Phase 2 Rust core + Dart shell implemented; FRB bindings pending codegen
+> **Status**: Phase 2 Rust core + Dart shell + FRB bindings implemented
 > **Date**: 2026-06-08
 > **Domain**: HealthOS
 > **Scope**: Add Garmin Connect as a health data provider — Rust core, Dart shell
@@ -84,19 +84,22 @@ lifeos_native/
 [dependencies]
 # existing
 fastembed = { ... }
-anyhow = "1"
-flutter_rust_bridge = "=2.12.0"
+anyhow = "1.0.102"
+flutter_rust_bridge = "=2.13.0-beta.4"
 
 # new: health / garmin
-reqwest = { version = "0.12", features = ["json", "cookies", "rustls-tls"], default-features = false }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tokio = { version = "1", features = ["time", "sync"] }
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1", features = ["v4"] }
+reqwest = { version = "0.13.4", features = ["json", "cookies", "rustls", "form"], default-features = false }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+tokio = { version = "1.52.3", features = ["time", "sync", "macros"] }
+chrono = { version = "0.4.45", features = ["serde"] }
+uuid = { version = "1.23.2", features = ["v4"] }
 ```
 
-Note: `reqwest` with `rustls-tls` avoids OpenSSL linking issues on iOS/Android. `tokio` is already transitive via `reqwest`; we just need to expose `time` and `sync` features.
+Note: `reqwest` with the `rustls` feature avoids OpenSSL linking issues on
+iOS/Android. The `form` feature is required for Garmin OAuth token exchange.
+`tokio` is already transitive via `reqwest`; we expose `time`, `sync`, and
+`macros` for the native async bridge tests.
 
 ### 1.2 `HealthProvider` Trait
 
@@ -662,8 +665,8 @@ continue to expose the Garmin auth, sync, cancel, cursor, logout, export, and
 |---|---|
 | Garmin SSO changes break auth | Auth state machine isolated in `auth.rs`; monitor python-garminconnect issues; snapshot tests catch regressions |
 | 429 rate limits during initial sync | Rate limiter with exponential backoff; paginate by day; 30-day sync may take 15–30 min |
-| FRB async bridge complexity | FRB 2.12 supports async natively; test with mock first, real HTTP second |
-| Rust dependency size (reqwest + tokio) | `opt-level = "z"` + LTO + strip already configured; reqwest with rustls-tls avoids OpenSSL |
+| FRB async bridge complexity | FRB 2.13 beta supports async natively; generated contract tests guard the exposed symbols |
+| Rust dependency size (reqwest + tokio) | `opt-level = "z"` + LTO + strip already configured; reqwest with rustls avoids OpenSSL |
 | Token persistence across app restarts | `TokenStore` trait with Dart `flutter_secure_storage` impl; test round-trip |
 | Garmin data quality worse than HealthKit | Phase 1 probe validates; merge strategy prefers higher-quality source |
 
