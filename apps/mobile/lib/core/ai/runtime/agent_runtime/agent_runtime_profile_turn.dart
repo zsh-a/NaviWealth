@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../contracts/contracts.dart';
 import 'agent_runtime_step_result.dart';
 
 const String kSettingsLlmRuntimeCheckAgentId = 'settings_llm_runtime_check';
@@ -17,7 +18,7 @@ typedef AgentRuntimeProfileTurnBindingKey = ({
 });
 
 typedef AgentRuntimeProfileTurnTraceRecorder =
-    Future<void> Function(AgentRuntimeProfileTurnResult result);
+    Future<AiTrace?> Function(AgentRuntimeProfileTurnResult result);
 
 typedef AgentRuntimeProfileTurnTraceRecorderFactory =
     AgentRuntimeProfileTurnTraceRecorder Function({
@@ -107,17 +108,30 @@ class AgentRuntimeProfileTurnResult {
     this.stepRun = const AgentRuntimeNativeStepRunResult(
       terminalStep: <String, Object?>{},
     ),
+    this.traceId,
   });
 
   final Map<String, Object?> llmResponse;
   final Map<String, Object?> step;
   final AgentRuntimeNativeStepRunResult stepRun;
+  final String? traceId;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'llm_response': llmResponse,
     'step': step,
     'step_run': stepRun.toJson(),
+    if (traceId != null) 'trace_id': traceId,
   };
+
+  AgentRuntimeProfileTurnResult withTraceId(String? traceId) {
+    if (traceId == null || traceId == this.traceId) return this;
+    return AgentRuntimeProfileTurnResult(
+      llmResponse: llmResponse,
+      step: step,
+      stepRun: stepRun,
+      traceId: traceId,
+    );
+  }
 }
 
 class AgentRuntimeProfileTurnBinding {
@@ -173,18 +187,21 @@ class AgentRuntimeProfileTurnBinding {
       },
       maxEffectSteps: maxEffectSteps,
     );
-    await recordProfileTurn(result);
-    return result;
+    return recordProfileTurn(result);
   }
 
-  Future<void> recordProfileTurn(AgentRuntimeProfileTurnResult result) async {
+  Future<AgentRuntimeProfileTurnResult> recordProfileTurn(
+    AgentRuntimeProfileTurnResult result,
+  ) async {
     final recorder = recordTrace;
-    if (recorder == null) return;
+    if (recorder == null) return result;
     try {
-      await recorder(result);
+      final trace = await recorder(result);
+      return result.withTraceId(trace?.requestId);
     } on Object catch (error, stackTrace) {
       onRecordTraceError?.call(error, stackTrace);
       // Best-effort diagnostics; never fail the production agent.
+      return result;
     }
   }
 }

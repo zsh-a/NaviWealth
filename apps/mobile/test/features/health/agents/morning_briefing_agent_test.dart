@@ -8,6 +8,7 @@ import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
 
@@ -174,6 +175,44 @@ void main() {
       },
     );
 
+    test(
+      'persists synthesizer trace id onto result, artifact, and memory',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final rt = _runtimeForDb(db);
+        final store = SqliteAgentArtifactStore(db: db);
+
+        final out = await MorningBriefingAgent.synthesize(
+          events: [
+            _sleepEvent(id: 'h1', at: yesterdayEvening, seconds: 7.5 * 3600.0),
+          ],
+          ownerUserId: 'u',
+          startedAt: now,
+          finishedAt: now.add(const Duration(milliseconds: 50)),
+          runtime: rt,
+          synthesizer: const _TraceBriefingSynthesizer(),
+          artifactStore: store,
+        );
+
+        expect(out.status, AgentRunStatus.completed);
+        expect(out.traceId, 'trace-health-1');
+
+        final artifact = await store.read(out.artifactId!);
+        expect(artifact?.traceId, 'trace-health-1');
+
+        final memories = await rt.recall(
+          ownerUserId: 'u',
+          entityFilter: const {'morning_briefing'},
+          validAt: now,
+          topK: 1,
+        );
+        expect(memories.single.record.payload['trace_id'], 'trace-health-1');
+        final outcome = memories.single.record.payload['outcome'] as Map;
+        expect(outcome['trace_id'], 'trace-health-1');
+      },
+    );
+
     test('annotates short sleep when the indexer tagged short_sleep', () async {
       final rt = _runtime();
       final out = await MorningBriefingAgent.synthesize(
@@ -233,4 +272,18 @@ void main() {
     expect(agent.schedule.preferredHourLocal, 7);
     expect(agent.schedule.interval, const Duration(days: 1));
   });
+}
+
+class _TraceBriefingSynthesizer implements BriefingSynthesizer {
+  const _TraceBriefingSynthesizer();
+
+  @override
+  Future<BriefingOutput> synthesize(BriefingInputs inputs) async {
+    return const BriefingOutput(
+      summary: 'LLM briefing with trace.',
+      sleepLine: 'Slept 7.5h',
+      source: BriefingSource.llm,
+      traceId: 'trace-health-1',
+    );
+  }
 }

@@ -189,8 +189,10 @@ class MorningBriefingAgent implements Agent {
           'hrv_summary': ?output.hrvLine,
           'finance_summary': ?output.financeLine,
           'synthesis_source': output.source.name,
+          if (output.traceId != null) 'trace_id': output.traceId,
         },
         'artifact_id': artifactId,
+        if (output.traceId != null) 'trace_id': output.traceId,
       },
       entities: <String>{'morning_briefing', 'briefing', dayKey},
       importance: 0.6,
@@ -225,6 +227,7 @@ class MorningBriefingAgent implements Agent {
       },
       memoryId: memoryId,
       artifactId: artifactStore == null ? null : artifactId,
+      traceId: output.traceId,
     );
   }
 
@@ -294,6 +297,7 @@ class MorningBriefingAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: output.traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
