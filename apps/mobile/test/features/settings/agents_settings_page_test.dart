@@ -134,10 +134,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Presented Agent'), findsOneWidget);
-    expect(find.text('Presented description.'), findsOneWidget);
-    expect(find.text('Daily · around 08:00'), findsOneWidget);
-    expect(find.text('Notifications'), findsOneWidget);
+    expect(find.textContaining('Presented description.'), findsOneWidget);
+    expect(find.textContaining('Daily · around 08:00'), findsOneWidget);
+    expect(find.text('FinanceOS'), findsOneWidget);
+    expect(find.text('Run now'), findsNothing);
+    expect(find.text('Notifications'), findsNothing);
+
+    await tester.tap(find.text('Presented Agent'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Run now'), findsOneWidget);
+    expect(find.text('Notifications'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey<String>('agent-notifications-fake_agent')),
@@ -204,7 +211,7 @@ void main() {
     );
     expect(pref.enabled, isFalse);
     expect(pref.notificationsEnabled, isTrue);
-    expect(find.text('Disabled'), findsOneWidget);
+    expect(find.text('Disabled'), findsWidgets);
   });
 
   testWidgets('disabled agents cannot be run manually from settings', (
@@ -256,7 +263,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Disabled'), findsOneWidget);
+    expect(find.text('Disabled'), findsWidgets);
+    await tester.tap(find.text('Presented Agent'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Run now'));
     await tester.pumpAndSettle();
 
@@ -314,6 +324,9 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Presented Agent'));
     await tester.pumpAndSettle();
 
     await tester.tap(
@@ -390,6 +403,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Presented Agent'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Run now'));
     await tester.pumpAndSettle();
 
@@ -401,7 +417,7 @@ void main() {
     expect(latest!.trigger, AgentRunTrigger.manual);
     expect(latest.status, AgentRunLifecycleStatus.noFinding);
     expect(latest.summary, 'test');
-    expect(find.textContaining('No finding'), findsOneWidget);
+    expect(find.textContaining('No finding'), findsWidgets);
   });
 
   testWidgets('opens latest agent artifact from settings', (tester) async {
@@ -485,6 +501,9 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Presented Agent'));
     await tester.pumpAndSettle();
 
     expect(find.text('View result'), findsOneWidget);
@@ -575,6 +594,9 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Presented Agent'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('History'));

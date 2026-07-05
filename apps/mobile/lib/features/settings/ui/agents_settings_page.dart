@@ -1,6 +1,8 @@
 /// Cross-domain agent management settings.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -17,6 +19,7 @@ import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/auth/domain_scope.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../core/shell/settings_route_paths.dart';
@@ -104,16 +107,18 @@ class AgentsSettingsPage extends ConsumerWidget {
                   ),
                 );
               }
-              return SoftCard(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-                child: Column(
-                  children: [
-                    for (var i = 0; i < items.length; i++) ...[
-                      _AgentSettingsRowTile(row: items[i]),
-                      if (i != items.length - 1) const AppGradientDivider(),
-                    ],
+              final sections = _groupRowsByDomain(items);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _AgentSettingsOverview(rows: items),
+                  const SizedBox(height: AppSpacing.s12),
+                  for (var i = 0; i < sections.length; i++) ...[
+                    _AgentSettingsDomainSectionView(section: sections[i]),
+                    if (i != sections.length - 1)
+                      const SizedBox(height: AppSpacing.s12),
                   ],
-                ),
+                ],
               );
             },
           ),
@@ -137,6 +142,117 @@ class _AgentSettingsRow {
   final AgentPreference preference;
   final AgentRunRecord? latestRun;
   final AgentArtifact? latestArtifact;
+}
+
+class _AgentSettingsDomainSection {
+  const _AgentSettingsDomainSection({required this.domain, required this.rows});
+
+  final DomainScope domain;
+  final List<_AgentSettingsRow> rows;
+}
+
+List<_AgentSettingsDomainSection> _groupRowsByDomain(
+  List<_AgentSettingsRow> rows,
+) {
+  final grouped = <DomainScope, List<_AgentSettingsRow>>{};
+  for (final row in rows) {
+    final domain = row.presentation?.domain ?? DomainScope.finance;
+    grouped.putIfAbsent(domain, () => <_AgentSettingsRow>[]).add(row);
+  }
+  return [
+    for (final domain in DomainScope.values)
+      if (grouped[domain]?.isNotEmpty ?? false)
+        _AgentSettingsDomainSection(domain: domain, rows: grouped[domain]!),
+  ];
+}
+
+class _AgentSettingsOverview extends StatelessWidget {
+  const _AgentSettingsOverview({required this.rows});
+
+  final List<_AgentSettingsRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final enabled = rows.where((row) => row.preference.enabled).length;
+    final attention = rows
+        .where(
+          (row) =>
+              row.latestRun?.status == AgentRunLifecycleStatus.ready ||
+              row.latestRun?.status == AgentRunLifecycleStatus.failed,
+        )
+        .length;
+    final notificationCapable = rows
+        .where((row) => row.presentation?.notificationsSupported ?? false)
+        .length;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      child: Row(
+        children: [
+          AppIconTile(
+            icon: FLucideIcons.bot,
+            color: context.theme.colors.primary,
+            size: AppSpacing.s40,
+            iconSize: AppIconSizes.md,
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.agentSettingsTitle, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  '$enabled/${rows.length} ${l10n.agentSettingsEnabled.toLowerCase()} · '
+                  '$attention ${l10n.agentRunStatusReady.toLowerCase()} · '
+                  '$notificationCapable ${l10n.agentSettingsNotifications.toLowerCase()}',
+                  style: context.captionStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AgentSettingsDomainSectionView extends StatelessWidget {
+  const _AgentSettingsDomainSectionView({required this.section});
+
+  final _AgentSettingsDomainSection section;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+          child: Text(
+            _domainLabel(section.domain),
+            style: context.captionLabelStyle.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s6),
+        SoftCard(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+          child: Column(
+            children: [
+              for (var i = 0; i < section.rows.length; i++) ...[
+                _AgentSettingsRowTile(row: section.rows[i]),
+                if (i != section.rows.length - 1) const AppGradientDivider(),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _AgentSettingsRowTile extends ConsumerStatefulWidget {
@@ -229,6 +345,27 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     );
   }
 
+  Future<void> _showDetails() async {
+    final row = widget.row;
+    final l10n = AppLocalizations.of(context);
+    final label = row.presentation?.label(l10n) ?? row.agent.name;
+    await showAppSheet<void>(
+      context: context,
+      title: label,
+      subtitle: _domainLabel(row.presentation?.domain ?? DomainScope.finance),
+      maxHeightFactor: 0.88,
+      builder: (_) => _AgentSettingsDetailSheet(
+        row: row,
+        running: _running,
+        onRunNow: _runNow,
+        onShowHistory: _showHistory,
+        onSetEnabled: _setEnabled,
+        onSetNotificationsEnabled: _setNotificationsEnabled,
+        onRowsChanged: () => ref.invalidate(_agentSettingsRowsProvider),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
@@ -238,143 +375,355 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     final enabled = row.preference.enabled;
     final label = presentation?.label(l10n) ?? row.agent.name;
     final description = presentation?.description(l10n);
-    final formatters = context.formatters(ref);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s10,
+        vertical: AppSpacing.s8,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              AppIconTile(
-                icon: presentation?.icon ?? FLucideIcons.bot,
-                color: enabled ? colors.primary : colors.mutedForeground,
-                size: AppSpacing.s32,
-                iconSize: AppIconSizes.sm,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: context.theme.typography.body.sm,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+          Expanded(
+            child: FTappable(
+              onPress: _showDetails,
+              child: Row(
+                children: [
+                  AppIconTile(
+                    icon: presentation?.icon ?? FLucideIcons.bot,
+                    color: enabled ? colors.primary : colors.mutedForeground,
+                    size: AppSpacing.s32,
+                    iconSize: AppIconSizes.sm,
+                    backgroundOpacity: AppOpacity.subtle,
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                label,
+                                style: context.theme.typography.body.sm,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.s6),
+                            _AgentRunStatusDot(row: row),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.s2),
+                        Text(
+                          _compactSubtitle(context, row, description),
+                          style: context.captionStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      _subtitle(row, description),
-                      style: context.captionStyle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (presentation?.userToggleable ?? true)
-                FSwitch(
-                  key: ValueKey<String>('agent-enabled-${row.agent.id}'),
-                  value: enabled,
-                  onChange: _setEnabled,
-                )
-              else
-                AppBadge(
-                  label: l10n.agentSettingsManagedBadge,
-                  size: AppBadgeSize.compact,
-                  tone: AppBadgeTone.neutral,
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: [
-              AppQuietButton(
-                label: _running
-                    ? l10n.agentSettingsRunning
-                    : l10n.agentSettingsRunNow,
-                onPress: _running || !enabled ? null : _runNow,
-                busy: _running,
-                prefix: const Icon(FLucideIcons.play, size: AppIconSizes.xs),
-              ),
-              if (row.latestArtifact != null)
-                AppQuietButton(
-                  label: l10n.agentSettingsViewResult,
-                  onPress: () => showAgentArtifactSheet(
-                    context: context,
-                    artifact: row.latestArtifact!,
-                    onVisibilityChanged: () =>
-                        ref.invalidate(_agentSettingsRowsProvider),
                   ),
-                  prefix: const Icon(
-                    FLucideIcons.externalLink,
+                  const SizedBox(width: AppSpacing.s8),
+                  Icon(
+                    FLucideIcons.chevronRight,
                     size: AppIconSizes.xs,
+                    color: colors.mutedForeground,
                   ),
-                ),
-              if (row.latestRun != null)
-                AppQuietButton(
-                  label: l10n.agentSettingsViewHistory,
-                  onPress: _showHistory,
-                  prefix: const Icon(
-                    FLucideIcons.history,
-                    size: AppIconSizes.xs,
-                  ),
-                ),
-              AppBadge(
-                label: enabled
-                    ? l10n.agentSettingsEnabled
-                    : l10n.agentSettingsDisabled,
-                size: AppBadgeSize.compact,
-                tone: enabled ? AppBadgeTone.accent : AppBadgeTone.neutral,
+                ],
               ),
-              AppBadge(
-                label: _scheduleLabel(l10n, row.agent.schedule),
-                size: AppBadgeSize.compact,
-                tone: AppBadgeTone.neutral,
-              ),
-              if (row.latestRun != null)
-                AppBadge(
-                  label: l10n.agentSettingsLastRunAt(
-                    formatters.dateTime(row.latestRun!.startedAt.toLocal()),
-                  ),
-                  size: AppBadgeSize.compact,
-                  tone: AppBadgeTone.neutral,
-                ),
-              if (presentation?.notificationsSupported ?? false)
-                _AgentNotificationToggle(
-                  agentId: row.agent.id,
-                  label: l10n.agentSettingsNotifications,
-                  value: row.preference.notificationsEnabled,
-                  enabled: enabled,
-                  onChange: _setNotificationsEnabled,
-                ),
-            ],
+            ),
           ),
+          const SizedBox(width: AppSpacing.s10),
+          if (presentation?.userToggleable ?? true)
+            FSwitch(
+              key: ValueKey<String>('agent-enabled-${row.agent.id}'),
+              value: enabled,
+              onChange: _setEnabled,
+            )
+          else
+            AppBadge(
+              label: l10n.agentSettingsManagedBadge,
+              size: AppBadgeSize.compact,
+              tone: AppBadgeTone.neutral,
+            ),
         ],
       ),
     );
   }
+}
 
-  String _subtitle(_AgentSettingsRow row, String? description) {
+class _AgentSettingsDetailSheet extends ConsumerStatefulWidget {
+  const _AgentSettingsDetailSheet({
+    required this.row,
+    required this.running,
+    required this.onRunNow,
+    required this.onShowHistory,
+    required this.onSetEnabled,
+    required this.onSetNotificationsEnabled,
+    required this.onRowsChanged,
+  });
+
+  final _AgentSettingsRow row;
+  final bool running;
+  final Future<void> Function() onRunNow;
+  final Future<void> Function() onShowHistory;
+  final Future<void> Function(bool) onSetEnabled;
+  final Future<void> Function(bool) onSetNotificationsEnabled;
+  final VoidCallback onRowsChanged;
+
+  @override
+  ConsumerState<_AgentSettingsDetailSheet> createState() =>
+      _AgentSettingsDetailSheetState();
+}
+
+class _AgentSettingsDetailSheetState
+    extends ConsumerState<_AgentSettingsDetailSheet> {
+  late bool _enabled;
+  late bool _notificationsEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _enabled = widget.row.preference.enabled;
+    _notificationsEnabled = widget.row.preference.notificationsEnabled;
+  }
+
+  void _setEnabled(bool value) {
+    setState(() => _enabled = value);
+    unawaited(widget.onSetEnabled(value));
+  }
+
+  void _setNotificationsEnabled(bool value) {
+    setState(() => _notificationsEnabled = value);
+    unawaited(widget.onSetNotificationsEnabled(value));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    final row = widget.row;
+    final presentation = row.presentation;
+    final enabled = _enabled;
+    final description = presentation?.description(l10n);
+    final formatters = context.formatters(ref);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppIconTile(
+              icon: presentation?.icon ?? FLucideIcons.bot,
+              color: enabled ? colors.primary : colors.mutedForeground,
+              size: AppSpacing.s40,
+              iconSize: AppIconSizes.md,
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _detailSubtitle(context, row, description),
+                    style: context.theme.typography.body.sm,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  Wrap(
+                    spacing: AppSpacing.s8,
+                    runSpacing: AppSpacing.s8,
+                    children: [
+                      AppBadge(
+                        label: enabled
+                            ? l10n.agentSettingsEnabled
+                            : l10n.agentSettingsDisabled,
+                        size: AppBadgeSize.compact,
+                        tone: enabled
+                            ? AppBadgeTone.accent
+                            : AppBadgeTone.neutral,
+                      ),
+                      AppBadge(
+                        label: _scheduleLabel(l10n, row.agent.schedule),
+                        size: AppBadgeSize.compact,
+                        tone: AppBadgeTone.neutral,
+                      ),
+                      if (row.latestRun != null)
+                        AppBadge(
+                          label: l10n.agentSettingsLastRunAt(
+                            formatters.dateTime(
+                              row.latestRun!.startedAt.toLocal(),
+                            ),
+                          ),
+                          size: AppBadgeSize.compact,
+                          tone: AppBadgeTone.neutral,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        SoftCard(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+          child: Column(
+            children: [
+              _AgentDetailActionRow(
+                icon: FLucideIcons.power,
+                title: l10n.agentSettingsEnabled,
+                subtitle: enabled
+                    ? l10n.agentSettingsEnabled
+                    : l10n.agentSettingsDisabled,
+                trailing: presentation?.userToggleable ?? true
+                    ? FSwitch(value: enabled, onChange: _setEnabled)
+                    : AppBadge(
+                        label: l10n.agentSettingsManagedBadge,
+                        size: AppBadgeSize.compact,
+                        tone: AppBadgeTone.neutral,
+                      ),
+              ),
+              if (presentation?.notificationsSupported ?? false) ...[
+                const AppGradientDivider(),
+                _AgentDetailActionRow(
+                  icon: FLucideIcons.bell,
+                  title: l10n.agentSettingsNotifications,
+                  subtitle: _notificationsEnabled
+                      ? l10n.agentSettingsEnabled
+                      : l10n.agentSettingsDisabled,
+                  trailing: FSwitch(
+                    key: ValueKey<String>(
+                      'agent-notifications-${row.agent.id}',
+                    ),
+                    value: _notificationsEnabled,
+                    onChange: enabled ? _setNotificationsEnabled : null,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            AppQuietButton(
+              label: widget.running
+                  ? l10n.agentSettingsRunning
+                  : l10n.agentSettingsRunNow,
+              onPress: widget.running || !enabled ? null : widget.onRunNow,
+              busy: widget.running,
+              prefix: const Icon(FLucideIcons.play, size: AppIconSizes.xs),
+            ),
+            if (row.latestArtifact != null)
+              AppQuietButton(
+                label: l10n.agentSettingsViewResult,
+                onPress: () => showAgentArtifactSheet(
+                  context: context,
+                  artifact: row.latestArtifact!,
+                  onVisibilityChanged: widget.onRowsChanged,
+                ),
+                prefix: const Icon(
+                  FLucideIcons.externalLink,
+                  size: AppIconSizes.xs,
+                ),
+              ),
+            if (row.latestRun != null)
+              AppQuietButton(
+                label: l10n.agentSettingsViewHistory,
+                onPress: widget.onShowHistory,
+                prefix: const Icon(FLucideIcons.history, size: AppIconSizes.xs),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _AgentDetailActionRow extends StatelessWidget {
+  const _AgentDetailActionRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: AppIconSizes.h18,
+            color: context.theme.colors.mutedForeground,
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: context.captionLabelStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  subtitle,
+                  style: context.captionStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          trailing,
+        ],
+      ),
+    );
+  }
+}
+
+class _AgentRunStatusDot extends StatelessWidget {
+  const _AgentRunStatusDot({required this.row});
+
+  final _AgentSettingsRow row;
+
+  @override
+  Widget build(BuildContext context) {
     final latest = row.latestRun;
     final l10n = AppLocalizations.of(context);
-    if (latest == null) return description ?? l10n.agentSettingsNeverRun;
-    final status = switch (latest.status) {
-      AgentRunLifecycleStatus.running => l10n.agentRunStatusRunning,
-      AgentRunLifecycleStatus.ready => l10n.agentRunStatusReady,
-      AgentRunLifecycleStatus.noFinding => l10n.agentRunStatusNoFinding,
-      AgentRunLifecycleStatus.failed => l10n.agentRunStatusFailed,
-    };
-    final detail = latest.error ?? latest.summary;
-    return detail == null
-        ? status
-        : l10n.agentSettingsStatusWithDetail(status, detail);
+    if (!row.preference.enabled) {
+      return AppBadge(
+        label: l10n.agentSettingsDisabled,
+        size: AppBadgeSize.compact,
+        tone: AppBadgeTone.neutral,
+      );
+    }
+    if (latest == null) return const SizedBox.shrink();
+    return AppBadge(
+      label: _statusLabel(l10n, latest.status),
+      size: AppBadgeSize.compact,
+      tone: switch (latest.status) {
+        AgentRunLifecycleStatus.failed => AppBadgeTone.error,
+        AgentRunLifecycleStatus.ready => AppBadgeTone.accent,
+        _ => AppBadgeTone.neutral,
+      },
+    );
   }
 }
 
@@ -427,6 +776,64 @@ String _triggerLabel(AppLocalizations l10n, AgentRunTrigger trigger) {
   };
 }
 
+String _compactSubtitle(
+  BuildContext context,
+  _AgentSettingsRow row,
+  String? description,
+) {
+  final l10n = AppLocalizations.of(context);
+  if (!row.preference.enabled) return l10n.agentSettingsDisabled;
+  final latest = row.latestRun;
+  if (latest == null) {
+    final fallback = description ?? l10n.agentSettingsNeverRun;
+    return '${_scheduleLabel(l10n, row.agent.schedule)} · $fallback';
+  }
+  return '${_statusLabel(l10n, latest.status)} · '
+      '${_relativeTimeShort(latest.startedAt)} · '
+      '${_scheduleLabel(l10n, row.agent.schedule)}';
+}
+
+String _detailSubtitle(
+  BuildContext context,
+  _AgentSettingsRow row,
+  String? description,
+) {
+  final latest = row.latestRun;
+  final l10n = AppLocalizations.of(context);
+  if (latest == null) return description ?? l10n.agentSettingsNeverRun;
+  final status = _statusLabel(l10n, latest.status);
+  final detail = latest.error ?? latest.summary;
+  return detail == null
+      ? status
+      : l10n.agentSettingsStatusWithDetail(status, detail);
+}
+
+String _statusLabel(AppLocalizations l10n, AgentRunLifecycleStatus status) {
+  return switch (status) {
+    AgentRunLifecycleStatus.running => l10n.agentRunStatusRunning,
+    AgentRunLifecycleStatus.ready => l10n.agentRunStatusReady,
+    AgentRunLifecycleStatus.noFinding => l10n.agentRunStatusNoFinding,
+    AgentRunLifecycleStatus.failed => l10n.agentRunStatusFailed,
+  };
+}
+
+String _relativeTimeShort(DateTime at) {
+  final delta = DateTime.now().toUtc().difference(at.toUtc());
+  if (delta.inMinutes < 1) return '0m';
+  if (delta.inHours < 1) return '${delta.inMinutes}m';
+  if (delta.inDays < 1) return '${delta.inHours}h';
+  return '${delta.inDays}d';
+}
+
+String _domainLabel(DomainScope domain) {
+  return switch (domain) {
+    DomainScope.finance => 'FinanceOS',
+    DomainScope.health => 'HealthOS',
+    DomainScope.knowledge => 'KnowledgeOS',
+    DomainScope.execution => 'ExecutionOS',
+  };
+}
+
 String _scheduleLabel(AppLocalizations l10n, AgentSchedule schedule) {
   final cadence = _intervalLabel(l10n, schedule.interval);
   final hour = schedule.preferredHourLocal;
@@ -449,48 +856,4 @@ String _intervalLabel(AppLocalizations l10n, Duration interval) {
   }
   final hours = interval.inHours <= 0 ? 1 : interval.inHours;
   return l10n.agentSettingsEveryHours(hours);
-}
-
-class _AgentNotificationToggle extends StatelessWidget {
-  const _AgentNotificationToggle({
-    required this.agentId,
-    required this.label,
-    required this.value,
-    required this.enabled,
-    required this.onChange,
-  });
-
-  final String agentId;
-  final String label;
-  final bool value;
-  final bool enabled;
-  final ValueChanged<bool> onChange;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.theme.colors.muted.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s8,
-          vertical: AppSpacing.s6,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: context.captionStyle),
-            const SizedBox(width: AppSpacing.s8),
-            FSwitch(
-              key: ValueKey<String>('agent-notifications-$agentId'),
-              value: value,
-              onChange: enabled ? onChange : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
