@@ -108,5 +108,27 @@ void main() {
 
       expect(failures.map((failure) => failure.field), contains('artifact'));
     });
+
+    test('accepts domain opt-out no-run outcomes', () {
+      final failures = evaluateAgentOutcomeCaseWithoutRun(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'knowledge.routine_due.domain_opt_out',
+        ),
+        reason: 'domain_not_enabled',
+      );
+
+      expect(failures, isEmpty);
+    });
+
+    test('rejects no-run outcomes for ready cases', () {
+      final failures = evaluateAgentOutcomeCaseWithoutRun(
+        regressionCase: agentOutcomeRegressionCaseById(
+          'finance.weekly_wealth_review.ready',
+        ),
+        reason: 'domain_not_enabled',
+      );
+
+      expect(failures.map((failure) => failure.field), contains('status'));
+    });
   });
 }

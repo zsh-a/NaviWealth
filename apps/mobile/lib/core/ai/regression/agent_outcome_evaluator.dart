@@ -122,6 +122,37 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
   return failures;
 }
 
+List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCaseWithoutRun({
+  required AgentOutcomeRegressionCase regressionCase,
+  required String reason,
+  AgentArtifact? artifact,
+  Set<String> proposalKinds = const <String>{},
+}) {
+  final failures = <AgentOutcomeEvaluationFailure>[];
+  void add(String field, Object? expected, Object? actual) {
+    failures.add(
+      AgentOutcomeEvaluationFailure(
+        field: field,
+        expected: expected,
+        actual: actual,
+      ),
+    );
+  }
+
+  if (regressionCase.expectedStatus != AgentOutcomeRegressionStatus.noFinding) {
+    add('status', regressionCase.expectedStatus, 'not_run:$reason');
+  }
+  if (artifact != null) {
+    add('artifact', null, artifact.id);
+  }
+  if (regressionCase.expectedProposalKinds.isNotEmpty ||
+      proposalKinds.isNotEmpty) {
+    add('proposalKinds', regressionCase.expectedProposalKinds, proposalKinds);
+  }
+
+  return failures;
+}
+
 AgentOutcomeRegressionStatus _statusFromResult(AgentRunResult result) {
   return switch (result.userVisibleStatus) {
     AgentRunUserVisibleStatus.ready => AgentOutcomeRegressionStatus.ready,
