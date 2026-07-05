@@ -19,6 +19,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart'
@@ -40,6 +43,7 @@ import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
+import '../../../core/persistence/test_database.dart';
 
 const _owner = 'u1';
 final _now = DateTime.utc(2026, 5, 30, 12);
@@ -238,12 +242,18 @@ void main() {
     required _FakeRuntime runtime,
     bool heuristicProviderJudge = false,
   }) {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
     final c = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(_prefs),
         currentUserIdProvider.overrideWithValue(() async => _owner),
         knowledgeRepositoryProvider.overrideWith((ref) async => repo),
         memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
         // The no-LLM provider path yields HeuristicContradictionJudge.
         // We pin that directly (rather than overriding deviceLlmClient to
         // null) so the test doesn't have to stand up the whole
@@ -286,11 +296,25 @@ void main() {
     final result = await runAgent(container, agent);
 
     expect(result.status, AgentRunStatus.completed);
+    expect(result.artifactId, '$kKnowledgeContradictionAgentId:2026-05-30');
     expect(result.payload['issue_count'], 1);
+    expect(runtime.remembered!.payload['artifact_id'], result.artifactId);
     final issues = runtime.remembered!.payload['issues']! as List<Object?>;
     final issue = issues.single! as Map<String, Object?>;
     expect(issue['kind'], 'assumption_invalidated');
     expect(issue['reference_id'], 'a-stale');
+
+    final artifactStore = await container.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact, isNotNull);
+    expect(artifact!.kind, AgentArtifactKind.alert);
+    expect(artifact.severity, AgentArtifactSeverity.warning);
+    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.insights.single.title, 'Invalidated assumptions');
+    expect(artifact.evidence.single.id, 'd1');
+    expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
   });
 
   test('check-2: LLM judge confirms a real contradiction -> flag with the '

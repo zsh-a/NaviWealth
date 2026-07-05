@@ -18,6 +18,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -218,6 +221,9 @@ void main() {
           currentUserIdProvider.overrideWithValue(() async => _owner),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           inboxTriageRepositoryProvider.overrideWith((ref) async => triage),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => SqliteAgentArtifactStore(db: db),
+          ),
         ],
       );
       addTearDown(c.dispose);
@@ -260,12 +266,27 @@ void main() {
 
       final res = await runAgent(c, agent);
       expect(res.status, AgentRunStatus.completed);
+      expect(res.artifactId, '$kKnowledgeInboxTriageAgentId:2026-01-01');
 
       final rec = await triage.findForNote('n1');
       expect(rec, isNotNull);
       expect(rec!.proposals, hasLength(1));
       expect(rec.proposals.single.kind, InboxProposalKind.classification);
       expect(rec.proposals.single.payload['kind'], 'decision_candidate');
+
+      final artifactStore = await c.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final artifact = await artifactStore.read(res.artifactId!);
+      expect(artifact, isNotNull);
+      expect(artifact!.kind, AgentArtifactKind.review);
+      expect(artifact.severity, AgentArtifactSeverity.info);
+      expect(artifact.insights.map((insight) => insight.title), [
+        'New suggestions',
+        'Classification',
+      ]);
+      expect(artifact.evidence.single.id, 'n1');
+      expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
     });
 
     test(

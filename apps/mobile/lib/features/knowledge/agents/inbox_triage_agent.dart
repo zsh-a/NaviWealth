@@ -22,7 +22,10 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
@@ -92,6 +95,7 @@ class InboxTriageAgent implements Agent {
     }
 
     var emitted = 0;
+    final artifactItems = <_InboxTriageArtifactItem>[];
     for (final note in untriaged) {
       final proposals = await activeClassifier.triage(note, source.decisions);
       if (proposals.isEmpty) {
@@ -117,11 +121,31 @@ class InboxTriageAgent implements Agent {
         ),
       );
       emitted += proposals.length;
+      artifactItems.add(_InboxTriageArtifactItem(note, proposals));
     }
 
     final summary = emitted == 0
         ? '看了 ${untriaged.length} 条 note,没找到值得提议的'
         : '为 ${untriaged.length} 条 note 生成了 $emitted 条建议';
+    String? artifactId;
+    if (emitted > 0) {
+      final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+      artifactId = '$kKnowledgeInboxTriageAgentId:$dayKey';
+      final artifactStore = await ctx.ref.read(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      await artifactStore.save(
+        _buildArtifact(
+          id: artifactId,
+          ownerUserId: ownerUserId,
+          createdAt: finished,
+          summary: summary,
+          scannedNotes: untriaged.length,
+          emittedProposals: emitted,
+          items: artifactItems,
+        ),
+      );
+    }
     return AgentRunResult(
       agentId: kKnowledgeInboxTriageAgentId,
       status: AgentRunStatus.completed,
@@ -132,9 +156,97 @@ class InboxTriageAgent implements Agent {
         'scanned_notes': untriaged.length,
         'emitted_proposals': emitted,
       },
+      artifactId: artifactId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String id,
+    required String ownerUserId,
+    required DateTime createdAt,
+    required String summary,
+    required int scannedNotes,
+    required int emittedProposals,
+    required List<_InboxTriageArtifactItem> items,
+  }) {
+    final byKind = <InboxProposalKind, int>{};
+    for (final item in items) {
+      for (final proposal in item.proposals) {
+        byKind.update(proposal.kind, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeInboxTriageAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.review,
+      severity: AgentArtifactSeverity.info,
+      title: 'Inbox Triage',
+      summary: summary,
+      insights: <AgentInsight>[
+        AgentInsight(
+          title: 'New suggestions',
+          body:
+              '$emittedProposals suggestion${emittedProposals == 1 ? '' : 's'}'
+              ' across ${items.length} note${items.length == 1 ? '' : 's'}.',
+          payload: <String, Object?>{
+            'scanned_notes': scannedNotes,
+            'emitted_proposals': emittedProposals,
+            'notes_with_suggestions': items.length,
+          },
+        ),
+        for (final entry in byKind.entries)
+          AgentInsight(
+            title: _proposalKindLabel(entry.key),
+            body:
+                '${entry.value} ${entry.value == 1 ? 'suggestion' : 'suggestions'}.',
+            payload: <String, Object?>{
+              'proposal_kind': entry.key.wire,
+              'count': entry.value,
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final item in items)
+          AgentEvidenceRef(
+            type: 'knowledge_note',
+            id: item.note.id,
+            label: item.note.title.isEmpty ? 'Untitled note' : item.note.title,
+            payload: <String, Object?>{
+              'proposal_count': item.proposals.length,
+              'proposal_kinds': item.proposals
+                  .map((proposal) => proposal.kind.wire)
+                  .toList(growable: false),
+            },
+          ),
+      ],
+      actions: const <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review inbox suggestions',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+        ),
+      ],
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 7)),
     );
   }
 }
+
+class _InboxTriageArtifactItem {
+  const _InboxTriageArtifactItem(this.note, this.proposals);
+
+  final KnowledgeNote note;
+  final List<InboxProposal> proposals;
+}
+
+String _proposalKindLabel(InboxProposalKind kind) => switch (kind) {
+  InboxProposalKind.classification => 'Classification',
+  InboxProposalKind.tags => 'Tags',
+  InboxProposalKind.linkToDecision => 'Decision links',
+};
 
 abstract class InboxTriageSourceReader {
   Future<InboxTriageSourceSnapshot> read(AgentContext ctx);

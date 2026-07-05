@@ -27,7 +27,10 @@
 library;
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
+import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
@@ -168,6 +171,8 @@ class ContradictionAgent implements Agent {
             firstIssue.kind,
           );
 
+    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+    final artifactId = '$kKnowledgeContradictionAgentId:$dayKey';
     final built = buildAgentMemory(
       source: kKnowledgeContradictionMemorySource,
       kind: MemoryKind.semantic,
@@ -188,6 +193,7 @@ class ContradictionAgent implements Agent {
               },
             )
             .toList(growable: false),
+        'artifact_id': artifactId,
       },
       entities: <String>{
         'knowledge_contradiction',
@@ -197,6 +203,19 @@ class ContradictionAgent implements Agent {
       confidence: 0.6,
     );
     await runtime.remember(built.record);
+    final artifactStore = await ctx.ref.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    await artifactStore.save(
+      _buildArtifact(
+        id: artifactId,
+        ownerUserId: ownerUserId,
+        createdAt: finished,
+        summary: summary,
+        memoryId: built.memoryId,
+        issues: issues,
+      ),
+    );
 
     return AgentRunResult(
       agentId: kKnowledgeContradictionAgentId,
@@ -206,6 +225,83 @@ class ContradictionAgent implements Agent {
       summary: summary,
       payload: <String, Object?>{'issue_count': issues.length},
       memoryId: built.memoryId,
+      artifactId: artifactId,
+    );
+  }
+
+  AgentArtifact _buildArtifact({
+    required String id,
+    required String ownerUserId,
+    required DateTime createdAt,
+    required String summary,
+    required String memoryId,
+    required List<_Contradiction> issues,
+  }) {
+    final structural = issues
+        .where((issue) => issue.kind == 'assumption_invalidated')
+        .toList(growable: false);
+    final principle = issues
+        .where((issue) => issue.kind == 'principle_mismatch')
+        .toList(growable: false);
+    return AgentArtifact(
+      id: id,
+      ownerUserId: ownerUserId,
+      agentId: kKnowledgeContradictionAgentId,
+      domain: 'knowledge',
+      kind: AgentArtifactKind.alert,
+      severity: AgentArtifactSeverity.warning,
+      title: 'Contradiction Check',
+      summary: summary,
+      insights: <AgentInsight>[
+        if (structural.isNotEmpty)
+          AgentInsight(
+            title: 'Invalidated assumptions',
+            body:
+                '${structural.length} decision${structural.length == 1 ? '' : 's'}'
+                ' cite assumptions that are no longer open.',
+            severity: AgentArtifactSeverity.warning,
+            payload: <String, Object?>{
+              'count': structural.length,
+              'first_decision_id': structural.first.decisionId,
+            },
+          ),
+        if (principle.isNotEmpty)
+          AgentInsight(
+            title: 'Principle drift',
+            body:
+                '${principle.length} recent item${principle.length == 1 ? '' : 's'}'
+                ' may conflict with active principles.',
+            severity: AgentArtifactSeverity.attention,
+            payload: <String, Object?>{
+              'count': principle.length,
+              'first_reference_id': principle.first.referenceId,
+            },
+          ),
+      ],
+      evidence: <AgentEvidenceRef>[
+        for (final issue in issues)
+          AgentEvidenceRef(
+            type: 'knowledge_decision',
+            id: issue.decisionId,
+            label: issue.decisionQuestion,
+            payload: <String, Object?>{
+              'kind': issue.kind,
+              'reference_id': issue.referenceId,
+              'detail': issue.detail,
+            },
+          ),
+      ],
+      actions: const <AgentAction>[
+        AgentAction(
+          kind: 'open_object',
+          label: 'Review contradictions',
+          intent: kKnowledgeReviewDueItemsIntent,
+          objectType: kAgentArtifactObjectType,
+        ),
+      ],
+      memoryId: memoryId,
+      createdAt: createdAt.toUtc(),
+      expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
   }
 
