@@ -1,5 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -67,6 +71,80 @@ void main() {
 
     expect(scheduler.calls.last, 'cancel:$kExecutionReviewTaskName');
   });
+
+  test('execution review providers read latest artifact and run', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runStore = SqliteAgentRunStore(db: db);
+    final startedAt = DateTime.utc(2026, 7, 5, 17);
+    await artifactStore.save(
+      _executionArtifact(
+        id: 'execution-review-old',
+        createdAt: startedAt.subtract(const Duration(days: 7)),
+      ),
+    );
+    await artifactStore.save(
+      _executionArtifact(id: 'execution-review-new', createdAt: startedAt),
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: const ExecutionReviewAgent(),
+      runStartedAt: startedAt,
+      result: AgentRunResult(
+        agentId: kExecutionReviewAgentId,
+        status: AgentRunStatus.completed,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+        summary: '3 actions need attention',
+        artifactId: 'execution-review-new',
+        traceId: 'trace-execution-review',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    final c = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((_) async => db),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+        agent_providers.agentRunStoreProvider.overrideWith(
+          (ref) async => runStore,
+        ),
+      ],
+    );
+    addTearDown(c.dispose);
+    await c.read(auth.domainOptInsProvider.future);
+    await c
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.execution, true);
+
+    final artifact = await c.read(latestExecutionReviewArtifactProvider.future);
+    final run = await c.read(latestExecutionReviewRunProvider.future);
+
+    expect(artifact?.id, 'execution-review-new');
+    expect(run?.status, AgentRunLifecycleStatus.ready);
+    expect(run?.artifactId, 'execution-review-new');
+    expect(run?.traceId, 'trace-execution-review');
+  });
+}
+
+AgentArtifact _executionArtifact({
+  required String id,
+  required DateTime createdAt,
+}) {
+  return AgentArtifact(
+    id: id,
+    ownerUserId: 'user-1',
+    agentId: kExecutionReviewAgentId,
+    domain: 'execution',
+    kind: AgentArtifactKind.review,
+    severity: AgentArtifactSeverity.info,
+    title: 'Execution Review',
+    summary: '3 actions need attention',
+    createdAt: createdAt,
+  );
 }
 
 class _RecordingScheduler implements BackgroundScheduler {

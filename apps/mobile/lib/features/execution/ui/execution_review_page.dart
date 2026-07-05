@@ -4,9 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../agents/providers.dart' as execution_agent_providers;
+import '../agents/review_agent.dart' show kExecutionReviewAgentId;
 import '../composition/execution_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
@@ -33,6 +38,12 @@ class ExecutionReviewPage extends ConsumerWidget {
       ],
       child: RefreshIndicator(
         onRefresh: () async {
+          ref.invalidate(
+            execution_agent_providers.latestExecutionReviewArtifactProvider,
+          );
+          ref.invalidate(
+            execution_agent_providers.latestExecutionReviewRunProvider,
+          );
           ref.invalidate(executionRecentProgressProvider);
           ref.invalidate(executionClosedActionsProvider);
           ref.invalidate(executionReviewRelationsProvider);
@@ -74,6 +85,7 @@ class _ReviewBody extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: shellTabContentPadding(context),
         children: [
+          const _ExecutionReviewAgentPanel(),
           ExecutionStateView(
             icon: FLucideIcons.clipboardCheck,
             title: l10n.executionReviewEmptyTitle,
@@ -92,6 +104,7 @@ class _ReviewBody extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: shellTabContentPadding(context),
       children: [
+        const _ExecutionReviewAgentPanel(),
         if (entries.isNotEmpty) ...[
           ExecutionSectionHeader(
             title: l10n.executionReviewTitle,
@@ -154,6 +167,90 @@ class _ReviewBody extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _ExecutionReviewAgentPanel extends ConsumerWidget {
+  const _ExecutionReviewAgentPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final artifact = ref
+        .watch(execution_agent_providers.latestExecutionReviewArtifactProvider)
+        .value;
+    if (artifact != null) {
+      return _ExecutionReviewAgentPanelFrame(
+        child: _ExecutionReviewArtifactCard(artifact: artifact),
+      );
+    }
+    final run = ref
+        .watch(execution_agent_providers.latestExecutionReviewRunProvider)
+        .value;
+    if (run == null) return const SizedBox.shrink();
+    return _ExecutionReviewAgentPanelFrame(
+      child: AgentRunStatusCard(
+        record: run,
+        metaLabel: _executionAgentMetaLabel(context, run.startedAt),
+        onRetry: () => _retryExecutionReview(ref),
+      ),
+    );
+  }
+}
+
+class _ExecutionReviewAgentPanelFrame extends StatelessWidget {
+  const _ExecutionReviewAgentPanelFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        child,
+        const SizedBox(height: AppSpacing.s16),
+      ],
+    );
+  }
+}
+
+class _ExecutionReviewArtifactCard extends ConsumerWidget {
+  const _ExecutionReviewArtifactCard({required this.artifact});
+
+  final AgentArtifact artifact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final metaLabel = _executionAgentMetaLabel(context, artifact.createdAt);
+    return AgentResultCard(
+      artifact: artifact,
+      metaLabel: metaLabel,
+      onOpen: () => showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: metaLabel,
+        onVisibilityChanged: () => ref.invalidate(
+          execution_agent_providers.latestExecutionReviewArtifactProvider,
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _retryExecutionReview(WidgetRef ref) async {
+  final controller = await ref.read(agentRunControllerProvider.future);
+  await controller.runOnceById(kExecutionReviewAgentId);
+  ref.invalidate(
+    execution_agent_providers.latestExecutionReviewArtifactProvider,
+  );
+  ref.invalidate(execution_agent_providers.latestExecutionReviewRunProvider);
+}
+
+String _executionAgentMetaLabel(BuildContext context, DateTime at) {
+  final l10n = AppLocalizations.of(context);
+  final local = at.toLocal();
+  final mm = local.month.toString().padLeft(2, '0');
+  final dd = local.day.toString().padLeft(2, '0');
+  return '${l10n.executionReviewTitle} · $mm-$dd';
 }
 
 String? _fallbackRelationLabel(String? id) {
