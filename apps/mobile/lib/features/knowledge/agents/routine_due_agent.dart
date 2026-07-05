@@ -72,7 +72,8 @@ class RoutineDueAgent implements Agent {
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
-    final due = await dueReader.listDue(ctx);
+    final snapshot = await dueReader.listDue(ctx);
+    final due = snapshot.due;
     final finished = DateTime.now().toUtc();
 
     if (due.isEmpty) {
@@ -81,6 +82,7 @@ class RoutineDueAgent implements Agent {
         startedAt: start,
         finishedAt: finished,
         reason: l10n.knowledgeAgentRoutineNoneDue(kRoutineDueLookahead.inDays),
+        traceId: snapshot.traceId,
       );
     }
 
@@ -116,6 +118,7 @@ class RoutineDueAgent implements Agent {
             .toList(growable: false),
         'lookahead_days': kRoutineDueLookahead.inDays,
         'artifact_id': artifactId,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       entities: <String>{'knowledge_routine', 'routine_due'},
       importance: overdue.isNotEmpty ? 0.75 : 0.5,
@@ -135,6 +138,7 @@ class RoutineDueAgent implements Agent {
         now: start,
         overdue: overdue,
         upcoming: upcoming,
+        traceId: snapshot.traceId,
       ),
     );
 
@@ -152,9 +156,11 @@ class RoutineDueAgent implements Agent {
       payload: <String, Object?>{
         'overdue_count': overdue.length,
         'upcoming_count': upcoming.length,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       memoryId: built.memoryId,
       artifactId: artifactId,
+      traceId: snapshot.traceId,
     );
   }
 
@@ -167,6 +173,7 @@ class RoutineDueAgent implements Agent {
     required DateTime now,
     required List<RoutineDueItem> overdue,
     required List<RoutineDueItem> upcoming,
+    required String? traceId,
   }) {
     return AgentArtifact(
       id: id,
@@ -238,6 +245,7 @@ class RoutineDueAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
@@ -304,14 +312,14 @@ class RoutineDueAgent implements Agent {
 }
 
 abstract class RoutineDueReader {
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx);
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx);
 }
 
 class RepositoryRoutineDueReader implements RoutineDueReader {
   const RepositoryRoutineDueReader();
 
   @override
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final due = await repo.listDueRoutines(
@@ -319,7 +327,9 @@ class RepositoryRoutineDueReader implements RoutineDueReader {
       asOf: ctx.now.add(kRoutineDueLookahead),
       excludeDoneSince: _startOfLocalDay(ctx.now),
     );
-    return due.map(RoutineDueItem.fromRoutine).toList(growable: false);
+    return RoutineDueSnapshot(
+      due: due.map(RoutineDueItem.fromRoutine).toList(growable: false),
+    );
   }
 }
 
@@ -333,7 +343,7 @@ class FrbRoutineDueReader implements RoutineDueReader {
   final RoutineDueReader fallback;
 
   @override
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async {
     final asOf = ctx.now.add(kRoutineDueLookahead).toUtc().toIso8601String();
     return _runtime.readFromEffectPlan(
       effectPlan: <AgentRuntimeEffect>[
@@ -349,10 +359,19 @@ class FrbRoutineDueReader implements RoutineDueReader {
           stepRun.terminalStep,
           'list_due_routines',
         );
-        return routineDueItemsFromToolResult(result);
+        final items = routineDueItemsFromToolResult(result);
+        if (items == null) return null;
+        return RoutineDueSnapshot(due: items, traceId: stepRun.traceId);
       },
     );
   }
+}
+
+class RoutineDueSnapshot {
+  const RoutineDueSnapshot({required this.due, this.traceId});
+
+  final List<RoutineDueItem> due;
+  final String? traceId;
 }
 
 class RoutineDueItem {

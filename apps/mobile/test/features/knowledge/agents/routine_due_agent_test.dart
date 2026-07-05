@@ -70,11 +70,12 @@ void main() {
         ),
       );
 
-      final due = await reader.listDue(_context());
+      final snapshot = await reader.listDue(_context());
 
-      expect(due, hasLength(1));
-      expect(due.single.id, 'routine_1');
-      expect(due.single.statement, 'Activate bank card');
+      expect(snapshot.due, hasLength(1));
+      expect(snapshot.due.single.id, 'routine_1');
+      expect(snapshot.due.single.statement, 'Activate bank card');
+      expect(snapshot.traceId, 'agent-runtime:knowledge_routine_due:run_1');
       expect(dispatcher.calls.single.name, 'list_due_routines');
       expect(dispatcher.calls.single.input, containsPair('limit', 50));
       expect(bridge.startRequests.single.agentId, kKnowledgeRoutineAgentId);
@@ -87,13 +88,17 @@ void main() {
     });
 
     test('falls back when FRB effect path fails', () async {
-      final fallback = _FallbackReader(<RoutineDueItem>[
-        RoutineDueItem(
-          id: 'fallback_routine',
-          statement: 'Fallback routine',
-          nextDueAt: DateTime.utc(2026, 6, 30),
+      final fallback = _FallbackReader(
+        RoutineDueSnapshot(
+          due: <RoutineDueItem>[
+            RoutineDueItem(
+              id: 'fallback_routine',
+              statement: 'Fallback routine',
+              nextDueAt: DateTime.utc(2026, 6, 30),
+            ),
+          ],
         ),
-      ]);
+      );
       final reader = FrbRoutineDueReader(
         runtime: _runtime(
           bridge: FailingAgentRuntimeEffectPlanBridge(),
@@ -102,22 +107,26 @@ void main() {
         fallback: fallback,
       );
 
-      final due = await reader.listDue(_context());
+      final snapshot = await reader.listDue(_context());
 
-      expect(due.single.id, 'fallback_routine');
+      expect(snapshot.due.single.id, 'fallback_routine');
       expect(fallback.calls, 1);
     });
 
     test(
       'ignores trace recording failures after a successful FRB read',
       () async {
-        final fallback = _FallbackReader(<RoutineDueItem>[
-          RoutineDueItem(
-            id: 'fallback_routine',
-            statement: 'Fallback routine',
-            nextDueAt: DateTime.utc(2026, 6, 30),
+        final fallback = _FallbackReader(
+          RoutineDueSnapshot(
+            due: <RoutineDueItem>[
+              RoutineDueItem(
+                id: 'fallback_routine',
+                statement: 'Fallback routine',
+                nextDueAt: DateTime.utc(2026, 6, 30),
+              ),
+            ],
           ),
-        ]);
+        );
         final reader = FrbRoutineDueReader(
           runtime: _runtime(
             bridge: FakeAgentRuntimeEffectPlanBridge(),
@@ -128,10 +137,11 @@ void main() {
           fallback: fallback,
         );
 
-        final due = await reader.listDue(_context());
+        final snapshot = await reader.listDue(_context());
 
-        expect(due, hasLength(1));
-        expect(due.single.id, 'routine_1');
+        expect(snapshot.due, hasLength(1));
+        expect(snapshot.due.single.id, 'routine_1');
+        expect(snapshot.traceId, isNull);
         expect(fallback.calls, 0);
       },
     );
@@ -154,18 +164,23 @@ void main() {
     );
     addTearDown(container.dispose);
     final agent = RoutineDueAgent(
-      dueReader: _FixedRoutineReader(<RoutineDueItem>[
-        RoutineDueItem(
-          id: 'routine-overdue',
-          statement: 'Activate bank card',
-          nextDueAt: DateTime.utc(2026, 7, 4, 8),
+      dueReader: _FixedRoutineReader(
+        RoutineDueSnapshot(
+          due: <RoutineDueItem>[
+            RoutineDueItem(
+              id: 'routine-overdue',
+              statement: 'Activate bank card',
+              nextDueAt: DateTime.utc(2026, 7, 4, 8),
+            ),
+            RoutineDueItem(
+              id: 'routine-upcoming',
+              statement: 'Review notes',
+              nextDueAt: DateTime.utc(2026, 7, 9, 8),
+            ),
+          ],
+          traceId: 'trace-routine-1',
         ),
-        RoutineDueItem(
-          id: 'routine-upcoming',
-          statement: 'Review notes',
-          nextDueAt: DateTime.utc(2026, 7, 9, 8),
-        ),
-      ]),
+      ),
     );
 
     final result = await _runAgent(
@@ -177,13 +192,16 @@ void main() {
     expect(result.status, AgentRunStatus.completed);
     expect(result.memoryId, '$kKnowledgeRoutineMemorySource:2026-07-05');
     expect(result.artifactId, '$kKnowledgeRoutineAgentId:2026-07-05');
+    expect(result.traceId, 'trace-routine-1');
     expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+    expect(runtime.remembered?.payload['trace_id'], 'trace-routine-1');
 
     final artifact = await artifactStore.read(result.artifactId!);
     expect(artifact, isNotNull);
     expect(artifact!.kind, AgentArtifactKind.reminder);
     expect(artifact.severity, AgentArtifactSeverity.attention);
     expect(artifact.memoryId, result.memoryId);
+    expect(artifact.traceId, 'trace-routine-1');
     expect(artifact.insights.map((insight) => insight.title), [
       'Overdue routines',
       'Upcoming routines',
@@ -279,11 +297,11 @@ class _RoutineDispatcher implements DeviceToolDispatcher {
 class _FallbackReader implements RoutineDueReader {
   _FallbackReader(this.result);
 
-  final List<RoutineDueItem> result;
+  final RoutineDueSnapshot result;
   var calls = 0;
 
   @override
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async {
     calls += 1;
     return result;
   }
@@ -304,10 +322,10 @@ Future<AgentRunResult> _runAgent(
 class _FixedRoutineReader implements RoutineDueReader {
   const _FixedRoutineReader(this.result);
 
-  final List<RoutineDueItem> result;
+  final RoutineDueSnapshot result;
 
   @override
-  Future<List<RoutineDueItem>> listDue(AgentContext ctx) async => result;
+  Future<RoutineDueSnapshot> listDue(AgentContext ctx) async => result;
 }
 
 class _FakeMemoryRuntime implements MemoryRuntime {
