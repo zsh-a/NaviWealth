@@ -139,6 +139,7 @@ void main() {
         expect(c.expectedSeverity, isNotNull, reason: c.id);
         expect(c.expectedTopInsightTitles, isNotEmpty, reason: c.id);
         expect(c.expectedEvidenceTypes, isNotEmpty, reason: c.id);
+        expect(c.expectedActionKinds, isNotEmpty, reason: c.id);
       }
     });
 
@@ -150,9 +151,27 @@ void main() {
         expect(c.expectedSeverity, isNull, reason: c.id);
         expect(c.expectedTopInsightTitles, isEmpty, reason: c.id);
         expect(c.expectedEvidenceTypes, isEmpty, reason: c.id);
+        expect(c.expectedActionKinds, isEmpty, reason: c.id);
         expect(c.expectedActionIntents, isEmpty, reason: c.id);
       }
     });
+
+    test(
+      'ready action kinds stay within the unified artifact action model',
+      () {
+        const allowedActionKinds = <String>{'review', 'open_object'};
+
+        for (final c in agentOutcomeRegressionCorpus.where(
+          (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
+        )) {
+          expect(
+            allowedActionKinds.containsAll(c.expectedActionKinds),
+            isTrue,
+            reason: c.id,
+          );
+        }
+      },
+    );
 
     test('FinanceOS agent actions stay follow-up only', () {
       const financeFollowUpIntents = <String>{

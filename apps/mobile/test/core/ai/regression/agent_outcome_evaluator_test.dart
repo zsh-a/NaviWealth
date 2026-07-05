@@ -85,6 +85,7 @@ void main() {
           'artifact.severity',
           'artifact.insights',
           'artifact.evidence',
+          'artifact.actions.kind',
           'artifact.actions.intent',
         ]),
       );

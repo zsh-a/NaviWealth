@@ -112,6 +112,18 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
     );
   }
 
+  final actionKinds = {for (final action in artifact.actions) action.kind};
+  final missingActionKinds = regressionCase.expectedActionKinds.difference(
+    actionKinds,
+  );
+  if (missingActionKinds.isNotEmpty) {
+    add(
+      'artifact.actions.kind',
+      regressionCase.expectedActionKinds,
+      actionKinds,
+    );
+  }
+
   final actionIntents = {
     for (final action in artifact.actions)
       if (action.intent != null) action.intent!,

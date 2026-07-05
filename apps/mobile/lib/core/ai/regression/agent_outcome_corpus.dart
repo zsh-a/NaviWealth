@@ -23,6 +23,7 @@ class AgentOutcomeRegressionCase {
     this.expectedSeverity,
     this.expectedTopInsightTitles = const <String>{},
     this.expectedEvidenceTypes = const <String>{},
+    this.expectedActionKinds = const <String>{},
     this.expectedActionIntents = const <String>{},
     this.expectedProposalKinds = const <String>{},
     this.tags = const <String>{},
@@ -47,6 +48,7 @@ class AgentOutcomeRegressionCase {
   final AgentArtifactSeverity? expectedSeverity;
   final Set<String> expectedTopInsightTitles;
   final Set<String> expectedEvidenceTypes;
+  final Set<String> expectedActionKinds;
   final Set<String> expectedActionIntents;
 
   /// Proposal kinds expected to be created or referenced by the outcome.
@@ -76,6 +78,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
     expectedEvidenceTypes: <String>{'finance_holding'},
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kFinanceReviewWealthIntent},
   ),
   AgentOutcomeRegressionCase(
@@ -88,6 +91,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
     expectedEvidenceTypes: <String>{'finance_holding'},
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kFinanceReviewWealthIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
@@ -104,6 +108,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Detector source',
     },
     expectedEvidenceTypes: <String>{'anomaly_flag'},
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
@@ -119,6 +124,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Detector source',
     },
     expectedEvidenceTypes: <String>{'anomaly_flag'},
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
@@ -135,6 +141,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Plan snapshot',
     },
     expectedEvidenceTypes: <String>{'fire_review', 'fire_finding'},
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
@@ -150,6 +157,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Plan snapshot',
     },
     expectedEvidenceTypes: <String>{'fire_review', 'fire_finding'},
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
@@ -170,6 +178,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'options_income_scan',
       'options_opportunity',
     },
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
@@ -189,6 +198,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'options_income_scan',
       'options_opportunity',
     },
+    expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
@@ -202,6 +212,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.attention,
     expectedTopInsightTitles: <String>{'Sleep', 'HRV', 'Finance'},
     expectedEvidenceTypes: <String>{'health_event', 'finance_event'},
+    expectedActionKinds: <String>{'review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'health.recovery_alert.ready',
@@ -213,6 +224,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'HRV decline'},
     expectedEvidenceTypes: <String>{'health_metric_trend'},
+    expectedActionKinds: <String>{'review'},
+    expectedActionIntents: <String>{kHealthExplainRecoveryAlertIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'health.weekly_summary.no_finding',
@@ -236,6 +249,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Workouts',
     },
     expectedEvidenceTypes: <String>{'health_week'},
+    expectedActionKinds: <String>{'review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.assumption.ready',
@@ -247,6 +261,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.attention,
     expectedTopInsightTitles: <String>{'Stale assumptions'},
     expectedEvidenceTypes: <String>{'knowledge_assumption'},
+    expectedActionKinds: <String>{'open_object'},
+    expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.inbox_triage.ready',
@@ -258,6 +274,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.info,
     expectedTopInsightTitles: <String>{'New suggestions', 'Classification'},
     expectedEvidenceTypes: <String>{'knowledge_note'},
+    expectedActionKinds: <String>{'open_object'},
+    expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     expectedProposalKinds: <String>{'classification'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
@@ -271,6 +289,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{'Invalidated assumptions'},
     expectedEvidenceTypes: <String>{'knowledge_decision'},
+    expectedActionKinds: <String>{'open_object'},
+    expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.contradiction.prompt_injection_guard',
@@ -293,6 +313,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'knowledge_decision',
       'knowledge_assumption',
     },
+    expectedActionKinds: <String>{'open_object'},
+    expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.review.tool_failure_fallback',
@@ -307,6 +329,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'knowledge_decision',
       'knowledge_assumption',
     },
+    expectedActionKinds: <String>{'open_object'},
+    expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
     tags: <String>{kAgentOutcomeToolFailureTag},
   ),
   AgentOutcomeRegressionCase(
@@ -323,6 +347,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
       'Due work',
     },
     expectedEvidenceTypes: <String>{'execution_action'},
+    expectedActionKinds: <String>{'review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'execution.review.budget_exhausted',
@@ -342,6 +367,8 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.attention,
     expectedTopInsightTitles: <String>{'Overdue routines', 'Upcoming routines'},
     expectedEvidenceTypes: <String>{'knowledge_routine'},
+    expectedActionKinds: <String>{'open_object'},
+    expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.routine_due.domain_opt_out',
