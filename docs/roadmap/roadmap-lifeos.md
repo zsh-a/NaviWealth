@@ -73,6 +73,9 @@ Device AI should be auditable by construction:
 - Write tools should return proposals or use explicit confirmation.
 - Batch proposals need UI, undo, and progress treatment before they become
   normal agent output.
+- Standard agent-result follow-up intents should be contributed by every
+  agent-capable domain and de-duplicated at domain composition, so shared
+  result actions do not depend on one seed domain's registry.
 - Memory retrieval should be evaluated for answer quality, not only for
   successful vector lookup.
 

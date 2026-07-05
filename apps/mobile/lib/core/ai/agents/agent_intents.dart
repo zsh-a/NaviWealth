@@ -13,7 +13,7 @@ const String kFinanceReviewWealthIntent = 'finance.reviewWealth';
 const String kHealthExplainRecoveryAlertIntent = 'health.explainRecoveryAlert';
 const String kKnowledgeReviewDueItemsIntent = 'knowledge.reviewDueItems';
 
-const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
+const kAgentResultIntentDescriptors = <IntentDescriptor>[
   IntentDescriptor(
     name: kAgentExplainResultIntent,
     domain: kDomainFinance,
@@ -41,6 +41,10 @@ const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
     },
     preferredReadModels: <String>['agent_artifacts', 'agent_runs'],
   ),
+];
+
+const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
+  ...kAgentResultIntentDescriptors,
   IntentDescriptor(
     name: kFinanceReviewWealthIntent,
     domain: kDomainFinance,
@@ -58,6 +62,7 @@ const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
 ];
 
 const kHealthAgentIntentDescriptors = <IntentDescriptor>[
+  ...kAgentResultIntentDescriptors,
   IntentDescriptor(
     name: kHealthExplainRecoveryAlertIntent,
     domain: kDomainHealth,
@@ -72,6 +77,7 @@ const kHealthAgentIntentDescriptors = <IntentDescriptor>[
 ];
 
 const kKnowledgeAgentIntentDescriptors = <IntentDescriptor>[
+  ...kAgentResultIntentDescriptors,
   IntentDescriptor(
     name: kKnowledgeReviewDueItemsIntent,
     domain: kDomainKnowledge,
@@ -88,4 +94,6 @@ const kKnowledgeAgentIntentDescriptors = <IntentDescriptor>[
   ),
 ];
 
-const kExecutionAgentIntentDescriptors = <IntentDescriptor>[];
+const kExecutionAgentIntentDescriptors = <IntentDescriptor>[
+  ...kAgentResultIntentDescriptors,
+];

@@ -74,6 +74,20 @@ const _healthIntent = IntentDescriptor(
   domain: kDomainHealth,
 );
 
+const _sharedFinanceIntent = IntentDescriptor(
+  name: 'fake_shared_intent',
+  allowedObjectTypes: <String>{'shared_object'},
+  preferredCapabilities: <AiCapability>{AiCapability.chat},
+  domain: kDomainFinance,
+);
+
+const _sharedHealthIntent = IntentDescriptor(
+  name: 'fake_shared_intent',
+  allowedObjectTypes: <String>{'shared_object'},
+  preferredCapabilities: <AiCapability>{AiCapability.chat},
+  domain: kDomainHealth,
+);
+
 const _financeAgentPresentation = AgentPresentationSpec(
   agentId: 'domain_agent',
   domain: DomainScope.finance,
@@ -334,6 +348,24 @@ void main() {
     expect(catalog.lookup('fake_health_intent'), _healthIntent);
   });
 
+  test('intent catalog de-duplicates active descriptors by name', () {
+    const financePack = DomainPack(
+      scope: DomainScope.finance,
+      intentDescriptors: [_sharedFinanceIntent],
+    );
+    const healthPack = DomainPack(
+      scope: DomainScope.health,
+      intentDescriptors: [_sharedHealthIntent],
+    );
+
+    final catalog = domainIntentCatalog(const [financePack, healthPack]);
+
+    expect(catalog.descriptors.map((descriptor) => descriptor.name), [
+      'fake_shared_intent',
+    ]);
+    expect(catalog.lookup('fake_shared_intent')?.domain, kDomainFinance);
+  });
+
   test('composition bundle includes domain provider overrides', () {
     const pack = DomainPack(
       scope: DomainScope.finance,
@@ -453,9 +485,29 @@ void main() {
         ]),
       );
       final catalog = c.read(intentCatalogProvider);
-      expect(catalog.lookup(kAgentExplainResultIntent), isNotNull);
+      for (final intentName in const <String>[
+        kAgentExplainResultIntent,
+        kAgentShowEvidenceIntent,
+        kAgentCreatePlanFromResultIntent,
+      ]) {
+        expect(catalog.lookup(intentName), isNotNull);
+        expect(
+          catalog.descriptors.where(
+            (descriptor) => descriptor.name == intentName,
+          ),
+          hasLength(1),
+        );
+      }
       expect(catalog.lookup(kFinanceReviewWealthIntent), isNotNull);
       expect(catalog.lookup(kKnowledgeReviewDueItemsIntent), isNotNull);
+      expect(
+        kExecutionAgentIntentDescriptors.map((descriptor) => descriptor.name),
+        containsAll(<String>[
+          kAgentExplainResultIntent,
+          kAgentShowEvidenceIntent,
+          kAgentCreatePlanFromResultIntent,
+        ]),
+      );
     },
   );
 

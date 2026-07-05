@@ -190,7 +190,13 @@ List<ProposalKindMeta> domainProposalKinds(List<DomainPack> packs) {
 }
 
 IntentCatalog domainIntentCatalog(List<DomainPack> packs) {
-  return IntentCatalog([for (final p in packs) ...p.intentDescriptors]);
+  final descriptorsByName = <String, IntentDescriptor>{};
+  for (final pack in packs) {
+    for (final descriptor in pack.intentDescriptors) {
+      descriptorsByName.putIfAbsent(descriptor.name, () => descriptor);
+    }
+  }
+  return IntentCatalog(descriptorsByName.values.toList(growable: false));
 }
 
 Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
