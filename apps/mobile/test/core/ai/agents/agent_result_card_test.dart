@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
@@ -112,6 +113,8 @@ void main() {
     expect(find.text('trace-1'), findsOneWidget);
     expect(find.text('Actions'), findsOneWidget);
     expect(find.text('Ask follow-up'), findsOneWidget);
+    expect(find.text('Show evidence'), findsOneWidget);
+    expect(find.text('Create plan'), findsOneWidget);
     expect(find.text('Review plan'), findsOneWidget);
   });
 
@@ -142,12 +145,81 @@ void main() {
     await tester.tap(find.text('Ask').first);
     await tester.pump(const Duration(milliseconds: 120));
 
-    expect(capturedInvocation?.intent, 'agent.explainResult');
-    expect(capturedInvocation?.object?.type, 'agent_artifact');
+    expect(capturedInvocation?.intent, kAgentExplainResultIntent);
+    expect(capturedInvocation?.object?.type, kAgentArtifactObjectType);
     expect(capturedInvocation?.object?.id, 'artifact-1');
     expect(capturedInvocation?.context['agent_id'], 'agent-1');
     expect(capturedInvocation?.context['trace_id'], 'trace-1');
     expect(capturedObjectLabel, 'Morning Briefing');
+  });
+
+  testWidgets('detail evidence action opens registered evidence intent', (
+    tester,
+  ) async {
+    AiIntentInvocation? capturedInvocation;
+    await tester.pumpWidget(
+      _wrap(
+        SingleChildScrollView(
+          child: AgentArtifactDetailBody(artifact: _artifact()),
+        ),
+        overrides: [
+          askAiSurfaceProvider.overrideWithValue((
+            context, {
+            invocation,
+            objectLabel,
+            prefill,
+          }) async {
+            capturedInvocation = invocation;
+          }),
+        ],
+      ),
+    );
+
+    await tester.tap(find.text('Ask').at(1));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(capturedInvocation?.intent, kAgentShowEvidenceIntent);
+    expect(capturedInvocation?.object?.type, kAgentArtifactObjectType);
+    expect(capturedInvocation?.object?.id, 'artifact-1');
+    expect(capturedInvocation?.context['follow_up_focus'], 'evidence');
+    expect(capturedInvocation?.context['evidence_refs'], isNotEmpty);
+  });
+
+  testWidgets('detail plan action opens registered plan intent', (
+    tester,
+  ) async {
+    AiIntentInvocation? capturedInvocation;
+    await tester.pumpWidget(
+      _wrap(
+        SingleChildScrollView(
+          child: AgentArtifactDetailBody(artifact: _artifact()),
+        ),
+        overrides: [
+          askAiSurfaceProvider.overrideWithValue((
+            context, {
+            invocation,
+            objectLabel,
+            prefill,
+          }) async {
+            capturedInvocation = invocation;
+          }),
+        ],
+      ),
+    );
+
+    final planAsk = find.text('Ask').at(2);
+    await tester.ensureVisible(planAsk);
+    await tester.tap(planAsk);
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(capturedInvocation?.intent, kAgentCreatePlanFromResultIntent);
+    expect(capturedInvocation?.object?.type, kAgentArtifactObjectType);
+    expect(capturedInvocation?.object?.id, 'artifact-1');
+    expect(capturedInvocation?.context['follow_up_focus'], 'plan');
+    expect(
+      capturedInvocation?.capabilities,
+      containsAll(<AiCapability>{AiCapability.chat, AiCapability.proposal}),
+    );
   });
 
   testWidgets('run status card renders failed status and retry action', (

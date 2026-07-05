@@ -7,6 +7,8 @@ import '../intent/intent.dart';
 
 const String kAgentArtifactObjectType = 'agent_artifact';
 const String kAgentExplainResultIntent = 'agent.explainResult';
+const String kAgentShowEvidenceIntent = 'agent.showEvidence';
+const String kAgentCreatePlanFromResultIntent = 'agent.createPlanFromResult';
 const String kFinanceReviewWealthIntent = 'finance.reviewWealth';
 const String kKnowledgeReviewDueItemsIntent = 'knowledge.reviewDueItems';
 
@@ -17,6 +19,25 @@ const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
     allowedDomains: <String>{kDomainHealth, kDomainKnowledge, kDomainExecution},
     allowedObjectTypes: <String>{kAgentArtifactObjectType},
     preferredCapabilities: <AiCapability>{AiCapability.chat},
+    preferredReadModels: <String>['agent_artifacts', 'agent_runs'],
+  ),
+  IntentDescriptor(
+    name: kAgentShowEvidenceIntent,
+    domain: kDomainFinance,
+    allowedDomains: <String>{kDomainHealth, kDomainKnowledge, kDomainExecution},
+    allowedObjectTypes: <String>{kAgentArtifactObjectType},
+    preferredCapabilities: <AiCapability>{AiCapability.chat},
+    preferredReadModels: <String>['agent_artifacts', 'agent_runs'],
+  ),
+  IntentDescriptor(
+    name: kAgentCreatePlanFromResultIntent,
+    domain: kDomainFinance,
+    allowedDomains: <String>{kDomainHealth, kDomainKnowledge, kDomainExecution},
+    allowedObjectTypes: <String>{kAgentArtifactObjectType},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.proposal,
+    },
     preferredReadModels: <String>['agent_artifacts', 'agent_runs'],
   ),
   IntentDescriptor(

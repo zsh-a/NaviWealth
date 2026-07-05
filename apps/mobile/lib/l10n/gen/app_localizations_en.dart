@@ -5615,6 +5615,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Explain this result and its evidence.';
 
   @override
+  String get agentResultShowEvidenceTitle => 'Show evidence';
+
+  @override
+  String get agentResultShowEvidenceBody =>
+      'Map the evidence to the claims in this result.';
+
+  @override
+  String get agentResultCreatePlanTitle => 'Create plan';
+
+  @override
+  String get agentResultCreatePlanBody =>
+      'Turn this result into proposed next steps.';
+
+  @override
   String get agentPresentationWeeklyWealthReviewLabel => 'Weekly Wealth Review';
 
   @override

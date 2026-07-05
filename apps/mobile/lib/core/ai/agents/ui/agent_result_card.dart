@@ -344,13 +344,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
           _DetailSection(
             title: l10n.agentResultActionsSection,
             children: [
-              _ActionIntentTile(
-                icon: FLucideIcons.messageCircle,
-                title: l10n.agentResultAskFollowUpTitle,
-                body: l10n.agentResultAskFollowUpBody,
-                color: colors.primary,
-                onPress: () => _askAboutArtifact(context, ref),
-              ),
+              ..._standardFollowUpActions(context, ref),
               for (final action in artifact.actions)
                 if (action.intent != null)
                   _ActionIntentTile(
@@ -373,19 +367,40 @@ class AgentArtifactDetailBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
             title: l10n.agentResultActionsSection,
-            children: [
-              _ActionIntentTile(
-                icon: FLucideIcons.messageCircle,
-                title: l10n.agentResultAskFollowUpTitle,
-                body: l10n.agentResultAskFollowUpBody,
-                color: colors.primary,
-                onPress: () => _askAboutArtifact(context, ref),
-              ),
-            ],
+            children: _standardFollowUpActions(context, ref),
           ),
         ],
       ],
     );
+  }
+
+  List<Widget> _standardFollowUpActions(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    return [
+      _ActionIntentTile(
+        icon: FLucideIcons.messageCircle,
+        title: l10n.agentResultAskFollowUpTitle,
+        body: l10n.agentResultAskFollowUpBody,
+        color: colors.primary,
+        onPress: () => _askAboutArtifact(context, ref),
+      ),
+      if (artifact.evidence.isNotEmpty)
+        _ActionIntentTile(
+          icon: FLucideIcons.fileText,
+          title: l10n.agentResultShowEvidenceTitle,
+          body: l10n.agentResultShowEvidenceBody,
+          color: colors.primary,
+          onPress: () => _showEvidenceForArtifact(context, ref),
+        ),
+      _ActionIntentTile(
+        icon: FLucideIcons.listChecks,
+        title: l10n.agentResultCreatePlanTitle,
+        body: l10n.agentResultCreatePlanBody,
+        color: colors.primary,
+        onPress: () => _createPlanFromArtifact(context, ref),
+      ),
+    ];
   }
 
   Future<void> _askAboutArtifact(BuildContext context, WidgetRef ref) {
@@ -398,6 +413,38 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       attrs: _artifactAttrs(),
       source: 'agent_artifact_detail',
       capabilities: const <AiCapability>{AiCapability.chat},
+    );
+  }
+
+  Future<void> _showEvidenceForArtifact(BuildContext context, WidgetRef ref) {
+    return askAi(
+      context,
+      ref,
+      intent: kAgentShowEvidenceIntent,
+      object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
+      objectLabel: artifact.title,
+      attrs: <String, Object?>{
+        ..._artifactAttrs(),
+        'follow_up_focus': 'evidence',
+      },
+      source: 'agent_artifact_detail',
+      capabilities: const <AiCapability>{AiCapability.chat},
+    );
+  }
+
+  Future<void> _createPlanFromArtifact(BuildContext context, WidgetRef ref) {
+    return askAi(
+      context,
+      ref,
+      intent: kAgentCreatePlanFromResultIntent,
+      object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
+      objectLabel: artifact.title,
+      attrs: <String, Object?>{..._artifactAttrs(), 'follow_up_focus': 'plan'},
+      source: 'agent_artifact_detail',
+      capabilities: const <AiCapability>{
+        AiCapability.chat,
+        AiCapability.proposal,
+      },
     );
   }
 

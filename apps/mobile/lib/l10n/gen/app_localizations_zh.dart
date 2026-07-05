@@ -5363,6 +5363,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentResultAskFollowUpBody => '解释这个结果与它使用的证据。';
 
   @override
+  String get agentResultShowEvidenceTitle => '查看证据';
+
+  @override
+  String get agentResultShowEvidenceBody => '把证据对应到这份结果里的判断。';
+
+  @override
+  String get agentResultCreatePlanTitle => '制定计划';
+
+  @override
+  String get agentResultCreatePlanBody => '把这份结果转成建议的下一步。';
+
+  @override
   String get agentPresentationWeeklyWealthReviewLabel => '每周财富复盘';
 
   @override

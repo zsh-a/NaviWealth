@@ -94,6 +94,16 @@ IntentCopyResolver localizedIntentCopyResolver(AppLocalizations l10n) {
       promptTemplate:
           'Explain {{object_label}}, summarize the evidence, and call out any caveats.',
     ),
+    'agent.showEvidence' => const IntentCopy(
+      label: 'Show evidence',
+      promptTemplate:
+          'Show the evidence behind {{object_label}}, identify which claims each evidence item supports, and note any missing evidence.',
+    ),
+    'agent.createPlanFromResult' => const IntentCopy(
+      label: 'Create plan',
+      promptTemplate:
+          'Turn {{object_label}} into a short action plan. Use existing evidence, separate proposed actions from facts, and avoid applying changes without confirmation.',
+    ),
     'finance.reviewWealth' => const IntentCopy(
       label: 'Review wealth',
       promptTemplate:

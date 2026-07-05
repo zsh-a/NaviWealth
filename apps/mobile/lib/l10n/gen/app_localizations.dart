@@ -9591,6 +9591,30 @@ abstract class AppLocalizations {
   /// **'Explain this result and its evidence.'**
   String get agentResultAskFollowUpBody;
 
+  /// Agent detail action title for showing evidence behind the result.
+  ///
+  /// In en, this message translates to:
+  /// **'Show evidence'**
+  String get agentResultShowEvidenceTitle;
+
+  /// Agent detail action description for showing evidence behind the result.
+  ///
+  /// In en, this message translates to:
+  /// **'Map the evidence to the claims in this result.'**
+  String get agentResultShowEvidenceBody;
+
+  /// Agent detail action title for turning an agent result into a plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Create plan'**
+  String get agentResultCreatePlanTitle;
+
+  /// Agent detail action description for turning an agent result into a plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn this result into proposed next steps.'**
+  String get agentResultCreatePlanBody;
+
   /// Presentation label for the FinanceOS weekly wealth review agent.
   ///
   /// In en, this message translates to:

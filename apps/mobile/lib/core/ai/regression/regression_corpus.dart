@@ -112,6 +112,22 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     objectId: 'weekly_wealth_review:2026-07-05',
   ),
   RegressionPrompt(
+    id: 'agent.showEvidence.weekly_wealth_review',
+    intent: 'agent.showEvidence',
+    userPrompt: '列出这份 weekly wealth review 的证据，并说明每条证据支持了哪个判断。',
+    expectedTools: <String>{'get_agent_artifacts', 'get_agent_runs'},
+    objectType: 'agent_artifact',
+    objectId: 'weekly_wealth_review:2026-07-05',
+  ),
+  RegressionPrompt(
+    id: 'agent.createPlanFromResult.execution_review',
+    intent: 'agent.createPlanFromResult',
+    userPrompt: '把这份 execution review 结果转成今天可确认的行动计划。',
+    expectedTools: <String>{'get_agent_artifacts', 'get_agent_runs'},
+    objectType: 'agent_artifact',
+    objectId: 'execution_review:2026-07-05',
+  ),
+  RegressionPrompt(
     id: 'finance.reviewWealth.weekly_wealth_review',
     intent: 'finance.reviewWealth',
     userPrompt: '基于这份 weekly wealth review，帮我复盘净资产和持仓证据。',
