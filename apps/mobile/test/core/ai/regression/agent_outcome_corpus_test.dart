@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/intent/intent.dart'
+    show IntentDescriptor, intentAllowsDomain;
 import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 
 void main() {
@@ -217,6 +219,37 @@ void main() {
         }
       },
     );
+
+    test('ready action intents are registered for agent artifacts', () {
+      final descriptorsByName = <String, IntentDescriptor>{};
+      for (final descriptor in const <IntentDescriptor>[
+        ...kFinanceAgentIntentDescriptors,
+        ...kHealthAgentIntentDescriptors,
+        ...kKnowledgeAgentIntentDescriptors,
+        ...kExecutionAgentIntentDescriptors,
+      ]) {
+        descriptorsByName.putIfAbsent(descriptor.name, () => descriptor);
+      }
+
+      for (final c in agentOutcomeRegressionCorpus.where(
+        (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
+      )) {
+        for (final intent in c.expectedActionIntents) {
+          final descriptor = descriptorsByName[intent];
+          expect(descriptor, isNotNull, reason: '${c.id}: $intent');
+          expect(
+            intentAllowsDomain(descriptor!, c.domain),
+            isTrue,
+            reason: '${c.id}: $intent',
+          );
+          expect(
+            descriptor.allowedObjectTypes,
+            contains(kAgentArtifactObjectType),
+            reason: '${c.id}: $intent',
+          );
+        }
+      }
+    });
 
     test('FinanceOS agent actions stay follow-up only', () {
       const financeFollowUpIntents = <String>{
