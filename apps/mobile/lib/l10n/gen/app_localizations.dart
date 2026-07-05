@@ -9345,6 +9345,30 @@ abstract class AppLocalizations {
   /// **'View result'**
   String get agentSettingsViewResult;
 
+  /// Button label to open an agent run history sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get agentSettingsViewHistory;
+
+  /// Sheet title for one agent's run history.
+  ///
+  /// In en, this message translates to:
+  /// **'{agentName} history'**
+  String agentSettingsHistoryTitle(String agentName);
+
+  /// Empty state title for an agent history sheet with no runs.
+  ///
+  /// In en, this message translates to:
+  /// **'No runs yet'**
+  String get agentSettingsHistoryEmptyTitle;
+
+  /// Empty state message for an agent history sheet with no runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Run this agent once to start its local history.'**
+  String get agentSettingsHistoryEmptyMessage;
+
   /// Button/status label while an agent is running.
   ///
   /// In en, this message translates to:
@@ -9428,6 +9452,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{status} · {detail}'**
   String agentSettingsStatusWithDetail(String status, String detail);
+
+  /// Agent run trigger label: manual run.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get agentSettingsTriggerManual;
+
+  /// Agent run trigger label: scheduled run.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get agentSettingsTriggerSchedule;
+
+  /// Agent run trigger label: background due flag.
+  ///
+  /// In en, this message translates to:
+  /// **'Background due'**
+  String get agentSettingsTriggerBackgroundDue;
+
+  /// Agent run trigger label: foreground catch-up run.
+  ///
+  /// In en, this message translates to:
+  /// **'Catch-up'**
+  String get agentSettingsTriggerCatchUp;
 
   /// Settings section header for diagnostics, version, logs, and performance tools
   ///

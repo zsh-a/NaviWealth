@@ -163,12 +163,102 @@ void main() {
 
     expect(find.text('View result'), findsOneWidget);
     expect(find.textContaining('Last run'), findsOneWidget);
+    expect(find.text('History'), findsOneWidget);
 
     await tester.tap(find.text('View result'));
     await tester.pumpAndSettle();
 
     expect(find.text('Latest Artifact'), findsWidgets);
     expect(find.text('Something happened.'), findsOneWidget);
+  });
+
+  testWidgets('opens agent run history from settings', (tester) async {
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    const agent = _FakeAgent();
+    final olderStartedAt = DateTime.utc(2026, 7, 4, 9);
+    final latestStartedAt = DateTime.utc(2026, 7, 5, 9);
+    await runStore.markRunning(
+      ownerUserId: 'user-1',
+      agent: agent,
+      startedAt: olderStartedAt,
+      trigger: AgentRunTrigger.schedule,
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: agent,
+      runStartedAt: olderStartedAt,
+      result: AgentRunResult.skipped(
+        agentId: agent.id,
+        startedAt: olderStartedAt,
+        finishedAt: olderStartedAt.add(const Duration(milliseconds: 20)),
+        reason: 'Older summary',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await runStore.markRunning(
+      ownerUserId: 'user-1',
+      agent: agent,
+      startedAt: latestStartedAt,
+      trigger: AgentRunTrigger.manual,
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: agent,
+      runStartedAt: latestStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: latestStartedAt,
+        finishedAt: latestStartedAt.add(const Duration(milliseconds: 20)),
+        summary: 'Latest summary',
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistryProvider.overrideWithValue(const <Agent>[agent]),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('History'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Raw agent name history'), findsOneWidget);
+    expect(find.text('Latest summary'), findsOneWidget);
+    expect(find.text('Older summary'), findsOneWidget);
+    expect(find.textContaining('Manual'), findsOneWidget);
+    expect(find.textContaining('Scheduled'), findsOneWidget);
   });
 }
 

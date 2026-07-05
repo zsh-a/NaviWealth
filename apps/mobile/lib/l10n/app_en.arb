@@ -2924,6 +2924,17 @@
   "@agentSettingsRunNow": { "description": "Button label to run an agent immediately." },
   "agentSettingsViewResult": "View result",
   "@agentSettingsViewResult": { "description": "Button label to open the latest visible result from an agent run." },
+  "agentSettingsViewHistory": "History",
+  "@agentSettingsViewHistory": { "description": "Button label to open an agent run history sheet." },
+  "agentSettingsHistoryTitle": "{agentName} history",
+  "@agentSettingsHistoryTitle": {
+    "description": "Sheet title for one agent's run history.",
+    "placeholders": { "agentName": { "type": "String", "example": "Morning Briefing" } }
+  },
+  "agentSettingsHistoryEmptyTitle": "No runs yet",
+  "@agentSettingsHistoryEmptyTitle": { "description": "Empty state title for an agent history sheet with no runs." },
+  "agentSettingsHistoryEmptyMessage": "Run this agent once to start its local history.",
+  "@agentSettingsHistoryEmptyMessage": { "description": "Empty state message for an agent history sheet with no runs." },
   "agentSettingsRunning": "Running",
   "@agentSettingsRunning": { "description": "Button/status label while an agent is running." },
   "agentSettingsEnabled": "Enabled",
@@ -2970,6 +2981,14 @@
       "detail": { "type": "String", "example": "3 items need review" }
     }
   },
+  "agentSettingsTriggerManual": "Manual",
+  "@agentSettingsTriggerManual": { "description": "Agent run trigger label: manual run." },
+  "agentSettingsTriggerSchedule": "Scheduled",
+  "@agentSettingsTriggerSchedule": { "description": "Agent run trigger label: scheduled run." },
+  "agentSettingsTriggerBackgroundDue": "Background due",
+  "@agentSettingsTriggerBackgroundDue": { "description": "Agent run trigger label: background due flag." },
+  "agentSettingsTriggerCatchUp": "Catch-up",
+  "@agentSettingsTriggerCatchUp": { "description": "Agent run trigger label: foreground catch-up run." },
   "settingsAdvancedSection": "Diagnostics",
   "@settingsAdvancedSection": { "description": "Settings section header for diagnostics, version, logs, and performance tools" },
   "settingsAiModelsTitle": "AI Models",

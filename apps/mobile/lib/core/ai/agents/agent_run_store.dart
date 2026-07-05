@@ -106,6 +106,12 @@ abstract interface class AgentRunStore {
     required String agentId,
   });
 
+  Future<List<AgentRunRecord>> listForAgent({
+    required String ownerUserId,
+    required String agentId,
+    int limit = 20,
+  });
+
   Future<DateTime?> lastNonFailedRunAt({
     required String ownerUserId,
     required String agentId,
@@ -157,6 +163,20 @@ class InMemoryAgentRunStore implements AgentRunStore {
     required String ownerUserId,
     required String agentId,
   }) async {
+    final rows = await listForAgent(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  @override
+  Future<List<AgentRunRecord>> listForAgent({
+    required String ownerUserId,
+    required String agentId,
+    int limit = 20,
+  }) async {
     final rows =
         _runs.values
             .where(
@@ -164,7 +184,7 @@ class InMemoryAgentRunStore implements AgentRunStore {
             )
             .toList()
           ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
-    return rows.isEmpty ? null : rows.first;
+    return rows.take(limit).toList(growable: false);
   }
 
   @override
@@ -290,6 +310,20 @@ class SqliteAgentRunStore implements AgentRunStore {
     required String ownerUserId,
     required String agentId,
   }) async {
+    final rows = await listForAgent(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  @override
+  Future<List<AgentRunRecord>> listForAgent({
+    required String ownerUserId,
+    required String agentId,
+    int limit = 20,
+  }) async {
     final row = await _db
         .customSelect(
           '''
@@ -297,15 +331,16 @@ class SqliteAgentRunStore implements AgentRunStore {
           FROM agent_runs
           WHERE owner_user_id = ? AND agent_id = ?
           ORDER BY started_at DESC
-          LIMIT 1
+          LIMIT ?
           ''',
           variables: [
             Variable.withString(ownerUserId),
             Variable.withString(agentId),
+            Variable.withInt(limit),
           ],
         )
-        .getSingleOrNull();
-    return row == null ? null : _rowToRecord(row);
+        .get();
+    return [for (final item in row) _rowToRecord(item)];
   }
 
   @override

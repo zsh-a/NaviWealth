@@ -5227,6 +5227,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsViewResult => '查看结果';
 
   @override
+  String get agentSettingsViewHistory => '历史';
+
+  @override
+  String agentSettingsHistoryTitle(String agentName) {
+    return '$agentName 历史';
+  }
+
+  @override
+  String get agentSettingsHistoryEmptyTitle => '暂无运行记录';
+
+  @override
+  String get agentSettingsHistoryEmptyMessage => '运行一次后，这里会显示本地历史。';
+
+  @override
   String get agentSettingsRunning => '运行中';
 
   @override
@@ -5277,6 +5291,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String agentSettingsStatusWithDetail(String status, String detail) {
     return '$status · $detail';
   }
+
+  @override
+  String get agentSettingsTriggerManual => '手动';
+
+  @override
+  String get agentSettingsTriggerSchedule => '定时';
+
+  @override
+  String get agentSettingsTriggerBackgroundDue => '后台到期';
+
+  @override
+  String get agentSettingsTriggerCatchUp => '补跑';
 
   @override
   String get settingsAdvancedSection => '诊断';

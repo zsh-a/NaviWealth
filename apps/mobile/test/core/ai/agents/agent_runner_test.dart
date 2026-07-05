@@ -221,6 +221,70 @@ void main() {
     expect(latest?.traceId, 'trace-persisted');
   });
 
+  test('persisted run store lists agent history newest first', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentRunStore(db: db);
+    final agent = _StubAgent(id: 'history');
+    final first = DateTime.utc(2026, 5, 27, 9);
+    final second = DateTime.utc(2026, 5, 28, 9);
+
+    await store.markRunning(
+      ownerUserId: 'u',
+      agent: agent,
+      startedAt: first,
+      trigger: AgentRunTrigger.schedule,
+    );
+    await store.finishRun(
+      ownerUserId: 'u',
+      agent: agent,
+      runStartedAt: first,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: first,
+        finishedAt: first.add(const Duration(milliseconds: 10)),
+        summary: 'first',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await store.markRunning(
+      ownerUserId: 'u',
+      agent: agent,
+      startedAt: second,
+      trigger: AgentRunTrigger.manual,
+    );
+    await store.finishRun(
+      ownerUserId: 'u',
+      agent: agent,
+      runStartedAt: second,
+      result: AgentRunResult.skipped(
+        agentId: agent.id,
+        startedAt: second,
+        finishedAt: second.add(const Duration(milliseconds: 10)),
+        reason: 'second',
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+
+    final history = await store.listForAgent(
+      ownerUserId: 'u',
+      agentId: agent.id,
+    );
+    final limited = await store.listForAgent(
+      ownerUserId: 'u',
+      agentId: agent.id,
+      limit: 1,
+    );
+
+    expect(history.map((run) => run.summary), ['second', 'first']);
+    expect(history.map((run) => run.trigger), [
+      AgentRunTrigger.manual,
+      AgentRunTrigger.schedule,
+    ]);
+    expect(limited.map((run) => run.summary), ['second']);
+  });
+
   test('tick fires every agent whose schedule says yes', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');

@@ -5476,6 +5476,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSettingsViewResult => 'View result';
 
   @override
+  String get agentSettingsViewHistory => 'History';
+
+  @override
+  String agentSettingsHistoryTitle(String agentName) {
+    return '$agentName history';
+  }
+
+  @override
+  String get agentSettingsHistoryEmptyTitle => 'No runs yet';
+
+  @override
+  String get agentSettingsHistoryEmptyMessage =>
+      'Run this agent once to start its local history.';
+
+  @override
   String get agentSettingsRunning => 'Running';
 
   @override
@@ -5526,6 +5541,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String agentSettingsStatusWithDetail(String status, String detail) {
     return '$status · $detail';
   }
+
+  @override
+  String get agentSettingsTriggerManual => 'Manual';
+
+  @override
+  String get agentSettingsTriggerSchedule => 'Scheduled';
+
+  @override
+  String get agentSettingsTriggerBackgroundDue => 'Background due';
+
+  @override
+  String get agentSettingsTriggerCatchUp => 'Catch-up';
 
   @override
   String get settingsAdvancedSection => 'Diagnostics';

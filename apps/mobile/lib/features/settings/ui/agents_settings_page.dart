@@ -16,6 +16,7 @@ import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
@@ -201,6 +202,23 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     }
   }
 
+  Future<void> _showHistory() async {
+    final ownerUserId = await ref.read(currentUserIdProvider)();
+    final store = await ref.read(agent_providers.agentRunStoreProvider.future);
+    final runs = await store.listForAgent(
+      ownerUserId: ownerUserId,
+      agentId: widget.row.agent.id,
+    );
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await showAppSheet<void>(
+      context: context,
+      title: l10n.agentSettingsHistoryTitle(widget.row.agent.name),
+      maxHeightFactor: 0.88,
+      builder: (sheetContext) => _AgentRunHistoryList(runs: runs),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
@@ -285,6 +303,15 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                     size: AppIconSizes.xs,
                   ),
                 ),
+              if (row.latestRun != null)
+                AppQuietButton(
+                  label: l10n.agentSettingsViewHistory,
+                  onPress: _showHistory,
+                  prefix: const Icon(
+                    FLucideIcons.history,
+                    size: AppIconSizes.xs,
+                  ),
+                ),
               AppBadge(
                 label: enabled
                     ? l10n.agentSettingsEnabled
@@ -335,6 +362,55 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
         ? status
         : l10n.agentSettingsStatusWithDetail(status, detail);
   }
+}
+
+class _AgentRunHistoryList extends ConsumerWidget {
+  const _AgentRunHistoryList({required this.runs});
+
+  final List<AgentRunRecord> runs;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    if (runs.isEmpty) {
+      return AppEmptyState(
+        icon: FLucideIcons.history,
+        title: l10n.agentSettingsHistoryEmptyTitle,
+        message: l10n.agentSettingsHistoryEmptyMessage,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < runs.length; i++) ...[
+          AgentRunStatusCard(
+            record: runs[i],
+            metaLabel: _historyMetaLabel(l10n, formatters, runs[i]),
+          ),
+          if (i != runs.length - 1) const SizedBox(height: AppSpacing.s12),
+        ],
+      ],
+    );
+  }
+}
+
+String _historyMetaLabel(
+  AppLocalizations l10n,
+  AppFormatters formatters,
+  AgentRunRecord run,
+) {
+  return '${_triggerLabel(l10n, run.trigger)} · '
+      '${formatters.dateTime(run.startedAt.toLocal())}';
+}
+
+String _triggerLabel(AppLocalizations l10n, AgentRunTrigger trigger) {
+  return switch (trigger) {
+    AgentRunTrigger.manual => l10n.agentSettingsTriggerManual,
+    AgentRunTrigger.schedule => l10n.agentSettingsTriggerSchedule,
+    AgentRunTrigger.backgroundDue => l10n.agentSettingsTriggerBackgroundDue,
+    AgentRunTrigger.catchUp => l10n.agentSettingsTriggerCatchUp,
+  };
 }
 
 String _scheduleLabel(AppLocalizations l10n, AgentSchedule schedule) {
