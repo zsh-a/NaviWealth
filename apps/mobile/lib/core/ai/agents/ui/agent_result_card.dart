@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/ask_ai.dart';
 import '../../intent/ai_intent_invocation.dart';
 import '../agent_artifact.dart';
@@ -34,6 +35,7 @@ class AgentResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     final accent = _accentColor(context, artifact.severity);
     final previewInsights = artifact.insights.take(maxInsightPreviewCount);
 
@@ -78,7 +80,7 @@ class AgentResultCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s8),
               AppBadge(
-                label: _badgeLabel(artifact),
+                label: _badgeLabel(l10n, artifact),
                 size: AppBadgeSize.compact,
                 tone: _badgeTone(artifact.severity),
                 icon: artifact.severity == AgentArtifactSeverity.info
@@ -119,7 +121,7 @@ class AgentResultCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: AppQuietButton(
-                label: 'Review',
+                label: l10n.agentResultReviewAction,
                 onPress: onOpen,
                 prefix: const Icon(
                   FLucideIcons.externalLink,
@@ -150,9 +152,10 @@ class AgentRunStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     final accent = _accentColorForRun(context, record.status);
     final summary =
-        record.error ?? record.summary ?? _statusLabel(record.status);
+        record.error ?? record.summary ?? _statusLabel(l10n, record.status);
 
     return SoftCard(
       level: SoftCardLevel.raised,
@@ -194,7 +197,7 @@ class AgentRunStatusCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s8),
               AppBadge(
-                label: _statusLabel(record.status),
+                label: _statusLabel(l10n, record.status),
                 tone: _badgeToneForRun(record.status),
                 size: AppBadgeSize.compact,
               ),
@@ -229,7 +232,7 @@ class AgentRunStatusCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: AppQuietButton(
-                label: 'Retry',
+                label: l10n.agentResultRetryAction,
                 onPress: onRetry,
                 prefix: const Icon(
                   FLucideIcons.refreshCw,
@@ -252,7 +255,9 @@ Future<void> showAgentArtifactSheet({
   return showAppSheet<void>(
     context: context,
     title: artifact.title,
-    subtitle: subtitle ?? _artifactKindLabel(artifact.kind),
+    subtitle:
+        subtitle ??
+        _artifactKindLabel(AppLocalizations.of(context), artifact.kind),
     maxHeightFactor: 0.88,
     builder: (_) => AgentArtifactDetailBody(artifact: artifact),
   );
@@ -267,6 +272,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -286,7 +292,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
         if (artifact.insights.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
-            title: 'Insights',
+            title: l10n.agentResultInsightsSection,
             children: [
               for (final insight in artifact.insights)
                 _DetailTile(
@@ -304,7 +310,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
         if (artifact.evidence.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
-            title: 'Evidence',
+            title: l10n.agentResultEvidenceSection,
             children: [
               for (final evidence in artifact.evidence)
                 _DetailTile(
@@ -319,12 +325,12 @@ class AgentArtifactDetailBody extends ConsumerWidget {
         if (artifact.actions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
-            title: 'Actions',
+            title: l10n.agentResultActionsSection,
             children: [
               _ActionIntentTile(
                 icon: FLucideIcons.messageCircle,
-                title: 'Ask follow-up',
-                body: 'Explain this result and its evidence.',
+                title: l10n.agentResultAskFollowUpTitle,
+                body: l10n.agentResultAskFollowUpBody,
                 color: colors.primary,
                 onPress: () => _askAboutArtifact(context, ref),
               ),
@@ -349,12 +355,12 @@ class AgentArtifactDetailBody extends ConsumerWidget {
         ] else ...[
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
-            title: 'Actions',
+            title: l10n.agentResultActionsSection,
             children: [
               _ActionIntentTile(
                 icon: FLucideIcons.messageCircle,
-                title: 'Ask follow-up',
-                body: 'Explain this result and its evidence.',
+                title: l10n.agentResultAskFollowUpTitle,
+                body: l10n.agentResultAskFollowUpBody,
                 color: colors.primary,
                 onPress: () => _askAboutArtifact(context, ref),
               ),
@@ -569,6 +575,7 @@ class _ActionIntentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: AppOpacity.subtle),
@@ -598,7 +605,7 @@ class _ActionIntentTile extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.s8),
             AppQuietButton(
-              label: 'Ask',
+              label: l10n.agentResultAskAction,
               onPress: onPress,
               prefix: const Icon(
                 FLucideIcons.messageCircle,
@@ -619,18 +626,20 @@ IconData _iconForKind(AgentArtifactKind kind) => switch (kind) {
   AgentArtifactKind.reminder => FLucideIcons.bell,
 };
 
-String _artifactKindLabel(AgentArtifactKind kind) => switch (kind) {
-  AgentArtifactKind.briefing => 'Briefing',
-  AgentArtifactKind.review => 'Review',
-  AgentArtifactKind.alert => 'Alert',
-  AgentArtifactKind.reminder => 'Reminder',
-};
+String _artifactKindLabel(AppLocalizations l10n, AgentArtifactKind kind) =>
+    switch (kind) {
+      AgentArtifactKind.briefing => l10n.agentResultKindBriefing,
+      AgentArtifactKind.review => l10n.agentResultKindReview,
+      AgentArtifactKind.alert => l10n.agentResultKindAlert,
+      AgentArtifactKind.reminder => l10n.agentResultKindReminder,
+    };
 
-String _badgeLabel(AgentArtifact artifact) => switch (artifact.severity) {
-  AgentArtifactSeverity.info => _artifactKindLabel(artifact.kind),
-  AgentArtifactSeverity.attention => 'Attention',
-  AgentArtifactSeverity.warning => 'Warning',
-};
+String _badgeLabel(AppLocalizations l10n, AgentArtifact artifact) =>
+    switch (artifact.severity) {
+      AgentArtifactSeverity.info => _artifactKindLabel(l10n, artifact.kind),
+      AgentArtifactSeverity.attention => l10n.agentResultSeverityAttention,
+      AgentArtifactSeverity.warning => l10n.agentResultSeverityWarning,
+    };
 
 AppBadgeTone _badgeTone(AgentArtifactSeverity severity) => switch (severity) {
   AgentArtifactSeverity.info => AppBadgeTone.accent,
@@ -655,12 +664,13 @@ IconData _iconForRunStatus(AgentRunLifecycleStatus status) => switch (status) {
   AgentRunLifecycleStatus.failed => FLucideIcons.triangleAlert,
 };
 
-String _statusLabel(AgentRunLifecycleStatus status) => switch (status) {
-  AgentRunLifecycleStatus.running => 'Running',
-  AgentRunLifecycleStatus.noFinding => 'No finding',
-  AgentRunLifecycleStatus.ready => 'Ready',
-  AgentRunLifecycleStatus.failed => 'Failed',
-};
+String _statusLabel(AppLocalizations l10n, AgentRunLifecycleStatus status) =>
+    switch (status) {
+      AgentRunLifecycleStatus.running => l10n.agentRunStatusRunning,
+      AgentRunLifecycleStatus.noFinding => l10n.agentRunStatusNoFinding,
+      AgentRunLifecycleStatus.ready => l10n.agentRunStatusReady,
+      AgentRunLifecycleStatus.failed => l10n.agentRunStatusFailed,
+    };
 
 AppBadgeTone _badgeToneForRun(AgentRunLifecycleStatus status) =>
     switch (status) {

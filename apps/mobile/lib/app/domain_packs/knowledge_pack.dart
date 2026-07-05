@@ -134,28 +134,32 @@ String _knowledgeSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
     ? l10n.settingsDomainsKnowledgeEnabledSubtitle
     : l10n.settingsDomainsKnowledgeDisabledSubtitle;
 
-String _knowledgeReviewLabel(AppLocalizations l10n) => 'Knowledge Review';
+String _knowledgeReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationKnowledgeReviewLabel;
 
 String _knowledgeReviewDescription(AppLocalizations l10n) =>
-    'Reviews due decisions and stale assumptions.';
+    l10n.agentPresentationKnowledgeReviewDescription;
 
-String _knowledgeAssumptionLabel(AppLocalizations l10n) => 'Assumption Review';
+String _knowledgeAssumptionLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationKnowledgeAssumptionLabel;
 
 String _knowledgeAssumptionDescription(AppLocalizations l10n) =>
-    'Finds assumptions that need revalidation.';
+    l10n.agentPresentationKnowledgeAssumptionDescription;
 
 String _knowledgeContradictionLabel(AppLocalizations l10n) =>
-    'Contradiction Review';
+    l10n.agentPresentationKnowledgeContradictionLabel;
 
 String _knowledgeContradictionDescription(AppLocalizations l10n) =>
-    'Looks for conflicting notes, decisions, and assumptions.';
+    l10n.agentPresentationKnowledgeContradictionDescription;
 
-String _knowledgeInboxTriageLabel(AppLocalizations l10n) => 'Inbox Triage';
+String _knowledgeInboxTriageLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationKnowledgeInboxTriageLabel;
 
 String _knowledgeInboxTriageDescription(AppLocalizations l10n) =>
-    'Surfaces captured notes that need classification or follow-up.';
+    l10n.agentPresentationKnowledgeInboxTriageDescription;
 
-String _knowledgeRoutineLabel(AppLocalizations l10n) => 'Routine Due';
+String _knowledgeRoutineLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationKnowledgeRoutineLabel;
 
 String _knowledgeRoutineDescription(AppLocalizations l10n) =>
-    'Checks knowledge routines due for review.';
+    l10n.agentPresentationKnowledgeRoutineDescription;

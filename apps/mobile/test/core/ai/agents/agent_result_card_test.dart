@@ -9,12 +9,15 @@ import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child, {List<Override> overrides = const <Override>[]}) {
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
       theme: AppTheme.light(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: FTheme(
         data: FThemes.slate.light.desktop,
         child: FScaffold(childPad: false, child: Center(child: child)),

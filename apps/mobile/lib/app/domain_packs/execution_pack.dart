@@ -84,7 +84,8 @@ String _executionSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
     ? l10n.settingsDomainsExecutionEnabledSubtitle
     : l10n.settingsDomainsExecutionDisabledSubtitle;
 
-String _executionReviewLabel(AppLocalizations l10n) => 'Execution Review';
+String _executionReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationExecutionReviewLabel;
 
 String _executionReviewDescription(AppLocalizations l10n) =>
-    'Reviews today actions, blocked work, commitments, and weekly progress.';
+    l10n.agentPresentationExecutionReviewDescription;

@@ -5206,6 +5206,49 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get agentSettingsTitle => 'Agents';
+
+  @override
+  String get agentSettingsSubtitle => '管理当前已启用 LifeOS 域在本设备上的定时 Agent。';
+
+  @override
+  String get agentSettingsNoActiveTitle => '暂无可用 Agent';
+
+  @override
+  String get agentSettingsNoActiveMessage => '启用一个 LifeOS 域后，可在这里查看它的 Agent。';
+
+  @override
+  String get agentSettingsManagedBadge => '托管';
+
+  @override
+  String get agentSettingsRunNow => '立即运行';
+
+  @override
+  String get agentSettingsRunning => '运行中';
+
+  @override
+  String get agentSettingsEnabled => '已启用';
+
+  @override
+  String get agentSettingsDisabled => '已停用';
+
+  @override
+  String get agentSettingsNotifications => '通知';
+
+  @override
+  String get agentSettingsNeverRun => '尚未运行';
+
+  @override
+  String agentSettingsRunFinished(String agentName) {
+    return '$agentName 已完成';
+  }
+
+  @override
+  String agentSettingsStatusWithDetail(String status, String detail) {
+    return '$status · $detail';
+  }
+
+  @override
   String get settingsAdvancedSection => '诊断';
 
   @override
@@ -5249,6 +5292,128 @@ class AppLocalizationsZh extends AppLocalizations {
   String aiLlmRuntimeCheckStatus(String status) {
     return 'Native step：$status';
   }
+
+  @override
+  String get agentResultReviewAction => '查看';
+
+  @override
+  String get agentResultRetryAction => '重试';
+
+  @override
+  String get agentResultAskAction => '追问';
+
+  @override
+  String get agentResultKindBriefing => '简报';
+
+  @override
+  String get agentResultKindReview => '复盘';
+
+  @override
+  String get agentResultKindAlert => '提醒';
+
+  @override
+  String get agentResultKindReminder => '待办提醒';
+
+  @override
+  String get agentResultSeverityAttention => '需关注';
+
+  @override
+  String get agentResultSeverityWarning => '警告';
+
+  @override
+  String get agentRunStatusRunning => '运行中';
+
+  @override
+  String get agentRunStatusNoFinding => '无发现';
+
+  @override
+  String get agentRunStatusReady => '可查看';
+
+  @override
+  String get agentRunStatusFailed => '失败';
+
+  @override
+  String get agentResultInsightsSection => '洞察';
+
+  @override
+  String get agentResultEvidenceSection => '证据';
+
+  @override
+  String get agentResultActionsSection => '操作';
+
+  @override
+  String get agentResultAskFollowUpTitle => '继续追问';
+
+  @override
+  String get agentResultAskFollowUpBody => '解释这个结果与它使用的证据。';
+
+  @override
+  String get agentPresentationWeeklyWealthReviewLabel => '每周财富复盘';
+
+  @override
+  String get agentPresentationWeeklyWealthReviewDescription =>
+      '复盘净资产、配置集中度、价格新鲜度与汇率覆盖。';
+
+  @override
+  String get agentPresentationMorningBriefingLabel => '早间简报';
+
+  @override
+  String get agentPresentationMorningBriefingDescription =>
+      '基于最近的健康与财务信号生成每日简报。';
+
+  @override
+  String get agentPresentationRecoveryAlertLabel => '恢复提醒';
+
+  @override
+  String get agentPresentationRecoveryAlertDescription =>
+      '标记短睡眠、低 HRV 和需要关注的恢复信号。';
+
+  @override
+  String get agentPresentationWeeklySummaryLabel => '每周总结';
+
+  @override
+  String get agentPresentationWeeklySummaryDescription => '复盘本周睡眠、活动、恢复与趋势证据。';
+
+  @override
+  String get agentPresentationKnowledgeReviewLabel => '知识复盘';
+
+  @override
+  String get agentPresentationKnowledgeReviewDescription =>
+      '复盘到期 Decision 与长期未校验的 Assumption。';
+
+  @override
+  String get agentPresentationKnowledgeAssumptionLabel => '假设复核';
+
+  @override
+  String get agentPresentationKnowledgeAssumptionDescription => '找出需要重新校验的假设。';
+
+  @override
+  String get agentPresentationKnowledgeContradictionLabel => '矛盾复核';
+
+  @override
+  String get agentPresentationKnowledgeContradictionDescription =>
+      '查找笔记、决策与假设之间的冲突。';
+
+  @override
+  String get agentPresentationKnowledgeInboxTriageLabel => 'Inbox 整理';
+
+  @override
+  String get agentPresentationKnowledgeInboxTriageDescription =>
+      '找出需要分类或后续处理的捕获笔记。';
+
+  @override
+  String get agentPresentationKnowledgeRoutineLabel => 'Routine 到期';
+
+  @override
+  String get agentPresentationKnowledgeRoutineDescription =>
+      '检查到期需要复盘的知识 Routine。';
+
+  @override
+  String get agentPresentationExecutionReviewLabel => '执行复盘';
+
+  @override
+  String get agentPresentationExecutionReviewDescription =>
+      '复盘今日行动、阻塞事项、承诺与本周进展。';
 
   @override
   String aiLlmRuntimeProposalTitle(String kind) {

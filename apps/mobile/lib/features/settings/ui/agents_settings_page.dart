@@ -53,15 +53,14 @@ class AgentsSettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final rows = ref.watch(_agentSettingsRowsProvider);
     return AppPageScaffold(
-      title: 'Agents',
+      title: l10n.agentSettingsTitle,
       childPad: false,
       child: SettingsPageFrame(
         children: [
-          const SettingsHintText(
-            'Control scheduled LifeOS agents for active domains on this device.',
-          ),
+          SettingsHintText(l10n.agentSettingsSubtitle),
           const SizedBox(height: AppSpacing.s12),
           rows.when(
             loading: () => const SkeletonCard(
@@ -75,10 +74,10 @@ class AgentsSettingsPage extends ConsumerWidget {
             ),
             data: (items) {
               if (items.isEmpty) {
-                return const AppEmptyState(
+                return AppEmptyState(
                   icon: FLucideIcons.bot,
-                  title: 'No active agents',
-                  message: 'Enable a LifeOS domain to see its agents here.',
+                  title: l10n.agentSettingsNoActiveTitle,
+                  message: l10n.agentSettingsNoActiveMessage,
                 );
               }
               return SoftCard(
@@ -153,7 +152,11 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
         result.status == AgentRunStatus.failed
             ? ToastKind.error
             : ToastKind.success,
-        result.error ?? result.summary ?? '${widget.row.agent.name} finished',
+        result.error ??
+            result.summary ??
+            AppLocalizations.of(
+              context,
+            ).agentSettingsRunFinished(widget.row.agent.name),
       );
       ref.invalidate(_agentSettingsRowsProvider);
     } finally {
@@ -210,8 +213,8 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
               if (presentation?.userToggleable ?? true)
                 FSwitch(value: enabled, onChange: _setEnabled)
               else
-                const AppBadge(
-                  label: 'Managed',
+                AppBadge(
+                  label: l10n.agentSettingsManagedBadge,
                   size: AppBadgeSize.compact,
                   tone: AppBadgeTone.neutral,
                 ),
@@ -223,19 +226,23 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
             runSpacing: AppSpacing.s8,
             children: [
               AppQuietButton(
-                label: _running ? 'Running' : 'Run now',
+                label: _running
+                    ? l10n.agentSettingsRunning
+                    : l10n.agentSettingsRunNow,
                 onPress: _running || !enabled ? null : _runNow,
                 busy: _running,
                 prefix: const Icon(FLucideIcons.play, size: AppIconSizes.xs),
               ),
               AppBadge(
-                label: enabled ? 'Enabled' : 'Disabled',
+                label: enabled
+                    ? l10n.agentSettingsEnabled
+                    : l10n.agentSettingsDisabled,
                 size: AppBadgeSize.compact,
                 tone: enabled ? AppBadgeTone.accent : AppBadgeTone.neutral,
               ),
               if (presentation?.notificationsSupported ?? false)
-                const AppBadge(
-                  label: 'Notifications',
+                AppBadge(
+                  label: l10n.agentSettingsNotifications,
                   size: AppBadgeSize.compact,
                   tone: AppBadgeTone.info,
                 ),
@@ -248,14 +255,17 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
 
   String _subtitle(_AgentSettingsRow row, String? description) {
     final latest = row.latestRun;
-    if (latest == null) return description ?? 'Never run';
+    final l10n = AppLocalizations.of(context);
+    if (latest == null) return description ?? l10n.agentSettingsNeverRun;
     final status = switch (latest.status) {
-      AgentRunLifecycleStatus.running => 'Running',
-      AgentRunLifecycleStatus.ready => 'Ready',
-      AgentRunLifecycleStatus.noFinding => 'No finding',
-      AgentRunLifecycleStatus.failed => 'Failed',
+      AgentRunLifecycleStatus.running => l10n.agentRunStatusRunning,
+      AgentRunLifecycleStatus.ready => l10n.agentRunStatusReady,
+      AgentRunLifecycleStatus.noFinding => l10n.agentRunStatusNoFinding,
+      AgentRunLifecycleStatus.failed => l10n.agentRunStatusFailed,
     };
     final detail = latest.error ?? latest.summary;
-    return detail == null ? status : '$status · $detail';
+    return detail == null
+        ? status
+        : l10n.agentSettingsStatusWithDetail(status, detail);
   }
 }

@@ -113,17 +113,20 @@ String _healthSettingsSubtitle(AppLocalizations l10n, bool enabled) => enabled
     ? l10n.settingsDomainsHealthEnabledSubtitle
     : l10n.settingsDomainsHealthDisabledSubtitle;
 
-String _morningBriefingLabel(AppLocalizations l10n) => 'Morning Briefing';
+String _morningBriefingLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationMorningBriefingLabel;
 
 String _morningBriefingDescription(AppLocalizations l10n) =>
-    'Builds a daily briefing from recent Health and Finance signals.';
+    l10n.agentPresentationMorningBriefingDescription;
 
-String _recoveryAlertLabel(AppLocalizations l10n) => 'Recovery Alert';
+String _recoveryAlertLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationRecoveryAlertLabel;
 
 String _recoveryAlertDescription(AppLocalizations l10n) =>
-    'Flags short sleep, low HRV, and recovery signals that need attention.';
+    l10n.agentPresentationRecoveryAlertDescription;
 
-String _weeklySummaryLabel(AppLocalizations l10n) => 'Weekly Summary';
+String _weeklySummaryLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationWeeklySummaryLabel;
 
 String _weeklySummaryDescription(AppLocalizations l10n) =>
-    'Reviews the week across sleep, activity, recovery, and trend evidence.';
+    l10n.agentPresentationWeeklySummaryDescription;

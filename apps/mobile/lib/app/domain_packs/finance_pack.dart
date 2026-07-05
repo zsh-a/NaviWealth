@@ -99,7 +99,7 @@ String _financeSettingsSubtitle(AppLocalizations l10n, bool _) =>
 Widget _financeSettingsSection() => const FinanceDomainSettingsSection();
 
 String _weeklyWealthReviewLabel(AppLocalizations l10n) =>
-    'Weekly Wealth Review';
+    l10n.agentPresentationWeeklyWealthReviewLabel;
 
 String _weeklyWealthReviewDescription(AppLocalizations l10n) =>
-    'Reviews net worth, allocation concentration, price freshness, and FX coverage.';
+    l10n.agentPresentationWeeklyWealthReviewDescription;

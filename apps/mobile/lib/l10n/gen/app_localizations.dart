@@ -9303,6 +9303,84 @@ abstract class AppLocalizations {
   /// **'{domain} disabled. You can re-enable it here at any time.'**
   String settingsDomainsDisabledToast(String domain);
 
+  /// Settings page title for LifeOS agent management.
+  ///
+  /// In en, this message translates to:
+  /// **'Agents'**
+  String get agentSettingsTitle;
+
+  /// Hint text shown at the top of the Agents settings page.
+  ///
+  /// In en, this message translates to:
+  /// **'Control scheduled LifeOS agents for active domains on this device.'**
+  String get agentSettingsSubtitle;
+
+  /// Empty state title when no active domain has registered agents.
+  ///
+  /// In en, this message translates to:
+  /// **'No active agents'**
+  String get agentSettingsNoActiveTitle;
+
+  /// Empty state message when no active domain has registered agents.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable a LifeOS domain to see its agents here.'**
+  String get agentSettingsNoActiveMessage;
+
+  /// Badge for non-toggleable managed agents.
+  ///
+  /// In en, this message translates to:
+  /// **'Managed'**
+  String get agentSettingsManagedBadge;
+
+  /// Button label to run an agent immediately.
+  ///
+  /// In en, this message translates to:
+  /// **'Run now'**
+  String get agentSettingsRunNow;
+
+  /// Button/status label while an agent is running.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get agentSettingsRunning;
+
+  /// Badge for an enabled agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get agentSettingsEnabled;
+
+  /// Badge for a disabled agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get agentSettingsDisabled;
+
+  /// Badge for agents that support notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get agentSettingsNotifications;
+
+  /// Subtitle when an agent has no run history.
+  ///
+  /// In en, this message translates to:
+  /// **'Never run'**
+  String get agentSettingsNeverRun;
+
+  /// Toast fallback after an agent run finishes without a summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{agentName} finished'**
+  String agentSettingsRunFinished(String agentName);
+
+  /// Agent settings row subtitle with lifecycle status and run detail.
+  ///
+  /// In en, this message translates to:
+  /// **'{status} · {detail}'**
+  String agentSettingsStatusWithDetail(String status, String detail);
+
   /// Settings section header for diagnostics, version, logs, and performance tools
   ///
   /// In en, this message translates to:
@@ -9374,6 +9452,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Native step: {status}'**
   String aiLlmRuntimeCheckStatus(String status);
+
+  /// Button label that opens an agent result detail sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get agentResultReviewAction;
+
+  /// Button label that retries a failed agent run.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get agentResultRetryAction;
+
+  /// Button label that opens an AI follow-up for an agent result action.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get agentResultAskAction;
+
+  /// Agent artifact kind label for briefings.
+  ///
+  /// In en, this message translates to:
+  /// **'Briefing'**
+  String get agentResultKindBriefing;
+
+  /// Agent artifact kind label for reviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get agentResultKindReview;
+
+  /// Agent artifact kind label for alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert'**
+  String get agentResultKindAlert;
+
+  /// Agent artifact kind label for reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get agentResultKindReminder;
+
+  /// Agent artifact severity badge for items needing attention.
+  ///
+  /// In en, this message translates to:
+  /// **'Attention'**
+  String get agentResultSeverityAttention;
+
+  /// Agent artifact severity badge for warning items.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get agentResultSeverityWarning;
+
+  /// Agent run lifecycle status: running.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get agentRunStatusRunning;
+
+  /// Agent run lifecycle status: ran without a user-visible finding.
+  ///
+  /// In en, this message translates to:
+  /// **'No finding'**
+  String get agentRunStatusNoFinding;
+
+  /// Agent run lifecycle status: ready with a result.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get agentRunStatusReady;
+
+  /// Agent run lifecycle status: failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get agentRunStatusFailed;
+
+  /// Agent detail section title for insights.
+  ///
+  /// In en, this message translates to:
+  /// **'Insights'**
+  String get agentResultInsightsSection;
+
+  /// Agent detail section title for evidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence'**
+  String get agentResultEvidenceSection;
+
+  /// Agent detail section title for actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get agentResultActionsSection;
+
+  /// Agent detail action title for asking a follow-up question.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask follow-up'**
+  String get agentResultAskFollowUpTitle;
+
+  /// Agent detail action description for asking a follow-up question.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain this result and its evidence.'**
+  String get agentResultAskFollowUpBody;
+
+  /// Presentation label for the FinanceOS weekly wealth review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Wealth Review'**
+  String get agentPresentationWeeklyWealthReviewLabel;
+
+  /// Presentation description for the FinanceOS weekly wealth review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews net worth, allocation concentration, price freshness, and FX coverage.'**
+  String get agentPresentationWeeklyWealthReviewDescription;
+
+  /// Presentation label for the HealthOS morning briefing agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning Briefing'**
+  String get agentPresentationMorningBriefingLabel;
+
+  /// Presentation description for the HealthOS morning briefing agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Builds a daily briefing from recent Health and Finance signals.'**
+  String get agentPresentationMorningBriefingDescription;
+
+  /// Presentation label for the HealthOS recovery alert agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery Alert'**
+  String get agentPresentationRecoveryAlertLabel;
+
+  /// Presentation description for the HealthOS recovery alert agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Flags short sleep, low HRV, and recovery signals that need attention.'**
+  String get agentPresentationRecoveryAlertDescription;
+
+  /// Presentation label for the HealthOS weekly summary agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Summary'**
+  String get agentPresentationWeeklySummaryLabel;
+
+  /// Presentation description for the HealthOS weekly summary agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews the week across sleep, activity, recovery, and trend evidence.'**
+  String get agentPresentationWeeklySummaryDescription;
+
+  /// Presentation label for the KnowledgeOS review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge Review'**
+  String get agentPresentationKnowledgeReviewLabel;
+
+  /// Presentation description for the KnowledgeOS review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews due decisions and stale assumptions.'**
+  String get agentPresentationKnowledgeReviewDescription;
+
+  /// Presentation label for the KnowledgeOS assumption agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumption Review'**
+  String get agentPresentationKnowledgeAssumptionLabel;
+
+  /// Presentation description for the KnowledgeOS assumption agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Finds assumptions that need revalidation.'**
+  String get agentPresentationKnowledgeAssumptionDescription;
+
+  /// Presentation label for the KnowledgeOS contradiction agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Contradiction Review'**
+  String get agentPresentationKnowledgeContradictionLabel;
+
+  /// Presentation description for the KnowledgeOS contradiction agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks for conflicting notes, decisions, and assumptions.'**
+  String get agentPresentationKnowledgeContradictionDescription;
+
+  /// Presentation label for the KnowledgeOS inbox triage agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox Triage'**
+  String get agentPresentationKnowledgeInboxTriageLabel;
+
+  /// Presentation description for the KnowledgeOS inbox triage agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Surfaces captured notes that need classification or follow-up.'**
+  String get agentPresentationKnowledgeInboxTriageDescription;
+
+  /// Presentation label for the KnowledgeOS routine due agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine Due'**
+  String get agentPresentationKnowledgeRoutineLabel;
+
+  /// Presentation description for the KnowledgeOS routine due agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks knowledge routines due for review.'**
+  String get agentPresentationKnowledgeRoutineDescription;
+
+  /// Presentation label for the ExecutionOS review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution Review'**
+  String get agentPresentationExecutionReviewLabel;
+
+  /// Presentation description for the ExecutionOS review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews today actions, blocked work, commitments, and weekly progress.'**
+  String get agentPresentationExecutionReviewDescription;
 
   /// Header for a ready proposal returned by the FRB-backed runtime check.
   ///
