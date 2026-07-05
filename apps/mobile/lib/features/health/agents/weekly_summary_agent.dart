@@ -55,6 +55,7 @@ class WeeklySummaryAgent implements Agent {
         startedAt: start,
         finishedAt: DateTime.now().toUtc(),
         reason: 'no health data this week',
+        traceId: snapshot.traceId,
       );
     }
 
@@ -85,6 +86,7 @@ class WeeklySummaryAgent implements Agent {
         startedAt: start,
         finishedAt: DateTime.now().toUtc(),
         reason: 'no actionable signals this week',
+        traceId: snapshot.traceId,
       );
     }
 
@@ -111,8 +113,10 @@ class WeeklySummaryAgent implements Agent {
           'total_steps': weekSteps,
           'workout_count': weekWorkouts,
           'workout_minutes': _round(weekWorkoutMin),
+          if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
         },
         'artifact_id': artifactId,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       entities: <String>{'weekly_summary', 'health', dayKey},
       importance: 0.6,
@@ -133,6 +137,7 @@ class WeeklySummaryAgent implements Agent {
         createdAt: start,
         snapshot: snapshot,
         summary: summary,
+        traceId: snapshot.traceId,
       ),
     );
 
@@ -146,9 +151,11 @@ class WeeklySummaryAgent implements Agent {
         'recovery_score': recoveryScore,
         'total_steps': weekSteps,
         'workout_count': weekWorkouts,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       memoryId: memoryId,
       artifactId: artifactId,
+      traceId: snapshot.traceId,
     );
   }
 
@@ -159,6 +166,7 @@ class WeeklySummaryAgent implements Agent {
     required DateTime createdAt,
     required WeeklySummarySnapshot snapshot,
     required String summary,
+    required String? traceId,
   }) {
     final recoveryScore = snapshot.recoveryScore;
     final severity = recoveryScore == null
@@ -242,6 +250,7 @@ class WeeklySummaryAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
@@ -394,8 +403,10 @@ class FrbWeeklySummaryReader implements WeeklySummaryReader {
       ],
       maxEffectSteps: 3,
       fallback: () => fallback.read(ctx),
-      decode: (stepRun) =>
-          weeklySummarySnapshotFromTerminalStep(stepRun.terminalStep),
+      decode: (stepRun) => weeklySummarySnapshotFromTerminalStep(
+        stepRun.terminalStep,
+        traceId: stepRun.traceId,
+      ),
     );
   }
 }
@@ -409,6 +420,7 @@ class WeeklySummarySnapshot {
     required this.totalSteps,
     required this.workoutCount,
     required this.workoutMinutes,
+    this.traceId,
   });
 
   final bool hasHealthData;
@@ -418,6 +430,7 @@ class WeeklySummarySnapshot {
   final double totalSteps;
   final int workoutCount;
   final double workoutMinutes;
+  final String? traceId;
 
   bool get hasAnySignal =>
       hasHealthData ||
@@ -428,8 +441,9 @@ class WeeklySummarySnapshot {
 }
 
 WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
-  Map<String, Object?> step,
-) {
+  Map<String, Object?> step, {
+  String? traceId,
+}) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final recovery = byTool['get_recovery_signal'];
   final sleep = byTool['get_recent_sleep_summary'];
@@ -465,6 +479,7 @@ WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
     totalSteps: totalSteps,
     workoutCount: workoutCount,
     workoutMinutes: workoutMinutes,
+    traceId: traceId,
   );
 }
 

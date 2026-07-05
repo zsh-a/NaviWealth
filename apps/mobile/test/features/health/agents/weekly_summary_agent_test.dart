@@ -80,10 +80,12 @@ void main() {
             ],
           },
         },
+        traceId: 'trace-parser-1',
       );
 
       expect(snapshot, isNotNull);
-      expect(snapshot!.recoveryScore, 82);
+      expect(snapshot!.traceId, 'trace-parser-1');
+      expect(snapshot.recoveryScore, 82);
       expect(snapshot.recoveryVerdict, 'rested');
       expect(snapshot.avgSleepHours, 7.5);
       expect(snapshot.totalSteps, 42000);
@@ -121,6 +123,7 @@ void main() {
         final snapshot = await reader.read(_context());
 
         expect(snapshot.recoveryScore, 82);
+        expect(snapshot.traceId, 'agent-runtime:weekly_summary:run_1');
         expect(snapshot.totalSteps, 42000);
         expect(dispatcher.calls.map((c) => c.name), <String>[
           'get_recovery_signal',
@@ -224,6 +227,7 @@ void main() {
             totalSteps: 42000,
             workoutCount: 3,
             workoutMinutes: 95,
+            traceId: 'trace-weekly-summary-1',
           ),
         ),
       );
@@ -236,8 +240,12 @@ void main() {
       expect(result.summary, contains('Recovery 82/100 (rested)'));
       expect(result.summary, contains('42.0k steps'));
       expect(result.artifactId, '$kWeeklySummaryAgentId:2026-06-29');
+      expect(result.traceId, 'trace-weekly-summary-1');
       expect(runtime.remembered?.source, kWeeklySummaryMemorySource);
       expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+      expect(runtime.remembered?.payload['trace_id'], 'trace-weekly-summary-1');
+      final outcome = runtime.remembered?.payload['outcome'] as Map?;
+      expect(outcome?['trace_id'], 'trace-weekly-summary-1');
 
       final artifact = await store.read(result.artifactId!);
       expect(artifact, isNotNull);
@@ -245,6 +253,7 @@ void main() {
       expect(artifact.domain, 'health');
       expect(artifact.severity, AgentArtifactSeverity.info);
       expect(artifact.memoryId, result.memoryId);
+      expect(artifact.traceId, 'trace-weekly-summary-1');
       expect(artifact.summary, result.summary);
       expect(
         artifact.insights.map((insight) => insight.title),
