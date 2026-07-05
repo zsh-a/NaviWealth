@@ -11,6 +11,7 @@ import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/background/background_scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -109,11 +110,13 @@ void main() {
       preferences: preferences,
       controller: controller,
       currentUserId: () async => 'u',
+      domainOptIns: () async => DomainOptIns.financeOnly,
     );
 
     final result = await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
         agentId: 'agent-1',
+        domain: DomainScope.finance,
         task: _task,
       ),
     );
@@ -169,11 +172,64 @@ void main() {
       preferences: preferences,
       controller: controller,
       currentUserId: () async => 'u',
+      domainOptIns: () async => DomainOptIns.financeOnly,
     );
 
     final result = await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
         agentId: 'agent-1',
+        domain: DomainScope.finance,
+        task: _task,
+      ),
+    );
+
+    expect(result, isNull);
+    expect(agent.runCount, 0);
+    expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
+  });
+
+  test('runIfDue consumes flag but skips inactive domains', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      _task.dueAtPreferenceKey: DateTime.utc(
+        2026,
+        7,
+        5,
+        8,
+      ).millisecondsSinceEpoch,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final runtime = MemoryRuntime(
+      embedder: StubEmbedder(),
+      memoryStore: SqliteMemoryStore(db: db),
+      eventStore: SqliteEventStore(db: db),
+    );
+    final preferences = InMemoryAgentPreferenceStore();
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final agent = _StubAgent();
+    final controller = AgentRunController(
+      runner: AgentRunner(
+        runtime: runtime,
+        ownerUserId: 'u',
+        preferenceStore: preferences,
+      ),
+      agents: [agent],
+      ref: container.read(_refProvider),
+    );
+    final catchUp = AgentBackgroundCatchUpRunner(
+      dueFlags: AgentDueFlagStore(prefs: prefs),
+      preferences: preferences,
+      controller: controller,
+      currentUserId: () async => 'u',
+      domainOptIns: () async => DomainOptIns.financeOnly,
+    );
+
+    final result = await catchUp.runIfDue(
+      binding: const AgentBackgroundTaskBinding(
+        agentId: 'agent-1',
+        domain: DomainScope.health,
         task: _task,
       ),
     );
@@ -224,11 +280,13 @@ void main() {
       preferences: preferences,
       controller: controller,
       currentUserId: () async => 'u',
+      domainOptIns: () async => DomainOptIns.financeOnly,
     );
 
     final result = await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
         agentId: 'agent-1',
+        domain: DomainScope.finance,
         task: _task,
       ),
     );
@@ -294,11 +352,13 @@ void main() {
       preferences: preferences,
       controller: controller,
       currentUserId: () async => 'u',
+      domainOptIns: () async => DomainOptIns.financeOnly,
     );
 
     final result = await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
         agentId: 'agent-1',
+        domain: DomainScope.finance,
         task: _task,
       ),
     );

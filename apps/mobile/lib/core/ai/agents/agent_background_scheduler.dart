@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../../auth/current_user.dart';
+import '../../auth/domain_scope.dart';
+import '../../auth/providers.dart' as auth_providers;
 import '../../background/background_scheduler.dart';
 import 'agent.dart';
 import 'agent_preference_store.dart';
@@ -18,9 +20,14 @@ import 'agent_run_store.dart';
 import 'providers.dart' as agent_providers;
 
 class AgentBackgroundTaskBinding {
-  const AgentBackgroundTaskBinding({required this.agentId, required this.task});
+  const AgentBackgroundTaskBinding({
+    required this.agentId,
+    required this.domain,
+    required this.task,
+  });
 
   final String agentId;
+  final DomainScope domain;
   final BackgroundTaskSpec task;
 }
 
@@ -49,15 +56,18 @@ class AgentBackgroundCatchUpRunner {
     required AgentPreferenceStore preferences,
     required AgentRunController controller,
     required Future<String> Function() currentUserId,
+    required Future<DomainOptIns> Function() domainOptIns,
   }) : _dueFlags = dueFlags,
        _preferences = preferences,
        _controller = controller,
-       _currentUserId = currentUserId;
+       _currentUserId = currentUserId,
+       _domainOptIns = domainOptIns;
 
   final AgentDueFlagStore _dueFlags;
   final AgentPreferenceStore _preferences;
   final AgentRunController _controller;
   final Future<String> Function() _currentUserId;
+  final Future<DomainOptIns> Function() _domainOptIns;
 
   Future<AgentRunResult?> runIfDue({
     required AgentBackgroundTaskBinding binding,
@@ -65,6 +75,8 @@ class AgentBackgroundCatchUpRunner {
   }) async {
     final dueAt = await _dueFlags.consumeDue(binding.task);
     if (dueAt == null) return null;
+    final optIns = await _domainOptIns();
+    if (!optIns.contains(binding.domain)) return null;
     final ownerUserId = await _currentUserId();
     final enabled = await _preferences.isEnabled(
       ownerUserId: ownerUserId,
@@ -96,5 +108,7 @@ final agentBackgroundCatchUpRunnerProvider =
         preferences: preferences,
         controller: controller,
         currentUserId: ref.read(currentUserIdProvider),
+        domainOptIns: () =>
+            ref.read(auth_providers.domainOptInsProvider.future),
       );
     });

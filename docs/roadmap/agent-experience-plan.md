@@ -41,6 +41,7 @@ Agent 的产品体验应当是：
 - Agent result read tools 已按当前 domain opt-in 过滤 artifact，inactive domain 的 artifact 不会被 AI follow-up 工具读取或解释。
 - Agent run / artifact / preference 表保持 local-only；sync 和 backup registry 都有负向 contract 防止 agent lifecycle 表进入云同步或备份面。
 - Agent settings page 已覆盖 active agent row、notification preference、enabled toggle、Run now manual run、latest artifact 和 run history，确保用户控制入口不与通知偏好混淆。
+- Agent background catch-up binding 已声明所属 domain，core runner 会在消费 due flag 后统一拒绝 inactive domain，避免 stale background flag 越过 domain opt-in。
 - Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution / Knowledge 的真实 agent fixture；`knowledge_routine_due.domain_opt_out` 已接到生产 domain opt-in composition 层面的可执行 no-run eval，`execution.review.budget_exhausted` 已接到真实 runner failed-outcome eval。
 
 ## 体验模型

@@ -113,6 +113,7 @@ final pendingKnowledgeRoutineDueRunProvider =
         return catchUp.runIfDue(
           binding: const AgentBackgroundTaskBinding(
             agentId: kKnowledgeRoutineAgentId,
+            domain: DomainScope.knowledge,
             task: kKnowledgeRoutineDueBackgroundTask,
           ),
         );

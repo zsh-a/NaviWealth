@@ -111,6 +111,7 @@ final pendingExecutionReviewRunProvider =
         return catchUp.runIfDue(
           binding: const AgentBackgroundTaskBinding(
             agentId: kExecutionReviewAgentId,
+            domain: DomainScope.execution,
             task: kExecutionReviewBackgroundTask,
           ),
         );

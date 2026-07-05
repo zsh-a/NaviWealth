@@ -196,6 +196,7 @@ Future<AgentRunResult?> runDueMorningBriefingTick(Ref ref) async {
     return catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
         agentId: kMorningBriefingAgentId,
+        domain: DomainScope.health,
         task: kMorningBriefingBackgroundTask,
       ),
       beforeRun: () => _syncHealthBeforeBriefing(ref),
