@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/event_record.dart';
@@ -297,7 +298,8 @@ class MorningBriefingAgent implements Agent {
         AgentAction(
           kind: 'review',
           label: 'Review briefing',
-          objectType: 'agent_artifact',
+          intent: kAgentExplainResultIntent,
+          objectType: kAgentArtifactObjectType,
           objectId: id,
         ),
       ],

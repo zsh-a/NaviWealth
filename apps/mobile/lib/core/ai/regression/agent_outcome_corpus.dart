@@ -213,6 +213,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedTopInsightTitles: <String>{'Sleep', 'HRV', 'Finance'},
     expectedEvidenceTypes: <String>{'health_event', 'finance_event'},
     expectedActionKinds: <String>{'review'},
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'health.recovery_alert.ready',
@@ -250,6 +251,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     },
     expectedEvidenceTypes: <String>{'health_week'},
     expectedActionKinds: <String>{'review'},
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.assumption.ready',
@@ -348,6 +350,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     },
     expectedEvidenceTypes: <String>{'execution_action'},
     expectedActionKinds: <String>{'review'},
+    expectedActionIntents: <String>{kAgentExplainResultIntent},
   ),
   AgentOutcomeRegressionCase(
     id: 'execution.review.budget_exhausted',
