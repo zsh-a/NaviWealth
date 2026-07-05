@@ -38,6 +38,7 @@ Agent 的产品体验应当是：
 
 - `agent.explainResult` / `agent.showEvidence` / `agent.createPlanFromResult` 都已通过 `AgentArtifactDetailBody` 走统一 `askAi()` follow-up 入口，并有 widget test 覆盖 intent、object、context 和 proposal capability。
 - Agent artifact detail 已提供 local transparency trace entry，点击后进入 `SettingsRoutes.aiTransparencyDetail(traceId)`；组件测试覆盖 route handoff。
+- Agent result read tools 已按当前 domain opt-in 过滤 artifact，inactive domain 的 artifact 不会被 AI follow-up 工具读取或解释。
 - Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution / Knowledge 的真实 agent fixture；`knowledge_routine_due.domain_opt_out` 已接到生产 domain opt-in composition 层面的可执行 no-run eval，`execution.review.budget_exhausted` 已接到真实 runner failed-outcome eval。
 
 ## 体验模型

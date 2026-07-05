@@ -2,6 +2,8 @@
 library;
 
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart' as auth;
 
 import '../../../agents/agent_artifact.dart';
 import '../../../agents/agent_run_store.dart';
@@ -53,6 +55,7 @@ class GetAgentArtifactsTool implements DeviceTool {
   ) async {
     final store = await ctx.ref.read(agentArtifactStoreProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final domainOptIns = await ctx.ref.read(auth.domainOptInsProvider.future);
     final artifactId = _trimmed(input['artifact_id']);
     final agentId = _trimmed(input['agent_id']);
     final domain = _trimmed(input['domain']);
@@ -61,18 +64,30 @@ class GetAgentArtifactsTool implements DeviceTool {
     final artifacts = <AgentArtifact>[];
     if (artifactId != null) {
       final artifact = await store.read(artifactId);
-      if (artifact != null && artifact.ownerUserId == ownerUserId) {
+      if (artifact != null &&
+          artifact.ownerUserId == ownerUserId &&
+          _domainIsActive(artifact.domain, domainOptIns)) {
         artifacts.add(artifact);
       }
     } else if (agentId != null) {
+      final rows = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: agentId,
+        limit: limit,
+      );
       artifacts.addAll(
-        await store.latestForAgent(
-          ownerUserId: ownerUserId,
-          agentId: agentId,
-          limit: limit,
+        rows.where(
+          (artifact) => _domainIsActive(artifact.domain, domainOptIns),
         ),
       );
     } else if (domain != null) {
+      if (!_domainIsActive(domain, domainOptIns)) {
+        return <String, Object?>{
+          'artifacts': const <Map<String, Object?>>[],
+          'guidance':
+              '该 domain 当前未启用。不要读取或解释未启用 domain 的 agent artifact；请让用户先在 Domains 设置中启用对应 domain。',
+        };
+      }
       artifacts.addAll(
         await store.latestForDomain(
           ownerUserId: ownerUserId,
@@ -144,6 +159,11 @@ class GetAgentRunsTool implements DeviceTool {
       if (run == null) 'guidance': '没有找到该 agent 的运行记录。请避免说它已经成功或失败；只能说明本地暂无记录。',
     };
   }
+}
+
+bool _domainIsActive(String wire, DomainOptIns optIns) {
+  final scope = DomainScope.tryParse(wire);
+  return scope != null && optIns.contains(scope);
 }
 
 Map<String, Object?> _artifactToWire(AgentArtifact artifact) {

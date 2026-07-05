@@ -9,6 +9,8 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/agent_result_tools.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 
@@ -106,6 +108,80 @@ void main() {
       'finance_holding',
     );
   });
+
+  test('get_agent_artifacts hides artifacts from inactive domains', () async {
+    final store = SqliteAgentArtifactStore(db: db);
+    await store.save(
+      AgentArtifact(
+        id: 'weekly_summary:2026-07-05',
+        ownerUserId: _owner,
+        agentId: 'weekly_summary',
+        domain: 'health',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Weekly Summary',
+        summary: 'Health weekly summary.',
+        createdAt: DateTime.utc(2026, 7, 5),
+      ),
+    );
+    final container = _container(db);
+
+    final byId = await _withRef(
+      container,
+      (ref) => const GetAgentArtifactsTool().invoke(_ctx(ref), {
+        'artifact_id': 'weekly_summary:2026-07-05',
+      }),
+    );
+    final byDomain = await _withRef(
+      container,
+      (ref) =>
+          const GetAgentArtifactsTool().invoke(_ctx(ref), {'domain': 'health'}),
+    );
+
+    final byIdJson = byId! as Map<String, Object?>;
+    final byDomainJson = byDomain! as Map<String, Object?>;
+    expect(byIdJson['artifacts'], isEmpty);
+    expect(byDomainJson['artifacts'], isEmpty);
+    expect(byDomainJson['guidance'], contains('domain 当前未启用'));
+  });
+
+  test(
+    'get_agent_artifacts reads optional domain artifacts after opt-in',
+    () async {
+      final store = SqliteAgentArtifactStore(db: db);
+      await store.save(
+        AgentArtifact(
+          id: 'weekly_summary:2026-07-05',
+          ownerUserId: _owner,
+          agentId: 'weekly_summary',
+          domain: 'health',
+          kind: AgentArtifactKind.review,
+          severity: AgentArtifactSeverity.info,
+          title: 'Weekly Summary',
+          summary: 'Health weekly summary.',
+          createdAt: DateTime.utc(2026, 7, 5),
+        ),
+      );
+      final container = _container(db);
+      await container.read(auth.domainOptInsProvider.future);
+      await container
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+
+      final output = await _withRef(
+        container,
+        (ref) => const GetAgentArtifactsTool().invoke(_ctx(ref), {
+          'artifact_id': 'weekly_summary:2026-07-05',
+        }),
+      );
+
+      final json = output! as Map<String, Object?>;
+      final artifacts = json['artifacts']! as List<Object?>;
+      final artifact = artifacts.single! as Map<String, Object?>;
+      expect(artifact['domain'], 'health');
+      expect(artifact['id'], 'weekly_summary:2026-07-05');
+    },
+  );
 
   test('get_agent_runs reads latest run by agent id', () async {
     final runStore = SqliteAgentRunStore(db: db);
