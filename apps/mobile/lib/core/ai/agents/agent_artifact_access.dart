@@ -16,10 +16,12 @@ Future<AgentArtifact?> readActiveAgentArtifact(
   Ref ref, {
   required String artifactId,
   String? expectedDomain,
+  DateTime? visibleAt,
 }) {
   return _readActiveAgentArtifact(
     artifactId: artifactId,
     expectedDomain: expectedDomain,
+    visibleAt: visibleAt,
     readStore: () => ref.read(agentArtifactStoreProvider.future),
     readOwnerUserId: () => ref.read(currentUserIdProvider)(),
     readOptIns: () => ref.read(auth.domainOptInsProvider.future),
@@ -31,10 +33,12 @@ Future<AgentArtifact?> readActiveAgentArtifactFromWidgetRef(
   WidgetRef ref, {
   required String artifactId,
   String? expectedDomain,
+  DateTime? visibleAt,
 }) {
   return _readActiveAgentArtifact(
     artifactId: artifactId,
     expectedDomain: expectedDomain,
+    visibleAt: visibleAt,
     readStore: () => ref.read(agentArtifactStoreProvider.future),
     readOwnerUserId: () => ref.read(currentUserIdProvider)(),
     readOptIns: () => ref.read(auth.domainOptInsProvider.future),
@@ -45,6 +49,7 @@ Future<AgentArtifact?> readActiveAgentArtifactFromWidgetRef(
 Future<AgentArtifact?> _readActiveAgentArtifact({
   required String artifactId,
   String? expectedDomain,
+  DateTime? visibleAt,
   required Future<AgentArtifactStore> Function() readStore,
   required Future<String> Function() readOwnerUserId,
   required Future<DomainOptIns> Function() readOptIns,
@@ -56,6 +61,10 @@ Future<AgentArtifact?> _readActiveAgentArtifact({
   final store = await readStore();
   final artifact = await store.read(id);
   if (artifact == null) return null;
+
+  if (!artifact.isVisibleAt(visibleAt ?? DateTime.now().toUtc())) {
+    return null;
+  }
 
   final ownerUserId = await readOwnerUserId();
   if (artifact.ownerUserId != ownerUserId) return null;

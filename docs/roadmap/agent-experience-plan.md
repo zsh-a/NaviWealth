@@ -46,7 +46,7 @@ Agent 的产品体验应当是：
 - Intent policy 已覆盖 active-domain catalog、off-catalog debug assert、以及 asserts-off fallback prompt，确保 agent follow-up 不因未注册 intent 破坏生产兜底。
 - Agent artifact detail 已提供 local transparency trace entry，点击后进入 `SettingsRoutes.aiTransparencyDetail(traceId)`；组件测试覆盖 route handoff。
 - Agent result read tools 已按当前 domain opt-in / active agent registry 过滤 artifact 与 run；`artifact_id` / `agent_id` / `domain` 三条 artifact 读取路径都会拒绝未注册 agent 或 inactive domain 的历史结果，避免 AI follow-up 工具读取或解释已下线 surface。
-- Agent artifact notification / route deep link 已通过 `readActiveAgentArtifact` 统一校验 current user、active domain、active agent registry 和 expected domain，防止 query 参数绕过领域开关或用户边界直接打开历史 artifact。
+- Agent artifact notification / route deep link 已通过 `readActiveAgentArtifact` 统一校验 current user、active domain、active agent registry、expected domain 和 visibility state，防止 query 参数绕过领域开关、用户边界或 dismissed / snoozed / expired 状态直接打开历史 artifact。
 - Agent artifact store 已覆盖 deterministic artifact upsert 会保留本地 dismissed / snoozed visibility state，防止 agent 重跑把用户关闭的结果重新顶回页面。
 - Agent artifact store 已覆盖 visibility state 只在同一 `owner_user_id` 的稳定 artifact upsert 间保留，防止多用户本地切换时继承其他用户的 dismissed / snoozed 状态。
 - Agent persistence 已覆盖 fresh schema 的 `agent_runs.trace_id` / artifact visibility columns，并有 v31→current 迁移测试验证旧 agent run/artifact 数据保留且补齐 trace / dismissed / snoozed 列；testing infrastructure contract 锁住该迁移用例。

@@ -141,11 +141,49 @@ void main() {
 
     expect(artifact, isNull);
   });
+
+  test('readActiveAgentArtifact rejects hidden artifacts', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await DomainOptInStore(
+      db,
+    ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+    final store = SqliteAgentArtifactStore(db: db);
+    final now = DateTime.utc(2026, 7, 5, 12);
+    await store.save(_artifact(id: 'dismissed', ownerUserId: _owner));
+    await store.save(_artifact(id: 'snoozed', ownerUserId: _owner));
+    await store.save(
+      _artifact(
+        id: 'expired',
+        ownerUserId: _owner,
+        expiresAt: now.subtract(const Duration(minutes: 1)),
+      ),
+    );
+    await store.dismiss(ownerUserId: _owner, id: 'dismissed', dismissedAt: now);
+    await store.snooze(
+      ownerUserId: _owner,
+      id: 'snoozed',
+      until: now.add(const Duration(hours: 2)),
+    );
+    final container = _container(db, agents: const <Agent>[_HealthAgent()]);
+
+    for (final id in const <String>['dismissed', 'snoozed', 'expired']) {
+      final artifact = await _withRef(
+        container,
+        (ref) => readActiveAgentArtifact(ref, artifactId: id, visibleAt: now),
+      );
+      expect(artifact, isNull, reason: id);
+    }
+  });
 }
 
-AgentArtifact _artifact({required String ownerUserId}) {
+AgentArtifact _artifact({
+  String id = 'health-artifact',
+  required String ownerUserId,
+  DateTime? expiresAt,
+}) {
   return AgentArtifact(
-    id: 'health-artifact',
+    id: id,
     ownerUserId: ownerUserId,
     agentId: 'health_agent',
     domain: DomainScope.health.wire,
@@ -154,6 +192,7 @@ AgentArtifact _artifact({required String ownerUserId}) {
     title: 'Health Artifact',
     summary: 'Health summary',
     createdAt: DateTime.utc(2026, 7, 5),
+    expiresAt: expiresAt,
   );
 }
 
