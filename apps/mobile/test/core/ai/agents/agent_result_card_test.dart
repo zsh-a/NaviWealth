@@ -323,6 +323,49 @@ void main() {
     expect(visibilityChanges, 2);
   });
 
+  for (final entry in <({AgentRunLifecycleStatus status, String label})>[
+    (status: AgentRunLifecycleStatus.running, label: 'Running'),
+    (status: AgentRunLifecycleStatus.noFinding, label: 'No finding'),
+    (status: AgentRunLifecycleStatus.ready, label: 'Ready'),
+  ]) {
+    testWidgets('run status card renders ${entry.label} status', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          AgentRunStatusCard(
+            record: AgentRunRecord(
+              id: 'run-${entry.status.name}',
+              ownerUserId: 'user-1',
+              agentId: 'agent-1',
+              agentName: 'Weekly Review',
+              status: entry.status,
+              trigger: AgentRunTrigger.schedule,
+              startedAt: DateTime.utc(2026, 7, 5, 8),
+              finishedAt: entry.status == AgentRunLifecycleStatus.running
+                  ? null
+                  : DateTime.utc(2026, 7, 5, 8, 1),
+              summary: entry.status == AgentRunLifecycleStatus.ready
+                  ? 'Review ready'
+                  : null,
+            ),
+            metaLabel: 'Updated just now',
+          ),
+        ),
+      );
+
+      expect(find.text('Weekly Review'), findsOneWidget);
+      expect(find.text(entry.label), findsWidgets);
+      expect(find.text('Updated just now'), findsOneWidget);
+      if (entry.status == AgentRunLifecycleStatus.running) {
+        expect(find.byType(FCircularProgress), findsOneWidget);
+      }
+      if (entry.status == AgentRunLifecycleStatus.ready) {
+        expect(find.text('Review ready'), findsOneWidget);
+      }
+    });
+  }
+
   testWidgets('run status card renders failed status and retry action', (
     tester,
   ) async {
