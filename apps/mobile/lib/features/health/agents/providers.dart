@@ -29,6 +29,7 @@ import '../data/health_notification_preferences.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
+import 'weekly_summary_agent.dart';
 
 /// Shorter lookback for periodic foreground catch-up after a background wake.
 /// Manual sync and Morning Briefing still use [kDefaultHealthSyncWindow].
@@ -288,6 +289,23 @@ final latestMorningBriefingArtifactProvider =
       final artifacts = await store.latestForAgent(
         ownerUserId: ownerUserId,
         agentId: kMorningBriefingAgentId,
+        limit: 1,
+      );
+      return artifacts.isEmpty ? null : artifacts.single;
+    });
+
+/// Most recent user-visible Weekly Summary artifact for the Health Today page.
+final latestWeeklySummaryArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final store = await ref.watch(
+        agent_providers.agentArtifactStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final artifacts = await store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kWeeklySummaryAgentId,
         limit: 1,
       );
       return artifacts.isEmpty ? null : artifacts.single;

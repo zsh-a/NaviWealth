@@ -13,6 +13,11 @@ import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_pl
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart' as auth;
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/features/health/agents/providers.dart'
+    as health_agent_providers;
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 
 import '../../../app/agent_runtime_effect_plan_test_harness.dart';
@@ -263,6 +268,79 @@ void main() {
       expect(artifact.actions.single.objectId, result.artifactId);
     },
   );
+
+  test(
+    'latest weekly summary artifact provider returns newest health artifact',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(auth.domainOptInsProvider.future);
+      await container
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+      await store.save(
+        _weeklyArtifact(
+          id: 'weekly-old',
+          createdAt: DateTime.utc(2026, 6, 22, 20),
+        ),
+      );
+      await store.save(
+        _weeklyArtifact(
+          id: 'weekly-new',
+          createdAt: DateTime.utc(2026, 6, 29, 20),
+        ),
+      );
+
+      final artifact = await container.read(
+        health_agent_providers.latestWeeklySummaryArtifactProvider.future,
+      );
+
+      expect(artifact?.id, 'weekly-new');
+    },
+  );
+
+  test(
+    'latest weekly summary artifact provider respects Health opt-in',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => store,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(auth.domainOptInsProvider.future);
+      await store.save(
+        _weeklyArtifact(
+          id: 'weekly-hidden',
+          createdAt: DateTime.utc(2026, 6, 29, 20),
+        ),
+      );
+
+      final artifact = await container.read(
+        health_agent_providers.latestWeeklySummaryArtifactProvider.future,
+      );
+
+      expect(artifact, isNull);
+    },
+  );
 }
 
 AgentContext _context() {
@@ -273,6 +351,23 @@ AgentContext _context() {
 }
 
 final _refProvider = Provider<Ref>((ref) => ref);
+
+AgentArtifact _weeklyArtifact({
+  required String id,
+  required DateTime createdAt,
+}) {
+  return AgentArtifact(
+    id: id,
+    ownerUserId: _owner,
+    agentId: kWeeklySummaryAgentId,
+    domain: 'health',
+    kind: AgentArtifactKind.review,
+    severity: AgentArtifactSeverity.info,
+    title: 'Weekly Summary',
+    summary: 'Weekly health summary',
+    createdAt: createdAt,
+  );
+}
 
 AgentRuntimeEffectPlanBinding _runtime({
   required AgentRuntimeNativeBridge bridge,

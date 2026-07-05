@@ -5,7 +5,70 @@ class _WeeklySummaryPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final artifactAsync = ref.watch(
+      health_agent_providers.latestWeeklySummaryArtifactProvider,
+    );
     final async = ref.watch(weeklySummaryProvider);
+    return artifactAsync.when(
+      loading: () => const _WeeklySummarySkeleton(),
+      error: (_, _) => _WeeklySummaryMetricsCard(async: async),
+      data: (artifact) {
+        if (artifact != null) {
+          return _WeeklySummaryArtifactCard(
+            artifact: artifact,
+            onVisibilityChanged: () {
+              ref.invalidate(
+                health_agent_providers.latestWeeklySummaryArtifactProvider,
+              );
+            },
+          );
+        }
+        return _WeeklySummaryMetricsCard(async: async);
+      },
+    );
+  }
+}
+
+class _WeeklySummaryArtifactCard extends StatelessWidget {
+  const _WeeklySummaryArtifactCard({
+    required this.artifact,
+    required this.onVisibilityChanged,
+  });
+
+  final AgentArtifact artifact;
+  final VoidCallback onVisibilityChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final metaLabel = l10n.healthBriefingUpdated(
+      _ago(l10n, artifact.createdAt),
+    );
+
+    void openArtifact() {
+      showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: l10n.healthWeeklySummarySubtitle,
+        onVisibilityChanged: onVisibilityChanged,
+      );
+    }
+
+    return AgentResultCard(
+      artifact: artifact,
+      metaLabel: metaLabel,
+      onOpen: openArtifact,
+    );
+  }
+}
+
+class _WeeklySummaryMetricsCard extends StatelessWidget {
+  const _WeeklySummaryMetricsCard({required this.async});
+
+  final AsyncValue<WeeklySummary?> async;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return async.when(

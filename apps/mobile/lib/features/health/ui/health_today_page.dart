@@ -75,6 +75,9 @@ class HealthTodayPage extends ConsumerWidget {
           ref.invalidate(
             health_agent_providers.latestMorningBriefingArtifactProvider,
           );
+          ref.invalidate(
+            health_agent_providers.latestWeeklySummaryArtifactProvider,
+          );
           await ref.read(healthTodaySnapshotProvider.future);
         },
         child: ListView(
