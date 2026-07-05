@@ -49,6 +49,7 @@ Agent 的产品体验应当是：
 - Knowledge Routine Due 和 Execution Review 的 pending background providers 已覆盖 foreground catch-up 组合路径，验证 due flag 会被消费并以 `background_due` trigger 调用共享 AgentRunController。
 - Execution Review 页面已覆盖 latest agent artifact 以统一 `AgentResultCard` 出现在 Review tab 顶部，锁住 ExecutionOS 的 domainReview placement。
 - Knowledge Review 页面已覆盖 latest domainReview artifacts 以统一 `AgentResultCard` 出现在 Review tab 顶部，锁住多 agent artifact list 的页面级展示。
+- Health Today 页面已覆盖 Morning Briefing、Recovery Alert、Weekly Summary 三类 latest agent artifact 均以统一 `AgentResultCard` 展示，锁住 HealthOS 首页 agent surface。
 - Finance Home 的 agent result panel 已有 widget 覆盖，确认 weekly finance artifact 会以统一 `AgentResultCard` 出现在 FinanceOS 首页 placement。
 - Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution / Knowledge 的真实 agent fixture；`knowledge_routine_due.domain_opt_out` 已接到生产 domain opt-in composition 层面的可执行 no-run eval，`execution.review.budget_exhausted` 已接到真实 runner failed-outcome eval。
 - Health Morning Briefing 已接入 agent outcome corpus 和 evaluator，覆盖 briefing artifact 的 insight / evidence / severity contract。
