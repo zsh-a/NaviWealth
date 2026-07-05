@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
@@ -12,6 +13,7 @@ import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -26,6 +28,17 @@ Widget _wrap(Widget child, {List<Override> overrides = const <Override>[]}) {
         data: FThemes.slate.light.desktop,
         child: FScaffold(childPad: false, child: Center(child: child)),
       ),
+    ),
+  );
+}
+
+Widget _wrapWithRouter(GoRouter router) {
+  return ProviderScope(
+    child: MaterialApp.router(
+      theme: AppTheme.light(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: router,
     ),
   );
 }
@@ -225,6 +238,47 @@ void main() {
       capturedInvocation?.capabilities,
       containsAll(<AiCapability>{AiCapability.chat, AiCapability.proposal}),
     );
+  });
+
+  testWidgets('detail trace action opens transparency detail route', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: FScaffold(
+              childPad: false,
+              child: SingleChildScrollView(
+                child: AgentArtifactDetailBody(artifact: _artifact()),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '${SettingsRoutes.aiTransparency}/:requestId',
+          builder: (_, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: FScaffold(
+              childPad: false,
+              child: Text('trace detail ${state.pathParameters['requestId']}'),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(_wrapWithRouter(router));
+
+    final openTrace = find.text('Open');
+    await tester.ensureVisible(openTrace);
+    await tester.tap(openTrace);
+    await tester.pumpAndSettle();
+
+    expect(find.text('trace detail trace-1'), findsOneWidget);
   });
 
   testWidgets('detail local actions snooze and dismiss artifact', (

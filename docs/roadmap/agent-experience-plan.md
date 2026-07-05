@@ -1,7 +1,7 @@
 # Agent 使用体验统一计划
 
-Status: implementation in progress; FinanceOS first-batch agents are now
-implemented through Phase 6.
+Status: implementation in progress; core Phase 1-6 surfaces are implemented,
+with remaining work tracked as hardening and broader eval coverage.
 
 本文说明如何把现有 agent 架构落成简洁、统一、可解释的用户体验，并列出需要改动的模块。本文不改变现有架构边界：AI 仍然是 device-only，domain 仍通过 `DomainPack` 注册，用户默认不进入一个新的 AI 目的地。
 
@@ -34,10 +34,10 @@ Agent 的产品体验应当是：
 | Memory / event | `apps/mobile/lib/core/ai/local/memory/` | Agent 可写 event 和 memory |
 | Regression | `apps/mobile/lib/core/ai/regression/agent_outcome_corpus.dart` | 有 agent outcome corpus contract test |
 
-剩余缺口：
+当前覆盖状态：
 
-- `agent.showEvidence` / `agent.createPlanFromResult` 的 follow-up UI 覆盖还不如 `agent.explainResult` 完整。
-- Agent artifact detail 的 trace / transparency entry 仍可加强成统一入口。
+- `agent.explainResult` / `agent.showEvidence` / `agent.createPlanFromResult` 都已通过 `AgentArtifactDetailBody` 走统一 `askAi()` follow-up 入口，并有 widget test 覆盖 intent、object、context 和 proposal capability。
+- Agent artifact detail 已提供 local transparency trace entry，点击后进入 `SettingsRoutes.aiTransparencyDetail(traceId)`；组件测试覆盖 route handoff。
 - Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution / Knowledge 的真实 agent fixture；`knowledge_routine_due.domain_opt_out` 已接到生产 domain opt-in composition 层面的可执行 no-run eval。
 
 ## 体验模型
