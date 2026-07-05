@@ -5708,6 +5708,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reviews net worth, allocation concentration, price freshness, and FX coverage.';
 
   @override
+  String get agentPresentationCashflowAnomalyReviewLabel =>
+      'Cashflow Anomaly Review';
+
+  @override
+  String get agentPresentationCashflowAnomalyReviewDescription =>
+      'Reviews on-device monthly spending anomalies.';
+
+  @override
   String get agentPresentationMorningBriefingLabel => 'Morning Briefing';
 
   @override

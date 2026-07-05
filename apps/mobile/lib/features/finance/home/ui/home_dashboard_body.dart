@@ -84,7 +84,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                     secondary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const _WeeklyWealthReviewPanel(),
+                        const _FinanceAgentResultsPanel(),
                         if (insights.isNotEmpty) ...[
                           AiInsightFeed(insights: insights),
                           const SizedBox(height: AppSpacing.s20),
@@ -104,7 +104,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
                         const _HomeQuickActions(),
-                        const _WeeklyWealthReviewPanel(),
+                        const _FinanceAgentResultsPanel(),
                         if (insights.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.s20),
                           AiInsightFeed(insights: insights),
@@ -129,36 +129,41 @@ class _DashboardBodyContent extends ConsumerWidget {
   }
 }
 
-class _WeeklyWealthReviewPanel extends ConsumerWidget {
-  const _WeeklyWealthReviewPanel();
+class _FinanceAgentResultsPanel extends ConsumerWidget {
+  const _FinanceAgentResultsPanel();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final artifactAsync = ref.watch(
-      finance_agent_providers.latestWeeklyWealthReviewArtifactProvider,
-    );
-    final artifact = artifactAsync.value;
-    if (artifact != null) {
+    final artifacts = ref
+        .watch(finance_agent_providers.latestFinanceAgentArtifactsProvider)
+        .value;
+    if (artifacts != null && artifacts.isNotEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AgentResultCard(
-            artifact: artifact,
-            metaLabel: _financeAgentMetaLabel(context, ref, artifact.createdAt),
-            onOpen: () => showAgentArtifactSheet(
-              context: context,
+          for (final artifact in artifacts) ...[
+            AgentResultCard(
               artifact: artifact,
-              subtitle: _financeAgentMetaLabel(
+              metaLabel: _financeAgentMetaLabel(
                 context,
                 ref,
                 artifact.createdAt,
               ),
-              onVisibilityChanged: () => ref.invalidate(
-                finance_agent_providers
-                    .latestWeeklyWealthReviewArtifactProvider,
+              onOpen: () => showAgentArtifactSheet(
+                context: context,
+                artifact: artifact,
+                subtitle: _financeAgentMetaLabel(
+                  context,
+                  ref,
+                  artifact.createdAt,
+                ),
+                onVisibilityChanged: () => ref.invalidate(
+                  finance_agent_providers.latestFinanceAgentArtifactsProvider,
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           const SizedBox(height: AppSpacing.s20),
         ],
       );
@@ -179,6 +184,9 @@ class _WeeklyWealthReviewPanel extends ConsumerWidget {
               agentRunControllerProvider.future,
             );
             await controller.runOnceById(kWeeklyWealthReviewAgentId);
+            ref.invalidate(
+              finance_agent_providers.latestFinanceAgentArtifactsProvider,
+            );
             ref.invalidate(
               finance_agent_providers.latestWeeklyWealthReviewArtifactProvider,
             );

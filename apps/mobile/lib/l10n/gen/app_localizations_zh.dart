@@ -5453,6 +5453,13 @@ class AppLocalizationsZh extends AppLocalizations {
       '复盘净资产、配置集中度、价格新鲜度与汇率覆盖。';
 
   @override
+  String get agentPresentationCashflowAnomalyReviewLabel => '现金流异常复盘';
+
+  @override
+  String get agentPresentationCashflowAnomalyReviewDescription =>
+      '复盘端侧检测到的月度支出异常。';
+
+  @override
   String get agentPresentationMorningBriefingLabel => '早间简报';
 
   @override

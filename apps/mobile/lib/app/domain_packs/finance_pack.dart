@@ -7,6 +7,8 @@ import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart'
+    show kCashflowAnomalyReviewAgentId;
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart'
@@ -70,6 +72,14 @@ final DomainPack kFinancePack = DomainPack(
       description: _weeklyWealthReviewDescription,
       placement: AgentResultPlacement.domainHome,
     ),
+    AgentPresentationSpec(
+      agentId: kCashflowAnomalyReviewAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.triangleAlert,
+      label: _cashflowAnomalyReviewLabel,
+      description: _cashflowAnomalyReviewDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
   ],
   memoryBootstrapBuilder: _financeMemoryBootstrap,
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
@@ -103,3 +113,9 @@ String _weeklyWealthReviewLabel(AppLocalizations l10n) =>
 
 String _weeklyWealthReviewDescription(AppLocalizations l10n) =>
     l10n.agentPresentationWeeklyWealthReviewDescription;
+
+String _cashflowAnomalyReviewLabel(AppLocalizations l10n) =>
+    l10n.agentPresentationCashflowAnomalyReviewLabel;
+
+String _cashflowAnomalyReviewDescription(AppLocalizations l10n) =>
+    l10n.agentPresentationCashflowAnomalyReviewDescription;

@@ -9753,6 +9753,18 @@ abstract class AppLocalizations {
   /// **'Reviews net worth, allocation concentration, price freshness, and FX coverage.'**
   String get agentPresentationWeeklyWealthReviewDescription;
 
+  /// Presentation label for the FinanceOS cashflow anomaly review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow Anomaly Review'**
+  String get agentPresentationCashflowAnomalyReviewLabel;
+
+  /// Presentation description for the FinanceOS cashflow anomaly review agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews on-device monthly spending anomalies.'**
+  String get agentPresentationCashflowAnomalyReviewDescription;
+
   /// Presentation label for the HealthOS morning briefing agent.
   ///
   /// In en, this message translates to:
