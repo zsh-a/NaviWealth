@@ -1,6 +1,7 @@
 # Agent 使用体验统一计划
 
-Status: proposed cross-domain implementation plan.
+Status: implementation in progress; FinanceOS first-batch agents are now
+implemented through Phase 6.
 
 本文说明如何把现有 agent 架构落成简洁、统一、可解释的用户体验，并列出需要改动的模块。本文不改变现有架构边界：AI 仍然是 device-only，domain 仍通过 `DomainPack` 注册，用户默认不进入一个新的 AI 目的地。
 
@@ -347,14 +348,14 @@ class AgentPresentationSpec {
 - `apps/mobile/lib/app/domain_packs/finance_pack.dart`
 - `apps/mobile/lib/features/finance/ui/`
 
-建议首批：
+首批状态：
 
-| Agent | 触发 | 输出 |
-|---|---|---|
-| Weekly Wealth Review | weekly | net worth delta, account changes, evidence |
-| Cashflow Anomaly Review | daily / after import | unusual spend / income changes |
-| FIRE Plan Drift Monitor | weekly | gap to plan, assumptions changed |
-| Options Income Risk Review | weekly / after scan | concentration, earnings, quote quality warnings |
+| Agent | 触发 | 输出 | 状态 |
+|---|---|---|---|
+| Weekly Wealth Review | weekly | net worth delta, account changes, evidence | ✅ `weekly_wealth_review_agent.dart` |
+| Cashflow Anomaly Review | daily / after import | unusual spend / income changes | ✅ `cashflow_anomaly_review_agent.dart` |
+| FIRE Plan Drift Monitor | weekly | gap to plan, assumptions changed | ✅ `fire_plan_drift_monitor_agent.dart` |
+| Options Income Risk Review | daily / after scan | concentration, quote quality, stale scan warnings | ✅ `options_income_risk_review_agent.dart` |
 
 规则：
 
