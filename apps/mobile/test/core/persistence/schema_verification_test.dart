@@ -291,6 +291,7 @@ void main() {
           'error',
           'memory_id',
           'artifact_id',
+          'trace_id',
         ]),
       );
     });
