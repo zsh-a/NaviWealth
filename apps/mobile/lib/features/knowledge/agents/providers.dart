@@ -124,6 +124,10 @@ final pendingKnowledgeRoutineDueRunProvider =
 /// Most recent user-visible Knowledge Review artifact for the Review tab.
 final latestKnowledgeReviewArtifactProvider =
     FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.knowledge)) {
+        return null;
+      }
       final store = await ref.watch(
         agent_providers.agentArtifactStoreProvider.future,
       );
@@ -138,6 +142,10 @@ final latestKnowledgeReviewArtifactProvider =
 
 final latestKnowledgeReviewRunProvider =
     FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.knowledge)) {
+        return null;
+      }
       final store = await ref.watch(
         agent_providers.agentRunStoreProvider.future,
       );

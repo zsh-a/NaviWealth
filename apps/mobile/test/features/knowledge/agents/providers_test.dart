@@ -1,5 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -9,6 +13,7 @@ import 'package:naviwealth/core/background/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/providers.dart';
+import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/routine_due_agent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -67,6 +72,79 @@ void main() {
 
     expect(scheduler.calls.last, 'cancel:$kKnowledgeRoutineDueTaskName');
   });
+
+  test('review result providers respect Knowledge opt-in', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    final runStore = SqliteAgentRunStore(db: db);
+    final startedAt = DateTime.utc(2026, 7, 5, 9);
+    await artifactStore.save(
+      _knowledgeArtifact(id: 'knowledge-review-1', createdAt: startedAt),
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: const ReviewAgent(),
+      runStartedAt: startedAt,
+      result: AgentRunResult(
+        agentId: kKnowledgeReviewAgentId,
+        status: AgentRunStatus.completed,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+        summary: 'Review due decisions',
+        artifactId: 'knowledge-review-1',
+        traceId: 'trace-knowledge-review',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    final c = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((_) async => db),
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+        agent_providers.agentRunStoreProvider.overrideWith(
+          (ref) async => runStore,
+        ),
+      ],
+    );
+    addTearDown(c.dispose);
+    await c.read(auth.domainOptInsProvider.future);
+
+    expect(await c.read(latestKnowledgeReviewArtifactProvider.future), isNull);
+    expect(await c.read(latestKnowledgeReviewRunProvider.future), isNull);
+
+    await c
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.knowledge, true);
+    c.invalidate(latestKnowledgeReviewArtifactProvider);
+    c.invalidate(latestKnowledgeReviewRunProvider);
+
+    final artifact = await c.read(latestKnowledgeReviewArtifactProvider.future);
+    final run = await c.read(latestKnowledgeReviewRunProvider.future);
+
+    expect(artifact?.id, 'knowledge-review-1');
+    expect(run?.status, AgentRunLifecycleStatus.ready);
+    expect(run?.traceId, 'trace-knowledge-review');
+  });
+}
+
+AgentArtifact _knowledgeArtifact({
+  required String id,
+  required DateTime createdAt,
+}) {
+  return AgentArtifact(
+    id: id,
+    ownerUserId: 'user-1',
+    agentId: kKnowledgeReviewAgentId,
+    domain: 'knowledge',
+    kind: AgentArtifactKind.review,
+    severity: AgentArtifactSeverity.info,
+    title: 'Knowledge Review',
+    summary: 'Review due decisions',
+    createdAt: createdAt,
+  );
 }
 
 class _RecordingScheduler implements BackgroundScheduler {
