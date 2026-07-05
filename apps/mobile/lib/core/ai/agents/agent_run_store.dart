@@ -63,6 +63,7 @@ class AgentRunRecord {
     this.error,
     this.memoryId,
     this.artifactId,
+    this.traceId,
   });
 
   final String id;
@@ -77,6 +78,7 @@ class AgentRunRecord {
   final String? error;
   final String? memoryId;
   final String? artifactId;
+  final String? traceId;
 
   bool get isNonFailed =>
       status == AgentRunLifecycleStatus.ready ||
@@ -210,8 +212,9 @@ class SqliteAgentRunStore implements AgentRunStore {
         summary,
         error,
         memory_id,
-        artifact_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        artifact_id,
+        trace_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       <Object?>[
         agentRunId(agentId: agent.id, startedAt: startedAt),
@@ -221,6 +224,7 @@ class SqliteAgentRunStore implements AgentRunStore {
         AgentRunLifecycleStatus.running.wire,
         trigger.wire,
         startedAt.toUtc().millisecondsSinceEpoch,
+        null,
         null,
         null,
         null,
@@ -259,8 +263,9 @@ class SqliteAgentRunStore implements AgentRunStore {
         summary,
         error,
         memory_id,
-        artifact_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        artifact_id,
+        trace_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       <Object?>[
         record.id,
@@ -275,6 +280,7 @@ class SqliteAgentRunStore implements AgentRunStore {
         record.error,
         record.memoryId,
         record.artifactId,
+        record.traceId,
       ],
     );
   }
@@ -358,6 +364,7 @@ AgentRunRecord _recordFromResult({
     error: result.error,
     memoryId: result.memoryId,
     artifactId: result.artifactId,
+    traceId: result.traceId,
   );
 }
 
@@ -381,5 +388,6 @@ AgentRunRecord _rowToRecord(QueryRow row) {
     error: row.read<String?>('error'),
     memoryId: row.read<String?>('memory_id'),
     artifactId: row.read<String?>('artifact_id'),
+    traceId: row.read<String?>('trace_id'),
   );
 }

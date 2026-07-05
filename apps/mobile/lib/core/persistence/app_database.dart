@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 32;
+  int get schemaVersion => 33;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -484,6 +484,17 @@ class AppDatabase extends _$AppDatabase {
       // scheduling/notification behavior but remain local product state.
       if (from < 32) {
         await _createAgentPreferences(this);
+      }
+      // v32 -> v33: retain the runtime transparency trace associated with a
+      // product-level agent run. Artifacts already have `trace_id`; this keeps
+      // lifecycle/history surfaces linked to the same local trace.
+      if (from < 33) {
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_runs',
+          column: 'trace_id',
+          definition: 'TEXT',
+        );
       }
     },
     beforeOpen: (details) async {

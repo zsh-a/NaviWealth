@@ -143,9 +143,11 @@ class AgentRunner {
         'agent_name': agent.name,
         'status': result.status.name,
         'duration_ms': result.duration.inMilliseconds,
-        if (result.memoryId != null) 'memory_id': result.memoryId,
-        if (result.error != null) 'error': result.error,
         ...result.payload,
+        if (result.memoryId != null) 'memory_id': result.memoryId,
+        if (result.artifactId != null) 'artifact_id': result.artifactId,
+        if (result.traceId != null) 'trace_id': result.traceId,
+        if (result.error != null) 'error': result.error,
       },
       entities: <String>{'agent', agent.id},
       importance: switch (result.status) {

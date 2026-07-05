@@ -84,7 +84,19 @@ void main() {
   test('runOnce returns completed result + writes one event', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
-    final agent = _StubAgent(id: 'stub');
+    final agent = _StubAgent(
+      id: 'stub',
+      onRun: (ctx) => AgentRunResult(
+        agentId: 'stub',
+        status: AgentRunStatus.completed,
+        startedAt: ctx.now,
+        finishedAt: ctx.now.add(const Duration(milliseconds: 10)),
+        summary: 'ok',
+        memoryId: 'memory-1',
+        artifactId: 'artifact-1',
+        traceId: 'trace-1',
+      ),
+    );
 
     final result = await runner.runOnce(agent, _context(rt, now));
     expect(result.status, AgentRunStatus.completed);
@@ -97,6 +109,9 @@ void main() {
     expect(events, hasLength(1));
     expect(events.single.type, kAgentRunEventTypeCompleted);
     expect(events.single.payload['agent_id'], 'stub');
+    expect(events.single.payload['memory_id'], 'memory-1');
+    expect(events.single.payload['artifact_id'], 'artifact-1');
+    expect(events.single.payload['trace_id'], 'trace-1');
   });
 
   test('runOnce captures throws as failed result', () async {
@@ -175,6 +190,15 @@ void main() {
     final agent = _StubAgent(
       id: 'persisted',
       schedule: const AgentSchedule(interval: Duration(hours: 1)),
+      onRun: (ctx) => AgentRunResult(
+        agentId: 'persisted',
+        status: AgentRunStatus.completed,
+        startedAt: ctx.now,
+        finishedAt: ctx.now.add(const Duration(milliseconds: 10)),
+        summary: 'persisted ok',
+        artifactId: 'artifact-persisted',
+        traceId: 'trace-persisted',
+      ),
     );
 
     await firstRunner.tick(agents: [agent], context: _context(rt, now));
@@ -193,6 +217,8 @@ void main() {
     );
     expect(latest?.status, AgentRunLifecycleStatus.ready);
     expect(latest?.trigger, AgentRunTrigger.schedule);
+    expect(latest?.artifactId, 'artifact-persisted');
+    expect(latest?.traceId, 'trace-persisted');
   });
 
   test('tick fires every agent whose schedule says yes', () async {

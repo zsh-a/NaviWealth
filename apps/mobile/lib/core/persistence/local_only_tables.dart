@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS agent_runs (
   summary       TEXT,
   error         TEXT,
   memory_id     TEXT,
-  artifact_id   TEXT
+  artifact_id   TEXT,
+  trace_id      TEXT
 )
 ''';
 

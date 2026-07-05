@@ -55,6 +55,7 @@ class AgentRunResult {
     this.payload = const <String, Object?>{},
     this.memoryId,
     this.artifactId,
+    this.traceId,
     this.error,
   });
 
@@ -63,12 +64,14 @@ class AgentRunResult {
     required DateTime startedAt,
     required DateTime finishedAt,
     String? reason,
+    String? traceId,
   }) => AgentRunResult(
     agentId: agentId,
     status: AgentRunStatus.skipped,
     startedAt: startedAt,
     finishedAt: finishedAt,
     summary: reason,
+    traceId: traceId,
   );
 
   factory AgentRunResult.failed({
@@ -76,12 +79,14 @@ class AgentRunResult {
     required DateTime startedAt,
     required DateTime finishedAt,
     required String error,
+    String? traceId,
   }) => AgentRunResult(
     agentId: agentId,
     status: AgentRunStatus.failed,
     startedAt: startedAt,
     finishedAt: finishedAt,
     error: error,
+    traceId: traceId,
   );
 
   /// `[Agent.id]` of the agent that produced this result. Stable
@@ -110,6 +115,10 @@ class AgentRunResult {
   /// `null` for skipped / failed runs and for legacy agents that only
   /// write memory/events.
   final String? artifactId;
+
+  /// AI/runtime trace associated with this run, when the agent used the
+  /// runtime trace recorder.
+  final String? traceId;
 
   final String? error;
 
