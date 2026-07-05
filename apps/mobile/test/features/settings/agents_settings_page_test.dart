@@ -8,9 +8,15 @@ import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_runner.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
+import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -76,6 +82,136 @@ void main() {
     );
     expect(pref.notificationsEnabled, isFalse);
     expect(pref.enabled, isTrue);
+  });
+
+  testWidgets('persists enabled toggle without changing notifications', (
+    tester,
+  ) async {
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistryProvider.overrideWithValue(const <Agent>[_FakeAgent()]),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                  notificationsSupported: true,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('agent-enabled-fake_agent')),
+    );
+    await tester.pumpAndSettle();
+
+    final pref = await preferenceStore.preferenceFor(
+      ownerUserId: 'user-1',
+      agentId: 'fake_agent',
+    );
+    expect(pref.enabled, isFalse);
+    expect(pref.notificationsEnabled, isTrue);
+    expect(find.text('Disabled'), findsOneWidget);
+  });
+
+  testWidgets('run now writes a manual run through the controller', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    const agent = _FakeAgent();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistryProvider.overrideWithValue(const <Agent>[agent]),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+          agentRunControllerProvider.overrideWith((ref) async {
+            final runtime = MemoryRuntime(
+              embedder: StubEmbedder(),
+              memoryStore: SqliteMemoryStore(db: db),
+              eventStore: SqliteEventStore(db: db),
+            );
+            return AgentRunController(
+              runner: AgentRunner(
+                runtime: runtime,
+                ownerUserId: 'user-1',
+                runStore: runStore,
+                preferenceStore: preferenceStore,
+              ),
+              agents: const <Agent>[agent],
+              ref: ref,
+            );
+          }),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Run now'));
+    await tester.pumpAndSettle();
+
+    final latest = await runStore.latestForAgent(
+      ownerUserId: 'user-1',
+      agentId: agent.id,
+    );
+    expect(latest, isNotNull);
+    expect(latest!.trigger, AgentRunTrigger.manual);
+    expect(latest.status, AgentRunLifecycleStatus.noFinding);
+    expect(latest.summary, 'test');
+    expect(find.textContaining('No finding'), findsOneWidget);
   });
 
   testWidgets('opens latest agent artifact from settings', (tester) async {

@@ -267,7 +267,11 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                 ),
               ),
               if (presentation?.userToggleable ?? true)
-                FSwitch(value: enabled, onChange: _setEnabled)
+                FSwitch(
+                  key: ValueKey<String>('agent-enabled-${row.agent.id}'),
+                  value: enabled,
+                  onChange: _setEnabled,
+                )
               else
                 AppBadge(
                   label: l10n.agentSettingsManagedBadge,
