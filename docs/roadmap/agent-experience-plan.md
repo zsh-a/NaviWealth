@@ -113,6 +113,35 @@ Agent 的产品体验应当是：
 | `Snooze` | 延后本次结果 |
 | `Dismiss` | 关闭本次结果，不删除历史 |
 
+### 界面原则
+
+Agent 体验应当像领域页面里的主动洞察层，而不是新的 AI 产品入口。UI 目标是让用户快速判断“发生了什么、为什么、现在要不要处理”，默认保持低噪音、轻层级、少干扰。
+
+- 领域首页只展示少量高信号结果：最多 1 个主结果 + 2-3 个次级摘要，避免 agent card 列表把领域页面变成通知流。
+- `AgentResultCard` 使用紧凑信息结构：icon / status / title / one-line summary / primary action / overflow actions。证据数量、trace 和历史入口放进 detail sheet。
+- 状态表达优先用语义颜色、图标和短文案，不使用大面积警示色、装饰性渐变或夸张 AI 品牌视觉。
+- 动作分层：主按钮只保留 `Review` 或最符合当前结果的一个行动；`Snooze` / `Dismiss` / `Open trace` 进入 overflow 或 sheet 内二级区域。
+- 文案保持对象语义，例如 “Review recovery signal” / “Explain this spending change”，不写泛化的 “Ask AI” 或解释 AI 功能的说明文。
+- 页面布局遵循现有 domain shell：agent 结果嵌入已有 tab / section，不新增全屏 agent dashboard，也不把每个 agent 做成独立 destination。
+- 卡片半径、间距、字体层级遵循 Forui 和 design system；禁止嵌套卡片，detail sheet 内用 section、divider 和 sticky action bar 表达层级。
+
+### 交互模型
+
+核心交互围绕“扫一眼、展开、行动、追问”四步：
+
+1. 扫一眼：领域页面只给出结果标题、短摘要、严重程度和新鲜度。
+2. 展开：`Review` 打开统一 detail sheet，展示 summary、insights、evidence、trace 和 actions。
+3. 行动：写入、计划、批量更新等动作继续进入 proposal confirmation surface。
+4. 追问：follow-up chip 调用 `askAi()`，带上 registered intent、`AiObjectRef`、artifact id 和 evidence context。
+
+Detail sheet 应当是主要阅读与决策表面：
+
+- 顶部为 sticky header：agent label、status、created time、close。
+- 中部按顺序展示：summary、top insights、evidence、affected objects、trace entry。
+- 底部为 sticky action bar：primary action + follow-up；低频动作收进 overflow。
+- 小屏优先保证正文可读和主动作可达；证据列表可折叠，trace 默认收起。
+- 关闭、snooze、dismiss 都保留历史，不删除 artifact。
+
 ## 新增核心契约
 
 ### AgentRunStore
@@ -325,6 +354,25 @@ class AgentPresentationSpec {
   - `AgentEvidenceList`
   - `AgentActionBar`
 - 每个 domain 页面只负责选择 placement 和 domain-specific renderer。
+- 领域页展示采用 compact card，不做独立 agent feed：
+  - Finance Home / Health Today / Knowledge Review / Execution Review 每个 placement 默认只突出最新或最高严重度结果。
+  - 多结果场景用 compact list 或 horizontal summary row，不堆叠完整卡片。
+  - `noFinding` 和 `idle` 状态默认在设置页或轻量 status row 中出现，不占用首页主要区域。
+- `AgentResultCard` 信息层级固定为：
+  - header：domain-neutral agent icon、label、status badge、relative time。
+  - body：title、最多两行 summary、最多两个 insight chip。
+  - footer：一个 primary action、一个 overflow menu。
+- `AgentDetailSheet` 信息层级固定为：
+  - sticky header：title、agent label、status / severity、close。
+  - summary section：一句结论 + 关键指标。
+  - insights section：按 priority 排序，最多默认展开 3 条。
+  - evidence section：可折叠，显示来源对象、时间、可信度或 stale 标记。
+  - action section：primary proposal / follow-up / open object。
+  - transparency section：trace entry 默认收起。
+- 动效保持低调：
+  - running 用 progress row 或 skeleton，不用全屏 loading。
+  - ready 结果只允许轻微进入动效，不循环闪烁。
+  - failed 状态给出直接修复动作，不用红色大面积错误面板。
 - `Ask follow-up` 必须调用 `askAi()`，并传入 registered intent + `AiObjectRef`。
 - UI 文案使用对象语义，不写泛化的 “Ask AI”。
 
@@ -332,6 +380,8 @@ class AgentPresentationSpec {
 
 - Widget tests for card states。
 - Bottom sheet viewport behavior。
+- Compact placement test：领域页最多展示约定数量的 agent results，且不会因多 artifact 产生纵向堆叠噪音。
+- Overflow action test：`Snooze` / `Dismiss` / trace 等低频动作仍可达，但不占用主 footer。
 - l10n parity for new strings。
 
 ### 6. Settings Agent Management
@@ -516,6 +566,9 @@ class AgentPresentationSpec {
 - 有 ready / noFinding / failed / running 四类 UI 状态。
 - Detail Sheet 展示 summary、evidence、actions、trace entry。
 - Follow-up 通过 `askAi()`，不新增 chat route。
+- 领域页 agent surface 保持紧凑：默认只突出一个主结果，多结果使用 summary row 或 compact list。
+- 主动作清晰、二级动作收敛到 overflow；小屏下正文、关闭按钮和主动作都不被遮挡。
+- 视觉上符合 Forui / design system：无嵌套卡片、无大面积 AI 装饰、无解释性营销文案。
 
 ### Phase 4: Settings And Preferences
 

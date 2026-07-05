@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
@@ -37,6 +38,17 @@ void main() {
                     ],
                     createdAt: DateTime.utc(2026, 7, 5),
                   ),
+                  AgentArtifact(
+                    id: 'cashflow_anomaly_review:2026-07-05',
+                    ownerUserId: 'user-1',
+                    agentId: 'cashflow_anomaly_review',
+                    domain: 'finance',
+                    kind: AgentArtifactKind.alert,
+                    severity: AgentArtifactSeverity.warning,
+                    title: 'Cashflow Anomaly Review',
+                    summary: 'Spending moved sharply above baseline.',
+                    createdAt: DateTime.utc(2026, 7, 4),
+                  ),
                 ],
               ),
         ],
@@ -59,6 +71,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Net worth'), findsOneWidget);
-    expect(find.textContaining('FinanceOS'), findsOneWidget);
+    expect(find.text('Cashflow Anomaly Review'), findsOneWidget);
+    expect(find.text('Spending moved sharply above baseline.'), findsNothing);
+    expect(find.byType(AgentResultCard), findsOneWidget);
+    expect(find.byType(AgentCompactResultRow), findsOneWidget);
+    expect(find.textContaining('FinanceOS'), findsNWidgets(2));
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/async/deferred_provider_snapshot.dart';

@@ -254,12 +254,19 @@ class _KnowledgeReviewAgentResultList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = artifacts.first;
+    final secondary = artifacts.skip(1).toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var i = 0; i < artifacts.length; i++) ...[
-          _KnowledgeReviewAgentResultCard(artifact: artifacts[i]),
-          if (i != artifacts.length - 1) const SizedBox(height: AppSpacing.s8),
+        _KnowledgeReviewAgentResultCard(artifact: primary),
+        if (secondary.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s8),
+          for (var i = 0; i < secondary.length; i++) ...[
+            _KnowledgeReviewAgentResultRow(artifact: secondary[i]),
+            if (i != secondary.length - 1)
+              const SizedBox(height: AppSpacing.s6),
+          ],
         ],
       ],
     );
@@ -292,6 +299,35 @@ class _KnowledgeReviewAgentResultCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
     return AgentResultCard(
+      artifact: artifact,
+      metaLabel: metaLabel,
+      onOpen: () => showAgentArtifactSheet(
+        context: context,
+        artifact: artifact,
+        subtitle: metaLabel,
+        onVisibilityChanged: () {
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
+          );
+          ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _KnowledgeReviewAgentResultRow extends ConsumerWidget {
+  const _KnowledgeReviewAgentResultRow({required this.artifact});
+
+  final AgentArtifact artifact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
+    return AgentCompactResultRow(
       artifact: artifact,
       metaLabel: metaLabel,
       onOpen: () => showAgentArtifactSheet(

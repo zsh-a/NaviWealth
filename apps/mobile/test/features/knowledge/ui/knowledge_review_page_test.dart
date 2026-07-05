@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -115,7 +116,17 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(prefs),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider
-              .overrideWith((ref) async => <AgentArtifact>[_artifact()]),
+              .overrideWith(
+                (ref) async => <AgentArtifact>[
+                  _artifact(),
+                  _artifact(
+                    id: 'knowledge-routine-1',
+                    title: 'Routine Due',
+                    summary: 'A weekly review routine is due.',
+                    createdAt: DateTime.utc(2026, 7, 4, 9),
+                  ),
+                ],
+              ),
           knowledge_agent_providers.latestKnowledgeReviewRunProvider
               .overrideWith((ref) async => null),
           knowledgeRepositoryProvider.overrideWith(
@@ -132,6 +143,10 @@ void main() {
 
     expect(find.text('Knowledge Review'), findsOneWidget);
     expect(find.text('Review due decisions and assumptions.'), findsOneWidget);
+    expect(find.text('Routine Due'), findsOneWidget);
+    expect(find.text('A weekly review routine is due.'), findsNothing);
+    expect(find.byType(AgentResultCard), findsOneWidget);
+    expect(find.byType(AgentCompactResultRow), findsOneWidget);
     expect(find.text('Decisions due'), findsOneWidget);
     expect(find.text('Review'), findsWidgets);
   });
@@ -150,23 +165,28 @@ Widget _wrap(Widget child, {required List<Override> overrides}) {
   );
 }
 
-AgentArtifact _artifact() {
+AgentArtifact _artifact({
+  String id = 'knowledge-review-1',
+  String title = 'Knowledge Review',
+  String summary = 'Review due decisions and assumptions.',
+  DateTime? createdAt,
+}) {
   return AgentArtifact(
-    id: 'knowledge-review-1',
+    id: id,
     ownerUserId: 'user-1',
     agentId: kKnowledgeReviewAgentId,
     domain: 'knowledge',
     kind: AgentArtifactKind.review,
     severity: AgentArtifactSeverity.attention,
-    title: 'Knowledge Review',
-    summary: 'Review due decisions and assumptions.',
+    title: title,
+    summary: summary,
     insights: const <AgentInsight>[
       AgentInsight(title: 'Decisions due', body: 'One decision is due.'),
     ],
     evidence: const <AgentEvidenceRef>[
       AgentEvidenceRef(type: 'knowledge_decision', id: 'decision-1'),
     ],
-    createdAt: DateTime.utc(2026, 7, 5, 9),
+    createdAt: createdAt ?? DateTime.utc(2026, 7, 5, 9),
   );
 }
 

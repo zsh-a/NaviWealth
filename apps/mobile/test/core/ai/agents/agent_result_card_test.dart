@@ -119,6 +119,34 @@ void main() {
     expect(opened, isTrue);
   });
 
+  testWidgets('compact result row renders light metadata and opens detail', (
+    tester,
+  ) async {
+    var opened = false;
+    await tester.pumpWidget(
+      _wrap(
+        AgentCompactResultRow(
+          artifact: _artifact(),
+          metaLabel: 'Updated just now',
+          onOpen: () => opened = true,
+        ),
+      ),
+    );
+
+    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Updated just now'), findsOneWidget);
+    expect(find.text('Attention'), findsOneWidget);
+    expect(
+      find.text('Sleep debt is elevated; keep the first block light.'),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('Morning Briefing'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(opened, isTrue);
+  });
+
   testWidgets('detail body renders artifact evidence and actions', (
     tester,
   ) async {

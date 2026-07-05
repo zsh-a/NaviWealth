@@ -39,7 +39,6 @@ class AgentResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     final accent = _accentColor(context, artifact.severity);
@@ -96,20 +95,11 @@ class AgentResultCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.muted.withValues(alpha: AppOpacity.subtle),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Text(
-                artifact.summary,
-                style: typography.body.sm.copyWith(height: 1.45),
-                maxLines: 8,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+          Text(
+            artifact.summary,
+            style: typography.body.sm.copyWith(height: 1.4),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           if (artifact.insights.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s10),
@@ -136,6 +126,78 @@ class AgentResultCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class AgentCompactResultRow extends StatelessWidget {
+  const AgentCompactResultRow({
+    super.key,
+    required this.artifact,
+    required this.metaLabel,
+    this.onOpen,
+  });
+
+  final AgentArtifact artifact;
+  final String metaLabel;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final accent = _accentColor(context, artifact.severity);
+    return SoftCard(
+      level: SoftCardLevel.flat,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
+      onPress: onOpen,
+      child: Row(
+        children: [
+          AppIconTile(
+            icon: _iconForKind(artifact.kind),
+            color: accent,
+            size: AppSpacing.s32,
+            iconSize: AppIconSizes.sm,
+            backgroundOpacity: AppOpacity.subtle,
+            foregroundOpacity: 1,
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  artifact.title,
+                  style: context.captionLabelStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  metaLabel,
+                  style: context.captionStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          AppBadge(
+            label: _badgeLabel(l10n, artifact),
+            size: AppBadgeSize.compact,
+            tone: _badgeTone(artifact.severity),
+          ),
+          const SizedBox(width: AppSpacing.s6),
+          Icon(
+            FLucideIcons.chevronRight,
+            size: AppIconSizes.xs,
+            color: context.theme.colors.mutedForeground,
+          ),
         ],
       ),
     );
@@ -270,6 +332,7 @@ Future<void> showAgentArtifactSheet({
       artifact: artifact,
       onVisibilityChanged: onVisibilityChanged,
     ),
+    footer: _AgentArtifactSheetFooter(artifact: artifact),
   );
 }
 
@@ -442,48 +505,25 @@ class AgentArtifactDetailBody extends ConsumerWidget {
   }
 
   Future<void> _snoozeArtifact(BuildContext context, WidgetRef ref) async {
-    final ownerUserId = await ref.read(currentUserIdProvider)();
-    final store = await ref.read(
-      agent_providers.agentArtifactStoreProvider.future,
+    await _snoozeAgentArtifact(
+      context,
+      ref,
+      artifact: artifact,
+      onVisibilityChanged: onVisibilityChanged,
     );
-    await store.snooze(
-      ownerUserId: ownerUserId,
-      id: artifact.id,
-      until: DateTime.now().toUtc().add(const Duration(days: 1)),
-    );
-    await onVisibilityChanged?.call();
-    if (context.mounted && Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    }
   }
 
   Future<void> _dismissArtifact(BuildContext context, WidgetRef ref) async {
-    final ownerUserId = await ref.read(currentUserIdProvider)();
-    final store = await ref.read(
-      agent_providers.agentArtifactStoreProvider.future,
+    await _dismissAgentArtifact(
+      context,
+      ref,
+      artifact: artifact,
+      onVisibilityChanged: onVisibilityChanged,
     );
-    await store.dismiss(
-      ownerUserId: ownerUserId,
-      id: artifact.id,
-      dismissedAt: DateTime.now().toUtc(),
-    );
-    await onVisibilityChanged?.call();
-    if (context.mounted && Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    }
   }
 
   Future<void> _askAboutArtifact(BuildContext context, WidgetRef ref) {
-    return askAi(
-      context,
-      ref,
-      intent: kAgentExplainResultIntent,
-      object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
-      objectLabel: artifact.title,
-      attrs: _artifactAttrs(),
-      source: 'agent_artifact_detail',
-      capabilities: const <AiCapability>{AiCapability.chat},
-    );
+    return _askAboutAgentArtifact(context, ref, artifact: artifact);
   }
 
   Future<void> _showEvidenceForArtifact(BuildContext context, WidgetRef ref) {
@@ -494,7 +534,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
       objectLabel: artifact.title,
       attrs: <String, Object?>{
-        ..._artifactAttrs(),
+        ..._agentArtifactAttrs(artifact),
         'follow_up_focus': 'evidence',
       },
       source: 'agent_artifact_detail',
@@ -509,7 +549,10 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       intent: kAgentCreatePlanFromResultIntent,
       object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
       objectLabel: artifact.title,
-      attrs: <String, Object?>{..._artifactAttrs(), 'follow_up_focus': 'plan'},
+      attrs: <String, Object?>{
+        ..._agentArtifactAttrs(artifact),
+        'follow_up_focus': 'plan',
+      },
       source: 'agent_artifact_detail',
       capabilities: const <AiCapability>{
         AiCapability.chat,
@@ -533,7 +576,7 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       ),
       objectLabel: artifact.title,
       attrs: <String, Object?>{
-        ..._artifactAttrs(),
+        ..._agentArtifactAttrs(artifact),
         'action_kind': action.kind,
         'action_label': action.label,
         ...action.payload,
@@ -541,32 +584,183 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       source: 'agent_artifact_detail',
     );
   }
+}
 
-  Map<String, Object?> _artifactAttrs() {
-    return <String, Object?>{
-      'artifact_id': artifact.id,
-      'agent_id': artifact.agentId,
-      'artifact_domain': artifact.domain,
-      'artifact_kind': artifact.kind.wire,
-      'artifact_severity': artifact.severity.wire,
-      'artifact_summary': artifact.summary,
-      if (artifact.memoryId != null) 'memory_id': artifact.memoryId,
-      if (artifact.traceId != null) 'trace_id': artifact.traceId,
-      if (artifact.insights.isNotEmpty)
-        'insight_titles': [
-          for (final insight in artifact.insights.take(6)) insight.title,
-        ],
-      if (artifact.evidence.isNotEmpty)
-        'evidence_refs': [
-          for (final evidence in artifact.evidence.take(8))
-            <String, Object?>{
-              'type': evidence.type,
-              'id': evidence.id,
-              if (evidence.label != null) 'label': evidence.label,
-            },
-        ],
-    };
+class _AgentArtifactSheetFooter extends ConsumerWidget {
+  const _AgentArtifactSheetFooter({required this.artifact});
+
+  final AgentArtifact artifact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: AppQuietButton(
+            expanded: true,
+            onPress: artifact.evidence.isEmpty
+                ? () => _createPlanFromAgentArtifact(
+                    context,
+                    ref,
+                    artifact: artifact,
+                  )
+                : () => _showEvidenceForAgentArtifact(
+                    context,
+                    ref,
+                    artifact: artifact,
+                  ),
+            label: artifact.evidence.isEmpty
+                ? l10n.agentResultCreatePlanTitle
+                : l10n.agentResultShowEvidenceTitle,
+            prefix: Icon(
+              artifact.evidence.isEmpty
+                  ? FLucideIcons.listChecks
+                  : FLucideIcons.fileText,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s12),
+        Expanded(
+          child: AppQuietButton(
+            expanded: true,
+            onPress: () =>
+                _askAboutAgentArtifact(context, ref, artifact: artifact),
+            label: l10n.agentResultAskFollowUpTitle,
+            prefix: const Icon(FLucideIcons.messageCircle),
+          ),
+        ),
+      ],
+    );
   }
+}
+
+Future<void> _snoozeAgentArtifact(
+  BuildContext context,
+  WidgetRef ref, {
+  required AgentArtifact artifact,
+  FutureOr<void> Function()? onVisibilityChanged,
+}) async {
+  final ownerUserId = await ref.read(currentUserIdProvider)();
+  final store = await ref.read(
+    agent_providers.agentArtifactStoreProvider.future,
+  );
+  await store.snooze(
+    ownerUserId: ownerUserId,
+    id: artifact.id,
+    until: DateTime.now().toUtc().add(const Duration(days: 1)),
+  );
+  await onVisibilityChanged?.call();
+  if (context.mounted && Navigator.of(context).canPop()) {
+    Navigator.of(context).pop();
+  }
+}
+
+Future<void> _dismissAgentArtifact(
+  BuildContext context,
+  WidgetRef ref, {
+  required AgentArtifact artifact,
+  FutureOr<void> Function()? onVisibilityChanged,
+}) async {
+  final ownerUserId = await ref.read(currentUserIdProvider)();
+  final store = await ref.read(
+    agent_providers.agentArtifactStoreProvider.future,
+  );
+  await store.dismiss(
+    ownerUserId: ownerUserId,
+    id: artifact.id,
+    dismissedAt: DateTime.now().toUtc(),
+  );
+  await onVisibilityChanged?.call();
+  if (context.mounted && Navigator.of(context).canPop()) {
+    Navigator.of(context).pop();
+  }
+}
+
+Future<void> _askAboutAgentArtifact(
+  BuildContext context,
+  WidgetRef ref, {
+  required AgentArtifact artifact,
+}) {
+  return askAi(
+    context,
+    ref,
+    intent: kAgentExplainResultIntent,
+    object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
+    objectLabel: artifact.title,
+    attrs: _agentArtifactAttrs(artifact),
+    source: 'agent_artifact_detail',
+    capabilities: const <AiCapability>{AiCapability.chat},
+  );
+}
+
+Future<void> _showEvidenceForAgentArtifact(
+  BuildContext context,
+  WidgetRef ref, {
+  required AgentArtifact artifact,
+}) {
+  return askAi(
+    context,
+    ref,
+    intent: kAgentShowEvidenceIntent,
+    object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
+    objectLabel: artifact.title,
+    attrs: <String, Object?>{
+      ..._agentArtifactAttrs(artifact),
+      'follow_up_focus': 'evidence',
+    },
+    source: 'agent_artifact_detail',
+    capabilities: const <AiCapability>{AiCapability.chat},
+  );
+}
+
+Future<void> _createPlanFromAgentArtifact(
+  BuildContext context,
+  WidgetRef ref, {
+  required AgentArtifact artifact,
+}) {
+  return askAi(
+    context,
+    ref,
+    intent: kAgentCreatePlanFromResultIntent,
+    object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
+    objectLabel: artifact.title,
+    attrs: <String, Object?>{
+      ..._agentArtifactAttrs(artifact),
+      'follow_up_focus': 'plan',
+    },
+    source: 'agent_artifact_detail',
+    capabilities: const <AiCapability>{
+      AiCapability.chat,
+      AiCapability.proposal,
+    },
+  );
+}
+
+Map<String, Object?> _agentArtifactAttrs(AgentArtifact artifact) {
+  return <String, Object?>{
+    'artifact_id': artifact.id,
+    'agent_id': artifact.agentId,
+    'artifact_domain': artifact.domain,
+    'artifact_kind': artifact.kind.wire,
+    'artifact_severity': artifact.severity.wire,
+    'artifact_summary': artifact.summary,
+    if (artifact.memoryId != null) 'memory_id': artifact.memoryId,
+    if (artifact.traceId != null) 'trace_id': artifact.traceId,
+    if (artifact.insights.isNotEmpty)
+      'insight_titles': [
+        for (final insight in artifact.insights.take(6)) insight.title,
+      ],
+    if (artifact.evidence.isNotEmpty)
+      'evidence_refs': [
+        for (final evidence in artifact.evidence.take(8))
+          <String, Object?>{
+            'type': evidence.type,
+            'id': evidence.id,
+            if (evidence.label != null) 'label': evidence.label,
+          },
+      ],
+  };
 }
 
 class _InsightPreview extends StatelessWidget {
@@ -708,46 +902,44 @@ class _ActionIntentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: AppIconSizes.h18, color: color),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: context.captionLabelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(body, style: context.captionStyle),
-                ],
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: AppIconSizes.h18, color: color),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: context.captionLabelStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  body,
+                  style: context.captionStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s8),
-            AppQuietButton(
-              label: l10n.agentResultAskAction,
-              onPress: onPress,
-              prefix: const Icon(
-                FLucideIcons.messageCircle,
-                size: AppIconSizes.xs,
-              ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          AppQuietButton(
+            label: l10n.agentResultAskAction,
+            onPress: onPress,
+            prefix: const Icon(
+              FLucideIcons.messageCircle,
+              size: AppIconSizes.xs,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -772,42 +964,40 @@ class _LocalActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: AppIconSizes.h18, color: color),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: context.captionLabelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(body, style: context.captionStyle),
-                ],
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: AppIconSizes.h18, color: color),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: context.captionLabelStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  body,
+                  style: context.captionStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s8),
-            AppQuietButton(
-              label: actionLabel,
-              onPress: onPress,
-              prefix: Icon(icon, size: AppIconSizes.xs),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          AppQuietButton(
+            label: actionLabel,
+            onPress: onPress,
+            prefix: Icon(icon, size: AppIconSizes.xs),
+          ),
+        ],
       ),
     );
   }

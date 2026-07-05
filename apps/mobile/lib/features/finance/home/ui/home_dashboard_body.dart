@@ -138,31 +138,32 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
         .watch(finance_agent_providers.latestFinanceAgentArtifactsProvider)
         .value;
     if (artifacts != null && artifacts.isNotEmpty) {
+      final primary = artifacts.first;
+      final secondary = artifacts.skip(1).toList(growable: false);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final artifact in artifacts) ...[
-            AgentResultCard(
-              artifact: artifact,
-              metaLabel: _financeAgentMetaLabel(
-                context,
-                ref,
-                artifact.createdAt,
-              ),
-              onOpen: () => showAgentArtifactSheet(
-                context: context,
-                artifact: artifact,
-                subtitle: _financeAgentMetaLabel(
+          AgentResultCard(
+            artifact: primary,
+            metaLabel: _financeAgentMetaLabel(context, ref, primary.createdAt),
+            onOpen: () => _openFinanceAgentArtifact(context, ref, primary),
+          ),
+          if (secondary.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            for (var i = 0; i < secondary.length; i++) ...[
+              AgentCompactResultRow(
+                artifact: secondary[i],
+                metaLabel: _financeAgentMetaLabel(
                   context,
                   ref,
-                  artifact.createdAt,
+                  secondary[i].createdAt,
                 ),
-                onVisibilityChanged: () => ref.invalidate(
-                  finance_agent_providers.latestFinanceAgentArtifactsProvider,
-                ),
+                onOpen: () =>
+                    _openFinanceAgentArtifact(context, ref, secondary[i]),
               ),
-            ),
-            const SizedBox(height: AppSpacing.s12),
+              if (i != secondary.length - 1)
+                const SizedBox(height: AppSpacing.s6),
+            ],
           ],
           const SizedBox(height: AppSpacing.s20),
         ],
@@ -197,6 +198,22 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.s20),
       ],
+    );
+  }
+
+  void _openFinanceAgentArtifact(
+    BuildContext context,
+    WidgetRef ref,
+    AgentArtifact artifact,
+  ) {
+    final metaLabel = _financeAgentMetaLabel(context, ref, artifact.createdAt);
+    showAgentArtifactSheet(
+      context: context,
+      artifact: artifact,
+      subtitle: metaLabel,
+      onVisibilityChanged: () => ref.invalidate(
+        finance_agent_providers.latestFinanceAgentArtifactsProvider,
+      ),
     );
   }
 }

@@ -113,12 +113,13 @@ class _BriefingArtifactCard extends StatelessWidget {
     return AgentResultCard(
       artifact: artifact,
       metaLabel: l10n.healthBriefingUpdated(_ago(l10n, artifact.createdAt)),
+      onOpen: openArtifact,
       footer: Wrap(
         spacing: AppSpacing.s8,
         runSpacing: AppSpacing.s8,
         children: [
           AppQuietButton(
-            label: 'Review',
+            label: l10n.agentResultReviewAction,
             onPress: openArtifact,
             prefix: const Icon(
               FLucideIcons.externalLink,
