@@ -131,6 +131,50 @@ void main() {
       }
     });
 
+    test('all corpus cases are wired to executable evaluator fixtures', () {
+      const executableFixturePaths = <String, String>{
+        'weekly_wealth_review':
+            'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
+        'cashflow_anomaly_review':
+            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'fire_plan_drift_monitor':
+            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'options_income_risk_review':
+            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+        'morning_briefing':
+            'test/features/health/agents/morning_briefing_agent_test.dart',
+        'recovery_alert':
+            'test/features/health/agents/recovery_alert_agent_test.dart',
+        'weekly_summary':
+            'test/features/health/agents/weekly_summary_agent_test.dart',
+        'knowledge_inbox_triage':
+            'test/features/knowledge/agents/inbox_triage_agent_test.dart',
+        'knowledge_assumption':
+            'test/features/knowledge/agents/assumption_agent_test.dart',
+        'knowledge_contradiction':
+            'test/features/knowledge/agents/contradiction_agent_test.dart',
+        'knowledge_review':
+            'test/features/knowledge/agents/review_agent_test.dart',
+        'knowledge_routine_due':
+            'test/features/knowledge/agents/routine_due_agent_test.dart',
+        'execution_review':
+            'test/features/execution/agents/review_agent_test.dart',
+      };
+      const fixturePathsByCaseId = <String, String>{
+        'knowledge.routine_due.domain_opt_out':
+            'test/app/domain_composition_test.dart',
+      };
+
+      for (final c in agentOutcomeRegressionCorpus) {
+        final path =
+            fixturePathsByCaseId[c.id] ?? executableFixturePaths[c.agentId];
+        expect(path, isNotNull, reason: c.id);
+        final src = File(path!).readAsStringSync();
+        expect(src, contains(c.id), reason: c.id);
+        expect(src, contains('evaluateAgentOutcomeCase'), reason: c.id);
+      }
+    });
+
     test('ready cases declare artifact shape, evidence, and top insights', () {
       for (final c in agentOutcomeRegressionCorpus.where(
         (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
