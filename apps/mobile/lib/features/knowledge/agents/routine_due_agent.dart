@@ -22,6 +22,7 @@ import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -98,7 +99,7 @@ class RoutineDueAgent implements Agent {
       first: due.first,
       now: start,
     );
-    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+    final dayKey = AppFormatters.utcDayKey(start);
     final artifactId = '$kKnowledgeRoutineAgentId:$dayKey';
 
     final built = buildAgentMemory(

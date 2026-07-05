@@ -29,6 +29,7 @@ import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../data/inbox_triage_classifier.dart' show InboxTriageClassifier;
@@ -130,7 +131,7 @@ class InboxTriageAgent implements Agent {
         : '为 ${untriaged.length} 条 note 生成了 $emitted 条建议';
     String? artifactId;
     if (emitted > 0) {
-      final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+      final dayKey = AppFormatters.utcDayKey(start);
       artifactId = '$kKnowledgeInboxTriageAgentId:$dayKey';
       final artifactStore = await ctx.ref.read(
         agent_providers.agentArtifactStoreProvider.future,

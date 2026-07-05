@@ -18,6 +18,7 @@ import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -76,7 +77,7 @@ class AssumptionAgent implements Agent {
     }
 
     final summary = _summarize(l10n, stale.length, stale.first.statement);
-    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+    final dayKey = AppFormatters.utcDayKey(start);
     final artifactId = '$kKnowledgeAssumptionAgentId:$dayKey';
     final built = buildAgentMemory(
       source: kKnowledgeAssumptionMemorySource,
