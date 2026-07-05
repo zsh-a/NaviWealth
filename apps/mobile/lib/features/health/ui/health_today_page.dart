@@ -19,6 +19,8 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -28,6 +30,7 @@ import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
+import '../agents/weekly_summary_agent.dart' show kWeeklySummaryAgentId;
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
@@ -78,6 +81,7 @@ class HealthTodayPage extends ConsumerWidget {
           ref.invalidate(
             health_agent_providers.latestWeeklySummaryArtifactProvider,
           );
+          ref.invalidate(health_agent_providers.latestWeeklySummaryRunProvider);
           await ref.read(healthTodaySnapshotProvider.future);
         },
         child: ListView(

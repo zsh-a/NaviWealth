@@ -8,10 +8,13 @@ class _WeeklySummaryPanel extends ConsumerWidget {
     final artifactAsync = ref.watch(
       health_agent_providers.latestWeeklySummaryArtifactProvider,
     );
+    final runAsync = ref.watch(
+      health_agent_providers.latestWeeklySummaryRunProvider,
+    );
     final async = ref.watch(weeklySummaryProvider);
     return artifactAsync.when(
       loading: () => const _WeeklySummarySkeleton(),
-      error: (_, _) => _WeeklySummaryMetricsCard(async: async),
+      error: (_, _) => _WeeklySummaryFallback(async: async, runAsync: runAsync),
       data: (artifact) {
         if (artifact != null) {
           return _WeeklySummaryArtifactCard(
@@ -23,7 +26,7 @@ class _WeeklySummaryPanel extends ConsumerWidget {
             },
           );
         }
-        return _WeeklySummaryMetricsCard(async: async);
+        return _WeeklySummaryFallback(async: async, runAsync: runAsync);
       },
     );
   }
@@ -58,6 +61,39 @@ class _WeeklySummaryArtifactCard extends StatelessWidget {
       artifact: artifact,
       metaLabel: metaLabel,
       onOpen: openArtifact,
+    );
+  }
+}
+
+class _WeeklySummaryFallback extends ConsumerWidget {
+  const _WeeklySummaryFallback({required this.async, required this.runAsync});
+
+  final AsyncValue<WeeklySummary?> async;
+  final AsyncValue<AgentRunRecord?> runAsync;
+
+  Future<void> _retry(WidgetRef ref) async {
+    final controller = await ref.read(agentRunControllerProvider.future);
+    await controller.runOnceById(kWeeklySummaryAgentId);
+    ref.invalidate(health_agent_providers.latestWeeklySummaryArtifactProvider);
+    ref.invalidate(health_agent_providers.latestWeeklySummaryRunProvider);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final run = runAsync.value;
+    if (run == null) return _WeeklySummaryMetricsCard(async: async);
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AgentRunStatusCard(
+          record: run,
+          metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
+          onRetry: () => _retry(ref),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        _WeeklySummaryMetricsCard(async: async),
+      ],
     );
   }
 }

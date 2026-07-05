@@ -15,6 +15,7 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_background_scheduler.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart' as memory_providers;
@@ -309,4 +310,19 @@ final latestWeeklySummaryArtifactProvider =
         limit: 1,
       );
       return artifacts.isEmpty ? null : artifacts.single;
+    });
+
+/// Most recent Weekly Summary run status for Health Today fallback UI.
+final latestWeeklySummaryRunProvider =
+    FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final store = await ref.watch(
+        agent_providers.agentRunStoreProvider.future,
+      );
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      return store.latestForAgent(
+        ownerUserId: ownerUserId,
+        agentId: kWeeklySummaryAgentId,
+      );
     });

@@ -5,6 +5,7 @@ import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart'
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -341,6 +342,48 @@ void main() {
       expect(artifact, isNull);
     },
   );
+
+  test('latest weekly summary run provider returns last health run', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final runStore = SqliteAgentRunStore(db: db);
+    final startedAt = DateTime.utc(2026, 6, 29, 20);
+    await runStore.finishRun(
+      ownerUserId: _owner,
+      agent: const WeeklySummaryAgent(),
+      runStartedAt: startedAt,
+      result: AgentRunResult.skipped(
+        agentId: kWeeklySummaryAgentId,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+        reason: 'no health data this week',
+        traceId: 'trace-weekly-empty',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((_) async => db),
+        currentUserIdProvider.overrideWithValue(() async => _owner),
+        agent_providers.agentRunStoreProvider.overrideWith(
+          (ref) async => runStore,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(auth.domainOptInsProvider.future);
+    await container
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.health, true);
+
+    final run = await container.read(
+      health_agent_providers.latestWeeklySummaryRunProvider.future,
+    );
+
+    expect(run?.status, AgentRunLifecycleStatus.noFinding);
+    expect(run?.summary, 'no health data this week');
+    expect(run?.traceId, 'trace-weekly-empty');
+  });
 }
 
 AgentContext _context() {
