@@ -26,6 +26,49 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../../core/persistence/test_database.dart';
 
 void main() {
+  testWidgets('renders empty state when no active domain registers agents', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistryProvider.overrideWithValue(const <Agent>[]),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{},
+          ),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => InMemoryAgentPreferenceStore(),
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => InMemoryAgentRunStore(),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No active agents'), findsOneWidget);
+    expect(
+      find.text('Enable a LifeOS domain to see its agents here.'),
+      findsOneWidget,
+    );
+    expect(find.text('Run now'), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('agent-enabled-fake_agent')),
+      findsNothing,
+    );
+  });
+
   testWidgets('renders agent rows from presentation metadata', (tester) async {
     final preferenceStore = InMemoryAgentPreferenceStore();
     final runStore = InMemoryAgentRunStore();
