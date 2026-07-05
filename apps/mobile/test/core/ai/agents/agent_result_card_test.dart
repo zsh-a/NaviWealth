@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
+import 'package:naviwealth/core/ai/composition/ask_ai.dart';
+import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
-Widget _wrap(Widget child) {
-  return MaterialApp(
-    theme: AppTheme.light(),
-    home: FTheme(
-      data: FThemes.slate.light.desktop,
-      child: FScaffold(childPad: false, child: Center(child: child)),
+Widget _wrap(Widget child, {List<Override> overrides = const <Override>[]}) {
+  return ProviderScope(
+    overrides: overrides,
+    child: MaterialApp(
+      theme: AppTheme.light(),
+      home: FTheme(
+        data: FThemes.slate.light.desktop,
+        child: FScaffold(childPad: false, child: Center(child: child)),
+      ),
     ),
   );
 }
@@ -97,7 +104,42 @@ void main() {
     expect(find.text('Evidence'), findsOneWidget);
     expect(find.text('Sleep session'), findsOneWidget);
     expect(find.text('Actions'), findsOneWidget);
+    expect(find.text('Ask follow-up'), findsOneWidget);
     expect(find.text('Review plan'), findsOneWidget);
+  });
+
+  testWidgets('detail follow-up opens askAi invocation for artifact', (
+    tester,
+  ) async {
+    AiIntentInvocation? capturedInvocation;
+    String? capturedObjectLabel;
+    await tester.pumpWidget(
+      _wrap(
+        SingleChildScrollView(
+          child: AgentArtifactDetailBody(artifact: _artifact()),
+        ),
+        overrides: [
+          askAiSurfaceProvider.overrideWithValue((
+            context, {
+            invocation,
+            objectLabel,
+            prefill,
+          }) async {
+            capturedInvocation = invocation;
+            capturedObjectLabel = objectLabel;
+          }),
+        ],
+      ),
+    );
+
+    await tester.tap(find.text('Ask').first);
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(capturedInvocation?.intent, 'agent.explainResult');
+    expect(capturedInvocation?.object?.type, 'agent_artifact');
+    expect(capturedInvocation?.object?.id, 'artifact-1');
+    expect(capturedInvocation?.context['agent_id'], 'agent-1');
+    expect(capturedObjectLabel, 'Morning Briefing');
   });
 
   testWidgets('run status card renders failed status and retry action', (

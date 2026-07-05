@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
@@ -33,7 +34,10 @@ final DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: kFinanceDeviceTools,
   toolDescriptors: kFinanceToolDescriptors,
-  intentDescriptors: kFinanceIntentDescriptors,
+  intentDescriptors: [
+    ...kFinanceIntentDescriptors,
+    ...kFinanceAgentIntentDescriptors,
+  ],
   proposalKinds: kFinanceProposalKinds,
   proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
     ref,

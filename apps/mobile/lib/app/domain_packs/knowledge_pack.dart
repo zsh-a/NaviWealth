@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
@@ -40,6 +41,7 @@ final DomainPack kKnowledgePack = DomainPack(
   scope: DomainScope.knowledge,
   deviceTools: kKnowledgeDeviceTools,
   toolDescriptors: kKnowledgeToolDescriptors,
+  intentDescriptors: kKnowledgeAgentIntentDescriptors,
   proposalKinds: kKnowledgeProposalKinds,
   proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
     ref,

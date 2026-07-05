@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
@@ -447,6 +448,10 @@ void main() {
           'execution_review',
         ]),
       );
+      final catalog = c.read(intentCatalogProvider);
+      expect(catalog.lookup(kAgentExplainResultIntent), isNotNull);
+      expect(catalog.lookup(kFinanceReviewWealthIntent), isNotNull);
+      expect(catalog.lookup(kKnowledgeReviewDueItemsIntent), isNotNull);
     },
   );
 }

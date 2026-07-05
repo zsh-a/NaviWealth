@@ -11,6 +11,7 @@ import 'package:decimal/decimal.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
+import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
@@ -319,8 +320,8 @@ class WealthReviewAnalysis {
         AgentAction(
           kind: 'review',
           label: 'Review wealth',
-          intent: 'finance.reviewWealth',
-          objectType: 'agent_artifact',
+          intent: kFinanceReviewWealthIntent,
+          objectType: kAgentArtifactObjectType,
           objectId: id,
         ),
       ],

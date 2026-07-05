@@ -89,6 +89,21 @@ IntentCopyResolver localizedIntentCopyResolver(AppLocalizations l10n) {
       label: l10n.aiIntentSuggestFireActionsLabel,
       promptTemplate: l10n.aiIntentSuggestFireActionsPrompt,
     ),
+    'agent.explainResult' => const IntentCopy(
+      label: 'Explain result',
+      promptTemplate:
+          'Explain {{object_label}}, summarize the evidence, and call out any caveats.',
+    ),
+    'finance.reviewWealth' => const IntentCopy(
+      label: 'Review wealth',
+      promptTemplate:
+          'Review {{object_label}} with the attached net-worth, allocation, price freshness, and FX evidence.',
+    ),
+    'knowledge.reviewDueItems' => const IntentCopy(
+      label: 'Review knowledge items',
+      promptTemplate:
+          'Review {{object_label}} and help prioritize the due decisions and stale assumptions.',
+    ),
     _ => fallbackIntentCopy(desc),
   };
 }
