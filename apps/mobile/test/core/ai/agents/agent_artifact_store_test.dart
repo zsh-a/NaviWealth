@@ -205,4 +205,103 @@ void main() {
       ]);
     },
   );
+
+  test(
+    'SqliteAgentArtifactStore preserves local visibility state across upserts',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = SqliteAgentArtifactStore(db: db);
+      final now = DateTime.utc(2026, 7, 5, 12);
+
+      AgentArtifact artifact({required String summary}) {
+        return AgentArtifact(
+          id: 'stable-agent-artifact',
+          ownerUserId: 'user-1',
+          agentId: 'weekly_summary',
+          domain: 'health',
+          kind: AgentArtifactKind.review,
+          severity: AgentArtifactSeverity.info,
+          title: 'Weekly summary',
+          summary: summary,
+          createdAt: now,
+        );
+      }
+
+      await store.save(artifact(summary: 'first result'));
+      await store.dismiss(
+        ownerUserId: 'user-1',
+        id: 'stable-agent-artifact',
+        dismissedAt: now.add(const Duration(minutes: 1)),
+      );
+
+      await store.save(artifact(summary: 'updated result'));
+
+      final dismissed = await store.read('stable-agent-artifact');
+      expect(dismissed?.summary, 'updated result');
+      expect(dismissed?.dismissedAt, now.add(const Duration(minutes: 1)));
+      expect(
+        await store.latestForAgent(
+          ownerUserId: 'user-1',
+          agentId: 'weekly_summary',
+          visibleAt: now.add(const Duration(minutes: 2)),
+        ),
+        isEmpty,
+      );
+
+      final snoozedUntil = now.add(const Duration(hours: 3));
+      await store.save(
+        AgentArtifact(
+          id: 'stable-snoozed-artifact',
+          ownerUserId: 'user-1',
+          agentId: 'weekly_summary',
+          domain: 'health',
+          kind: AgentArtifactKind.review,
+          severity: AgentArtifactSeverity.info,
+          title: 'Weekly summary',
+          summary: 'first snoozed result',
+          createdAt: now,
+        ),
+      );
+      await store.snooze(
+        ownerUserId: 'user-1',
+        id: 'stable-snoozed-artifact',
+        until: snoozedUntil,
+      );
+      await store.save(
+        AgentArtifact(
+          id: 'stable-snoozed-artifact',
+          ownerUserId: 'user-1',
+          agentId: 'weekly_summary',
+          domain: 'health',
+          kind: AgentArtifactKind.review,
+          severity: AgentArtifactSeverity.warning,
+          title: 'Weekly summary',
+          summary: 'updated snoozed result',
+          createdAt: now.add(const Duration(minutes: 5)),
+        ),
+      );
+
+      final snoozed = await store.read('stable-snoozed-artifact');
+      expect(snoozed?.summary, 'updated snoozed result');
+      expect(snoozed?.severity, AgentArtifactSeverity.warning);
+      expect(snoozed?.snoozedUntil, snoozedUntil);
+      expect(
+        await store.latestForAgent(
+          ownerUserId: 'user-1',
+          agentId: 'weekly_summary',
+          visibleAt: now.add(const Duration(hours: 1)),
+        ),
+        isEmpty,
+      );
+      expect(
+        (await store.latestForAgent(
+          ownerUserId: 'user-1',
+          agentId: 'weekly_summary',
+          visibleAt: now.add(const Duration(hours: 4)),
+        )).map((artifact) => artifact.id),
+        ['stable-snoozed-artifact'],
+      );
+    },
+  );
 }
