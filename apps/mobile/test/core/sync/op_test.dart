@@ -69,6 +69,22 @@ void main() {
       expect(kSyncBackfillTables, isNot(contains('fx_rates')));
     });
 
+    test('agent lifecycle tables stay local-only', () {
+      const agentLocalOnlyTables = <String>{
+        'agent_runs',
+        'agent_artifacts',
+        'agent_preferences',
+      };
+
+      for (final table in agentLocalOnlyTables) {
+        expect(kSyncableTables, isNot(contains(table)));
+        expect(kSyncBackfillTables, isNot(contains(table)));
+        for (final tables in kSyncTablesByDomainPrefix.values) {
+          expect(tables, isNot(contains(table)));
+        }
+      }
+    });
+
     test('registry metadata matches Drift table columns', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
