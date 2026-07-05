@@ -188,5 +188,30 @@ void main() {
         }
       }
     });
+
+    test('tagged risk cases are wired to executable evaluator fixtures', () {
+      const fixturePathsByCaseId = <String, String>{
+        'knowledge.inbox_triage.ready':
+            'test/features/knowledge/agents/inbox_triage_agent_test.dart',
+        'knowledge.contradiction.prompt_injection_guard':
+            'test/features/knowledge/agents/contradiction_agent_test.dart',
+        'knowledge.review.tool_failure_fallback':
+            'test/features/knowledge/agents/review_agent_test.dart',
+        'execution.review.budget_exhausted':
+            'test/features/execution/agents/review_agent_test.dart',
+        'knowledge.routine_due.domain_opt_out':
+            'test/app/domain_composition_test.dart',
+      };
+
+      for (final c in agentOutcomeRegressionCorpus.where(
+        (c) => c.tags.isNotEmpty,
+      )) {
+        final path = fixturePathsByCaseId[c.id];
+        expect(path, isNotNull, reason: c.id);
+        final src = File(path!).readAsStringSync();
+        expect(src, contains(c.id), reason: c.id);
+        expect(src, contains('evaluateAgentOutcomeCase'), reason: c.id);
+      }
+    });
   });
 }

@@ -5,6 +5,9 @@ import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart'
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_runner.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
@@ -245,6 +248,39 @@ void main() {
 
     expect(result.status, AgentRunStatus.skipped);
     expect(result.summary, 'no execution signals to review');
+  });
+
+  test('budget exhausted runtime failure matches outcome corpus', () async {
+    final runtime = await container.read(memoryRuntimeProvider.future);
+    final runStore = SqliteAgentRunStore(db: db);
+    final runner = AgentRunner(
+      runtime: runtime,
+      ownerUserId: _userId,
+      runStore: runStore,
+      preferenceStore: InMemoryAgentPreferenceStore(),
+    );
+
+    final result = await _withRef(
+      container,
+      (ref) => runner.runOnce(
+        ExecutionReviewAgent(
+          reviewReader: _ThrowingReader(StateError('effect_budget_exhausted')),
+        ),
+        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 5, 17)),
+      ),
+    );
+
+    expect(result.status, AgentRunStatus.failed);
+    expect(result.error, contains('effect_budget_exhausted'));
+    expect(result.artifactId, isNull);
+
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'execution.review.budget_exhausted',
+      ),
+      result: result,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
   });
 
   group('executionReviewSnapshotFromTerminalStep', () {
@@ -535,5 +571,16 @@ class _FallbackReader implements ExecutionReviewReader {
   Future<ExecutionReviewSnapshot> read(AgentContext ctx) async {
     calls += 1;
     return result;
+  }
+}
+
+class _ThrowingReader implements ExecutionReviewReader {
+  const _ThrowingReader(this.error);
+
+  final Object error;
+
+  @override
+  Future<ExecutionReviewSnapshot> read(AgentContext ctx) async {
+    throw error;
   }
 }
