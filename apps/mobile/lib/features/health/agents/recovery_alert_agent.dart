@@ -133,7 +133,9 @@ class RecoveryAlertAgent implements Agent {
             body:
                 'HRV down ${_round(alert.declinePct)}% over ${alert.consecutiveDays} days. '
                 'Consider lighter activity today.',
-            payload: 'recovery_alert',
+            payload: HealthNotifications.payloadForRecoveryAlert(
+              artifactId: artifactId,
+            ),
             channel: kHealthBriefingNotificationChannel,
           );
         }

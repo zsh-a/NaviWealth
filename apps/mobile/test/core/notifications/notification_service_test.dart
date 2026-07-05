@@ -94,6 +94,28 @@ void main() {
     );
   });
 
+  test('health recovery notification payload deep-links to artifact', () {
+    final payload = HealthNotifications.payloadForRecoveryAlert(
+      artifactId: 'recovery_alert:2026-07-05',
+    );
+
+    expect(payload, '/health?agent_artifact_id=recovery_alert%3A2026-07-05');
+    expect(
+      HealthNotifications.recoveryArtifactIdFromPayload(payload),
+      'recovery_alert:2026-07-05',
+    );
+    expect(
+      HealthNotifications.recoveryArtifactIdFromPayload(
+        '/health?agent_artifact_id=',
+      ),
+      isNull,
+    );
+    expect(
+      HealthNotifications.recoveryArtifactIdFromPayload('/health/trend'),
+      isNull,
+    );
+  });
+
   test('notification ids stay within Android signed int range', () {
     final representativeDays = [DateTime(2026, 1, 1), DateTime(2099, 12, 31)];
 

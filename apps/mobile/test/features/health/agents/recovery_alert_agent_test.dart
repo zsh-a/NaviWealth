@@ -16,6 +16,7 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
+import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
     as health_agent_providers;
@@ -159,7 +160,9 @@ void main() {
       );
       addTearDown(container.dispose);
       final ref = container.read(_refProvider);
+      final notifier = _RecordingNotificationService();
       final agent = RecoveryAlertAgent(
+        notifier: notifier,
         signalReader: _FallbackReader(
           RecoveryAlertSignalRead.alert(
             source: 'test',
@@ -202,6 +205,11 @@ void main() {
       expect(artifact.actions.single.objectId, result.artifactId);
       expect(artifact.actions.single.intent, kHealthExplainRecoveryAlertIntent);
       expect(artifact.actions.single.objectType, kAgentArtifactObjectType);
+      expect(notifier.showCount, 1);
+      expect(
+        notifier.lastPayload,
+        '/health?agent_artifact_id=recovery_alert%3A2026-06-29',
+      );
     },
   );
 
@@ -366,4 +374,39 @@ class _FakeMemoryRuntime implements MemoryRuntime {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} not stubbed');
+}
+
+class _RecordingNotificationService implements NotificationService {
+  int showCount = 0;
+  String? lastPayload;
+
+  @override
+  Stream<String> get payloads => const Stream<String>.empty();
+
+  @override
+  Future<void> cancel(int id) async {}
+
+  @override
+  Future<bool> hasPermissions() async => true;
+
+  @override
+  Future<String?> initialPayload() async => null;
+
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<bool> requestPermissions() async => true;
+
+  @override
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+    required NotificationChannelSpec channel,
+    String? payload,
+  }) async {
+    showCount += 1;
+    lastPayload = payload;
+  }
 }
