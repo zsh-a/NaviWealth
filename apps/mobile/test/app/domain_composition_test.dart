@@ -21,6 +21,7 @@ import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -549,8 +550,13 @@ void main() {
       final registrations = c.read(registrationsProvider);
       final specs = c.read(agentPresentationSpecsProvider);
       final agentIds = {for (final r in registrations) r.agent.id};
+      final corpusAgentIds = {
+        for (final regressionCase in agentOutcomeRegressionCorpus)
+          regressionCase.agentId,
+      };
 
       expect(specs.keys.toSet(), agentIds);
+      expect(corpusAgentIds, containsAll(agentIds));
       for (final registration in registrations) {
         expect(
           specs[registration.agent.id]?.domain,
