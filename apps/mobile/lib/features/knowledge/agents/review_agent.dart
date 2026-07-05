@@ -141,8 +141,9 @@ class ReviewAgent implements Agent {
   }) {
     final dayKey = start.toUtc().toIso8601String().substring(0, 10);
     final hasStaleAssumptions = staleAssumptions.isNotEmpty;
+    final artifactId = '$kKnowledgeReviewAgentId:$dayKey';
     return AgentArtifact(
-      id: '$kKnowledgeReviewAgentId:$dayKey',
+      id: artifactId,
       ownerUserId: ownerUserId,
       agentId: kKnowledgeReviewAgentId,
       domain: 'knowledge',
@@ -195,12 +196,13 @@ class ReviewAgent implements Agent {
             payload: const <String, Object?>{'reason': 'stale_assumption'},
           ),
       ],
-      actions: const <AgentAction>[
+      actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
           label: 'Review knowledge items',
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
+          objectId: artifactId,
         ),
       ],
       memoryId: memoryId,

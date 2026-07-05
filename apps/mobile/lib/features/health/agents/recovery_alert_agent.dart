@@ -247,7 +247,7 @@ class RecoveryAlertAgent implements Agent {
           kind: 'review',
           label: 'Review recovery alert',
           intent: kHealthExplainRecoveryAlertIntent,
-          objectType: 'agent_artifact',
+          objectType: kAgentArtifactObjectType,
           objectId: id,
         ),
       ],

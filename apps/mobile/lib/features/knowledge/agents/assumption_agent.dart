@@ -172,12 +172,13 @@ class AssumptionAgent implements Agent {
             },
           ),
       ],
-      actions: const <AgentAction>[
+      actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
           label: 'Review assumptions',
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
+          objectId: id,
         ),
       ],
       memoryId: memoryId,

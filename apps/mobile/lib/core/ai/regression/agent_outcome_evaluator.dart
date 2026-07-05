@@ -7,6 +7,7 @@ library;
 
 import '../agents/agent.dart';
 import '../agents/agent_artifact.dart';
+import '../agents/agent_intents.dart';
 import 'agent_outcome_corpus.dart';
 
 class AgentOutcomeEvaluationFailure {
@@ -164,6 +165,25 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
         actionIntents,
       );
     }
+  }
+
+  final intentActions = [
+    for (final action in artifact.actions)
+      if (action.intent != null) action,
+  ];
+  final actionObjectTypes = {
+    for (final action in intentActions) action.objectType,
+  };
+  if (actionObjectTypes.any((type) => type != kAgentArtifactObjectType)) {
+    add(
+      'artifact.actions.objectType',
+      kAgentArtifactObjectType,
+      actionObjectTypes,
+    );
+  }
+  final actionObjectIds = {for (final action in intentActions) action.objectId};
+  if (actionObjectIds.any((id) => id != artifact.id)) {
+    add('artifact.actions.objectId', artifact.id, actionObjectIds);
   }
 
   final missingProposals = regressionCase.expectedProposalKinds.difference(

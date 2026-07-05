@@ -226,12 +226,13 @@ class InboxTriageAgent implements Agent {
             },
           ),
       ],
-      actions: const <AgentAction>[
+      actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
           label: 'Review inbox suggestions',
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
+          objectId: id,
         ),
       ],
       traceId: traceId,

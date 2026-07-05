@@ -252,12 +252,13 @@ class RoutineDueAgent implements Agent {
             },
           ),
       ],
-      actions: const <AgentAction>[
+      actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
           label: 'Review routines',
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
+          objectId: id,
         ),
       ],
       memoryId: memoryId,

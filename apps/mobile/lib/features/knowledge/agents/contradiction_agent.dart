@@ -299,12 +299,13 @@ class ContradictionAgent implements Agent {
             },
           ),
       ],
-      actions: const <AgentAction>[
+      actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
           label: 'Review contradictions',
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
+          objectId: id,
         ),
       ],
       memoryId: memoryId,
