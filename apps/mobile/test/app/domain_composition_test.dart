@@ -460,6 +460,56 @@ void main() {
   );
 
   test(
+    'production agent registry and presentation specs stay in parity',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final registrationsProvider = Provider<List<DomainAgentRegistration>>((
+        ref,
+      ) {
+        return domainAgentRegistrations(
+          ref,
+          ref.watch(activeDomainPacksProvider),
+        );
+      });
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          ...lifeOsDomainCompositionOverrides(),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      await c.read(auth.domainOptInsProvider.future);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.knowledge, true);
+      await c
+          .read(auth.domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.execution, true);
+
+      final registrations = c.read(registrationsProvider);
+      final specs = c.read(agentPresentationSpecsProvider);
+      final agentIds = {for (final r in registrations) r.agent.id};
+
+      expect(specs.keys.toSet(), agentIds);
+      for (final registration in registrations) {
+        expect(
+          specs[registration.agent.id]?.domain,
+          registration.domain,
+          reason: registration.agent.id,
+        );
+      }
+    },
+  );
+
+  test(
     'production composition treats disabled KnowledgeOS agents as no-run outcomes',
     () async {
       SharedPreferences.setMockInitialValues({});
