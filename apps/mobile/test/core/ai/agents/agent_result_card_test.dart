@@ -61,7 +61,14 @@ AgentArtifact _artifact() {
       AgentEvidenceRef(type: 'metric', id: 'sleep-1', label: 'Sleep session'),
     ],
     actions: const [
-      AgentAction(kind: 'review', label: 'Review plan', intent: 'open_plan'),
+      AgentAction(
+        kind: 'review',
+        label: 'Review plan',
+        intent: 'open_plan',
+        objectType: 'execution_action',
+        objectId: 'action-1',
+        payload: <String, Object?>{'proposal_kind': 'action_plan'},
+      ),
     ],
     traceId: 'trace-1',
     createdAt: DateTime.utc(2026, 7, 5, 8),
@@ -238,6 +245,45 @@ void main() {
       capturedInvocation?.capabilities,
       containsAll(<AiCapability>{AiCapability.chat, AiCapability.proposal}),
     );
+  });
+
+  testWidgets('detail custom action opens its intent with object and payload', (
+    tester,
+  ) async {
+    AiIntentInvocation? capturedInvocation;
+    String? capturedObjectLabel;
+    await tester.pumpWidget(
+      _wrap(
+        SingleChildScrollView(
+          child: AgentArtifactDetailBody(artifact: _artifact()),
+        ),
+        overrides: [
+          askAiSurfaceProvider.overrideWithValue((
+            context, {
+            invocation,
+            objectLabel,
+            prefill,
+          }) async {
+            capturedInvocation = invocation;
+            capturedObjectLabel = objectLabel;
+          }),
+        ],
+      ),
+    );
+
+    final customAsk = find.text('Ask').last;
+    await tester.ensureVisible(customAsk);
+    await tester.tap(customAsk);
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(capturedInvocation?.intent, 'open_plan');
+    expect(capturedInvocation?.object?.type, 'execution_action');
+    expect(capturedInvocation?.object?.id, 'action-1');
+    expect(capturedInvocation?.context['action_kind'], 'review');
+    expect(capturedInvocation?.context['action_label'], 'Review plan');
+    expect(capturedInvocation?.context['proposal_kind'], 'action_plan');
+    expect(capturedInvocation?.context['artifact_id'], 'artifact-1');
+    expect(capturedObjectLabel, 'Morning Briefing');
   });
 
   testWidgets('detail trace action opens transparency detail route', (
