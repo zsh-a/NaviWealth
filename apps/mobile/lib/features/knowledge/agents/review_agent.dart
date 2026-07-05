@@ -90,6 +90,7 @@ class ReviewAgent implements Agent {
             .map((a) => a.id)
             .toList(growable: false),
         'assumption_threshold_days': kAssumptionStaleDays,
+        if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
       },
       entities: <String>{'knowledge_review', 'weekly_review'},
       importance: 0.7,
@@ -107,6 +108,7 @@ class ReviewAgent implements Agent {
       memoryId: built.memoryId,
       due: due,
       staleAssumptions: staleAssumptions,
+      traceId: dueSnapshot.traceId,
     );
     await artifactStore.save(artifact);
 
@@ -119,9 +121,11 @@ class ReviewAgent implements Agent {
       payload: <String, Object?>{
         'due_count': due.length,
         'stale_assumption_count': staleAssumptions.length,
+        if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
       },
       memoryId: built.memoryId,
       artifactId: artifact.id,
+      traceId: dueSnapshot.traceId,
     );
   }
 
@@ -133,6 +137,7 @@ class ReviewAgent implements Agent {
     required String memoryId,
     required List<ReviewDecisionItem> due,
     required List<ReviewAssumptionItem> staleAssumptions,
+    required String? traceId,
   }) {
     final dayKey = start.toUtc().toIso8601String().substring(0, 10);
     final hasStaleAssumptions = staleAssumptions.isNotEmpty;
@@ -199,6 +204,7 @@ class ReviewAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: finished.toUtc(),
       expiresAt: finished.toUtc().add(const Duration(days: 14)),
     );
@@ -291,8 +297,11 @@ class FrbReviewDueReader implements ReviewDueReader {
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
-      decode: (stepRun) =>
-          reviewDueSnapshotFromTerminalStep(stepRun.terminalStep, now: ctx.now),
+      decode: (stepRun) => reviewDueSnapshotFromTerminalStep(
+        stepRun.terminalStep,
+        now: ctx.now,
+        traceId: stepRun.traceId,
+      ),
     );
   }
 }
@@ -301,10 +310,12 @@ class ReviewDueSnapshot {
   const ReviewDueSnapshot({
     required this.dueReviews,
     required this.staleAssumptions,
+    this.traceId,
   });
 
   final List<ReviewDecisionItem> dueReviews;
   final List<ReviewAssumptionItem> staleAssumptions;
+  final String? traceId;
 }
 
 class ReviewDecisionItem {
@@ -335,6 +346,7 @@ class ReviewAssumptionItem {
 ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required DateTime now,
+  String? traceId,
 }) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final reviews = reviewDecisionItemsFromToolResult(byTool['list_due_reviews']);
@@ -350,6 +362,7 @@ ReviewDueSnapshot? reviewDueSnapshotFromTerminalStep(
   return ReviewDueSnapshot(
     dueReviews: reviews,
     staleAssumptions: staleAssumptions,
+    traceId: traceId,
   );
 }
 

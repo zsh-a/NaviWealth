@@ -61,6 +61,7 @@ void main() {
               statement: 'Rates stay high',
             ),
           ],
+          traceId: 'trace-knowledge-review-1',
         ),
       ),
     );
@@ -74,12 +75,15 @@ void main() {
     expect(result.status, AgentRunStatus.completed);
     expect(result.memoryId, '$kKnowledgeReviewMemorySource:2026-07-05');
     expect(result.artifactId, 'knowledge_review:2026-07-05');
+    expect(result.traceId, 'trace-knowledge-review-1');
     expect(runtime.remembered?.id, result.memoryId);
+    expect(runtime.remembered?.payload['trace_id'], 'trace-knowledge-review-1');
 
     final artifact = await artifactStore.read(result.artifactId!);
     expect(artifact?.kind, AgentArtifactKind.review);
     expect(artifact?.severity, AgentArtifactSeverity.attention);
     expect(artifact?.memoryId, result.memoryId);
+    expect(artifact?.traceId, 'trace-knowledge-review-1');
     expect(artifact?.insights.map((insight) => insight.title), [
       'Decisions due',
       'Stale assumptions',
@@ -141,10 +145,12 @@ void main() {
           },
         },
         now: DateTime.utc(2026, 6, 29),
+        traceId: 'trace-parser-1',
       );
 
       expect(snapshot, isNotNull);
-      expect(snapshot!.dueReviews.single.id, 'decision_1');
+      expect(snapshot!.traceId, 'trace-parser-1');
+      expect(snapshot.dueReviews.single.id, 'decision_1');
       expect(snapshot.staleAssumptions.single.id, 'assumption_stale');
     });
 
@@ -177,6 +183,7 @@ void main() {
       final snapshot = await reader.read(_context());
 
       expect(snapshot.dueReviews.single.question, 'Revisit portfolio hedge?');
+      expect(snapshot.traceId, 'agent-runtime:knowledge_review:run_1');
       expect(snapshot.staleAssumptions.single.statement, 'Rates stay high');
       expect(dispatcher.calls.map((c) => c.name), <String>[
         'list_due_reviews',
