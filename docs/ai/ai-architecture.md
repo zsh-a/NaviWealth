@@ -81,10 +81,10 @@ ChatRepository
 
 - `AgentRuntimeLlmBridge` / `AgentRuntimeProfileTurnRunner` 是当前生产业务 agent 的首选入口：
   它们把 active `LlmProfile` 映射为 provider-neutral native request，经 FRB 调 native
-  runtime，并把 native tool plan / proposal result 回接到 Dart host。
+  runtime，并把 native effect request / proposal result 回接到 Dart host。
 - 旧 direct-Dart streaming loop / provider HTTP client 已从 Flutter `lib/` 删除。
-  生产 interactive chat 只有 `FrbChatRunner` 一个入口，provider SSE 解析与 tool loop
-  由 native runtime 承接。
+  生产 interactive chat 只有 `FrbChatRunner` 一个入口，provider SSE 解析与 ChatTurn
+  续轮由 native runtime 承接。
 - 事件词表（`TextEvent` / `ToolCall*` / `SpanEvent` / `DoneEvent` …）见
   [`ai-protocol.md`](./ai-protocol.md)——repository/UI 仍用旧事件词表，故 chat 历史 /
   流式渲染 / 取消 / trace 捕获无需重写，只是事件改为进程内 Dart stream。
@@ -376,7 +376,7 @@ regression/                      regression_corpus（静态契约测试）
 production 由 app composition root 覆盖到 `FrbChatRunner` +
 `AgentRuntimeLlmStreamBridge`，消费 FRB primitive LLM event stream；OpenAI-compatible
 与 Anthropic text/usage/tool/reasoning SSE 已 provider-real，并支持 Dart
-tool-result continuation、`ask_user` terminal pause、trace span 与 cancel parity）·
+ChatTurn result continuation、`ask_user` terminal pause、trace span 与 cancel parity）·
 `chat_repository.dart` · `proposal_applier.dart` · ui/（`ai_chat_page` 现为
 `/settings/ai-history` 只读 · `propose_card`（mode 三分支）· `tool_invocation_*`
 domain renderer · `ai_object_capsule` · `reply_chips` · `ai_transparency_badge`）。
@@ -405,7 +405,7 @@ Domain agent / business AI request
   → FRB generated API
   → native lifeos_native::agent_runtime / agent-llm
      - provider request 使用 active LlmProfile（用户 key）
-     - native step 可产 tool_plan / proposal envelope / trace metadata
+     - native step 可产 effect request / proposal envelope / trace metadata
   → Dart AgentRuntimeToolHost dispatch / proposal bridge
   → AgentRuntimeTraceRecorder 写 AiTraceStore
 ```

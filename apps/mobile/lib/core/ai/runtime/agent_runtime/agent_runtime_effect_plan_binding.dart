@@ -8,6 +8,75 @@ import 'agent_runtime_step_result.dart';
 
 export 'agent_runtime_step_result.dart' show AgentRuntimeNativeStepRunResult;
 
+sealed class AgentRuntimeEffect {
+  const AgentRuntimeEffect();
+
+  const factory AgentRuntimeEffect.tool({
+    required String name,
+    Map<String, Object?>? input,
+  }) = AgentRuntimeToolEffect;
+
+  const factory AgentRuntimeEffect.subagent({
+    required String agentId,
+    Map<String, Object?>? input,
+    String? runId,
+    Map<String, Object?>? scope,
+    Map<String, Object?>? workflow,
+    Map<String, Object?>? metadata,
+  }) = AgentRuntimeSubagentEffect;
+
+  Map<String, Object?> toJson();
+}
+
+final class AgentRuntimeToolEffect extends AgentRuntimeEffect {
+  const AgentRuntimeToolEffect({
+    required this.name,
+    Map<String, Object?>? input,
+  }) : input = input ?? const <String, Object?>{},
+       super();
+
+  final String name;
+  final Map<String, Object?> input;
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': 'tool',
+    'name': name,
+    'input': input,
+  };
+}
+
+final class AgentRuntimeSubagentEffect extends AgentRuntimeEffect {
+  const AgentRuntimeSubagentEffect({
+    required this.agentId,
+    Map<String, Object?>? input,
+    this.runId,
+    this.scope,
+    this.workflow,
+    Map<String, Object?>? metadata,
+  }) : input = input ?? const <String, Object?>{},
+       metadata = metadata ?? const <String, Object?>{},
+       super();
+
+  final String agentId;
+  final Map<String, Object?> input;
+  final String? runId;
+  final Map<String, Object?>? scope;
+  final Map<String, Object?>? workflow;
+  final Map<String, Object?> metadata;
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': 'subagent',
+    'agent_id': agentId,
+    'input': input,
+    if (runId != null) 'run_id': runId,
+    if (scope != null) 'scope': scope,
+    if (workflow != null) 'workflow': workflow,
+    'metadata': metadata,
+  };
+}
+
 abstract interface class AgentRuntimeEffectStepRunner {
   Future<AgentRuntimeNativeStepRunResult> runUntilTerminalWithTrace({
     required Map<String, Object?> catalog,
@@ -46,10 +115,8 @@ class AgentRuntimeEffectPlanBinding {
   final AgentRuntimeEffectStepRunner Function() _stepRunnerReader;
   final Map<String, Object?> Function() _catalogJsonReader;
 
-  AgentRuntimeEffectStepRunner get stepRunner => _stepRunnerReader();
-
   Future<AgentRuntimeNativeStepRunResult> runEffectPlan({
-    required List<Map<String, Object?>> effectPlan,
+    required List<AgentRuntimeEffect> effectPlan,
     String trigger = 'manual',
     Map<String, Object?> metadata = const <String, Object?>{},
     int? maxEffectSteps,
@@ -58,7 +125,9 @@ class AgentRuntimeEffectPlanBinding {
       catalog: _catalogJsonReader(),
       request: <String, Object?>{
         'protocol_version': kAgentRuntimeProtocolVersion,
-        'input': <String, Object?>{'effects': effectPlan},
+        'input': <String, Object?>{
+          'effects': effectPlan.map((effect) => effect.toJson()).toList(),
+        },
         'trigger': trigger,
         'metadata': <String, Object?>{
           'surface': surface,
@@ -74,7 +143,7 @@ class AgentRuntimeEffectPlanBinding {
   }
 
   Future<T> readFromEffectPlan<T>({
-    required List<Map<String, Object?>> effectPlan,
+    required List<AgentRuntimeEffect> effectPlan,
     required Future<T> Function() fallback,
     required FutureOr<T?> Function(Map<String, Object?> terminalStep) decode,
     String trigger = 'manual',

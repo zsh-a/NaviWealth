@@ -10,7 +10,10 @@ import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_pl
 export 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart'
     show
         AgentRuntimeNativeStepRunResult,
+        AgentRuntimeEffect,
         AgentRuntimeEffectPlanBinding,
+        AgentRuntimeSubagentEffect,
+        AgentRuntimeToolEffect,
         AgentRuntimeEffectStepRunner;
 
 AgentRuntimeEffectPlanBinding agentRuntimeEffectPlanBinding(

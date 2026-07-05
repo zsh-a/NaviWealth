@@ -17,7 +17,7 @@ Directory map:
 - `overrides/`: production provider overrides installed by bootstrap.
 - `proposals/`: proposal application bridge back into app routes.
 - `runner/`: app-owned runtime and step runners.
-- `tools/`: tool host, dispatcher, plan binding, and headless process host.
+- `tools/`: tool host, dispatcher, effect-plan binding, and headless process host.
 - `trace/`: local trace capture for runtime-backed execution.
 
 Do not put protocol-only DTOs here. Those live in

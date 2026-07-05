@@ -229,12 +229,11 @@ class FrbRoutineDueReader implements RoutineDueReader {
   Future<List<RoutineDueItem>> listDue(AgentContext ctx) async {
     final asOf = ctx.now.add(kRoutineDueLookahead).toUtc().toIso8601String();
     return _runtime.readFromEffectPlan(
-      effectPlan: <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_due_routines',
-          'input': <String, Object?>{'as_of': asOf, 'limit': 50},
-        },
+      effectPlan: <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_due_routines',
+          input: <String, Object?>{'as_of': asOf, 'limit': 50},
+        ),
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.listDue(ctx),

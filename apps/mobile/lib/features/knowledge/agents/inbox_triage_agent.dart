@@ -177,20 +177,18 @@ class FrbInboxTriageSourceReader implements InboxTriageSourceReader {
   @override
   Future<InboxTriageSourceSnapshot> read(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
-      effectPlan: const <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_inbox_triage_candidates',
-          'input': <String, Object?>{
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_inbox_triage_candidates',
+          input: <String, Object?>{
             'limit': kInboxTriageMaxNotesPerRun,
             'scan_limit': 200,
           },
-        },
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_triage_decisions',
-          'input': <String, Object?>{'limit': 200},
-        },
+        ),
+        AgentRuntimeEffect.tool(
+          name: 'list_triage_decisions',
+          input: <String, Object?>{'limit': 200},
+        ),
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),

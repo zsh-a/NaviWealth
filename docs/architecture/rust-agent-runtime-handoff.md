@@ -132,12 +132,12 @@ Current bridge capabilities:
 - Provide FRB/native profile-backed LLM completion via
   `agentRuntimeCompleteProfileLlm`, using the device-local profile metadata
   for OpenAI-compatible and Anthropic-compatible HTTP providers.
-- Provide FRB/native continuation for the first Dart-dispatched tool step via
+- Provide FRB/native continuation for Dart-dispatched host effects via
   `agentRuntimeContinueRunStep`.
 - Provide a Dart-side `AgentRuntimeNativeStepRunner` that executes a bounded
-  embedded tool loop without a process host: native start step, Dart device
-  tool dispatch, native continuation step, repeated until a terminal native
-  step or the tool-call budget is exhausted.
+  embedded effect loop without a process host: native start step, Dart
+  host-effect dispatch, native continuation step, repeated until a terminal
+  native step or the effect budget is exhausted.
 - Provide a Dart-side `AgentRuntimeProposalBridge` that parses ready proposal
   envelopes from terminal FRB steps and dispatches confirmed proposals through
   the active cross-domain `ProposalApplier`.
@@ -151,32 +151,32 @@ Current bridge capabilities:
   proposal runner.
 - Provide `AgentRuntimeProfileTurnRunner` and
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB LLM
-  completion with the bounded native FRB step/tool loop and return both the LLM
+  completion with the bounded native FRB effect loop and return both the LLM
   response and terminal native step.
 - Provide FRB/native profile-turn first-step execution via
   `agentRuntimeStartProfileTurnStep`: Rust completes the active-profile LLM
   request and starts the first native runtime step, then Dart resumes bounded
-  tool dispatch from that initial step.
-- Provide native-planned FRB tool continuation: Rust can seed a `tool_plan`
-  from run input or LLM response metadata, return the first
-  `tool_call_requested` step, consume each Dart tool response through
-  `agentRuntimeContinueRunStep`, and either request the next catalog tool or
-  return a terminal `frb_tool_loop` output.
+  host-effect dispatch from that initial step.
+- Provide native FRB effect continuation: Rust can seed `input.effects` from
+  run input or LLM response metadata, return the first `effect_requested` step,
+  consume each Dart effect response through `agentRuntimeContinueRunStep`, and
+  either request the next host effect or return a terminal `frb_effect_loop`
+  output.
 - Provide Dart-side native step trace summaries:
   `AgentRuntimeNativeStepRunner` can return the terminal step plus all native
-  steps observed, Dart tool responses, dispatch count, and budget-exhaustion
+  steps observed, Dart effect responses, dispatch count, and budget-exhaustion
   state; `AgentRuntimeProfileTurnResult` includes the same summary.
 - Provide Dart-side runtime bindings:
-  `AgentRuntimeToolPlanBinding` and `AgentRuntimeProfileTurnBinding` own
+  `AgentRuntimeEffectPlanBinding` and `AgentRuntimeProfileTurnBinding` own
   runtime metadata, active catalog lookup, runner invocation, and best-effort
-  trace recording for feature-level FRB integrations. Tool-plan business
-  readers use `AgentRuntimeToolPlanBinding.readFromToolPlan` for shared
+  trace recording for feature-level FRB integrations. Effect-plan business
+  readers use `AgentRuntimeEffectPlanBinding.readFromEffectPlan` for shared
   run/decode/fallback control flow.
 - Provide local AI trace persistence for the user-facing runtime check:
   `AgentRuntimeTraceRecorder` converts FRB profile-turn results into the
   existing `AiTrace` span model, and Settings -> AI provider records successful
   runtime checks into `AiTraceStore` best-effort.
-- Provide local AI trace persistence for migrated production tool-plan agents:
+- Provide local AI trace persistence for migrated production effect-loop agents:
   HealthOS Recovery Alert / Weekly Summary, KnowledgeOS Assumption Review /
   Weekly Review / Routine Due, and ExecutionOS Review record successful
   step-only FRB runs through `AgentRuntimeTraceRecorder.recordStepRun`.
@@ -187,7 +187,7 @@ Current bridge capabilities:
   `app/agent_runtime/overrides/agent_runtime_provider_overrides.dart`, keeping
   `app/bootstrap.dart` focused on startup/auth/sync/domain/bootstrap concerns
   while FRB chat, profile-completion clients, profile-turn synthesis, and
-  migrated tool-plan agents are composed through the shared runtime binding
+  migrated effect-loop agents are composed through the shared runtime binding
   layer.
 - Provide a Settings -> AI provider runtime check that uses
   `AgentRuntimeProfileTurnBinding` / `agentRuntimeProfileTurnBindingProvider`
@@ -240,32 +240,32 @@ Current bridge capabilities:
   content blocks in response metadata, and `FrbVisionIngestClient` extracts the
   `emit_parsed_transactions` tool_use result locally.
 - Provide the first tool-using production agent integration on the
-  native-planned continuation loop: HealthOS Recovery Alert now uses
+  native effect continuation loop: HealthOS Recovery Alert now uses
   `FrbRecoveryAlertSignalReader` to request `get_hrv_trend` through an FRB
-  `tool_plan`, while Dart executes the HealthOS device tool and the agent keeps
+  effect loop, while Dart executes the HealthOS device tool and the agent keeps
   its existing sustained-HRV-decline policy.
 - Provide an additional tool-using production agent integration:
   KnowledgeOS Routine Due now uses `FrbRoutineDueReader` to request
-  `list_due_routines` through the same FRB `tool_plan` loop before falling
+  `list_due_routines` through the same FRB effect loop before falling
   back to direct repository reads.
 - Provide an additional multi-tool production agent integration:
   KnowledgeOS Weekly Review now uses `FrbReviewDueReader` to request
   `list_due_reviews` and `list_open_assumptions` through a two-step FRB
-  `tool_plan`, while Dart keeps stale-assumption filtering, memory writes, and
+  effect loop, while Dart keeps stale-assumption filtering, memory writes, and
   repository fallback.
 - Provide an additional KnowledgeOS production agent integration:
   KnowledgeOS Assumption Review now uses `FrbAssumptionReviewReader` to request
-  `list_open_assumptions` through an FRB `tool_plan`, while Dart keeps the
+  `list_open_assumptions` through an FRB effect loop, while Dart keeps the
   90-day stale policy, memory writes, and repository fallback.
 - Provide an ExecutionOS production agent integration: Execution Review now
   uses `FrbExecutionReviewReader` to request `list_open_actions` and
-  `summarize_execution_progress` through a two-step FRB `tool_plan`, while
+  `summarize_execution_progress` through a two-step FRB effect loop, while
   Dart keeps today/due/blocked/weekly summarisation, memory writes, and
   repository fallback.
 - Provide an additional HealthOS production agent integration: Weekly Summary
   now uses `FrbWeeklySummaryReader` to request `get_recovery_signal`,
   `get_recent_sleep_summary`, and `get_activity_summary` through a three-step
-  FRB `tool_plan`, while Dart keeps weekly summary composition, memory writes,
+  FRB effect loop, while Dart keeps weekly summary composition, memory writes,
   and repository fallback.
 
 Production Flutter integration is FRB-first: Flutter calls the native Rust
@@ -279,10 +279,10 @@ Known limitation:
   contexts by sqlite3/Drift environment setup. Treat that as a dev/process-host
   limitation, not the production mobile path. The production path should
   advance through FRB embedded runtime steps and Dart-side device tool dispatch.
-- The embedded FRB path currently covers deterministic native step contracts
-  bounded Dart-side tool loops, FRB LLM contract/mock completion, and an
+- The embedded FRB path currently covers deterministic native step contracts,
+  bounded Dart-side effect loops, FRB LLM contract/mock completion, and an
   active-profile LLM request bridge, profile-backed native LLM completion, and
-  native profile-turn first-step execution, native-planned `tool_plan`
+  native profile-turn first-step execution, native effect
   continuation, plus explicit confirmed-proposal/profile-turn providers and a
   user-facing runtime check / guarded confirmed-proposal apply surface in the
   AI provider settings page, plus the HealthOS Morning Briefing
@@ -291,7 +291,7 @@ Known limitation:
   KnowledgeOS Assumption Review / Weekly Review / Routine Due tool-using
   production agent paths, and ExecutionOS Review. The remaining production
   work is richer Rust-side agent policy/state/trace replay ownership beyond
-  the current tool-plan/trace-summary/local persistence contract and migrating
+  the current effect-loop/trace-summary/local persistence contract and migrating
   additional tool-using production agents onto that fuller loop.
 
 ## Current Refactor State

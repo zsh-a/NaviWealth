@@ -183,17 +183,15 @@ class FrbReviewDueReader implements ReviewDueReader {
   Future<ReviewDueSnapshot> read(AgentContext ctx) async {
     final asOf = ctx.now.toUtc().toIso8601String();
     return _runtime.readFromEffectPlan(
-      effectPlan: <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_due_reviews',
-          'input': <String, Object?>{'as_of': asOf, 'limit': 50},
-        },
-        const <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_open_assumptions',
-          'input': <String, Object?>{'limit': 50},
-        },
+      effectPlan: <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_due_reviews',
+          input: <String, Object?>{'as_of': asOf, 'limit': 50},
+        ),
+        const AgentRuntimeEffect.tool(
+          name: 'list_open_assumptions',
+          input: <String, Object?>{'limit': 50},
+        ),
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),

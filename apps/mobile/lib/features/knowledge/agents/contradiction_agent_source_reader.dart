@@ -41,22 +41,19 @@ class FrbContradictionSourceReader implements ContradictionSourceReader {
   @override
   Future<ContradictionSourceSnapshot> read(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
-      effectPlan: const <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_triage_decisions',
-          'input': <String, Object?>{'limit': 200},
-        },
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_active_principles',
-          'input': <String, Object?>{'limit': 200},
-        },
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_open_assumptions',
-          'input': <String, Object?>{'limit': 200},
-        },
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_triage_decisions',
+          input: <String, Object?>{'limit': 200},
+        ),
+        AgentRuntimeEffect.tool(
+          name: 'list_active_principles',
+          input: <String, Object?>{'limit': 200},
+        ),
+        AgentRuntimeEffect.tool(
+          name: 'list_open_assumptions',
+          input: <String, Object?>{'limit': 200},
+        ),
       ],
       maxEffectSteps: 3,
       fallback: () => fallback.read(ctx),

@@ -175,12 +175,11 @@ class FrbRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
   @override
   Future<RecoveryAlertSignalRead> read(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
-      effectPlan: const <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'get_hrv_trend',
-          'input': <String, Object?>{'window_days': 14},
-        },
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'get_hrv_trend',
+          input: <String, Object?>{'window_days': 14},
+        ),
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.read(ctx),

@@ -145,12 +145,11 @@ class FrbAssumptionReviewReader implements AssumptionReviewReader {
   @override
   Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
-      effectPlan: const <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_open_assumptions',
-          'input': <String, Object?>{'limit': 50},
-        },
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_open_assumptions',
+          input: <String, Object?>{'limit': 50},
+        ),
       ],
       maxEffectSteps: 1,
       fallback: () => fallback.listOpen(ctx),

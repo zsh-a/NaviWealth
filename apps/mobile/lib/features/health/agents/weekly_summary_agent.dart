@@ -268,22 +268,16 @@ class FrbWeeklySummaryReader implements WeeklySummaryReader {
   @override
   Future<WeeklySummarySnapshot> read(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
-      effectPlan: const <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'get_recovery_signal',
-          'input': <String, Object?>{},
-        },
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'get_recent_sleep_summary',
-          'input': <String, Object?>{'days_back': 7},
-        },
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'get_activity_summary',
-          'input': <String, Object?>{'days_back': 7},
-        },
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(name: 'get_recovery_signal'),
+        AgentRuntimeEffect.tool(
+          name: 'get_recent_sleep_summary',
+          input: <String, Object?>{'days_back': 7},
+        ),
+        AgentRuntimeEffect.tool(
+          name: 'get_activity_summary',
+          input: <String, Object?>{'days_back': 7},
+        ),
       ],
       maxEffectSteps: 3,
       fallback: () => fallback.read(ctx),

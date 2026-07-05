@@ -246,17 +246,15 @@ class FrbExecutionReviewReader implements ExecutionReviewReader {
   @override
   Future<ExecutionReviewSnapshot> read(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
-      effectPlan: const <Map<String, Object?>>[
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'list_open_actions',
-          'input': <String, Object?>{'limit': 100},
-        },
-        <String, Object?>{
-          'kind': 'tool',
-          'name': 'summarize_execution_progress',
-          'input': <String, Object?>{'limit': 100},
-        },
+      effectPlan: const <AgentRuntimeEffect>[
+        AgentRuntimeEffect.tool(
+          name: 'list_open_actions',
+          input: <String, Object?>{'limit': 100},
+        ),
+        AgentRuntimeEffect.tool(
+          name: 'summarize_execution_progress',
+          input: <String, Object?>{'limit': 100},
+        ),
       ],
       maxEffectSteps: 2,
       fallback: () => fallback.read(ctx),
