@@ -71,10 +71,11 @@ void main() {
           ),
         );
 
-        final items = await reader.listOpen(_context());
+        final snapshot = await reader.listOpen(_context());
 
-        expect(items, hasLength(2));
-        expect(items.first.id, 'assumption_stale');
+        expect(snapshot.open, hasLength(2));
+        expect(snapshot.open.first.id, 'assumption_stale');
+        expect(snapshot.traceId, 'agent-runtime:knowledge_assumption:run_1');
         expect(dispatcher.calls.single.name, 'list_open_assumptions');
         expect(dispatcher.calls.single.input, containsPair('limit', 50));
         expect(
@@ -91,13 +92,17 @@ void main() {
     );
 
     test('falls back when FRB effect path fails', () async {
-      final fallback = _FallbackReader(const <AssumptionReviewItem>[
-        AssumptionReviewItem(
-          id: 'fallback_assumption',
-          statement: 'Fallback assumption',
-          daysSinceVerify: 100,
+      final fallback = _FallbackReader(
+        const AssumptionReviewSnapshot(
+          open: <AssumptionReviewItem>[
+            AssumptionReviewItem(
+              id: 'fallback_assumption',
+              statement: 'Fallback assumption',
+              daysSinceVerify: 100,
+            ),
+          ],
         ),
-      ]);
+      );
       final reader = FrbAssumptionReviewReader(
         runtime: _runtime(
           bridge: FailingAgentRuntimeEffectPlanBridge(),
@@ -106,22 +111,26 @@ void main() {
         fallback: fallback,
       );
 
-      final items = await reader.listOpen(_context());
+      final snapshot = await reader.listOpen(_context());
 
-      expect(items.single.id, 'fallback_assumption');
+      expect(snapshot.open.single.id, 'fallback_assumption');
       expect(fallback.calls, 1);
     });
 
     test(
       'ignores trace recording failures after a successful FRB read',
       () async {
-        final fallback = _FallbackReader(const <AssumptionReviewItem>[
-          AssumptionReviewItem(
-            id: 'fallback_assumption',
-            statement: 'Fallback assumption',
-            daysSinceVerify: 100,
+        final fallback = _FallbackReader(
+          const AssumptionReviewSnapshot(
+            open: <AssumptionReviewItem>[
+              AssumptionReviewItem(
+                id: 'fallback_assumption',
+                statement: 'Fallback assumption',
+                daysSinceVerify: 100,
+              ),
+            ],
           ),
-        ]);
+        );
         final reader = FrbAssumptionReviewReader(
           runtime: _runtime(
             bridge: FakeAgentRuntimeEffectPlanBridge(),
@@ -132,10 +141,11 @@ void main() {
           fallback: fallback,
         );
 
-        final items = await reader.listOpen(_context());
+        final snapshot = await reader.listOpen(_context());
 
-        expect(items, hasLength(2));
-        expect(items.first.id, 'assumption_stale');
+        expect(snapshot.open, hasLength(2));
+        expect(snapshot.open.first.id, 'assumption_stale');
+        expect(snapshot.traceId, isNull);
         expect(fallback.calls, 0);
       },
     );
@@ -158,18 +168,23 @@ void main() {
     );
     addTearDown(container.dispose);
     const agent = AssumptionAgent(
-      assumptionReader: _FixedAssumptionReader(<AssumptionReviewItem>[
-        AssumptionReviewItem(
-          id: 'assumption-stale',
-          statement: 'Rates stay high',
-          daysSinceVerify: kAssumptionStaleDays,
+      assumptionReader: _FixedAssumptionReader(
+        AssumptionReviewSnapshot(
+          open: <AssumptionReviewItem>[
+            AssumptionReviewItem(
+              id: 'assumption-stale',
+              statement: 'Rates stay high',
+              daysSinceVerify: kAssumptionStaleDays,
+            ),
+            AssumptionReviewItem(
+              id: 'assumption-fresh',
+              statement: 'Demand holds',
+              daysSinceVerify: 7,
+            ),
+          ],
+          traceId: 'trace-assumption-1',
         ),
-        AssumptionReviewItem(
-          id: 'assumption-fresh',
-          statement: 'Demand holds',
-          daysSinceVerify: 7,
-        ),
-      ]),
+      ),
     );
 
     final result = await _runAgent(
@@ -181,13 +196,16 @@ void main() {
     expect(result.status, AgentRunStatus.completed);
     expect(result.memoryId, '$kKnowledgeAssumptionMemorySource:2026-07-05');
     expect(result.artifactId, '$kKnowledgeAssumptionAgentId:2026-07-05');
+    expect(result.traceId, 'trace-assumption-1');
     expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
+    expect(runtime.remembered?.payload['trace_id'], 'trace-assumption-1');
 
     final artifact = await artifactStore.read(result.artifactId!);
     expect(artifact, isNotNull);
     expect(artifact!.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.attention);
     expect(artifact.memoryId, result.memoryId);
+    expect(artifact.traceId, 'trace-assumption-1');
     expect(artifact.insights.single.title, 'Stale assumptions');
     expect(artifact.evidence.map((ref) => ref.id), ['assumption-stale']);
     expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
@@ -277,11 +295,11 @@ class _AssumptionDispatcher implements DeviceToolDispatcher {
 class _FallbackReader implements AssumptionReviewReader {
   _FallbackReader(this.result);
 
-  final List<AssumptionReviewItem> result;
+  final AssumptionReviewSnapshot result;
   var calls = 0;
 
   @override
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx) async {
     calls += 1;
     return result;
   }
@@ -302,10 +320,10 @@ Future<AgentRunResult> _runAgent(
 class _FixedAssumptionReader implements AssumptionReviewReader {
   const _FixedAssumptionReader(this.result);
 
-  final List<AssumptionReviewItem> result;
+  final AssumptionReviewSnapshot result;
 
   @override
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async => result;
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx) async => result;
 }
 
 class _FakeMemoryRuntime implements MemoryRuntime {

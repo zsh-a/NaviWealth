@@ -58,7 +58,8 @@ class AssumptionAgent implements Agent {
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
-    final open = await assumptionReader.listOpen(ctx);
+    final snapshot = await assumptionReader.listOpen(ctx);
+    final open = snapshot.open;
     final stale = open
         .where((a) => a.daysSinceVerify >= kAssumptionStaleDays)
         .toList(growable: false);
@@ -70,6 +71,7 @@ class AssumptionAgent implements Agent {
         startedAt: start,
         finishedAt: finished,
         reason: l10n.knowledgeAgentAssumptionNoStale,
+        traceId: snapshot.traceId,
       );
     }
 
@@ -88,6 +90,7 @@ class AssumptionAgent implements Agent {
         'stale_assumption_ids': stale.map((a) => a.id).toList(growable: false),
         'threshold_days': kAssumptionStaleDays,
         'artifact_id': artifactId,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
       entities: <String>{'knowledge_assumption', 'assumption_review'},
       importance: 0.6,
@@ -105,6 +108,7 @@ class AssumptionAgent implements Agent {
         summary: summary,
         memoryId: built.memoryId,
         stale: stale,
+        traceId: snapshot.traceId,
       ),
     );
 
@@ -114,9 +118,13 @@ class AssumptionAgent implements Agent {
       startedAt: start,
       finishedAt: finished,
       summary: summary,
-      payload: <String, Object?>{'stale_count': stale.length},
+      payload: <String, Object?>{
+        'stale_count': stale.length,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
+      },
       memoryId: built.memoryId,
       artifactId: artifactId,
+      traceId: snapshot.traceId,
     );
   }
 
@@ -127,6 +135,7 @@ class AssumptionAgent implements Agent {
     required String summary,
     required String memoryId,
     required List<AssumptionReviewItem> stale,
+    required String? traceId,
   }) {
     return AgentArtifact(
       id: id,
@@ -172,6 +181,7 @@ class AssumptionAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
@@ -193,20 +203,22 @@ class AssumptionAgent implements Agent {
 }
 
 abstract class AssumptionReviewReader {
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx);
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx);
 }
 
 class RepositoryAssumptionReviewReader implements AssumptionReviewReader {
   const RepositoryAssumptionReviewReader();
 
   @override
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx) async {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
-    return open
-        .map((a) => AssumptionReviewItem.fromAssumption(a, now: ctx.now))
-        .toList(growable: false);
+    return AssumptionReviewSnapshot(
+      open: open
+          .map((a) => AssumptionReviewItem.fromAssumption(a, now: ctx.now))
+          .toList(growable: false),
+    );
   }
 }
 
@@ -220,7 +232,7 @@ class FrbAssumptionReviewReader implements AssumptionReviewReader {
   final AssumptionReviewReader fallback;
 
   @override
-  Future<List<AssumptionReviewItem>> listOpen(AgentContext ctx) async {
+  Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx) async {
     return _runtime.readFromEffectPlan(
       effectPlan: const <AgentRuntimeEffect>[
         AgentRuntimeEffect.tool(
@@ -235,10 +247,19 @@ class FrbAssumptionReviewReader implements AssumptionReviewReader {
           stepRun.terminalStep,
           'list_open_assumptions',
         );
-        return assumptionReviewItemsFromToolResult(result);
+        final items = assumptionReviewItemsFromToolResult(result);
+        if (items == null) return null;
+        return AssumptionReviewSnapshot(open: items, traceId: stepRun.traceId);
       },
     );
   }
+}
+
+class AssumptionReviewSnapshot {
+  const AssumptionReviewSnapshot({required this.open, this.traceId});
+
+  final List<AssumptionReviewItem> open;
+  final String? traceId;
 }
 
 class AssumptionReviewItem {
