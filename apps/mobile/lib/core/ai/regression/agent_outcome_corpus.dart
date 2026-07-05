@@ -75,6 +75,18 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'finance_holding'},
   ),
   AgentOutcomeRegressionCase(
+    id: 'finance.weekly_wealth_review.no_llm_profile_fallback',
+    agentId: 'weekly_wealth_review',
+    domain: 'finance',
+    snapshotId: 'finance.weekly_wealth_review.no_llm_profile',
+    expectedStatus: AgentOutcomeRegressionStatus.ready,
+    expectedArtifactKind: AgentArtifactKind.review,
+    expectedSeverity: AgentArtifactSeverity.warning,
+    expectedTopInsightTitles: <String>{'Net worth', 'Largest allocation'},
+    expectedEvidenceTypes: <String>{'finance_holding'},
+    tags: <String>{kAgentOutcomeNoLlmProfileTag},
+  ),
+  AgentOutcomeRegressionCase(
     id: 'finance.cashflow_anomaly_review.ready',
     agentId: 'cashflow_anomaly_review',
     domain: 'finance',

@@ -95,6 +95,18 @@ void main() {
       artifact: artifact,
     );
     expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+    final noLlmFallbackFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'finance.weekly_wealth_review.no_llm_profile_fallback',
+      ),
+      result: result,
+      artifact: artifact,
+    );
+    expect(
+      noLlmFallbackFailures,
+      isEmpty,
+      reason: noLlmFallbackFailures.join('\n'),
+    );
 
     final trace = await traceStore.findByRequestId(result.traceId!);
     expect(trace, isNotNull);

@@ -174,6 +174,20 @@ void main() {
       expect(tags, contains(kAgentOutcomeDomainOptOutTag));
     });
 
+    test('FinanceOS has executable no-LLM fallback coverage', () {
+      final financeNoLlmCases = agentOutcomeRegressionCorpus.where(
+        (c) =>
+            c.domain == 'finance' &&
+            c.tags.contains(kAgentOutcomeNoLlmProfileTag),
+      );
+
+      expect(financeNoLlmCases, isNotEmpty);
+      expect(
+        financeNoLlmCases.map((c) => c.expectedStatus),
+        everyElement(AgentOutcomeRegressionStatus.ready),
+      );
+    });
+
     test('risk tags are paired with coherent expected statuses', () {
       for (final c in agentOutcomeRegressionCorpus) {
         if (c.tags.contains(kAgentOutcomeBudgetExhaustedTag)) {
@@ -195,6 +209,8 @@ void main() {
 
     test('tagged risk cases are wired to executable evaluator fixtures', () {
       const fixturePathsByCaseId = <String, String>{
+        'finance.weekly_wealth_review.no_llm_profile_fallback':
+            'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
         'knowledge.inbox_triage.ready':
             'test/features/knowledge/agents/inbox_triage_agent_test.dart',
         'knowledge.contradiction.prompt_injection_guard':
