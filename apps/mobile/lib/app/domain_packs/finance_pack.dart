@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
+import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart'
+    show kWeeklyWealthReviewAgentId;
 import 'package:naviwealth/features/finance/composition/finance_bootstrap.dart';
 import 'package:naviwealth/features/finance/composition/finance_command_palette.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
@@ -54,6 +57,16 @@ final DomainPack kFinancePack = DomainPack(
   // Wealth / Plan navigation, but route ownership still belongs to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
   agentBuilder: _financeAgents,
+  agentPresentationSpecs: const [
+    AgentPresentationSpec(
+      agentId: kWeeklyWealthReviewAgentId,
+      domain: DomainScope.finance,
+      icon: FLucideIcons.walletCards,
+      label: _weeklyWealthReviewLabel,
+      description: _weeklyWealthReviewDescription,
+      placement: AgentResultPlacement.domainHome,
+    ),
+  ],
   memoryBootstrapBuilder: _financeMemoryBootstrap,
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
@@ -80,3 +93,9 @@ String _financeSettingsSubtitle(AppLocalizations l10n, bool _) =>
     l10n.settingsDomainsFinanceSubtitle;
 
 Widget _financeSettingsSection() => const FinanceDomainSettingsSection();
+
+String _weeklyWealthReviewLabel(AppLocalizations l10n) =>
+    'Weekly Wealth Review';
+
+String _weeklyWealthReviewDescription(AppLocalizations l10n) =>
+    'Reviews net worth, allocation concentration, price freshness, and FX coverage.';

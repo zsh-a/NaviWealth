@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_preference_store.dart';
+import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_registry.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
@@ -14,6 +15,7 @@ import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 final _agentSettingsRowsProvider =
     FutureProvider.autoDispose<List<_AgentSettingsRow>>((ref) async {
@@ -25,11 +27,13 @@ final _agentSettingsRowsProvider =
         agent_providers.agentRunStoreProvider.future,
       );
       final agents = ref.watch(agentRegistryProvider);
+      final presentations = ref.watch(agentPresentationSpecsProvider);
       final rows = <_AgentSettingsRow>[];
       for (final agent in agents) {
         rows.add(
           _AgentSettingsRow(
             agent: agent,
+            presentation: presentations[agent.id],
             preference: await preferenceStore.preferenceFor(
               ownerUserId: ownerUserId,
               agentId: agent.id,
@@ -99,11 +103,13 @@ class AgentsSettingsPage extends ConsumerWidget {
 class _AgentSettingsRow {
   const _AgentSettingsRow({
     required this.agent,
+    required this.presentation,
     required this.preference,
     required this.latestRun,
   });
 
   final Agent agent;
+  final AgentPresentationSpec? presentation;
   final AgentPreference preference;
   final AgentRunRecord? latestRun;
 }
@@ -158,8 +164,12 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     final row = widget.row;
+    final presentation = row.presentation;
     final enabled = row.preference.enabled;
+    final label = presentation?.label(l10n) ?? row.agent.name;
+    final description = presentation?.description(l10n);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
@@ -171,7 +181,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
           Row(
             children: [
               AppIconTile(
-                icon: FLucideIcons.bot,
+                icon: presentation?.icon ?? FLucideIcons.bot,
                 color: enabled ? colors.primary : colors.mutedForeground,
                 size: AppSpacing.s32,
                 iconSize: AppIconSizes.sm,
@@ -182,14 +192,14 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      row.agent.name,
+                      label,
                       style: context.theme.typography.body.sm,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: AppSpacing.s2),
                     Text(
-                      _subtitle(row),
+                      _subtitle(row, description),
                       style: context.captionStyle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -197,7 +207,14 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                   ],
                 ),
               ),
-              FSwitch(value: enabled, onChange: _setEnabled),
+              if (presentation?.userToggleable ?? true)
+                FSwitch(value: enabled, onChange: _setEnabled)
+              else
+                const AppBadge(
+                  label: 'Managed',
+                  size: AppBadgeSize.compact,
+                  tone: AppBadgeTone.neutral,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.s10),
@@ -207,7 +224,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
             children: [
               AppQuietButton(
                 label: _running ? 'Running' : 'Run now',
-                onPress: _running ? null : _runNow,
+                onPress: _running || !enabled ? null : _runNow,
                 busy: _running,
                 prefix: const Icon(FLucideIcons.play, size: AppIconSizes.xs),
               ),
@@ -216,6 +233,12 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                 size: AppBadgeSize.compact,
                 tone: enabled ? AppBadgeTone.accent : AppBadgeTone.neutral,
               ),
+              if (presentation?.notificationsSupported ?? false)
+                const AppBadge(
+                  label: 'Notifications',
+                  size: AppBadgeSize.compact,
+                  tone: AppBadgeTone.info,
+                ),
             ],
           ),
         ],
@@ -223,9 +246,9 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     );
   }
 
-  String _subtitle(_AgentSettingsRow row) {
+  String _subtitle(_AgentSettingsRow row, String? description) {
     final latest = row.latestRun;
-    if (latest == null) return 'Never run';
+    if (latest == null) return description ?? 'Never run';
     final status = switch (latest.status) {
       AgentRunLifecycleStatus.running => 'Running',
       AgentRunLifecycleStatus.ready => 'Ready',

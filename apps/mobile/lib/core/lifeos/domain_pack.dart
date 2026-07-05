@@ -17,6 +17,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../ai/agents/agent.dart';
+import '../ai/agents/agent_presentation.dart';
 import '../ai/composition/composite_proposal_applier.dart';
 import '../ai/composition/proposal_kind_registry.dart';
 import '../ai/contracts/tool_descriptor.dart';
@@ -143,6 +144,7 @@ class DomainPack {
     this.tabPaths = const <String>[],
     this.additionalPathPrefixes = const <String>[],
     this.agentBuilder,
+    this.agentPresentationSpecs = const <AgentPresentationSpec>[],
     this.memoryBootstrapBuilder,
     this.backgroundBootstrapBuilder,
     this.commandPaletteEntriesBuilder,
@@ -210,6 +212,11 @@ class DomainPack {
   /// one or more agent providers from `ref` so each agent stays
   /// composition-blind.
   final DomainAgentBuilder? agentBuilder;
+
+  /// Shared UI presentation metadata for the agents contributed by this
+  /// domain. Specs are active-domain scoped by [activeDomainPacksProvider] and
+  /// keyed by [AgentPresentationSpec.agentId].
+  final List<AgentPresentationSpec> agentPresentationSpecs;
 
   /// Eager Memory Runtime indexer bootstrap. Null when the domain has no
   /// memory indexers with source streams.

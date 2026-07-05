@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
-import 'package:naviwealth/features/health/agents/providers.dart' as health_agent_providers;
+import 'package:naviwealth/features/health/agents/providers.dart'
+    as health_agent_providers;
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 import 'package:naviwealth/features/health/composition/health_command_palette.dart';
@@ -37,6 +39,34 @@ final DomainPack kHealthPack = DomainPack(
     AppRoutes.healthPlan,
   ],
   agentBuilder: _healthAgents,
+  agentPresentationSpecs: const [
+    AgentPresentationSpec(
+      agentId: kMorningBriefingAgentId,
+      domain: DomainScope.health,
+      icon: FLucideIcons.sun,
+      label: _morningBriefingLabel,
+      description: _morningBriefingDescription,
+      notificationsSupported: true,
+      placement: AgentResultPlacement.domainHome,
+    ),
+    AgentPresentationSpec(
+      agentId: kRecoveryAlertAgentId,
+      domain: DomainScope.health,
+      icon: FLucideIcons.heartPulse,
+      label: _recoveryAlertLabel,
+      description: _recoveryAlertDescription,
+      notificationsSupported: true,
+      placement: AgentResultPlacement.domainHome,
+    ),
+    AgentPresentationSpec(
+      agentId: kWeeklySummaryAgentId,
+      domain: DomainScope.health,
+      icon: FLucideIcons.clipboardCheck,
+      label: _weeklySummaryLabel,
+      description: _weeklySummaryDescription,
+      placement: AgentResultPlacement.domainReview,
+    ),
+  ],
   memoryBootstrapBuilder: _healthMemoryBootstrap,
   backgroundBootstrapBuilder: _healthBackgroundBootstrap,
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
@@ -80,3 +110,18 @@ void _healthBackgroundBootstrap(Ref ref) {
 String _healthSettingsSubtitle(AppLocalizations l10n, bool enabled) => enabled
     ? l10n.settingsDomainsHealthEnabledSubtitle
     : l10n.settingsDomainsHealthDisabledSubtitle;
+
+String _morningBriefingLabel(AppLocalizations l10n) => 'Morning Briefing';
+
+String _morningBriefingDescription(AppLocalizations l10n) =>
+    'Builds a daily briefing from recent Health and Finance signals.';
+
+String _recoveryAlertLabel(AppLocalizations l10n) => 'Recovery Alert';
+
+String _recoveryAlertDescription(AppLocalizations l10n) =>
+    'Flags short sleep, low HRV, and recovery signals that need attention.';
+
+String _weeklySummaryLabel(AppLocalizations l10n) => 'Weekly Summary';
+
+String _weeklySummaryDescription(AppLocalizations l10n) =>
+    'Reviews the week across sleep, activity, recovery, and trend evidence.';

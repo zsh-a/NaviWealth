@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/composition/composite_proposal_applier.dart';
@@ -71,6 +72,14 @@ const _healthIntent = IntentDescriptor(
   domain: kDomainHealth,
 );
 
+const _financeAgentPresentation = AgentPresentationSpec(
+  agentId: 'domain_agent',
+  domain: DomainScope.finance,
+  icon: Icons.account_balance,
+  label: _fakeFinanceAgentLabel,
+  description: _fakeFinanceAgentDescription,
+);
+
 const _financePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: [_tool],
@@ -90,6 +99,7 @@ const _financePack = DomainPack(
   systemPromptBlock: 'Finance block',
   commandPaletteEntriesBuilder: _financeEntries,
   agentBuilder: _financeAgents,
+  agentPresentationSpecs: [_financeAgentPresentation],
 );
 
 const _healthPack = DomainPack(
@@ -113,6 +123,9 @@ const _healthPack = DomainPack(
 
 String _fakeFinanceProposalLabel(AppLocalizations l10n) => 'Fake finance';
 String _fakeHealthProposalLabel(AppLocalizations l10n) => 'Fake health';
+String _fakeFinanceAgentLabel(AppLocalizations l10n) => 'Fake finance agent';
+String _fakeFinanceAgentDescription(AppLocalizations l10n) =>
+    'Runs fake finance work.';
 
 Future<ProposalApplierRoute> _fakeFinanceProposalRoute(Ref ref) async =>
     const ProposalApplierRoute(
@@ -272,6 +285,17 @@ void main() {
     expect(c.read(agentsProvider).single.id, 'domain_agent');
   });
 
+  test('agent presentation specs are aggregated by active packs', () {
+    final specs = domainAgentPresentationSpecs(const [_financePack]);
+
+    expect(specs, contains('domain_agent'));
+    expect(specs['domain_agent']?.domain, DomainScope.finance);
+    expect(
+      specs['domain_agent']?.label(lookupAppLocalizations(const Locale('en'))),
+      'Fake finance agent',
+    );
+  });
+
   test('tool descriptor lookup follows active domain opt-ins', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
@@ -407,6 +431,15 @@ void main() {
       ]);
       expect(
         c.read(agentRegistryProvider).map((agent) => agent.id),
+        containsAll(<String>[
+          'weekly_wealth_review',
+          'morning_briefing',
+          'knowledge_review',
+          'execution_review',
+        ]),
+      );
+      expect(
+        c.read(agentPresentationSpecsProvider).keys,
         containsAll(<String>[
           'weekly_wealth_review',
           'morning_briefing',
