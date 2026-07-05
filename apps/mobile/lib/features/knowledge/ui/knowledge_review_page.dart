@@ -11,9 +11,10 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_access.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
-import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/agents/ui/agent_result_card.dart';
+import '../../../core/auth/domain_scope.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
@@ -169,10 +170,11 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
     _openedInitialArtifactId = artifactId;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final store = await ref.read(
-        agent_providers.agentArtifactStoreProvider.future,
+      final artifact = await readActiveAgentArtifactFromWidgetRef(
+        ref,
+        artifactId: artifactId,
+        expectedDomain: DomainScope.knowledge.wire,
       );
-      final artifact = await store.read(artifactId);
       if (!mounted || artifact == null) return;
       final l10n = AppLocalizations.of(context);
       final metaLabel = _knowledgeAgentArtifactUpdated(

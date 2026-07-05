@@ -19,9 +19,9 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_access.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
-import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -128,10 +128,11 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
     _openedInitialArtifactId = artifactId;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final store = await ref.read(
-        agent_providers.agentArtifactStoreProvider.future,
+      final artifact = await readActiveAgentArtifactFromWidgetRef(
+        ref,
+        artifactId: artifactId,
+        expectedDomain: DomainScope.health.wire,
       );
-      final artifact = await store.read(artifactId);
       if (!mounted || artifact == null) return;
       final l10n = AppLocalizations.of(context);
       final metaLabel = l10n.healthBriefingUpdated(
