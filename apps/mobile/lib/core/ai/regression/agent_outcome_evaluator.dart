@@ -122,6 +122,17 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
       regressionCase.expectedActionKinds,
       actionKinds,
     );
+  } else {
+    final unexpectedActionKinds = actionKinds.difference(
+      regressionCase.expectedActionKinds,
+    );
+    if (unexpectedActionKinds.isNotEmpty) {
+      add(
+        'artifact.actions.kind',
+        regressionCase.expectedActionKinds,
+        actionKinds,
+      );
+    }
   }
 
   final actionIntents = {
@@ -137,6 +148,17 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
       regressionCase.expectedActionIntents,
       actionIntents,
     );
+  } else {
+    final unexpectedActionIntents = actionIntents.difference(
+      regressionCase.expectedActionIntents,
+    );
+    if (unexpectedActionIntents.isNotEmpty) {
+      add(
+        'artifact.actions.intent',
+        regressionCase.expectedActionIntents,
+        actionIntents,
+      );
+    }
   }
 
   final missingProposals = regressionCase.expectedProposalKinds.difference(

@@ -62,7 +62,7 @@ Agent 的产品体验应当是：
 - Finance Home 的 agent result panel 已有 widget 覆盖，确认 weekly finance artifact 会以统一 `AgentResultCard` 出现在 FinanceOS 首页 placement。
 - Finance latest agent artifact provider 已覆盖多 agent 聚合时的 finance domain scope、created_at 排序和 4 条上限，防止其它 domain artifact 或过量历史进入 Finance Home。
 - Regression corpus 已覆盖 FinanceOS 首批 agent，校验所有 corpus agent 都有 fixture 文件，并通过 domain-neutral evaluator 接入 Finance / Health / Execution / Knowledge 的真实 agent fixture；`knowledge_routine_due.domain_opt_out` 已接到生产 domain opt-in composition 层面的可执行 no-run eval，`execution.review.budget_exhausted` 已接到真实 runner failed-outcome eval。
-- Regression evaluator 已覆盖 ready artifact 的统一 action kind，防止各 domain agent 产出无动作或私有动作模型。
+- Regression evaluator 已覆盖 ready artifact 的统一 action kind / intent，并拒绝 unexpected artifact action，防止各 domain agent 产出无动作、私有动作模型或绕过统一 follow-up/proposal surface。
 - Agent runtime effect-plan binding 已覆盖成功 step run 会回填 `agent-runtime:<agent>:<run>` trace id，以及 native execution failure 会记录 failed fallback step run / `agent_runtime_fallback` trace event 后再走 programmatic fallback。
 - FinanceOS 首批 deterministic agents 均已接入 `no_llm_profile` corpus case，锁住 Finance agent 在无 LLM profile 时仍可产出本地计算结果的 fallback 契约。
 - FinanceOS 首批 agent artifact action intents 已进入 regression evaluator；evaluator 会拒绝 unexpected proposal kinds，确保 agent 结果只暴露 review/follow-up action，不绕过 proposal confirmation surface。
