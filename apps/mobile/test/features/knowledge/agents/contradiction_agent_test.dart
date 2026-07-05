@@ -317,6 +317,43 @@ void main() {
     expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
   });
 
+  test('persists source trace id onto result, artifact, and memory', () async {
+    final runtime = _FakeRuntime(const {});
+    final container = makeContainer(repo: _FakeRepo(), runtime: runtime);
+    final agent = ContradictionAgent(
+      judgeOverride: _ThrowingJudge(),
+      sourceReader: _FallbackSourceReader(
+        ContradictionSourceSnapshot(
+          decisions: <KnowledgeDecision>[
+            _decision(
+              'd-trace',
+              question: 'Trace contradiction?',
+              assumptionIds: ['a-stale'],
+            ),
+          ],
+          principles: const <KnowledgePrinciple>[],
+          openAssumptions: <KnowledgeAssumption>[
+            _assumption('a-open', 'Still open'),
+          ],
+          traceId: 'trace-contradiction-1',
+        ),
+      ),
+    );
+
+    final result = await runAgent(container, agent);
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.traceId, 'trace-contradiction-1');
+    expect(result.payload['trace_id'], 'trace-contradiction-1');
+    expect(runtime.remembered?.payload['trace_id'], 'trace-contradiction-1');
+
+    final artifactStore = await container.read(
+      agent_providers.agentArtifactStoreProvider.future,
+    );
+    final artifact = await artifactStore.read(result.artifactId!);
+    expect(artifact?.traceId, 'trace-contradiction-1');
+  });
+
   test('check-2: LLM judge confirms a real contradiction -> flag with the '
       'LLM reason', () async {
     final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
@@ -438,6 +475,7 @@ void main() {
       final snapshot = await reader.read(_context());
 
       expect(snapshot.decisions.single.assumptionIds, <String>['a-frb']);
+      expect(snapshot.traceId, 'agent-runtime:knowledge_contradiction:run_1');
       expect(snapshot.principles.single.id, 'p-frb');
       expect(snapshot.openAssumptions.single.id, 'a-open');
       expect(dispatcher.calls.map((call) => call.name), <String>[

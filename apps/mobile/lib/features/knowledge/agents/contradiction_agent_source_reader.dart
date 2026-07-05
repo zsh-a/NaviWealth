@@ -62,6 +62,7 @@ class FrbContradictionSourceReader implements ContradictionSourceReader {
         return contradictionSourceSnapshotFromTerminalStep(
           stepRun.terminalStep,
           ownerUserId: ownerUserId,
+          traceId: stepRun.traceId,
         );
       },
     );
@@ -73,16 +74,19 @@ class ContradictionSourceSnapshot {
     required this.decisions,
     required this.principles,
     required this.openAssumptions,
+    this.traceId,
   });
 
   final List<KnowledgeDecision> decisions;
   final List<KnowledgePrinciple> principles;
   final List<KnowledgeAssumption> openAssumptions;
+  final String? traceId;
 }
 
 ContradictionSourceSnapshot? contradictionSourceSnapshotFromTerminalStep(
   Map<String, Object?> step, {
   required String ownerUserId,
+  String? traceId,
 }) {
   final byTool = agentRuntimeTerminalEffectResultsByToolName(step);
   final decisions = contradictionDecisionsFromToolResult(
@@ -104,6 +108,7 @@ ContradictionSourceSnapshot? contradictionSourceSnapshotFromTerminalStep(
     decisions: decisions,
     principles: principles,
     openAssumptions: assumptions,
+    traceId: traceId,
   );
 }
 

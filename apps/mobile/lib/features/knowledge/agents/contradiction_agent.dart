@@ -156,6 +156,7 @@ class ContradictionAgent implements Agent {
         startedAt: start,
         finishedAt: finished,
         reason: l10n.knowledgeAgentContradictionNone,
+        traceId: source.traceId,
       );
     }
 
@@ -194,6 +195,7 @@ class ContradictionAgent implements Agent {
             )
             .toList(growable: false),
         'artifact_id': artifactId,
+        if (source.traceId != null) 'trace_id': source.traceId,
       },
       entities: <String>{
         'knowledge_contradiction',
@@ -214,6 +216,7 @@ class ContradictionAgent implements Agent {
         summary: summary,
         memoryId: built.memoryId,
         issues: issues,
+        traceId: source.traceId,
       ),
     );
 
@@ -223,9 +226,13 @@ class ContradictionAgent implements Agent {
       startedAt: start,
       finishedAt: finished,
       summary: summary,
-      payload: <String, Object?>{'issue_count': issues.length},
+      payload: <String, Object?>{
+        'issue_count': issues.length,
+        if (source.traceId != null) 'trace_id': source.traceId,
+      },
       memoryId: built.memoryId,
       artifactId: artifactId,
+      traceId: source.traceId,
     );
   }
 
@@ -236,6 +243,7 @@ class ContradictionAgent implements Agent {
     required String summary,
     required String memoryId,
     required List<_Contradiction> issues,
+    required String? traceId,
   }) {
     final structural = issues
         .where((issue) => issue.kind == 'assumption_invalidated')
@@ -300,6 +308,7 @@ class ContradictionAgent implements Agent {
         ),
       ],
       memoryId: memoryId,
+      traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
