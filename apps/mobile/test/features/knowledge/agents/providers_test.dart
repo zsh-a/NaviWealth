@@ -111,6 +111,14 @@ void main() {
       expect(controller.calls.single.now, dueAt);
       expect(controller.calls.single.trigger, AgentRunTrigger.backgroundDue);
       expect(prefs.getInt(kKnowledgeRoutineDueAtKey), isNull);
+
+      c.invalidate(pendingKnowledgeRoutineDueRunProvider);
+      final repeated = await c.read(
+        pendingKnowledgeRoutineDueRunProvider.future,
+      );
+
+      expect(repeated, isNull);
+      expect(controller.calls, hasLength(1));
     },
   );
 

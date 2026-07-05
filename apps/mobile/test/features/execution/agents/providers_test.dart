@@ -109,6 +109,12 @@ void main() {
       expect(controller.calls.single.now, dueAt);
       expect(controller.calls.single.trigger, AgentRunTrigger.backgroundDue);
       expect(prefs.getInt(kExecutionReviewDueAtKey), isNull);
+
+      c.invalidate(pendingExecutionReviewRunProvider);
+      final repeated = await c.read(pendingExecutionReviewRunProvider.future);
+
+      expect(repeated, isNull);
+      expect(controller.calls, hasLength(1));
     },
   );
 
