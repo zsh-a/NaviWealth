@@ -6,12 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_preference_store.dart';
 import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_registry.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
+import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
@@ -30,6 +32,17 @@ final _agentSettingsRowsProvider =
       final presentations = ref.watch(agentPresentationSpecsProvider);
       final rows = <_AgentSettingsRow>[];
       for (final agent in agents) {
+        final latestRun = await runStore.latestForAgent(
+          ownerUserId: ownerUserId,
+          agentId: agent.id,
+        );
+        AgentArtifact? latestArtifact;
+        if (latestRun?.artifactId != null) {
+          final artifactStore = await ref.watch(
+            agent_providers.agentArtifactStoreProvider.future,
+          );
+          latestArtifact = await artifactStore.read(latestRun!.artifactId!);
+        }
         rows.add(
           _AgentSettingsRow(
             agent: agent,
@@ -38,10 +51,8 @@ final _agentSettingsRowsProvider =
               ownerUserId: ownerUserId,
               agentId: agent.id,
             ),
-            latestRun: await runStore.latestForAgent(
-              ownerUserId: ownerUserId,
-              agentId: agent.id,
-            ),
+            latestRun: latestRun,
+            latestArtifact: latestArtifact,
           ),
         );
       }
@@ -105,12 +116,14 @@ class _AgentSettingsRow {
     required this.presentation,
     required this.preference,
     required this.latestRun,
+    required this.latestArtifact,
   });
 
   final Agent agent;
   final AgentPresentationSpec? presentation;
   final AgentPreference preference;
   final AgentRunRecord? latestRun;
+  final AgentArtifact? latestArtifact;
 }
 
 class _AgentSettingsRowTile extends ConsumerStatefulWidget {
@@ -233,6 +246,18 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                 busy: _running,
                 prefix: const Icon(FLucideIcons.play, size: AppIconSizes.xs),
               ),
+              if (row.latestArtifact != null)
+                AppQuietButton(
+                  label: l10n.agentSettingsViewResult,
+                  onPress: () => showAgentArtifactSheet(
+                    context: context,
+                    artifact: row.latestArtifact!,
+                  ),
+                  prefix: const Icon(
+                    FLucideIcons.externalLink,
+                    size: AppIconSizes.xs,
+                  ),
+                ),
               AppBadge(
                 label: enabled
                     ? l10n.agentSettingsEnabled

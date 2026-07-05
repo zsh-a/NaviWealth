@@ -9339,6 +9339,12 @@ abstract class AppLocalizations {
   /// **'Run now'**
   String get agentSettingsRunNow;
 
+  /// Button label to open the latest visible result from an agent run.
+  ///
+  /// In en, this message translates to:
+  /// **'View result'**
+  String get agentSettingsViewResult;
+
   /// Button/status label while an agent is running.
   ///
   /// In en, this message translates to:

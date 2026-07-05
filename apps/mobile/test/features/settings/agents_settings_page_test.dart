@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
@@ -14,6 +16,8 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/agents_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../core/persistence/test_database.dart';
 
 void main() {
   testWidgets('renders agent rows from presentation metadata', (tester) async {
@@ -59,6 +63,98 @@ void main() {
     expect(find.text('Presented description.'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Run now'), findsOneWidget);
+  });
+
+  testWidgets('opens latest agent artifact from settings', (tester) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    const agent = _FakeAgent();
+    final startedAt = DateTime.utc(2026, 7, 5, 9);
+    await runStore.markRunning(
+      ownerUserId: 'user-1',
+      agent: agent,
+      startedAt: startedAt,
+      trigger: AgentRunTrigger.manual,
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: agent,
+      runStartedAt: startedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+        summary: 'Artifact summary',
+        artifactId: 'artifact-1',
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+    await artifactStore.save(
+      AgentArtifact(
+        id: 'artifact-1',
+        ownerUserId: 'user-1',
+        agentId: agent.id,
+        domain: 'finance',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Latest Artifact',
+        summary: 'Artifact summary',
+        insights: const <AgentInsight>[
+          AgentInsight(title: 'Signal', body: 'Something happened.'),
+        ],
+        createdAt: startedAt,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistryProvider.overrideWithValue(const <Agent>[agent]),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => artifactStore,
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('View result'), findsOneWidget);
+
+    await tester.tap(find.text('View result'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Latest Artifact'), findsWidgets);
+    expect(find.text('Something happened.'), findsOneWidget);
   });
 }
 

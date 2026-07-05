@@ -5224,6 +5224,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsRunNow => '立即运行';
 
   @override
+  String get agentSettingsViewResult => '查看结果';
+
+  @override
   String get agentSettingsRunning => '运行中';
 
   @override

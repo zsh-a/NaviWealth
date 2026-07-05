@@ -5473,6 +5473,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSettingsRunNow => 'Run now';
 
   @override
+  String get agentSettingsViewResult => 'View result';
+
+  @override
   String get agentSettingsRunning => 'Running';
 
   @override
