@@ -70,6 +70,29 @@ void main() {
       );
     });
 
+    test('FinanceOS outcome cases point at executable agent fixtures', () {
+      const executableFixturePaths = <String, String>{
+        'weekly_wealth_review':
+            'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
+        'cashflow_anomaly_review':
+            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'fire_plan_drift_monitor':
+            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'options_income_risk_review':
+            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+      };
+
+      for (final c in agentOutcomeRegressionCorpus.where(
+        (c) =>
+            c.domain == 'finance' &&
+            c.expectedStatus == AgentOutcomeRegressionStatus.ready,
+      )) {
+        final path = executableFixturePaths[c.agentId];
+        expect(path, isNotNull, reason: c.id);
+        expect(File(path!).existsSync(), isTrue, reason: c.id);
+      }
+    });
+
     test('ready cases declare artifact shape, evidence, and top insights', () {
       for (final c in agentOutcomeRegressionCorpus.where(
         (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
