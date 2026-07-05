@@ -76,13 +76,9 @@ void main() {
   });
 
   test('runIfDue executes agent through background_due trigger', () async {
+    final dueAt = DateTime.utc(2026, 7, 5, 8);
     SharedPreferences.setMockInitialValues(<String, Object>{
-      _task.dueAtPreferenceKey: DateTime.utc(
-        2026,
-        7,
-        5,
-        8,
-      ).millisecondsSinceEpoch,
+      _task.dueAtPreferenceKey: dueAt.millisecondsSinceEpoch,
     });
     final prefs = await SharedPreferences.getInstance();
     final db = makeTestDatabase();
@@ -129,6 +125,7 @@ void main() {
       agentId: 'agent-1',
     );
     expect(latest?.trigger, AgentRunTrigger.backgroundDue);
+    expect(latest?.startedAt, dueAt);
   });
 
   test('runIfDue consumes flag but skips disabled agents', () async {

@@ -74,6 +74,7 @@ class AgentBackgroundCatchUpRunner {
     if (beforeRun != null) await beforeRun();
     return _controller.runOnceById(
       binding.agentId,
+      now: dueAt,
       trigger: AgentRunTrigger.backgroundDue,
     );
   }
