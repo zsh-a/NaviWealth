@@ -42,6 +42,7 @@ Agent 的产品体验应当是：
 - l10n copy contract 已覆盖 `app_en.arb` / `app_zh.arb` 的可见 message key parity，并按 ARB metadata 验证占位符引用，防止 agent UI / settings 新文案只落单语或参数错位。
 - `AgentRunStatusCard` 已覆盖 running / noFinding / ready / failed 四类统一状态，`AgentResultCard` 已覆盖 summary、preview insights、review open action。
 - `AgentRunStore` 已有 focused SQLite store 测试覆盖 running row、completed/skipped/failed lifecycle 映射，以及 failed 不推进 last non-failed run。
+- `AgentRunStore.lastNonFailedRunAt` 已锁住使用 non-failed run 的完成时间作为 schedule gate，而不是开始时间，避免长运行 agent 过早重复触发。
 - Intent policy 已覆盖 active-domain catalog、off-catalog debug assert、以及 asserts-off fallback prompt，确保 agent follow-up 不因未注册 intent 破坏生产兜底。
 - Agent artifact detail 已提供 local transparency trace entry，点击后进入 `SettingsRoutes.aiTransparencyDetail(traceId)`；组件测试覆盖 route handoff。
 - Agent result read tools 已按当前 domain opt-in / active agent registry 过滤 artifact 与 run；`artifact_id` / `agent_id` / `domain` 三条 artifact 读取路径都会拒绝未注册 agent 或 inactive domain 的历史结果，避免 AI follow-up 工具读取或解释已下线 surface。

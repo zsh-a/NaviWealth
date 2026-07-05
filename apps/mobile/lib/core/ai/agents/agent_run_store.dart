@@ -201,8 +201,13 @@ class InMemoryAgentRunStore implements AgentRunStore {
                   run.isNonFailed,
             )
             .toList()
-          ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
-    return rows.isEmpty ? null : rows.first.startedAt;
+          ..sort((a, b) {
+            final aCompletedAt = a.finishedAt ?? a.startedAt;
+            final bCompletedAt = b.finishedAt ?? b.startedAt;
+            return bCompletedAt.compareTo(aCompletedAt);
+          });
+    final latest = rows.isEmpty ? null : rows.first;
+    return latest == null ? null : latest.finishedAt ?? latest.startedAt;
   }
 }
 
@@ -351,12 +356,12 @@ class SqliteAgentRunStore implements AgentRunStore {
     final row = await _db
         .customSelect(
           '''
-          SELECT started_at
+          SELECT COALESCE(finished_at, started_at) AS last_non_failed_at
           FROM agent_runs
           WHERE owner_user_id = ?
             AND agent_id = ?
             AND status IN ('ready', 'no_finding')
-          ORDER BY started_at DESC
+          ORDER BY last_non_failed_at DESC
           LIMIT 1
           ''',
           variables: [
@@ -365,7 +370,7 @@ class SqliteAgentRunStore implements AgentRunStore {
           ],
         )
         .getSingleOrNull();
-    final millis = row?.read<int>('started_at');
+    final millis = row?.read<int>('last_non_failed_at');
     if (millis == null) return null;
     return DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
   }

@@ -14,6 +14,10 @@ void main() {
     final completedAt = DateTime.utc(2026, 7, 5, 8);
     final skippedAt = DateTime.utc(2026, 7, 5, 9);
     final failedAt = DateTime.utc(2026, 7, 5, 10);
+    final completedFinishedAt = completedAt.add(
+      const Duration(milliseconds: 10),
+    );
+    final skippedFinishedAt = skippedAt.add(const Duration(milliseconds: 10));
 
     await _record(
       store,
@@ -23,7 +27,7 @@ void main() {
         agentId: agent.id,
         status: AgentRunStatus.completed,
         startedAt: completedAt,
-        finishedAt: completedAt.add(const Duration(milliseconds: 10)),
+        finishedAt: completedFinishedAt,
         summary: 'ready result',
         memoryId: 'memory-ready',
         artifactId: 'artifact-ready',
@@ -38,7 +42,7 @@ void main() {
       result: AgentRunResult.skipped(
         agentId: agent.id,
         startedAt: skippedAt,
-        finishedAt: skippedAt.add(const Duration(milliseconds: 10)),
+        finishedAt: skippedFinishedAt,
         reason: 'nothing new',
         traceId: 'trace-skipped',
       ),
@@ -73,9 +77,93 @@ void main() {
     expect(history[2].traceId, 'trace-ready');
     expect(
       await store.lastNonFailedRunAt(ownerUserId: 'user-1', agentId: agent.id),
-      skippedAt,
+      skippedFinishedAt,
     );
   });
+
+  test('lastNonFailedRunAt uses completion time for schedule gates', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentRunStore(db: db);
+    const agent = _RunStoreAgent();
+    final shortRunStartedAt = DateTime.utc(2026, 7, 5, 8);
+    final longRunStartedAt = DateTime.utc(2026, 7, 5, 7);
+    final longRunFinishedAt = DateTime.utc(2026, 7, 5, 9);
+
+    await _record(
+      store,
+      agent: agent,
+      startedAt: shortRunStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: shortRunStartedAt,
+        finishedAt: shortRunStartedAt.add(const Duration(minutes: 1)),
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await _record(
+      store,
+      agent: agent,
+      startedAt: longRunStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: longRunStartedAt,
+        finishedAt: longRunFinishedAt,
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+
+    expect(
+      await store.lastNonFailedRunAt(ownerUserId: 'user-1', agentId: agent.id),
+      longRunFinishedAt,
+    );
+  });
+
+  test(
+    'in-memory lastNonFailedRunAt matches sqlite completion semantics',
+    () async {
+      final store = InMemoryAgentRunStore();
+      const agent = _RunStoreAgent();
+      final shortRunStartedAt = DateTime.utc(2026, 7, 5, 8);
+      final longRunStartedAt = DateTime.utc(2026, 7, 5, 7);
+      final longRunFinishedAt = DateTime.utc(2026, 7, 5, 9);
+
+      await _record(
+        store,
+        agent: agent,
+        startedAt: shortRunStartedAt,
+        result: AgentRunResult(
+          agentId: agent.id,
+          status: AgentRunStatus.completed,
+          startedAt: shortRunStartedAt,
+          finishedAt: shortRunStartedAt.add(const Duration(minutes: 1)),
+        ),
+        trigger: AgentRunTrigger.schedule,
+      );
+      await _record(
+        store,
+        agent: agent,
+        startedAt: longRunStartedAt,
+        result: AgentRunResult(
+          agentId: agent.id,
+          status: AgentRunStatus.completed,
+          startedAt: longRunStartedAt,
+          finishedAt: longRunFinishedAt,
+        ),
+        trigger: AgentRunTrigger.schedule,
+      );
+
+      expect(
+        await store.lastNonFailedRunAt(
+          ownerUserId: 'user-1',
+          agentId: agent.id,
+        ),
+        longRunFinishedAt,
+      );
+    },
+  );
 
   test('markRunning persists an in-flight lifecycle row', () async {
     final db = makeTestDatabase();

@@ -198,7 +198,10 @@ void main() {
     final agent = _StubAgent(id: 'stub');
     expect(await runner.lastRunAt('stub'), isNull);
     await runner.runOnce(agent, _context(rt, now));
-    expect(await runner.lastRunAt('stub'), now);
+    expect(
+      await runner.lastRunAt('stub'),
+      now.add(const Duration(milliseconds: 10)),
+    );
   });
 
   test('failed runs do NOT advance lastRunAt', () async {
@@ -223,7 +226,10 @@ void main() {
     );
 
     await runner.runOnce(agent, _context(rt, now));
-    expect(await runner.lastRunAt('quiet'), now);
+    expect(
+      await runner.lastRunAt('quiet'),
+      now.add(const Duration(milliseconds: 10)),
+    );
 
     final tooSoon = await runner.tick(
       agents: [agent],
@@ -255,7 +261,7 @@ void main() {
         agentId: 'persisted',
         status: AgentRunStatus.completed,
         startedAt: ctx.now,
-        finishedAt: ctx.now.add(const Duration(milliseconds: 10)),
+        finishedAt: ctx.now.add(const Duration(minutes: 45)),
         summary: 'persisted ok',
         artifactId: 'artifact-persisted',
         traceId: 'trace-persisted',
@@ -267,7 +273,7 @@ void main() {
 
     final tooSoon = await secondRunner.tick(
       agents: [agent],
-      context: _context(rt, now.add(const Duration(minutes: 30))),
+      context: _context(rt, now.add(const Duration(hours: 1, minutes: 30))),
     );
 
     expect(tooSoon, isEmpty);
