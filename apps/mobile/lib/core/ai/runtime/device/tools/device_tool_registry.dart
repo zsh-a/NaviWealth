@@ -25,6 +25,7 @@ import '../../../contracts/tool_descriptor.dart';
 import '../../../contracts/tool_schema.dart';
 import '../device_tool_dispatcher.dart';
 import '../device_tool_session.dart';
+import 'agent_result_tools.dart';
 import 'ask_user_tool.dart';
 import 'build_context_tool.dart';
 import 'device_tool.dart';
@@ -44,6 +45,8 @@ const List<DeviceTool> kShellDeviceToolsCore = <DeviceTool>[
   QueryMemoryTool(),
   BuildContextTool(),
   AskUserTool(),
+  GetAgentArtifactsTool(),
+  GetAgentRunsTool(),
 ];
 
 /// Shell-only tool descriptors. Co-located with [kShellDeviceToolsCore]
@@ -71,6 +74,22 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
       // and hands a structured decision to the user (see `ask_user_tool.dart`).
       'ask_user': ToolDescriptor(
         name: 'ask_user',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainShell,
+      ),
+      'get_agent_artifacts': ToolDescriptor(
+        name: 'get_agent_artifacts',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainShell,
+      ),
+      'get_agent_runs': ToolDescriptor(
+        name: 'get_agent_runs',
         access: Access.read,
         risk: RiskLevel.info,
         requiresConfirmation: Confirmation.none,

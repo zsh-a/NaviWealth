@@ -95,9 +95,43 @@ const Set<String> jsonOnlyRenderTools = <String>{
   'get_fire_stress_tests',
   'get_fire_review',
   'simulate_fire_plan',
+  // Agent-result follow-up uses concise local-only rows; the answer should
+  // narrate the summary/evidence in prose while raw JSON remains available.
+  'get_agent_artifacts',
+  'get_agent_runs',
 };
 
 const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
+  // ── agent.explainResult ───────────────────────────────────────
+  RegressionPrompt(
+    id: 'agent.explainResult.weekly_wealth_review',
+    intent: 'agent.explainResult',
+    userPrompt: '解释这个 weekly wealth review 结果和它的证据。',
+    expectedTools: <String>{'get_agent_artifacts', 'get_agent_runs'},
+    objectType: 'agent_artifact',
+    objectId: 'weekly_wealth_review:2026-07-05',
+  ),
+  RegressionPrompt(
+    id: 'finance.reviewWealth.weekly_wealth_review',
+    intent: 'finance.reviewWealth',
+    userPrompt: '基于这份 weekly wealth review，帮我复盘净资产和持仓证据。',
+    expectedTools: <String>{
+      'get_agent_artifacts',
+      'get_net_worth_summary',
+      'get_holdings',
+    },
+    objectType: 'agent_artifact',
+    objectId: 'weekly_wealth_review:2026-07-05',
+  ),
+  RegressionPrompt(
+    id: 'knowledge.reviewDueItems.weekly_review',
+    intent: 'knowledge.reviewDueItems',
+    userPrompt: '解释这份 knowledge review 里哪些 decision 和 assumption 需要处理。',
+    expectedTools: <String>{'get_agent_artifacts'},
+    objectType: 'agent_artifact',
+    objectId: 'knowledge_review:2026-07-05',
+  ),
+
   // ── explain_change ─────────────────────────────────────────────
   RegressionPrompt(
     id: 'explain_change.expense_netflix',
