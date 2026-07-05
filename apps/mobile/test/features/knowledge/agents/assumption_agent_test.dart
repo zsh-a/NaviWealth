@@ -9,6 +9,7 @@ import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -209,6 +210,14 @@ void main() {
     expect(artifact.insights.single.title, 'Stale assumptions');
     expect(artifact.evidence.map((ref) => ref.id), ['assumption-stale']);
     expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'knowledge.assumption.ready',
+      ),
+      result: result,
+      artifact: artifact,
+    );
+    expect(outcomeFailures, isEmpty);
   });
 }
 

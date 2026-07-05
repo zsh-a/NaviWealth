@@ -111,6 +111,8 @@ void main() {
             'test/features/health/agents/weekly_summary_agent_test.dart',
         'knowledge_inbox_triage':
             'test/features/knowledge/agents/inbox_triage_agent_test.dart',
+        'knowledge_assumption':
+            'test/features/knowledge/agents/assumption_agent_test.dart',
         'knowledge_contradiction':
             'test/features/knowledge/agents/contradiction_agent_test.dart',
         'knowledge_review':
