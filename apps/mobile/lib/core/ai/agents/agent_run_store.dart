@@ -387,11 +387,7 @@ AgentRunRecord _recordFromResult({
     ownerUserId: ownerUserId,
     agentId: agent.id,
     agentName: agent.name,
-    status: switch (result.status) {
-      AgentRunStatus.completed => AgentRunLifecycleStatus.ready,
-      AgentRunStatus.skipped => AgentRunLifecycleStatus.noFinding,
-      AgentRunStatus.failed => AgentRunLifecycleStatus.failed,
-    },
+    status: _lifecycleStatusFromResult(result.userVisibleStatus),
     trigger: trigger,
     startedAt: result.startedAt.toUtc(),
     finishedAt: result.finishedAt.toUtc(),
@@ -402,6 +398,14 @@ AgentRunRecord _recordFromResult({
     traceId: result.traceId,
   );
 }
+
+AgentRunLifecycleStatus _lifecycleStatusFromResult(
+  AgentRunUserVisibleStatus status,
+) => switch (status) {
+  AgentRunUserVisibleStatus.ready => AgentRunLifecycleStatus.ready,
+  AgentRunUserVisibleStatus.noFinding => AgentRunLifecycleStatus.noFinding,
+  AgentRunUserVisibleStatus.failed => AgentRunLifecycleStatus.failed,
+};
 
 AgentRunRecord _rowToRecord(QueryRow row) {
   final finishedAtMillis = row.read<int?>('finished_at');

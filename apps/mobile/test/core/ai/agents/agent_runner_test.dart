@@ -81,6 +81,33 @@ AgentContext _context(MemoryRuntime rt, DateTime now) {
 void main() {
   final now = DateTime.utc(2026, 5, 27, 14);
 
+  test('AgentRunResult exposes user-visible status', () {
+    final finishedAt = now.add(const Duration(milliseconds: 10));
+
+    final completed = AgentRunResult(
+      agentId: 'completed',
+      status: AgentRunStatus.completed,
+      startedAt: now,
+      finishedAt: finishedAt,
+    );
+    final skipped = AgentRunResult.skipped(
+      agentId: 'skipped',
+      startedAt: now,
+      finishedAt: finishedAt,
+      reason: 'nothing new',
+    );
+    final failed = AgentRunResult.failed(
+      agentId: 'failed',
+      startedAt: now,
+      finishedAt: finishedAt,
+      error: 'boom',
+    );
+
+    expect(completed.userVisibleStatus, AgentRunUserVisibleStatus.ready);
+    expect(skipped.userVisibleStatus, AgentRunUserVisibleStatus.noFinding);
+    expect(failed.userVisibleStatus, AgentRunUserVisibleStatus.failed);
+  });
+
   test('runOnce returns completed result + writes one event', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');

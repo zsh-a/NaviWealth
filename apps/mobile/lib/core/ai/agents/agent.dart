@@ -44,6 +44,13 @@ enum AgentRunStatus {
   failed,
 }
 
+/// Product-facing status for a finished [AgentRunResult].
+///
+/// This intentionally excludes `running`: an [AgentRunResult] is emitted only
+/// after a run has finished, while the persistent run store owns in-flight
+/// lifecycle rows.
+enum AgentRunUserVisibleStatus { ready, noFinding, failed }
+
 /// One agent run's outcome — what the runner persists.
 class AgentRunResult {
   const AgentRunResult({
@@ -123,6 +130,12 @@ class AgentRunResult {
   final String? error;
 
   Duration get duration => finishedAt.difference(startedAt);
+
+  AgentRunUserVisibleStatus get userVisibleStatus => switch (status) {
+    AgentRunStatus.completed => AgentRunUserVisibleStatus.ready,
+    AgentRunStatus.skipped => AgentRunUserVisibleStatus.noFinding,
+    AgentRunStatus.failed => AgentRunUserVisibleStatus.failed,
+  };
 }
 
 /// One scheduled agent. Concrete implementations live in domain
