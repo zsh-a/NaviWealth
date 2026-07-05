@@ -103,6 +103,8 @@ void main() {
             'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
         'options_income_risk_review':
             'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+        'morning_briefing':
+            'test/features/health/agents/morning_briefing_agent_test.dart',
         'recovery_alert':
             'test/features/health/agents/recovery_alert_agent_test.dart',
         'weekly_summary':

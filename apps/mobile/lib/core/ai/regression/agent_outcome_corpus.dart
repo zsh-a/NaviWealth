@@ -121,6 +121,17 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
         },
       ),
       AgentOutcomeRegressionCase(
+        id: 'health.morning_briefing.ready',
+        agentId: 'morning_briefing',
+        domain: 'health',
+        snapshotId: 'health.morning_briefing.recovery_attention',
+        expectedStatus: AgentOutcomeRegressionStatus.ready,
+        expectedArtifactKind: AgentArtifactKind.briefing,
+        expectedSeverity: AgentArtifactSeverity.attention,
+        expectedTopInsightTitles: <String>{'Sleep', 'HRV', 'Finance'},
+        expectedEvidenceTypes: <String>{'health_event', 'finance_event'},
+      ),
+      AgentOutcomeRegressionCase(
         id: 'health.recovery_alert.ready',
         agentId: 'recovery_alert',
         domain: 'health',

@@ -7,6 +7,7 @@ import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
@@ -172,6 +173,14 @@ void main() {
           contains('f1'),
         );
         expect(artifact.actions.single.kind, 'review');
+        final outcomeFailures = evaluateAgentOutcomeCase(
+          regressionCase: agentOutcomeRegressionCaseById(
+            'health.morning_briefing.ready',
+          ),
+          result: out,
+          artifact: artifact,
+        );
+        expect(outcomeFailures, isEmpty);
       },
     );
 
