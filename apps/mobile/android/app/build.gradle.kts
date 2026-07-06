@@ -1,8 +1,46 @@
+import groovy.json.JsonSlurper
+import org.gradle.api.artifacts.dsl.RepositoryHandler
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+fun RepositoryHandler.rustlsPlatformVerifier(): MavenArtifactRepository {
+    val dependencyText = providers.exec {
+        workingDir = rootProject.projectDir.parentFile
+        commandLine(
+            "cargo",
+            "metadata",
+            "--format-version",
+            "1",
+            "--filter-platform",
+            "aarch64-linux-android",
+            "--manifest-path",
+            "native/lifeos_native/Cargo.toml",
+        )
+    }.standardOutput.asText.get()
+
+    val dependencyJson = JsonSlurper().parseText(dependencyText) as Map<*, *>
+    val packages = dependencyJson["packages"] as List<*>
+    val manifestPath = packages
+        .filterIsInstance<Map<*, *>>()
+        .first {
+            it["name"] == "rustls-platform-verifier-android"
+        }["manifest_path"] as String
+    val manifestFile = file(manifestPath)
+
+    return maven {
+        url = uri(file(manifestFile.parentFile.resolve("maven")))
+        metadataSources.artifact()
+    }
+}
+
+repositories {
+    rustlsPlatformVerifier()
 }
 
 android {
@@ -50,6 +88,10 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }
@@ -60,4 +102,5 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    implementation("rustls:rustls-platform-verifier:latest.release")
 }

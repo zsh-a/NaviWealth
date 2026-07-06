@@ -12,6 +12,7 @@ pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmPr
             "mock response",
         ))),
         "openai" | "openai-compatible" => {
+            crate::android_tls::ensure_initialized()?;
             let api_key = llm_metadata_string(request, "api_key")?;
             let base_url = llm_metadata_string(request, "base_url")
                 .map(normalize_openai_base_url)
@@ -22,6 +23,7 @@ pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmPr
             Ok(Box::new(provider))
         }
         "anthropic" => {
+            crate::android_tls::ensure_initialized()?;
             let api_key = llm_metadata_string(request, "api_key")?;
             let base_url = llm_metadata_string(request, "base_url")
                 .map(normalize_anthropic_base_url)

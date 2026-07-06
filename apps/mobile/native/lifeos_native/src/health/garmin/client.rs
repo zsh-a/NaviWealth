@@ -98,6 +98,7 @@ impl Clone for GarminClient {
 impl GarminClient {
     /// Create a new client. Attempts to load stored credentials.
     pub async fn new(token_store: Arc<dyn TokenStore>, is_cn: bool) -> Result<Self> {
+        crate::android_tls::ensure_initialized()?;
         let domain = if is_cn { "garmin.cn" } else { "garmin.com" };
         let http = Client::builder()
             .cookie_store(true)

@@ -50,6 +50,10 @@ async-trait = "0.1.89"
 once_cell = "1.21.4"
 base64 = "0.22.1"
 
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.22.4"
+rustls-platform-verifier = "0.7.0"
+
 [profile.release]
 # Smaller binary; matters for mobile bundle size.
 opt-level = "z"
