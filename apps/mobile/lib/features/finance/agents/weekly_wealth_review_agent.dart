@@ -6,6 +6,8 @@
 /// checks stay deterministic.
 library;
 
+import 'dart:ui' show Locale;
+
 import 'package:decimal/decimal.dart';
 
 import '../../../core/ai/agents/agent.dart';
@@ -222,10 +224,14 @@ class WealthReviewAnalysis {
 
   String summary(AppLocalizations l10n) {
     final parts = <String>[
-      l10n.financeAgentWeeklyWealthPartNetWorth(_money(snapshot.netWorth)),
-      l10n.financeAgentWeeklyWealthPartAssets(_money(snapshot.totalAssets)),
+      l10n.financeAgentWeeklyWealthPartNetWorth(
+        _money(snapshot.netWorth, l10n),
+      ),
+      l10n.financeAgentWeeklyWealthPartAssets(
+        _money(snapshot.totalAssets, l10n),
+      ),
       l10n.financeAgentWeeklyWealthPartLiabilities(
-        _money(snapshot.totalLiabilities),
+        _money(snapshot.totalLiabilities, l10n),
       ),
     ];
     final top = topAllocation;
@@ -233,7 +239,7 @@ class WealthReviewAnalysis {
       parts.add(
         l10n.financeAgentWeeklyWealthPartLargestAllocation(
           _categoryLabel(l10n, top.category),
-          _money(top.totalInBase),
+          _money(top.totalInBase, l10n),
           Fmt.signedPercent(
             topAllocationRatio,
             decimalDigits: 0,
@@ -292,9 +298,9 @@ class WealthReviewAnalysis {
         AgentInsight(
           title: l10n.financeAgentWeeklyWealthInsightNetWorthTitle,
           body: l10n.financeAgentWeeklyWealthInsightNetWorthBody(
-            _money(snapshot.netWorth),
-            _money(snapshot.totalAssets),
-            _money(snapshot.totalLiabilities),
+            _money(snapshot.netWorth, l10n),
+            _money(snapshot.totalAssets, l10n),
+            _money(snapshot.totalLiabilities, l10n),
           ),
           payload: <String, Object?>{
             'net_worth': snapshot.netWorth.amount.toString(),
@@ -307,7 +313,7 @@ class WealthReviewAnalysis {
             title: l10n.financeAgentWeeklyWealthInsightLargestAllocationTitle,
             body: l10n.financeAgentWeeklyWealthInsightLargestAllocationBody(
               _categoryLabel(l10n, top.category),
-              _money(top.totalInBase),
+              _money(top.totalInBase, l10n),
               Fmt.signedPercent(
                 topAllocationRatio,
                 decimalDigits: 0,
@@ -430,7 +436,13 @@ class WealthReviewAnalysis {
   }
 }
 
-String _money(Money money) => '${money.amount} ${money.currency}';
+String _money(Money money, AppLocalizations l10n) {
+  final locale = Locale(l10n.localeName);
+  return AppFormatters(
+    locale: locale,
+    baseCurrency: money.currency,
+  ).currency(money.amount, code: money.currency);
+}
 
 String _categoryLabel(AppLocalizations l10n, AssetCategory category) =>
     switch (category) {

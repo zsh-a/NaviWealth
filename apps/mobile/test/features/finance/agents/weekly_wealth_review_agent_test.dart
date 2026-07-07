@@ -66,7 +66,7 @@ void main() {
     expect(result.memoryId, '$kWeeklyWealthReviewMemorySource:2026-07-05');
     expect(result.artifactId, '$kWeeklyWealthReviewAgentId:2026-07-05');
     expect(result.traceId, '$kWeeklyWealthReviewAgentId:trace:2026-07-05');
-    expect(result.summary, contains('Net worth 8000 CNY'));
+    expect(result.summary, contains('Net worth ¥8,000.00'));
     expect(result.payload['top_allocation_category'], AssetCategory.stock.name);
 
     final artifact = await store.read(result.artifactId!);
@@ -142,7 +142,7 @@ void main() {
 
     expect(result.status, AgentRunStatus.completed);
     expect(result.summary, contains('每周财富复盘'));
-    expect(result.summary, contains('净资产 8000 CNY'));
+    expect(result.summary, contains('净资产 ¥8,000.00'));
 
     final artifact = await store.read(result.artifactId!);
     expect(artifact?.title, '每周财富复盘');
@@ -151,6 +151,31 @@ void main() {
       containsAll(['净资产', '最大配置', '价格新鲜度', '汇率覆盖']),
     );
     expect(artifact?.actions.single.label, '查看财富复盘');
+  });
+
+  test('rounds long decimal money amounts for display', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final runtime = _runtimeForDb(db);
+    final store = SqliteAgentArtifactStore(db: db);
+    final l10n = lookupAppLocalizations(const Locale('zh'));
+
+    final result = await WeeklyWealthReviewAgent.synthesize(
+      snapshot: _longDecimalSnapshot(),
+      ownerUserId: 'u',
+      startedAt: now,
+      finishedAt: now.add(const Duration(milliseconds: 20)),
+      runtime: runtime,
+      artifactStore: store,
+      l10n: l10n,
+    );
+
+    expect(result.summary, contains('净资产 ¥7,532.20'));
+    expect(result.summary, isNot(contains('7532.20338983050847457307')));
+
+    final artifact = await store.read(result.artifactId!);
+    expect(artifact?.summary, contains('¥7,532.20'));
+    expect(artifact?.summary, isNot(contains('7532.20338983050847457307')));
   });
 
   test('finance agent providers read latest artifact and run', () async {
@@ -271,6 +296,36 @@ DashboardSnapshot _snapshot() {
     netWorth: Money(Decimal.parse('8000'), currency),
     currencyMismatches: const [CurrencyMismatch(id: 'fx1', currency: 'USD')],
     staleHoldingCount: 1,
+  );
+}
+
+DashboardSnapshot _longDecimalSnapshot() {
+  const currency = 'CNY';
+  final amount = Decimal.parse('7532.20338983050847457307');
+  return DashboardSnapshot(
+    asOf: DateTime.utc(2026, 7, 5),
+    baseCurrency: currency,
+    allocations: [
+      CategoryAllocation(
+        category: AssetCategory.cash,
+        totalInBase: Money(amount, currency),
+        items: [
+          CategoryItem(
+            id: 'cash',
+            name: 'Cash',
+            subtitle: null,
+            valueInBase: Money(amount, currency),
+            nativeAmount: amount,
+            nativeCurrency: currency,
+          ),
+        ],
+      ),
+    ],
+    totalAssets: Money(amount, currency),
+    totalLiabilities: Money(Decimal.zero, currency),
+    netWorth: Money(amount, currency),
+    currencyMismatches: const [],
+    staleHoldingCount: 0,
   );
 }
 
