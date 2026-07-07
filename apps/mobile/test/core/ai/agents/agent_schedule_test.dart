@@ -34,25 +34,41 @@ void main() {
   });
 
   group('AgentSchedule.shouldFire — preferred hour anchor', () {
-    test('fires in the preferred-hour window (±jitter)', () {
+    test('fires when the preferred-hour gate opens', () {
       final s = AgentSchedule.daily(hourLocal: 7);
-      // Build a `now` whose local hour is 7; jitter is 5min so any
-      // minute 00–04 is inside, plus the 5min lookahead 55–59 of hour 6.
+      // Build a `now` whose local hour is 7; once the preferred hour is
+      // reached, the schedule remains eligible for the rest of the local day.
       final inWindow = DateTime(2026, 5, 27, 7, 2);
       expect(s.shouldFire(now: inWindow), isTrue);
     });
 
-    test('blocks outside the preferred-hour window', () {
+    test('blocks before the preferred-hour catch-up window', () {
       final s = AgentSchedule.daily(hourLocal: 7);
-      final tooLate = DateTime(2026, 5, 27, 9, 0);
-      expect(s.shouldFire(now: tooLate), isFalse);
+      final tooEarly = DateTime(2026, 5, 27, 6, 54);
+      expect(s.shouldFire(now: tooEarly), isFalse);
     });
 
-    test('still blocks when interval elapsed but hour wrong', () {
+    test('fires after the preferred hour when no run happened today', () {
+      final s = AgentSchedule.daily(hourLocal: 7);
+      final laterToday = DateTime(2026, 5, 27, 9, 0);
+      expect(s.shouldFire(now: laterToday), isTrue);
+    });
+
+    test('fires after the preferred hour when interval elapsed', () {
       final s = AgentSchedule.daily(hourLocal: 7);
       final last = DateTime(2026, 5, 26, 7, 1);
-      final now = DateTime(2026, 5, 27, 20, 0); // 37h later, but hour 20
-      expect(s.shouldFire(now: now, lastRunAt: last), isFalse);
+      final now = DateTime(2026, 5, 27, 20, 0); // 37h later
+      expect(s.shouldFire(now: now, lastRunAt: last), isTrue);
+    });
+
+    test('does not fire again later on the same local day', () {
+      const s = AgentSchedule(
+        interval: Duration(hours: 1),
+        preferredHourLocal: 7,
+      );
+      final last = DateTime(2026, 5, 27, 7, 1);
+      final laterToday = DateTime(2026, 5, 27, 20, 0);
+      expect(s.shouldFire(now: laterToday, lastRunAt: last), isFalse);
     });
 
     test('honours custom jitter', () {
@@ -61,7 +77,7 @@ void main() {
         preferredHourLocal: 7,
         jitter: Duration(minutes: 30),
       );
-      final widerWindow = DateTime(2026, 5, 27, 7, 25);
+      final widerWindow = DateTime(2026, 5, 27, 6, 35);
       expect(wideSchedule.shouldFire(now: widerWindow), isTrue);
     });
   });

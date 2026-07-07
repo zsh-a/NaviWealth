@@ -364,10 +364,12 @@ void main() {
       schedule: AgentSchedule.daily(hourLocal: 7),
     );
 
-    // 14:00 — hourly fires, morning blocked by hour gate.
+    final beforeMorning = DateTime(2026, 5, 27, 6).toUtc();
+
+    // 06:00 local — hourly fires, morning blocked by hour gate.
     final results = await runner.tick(
       agents: [hourly, morning],
-      context: _context(rt, now),
+      context: _context(rt, beforeMorning),
     );
     expect(results.map((r) => r.agentId).toList(), ['hourly']);
     expect(hourly.runCount, 1);

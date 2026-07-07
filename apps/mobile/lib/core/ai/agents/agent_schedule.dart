@@ -33,12 +33,14 @@ class AgentSchedule {
   final Duration interval;
 
   /// Local-time anchor (0–23). When set, `shouldFire` won't fire until
-  /// `now`'s local hour reaches this value AND [interval] has elapsed
-  /// since the last fire. `null` ⇒ no hour gate.
+  /// `now` has reached this value's local-day catch-up window AND [interval]
+  /// has elapsed since the last fire. `null` ⇒ no hour gate.
   final int? preferredHourLocal;
 
-  /// Tolerance window on the preferred hour. Without this, an app
-  /// opened at 06:55 wouldn't fire today's briefing. Default ±5min.
+  /// Early tolerance window before the preferred hour. Without this, an app
+  /// opened at 06:55 wouldn't fire today's 07:00 briefing. Once the preferred
+  /// hour has passed, the schedule stays eligible for the rest of the local
+  /// day, subject to [interval] and same-day duplicate gating.
   final Duration jitter;
 
   /// True iff the agent should fire right now given the last
@@ -46,22 +48,21 @@ class AgentSchedule {
   ///
   /// - `lastRunAt == null` → fire on the first tick that passes the
   ///   preferred-hour gate (or immediately when no hour anchor is set)
-  /// - `lastRunAt != null` → must have at least [interval] elapsed
-  ///   AND we're inside the preferred-hour window (if set)
+  /// - `lastRunAt != null` → must have at least [interval] elapsed, must not
+  ///   have already run on the same local day, and must pass the
+  ///   preferred-hour gate (if set)
   bool shouldFire({required DateTime now, DateTime? lastRunAt}) {
     if (lastRunAt != null && now.difference(lastRunAt) < interval) {
       return false;
     }
     final hour = preferredHourLocal;
     if (hour == null) return true;
-    // `now.hour` is already local time; jitter expands the hit window
-    // symmetrically. A `jitter == 5min` schedule for hour=7 fires for
-    // local 06:55–07:05.
-    final localHour = now.toLocal().hour;
-    final localMinute = now.toLocal().minute;
-    final secondsFromTarget = ((localHour - hour) * 3600 + localMinute * 60)
-        .abs();
-    return secondsFromTarget <= jitter.inSeconds;
+    final localNow = now.toLocal();
+    if (lastRunAt != null && _isSameLocalDay(localNow, lastRunAt.toLocal())) {
+      return false;
+    }
+    final target = DateTime(localNow.year, localNow.month, localNow.day, hour);
+    return !localNow.isBefore(target.subtract(jitter));
   }
 
   @override
@@ -74,3 +75,6 @@ class AgentSchedule {
   @override
   int get hashCode => Object.hash(interval, preferredHourLocal, jitter);
 }
+
+bool _isSameLocalDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;

@@ -248,6 +248,9 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // Mount domain-owned background bootstraps (scheduler registration and
   // pending native wakeup drains). DomainPack remains the startup inventory.
   container.read(domainBackgroundBootstrapProvider);
+  if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
+    container.read(agentForegroundSchedulerBootstrapProvider);
+  }
 
   return container;
 }
