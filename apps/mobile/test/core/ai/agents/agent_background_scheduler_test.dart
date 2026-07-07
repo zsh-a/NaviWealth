@@ -112,6 +112,7 @@ void main() {
       currentUserId: () async => 'u',
       domainOptIns: () async => DomainOptIns.financeOnly,
     );
+    var beforeRunCount = 0;
 
     final result = await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
@@ -119,10 +120,14 @@ void main() {
         domain: DomainScope.finance,
         task: _task,
       ),
+      beforeRun: () async {
+        beforeRunCount += 1;
+      },
     );
 
     expect(result?.status, AgentRunStatus.completed);
     expect(agent.runCount, 1);
+    expect(beforeRunCount, 1);
     final latest = await runStore.latestForAgent(
       ownerUserId: 'u',
       agentId: 'agent-1',
@@ -174,6 +179,7 @@ void main() {
       currentUserId: () async => 'u',
       domainOptIns: () async => DomainOptIns.financeOnly,
     );
+    var beforeRunCount = 0;
 
     final result = await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
@@ -181,10 +187,14 @@ void main() {
         domain: DomainScope.finance,
         task: _task,
       ),
+      beforeRun: () async {
+        beforeRunCount += 1;
+      },
     );
 
     expect(result, isNull);
     expect(agent.runCount, 0);
+    expect(beforeRunCount, 0);
     expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
   });
 
@@ -296,7 +306,7 @@ void main() {
     expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
   });
 
-  test('runIfDue bypasses normal schedule gate for due flags', () async {
+  test('runIfDue honors normal schedule gate for due flags', () async {
     final dueAt = DateTime.utc(2026, 7, 5, 8);
     SharedPreferences.setMockInitialValues(<String, Object>{
       _task.dueAtPreferenceKey: dueAt.millisecondsSinceEpoch,
@@ -354,6 +364,7 @@ void main() {
       currentUserId: () async => 'u',
       domainOptIns: () async => DomainOptIns.financeOnly,
     );
+    var beforeRunCount = 0;
 
     final result = await catchUp.runIfDue(
       binding: const AgentBackgroundTaskBinding(
@@ -361,14 +372,19 @@ void main() {
         domain: DomainScope.finance,
         task: _task,
       ),
+      beforeRun: () async {
+        beforeRunCount += 1;
+      },
     );
 
-    expect(result?.status, AgentRunStatus.completed);
-    expect(agent.runCount, 1);
+    expect(result, isNull);
+    expect(agent.runCount, 0);
+    expect(beforeRunCount, 0);
+    expect(prefs.getInt(_task.dueAtPreferenceKey), isNull);
     final latest = await runStore.latestForAgent(
       ownerUserId: 'u',
       agentId: 'agent-1',
     );
-    expect(latest?.trigger, AgentRunTrigger.backgroundDue);
+    expect(latest?.trigger, AgentRunTrigger.schedule);
   });
 }

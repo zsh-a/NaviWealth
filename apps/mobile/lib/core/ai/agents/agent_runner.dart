@@ -102,6 +102,7 @@ class AgentRunner {
     required List<Agent> agents,
     required AgentContext context,
     AgentRunTrigger trigger = AgentRunTrigger.schedule,
+    Future<void> Function(Agent agent)? beforeRun,
   }) async {
     final results = <AgentRunResult>[];
     for (final agent in agents) {
@@ -117,6 +118,7 @@ class AgentRunner {
       if (!agent.schedule.shouldFire(now: context.now, lastRunAt: last)) {
         continue;
       }
+      if (beforeRun != null) await beforeRun(agent);
       final result = await runOnce(agent, context, trigger: trigger);
       results.add(result);
     }

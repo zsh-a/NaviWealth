@@ -1,8 +1,8 @@
 /// Foreground catch-up helpers for background-capable agents.
 ///
 /// The platform background isolate only stamps a SharedPreferences due flag.
-/// Foreground code consumes that flag here, then runs the normal
-/// [AgentRunController] path with a `background_due` trigger.
+/// Foreground code consumes that flag here, then runs the normal scheduled
+/// [AgentRunController.tick] path with a `background_due` trigger.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,12 +83,13 @@ class AgentBackgroundCatchUpRunner {
       agentId: binding.agentId,
     );
     if (!enabled) return null;
-    if (beforeRun != null) await beforeRun();
-    return _controller.runOnceById(
-      binding.agentId,
+    final results = await _controller.tick(
       now: dueAt,
+      onlyAgentIds: <String>[binding.agentId],
       trigger: AgentRunTrigger.backgroundDue,
+      beforeRun: beforeRun == null ? null : (_) => beforeRun(),
     );
+    return results.isEmpty ? null : results.first;
   }
 }
 

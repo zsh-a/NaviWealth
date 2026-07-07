@@ -273,7 +273,19 @@ class _RecordingAgentRunController implements AgentRunController {
     DateTime? now,
     Iterable<String>? onlyAgentIds,
     AgentRunTrigger trigger = AgentRunTrigger.schedule,
+    Future<void> Function(Agent agent)? beforeRun,
   }) async {
-    throw UnimplementedError('tick is not used by this provider test');
+    final agentId = onlyAgentIds?.single ?? kExecutionReviewAgentId;
+    calls.add(_RunCall(agentId: agentId, now: now, trigger: trigger));
+    final startedAt = now ?? DateTime.utc(2026, 7, 5, 8);
+    return [
+      AgentRunResult(
+        agentId: agentId,
+        status: AgentRunStatus.completed,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 1)),
+        summary: 'background catch-up complete',
+      ),
+    ];
   }
 }

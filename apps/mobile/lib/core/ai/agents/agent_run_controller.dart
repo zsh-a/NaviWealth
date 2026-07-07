@@ -52,6 +52,7 @@ class AgentRunController {
     DateTime? now,
     Iterable<String>? onlyAgentIds,
     AgentRunTrigger trigger = AgentRunTrigger.schedule,
+    Future<void> Function(Agent agent)? beforeRun,
   }) {
     final idFilter = onlyAgentIds?.toSet();
     final selected = onlyAgentIds == null
@@ -64,6 +65,7 @@ class AgentRunController {
       agents: selected,
       context: AgentContext(ref: _ref, now: (now ?? DateTime.now()).toUtc()),
       trigger: trigger,
+      beforeRun: beforeRun,
     );
   }
 
