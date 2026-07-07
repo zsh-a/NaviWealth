@@ -10,6 +10,7 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/contracts.dart';
@@ -20,6 +21,7 @@ import '../../../core/ai/trace/ai_trace_store.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../options_income/data/options_opportunity_cache_repository.dart';
 import '../options_income/data/providers.dart';
 import '../options_income/domain/option_contract.dart';
@@ -65,6 +67,7 @@ class OptionsIncomeRiskReviewAgent implements Agent {
       runtime: runtime,
       artifactStore: artifactStore,
       traceStore: traceStore,
+      l10n: agentL10n(ctx.ref),
     );
   }
 
@@ -76,26 +79,29 @@ class OptionsIncomeRiskReviewAgent implements Agent {
     required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
     AiTraceStore? traceStore,
+    AppLocalizations? l10n,
   }) async {
+    final strings = l10n ?? defaultAgentL10n();
     if (snapshot.opportunities.isEmpty) {
       return AgentRunResult.skipped(
         agentId: kOptionsIncomeRiskReviewAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'no options income scan available',
+        reason: strings.financeAgentOptionsSkipNoScan,
       );
     }
 
     final analysis = OptionsIncomeRiskAnalysis.fromSnapshot(
       snapshot,
       now: startedAt,
+      l10n: strings,
     );
     if (!analysis.hasFinding) {
       return AgentRunResult.skipped(
         agentId: kOptionsIncomeRiskReviewAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'no options income risk finding',
+        reason: strings.financeAgentOptionsSkipNoFinding,
       );
     }
 
@@ -103,7 +109,7 @@ class OptionsIncomeRiskReviewAgent implements Agent {
     final memoryId = '$kOptionsIncomeRiskReviewMemorySource:$dayKey';
     final artifactId = '$kOptionsIncomeRiskReviewAgentId:$dayKey';
     final traceId = '$kOptionsIncomeRiskReviewAgentId:trace:$dayKey';
-    final summary = analysis.summary;
+    final summary = analysis.summary(strings);
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
@@ -111,7 +117,7 @@ class OptionsIncomeRiskReviewAgent implements Agent {
       scope: 'finance',
       source: kOptionsIncomeRiskReviewMemorySource,
       sourceId: dayKey,
-      title: 'Options income risk review · $dayKey',
+      title: strings.financeAgentOptionsMemoryTitle(dayKey),
       summary: summary,
       payload: <String, Object?>{
         'context':
@@ -154,6 +160,7 @@ class OptionsIncomeRiskReviewAgent implements Agent {
         memoryId: memoryId,
         traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
+        l10n: strings,
       ),
     );
 
@@ -212,6 +219,7 @@ class OptionsIncomeRiskAnalysis {
   factory OptionsIncomeRiskAnalysis.fromSnapshot(
     OptionsIncomeRiskSnapshot snapshot, {
     required DateTime now,
+    required AppLocalizations l10n,
   }) {
     final opportunities = snapshot.opportunities;
     final issues = <OptionsRiskIssue>[];
@@ -222,9 +230,8 @@ class OptionsIncomeRiskAnalysis {
         issues.add(
           OptionsRiskIssue(
             key: 'stale_scan',
-            title: 'Scan data is stale',
-            body:
-                'Latest options-income scan is ${age.inHours} hours old; quotes and greeks may no longer reflect the market.',
+            title: l10n.financeAgentOptionsIssueStaleScanTitle,
+            body: l10n.financeAgentOptionsIssueStaleScanBody(age.inHours),
             severity: AgentArtifactSeverity.attention,
             payload: <String, Object?>{
               'scan_id': scanState.scanId,
@@ -244,9 +251,8 @@ class OptionsIncomeRiskAnalysis {
       issues.add(
         OptionsRiskIssue(
           key: 'elevated_risk',
-          title: 'Elevated-risk contracts present',
-          body:
-              '${elevated.length} cached opportunities are classified as elevated risk before trade review.',
+          title: l10n.financeAgentOptionsIssueElevatedRiskTitle,
+          body: l10n.financeAgentOptionsIssueElevatedRiskBody(elevated.length),
           severity: AgentArtifactSeverity.warning,
           payload: <String, Object?>{
             'count': elevated.length,
@@ -274,9 +280,11 @@ class OptionsIncomeRiskAnalysis {
       issues.add(
         OptionsRiskIssue(
           key: 'quote_quality',
-          title: 'Quote quality needs review',
-          body:
-              '${wideSpreads.length} opportunities have bid/ask spread above 8%, and ${thinBooks.length} have thin volume or open interest.',
+          title: l10n.financeAgentOptionsIssueQuoteQualityTitle,
+          body: l10n.financeAgentOptionsIssueQuoteQualityBody(
+            wideSpreads.length,
+            thinBooks.length,
+          ),
           severity: maxSpread > Decimal.parse('0.15')
               ? AgentArtifactSeverity.warning
               : AgentArtifactSeverity.attention,
@@ -296,9 +304,10 @@ class OptionsIncomeRiskAnalysis {
       issues.add(
         OptionsRiskIssue(
           key: 'narrow_cushion',
-          title: 'Margin of safety is narrow',
-          body:
-              '${narrowCushion.length} opportunities have less than 5% margin of safety to breakeven.',
+          title: l10n.financeAgentOptionsIssueNarrowCushionTitle,
+          body: l10n.financeAgentOptionsIssueNarrowCushionBody(
+            narrowCushion.length,
+          ),
           severity: AgentArtifactSeverity.attention,
           payload: <String, Object?>{
             'count': narrowCushion.length,
@@ -319,9 +328,10 @@ class OptionsIncomeRiskAnalysis {
       issues.add(
         OptionsRiskIssue(
           key: 'missing_greeks',
-          title: 'Risk inputs are incomplete',
-          body:
-              '${missingGreeks.length} opportunities are missing delta or implied volatility from the quote source.',
+          title: l10n.financeAgentOptionsIssueMissingGreeksTitle,
+          body: l10n.financeAgentOptionsIssueMissingGreeksBody(
+            missingGreeks.length,
+          ),
           severity: AgentArtifactSeverity.attention,
           payload: <String, Object?>{
             'count': missingGreeks.length,
@@ -346,9 +356,12 @@ class OptionsIncomeRiskAnalysis {
         issues.add(
           OptionsRiskIssue(
             key: 'underlying_concentration',
-            title: 'Underlying concentration is high',
-            body:
-                '${top.value} of ${opportunities.length} opportunities are tied to ${top.key}.',
+            title: l10n.financeAgentOptionsIssueConcentrationTitle,
+            body: l10n.financeAgentOptionsIssueConcentrationBody(
+              top.value,
+              opportunities.length,
+              top.key,
+            ),
             severity: AgentArtifactSeverity.attention,
             payload: <String, Object?>{
               'underlying': top.key,
@@ -370,9 +383,11 @@ class OptionsIncomeRiskAnalysis {
       issues.add(
         OptionsRiskIssue(
           key: 'moderate_risk_cluster',
-          title: 'Moderate-risk cluster',
-          body:
-              '$moderate of ${opportunities.length} opportunities are moderate risk; review sizing before using the scan.',
+          title: l10n.financeAgentOptionsIssueModerateClusterTitle,
+          body: l10n.financeAgentOptionsIssueModerateClusterBody(
+            moderate,
+            opportunities.length,
+          ),
           severity: AgentArtifactSeverity.attention,
           payload: <String, Object?>{
             'moderate_count': moderate,
@@ -410,15 +425,21 @@ class OptionsIncomeRiskAnalysis {
     return copy.take(5).toList(growable: false);
   }
 
-  String get summary {
+  String summary(AppLocalizations l10n) {
     final scanId =
         snapshot.scanState?.scanId ?? snapshot.opportunities.first.scanId;
     final elevatedCount = snapshot.opportunities
         .where((opp) => opp.risk == OpportunityRiskLevel.elevated)
         .length;
-    return 'Options income risk review: ${issues.first.title.toLowerCase()} '
-        'across ${snapshot.opportunities.length} opportunities in $scanId; '
-        '$elevatedCount elevated-risk contracts.';
+    final issueTitle = agentLocaleIsZh(l10n)
+        ? issues.first.title
+        : issues.first.title.toLowerCase();
+    return l10n.financeAgentOptionsSummary(
+      issueTitle,
+      snapshot.opportunities.length,
+      scanId,
+      elevatedCount,
+    );
   }
 
   Map<String, Object?> toPayload() => <String, Object?>{
@@ -446,6 +467,7 @@ class OptionsIncomeRiskAnalysis {
     required String memoryId,
     required String? traceId,
     required DateTime createdAt,
+    required AppLocalizations l10n,
   }) {
     final scanId =
         snapshot.scanState?.scanId ?? snapshot.opportunities.first.scanId;
@@ -458,8 +480,8 @@ class OptionsIncomeRiskAnalysis {
           ? AgentArtifactKind.alert
           : AgentArtifactKind.review,
       severity: severity,
-      title: 'Options Income Risk Review',
-      summary: summary,
+      title: l10n.financeAgentOptionsTitle,
+      summary: summary(l10n),
       insights: <AgentInsight>[
         for (final issue in issues.take(5))
           AgentInsight(
@@ -469,9 +491,11 @@ class OptionsIncomeRiskAnalysis {
             payload: issue.payload,
           ),
         AgentInsight(
-          title: 'Scan snapshot',
-          body:
-              '${snapshot.opportunities.length} cached opportunities, risk mix ${_riskMixLabel(snapshot.opportunities)}.',
+          title: l10n.financeAgentOptionsInsightScanSnapshotTitle,
+          body: l10n.financeAgentOptionsInsightScanSnapshotBody(
+            snapshot.opportunities.length,
+            _riskMixLabel(l10n, snapshot.opportunities),
+          ),
           payload: <String, Object?>{
             'scan_id': scanId,
             'risk_counts': _riskCounts(snapshot.opportunities),
@@ -482,7 +506,7 @@ class OptionsIncomeRiskAnalysis {
         AgentEvidenceRef(
           type: 'options_income_scan',
           id: scanId,
-          label: 'Options income scan $scanId',
+          label: l10n.financeAgentOptionsEvidenceScanLabel(scanId),
           payload: <String, Object?>{
             'scan_id': scanId,
             'scanned_at':
@@ -504,7 +528,7 @@ class OptionsIncomeRiskAnalysis {
       actions: <AgentAction>[
         AgentAction(
           kind: 'review',
-          label: 'Review options scan',
+          label: l10n.financeAgentOptionsAction,
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
@@ -599,10 +623,16 @@ Map<String, int> _riskCounts(List<OptionsOpportunity> opportunities) {
   return counts;
 }
 
-String _riskMixLabel(List<OptionsOpportunity> opportunities) {
+String _riskMixLabel(
+  AppLocalizations l10n,
+  List<OptionsOpportunity> opportunities,
+) {
   final counts = _riskCounts(opportunities);
-  return '${counts['low']} low / ${counts['moderate']} moderate / '
-      '${counts['elevated']} elevated';
+  return l10n.financeAgentOptionsRiskMix(
+    counts['low'] ?? 0,
+    counts['moderate'] ?? 0,
+    counts['elevated'] ?? 0,
+  );
 }
 
 Map<String, Object?> _opportunityPayload(OptionsOpportunity opportunity) {

@@ -1,3 +1,5 @@
+import 'dart:ui' show Locale;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
@@ -18,6 +20,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
 import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -190,6 +193,39 @@ void main() {
         expect(outcomeFailures, isEmpty);
       },
     );
+
+    test('programmatic briefing uses Chinese locale when requested', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final rt = _runtimeForDb(db);
+      final store = SqliteAgentArtifactStore(db: db);
+      final l10n = lookupAppLocalizations(const Locale('zh'));
+
+      final out = await MorningBriefingAgent.synthesize(
+        events: [
+          _sleepEvent(id: 'h1', at: yesterdayEvening, seconds: 7.5 * 3600.0),
+          _hrvEvent(id: 'h2', at: yesterdayEvening, ms: 52),
+        ],
+        ownerUserId: 'u',
+        startedAt: now,
+        finishedAt: now.add(const Duration(milliseconds: 50)),
+        runtime: rt,
+        artifactStore: store,
+        l10n: l10n,
+      );
+
+      expect(out.status, AgentRunStatus.completed);
+      expect(out.summary, contains('睡眠 7.5 小时'));
+      expect(out.summary, contains('HRV 52 ms'));
+
+      final artifact = await store.read(out.artifactId!);
+      expect(artifact?.title, '晨间简报');
+      expect(
+        artifact?.insights.map((insight) => insight.title),
+        containsAll(['睡眠', 'HRV']),
+      );
+      expect(artifact?.actions.single.label, '查看简报');
+    });
 
     test(
       'persists synthesizer trace id onto result, artifact, and memory',

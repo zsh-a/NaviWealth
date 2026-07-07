@@ -24,6 +24,7 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/event_record.dart';
@@ -33,6 +34,7 @@ import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/morning_briefing_preferences.dart';
 import 'briefing_synthesizer.dart';
 import 'health_notifications.dart';
@@ -91,6 +93,7 @@ class MorningBriefingAgent implements Agent {
       artifactStore: await ctx.ref.read(
         agent_providers.agentArtifactStoreProvider.future,
       ),
+      l10n: agentL10n(ctx.ref),
     );
 
     if (result.status == AgentRunStatus.completed && notifier != null) {
@@ -99,6 +102,7 @@ class MorningBriefingAgent implements Agent {
         ownerUserId,
         start.toLocal(),
         result.summary ?? '',
+        agentL10n(ctx.ref),
       );
     }
     return result;
@@ -114,6 +118,7 @@ class MorningBriefingAgent implements Agent {
     required MemoryRuntime runtime,
     BriefingSynthesizer synthesizer = const ProgrammaticBriefingSynthesizer(),
     AgentArtifactStore? artifactStore,
+    AppLocalizations? l10n,
   }) {
     final agent = MorningBriefingAgent(synthesizer: synthesizer);
     return agent._synthesizeAndPersist(
@@ -123,6 +128,7 @@ class MorningBriefingAgent implements Agent {
       finishedAt: finishedAt,
       runtime: runtime,
       artifactStore: artifactStore,
+      l10n: l10n ?? defaultAgentL10n(),
     );
   }
 
@@ -133,7 +139,9 @@ class MorningBriefingAgent implements Agent {
     required DateTime finishedAt,
     required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
+    AppLocalizations? l10n,
   }) async {
+    final strings = l10n ?? defaultAgentL10n();
     final healthEvents = events
         .where((e) => e.source.startsWith('health'))
         .toList();
@@ -151,7 +159,7 @@ class MorningBriefingAgent implements Agent {
         agentId: kMorningBriefingAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'no health signals in the last 24h',
+        reason: strings.healthAgentMorningSkipNoHealth,
       );
     }
 
@@ -160,6 +168,7 @@ class MorningBriefingAgent implements Agent {
       dayKey: dayKey,
       healthEvents: healthEvents,
       financeEvents: financeEvents,
+      l10n: strings,
     );
     final output = await synthesizer.synthesize(inputs);
 
@@ -168,7 +177,7 @@ class MorningBriefingAgent implements Agent {
         agentId: kMorningBriefingAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'health events present but no usable signals',
+        reason: strings.healthAgentMorningSkipNoUsable,
       );
     }
 
@@ -181,7 +190,7 @@ class MorningBriefingAgent implements Agent {
       scope: '*',
       source: kMorningBriefingMemorySource,
       sourceId: dayKey,
-      title: 'Morning briefing · $dayKey',
+      title: strings.healthAgentMorningMemoryTitle(dayKey),
       summary: output.summary,
       payload: <String, Object?>{
         'context':
@@ -217,6 +226,7 @@ class MorningBriefingAgent implements Agent {
         output: output,
         healthEvents: healthEvents,
         financeEvents: financeEvents,
+        l10n: strings,
       ),
     );
 
@@ -245,8 +255,11 @@ class MorningBriefingAgent implements Agent {
     required BriefingOutput output,
     required List<EventRecord> healthEvents,
     required List<EventRecord> financeEvents,
+    required AppLocalizations l10n,
   }) {
-    final shortSleep = output.sleepLine?.contains('(short)') ?? false;
+    final shortSleep = healthEvents.any(
+      (event) => event.entities.contains('short_sleep'),
+    );
     return AgentArtifact(
       id: id,
       ownerUserId: ownerUserId,
@@ -256,21 +269,27 @@ class MorningBriefingAgent implements Agent {
       severity: shortSleep
           ? AgentArtifactSeverity.attention
           : AgentArtifactSeverity.info,
-      title: 'Morning Briefing',
+      title: l10n.healthAgentMorningTitle,
       summary: output.summary,
       insights: <AgentInsight>[
         if (output.sleepLine != null)
           AgentInsight(
-            title: 'Sleep',
+            title: l10n.healthAgentMorningInsightSleepTitle,
             body: output.sleepLine!,
             severity: shortSleep
                 ? AgentArtifactSeverity.attention
                 : AgentArtifactSeverity.info,
           ),
         if (output.hrvLine != null)
-          AgentInsight(title: 'HRV', body: output.hrvLine!),
+          AgentInsight(
+            title: l10n.healthAgentMorningInsightHrvTitle,
+            body: output.hrvLine!,
+          ),
         if (output.financeLine != null)
-          AgentInsight(title: 'Finance', body: output.financeLine!),
+          AgentInsight(
+            title: l10n.healthAgentMorningInsightFinanceTitle,
+            body: output.financeLine!,
+          ),
       ],
       evidence: <AgentEvidenceRef>[
         for (final event in healthEvents.take(8))
@@ -297,7 +316,7 @@ class MorningBriefingAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'review',
-          label: 'Review briefing',
+          label: l10n.healthAgentMorningAction,
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
@@ -315,6 +334,7 @@ class MorningBriefingAgent implements Agent {
     String ownerUserId,
     DateTime localDay,
     String summary,
+    AppLocalizations l10n,
   ) async {
     final n = notifier!;
     try {
@@ -330,7 +350,7 @@ class MorningBriefingAgent implements Agent {
       if (!await n.hasPermissions()) return;
       await n.showNow(
         id: HealthNotifications.idForBriefing(localDay),
-        title: 'Morning Briefing',
+        title: l10n.healthAgentMorningTitle,
         body: summary,
         payload: 'morning_briefing',
         channel: kHealthBriefingNotificationChannel,

@@ -12,6 +12,7 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/contracts.dart';
@@ -22,6 +23,7 @@ import '../../../core/ai/trace/ai_trace_store.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/read_models/dashboard_providers.dart';
 import '../domain/fx/money.dart';
 import '../home/domain/dashboard_models.dart';
@@ -64,6 +66,7 @@ class WeeklyWealthReviewAgent implements Agent {
       runtime: runtime,
       artifactStore: artifactStore,
       traceStore: traceStore,
+      l10n: agentL10n(ctx.ref),
     );
   }
 
@@ -75,7 +78,9 @@ class WeeklyWealthReviewAgent implements Agent {
     required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
     AiTraceStore? traceStore,
+    AppLocalizations? l10n,
   }) async {
+    final strings = l10n ?? defaultAgentL10n();
     if (snapshot.isEmpty &&
         snapshot.netWorth.isZero &&
         snapshot.totalAssets.isZero &&
@@ -84,7 +89,7 @@ class WeeklyWealthReviewAgent implements Agent {
         agentId: kWeeklyWealthReviewAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'no finance snapshot to review',
+        reason: strings.financeAgentWeeklyWealthSkipNoSnapshot,
       );
     }
 
@@ -93,7 +98,7 @@ class WeeklyWealthReviewAgent implements Agent {
     final memoryId = '$kWeeklyWealthReviewMemorySource:$dayKey';
     final artifactId = '$kWeeklyWealthReviewAgentId:$dayKey';
     final traceId = '$kWeeklyWealthReviewAgentId:trace:$dayKey';
-    final summary = analysis.summary;
+    final summary = analysis.summary(strings);
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
@@ -101,7 +106,7 @@ class WeeklyWealthReviewAgent implements Agent {
       scope: 'finance',
       source: kWeeklyWealthReviewMemorySource,
       sourceId: dayKey,
-      title: 'Weekly wealth review · $dayKey',
+      title: strings.financeAgentWeeklyWealthMemoryTitle(dayKey),
       summary: summary,
       payload: <String, Object?>{
         'context':
@@ -142,6 +147,7 @@ class WeeklyWealthReviewAgent implements Agent {
         memoryId: memoryId,
         traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
+        l10n: strings,
       ),
     );
 
@@ -214,26 +220,42 @@ class WealthReviewAnalysis {
   final List<CategoryItem> evidenceItems;
   final AgentArtifactSeverity severity;
 
-  String get summary {
+  String summary(AppLocalizations l10n) {
     final parts = <String>[
-      'Net worth ${_money(snapshot.netWorth)}',
-      'assets ${_money(snapshot.totalAssets)}',
-      'liabilities ${_money(snapshot.totalLiabilities)}',
+      l10n.financeAgentWeeklyWealthPartNetWorth(_money(snapshot.netWorth)),
+      l10n.financeAgentWeeklyWealthPartAssets(_money(snapshot.totalAssets)),
+      l10n.financeAgentWeeklyWealthPartLiabilities(
+        _money(snapshot.totalLiabilities),
+      ),
     ];
     final top = topAllocation;
     if (top != null) {
       parts.add(
-        'largest allocation ${_categoryLabel(top.category)} ${_money(top.totalInBase)} '
-        '(${Fmt.signedPercent(topAllocationRatio, decimalDigits: 0).replaceFirst('+', '')})',
+        l10n.financeAgentWeeklyWealthPartLargestAllocation(
+          _categoryLabel(l10n, top.category),
+          _money(top.totalInBase),
+          Fmt.signedPercent(
+            topAllocationRatio,
+            decimalDigits: 0,
+          ).replaceFirst('+', ''),
+        ),
       );
     }
     if (snapshot.staleHoldingCount > 0) {
-      parts.add('${snapshot.staleHoldingCount} stale prices');
+      parts.add(
+        l10n.financeAgentWeeklyWealthPartStalePrices(
+          snapshot.staleHoldingCount,
+        ),
+      );
     }
     if (snapshot.currencyMismatches.isNotEmpty) {
-      parts.add('${snapshot.currencyMismatches.length} FX gaps');
+      parts.add(
+        l10n.financeAgentWeeklyWealthPartFxGaps(
+          snapshot.currencyMismatches.length,
+        ),
+      );
     }
-    return 'Weekly wealth review: ${parts.join(' · ')}.';
+    return l10n.financeAgentWeeklyWealthSummary(parts.join(' · '));
   }
 
   Map<String, Object?> toPayload() => <String, Object?>{
@@ -254,6 +276,7 @@ class WealthReviewAnalysis {
     required String memoryId,
     required String? traceId,
     required DateTime createdAt,
+    required AppLocalizations l10n,
   }) {
     final top = topAllocation;
     return AgentArtifact(
@@ -263,15 +286,16 @@ class WealthReviewAnalysis {
       domain: 'finance',
       kind: AgentArtifactKind.review,
       severity: severity,
-      title: 'Weekly Wealth Review',
-      summary: summary,
+      title: l10n.financeAgentWeeklyWealthTitle,
+      summary: summary(l10n),
       insights: <AgentInsight>[
         AgentInsight(
-          title: 'Net worth',
-          body:
-              '${_money(snapshot.netWorth)} net worth from '
-              '${_money(snapshot.totalAssets)} assets and '
-              '${_money(snapshot.totalLiabilities)} liabilities.',
+          title: l10n.financeAgentWeeklyWealthInsightNetWorthTitle,
+          body: l10n.financeAgentWeeklyWealthInsightNetWorthBody(
+            _money(snapshot.netWorth),
+            _money(snapshot.totalAssets),
+            _money(snapshot.totalLiabilities),
+          ),
           payload: <String, Object?>{
             'net_worth': snapshot.netWorth.amount.toString(),
             'total_assets': snapshot.totalAssets.amount.toString(),
@@ -280,12 +304,15 @@ class WealthReviewAnalysis {
         ),
         if (top != null)
           AgentInsight(
-            title: 'Largest allocation',
-            body:
-                '${_categoryLabel(top.category)} is '
-                '${_money(top.totalInBase)}, about '
-                '${Fmt.signedPercent(topAllocationRatio, decimalDigits: 0).replaceFirst('+', '')} '
-                'of assets.',
+            title: l10n.financeAgentWeeklyWealthInsightLargestAllocationTitle,
+            body: l10n.financeAgentWeeklyWealthInsightLargestAllocationBody(
+              _categoryLabel(l10n, top.category),
+              _money(top.totalInBase),
+              Fmt.signedPercent(
+                topAllocationRatio,
+                decimalDigits: 0,
+              ).replaceFirst('+', ''),
+            ),
             severity: topAllocationRatio >= 0.7
                 ? AgentArtifactSeverity.attention
                 : AgentArtifactSeverity.info,
@@ -297,8 +324,10 @@ class WealthReviewAnalysis {
           ),
         if (snapshot.staleHoldingCount > 0)
           AgentInsight(
-            title: 'Price freshness',
-            body: '${snapshot.staleHoldingCount} holdings have stale prices.',
+            title: l10n.financeAgentWeeklyWealthInsightPriceFreshnessTitle,
+            body: l10n.financeAgentWeeklyWealthInsightPriceFreshnessBody(
+              snapshot.staleHoldingCount,
+            ),
             severity: AgentArtifactSeverity.attention,
             payload: <String, Object?>{
               'stale_holding_count': snapshot.staleHoldingCount,
@@ -306,9 +335,10 @@ class WealthReviewAnalysis {
           ),
         if (snapshot.currencyMismatches.isNotEmpty)
           AgentInsight(
-            title: 'FX coverage',
-            body:
-                '${snapshot.currencyMismatches.length} holdings were excluded because FX conversion is missing.',
+            title: l10n.financeAgentWeeklyWealthInsightFxCoverageTitle,
+            body: l10n.financeAgentWeeklyWealthInsightFxCoverageBody(
+              snapshot.currencyMismatches.length,
+            ),
             severity: AgentArtifactSeverity.warning,
             payload: <String, Object?>{
               'currency_mismatch_count': snapshot.currencyMismatches.length,
@@ -338,7 +368,7 @@ class WealthReviewAnalysis {
       actions: <AgentAction>[
         AgentAction(
           kind: 'review',
-          label: 'Review wealth',
+          label: l10n.financeAgentWeeklyWealthAction,
           intent: kFinanceReviewWealthIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
@@ -402,13 +432,15 @@ class WealthReviewAnalysis {
 
 String _money(Money money) => '${money.amount} ${money.currency}';
 
-String _categoryLabel(AssetCategory category) => switch (category) {
-  AssetCategory.stock => 'stocks',
-  AssetCategory.etf => 'ETFs',
-  AssetCategory.bondsAndFunds => 'bonds and funds',
-  AssetCategory.cash => 'cash',
-  AssetCategory.crypto => 'crypto',
-  AssetCategory.realEstate => 'real estate',
-  AssetCategory.vehicle => 'vehicles',
-  AssetCategory.liability => 'liabilities',
-};
+String _categoryLabel(AppLocalizations l10n, AssetCategory category) =>
+    switch (category) {
+      AssetCategory.stock => l10n.financeAgentAssetCategoryStock,
+      AssetCategory.etf => l10n.financeAgentAssetCategoryEtf,
+      AssetCategory.bondsAndFunds =>
+        l10n.financeAgentAssetCategoryBondsAndFunds,
+      AssetCategory.cash => l10n.financeAgentAssetCategoryCash,
+      AssetCategory.crypto => l10n.financeAgentAssetCategoryCrypto,
+      AssetCategory.realEstate => l10n.financeAgentAssetCategoryRealEstate,
+      AssetCategory.vehicle => l10n.financeAgentAssetCategoryVehicle,
+      AssetCategory.liability => l10n.financeAgentAssetCategoryLiability,
+    };

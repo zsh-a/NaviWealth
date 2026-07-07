@@ -15,8 +15,10 @@
 /// otherwise).
 library;
 
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/health_metric_memory_indexer.dart';
 
 /// Inputs to a single synthesis call. The agent pre-partitions events
@@ -26,6 +28,7 @@ class BriefingInputs {
     required this.dayKey,
     required this.healthEvents,
     required this.financeEvents,
+    this.l10n,
   });
 
   /// `yyyy-MM-dd` of the briefing's anchor day (local). Used by the
@@ -33,6 +36,7 @@ class BriefingInputs {
   final String dayKey;
   final List<EventRecord> healthEvents;
   final List<EventRecord> financeEvents;
+  final AppLocalizations? l10n;
 
   bool get hasHealthSignals => healthEvents.isNotEmpty;
 }
@@ -81,14 +85,6 @@ abstract class BriefingSynthesizer {
   Future<BriefingOutput> synthesize(BriefingInputs inputs);
 }
 
-const String _kBriefingSystemPrompt =
-    'You are HealthOS Morning Briefing. Given structured Health + '
-    'Finance signals from the last 24 hours, write a single-sentence '
-    'morning briefing in the user\'s tone (short, calm, factual). '
-    'Use only the numbers provided. Do not add advice unless the '
-    'numbers are clearly outliers. Reply in the same language the '
-    'inputs are in (Chinese or English).';
-
 /// Deterministic fallback. Replicates the D-2.5 logic verbatim so the
 /// existing tests still pin behaviour.
 class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
@@ -96,9 +92,10 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
 
   @override
   Future<BriefingOutput> synthesize(BriefingInputs inputs) async {
-    final sleepLine = _summariseSleep(inputs.healthEvents);
-    final hrvLine = _summariseHrv(inputs.healthEvents);
-    final financeLine = _summariseFinance(inputs.financeEvents);
+    final l10n = inputs.l10n ?? defaultAgentL10n();
+    final sleepLine = _summariseSleep(inputs.healthEvents, l10n);
+    final hrvLine = _summariseHrv(inputs.healthEvents, l10n);
+    final financeLine = _summariseFinance(inputs.financeEvents, l10n);
 
     final parts = <String>[?sleepLine, ?hrvLine, ?financeLine];
     if (parts.isEmpty) return BriefingOutput.empty();
@@ -110,7 +107,10 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
     );
   }
 
-  static String? _summariseSleep(List<EventRecord> healthEvents) {
+  static String? _summariseSleep(
+    List<EventRecord> healthEvents,
+    AppLocalizations l10n,
+  ) {
     EventRecord? latest;
     for (final e in healthEvents) {
       if (e.type != kEventSleepSessionEnded) continue;
@@ -130,14 +130,17 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
     };
     final rounded = (hours * 10).round() / 10.0;
     final tag = latest.entities.contains('short_sleep')
-        ? ' (short)'
+        ? l10n.healthAgentMorningSleepShortTag
         : latest.entities.contains('long_sleep')
-        ? ' (long)'
+        ? l10n.healthAgentMorningSleepLongTag
         : '';
-    return 'Slept ${rounded}h$tag';
+    return l10n.healthAgentMorningSleepLine(rounded, tag);
   }
 
-  static String? _summariseHrv(List<EventRecord> healthEvents) {
+  static String? _summariseHrv(
+    List<EventRecord> healthEvents,
+    AppLocalizations l10n,
+  ) {
     EventRecord? latest;
     for (final e in healthEvents) {
       if (e.type != kEventHrvRecorded) continue;
@@ -148,10 +151,13 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
     if (latest == null) return null;
     final value = latest.payload['value'];
     if (value is! num) return null;
-    return 'HRV ${value.toStringAsFixed(0)}ms';
+    return l10n.healthAgentMorningHrvLine(value.toStringAsFixed(0));
   }
 
-  static String? _summariseFinance(List<EventRecord> financeEvents) {
+  static String? _summariseFinance(
+    List<EventRecord> financeEvents,
+    AppLocalizations l10n,
+  ) {
     if (financeEvents.isEmpty) return null;
     final byType = <String, int>{};
     for (final e in financeEvents) {
@@ -161,7 +167,7 @@ class ProgrammaticBriefingSynthesizer implements BriefingSynthesizer {
     byType.forEach((type, count) {
       pieces.add('$count ${type.replaceAll('_', ' ')}');
     });
-    return 'Finance: ${pieces.join(', ')}';
+    return l10n.healthAgentMorningFinanceLine(pieces.join(', '));
   }
 }
 
@@ -190,9 +196,9 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
       final result = await runtime
           .run(
             messages: <Map<String, Object?>>[
-              const <String, Object?>{
+              <String, Object?>{
                 'role': 'system',
-                'content': _kBriefingSystemPrompt,
+                'content': _briefingSystemPrompt(inputs),
               },
               <String, Object?>{'role': 'user', 'content': prompt},
             ],
@@ -218,20 +224,24 @@ class FrbBriefingSynthesizer implements BriefingSynthesizer {
 }
 
 String _buildBriefingPrompt(BriefingInputs inputs, BriefingOutput baseline) {
+  final l10n = inputs.l10n ?? defaultAgentL10n();
   final buf = StringBuffer()
     ..writeln('Date: ${inputs.dayKey}')
     ..writeln('---')
-    ..writeln(
-      'Structured signals (use these numbers verbatim, do not change them):',
-    );
+    ..writeln(l10n.healthAgentMorningPromptStructuredSignals);
   if (baseline.sleepLine != null) buf.writeln('- ${baseline.sleepLine}');
   if (baseline.hrvLine != null) buf.writeln('- ${baseline.hrvLine}');
   if (baseline.financeLine != null) buf.writeln('- ${baseline.financeLine}');
   buf
     ..writeln('---')
-    ..writeln(
-      'Write one calm, factual sentence (<= 30 words) that mentions '
-      'each signal. No bullet points. No emojis.',
-    );
+    ..writeln(l10n.healthAgentMorningPromptInstruction);
   return buf.toString();
+}
+
+String _briefingSystemPrompt(BriefingInputs inputs) {
+  final l10n = inputs.l10n ?? defaultAgentL10n();
+  final language = agentLocaleIsZh(l10n)
+      ? l10n.agentOutputLanguageChinese
+      : l10n.agentOutputLanguageEnglish;
+  return l10n.healthAgentMorningPromptSystem(language);
 }

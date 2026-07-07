@@ -1,3 +1,5 @@
+import 'dart:ui' show Locale;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
@@ -101,6 +103,57 @@ void main() {
     );
     expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
   });
+
+  test(
+    'run persists weekly review artifact labels in Chinese locale',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final artifactStore = SqliteAgentArtifactStore(db: db);
+      final runtime = _FakeMemoryRuntime();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          memoryRuntimeProvider.overrideWith((ref) async => runtime),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => artifactStore,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      addTearDown(() => prefs.remove('naviwealth.locale'));
+      await container.read(localeProvider.notifier).set(const Locale('zh'));
+      const agent = ReviewAgent(
+        dueReader: _FixedReviewDueReader(
+          ReviewDueSnapshot(
+            dueReviews: [
+              ReviewDecisionItem(id: 'decision-1', question: '是否复查对冲？'),
+            ],
+            staleAssumptions: [
+              ReviewAssumptionItem(id: 'assumption-1', statement: '利率维持高位'),
+            ],
+          ),
+        ),
+      );
+
+      final result = await _runAgent(
+        container,
+        agent,
+        DateTime.utc(2026, 7, 5, 9),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+    expect(result.summary, contains('可复盘'));
+      final artifact = await artifactStore.read(result.artifactId!);
+      expect(artifact?.title, '每周知识复盘');
+      expect(artifact?.insights.map((insight) => insight.title), [
+        '到期决策',
+        '过期假设',
+      ]);
+      expect(artifact?.actions.single.label, '查看知识事项');
+    },
+  );
 
   group('review due effect-result parsing', () {
     test('parses terminal multi-tool output and filters stale assumptions', () {

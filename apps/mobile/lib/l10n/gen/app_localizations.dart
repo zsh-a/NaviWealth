@@ -18544,6 +18544,1276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Source'**
   String get executionProposalRowSource;
+
+  /// No description provided for @agentOutputLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get agentOutputLanguageEnglish;
+
+  /// No description provided for @agentOutputLanguageChinese.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese'**
+  String get agentOutputLanguageChinese;
+
+  /// No description provided for @financeAgentWeeklyWealthSkipNoSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'no finance snapshot to review'**
+  String get financeAgentWeeklyWealthSkipNoSnapshot;
+
+  /// No description provided for @financeAgentWeeklyWealthMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly wealth review · {dayKey}'**
+  String financeAgentWeeklyWealthMemoryTitle(Object dayKey);
+
+  /// No description provided for @financeAgentWeeklyWealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Wealth Review'**
+  String get financeAgentWeeklyWealthTitle;
+
+  /// No description provided for @financeAgentWeeklyWealthSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly wealth review: {details}.'**
+  String financeAgentWeeklyWealthSummary(Object details);
+
+  /// No description provided for @financeAgentWeeklyWealthPartNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth {value}'**
+  String financeAgentWeeklyWealthPartNetWorth(Object value);
+
+  /// No description provided for @financeAgentWeeklyWealthPartAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'assets {value}'**
+  String financeAgentWeeklyWealthPartAssets(Object value);
+
+  /// No description provided for @financeAgentWeeklyWealthPartLiabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'liabilities {value}'**
+  String financeAgentWeeklyWealthPartLiabilities(Object value);
+
+  /// No description provided for @financeAgentWeeklyWealthPartLargestAllocation.
+  ///
+  /// In en, this message translates to:
+  /// **'largest allocation {category} {amount} ({ratio})'**
+  String financeAgentWeeklyWealthPartLargestAllocation(
+    Object amount,
+    Object category,
+    Object ratio,
+  );
+
+  /// No description provided for @financeAgentWeeklyWealthPartStalePrices.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} stale prices'**
+  String financeAgentWeeklyWealthPartStalePrices(Object count);
+
+  /// No description provided for @financeAgentWeeklyWealthPartFxGaps.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} FX gaps'**
+  String financeAgentWeeklyWealthPartFxGaps(Object count);
+
+  /// No description provided for @financeAgentAssetCategoryStock.
+  ///
+  /// In en, this message translates to:
+  /// **'stocks'**
+  String get financeAgentAssetCategoryStock;
+
+  /// No description provided for @financeAgentAssetCategoryEtf.
+  ///
+  /// In en, this message translates to:
+  /// **'ETFs'**
+  String get financeAgentAssetCategoryEtf;
+
+  /// No description provided for @financeAgentAssetCategoryBondsAndFunds.
+  ///
+  /// In en, this message translates to:
+  /// **'bonds and funds'**
+  String get financeAgentAssetCategoryBondsAndFunds;
+
+  /// No description provided for @financeAgentAssetCategoryCash.
+  ///
+  /// In en, this message translates to:
+  /// **'cash'**
+  String get financeAgentAssetCategoryCash;
+
+  /// No description provided for @financeAgentAssetCategoryCrypto.
+  ///
+  /// In en, this message translates to:
+  /// **'crypto'**
+  String get financeAgentAssetCategoryCrypto;
+
+  /// No description provided for @financeAgentAssetCategoryRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'real estate'**
+  String get financeAgentAssetCategoryRealEstate;
+
+  /// No description provided for @financeAgentAssetCategoryVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'vehicles'**
+  String get financeAgentAssetCategoryVehicle;
+
+  /// No description provided for @financeAgentAssetCategoryLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'liabilities'**
+  String get financeAgentAssetCategoryLiability;
+
+  /// No description provided for @financeAgentWeeklyWealthInsightNetWorthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth'**
+  String get financeAgentWeeklyWealthInsightNetWorthTitle;
+
+  /// No description provided for @financeAgentWeeklyWealthInsightNetWorthBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{netWorth} net worth from {assets} assets and {liabilities} liabilities.'**
+  String financeAgentWeeklyWealthInsightNetWorthBody(
+    Object assets,
+    Object liabilities,
+    Object netWorth,
+  );
+
+  /// No description provided for @financeAgentWeeklyWealthInsightLargestAllocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest allocation'**
+  String get financeAgentWeeklyWealthInsightLargestAllocationTitle;
+
+  /// No description provided for @financeAgentWeeklyWealthInsightLargestAllocationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} is {amount}, about {ratio} of assets.'**
+  String financeAgentWeeklyWealthInsightLargestAllocationBody(
+    Object amount,
+    Object category,
+    Object ratio,
+  );
+
+  /// No description provided for @financeAgentWeeklyWealthInsightPriceFreshnessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Price freshness'**
+  String get financeAgentWeeklyWealthInsightPriceFreshnessTitle;
+
+  /// No description provided for @financeAgentWeeklyWealthInsightPriceFreshnessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings have stale prices.'**
+  String financeAgentWeeklyWealthInsightPriceFreshnessBody(Object count);
+
+  /// No description provided for @financeAgentWeeklyWealthInsightFxCoverageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FX coverage'**
+  String get financeAgentWeeklyWealthInsightFxCoverageTitle;
+
+  /// No description provided for @financeAgentWeeklyWealthInsightFxCoverageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings were excluded because FX conversion is missing.'**
+  String financeAgentWeeklyWealthInsightFxCoverageBody(Object count);
+
+  /// No description provided for @financeAgentWeeklyWealthAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review wealth'**
+  String get financeAgentWeeklyWealthAction;
+
+  /// No description provided for @financeAgentCashflowSkipNoAnomaly.
+  ///
+  /// In en, this message translates to:
+  /// **'no cashflow anomaly detected'**
+  String get financeAgentCashflowSkipNoAnomaly;
+
+  /// No description provided for @financeAgentCashflowMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow anomaly review · {dayKey}'**
+  String financeAgentCashflowMemoryTitle(Object dayKey);
+
+  /// No description provided for @financeAgentCashflowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow Anomaly Review'**
+  String get financeAgentCashflowTitle;
+
+  /// No description provided for @financeAgentCashflowDirectionHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'higher'**
+  String get financeAgentCashflowDirectionHigher;
+
+  /// No description provided for @financeAgentCashflowDirectionLower.
+  ///
+  /// In en, this message translates to:
+  /// **'lower'**
+  String get financeAgentCashflowDirectionLower;
+
+  /// No description provided for @financeAgentCashflowSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow anomaly review: projected monthly spending is {delta} vs. the previous 3-month average.'**
+  String financeAgentCashflowSummary(Object delta);
+
+  /// No description provided for @financeAgentCashflowInsightProjectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly spending projection'**
+  String get financeAgentCashflowInsightProjectionTitle;
+
+  /// No description provided for @financeAgentCashflowInsightProjectionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Current-month spending is projected {direction} than the previous 3-month average by {delta}.'**
+  String financeAgentCashflowInsightProjectionBody(
+    Object delta,
+    Object direction,
+  );
+
+  /// No description provided for @financeAgentCashflowInsightDetectorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Detector source'**
+  String get financeAgentCashflowInsightDetectorTitle;
+
+  /// No description provided for @financeAgentCashflowInsightDetectorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This result comes from the on-device anomaly detector used by get_anomaly_flags.'**
+  String get financeAgentCashflowInsightDetectorBody;
+
+  /// No description provided for @financeAgentCashflowEvidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly expense anomaly'**
+  String get financeAgentCashflowEvidenceLabel;
+
+  /// No description provided for @financeAgentCashflowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review anomaly'**
+  String get financeAgentCashflowAction;
+
+  /// No description provided for @financeAgentFireSkipNoPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'no FIRE plan configured'**
+  String get financeAgentFireSkipNoPlan;
+
+  /// No description provided for @financeAgentFireSkipNoDrift.
+  ///
+  /// In en, this message translates to:
+  /// **'no FIRE plan drift detected'**
+  String get financeAgentFireSkipNoDrift;
+
+  /// No description provided for @financeAgentFireMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE plan drift monitor · {dayKey}'**
+  String financeAgentFireMemoryTitle(Object dayKey);
+
+  /// No description provided for @financeAgentFireTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE Plan Drift Monitor'**
+  String get financeAgentFireTitle;
+
+  /// No description provided for @financeAgentFireSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE plan drift monitor: {headline}. Safety {safety}, withdrawal rate {withdrawalRate}, cash bucket {cashBucketMonths} months.'**
+  String financeAgentFireSummary(
+    Object cashBucketMonths,
+    Object headline,
+    Object safety,
+    Object withdrawalRate,
+  );
+
+  /// No description provided for @financeAgentFireInsightPlanSnapshotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan snapshot'**
+  String get financeAgentFireInsightPlanSnapshotTitle;
+
+  /// No description provided for @financeAgentFireInsightPlanSnapshotBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate {withdrawalRate} vs. safe rate {safeRate}, cash bucket {cashBucketMonths} / {targetCashBucketMonths} months.'**
+  String financeAgentFireInsightPlanSnapshotBody(
+    Object cashBucketMonths,
+    Object safeRate,
+    Object targetCashBucketMonths,
+    Object withdrawalRate,
+  );
+
+  /// No description provided for @financeAgentFireEvidenceReviewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE review {periodKey}'**
+  String financeAgentFireEvidenceReviewLabel(Object periodKey);
+
+  /// No description provided for @financeAgentFireAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review FIRE plan'**
+  String get financeAgentFireAction;
+
+  /// No description provided for @financeAgentFireFindingCashBucketBelowTargetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket below target'**
+  String get financeAgentFireFindingCashBucketBelowTargetTitle;
+
+  /// No description provided for @financeAgentFireFindingWithdrawalRateAboveSwrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate above safe rate'**
+  String get financeAgentFireFindingWithdrawalRateAboveSwrTitle;
+
+  /// No description provided for @financeAgentFireFindingWithdrawalRateInfiniteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate unavailable'**
+  String get financeAgentFireFindingWithdrawalRateInfiniteTitle;
+
+  /// No description provided for @financeAgentFireFindingEtaUnreachableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE ETA unreachable'**
+  String get financeAgentFireFindingEtaUnreachableTitle;
+
+  /// No description provided for @financeAgentFireFindingCurrencyGapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FX coverage gap'**
+  String get financeAgentFireFindingCurrencyGapTitle;
+
+  /// No description provided for @financeAgentFireFindingUnmappedHoldingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmapped FIRE holdings'**
+  String get financeAgentFireFindingUnmappedHoldingsTitle;
+
+  /// No description provided for @financeAgentFireFindingStressDangerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress test danger'**
+  String get financeAgentFireFindingStressDangerTitle;
+
+  /// No description provided for @financeAgentFireFindingStressCautiousTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress test caution'**
+  String get financeAgentFireFindingStressCautiousTitle;
+
+  /// No description provided for @financeAgentFireFindingNetWorthBrokenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth below zero'**
+  String get financeAgentFireFindingNetWorthBrokenTitle;
+
+  /// No description provided for @financeAgentFireFindingCashBucketBelowTargetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash runway is below the configured target of {months} months.'**
+  String financeAgentFireFindingCashBucketBelowTargetBody(Object months);
+
+  /// No description provided for @financeAgentFireFindingWithdrawalRateAboveSwrBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate is above the safe withdrawal rate by {rate}.'**
+  String financeAgentFireFindingWithdrawalRateAboveSwrBody(Object rate);
+
+  /// No description provided for @financeAgentFireFindingWithdrawalRateInfiniteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual spend exists, but investable assets are zero.'**
+  String get financeAgentFireFindingWithdrawalRateInfiniteBody;
+
+  /// No description provided for @financeAgentFireFindingEtaUnreachableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Projection did not reach the FIRE target in the modeled horizon.'**
+  String get financeAgentFireFindingEtaUnreachableBody;
+
+  /// No description provided for @financeAgentFireFindingCurrencyGapBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings are excluded because FX conversion is missing.'**
+  String financeAgentFireFindingCurrencyGapBody(Object count);
+
+  /// No description provided for @financeAgentFireFindingUnmappedHoldingsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings are not mapped to FIRE buckets.'**
+  String financeAgentFireFindingUnmappedHoldingsBody(Object count);
+
+  /// No description provided for @financeAgentFireFindingStressDangerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress scenario {scenario} breaks the plan.'**
+  String financeAgentFireFindingStressDangerBody(Object scenario);
+
+  /// No description provided for @financeAgentFireFindingStressCautiousBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress scenario {scenario} needs attention.'**
+  String financeAgentFireFindingStressCautiousBody(Object scenario);
+
+  /// No description provided for @financeAgentFireFindingNetWorthBrokenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth is below zero, so the FIRE plan needs review.'**
+  String get financeAgentFireFindingNetWorthBrokenBody;
+
+  /// No description provided for @financeAgentFireFindingDefaultBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review finding {code}.'**
+  String financeAgentFireFindingDefaultBody(Object code);
+
+  /// No description provided for @financeAgentOptionsSkipNoScan.
+  ///
+  /// In en, this message translates to:
+  /// **'no options income scan available'**
+  String get financeAgentOptionsSkipNoScan;
+
+  /// No description provided for @financeAgentOptionsSkipNoFinding.
+  ///
+  /// In en, this message translates to:
+  /// **'no options income risk finding'**
+  String get financeAgentOptionsSkipNoFinding;
+
+  /// No description provided for @financeAgentOptionsMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Options income risk review · {dayKey}'**
+  String financeAgentOptionsMemoryTitle(Object dayKey);
+
+  /// No description provided for @financeAgentOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Options Income Risk Review'**
+  String get financeAgentOptionsTitle;
+
+  /// No description provided for @financeAgentOptionsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Options income risk review: {issueTitle} across {opportunityCount} opportunities in {scanId}; {elevatedCount} elevated-risk contracts.'**
+  String financeAgentOptionsSummary(
+    Object elevatedCount,
+    Object issueTitle,
+    Object opportunityCount,
+    Object scanId,
+  );
+
+  /// No description provided for @financeAgentOptionsIssueStaleScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan data is stale'**
+  String get financeAgentOptionsIssueStaleScanTitle;
+
+  /// No description provided for @financeAgentOptionsIssueStaleScanBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest options-income scan is {ageHours} hours old; quotes and greeks may no longer reflect the market.'**
+  String financeAgentOptionsIssueStaleScanBody(Object ageHours);
+
+  /// No description provided for @financeAgentOptionsIssueElevatedRiskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Elevated-risk contracts present'**
+  String get financeAgentOptionsIssueElevatedRiskTitle;
+
+  /// No description provided for @financeAgentOptionsIssueElevatedRiskBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cached opportunities are classified as elevated risk before trade review.'**
+  String financeAgentOptionsIssueElevatedRiskBody(Object count);
+
+  /// No description provided for @financeAgentOptionsIssueQuoteQualityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote quality needs review'**
+  String get financeAgentOptionsIssueQuoteQualityTitle;
+
+  /// No description provided for @financeAgentOptionsIssueQuoteQualityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{wideSpreadCount} opportunities have bid/ask spread above 8%, and {thinBookCount} have thin volume or open interest.'**
+  String financeAgentOptionsIssueQuoteQualityBody(
+    Object thinBookCount,
+    Object wideSpreadCount,
+  );
+
+  /// No description provided for @financeAgentOptionsIssueNarrowCushionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin of safety is narrow'**
+  String get financeAgentOptionsIssueNarrowCushionTitle;
+
+  /// No description provided for @financeAgentOptionsIssueNarrowCushionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} opportunities have less than 5% margin of safety to breakeven.'**
+  String financeAgentOptionsIssueNarrowCushionBody(Object count);
+
+  /// No description provided for @financeAgentOptionsIssueMissingGreeksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk inputs are incomplete'**
+  String get financeAgentOptionsIssueMissingGreeksTitle;
+
+  /// No description provided for @financeAgentOptionsIssueMissingGreeksBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} opportunities are missing delta or implied volatility from the quote source.'**
+  String financeAgentOptionsIssueMissingGreeksBody(Object count);
+
+  /// No description provided for @financeAgentOptionsIssueConcentrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Underlying concentration is high'**
+  String get financeAgentOptionsIssueConcentrationTitle;
+
+  /// No description provided for @financeAgentOptionsIssueConcentrationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {opportunityCount} opportunities are tied to {underlying}.'**
+  String financeAgentOptionsIssueConcentrationBody(
+    Object count,
+    Object opportunityCount,
+    Object underlying,
+  );
+
+  /// No description provided for @financeAgentOptionsIssueModerateClusterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate-risk cluster'**
+  String get financeAgentOptionsIssueModerateClusterTitle;
+
+  /// No description provided for @financeAgentOptionsIssueModerateClusterBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{moderateCount} of {opportunityCount} opportunities are moderate risk; review sizing before using the scan.'**
+  String financeAgentOptionsIssueModerateClusterBody(
+    Object moderateCount,
+    Object opportunityCount,
+  );
+
+  /// No description provided for @financeAgentOptionsInsightScanSnapshotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan snapshot'**
+  String get financeAgentOptionsInsightScanSnapshotTitle;
+
+  /// No description provided for @financeAgentOptionsInsightScanSnapshotBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{opportunityCount} cached opportunities, risk mix {riskMix}.'**
+  String financeAgentOptionsInsightScanSnapshotBody(
+    Object opportunityCount,
+    Object riskMix,
+  );
+
+  /// No description provided for @financeAgentOptionsRiskMix.
+  ///
+  /// In en, this message translates to:
+  /// **'{low} low / {moderate} moderate / {elevated} elevated'**
+  String financeAgentOptionsRiskMix(
+    Object elevated,
+    Object low,
+    Object moderate,
+  );
+
+  /// No description provided for @financeAgentOptionsEvidenceScanLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Options income scan {scanId}'**
+  String financeAgentOptionsEvidenceScanLabel(Object scanId);
+
+  /// No description provided for @financeAgentOptionsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review options scan'**
+  String get financeAgentOptionsAction;
+
+  /// No description provided for @healthAgentMorningSkipNoHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'no health signals in the last 24h'**
+  String get healthAgentMorningSkipNoHealth;
+
+  /// No description provided for @healthAgentMorningSkipNoUsable.
+  ///
+  /// In en, this message translates to:
+  /// **'health events present but no usable signals'**
+  String get healthAgentMorningSkipNoUsable;
+
+  /// No description provided for @healthAgentMorningMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning briefing · {dayKey}'**
+  String healthAgentMorningMemoryTitle(Object dayKey);
+
+  /// No description provided for @healthAgentMorningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning Briefing'**
+  String get healthAgentMorningTitle;
+
+  /// No description provided for @healthAgentMorningSleepShortTag.
+  ///
+  /// In en, this message translates to:
+  /// **' (short)'**
+  String get healthAgentMorningSleepShortTag;
+
+  /// No description provided for @healthAgentMorningSleepLongTag.
+  ///
+  /// In en, this message translates to:
+  /// **' (long)'**
+  String get healthAgentMorningSleepLongTag;
+
+  /// No description provided for @healthAgentMorningSleepLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Slept {hours}h{tag}'**
+  String healthAgentMorningSleepLine(Object hours, Object tag);
+
+  /// No description provided for @healthAgentMorningHrvLine.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV {value}ms'**
+  String healthAgentMorningHrvLine(Object value);
+
+  /// No description provided for @healthAgentMorningFinanceLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance: {items}'**
+  String healthAgentMorningFinanceLine(Object items);
+
+  /// No description provided for @healthAgentMorningPromptSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'You are HealthOS Morning Briefing. Given structured Health + Finance signals from the last 24 hours, write a single-sentence morning briefing in the user\'s tone (short, calm, factual). Use only the numbers provided. Do not add advice unless the numbers are clearly outliers. Reply in {language}.'**
+  String healthAgentMorningPromptSystem(Object language);
+
+  /// No description provided for @healthAgentMorningPromptStructuredSignals.
+  ///
+  /// In en, this message translates to:
+  /// **'Structured signals (use these numbers verbatim, do not change them):'**
+  String get healthAgentMorningPromptStructuredSignals;
+
+  /// No description provided for @healthAgentMorningPromptInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Write one calm, factual sentence (<= 30 words) that mentions each signal. No bullet points. No emojis.'**
+  String get healthAgentMorningPromptInstruction;
+
+  /// No description provided for @healthAgentMorningInsightSleepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get healthAgentMorningInsightSleepTitle;
+
+  /// No description provided for @healthAgentMorningInsightHrvTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV'**
+  String get healthAgentMorningInsightHrvTitle;
+
+  /// No description provided for @healthAgentMorningInsightFinanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get healthAgentMorningInsightFinanceTitle;
+
+  /// No description provided for @healthAgentMorningAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review briefing'**
+  String get healthAgentMorningAction;
+
+  /// No description provided for @healthAgentRecoverySkipInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'insufficient HRV data ({count} points)'**
+  String healthAgentRecoverySkipInsufficient(Object count);
+
+  /// No description provided for @healthAgentRecoverySkipNoDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'no sustained HRV decline detected'**
+  String get healthAgentRecoverySkipNoDecline;
+
+  /// No description provided for @healthAgentRecoveryMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery Alert · {dayKey}'**
+  String healthAgentRecoveryMemoryTitle(Object dayKey);
+
+  /// No description provided for @healthAgentRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery Alert'**
+  String get healthAgentRecoveryTitle;
+
+  /// No description provided for @healthAgentRecoverySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV has been below your baseline for {days} days ({recentMs} ms vs {baselineMs} ms average, {declinePct}% decline). Consider lighter activity today.'**
+  String healthAgentRecoverySummary(
+    Object baselineMs,
+    Object days,
+    Object declinePct,
+    Object recentMs,
+  );
+
+  /// No description provided for @healthAgentRecoveryNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV down {declinePct}% over {days} days. Consider lighter activity today.'**
+  String healthAgentRecoveryNotificationBody(Object days, Object declinePct);
+
+  /// No description provided for @healthAgentRecoveryInsightDeclineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV decline'**
+  String get healthAgentRecoveryInsightDeclineTitle;
+
+  /// No description provided for @healthAgentRecoveryInsightDeclineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days below baseline; {declinePct}% lower than usual.'**
+  String healthAgentRecoveryInsightDeclineBody(Object days, Object declinePct);
+
+  /// No description provided for @healthAgentRecoveryInsightAdjustmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested adjustment'**
+  String get healthAgentRecoveryInsightAdjustmentTitle;
+
+  /// No description provided for @healthAgentRecoveryInsightAdjustmentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Consider lighter activity today and watch recovery tomorrow.'**
+  String get healthAgentRecoveryInsightAdjustmentBody;
+
+  /// No description provided for @healthAgentRecoveryEvidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV trend'**
+  String get healthAgentRecoveryEvidenceLabel;
+
+  /// No description provided for @healthAgentRecoveryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review recovery alert'**
+  String get healthAgentRecoveryAction;
+
+  /// No description provided for @healthAgentWeeklySkipNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'no health data this week'**
+  String get healthAgentWeeklySkipNoData;
+
+  /// No description provided for @healthAgentWeeklySkipNoActionable.
+  ///
+  /// In en, this message translates to:
+  /// **'no actionable signals this week'**
+  String get healthAgentWeeklySkipNoActionable;
+
+  /// No description provided for @healthAgentWeeklyMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Summary · {dayKey}'**
+  String healthAgentWeeklyMemoryTitle(Object dayKey);
+
+  /// No description provided for @healthAgentWeeklyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Summary'**
+  String get healthAgentWeeklyTitle;
+
+  /// No description provided for @healthAgentWeeklyPartRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery {score}/100 ({verdict})'**
+  String healthAgentWeeklyPartRecovery(Object score, Object verdict);
+
+  /// No description provided for @healthAgentWeeklyPartAvgSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'avg sleep {hours}h'**
+  String healthAgentWeeklyPartAvgSleep(Object hours);
+
+  /// No description provided for @healthAgentWeeklyPartSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{steps} steps'**
+  String healthAgentWeeklyPartSteps(Object steps);
+
+  /// No description provided for @healthAgentWeeklyPartWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} workouts ({minutes} min)'**
+  String healthAgentWeeklyPartWorkouts(Object count, Object minutes);
+
+  /// No description provided for @healthAgentWeeklySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'This week: {details}.'**
+  String healthAgentWeeklySummary(Object details);
+
+  /// No description provided for @healthAgentWeeklyInsightRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get healthAgentWeeklyInsightRecoveryTitle;
+
+  /// No description provided for @healthAgentWeeklyInsightRecoveryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{score}/100{verdictSuffix}'**
+  String healthAgentWeeklyInsightRecoveryBody(
+    Object score,
+    Object verdictSuffix,
+  );
+
+  /// No description provided for @healthAgentWeeklyInsightSleepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get healthAgentWeeklyInsightSleepTitle;
+
+  /// No description provided for @healthAgentWeeklyInsightSleepBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Average {hours}h per night.'**
+  String healthAgentWeeklyInsightSleepBody(Object hours);
+
+  /// No description provided for @healthAgentWeeklyInsightActivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get healthAgentWeeklyInsightActivityTitle;
+
+  /// No description provided for @healthAgentWeeklyInsightActivityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{steps} steps this week.'**
+  String healthAgentWeeklyInsightActivityBody(Object steps);
+
+  /// No description provided for @healthAgentWeeklyInsightWorkoutsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workouts'**
+  String get healthAgentWeeklyInsightWorkoutsTitle;
+
+  /// No description provided for @healthAgentWeeklyInsightWorkoutsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} workouts, {minutes} minutes total.'**
+  String healthAgentWeeklyInsightWorkoutsBody(Object count, Object minutes);
+
+  /// No description provided for @healthAgentWeeklyEvidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly health rollup'**
+  String get healthAgentWeeklyEvidenceLabel;
+
+  /// No description provided for @healthAgentWeeklyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review weekly summary'**
+  String get healthAgentWeeklyAction;
+
+  /// No description provided for @executionAgentReviewSkipNoSignals.
+  ///
+  /// In en, this message translates to:
+  /// **'no execution signals to review'**
+  String get executionAgentReviewSkipNoSignals;
+
+  /// No description provided for @executionAgentReviewMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution review · {dayKey}'**
+  String executionAgentReviewMemoryTitle(Object dayKey);
+
+  /// No description provided for @executionAgentReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution review'**
+  String get executionAgentReviewTitle;
+
+  /// No description provided for @executionAgentReviewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution review: {details}.{sample}'**
+  String executionAgentReviewSummary(Object details, Object sample);
+
+  /// No description provided for @executionAgentReviewSummaryPartToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} today actions'**
+  String executionAgentReviewSummaryPartToday(Object count);
+
+  /// No description provided for @executionAgentReviewSummaryPartOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} open actions'**
+  String executionAgentReviewSummaryPartOpen(Object count);
+
+  /// No description provided for @executionAgentReviewSummaryPartProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active projects'**
+  String executionAgentReviewSummaryPartProjects(Object count);
+
+  /// No description provided for @executionAgentReviewSummaryPartCommitments.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active commitments'**
+  String executionAgentReviewSummaryPartCommitments(Object count);
+
+  /// No description provided for @executionAgentReviewSummaryPartProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} progress entries this week'**
+  String executionAgentReviewSummaryPartProgress(Object count);
+
+  /// No description provided for @executionAgentReviewSummaryPartBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} blocked'**
+  String executionAgentReviewSummaryPartBlocked(Object count);
+
+  /// No description provided for @executionAgentReviewSummaryPartDue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} due'**
+  String executionAgentReviewSummaryPartDue(Object count);
+
+  /// No description provided for @executionAgentReviewSummaryFirst.
+  ///
+  /// In en, this message translates to:
+  /// **' First: {title}.'**
+  String executionAgentReviewSummaryFirst(Object title);
+
+  /// No description provided for @executionAgentReviewInsightTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today focus'**
+  String get executionAgentReviewInsightTodayTitle;
+
+  /// No description provided for @executionAgentReviewInsightTodayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{todayCount} today-worthy actions out of {openCount} open actions.'**
+  String executionAgentReviewInsightTodayBody(
+    Object openCount,
+    Object todayCount,
+  );
+
+  /// No description provided for @executionAgentReviewInsightBlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked work'**
+  String get executionAgentReviewInsightBlockedTitle;
+
+  /// No description provided for @executionAgentReviewInsightBlockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} actions are blocked.'**
+  String executionAgentReviewInsightBlockedBody(Object count);
+
+  /// No description provided for @executionAgentReviewInsightDueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Due work'**
+  String get executionAgentReviewInsightDueTitle;
+
+  /// No description provided for @executionAgentReviewInsightDueBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} actions are due.'**
+  String executionAgentReviewInsightDueBody(Object count);
+
+  /// No description provided for @executionAgentReviewInsightProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly progress'**
+  String get executionAgentReviewInsightProgressTitle;
+
+  /// No description provided for @executionAgentReviewInsightProgressBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressCount} progress entries across {projectCount} active projects and {commitmentCount} active commitments.'**
+  String executionAgentReviewInsightProgressBody(
+    Object commitmentCount,
+    Object progressCount,
+    Object projectCount,
+  );
+
+  /// No description provided for @executionAgentReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review execution'**
+  String get executionAgentReviewAction;
+
+  /// No description provided for @knowledgeAgentReviewArtifactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Knowledge Review'**
+  String get knowledgeAgentReviewArtifactTitle;
+
+  /// No description provided for @knowledgeAgentReviewInsightDecisionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions due'**
+  String get knowledgeAgentReviewInsightDecisionsTitle;
+
+  /// No description provided for @knowledgeAgentReviewInsightDecisionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} decision review{plural} need attention.'**
+  String knowledgeAgentReviewInsightDecisionsBody(Object count, Object plural);
+
+  /// No description provided for @knowledgeAgentReviewInsightAssumptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale assumptions'**
+  String get knowledgeAgentReviewInsightAssumptionsTitle;
+
+  /// No description provided for @knowledgeAgentReviewInsightAssumptionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} assumption{plural} crossed the {days} day verification window.'**
+  String knowledgeAgentReviewInsightAssumptionsBody(
+    Object count,
+    Object days,
+    Object plural,
+  );
+
+  /// No description provided for @knowledgeAgentReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review knowledge items'**
+  String get knowledgeAgentReviewAction;
+
+  /// No description provided for @knowledgeAgentAssumptionArtifactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumption Review'**
+  String get knowledgeAgentAssumptionArtifactTitle;
+
+  /// No description provided for @knowledgeAgentAssumptionInsightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale assumptions'**
+  String get knowledgeAgentAssumptionInsightTitle;
+
+  /// No description provided for @knowledgeAgentAssumptionInsightBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} assumption{plural} crossed the {days} day verification window.'**
+  String knowledgeAgentAssumptionInsightBody(
+    Object count,
+    Object days,
+    Object plural,
+  );
+
+  /// No description provided for @knowledgeAgentAssumptionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review assumptions'**
+  String get knowledgeAgentAssumptionAction;
+
+  /// No description provided for @knowledgeAgentContradictionArtifactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contradiction Check'**
+  String get knowledgeAgentContradictionArtifactTitle;
+
+  /// No description provided for @knowledgeAgentContradictionInsightInvalidatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalidated assumptions'**
+  String get knowledgeAgentContradictionInsightInvalidatedTitle;
+
+  /// No description provided for @knowledgeAgentContradictionInsightInvalidatedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} decision{plural} cite assumptions that are no longer open.'**
+  String knowledgeAgentContradictionInsightInvalidatedBody(
+    Object count,
+    Object plural,
+  );
+
+  /// No description provided for @knowledgeAgentContradictionInsightPrincipleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Principle drift'**
+  String get knowledgeAgentContradictionInsightPrincipleTitle;
+
+  /// No description provided for @knowledgeAgentContradictionInsightPrincipleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} recent item{plural} may conflict with active principles.'**
+  String knowledgeAgentContradictionInsightPrincipleBody(
+    Object count,
+    Object plural,
+  );
+
+  /// No description provided for @knowledgeAgentContradictionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review contradictions'**
+  String get knowledgeAgentContradictionAction;
+
+  /// No description provided for @knowledgeAgentRoutineArtifactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine Due'**
+  String get knowledgeAgentRoutineArtifactTitle;
+
+  /// No description provided for @knowledgeAgentRoutineInsightOverdueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue routines'**
+  String get knowledgeAgentRoutineInsightOverdueTitle;
+
+  /// No description provided for @knowledgeAgentRoutineInsightOverdueBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} routine{plural} are overdue.'**
+  String knowledgeAgentRoutineInsightOverdueBody(Object count, Object plural);
+
+  /// No description provided for @knowledgeAgentRoutineInsightUpcomingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming routines'**
+  String get knowledgeAgentRoutineInsightUpcomingTitle;
+
+  /// No description provided for @knowledgeAgentRoutineInsightUpcomingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} routine{plural} are due within {days} days.'**
+  String knowledgeAgentRoutineInsightUpcomingBody(
+    Object count,
+    Object days,
+    Object plural,
+  );
+
+  /// No description provided for @knowledgeAgentRoutineAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review routines'**
+  String get knowledgeAgentRoutineAction;
+
+  /// No description provided for @knowledgeAgentInboxSkipNoNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'no untriaged notes'**
+  String get knowledgeAgentInboxSkipNoNotes;
+
+  /// No description provided for @knowledgeAgentInboxSummaryNoSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed {noteCount} notes and found no suggestions worth proposing.'**
+  String knowledgeAgentInboxSummaryNoSuggestions(Object noteCount);
+
+  /// No description provided for @knowledgeAgentInboxSummarySuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated {proposalCount} suggestions for {noteCount} notes.'**
+  String knowledgeAgentInboxSummarySuggestions(
+    Object noteCount,
+    Object proposalCount,
+  );
+
+  /// No description provided for @knowledgeAgentInboxArtifactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox Triage'**
+  String get knowledgeAgentInboxArtifactTitle;
+
+  /// No description provided for @knowledgeAgentInboxInsightSuggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New suggestions'**
+  String get knowledgeAgentInboxInsightSuggestionsTitle;
+
+  /// No description provided for @knowledgeAgentInboxInsightSuggestionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{proposalCount} suggestion{proposalPlural} across {noteCount} note{notePlural}.'**
+  String knowledgeAgentInboxInsightSuggestionsBody(
+    Object noteCount,
+    Object notePlural,
+    Object proposalCount,
+    Object proposalPlural,
+  );
+
+  /// No description provided for @knowledgeAgentInboxInsightKindBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} {label}.'**
+  String knowledgeAgentInboxInsightKindBody(Object count, Object label);
+
+  /// No description provided for @knowledgeAgentInboxUntitledNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled note'**
+  String get knowledgeAgentInboxUntitledNote;
+
+  /// No description provided for @knowledgeAgentInboxProposalClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'Classification'**
+  String get knowledgeAgentInboxProposalClassification;
+
+  /// No description provided for @knowledgeAgentInboxProposalTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get knowledgeAgentInboxProposalTags;
+
+  /// No description provided for @knowledgeAgentInboxProposalDecisionLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision links'**
+  String get knowledgeAgentInboxProposalDecisionLinks;
+
+  /// No description provided for @knowledgeAgentInboxProposalSuggestionSingular.
+  ///
+  /// In en, this message translates to:
+  /// **'suggestion'**
+  String get knowledgeAgentInboxProposalSuggestionSingular;
+
+  /// No description provided for @knowledgeAgentInboxProposalSuggestionPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'suggestions'**
+  String get knowledgeAgentInboxProposalSuggestionPlural;
+
+  /// No description provided for @knowledgeAgentInboxAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review inbox suggestions'**
+  String get knowledgeAgentInboxAction;
 }
 
 class _AppLocalizationsDelegate

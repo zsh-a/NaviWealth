@@ -10296,4 +10296,855 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionProposalRowSource => '来源';
+
+  @override
+  String get agentOutputLanguageEnglish => '英文';
+
+  @override
+  String get agentOutputLanguageChinese => '中文';
+
+  @override
+  String get financeAgentWeeklyWealthSkipNoSnapshot => '暂无可复盘的财务快照';
+
+  @override
+  String financeAgentWeeklyWealthMemoryTitle(Object dayKey) {
+    return '每周财富复盘 · $dayKey';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthTitle => '每周财富复盘';
+
+  @override
+  String financeAgentWeeklyWealthSummary(Object details) {
+    return '每周财富复盘：$details。';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartNetWorth(Object value) {
+    return '净资产 $value';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartAssets(Object value) {
+    return '资产 $value';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartLiabilities(Object value) {
+    return '负债 $value';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartLargestAllocation(
+    Object amount,
+    Object category,
+    Object ratio,
+  ) {
+    return '最大配置 $category $amount（$ratio）';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartStalePrices(Object count) {
+    return '$count 个价格过期';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartFxGaps(Object count) {
+    return '$count 个汇率缺口';
+  }
+
+  @override
+  String get financeAgentAssetCategoryStock => '股票';
+
+  @override
+  String get financeAgentAssetCategoryEtf => 'ETF';
+
+  @override
+  String get financeAgentAssetCategoryBondsAndFunds => '债券和基金';
+
+  @override
+  String get financeAgentAssetCategoryCash => '现金';
+
+  @override
+  String get financeAgentAssetCategoryCrypto => '加密资产';
+
+  @override
+  String get financeAgentAssetCategoryRealEstate => '房地产';
+
+  @override
+  String get financeAgentAssetCategoryVehicle => '车辆';
+
+  @override
+  String get financeAgentAssetCategoryLiability => '负债';
+
+  @override
+  String get financeAgentWeeklyWealthInsightNetWorthTitle => '净资产';
+
+  @override
+  String financeAgentWeeklyWealthInsightNetWorthBody(
+    Object assets,
+    Object liabilities,
+    Object netWorth,
+  ) {
+    return '净资产 $netWorth，由 $assets 资产和 $liabilities 负债构成。';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthInsightLargestAllocationTitle => '最大配置';
+
+  @override
+  String financeAgentWeeklyWealthInsightLargestAllocationBody(
+    Object amount,
+    Object category,
+    Object ratio,
+  ) {
+    return '$category 为 $amount，约占资产 $ratio。';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthInsightPriceFreshnessTitle => '价格新鲜度';
+
+  @override
+  String financeAgentWeeklyWealthInsightPriceFreshnessBody(Object count) {
+    return '$count 个持仓价格已过期。';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthInsightFxCoverageTitle => '汇率覆盖';
+
+  @override
+  String financeAgentWeeklyWealthInsightFxCoverageBody(Object count) {
+    return '$count 个持仓因缺少汇率换算被排除。';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthAction => '查看财富复盘';
+
+  @override
+  String get financeAgentCashflowSkipNoAnomaly => '未检测到现金流异常';
+
+  @override
+  String financeAgentCashflowMemoryTitle(Object dayKey) {
+    return '现金流异常复盘 · $dayKey';
+  }
+
+  @override
+  String get financeAgentCashflowTitle => '现金流异常复盘';
+
+  @override
+  String get financeAgentCashflowDirectionHigher => '更高';
+
+  @override
+  String get financeAgentCashflowDirectionLower => '更低';
+
+  @override
+  String financeAgentCashflowSummary(Object delta) {
+    return '现金流异常复盘：本月支出预测较过去 3 个月均值为 $delta。';
+  }
+
+  @override
+  String get financeAgentCashflowInsightProjectionTitle => '月度支出预测';
+
+  @override
+  String financeAgentCashflowInsightProjectionBody(
+    Object delta,
+    Object direction,
+  ) {
+    return '当前月支出预计比过去 3 个月均值$direction $delta。';
+  }
+
+  @override
+  String get financeAgentCashflowInsightDetectorTitle => '检测来源';
+
+  @override
+  String get financeAgentCashflowInsightDetectorBody =>
+      '该结果来自 get_anomaly_flags 使用的本机异常检测器。';
+
+  @override
+  String get financeAgentCashflowEvidenceLabel => '月度支出异常';
+
+  @override
+  String get financeAgentCashflowAction => '查看异常';
+
+  @override
+  String get financeAgentFireSkipNoPlan => '尚未配置 FIRE 计划';
+
+  @override
+  String get financeAgentFireSkipNoDrift => '未检测到 FIRE 计划偏移';
+
+  @override
+  String financeAgentFireMemoryTitle(Object dayKey) {
+    return 'FIRE 计划偏移监控 · $dayKey';
+  }
+
+  @override
+  String get financeAgentFireTitle => 'FIRE 计划偏移监控';
+
+  @override
+  String financeAgentFireSummary(
+    Object cashBucketMonths,
+    Object headline,
+    Object safety,
+    Object withdrawalRate,
+  ) {
+    return 'FIRE 计划偏移监控：$headline。安全等级 $safety，提取率 $withdrawalRate，现金桶 $cashBucketMonths 个月。';
+  }
+
+  @override
+  String get financeAgentFireInsightPlanSnapshotTitle => '计划快照';
+
+  @override
+  String financeAgentFireInsightPlanSnapshotBody(
+    Object cashBucketMonths,
+    Object safeRate,
+    Object targetCashBucketMonths,
+    Object withdrawalRate,
+  ) {
+    return '提取率 $withdrawalRate vs 安全提取率 $safeRate，现金桶 $cashBucketMonths / $targetCashBucketMonths 个月。';
+  }
+
+  @override
+  String financeAgentFireEvidenceReviewLabel(Object periodKey) {
+    return 'FIRE 复盘 $periodKey';
+  }
+
+  @override
+  String get financeAgentFireAction => '查看 FIRE 计划';
+
+  @override
+  String get financeAgentFireFindingCashBucketBelowTargetTitle => '现金桶低于目标';
+
+  @override
+  String get financeAgentFireFindingWithdrawalRateAboveSwrTitle => '提取率高于安全线';
+
+  @override
+  String get financeAgentFireFindingWithdrawalRateInfiniteTitle => '提取率不可用';
+
+  @override
+  String get financeAgentFireFindingEtaUnreachableTitle => '无法到达 FIRE 目标';
+
+  @override
+  String get financeAgentFireFindingCurrencyGapTitle => '汇率覆盖缺口';
+
+  @override
+  String get financeAgentFireFindingUnmappedHoldingsTitle => '未映射 FIRE 持仓';
+
+  @override
+  String get financeAgentFireFindingStressDangerTitle => '压力测试危险';
+
+  @override
+  String get financeAgentFireFindingStressCautiousTitle => '压力测试需关注';
+
+  @override
+  String get financeAgentFireFindingNetWorthBrokenTitle => '净资产低于零';
+
+  @override
+  String financeAgentFireFindingCashBucketBelowTargetBody(Object months) {
+    return '现金续航低于已配置的 $months 个月目标。';
+  }
+
+  @override
+  String financeAgentFireFindingWithdrawalRateAboveSwrBody(Object rate) {
+    return '提取率高于安全提取率 $rate。';
+  }
+
+  @override
+  String get financeAgentFireFindingWithdrawalRateInfiniteBody =>
+      '存在年度支出，但可投资资产为零。';
+
+  @override
+  String get financeAgentFireFindingEtaUnreachableBody =>
+      '预测在建模周期内未达到 FIRE 目标。';
+
+  @override
+  String financeAgentFireFindingCurrencyGapBody(Object count) {
+    return '$count 个持仓因缺少汇率换算被排除。';
+  }
+
+  @override
+  String financeAgentFireFindingUnmappedHoldingsBody(Object count) {
+    return '$count 个持仓尚未映射到 FIRE 桶。';
+  }
+
+  @override
+  String financeAgentFireFindingStressDangerBody(Object scenario) {
+    return '压力场景 $scenario 会击穿计划。';
+  }
+
+  @override
+  String financeAgentFireFindingStressCautiousBody(Object scenario) {
+    return '压力场景 $scenario 需要关注。';
+  }
+
+  @override
+  String get financeAgentFireFindingNetWorthBrokenBody => '净资产低于零，FIRE 计划需要复核。';
+
+  @override
+  String financeAgentFireFindingDefaultBody(Object code) {
+    return '复核发现 $code。';
+  }
+
+  @override
+  String get financeAgentOptionsSkipNoScan => '暂无期权收入扫描';
+
+  @override
+  String get financeAgentOptionsSkipNoFinding => '未发现期权收入风险';
+
+  @override
+  String financeAgentOptionsMemoryTitle(Object dayKey) {
+    return '期权收入风险复盘 · $dayKey';
+  }
+
+  @override
+  String get financeAgentOptionsTitle => '期权收入风险复盘';
+
+  @override
+  String financeAgentOptionsSummary(
+    Object elevatedCount,
+    Object issueTitle,
+    Object opportunityCount,
+    Object scanId,
+  ) {
+    return '期权收入风险复盘：$scanId 中 $opportunityCount 个机会存在「$issueTitle」，其中 $elevatedCount 个为高风险合约。';
+  }
+
+  @override
+  String get financeAgentOptionsIssueStaleScanTitle => '扫描数据已过期';
+
+  @override
+  String financeAgentOptionsIssueStaleScanBody(Object ageHours) {
+    return '最新期权收入扫描已是 $ageHours 小时前；报价和 Greeks 可能不再反映市场。';
+  }
+
+  @override
+  String get financeAgentOptionsIssueElevatedRiskTitle => '存在高风险合约';
+
+  @override
+  String financeAgentOptionsIssueElevatedRiskBody(Object count) {
+    return '$count 个缓存机会在交易复核前已被标记为高风险。';
+  }
+
+  @override
+  String get financeAgentOptionsIssueQuoteQualityTitle => '报价质量需要复核';
+
+  @override
+  String financeAgentOptionsIssueQuoteQualityBody(
+    Object thinBookCount,
+    Object wideSpreadCount,
+  ) {
+    return '$wideSpreadCount 个机会买卖价差高于 8%，$thinBookCount 个成交量或未平仓量偏薄。';
+  }
+
+  @override
+  String get financeAgentOptionsIssueNarrowCushionTitle => '安全边际偏窄';
+
+  @override
+  String financeAgentOptionsIssueNarrowCushionBody(Object count) {
+    return '$count 个机会距离盈亏平衡的安全边际小于 5%。';
+  }
+
+  @override
+  String get financeAgentOptionsIssueMissingGreeksTitle => '风险输入不完整';
+
+  @override
+  String financeAgentOptionsIssueMissingGreeksBody(Object count) {
+    return '$count 个机会缺少报价源中的 delta 或隐含波动率。';
+  }
+
+  @override
+  String get financeAgentOptionsIssueConcentrationTitle => '标的集中度偏高';
+
+  @override
+  String financeAgentOptionsIssueConcentrationBody(
+    Object count,
+    Object opportunityCount,
+    Object underlying,
+  ) {
+    return '$opportunityCount 个机会中有 $count 个绑定到 $underlying。';
+  }
+
+  @override
+  String get financeAgentOptionsIssueModerateClusterTitle => '中等风险机会集中';
+
+  @override
+  String financeAgentOptionsIssueModerateClusterBody(
+    Object moderateCount,
+    Object opportunityCount,
+  ) {
+    return '$opportunityCount 个机会中有 $moderateCount 个为中等风险；使用扫描前请复核仓位大小。';
+  }
+
+  @override
+  String get financeAgentOptionsInsightScanSnapshotTitle => '扫描快照';
+
+  @override
+  String financeAgentOptionsInsightScanSnapshotBody(
+    Object opportunityCount,
+    Object riskMix,
+  ) {
+    return '$opportunityCount 个缓存机会，风险结构 $riskMix。';
+  }
+
+  @override
+  String financeAgentOptionsRiskMix(
+    Object elevated,
+    Object low,
+    Object moderate,
+  ) {
+    return '$low 低 / $moderate 中 / $elevated 高';
+  }
+
+  @override
+  String financeAgentOptionsEvidenceScanLabel(Object scanId) {
+    return '期权收入扫描 $scanId';
+  }
+
+  @override
+  String get financeAgentOptionsAction => '查看期权扫描';
+
+  @override
+  String get healthAgentMorningSkipNoHealth => '过去 24 小时没有健康信号';
+
+  @override
+  String get healthAgentMorningSkipNoUsable => '有健康事件但没有可用信号';
+
+  @override
+  String healthAgentMorningMemoryTitle(Object dayKey) {
+    return '晨间简报 · $dayKey';
+  }
+
+  @override
+  String get healthAgentMorningTitle => '晨间简报';
+
+  @override
+  String get healthAgentMorningSleepShortTag => '（偏短）';
+
+  @override
+  String get healthAgentMorningSleepLongTag => '（偏长）';
+
+  @override
+  String healthAgentMorningSleepLine(Object hours, Object tag) {
+    return '睡眠 $hours 小时$tag';
+  }
+
+  @override
+  String healthAgentMorningHrvLine(Object value) {
+    return 'HRV $value ms';
+  }
+
+  @override
+  String healthAgentMorningFinanceLine(Object items) {
+    return '财务：$items';
+  }
+
+  @override
+  String healthAgentMorningPromptSystem(Object language) {
+    return '你是 HealthOS 晨间简报。根据过去 24 小时的结构化健康和财务信号，写一句符合用户语气的晨间简报（简短、平静、事实化）。只使用提供的数字。除非数字明显异常，否则不要添加建议。请用$language回复。';
+  }
+
+  @override
+  String get healthAgentMorningPromptStructuredSignals =>
+      '结构化信号（原样使用这些数字，不要改写）：';
+
+  @override
+  String get healthAgentMorningPromptInstruction =>
+      '写一句平静、事实化的句子（不超过 30 个词或 45 个汉字），提到每个信号。不要列点。不要使用表情。';
+
+  @override
+  String get healthAgentMorningInsightSleepTitle => '睡眠';
+
+  @override
+  String get healthAgentMorningInsightHrvTitle => 'HRV';
+
+  @override
+  String get healthAgentMorningInsightFinanceTitle => '财务';
+
+  @override
+  String get healthAgentMorningAction => '查看简报';
+
+  @override
+  String healthAgentRecoverySkipInsufficient(Object count) {
+    return 'HRV 数据不足（$count 个点）';
+  }
+
+  @override
+  String get healthAgentRecoverySkipNoDecline => '未检测到持续 HRV 下降';
+
+  @override
+  String healthAgentRecoveryMemoryTitle(Object dayKey) {
+    return '恢复提醒 · $dayKey';
+  }
+
+  @override
+  String get healthAgentRecoveryTitle => '恢复提醒';
+
+  @override
+  String healthAgentRecoverySummary(
+    Object baselineMs,
+    Object days,
+    Object declinePct,
+    Object recentMs,
+  ) {
+    return 'HRV 已连续 $days 天低于基线（近期 $recentMs ms vs 平均 $baselineMs ms，下降 $declinePct%）。今天可考虑降低活动强度。';
+  }
+
+  @override
+  String healthAgentRecoveryNotificationBody(Object days, Object declinePct) {
+    return 'HRV 在 $days 天内下降 $declinePct%。今天可考虑降低活动强度。';
+  }
+
+  @override
+  String get healthAgentRecoveryInsightDeclineTitle => 'HRV 下降';
+
+  @override
+  String healthAgentRecoveryInsightDeclineBody(Object days, Object declinePct) {
+    return '连续 $days 天低于基线；比平时低 $declinePct%。';
+  }
+
+  @override
+  String get healthAgentRecoveryInsightAdjustmentTitle => '调整建议';
+
+  @override
+  String get healthAgentRecoveryInsightAdjustmentBody =>
+      '今天可考虑降低活动强度，并观察明天恢复情况。';
+
+  @override
+  String get healthAgentRecoveryEvidenceLabel => 'HRV 趋势';
+
+  @override
+  String get healthAgentRecoveryAction => '查看恢复提醒';
+
+  @override
+  String get healthAgentWeeklySkipNoData => '本周没有健康数据';
+
+  @override
+  String get healthAgentWeeklySkipNoActionable => '本周没有可行动信号';
+
+  @override
+  String healthAgentWeeklyMemoryTitle(Object dayKey) {
+    return '每周健康总结 · $dayKey';
+  }
+
+  @override
+  String get healthAgentWeeklyTitle => '每周健康总结';
+
+  @override
+  String healthAgentWeeklyPartRecovery(Object score, Object verdict) {
+    return '恢复 $score/100（$verdict）';
+  }
+
+  @override
+  String healthAgentWeeklyPartAvgSleep(Object hours) {
+    return '平均睡眠 $hours 小时';
+  }
+
+  @override
+  String healthAgentWeeklyPartSteps(Object steps) {
+    return '$steps 步';
+  }
+
+  @override
+  String healthAgentWeeklyPartWorkouts(Object count, Object minutes) {
+    return '$count 次训练（$minutes 分钟）';
+  }
+
+  @override
+  String healthAgentWeeklySummary(Object details) {
+    return '本周：$details。';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightRecoveryTitle => '恢复';
+
+  @override
+  String healthAgentWeeklyInsightRecoveryBody(
+    Object score,
+    Object verdictSuffix,
+  ) {
+    return '$score/100$verdictSuffix';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightSleepTitle => '睡眠';
+
+  @override
+  String healthAgentWeeklyInsightSleepBody(Object hours) {
+    return '平均每晚 $hours 小时。';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightActivityTitle => '活动';
+
+  @override
+  String healthAgentWeeklyInsightActivityBody(Object steps) {
+    return '本周 $steps 步。';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightWorkoutsTitle => '训练';
+
+  @override
+  String healthAgentWeeklyInsightWorkoutsBody(Object count, Object minutes) {
+    return '$count 次训练，共 $minutes 分钟。';
+  }
+
+  @override
+  String get healthAgentWeeklyEvidenceLabel => '每周健康汇总';
+
+  @override
+  String get healthAgentWeeklyAction => '查看每周总结';
+
+  @override
+  String get executionAgentReviewSkipNoSignals => '暂无可复盘的执行信号';
+
+  @override
+  String executionAgentReviewMemoryTitle(Object dayKey) {
+    return '执行复盘 · $dayKey';
+  }
+
+  @override
+  String get executionAgentReviewTitle => '执行复盘';
+
+  @override
+  String executionAgentReviewSummary(Object details, Object sample) {
+    return '执行复盘：$details。$sample';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartToday(Object count) {
+    return '$count 个今日行动';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartOpen(Object count) {
+    return '$count 个未完成行动';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartProjects(Object count) {
+    return '$count 个活跃项目';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartCommitments(Object count) {
+    return '$count 个活跃承诺';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartProgress(Object count) {
+    return '本周 $count 条进展';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartBlocked(Object count) {
+    return '$count 个阻塞';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartDue(Object count) {
+    return '$count 个到期';
+  }
+
+  @override
+  String executionAgentReviewSummaryFirst(Object title) {
+    return '第一项：$title。';
+  }
+
+  @override
+  String get executionAgentReviewInsightTodayTitle => '今日焦点';
+
+  @override
+  String executionAgentReviewInsightTodayBody(
+    Object openCount,
+    Object todayCount,
+  ) {
+    return '$openCount 个未完成行动中，有 $todayCount 个值得今天处理。';
+  }
+
+  @override
+  String get executionAgentReviewInsightBlockedTitle => '阻塞事项';
+
+  @override
+  String executionAgentReviewInsightBlockedBody(Object count) {
+    return '$count 个行动被阻塞。';
+  }
+
+  @override
+  String get executionAgentReviewInsightDueTitle => '到期事项';
+
+  @override
+  String executionAgentReviewInsightDueBody(Object count) {
+    return '$count 个行动已到期。';
+  }
+
+  @override
+  String get executionAgentReviewInsightProgressTitle => '每周进展';
+
+  @override
+  String executionAgentReviewInsightProgressBody(
+    Object commitmentCount,
+    Object progressCount,
+    Object projectCount,
+  ) {
+    return '$projectCount 个活跃项目和 $commitmentCount 个活跃承诺下有 $progressCount 条进展。';
+  }
+
+  @override
+  String get executionAgentReviewAction => '查看执行复盘';
+
+  @override
+  String get knowledgeAgentReviewArtifactTitle => '每周知识复盘';
+
+  @override
+  String get knowledgeAgentReviewInsightDecisionsTitle => '到期决策';
+
+  @override
+  String knowledgeAgentReviewInsightDecisionsBody(Object count, Object plural) {
+    return '$count 个决策复盘需要关注。';
+  }
+
+  @override
+  String get knowledgeAgentReviewInsightAssumptionsTitle => '过期假设';
+
+  @override
+  String knowledgeAgentReviewInsightAssumptionsBody(
+    Object count,
+    Object days,
+    Object plural,
+  ) {
+    return '$count 个假设已超过 $days 天验证窗口。';
+  }
+
+  @override
+  String get knowledgeAgentReviewAction => '查看知识事项';
+
+  @override
+  String get knowledgeAgentAssumptionArtifactTitle => '假设复盘';
+
+  @override
+  String get knowledgeAgentAssumptionInsightTitle => '过期假设';
+
+  @override
+  String knowledgeAgentAssumptionInsightBody(
+    Object count,
+    Object days,
+    Object plural,
+  ) {
+    return '$count 个假设已超过 $days 天验证窗口。';
+  }
+
+  @override
+  String get knowledgeAgentAssumptionAction => '查看假设';
+
+  @override
+  String get knowledgeAgentContradictionArtifactTitle => '矛盾检查';
+
+  @override
+  String get knowledgeAgentContradictionInsightInvalidatedTitle => '已失效假设';
+
+  @override
+  String knowledgeAgentContradictionInsightInvalidatedBody(
+    Object count,
+    Object plural,
+  ) {
+    return '$count 个决策引用了不再开放的假设。';
+  }
+
+  @override
+  String get knowledgeAgentContradictionInsightPrincipleTitle => '原则漂移';
+
+  @override
+  String knowledgeAgentContradictionInsightPrincipleBody(
+    Object count,
+    Object plural,
+  ) {
+    return '$count 个近期项目可能与活跃原则冲突。';
+  }
+
+  @override
+  String get knowledgeAgentContradictionAction => '查看矛盾项';
+
+  @override
+  String get knowledgeAgentRoutineArtifactTitle => '例行事项到期';
+
+  @override
+  String get knowledgeAgentRoutineInsightOverdueTitle => '逾期例行事项';
+
+  @override
+  String knowledgeAgentRoutineInsightOverdueBody(Object count, Object plural) {
+    return '$count 个例行事项已逾期。';
+  }
+
+  @override
+  String get knowledgeAgentRoutineInsightUpcomingTitle => '即将到期例行事项';
+
+  @override
+  String knowledgeAgentRoutineInsightUpcomingBody(
+    Object count,
+    Object days,
+    Object plural,
+  ) {
+    return '$count 个例行事项将在 $days 天内到期。';
+  }
+
+  @override
+  String get knowledgeAgentRoutineAction => '查看例行事项';
+
+  @override
+  String get knowledgeAgentInboxSkipNoNotes => '没有待 triage 的 note';
+
+  @override
+  String knowledgeAgentInboxSummaryNoSuggestions(Object noteCount) {
+    return '已查看 $noteCount 条 note，未找到值得提议的内容。';
+  }
+
+  @override
+  String knowledgeAgentInboxSummarySuggestions(
+    Object noteCount,
+    Object proposalCount,
+  ) {
+    return '为 $noteCount 条 note 生成了 $proposalCount 条建议。';
+  }
+
+  @override
+  String get knowledgeAgentInboxArtifactTitle => 'Inbox Triage';
+
+  @override
+  String get knowledgeAgentInboxInsightSuggestionsTitle => '新建议';
+
+  @override
+  String knowledgeAgentInboxInsightSuggestionsBody(
+    Object noteCount,
+    Object notePlural,
+    Object proposalCount,
+    Object proposalPlural,
+  ) {
+    return '$noteCount 条 note 中共有 $proposalCount 条建议。';
+  }
+
+  @override
+  String knowledgeAgentInboxInsightKindBody(Object count, Object label) {
+    return '$count 条建议。';
+  }
+
+  @override
+  String get knowledgeAgentInboxUntitledNote => '未命名 note';
+
+  @override
+  String get knowledgeAgentInboxProposalClassification => '分类';
+
+  @override
+  String get knowledgeAgentInboxProposalTags => '标签';
+
+  @override
+  String get knowledgeAgentInboxProposalDecisionLinks => '关联决策';
+
+  @override
+  String get knowledgeAgentInboxProposalSuggestionSingular => '建议';
+
+  @override
+  String get knowledgeAgentInboxProposalSuggestionPlural => '建议';
+
+  @override
+  String get knowledgeAgentInboxAction => '查看 Inbox 建议';
 }

@@ -24,6 +24,7 @@ library;
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -32,6 +33,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/inbox_triage_classifier.dart' show InboxTriageClassifier;
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
@@ -76,6 +78,7 @@ class InboxTriageAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final l10n = agentL10n(ctx.ref);
     final triage = await ctx.ref.read(inboxTriageRepositoryProvider.future);
     // Test override wins; otherwise resolve the LLM-vs-heuristic seam.
     final pinned = classifier;
@@ -91,7 +94,7 @@ class InboxTriageAgent implements Agent {
         agentId: kKnowledgeInboxTriageAgentId,
         startedAt: start,
         finishedAt: finished,
-        reason: 'no untriaged notes',
+        reason: l10n.knowledgeAgentInboxSkipNoNotes,
         traceId: source.traceId,
       );
     }
@@ -127,8 +130,8 @@ class InboxTriageAgent implements Agent {
     }
 
     final summary = emitted == 0
-        ? '看了 ${untriaged.length} 条 note,没找到值得提议的'
-        : '为 ${untriaged.length} 条 note 生成了 $emitted 条建议';
+        ? l10n.knowledgeAgentInboxSummaryNoSuggestions(untriaged.length)
+        : l10n.knowledgeAgentInboxSummarySuggestions(emitted, untriaged.length);
     String? artifactId;
     if (emitted > 0) {
       final dayKey = AppFormatters.utcDayKey(start);
@@ -146,6 +149,7 @@ class InboxTriageAgent implements Agent {
           emittedProposals: emitted,
           items: artifactItems,
           traceId: source.traceId,
+          l10n: l10n,
         ),
       );
     }
@@ -174,6 +178,7 @@ class InboxTriageAgent implements Agent {
     required int emittedProposals,
     required List<_InboxTriageArtifactItem> items,
     required String? traceId,
+    required AppLocalizations l10n,
   }) {
     final byKind = <InboxProposalKind, int>{};
     for (final item in items) {
@@ -188,14 +193,17 @@ class InboxTriageAgent implements Agent {
       domain: 'knowledge',
       kind: AgentArtifactKind.review,
       severity: AgentArtifactSeverity.info,
-      title: 'Inbox Triage',
+      title: l10n.knowledgeAgentInboxArtifactTitle,
       summary: summary,
       insights: <AgentInsight>[
         AgentInsight(
-          title: 'New suggestions',
-          body:
-              '$emittedProposals suggestion${emittedProposals == 1 ? '' : 's'}'
-              ' across ${items.length} note${items.length == 1 ? '' : 's'}.',
+          title: l10n.knowledgeAgentInboxInsightSuggestionsTitle,
+          body: l10n.knowledgeAgentInboxInsightSuggestionsBody(
+            emittedProposals,
+            emittedProposals == 1 ? '' : 's',
+            items.length,
+            items.length == 1 ? '' : 's',
+          ),
           payload: <String, Object?>{
             'scanned_notes': scannedNotes,
             'emitted_proposals': emittedProposals,
@@ -204,9 +212,13 @@ class InboxTriageAgent implements Agent {
         ),
         for (final entry in byKind.entries)
           AgentInsight(
-            title: _proposalKindLabel(entry.key),
-            body:
-                '${entry.value} ${entry.value == 1 ? 'suggestion' : 'suggestions'}.',
+            title: _proposalKindLabel(l10n, entry.key),
+            body: l10n.knowledgeAgentInboxInsightKindBody(
+              entry.value,
+              entry.value == 1
+                  ? l10n.knowledgeAgentInboxProposalSuggestionSingular
+                  : l10n.knowledgeAgentInboxProposalSuggestionPlural,
+            ),
             payload: <String, Object?>{
               'proposal_kind': entry.key.wire,
               'count': entry.value,
@@ -218,7 +230,9 @@ class InboxTriageAgent implements Agent {
           AgentEvidenceRef(
             type: 'knowledge_note',
             id: item.note.id,
-            label: item.note.title.isEmpty ? 'Untitled note' : item.note.title,
+            label: item.note.title.isEmpty
+                ? l10n.knowledgeAgentInboxUntitledNote
+                : item.note.title,
             payload: <String, Object?>{
               'proposal_count': item.proposals.length,
               'proposal_kinds': item.proposals
@@ -230,7 +244,7 @@ class InboxTriageAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
-          label: 'Review inbox suggestions',
+          label: l10n.knowledgeAgentInboxAction,
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
@@ -250,11 +264,14 @@ class _InboxTriageArtifactItem {
   final List<InboxProposal> proposals;
 }
 
-String _proposalKindLabel(InboxProposalKind kind) => switch (kind) {
-  InboxProposalKind.classification => 'Classification',
-  InboxProposalKind.tags => 'Tags',
-  InboxProposalKind.linkToDecision => 'Decision links',
-};
+String _proposalKindLabel(AppLocalizations l10n, InboxProposalKind kind) =>
+    switch (kind) {
+      InboxProposalKind.classification =>
+        l10n.knowledgeAgentInboxProposalClassification,
+      InboxProposalKind.tags => l10n.knowledgeAgentInboxProposalTags,
+      InboxProposalKind.linkToDecision =>
+        l10n.knowledgeAgentInboxProposalDecisionLinks,
+    };
 
 abstract class InboxTriageSourceReader {
   Future<InboxTriageSourceSnapshot> read(AgentContext ctx);

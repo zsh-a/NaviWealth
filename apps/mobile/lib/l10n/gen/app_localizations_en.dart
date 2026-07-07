@@ -10785,4 +10785,884 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProposalRowSource => 'Source';
+
+  @override
+  String get agentOutputLanguageEnglish => 'English';
+
+  @override
+  String get agentOutputLanguageChinese => 'Chinese';
+
+  @override
+  String get financeAgentWeeklyWealthSkipNoSnapshot =>
+      'no finance snapshot to review';
+
+  @override
+  String financeAgentWeeklyWealthMemoryTitle(Object dayKey) {
+    return 'Weekly wealth review · $dayKey';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthTitle => 'Weekly Wealth Review';
+
+  @override
+  String financeAgentWeeklyWealthSummary(Object details) {
+    return 'Weekly wealth review: $details.';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartNetWorth(Object value) {
+    return 'Net worth $value';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartAssets(Object value) {
+    return 'assets $value';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartLiabilities(Object value) {
+    return 'liabilities $value';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartLargestAllocation(
+    Object amount,
+    Object category,
+    Object ratio,
+  ) {
+    return 'largest allocation $category $amount ($ratio)';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartStalePrices(Object count) {
+    return '$count stale prices';
+  }
+
+  @override
+  String financeAgentWeeklyWealthPartFxGaps(Object count) {
+    return '$count FX gaps';
+  }
+
+  @override
+  String get financeAgentAssetCategoryStock => 'stocks';
+
+  @override
+  String get financeAgentAssetCategoryEtf => 'ETFs';
+
+  @override
+  String get financeAgentAssetCategoryBondsAndFunds => 'bonds and funds';
+
+  @override
+  String get financeAgentAssetCategoryCash => 'cash';
+
+  @override
+  String get financeAgentAssetCategoryCrypto => 'crypto';
+
+  @override
+  String get financeAgentAssetCategoryRealEstate => 'real estate';
+
+  @override
+  String get financeAgentAssetCategoryVehicle => 'vehicles';
+
+  @override
+  String get financeAgentAssetCategoryLiability => 'liabilities';
+
+  @override
+  String get financeAgentWeeklyWealthInsightNetWorthTitle => 'Net worth';
+
+  @override
+  String financeAgentWeeklyWealthInsightNetWorthBody(
+    Object assets,
+    Object liabilities,
+    Object netWorth,
+  ) {
+    return '$netWorth net worth from $assets assets and $liabilities liabilities.';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthInsightLargestAllocationTitle =>
+      'Largest allocation';
+
+  @override
+  String financeAgentWeeklyWealthInsightLargestAllocationBody(
+    Object amount,
+    Object category,
+    Object ratio,
+  ) {
+    return '$category is $amount, about $ratio of assets.';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthInsightPriceFreshnessTitle =>
+      'Price freshness';
+
+  @override
+  String financeAgentWeeklyWealthInsightPriceFreshnessBody(Object count) {
+    return '$count holdings have stale prices.';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthInsightFxCoverageTitle => 'FX coverage';
+
+  @override
+  String financeAgentWeeklyWealthInsightFxCoverageBody(Object count) {
+    return '$count holdings were excluded because FX conversion is missing.';
+  }
+
+  @override
+  String get financeAgentWeeklyWealthAction => 'Review wealth';
+
+  @override
+  String get financeAgentCashflowSkipNoAnomaly =>
+      'no cashflow anomaly detected';
+
+  @override
+  String financeAgentCashflowMemoryTitle(Object dayKey) {
+    return 'Cashflow anomaly review · $dayKey';
+  }
+
+  @override
+  String get financeAgentCashflowTitle => 'Cashflow Anomaly Review';
+
+  @override
+  String get financeAgentCashflowDirectionHigher => 'higher';
+
+  @override
+  String get financeAgentCashflowDirectionLower => 'lower';
+
+  @override
+  String financeAgentCashflowSummary(Object delta) {
+    return 'Cashflow anomaly review: projected monthly spending is $delta vs. the previous 3-month average.';
+  }
+
+  @override
+  String get financeAgentCashflowInsightProjectionTitle =>
+      'Monthly spending projection';
+
+  @override
+  String financeAgentCashflowInsightProjectionBody(
+    Object delta,
+    Object direction,
+  ) {
+    return 'Current-month spending is projected $direction than the previous 3-month average by $delta.';
+  }
+
+  @override
+  String get financeAgentCashflowInsightDetectorTitle => 'Detector source';
+
+  @override
+  String get financeAgentCashflowInsightDetectorBody =>
+      'This result comes from the on-device anomaly detector used by get_anomaly_flags.';
+
+  @override
+  String get financeAgentCashflowEvidenceLabel => 'Monthly expense anomaly';
+
+  @override
+  String get financeAgentCashflowAction => 'Review anomaly';
+
+  @override
+  String get financeAgentFireSkipNoPlan => 'no FIRE plan configured';
+
+  @override
+  String get financeAgentFireSkipNoDrift => 'no FIRE plan drift detected';
+
+  @override
+  String financeAgentFireMemoryTitle(Object dayKey) {
+    return 'FIRE plan drift monitor · $dayKey';
+  }
+
+  @override
+  String get financeAgentFireTitle => 'FIRE Plan Drift Monitor';
+
+  @override
+  String financeAgentFireSummary(
+    Object cashBucketMonths,
+    Object headline,
+    Object safety,
+    Object withdrawalRate,
+  ) {
+    return 'FIRE plan drift monitor: $headline. Safety $safety, withdrawal rate $withdrawalRate, cash bucket $cashBucketMonths months.';
+  }
+
+  @override
+  String get financeAgentFireInsightPlanSnapshotTitle => 'Plan snapshot';
+
+  @override
+  String financeAgentFireInsightPlanSnapshotBody(
+    Object cashBucketMonths,
+    Object safeRate,
+    Object targetCashBucketMonths,
+    Object withdrawalRate,
+  ) {
+    return 'Withdrawal rate $withdrawalRate vs. safe rate $safeRate, cash bucket $cashBucketMonths / $targetCashBucketMonths months.';
+  }
+
+  @override
+  String financeAgentFireEvidenceReviewLabel(Object periodKey) {
+    return 'FIRE review $periodKey';
+  }
+
+  @override
+  String get financeAgentFireAction => 'Review FIRE plan';
+
+  @override
+  String get financeAgentFireFindingCashBucketBelowTargetTitle =>
+      'Cash bucket below target';
+
+  @override
+  String get financeAgentFireFindingWithdrawalRateAboveSwrTitle =>
+      'Withdrawal rate above safe rate';
+
+  @override
+  String get financeAgentFireFindingWithdrawalRateInfiniteTitle =>
+      'Withdrawal rate unavailable';
+
+  @override
+  String get financeAgentFireFindingEtaUnreachableTitle =>
+      'FIRE ETA unreachable';
+
+  @override
+  String get financeAgentFireFindingCurrencyGapTitle => 'FX coverage gap';
+
+  @override
+  String get financeAgentFireFindingUnmappedHoldingsTitle =>
+      'Unmapped FIRE holdings';
+
+  @override
+  String get financeAgentFireFindingStressDangerTitle => 'Stress test danger';
+
+  @override
+  String get financeAgentFireFindingStressCautiousTitle =>
+      'Stress test caution';
+
+  @override
+  String get financeAgentFireFindingNetWorthBrokenTitle =>
+      'Net worth below zero';
+
+  @override
+  String financeAgentFireFindingCashBucketBelowTargetBody(Object months) {
+    return 'Cash runway is below the configured target of $months months.';
+  }
+
+  @override
+  String financeAgentFireFindingWithdrawalRateAboveSwrBody(Object rate) {
+    return 'Withdrawal rate is above the safe withdrawal rate by $rate.';
+  }
+
+  @override
+  String get financeAgentFireFindingWithdrawalRateInfiniteBody =>
+      'Annual spend exists, but investable assets are zero.';
+
+  @override
+  String get financeAgentFireFindingEtaUnreachableBody =>
+      'Projection did not reach the FIRE target in the modeled horizon.';
+
+  @override
+  String financeAgentFireFindingCurrencyGapBody(Object count) {
+    return '$count holdings are excluded because FX conversion is missing.';
+  }
+
+  @override
+  String financeAgentFireFindingUnmappedHoldingsBody(Object count) {
+    return '$count holdings are not mapped to FIRE buckets.';
+  }
+
+  @override
+  String financeAgentFireFindingStressDangerBody(Object scenario) {
+    return 'Stress scenario $scenario breaks the plan.';
+  }
+
+  @override
+  String financeAgentFireFindingStressCautiousBody(Object scenario) {
+    return 'Stress scenario $scenario needs attention.';
+  }
+
+  @override
+  String get financeAgentFireFindingNetWorthBrokenBody =>
+      'Net worth is below zero, so the FIRE plan needs review.';
+
+  @override
+  String financeAgentFireFindingDefaultBody(Object code) {
+    return 'Review finding $code.';
+  }
+
+  @override
+  String get financeAgentOptionsSkipNoScan =>
+      'no options income scan available';
+
+  @override
+  String get financeAgentOptionsSkipNoFinding =>
+      'no options income risk finding';
+
+  @override
+  String financeAgentOptionsMemoryTitle(Object dayKey) {
+    return 'Options income risk review · $dayKey';
+  }
+
+  @override
+  String get financeAgentOptionsTitle => 'Options Income Risk Review';
+
+  @override
+  String financeAgentOptionsSummary(
+    Object elevatedCount,
+    Object issueTitle,
+    Object opportunityCount,
+    Object scanId,
+  ) {
+    return 'Options income risk review: $issueTitle across $opportunityCount opportunities in $scanId; $elevatedCount elevated-risk contracts.';
+  }
+
+  @override
+  String get financeAgentOptionsIssueStaleScanTitle => 'Scan data is stale';
+
+  @override
+  String financeAgentOptionsIssueStaleScanBody(Object ageHours) {
+    return 'Latest options-income scan is $ageHours hours old; quotes and greeks may no longer reflect the market.';
+  }
+
+  @override
+  String get financeAgentOptionsIssueElevatedRiskTitle =>
+      'Elevated-risk contracts present';
+
+  @override
+  String financeAgentOptionsIssueElevatedRiskBody(Object count) {
+    return '$count cached opportunities are classified as elevated risk before trade review.';
+  }
+
+  @override
+  String get financeAgentOptionsIssueQuoteQualityTitle =>
+      'Quote quality needs review';
+
+  @override
+  String financeAgentOptionsIssueQuoteQualityBody(
+    Object thinBookCount,
+    Object wideSpreadCount,
+  ) {
+    return '$wideSpreadCount opportunities have bid/ask spread above 8%, and $thinBookCount have thin volume or open interest.';
+  }
+
+  @override
+  String get financeAgentOptionsIssueNarrowCushionTitle =>
+      'Margin of safety is narrow';
+
+  @override
+  String financeAgentOptionsIssueNarrowCushionBody(Object count) {
+    return '$count opportunities have less than 5% margin of safety to breakeven.';
+  }
+
+  @override
+  String get financeAgentOptionsIssueMissingGreeksTitle =>
+      'Risk inputs are incomplete';
+
+  @override
+  String financeAgentOptionsIssueMissingGreeksBody(Object count) {
+    return '$count opportunities are missing delta or implied volatility from the quote source.';
+  }
+
+  @override
+  String get financeAgentOptionsIssueConcentrationTitle =>
+      'Underlying concentration is high';
+
+  @override
+  String financeAgentOptionsIssueConcentrationBody(
+    Object count,
+    Object opportunityCount,
+    Object underlying,
+  ) {
+    return '$count of $opportunityCount opportunities are tied to $underlying.';
+  }
+
+  @override
+  String get financeAgentOptionsIssueModerateClusterTitle =>
+      'Moderate-risk cluster';
+
+  @override
+  String financeAgentOptionsIssueModerateClusterBody(
+    Object moderateCount,
+    Object opportunityCount,
+  ) {
+    return '$moderateCount of $opportunityCount opportunities are moderate risk; review sizing before using the scan.';
+  }
+
+  @override
+  String get financeAgentOptionsInsightScanSnapshotTitle => 'Scan snapshot';
+
+  @override
+  String financeAgentOptionsInsightScanSnapshotBody(
+    Object opportunityCount,
+    Object riskMix,
+  ) {
+    return '$opportunityCount cached opportunities, risk mix $riskMix.';
+  }
+
+  @override
+  String financeAgentOptionsRiskMix(
+    Object elevated,
+    Object low,
+    Object moderate,
+  ) {
+    return '$low low / $moderate moderate / $elevated elevated';
+  }
+
+  @override
+  String financeAgentOptionsEvidenceScanLabel(Object scanId) {
+    return 'Options income scan $scanId';
+  }
+
+  @override
+  String get financeAgentOptionsAction => 'Review options scan';
+
+  @override
+  String get healthAgentMorningSkipNoHealth =>
+      'no health signals in the last 24h';
+
+  @override
+  String get healthAgentMorningSkipNoUsable =>
+      'health events present but no usable signals';
+
+  @override
+  String healthAgentMorningMemoryTitle(Object dayKey) {
+    return 'Morning briefing · $dayKey';
+  }
+
+  @override
+  String get healthAgentMorningTitle => 'Morning Briefing';
+
+  @override
+  String get healthAgentMorningSleepShortTag => ' (short)';
+
+  @override
+  String get healthAgentMorningSleepLongTag => ' (long)';
+
+  @override
+  String healthAgentMorningSleepLine(Object hours, Object tag) {
+    return 'Slept ${hours}h$tag';
+  }
+
+  @override
+  String healthAgentMorningHrvLine(Object value) {
+    return 'HRV ${value}ms';
+  }
+
+  @override
+  String healthAgentMorningFinanceLine(Object items) {
+    return 'Finance: $items';
+  }
+
+  @override
+  String healthAgentMorningPromptSystem(Object language) {
+    return 'You are HealthOS Morning Briefing. Given structured Health + Finance signals from the last 24 hours, write a single-sentence morning briefing in the user\'s tone (short, calm, factual). Use only the numbers provided. Do not add advice unless the numbers are clearly outliers. Reply in $language.';
+  }
+
+  @override
+  String get healthAgentMorningPromptStructuredSignals =>
+      'Structured signals (use these numbers verbatim, do not change them):';
+
+  @override
+  String get healthAgentMorningPromptInstruction =>
+      'Write one calm, factual sentence (<= 30 words) that mentions each signal. No bullet points. No emojis.';
+
+  @override
+  String get healthAgentMorningInsightSleepTitle => 'Sleep';
+
+  @override
+  String get healthAgentMorningInsightHrvTitle => 'HRV';
+
+  @override
+  String get healthAgentMorningInsightFinanceTitle => 'Finance';
+
+  @override
+  String get healthAgentMorningAction => 'Review briefing';
+
+  @override
+  String healthAgentRecoverySkipInsufficient(Object count) {
+    return 'insufficient HRV data ($count points)';
+  }
+
+  @override
+  String get healthAgentRecoverySkipNoDecline =>
+      'no sustained HRV decline detected';
+
+  @override
+  String healthAgentRecoveryMemoryTitle(Object dayKey) {
+    return 'Recovery Alert · $dayKey';
+  }
+
+  @override
+  String get healthAgentRecoveryTitle => 'Recovery Alert';
+
+  @override
+  String healthAgentRecoverySummary(
+    Object baselineMs,
+    Object days,
+    Object declinePct,
+    Object recentMs,
+  ) {
+    return 'HRV has been below your baseline for $days days ($recentMs ms vs $baselineMs ms average, $declinePct% decline). Consider lighter activity today.';
+  }
+
+  @override
+  String healthAgentRecoveryNotificationBody(Object days, Object declinePct) {
+    return 'HRV down $declinePct% over $days days. Consider lighter activity today.';
+  }
+
+  @override
+  String get healthAgentRecoveryInsightDeclineTitle => 'HRV decline';
+
+  @override
+  String healthAgentRecoveryInsightDeclineBody(Object days, Object declinePct) {
+    return '$days days below baseline; $declinePct% lower than usual.';
+  }
+
+  @override
+  String get healthAgentRecoveryInsightAdjustmentTitle =>
+      'Suggested adjustment';
+
+  @override
+  String get healthAgentRecoveryInsightAdjustmentBody =>
+      'Consider lighter activity today and watch recovery tomorrow.';
+
+  @override
+  String get healthAgentRecoveryEvidenceLabel => 'HRV trend';
+
+  @override
+  String get healthAgentRecoveryAction => 'Review recovery alert';
+
+  @override
+  String get healthAgentWeeklySkipNoData => 'no health data this week';
+
+  @override
+  String get healthAgentWeeklySkipNoActionable =>
+      'no actionable signals this week';
+
+  @override
+  String healthAgentWeeklyMemoryTitle(Object dayKey) {
+    return 'Weekly Summary · $dayKey';
+  }
+
+  @override
+  String get healthAgentWeeklyTitle => 'Weekly Summary';
+
+  @override
+  String healthAgentWeeklyPartRecovery(Object score, Object verdict) {
+    return 'Recovery $score/100 ($verdict)';
+  }
+
+  @override
+  String healthAgentWeeklyPartAvgSleep(Object hours) {
+    return 'avg sleep ${hours}h';
+  }
+
+  @override
+  String healthAgentWeeklyPartSteps(Object steps) {
+    return '$steps steps';
+  }
+
+  @override
+  String healthAgentWeeklyPartWorkouts(Object count, Object minutes) {
+    return '$count workouts ($minutes min)';
+  }
+
+  @override
+  String healthAgentWeeklySummary(Object details) {
+    return 'This week: $details.';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightRecoveryTitle => 'Recovery';
+
+  @override
+  String healthAgentWeeklyInsightRecoveryBody(
+    Object score,
+    Object verdictSuffix,
+  ) {
+    return '$score/100$verdictSuffix';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightSleepTitle => 'Sleep';
+
+  @override
+  String healthAgentWeeklyInsightSleepBody(Object hours) {
+    return 'Average ${hours}h per night.';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightActivityTitle => 'Activity';
+
+  @override
+  String healthAgentWeeklyInsightActivityBody(Object steps) {
+    return '$steps steps this week.';
+  }
+
+  @override
+  String get healthAgentWeeklyInsightWorkoutsTitle => 'Workouts';
+
+  @override
+  String healthAgentWeeklyInsightWorkoutsBody(Object count, Object minutes) {
+    return '$count workouts, $minutes minutes total.';
+  }
+
+  @override
+  String get healthAgentWeeklyEvidenceLabel => 'Weekly health rollup';
+
+  @override
+  String get healthAgentWeeklyAction => 'Review weekly summary';
+
+  @override
+  String get executionAgentReviewSkipNoSignals =>
+      'no execution signals to review';
+
+  @override
+  String executionAgentReviewMemoryTitle(Object dayKey) {
+    return 'Execution review · $dayKey';
+  }
+
+  @override
+  String get executionAgentReviewTitle => 'Execution review';
+
+  @override
+  String executionAgentReviewSummary(Object details, Object sample) {
+    return 'Execution review: $details.$sample';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartToday(Object count) {
+    return '$count today actions';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartOpen(Object count) {
+    return '$count open actions';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartProjects(Object count) {
+    return '$count active projects';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartCommitments(Object count) {
+    return '$count active commitments';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartProgress(Object count) {
+    return '$count progress entries this week';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartBlocked(Object count) {
+    return '$count blocked';
+  }
+
+  @override
+  String executionAgentReviewSummaryPartDue(Object count) {
+    return '$count due';
+  }
+
+  @override
+  String executionAgentReviewSummaryFirst(Object title) {
+    return ' First: $title.';
+  }
+
+  @override
+  String get executionAgentReviewInsightTodayTitle => 'Today focus';
+
+  @override
+  String executionAgentReviewInsightTodayBody(
+    Object openCount,
+    Object todayCount,
+  ) {
+    return '$todayCount today-worthy actions out of $openCount open actions.';
+  }
+
+  @override
+  String get executionAgentReviewInsightBlockedTitle => 'Blocked work';
+
+  @override
+  String executionAgentReviewInsightBlockedBody(Object count) {
+    return '$count actions are blocked.';
+  }
+
+  @override
+  String get executionAgentReviewInsightDueTitle => 'Due work';
+
+  @override
+  String executionAgentReviewInsightDueBody(Object count) {
+    return '$count actions are due.';
+  }
+
+  @override
+  String get executionAgentReviewInsightProgressTitle => 'Weekly progress';
+
+  @override
+  String executionAgentReviewInsightProgressBody(
+    Object commitmentCount,
+    Object progressCount,
+    Object projectCount,
+  ) {
+    return '$progressCount progress entries across $projectCount active projects and $commitmentCount active commitments.';
+  }
+
+  @override
+  String get executionAgentReviewAction => 'Review execution';
+
+  @override
+  String get knowledgeAgentReviewArtifactTitle => 'Weekly Knowledge Review';
+
+  @override
+  String get knowledgeAgentReviewInsightDecisionsTitle => 'Decisions due';
+
+  @override
+  String knowledgeAgentReviewInsightDecisionsBody(Object count, Object plural) {
+    return '$count decision review$plural need attention.';
+  }
+
+  @override
+  String get knowledgeAgentReviewInsightAssumptionsTitle => 'Stale assumptions';
+
+  @override
+  String knowledgeAgentReviewInsightAssumptionsBody(
+    Object count,
+    Object days,
+    Object plural,
+  ) {
+    return '$count assumption$plural crossed the $days day verification window.';
+  }
+
+  @override
+  String get knowledgeAgentReviewAction => 'Review knowledge items';
+
+  @override
+  String get knowledgeAgentAssumptionArtifactTitle => 'Assumption Review';
+
+  @override
+  String get knowledgeAgentAssumptionInsightTitle => 'Stale assumptions';
+
+  @override
+  String knowledgeAgentAssumptionInsightBody(
+    Object count,
+    Object days,
+    Object plural,
+  ) {
+    return '$count assumption$plural crossed the $days day verification window.';
+  }
+
+  @override
+  String get knowledgeAgentAssumptionAction => 'Review assumptions';
+
+  @override
+  String get knowledgeAgentContradictionArtifactTitle => 'Contradiction Check';
+
+  @override
+  String get knowledgeAgentContradictionInsightInvalidatedTitle =>
+      'Invalidated assumptions';
+
+  @override
+  String knowledgeAgentContradictionInsightInvalidatedBody(
+    Object count,
+    Object plural,
+  ) {
+    return '$count decision$plural cite assumptions that are no longer open.';
+  }
+
+  @override
+  String get knowledgeAgentContradictionInsightPrincipleTitle =>
+      'Principle drift';
+
+  @override
+  String knowledgeAgentContradictionInsightPrincipleBody(
+    Object count,
+    Object plural,
+  ) {
+    return '$count recent item$plural may conflict with active principles.';
+  }
+
+  @override
+  String get knowledgeAgentContradictionAction => 'Review contradictions';
+
+  @override
+  String get knowledgeAgentRoutineArtifactTitle => 'Routine Due';
+
+  @override
+  String get knowledgeAgentRoutineInsightOverdueTitle => 'Overdue routines';
+
+  @override
+  String knowledgeAgentRoutineInsightOverdueBody(Object count, Object plural) {
+    return '$count routine$plural are overdue.';
+  }
+
+  @override
+  String get knowledgeAgentRoutineInsightUpcomingTitle => 'Upcoming routines';
+
+  @override
+  String knowledgeAgentRoutineInsightUpcomingBody(
+    Object count,
+    Object days,
+    Object plural,
+  ) {
+    return '$count routine$plural are due within $days days.';
+  }
+
+  @override
+  String get knowledgeAgentRoutineAction => 'Review routines';
+
+  @override
+  String get knowledgeAgentInboxSkipNoNotes => 'no untriaged notes';
+
+  @override
+  String knowledgeAgentInboxSummaryNoSuggestions(Object noteCount) {
+    return 'Reviewed $noteCount notes and found no suggestions worth proposing.';
+  }
+
+  @override
+  String knowledgeAgentInboxSummarySuggestions(
+    Object noteCount,
+    Object proposalCount,
+  ) {
+    return 'Generated $proposalCount suggestions for $noteCount notes.';
+  }
+
+  @override
+  String get knowledgeAgentInboxArtifactTitle => 'Inbox Triage';
+
+  @override
+  String get knowledgeAgentInboxInsightSuggestionsTitle => 'New suggestions';
+
+  @override
+  String knowledgeAgentInboxInsightSuggestionsBody(
+    Object noteCount,
+    Object notePlural,
+    Object proposalCount,
+    Object proposalPlural,
+  ) {
+    return '$proposalCount suggestion$proposalPlural across $noteCount note$notePlural.';
+  }
+
+  @override
+  String knowledgeAgentInboxInsightKindBody(Object count, Object label) {
+    return '$count $label.';
+  }
+
+  @override
+  String get knowledgeAgentInboxUntitledNote => 'Untitled note';
+
+  @override
+  String get knowledgeAgentInboxProposalClassification => 'Classification';
+
+  @override
+  String get knowledgeAgentInboxProposalTags => 'Tags';
+
+  @override
+  String get knowledgeAgentInboxProposalDecisionLinks => 'Decision links';
+
+  @override
+  String get knowledgeAgentInboxProposalSuggestionSingular => 'suggestion';
+
+  @override
+  String get knowledgeAgentInboxProposalSuggestionPlural => 'suggestions';
+
+  @override
+  String get knowledgeAgentInboxAction => 'Review inbox suggestions';
 }

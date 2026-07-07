@@ -9,6 +9,7 @@ library;
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
@@ -17,6 +18,7 @@ import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 
@@ -45,6 +47,7 @@ class ExecutionReviewAgent implements Agent {
     final startedAt = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final l10n = agentL10n(ctx.ref);
 
     final snapshot = await reviewReader.read(ctx);
     final openActions = snapshot.openActions;
@@ -81,7 +84,7 @@ class ExecutionReviewAgent implements Agent {
         agentId: kExecutionReviewAgentId,
         startedAt: startedAt,
         finishedAt: DateTime.now().toUtc(),
-        reason: 'no execution signals to review',
+        reason: l10n.executionAgentReviewSkipNoSignals,
       );
     }
 
@@ -90,6 +93,7 @@ class ExecutionReviewAgent implements Agent {
     final memoryId = '$kExecutionReviewMemorySource:$dayKey';
     final artifactId = '$kExecutionReviewAgentId:$dayKey';
     final summary = _summary(
+      l10n: l10n,
       todayActions: todayActions,
       openActions: openActions,
       blockedActions: blockedActions,
@@ -105,7 +109,7 @@ class ExecutionReviewAgent implements Agent {
       scope: '*',
       source: kExecutionReviewMemorySource,
       sourceId: dayKey,
-      title: 'Execution review · $dayKey',
+      title: l10n.executionAgentReviewMemoryTitle(dayKey),
       summary: summary,
       payload: <String, Object?>{
         'context':
@@ -173,6 +177,7 @@ class ExecutionReviewAgent implements Agent {
         commitments: commitments,
         weeklyProgress: weeklyProgress,
         traceId: snapshot.traceId,
+        l10n: l10n,
       ),
     );
 
@@ -203,6 +208,7 @@ class ExecutionReviewAgent implements Agent {
     required List<ExecutionReviewRef> commitments,
     required List<ExecutionReviewProgress> weeklyProgress,
     required String? traceId,
+    required AppLocalizations l10n,
   }) {
     return AgentArtifact(
       id: id,
@@ -213,14 +219,15 @@ class ExecutionReviewAgent implements Agent {
       severity: blockedActions.isNotEmpty || dueActions.isNotEmpty
           ? AgentArtifactSeverity.attention
           : AgentArtifactSeverity.info,
-      title: 'Execution review',
+      title: l10n.executionAgentReviewTitle,
       summary: summary,
       insights: <AgentInsight>[
         AgentInsight(
-          title: 'Today focus',
-          body:
-              '${todayActions.length} today-worthy actions out of '
-              '${openActions.length} open actions.',
+          title: l10n.executionAgentReviewInsightTodayTitle,
+          body: l10n.executionAgentReviewInsightTodayBody(
+            todayActions.length,
+            openActions.length,
+          ),
           severity: todayActions.isEmpty
               ? AgentArtifactSeverity.info
               : AgentArtifactSeverity.attention,
@@ -231,8 +238,10 @@ class ExecutionReviewAgent implements Agent {
         ),
         if (blockedActions.isNotEmpty)
           AgentInsight(
-            title: 'Blocked work',
-            body: '${blockedActions.length} actions are blocked.',
+            title: l10n.executionAgentReviewInsightBlockedTitle,
+            body: l10n.executionAgentReviewInsightBlockedBody(
+              blockedActions.length,
+            ),
             severity: AgentArtifactSeverity.warning,
             payload: <String, Object?>{
               'blocked_action_count': blockedActions.length,
@@ -244,8 +253,8 @@ class ExecutionReviewAgent implements Agent {
           ),
         if (dueActions.isNotEmpty)
           AgentInsight(
-            title: 'Due work',
-            body: '${dueActions.length} actions are due.',
+            title: l10n.executionAgentReviewInsightDueTitle,
+            body: l10n.executionAgentReviewInsightDueBody(dueActions.length),
             severity: AgentArtifactSeverity.attention,
             payload: <String, Object?>{
               'due_action_count': dueActions.length,
@@ -256,11 +265,12 @@ class ExecutionReviewAgent implements Agent {
             },
           ),
         AgentInsight(
-          title: 'Weekly progress',
-          body:
-              '${weeklyProgress.length} progress entries across '
-              '${projects.length} active projects and '
-              '${commitments.length} active commitments.',
+          title: l10n.executionAgentReviewInsightProgressTitle,
+          body: l10n.executionAgentReviewInsightProgressBody(
+            weeklyProgress.length,
+            projects.length,
+            commitments.length,
+          ),
           payload: <String, Object?>{
             'weekly_progress_count': weeklyProgress.length,
             'active_project_count': projects.length,
@@ -287,7 +297,7 @@ class ExecutionReviewAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'review',
-          label: 'Review execution',
+          label: l10n.executionAgentReviewAction,
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
@@ -308,6 +318,7 @@ class ExecutionReviewAgent implements Agent {
   }
 
   static String _summary({
+    required AppLocalizations l10n,
     required List<ExecutionReviewAction> todayActions,
     required List<ExecutionReviewAction> openActions,
     required List<ExecutionReviewAction> blockedActions,
@@ -317,22 +328,24 @@ class ExecutionReviewAgent implements Agent {
     required List<ExecutionReviewProgress> weeklyProgress,
   }) {
     final parts = <String>[
-      '${todayActions.length} today actions',
-      '${openActions.length} open actions',
-      '$activeProjectCount active projects',
-      '$activeCommitmentCount active commitments',
-      '${weeklyProgress.length} progress entries this week',
+      l10n.executionAgentReviewSummaryPartToday(todayActions.length),
+      l10n.executionAgentReviewSummaryPartOpen(openActions.length),
+      l10n.executionAgentReviewSummaryPartProjects(activeProjectCount),
+      l10n.executionAgentReviewSummaryPartCommitments(activeCommitmentCount),
+      l10n.executionAgentReviewSummaryPartProgress(weeklyProgress.length),
     ];
     if (blockedActions.isNotEmpty) {
-      parts.add('${blockedActions.length} blocked');
+      parts.add(
+        l10n.executionAgentReviewSummaryPartBlocked(blockedActions.length),
+      );
     }
     if (dueActions.isNotEmpty) {
-      parts.add('${dueActions.length} due');
+      parts.add(l10n.executionAgentReviewSummaryPartDue(dueActions.length));
     }
     final sample = todayActions.isNotEmpty
-        ? ' First: ${todayActions.first.title}.'
+        ? l10n.executionAgentReviewSummaryFirst(todayActions.first.title)
         : '';
-    return 'Execution review: ${parts.join(' · ')}.$sample';
+    return l10n.executionAgentReviewSummary(parts.join(' · '), sample);
   }
 }
 

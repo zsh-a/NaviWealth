@@ -110,6 +110,7 @@ class AssumptionAgent implements Agent {
         memoryId: built.memoryId,
         stale: stale,
         traceId: snapshot.traceId,
+        l10n: l10n,
       ),
     );
 
@@ -137,6 +138,7 @@ class AssumptionAgent implements Agent {
     required String memoryId,
     required List<AssumptionReviewItem> stale,
     required String? traceId,
+    required AppLocalizations l10n,
   }) {
     return AgentArtifact(
       id: id,
@@ -145,14 +147,16 @@ class AssumptionAgent implements Agent {
       domain: 'knowledge',
       kind: AgentArtifactKind.review,
       severity: AgentArtifactSeverity.attention,
-      title: 'Assumption Review',
+      title: l10n.knowledgeAgentAssumptionArtifactTitle,
       summary: summary,
       insights: <AgentInsight>[
         AgentInsight(
-          title: 'Stale assumptions',
-          body:
-              '${stale.length} assumption${stale.length == 1 ? '' : 's'}'
-              ' crossed the $kAssumptionStaleDays day verification window.',
+          title: l10n.knowledgeAgentAssumptionInsightTitle,
+          body: l10n.knowledgeAgentAssumptionInsightBody(
+            stale.length,
+            stale.length == 1 ? '' : 's',
+            kAssumptionStaleDays,
+          ),
           severity: AgentArtifactSeverity.attention,
           payload: <String, Object?>{
             'count': stale.length,
@@ -176,7 +180,7 @@ class AssumptionAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
-          label: 'Review assumptions',
+          label: l10n.knowledgeAgentAssumptionAction,
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,

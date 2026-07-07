@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/memory_record.dart';
@@ -17,6 +18,7 @@ import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../data/recovery_scorer.dart';
 import '../domain/health_metric.dart';
@@ -47,6 +49,7 @@ class WeeklySummaryAgent implements Agent {
     final start = ctx.now;
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+    final l10n = agentL10n(ctx.ref);
 
     final snapshot = await summaryReader.read(ctx);
 
@@ -55,7 +58,7 @@ class WeeklySummaryAgent implements Agent {
         agentId: kWeeklySummaryAgentId,
         startedAt: start,
         finishedAt: DateTime.now().toUtc(),
-        reason: 'no health data this week',
+        reason: l10n.healthAgentWeeklySkipNoData,
         traceId: snapshot.traceId,
       );
     }
@@ -65,20 +68,27 @@ class WeeklySummaryAgent implements Agent {
     final recoveryScore = snapshot.recoveryScore;
     final recoveryVerdict = snapshot.recoveryVerdict;
     if (recoveryScore != null && recoveryVerdict != null) {
-      parts.add('Recovery $recoveryScore/100 ($recoveryVerdict)');
+      parts.add(
+        l10n.healthAgentWeeklyPartRecovery(recoveryScore, recoveryVerdict),
+      );
     }
     final avgSleep = snapshot.avgSleepHours;
     if (avgSleep != null) {
-      parts.add('avg sleep ${_round(avgSleep)}h');
+      parts.add(l10n.healthAgentWeeklyPartAvgSleep(_round(avgSleep)));
     }
     final weekSteps = snapshot.totalSteps;
     if (weekSteps > 0) {
-      parts.add('${_formatSteps(weekSteps)} steps');
+      parts.add(l10n.healthAgentWeeklyPartSteps(_formatSteps(weekSteps)));
     }
     final weekWorkouts = snapshot.workoutCount;
     final weekWorkoutMin = snapshot.workoutMinutes;
     if (weekWorkouts > 0) {
-      parts.add('$weekWorkouts workouts (${_round(weekWorkoutMin)} min)');
+      parts.add(
+        l10n.healthAgentWeeklyPartWorkouts(
+          weekWorkouts,
+          _round(weekWorkoutMin),
+        ),
+      );
     }
 
     if (parts.isEmpty) {
@@ -86,12 +96,12 @@ class WeeklySummaryAgent implements Agent {
         agentId: kWeeklySummaryAgentId,
         startedAt: start,
         finishedAt: DateTime.now().toUtc(),
-        reason: 'no actionable signals this week',
+        reason: l10n.healthAgentWeeklySkipNoActionable,
         traceId: snapshot.traceId,
       );
     }
 
-    final summary = 'This week: ${parts.join(' · ')}.';
+    final summary = l10n.healthAgentWeeklySummary(parts.join(' · '));
     final dayKey = AppFormatters.utcDayKey(start);
     final memoryId = '$kWeeklySummaryMemorySource:$dayKey';
     final artifactId = '$kWeeklySummaryAgentId:$dayKey';
@@ -103,7 +113,7 @@ class WeeklySummaryAgent implements Agent {
       scope: '*',
       source: kWeeklySummaryMemorySource,
       sourceId: dayKey,
-      title: 'Weekly Summary · $dayKey',
+      title: l10n.healthAgentWeeklyMemoryTitle(dayKey),
       summary: summary,
       payload: <String, Object?>{
         'context': 'weekly summary at ${start.toUtc().toIso8601String()}',
@@ -139,6 +149,7 @@ class WeeklySummaryAgent implements Agent {
         snapshot: snapshot,
         summary: summary,
         traceId: snapshot.traceId,
+        l10n: l10n,
       ),
     );
 
@@ -168,6 +179,7 @@ class WeeklySummaryAgent implements Agent {
     required WeeklySummarySnapshot snapshot,
     required String summary,
     required String? traceId,
+    required AppLocalizations l10n,
   }) {
     final recoveryScore = snapshot.recoveryScore;
     final severity = recoveryScore == null
@@ -184,15 +196,16 @@ class WeeklySummaryAgent implements Agent {
       domain: 'health',
       kind: AgentArtifactKind.review,
       severity: severity,
-      title: 'Weekly Summary',
+      title: l10n.healthAgentWeeklyTitle,
       summary: summary,
       insights: <AgentInsight>[
         if (snapshot.recoveryScore != null)
           AgentInsight(
-            title: 'Recovery',
-            body:
-                '${snapshot.recoveryScore}/100'
-                '${snapshot.recoveryVerdict == null ? '' : ' (${snapshot.recoveryVerdict})'}',
+            title: l10n.healthAgentWeeklyInsightRecoveryTitle,
+            body: l10n.healthAgentWeeklyInsightRecoveryBody(
+              snapshot.recoveryScore!,
+              _verdictSuffix(l10n, snapshot.recoveryVerdict),
+            ),
             severity: severity == AgentArtifactSeverity.info ? null : severity,
             payload: <String, Object?>{
               'score': snapshot.recoveryScore,
@@ -201,24 +214,29 @@ class WeeklySummaryAgent implements Agent {
           ),
         if (snapshot.avgSleepHours != null)
           AgentInsight(
-            title: 'Sleep',
-            body: 'Average ${_round(snapshot.avgSleepHours!)}h per night.',
+            title: l10n.healthAgentWeeklyInsightSleepTitle,
+            body: l10n.healthAgentWeeklyInsightSleepBody(
+              _round(snapshot.avgSleepHours!),
+            ),
             payload: <String, Object?>{
               'avg_sleep_hours': _round(snapshot.avgSleepHours!),
             },
           ),
         if (snapshot.totalSteps > 0)
           AgentInsight(
-            title: 'Activity',
-            body: '${_formatSteps(snapshot.totalSteps)} steps this week.',
+            title: l10n.healthAgentWeeklyInsightActivityTitle,
+            body: l10n.healthAgentWeeklyInsightActivityBody(
+              _formatSteps(snapshot.totalSteps),
+            ),
             payload: <String, Object?>{'total_steps': snapshot.totalSteps},
           ),
         if (snapshot.workoutCount > 0)
           AgentInsight(
-            title: 'Workouts',
-            body:
-                '${snapshot.workoutCount} workouts, '
-                '${_round(snapshot.workoutMinutes)} minutes total.',
+            title: l10n.healthAgentWeeklyInsightWorkoutsTitle,
+            body: l10n.healthAgentWeeklyInsightWorkoutsBody(
+              snapshot.workoutCount,
+              _round(snapshot.workoutMinutes),
+            ),
             payload: <String, Object?>{
               'workout_count': snapshot.workoutCount,
               'workout_minutes': _round(snapshot.workoutMinutes),
@@ -229,7 +247,7 @@ class WeeklySummaryAgent implements Agent {
         AgentEvidenceRef(
           type: 'health_week',
           id: id,
-          label: 'Weekly health rollup',
+          label: l10n.healthAgentWeeklyEvidenceLabel,
           payload: <String, Object?>{
             'recovery_score': snapshot.recoveryScore,
             'recovery_verdict': snapshot.recoveryVerdict,
@@ -245,7 +263,7 @@ class WeeklySummaryAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'review',
-          label: 'Review weekly summary',
+          label: l10n.healthAgentWeeklyAction,
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
@@ -328,6 +346,11 @@ class WeeklySummaryAgent implements Agent {
   }
 
   static double _round(double v) => (v * 100).round() / 100.0;
+}
+
+String _verdictSuffix(AppLocalizations l10n, String? verdict) {
+  if (verdict == null || verdict.isEmpty) return '';
+  return agentLocaleIsZh(l10n) ? '（$verdict）' : ' ($verdict)';
 }
 
 abstract class WeeklySummaryReader {

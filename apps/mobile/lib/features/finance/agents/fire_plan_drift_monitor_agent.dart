@@ -9,6 +9,7 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/contracts.dart';
@@ -19,6 +20,7 @@ import '../../../core/ai/trace/ai_trace_store.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../fire/data/fire_providers.dart';
 import '../fire/domain/fire_action.dart';
 import '../fire/domain/fire_review.dart';
@@ -63,6 +65,7 @@ class FirePlanDriftMonitorAgent implements Agent {
       runtime: runtime,
       artifactStore: artifactStore,
       traceStore: traceStore,
+      l10n: agentL10n(ctx.ref),
     );
   }
 
@@ -74,13 +77,15 @@ class FirePlanDriftMonitorAgent implements Agent {
     required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
     AiTraceStore? traceStore,
+    AppLocalizations? l10n,
   }) async {
+    final strings = l10n ?? defaultAgentL10n();
     if (review == null) {
       return AgentRunResult.skipped(
         agentId: kFirePlanDriftMonitorAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'no FIRE plan configured',
+        reason: strings.financeAgentFireSkipNoPlan,
       );
     }
 
@@ -90,7 +95,7 @@ class FirePlanDriftMonitorAgent implements Agent {
         agentId: kFirePlanDriftMonitorAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'no FIRE plan drift detected',
+        reason: strings.financeAgentFireSkipNoDrift,
       );
     }
 
@@ -98,7 +103,7 @@ class FirePlanDriftMonitorAgent implements Agent {
     final memoryId = '$kFirePlanDriftMonitorMemorySource:$dayKey';
     final artifactId = '$kFirePlanDriftMonitorAgentId:$dayKey';
     final traceId = '$kFirePlanDriftMonitorAgentId:trace:$dayKey';
-    final summary = analysis.summary;
+    final summary = analysis.summary(strings);
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
@@ -106,7 +111,7 @@ class FirePlanDriftMonitorAgent implements Agent {
       scope: 'finance',
       source: kFirePlanDriftMonitorMemorySource,
       sourceId: dayKey,
-      title: 'FIRE plan drift monitor · $dayKey',
+      title: strings.financeAgentFireMemoryTitle(dayKey),
       summary: summary,
       payload: <String, Object?>{
         'context':
@@ -148,6 +153,7 @@ class FirePlanDriftMonitorAgent implements Agent {
         memoryId: memoryId,
         traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
+        l10n: strings,
       ),
     );
 
@@ -215,12 +221,14 @@ class FirePlanDriftAnalysis {
 
   bool get hasDrift => concerningFindings.isNotEmpty;
 
-  String get summary {
+  String summary(AppLocalizations l10n) {
     final headline = concerningFindings.first;
-    return 'FIRE plan drift monitor: ${_findingTitle(headline)}. '
-        'Safety ${review.safetyLevel.name}, withdrawal rate '
-        '${_rate(review.withdrawalRate)}, cash bucket '
-        '${_months(review.cashBucketMonths)} months.';
+    return l10n.financeAgentFireSummary(
+      _findingTitle(l10n, headline),
+      review.safetyLevel.name,
+      _rate(review.withdrawalRate),
+      _months(review.cashBucketMonths),
+    );
   }
 
   Map<String, Object?> toPayload() => <String, Object?>{
@@ -248,6 +256,7 @@ class FirePlanDriftAnalysis {
     required String memoryId,
     required String? traceId,
     required DateTime createdAt,
+    required AppLocalizations l10n,
   }) {
     return AgentArtifact(
       id: id,
@@ -256,20 +265,24 @@ class FirePlanDriftAnalysis {
       domain: 'finance',
       kind: AgentArtifactKind.review,
       severity: severity,
-      title: 'FIRE Plan Drift Monitor',
-      summary: summary,
+      title: l10n.financeAgentFireTitle,
+      summary: summary(l10n),
       insights: <AgentInsight>[
         for (final finding in concerningFindings.take(4))
           AgentInsight(
-            title: _findingTitle(finding),
-            body: _findingBody(finding),
+            title: _findingTitle(l10n, finding),
+            body: _findingBody(l10n, finding),
             severity: _severity(finding.severity),
             payload: finding.toJson(),
           ),
         AgentInsight(
-          title: 'Plan snapshot',
-          body:
-              'Withdrawal rate ${_rate(review.withdrawalRate)} vs. safe rate ${_rate(review.safeWithdrawalRate)}, cash bucket ${_months(review.cashBucketMonths)} / ${review.targetCashBucketMonths} months.',
+          title: l10n.financeAgentFireInsightPlanSnapshotTitle,
+          body: l10n.financeAgentFireInsightPlanSnapshotBody(
+            _rate(review.withdrawalRate),
+            _rate(review.safeWithdrawalRate),
+            _months(review.cashBucketMonths),
+            review.targetCashBucketMonths,
+          ),
           payload: <String, Object?>{
             'withdrawal_rate': review.withdrawalRate.isFinite
                 ? review.withdrawalRate
@@ -286,21 +299,21 @@ class FirePlanDriftAnalysis {
         AgentEvidenceRef(
           type: 'fire_review',
           id: review.periodKey,
-          label: 'FIRE review ${review.periodKey}',
+          label: l10n.financeAgentFireEvidenceReviewLabel(review.periodKey),
           payload: review.toJson(),
         ),
         for (final finding in concerningFindings.take(6))
           AgentEvidenceRef(
             type: 'fire_finding',
             id: finding.code.name,
-            label: _findingTitle(finding),
+            label: _findingTitle(l10n, finding),
             payload: finding.toJson(),
           ),
       ],
       actions: <AgentAction>[
         AgentAction(
           kind: 'review',
-          label: 'Review FIRE plan',
+          label: l10n.financeAgentFireAction,
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
@@ -367,41 +380,58 @@ AgentArtifactSeverity _severity(FireActionSeverity severity) =>
       FireActionSeverity.critical => AgentArtifactSeverity.warning,
     };
 
-String _findingTitle(FireReviewFinding finding) => switch (finding.code) {
-  FireReviewFindingCode.belowTargetCashBucket => 'Cash bucket below target',
-  FireReviewFindingCode.withdrawalRateAboveSwr =>
-    'Withdrawal rate above safe rate',
-  FireReviewFindingCode.withdrawalRateInfinite => 'Withdrawal rate unavailable',
-  FireReviewFindingCode.fireEtaUnreachable => 'FIRE ETA unreachable',
-  FireReviewFindingCode.currencyGapPresent => 'FX coverage gap',
-  FireReviewFindingCode.unmappedHoldingsPresent => 'Unmapped FIRE holdings',
-  FireReviewFindingCode.stressTestDanger => 'Stress test danger',
-  FireReviewFindingCode.stressTestCautious => 'Stress test caution',
-  FireReviewFindingCode.netWorthBroken => 'Net worth below zero',
-  _ => finding.code.name,
-};
+String _findingTitle(AppLocalizations l10n, FireReviewFinding finding) =>
+    switch (finding.code) {
+      FireReviewFindingCode.belowTargetCashBucket =>
+        l10n.financeAgentFireFindingCashBucketBelowTargetTitle,
+      FireReviewFindingCode.withdrawalRateAboveSwr =>
+        l10n.financeAgentFireFindingWithdrawalRateAboveSwrTitle,
+      FireReviewFindingCode.withdrawalRateInfinite =>
+        l10n.financeAgentFireFindingWithdrawalRateInfiniteTitle,
+      FireReviewFindingCode.fireEtaUnreachable =>
+        l10n.financeAgentFireFindingEtaUnreachableTitle,
+      FireReviewFindingCode.currencyGapPresent =>
+        l10n.financeAgentFireFindingCurrencyGapTitle,
+      FireReviewFindingCode.unmappedHoldingsPresent =>
+        l10n.financeAgentFireFindingUnmappedHoldingsTitle,
+      FireReviewFindingCode.stressTestDanger =>
+        l10n.financeAgentFireFindingStressDangerTitle,
+      FireReviewFindingCode.stressTestCautious =>
+        l10n.financeAgentFireFindingStressCautiousTitle,
+      FireReviewFindingCode.netWorthBroken =>
+        l10n.financeAgentFireFindingNetWorthBrokenTitle,
+      _ => finding.code.name,
+    };
 
-String _findingBody(FireReviewFinding finding) {
+String _findingBody(AppLocalizations l10n, FireReviewFinding finding) {
   return switch (finding.code) {
     FireReviewFindingCode.belowTargetCashBucket =>
-      'Cash runway is below the configured target of ${finding.months ?? 0} months.',
+      l10n.financeAgentFireFindingCashBucketBelowTargetBody(
+        finding.months ?? 0,
+      ),
     FireReviewFindingCode.withdrawalRateAboveSwr =>
-      'Withdrawal rate is above the safe withdrawal rate by ${_rate(finding.pct ?? 0)}.',
+      l10n.financeAgentFireFindingWithdrawalRateAboveSwrBody(
+        _rate(finding.pct ?? 0),
+      ),
     FireReviewFindingCode.withdrawalRateInfinite =>
-      'Annual spend exists, but investable assets are zero.',
+      l10n.financeAgentFireFindingWithdrawalRateInfiniteBody,
     FireReviewFindingCode.fireEtaUnreachable =>
-      'Projection did not reach the FIRE target in the modeled horizon.',
+      l10n.financeAgentFireFindingEtaUnreachableBody,
     FireReviewFindingCode.currencyGapPresent =>
-      '${finding.months ?? 0} holdings are excluded because FX conversion is missing.',
+      l10n.financeAgentFireFindingCurrencyGapBody(finding.months ?? 0),
     FireReviewFindingCode.unmappedHoldingsPresent =>
-      '${finding.months ?? 0} holdings are not mapped to FIRE buckets.',
+      l10n.financeAgentFireFindingUnmappedHoldingsBody(finding.months ?? 0),
     FireReviewFindingCode.stressTestDanger =>
-      'Stress scenario ${finding.scenarioCode ?? 'unknown'} breaks the plan.',
+      l10n.financeAgentFireFindingStressDangerBody(
+        finding.scenarioCode ?? 'unknown',
+      ),
     FireReviewFindingCode.stressTestCautious =>
-      'Stress scenario ${finding.scenarioCode ?? 'unknown'} needs attention.',
+      l10n.financeAgentFireFindingStressCautiousBody(
+        finding.scenarioCode ?? 'unknown',
+      ),
     FireReviewFindingCode.netWorthBroken =>
-      'Net worth is below zero, so the FIRE plan needs review.',
-    _ => 'Review finding ${finding.code.name}.',
+      l10n.financeAgentFireFindingNetWorthBrokenBody,
+    _ => l10n.financeAgentFireFindingDefaultBody(finding.code.name),
   };
 }
 

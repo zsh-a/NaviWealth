@@ -1,3 +1,5 @@
+import 'dart:ui' show Locale;
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +22,7 @@ import 'package:naviwealth/features/finance/agents/providers.dart'
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -118,6 +121,36 @@ void main() {
       trace.spans.single.attributes,
       containsPair('artifact_id', result.artifactId),
     );
+  });
+
+  test('persists weekly wealth artifact in Chinese when requested', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final runtime = _runtimeForDb(db);
+    final store = SqliteAgentArtifactStore(db: db);
+    final l10n = lookupAppLocalizations(const Locale('zh'));
+
+    final result = await WeeklyWealthReviewAgent.synthesize(
+      snapshot: _snapshot(),
+      ownerUserId: 'u',
+      startedAt: now,
+      finishedAt: now.add(const Duration(milliseconds: 20)),
+      runtime: runtime,
+      artifactStore: store,
+      l10n: l10n,
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.summary, contains('每周财富复盘'));
+    expect(result.summary, contains('净资产 8000 CNY'));
+
+    final artifact = await store.read(result.artifactId!);
+    expect(artifact?.title, '每周财富复盘');
+    expect(
+      artifact?.insights.map((insight) => insight.title),
+      containsAll(['净资产', '最大配置', '价格新鲜度', '汇率覆盖']),
+    );
+    expect(artifact?.actions.single.label, '查看财富复盘');
   });
 
   test('finance agent providers read latest artifact and run', () async {

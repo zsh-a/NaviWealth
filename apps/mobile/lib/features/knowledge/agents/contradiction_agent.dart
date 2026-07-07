@@ -40,6 +40,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/contradiction_judge.dart';
 import '../data/knowledge_object_memory_indexers.dart'
     show kKnowledgeDecisionMemorySource, kKnowledgeNoteMemorySource;
@@ -218,6 +219,7 @@ class ContradictionAgent implements Agent {
         memoryId: built.memoryId,
         issues: issues,
         traceId: source.traceId,
+        l10n: l10n,
       ),
     );
 
@@ -245,6 +247,7 @@ class ContradictionAgent implements Agent {
     required String memoryId,
     required List<_Contradiction> issues,
     required String? traceId,
+    required AppLocalizations l10n,
   }) {
     final structural = issues
         .where((issue) => issue.kind == 'assumption_invalidated')
@@ -259,15 +262,16 @@ class ContradictionAgent implements Agent {
       domain: 'knowledge',
       kind: AgentArtifactKind.alert,
       severity: AgentArtifactSeverity.warning,
-      title: 'Contradiction Check',
+      title: l10n.knowledgeAgentContradictionArtifactTitle,
       summary: summary,
       insights: <AgentInsight>[
         if (structural.isNotEmpty)
           AgentInsight(
-            title: 'Invalidated assumptions',
-            body:
-                '${structural.length} decision${structural.length == 1 ? '' : 's'}'
-                ' cite assumptions that are no longer open.',
+            title: l10n.knowledgeAgentContradictionInsightInvalidatedTitle,
+            body: l10n.knowledgeAgentContradictionInsightInvalidatedBody(
+              structural.length,
+              structural.length == 1 ? '' : 's',
+            ),
             severity: AgentArtifactSeverity.warning,
             payload: <String, Object?>{
               'count': structural.length,
@@ -276,10 +280,11 @@ class ContradictionAgent implements Agent {
           ),
         if (principle.isNotEmpty)
           AgentInsight(
-            title: 'Principle drift',
-            body:
-                '${principle.length} recent item${principle.length == 1 ? '' : 's'}'
-                ' may conflict with active principles.',
+            title: l10n.knowledgeAgentContradictionInsightPrincipleTitle,
+            body: l10n.knowledgeAgentContradictionInsightPrincipleBody(
+              principle.length,
+              principle.length == 1 ? '' : 's',
+            ),
             severity: AgentArtifactSeverity.attention,
             payload: <String, Object?>{
               'count': principle.length,
@@ -303,7 +308,7 @@ class ContradictionAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
-          label: 'Review contradictions',
+          label: l10n.knowledgeAgentContradictionAction,
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,

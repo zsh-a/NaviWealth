@@ -110,6 +110,7 @@ class ReviewAgent implements Agent {
       due: due,
       staleAssumptions: staleAssumptions,
       traceId: dueSnapshot.traceId,
+      l10n: l10n,
     );
     await artifactStore.save(artifact);
 
@@ -139,6 +140,7 @@ class ReviewAgent implements Agent {
     required List<ReviewDecisionItem> due,
     required List<ReviewAssumptionItem> staleAssumptions,
     required String? traceId,
+    required AppLocalizations l10n,
   }) {
     final dayKey = AppFormatters.utcDayKey(start);
     final hasStaleAssumptions = staleAssumptions.isNotEmpty;
@@ -152,15 +154,16 @@ class ReviewAgent implements Agent {
       severity: hasStaleAssumptions
           ? AgentArtifactSeverity.attention
           : AgentArtifactSeverity.info,
-      title: 'Weekly Knowledge Review',
+      title: l10n.knowledgeAgentReviewArtifactTitle,
       summary: summary,
       insights: <AgentInsight>[
         if (due.isNotEmpty)
           AgentInsight(
-            title: 'Decisions due',
-            body:
-                '${due.length} decision review${due.length == 1 ? '' : 's'}'
-                ' need attention.',
+            title: l10n.knowledgeAgentReviewInsightDecisionsTitle,
+            body: l10n.knowledgeAgentReviewInsightDecisionsBody(
+              due.length,
+              due.length == 1 ? '' : 's',
+            ),
             severity: AgentArtifactSeverity.info,
             payload: <String, Object?>{
               'count': due.length,
@@ -169,10 +172,12 @@ class ReviewAgent implements Agent {
           ),
         if (staleAssumptions.isNotEmpty)
           AgentInsight(
-            title: 'Stale assumptions',
-            body:
-                '${staleAssumptions.length} assumption${staleAssumptions.length == 1 ? '' : 's'}'
-                ' crossed the $kAssumptionStaleDays day verification window.',
+            title: l10n.knowledgeAgentReviewInsightAssumptionsTitle,
+            body: l10n.knowledgeAgentReviewInsightAssumptionsBody(
+              staleAssumptions.length,
+              staleAssumptions.length == 1 ? '' : 's',
+              kAssumptionStaleDays,
+            ),
             severity: AgentArtifactSeverity.attention,
             payload: <String, Object?>{
               'count': staleAssumptions.length,
@@ -200,7 +205,7 @@ class ReviewAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
-          label: 'Review knowledge items',
+          label: l10n.knowledgeAgentReviewAction,
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: artifactId,

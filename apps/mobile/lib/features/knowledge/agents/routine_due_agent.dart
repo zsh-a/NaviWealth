@@ -140,6 +140,7 @@ class RoutineDueAgent implements Agent {
         overdue: overdue,
         upcoming: upcoming,
         traceId: snapshot.traceId,
+        l10n: l10n,
       ),
     );
 
@@ -191,6 +192,7 @@ class RoutineDueAgent implements Agent {
     required List<RoutineDueItem> overdue,
     required List<RoutineDueItem> upcoming,
     required String? traceId,
+    required AppLocalizations l10n,
   }) {
     return AgentArtifact(
       id: id,
@@ -201,15 +203,16 @@ class RoutineDueAgent implements Agent {
       severity: overdue.isNotEmpty
           ? AgentArtifactSeverity.attention
           : AgentArtifactSeverity.info,
-      title: 'Routine Due',
+      title: l10n.knowledgeAgentRoutineArtifactTitle,
       summary: summary,
       insights: <AgentInsight>[
         if (overdue.isNotEmpty)
           AgentInsight(
-            title: 'Overdue routines',
-            body:
-                '${overdue.length} routine${overdue.length == 1 ? '' : 's'}'
-                ' are overdue.',
+            title: l10n.knowledgeAgentRoutineInsightOverdueTitle,
+            body: l10n.knowledgeAgentRoutineInsightOverdueBody(
+              overdue.length,
+              overdue.length == 1 ? '' : 's',
+            ),
             severity: AgentArtifactSeverity.attention,
             payload: <String, Object?>{
               'count': overdue.length,
@@ -218,10 +221,12 @@ class RoutineDueAgent implements Agent {
           ),
         if (upcoming.isNotEmpty)
           AgentInsight(
-            title: 'Upcoming routines',
-            body:
-                '${upcoming.length} routine${upcoming.length == 1 ? '' : 's'}'
-                ' are due within ${kRoutineDueLookahead.inDays} days.',
+            title: l10n.knowledgeAgentRoutineInsightUpcomingTitle,
+            body: l10n.knowledgeAgentRoutineInsightUpcomingBody(
+              upcoming.length,
+              upcoming.length == 1 ? '' : 's',
+              kRoutineDueLookahead.inDays,
+            ),
             payload: <String, Object?>{
               'count': upcoming.length,
               'lookahead_days': kRoutineDueLookahead.inDays,
@@ -256,7 +261,7 @@ class RoutineDueAgent implements Agent {
       actions: <AgentAction>[
         AgentAction(
           kind: 'open_object',
-          label: 'Review routines',
+          label: l10n.knowledgeAgentRoutineAction,
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,

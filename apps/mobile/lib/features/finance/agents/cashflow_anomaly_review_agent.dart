@@ -9,6 +9,7 @@ import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/contracts/contracts.dart';
@@ -19,6 +20,7 @@ import '../../../core/ai/trace/ai_trace_store.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../expense/data/expense_anomaly_insight_provider.dart';
 
 const String kCashflowAnomalyReviewAgentId = 'cashflow_anomaly_review';
@@ -60,6 +62,7 @@ class CashflowAnomalyReviewAgent implements Agent {
       runtime: runtime,
       artifactStore: artifactStore,
       traceStore: traceStore,
+      l10n: agentL10n(ctx.ref),
     );
   }
 
@@ -71,13 +74,15 @@ class CashflowAnomalyReviewAgent implements Agent {
     required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
     AiTraceStore? traceStore,
+    AppLocalizations? l10n,
   }) async {
+    final strings = l10n ?? defaultAgentL10n();
     if (anomaly == null) {
       return AgentRunResult.skipped(
         agentId: kCashflowAnomalyReviewAgentId,
         startedAt: startedAt,
         finishedAt: finishedAt,
-        reason: 'no cashflow anomaly detected',
+        reason: strings.financeAgentCashflowSkipNoAnomaly,
       );
     }
 
@@ -89,7 +94,7 @@ class CashflowAnomalyReviewAgent implements Agent {
     final memoryId = '$kCashflowAnomalyReviewMemorySource:$dayKey';
     final artifactId = '$kCashflowAnomalyReviewAgentId:$dayKey';
     final traceId = '$kCashflowAnomalyReviewAgentId:trace:$dayKey';
-    final summary = analysis.summary;
+    final summary = analysis.summary(strings);
     final memory = MemoryRecord(
       id: memoryId,
       kind: MemoryKind.episodic,
@@ -97,7 +102,7 @@ class CashflowAnomalyReviewAgent implements Agent {
       scope: 'finance',
       source: kCashflowAnomalyReviewMemorySource,
       sourceId: dayKey,
-      title: 'Cashflow anomaly review · $dayKey',
+      title: strings.financeAgentCashflowMemoryTitle(dayKey),
       summary: summary,
       payload: <String, Object?>{
         'context':
@@ -138,6 +143,7 @@ class CashflowAnomalyReviewAgent implements Agent {
         memoryId: memoryId,
         traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
+        l10n: strings,
       ),
     );
 
@@ -201,12 +207,14 @@ class CashflowAnomalyAnalysis {
 
   int get deltaPct => (anomaly.deltaRatio * 100).round();
 
-  String get direction => anomaly.deltaRatio >= 0 ? 'higher' : 'lower';
+  String direction(AppLocalizations l10n) => anomaly.deltaRatio >= 0
+      ? l10n.financeAgentCashflowDirectionHigher
+      : l10n.financeAgentCashflowDirectionLower;
 
-  String get summary {
-    return 'Cashflow anomaly review: projected monthly spending is '
-        '${Fmt.signedPercent(anomaly.deltaRatio, decimalDigits: 0)} '
-        'vs. the previous 3-month average.';
+  String summary(AppLocalizations l10n) {
+    return l10n.financeAgentCashflowSummary(
+      Fmt.signedPercent(anomaly.deltaRatio, decimalDigits: 0),
+    );
   }
 
   Map<String, Object?> toPayload() => <String, Object?>{
@@ -225,6 +233,7 @@ class CashflowAnomalyAnalysis {
     required String memoryId,
     required String? traceId,
     required DateTime createdAt,
+    required AppLocalizations l10n,
   }) {
     return AgentArtifact(
       id: id,
@@ -233,21 +242,21 @@ class CashflowAnomalyAnalysis {
       domain: 'finance',
       kind: AgentArtifactKind.alert,
       severity: severity,
-      title: 'Cashflow Anomaly Review',
-      summary: summary,
+      title: l10n.financeAgentCashflowTitle,
+      summary: summary(l10n),
       insights: <AgentInsight>[
         AgentInsight(
-          title: 'Monthly spending projection',
-          body:
-              'Current-month spending is projected $direction than the previous 3-month average by '
-              '${Fmt.signedPercent(anomaly.deltaRatio, decimalDigits: 0)}.',
+          title: l10n.financeAgentCashflowInsightProjectionTitle,
+          body: l10n.financeAgentCashflowInsightProjectionBody(
+            direction(l10n),
+            Fmt.signedPercent(anomaly.deltaRatio, decimalDigits: 0),
+          ),
           severity: severity,
           payload: toPayload(),
         ),
-        const AgentInsight(
-          title: 'Detector source',
-          body:
-              'This result comes from the on-device anomaly detector used by get_anomaly_flags.',
+        AgentInsight(
+          title: l10n.financeAgentCashflowInsightDetectorTitle,
+          body: l10n.financeAgentCashflowInsightDetectorBody,
           payload: <String, Object?>{
             'source': 'expenseAnomalyInsightProvider',
             'read_model': 'anomaly_flags',
@@ -258,14 +267,14 @@ class CashflowAnomalyAnalysis {
         AgentEvidenceRef(
           type: 'anomaly_flag',
           id: upload.id,
-          label: 'Monthly expense anomaly',
+          label: l10n.financeAgentCashflowEvidenceLabel,
           payload: upload.payload,
         ),
       ],
       actions: <AgentAction>[
         AgentAction(
           kind: 'review',
-          label: 'Review anomaly',
+          label: l10n.financeAgentCashflowAction,
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
