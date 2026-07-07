@@ -349,24 +349,11 @@ class AgentArtifactDetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.muted.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            child: Text(
-              artifact.summary,
-              style: typography.body.sm.copyWith(height: 1.5),
-            ),
-          ),
-        ),
+        _ArtifactSummary(summary: artifact.summary),
         if (artifact.insights.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
@@ -418,8 +405,6 @@ class AgentArtifactDetailBody extends ConsumerWidget {
           _DetailSection(
             title: l10n.agentResultActionsSection,
             children: [
-              ..._standardFollowUpActions(context, ref),
-              ..._localVisibilityActions(context, ref),
               for (final action in artifact.actions)
                 if (action.intent != null)
                   _ActionIntentTile(
@@ -438,70 +423,16 @@ class AgentArtifactDetailBody extends ConsumerWidget {
                   ),
             ],
           ),
-        ] else ...[
-          const SizedBox(height: AppSpacing.s16),
-          _DetailSection(
-            title: l10n.agentResultActionsSection,
-            children: [
-              ..._standardFollowUpActions(context, ref),
-              ..._localVisibilityActions(context, ref),
-            ],
-          ),
         ],
+        const SizedBox(height: AppSpacing.s16),
+        _VisibilityActionsRow(
+          snoozeLabel: l10n.agentResultSnoozeTitle,
+          dismissLabel: l10n.agentResultDismissTitle,
+          onSnooze: () => unawaited(_snoozeArtifact(context, ref)),
+          onDismiss: () => unawaited(_dismissArtifact(context, ref)),
+        ),
       ],
     );
-  }
-
-  List<Widget> _standardFollowUpActions(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    final l10n = AppLocalizations.of(context);
-    return [
-      _ActionIntentTile(
-        icon: FLucideIcons.messageCircle,
-        title: l10n.agentResultAskFollowUpTitle,
-        body: l10n.agentResultAskFollowUpBody,
-        color: colors.primary,
-        onPress: () => _askAboutArtifact(context, ref),
-      ),
-      if (artifact.evidence.isNotEmpty)
-        _ActionIntentTile(
-          icon: FLucideIcons.fileText,
-          title: l10n.agentResultShowEvidenceTitle,
-          body: l10n.agentResultShowEvidenceBody,
-          color: colors.primary,
-          onPress: () => _showEvidenceForArtifact(context, ref),
-        ),
-      _ActionIntentTile(
-        icon: FLucideIcons.listChecks,
-        title: l10n.agentResultCreatePlanTitle,
-        body: l10n.agentResultCreatePlanBody,
-        color: colors.primary,
-        onPress: () => _createPlanFromArtifact(context, ref),
-      ),
-    ];
-  }
-
-  List<Widget> _localVisibilityActions(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    final l10n = AppLocalizations.of(context);
-    return [
-      _LocalActionTile(
-        icon: FLucideIcons.clock3,
-        title: l10n.agentResultSnoozeTitle,
-        body: l10n.agentResultSnoozeBody,
-        color: colors.primary,
-        actionLabel: l10n.agentResultSnoozeAction,
-        onPress: () => unawaited(_snoozeArtifact(context, ref)),
-      ),
-      _LocalActionTile(
-        icon: FLucideIcons.x,
-        title: l10n.agentResultDismissTitle,
-        body: l10n.agentResultDismissBody,
-        color: colors.mutedForeground,
-        actionLabel: l10n.agentResultDismissAction,
-        onPress: () => unawaited(_dismissArtifact(context, ref)),
-      ),
-    ];
   }
 
   Future<void> _snoozeArtifact(BuildContext context, WidgetRef ref) async {
@@ -519,45 +450,6 @@ class AgentArtifactDetailBody extends ConsumerWidget {
       ref,
       artifact: artifact,
       onVisibilityChanged: onVisibilityChanged,
-    );
-  }
-
-  Future<void> _askAboutArtifact(BuildContext context, WidgetRef ref) {
-    return _askAboutAgentArtifact(context, ref, artifact: artifact);
-  }
-
-  Future<void> _showEvidenceForArtifact(BuildContext context, WidgetRef ref) {
-    return askAi(
-      context,
-      ref,
-      intent: kAgentShowEvidenceIntent,
-      object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
-      objectLabel: artifact.title,
-      attrs: <String, Object?>{
-        ..._agentArtifactAttrs(artifact),
-        'follow_up_focus': 'evidence',
-      },
-      source: 'agent_artifact_detail',
-      capabilities: const <AiCapability>{AiCapability.chat},
-    );
-  }
-
-  Future<void> _createPlanFromArtifact(BuildContext context, WidgetRef ref) {
-    return askAi(
-      context,
-      ref,
-      intent: kAgentCreatePlanFromResultIntent,
-      object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
-      objectLabel: artifact.title,
-      attrs: <String, Object?>{
-        ..._agentArtifactAttrs(artifact),
-        'follow_up_focus': 'plan',
-      },
-      source: 'agent_artifact_detail',
-      capabilities: const <AiCapability>{
-        AiCapability.chat,
-        AiCapability.proposal,
-      },
     );
   }
 
@@ -597,8 +489,7 @@ class _AgentArtifactSheetFooter extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-          child: AppQuietButton(
-            expanded: true,
+          child: _FooterActionButton(
             onPress: artifact.evidence.isEmpty
                 ? () => _createPlanFromAgentArtifact(
                     context,
@@ -610,27 +501,88 @@ class _AgentArtifactSheetFooter extends ConsumerWidget {
                     ref,
                     artifact: artifact,
                   ),
+            icon: artifact.evidence.isEmpty
+                ? FLucideIcons.listChecks
+                : FLucideIcons.fileText,
             label: artifact.evidence.isEmpty
                 ? l10n.agentResultCreatePlanTitle
                 : l10n.agentResultShowEvidenceTitle,
-            prefix: Icon(
-              artifact.evidence.isEmpty
-                  ? FLucideIcons.listChecks
-                  : FLucideIcons.fileText,
-            ),
           ),
         ),
-        const SizedBox(width: AppSpacing.s12),
+        const SizedBox(width: AppSpacing.s10),
         Expanded(
-          child: AppQuietButton(
-            expanded: true,
+          child: _FooterActionButton(
+            primary: true,
             onPress: () =>
                 _askAboutAgentArtifact(context, ref, artifact: artifact),
+            icon: FLucideIcons.messageCircle,
             label: l10n.agentResultAskFollowUpTitle,
-            prefix: const Icon(FLucideIcons.messageCircle),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FooterActionButton extends StatelessWidget {
+  const _FooterActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+    this.primary = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final foreground = primary ? colors.primaryForeground : colors.foreground;
+    final background = primary
+        ? colors.primary
+        : colors.muted.withValues(alpha: AppOpacity.whisper);
+
+    return Semantics(
+      button: true,
+      child: FTappable(
+        onPress: onPress,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            border: Border.all(
+              color: primary
+                  ? colors.primary
+                  : colors.foreground.withValues(alpha: AppOpacity.light),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s10,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: AppIconSizes.xs, color: foreground),
+                const SizedBox(width: AppSpacing.s6),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: context.mediumLabelStyle.copyWith(color: foreground),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -763,6 +715,121 @@ Map<String, Object?> _agentArtifactAttrs(AgentArtifact artifact) {
   };
 }
 
+class _ArtifactSummary extends StatelessWidget {
+  const _ArtifactSummary({required this.summary});
+
+  final String summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Text(
+      summary,
+      style: typography.body.sm.copyWith(
+        height: 1.5,
+        color: colors.mutedForeground,
+      ),
+    );
+  }
+}
+
+class _VisibilityActionsRow extends StatelessWidget {
+  const _VisibilityActionsRow({
+    required this.snoozeLabel,
+    required this.dismissLabel,
+    required this.onSnooze,
+    required this.onDismiss,
+  });
+
+  final String snoozeLabel;
+  final String dismissLabel;
+  final VoidCallback onSnooze;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Row(
+      children: [
+        Expanded(
+          child: _VisibilityActionButton(
+            icon: FLucideIcons.clock3,
+            label: snoozeLabel,
+            color: colors.primary,
+            onPress: onSnooze,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(
+          child: _VisibilityActionButton(
+            icon: FLucideIcons.x,
+            label: dismissLabel,
+            color: colors.mutedForeground,
+            onPress: onDismiss,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VisibilityActionButton extends StatelessWidget {
+  const _VisibilityActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPress,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Semantics(
+      button: true,
+      child: FTappable(
+        onPress: onPress,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.muted.withValues(alpha: AppOpacity.whisper),
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            border: Border.all(
+              color: colors.foreground.withValues(alpha: AppOpacity.light),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s8,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: AppIconSizes.xs, color: color),
+                const SizedBox(width: AppSpacing.s6),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: context.captionLabelStyle.copyWith(color: color),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _InsightPreview extends StatelessWidget {
   const _InsightPreview({required this.insight});
 
@@ -819,15 +886,21 @@ class _DetailSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: context.labelStyle),
-        const SizedBox(height: AppSpacing.s8),
+        Text(
+          title,
+          style: context.captionLabelStyle.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s6),
         ...children.expand(
           (child) => <Widget>[
             child,
-            if (child != children.last) const SizedBox(height: AppSpacing.s8),
+            if (child != children.last) const SizedBox(height: AppSpacing.s4),
           ],
         ),
       ],
@@ -841,46 +914,75 @@ class _DetailTile extends StatelessWidget {
     required this.title,
     required this.body,
     required this.color,
+    this.onPress,
+    this.trailingIcon,
   });
 
   final IconData icon;
   final String title;
   final String body;
   final Color color;
+  final VoidCallback? onPress;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s2,
+        vertical: AppSpacing.s8,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: AppIconSizes.h18, color: color),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: AppSpacing.s32,
+            height: AppSpacing.s32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: AppIconSizes.xs, color: color),
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: context.captionLabelStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  body,
+                  style: context.captionStyle.copyWith(height: 1.35),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (trailingIcon != null) ...[
             const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: context.captionLabelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(body, style: context.captionStyle),
-                ],
-              ),
+            Icon(
+              trailingIcon,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
             ),
           ],
-        ),
+        ],
       ),
+    );
+
+    if (onPress == null) return content;
+    return Semantics(
+      button: true,
+      child: FTappable(onPress: onPress, child: content),
     );
   }
 }
@@ -902,103 +1004,13 @@ class _ActionIntentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, size: AppIconSizes.h18, color: color),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.captionLabelStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  body,
-                  style: context.captionStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          AppQuietButton(
-            label: l10n.agentResultAskAction,
-            onPress: onPress,
-            prefix: const Icon(
-              FLucideIcons.messageCircle,
-              size: AppIconSizes.xs,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocalActionTile extends StatelessWidget {
-  const _LocalActionTile({
-    required this.icon,
-    required this.title,
-    required this.body,
-    required this.color,
-    required this.actionLabel,
-    required this.onPress,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-  final Color color;
-  final String actionLabel;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, size: AppIconSizes.h18, color: color),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.captionLabelStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  body,
-                  style: context.captionStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          AppQuietButton(
-            label: actionLabel,
-            onPress: onPress,
-            prefix: Icon(icon, size: AppIconSizes.xs),
-          ),
-        ],
-      ),
+    return _DetailTile(
+      icon: icon,
+      title: title,
+      body: body,
+      color: color,
+      trailingIcon: FLucideIcons.messageCircle,
+      onPress: onPress,
     );
   }
 }
@@ -1018,67 +1030,20 @@ class _TraceEntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final route = SettingsRoutes.aiTransparencyDetail(traceId);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              FLucideIcons.network,
-              size: AppIconSizes.h18,
-              color: colors.primary,
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: context.captionLabelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(body, style: context.captionStyle),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    traceId,
-                    style: context.captionStyle.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            AppQuietButton(
-              label: AppLocalizations.of(context).agentResultTraceAction,
-              onPress: () {
-                final router = GoRouter.of(context);
-                if (appSheetOverlayDepthListenable.value > 0) {
-                  unawaited(
-                    closeSheetThen(context, () => router.push<void>(route)),
-                  );
-                } else {
-                  unawaited(router.push<void>(route));
-                }
-              },
-              prefix: const Icon(
-                FLucideIcons.externalLink,
-                size: AppIconSizes.xs,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return _DetailTile(
+      icon: FLucideIcons.network,
+      title: title,
+      body: '$body\n$traceId',
+      color: colors.primary,
+      trailingIcon: FLucideIcons.externalLink,
+      onPress: () {
+        final router = GoRouter.of(context);
+        if (appSheetOverlayDepthListenable.value > 0) {
+          unawaited(closeSheetThen(context, () => router.push<void>(route)));
+        } else {
+          unawaited(router.push<void>(route));
+        }
+      },
     );
   }
 }
