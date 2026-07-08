@@ -9545,6 +9545,12 @@ abstract class AppLocalizations {
   /// **'Ask'**
   String get agentResultAskAction;
 
+  /// Loading message shown while a domain surface loads agent artifacts and run status.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the latest agent results for this view.'**
+  String get agentResultLoadingBody;
+
   /// Agent artifact kind label for briefings.
   ///
   /// In en, this message translates to:

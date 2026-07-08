@@ -5588,6 +5588,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentResultAskAction => 'Ask';
 
   @override
+  String get agentResultLoadingBody =>
+      'Checking the latest agent results for this view.';
+
+  @override
   String get agentResultKindBriefing => 'Briefing';
 
   @override

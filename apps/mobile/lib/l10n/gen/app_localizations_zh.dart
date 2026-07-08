@@ -5340,6 +5340,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentResultAskAction => '追问';
 
   @override
+  String get agentResultLoadingBody => '正在检查当前页面的最新 Agent 结果。';
+
+  @override
   String get agentResultKindBriefing => '简报';
 
   @override

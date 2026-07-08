@@ -117,7 +117,7 @@ class _WeeklySummaryFallback extends ConsumerWidget {
           AgentResultPanelStateCard(
             icon: FLucideIcons.loaderCircle,
             title: l10n.commonLoading,
-            message: l10n.agentSettingsSubtitle,
+            message: l10n.agentResultLoadingBody,
             loading: true,
           ),
           const SizedBox(height: AppSpacing.s12),

@@ -221,20 +221,21 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
     final runAsync = ref.watch(
       knowledge_agent_providers.latestKnowledgeReviewRunProvider,
     );
+    final l10n = AppLocalizations.of(context);
     return artifactAsync.when(
       loading: () => _KnowledgeAgentPanelFrame(
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.loaderCircle,
-          title: AppLocalizations.of(context).commonLoading,
-          message: AppLocalizations.of(context).agentSettingsSubtitle,
+          title: l10n.commonLoading,
+          message: l10n.agentResultLoadingBody,
           loading: true,
         ),
       ),
       error: (error, _) => _KnowledgeAgentPanelFrame(
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.triangleAlert,
-          title: AppLocalizations.of(context).commonError,
-          message: AppLocalizations.of(context).commonLoadError('$error'),
+          title: l10n.commonError,
+          message: l10n.commonLoadError('$error'),
           error: true,
           onRetry: () => ref.invalidate(
             knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
@@ -249,16 +250,16 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
           loading: () => _KnowledgeAgentPanelFrame(
             child: AgentResultPanelStateCard(
               icon: FLucideIcons.loaderCircle,
-              title: AppLocalizations.of(context).commonLoading,
-              message: AppLocalizations.of(context).agentSettingsSubtitle,
+              title: l10n.commonLoading,
+              message: l10n.agentResultLoadingBody,
               loading: true,
             ),
           ),
           error: (error, _) => _KnowledgeAgentPanelFrame(
             child: AgentResultPanelStateCard(
               icon: FLucideIcons.triangleAlert,
-              title: AppLocalizations.of(context).commonError,
-              message: AppLocalizations.of(context).commonLoadError('$error'),
+              title: l10n.commonError,
+              message: l10n.commonLoadError('$error'),
               error: true,
               onRetry: () => ref.invalidate(
                 knowledge_agent_providers.latestKnowledgeReviewResultsProvider,

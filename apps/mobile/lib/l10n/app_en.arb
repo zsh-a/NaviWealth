@@ -3020,6 +3020,8 @@
   "@agentResultRetryAction": { "description": "Button label that retries a failed agent run." },
   "agentResultAskAction": "Ask",
   "@agentResultAskAction": { "description": "Button label that opens an AI follow-up for an agent result action." },
+  "agentResultLoadingBody": "Checking the latest agent results for this view.",
+  "@agentResultLoadingBody": { "description": "Loading message shown while a domain surface loads agent artifacts and run status." },
   "agentResultKindBriefing": "Briefing",
   "@agentResultKindBriefing": { "description": "Agent artifact kind label for briefings." },
   "agentResultKindReview": "Review",

@@ -180,7 +180,7 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.loaderCircle,
           title: l10n.commonLoading,
-          message: l10n.agentSettingsSubtitle,
+          message: l10n.agentResultLoadingBody,
           loading: true,
         ),
       );
