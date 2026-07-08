@@ -17,6 +17,8 @@ import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_dispatcher
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/progress/long_task_progress.dart';
 import 'package:naviwealth/core/ai/runtime/ai_runtime.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
+    show kMaxToolRounds;
 import 'package:naviwealth/core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
 
@@ -27,7 +29,7 @@ class FrbChatRunner implements ChatAgent {
     required AgentRuntimeLlmStreamBridge streamBridge,
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     AgentRuntimeToolLineHandler? toolLineHandler,
-    int maxToolRounds = 4,
+    int maxToolRounds = kMaxToolRounds,
     String agentId = kFrbChatRunnerAgentId,
   }) : _streamBridge = streamBridge,
        _toolsReader = (() => tools),
@@ -39,7 +41,7 @@ class FrbChatRunner implements ChatAgent {
     required AgentRuntimeLlmStreamBridge streamBridge,
     required List<Map<String, Object?>> Function() toolsReader,
     AgentRuntimeToolLineHandler? toolLineHandler,
-    int maxToolRounds = 4,
+    int maxToolRounds = kMaxToolRounds,
     String agentId = kFrbChatRunnerAgentId,
   }) : _streamBridge = streamBridge,
        _toolsReader = toolsReader,

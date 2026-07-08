@@ -8,6 +8,8 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_stream_br
 import 'package:naviwealth/app/agent_runtime/chat/frb_chat_runner.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/chat_agent.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
+    show kMaxToolRounds;
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 
 void main() {
@@ -220,7 +222,7 @@ void main() {
 
     final firstRequest = streamBridge.requests.first;
     expect(firstRequest['tools'], hasLength(1));
-    expect(firstRequest['max_tool_rounds'], 4);
+    expect(firstRequest['max_tool_rounds'], kMaxToolRounds);
     final secondMessages = streamBridge.requests[1]['messages'] as List;
     expect(secondMessages, hasLength(1));
     final secondMetadata =

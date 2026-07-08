@@ -9,6 +9,8 @@ import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart'
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/local/embedding/rust_gemma_embedder.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
+    show kMaxToolRounds;
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 
@@ -54,7 +56,7 @@ final class RealLlmE2eConfig {
     return value == null || value.isEmpty ? null : value;
   }
 
-  int get maxToolRounds => _readInt('E2E_LLM_MAX_TOOL_ROUNDS', 8);
+  int get maxToolRounds => _readInt('E2E_LLM_MAX_TOOL_ROUNDS', kMaxToolRounds);
 
   Duration get timeout =>
       Duration(seconds: _readInt('E2E_LLM_TIMEOUT_SECONDS', 180));

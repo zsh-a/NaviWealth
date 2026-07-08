@@ -10,7 +10,7 @@
 library;
 
 /// Maximum LLM↔tool round-trips per turn.
-const int kMaxToolRounds = 8;
+const int kMaxToolRounds = 16;
 
 /// Per-conversation cap on `propose_*` calls.
 const int kMaxProposalsPerConversation = 5;
