@@ -225,6 +225,33 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('panel state card constrains long copy on a compact viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      _wrap(
+        const SizedBox(
+          width: 220,
+          child: AgentResultPanelStateCard(
+            icon: Icons.auto_awesome,
+            title:
+                'Extremely long agent status title that should not overflow the row',
+            message:
+                'A very long status message should stay inside the available width and use ellipsis when the panel is compact.',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(AgentResultPanelStateCard), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('detail follow-up opens askAi invocation for artifact', (
     tester,
   ) async {
@@ -254,6 +281,43 @@ void main() {
     expect(capturedInvocation?.context['agent_id'], 'agent-1');
     expect(capturedInvocation?.context['trace_id'], 'trace-1');
     expect(capturedObjectLabel, 'Morning Briefing');
+  });
+
+  testWidgets('detail follow-up ignores repeat taps while pending', (
+    tester,
+  ) async {
+    final pending = Completer<void>();
+    var calls = 0;
+    await _openArtifactSheet(
+      tester,
+      overrides: [
+        askAiSurfaceProvider.overrideWithValue((
+          context, {
+          invocation,
+          objectLabel,
+          prefill,
+        }) async {
+          calls += 1;
+          await pending.future;
+        }),
+      ],
+    );
+
+    await tester.tap(find.text('Ask follow-up'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(calls, 1);
+    expect(find.byType(FCircularProgress), findsOneWidget);
+
+    await tester.tap(find.text('Ask follow-up'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(calls, 1);
+
+    pending.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FCircularProgress), findsNothing);
   });
 
   testWidgets('detail evidence action opens registered evidence intent', (

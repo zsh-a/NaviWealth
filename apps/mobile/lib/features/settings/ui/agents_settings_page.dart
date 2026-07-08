@@ -55,6 +55,7 @@ final _agentSettingsRowsProvider =
       final artifactStore = artifactIds.isEmpty
           ? null
           : await ref.watch(agent_providers.agentArtifactStoreProvider.future);
+      final visibleAt = DateTime.now().toUtc();
       final artifacts = artifactStore == null
           ? const <AgentArtifact?>[]
           : await Future.wait([
@@ -63,7 +64,7 @@ final _agentSettingsRowsProvider =
             ]);
       final artifactsById = <String, AgentArtifact>{
         for (final artifact in artifacts.whereType<AgentArtifact>())
-          artifact.id: artifact,
+          if (artifact.isVisibleAt(visibleAt)) artifact.id: artifact,
       };
       final rows = <_AgentSettingsRow>[];
       for (final registration in registrations) {
@@ -578,6 +579,7 @@ class _AgentSettingsDetailSheetState
     extends ConsumerState<_AgentSettingsDetailSheet> {
   late bool _enabled;
   late bool _notificationsEnabled;
+  late bool _running;
   bool _savingEnabled = false;
   bool _savingNotifications = false;
 
@@ -586,6 +588,15 @@ class _AgentSettingsDetailSheetState
     super.initState();
     _enabled = widget.row.preference.enabled;
     _notificationsEnabled = widget.row.preference.notificationsEnabled;
+    _running = widget.running;
+  }
+
+  @override
+  void didUpdateWidget(covariant _AgentSettingsDetailSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.running != widget.running) {
+      _running = widget.running;
+    }
   }
 
   Future<void> _setEnabled(bool value) async {
@@ -629,6 +640,16 @@ class _AgentSettingsDetailSheetState
       );
     } finally {
       if (mounted) setState(() => _savingNotifications = false);
+    }
+  }
+
+  Future<void> _runNow() async {
+    if (_running || !_enabled) return;
+    setState(() => _running = true);
+    try {
+      await widget.onRunNow();
+    } finally {
+      if (mounted) setState(() => _running = false);
     }
   }
 
@@ -762,11 +783,11 @@ class _AgentSettingsDetailSheetState
           runSpacing: AppSpacing.s8,
           children: [
             AppQuietButton(
-              label: widget.running
+              label: _running
                   ? l10n.agentSettingsRunning
                   : l10n.agentSettingsRunNow,
-              onPress: widget.running || !enabled ? null : widget.onRunNow,
-              busy: widget.running,
+              onPress: _running || !enabled ? null : _runNow,
+              busy: _running,
               prefix: const Icon(FLucideIcons.play, size: AppIconSizes.xs),
             ),
             if (row.latestArtifact != null)

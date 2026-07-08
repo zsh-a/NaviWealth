@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -524,6 +526,87 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('detail run now stays busy while manual run is pending', (
+    tester,
+  ) async {
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    const agent = _FakeAgent();
+    final runCompleter = Completer<AgentRunResult>();
+    final controller = _DelayedAgentRunController(result: runCompleter.future);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: agent,
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+          agentRunControllerProvider.overrideWith((ref) async => controller),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Presented Agent'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Run now'));
+    await tester.pump();
+
+    expect(controller.calls, 1);
+    expect(find.text('Running'), findsOneWidget);
+    expect(find.text('Run now'), findsNothing);
+
+    await tester.tap(find.text('Running'));
+    await tester.pump();
+
+    expect(controller.calls, 1);
+
+    runCompleter.complete(
+      AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: DateTime.utc(2026, 7, 5, 9),
+        finishedAt: DateTime.utc(2026, 7, 5, 9, 1),
+        summary: 'done',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Run now'), findsOneWidget);
+  });
+
   testWidgets('opens latest agent artifact from settings', (tester) async {
     final db = makeTestDatabase();
     addTearDown(db.close);
@@ -626,6 +709,107 @@ void main() {
 
     expect(find.text('Latest Artifact'), findsWidgets);
     expect(find.text('Something happened.'), findsOneWidget);
+  });
+
+  testWidgets('hides latest agent artifact when it is no longer visible', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    final artifactStore = SqliteAgentArtifactStore(db: db);
+    const agent = _FakeAgent();
+    final startedAt = DateTime.utc(2026, 7, 5, 9);
+    await runStore.markRunning(
+      ownerUserId: 'user-1',
+      agent: agent,
+      startedAt: startedAt,
+      trigger: AgentRunTrigger.manual,
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: agent,
+      runStartedAt: startedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+        summary: 'Artifact summary',
+        artifactId: 'artifact-1',
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+    await artifactStore.save(
+      AgentArtifact(
+        id: 'artifact-1',
+        ownerUserId: 'user-1',
+        agentId: agent.id,
+        domain: 'finance',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Hidden Artifact',
+        summary: 'Artifact summary',
+        createdAt: startedAt,
+      ),
+    );
+    await artifactStore.dismiss(
+      ownerUserId: 'user-1',
+      id: 'artifact-1',
+      dismissedAt: startedAt,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: agent,
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+          agent_providers.agentArtifactStoreProvider.overrideWith(
+            (ref) async => artifactStore,
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Presented Agent'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('View result'), findsNothing);
+    expect(find.text('History'), findsOneWidget);
   });
 
   testWidgets('opens agent run history from settings', (tester) async {
@@ -753,5 +937,32 @@ class _FakeAgent implements Agent {
       finishedAt: ctx.now,
       reason: 'test',
     );
+  }
+}
+
+class _DelayedAgentRunController implements AgentRunController {
+  _DelayedAgentRunController({required this.result});
+
+  final Future<AgentRunResult> result;
+  int calls = 0;
+
+  @override
+  Future<AgentRunResult> runOnceById(
+    String agentId, {
+    DateTime? now,
+    AgentRunTrigger trigger = AgentRunTrigger.manual,
+  }) {
+    calls += 1;
+    return result;
+  }
+
+  @override
+  Future<List<AgentRunResult>> tick({
+    DateTime? now,
+    Iterable<String>? onlyAgentIds,
+    AgentRunTrigger trigger = AgentRunTrigger.schedule,
+    Future<void> Function(Agent agent)? beforeRun,
+  }) async {
+    return <AgentRunResult>[await result];
   }
 }

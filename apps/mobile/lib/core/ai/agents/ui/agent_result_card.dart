@@ -358,11 +358,18 @@ class AgentResultPanelStateCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: context.labelStyle),
+                Text(
+                  title,
+                  style: context.labelStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: AppSpacing.s4),
                 Text(
                   message,
                   style: context.captionStyle.copyWith(height: 1.4),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (loading) ...[
                   const SizedBox(height: AppSpacing.s12),
@@ -562,32 +569,81 @@ class _AgentArtifactDetailBodyState
   }
 }
 
-class _AgentArtifactSheetFooter extends ConsumerWidget {
+class _AgentArtifactSheetFooter extends ConsumerStatefulWidget {
   const _AgentArtifactSheetFooter({required this.artifact});
 
   final AgentArtifact artifact;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AgentArtifactSheetFooter> createState() =>
+      _AgentArtifactSheetFooterState();
+}
+
+class _AgentArtifactSheetFooterState
+    extends ConsumerState<_AgentArtifactSheetFooter> {
+  bool _secondaryBusy = false;
+  bool _primaryBusy = false;
+
+  Future<void> _runAction({
+    required bool primary,
+    required Future<void> Function() action,
+  }) async {
+    if (_primaryBusy || _secondaryBusy) return;
+    setState(() {
+      if (primary) {
+        _primaryBusy = true;
+      } else {
+        _secondaryBusy = true;
+      }
+    });
+    try {
+      await action();
+    } finally {
+      if (mounted) {
+        setState(() {
+          if (primary) {
+            _primaryBusy = false;
+          } else {
+            _secondaryBusy = false;
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final artifact = widget.artifact;
     final secondaryAction = _footerActionForArtifact(l10n, artifact);
+    final footerBusy = _primaryBusy || _secondaryBusy;
     return Row(
       children: [
         Expanded(
           child: _FooterActionButton(
-            onPress: () => secondaryAction.run(context, ref),
+            onPress: () => _runAction(
+              primary: false,
+              action: () => secondaryAction.run(context, ref),
+            ),
             icon: secondaryAction.icon,
             label: secondaryAction.label,
+            busy: _secondaryBusy,
+            disabled: footerBusy,
           ),
         ),
         const SizedBox(width: AppSpacing.s10),
         Expanded(
           child: _FooterActionButton(
             primary: true,
-            onPress: () =>
-                _askAboutAgentArtifact(context, ref, artifact: artifact),
+            onPress: () => _runAction(
+              primary: true,
+              action: () =>
+                  _askAboutAgentArtifact(context, ref, artifact: artifact),
+            ),
             icon: FLucideIcons.messageCircle,
             label: l10n.agentResultAskFollowUpTitle,
+            busy: _primaryBusy,
+            disabled: footerBusy,
           ),
         ),
       ],
@@ -647,12 +703,16 @@ class _FooterActionButton extends StatelessWidget {
     required this.label,
     required this.onPress,
     this.primary = false,
+    this.busy = false,
+    this.disabled = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPress;
   final bool primary;
+  final bool busy;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -665,7 +725,7 @@ class _FooterActionButton extends StatelessWidget {
     return Semantics(
       button: true,
       child: FTappable(
-        onPress: onPress,
+        onPress: busy || disabled ? null : onPress,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: background,
@@ -684,7 +744,10 @@ class _FooterActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: AppIconSizes.xs, color: foreground),
+                if (busy)
+                  const FCircularProgress(size: FCircularProgressSizeVariant.sm)
+                else
+                  Icon(icon, size: AppIconSizes.xs, color: foreground),
                 const SizedBox(width: AppSpacing.s6),
                 Flexible(
                   child: Text(
