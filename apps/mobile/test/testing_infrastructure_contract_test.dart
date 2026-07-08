@@ -190,8 +190,8 @@ void main() {
             ),
             'features/finance/rebalance': (
               testPath: 'test/features/finance/rebalance',
-              minTestFiles: 4,
-              minTestCases: 15,
+              minTestFiles: 3,
+              minTestCases: 13,
             ),
           };
 
@@ -257,11 +257,9 @@ void main() {
         'test/features/finance/options_income/ui/wheel_lifecycle_page_test.dart':
             1,
 
-        // Rebalance: engine behavior, insight provider, and both editing /
-        // execution surfaces need separate regression coverage.
+        // Rebalance: engine behavior and both editing / execution surfaces
+        // need separate regression coverage.
         'test/features/finance/rebalance/domain/rebalance_engine_test.dart': 5,
-        'test/features/finance/rebalance/data/rebalance_drift_insight_provider_test.dart':
-            2,
         'test/features/finance/rebalance/rebalance_execution_sheet_test.dart':
             4,
         'test/features/finance/rebalance/target_allocation_editor_sheet_test.dart':

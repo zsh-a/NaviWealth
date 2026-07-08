@@ -1026,9 +1026,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dashboardAiInsightsTitle => 'Insights for you';
-
-  @override
   String get dashboardActivityPreviewTitle => 'Recent activity';
 
   @override
@@ -1058,14 +1055,36 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String homeGreetingInsightsFragment(int count) {
+  String homeGreetingAgentResultsFragment(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count insights available',
-      one: '1 insight available',
+      other: '$count agent results ready',
+      one: '1 agent result ready',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get financeAgentResultsLoading => 'Checking agent results';
+
+  @override
+  String get financeAgentResultsLoadingBody =>
+      'Recent FinanceOS reviews are loading.';
+
+  @override
+  String get financeAgentResultsEmptyTitle => 'No agent results yet';
+
+  @override
+  String get financeAgentResultsEmptyBody =>
+      'Scheduled reviews appear here when they have something to show.';
+
+  @override
+  String get financeAgentResultsErrorTitle => 'Agent results could not load';
+
+  @override
+  String financeAgentResultsErrorBody(String error) {
+    return '$error';
   }
 
   @override
@@ -1092,30 +1111,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get activityEntryDetailNoExplanation =>
       'No insight available for this entry.';
-
-  @override
-  String get activityEntryDetailInsightSubscription =>
-      'Recurring subscription. Review whether it still fits your plan before the next renewal.';
-
-  @override
-  String get activityEntryDetailInsightHousing =>
-      'Recurring housing payment. Keep it in the essential-spending baseline.';
-
-  @override
-  String get activityEntryDetailInsightIncome =>
-      'Primary income inflow. Keep it stable in cash-flow projections.';
-
-  @override
-  String get activityEntryDetailInsightDining =>
-      'Dining expense. Review if it aligns with your monthly food budget.';
-
-  @override
-  String get activityEntryDetailInsightTransport =>
-      'Transportation cost. Consider whether it\'s a routine commute or one-off trip.';
-
-  @override
-  String get activityEntryDetailInsightShopping =>
-      'Shopping purchase. Check if it was planned or impulse spending.';
 
   @override
   String activityEntryDetailLegCount(int count) {
@@ -3137,32 +3132,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'These assets aren\'t part of any bucket. Map them if they should fund the plan.';
 
   @override
-  String get fireOsInsightBucketDeviation => 'Bucket below target';
-
-  @override
-  String fireOsInsightBucketDeviationValue(
-    String role,
-    String current,
-    String target,
-  ) {
-    return '$role: $current / $target';
-  }
-
-  @override
-  String get fireOsInsightUnmappedHoldings => 'Unmapped holdings';
-
-  @override
-  String fireOsInsightUnmappedHoldingsValue(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count holdings',
-      one: '1 holding',
-    );
-    return '$_temp0 not assigned to any bucket';
-  }
-
-  @override
   String get fireOsSimulationsTitle => 'Simulations';
 
   @override
@@ -3407,22 +3376,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fireOsReviewFindingStressSafe =>
       'All stress tests are safe under current assumptions.';
-
-  @override
-  String get fireOsInsightHighWithdrawalRate => 'Withdrawal rate above SWR';
-
-  @override
-  String fireOsInsightHighWithdrawalRateValue(String rate, String swr) {
-    return '$rate% / SWR $swr%';
-  }
-
-  @override
-  String get fireOsInsightLowCashBucket => 'Cash bucket below target';
-
-  @override
-  String fireOsInsightLowCashBucketValue(String months, int target) {
-    return '$months of $target months';
-  }
 
   @override
   String get benchmarkComparisonTitle => 'Benchmark comparison';
@@ -7435,96 +7388,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get localSecuritiesMarketLabel => 'Market';
 
   @override
-  String get dashboardInsightFireLabel => 'FIRE';
-
-  @override
-  String dashboardInsightFireToGoYears(int years, int months) {
-    return '${years}y ${months}m to go';
-  }
-
-  @override
-  String dashboardInsightFireToGoMonths(int months) {
-    return '${months}m to go';
-  }
-
-  @override
-  String get dashboardInsightFireReached => 'Goal reached';
-
-  @override
-  String get dashboardInsightDriftLabel => 'Portfolio drift';
-
-  @override
-  String get dashboardInsightDriftOver => 'over';
-
-  @override
-  String get dashboardInsightDriftUnder => 'under';
-
-  @override
-  String dashboardInsightDriftValue(
-    String category,
-    String direction,
-    int points,
-  ) {
-    return '$category $direction ${points}pp';
-  }
-
-  @override
-  String get dashboardInsightMaturityLabel => 'Maturities';
-
-  @override
-  String dashboardInsightMaturityValue(int count, int days) {
-    return '$count deposits due in ${days}d';
-  }
-
-  @override
-  String get dashboardInsightAnomalyLabel => 'Expense trend';
-
-  @override
-  String dashboardInsightAnomalyValue(String percent) {
-    return 'Projected $percent';
-  }
-
-  @override
-  String get dashboardInsightDuplicateChargeLabel =>
-      'Possible duplicate charge';
-
-  @override
-  String dashboardInsightDuplicateChargeValue(int count, String amount) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count pairs',
-      one: '1 pair',
-    );
-    return '$_temp0 totaling $amount';
-  }
-
-  @override
-  String get dashboardInsightMonthlySummaryLabel => 'Last month recap';
-
-  @override
-  String dashboardInsightMonthlySummaryUp(String amount) {
-    return 'Net worth grew $amount';
-  }
-
-  @override
-  String dashboardInsightMonthlySummaryDown(String amount) {
-    return 'Net worth shrank $amount';
-  }
-
-  @override
-  String get dashboardInsightMonthlySummaryFlat => 'Net worth was flat';
-
-  @override
-  String get dashboardInsightActionExpand => 'Expand';
-
-  @override
-  String get dashboardInsightActionAsk => 'Ask';
-
-  @override
-  String get dashboardInsightActionDismiss => 'Dismiss';
-
-  @override
   String get portfolioViewAssets => 'Assets';
 
   @override
@@ -7891,36 +7754,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiCapsuleExpandFallback => 'Expand';
-
-  @override
-  String get dashboardInsightIngestQueueLabel => 'Records to confirm';
-
-  @override
-  String dashboardInsightIngestQueueValue(int count, int fresh) {
-    return '$count parsed · $fresh ready to add';
-  }
-
-  @override
-  String get dashboardInsightCashFlowDeficitLabel => 'Cashflow gap';
-
-  @override
-  String dashboardInsightCashFlowDeficitValue(String amount) {
-    return 'This month is short $amount';
-  }
-
-  @override
-  String get dashboardInsightCurrencyMismatchLabel => 'FX rate missing';
-
-  @override
-  String dashboardInsightCurrencyMismatchValue(int count, String currency) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count holdings are excluded from $currency totals',
-      one: '1 holding is excluded from $currency totals',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get ingestReviewTitle => 'Review entries';
@@ -11641,7 +11474,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String knowledgeAgentInboxInsightKindBody(Object count, Object label) {
+  String knowledgeAgentInboxSuggestionKindBody(Object count, Object label) {
     return '$count $label.';
   }
 

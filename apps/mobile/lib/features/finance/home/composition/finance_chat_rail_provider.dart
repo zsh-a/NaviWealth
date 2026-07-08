@@ -1,54 +1,56 @@
 /// Finance-domain contribution to the chat rail
 /// (`docs/architecture/lifeos-shell.md` §4).
 ///
-/// The chat rail used to be wired directly in
-/// `features/ai_chat/ui/ai_action_cards_rail.dart` and reached into
-/// `features/finance/home/` to read `dashboardInsightsProvider` + render its
-/// `InsightItem` model. The rail now reads a domain-neutral
-/// `List<ChatRailContent>` from `core/ai/composition/`, and domain packs
-/// provide their own projections through app composition. The AI rail attaches
-/// to this selector after the first frame.
+/// The rail reads a domain-neutral `List<ChatRailContent>` from
+/// `core/ai/composition/`. Finance projects persisted agent artifacts into
+/// that shape so the chat surface can invoke follow-up intents without
+/// importing Finance UI or data models.
 library;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/composition/chat_rail_content.dart';
 import 'package:naviwealth/core/ai/composition/chat_rail_provider.dart';
-import 'package:naviwealth/l10n/gen/app_localizations.dart';
-import '../data/dashboard_insights_provider.dart';
-import '../domain/insight_models.dart';
-import '../ui/insight_feed_strings.dart';
+import 'package:naviwealth/core/ai/intent/intent.dart';
+import 'package:naviwealth/features/finance/agents/providers.dart'
+    as finance_agent_providers;
 
-ChatRailTone? _mapTone(InsightTone? tone) => switch (tone) {
-  InsightTone.success => ChatRailTone.success,
-  InsightTone.warning => ChatRailTone.warning,
-  InsightTone.danger => ChatRailTone.danger,
-  InsightTone.info => ChatRailTone.info,
-  null => null,
-};
-
-/// Maps the home-domain `InsightItem` list into the cross-domain
-/// `ChatRailContent` model the shell consumes.
+/// Maps FinanceOS agent artifacts into the cross-domain `ChatRailContent`
+/// model the shell consumes.
 List<ChatRailContent> financeChatRailContent({
-  required List<InsightItem> insights,
-  required AppLocalizations l10n,
+  required List<AgentArtifact> artifacts,
 }) {
-  return insights
+  return artifacts
       .map(
-        (item) => ChatRailContent(
-          id: 'finance:${item.kind.name}:${item.route ?? ''}',
-          headline: insightHeadline(l10n, item),
-          detail: insightDetail(l10n, item),
-          icon: item.icon,
-          tone: _mapTone(item.tone),
-          route: item.route,
+        (artifact) => ChatRailContent(
+          id: 'finance:agent_artifact:${artifact.id}',
+          headline: artifact.title,
+          detail: artifact.summary,
+          icon: _iconForKind(artifact.kind),
+          tone: _toneForSeverity(artifact.severity),
+          intent: kAgentExplainResultIntent,
+          object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
+          objectLabel: artifact.title,
+          attrs: <String, Object?>{
+            'artifact_id': artifact.id,
+            'artifact_title': artifact.title,
+            'artifact_summary': artifact.summary,
+            'agent_id': artifact.agentId,
+            'artifact_kind': artifact.kind.wire,
+            'artifact_severity': artifact.severity.wire,
+          },
+          source: 'finance_agent_artifact_rail',
         ),
       )
       .toList(growable: false);
 }
 
 /// FinanceOS implementation of [ChatRailContentSelector]. Watches the
-/// home insights feed and projects each `InsightItem` into the
+/// latest visible Finance agent artifacts and projects each one into the
 /// cross-domain `ChatRailContent` shape.
 ///
 /// Finance composition exposes this selector through its domain pack so
@@ -56,6 +58,26 @@ List<ChatRailContent> financeChatRailContent({
 /// UI or data models.
 final financeChatRailContentSelectorProvider =
     Provider<ChatRailContentSelector>((ref) {
-      final insights = ref.watch(dashboardInsightsProvider);
-      return (l10n) => financeChatRailContent(insights: insights, l10n: l10n);
+      final artifacts =
+          ref
+              .watch(
+                finance_agent_providers.latestFinanceAgentArtifactsProvider,
+              )
+              .value ??
+          const <AgentArtifact>[];
+      return (_) => financeChatRailContent(artifacts: artifacts);
     });
+
+IconData _iconForKind(AgentArtifactKind kind) => switch (kind) {
+  AgentArtifactKind.briefing => FLucideIcons.sun,
+  AgentArtifactKind.review => FLucideIcons.clipboardCheck,
+  AgentArtifactKind.alert => FLucideIcons.triangleAlert,
+  AgentArtifactKind.reminder => FLucideIcons.bell,
+};
+
+ChatRailTone _toneForSeverity(AgentArtifactSeverity severity) =>
+    switch (severity) {
+      AgentArtifactSeverity.info => ChatRailTone.info,
+      AgentArtifactSeverity.attention => ChatRailTone.warning,
+      AgentArtifactSeverity.warning => ChatRailTone.danger,
+    };

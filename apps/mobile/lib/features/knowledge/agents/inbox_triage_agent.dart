@@ -213,7 +213,7 @@ class InboxTriageAgent implements Agent {
         for (final entry in byKind.entries)
           AgentInsight(
             title: _proposalKindLabel(l10n, entry.key),
-            body: l10n.knowledgeAgentInboxInsightKindBody(
+            body: l10n.knowledgeAgentInboxSuggestionKindBody(
               entry.value,
               entry.value == 1
                   ? l10n.knowledgeAgentInboxProposalSuggestionSingular

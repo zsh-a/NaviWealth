@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
-import 'package:naviwealth/core/async/deferred_provider_snapshot.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/sync/providers.dart';
@@ -24,11 +23,8 @@ import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordina
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../data/dashboard_insights_provider.dart';
 import '../domain/dashboard_models.dart';
-import '../domain/insight_models.dart';
 import 'activity_timeline_preview.dart';
-import 'ai_insight_feed.dart';
 import 'allocation_summary.dart';
 import 'currency_mismatch_banner.dart';
 import 'home_greeting_header.dart';

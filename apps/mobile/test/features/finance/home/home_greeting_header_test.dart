@@ -8,8 +8,6 @@ import 'package:naviwealth/app/shell/shell_chrome.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
-import 'package:naviwealth/features/finance/home/data/dashboard_insights_provider.dart';
-import 'package:naviwealth/features/finance/home/domain/insight_models.dart';
 import 'package:naviwealth/features/finance/home/ui/home_greeting_header.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -47,7 +45,7 @@ GoRouter _router({Widget child = const HomeGreetingHeader()}) {
 
 Widget _wrap({
   AsyncValue<DashboardHeaderMetrics>? metricsAsync,
-  List<InsightItem> insights = const [],
+  int agentArtifactCount = 0,
 }) {
   return ProviderScope(
     overrides: [
@@ -59,7 +57,7 @@ Widget _wrap({
     ],
     child: MaterialApp.router(
       routerConfig: _router(
-        child: HomeGreetingHeader(insightCount: insights.length),
+        child: HomeGreetingHeader(agentArtifactCount: agentArtifactCount),
       ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -89,7 +87,7 @@ void main() {
     expect(find.byType(Text), findsWidgets);
   });
 
-  testWidgets('renders no status row when there is no MTD and no insights', (
+  testWidgets('renders no status row when there is no MTD and no agent count', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 400));
@@ -117,7 +115,7 @@ void main() {
     expect(find.textContaining('2.5%'), findsOneWidget);
   });
 
-  testWidgets('shows the insight count fragment when insights exist', (
+  testWidgets('shows the agent result count fragment when artifacts exist', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 400));
@@ -126,10 +124,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         metricsAsync: AsyncData(_metrics(monthlyPct: 0.01)),
-        insights: const [
-          InsightItem(icon: FLucideIcons.calendar, kind: InsightKind.maturity),
-          InsightItem(icon: FLucideIcons.calendar, kind: InsightKind.maturity),
-        ],
+        agentArtifactCount: 2,
       ),
     );
     await tester.pumpAndSettle();
@@ -138,7 +133,7 @@ void main() {
     expect(find.text('·'), findsOneWidget);
   });
 
-  testWidgets('does not subscribe to source insights during header build', (
+  testWidgets('uses explicit agent count without reading a source provider', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 400));
@@ -150,14 +145,11 @@ void main() {
           dashboardHeaderMetricsProvider.overrideWith(
             (ref) async => _metrics(monthlyPct: 0.01),
           ),
-          dashboardInsightsProvider.overrideWith((ref) {
-            throw StateError('source insights should not be watched');
-          }),
           authControllerProvider.overrideWith(_FakeAuthController.new),
         ],
         child: MaterialApp.router(
           routerConfig: _router(
-            child: const HomeGreetingHeader(insightCount: 1),
+            child: const HomeGreetingHeader(agentArtifactCount: 1),
           ),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

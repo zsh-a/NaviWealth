@@ -16,14 +16,14 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 ///
 /// Status line composes:
 ///   • Net worth direction (MTD %)
-///   • Number of available AI insights
+///   • Number of visible FinanceOS agent results
 ///
 /// Both lines are silent when the data is missing — the header
 /// gracefully degrades to just the greeting.
 class HomeGreetingHeader extends ConsumerWidget {
-  const HomeGreetingHeader({this.insightCount = 0, super.key});
+  const HomeGreetingHeader({this.agentArtifactCount = 0, super.key});
 
-  final int insightCount;
+  final int agentArtifactCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,10 +49,10 @@ class HomeGreetingHeader extends ConsumerWidget {
         ),
       );
     }
-    if (insightCount > 0) {
+    if (agentArtifactCount > 0) {
       statusFragments.add(
         _StatusFragment(
-          text: l10n.homeGreetingInsightsFragment(insightCount),
+          text: l10n.homeGreetingAgentResultsFragment(agentArtifactCount),
           color: colors.mutedForeground,
         ),
       );

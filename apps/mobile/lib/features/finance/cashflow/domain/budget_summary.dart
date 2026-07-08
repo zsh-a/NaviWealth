@@ -104,7 +104,7 @@ class MonthlyBudgetSummary {
 
   /// Categories sorted by how strained they are — overspends first
   /// (largest first), then under-budget rows in original order. Useful
-  /// for the dashboard insight strip which surfaces the worst case.
+  /// for reporting surfaces that need the worst case first.
   List<CategoryBudgetStatus> get rankedByStrain {
     final over = categories.where((c) => c.isOverBudget).toList()
       ..sort((a, b) => b.spent.amount.compareTo(a.spent.amount));

@@ -144,7 +144,7 @@ void main() {
       );
 
       expect(result.status, AgentRunStatus.completed);
-    expect(result.summary, contains('可复盘'));
+      expect(result.summary, contains('可复盘'));
       final artifact = await artifactStore.read(result.artifactId!);
       expect(artifact?.title, '每周知识复盘');
       expect(artifact?.insights.map((insight) => insight.title), [

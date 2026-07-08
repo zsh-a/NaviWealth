@@ -600,8 +600,6 @@
   "assetDetailFxPnlTotal": "Total base P/L",
   "assetDetailFxPnlLoadError": "FX P/L failed to load: {error}",
   "@assetDetailFxPnlLoadError": { "placeholders": { "error": { "type": "String" } } },
-  "dashboardAiInsightsTitle": "Insights for you",
-  "@dashboardAiInsightsTitle": { "description": "Section header above the home AI Insight Feed" },
   "dashboardActivityPreviewTitle": "Recent activity",
   "@dashboardActivityPreviewTitle": { "description": "Section header above the home recent-activity timeline preview" },
   "dashboardActivityPreviewViewAll": "View all",
@@ -623,10 +621,25 @@
     "description": "Status line fragment under the home greeting describing month-to-date net worth direction",
     "placeholders": { "pct": { "type": "String" } }
   },
-  "homeGreetingInsightsFragment": "{count, plural, =1{1 insight available} other{{count} insights available}}",
-  "@homeGreetingInsightsFragment": {
-    "description": "Status line fragment under the home greeting describing pending AI insights",
+  "homeGreetingAgentResultsFragment": "{count, plural, =1{1 agent result ready} other{{count} agent results ready}}",
+  "@homeGreetingAgentResultsFragment": {
+    "description": "Status line fragment under the home greeting describing visible FinanceOS agent results",
     "placeholders": { "count": { "type": "int" } }
+  },
+  "financeAgentResultsLoading": "Checking agent results",
+  "@financeAgentResultsLoading": { "description": "Home FinanceOS agent result panel loading title" },
+  "financeAgentResultsLoadingBody": "Recent FinanceOS reviews are loading.",
+  "@financeAgentResultsLoadingBody": { "description": "Home FinanceOS agent result panel loading body" },
+  "financeAgentResultsEmptyTitle": "No agent results yet",
+  "@financeAgentResultsEmptyTitle": { "description": "Home FinanceOS agent result panel empty title" },
+  "financeAgentResultsEmptyBody": "Scheduled reviews appear here when they have something to show.",
+  "@financeAgentResultsEmptyBody": { "description": "Home FinanceOS agent result panel empty body" },
+  "financeAgentResultsErrorTitle": "Agent results could not load",
+  "@financeAgentResultsErrorTitle": { "description": "Home FinanceOS agent result panel error title" },
+  "financeAgentResultsErrorBody": "{error}",
+  "@financeAgentResultsErrorBody": {
+    "description": "Home FinanceOS agent result panel error body",
+    "placeholders": { "error": { "type": "String" } }
   },
   "activityFilterChipAll": "All",
   "@activityFilterChipAll": { "description": "Activity timeline filter chip: clear all kind filters" },
@@ -641,21 +654,9 @@
   "activityEntryDetailTitle": "Transaction",
   "@activityEntryDetailTitle": { "description": "Title of the activity entry detail page" },
   "activityEntryDetailAiExplanation": "Entry insight",
-  "@activityEntryDetailAiExplanation": { "description": "Section header for the local rule-based explanation block in the activity entry detail page" },
+  "@activityEntryDetailAiExplanation": { "description": "Section header for the AI-generated explanation block in the activity entry detail page" },
   "activityEntryDetailNoExplanation": "No insight available for this entry.",
   "@activityEntryDetailNoExplanation": { "description": "Empty state when no AI explanation is available" },
-  "activityEntryDetailInsightSubscription": "Recurring subscription. Review whether it still fits your plan before the next renewal.",
-  "@activityEntryDetailInsightSubscription": { "description": "Local insight shown for subscription-like transaction descriptions" },
-  "activityEntryDetailInsightHousing": "Recurring housing payment. Keep it in the essential-spending baseline.",
-  "@activityEntryDetailInsightHousing": { "description": "Local insight shown for rent or mortgage-like transaction descriptions" },
-  "activityEntryDetailInsightIncome": "Primary income inflow. Keep it stable in cash-flow projections.",
-  "@activityEntryDetailInsightIncome": { "description": "Local insight shown for salary or payroll-like transaction descriptions" },
-  "activityEntryDetailInsightDining": "Dining expense. Review if it aligns with your monthly food budget.",
-  "@activityEntryDetailInsightDining": { "description": "Local insight shown for restaurant or food delivery transaction descriptions" },
-  "activityEntryDetailInsightTransport": "Transportation cost. Consider whether it's a routine commute or one-off trip.",
-  "@activityEntryDetailInsightTransport": { "description": "Local insight shown for ride-hailing, transit, or travel transaction descriptions" },
-  "activityEntryDetailInsightShopping": "Shopping purchase. Check if it was planned or impulse spending.",
-  "@activityEntryDetailInsightShopping": { "description": "Local insight shown for online shopping or retail transaction descriptions" },
   "activityEntryDetailLegCount": "{count, plural, =1{1 line} other{{count} lines}}",
   "@activityEntryDetailLegCount": {
     "description": "Transaction detail posting line count",
@@ -1716,20 +1717,6 @@
   "fireOsBucketsMappingEmpty": "No holdings to map yet. Add accounts or assets first.",
   "fireOsUnmappedTitle": "Unmapped holdings",
   "fireOsUnmappedSubtitle": "These assets aren't part of any bucket. Map them if they should fund the plan.",
-  "fireOsInsightBucketDeviation": "Bucket below target",
-  "fireOsInsightBucketDeviationValue": "{role}: {current} / {target}",
-  "@fireOsInsightBucketDeviationValue": {
-    "placeholders": {
-      "role": { "type": "String", "example": "Cash" },
-      "current": { "type": "String", "example": "¥30,000" },
-      "target": { "type": "String", "example": "¥48,000" }
-    }
-  },
-  "fireOsInsightUnmappedHoldings": "Unmapped holdings",
-  "fireOsInsightUnmappedHoldingsValue": "{count, plural, =1{1 holding} other{{count} holdings}} not assigned to any bucket",
-  "@fireOsInsightUnmappedHoldingsValue": {
-    "placeholders": { "count": { "type": "int", "example": "2" } }
-  },
   "fireOsSimulationsTitle": "Simulations",
   "fireOsSimulationsSubtitle": "Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.",
   "fireOsSimulationsBaselineLabel": "Baseline",
@@ -1884,22 +1871,6 @@
     "placeholders": { "scenario": { "type": "String", "example": "expense_surge" } }
   },
   "fireOsReviewFindingStressSafe": "All stress tests are safe under current assumptions.",
-  "fireOsInsightHighWithdrawalRate": "Withdrawal rate above SWR",
-  "fireOsInsightHighWithdrawalRateValue": "{rate}% / SWR {swr}%",
-  "@fireOsInsightHighWithdrawalRateValue": {
-    "placeholders": {
-      "rate": { "type": "String", "example": "4.6" },
-      "swr": { "type": "String", "example": "4.0" }
-    }
-  },
-  "fireOsInsightLowCashBucket": "Cash bucket below target",
-  "fireOsInsightLowCashBucketValue": "{months} of {target} months",
-  "@fireOsInsightLowCashBucketValue": {
-    "placeholders": {
-      "months": { "type": "String", "example": "6" },
-      "target": { "type": "int", "example": "12" }
-    }
-  },
 
   "benchmarkComparisonTitle": "Benchmark comparison",
   "benchmarkComparisonSubtitle": "Pin major indices against your net worth and read off the excess return.",
@@ -4045,85 +4016,6 @@
   "localSecuritiesMarketLabel": "Market",
   "@localSecuritiesMarketLabel": { "description": "Symbol field: market selector label" },
 
-  "dashboardInsightFireLabel": "FIRE",
-  "@dashboardInsightFireLabel": { "description": "Dashboard insight label: FIRE plan" },
-  "dashboardInsightFireToGoYears": "{years}y {months}m to go",
-  "@dashboardInsightFireToGoYears": {
-    "description": "Dashboard FIRE insight value when at least one year remains",
-    "placeholders": {
-      "years": { "type": "int" },
-      "months": { "type": "int" }
-    }
-  },
-  "dashboardInsightFireToGoMonths": "{months}m to go",
-  "@dashboardInsightFireToGoMonths": {
-    "description": "Dashboard FIRE insight value when less than one year remains",
-    "placeholders": { "months": { "type": "int" } }
-  },
-  "dashboardInsightFireReached": "Goal reached",
-  "@dashboardInsightFireReached": { "description": "Dashboard FIRE insight value when goal is reached" },
-  "dashboardInsightDriftLabel": "Portfolio drift",
-  "@dashboardInsightDriftLabel": { "description": "Dashboard insight label: rebalance drift" },
-  "dashboardInsightDriftOver": "over",
-  "@dashboardInsightDriftOver": { "description": "Dashboard drift direction: overweight" },
-  "dashboardInsightDriftUnder": "under",
-  "@dashboardInsightDriftUnder": { "description": "Dashboard drift direction: underweight" },
-  "dashboardInsightDriftValue": "{category} {direction} {points}pp",
-  "@dashboardInsightDriftValue": {
-    "description": "Dashboard drift insight value",
-    "placeholders": {
-      "category": { "type": "String" },
-      "direction": { "type": "String" },
-      "points": { "type": "int" }
-    }
-  },
-  "dashboardInsightMaturityLabel": "Maturities",
-  "@dashboardInsightMaturityLabel": { "description": "Dashboard insight label: upcoming deposit maturities" },
-  "dashboardInsightMaturityValue": "{count} deposits due in {days}d",
-  "@dashboardInsightMaturityValue": {
-    "description": "Dashboard deposit maturity insight value",
-    "placeholders": {
-      "count": { "type": "int" },
-      "days": { "type": "int" }
-    }
-  },
-  "dashboardInsightAnomalyLabel": "Expense trend",
-  "@dashboardInsightAnomalyLabel": { "description": "Dashboard insight label: expense anomaly" },
-  "dashboardInsightAnomalyValue": "Projected {percent}",
-  "@dashboardInsightAnomalyValue": {
-    "description": "Dashboard expense anomaly insight value",
-    "placeholders": { "percent": { "type": "String" } }
-  },
-  "dashboardInsightDuplicateChargeLabel": "Possible duplicate charge",
-  "@dashboardInsightDuplicateChargeLabel": { "description": "Dashboard insight label: same merchant + amount within ±2 days" },
-  "dashboardInsightDuplicateChargeValue": "{count, plural, one{1 pair} other{{count} pairs}} totaling {amount}",
-  "@dashboardInsightDuplicateChargeValue": {
-    "description": "Dashboard duplicate-charge insight value",
-    "placeholders": {
-      "count": { "type": "int" },
-      "amount": { "type": "String" }
-    }
-  },
-  "dashboardInsightMonthlySummaryLabel": "Last month recap",
-  "@dashboardInsightMonthlySummaryLabel": { "description": "Dashboard insight label: prior-month net-worth summary, fired in the first week of a new month" },
-  "dashboardInsightMonthlySummaryUp": "Net worth grew {amount}",
-  "@dashboardInsightMonthlySummaryUp": {
-    "description": "Monthly summary insight value when net worth grew",
-    "placeholders": { "amount": { "type": "String" } }
-  },
-  "dashboardInsightMonthlySummaryDown": "Net worth shrank {amount}",
-  "@dashboardInsightMonthlySummaryDown": {
-    "description": "Monthly summary insight value when net worth declined",
-    "placeholders": { "amount": { "type": "String" } }
-  },
-  "dashboardInsightMonthlySummaryFlat": "Net worth was flat",
-  "@dashboardInsightMonthlySummaryFlat": { "description": "Monthly summary insight value when net worth was unchanged" },
-  "dashboardInsightActionExpand": "Expand",
-  "@dashboardInsightActionExpand": { "description": "Insight card action: expand inline detail" },
-  "dashboardInsightActionAsk": "Ask",
-  "@dashboardInsightActionAsk": { "description": "Insight card action: open the command palette with the insight as context" },
-  "dashboardInsightActionDismiss": "Dismiss",
-  "@dashboardInsightActionDismiss": { "description": "Insight card action: hide this insight kind on the dashboard" },
   "portfolioViewAssets": "Assets",
   "@portfolioViewAssets": { "description": "Portfolio view switcher: assets list" },
   "portfolioViewAccount": "Account",
@@ -4336,30 +4228,6 @@
   "aiReplyChipVsLastMonth": "Compare with last month",
   "aiCapsuleExpandFallback": "Expand",
 
-  "dashboardInsightIngestQueueLabel": "Records to confirm",
-  "@dashboardInsightIngestQueueLabel": { "description": "Dashboard insight label: Layer 4 ingest queue has parsed drafts awaiting confirmation" },
-  "dashboardInsightIngestQueueValue": "{count} parsed · {fresh} ready to add",
-  "@dashboardInsightIngestQueueValue": {
-    "description": "Dashboard ingest-queue insight value",
-    "placeholders": { "count": { "type": "int" }, "fresh": { "type": "int" } }
-  },
-  "dashboardInsightCashFlowDeficitLabel": "Cashflow gap",
-  "@dashboardInsightCashFlowDeficitLabel": { "description": "Dashboard insight label shown when this month cashflow is negative" },
-  "dashboardInsightCashFlowDeficitValue": "This month is short {amount}",
-  "@dashboardInsightCashFlowDeficitValue": {
-    "description": "Dashboard insight detail for current-month negative cashflow",
-    "placeholders": { "amount": { "type": "String", "example": "$420.00" } }
-  },
-  "dashboardInsightCurrencyMismatchLabel": "FX rate missing",
-  "@dashboardInsightCurrencyMismatchLabel": { "description": "Dashboard insight label shown when holdings are excluded because FX conversion is missing" },
-  "dashboardInsightCurrencyMismatchValue": "{count, plural, one{1 holding is excluded from {currency} totals} other{{count} holdings are excluded from {currency} totals}}",
-  "@dashboardInsightCurrencyMismatchValue": {
-    "description": "Dashboard insight detail for holdings omitted from dashboard totals due to missing FX conversion",
-    "placeholders": {
-      "count": { "type": "int" },
-      "currency": { "type": "String", "example": "CNY" }
-    }
-  },
   "ingestReviewTitle": "Review entries",
   "@ingestReviewTitle": { "description": "Layer 4 ingest review page title" },
   "ingestAccountsLoadError": "Failed to load accounts: {error}",
@@ -5825,7 +5693,7 @@
   "knowledgeAgentInboxArtifactTitle": "Inbox Triage",
   "knowledgeAgentInboxInsightSuggestionsTitle": "New suggestions",
   "knowledgeAgentInboxInsightSuggestionsBody": "{proposalCount} suggestion{proposalPlural} across {noteCount} note{notePlural}.",
-  "knowledgeAgentInboxInsightKindBody": "{count} {label}.",
+  "knowledgeAgentInboxSuggestionKindBody": "{count} {label}.",
   "knowledgeAgentInboxUntitledNote": "Untitled note",
   "knowledgeAgentInboxProposalClassification": "Classification",
   "knowledgeAgentInboxProposalTags": "Tags",

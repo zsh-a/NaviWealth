@@ -8,9 +8,8 @@ import '../tokens/motion_utils.dart';
 /// A reusable entrance animation: opacity 0 → 1 combined with a small
 /// translate offset, driven by an [AnimationController].
 ///
-/// Extracted from the private `_StaggeredFadeIn` pattern used in
-/// `ai_insight_feed.dart`. Use this whenever a widget needs to "appear"
-/// with a fade + slide rather than popping in abruptly.
+/// Shared helper for widgets that should "appear" with a fade + slide rather
+/// than popping in abruptly.
 ///
 /// For staggered list entrances, wrap each item with a different [delay]:
 ///

@@ -1,6 +1,6 @@
 /// Feature-owned seam for generating one-line activity entry insights.
 ///
-/// The feature owns request shaping, deterministic fallback, and prompt text.
+/// The feature owns request shaping and prompt text.
 /// App bootstrap may inject an FRB-backed [ActivityEntryInsightClient], but the
 /// Activity feature does not import app-level runtime providers directly.
 library;
@@ -32,17 +32,16 @@ final aiExplainEntryProvider = FutureProvider.autoDispose
             ? const Locale('zh')
             : const Locale('en'),
       );
-      final fallback = heuristicActivityEntryInsight(request.entry, l10n);
       final client = ref.watch(activityEntryInsightClientProvider);
-      if (client == null) return fallback;
+      if (client == null) return null;
 
       try {
         final text = await client
             .explain(request, l10n)
             .timeout(const Duration(seconds: 15));
-        return cleanActivityEntryAiInsight(text) ?? fallback;
+        return cleanActivityEntryAiInsight(text);
       } on Object {
-        return fallback;
+        return null;
       }
     });
 
@@ -100,108 +99,6 @@ class ActivityEntryInsightRequest {
         })
         .join('|');
   }
-}
-
-String? heuristicActivityEntryInsight(
-  JournalEntryWithPostings entry,
-  AppLocalizations l10n,
-) {
-  final text = [
-    entry.entry.narration,
-    if (entry.entry.payee != null) entry.entry.payee!,
-  ].join(' ').toLowerCase();
-  if (_containsAny(text, const [
-    'netflix',
-    'spotify',
-    'prime',
-    'subscription',
-    '订阅',
-    '会员',
-    '自动续费',
-    '续费',
-    '月费',
-  ])) {
-    return l10n.activityEntryDetailInsightSubscription;
-  }
-  if (_containsAny(text, const [
-    'rent',
-    'mortgage',
-    'housing',
-    '房租',
-    '租金',
-    '房贷',
-    '按揭',
-    '物业',
-  ])) {
-    return l10n.activityEntryDetailInsightHousing;
-  }
-  if (_containsAny(text, const [
-    'salary',
-    'payroll',
-    'wage',
-    '工资',
-    '薪资',
-    '薪水',
-    '发薪',
-    '奖金',
-  ])) {
-    return l10n.activityEntryDetailInsightIncome;
-  }
-  if (_containsAny(text, const [
-    'restaurant',
-    'dining',
-    'food',
-    'lunch',
-    'dinner',
-    'breakfast',
-    '外卖',
-    '餐饮',
-    '美团',
-    '饿了么',
-    '麦当劳',
-    '肯德基',
-    '星巴克',
-  ])) {
-    return l10n.activityEntryDetailInsightDining;
-  }
-  if (_containsAny(text, const [
-    'uber',
-    'lyft',
-    'taxi',
-    'transit',
-    'metro',
-    'subway',
-    '滴滴',
-    '打车',
-    '地铁',
-    '公交',
-    '高铁',
-    '火车',
-    '机票',
-    '航空',
-  ])) {
-    return l10n.activityEntryDetailInsightTransport;
-  }
-  if (_containsAny(text, const [
-    'shopping',
-    'mall',
-    'store',
-    'taobao',
-    'jd.com',
-    'pinduoduo',
-    '淘宝',
-    '京东',
-    '拼多多',
-    '天猫',
-    '购物',
-  ])) {
-    return l10n.activityEntryDetailInsightShopping;
-  }
-  return null;
-}
-
-bool _containsAny(String text, List<String> keywords) {
-  return keywords.any(text.contains);
 }
 
 String activityEntryInsightSystem(Locale locale) {

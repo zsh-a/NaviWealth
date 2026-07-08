@@ -60,7 +60,7 @@ Cross-domain Home / LifeOS dashboard:
 
 - `apps/mobile/lib/features/finance/home/home_page.dart`
 - `apps/mobile/lib/features/finance/home/ui/home_greeting_header.dart`
-- `apps/mobile/lib/features/finance/home/ui/ai_insight_feed.dart`
+- `apps/mobile/lib/features/finance/home/ui/home_dashboard_body.dart`
 - `apps/mobile/lib/features/finance/home/ui/activity_timeline_preview.dart`
 - `apps/mobile/lib/features/finance/home/ui/allocation_summary.dart`
 - `apps/mobile/lib/features/finance/home/ui/trend_card.dart`
@@ -132,7 +132,7 @@ Intent:
 - Align Home with the integrated LifeOS view: top-level finance, health, and
   knowledge signals, plus recent activity/AI insight.
 - Preserve current Home business logic: `dashboardSnapshotProvider`,
-  `dashboardInsightsProvider`, price/sync status, recurring materialization,
+  agent result providers, price/sync status, recurring materialization,
   amount privacy, and current dashboard widgets.
 
 Implementation direction:
@@ -140,7 +140,7 @@ Implementation direction:
 - Continue using `AppCanvasScaffold` and `AdaptiveContentFrame`.
 - Keep the existing cockpit split for wide viewports.
 - Restyle `_NetWorthHeader` as the finance hero pattern shared with Wealth.
-- Treat existing `AiInsightFeed`, `ActivityTimelinePreview`,
+- Treat existing `FinanceAgentResultsPanel`, `ActivityTimelinePreview`,
   `AllocationSummary`, `TrendCard`, `PassiveIncomeCard`, and
   `CashflowCalendarCard` as content modules inside the new bento rhythm.
 - Add Health and Knowledge summary cards only if the data already exists behind

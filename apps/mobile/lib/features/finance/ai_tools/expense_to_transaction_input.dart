@@ -7,8 +7,8 @@
 /// minor unit, so `*100 → floor → BigInt` round-trips losslessly.
 ///
 /// Originally duplicated in `drift_query_plan_executor.dart` and the
-/// chat repository's `providers.dart`; promoted here once a third
-/// caller (`duplicate_charge_insight_provider.dart`) showed up.
+/// chat repository's `providers.dart`; promoted here for local skills that
+/// need the same transaction-shaped input.
 library;
 
 import 'package:decimal/decimal.dart';

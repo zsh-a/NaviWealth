@@ -222,7 +222,7 @@ label 影响。**Privacy policy 永远优先于 source。**
 
 | 层级 | 触发者 | 形态 | 落地 |
 |------|--------|------|------|
-| **Ambient** | 系统/端侧 detector | Insight 卡片（展开/问一下/忽略）| `features/finance/home/ui/ai_insight_feed.dart` |
+| **Ambient** | 本地 scheduled agents | Agent result panel + artifact rail → `askAi` invocation | `FinanceAgentResultsPanel` / `finance_chat_rail_provider.dart` |
 | **Contextual** | 用户在某对象上 | Capsule → inline bottom sheet | `AiObjectCapsule` + `showAiBottomSheet` |
 | **Global** | 跨领域复杂任务 | 命令栏 overlay（**非** `/ai` tab）| `core/command_palette/` |
 
@@ -287,7 +287,7 @@ AI 元素默认 surface tone（非 accent）；单色细线 sparkle（字号 ≤
 |-------|------|------|------|
 | 1 | 统一命令栏 | Cmd-K overlay / 移动端顶栏 pill | `core/command_palette/`（就地出结构化答案，不留对话历史）|
 | 2 | 内联上下文 Capsule | 图表 ⋯ / 卡片长按 → bottom sheet | §5.4 不变 |
-| 3 | 环境式洞察 | 主屏卡片三动作（展开/问一下/忽略）+ 偏好学习 | `ai_insight_feed.dart` |
+| 3 | 环境式 agent 结果 | 主屏 agent 结果面板 + chat rail artifact follow-up | `FinanceAgentResultsPanel` / `askAi()` |
 | 4 | 录入链路隐形 AI | 截图/文件/粘贴/分享自动解析 | `features/finance/ingest/`（见 §5.10）|
 
 拓扑结果：`/ai` tab 下线（FinanceOS 4-tab：Home/Activity/Wealth/Plan；Settings

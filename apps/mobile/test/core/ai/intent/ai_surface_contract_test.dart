@@ -116,20 +116,29 @@ void main() {
     expect(contextualCapsule, contains('intent: intent'));
     expect(contextualCapsule, contains('AiContextChipScope.contextMapOf'));
 
-    final ambientFeed = File(
-      'lib/features/finance/home/ui/ai_insight_feed.dart',
+    final ambientPanel = File(
+      'lib/features/finance/home/ui/home_dashboard_body.dart',
     ).readAsStringSync();
-    expect(ambientFeed, contains('class AiInsightFeed'));
-    expect(ambientFeed, contains('AiObjectCapsule('));
-    expect(ambientFeed, contains("intent: 'explain_insight'"));
-    expect(ambientFeed, contains("source: 'home_insight_card'"));
+    expect(ambientPanel, contains('class FinanceAgentResultsPanel'));
+    expect(ambientPanel, contains('AgentResultCard('));
+    expect(ambientPanel, contains('AgentRunStatusCard('));
 
-    final ingestProjection = File(
-      'lib/features/finance/ingest/data/ingest_queue_insight_provider.dart',
+    final agentArtifactRail = File(
+      'lib/features/finance/home/composition/finance_chat_rail_provider.dart',
     ).readAsStringSync();
-    expect(ingestProjection, contains('ingestQueueInsightProvider'));
-    expect(ingestProjection, contains('pendingIngestDraftsProvider'));
-    expect(ingestProjection, contains('IngestQueueSummary'));
+    expect(agentArtifactRail, contains('latestFinanceAgentArtifactsProvider'));
+    expect(agentArtifactRail, contains('kAgentExplainResultIntent'));
+    expect(agentArtifactRail, contains('kAgentArtifactObjectType'));
+    expect(
+      agentArtifactRail,
+      contains("source: 'finance_agent_artifact_rail'"),
+    );
+
+    final actionRail = File(
+      'lib/features/ai_chat/ui/ai_action_cards_rail.dart',
+    ).readAsStringSync();
+    expect(actionRail, contains('askAi('));
+    expect(actionRail, contains('intent: intent'));
   });
 }
 

@@ -997,9 +997,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get dashboardAiInsightsTitle => 'AI 洞察';
-
-  @override
   String get dashboardActivityPreviewTitle => '近期活动';
 
   @override
@@ -1029,13 +1026,33 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String homeGreetingInsightsFragment(int count) {
+  String homeGreetingAgentResultsFragment(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count 条洞察待查看',
+      other: '$count 条 agent 结果可查看',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get financeAgentResultsLoading => '正在检查 agent 结果';
+
+  @override
+  String get financeAgentResultsLoadingBody => '正在加载近期 FinanceOS 复盘。';
+
+  @override
+  String get financeAgentResultsEmptyTitle => '暂无 agent 结果';
+
+  @override
+  String get financeAgentResultsEmptyBody => '计划复盘有可展示结果时会出现在这里。';
+
+  @override
+  String get financeAgentResultsErrorTitle => '无法加载 agent 结果';
+
+  @override
+  String financeAgentResultsErrorBody(String error) {
+    return '$error';
   }
 
   @override
@@ -1061,25 +1078,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activityEntryDetailNoExplanation => '暂无该笔记录的洞察。';
-
-  @override
-  String get activityEntryDetailInsightSubscription =>
-      '识别为周期订阅。下次续费前可复核是否仍符合当前计划。';
-
-  @override
-  String get activityEntryDetailInsightHousing => '识别为周期居住支出。可纳入必要支出基线持续跟踪。';
-
-  @override
-  String get activityEntryDetailInsightIncome => '识别为主要收入流入。可作为现金流预测的稳定基线。';
-
-  @override
-  String get activityEntryDetailInsightDining => '餐饮支出。可对照月度餐饮预算检查是否合理。';
-
-  @override
-  String get activityEntryDetailInsightTransport => '交通出行费用。留意是日常通勤还是一次性出行。';
-
-  @override
-  String get activityEntryDetailInsightShopping => '购物消费。可回顾是计划内购买还是冲动消费。';
 
   @override
   String activityEntryDetailLegCount(int count) {
@@ -3005,32 +3003,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireOsUnmappedSubtitle => '这些资产暂未归入任何桶。若需纳入计划,请配置桶规则。';
 
   @override
-  String get fireOsInsightBucketDeviation => '桶低于目标';
-
-  @override
-  String fireOsInsightBucketDeviationValue(
-    String role,
-    String current,
-    String target,
-  ) {
-    return '$role: $current / $target';
-  }
-
-  @override
-  String get fireOsInsightUnmappedHoldings => '未分配资产';
-
-  @override
-  String fireOsInsightUnmappedHoldingsValue(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 项资产',
-      one: '1 项资产',
-    );
-    return '$_temp0 暂未分配桶';
-  }
-
-  @override
   String get fireOsSimulationsTitle => '情景模拟';
 
   @override
@@ -3265,22 +3237,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fireOsReviewFindingStressSafe => '所有压力测试在当前假设下均为安全。';
-
-  @override
-  String get fireOsInsightHighWithdrawalRate => '提取率高于安全线';
-
-  @override
-  String fireOsInsightHighWithdrawalRateValue(String rate, String swr) {
-    return '$rate% / 安全提取率 $swr%';
-  }
-
-  @override
-  String get fireOsInsightLowCashBucket => '现金桶低于目标';
-
-  @override
-  String fireOsInsightLowCashBucketValue(String months, int target) {
-    return '$months / 目标 $target 个月';
-  }
 
   @override
   String get benchmarkComparisonTitle => '基准指数对比';
@@ -7114,89 +7070,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get localSecuritiesMarketLabel => '市场';
 
   @override
-  String get dashboardInsightFireLabel => 'FIRE';
-
-  @override
-  String dashboardInsightFireToGoYears(int years, int months) {
-    return '还需 $years 年 $months 个月';
-  }
-
-  @override
-  String dashboardInsightFireToGoMonths(int months) {
-    return '还需 $months 个月';
-  }
-
-  @override
-  String get dashboardInsightFireReached => '已达成目标';
-
-  @override
-  String get dashboardInsightDriftLabel => '组合偏离';
-
-  @override
-  String get dashboardInsightDriftOver => '超配';
-
-  @override
-  String get dashboardInsightDriftUnder => '低配';
-
-  @override
-  String dashboardInsightDriftValue(
-    String category,
-    String direction,
-    int points,
-  ) {
-    return '$category $direction ${points}pp';
-  }
-
-  @override
-  String get dashboardInsightMaturityLabel => '到期提醒';
-
-  @override
-  String dashboardInsightMaturityValue(int count, int days) {
-    return '$count 笔定期 ${days}d 内到期';
-  }
-
-  @override
-  String get dashboardInsightAnomalyLabel => '支出趋势';
-
-  @override
-  String dashboardInsightAnomalyValue(String percent) {
-    return '预计 $percent';
-  }
-
-  @override
-  String get dashboardInsightDuplicateChargeLabel => '疑似重复扣款';
-
-  @override
-  String dashboardInsightDuplicateChargeValue(int count, String amount) {
-    return '$count 组，共 $amount';
-  }
-
-  @override
-  String get dashboardInsightMonthlySummaryLabel => '上月回顾';
-
-  @override
-  String dashboardInsightMonthlySummaryUp(String amount) {
-    return '净资产 +$amount';
-  }
-
-  @override
-  String dashboardInsightMonthlySummaryDown(String amount) {
-    return '净资产 -$amount';
-  }
-
-  @override
-  String get dashboardInsightMonthlySummaryFlat => '净资产基本持平';
-
-  @override
-  String get dashboardInsightActionExpand => '展开';
-
-  @override
-  String get dashboardInsightActionAsk => '问一下';
-
-  @override
-  String get dashboardInsightActionDismiss => '忽略';
-
-  @override
   String get portfolioViewAssets => '资产';
 
   @override
@@ -7519,30 +7392,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiCapsuleExpandFallback => '展开';
-
-  @override
-  String get dashboardInsightIngestQueueLabel => '录入待确认';
-
-  @override
-  String dashboardInsightIngestQueueValue(int count, int fresh) {
-    return '解析 $count 条 · $fresh 条可入账';
-  }
-
-  @override
-  String get dashboardInsightCashFlowDeficitLabel => '现金流缺口';
-
-  @override
-  String dashboardInsightCashFlowDeficitValue(String amount) {
-    return '本月缺口 $amount';
-  }
-
-  @override
-  String get dashboardInsightCurrencyMismatchLabel => '缺少汇率';
-
-  @override
-  String dashboardInsightCurrencyMismatchValue(int count, String currency) {
-    return '$count 项资产未计入 $currency 合计';
-  }
 
   @override
   String get ingestReviewTitle => '录入待确认';
@@ -11123,7 +10972,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String knowledgeAgentInboxInsightKindBody(Object count, Object label) {
+  String knowledgeAgentInboxSuggestionKindBody(Object count, Object label) {
     return '$count 条建议。';
   }
 

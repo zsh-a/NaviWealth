@@ -6,11 +6,13 @@
 /// provider so it stays unaware of which domains exist.
 ///
 /// The data model is intentionally minimal — title + detail + icon +
-/// route + tint. Domains keep their own richer model (e.g. Finance's
-/// `InsightItem`) and project down at composition time.
+/// route or typed AI invocation + tint. Domains keep their own richer
+/// model and project down at composition time.
 library;
 
 import 'package:flutter/widgets.dart';
+
+import '../intent/ai_intent_invocation.dart';
 
 /// Semantic tone for a chat-rail icon. Resolved to a concrete [Color]
 /// by the view layer via [SemanticColors]. Keeps composition providers
@@ -25,6 +27,11 @@ class ChatRailContent {
     required this.icon,
     this.tone,
     this.route,
+    this.intent,
+    this.object,
+    this.objectLabel,
+    this.attrs = const <String, Object?>{},
+    this.source,
   });
 
   /// Stable id used as a list key and (later) for trace attribution.
@@ -46,6 +53,23 @@ class ChatRailContent {
   final ChatRailTone? tone;
 
   /// `go_router` path to deep-link to when the card is tapped. Null
-  /// disables tap.
+  /// falls back to [intent] invocation when present.
   final String? route;
+
+  /// Optional AI intent invoked when [route] is null. This keeps chat-rail
+  /// actions object-semantic without requiring feature code to import the
+  /// concrete chat sheet.
+  final String? intent;
+
+  /// Optional business object attached to [intent].
+  final AiObjectRef? object;
+
+  /// Human-readable object label shown by the AI invocation surface.
+  final String? objectLabel;
+
+  /// Additional context attributes attached to [intent].
+  final Map<String, Object?> attrs;
+
+  /// Invocation source tag. When null, `askAi()` uses the ambient route path.
+  final String? source;
 }

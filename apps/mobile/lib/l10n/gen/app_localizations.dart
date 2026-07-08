@@ -1880,12 +1880,6 @@ abstract class AppLocalizations {
   /// **'FX P/L failed to load: {error}'**
   String assetDetailFxPnlLoadError(String error);
 
-  /// Section header above the home AI Insight Feed
-  ///
-  /// In en, this message translates to:
-  /// **'Insights for you'**
-  String get dashboardAiInsightsTitle;
-
   /// Section header above the home recent-activity timeline preview
   ///
   /// In en, this message translates to:
@@ -1940,11 +1934,47 @@ abstract class AppLocalizations {
   /// **'Net worth {pct} this month'**
   String homeGreetingNetWorthFragment(String pct);
 
-  /// Status line fragment under the home greeting describing pending AI insights
+  /// Status line fragment under the home greeting describing visible FinanceOS agent results
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 insight available} other{{count} insights available}}'**
-  String homeGreetingInsightsFragment(int count);
+  /// **'{count, plural, =1{1 agent result ready} other{{count} agent results ready}}'**
+  String homeGreetingAgentResultsFragment(int count);
+
+  /// Home FinanceOS agent result panel loading title
+  ///
+  /// In en, this message translates to:
+  /// **'Checking agent results'**
+  String get financeAgentResultsLoading;
+
+  /// Home FinanceOS agent result panel loading body
+  ///
+  /// In en, this message translates to:
+  /// **'Recent FinanceOS reviews are loading.'**
+  String get financeAgentResultsLoadingBody;
+
+  /// Home FinanceOS agent result panel empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No agent results yet'**
+  String get financeAgentResultsEmptyTitle;
+
+  /// Home FinanceOS agent result panel empty body
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled reviews appear here when they have something to show.'**
+  String get financeAgentResultsEmptyBody;
+
+  /// Home FinanceOS agent result panel error title
+  ///
+  /// In en, this message translates to:
+  /// **'Agent results could not load'**
+  String get financeAgentResultsErrorTitle;
+
+  /// Home FinanceOS agent result panel error body
+  ///
+  /// In en, this message translates to:
+  /// **'{error}'**
+  String financeAgentResultsErrorBody(String error);
 
   /// Activity timeline filter chip: clear all kind filters
   ///
@@ -1982,7 +2012,7 @@ abstract class AppLocalizations {
   /// **'Transaction'**
   String get activityEntryDetailTitle;
 
-  /// Section header for the local rule-based explanation block in the activity entry detail page
+  /// Section header for the AI-generated explanation block in the activity entry detail page
   ///
   /// In en, this message translates to:
   /// **'Entry insight'**
@@ -1993,42 +2023,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No insight available for this entry.'**
   String get activityEntryDetailNoExplanation;
-
-  /// Local insight shown for subscription-like transaction descriptions
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring subscription. Review whether it still fits your plan before the next renewal.'**
-  String get activityEntryDetailInsightSubscription;
-
-  /// Local insight shown for rent or mortgage-like transaction descriptions
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring housing payment. Keep it in the essential-spending baseline.'**
-  String get activityEntryDetailInsightHousing;
-
-  /// Local insight shown for salary or payroll-like transaction descriptions
-  ///
-  /// In en, this message translates to:
-  /// **'Primary income inflow. Keep it stable in cash-flow projections.'**
-  String get activityEntryDetailInsightIncome;
-
-  /// Local insight shown for restaurant or food delivery transaction descriptions
-  ///
-  /// In en, this message translates to:
-  /// **'Dining expense. Review if it aligns with your monthly food budget.'**
-  String get activityEntryDetailInsightDining;
-
-  /// Local insight shown for ride-hailing, transit, or travel transaction descriptions
-  ///
-  /// In en, this message translates to:
-  /// **'Transportation cost. Consider whether it\'s a routine commute or one-off trip.'**
-  String get activityEntryDetailInsightTransport;
-
-  /// Local insight shown for online shopping or retail transaction descriptions
-  ///
-  /// In en, this message translates to:
-  /// **'Shopping purchase. Check if it was planned or impulse spending.'**
-  String get activityEntryDetailInsightShopping;
 
   /// Transaction detail posting line count
   ///
@@ -5484,34 +5478,6 @@ abstract class AppLocalizations {
   /// **'These assets aren\'t part of any bucket. Map them if they should fund the plan.'**
   String get fireOsUnmappedSubtitle;
 
-  /// No description provided for @fireOsInsightBucketDeviation.
-  ///
-  /// In en, this message translates to:
-  /// **'Bucket below target'**
-  String get fireOsInsightBucketDeviation;
-
-  /// No description provided for @fireOsInsightBucketDeviationValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{role}: {current} / {target}'**
-  String fireOsInsightBucketDeviationValue(
-    String role,
-    String current,
-    String target,
-  );
-
-  /// No description provided for @fireOsInsightUnmappedHoldings.
-  ///
-  /// In en, this message translates to:
-  /// **'Unmapped holdings'**
-  String get fireOsInsightUnmappedHoldings;
-
-  /// No description provided for @fireOsInsightUnmappedHoldingsValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 holding} other{{count} holdings}} not assigned to any bucket'**
-  String fireOsInsightUnmappedHoldingsValue(int count);
-
   /// No description provided for @fireOsSimulationsTitle.
   ///
   /// In en, this message translates to:
@@ -5877,30 +5843,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All stress tests are safe under current assumptions.'**
   String get fireOsReviewFindingStressSafe;
-
-  /// No description provided for @fireOsInsightHighWithdrawalRate.
-  ///
-  /// In en, this message translates to:
-  /// **'Withdrawal rate above SWR'**
-  String get fireOsInsightHighWithdrawalRate;
-
-  /// No description provided for @fireOsInsightHighWithdrawalRateValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{rate}% / SWR {swr}%'**
-  String fireOsInsightHighWithdrawalRateValue(String rate, String swr);
-
-  /// No description provided for @fireOsInsightLowCashBucket.
-  ///
-  /// In en, this message translates to:
-  /// **'Cash bucket below target'**
-  String get fireOsInsightLowCashBucket;
-
-  /// No description provided for @fireOsInsightLowCashBucketValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{months} of {target} months'**
-  String fireOsInsightLowCashBucketValue(String months, int target);
 
   /// No description provided for @benchmarkComparisonTitle.
   ///
@@ -12698,136 +12640,6 @@ abstract class AppLocalizations {
   /// **'Market'**
   String get localSecuritiesMarketLabel;
 
-  /// Dashboard insight label: FIRE plan
-  ///
-  /// In en, this message translates to:
-  /// **'FIRE'**
-  String get dashboardInsightFireLabel;
-
-  /// Dashboard FIRE insight value when at least one year remains
-  ///
-  /// In en, this message translates to:
-  /// **'{years}y {months}m to go'**
-  String dashboardInsightFireToGoYears(int years, int months);
-
-  /// Dashboard FIRE insight value when less than one year remains
-  ///
-  /// In en, this message translates to:
-  /// **'{months}m to go'**
-  String dashboardInsightFireToGoMonths(int months);
-
-  /// Dashboard FIRE insight value when goal is reached
-  ///
-  /// In en, this message translates to:
-  /// **'Goal reached'**
-  String get dashboardInsightFireReached;
-
-  /// Dashboard insight label: rebalance drift
-  ///
-  /// In en, this message translates to:
-  /// **'Portfolio drift'**
-  String get dashboardInsightDriftLabel;
-
-  /// Dashboard drift direction: overweight
-  ///
-  /// In en, this message translates to:
-  /// **'over'**
-  String get dashboardInsightDriftOver;
-
-  /// Dashboard drift direction: underweight
-  ///
-  /// In en, this message translates to:
-  /// **'under'**
-  String get dashboardInsightDriftUnder;
-
-  /// Dashboard drift insight value
-  ///
-  /// In en, this message translates to:
-  /// **'{category} {direction} {points}pp'**
-  String dashboardInsightDriftValue(
-    String category,
-    String direction,
-    int points,
-  );
-
-  /// Dashboard insight label: upcoming deposit maturities
-  ///
-  /// In en, this message translates to:
-  /// **'Maturities'**
-  String get dashboardInsightMaturityLabel;
-
-  /// Dashboard deposit maturity insight value
-  ///
-  /// In en, this message translates to:
-  /// **'{count} deposits due in {days}d'**
-  String dashboardInsightMaturityValue(int count, int days);
-
-  /// Dashboard insight label: expense anomaly
-  ///
-  /// In en, this message translates to:
-  /// **'Expense trend'**
-  String get dashboardInsightAnomalyLabel;
-
-  /// Dashboard expense anomaly insight value
-  ///
-  /// In en, this message translates to:
-  /// **'Projected {percent}'**
-  String dashboardInsightAnomalyValue(String percent);
-
-  /// Dashboard insight label: same merchant + amount within ±2 days
-  ///
-  /// In en, this message translates to:
-  /// **'Possible duplicate charge'**
-  String get dashboardInsightDuplicateChargeLabel;
-
-  /// Dashboard duplicate-charge insight value
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one{1 pair} other{{count} pairs}} totaling {amount}'**
-  String dashboardInsightDuplicateChargeValue(int count, String amount);
-
-  /// Dashboard insight label: prior-month net-worth summary, fired in the first week of a new month
-  ///
-  /// In en, this message translates to:
-  /// **'Last month recap'**
-  String get dashboardInsightMonthlySummaryLabel;
-
-  /// Monthly summary insight value when net worth grew
-  ///
-  /// In en, this message translates to:
-  /// **'Net worth grew {amount}'**
-  String dashboardInsightMonthlySummaryUp(String amount);
-
-  /// Monthly summary insight value when net worth declined
-  ///
-  /// In en, this message translates to:
-  /// **'Net worth shrank {amount}'**
-  String dashboardInsightMonthlySummaryDown(String amount);
-
-  /// Monthly summary insight value when net worth was unchanged
-  ///
-  /// In en, this message translates to:
-  /// **'Net worth was flat'**
-  String get dashboardInsightMonthlySummaryFlat;
-
-  /// Insight card action: expand inline detail
-  ///
-  /// In en, this message translates to:
-  /// **'Expand'**
-  String get dashboardInsightActionExpand;
-
-  /// Insight card action: open the command palette with the insight as context
-  ///
-  /// In en, this message translates to:
-  /// **'Ask'**
-  String get dashboardInsightActionAsk;
-
-  /// Insight card action: hide this insight kind on the dashboard
-  ///
-  /// In en, this message translates to:
-  /// **'Dismiss'**
-  String get dashboardInsightActionDismiss;
-
   /// Portfolio view switcher: assets list
   ///
   /// In en, this message translates to:
@@ -13433,42 +13245,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expand'**
   String get aiCapsuleExpandFallback;
-
-  /// Dashboard insight label: Layer 4 ingest queue has parsed drafts awaiting confirmation
-  ///
-  /// In en, this message translates to:
-  /// **'Records to confirm'**
-  String get dashboardInsightIngestQueueLabel;
-
-  /// Dashboard ingest-queue insight value
-  ///
-  /// In en, this message translates to:
-  /// **'{count} parsed · {fresh} ready to add'**
-  String dashboardInsightIngestQueueValue(int count, int fresh);
-
-  /// Dashboard insight label shown when this month cashflow is negative
-  ///
-  /// In en, this message translates to:
-  /// **'Cashflow gap'**
-  String get dashboardInsightCashFlowDeficitLabel;
-
-  /// Dashboard insight detail for current-month negative cashflow
-  ///
-  /// In en, this message translates to:
-  /// **'This month is short {amount}'**
-  String dashboardInsightCashFlowDeficitValue(String amount);
-
-  /// Dashboard insight label shown when holdings are excluded because FX conversion is missing
-  ///
-  /// In en, this message translates to:
-  /// **'FX rate missing'**
-  String get dashboardInsightCurrencyMismatchLabel;
-
-  /// Dashboard insight detail for holdings omitted from dashboard totals due to missing FX conversion
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one{1 holding is excluded from {currency} totals} other{{count} holdings are excluded from {currency} totals}}'**
-  String dashboardInsightCurrencyMismatchValue(int count, String currency);
 
   /// Layer 4 ingest review page title
   ///
@@ -19767,11 +19543,11 @@ abstract class AppLocalizations {
     Object proposalPlural,
   );
 
-  /// No description provided for @knowledgeAgentInboxInsightKindBody.
+  /// No description provided for @knowledgeAgentInboxSuggestionKindBody.
   ///
   /// In en, this message translates to:
   /// **'{count} {label}.'**
-  String knowledgeAgentInboxInsightKindBody(Object count, Object label);
+  String knowledgeAgentInboxSuggestionKindBody(Object count, Object label);
 
   /// No description provided for @knowledgeAgentInboxUntitledNote.
   ///

@@ -48,8 +48,7 @@ final ingestDraftStoreProvider = Provider<IngestDraftStore?>((ref) {
   );
 });
 
-/// Live pending-draft queue. The Layer 3 ambient card + the review page
-/// both watch this.
+/// Live pending-draft queue watched by the review page.
 final pendingIngestDraftsProvider =
     StreamProvider.autoDispose<List<IngestDraft>>((ref) async* {
       final store = ref.watch(ingestDraftStoreProvider);

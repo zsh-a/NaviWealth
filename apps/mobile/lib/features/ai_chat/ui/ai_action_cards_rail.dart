@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/composition/ask_ai.dart';
 import '../../../core/ai/composition/chat_rail_content.dart';
 import '../../../core/ai/composition/chat_rail_provider.dart';
 import '../../../core/async/deferred_provider_snapshot.dart';
@@ -70,14 +71,14 @@ class AiActionCardsRail extends ConsumerWidget {
   }
 }
 
-class _ActionCard extends StatelessWidget {
+class _ActionCard extends ConsumerWidget {
   const _ActionCard({required this.item, required this.l10n});
 
   final ChatRailContent item;
   final AppLocalizations l10n;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final sem = SemanticColors.of(context);
     final tint = switch (item.tone) {
@@ -88,10 +89,24 @@ class _ActionCard extends StatelessWidget {
       null => colors.primary,
     };
     final route = item.route;
+    final intent = item.intent;
+    final onPress = route != null
+        ? () => context.push(route)
+        : intent == null
+        ? null
+        : () => askAi(
+            context,
+            ref,
+            intent: intent,
+            object: item.object,
+            objectLabel: item.objectLabel,
+            attrs: item.attrs,
+            source: item.source,
+          );
     return SizedBox(
       width: AppControlWidths.aiActionCard,
       child: SoftCard(
-        onPress: route == null ? null : () => context.push(route),
+        onPress: onPress,
         padding: const EdgeInsets.all(AppSpacing.s14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +143,7 @@ class _ActionCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (route != null)
+            if (onPress != null)
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(

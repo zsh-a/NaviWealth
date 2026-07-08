@@ -145,7 +145,7 @@ void main() {
     );
   });
 
-  testWidgets('renders localized subscription insight for English keywords', (
+  testWidgets('hides the insight card when no client is available', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -153,30 +153,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Entry insight'), findsOneWidget);
-    expect(
-      find.text(
-        'Recurring subscription. Review whether it still fits your plan before the next renewal.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Entry insight'), findsNothing);
     expect(find.text('No insight available for this entry.'), findsNothing);
-  });
-
-  testWidgets('renders localized income insight for Chinese keywords', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _wrap(
-        entry: _entry(narration: '5 月工资'),
-        locale: const Locale('zh'),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('记录洞察'), findsOneWidget);
-    expect(find.text('识别为主要收入流入。可作为现金流预测的稳定基线。'), findsOneWidget);
-    expect(find.text('暂无该笔记录的洞察。'), findsNothing);
   });
 
   testWidgets('uses FRB profile LLM explanation when available', (
@@ -187,7 +165,9 @@ void main() {
         entry: _entry(narration: 'Spotify subscription'),
         insightClient: _FakeInsightClient(
           responseText:
-              'This looks like a recurring media subscription paid from cash.',
+              '```text\n'
+              '- This looks like a recurring media subscription paid from cash.\n'
+              '```',
         ),
       ),
     );
@@ -200,15 +180,9 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(
-      find.text(
-        'Recurring subscription. Review whether it still fits your plan before the next renewal.',
-      ),
-      findsNothing,
-    );
   });
 
-  testWidgets('falls back to heuristic when FRB profile LLM fails', (
+  testWidgets('hides the insight card when FRB profile LLM fails', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -219,19 +193,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Entry insight'), findsOneWidget);
-    expect(
-      find.text(
-        'Recurring subscription. Review whether it still fits your plan before the next renewal.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Entry insight'), findsNothing);
   });
 
-  testWidgets('hides the entire insight card when no heuristic matches', (
+  testWidgets('hides the entire insight card when client returns no output', (
     tester,
   ) async {
-    await tester.pumpWidget(_wrap(entry: _entry(narration: 'Coffee')));
+    await tester.pumpWidget(
+      _wrap(
+        entry: _entry(narration: 'Coffee'),
+        insightClient: _FakeInsightClient(responseText: '   '),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Entry insight'), findsNothing);

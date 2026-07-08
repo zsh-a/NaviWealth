@@ -159,10 +159,10 @@ final budgetsForMonthProvider = StreamProvider.autoDispose
       yield* repo.watchByMonth(periodMonth);
     });
 
-/// Pure derivation of the budget posture for a given month. FIRE engine
-/// / dashboard insights subscribe to this rather than to budgets +
-/// postings directly, so "budget overspend nudges safetyLevel" remains
-/// one provider read.
+/// Pure derivation of the budget posture for a given month. FIRE and
+/// reporting surfaces subscribe to this rather than to budgets + postings
+/// directly, so "budget overspend nudges safetyLevel" remains one provider
+/// read.
 /// (`docs/roadmap-next.md` §3.2 — Budget × FIRE松耦合.)
 final monthlyBudgetSignalProvider = Provider.autoDispose
     .family<AsyncValue<BudgetSignal>, String>((ref, periodMonth) {

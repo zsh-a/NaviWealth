@@ -1,26 +1,33 @@
 part of 'home_page.dart';
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   const _DashboardBody({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context) {
-    return DeferredProviderSnapshot<List<InsightItem>>(
-      provider: dashboardInsightsProvider,
-      initialValue: const <InsightItem>[],
-      builder: (context, insights) =>
-          _DashboardBodyContent(snapshot: snapshot, insights: insights),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final agentArtifactCount =
+        ref
+            .watch(finance_agent_providers.latestFinanceAgentArtifactsProvider)
+            .value
+            ?.length ??
+        0;
+    return _DashboardBodyContent(
+      snapshot: snapshot,
+      agentArtifactCount: agentArtifactCount,
     );
   }
 }
 
 class _DashboardBodyContent extends ConsumerWidget {
-  const _DashboardBodyContent({required this.snapshot, required this.insights});
+  const _DashboardBodyContent({
+    required this.snapshot,
+    required this.agentArtifactCount,
+  });
 
   final DashboardSnapshot snapshot;
-  final List<InsightItem> insights;
+  final int agentArtifactCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,7 +72,9 @@ class _DashboardBodyContent extends ConsumerWidget {
                     header: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        HomeGreetingHeader(insightCount: insights.length),
+                        HomeGreetingHeader(
+                          agentArtifactCount: agentArtifactCount,
+                        ),
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
                         const _HomeQuickActions(),
@@ -81,15 +90,11 @@ class _DashboardBodyContent extends ConsumerWidget {
                         const TrendCard(),
                       ],
                     ),
-                    secondary: Column(
+                    secondary: const Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const FinanceAgentResultsPanel(),
-                        if (insights.isNotEmpty) ...[
-                          AiInsightFeed(insights: insights),
-                          const SizedBox(height: AppSpacing.s20),
-                        ],
-                        const ActivityTimelinePreview(),
+                        FinanceAgentResultsPanel(),
+                        ActivityTimelinePreview(),
                       ],
                     ),
                   )
@@ -100,15 +105,13 @@ class _DashboardBodyContent extends ConsumerWidget {
                     primary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        HomeGreetingHeader(insightCount: insights.length),
+                        HomeGreetingHeader(
+                          agentArtifactCount: agentArtifactCount,
+                        ),
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
                         const _HomeQuickActions(),
                         const FinanceAgentResultsPanel(),
-                        if (insights.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.s20),
-                          AiInsightFeed(insights: insights),
-                        ],
                         const SizedBox(height: AppSpacing.s20),
                         AllocationSummary(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s20),
@@ -134,10 +137,23 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final artifacts = ref
-        .watch(finance_agent_providers.latestFinanceAgentArtifactsProvider)
-        .value;
-    if (artifacts != null && artifacts.isNotEmpty) {
+    final artifactsAsync = ref.watch(
+      finance_agent_providers.latestFinanceAgentArtifactsProvider,
+    );
+    if (artifactsAsync.isLoading && !artifactsAsync.hasValue) {
+      return const _FinanceAgentPanelStateCard.loading();
+    }
+    if (artifactsAsync.hasError && !artifactsAsync.hasValue) {
+      return _FinanceAgentPanelStateCard.error(
+        error: artifactsAsync.error!,
+        onRetry: () => ref.invalidate(
+          finance_agent_providers.latestFinanceAgentArtifactsProvider,
+        ),
+      );
+    }
+
+    final artifacts = artifactsAsync.value ?? const <AgentArtifact>[];
+    if (artifacts.isNotEmpty) {
       final primary = artifacts.first;
       final secondary = artifacts.skip(1).toList(growable: false);
       return Column(
@@ -170,10 +186,23 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       );
     }
 
-    final run = ref
-        .watch(finance_agent_providers.latestWeeklyWealthReviewRunProvider)
-        .value;
-    if (run == null) return const SizedBox.shrink();
+    final runAsync = ref.watch(
+      finance_agent_providers.latestWeeklyWealthReviewRunProvider,
+    );
+    if (runAsync.isLoading && !runAsync.hasValue) {
+      return const _FinanceAgentPanelStateCard.loading();
+    }
+    if (runAsync.hasError && !runAsync.hasValue) {
+      return _FinanceAgentPanelStateCard.error(
+        error: runAsync.error!,
+        onRetry: () => ref.invalidate(
+          finance_agent_providers.latestWeeklyWealthReviewRunProvider,
+        ),
+      );
+    }
+
+    final run = runAsync.value;
+    if (run == null) return const _FinanceAgentPanelStateCard.empty();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -217,6 +246,129 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
     );
   }
 }
+
+class _FinanceAgentPanelStateCard extends StatelessWidget {
+  const _FinanceAgentPanelStateCard._({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.loading = false,
+    this.error,
+    this.onRetry,
+  });
+
+  const _FinanceAgentPanelStateCard.loading()
+    : this._(
+        icon: FLucideIcons.loaderCircle,
+        title: _FinanceAgentPanelStateTitle.loading,
+        message: _FinanceAgentPanelStateMessage.loading,
+        loading: true,
+      );
+
+  const _FinanceAgentPanelStateCard.empty()
+    : this._(
+        icon: FLucideIcons.sparkles,
+        title: _FinanceAgentPanelStateTitle.empty,
+        message: _FinanceAgentPanelStateMessage.empty,
+      );
+
+  const _FinanceAgentPanelStateCard.error({
+    required Object error,
+    required VoidCallback onRetry,
+  }) : this._(
+         icon: FLucideIcons.triangleAlert,
+         title: _FinanceAgentPanelStateTitle.error,
+         message: _FinanceAgentPanelStateMessage.error,
+         error: error,
+         onRetry: onRetry,
+       );
+
+  final IconData icon;
+  final _FinanceAgentPanelStateTitle title;
+  final _FinanceAgentPanelStateMessage message;
+  final bool loading;
+  final Object? error;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final sem = SemanticColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final accent = error == null ? colors.primary : sem.danger;
+    final resolvedTitle = switch (title) {
+      _FinanceAgentPanelStateTitle.loading => l10n.financeAgentResultsLoading,
+      _FinanceAgentPanelStateTitle.empty => l10n.financeAgentResultsEmptyTitle,
+      _FinanceAgentPanelStateTitle.error => l10n.financeAgentResultsErrorTitle,
+    };
+    final resolvedMessage = switch (message) {
+      _FinanceAgentPanelStateMessage.loading =>
+        l10n.financeAgentResultsLoadingBody,
+      _FinanceAgentPanelStateMessage.empty => l10n.financeAgentResultsEmptyBody,
+      _FinanceAgentPanelStateMessage.error => l10n.financeAgentResultsErrorBody(
+        '$error',
+      ),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SoftCard(
+          level: SoftCardLevel.flat,
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppIconTile(
+                icon: icon,
+                color: accent,
+                size: 36,
+                iconSize: AppIconSizes.h18,
+                backgroundOpacity: AppOpacity.subtle,
+                foregroundOpacity: 1,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(resolvedTitle, style: context.labelStyle),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      resolvedMessage,
+                      style: context.captionStyle.copyWith(height: 1.4),
+                    ),
+                    if (loading) ...[
+                      const SizedBox(height: AppSpacing.s12),
+                      const FCircularProgress(
+                        size: FCircularProgressSizeVariant.sm,
+                      ),
+                    ] else if (onRetry != null) ...[
+                      const SizedBox(height: AppSpacing.s12),
+                      AppQuietButton(
+                        label: l10n.commonRetry,
+                        onPress: onRetry,
+                        prefix: const Icon(
+                          FLucideIcons.refreshCw,
+                          size: AppIconSizes.xs,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s20),
+      ],
+    );
+  }
+}
+
+enum _FinanceAgentPanelStateTitle { loading, empty, error }
+
+enum _FinanceAgentPanelStateMessage { loading, empty, error }
 
 class _CashFlowCardsGrid extends StatelessWidget {
   const _CashFlowCardsGrid();

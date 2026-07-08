@@ -17,7 +17,7 @@
 | ID | 状态 | 原因 |
 |---|---|---|
 | P1-A 清理空目录 me/ 与 more/ | ✅ 完成 | IA contract migration 顺带删除 |
-| P1-B Dashboard Insights 4 类 | ✅ 完成 | `InsightKind` 当前已含 fireProgress / portfolioDrift / maturity / anomaly,plus 额外的 duplicateCharge / monthlySummary / ingestQueue / cashFlowDeficit / FIRE OS 系列 |
+| P1-B Dashboard Insights 4 类 | ✅ 历史完成 | 旧 dashboard insight feed 后续已由 device-only agent artifact surface 替代。 |
 | P1-C Activity Feed 分页 | ✅ 完成 | `activity_feed_provider.dart` 已支持 pagination + filter sheet |
 | P1-D Portfolio Tab 升级 | ⚠️ 重定义 | Portfolio 不存在,需要在新的 Wealth tab 上重新规划("多视角聚合"目标仍有效) |
 | P1-E 后端 AI 工具补全 | ❌ 作废 | 后端 AI relay 已删除;持仓对齐由端侧工具直接读 read-model 完成 |
