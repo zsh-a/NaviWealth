@@ -11,42 +11,49 @@ import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 
-import '../../../core/persistence/test_database.dart';
-
 void main() {
   test(
-    'latestFinanceAgentArtifactsProvider returns newest visible finance artifacts',
+    'latestFinanceAgentArtifactsProvider returns one newest artifact per finance agent',
     () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final artifactStore = SqliteAgentArtifactStore(db: db);
       final now = DateTime.utc(2026, 7, 5, 12);
-      final agentIds = <String>[
-        kWeeklyWealthReviewAgentId,
-        kCashflowAnomalyReviewAgentId,
-        kFirePlanDriftMonitorAgentId,
-        kOptionsIncomeRiskReviewAgentId,
-        kWeeklyWealthReviewAgentId,
-      ];
-
-      for (var i = 0; i < agentIds.length; i++) {
-        await artifactStore.save(
-          _artifact(
-            id: 'finance-$i',
-            agentId: agentIds[i],
-            domain: 'finance',
-            createdAt: now.add(Duration(minutes: i)),
-          ),
-        );
-      }
-      await artifactStore.save(
+      final artifactStore = _FakeArtifactStore([
+        _artifact(
+          id: 'weekly-old',
+          agentId: kWeeklyWealthReviewAgentId,
+          domain: 'finance',
+          createdAt: now.add(const Duration(minutes: 1)),
+        ),
+        _artifact(
+          id: 'cashflow-latest',
+          agentId: kCashflowAnomalyReviewAgentId,
+          domain: 'finance',
+          createdAt: now.add(const Duration(minutes: 2)),
+        ),
+        _artifact(
+          id: 'weekly-latest',
+          agentId: kWeeklyWealthReviewAgentId,
+          domain: 'finance',
+          createdAt: now.add(const Duration(minutes: 3)),
+        ),
+        _artifact(
+          id: 'options-latest',
+          agentId: kOptionsIncomeRiskReviewAgentId,
+          domain: 'finance',
+          createdAt: now.add(const Duration(minutes: 4)),
+        ),
+        _artifact(
+          id: 'fire-latest',
+          agentId: kFirePlanDriftMonitorAgentId,
+          domain: 'finance',
+          createdAt: now.add(const Duration(minutes: 5)),
+        ),
         _artifact(
           id: 'health-newer',
           agentId: 'weekly_summary',
           domain: 'health',
           createdAt: now.add(const Duration(hours: 1)),
         ),
-      );
+      ]);
 
       final container = ProviderContainer(
         overrides: [
@@ -63,10 +70,10 @@ void main() {
       );
 
       expect(artifacts.map((artifact) => artifact.id), [
-        'finance-4',
-        'finance-3',
-        'finance-2',
-        'finance-1',
+        'fire-latest',
+        'options-latest',
+        'weekly-latest',
+        'cashflow-latest',
       ]);
       expect(artifacts.map((artifact) => artifact.domain).toSet(), {'finance'});
       expect(
@@ -80,6 +87,71 @@ void main() {
       );
     },
   );
+}
+
+class _FakeArtifactStore implements AgentArtifactStore {
+  _FakeArtifactStore(List<AgentArtifact> artifacts) : _artifacts = artifacts;
+
+  final List<AgentArtifact> _artifacts;
+
+  @override
+  Future<void> save(AgentArtifact artifact) async {
+    _artifacts.add(artifact);
+  }
+
+  @override
+  Future<AgentArtifact?> read(String id) async {
+    for (final artifact in _artifacts) {
+      if (artifact.id == id) return artifact;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> dismiss({
+    required String ownerUserId,
+    required String id,
+    required DateTime dismissedAt,
+  }) async {}
+
+  @override
+  Future<void> snooze({
+    required String ownerUserId,
+    required String id,
+    required DateTime until,
+  }) async {}
+
+  @override
+  Future<List<AgentArtifact>> latestForAgent({
+    required String ownerUserId,
+    required String agentId,
+    int limit = 10,
+    DateTime? visibleAt,
+  }) async {
+    if (limit <= 0) return const <AgentArtifact>[];
+    final at = visibleAt ?? DateTime.now().toUtc();
+    final matches =
+        _artifacts
+            .where(
+              (artifact) =>
+                  artifact.ownerUserId == ownerUserId &&
+                  artifact.agentId == agentId &&
+                  artifact.isVisibleAt(at),
+            )
+            .toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return matches.take(limit).toList(growable: false);
+  }
+
+  @override
+  Future<List<AgentArtifact>> latestForDomain({
+    required String ownerUserId,
+    required String domain,
+    int limit = 20,
+    DateTime? visibleAt,
+  }) {
+    throw UnimplementedError('latestForDomain is not used by this test');
+  }
 }
 
 AgentArtifact _artifact({

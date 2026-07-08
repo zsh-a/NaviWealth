@@ -45,11 +45,21 @@ final latestFinanceAgentArtifactsProvider =
         agent_providers.agentArtifactStoreProvider.future,
       );
       final ownerUserId = await ref.read(currentUserIdProvider)();
-      return store.latestForDomain(
-        ownerUserId: ownerUserId,
-        domain: 'finance',
-        limit: 4,
+      final agents = ref.read(financeAgentsProvider);
+      final latestByAgent = await Future.wait(
+        agents.map(
+          (agent) => store.latestForAgent(
+            ownerUserId: ownerUserId,
+            agentId: agent.id,
+            limit: 1,
+          ),
+        ),
       );
+      final artifacts = [
+        for (final result in latestByAgent)
+          if (result.isNotEmpty) result.single,
+      ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return artifacts;
     });
 
 final latestWeeklyWealthReviewArtifactProvider =
