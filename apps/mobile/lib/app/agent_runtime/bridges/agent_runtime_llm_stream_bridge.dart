@@ -9,6 +9,7 @@ library;
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_storage_policy.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/core/ai/local/embedding/rust_gemma_embedder.dart';
@@ -30,6 +31,7 @@ final agentRuntimeLlmStreamBridgeProvider =
         libraryPath: config.rustEmbedderLibraryPath.isEmpty
             ? null
             : config.rustEmbedderLibraryPath,
+        storagePolicy: ref.watch(agentRuntimeStoragePolicyProvider),
       );
     });
 
@@ -38,16 +40,20 @@ class AgentRuntimeLlmStreamBridge {
     required AgentRuntimeLlmBridge llmBridge,
     required LifeosNativeRuntimeInitializer initRuntime,
     String? libraryPath,
+    AgentRuntimeStoragePolicy storagePolicy =
+        const AgentRuntimeStoragePolicy.appOwned(),
     AgentRuntimeChatTurnJsonStream? streamChatTurnJson,
   }) : _llmBridge = llmBridge,
        _initRuntime = initRuntime,
        _libraryPath = libraryPath,
+       _storagePolicy = storagePolicy,
        _streamChatTurnJson =
            streamChatTurnJson ?? rust.agentRuntimeStreamChatTurn;
 
   final AgentRuntimeLlmBridge _llmBridge;
   final LifeosNativeRuntimeInitializer _initRuntime;
   final String? _libraryPath;
+  final AgentRuntimeStoragePolicy _storagePolicy;
   final AgentRuntimeChatTurnJsonStream _streamChatTurnJson;
 
   Future<void>? _initFuture;
@@ -102,6 +108,7 @@ class AgentRuntimeLlmStreamBridge {
   }
 
   Future<void> _ensureInitialized() {
+    _storagePolicy.requireAppOwned(surface: 'agent-runtime stream bridge');
     return _initFuture ??= _initRuntime(libraryPath: _libraryPath);
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_storage_policy.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
@@ -222,6 +223,51 @@ void main() {
         .drain<void>();
 
     expect(initCalls, 1);
+  });
+
+  test('rejects runtime-owned SQLite policy before streaming', () async {
+    var initCalls = 0;
+    var streamCalls = 0;
+    final streamBridge = AgentRuntimeLlmStreamBridge(
+      llmBridge: AgentRuntimeLlmBridge(
+        bridge: FakeAgentRuntimeNativeBridge(),
+        profile: const LlmProfile(
+          id: 'profile_1',
+          name: '',
+          provider: LlmProvider.anthropic,
+          apiKey: 'sk-ant',
+        ),
+      ),
+      initRuntime: ({String? libraryPath}) async {
+        initCalls += 1;
+      },
+      storagePolicy: const AgentRuntimeStoragePolicy.runtimeOwnedSqliteDebug(
+        storePath: '/tmp/runtime.sqlite',
+      ),
+      streamChatTurnJson: ({required String requestJson}) {
+        streamCalls += 1;
+        return Stream<String>.fromIterable(const <String>[]);
+      },
+    );
+
+    await expectLater(
+      streamBridge
+          .streamChatTurn(
+            messages: const <Map<String, Object?>>[
+              <String, Object?>{'role': 'user', 'content': 'Hello'},
+            ],
+          )
+          .drain<void>(),
+      throwsA(
+        isA<UnsupportedError>().having(
+          (error) => error.message,
+          'message',
+          contains('app-owned Drift persistence'),
+        ),
+      ),
+    );
+    expect(initCalls, 0);
+    expect(streamCalls, 0);
   });
 
   test('rejects non-object FRB LLM stream events', () async {

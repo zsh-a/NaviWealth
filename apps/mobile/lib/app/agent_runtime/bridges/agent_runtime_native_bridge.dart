@@ -8,6 +8,7 @@ library;
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_storage_policy.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/local/embedding/rust_gemma_embedder.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_json.dart';
@@ -31,6 +32,7 @@ final agentRuntimeNativeBridgeProvider = Provider<AgentRuntimeNativeBridge>((
     libraryPath: config.rustEmbedderLibraryPath.isEmpty
         ? null
         : config.rustEmbedderLibraryPath,
+    storagePolicy: ref.watch(agentRuntimeStoragePolicyProvider),
   );
 });
 
@@ -215,13 +217,17 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
     required AgentRuntimeNativeApi api,
     required LifeosNativeRuntimeInitializer initRuntime,
     String? libraryPath,
+    AgentRuntimeStoragePolicy storagePolicy =
+        const AgentRuntimeStoragePolicy.appOwned(),
   }) : _api = api,
        _initRuntime = initRuntime,
-       _libraryPath = libraryPath;
+       _libraryPath = libraryPath,
+       _storagePolicy = storagePolicy;
 
   final AgentRuntimeNativeApi _api;
   final LifeosNativeRuntimeInitializer _initRuntime;
   final String? _libraryPath;
+  final AgentRuntimeStoragePolicy _storagePolicy;
 
   Future<void>? _initFuture;
 
@@ -369,6 +375,7 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   }
 
   Future<void> _ensureInitialized() {
+    _storagePolicy.requireAppOwned(surface: 'agent-runtime native bridge');
     return _initFuture ??= _initRuntime(libraryPath: _libraryPath);
   }
 }

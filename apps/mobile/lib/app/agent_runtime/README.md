@@ -29,3 +29,22 @@ Do not put Rust implementation details here. Those live in
 Do not fork upstream runtime behavior here. That belongs in the
 `third_party/agent-runtime` submodule and is consumed through
 `lifeos_native`.
+
+## Storage Policy
+
+Production FRB execution is app-owned for persistence. Rust emits
+runtime-shaped JSON events, steps, proposals, and LLM responses; the Flutter
+adapter records user-visible state through the existing Drift-backed stores:
+
+- `AiTraceStore` / `ai_traces` for transparency and debugging.
+- `AgentRunStore` / `agent_runs` for lifecycle and schedule gates.
+- `AgentArtifactStore` / `agent_artifacts` for briefing, review, and alert
+  surfaces.
+- Domain repositories, proposal appliers, undo, and touched-entity stores for
+  product side effects.
+
+Do not make Flutter UI or repositories read or write the upstream runtime's
+`runtime.sqlite` tables. That schema is runtime-owned and not a NaviWealth
+product contract. If runtime-owned SQLite is needed later, add explicit debug
+or replay bridge APIs that return stable JSON and keep the product persistence
+path in Drift.

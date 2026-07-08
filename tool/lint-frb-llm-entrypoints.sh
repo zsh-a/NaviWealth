@@ -19,6 +19,7 @@ APP_FEATURE_DEVICE_LOOP_PATTERN="runtime/device/device_agent_loop.dart|DeviceAge
 RAW_DEVICE_UNAVAILABLE_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_unavailable['\"]"
 RAW_LEGACY_VISION_TRACE_PATTERN="routingReason:[[:space:]]*['\"]device_vision_direct['\"]"
 LEGACY_VISION_TRACE_CONSTANT_PATTERN='kDeviceVisionDirectRoutingReason'
+RAW_FRB_AGENT_RUNTIME_IMPORT_PATTERN='(package:naviwealth/|\.\.?/)*src/rust/api/agent_runtime\.dart'
 
 violations="$(
   grep -rnE --include='*.dart' "$PATTERN" "$LIB" \
@@ -33,6 +34,22 @@ if [[ -n "$violations" ]]; then
   echo "Use AgentRuntimeLlmBridge or AgentRuntimeProfileTurnRunner for new" >&2
   echo "business/app integrations. Extend this allowlist only for low-level" >&2
   echo "runtime/provider infrastructure with a documented reason." >&2
+  exit 1
+fi
+
+raw_frb_agent_runtime_import_violations="$(
+  grep -rnE --include='*.dart' "$RAW_FRB_AGENT_RUNTIME_IMPORT_PATTERN" "$LIB" \
+    | grep -vE 'apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_(native|llm_stream)_bridge\.dart' \
+    || true
+)"
+
+if [[ -n "$raw_frb_agent_runtime_import_violations" ]]; then
+  echo "✖ raw FRB agent-runtime API imported outside app-level bridges:" >&2
+  echo "$raw_frb_agent_runtime_import_violations" >&2
+  echo >&2
+  echo "Route Flutter code through AgentRuntimeNativeBridge or" >&2
+  echo "AgentRuntimeLlmStreamBridge so storage policy and JSON decoding stay" >&2
+  echo "centralized. Do not couple product code to native runtime internals." >&2
   exit 1
 fi
 

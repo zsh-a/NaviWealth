@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/agent_runtime/agent_runtime_storage_policy.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
@@ -99,6 +100,47 @@ void main() {
         api.catalogPayloads.single,
         contains('"protocol_version":"agent.v1"'),
       );
+    },
+  );
+
+  test(
+    'agentRuntimeStoragePolicyProvider defaults to app-owned persistence',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final policy = container.read(agentRuntimeStoragePolicyProvider);
+
+      expect(policy.mode, AgentRuntimeStorageMode.appOwned);
+      expect(policy.storePath, isNull);
+    },
+  );
+
+  test(
+    'FfiAgentRuntimeNativeBridge rejects runtime-owned SQLite policy',
+    () async {
+      var initCalls = 0;
+      final bridge = FfiAgentRuntimeNativeBridge(
+        api: _FakeNativeApi(),
+        initRuntime: ({String? libraryPath}) async {
+          initCalls += 1;
+        },
+        storagePolicy: const AgentRuntimeStoragePolicy.runtimeOwnedSqliteDebug(
+          storePath: '/tmp/runtime.sqlite',
+        ),
+      );
+
+      await expectLater(
+        bridge.protocolVersion(),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (error) => error.message,
+            'message',
+            contains('app-owned Drift persistence'),
+          ),
+        ),
+      );
+      expect(initCalls, 0);
     },
   );
 
