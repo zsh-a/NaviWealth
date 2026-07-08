@@ -65,12 +65,20 @@ class AgentRunner {
         reason: 'agent disabled',
       );
     }
-    await _runStore.markRunning(
+    final acquire = await _runStore.acquireRun(
       ownerUserId: ownerUserId,
       agent: agent,
       startedAt: start,
       trigger: trigger,
     );
+    if (!acquire.acquired) {
+      return AgentRunResult.busy(
+        agentId: agent.id,
+        startedAt: start,
+        finishedAt: start,
+        reason: '${agent.name} is already running',
+      );
+    }
     AgentRunResult result;
     try {
       result = await agent.run(ctx);
@@ -139,6 +147,9 @@ class AgentRunner {
       AgentRunStatus.completed => kAgentRunEventTypeCompleted,
       AgentRunStatus.skipped => kAgentRunEventTypeSkipped,
       AgentRunStatus.failed => kAgentRunEventTypeFailed,
+      AgentRunStatus.busy => throw StateError(
+        'busy agent results are transient and cannot be recorded',
+      ),
     };
     final event = EventRecord(
       id: '$kAgentRunEventSource:${agent.id}:${result.startedAt.toUtc().toIso8601String()}',
@@ -168,6 +179,7 @@ class AgentRunner {
         AgentRunStatus.completed => 0.6,
         AgentRunStatus.skipped => 0.35,
         AgentRunStatus.failed => 0.7,
+        AgentRunStatus.busy => 0,
       },
     );
     await runtime.recordEvent(event);

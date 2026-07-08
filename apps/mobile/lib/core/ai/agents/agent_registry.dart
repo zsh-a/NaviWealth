@@ -11,6 +11,16 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../lifeos/domain_pack.dart';
 import 'agent.dart';
 
-final agentRegistryProvider = Provider<List<Agent>>((ref) => const <Agent>[]);
+final agentRegistrationProvider = Provider<List<DomainAgentRegistration>>(
+  (ref) => const <DomainAgentRegistration>[],
+);
+
+final agentRegistryProvider = Provider<List<Agent>>((ref) {
+  return [
+    for (final registration in ref.watch(agentRegistrationProvider))
+      registration.agent,
+  ];
+});

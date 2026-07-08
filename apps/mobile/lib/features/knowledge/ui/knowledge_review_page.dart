@@ -187,10 +187,7 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
         subtitle: metaLabel,
         onVisibilityChanged: () {
           ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
-          );
-          ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
           );
         },
       );
@@ -202,10 +199,7 @@ Future<void> _refreshReview(WidgetRef ref) async {
   ref.invalidate(knowledgeRepositoryProvider);
   ref.invalidate(inboxTriageRepositoryProvider);
   ref.invalidate(
-    knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
-  );
-  ref.invalidate(
-    knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+    knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
   );
   ref.invalidate(knowledge_agent_providers.latestKnowledgeReviewRunProvider);
   ref.read(aiSuggestionsRefreshProvider.notifier).state++;
@@ -228,21 +222,69 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
       knowledge_agent_providers.latestKnowledgeReviewRunProvider,
     );
     return artifactAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => _KnowledgeAgentPanelFrame(
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.loaderCircle,
+          title: AppLocalizations.of(context).commonLoading,
+          message: AppLocalizations.of(context).agentSettingsSubtitle,
+          loading: true,
+        ),
+      ),
+      error: (error, _) => _KnowledgeAgentPanelFrame(
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.triangleAlert,
+          title: AppLocalizations.of(context).commonError,
+          message: AppLocalizations.of(context).commonLoadError('$error'),
+          error: true,
+          onRetry: () => ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
+          ),
+        ),
+      ),
       data: (artifacts) {
         if (artifacts.isNotEmpty) {
           return _KnowledgeReviewAgentResultList(artifacts: artifacts);
         }
         return runAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          loading: () => _KnowledgeAgentPanelFrame(
+            child: AgentResultPanelStateCard(
+              icon: FLucideIcons.loaderCircle,
+              title: AppLocalizations.of(context).commonLoading,
+              message: AppLocalizations.of(context).agentSettingsSubtitle,
+              loading: true,
+            ),
+          ),
+          error: (error, _) => _KnowledgeAgentPanelFrame(
+            child: AgentResultPanelStateCard(
+              icon: FLucideIcons.triangleAlert,
+              title: AppLocalizations.of(context).commonError,
+              message: AppLocalizations.of(context).commonLoadError('$error'),
+              error: true,
+              onRetry: () => ref.invalidate(
+                knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
+              ),
+            ),
+          ),
           data: (record) {
             if (record == null) return const SizedBox.shrink();
             return _KnowledgeReviewAgentRunStatusCard(record: record);
           },
         );
       },
+    );
+  }
+}
+
+class _KnowledgeAgentPanelFrame extends StatelessWidget {
+  const _KnowledgeAgentPanelFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [child],
     );
   }
 }
@@ -307,10 +349,7 @@ class _KnowledgeReviewAgentResultCard extends ConsumerWidget {
         subtitle: metaLabel,
         onVisibilityChanged: () {
           ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
-          );
-          ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
           );
         },
       ),
@@ -336,10 +375,7 @@ class _KnowledgeReviewAgentResultRow extends ConsumerWidget {
         subtitle: metaLabel,
         onVisibilityChanged: () {
           ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewArtifactProvider,
-          );
-          ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
+            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
           );
         },
       ),

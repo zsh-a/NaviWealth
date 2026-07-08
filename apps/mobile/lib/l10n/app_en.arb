@@ -2946,6 +2946,25 @@
     "description": "Toast fallback after an agent run finishes without a summary.",
     "placeholders": { "agentName": { "type": "String", "example": "Morning Briefing" } }
   },
+  "agentSettingsRunBusy": "{agentName} is already running",
+  "@agentSettingsRunBusy": {
+    "description": "Toast shown when a manual agent run is skipped because another run is already active.",
+    "placeholders": { "agentName": { "type": "String", "example": "Morning Briefing" } }
+  },
+  "agentSettingsRunFailed": "Couldn't run agent: {error}",
+  "@agentSettingsRunFailed": {
+    "description": "Toast shown when a manual agent run fails before an agent result can be returned.",
+    "placeholders": { "error": { "type": "String", "example": "agent is not registered" } }
+  },
+  "agentSettingsSaveFailed": "Couldn't update agent settings: {error}",
+  "@agentSettingsSaveFailed": {
+    "description": "Toast shown when an agent settings toggle fails to save.",
+    "placeholders": { "error": { "type": "String", "example": "database locked" } }
+  },
+  "agentSettingsMissingPresentationBadge": "Metadata missing",
+  "@agentSettingsMissingPresentationBadge": { "description": "Diagnostic badge shown when a registered agent has no presentation metadata." },
+  "agentSettingsMissingPresentationDescription": "This agent is registered without presentation metadata.",
+  "@agentSettingsMissingPresentationDescription": { "description": "Fallback description when a registered agent has no presentation metadata." },
   "agentSettingsStatusWithDetail": "{status} · {detail}",
   "@agentSettingsStatusWithDetail": {
     "description": "Agent settings row subtitle with lifecycle status and run detail.",
@@ -3059,6 +3078,18 @@
   "@agentResultDismissBody": { "description": "Agent detail action description for dismissing an agent result." },
   "agentResultDismissAction": "Dismiss",
   "@agentResultDismissAction": { "description": "Button label that dismisses an agent result." },
+  "agentResultVisibilityActionFailed": "Couldn't update this result: {error}",
+  "@agentResultVisibilityActionFailed": {
+    "description": "Toast shown when snoozing or dismissing an agent result fails.",
+    "placeholders": { "error": { "type": "String", "example": "database locked" } }
+  },
+  "agentResultActionFallbackBody": "Open this action from the agent result.",
+  "@agentResultActionFallbackBody": { "description": "Fallback action description when an agent result action has no metadata." },
+  "agentResultActionFallbackWithKey": "Action key: {key}",
+  "@agentResultActionFallbackWithKey": {
+    "description": "Fallback action description that exposes the legacy action key only as secondary metadata.",
+    "placeholders": { "key": { "type": "String", "example": "review_plan" } }
+  },
   "agentPresentationWeeklyWealthReviewLabel": "Weekly Wealth Review",
   "@agentPresentationWeeklyWealthReviewLabel": { "description": "Presentation label for the FinanceOS weekly wealth review agent." },
   "agentPresentationWeeklyWealthReviewDescription": "Reviews net worth, allocation concentration, price freshness, and FX coverage.",

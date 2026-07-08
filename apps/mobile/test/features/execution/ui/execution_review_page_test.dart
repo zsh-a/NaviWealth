@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
@@ -21,10 +23,13 @@ void main() {
       _wrap(
         const ExecutionReviewPage(),
         overrides: [
-          execution_agent_providers.latestExecutionReviewArtifactProvider
-              .overrideWith((ref) async => _artifact()),
-          execution_agent_providers.latestExecutionReviewRunProvider
-              .overrideWith((ref) async => null),
+          execution_agent_providers.latestExecutionReviewResultsProvider
+              .overrideWith(
+                (ref) async => agent_providers.AgentResultBundle(
+                  artifacts: [_artifact()],
+                  latestRuns: const <AgentRunRecord>[],
+                ),
+              ),
           executionRecentProgressProvider.overrideWith(
             (ref) => Stream<List<ExecutionProgressEntry>>.value(
               const <ExecutionProgressEntry>[],

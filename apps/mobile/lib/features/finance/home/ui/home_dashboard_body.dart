@@ -137,22 +137,35 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final artifactsAsync = ref.watch(
-      finance_agent_providers.latestFinanceAgentArtifactsProvider,
+    final resultsAsync = ref.watch(
+      finance_agent_providers.latestFinanceAgentResultsProvider,
     );
-    if (artifactsAsync.isLoading && !artifactsAsync.hasValue) {
-      return const _FinanceAgentPanelStateCard.loading();
+    final l10n = AppLocalizations.of(context);
+    if (resultsAsync.isLoading && !resultsAsync.hasValue) {
+      return _FinanceAgentPanelFrame(
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.loaderCircle,
+          title: l10n.financeAgentResultsLoading,
+          message: l10n.financeAgentResultsLoadingBody,
+          loading: true,
+        ),
+      );
     }
-    if (artifactsAsync.hasError && !artifactsAsync.hasValue) {
-      return _FinanceAgentPanelStateCard.error(
-        error: artifactsAsync.error!,
-        onRetry: () => ref.invalidate(
-          finance_agent_providers.latestFinanceAgentArtifactsProvider,
+    if (resultsAsync.hasError && !resultsAsync.hasValue) {
+      return _FinanceAgentPanelFrame(
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.triangleAlert,
+          title: l10n.financeAgentResultsErrorTitle,
+          message: l10n.financeAgentResultsErrorBody('${resultsAsync.error}'),
+          error: true,
+          onRetry: () => ref.invalidate(
+            finance_agent_providers.latestFinanceAgentResultsProvider,
+          ),
         ),
       );
     }
 
-    final artifacts = artifactsAsync.value ?? const <AgentArtifact>[];
+    final artifacts = resultsAsync.value?.artifacts ?? const <AgentArtifact>[];
     if (artifacts.isNotEmpty) {
       final primary = artifacts.first;
       final secondary = artifacts.skip(1).toList(growable: false);
@@ -186,23 +199,16 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       );
     }
 
-    final runAsync = ref.watch(
-      finance_agent_providers.latestWeeklyWealthReviewRunProvider,
-    );
-    if (runAsync.isLoading && !runAsync.hasValue) {
-      return const _FinanceAgentPanelStateCard.loading();
-    }
-    if (runAsync.hasError && !runAsync.hasValue) {
-      return _FinanceAgentPanelStateCard.error(
-        error: runAsync.error!,
-        onRetry: () => ref.invalidate(
-          finance_agent_providers.latestWeeklyWealthReviewRunProvider,
+    final run = resultsAsync.value?.latestRun;
+    if (run == null) {
+      return _FinanceAgentPanelFrame(
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.sparkles,
+          title: l10n.financeAgentResultsEmptyTitle,
+          message: l10n.financeAgentResultsEmptyBody,
         ),
       );
     }
-
-    final run = runAsync.value;
-    if (run == null) return const _FinanceAgentPanelStateCard.empty();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -213,15 +219,9 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
             final controller = await ref.read(
               agentRunControllerProvider.future,
             );
-            await controller.runOnceById(kWeeklyWealthReviewAgentId);
+            await controller.runOnceById(run.agentId);
             ref.invalidate(
-              finance_agent_providers.latestFinanceAgentArtifactsProvider,
-            );
-            ref.invalidate(
-              finance_agent_providers.latestWeeklyWealthReviewArtifactProvider,
-            );
-            ref.invalidate(
-              finance_agent_providers.latestWeeklyWealthReviewRunProvider,
+              finance_agent_providers.latestFinanceAgentResultsProvider,
             );
           },
         ),
@@ -241,134 +241,28 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       artifact: artifact,
       subtitle: metaLabel,
       onVisibilityChanged: () => ref.invalidate(
-        finance_agent_providers.latestFinanceAgentArtifactsProvider,
+        finance_agent_providers.latestFinanceAgentResultsProvider,
       ),
     );
   }
 }
 
-class _FinanceAgentPanelStateCard extends StatelessWidget {
-  const _FinanceAgentPanelStateCard._({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.loading = false,
-    this.error,
-    this.onRetry,
-  });
+class _FinanceAgentPanelFrame extends StatelessWidget {
+  const _FinanceAgentPanelFrame({required this.child});
 
-  const _FinanceAgentPanelStateCard.loading()
-    : this._(
-        icon: FLucideIcons.loaderCircle,
-        title: _FinanceAgentPanelStateTitle.loading,
-        message: _FinanceAgentPanelStateMessage.loading,
-        loading: true,
-      );
-
-  const _FinanceAgentPanelStateCard.empty()
-    : this._(
-        icon: FLucideIcons.sparkles,
-        title: _FinanceAgentPanelStateTitle.empty,
-        message: _FinanceAgentPanelStateMessage.empty,
-      );
-
-  const _FinanceAgentPanelStateCard.error({
-    required Object error,
-    required VoidCallback onRetry,
-  }) : this._(
-         icon: FLucideIcons.triangleAlert,
-         title: _FinanceAgentPanelStateTitle.error,
-         message: _FinanceAgentPanelStateMessage.error,
-         error: error,
-         onRetry: onRetry,
-       );
-
-  final IconData icon;
-  final _FinanceAgentPanelStateTitle title;
-  final _FinanceAgentPanelStateMessage message;
-  final bool loading;
-  final Object? error;
-  final VoidCallback? onRetry;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final sem = SemanticColors.of(context);
-    final l10n = AppLocalizations.of(context);
-    final accent = error == null ? colors.primary : sem.danger;
-    final resolvedTitle = switch (title) {
-      _FinanceAgentPanelStateTitle.loading => l10n.financeAgentResultsLoading,
-      _FinanceAgentPanelStateTitle.empty => l10n.financeAgentResultsEmptyTitle,
-      _FinanceAgentPanelStateTitle.error => l10n.financeAgentResultsErrorTitle,
-    };
-    final resolvedMessage = switch (message) {
-      _FinanceAgentPanelStateMessage.loading =>
-        l10n.financeAgentResultsLoadingBody,
-      _FinanceAgentPanelStateMessage.empty => l10n.financeAgentResultsEmptyBody,
-      _FinanceAgentPanelStateMessage.error => l10n.financeAgentResultsErrorBody(
-        '$error',
-      ),
-    };
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard(
-          level: SoftCardLevel.flat,
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppIconTile(
-                icon: icon,
-                color: accent,
-                size: 36,
-                iconSize: AppIconSizes.h18,
-                backgroundOpacity: AppOpacity.subtle,
-                foregroundOpacity: 1,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(resolvedTitle, style: context.labelStyle),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      resolvedMessage,
-                      style: context.captionStyle.copyWith(height: 1.4),
-                    ),
-                    if (loading) ...[
-                      const SizedBox(height: AppSpacing.s12),
-                      const FCircularProgress(
-                        size: FCircularProgressSizeVariant.sm,
-                      ),
-                    ] else if (onRetry != null) ...[
-                      const SizedBox(height: AppSpacing.s12),
-                      AppQuietButton(
-                        label: l10n.commonRetry,
-                        onPress: onRetry,
-                        prefix: const Icon(
-                          FLucideIcons.refreshCw,
-                          size: AppIconSizes.xs,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        child,
         const SizedBox(height: AppSpacing.s20),
       ],
     );
   }
 }
-
-enum _FinanceAgentPanelStateTitle { loading, empty, error }
-
-enum _FinanceAgentPanelStateMessage { loading, empty, error }
 
 class _CashFlowCardsGrid extends StatelessWidget {
   const _CashFlowCardsGrid();

@@ -1,10 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
@@ -17,6 +21,7 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
     as health_agent_providers;
@@ -220,6 +225,7 @@ void main() {
           agent_providers.agentArtifactStoreProvider.overrideWith(
             (ref) async => store,
           ),
+          ..._weeklySummaryRegistrationOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -293,6 +299,7 @@ void main() {
           agent_providers.agentArtifactStoreProvider.overrideWith(
             (ref) async => store,
           ),
+          ..._weeklySummaryRegistrationOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -386,6 +393,7 @@ void main() {
         agent_providers.agentRunStoreProvider.overrideWith(
           (ref) async => runStore,
         ),
+        ..._weeklySummaryRegistrationOverrides(),
       ],
     );
     addTearDown(container.dispose);
@@ -412,6 +420,32 @@ AgentContext _context() {
 }
 
 final _refProvider = Provider<Ref>((ref) => ref);
+
+List<Override> _weeklySummaryRegistrationOverrides() {
+  return [
+    agentRegistrationProvider.overrideWithValue(const <DomainAgentRegistration>[
+      DomainAgentRegistration(
+        agent: WeeklySummaryAgent(),
+        domain: DomainScope.health,
+      ),
+    ]),
+    agentPresentationSpecsProvider
+        .overrideWithValue(const <String, AgentPresentationSpec>{
+          kWeeklySummaryAgentId: AgentPresentationSpec(
+            agentId: kWeeklySummaryAgentId,
+            domain: DomainScope.health,
+            icon: Icons.check,
+            label: _agentLabel,
+            description: _agentDescription,
+            placement: AgentResultPlacement.domainReview,
+          ),
+        }),
+  ];
+}
+
+String _agentLabel(_) => 'Weekly Summary';
+
+String _agentDescription(_) => 'Weekly Summary';
 
 AgentArtifact _weeklyArtifact({
   required String id,

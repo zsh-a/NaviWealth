@@ -13,7 +13,6 @@ import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
-import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';

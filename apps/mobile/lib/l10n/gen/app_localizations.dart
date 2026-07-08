@@ -9395,6 +9395,36 @@ abstract class AppLocalizations {
   /// **'{agentName} finished'**
   String agentSettingsRunFinished(String agentName);
 
+  /// Toast shown when a manual agent run is skipped because another run is already active.
+  ///
+  /// In en, this message translates to:
+  /// **'{agentName} is already running'**
+  String agentSettingsRunBusy(String agentName);
+
+  /// Toast shown when a manual agent run fails before an agent result can be returned.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t run agent: {error}'**
+  String agentSettingsRunFailed(String error);
+
+  /// Toast shown when an agent settings toggle fails to save.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update agent settings: {error}'**
+  String agentSettingsSaveFailed(String error);
+
+  /// Diagnostic badge shown when a registered agent has no presentation metadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata missing'**
+  String get agentSettingsMissingPresentationBadge;
+
+  /// Fallback description when a registered agent has no presentation metadata.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent is registered without presentation metadata.'**
+  String get agentSettingsMissingPresentationDescription;
+
   /// Agent settings row subtitle with lifecycle status and run detail.
   ///
   /// In en, this message translates to:
@@ -9688,6 +9718,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get agentResultDismissAction;
+
+  /// Toast shown when snoozing or dismissing an agent result fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update this result: {error}'**
+  String agentResultVisibilityActionFailed(String error);
+
+  /// Fallback action description when an agent result action has no metadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this action from the agent result.'**
+  String get agentResultActionFallbackBody;
+
+  /// Fallback action description that exposes the legacy action key only as secondary metadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Action key: {key}'**
+  String agentResultActionFallbackWithKey(String key);
 
   /// Presentation label for the FinanceOS weekly wealth review agent.
   ///

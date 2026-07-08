@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
@@ -50,6 +52,35 @@ class _StubAgent implements Agent {
       finishedAt: ctx.now.add(const Duration(milliseconds: 10)),
       summary: 'ok',
     );
+  }
+}
+
+class _BlockingAgent implements Agent {
+  _BlockingAgent({required this.id});
+
+  @override
+  final String id;
+
+  @override
+  String get name => id;
+
+  @override
+  AgentSchedule get schedule =>
+      const AgentSchedule(interval: Duration(hours: 1));
+
+  final Completer<void> started = Completer<void>();
+  final Completer<AgentRunResult> _result = Completer<AgentRunResult>();
+  int runCount = 0;
+
+  @override
+  Future<AgentRunResult> run(AgentContext ctx) {
+    runCount += 1;
+    if (!started.isCompleted) started.complete();
+    return _result.future;
+  }
+
+  void complete(AgentRunResult result) {
+    _result.complete(result);
   }
 }
 
@@ -238,6 +269,66 @@ void main() {
     expect(tooSoon, isEmpty);
     expect(agent.runCount, 1);
   });
+
+  test(
+    'concurrent runOnce returns transient busy without advancing gates',
+    () async {
+      final rt = _runtime();
+      final runStore = InMemoryAgentRunStore();
+      final runner = AgentRunner(
+        runtime: rt,
+        ownerUserId: 'u',
+        runStore: runStore,
+      );
+      final agent = _BlockingAgent(id: 'blocking');
+
+      final first = runner.runOnce(agent, _context(rt, now));
+      await agent.started.future;
+
+      final busy = await runner.runOnce(
+        agent,
+        _context(rt, now.add(const Duration(milliseconds: 1))),
+      );
+
+      expect(busy.status, AgentRunStatus.busy);
+      expect(agent.runCount, 1);
+      expect(await runner.lastRunAt('blocking'), isNull);
+      expect(
+        await rt.recentEvents(
+          ownerUserId: 'u',
+          window: const Duration(days: 9999),
+        ),
+        isEmpty,
+      );
+
+      agent.complete(
+        AgentRunResult(
+          agentId: 'blocking',
+          status: AgentRunStatus.completed,
+          startedAt: now,
+          finishedAt: now.add(const Duration(milliseconds: 10)),
+          summary: 'done',
+        ),
+      );
+      final completed = await first;
+
+      expect(completed.status, AgentRunStatus.completed);
+      expect(
+        await runner.lastRunAt('blocking'),
+        now.add(const Duration(milliseconds: 10)),
+      );
+      final latest = await runStore.latestForAgent(
+        ownerUserId: 'u',
+        agentId: 'blocking',
+      );
+      expect(latest?.status, AgentRunLifecycleStatus.ready);
+      final events = await rt.recentEvents(
+        ownerUserId: 'u',
+        window: const Duration(days: 9999),
+      );
+      expect(events, hasLength(1));
+    },
+  );
 
   test('persisted run store gates a new runner instance', () async {
     final db = makeTestDatabase();

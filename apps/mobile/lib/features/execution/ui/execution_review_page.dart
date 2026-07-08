@@ -39,10 +39,7 @@ class ExecutionReviewPage extends ConsumerWidget {
       child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(
-            execution_agent_providers.latestExecutionReviewArtifactProvider,
-          );
-          ref.invalidate(
-            execution_agent_providers.latestExecutionReviewRunProvider,
+            execution_agent_providers.latestExecutionReviewResultsProvider,
           );
           ref.invalidate(executionRecentProgressProvider);
           ref.invalidate(executionClosedActionsProvider);
@@ -174,17 +171,41 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final artifact = ref
-        .watch(execution_agent_providers.latestExecutionReviewArtifactProvider)
-        .value;
+    final resultsAsync = ref.watch(
+      execution_agent_providers.latestExecutionReviewResultsProvider,
+    );
+    final l10n = AppLocalizations.of(context);
+    if (resultsAsync.isLoading && !resultsAsync.hasValue) {
+      return _ExecutionReviewAgentPanelFrame(
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.loaderCircle,
+          title: l10n.commonLoading,
+          message: l10n.agentSettingsSubtitle,
+          loading: true,
+        ),
+      );
+    }
+    if (resultsAsync.hasError && !resultsAsync.hasValue) {
+      return _ExecutionReviewAgentPanelFrame(
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.triangleAlert,
+          title: l10n.commonError,
+          message: l10n.commonLoadError('${resultsAsync.error}'),
+          error: true,
+          onRetry: () => ref.invalidate(
+            execution_agent_providers.latestExecutionReviewResultsProvider,
+          ),
+        ),
+      );
+    }
+    final artifacts = resultsAsync.value?.artifacts ?? const <AgentArtifact>[];
+    final artifact = artifacts.isEmpty ? null : artifacts.first;
     if (artifact != null) {
       return _ExecutionReviewAgentPanelFrame(
         child: _ExecutionReviewArtifactCard(artifact: artifact),
       );
     }
-    final run = ref
-        .watch(execution_agent_providers.latestExecutionReviewRunProvider)
-        .value;
+    final run = resultsAsync.value?.latestRun;
     if (run == null) return const SizedBox.shrink();
     return _ExecutionReviewAgentPanelFrame(
       child: AgentRunStatusCard(
@@ -229,7 +250,7 @@ class _ExecutionReviewArtifactCard extends ConsumerWidget {
         artifact: artifact,
         subtitle: metaLabel,
         onVisibilityChanged: () => ref.invalidate(
-          execution_agent_providers.latestExecutionReviewArtifactProvider,
+          execution_agent_providers.latestExecutionReviewResultsProvider,
         ),
       ),
     );
@@ -240,9 +261,8 @@ Future<void> _retryExecutionReview(WidgetRef ref) async {
   final controller = await ref.read(agentRunControllerProvider.future);
   await controller.runOnceById(kExecutionReviewAgentId);
   ref.invalidate(
-    execution_agent_providers.latestExecutionReviewArtifactProvider,
+    execution_agent_providers.latestExecutionReviewResultsProvider,
   );
-  ref.invalidate(execution_agent_providers.latestExecutionReviewRunProvider);
 }
 
 String _executionAgentMetaLabel(BuildContext context, DateTime at) {

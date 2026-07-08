@@ -189,6 +189,96 @@ void main() {
     expect(latest?.finishedAt, isNull);
     expect(latest?.summary, isNull);
   });
+
+  test('sqlite acquire allows only one fresh running lease', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentRunStore(db: db);
+    const agent = _RunStoreAgent();
+    final startedAt = DateTime.utc(2026, 7, 5, 8);
+
+    final results = await Future.wait([
+      store.acquireRun(
+        ownerUserId: 'user-1',
+        agent: agent,
+        startedAt: startedAt,
+        trigger: AgentRunTrigger.schedule,
+      ),
+      store.acquireRun(
+        ownerUserId: 'user-1',
+        agent: agent,
+        startedAt: startedAt.add(const Duration(milliseconds: 1)),
+        trigger: AgentRunTrigger.manual,
+      ),
+    ]);
+
+    expect(results.where((result) => result.acquired), hasLength(1));
+    expect(results.where((result) => !result.acquired), hasLength(1));
+
+    final history = await store.listForAgent(
+      ownerUserId: 'user-1',
+      agentId: agent.id,
+    );
+    expect(history, hasLength(1));
+    expect(history.single.status, AgentRunLifecycleStatus.running);
+  });
+
+  test('sqlite acquire abandons stale running rows before new lease', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentRunStore(db: db);
+    const agent = _RunStoreAgent();
+    final staleStartedAt = DateTime.utc(2026, 7, 5, 8);
+    final newStartedAt = staleStartedAt
+        .add(kAgentRunLeaseTimeout)
+        .add(const Duration(minutes: 1));
+
+    final first = await store.acquireRun(
+      ownerUserId: 'user-1',
+      agent: agent,
+      startedAt: staleStartedAt,
+      trigger: AgentRunTrigger.schedule,
+    );
+    final second = await store.acquireRun(
+      ownerUserId: 'user-1',
+      agent: agent,
+      startedAt: newStartedAt,
+      trigger: AgentRunTrigger.manual,
+    );
+
+    expect(first.acquired, isTrue);
+    expect(second.acquired, isTrue);
+
+    await store.finishRun(
+      ownerUserId: 'user-1',
+      agent: agent,
+      runStartedAt: staleStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: staleStartedAt,
+        finishedAt: staleStartedAt.add(const Duration(minutes: 1)),
+        summary: 'late finish should not resurrect',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+
+    final history = await store.listForAgent(
+      ownerUserId: 'user-1',
+      agentId: agent.id,
+    );
+
+    expect(history.map((run) => run.status), <AgentRunLifecycleStatus>[
+      AgentRunLifecycleStatus.running,
+      AgentRunLifecycleStatus.failed,
+    ]);
+    expect(history.first.startedAt, newStartedAt);
+    expect(history.last.error, contains('stale running lease'));
+    expect(
+      await store.lastNonFailedRunAt(ownerUserId: 'user-1', agentId: agent.id),
+      isNull,
+    );
+  });
 }
 
 Future<void> _record(

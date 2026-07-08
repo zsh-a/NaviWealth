@@ -30,6 +30,12 @@ abstract interface class AgentArtifactStore {
     DateTime? visibleAt,
   });
 
+  Future<Map<String, AgentArtifact>> latestForAgents({
+    required String ownerUserId,
+    required Iterable<String> agentIds,
+    DateTime? visibleAt,
+  });
+
   Future<List<AgentArtifact>> latestForDomain({
     required String ownerUserId,
     required String domain,
@@ -187,6 +193,45 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         )
         .get();
     return [for (final row in rows) _rowToArtifact(row)];
+  }
+
+  @override
+  Future<Map<String, AgentArtifact>> latestForAgents({
+    required String ownerUserId,
+    required Iterable<String> agentIds,
+    DateTime? visibleAt,
+  }) async {
+    final ids = agentIds.toSet().toList(growable: false)..sort();
+    if (ids.isEmpty) return const <String, AgentArtifact>{};
+    final atMillis = (visibleAt ?? DateTime.now())
+        .toUtc()
+        .millisecondsSinceEpoch;
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    final rows = await _db
+        .customSelect(
+          '''
+          SELECT *
+          FROM agent_artifacts
+          WHERE owner_user_id = ? AND agent_id IN ($placeholders)
+            AND dismissed_at IS NULL
+            AND (snoozed_until IS NULL OR snoozed_until <= ?)
+            AND (expires_at IS NULL OR expires_at > ?)
+          ORDER BY agent_id ASC, created_at DESC
+          ''',
+          variables: [
+            Variable.withString(ownerUserId),
+            for (final id in ids) Variable.withString(id),
+            Variable.withInt(atMillis),
+            Variable.withInt(atMillis),
+          ],
+        )
+        .get();
+    final byAgent = <String, AgentArtifact>{};
+    for (final row in rows) {
+      final artifact = _rowToArtifact(row);
+      byAgent.putIfAbsent(artifact.agentId, () => artifact);
+    }
+    return byAgent;
   }
 
   @override

@@ -49,6 +49,20 @@ AgentRunLifecycleStatus agentRunLifecycleStatusFromWire(String value) =>
       _ => AgentRunLifecycleStatus.failed,
     };
 
+const Duration kAgentRunLeaseTimeout = Duration(hours: 6);
+
+class AgentRunAcquireResult {
+  const AgentRunAcquireResult.acquired({required this.record})
+    : activeRun = null;
+
+  const AgentRunAcquireResult.busy({required this.activeRun}) : record = null;
+
+  final AgentRunRecord? record;
+  final AgentRunRecord? activeRun;
+
+  bool get acquired => record != null;
+}
+
 class AgentRunRecord {
   const AgentRunRecord({
     required this.id,
@@ -86,6 +100,14 @@ class AgentRunRecord {
 }
 
 abstract interface class AgentRunStore {
+  Future<AgentRunAcquireResult> acquireRun({
+    required String ownerUserId,
+    required Agent agent,
+    required DateTime startedAt,
+    required AgentRunTrigger trigger,
+    Duration leaseTimeout = kAgentRunLeaseTimeout,
+  });
+
   Future<void> markRunning({
     required String ownerUserId,
     required Agent agent,
@@ -106,6 +128,11 @@ abstract interface class AgentRunStore {
     required String agentId,
   });
 
+  Future<Map<String, AgentRunRecord>> latestForAgents({
+    required String ownerUserId,
+    required Iterable<String> agentIds,
+  });
+
   Future<List<AgentRunRecord>> listForAgent({
     required String ownerUserId,
     required String agentId,
@@ -122,22 +149,53 @@ class InMemoryAgentRunStore implements AgentRunStore {
   final Map<String, AgentRunRecord> _runs = <String, AgentRunRecord>{};
 
   @override
+  Future<AgentRunAcquireResult> acquireRun({
+    required String ownerUserId,
+    required Agent agent,
+    required DateTime startedAt,
+    required AgentRunTrigger trigger,
+    Duration leaseTimeout = kAgentRunLeaseTimeout,
+  }) async {
+    final staleBefore = startedAt.toUtc().subtract(leaseTimeout);
+    final active = _latestRunningRun(
+      ownerUserId: ownerUserId,
+      agentId: agent.id,
+    );
+    if (active != null && active.startedAt.isAfter(staleBefore)) {
+      return AgentRunAcquireResult.busy(activeRun: active);
+    }
+    if (active != null) {
+      _abandonStaleRuns(
+        ownerUserId: ownerUserId,
+        agentId: agent.id,
+        staleBefore: staleBefore,
+        abandonedAt: startedAt,
+      );
+    }
+    final record = _runningRecord(
+      ownerUserId: ownerUserId,
+      agent: agent,
+      startedAt: startedAt,
+      trigger: trigger,
+    );
+    _runs[record.id] = record;
+    return AgentRunAcquireResult.acquired(record: record);
+  }
+
+  @override
   Future<void> markRunning({
     required String ownerUserId,
     required Agent agent,
     required DateTime startedAt,
     required AgentRunTrigger trigger,
   }) async {
-    final id = agentRunId(agentId: agent.id, startedAt: startedAt);
-    _runs[id] = AgentRunRecord(
-      id: id,
+    final record = _runningRecord(
       ownerUserId: ownerUserId,
-      agentId: agent.id,
-      agentName: agent.name,
-      status: AgentRunLifecycleStatus.running,
+      agent: agent,
+      startedAt: startedAt,
       trigger: trigger,
-      startedAt: startedAt.toUtc(),
     );
+    _runs[record.id] = record;
   }
 
   @override
@@ -148,7 +206,15 @@ class InMemoryAgentRunStore implements AgentRunStore {
     required AgentRunResult result,
     required AgentRunTrigger trigger,
   }) async {
+    if (result.status == AgentRunStatus.busy) {
+      throw StateError('busy agent results are transient and cannot finish');
+    }
     final id = agentRunId(agentId: agent.id, startedAt: runStartedAt);
+    final existing = _runs[id];
+    if (existing != null &&
+        existing.status != AgentRunLifecycleStatus.running) {
+      return;
+    }
     _runs[id] = _recordFromResult(
       id: id,
       ownerUserId: ownerUserId,
@@ -169,6 +235,28 @@ class InMemoryAgentRunStore implements AgentRunStore {
       limit: 1,
     );
     return rows.isEmpty ? null : rows.first;
+  }
+
+  @override
+  Future<Map<String, AgentRunRecord>> latestForAgents({
+    required String ownerUserId,
+    required Iterable<String> agentIds,
+  }) async {
+    final ids = agentIds.toSet();
+    if (ids.isEmpty) return const <String, AgentRunRecord>{};
+    final rows =
+        _runs.values
+            .where(
+              (run) =>
+                  run.ownerUserId == ownerUserId && ids.contains(run.agentId),
+            )
+            .toList()
+          ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+    final byAgent = <String, AgentRunRecord>{};
+    for (final row in rows) {
+      byAgent.putIfAbsent(row.agentId, () => row);
+    }
+    return byAgent;
   }
 
   @override
@@ -209,6 +297,55 @@ class InMemoryAgentRunStore implements AgentRunStore {
     final latest = rows.isEmpty ? null : rows.first;
     return latest == null ? null : latest.finishedAt ?? latest.startedAt;
   }
+
+  AgentRunRecord? _latestRunningRun({
+    required String ownerUserId,
+    required String agentId,
+  }) {
+    final rows =
+        _runs.values
+            .where(
+              (run) =>
+                  run.ownerUserId == ownerUserId &&
+                  run.agentId == agentId &&
+                  run.status == AgentRunLifecycleStatus.running,
+            )
+            .toList()
+          ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  void _abandonStaleRuns({
+    required String ownerUserId,
+    required String agentId,
+    required DateTime staleBefore,
+    required DateTime abandonedAt,
+  }) {
+    for (final entry in _runs.entries.toList(growable: false)) {
+      final run = entry.value;
+      if (run.ownerUserId != ownerUserId ||
+          run.agentId != agentId ||
+          run.status != AgentRunLifecycleStatus.running ||
+          run.startedAt.isAfter(staleBefore)) {
+        continue;
+      }
+      _runs[entry.key] = AgentRunRecord(
+        id: run.id,
+        ownerUserId: run.ownerUserId,
+        agentId: run.agentId,
+        agentName: run.agentName,
+        status: AgentRunLifecycleStatus.failed,
+        trigger: run.trigger,
+        startedAt: run.startedAt,
+        finishedAt: abandonedAt.toUtc(),
+        summary: 'abandoned stale running lease',
+        error: 'Agent run abandoned after stale running lease expired.',
+        memoryId: run.memoryId,
+        artifactId: run.artifactId,
+        traceId: run.traceId,
+      );
+    }
+  }
 }
 
 class SqliteAgentRunStore implements AgentRunStore {
@@ -217,45 +354,56 @@ class SqliteAgentRunStore implements AgentRunStore {
   final AppDatabase _db;
 
   @override
+  Future<AgentRunAcquireResult> acquireRun({
+    required String ownerUserId,
+    required Agent agent,
+    required DateTime startedAt,
+    required AgentRunTrigger trigger,
+    Duration leaseTimeout = kAgentRunLeaseTimeout,
+  }) {
+    return _db.transaction(() async {
+      final startedAtUtc = startedAt.toUtc();
+      final staleBefore = startedAtUtc.subtract(leaseTimeout);
+      final active = await _latestRunningRun(
+        ownerUserId: ownerUserId,
+        agentId: agent.id,
+      );
+      if (active != null && active.startedAt.isAfter(staleBefore)) {
+        return AgentRunAcquireResult.busy(activeRun: active);
+      }
+      if (active != null) {
+        await _abandonStaleRuns(
+          ownerUserId: ownerUserId,
+          agentId: agent.id,
+          staleBefore: staleBefore,
+          abandonedAt: startedAtUtc,
+        );
+      }
+      final record = _runningRecord(
+        ownerUserId: ownerUserId,
+        agent: agent,
+        startedAt: startedAtUtc,
+        trigger: trigger,
+      );
+      await _insertRunRecord(record);
+      return AgentRunAcquireResult.acquired(record: record);
+    });
+  }
+
+  @override
   Future<void> markRunning({
     required String ownerUserId,
     required Agent agent,
     required DateTime startedAt,
     required AgentRunTrigger trigger,
   }) async {
-    await _db.customStatement(
-      '''
-      INSERT OR REPLACE INTO agent_runs (
-        id,
-        owner_user_id,
-        agent_id,
-        agent_name,
-        status,
-        trigger,
-        started_at,
-        finished_at,
-        summary,
-        error,
-        memory_id,
-        artifact_id,
-        trace_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      <Object?>[
-        agentRunId(agentId: agent.id, startedAt: startedAt),
-        ownerUserId,
-        agent.id,
-        agent.name,
-        AgentRunLifecycleStatus.running.wire,
-        trigger.wire,
-        startedAt.toUtc().millisecondsSinceEpoch,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-      ],
+    await _insertRunRecord(
+      _runningRecord(
+        ownerUserId: ownerUserId,
+        agent: agent,
+        startedAt: startedAt,
+        trigger: trigger,
+      ),
     );
   }
 
@@ -267,47 +415,23 @@ class SqliteAgentRunStore implements AgentRunStore {
     required AgentRunResult result,
     required AgentRunTrigger trigger,
   }) async {
+    if (result.status == AgentRunStatus.busy) {
+      throw StateError('busy agent results are transient and cannot finish');
+    }
+    final id = agentRunId(agentId: agent.id, startedAt: runStartedAt);
+    final existing = await _runById(id);
+    if (existing != null &&
+        existing.status != AgentRunLifecycleStatus.running) {
+      return;
+    }
     final record = _recordFromResult(
-      id: agentRunId(agentId: agent.id, startedAt: runStartedAt),
+      id: id,
       ownerUserId: ownerUserId,
       agent: agent,
       result: result,
       trigger: trigger,
     );
-    await _db.customStatement(
-      '''
-      INSERT OR REPLACE INTO agent_runs (
-        id,
-        owner_user_id,
-        agent_id,
-        agent_name,
-        status,
-        trigger,
-        started_at,
-        finished_at,
-        summary,
-        error,
-        memory_id,
-        artifact_id,
-        trace_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      <Object?>[
-        record.id,
-        record.ownerUserId,
-        record.agentId,
-        record.agentName,
-        record.status.wire,
-        record.trigger.wire,
-        record.startedAt.toUtc().millisecondsSinceEpoch,
-        record.finishedAt?.toUtc().millisecondsSinceEpoch,
-        record.summary,
-        record.error,
-        record.memoryId,
-        record.artifactId,
-        record.traceId,
-      ],
-    );
+    await _insertRunRecord(record);
   }
 
   @override
@@ -321,6 +445,36 @@ class SqliteAgentRunStore implements AgentRunStore {
       limit: 1,
     );
     return rows.isEmpty ? null : rows.first;
+  }
+
+  @override
+  Future<Map<String, AgentRunRecord>> latestForAgents({
+    required String ownerUserId,
+    required Iterable<String> agentIds,
+  }) async {
+    final ids = agentIds.toSet().toList(growable: false)..sort();
+    if (ids.isEmpty) return const <String, AgentRunRecord>{};
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    final rows = await _db
+        .customSelect(
+          '''
+          SELECT *
+          FROM agent_runs
+          WHERE owner_user_id = ? AND agent_id IN ($placeholders)
+          ORDER BY agent_id ASC, started_at DESC
+          ''',
+          variables: [
+            Variable.withString(ownerUserId),
+            for (final id in ids) Variable.withString(id),
+          ],
+        )
+        .get();
+    final byAgent = <String, AgentRunRecord>{};
+    for (final row in rows) {
+      final record = _rowToRecord(row);
+      byAgent.putIfAbsent(record.agentId, () => record);
+    }
+    return byAgent;
   }
 
   @override
@@ -374,10 +528,128 @@ class SqliteAgentRunStore implements AgentRunStore {
     if (millis == null) return null;
     return DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
   }
+
+  Future<AgentRunRecord?> _runById(String id) async {
+    final row = await _db
+        .customSelect(
+          'SELECT * FROM agent_runs WHERE id = ?',
+          variables: [Variable.withString(id)],
+        )
+        .getSingleOrNull();
+    return row == null ? null : _rowToRecord(row);
+  }
+
+  Future<AgentRunRecord?> _latestRunningRun({
+    required String ownerUserId,
+    required String agentId,
+  }) async {
+    final row = await _db
+        .customSelect(
+          '''
+          SELECT *
+          FROM agent_runs
+          WHERE owner_user_id = ?
+            AND agent_id = ?
+            AND status = 'running'
+          ORDER BY started_at DESC
+          LIMIT 1
+          ''',
+          variables: [
+            Variable.withString(ownerUserId),
+            Variable.withString(agentId),
+          ],
+        )
+        .getSingleOrNull();
+    return row == null ? null : _rowToRecord(row);
+  }
+
+  Future<void> _abandonStaleRuns({
+    required String ownerUserId,
+    required String agentId,
+    required DateTime staleBefore,
+    required DateTime abandonedAt,
+  }) {
+    return _db.customStatement(
+      '''
+      UPDATE agent_runs
+      SET status = ?,
+          finished_at = ?,
+          summary = ?,
+          error = ?
+      WHERE owner_user_id = ?
+        AND agent_id = ?
+        AND status = 'running'
+        AND started_at <= ?
+      ''',
+      <Object?>[
+        AgentRunLifecycleStatus.failed.wire,
+        abandonedAt.toUtc().millisecondsSinceEpoch,
+        'abandoned stale running lease',
+        'Agent run abandoned after stale running lease expired.',
+        ownerUserId,
+        agentId,
+        staleBefore.toUtc().millisecondsSinceEpoch,
+      ],
+    );
+  }
+
+  Future<void> _insertRunRecord(AgentRunRecord record) {
+    return _db.customStatement(
+      '''
+      INSERT OR REPLACE INTO agent_runs (
+        id,
+        owner_user_id,
+        agent_id,
+        agent_name,
+        status,
+        trigger,
+        started_at,
+        finished_at,
+        summary,
+        error,
+        memory_id,
+        artifact_id,
+        trace_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      <Object?>[
+        record.id,
+        record.ownerUserId,
+        record.agentId,
+        record.agentName,
+        record.status.wire,
+        record.trigger.wire,
+        record.startedAt.toUtc().millisecondsSinceEpoch,
+        record.finishedAt?.toUtc().millisecondsSinceEpoch,
+        record.summary,
+        record.error,
+        record.memoryId,
+        record.artifactId,
+        record.traceId,
+      ],
+    );
+  }
 }
 
 String agentRunId({required String agentId, required DateTime startedAt}) {
   return '$agentId:${startedAt.toUtc().microsecondsSinceEpoch}';
+}
+
+AgentRunRecord _runningRecord({
+  required String ownerUserId,
+  required Agent agent,
+  required DateTime startedAt,
+  required AgentRunTrigger trigger,
+}) {
+  return AgentRunRecord(
+    id: agentRunId(agentId: agent.id, startedAt: startedAt),
+    ownerUserId: ownerUserId,
+    agentId: agent.id,
+    agentName: agent.name,
+    status: AgentRunLifecycleStatus.running,
+    trigger: trigger,
+    startedAt: startedAt.toUtc(),
+  );
 }
 
 AgentRunRecord _recordFromResult({

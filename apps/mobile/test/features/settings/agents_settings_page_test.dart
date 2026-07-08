@@ -20,6 +20,7 @@ import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/agents_settings_page.dart';
@@ -56,7 +57,9 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[]),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[],
+          ),
           agentPresentationSpecsProvider.overrideWithValue(
             const <String, AgentPresentationSpec>{},
           ),
@@ -101,7 +104,13 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[_FakeAgent()]),
+          agentRegistrationProvider
+              .overrideWithValue(const <DomainAgentRegistration>[
+                DomainAgentRegistration(
+                  agent: _FakeAgent(),
+                  domain: DomainScope.finance,
+                ),
+              ]),
           agentPresentationSpecsProvider
               .overrideWithValue(const <String, AgentPresentationSpec>{
                 'fake_agent': AgentPresentationSpec(
@@ -168,7 +177,13 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[_FakeAgent()]),
+          agentRegistrationProvider
+              .overrideWithValue(const <DomainAgentRegistration>[
+                DomainAgentRegistration(
+                  agent: _FakeAgent(),
+                  domain: DomainScope.finance,
+                ),
+              ]),
           agentPresentationSpecsProvider
               .overrideWithValue(const <String, AgentPresentationSpec>{
                 'fake_agent': AgentPresentationSpec(
@@ -229,7 +244,13 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[_FakeAgent()]),
+          agentRegistrationProvider
+              .overrideWithValue(const <DomainAgentRegistration>[
+                DomainAgentRegistration(
+                  agent: _FakeAgent(),
+                  domain: DomainScope.finance,
+                ),
+              ]),
           agentPresentationSpecsProvider
               .overrideWithValue(const <String, AgentPresentationSpec>{
                 'fake_agent': AgentPresentationSpec(
@@ -294,7 +315,13 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[_FakeAgent()]),
+          agentRegistrationProvider
+              .overrideWithValue(const <DomainAgentRegistration>[
+                DomainAgentRegistration(
+                  agent: _FakeAgent(),
+                  domain: DomainScope.finance,
+                ),
+              ]),
           agentPresentationSpecsProvider
               .overrideWithValue(const <String, AgentPresentationSpec>{
                 'fake_agent': AgentPresentationSpec(
@@ -355,7 +382,14 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[agent]),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: agent,
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
           agentPresentationSpecsProvider
               .overrideWithValue(const <String, AgentPresentationSpec>{
                 'fake_agent': AgentPresentationSpec(
@@ -420,6 +454,76 @@ void main() {
     expect(find.textContaining('No finding'), findsWidgets);
   });
 
+  testWidgets('run now reports controller failures and resets busy state', (
+    tester,
+  ) async {
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    const agent = _FakeAgent();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: agent,
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+          agentRunControllerProvider.overrideWith((ref) async {
+            throw StateError('runtime unavailable');
+          }),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => AppMessenger.init(child: child!),
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Presented Agent'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Run now'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining("Couldn't run agent"), findsOneWidget);
+    expect(find.text('Run now'), findsOneWidget);
+    expect(
+      await runStore.latestForAgent(ownerUserId: 'user-1', agentId: agent.id),
+      isNull,
+    );
+
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('opens latest agent artifact from settings', (tester) async {
     final db = makeTestDatabase();
     addTearDown(db.close);
@@ -469,7 +573,14 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[agent]),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: agent,
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
           agentPresentationSpecsProvider
               .overrideWithValue(const <String, AgentPresentationSpec>{
                 'fake_agent': AgentPresentationSpec(
@@ -565,7 +676,14 @@ void main() {
       ProviderScope(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistryProvider.overrideWithValue(const <Agent>[agent]),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: agent,
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
           agentPresentationSpecsProvider
               .overrideWithValue(const <String, AgentPresentationSpec>{
                 'fake_agent': AgentPresentationSpec(

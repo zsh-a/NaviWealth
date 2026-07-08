@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
@@ -12,6 +15,7 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/background/background_scheduler.dart';
 import 'package:naviwealth/core/background/providers.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
@@ -183,6 +187,36 @@ void main() {
         agent_providers.agentRunStoreProvider.overrideWith(
           (ref) async => runStore,
         ),
+        agentRegistrationProvider
+            .overrideWithValue(const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: ReviewAgent(),
+                domain: DomainScope.knowledge,
+              ),
+              DomainAgentRegistration(
+                agent: AssumptionAgent(),
+                domain: DomainScope.knowledge,
+              ),
+            ]),
+        agentPresentationSpecsProvider
+            .overrideWithValue(const <String, AgentPresentationSpec>{
+              kKnowledgeReviewAgentId: AgentPresentationSpec(
+                agentId: kKnowledgeReviewAgentId,
+                domain: DomainScope.knowledge,
+                icon: Icons.check,
+                label: _agentLabel,
+                description: _agentDescription,
+                placement: AgentResultPlacement.domainReview,
+              ),
+              kKnowledgeAssumptionAgentId: AgentPresentationSpec(
+                agentId: kKnowledgeAssumptionAgentId,
+                domain: DomainScope.knowledge,
+                icon: Icons.check,
+                label: _agentLabel,
+                description: _agentDescription,
+                placement: AgentResultPlacement.domainReview,
+              ),
+            }),
       ],
     );
     addTearDown(c.dispose);
@@ -208,7 +242,7 @@ void main() {
     );
     final run = await c.read(latestKnowledgeReviewRunProvider.future);
 
-    expect(artifact?.id, 'knowledge-review-1');
+    expect(artifact?.id, 'knowledge-assumption-1');
     expect(artifacts.map((artifact) => artifact.id), [
       'knowledge-assumption-1',
       'knowledge-review-1',
@@ -217,6 +251,10 @@ void main() {
     expect(run?.traceId, 'trace-knowledge-review');
   });
 }
+
+String _agentLabel(_) => 'Knowledge Review';
+
+String _agentDescription(_) => 'Knowledge Review';
 
 AgentArtifact _knowledgeArtifact({
   required String id,

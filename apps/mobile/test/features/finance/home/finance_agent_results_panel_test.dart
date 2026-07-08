@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
@@ -60,35 +61,37 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap([
-        finance_agent_providers.latestFinanceAgentArtifactsProvider
-            .overrideWith(
-              (ref) async => <AgentArtifact>[
-                _artifact(
-                  id: 'weekly_wealth_review:2026-07-05',
-                  agentId: kWeeklyWealthReviewAgentId,
-                  kind: AgentArtifactKind.review,
-                  severity: AgentArtifactSeverity.attention,
-                  title: 'Weekly Wealth Review',
-                  summary: 'Net worth moved 2.4% with cashflow pressure.',
-                  insights: const <AgentInsight>[
-                    AgentInsight(
-                      title: 'Net worth',
-                      body: 'Portfolio value increased this week.',
-                    ),
-                  ],
-                  createdAt: DateTime.utc(2026, 7, 5),
-                ),
-                _artifact(
-                  id: 'cashflow_anomaly_review:2026-07-05',
-                  agentId: 'cashflow_anomaly_review',
-                  kind: AgentArtifactKind.alert,
-                  severity: AgentArtifactSeverity.warning,
-                  title: 'Cashflow Anomaly Review',
-                  summary: 'Spending moved sharply above baseline.',
-                  createdAt: DateTime.utc(2026, 7, 4),
-                ),
-              ],
-            ),
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => agent_providers.AgentResultBundle(
+            artifacts: <AgentArtifact>[
+              _artifact(
+                id: 'weekly_wealth_review:2026-07-05',
+                agentId: kWeeklyWealthReviewAgentId,
+                kind: AgentArtifactKind.review,
+                severity: AgentArtifactSeverity.attention,
+                title: 'Weekly Wealth Review',
+                summary: 'Net worth moved 2.4% with cashflow pressure.',
+                insights: const <AgentInsight>[
+                  AgentInsight(
+                    title: 'Net worth',
+                    body: 'Portfolio value increased this week.',
+                  ),
+                ],
+                createdAt: DateTime.utc(2026, 7, 5),
+              ),
+              _artifact(
+                id: 'cashflow_anomaly_review:2026-07-05',
+                agentId: 'cashflow_anomaly_review',
+                kind: AgentArtifactKind.alert,
+                severity: AgentArtifactSeverity.warning,
+                title: 'Cashflow Anomaly Review',
+                summary: 'Spending moved sharply above baseline.',
+                createdAt: DateTime.utc(2026, 7, 4),
+              ),
+            ],
+            latestRuns: const <AgentRunRecord>[],
+          ),
+        ),
       ]),
     );
     await tester.pump();
@@ -109,15 +112,18 @@ void main() {
   });
 
   testWidgets('renders an intentional loading state', (tester) async {
-    final pending = Completer<List<AgentArtifact>>();
+    final pending = Completer<agent_providers.AgentResultBundle>();
     addTearDown(() {
-      if (!pending.isCompleted) pending.complete(const <AgentArtifact>[]);
+      if (!pending.isCompleted) {
+        pending.complete(agent_providers.AgentResultBundle.empty);
+      }
     });
 
     await tester.pumpWidget(
       _wrap([
-        finance_agent_providers.latestFinanceAgentArtifactsProvider
-            .overrideWith((ref) => pending.future),
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) => pending.future,
+        ),
       ]),
     );
     await tester.pump();
@@ -131,10 +137,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap([
-        finance_agent_providers.latestFinanceAgentArtifactsProvider
-            .overrideWith((ref) async => const <AgentArtifact>[]),
-        finance_agent_providers.latestWeeklyWealthReviewRunProvider
-            .overrideWith((ref) async => null),
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => agent_providers.AgentResultBundle.empty,
+        ),
       ]),
     );
     await tester.pump();
@@ -154,11 +159,11 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap([
-        finance_agent_providers.latestFinanceAgentArtifactsProvider
-            .overrideWith((ref) async => const <AgentArtifact>[]),
-        finance_agent_providers.latestWeeklyWealthReviewRunProvider
-            .overrideWith(
-              (ref) async => AgentRunRecord(
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => agent_providers.AgentResultBundle(
+            artifacts: const <AgentArtifact>[],
+            latestRuns: [
+              AgentRunRecord(
                 id: 'run-1',
                 ownerUserId: 'user-1',
                 agentId: kWeeklyWealthReviewAgentId,
@@ -168,7 +173,9 @@ void main() {
                 startedAt: DateTime.utc(2026, 7, 6),
                 summary: 'Review in progress.',
               ),
-            ),
+            ],
+          ),
+        ),
       ]),
     );
     await tester.pump();

@@ -98,11 +98,75 @@ class _RecoveryAlertPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final artifact = ref
-        .watch(health_agent_providers.latestRecoveryAlertArtifactProvider)
-        .value;
-    if (artifact == null) return const SizedBox.shrink();
+    final artifactAsync = ref.watch(
+      health_agent_providers.latestRecoveryAlertArtifactProvider,
+    );
+    final runAsync = ref.watch(
+      health_agent_providers.latestRecoveryAlertRunProvider,
+    );
     final l10n = AppLocalizations.of(context);
+    if (artifactAsync.isLoading && !artifactAsync.hasValue) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.s8),
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.loaderCircle,
+          title: l10n.commonLoading,
+          message: l10n.agentSettingsSubtitle,
+          loading: true,
+        ),
+      );
+    }
+    if (artifactAsync.hasError && !artifactAsync.hasValue) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.s8),
+        child: AgentResultPanelStateCard(
+          icon: FLucideIcons.triangleAlert,
+          title: l10n.commonError,
+          message: l10n.commonLoadError('${artifactAsync.error}'),
+          error: true,
+          onRetry: () => ref.invalidate(
+            health_agent_providers.latestRecoveryAlertArtifactProvider,
+          ),
+        ),
+      );
+    }
+    final artifact = artifactAsync.value;
+    if (artifact == null) {
+      return runAsync.when(
+        loading: () => Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.s8),
+          child: AgentResultPanelStateCard(
+            icon: FLucideIcons.loaderCircle,
+            title: l10n.commonLoading,
+            message: l10n.agentSettingsSubtitle,
+            loading: true,
+          ),
+        ),
+        error: (error, _) => Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.s8),
+          child: AgentResultPanelStateCard(
+            icon: FLucideIcons.triangleAlert,
+            title: l10n.commonError,
+            message: l10n.commonLoadError('$error'),
+            error: true,
+            onRetry: () => ref.invalidate(
+              health_agent_providers.latestRecoveryAlertRunProvider,
+            ),
+          ),
+        ),
+        data: (run) {
+          if (run == null) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
+            child: AgentRunStatusCard(
+              record: run,
+              metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
+              onRetry: () => _retryRecoveryAlert(ref),
+            ),
+          );
+        },
+      );
+    }
     final metaLabel = l10n.healthBriefingUpdated(
       _ago(l10n, artifact.createdAt),
     );
@@ -122,6 +186,13 @@ class _RecoveryAlertPanel extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _retryRecoveryAlert(WidgetRef ref) async {
+  final controller = await ref.read(agentRunControllerProvider.future);
+  await controller.runOnceById(kRecoveryAlertAgentId);
+  ref.invalidate(health_agent_providers.latestRecoveryAlertArtifactProvider);
+  ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
 }
 
 /// 7-day HRV sparkline shown beneath the recovery card.

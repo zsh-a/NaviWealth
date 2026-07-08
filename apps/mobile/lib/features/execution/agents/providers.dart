@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_background_scheduler.dart';
+import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
@@ -29,38 +30,39 @@ final executionAgentsProvider = Provider<List<Agent>>((ref) {
   return <Agent>[ref.watch(executionReviewAgentProvider)];
 });
 
-final latestExecutionReviewArtifactProvider =
-    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+const _executionReviewResultScope = agent_providers.AgentResultScope(
+  domain: DomainScope.execution,
+  placement: AgentResultPlacement.domainReview,
+  limit: 5,
+);
+
+final latestExecutionReviewResultsProvider =
+    FutureProvider.autoDispose<agent_providers.AgentResultBundle>((ref) async {
       final optIns = ref.watch(core_auth.domainOptInsProvider).value;
       if (optIns == null || !optIns.contains(DomainScope.execution)) {
-        return null;
+        return agent_providers.AgentResultBundle.empty;
       }
-      final store = await ref.watch(
-        agent_providers.agentArtifactStoreProvider.future,
+      return ref.watch(
+        agent_providers
+            .latestAgentResultsForPlacementProvider(_executionReviewResultScope)
+            .future,
       );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final artifacts = await store.latestForAgent(
-        ownerUserId: ownerUserId,
-        agentId: kExecutionReviewAgentId,
-        limit: 1,
+    });
+
+final latestExecutionReviewArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final bundle = await ref.watch(
+        latestExecutionReviewResultsProvider.future,
       );
-      return artifacts.isEmpty ? null : artifacts.single;
+      return bundle.artifacts.isEmpty ? null : bundle.artifacts.first;
     });
 
 final latestExecutionReviewRunProvider =
     FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.execution)) {
-        return null;
-      }
-      final store = await ref.watch(
-        agent_providers.agentRunStoreProvider.future,
+      final bundle = await ref.watch(
+        latestExecutionReviewResultsProvider.future,
       );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      return store.latestForAgent(
-        ownerUserId: ownerUserId,
-        agentId: kExecutionReviewAgentId,
-      );
+      return bundle.latestRun;
     });
 
 /// Registers/cancels the ExecutionOS review background wake-up. The native

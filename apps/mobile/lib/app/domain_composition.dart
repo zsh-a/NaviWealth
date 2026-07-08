@@ -83,8 +83,9 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     systemPromptBlocksProvider.overrideWith(
       (ref) => domainSystemPromptBlocks(ref.watch(activeDomainPacksProvider)),
     ),
-    agentRegistryProvider.overrideWith(
-      (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
+    agentRegistrationProvider.overrideWith(
+      (ref) =>
+          domainAgentRegistrations(ref, ref.watch(activeDomainPacksProvider)),
     ),
     agentPresentationSpecsProvider.overrideWith(
       (ref) =>

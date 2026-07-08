@@ -49,6 +49,16 @@ AgentArtifact _artifact({
   List<AgentEvidenceRef> evidence = const [
     AgentEvidenceRef(type: 'metric', id: 'sleep-1', label: 'Sleep session'),
   ],
+  List<AgentAction> actions = const [
+    AgentAction(
+      kind: 'review',
+      label: 'Review plan',
+      intent: 'open_plan',
+      objectType: 'execution_action',
+      objectId: 'action-1',
+      payload: <String, Object?>{'proposal_kind': 'action_plan'},
+    ),
+  ],
 }) {
   return AgentArtifact(
     id: 'artifact-1',
@@ -64,16 +74,7 @@ AgentArtifact _artifact({
       AgentInsight(title: 'HRV', body: 'HRV is stable enough for light work.'),
     ],
     evidence: evidence,
-    actions: const [
-      AgentAction(
-        kind: 'review',
-        label: 'Review plan',
-        intent: 'open_plan',
-        objectType: 'execution_action',
-        objectId: 'action-1',
-        payload: <String, Object?>{'proposal_kind': 'action_plan'},
-      ),
-    ],
+    actions: actions,
     traceId: 'trace-1',
     createdAt: DateTime.utc(2026, 7, 5, 8),
   );
@@ -261,6 +262,7 @@ void main() {
     AiIntentInvocation? capturedInvocation;
     await _openArtifactSheet(
       tester,
+      artifact: _artifact(actions: const <AgentAction>[]),
       overrides: [
         askAiSurfaceProvider.overrideWithValue((
           context, {
@@ -289,7 +291,7 @@ void main() {
     AiIntentInvocation? capturedInvocation;
     await _openArtifactSheet(
       tester,
-      artifact: _artifact(evidence: const []),
+      artifact: _artifact(evidence: const [], actions: const <AgentAction>[]),
       overrides: [
         askAiSurfaceProvider.overrideWithValue((
           context, {
@@ -569,6 +571,13 @@ class _FakeArtifactStore implements AgentArtifactStore {
     int limit = 10,
     DateTime? visibleAt,
   }) async => const <AgentArtifact>[];
+
+  @override
+  Future<Map<String, AgentArtifact>> latestForAgents({
+    required String ownerUserId,
+    required Iterable<String> agentIds,
+    DateTime? visibleAt,
+  }) async => const <String, AgentArtifact>{};
 
   @override
   Future<List<AgentArtifact>> latestForDomain({

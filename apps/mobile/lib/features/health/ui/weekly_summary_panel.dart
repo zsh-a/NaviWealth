@@ -14,14 +14,18 @@ class _WeeklySummaryPanel extends ConsumerWidget {
     final async = ref.watch(weeklySummaryProvider);
     return artifactAsync.when(
       loading: () => const _WeeklySummarySkeleton(),
-      error: (_, _) => _WeeklySummaryFallback(async: async, runAsync: runAsync),
+      error: (error, _) => _WeeklySummaryFallback(
+        async: async,
+        runAsync: runAsync,
+        agentLoadError: error,
+      ),
       data: (artifact) {
         if (artifact != null) {
           return _WeeklySummaryArtifactCard(
             artifact: artifact,
             onVisibilityChanged: () {
               ref.invalidate(
-                health_agent_providers.latestWeeklySummaryArtifactProvider,
+                health_agent_providers.latestHealthReviewAgentResultsProvider,
               );
             },
           );
@@ -66,23 +70,81 @@ class _WeeklySummaryArtifactCard extends StatelessWidget {
 }
 
 class _WeeklySummaryFallback extends ConsumerWidget {
-  const _WeeklySummaryFallback({required this.async, required this.runAsync});
+  const _WeeklySummaryFallback({
+    required this.async,
+    required this.runAsync,
+    this.agentLoadError,
+  });
 
   final AsyncValue<WeeklySummary?> async;
   final AsyncValue<AgentRunRecord?> runAsync;
+  final Object? agentLoadError;
 
   Future<void> _retry(WidgetRef ref) async {
     final controller = await ref.read(agentRunControllerProvider.future);
     await controller.runOnceById(kWeeklySummaryAgentId);
-    ref.invalidate(health_agent_providers.latestWeeklySummaryArtifactProvider);
-    ref.invalidate(health_agent_providers.latestWeeklySummaryRunProvider);
+    ref.invalidate(
+      health_agent_providers.latestHealthReviewAgentResultsProvider,
+    );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final agentLoadError = this.agentLoadError;
+    if (agentLoadError != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AgentResultPanelStateCard(
+            icon: FLucideIcons.triangleAlert,
+            title: l10n.commonError,
+            message: l10n.commonLoadError('$agentLoadError'),
+            error: true,
+            onRetry: () => ref.invalidate(
+              health_agent_providers.latestHealthReviewAgentResultsProvider,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _WeeklySummaryMetricsCard(async: async),
+        ],
+      );
+    }
+    if (runAsync.isLoading && !runAsync.hasValue) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AgentResultPanelStateCard(
+            icon: FLucideIcons.loaderCircle,
+            title: l10n.commonLoading,
+            message: l10n.agentSettingsSubtitle,
+            loading: true,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _WeeklySummaryMetricsCard(async: async),
+        ],
+      );
+    }
+    if (runAsync.hasError && !runAsync.hasValue) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AgentResultPanelStateCard(
+            icon: FLucideIcons.triangleAlert,
+            title: l10n.commonError,
+            message: l10n.commonLoadError('${runAsync.error}'),
+            error: true,
+            onRetry: () => ref.invalidate(
+              health_agent_providers.latestHealthReviewAgentResultsProvider,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _WeeklySummaryMetricsCard(async: async),
+        ],
+      );
+    }
     final run = runAsync.value;
     if (run == null) return _WeeklySummaryMetricsCard(async: async);
-    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

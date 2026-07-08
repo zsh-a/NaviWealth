@@ -10,6 +10,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart' show RiskLevel;
@@ -30,7 +31,7 @@ final agentRuntimeCatalogProvider = Provider<AgentRuntimeCatalog>((ref) {
   final packs = ref.watch(activeDomainPacksProvider);
   return buildAgentRuntimeCatalog(
     packs: packs,
-    agentRegistrations: domainAgentRegistrations(ref, packs),
+    agentRegistrations: ref.watch(agentRegistrationProvider),
     generatedAt: DateTime.now().toUtc(),
   );
 });

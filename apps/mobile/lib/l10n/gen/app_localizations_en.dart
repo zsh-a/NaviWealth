@@ -5494,6 +5494,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String agentSettingsRunBusy(String agentName) {
+    return '$agentName is already running';
+  }
+
+  @override
+  String agentSettingsRunFailed(String error) {
+    return 'Couldn\'t run agent: $error';
+  }
+
+  @override
+  String agentSettingsSaveFailed(String error) {
+    return 'Couldn\'t update agent settings: $error';
+  }
+
+  @override
+  String get agentSettingsMissingPresentationBadge => 'Metadata missing';
+
+  @override
+  String get agentSettingsMissingPresentationDescription =>
+      'This agent is registered without presentation metadata.';
+
+  @override
   String agentSettingsStatusWithDetail(String status, String detail) {
     return '$status · $detail';
   }
@@ -5655,6 +5677,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentResultDismissAction => 'Dismiss';
+
+  @override
+  String agentResultVisibilityActionFailed(String error) {
+    return 'Couldn\'t update this result: $error';
+  }
+
+  @override
+  String get agentResultActionFallbackBody =>
+      'Open this action from the agent result.';
+
+  @override
+  String agentResultActionFallbackWithKey(String key) {
+    return 'Action key: $key';
+  }
 
   @override
   String get agentPresentationWeeklyWealthReviewLabel => 'Weekly Wealth Review';

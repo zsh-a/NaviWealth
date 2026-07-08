@@ -31,6 +31,7 @@ import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
+import '../agents/recovery_alert_agent.dart' show kRecoveryAlertAgentId;
 import '../agents/weekly_summary_agent.dart' show kWeeklySummaryAgentId;
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
@@ -92,10 +93,10 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           ref.invalidate(
             health_agent_providers.latestRecoveryAlertArtifactProvider,
           );
+          ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
           ref.invalidate(
-            health_agent_providers.latestWeeklySummaryArtifactProvider,
+            health_agent_providers.latestHealthReviewAgentResultsProvider,
           );
-          ref.invalidate(health_agent_providers.latestWeeklySummaryRunProvider);
           await ref.read(healthTodaySnapshotProvider.future);
         },
         child: ListView(
@@ -149,8 +150,9 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           ref.invalidate(
             health_agent_providers.latestRecoveryAlertArtifactProvider,
           );
+          ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
           ref.invalidate(
-            health_agent_providers.latestWeeklySummaryArtifactProvider,
+            health_agent_providers.latestHealthReviewAgentResultsProvider,
           );
         },
       );

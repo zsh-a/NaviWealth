@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_background_scheduler.dart';
+import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
@@ -31,7 +32,6 @@ import '../data/health_sync_service.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
 import 'recovery_alert_agent.dart';
-import 'weekly_summary_agent.dart';
 
 /// Shorter lookback for periodic foreground catch-up after a background wake.
 /// Manual sync and Morning Briefing still use [kDefaultHealthSyncWindow].
@@ -318,25 +318,7 @@ final latestRecoveryAlertArtifactProvider =
       return artifacts.isEmpty ? null : artifacts.single;
     });
 
-/// Most recent user-visible Weekly Summary artifact for the Health Today page.
-final latestWeeklySummaryArtifactProvider =
-    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-      final store = await ref.watch(
-        agent_providers.agentArtifactStoreProvider.future,
-      );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final artifacts = await store.latestForAgent(
-        ownerUserId: ownerUserId,
-        agentId: kWeeklySummaryAgentId,
-        limit: 1,
-      );
-      return artifacts.isEmpty ? null : artifacts.single;
-    });
-
-/// Most recent Weekly Summary run status for Health Today fallback UI.
-final latestWeeklySummaryRunProvider =
+final latestRecoveryAlertRunProvider =
     FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
       final optIns = ref.watch(core_auth.domainOptInsProvider).value;
       if (optIns == null || !optIns.contains(DomainScope.health)) return null;
@@ -346,6 +328,43 @@ final latestWeeklySummaryRunProvider =
       final ownerUserId = await ref.read(currentUserIdProvider)();
       return store.latestForAgent(
         ownerUserId: ownerUserId,
-        agentId: kWeeklySummaryAgentId,
+        agentId: kRecoveryAlertAgentId,
       );
+    });
+
+const _healthReviewResultScope = agent_providers.AgentResultScope(
+  domain: DomainScope.health,
+  placement: AgentResultPlacement.domainReview,
+  limit: 5,
+);
+
+final latestHealthReviewAgentResultsProvider =
+    FutureProvider.autoDispose<agent_providers.AgentResultBundle>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) {
+        return agent_providers.AgentResultBundle.empty;
+      }
+      return ref.watch(
+        agent_providers
+            .latestAgentResultsForPlacementProvider(_healthReviewResultScope)
+            .future,
+      );
+    });
+
+/// Most recent user-visible Weekly Summary artifact for the Health Today page.
+final latestWeeklySummaryArtifactProvider =
+    FutureProvider.autoDispose<AgentArtifact?>((ref) async {
+      final bundle = await ref.watch(
+        latestHealthReviewAgentResultsProvider.future,
+      );
+      return bundle.artifacts.isEmpty ? null : bundle.artifacts.first;
+    });
+
+/// Most recent Weekly Summary run status for Health Today fallback UI.
+final latestWeeklySummaryRunProvider =
+    FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
+      final bundle = await ref.watch(
+        latestHealthReviewAgentResultsProvider.future,
+      );
+      return bundle.latestRun;
     });

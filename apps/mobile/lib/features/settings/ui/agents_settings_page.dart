@@ -1,8 +1,6 @@
 /// Cross-domain agent management settings.
 library;
 
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -36,31 +34,53 @@ final _agentSettingsRowsProvider =
       final runStore = await ref.watch(
         agent_providers.agentRunStoreProvider.future,
       );
-      final agents = ref.watch(agentRegistryProvider);
+      final registrations = ref.watch(agentRegistrationProvider);
       final presentations = ref.watch(agentPresentationSpecsProvider);
+      final agentIds = [
+        for (final registration in registrations) registration.agent.id,
+      ];
+      final preferences = await preferenceStore.listForOwner(
+        ownerUserId: ownerUserId,
+      );
+      final preferencesByAgentId = {
+        for (final preference in preferences) preference.agentId: preference,
+      };
+      final latestRunsByAgentId = await runStore.latestForAgents(
+        ownerUserId: ownerUserId,
+        agentIds: agentIds,
+      );
+      final artifactIds = {
+        for (final run in latestRunsByAgentId.values) ?run.artifactId,
+      };
+      final artifactStore = artifactIds.isEmpty
+          ? null
+          : await ref.watch(agent_providers.agentArtifactStoreProvider.future);
+      final artifacts = artifactStore == null
+          ? const <AgentArtifact?>[]
+          : await Future.wait([
+              for (final artifactId in artifactIds)
+                artifactStore.read(artifactId),
+            ]);
+      final artifactsById = <String, AgentArtifact>{
+        for (final artifact in artifacts.whereType<AgentArtifact>())
+          artifact.id: artifact,
+      };
       final rows = <_AgentSettingsRow>[];
-      for (final agent in agents) {
-        final latestRun = await runStore.latestForAgent(
-          ownerUserId: ownerUserId,
-          agentId: agent.id,
-        );
-        AgentArtifact? latestArtifact;
-        if (latestRun?.artifactId != null) {
-          final artifactStore = await ref.watch(
-            agent_providers.agentArtifactStoreProvider.future,
-          );
-          latestArtifact = await artifactStore.read(latestRun!.artifactId!);
-        }
+      for (final registration in registrations) {
+        final agent = registration.agent;
+        final latestRun = latestRunsByAgentId[agent.id];
         rows.add(
           _AgentSettingsRow(
             agent: agent,
+            domain: registration.domain,
             presentation: presentations[agent.id],
-            preference: await preferenceStore.preferenceFor(
-              ownerUserId: ownerUserId,
-              agentId: agent.id,
-            ),
+            preference:
+                preferencesByAgentId[agent.id] ??
+                _defaultAgentPreference(ownerUserId, agent.id),
             latestRun: latestRun,
-            latestArtifact: latestArtifact,
+            latestArtifact: latestRun?.artifactId == null
+                ? null
+                : artifactsById[latestRun!.artifactId!],
           ),
         );
       }
@@ -131,6 +151,7 @@ class AgentsSettingsPage extends ConsumerWidget {
 class _AgentSettingsRow {
   const _AgentSettingsRow({
     required this.agent,
+    required this.domain,
     required this.presentation,
     required this.preference,
     required this.latestRun,
@@ -138,6 +159,7 @@ class _AgentSettingsRow {
   });
 
   final Agent agent;
+  final DomainScope domain;
   final AgentPresentationSpec? presentation;
   final AgentPreference preference;
   final AgentRunRecord? latestRun;
@@ -151,13 +173,22 @@ class _AgentSettingsDomainSection {
   final List<_AgentSettingsRow> rows;
 }
 
+AgentPreference _defaultAgentPreference(String ownerUserId, String agentId) {
+  return AgentPreference(
+    ownerUserId: ownerUserId,
+    agentId: agentId,
+    enabled: true,
+    notificationsEnabled: true,
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+  );
+}
+
 List<_AgentSettingsDomainSection> _groupRowsByDomain(
   List<_AgentSettingsRow> rows,
 ) {
   final grouped = <DomainScope, List<_AgentSettingsRow>>{};
   for (final row in rows) {
-    final domain = row.presentation?.domain ?? DomainScope.finance;
-    grouped.putIfAbsent(domain, () => <_AgentSettingsRow>[]).add(row);
+    grouped.putIfAbsent(row.domain, () => <_AgentSettingsRow>[]).add(row);
   }
   return [
     for (final domain in DomainScope.values)
@@ -267,6 +298,18 @@ class _AgentSettingsRowTile extends ConsumerStatefulWidget {
 
 class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
   bool _running = false;
+  bool _savingEnabled = false;
+  bool? _enabledOverride;
+
+  bool get _enabled => _enabledOverride ?? widget.row.preference.enabled;
+
+  @override
+  void didUpdateWidget(covariant _AgentSettingsRowTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_enabledOverride == widget.row.preference.enabled) {
+      _enabledOverride = null;
+    }
+  }
 
   Future<void> _setEnabled(bool enabled) async {
     final ownerUserId = await ref.read(currentUserIdProvider)();
@@ -284,6 +327,28 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     );
     revision.state = revision.state + 1;
     ref.invalidate(_agentSettingsRowsProvider);
+  }
+
+  Future<void> _changeRowEnabled(bool enabled) async {
+    if (_savingEnabled) return;
+    final previous = _enabled;
+    setState(() {
+      _enabledOverride = enabled;
+      _savingEnabled = true;
+    });
+    try {
+      await _setEnabled(enabled);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _enabledOverride = previous);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).agentSettingsSaveFailed('$error'),
+      );
+    } finally {
+      if (mounted) setState(() => _savingEnabled = false);
+    }
   }
 
   Future<void> _setNotificationsEnabled(bool enabled) async {
@@ -313,16 +378,29 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       if (!mounted) return;
       AppMessenger.show(
         context,
-        result.status == AgentRunStatus.failed
-            ? ToastKind.error
-            : ToastKind.success,
+        switch (result.status) {
+          AgentRunStatus.failed => ToastKind.error,
+          AgentRunStatus.busy => ToastKind.info,
+          _ => ToastKind.success,
+        },
         result.error ??
             result.summary ??
-            AppLocalizations.of(
-              context,
-            ).agentSettingsRunFinished(widget.row.agent.name),
+            (result.status == AgentRunStatus.busy
+                ? AppLocalizations.of(
+                    context,
+                  ).agentSettingsRunBusy(widget.row.agent.name)
+                : AppLocalizations.of(
+                    context,
+                  ).agentSettingsRunFinished(widget.row.agent.name)),
       );
       ref.invalidate(_agentSettingsRowsProvider);
+    } on Object catch (error) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).agentSettingsRunFailed('$error'),
+      );
     } finally {
       if (mounted) setState(() => _running = false);
     }
@@ -352,7 +430,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     await showAppSheet<void>(
       context: context,
       title: label,
-      subtitle: _domainLabel(row.presentation?.domain ?? DomainScope.finance),
+      subtitle: _domainLabel(row.domain),
       maxHeightFactor: 0.88,
       builder: (_) => _AgentSettingsDetailSheet(
         row: row,
@@ -372,9 +450,11 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     final l10n = AppLocalizations.of(context);
     final row = widget.row;
     final presentation = row.presentation;
-    final enabled = row.preference.enabled;
+    final enabled = _enabled;
     final label = presentation?.label(l10n) ?? row.agent.name;
-    final description = presentation?.description(l10n);
+    final description =
+        presentation?.description(l10n) ??
+        l10n.agentSettingsMissingPresentationDescription;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
@@ -410,12 +490,17 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                               ),
                             ),
                             const SizedBox(width: AppSpacing.s6),
-                            _AgentRunStatusDot(row: row),
+                            _AgentRunStatusDot(row: row, enabled: enabled),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.s2),
                         Text(
-                          _compactSubtitle(context, row, description),
+                          _compactSubtitle(
+                            context,
+                            row,
+                            description,
+                            enabled: enabled,
+                          ),
                           style: context.captionStyle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -435,10 +520,23 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
           ),
           const SizedBox(width: AppSpacing.s10),
           if (presentation?.userToggleable ?? true)
-            FSwitch(
-              key: ValueKey<String>('agent-enabled-${row.agent.id}'),
-              value: enabled,
-              onChange: _setEnabled,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_savingEnabled) ...[
+                  const SizedBox(
+                    width: AppIconSizes.xs,
+                    height: AppIconSizes.xs,
+                    child: FCircularProgress(),
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
+                ],
+                FSwitch(
+                  key: ValueKey<String>('agent-enabled-${row.agent.id}'),
+                  value: enabled,
+                  onChange: _savingEnabled ? null : _changeRowEnabled,
+                ),
+              ],
             )
           else
             AppBadge(
@@ -480,6 +578,8 @@ class _AgentSettingsDetailSheetState
     extends ConsumerState<_AgentSettingsDetailSheet> {
   late bool _enabled;
   late bool _notificationsEnabled;
+  bool _savingEnabled = false;
+  bool _savingNotifications = false;
 
   @override
   void initState() {
@@ -488,14 +588,48 @@ class _AgentSettingsDetailSheetState
     _notificationsEnabled = widget.row.preference.notificationsEnabled;
   }
 
-  void _setEnabled(bool value) {
-    setState(() => _enabled = value);
-    unawaited(widget.onSetEnabled(value));
+  Future<void> _setEnabled(bool value) async {
+    if (_savingEnabled) return;
+    final previous = _enabled;
+    setState(() {
+      _enabled = value;
+      _savingEnabled = true;
+    });
+    try {
+      await widget.onSetEnabled(value);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _enabled = previous);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).agentSettingsSaveFailed('$error'),
+      );
+    } finally {
+      if (mounted) setState(() => _savingEnabled = false);
+    }
   }
 
-  void _setNotificationsEnabled(bool value) {
-    setState(() => _notificationsEnabled = value);
-    unawaited(widget.onSetNotificationsEnabled(value));
+  Future<void> _setNotificationsEnabled(bool value) async {
+    if (_savingNotifications) return;
+    final previous = _notificationsEnabled;
+    setState(() {
+      _notificationsEnabled = value;
+      _savingNotifications = true;
+    });
+    try {
+      await widget.onSetNotificationsEnabled(value);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _notificationsEnabled = previous);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).agentSettingsSaveFailed('$error'),
+      );
+    } finally {
+      if (mounted) setState(() => _savingNotifications = false);
+    }
   }
 
   @override
@@ -505,7 +639,9 @@ class _AgentSettingsDetailSheetState
     final row = widget.row;
     final presentation = row.presentation;
     final enabled = _enabled;
-    final description = presentation?.description(l10n);
+    final description =
+        presentation?.description(l10n) ??
+        l10n.agentSettingsMissingPresentationDescription;
     final formatters = context.formatters(ref);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -557,6 +693,12 @@ class _AgentSettingsDetailSheetState
                           size: AppBadgeSize.compact,
                           tone: AppBadgeTone.neutral,
                         ),
+                      if (presentation == null)
+                        AppBadge(
+                          label: l10n.agentSettingsMissingPresentationBadge,
+                          size: AppBadgeSize.compact,
+                          tone: AppBadgeTone.warning,
+                        ),
                     ],
                   ),
                 ],
@@ -572,11 +714,17 @@ class _AgentSettingsDetailSheetState
               _AgentDetailActionRow(
                 icon: FLucideIcons.power,
                 title: l10n.agentSettingsEnabled,
-                subtitle: enabled
+                subtitle: _savingEnabled
+                    ? l10n.commonSaving
+                    : enabled
                     ? l10n.agentSettingsEnabled
                     : l10n.agentSettingsDisabled,
                 trailing: presentation?.userToggleable ?? true
-                    ? FSwitch(value: enabled, onChange: _setEnabled)
+                    ? _SavingSwitch(
+                        value: enabled,
+                        saving: _savingEnabled,
+                        onChange: _savingEnabled ? null : _setEnabled,
+                      )
                     : AppBadge(
                         label: l10n.agentSettingsManagedBadge,
                         size: AppBadgeSize.compact,
@@ -588,15 +736,20 @@ class _AgentSettingsDetailSheetState
                 _AgentDetailActionRow(
                   icon: FLucideIcons.bell,
                   title: l10n.agentSettingsNotifications,
-                  subtitle: _notificationsEnabled
+                  subtitle: _savingNotifications
+                      ? l10n.commonSaving
+                      : _notificationsEnabled
                       ? l10n.agentSettingsEnabled
                       : l10n.agentSettingsDisabled,
-                  trailing: FSwitch(
+                  trailing: _SavingSwitch(
                     key: ValueKey<String>(
                       'agent-notifications-${row.agent.id}',
                     ),
                     value: _notificationsEnabled,
-                    onChange: enabled ? _setNotificationsEnabled : null,
+                    saving: _savingNotifications,
+                    onChange: enabled && !_savingNotifications
+                        ? _setNotificationsEnabled
+                        : null,
                   ),
                 ),
               ],
@@ -698,16 +851,48 @@ class _AgentDetailActionRow extends StatelessWidget {
   }
 }
 
+class _SavingSwitch extends StatelessWidget {
+  const _SavingSwitch({
+    super.key,
+    required this.value,
+    required this.saving,
+    required this.onChange,
+  });
+
+  final bool value;
+  final bool saving;
+  final ValueChanged<bool>? onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (saving) ...[
+          const SizedBox(
+            width: AppIconSizes.xs,
+            height: AppIconSizes.xs,
+            child: FCircularProgress(),
+          ),
+          const SizedBox(width: AppSpacing.s6),
+        ],
+        FSwitch(value: value, onChange: onChange),
+      ],
+    );
+  }
+}
+
 class _AgentRunStatusDot extends StatelessWidget {
-  const _AgentRunStatusDot({required this.row});
+  const _AgentRunStatusDot({required this.row, required this.enabled});
 
   final _AgentSettingsRow row;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final latest = row.latestRun;
     final l10n = AppLocalizations.of(context);
-    if (!row.preference.enabled) {
+    if (!enabled) {
       return AppBadge(
         label: l10n.agentSettingsDisabled,
         size: AppBadgeSize.compact,
@@ -779,10 +964,11 @@ String _triggerLabel(AppLocalizations l10n, AgentRunTrigger trigger) {
 String _compactSubtitle(
   BuildContext context,
   _AgentSettingsRow row,
-  String? description,
-) {
+  String? description, {
+  required bool enabled,
+}) {
   final l10n = AppLocalizations.of(context);
-  if (!row.preference.enabled) return l10n.agentSettingsDisabled;
+  if (!enabled) return l10n.agentSettingsDisabled;
   final latest = row.latestRun;
   if (latest == null) {
     final fallback = description ?? l10n.agentSettingsNeverRun;

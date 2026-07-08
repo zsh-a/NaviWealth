@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_background_scheduler.dart';
+import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
@@ -129,20 +130,10 @@ final pendingKnowledgeRoutineDueRunProvider =
 /// Most recent user-visible Knowledge Review artifact for the Review tab.
 final latestKnowledgeReviewArtifactProvider =
     FutureProvider.autoDispose<AgentArtifact?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.knowledge)) {
-        return null;
-      }
-      final store = await ref.watch(
-        agent_providers.agentArtifactStoreProvider.future,
+      final bundle = await ref.watch(
+        latestKnowledgeReviewResultsProvider.future,
       );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final artifacts = await store.latestForAgent(
-        ownerUserId: ownerUserId,
-        agentId: kKnowledgeReviewAgentId,
-        limit: 1,
-      );
-      return artifacts.isEmpty ? null : artifacts.single;
+      return bundle.artifacts.isEmpty ? null : bundle.artifacts.first;
     });
 
 /// Latest visible KnowledgeOS agent artifacts for the Review tab.
@@ -152,33 +143,35 @@ final latestKnowledgeReviewArtifactProvider =
 /// list so all user-visible outputs share the same result card surface.
 final latestKnowledgeReviewArtifactsProvider =
     FutureProvider.autoDispose<List<AgentArtifact>>((ref) async {
+      final bundle = await ref.watch(
+        latestKnowledgeReviewResultsProvider.future,
+      );
+      return bundle.artifacts;
+    });
+
+const _knowledgeReviewResultScope = agent_providers.AgentResultScope(
+  domain: DomainScope.knowledge,
+  placement: AgentResultPlacement.domainReview,
+  limit: 5,
+);
+
+final latestKnowledgeReviewResultsProvider =
+    FutureProvider.autoDispose<agent_providers.AgentResultBundle>((ref) async {
       final optIns = ref.watch(core_auth.domainOptInsProvider).value;
       if (optIns == null || !optIns.contains(DomainScope.knowledge)) {
-        return const <AgentArtifact>[];
+        return agent_providers.AgentResultBundle.empty;
       }
-      final store = await ref.watch(
-        agent_providers.agentArtifactStoreProvider.future,
-      );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      return store.latestForDomain(
-        ownerUserId: ownerUserId,
-        domain: 'knowledge',
-        limit: 5,
+      return ref.watch(
+        agent_providers
+            .latestAgentResultsForPlacementProvider(_knowledgeReviewResultScope)
+            .future,
       );
     });
 
 final latestKnowledgeReviewRunProvider =
     FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.knowledge)) {
-        return null;
-      }
-      final store = await ref.watch(
-        agent_providers.agentRunStoreProvider.future,
+      final bundle = await ref.watch(
+        latestKnowledgeReviewResultsProvider.future,
       );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      return store.latestForAgent(
-        ownerUserId: ownerUserId,
-        agentId: kKnowledgeReviewAgentId,
-      );
+      return bundle.latestRun;
     });

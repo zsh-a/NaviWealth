@@ -5247,6 +5247,28 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String agentSettingsRunBusy(String agentName) {
+    return '$agentName 正在运行';
+  }
+
+  @override
+  String agentSettingsRunFailed(String error) {
+    return '无法运行 Agent：$error';
+  }
+
+  @override
+  String agentSettingsSaveFailed(String error) {
+    return '无法更新 Agent 设置：$error';
+  }
+
+  @override
+  String get agentSettingsMissingPresentationBadge => '缺少元数据';
+
+  @override
+  String get agentSettingsMissingPresentationDescription =>
+      '这个 Agent 已注册，但缺少展示元数据。';
+
+  @override
   String agentSettingsStatusWithDetail(String status, String detail) {
     return '$status · $detail';
   }
@@ -5403,6 +5425,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentResultDismissAction => '关闭';
+
+  @override
+  String agentResultVisibilityActionFailed(String error) {
+    return '无法更新这份结果：$error';
+  }
+
+  @override
+  String get agentResultActionFallbackBody => '从这份 Agent 结果执行该操作。';
+
+  @override
+  String agentResultActionFallbackWithKey(String key) {
+    return '操作键：$key';
+  }
 
   @override
   String get agentPresentationWeeklyWealthReviewLabel => '每周财富复盘';

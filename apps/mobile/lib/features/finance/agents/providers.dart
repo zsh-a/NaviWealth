@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
+import '../../../core/auth/domain_scope.dart';
 import 'cashflow_anomaly_review_agent.dart';
 import 'fire_plan_drift_monitor_agent.dart';
 import 'options_income_risk_review_agent.dart';
@@ -39,27 +41,37 @@ final financeAgentsProvider = Provider<List<Agent>>((ref) {
   ];
 });
 
+const _financeHomeResultScope = agent_providers.AgentResultScope(
+  domain: DomainScope.finance,
+  placement: AgentResultPlacement.domainHome,
+  limit: 5,
+);
+
+final latestFinanceAgentResultsProvider =
+    FutureProvider.autoDispose<agent_providers.AgentResultBundle>((ref) {
+      return ref.watch(
+        agent_providers
+            .latestAgentResultsForPlacementProvider(_financeHomeResultScope)
+            .future,
+      );
+    });
+
 final latestFinanceAgentArtifactsProvider =
     FutureProvider.autoDispose<List<AgentArtifact>>((ref) async {
-      final store = await ref.watch(
-        agent_providers.agentArtifactStoreProvider.future,
-      );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final agents = ref.read(financeAgentsProvider);
-      final latestByAgent = await Future.wait(
-        agents.map(
-          (agent) => store.latestForAgent(
-            ownerUserId: ownerUserId,
-            agentId: agent.id,
-            limit: 1,
-          ),
-        ),
-      );
-      final artifacts = [
-        for (final result in latestByAgent)
-          if (result.isNotEmpty) result.single,
-      ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return artifacts;
+      final bundle = await ref.watch(latestFinanceAgentResultsProvider.future);
+      return bundle.artifacts;
+    });
+
+final latestFinanceAgentRunsProvider =
+    FutureProvider.autoDispose<List<AgentRunRecord>>((ref) async {
+      final bundle = await ref.watch(latestFinanceAgentResultsProvider.future);
+      return bundle.latestRuns;
+    });
+
+final latestFinanceAgentRunProvider =
+    FutureProvider.autoDispose<AgentRunRecord?>((ref) async {
+      final bundle = await ref.watch(latestFinanceAgentResultsProvider.future);
+      return bundle.latestRun;
     });
 
 final latestWeeklyWealthReviewArtifactProvider =

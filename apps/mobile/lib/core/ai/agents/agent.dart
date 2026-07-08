@@ -42,6 +42,12 @@ enum AgentRunStatus {
 
   /// Agent threw; the runner caught it. `error` carries the message.
   failed,
+
+  /// A fresh run for the same owner + agent is already active.
+  ///
+  /// Busy results are returned to the caller only. They must not be persisted
+  /// as skipped/no-finding runs because they should not advance schedules.
+  busy,
 }
 
 /// Product-facing status for a finished [AgentRunResult].
@@ -96,6 +102,19 @@ class AgentRunResult {
     traceId: traceId,
   );
 
+  factory AgentRunResult.busy({
+    required String agentId,
+    required DateTime startedAt,
+    required DateTime finishedAt,
+    String? reason,
+  }) => AgentRunResult(
+    agentId: agentId,
+    status: AgentRunStatus.busy,
+    startedAt: startedAt,
+    finishedAt: finishedAt,
+    summary: reason,
+  );
+
   /// `[Agent.id]` of the agent that produced this result. Stable
   /// identifier — UI surfaces ("show me last morning briefing") key
   /// off it.
@@ -135,6 +154,9 @@ class AgentRunResult {
     AgentRunStatus.completed => AgentRunUserVisibleStatus.ready,
     AgentRunStatus.skipped => AgentRunUserVisibleStatus.noFinding,
     AgentRunStatus.failed => AgentRunUserVisibleStatus.failed,
+    AgentRunStatus.busy => throw StateError(
+      'busy agent results are transient and cannot be persisted',
+    ),
   };
 }
 

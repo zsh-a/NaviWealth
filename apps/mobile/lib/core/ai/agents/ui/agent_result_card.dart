@@ -315,6 +315,80 @@ class AgentRunStatusCard extends StatelessWidget {
   }
 }
 
+class AgentResultPanelStateCard extends StatelessWidget {
+  const AgentResultPanelStateCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.loading = false,
+    this.error = false,
+    this.onRetry,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final bool loading;
+  final bool error;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final sem = SemanticColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final accent = error ? sem.danger : colors.primary;
+    return SoftCard(
+      level: SoftCardLevel.flat,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIconTile(
+            icon: icon,
+            color: accent,
+            size: 36,
+            iconSize: AppIconSizes.h18,
+            backgroundOpacity: AppOpacity.subtle,
+            foregroundOpacity: 1,
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: context.labelStyle),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  message,
+                  style: context.captionStyle.copyWith(height: 1.4),
+                ),
+                if (loading) ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  const FCircularProgress(
+                    size: FCircularProgressSizeVariant.sm,
+                  ),
+                ] else if (onRetry != null) ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  AppQuietButton(
+                    label: l10n.commonRetry,
+                    onPress: onRetry,
+                    prefix: const Icon(
+                      FLucideIcons.refreshCw,
+                      size: AppIconSizes.xs,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 Future<void> showAgentArtifactSheet({
   required BuildContext context,
   required AgentArtifact artifact,
@@ -336,7 +410,7 @@ Future<void> showAgentArtifactSheet({
   );
 }
 
-class AgentArtifactDetailBody extends ConsumerWidget {
+class AgentArtifactDetailBody extends ConsumerStatefulWidget {
   const AgentArtifactDetailBody({
     super.key,
     required this.artifact,
@@ -347,9 +421,19 @@ class AgentArtifactDetailBody extends ConsumerWidget {
   final FutureOr<void> Function()? onVisibilityChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AgentArtifactDetailBody> createState() =>
+      _AgentArtifactDetailBodyState();
+}
+
+class _AgentArtifactDetailBodyState
+    extends ConsumerState<AgentArtifactDetailBody> {
+  _VisibilityAction? _visibilityBusy;
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final artifact = widget.artifact;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -406,21 +490,13 @@ class AgentArtifactDetailBody extends ConsumerWidget {
             title: l10n.agentResultActionsSection,
             children: [
               for (final action in artifact.actions)
-                if (action.intent != null)
-                  _ActionIntentTile(
-                    icon: FLucideIcons.listChecks,
-                    title: action.label,
-                    body: action.intent!,
-                    color: colors.primary,
-                    onPress: () => _askAboutAction(context, ref, action),
-                  )
-                else
-                  _DetailTile(
-                    icon: FLucideIcons.listChecks,
-                    title: action.label,
-                    body: action.kind,
-                    color: colors.primary,
-                  ),
+                _AgentActionTile(
+                  action: action,
+                  artifact: artifact,
+                  onPress: action.intent == null
+                      ? null
+                      : () => _askAboutAction(context, ref, action),
+                ),
             ],
           ),
         ],
@@ -428,29 +504,48 @@ class AgentArtifactDetailBody extends ConsumerWidget {
         _VisibilityActionsRow(
           snoozeLabel: l10n.agentResultSnoozeTitle,
           dismissLabel: l10n.agentResultDismissTitle,
-          onSnooze: () => unawaited(_snoozeArtifact(context, ref)),
-          onDismiss: () => unawaited(_dismissArtifact(context, ref)),
+          busyAction: _visibilityBusy,
+          onSnooze: () => _runVisibilityAction(_VisibilityAction.snooze),
+          onDismiss: () => _runVisibilityAction(_VisibilityAction.dismiss),
         ),
       ],
     );
   }
 
-  Future<void> _snoozeArtifact(BuildContext context, WidgetRef ref) async {
-    await _snoozeAgentArtifact(
-      context,
-      ref,
-      artifact: artifact,
-      onVisibilityChanged: onVisibilityChanged,
-    );
-  }
-
-  Future<void> _dismissArtifact(BuildContext context, WidgetRef ref) async {
-    await _dismissAgentArtifact(
-      context,
-      ref,
-      artifact: artifact,
-      onVisibilityChanged: onVisibilityChanged,
-    );
+  Future<void> _runVisibilityAction(_VisibilityAction action) async {
+    if (_visibilityBusy != null) return;
+    setState(() => _visibilityBusy = action);
+    try {
+      switch (action) {
+        case _VisibilityAction.snooze:
+          await _snoozeAgentArtifact(
+            context,
+            ref,
+            artifact: widget.artifact,
+            onVisibilityChanged: widget.onVisibilityChanged,
+          );
+          break;
+        case _VisibilityAction.dismiss:
+          await _dismissAgentArtifact(
+            context,
+            ref,
+            artifact: widget.artifact,
+            onVisibilityChanged: widget.onVisibilityChanged,
+          );
+          break;
+      }
+    } on Object catch (error) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(
+          context,
+        ).agentResultVisibilityActionFailed('$error'),
+      );
+    } finally {
+      if (mounted) setState(() => _visibilityBusy = null);
+    }
   }
 
   Future<void> _askAboutAction(
@@ -458,22 +553,11 @@ class AgentArtifactDetailBody extends ConsumerWidget {
     WidgetRef ref,
     AgentAction action,
   ) {
-    return askAi(
+    return _askAboutAgentAction(
       context,
       ref,
-      intent: action.intent,
-      object: AiObjectRef(
-        type: action.objectType ?? kAgentArtifactObjectType,
-        id: action.objectId ?? artifact.id,
-      ),
-      objectLabel: artifact.title,
-      attrs: <String, Object?>{
-        ..._agentArtifactAttrs(artifact),
-        'action_kind': action.kind,
-        'action_label': action.label,
-        ...action.payload,
-      },
-      source: 'agent_artifact_detail',
+      artifact: widget.artifact,
+      action: action,
     );
   }
 }
@@ -486,27 +570,14 @@ class _AgentArtifactSheetFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final secondaryAction = _footerActionForArtifact(l10n, artifact);
     return Row(
       children: [
         Expanded(
           child: _FooterActionButton(
-            onPress: artifact.evidence.isEmpty
-                ? () => _createPlanFromAgentArtifact(
-                    context,
-                    ref,
-                    artifact: artifact,
-                  )
-                : () => _showEvidenceForAgentArtifact(
-                    context,
-                    ref,
-                    artifact: artifact,
-                  ),
-            icon: artifact.evidence.isEmpty
-                ? FLucideIcons.listChecks
-                : FLucideIcons.fileText,
-            label: artifact.evidence.isEmpty
-                ? l10n.agentResultCreatePlanTitle
-                : l10n.agentResultShowEvidenceTitle,
+            onPress: () => secondaryAction.run(context, ref),
+            icon: secondaryAction.icon,
+            label: secondaryAction.label,
           ),
         ),
         const SizedBox(width: AppSpacing.s10),
@@ -522,6 +593,52 @@ class _AgentArtifactSheetFooter extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _ArtifactFooterAction {
+  const _ArtifactFooterAction({
+    required this.icon,
+    required this.label,
+    required this.run,
+  });
+
+  final IconData icon;
+  final String label;
+  final Future<void> Function(BuildContext context, WidgetRef ref) run;
+}
+
+_ArtifactFooterAction _footerActionForArtifact(
+  AppLocalizations l10n,
+  AgentArtifact artifact,
+) {
+  for (final action in artifact.actions) {
+    if (action.intent == null) continue;
+    final presentation = _agentActionPresentation(l10n, action, artifact);
+    return _ArtifactFooterAction(
+      icon: presentation.icon,
+      label: presentation.title,
+      run: (context, ref) => _askAboutAgentAction(
+        context,
+        ref,
+        artifact: artifact,
+        action: action,
+      ),
+    );
+  }
+  if (artifact.evidence.isNotEmpty) {
+    return _ArtifactFooterAction(
+      icon: FLucideIcons.fileText,
+      label: l10n.agentResultShowEvidenceTitle,
+      run: (context, ref) =>
+          _showEvidenceForAgentArtifact(context, ref, artifact: artifact),
+    );
+  }
+  return _ArtifactFooterAction(
+    icon: FLucideIcons.listChecks,
+    label: l10n.agentResultCreatePlanTitle,
+    run: (context, ref) =>
+        _createPlanFromAgentArtifact(context, ref, artifact: artifact),
+  );
 }
 
 class _FooterActionButton extends StatelessWidget {
@@ -646,6 +763,34 @@ Future<void> _askAboutAgentArtifact(
   );
 }
 
+Future<void> _askAboutAgentAction(
+  BuildContext context,
+  WidgetRef ref, {
+  required AgentArtifact artifact,
+  required AgentAction action,
+}) {
+  return askAi(
+    context,
+    ref,
+    intent: action.intent,
+    object: AiObjectRef(
+      type: action.objectType ?? kAgentArtifactObjectType,
+      id: action.objectId ?? artifact.id,
+    ),
+    objectLabel: artifact.title,
+    attrs: <String, Object?>{
+      ..._agentArtifactAttrs(artifact),
+      'action_kind': action.kind,
+      'action_label': action.label,
+      if (action.description != null) 'action_description': action.description,
+      if (action.capabilities.isNotEmpty)
+        'action_capabilities': action.capabilities,
+      ...action.payload,
+    },
+    source: 'agent_artifact_detail',
+  );
+}
+
 Future<void> _showEvidenceForAgentArtifact(
   BuildContext context,
   WidgetRef ref, {
@@ -734,16 +879,20 @@ class _ArtifactSummary extends StatelessWidget {
   }
 }
 
+enum _VisibilityAction { snooze, dismiss }
+
 class _VisibilityActionsRow extends StatelessWidget {
   const _VisibilityActionsRow({
     required this.snoozeLabel,
     required this.dismissLabel,
+    required this.busyAction,
     required this.onSnooze,
     required this.onDismiss,
   });
 
   final String snoozeLabel;
   final String dismissLabel;
+  final _VisibilityAction? busyAction;
   final VoidCallback onSnooze;
   final VoidCallback onDismiss;
 
@@ -757,7 +906,8 @@ class _VisibilityActionsRow extends StatelessWidget {
             icon: FLucideIcons.clock3,
             label: snoozeLabel,
             color: colors.primary,
-            onPress: onSnooze,
+            busy: busyAction == _VisibilityAction.snooze,
+            onPress: busyAction == null ? onSnooze : null,
           ),
         ),
         const SizedBox(width: AppSpacing.s8),
@@ -766,7 +916,8 @@ class _VisibilityActionsRow extends StatelessWidget {
             icon: FLucideIcons.x,
             label: dismissLabel,
             color: colors.mutedForeground,
-            onPress: onDismiss,
+            busy: busyAction == _VisibilityAction.dismiss,
+            onPress: busyAction == null ? onDismiss : null,
           ),
         ),
       ],
@@ -779,13 +930,15 @@ class _VisibilityActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
+    required this.busy,
     required this.onPress,
   });
 
   final IconData icon;
   final String label;
   final Color color;
-  final VoidCallback onPress;
+  final bool busy;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
@@ -810,7 +963,14 @@ class _VisibilityActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: AppIconSizes.xs, color: color),
+                if (busy)
+                  const SizedBox(
+                    width: AppIconSizes.xs,
+                    height: AppIconSizes.xs,
+                    child: FCircularProgress(),
+                  )
+                else
+                  Icon(icon, size: AppIconSizes.xs, color: color),
                 const SizedBox(width: AppSpacing.s6),
                 Flexible(
                   child: Text(
@@ -987,32 +1147,128 @@ class _DetailTile extends StatelessWidget {
   }
 }
 
-class _ActionIntentTile extends StatelessWidget {
-  const _ActionIntentTile({
+class _AgentActionTile extends StatelessWidget {
+  const _AgentActionTile({
+    required this.action,
+    required this.artifact,
+    this.onPress,
+  });
+
+  final AgentAction action;
+  final AgentArtifact artifact;
+  final VoidCallback? onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final presentation = _agentActionPresentation(
+      AppLocalizations.of(context),
+      action,
+      artifact,
+    );
+    return _DetailTile(
+      icon: presentation.icon,
+      title: presentation.title,
+      body: presentation.body,
+      color: context.theme.colors.primary,
+      trailingIcon: onPress == null ? null : FLucideIcons.messageCircle,
+      onPress: onPress,
+    );
+  }
+}
+
+class _AgentActionPresentation {
+  const _AgentActionPresentation({
     required this.icon,
     required this.title,
     required this.body,
-    required this.color,
-    required this.onPress,
   });
 
   final IconData icon;
   final String title;
   final String body;
-  final Color color;
-  final VoidCallback onPress;
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return _DetailTile(
-      icon: icon,
+_AgentActionPresentation _agentActionPresentation(
+  AppLocalizations l10n,
+  AgentAction action,
+  AgentArtifact artifact,
+) {
+  final title = action.label.trim().isEmpty
+      ? _humanizeActionKind(action.kind)
+      : action.label.trim();
+  final explicitBody =
+      action.description ??
+      _stringPayload(action.payload, 'description') ??
+      _stringPayload(action.payload, 'body');
+  if (explicitBody != null && explicitBody.trim().isNotEmpty) {
+    return _AgentActionPresentation(
+      icon: _iconForAction(action),
       title: title,
-      body: body,
-      color: color,
-      trailingIcon: FLucideIcons.messageCircle,
-      onPress: onPress,
+      body: explicitBody.trim(),
     );
   }
+  final knownBody = _knownActionBody(l10n, action, artifact);
+  if (knownBody != null) {
+    return _AgentActionPresentation(
+      icon: _iconForAction(action),
+      title: title,
+      body: knownBody,
+    );
+  }
+  final fallback = action.intent ?? action.kind;
+  return _AgentActionPresentation(
+    icon: _iconForAction(action),
+    title: title,
+    body: fallback.trim().isEmpty
+        ? l10n.agentResultActionFallbackBody
+        : l10n.agentResultActionFallbackWithKey(fallback),
+  );
+}
+
+String? _stringPayload(Map<String, Object?> payload, String key) {
+  final value = payload[key];
+  return value is String ? value : null;
+}
+
+String? _knownActionBody(
+  AppLocalizations l10n,
+  AgentAction action,
+  AgentArtifact artifact,
+) {
+  final key = '${action.kind} ${action.intent ?? ''}'.toLowerCase();
+  if (key.contains('evidence')) return l10n.agentResultShowEvidenceBody;
+  if (key.contains('plan') || key.contains('proposal')) {
+    return l10n.agentResultCreatePlanBody;
+  }
+  if (key.contains('ask') || key.contains('explain')) {
+    return l10n.agentResultAskFollowUpBody;
+  }
+  if (artifact.evidence.isNotEmpty && key.contains('review')) {
+    return l10n.agentResultShowEvidenceBody;
+  }
+  return null;
+}
+
+IconData _iconForAction(AgentAction action) {
+  final key = '${action.kind} ${action.intent ?? ''}'.toLowerCase();
+  if (key.contains('evidence')) return FLucideIcons.fileText;
+  if (key.contains('plan') || key.contains('proposal')) {
+    return FLucideIcons.listChecks;
+  }
+  if (key.contains('ask') || key.contains('explain')) {
+    return FLucideIcons.messageCircle;
+  }
+  return FLucideIcons.listChecks;
+}
+
+String _humanizeActionKind(String kind) {
+  final normalized = kind.trim().replaceAll(RegExp(r'[_-]+'), ' ');
+  if (normalized.isEmpty) return 'Action';
+  return normalized
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
 }
 
 class _TraceEntryTile extends StatelessWidget {

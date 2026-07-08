@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
@@ -12,6 +15,7 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/background/background_scheduler.dart';
 import 'package:naviwealth/core/background/providers.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/execution/agents/providers.dart';
@@ -178,6 +182,24 @@ void main() {
         agent_providers.agentRunStoreProvider.overrideWith(
           (ref) async => runStore,
         ),
+        agentRegistrationProvider
+            .overrideWithValue(const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: ExecutionReviewAgent(),
+                domain: DomainScope.execution,
+              ),
+            ]),
+        agentPresentationSpecsProvider
+            .overrideWithValue(const <String, AgentPresentationSpec>{
+              kExecutionReviewAgentId: AgentPresentationSpec(
+                agentId: kExecutionReviewAgentId,
+                domain: DomainScope.execution,
+                icon: Icons.check,
+                label: _agentLabel,
+                description: _agentDescription,
+                placement: AgentResultPlacement.domainReview,
+              ),
+            }),
       ],
     );
     addTearDown(c.dispose);
@@ -195,6 +217,10 @@ void main() {
     expect(run?.traceId, 'trace-execution-review');
   });
 }
+
+String _agentLabel(_) => 'Execution Review';
+
+String _agentDescription(_) => 'Execution Review';
 
 AgentArtifact _executionArtifact({
   required String id,

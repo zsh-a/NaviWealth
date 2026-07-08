@@ -153,6 +153,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeDomainPacksProvider.overrideWith((ref) => [_pack]),
+        agentRegistrationProvider.overrideWithValue([
+          DomainAgentRegistration(agent: _agent, domain: DomainScope.finance),
+        ]),
       ],
     );
     addTearDown(container.dispose);

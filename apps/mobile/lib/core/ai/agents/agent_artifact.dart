@@ -175,25 +175,31 @@ class AgentAction {
   const AgentAction({
     required this.kind,
     required this.label,
+    this.description,
     this.intent,
     this.objectType,
     this.objectId,
+    this.capabilities = const <String>[],
     this.payload = const <String, Object?>{},
   });
 
   final String kind;
   final String label;
+  final String? description;
   final String? intent;
   final String? objectType;
   final String? objectId;
+  final List<String> capabilities;
   final Map<String, Object?> payload;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'kind': kind,
     'label': label,
+    if (description != null) 'description': description,
     if (intent != null) 'intent': intent,
     if (objectType != null) 'object_type': objectType,
     if (objectId != null) 'object_id': objectId,
+    if (capabilities.isNotEmpty) 'capabilities': capabilities,
     if (payload.isNotEmpty) 'payload': payload,
   };
 
@@ -201,9 +207,15 @@ class AgentAction {
     return AgentAction(
       kind: json['kind'] as String? ?? '',
       label: json['label'] as String? ?? '',
+      description: json['description'] as String?,
       intent: json['intent'] as String?,
       objectType: json['object_type'] as String?,
       objectId: json['object_id'] as String?,
+      capabilities:
+          (json['capabilities'] as List?)?.whereType<String>().toList(
+            growable: false,
+          ) ??
+          const <String>[],
       payload:
           (json['payload'] as Map?)?.cast<String, Object?>() ??
           const <String, Object?>{},
