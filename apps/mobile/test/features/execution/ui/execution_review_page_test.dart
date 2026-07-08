@@ -58,6 +58,60 @@ void main() {
     expect(find.textContaining('07-05'), findsOneWidget);
     expect(find.text('Review'), findsWidgets);
   });
+
+  testWidgets('review page renders newer failed run before older artifact', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionReviewPage(),
+        overrides: [
+          execution_agent_providers.latestExecutionReviewResultsProvider
+              .overrideWith(
+                (ref) async => agent_providers.AgentResultBundle(
+                  artifacts: [_artifact()],
+                  latestRuns: [
+                    AgentRunRecord(
+                      id: 'run-1',
+                      ownerUserId: 'user-1',
+                      agentId: kExecutionReviewAgentId,
+                      agentName: 'Execution Review',
+                      status: AgentRunLifecycleStatus.failed,
+                      trigger: AgentRunTrigger.manual,
+                      startedAt: DateTime.utc(2026, 7, 6, 8),
+                      finishedAt: DateTime.utc(2026, 7, 6, 8, 1),
+                      error: 'Runtime unavailable',
+                    ),
+                  ],
+                ),
+              ),
+          executionRecentProgressProvider.overrideWith(
+            (ref) => Stream<List<ExecutionProgressEntry>>.value(
+              const <ExecutionProgressEntry>[],
+            ),
+          ),
+          executionClosedActionsProvider.overrideWith(
+            (ref) =>
+                Stream<List<ExecutionAction>>.value(const <ExecutionAction>[]),
+          ),
+          executionReviewRelationsProvider.overrideWith(
+            (ref) async => const ExecutionReviewRelations(
+              actions: <String, ExecutionAction>{},
+              projects: <String, ExecutionProject>{},
+              commitments: <String, ExecutionCommitment>{},
+            ),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Execution Review'), findsWidgets);
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('Runtime unavailable'), findsOneWidget);
+    expect(find.text('Today focus'), findsNothing);
+  });
 }
 
 Widget _wrap(Widget child, {required List<Override> overrides}) {

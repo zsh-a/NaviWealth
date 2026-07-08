@@ -215,64 +215,48 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final artifactAsync = ref.watch(
-      knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider,
-    );
-    final runAsync = ref.watch(
-      knowledge_agent_providers.latestKnowledgeReviewRunProvider,
+    final resultsAsync = ref.watch(
+      knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
     );
     final l10n = AppLocalizations.of(context);
-    return artifactAsync.when(
-      loading: () => _KnowledgeAgentPanelFrame(
+    if (resultsAsync.isLoading && !resultsAsync.hasValue) {
+      return _KnowledgeAgentPanelFrame(
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.loaderCircle,
           title: l10n.commonLoading,
           message: l10n.agentResultLoadingBody,
           loading: true,
         ),
-      ),
-      error: (error, _) => _KnowledgeAgentPanelFrame(
+      );
+    }
+    if (resultsAsync.hasError && !resultsAsync.hasValue) {
+      return _KnowledgeAgentPanelFrame(
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.triangleAlert,
           title: l10n.commonError,
-          message: l10n.commonLoadError('$error'),
+          message: l10n.commonLoadError('${resultsAsync.error}'),
           error: true,
           onRetry: () => ref.invalidate(
             knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
           ),
         ),
-      ),
-      data: (artifacts) {
-        if (artifacts.isNotEmpty) {
-          return _KnowledgeReviewAgentResultList(artifacts: artifacts);
-        }
-        return runAsync.when(
-          loading: () => _KnowledgeAgentPanelFrame(
-            child: AgentResultPanelStateCard(
-              icon: FLucideIcons.loaderCircle,
-              title: l10n.commonLoading,
-              message: l10n.agentResultLoadingBody,
-              loading: true,
-            ),
-          ),
-          error: (error, _) => _KnowledgeAgentPanelFrame(
-            child: AgentResultPanelStateCard(
-              icon: FLucideIcons.triangleAlert,
-              title: l10n.commonError,
-              message: l10n.commonLoadError('$error'),
-              error: true,
-              onRetry: () => ref.invalidate(
-                knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-              ),
-            ),
-          ),
-          data: (record) {
-            if (record == null) return const SizedBox.shrink();
-            return _KnowledgeReviewAgentRunStatusCard(record: record);
-          },
-        );
-      },
-    );
+      );
+    }
+
+    final bundle = resultsAsync.value;
+    final runToShowBeforeArtifacts = bundle?.runToShowBeforeArtifacts;
+    if (runToShowBeforeArtifacts != null) {
+      return _KnowledgeReviewAgentRunStatusCard(
+        record: runToShowBeforeArtifacts,
+      );
+    }
+    final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
+    if (artifacts.isNotEmpty) {
+      return _KnowledgeReviewAgentResultList(artifacts: artifacts);
+    }
+    final record = bundle?.latestRun;
+    if (record == null) return const SizedBox.shrink();
+    return _KnowledgeReviewAgentRunStatusCard(record: record);
   }
 }
 

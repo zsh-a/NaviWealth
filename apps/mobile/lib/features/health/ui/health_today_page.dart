@@ -22,6 +22,7 @@ import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_access.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/providers.dart' as agent_result_providers;
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';

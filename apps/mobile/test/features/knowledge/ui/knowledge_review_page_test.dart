@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -115,20 +117,21 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          knowledge_agent_providers.latestKnowledgeReviewArtifactsProvider
+          knowledge_agent_providers.latestKnowledgeReviewResultsProvider
               .overrideWith(
-                (ref) async => <AgentArtifact>[
-                  _artifact(),
-                  _artifact(
-                    id: 'knowledge-routine-1',
-                    title: 'Routine Due',
-                    summary: 'A weekly review routine is due.',
-                    createdAt: DateTime.utc(2026, 7, 4, 9),
-                  ),
-                ],
+                (ref) async => agent_providers.AgentResultBundle(
+                  artifacts: <AgentArtifact>[
+                    _artifact(),
+                    _artifact(
+                      id: 'knowledge-routine-1',
+                      title: 'Routine Due',
+                      summary: 'A weekly review routine is due.',
+                      createdAt: DateTime.utc(2026, 7, 4, 9),
+                    ),
+                  ],
+                  latestRuns: const <AgentRunRecord>[],
+                ),
               ),
-          knowledge_agent_providers.latestKnowledgeReviewRunProvider
-              .overrideWith((ref) async => null),
           knowledgeRepositoryProvider.overrideWith(
             (ref) async => _FakeKnowledgeRepository(),
           ),
@@ -149,6 +152,60 @@ void main() {
     expect(find.byType(AgentCompactResultRow), findsOneWidget);
     expect(find.text('Decisions due'), findsOneWidget);
     expect(find.text('Review'), findsWidgets);
+  });
+
+  testWidgets('review page renders newer running run before older artifact', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeReviewPage(),
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          knowledge_agent_providers.latestKnowledgeReviewResultsProvider
+              .overrideWith(
+                (ref) async => agent_providers.AgentResultBundle(
+                  artifacts: <AgentArtifact>[
+                    _artifact(
+                      title: 'Old Knowledge Review',
+                      createdAt: DateTime.utc(2026, 7, 5, 9),
+                    ),
+                  ],
+                  latestRuns: [
+                    AgentRunRecord(
+                      id: 'run-1',
+                      ownerUserId: 'user-1',
+                      agentId: kKnowledgeReviewAgentId,
+                      agentName: 'Knowledge Review',
+                      status: AgentRunLifecycleStatus.running,
+                      trigger: AgentRunTrigger.manual,
+                      startedAt: DateTime.utc(2026, 7, 6, 9),
+                      summary: 'Review in progress.',
+                    ),
+                  ],
+                ),
+              ),
+          knowledgeRepositoryProvider.overrideWith(
+            (ref) async => _FakeKnowledgeRepository(),
+          ),
+          inboxTriageRepositoryProvider.overrideWith(
+            (ref) async => _FakeInboxTriageRepository(),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Knowledge Review'), findsWidgets);
+    expect(find.text('Running'), findsOneWidget);
+    expect(find.text('Review in progress.'), findsOneWidget);
+    expect(find.text('Old Knowledge Review'), findsNothing);
+    expect(find.byType(AgentRunStatusCard), findsOneWidget);
   });
 }
 

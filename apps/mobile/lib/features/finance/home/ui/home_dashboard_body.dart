@@ -165,7 +165,35 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       );
     }
 
-    final artifacts = resultsAsync.value?.artifacts ?? const <AgentArtifact>[];
+    final bundle = resultsAsync.value;
+    final runToShowBeforeArtifacts = bundle?.runToShowBeforeArtifacts;
+    if (runToShowBeforeArtifacts != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AgentRunStatusCard(
+            record: runToShowBeforeArtifacts,
+            metaLabel: _financeAgentMetaLabel(
+              context,
+              ref,
+              runToShowBeforeArtifacts.startedAt,
+            ),
+            onRetry: () async {
+              final controller = await ref.read(
+                agentRunControllerProvider.future,
+              );
+              await controller.runOnceById(runToShowBeforeArtifacts.agentId);
+              ref.invalidate(
+                finance_agent_providers.latestFinanceAgentResultsProvider,
+              );
+            },
+          ),
+          const SizedBox(height: AppSpacing.s20),
+        ],
+      );
+    }
+
+    final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
     if (artifacts.isNotEmpty) {
       final primary = artifacts.first;
       final secondary = artifacts.skip(1).toList(growable: false);
@@ -199,7 +227,7 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       );
     }
 
-    final run = resultsAsync.value?.latestRun;
+    final run = bundle?.latestRun;
     if (run == null) {
       return _FinanceAgentPanelFrame(
         child: AgentResultPanelStateCard(

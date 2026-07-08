@@ -21,6 +21,14 @@ class _WeeklySummaryPanel extends ConsumerWidget {
       ),
       data: (artifact) {
         if (artifact != null) {
+          final run = runAsync.value;
+          if (run != null &&
+              agent_result_providers.AgentResultBundle.shouldPrioritizeRun(
+                run,
+                artifact,
+              )) {
+            return _WeeklySummaryFallback(async: async, runAsync: runAsync);
+          }
           return _WeeklySummaryArtifactCard(
             artifact: artifact,
             onVisibilityChanged: () {

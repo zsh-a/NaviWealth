@@ -198,14 +198,29 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
         ),
       );
     }
-    final artifacts = resultsAsync.value?.artifacts ?? const <AgentArtifact>[];
+    final bundle = resultsAsync.value;
+    final runToShowBeforeArtifacts = bundle?.runToShowBeforeArtifacts;
+    if (runToShowBeforeArtifacts != null) {
+      return _ExecutionReviewAgentPanelFrame(
+        child: AgentRunStatusCard(
+          record: runToShowBeforeArtifacts,
+          metaLabel: _executionAgentMetaLabel(
+            context,
+            runToShowBeforeArtifacts.startedAt,
+          ),
+          onRetry: () => _retryExecutionReview(ref),
+        ),
+      );
+    }
+
+    final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
     final artifact = artifacts.isEmpty ? null : artifacts.first;
     if (artifact != null) {
       return _ExecutionReviewAgentPanelFrame(
         child: _ExecutionReviewArtifactCard(artifact: artifact),
       );
     }
-    final run = resultsAsync.value?.latestRun;
+    final run = bundle?.latestRun;
     if (run == null) return const SizedBox.shrink();
     return _ExecutionReviewAgentPanelFrame(
       child: AgentRunStatusCard(

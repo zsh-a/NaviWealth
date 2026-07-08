@@ -590,6 +590,51 @@ void main() {
 
     expect(retried, isTrue);
   });
+
+  testWidgets('run status retry ignores repeat taps while pending', (
+    tester,
+  ) async {
+    final pending = Completer<void>();
+    var retryCount = 0;
+    await tester.pumpWidget(
+      _wrap(
+        AgentRunStatusCard(
+          record: AgentRunRecord(
+            id: 'run-1',
+            ownerUserId: 'user-1',
+            agentId: 'agent-1',
+            agentName: 'Weekly Review',
+            status: AgentRunLifecycleStatus.failed,
+            trigger: AgentRunTrigger.manual,
+            startedAt: DateTime.utc(2026, 7, 5, 8),
+            finishedAt: DateTime.utc(2026, 7, 5, 8, 1),
+            error: 'Runtime unavailable',
+          ),
+          metaLabel: 'Updated just now',
+          onRetry: () async {
+            retryCount += 1;
+            await pending.future;
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(retryCount, 1);
+    expect(find.byType(FCircularProgress), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(retryCount, 1);
+
+    pending.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FCircularProgress), findsNothing);
+  });
 }
 
 class _FakeArtifactStore implements AgentArtifactStore {

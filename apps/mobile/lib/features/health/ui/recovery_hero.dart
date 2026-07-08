@@ -131,6 +131,22 @@ class _RecoveryAlertPanel extends ConsumerWidget {
       );
     }
     final artifact = artifactAsync.value;
+    final run = runAsync.value;
+    if (artifact != null &&
+        run != null &&
+        agent_result_providers.AgentResultBundle.shouldPrioritizeRun(
+          run,
+          artifact,
+        )) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.s8),
+        child: AgentRunStatusCard(
+          record: run,
+          metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
+          onRetry: () => _retryRecoveryAlert(ref),
+        ),
+      );
+    }
     if (artifact == null) {
       return runAsync.when(
         loading: () => Padding(

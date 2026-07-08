@@ -186,4 +186,49 @@ void main() {
     expect(find.text('Review in progress.'), findsOneWidget);
     expect(find.byType(AgentRunStatusCard), findsOneWidget);
   });
+
+  testWidgets('renders newer running run before older artifact', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap([
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => agent_providers.AgentResultBundle(
+            artifacts: <AgentArtifact>[
+              _artifact(
+                id: 'weekly_wealth_review:2026-07-05',
+                agentId: kWeeklyWealthReviewAgentId,
+                kind: AgentArtifactKind.review,
+                severity: AgentArtifactSeverity.attention,
+                title: 'Old Wealth Review',
+                summary: 'This older review should stay behind the run state.',
+                createdAt: DateTime.utc(2026, 7, 5),
+              ),
+            ],
+            latestRuns: [
+              AgentRunRecord(
+                id: 'run-1',
+                ownerUserId: 'user-1',
+                agentId: kWeeklyWealthReviewAgentId,
+                agentName: 'Weekly Wealth Review',
+                status: AgentRunLifecycleStatus.running,
+                trigger: AgentRunTrigger.schedule,
+                startedAt: DateTime.utc(2026, 7, 6),
+                summary: 'Review in progress.',
+              ),
+            ],
+          ),
+        ),
+      ]),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Weekly Wealth Review'), findsOneWidget);
+    expect(find.text('Running'), findsOneWidget);
+    expect(find.text('Review in progress.'), findsOneWidget);
+    expect(find.text('Old Wealth Review'), findsNothing);
+    expect(find.byType(AgentRunStatusCard), findsOneWidget);
+    expect(find.byType(AgentResultCard), findsNothing);
+  });
 }

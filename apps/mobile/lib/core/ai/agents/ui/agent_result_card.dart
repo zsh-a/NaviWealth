@@ -204,7 +204,7 @@ class AgentCompactResultRow extends StatelessWidget {
   }
 }
 
-class AgentRunStatusCard extends StatelessWidget {
+class AgentRunStatusCard extends StatefulWidget {
   const AgentRunStatusCard({
     super.key,
     required this.record,
@@ -214,13 +214,38 @@ class AgentRunStatusCard extends StatelessWidget {
 
   final AgentRunRecord record;
   final String metaLabel;
-  final VoidCallback? onRetry;
+  final FutureOr<void> Function()? onRetry;
+
+  @override
+  State<AgentRunStatusCard> createState() => _AgentRunStatusCardState();
+}
+
+class _AgentRunStatusCardState extends State<AgentRunStatusCard> {
+  bool _retrying = false;
+
+  Future<void> _retry() async {
+    if (_retrying || widget.onRetry == null) return;
+    setState(() => _retrying = true);
+    try {
+      await widget.onRetry!();
+    } on Object catch (error) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).commonLoadError('$error'),
+      );
+    } finally {
+      if (mounted) setState(() => _retrying = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
+    final record = widget.record;
     final accent = _accentColorForRun(context, record.status);
     final summary =
         record.error ?? record.summary ?? _statusLabel(l10n, record.status);
@@ -255,7 +280,7 @@ class AgentRunStatusCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.s2),
                     Text(
-                      metaLabel,
+                      widget.metaLabel,
                       style: context.captionStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -295,13 +320,14 @@ class AgentRunStatusCard extends StatelessWidget {
               child: FCircularProgress(),
             ),
           ] else if (record.status == AgentRunLifecycleStatus.failed &&
-              onRetry != null) ...[
+              widget.onRetry != null) ...[
             const SizedBox(height: AppSpacing.s12),
             Align(
               alignment: Alignment.centerLeft,
               child: AppQuietButton(
                 label: l10n.agentResultRetryAction,
-                onPress: onRetry,
+                onPress: _retrying ? null : _retry,
+                busy: _retrying,
                 prefix: const Icon(
                   FLucideIcons.refreshCw,
                   size: AppIconSizes.xs,

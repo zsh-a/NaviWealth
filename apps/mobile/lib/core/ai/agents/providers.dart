@@ -70,7 +70,24 @@ class AgentResultBundle {
   final List<AgentArtifact> artifacts;
   final List<AgentRunRecord> latestRuns;
 
+  AgentArtifact? get latestArtifact =>
+      artifacts.isEmpty ? null : artifacts.first;
+
   AgentRunRecord? get latestRun => latestRuns.isEmpty ? null : latestRuns.first;
+
+  AgentRunRecord? get runToShowBeforeArtifacts {
+    final run = latestRun;
+    if (run == null || !shouldPrioritizeRun(run, latestArtifact)) {
+      return null;
+    }
+    return run;
+  }
+
+  static bool shouldPrioritizeRun(AgentRunRecord run, AgentArtifact? artifact) {
+    if (!_runCanInterruptArtifacts(run.status)) return false;
+    if (artifact == null) return true;
+    return _runReferenceTime(run).isAfter(artifact.createdAt);
+  }
 }
 
 final latestAgentResultsForPlacementProvider = FutureProvider.autoDispose
@@ -110,4 +127,9 @@ final latestAgentResultsForPlacementProvider = FutureProvider.autoDispose
 
 DateTime _runReferenceTime(AgentRunRecord record) {
   return record.finishedAt ?? record.startedAt;
+}
+
+bool _runCanInterruptArtifacts(AgentRunLifecycleStatus status) {
+  return status == AgentRunLifecycleStatus.running ||
+      status == AgentRunLifecycleStatus.failed;
 }
