@@ -98,12 +98,16 @@ final scanOrchestratorProvider = FutureProvider<ScanOrchestrator>((ref) async {
 /// `OptionsOpportunityCacheRepository.changes`.
 final cachedOpportunitiesProvider =
     FutureProvider.autoDispose<List<OptionsOpportunity>>((ref) async {
-      final repo = await ref.watch(
+      final repoFuture = ref.watch(
         optionsOpportunityCacheRepositoryProvider.future,
       );
-      final ownerUserId = await ref.watch(currentUserIdProvider)();
+      final currentUserId = ref.watch(currentUserIdProvider);
+      final repo = await repoFuture;
+      if (!ref.mounted) return const <OptionsOpportunity>[];
+      final ownerUserId = await currentUserId();
+      if (!ref.mounted) return const <OptionsOpportunity>[];
       final sub = repo.changes.listen((uid) {
-        if (uid == ownerUserId) ref.invalidateSelf();
+        if (uid == ownerUserId && ref.mounted) ref.invalidateSelf();
       });
       ref.onDispose(sub.cancel);
       return repo.getLatest(ownerUserId);
@@ -213,12 +217,16 @@ int _stageRank(WheelStage stage) => switch (stage) {
 final latestScanStateProvider = FutureProvider.autoDispose<ScanCacheState?>((
   ref,
 ) async {
-  final repo = await ref.watch(
+  final repoFuture = ref.watch(
     optionsOpportunityCacheRepositoryProvider.future,
   );
-  final ownerUserId = await ref.watch(currentUserIdProvider)();
+  final currentUserId = ref.watch(currentUserIdProvider);
+  final repo = await repoFuture;
+  if (!ref.mounted) return null;
+  final ownerUserId = await currentUserId();
+  if (!ref.mounted) return null;
   final sub = repo.changes.listen((uid) {
-    if (uid == ownerUserId) ref.invalidateSelf();
+    if (uid == ownerUserId && ref.mounted) ref.invalidateSelf();
   });
   ref.onDispose(sub.cancel);
   return repo.latestScanState(ownerUserId);

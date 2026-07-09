@@ -188,10 +188,12 @@ class ProviderOptionsIncomeRiskReviewReader
 
   @override
   Future<OptionsIncomeRiskSnapshot> read(AgentContext ctx) async {
-    final opportunities = await ctx.ref.read(
+    final opportunitiesFuture = ctx.ref.read(
       cachedOpportunitiesProvider.future,
     );
-    final scanState = await ctx.ref.read(latestScanStateProvider.future);
+    final scanStateFuture = ctx.ref.read(latestScanStateProvider.future);
+    final opportunities = await opportunitiesFuture;
+    final scanState = await scanStateFuture;
     return OptionsIncomeRiskSnapshot(
       opportunities: opportunities,
       scanState: scanState,
