@@ -9341,6 +9341,30 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get agentSettingsNotifications;
 
+  /// Compact overview metric showing enabled agents out of all active-domain agents.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled {enabled}/{total}'**
+  String agentSettingsOverviewEnabled(int enabled, int total);
+
+  /// Compact overview metric showing enabled agents with ready results.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready {count}'**
+  String agentSettingsOverviewReady(int count);
+
+  /// Compact overview metric showing enabled agents whose latest run failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed {count}'**
+  String agentSettingsOverviewFailed(int count);
+
+  /// Compact overview metric showing enabled notification-capable agents with notifications on.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications {count}'**
+  String agentSettingsOverviewNotificationsOn(int count);
+
   /// Subtitle when an agent has no run history.
   ///
   /// In en, this message translates to:

@@ -1,7 +1,7 @@
 part of 'home_page.dart';
 
-class _HomeQuickActions extends StatelessWidget {
-  const _HomeQuickActions();
+class HomeQuickActions extends StatelessWidget {
+  const HomeQuickActions({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -9,8 +9,8 @@ class _HomeQuickActions extends StatelessWidget {
     final colors = context.theme.colors;
     return HomeSurface(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s8,
+        horizontal: AppSpacing.s6,
+        vertical: AppSpacing.s6,
       ),
       child: Row(
         children: [
@@ -59,28 +59,30 @@ class _HomeQuickAction extends StatelessWidget {
     final colors = context.theme.colors;
     return FTappable(
       onPress: onPress,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s4,
-          vertical: AppSpacing.s8,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: AppIconSizes.sm, color: colors.primary),
-            const SizedBox(width: AppSpacing.s6),
-            Flexible(
-              child: Text(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 54),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4,
+            vertical: AppSpacing.s6,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+              const SizedBox(height: AppSpacing.s4),
+              Text(
                 label,
+                textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: context.captionLabelStyle.copyWith(
                   color: colors.foreground,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -147,6 +147,10 @@ void main() {
     expect(find.text('Presented Agent'), findsOneWidget);
     expect(find.textContaining('Presented description.'), findsOneWidget);
     expect(find.textContaining('Daily · around 08:00'), findsOneWidget);
+    expect(find.text('Enabled 1/1'), findsOneWidget);
+    expect(find.text('Ready 0'), findsOneWidget);
+    expect(find.text('Failed 0'), findsOneWidget);
+    expect(find.text('Notifications 1'), findsOneWidget);
     expect(find.text('FinanceOS'), findsOneWidget);
     expect(find.text('Run now'), findsNothing);
     expect(find.text('Notifications'), findsNothing);
@@ -228,6 +232,120 @@ void main() {
     );
     expect(pref.enabled, isFalse);
     expect(pref.notificationsEnabled, isTrue);
+    expect(find.text('Disabled'), findsWidgets);
+  });
+
+  testWidgets('overview counts only enabled ready and failed agents', (
+    tester,
+  ) async {
+    final preferenceStore = InMemoryAgentPreferenceStore();
+    final runStore = InMemoryAgentRunStore();
+    const readyAgent = _FakeAgent();
+    const failedAgent = _FailedAgent();
+    final startedAt = DateTime.utc(2026, 7, 5, 9);
+
+    await runStore.markRunning(
+      ownerUserId: 'user-1',
+      agent: readyAgent,
+      startedAt: startedAt,
+      trigger: AgentRunTrigger.schedule,
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: readyAgent,
+      runStartedAt: startedAt,
+      result: AgentRunResult(
+        agentId: readyAgent.id,
+        status: AgentRunStatus.completed,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+        summary: 'Ready summary',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await runStore.markRunning(
+      ownerUserId: 'user-1',
+      agent: failedAgent,
+      startedAt: startedAt,
+      trigger: AgentRunTrigger.schedule,
+    );
+    await runStore.finishRun(
+      ownerUserId: 'user-1',
+      agent: failedAgent,
+      runStartedAt: startedAt,
+      result: AgentRunResult.failed(
+        agentId: failedAgent.id,
+        startedAt: startedAt,
+        finishedAt: startedAt.add(const Duration(milliseconds: 20)),
+        error: 'Failed summary',
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await preferenceStore.setEnabled(
+      ownerUserId: 'user-1',
+      agentId: failedAgent.id,
+      enabled: false,
+      updatedAt: startedAt,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+          agentRegistrationProvider
+              .overrideWithValue(const <DomainAgentRegistration>[
+                DomainAgentRegistration(
+                  agent: readyAgent,
+                  domain: DomainScope.finance,
+                ),
+                DomainAgentRegistration(
+                  agent: failedAgent,
+                  domain: DomainScope.finance,
+                ),
+              ]),
+          agentPresentationSpecsProvider
+              .overrideWithValue(const <String, AgentPresentationSpec>{
+                'fake_agent': AgentPresentationSpec(
+                  agentId: 'fake_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.walletCards,
+                  label: _fakeAgentLabel,
+                  description: _fakeAgentDescription,
+                  notificationsSupported: true,
+                ),
+                'failed_agent': AgentPresentationSpec(
+                  agentId: 'failed_agent',
+                  domain: DomainScope.finance,
+                  icon: FLucideIcons.triangleAlert,
+                  label: _failedAgentLabel,
+                  description: _failedAgentDescription,
+                  notificationsSupported: true,
+                ),
+              }),
+          agent_providers.agentPreferenceStoreProvider.overrideWith(
+            (ref) async => preferenceStore,
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => runStore,
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const AgentsSettingsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enabled 1/2'), findsOneWidget);
+    expect(find.text('Ready 1'), findsOneWidget);
+    expect(find.text('Failed 0'), findsOneWidget);
+    expect(find.text('Notifications 1'), findsOneWidget);
     expect(find.text('Disabled'), findsWidgets);
   });
 
@@ -904,7 +1022,7 @@ void main() {
     await tester.tap(find.text('History'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Raw agent name history'), findsOneWidget);
+    expect(find.text('Presented Agent history'), findsOneWidget);
     expect(find.text('Latest summary'), findsOneWidget);
     expect(find.text('Older summary'), findsOneWidget);
     expect(find.textContaining('Manual'), findsOneWidget);
@@ -915,6 +1033,10 @@ void main() {
 String _fakeAgentLabel(AppLocalizations l10n) => 'Presented Agent';
 
 String _fakeAgentDescription(AppLocalizations l10n) => 'Presented description.';
+
+String _failedAgentLabel(AppLocalizations l10n) => 'Disabled Failed Agent';
+
+String _failedAgentDescription(AppLocalizations l10n) => 'Failed description.';
 
 class _FakeAgent implements Agent {
   const _FakeAgent();
@@ -936,6 +1058,30 @@ class _FakeAgent implements Agent {
       startedAt: ctx.now,
       finishedAt: ctx.now,
       reason: 'test',
+    );
+  }
+}
+
+class _FailedAgent implements Agent {
+  const _FailedAgent();
+
+  @override
+  String get id => 'failed_agent';
+
+  @override
+  String get name => 'Raw failed agent name';
+
+  @override
+  AgentSchedule get schedule =>
+      const AgentSchedule(interval: Duration(days: 1), preferredHourLocal: 9);
+
+  @override
+  Future<AgentRunResult> run(AgentContext ctx) async {
+    return AgentRunResult.failed(
+      agentId: id,
+      startedAt: ctx.now,
+      finishedAt: ctx.now,
+      error: 'test',
     );
   }
 }

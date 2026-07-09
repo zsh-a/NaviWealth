@@ -2916,6 +2916,29 @@
   "@agentSettingsDisabled": { "description": "Badge for a disabled agent." },
   "agentSettingsNotifications": "Notifications",
   "@agentSettingsNotifications": { "description": "Badge for agents that support notifications." },
+  "agentSettingsOverviewEnabled": "Enabled {enabled}/{total}",
+  "@agentSettingsOverviewEnabled": {
+    "description": "Compact overview metric showing enabled agents out of all active-domain agents.",
+    "placeholders": {
+      "enabled": { "type": "int", "example": "4" },
+      "total": { "type": "int", "example": "6" }
+    }
+  },
+  "agentSettingsOverviewReady": "Ready {count}",
+  "@agentSettingsOverviewReady": {
+    "description": "Compact overview metric showing enabled agents with ready results.",
+    "placeholders": { "count": { "type": "int", "example": "2" } }
+  },
+  "agentSettingsOverviewFailed": "Failed {count}",
+  "@agentSettingsOverviewFailed": {
+    "description": "Compact overview metric showing enabled agents whose latest run failed.",
+    "placeholders": { "count": { "type": "int", "example": "1" } }
+  },
+  "agentSettingsOverviewNotificationsOn": "Notifications {count}",
+  "@agentSettingsOverviewNotificationsOn": {
+    "description": "Compact overview metric showing enabled notification-capable agents with notifications on.",
+    "placeholders": { "count": { "type": "int", "example": "3" } }
+  },
   "agentSettingsNeverRun": "Never run",
   "@agentSettingsNeverRun": { "description": "Subtitle when an agent has no run history." },
   "agentSettingsLastRunAt": "Last run {date}",

@@ -85,8 +85,8 @@ class SettingsOverview extends ConsumerWidget {
           const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.bot,
-            label: 'Agents',
-            subtitle: 'Schedule, run, and disable active LifeOS agents.',
+            label: l10n.agentSettingsTitle,
+            subtitle: l10n.agentSettingsSubtitle,
             onTap: () => context.goNamed(SettingsRouteNames.agents),
           ),
         ],

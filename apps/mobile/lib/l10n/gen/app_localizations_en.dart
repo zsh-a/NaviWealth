@@ -5459,6 +5459,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSettingsNotifications => 'Notifications';
 
   @override
+  String agentSettingsOverviewEnabled(int enabled, int total) {
+    return 'Enabled $enabled/$total';
+  }
+
+  @override
+  String agentSettingsOverviewReady(int count) {
+    return 'Ready $count';
+  }
+
+  @override
+  String agentSettingsOverviewFailed(int count) {
+    return 'Failed $count';
+  }
+
+  @override
+  String agentSettingsOverviewNotificationsOn(int count) {
+    return 'Notifications $count';
+  }
+
+  @override
   String get agentSettingsNeverRun => 'Never run';
 
   @override

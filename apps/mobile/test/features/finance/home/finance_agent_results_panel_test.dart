@@ -16,7 +16,7 @@ import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.da
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-Widget _wrap(List<Override> overrides) {
+Widget _wrap(List<Override> overrides, {bool showPlaceholderStates = true}) {
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
@@ -25,7 +25,11 @@ Widget _wrap(List<Override> overrides) {
       supportedLocales: AppLocalizations.supportedLocales,
       home: FTheme(
         data: FThemes.slate.light.desktop,
-        child: const Scaffold(body: FinanceAgentResultsPanel()),
+        child: Scaffold(
+          body: FinanceAgentResultsPanel(
+            showPlaceholderStates: showPlaceholderStates,
+          ),
+        ),
       ),
     ),
   );
@@ -154,6 +158,84 @@ void main() {
     );
   });
 
+  testWidgets('compact mode hides placeholder states on the home surface', (
+    tester,
+  ) async {
+    final pending = Completer<agent_providers.AgentResultBundle>();
+    addTearDown(() {
+      if (!pending.isCompleted) {
+        pending.complete(agent_providers.AgentResultBundle.empty);
+      }
+    });
+
+    await tester.pumpWidget(
+      _wrap([
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) => pending.future,
+        ),
+      ], showPlaceholderStates: false),
+    );
+    await tester.pump();
+
+    expect(find.text('Checking agent results'), findsNothing);
+    expect(find.byType(AgentResultPanelStateCard), findsNothing);
+
+    pending.complete(agent_providers.AgentResultBundle.empty);
+    await tester.pumpWidget(
+      _wrap([
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => agent_providers.AgentResultBundle.empty,
+        ),
+      ], showPlaceholderStates: false),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('No agent results yet'), findsNothing);
+    expect(find.byType(AgentResultPanelStateCard), findsNothing);
+
+    await tester.pumpWidget(
+      _wrap([
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => throw StateError('boom'),
+        ),
+      ], showPlaceholderStates: false),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Agent results could not load'), findsNothing);
+    expect(find.byType(AgentResultPanelStateCard), findsNothing);
+  });
+
+  testWidgets('compact mode still renders real artifacts', (tester) async {
+    await tester.pumpWidget(
+      _wrap([
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => agent_providers.AgentResultBundle(
+            artifacts: <AgentArtifact>[
+              _artifact(
+                id: 'weekly_wealth_review:2026-07-05',
+                agentId: kWeeklyWealthReviewAgentId,
+                kind: AgentArtifactKind.review,
+                severity: AgentArtifactSeverity.attention,
+                title: 'Weekly Wealth Review',
+                summary: 'Net worth moved 2.4%.',
+                createdAt: DateTime.utc(2026, 7, 5),
+              ),
+            ],
+            latestRuns: const <AgentRunRecord>[],
+          ),
+        ),
+      ], showPlaceholderStates: false),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Weekly Wealth Review'), findsOneWidget);
+    expect(find.byType(AgentResultCard), findsOneWidget);
+  });
+
   testWidgets('renders latest run status when no artifact exists', (
     tester,
   ) async {
@@ -184,6 +266,36 @@ void main() {
     expect(find.text('Weekly Wealth Review'), findsOneWidget);
     expect(find.text('Running'), findsOneWidget);
     expect(find.text('Review in progress.'), findsOneWidget);
+    expect(find.byType(AgentRunStatusCard), findsOneWidget);
+  });
+
+  testWidgets('compact mode still renders latest run status', (tester) async {
+    await tester.pumpWidget(
+      _wrap([
+        finance_agent_providers.latestFinanceAgentResultsProvider.overrideWith(
+          (ref) async => agent_providers.AgentResultBundle(
+            artifacts: const <AgentArtifact>[],
+            latestRuns: [
+              AgentRunRecord(
+                id: 'run-1',
+                ownerUserId: 'user-1',
+                agentId: kWeeklyWealthReviewAgentId,
+                agentName: 'Weekly Wealth Review',
+                status: AgentRunLifecycleStatus.running,
+                trigger: AgentRunTrigger.schedule,
+                startedAt: DateTime.utc(2026, 7, 6),
+                summary: 'Review in progress.',
+              ),
+            ],
+          ),
+        ),
+      ], showPlaceholderStates: false),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Weekly Wealth Review'), findsOneWidget);
+    expect(find.text('Running'), findsOneWidget);
     expect(find.byType(AgentRunStatusCard), findsOneWidget);
   });
 

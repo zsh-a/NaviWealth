@@ -77,7 +77,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                         ),
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
-                        const _HomeQuickActions(),
+                        const HomeQuickActions(),
                       ],
                     ),
                     primary: Column(
@@ -93,7 +93,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                     secondary: const Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        FinanceAgentResultsPanel(),
+                        FinanceAgentResultsPanel(showPlaceholderStates: false),
                         ActivityTimelinePreview(),
                       ],
                     ),
@@ -110,8 +110,10 @@ class _DashboardBodyContent extends ConsumerWidget {
                         ),
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
-                        const _HomeQuickActions(),
-                        const FinanceAgentResultsPanel(),
+                        const HomeQuickActions(),
+                        const FinanceAgentResultsPanel(
+                          showPlaceholderStates: false,
+                        ),
                         const SizedBox(height: AppSpacing.s20),
                         AllocationSummary(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s20),
@@ -133,7 +135,12 @@ class _DashboardBodyContent extends ConsumerWidget {
 }
 
 class FinanceAgentResultsPanel extends ConsumerWidget {
-  const FinanceAgentResultsPanel({super.key});
+  const FinanceAgentResultsPanel({
+    super.key,
+    this.showPlaceholderStates = true,
+  });
+
+  final bool showPlaceholderStates;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -142,6 +149,7 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
     );
     final l10n = AppLocalizations.of(context);
     if (resultsAsync.isLoading && !resultsAsync.hasValue) {
+      if (!showPlaceholderStates) return const SizedBox.shrink();
       return _FinanceAgentPanelFrame(
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.loaderCircle,
@@ -152,6 +160,7 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       );
     }
     if (resultsAsync.hasError && !resultsAsync.hasValue) {
+      if (!showPlaceholderStates) return const SizedBox.shrink();
       return _FinanceAgentPanelFrame(
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.triangleAlert,
@@ -229,6 +238,7 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
 
     final run = bundle?.latestRun;
     if (run == null) {
+      if (!showPlaceholderStates) return const SizedBox.shrink();
       return _FinanceAgentPanelFrame(
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.sparkles,

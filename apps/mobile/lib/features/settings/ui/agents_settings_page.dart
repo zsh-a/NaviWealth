@@ -206,16 +206,20 @@ class _AgentSettingsOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final enabled = rows.where((row) => row.preference.enabled).length;
-    final attention = rows
+    final activeRows = rows.where((row) => row.preference.enabled).toList();
+    final enabled = activeRows.length;
+    final ready = activeRows
+        .where((row) => row.latestRun?.status == AgentRunLifecycleStatus.ready)
+        .length;
+    final failed = activeRows
+        .where((row) => row.latestRun?.status == AgentRunLifecycleStatus.failed)
+        .length;
+    final notificationsOn = activeRows
         .where(
           (row) =>
-              row.latestRun?.status == AgentRunLifecycleStatus.ready ||
-              row.latestRun?.status == AgentRunLifecycleStatus.failed,
+              (row.presentation?.notificationsSupported ?? false) &&
+              row.preference.notificationsEnabled,
         )
-        .length;
-    final notificationCapable = rows
-        .where((row) => row.presentation?.notificationsSupported ?? false)
         .length;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s14),
@@ -233,19 +237,64 @@ class _AgentSettingsOverview extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(l10n.agentSettingsTitle, style: context.labelStyle),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  '$enabled/${rows.length} ${l10n.agentSettingsEnabled.toLowerCase()} · '
-                  '$attention ${l10n.agentRunStatusReady.toLowerCase()} · '
-                  '$notificationCapable ${l10n.agentSettingsNotifications.toLowerCase()}',
-                  style: context.captionStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: AppSpacing.s4),
+                Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s4,
+                  children: [
+                    _OverviewFragment(
+                      text: l10n.agentSettingsOverviewEnabled(
+                        enabled,
+                        rows.length,
+                      ),
+                    ),
+                    _OverviewFragment(
+                      text: l10n.agentSettingsOverviewReady(ready),
+                      emphasis: ready > 0,
+                    ),
+                    _OverviewFragment(
+                      text: l10n.agentSettingsOverviewFailed(failed),
+                      danger: failed > 0,
+                    ),
+                    _OverviewFragment(
+                      text: l10n.agentSettingsOverviewNotificationsOn(
+                        notificationsOn,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _OverviewFragment extends StatelessWidget {
+  const _OverviewFragment({
+    required this.text,
+    this.emphasis = false,
+    this.danger = false,
+  });
+
+  final String text;
+  final bool emphasis;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    return Text(
+      text,
+      style: context.captionStyle.copyWith(
+        color: danger
+            ? semantic.danger
+            : emphasis
+            ? colors.primary
+            : colors.mutedForeground,
       ),
     );
   }
@@ -374,6 +423,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     if (_running) return;
     setState(() => _running = true);
     try {
+      final l10n = AppLocalizations.of(context);
       final controller = await ref.read(agentRunControllerProvider.future);
       final result = await controller.runOnceById(widget.row.agent.id);
       if (!mounted) return;
@@ -387,12 +437,8 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
         result.error ??
             result.summary ??
             (result.status == AgentRunStatus.busy
-                ? AppLocalizations.of(
-                    context,
-                  ).agentSettingsRunBusy(widget.row.agent.name)
-                : AppLocalizations.of(
-                    context,
-                  ).agentSettingsRunFinished(widget.row.agent.name)),
+                ? l10n.agentSettingsRunBusy(_agentLabel(widget.row, l10n))
+                : l10n.agentSettingsRunFinished(_agentLabel(widget.row, l10n))),
       );
       ref.invalidate(_agentSettingsRowsProvider);
     } on Object catch (error) {
@@ -418,7 +464,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     final l10n = AppLocalizations.of(context);
     await showAppSheet<void>(
       context: context,
-      title: l10n.agentSettingsHistoryTitle(widget.row.agent.name),
+      title: l10n.agentSettingsHistoryTitle(_agentLabel(widget.row, l10n)),
       maxHeightFactor: 0.88,
       builder: (sheetContext) => _AgentRunHistoryList(runs: runs),
     );
@@ -427,7 +473,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
   Future<void> _showDetails() async {
     final row = widget.row;
     final l10n = AppLocalizations.of(context);
-    final label = row.presentation?.label(l10n) ?? row.agent.name;
+    final label = _agentLabel(row, l10n);
     await showAppSheet<void>(
       context: context,
       title: label,
@@ -452,14 +498,15 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     final row = widget.row;
     final presentation = row.presentation;
     final enabled = _enabled;
-    final label = presentation?.label(l10n) ?? row.agent.name;
+    final label = _agentLabel(row, l10n);
     final description =
         presentation?.description(l10n) ??
         l10n.agentSettingsMissingPresentationDescription;
+    final formatters = context.formatters(ref);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s8,
+        vertical: AppSpacing.s10,
       ),
       child: Row(
         children: [
@@ -500,10 +547,11 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
                             context,
                             row,
                             description,
+                            formatters: formatters,
                             enabled: enabled,
                           ),
                           style: context.captionStyle,
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -690,15 +738,6 @@ class _AgentSettingsDetailSheetState
                     spacing: AppSpacing.s8,
                     runSpacing: AppSpacing.s8,
                     children: [
-                      AppBadge(
-                        label: enabled
-                            ? l10n.agentSettingsEnabled
-                            : l10n.agentSettingsDisabled,
-                        size: AppBadgeSize.compact,
-                        tone: enabled
-                            ? AppBadgeTone.accent
-                            : AppBadgeTone.neutral,
-                      ),
                       AppBadge(
                         label: _scheduleLabel(l10n, row.agent.schedule),
                         size: AppBadgeSize.compact,
@@ -982,22 +1021,27 @@ String _triggerLabel(AppLocalizations l10n, AgentRunTrigger trigger) {
   };
 }
 
+String _agentLabel(_AgentSettingsRow row, AppLocalizations l10n) =>
+    row.presentation?.label(l10n) ?? row.agent.name;
+
 String _compactSubtitle(
   BuildContext context,
   _AgentSettingsRow row,
   String? description, {
+  required AppFormatters formatters,
   required bool enabled,
 }) {
   final l10n = AppLocalizations.of(context);
-  if (!enabled) return l10n.agentSettingsDisabled;
+  final schedule = _scheduleLabel(l10n, row.agent.schedule);
+  if (!enabled) return '${l10n.agentSettingsDisabled} · $schedule';
   final latest = row.latestRun;
   if (latest == null) {
     final fallback = description ?? l10n.agentSettingsNeverRun;
-    return '${_scheduleLabel(l10n, row.agent.schedule)} · $fallback';
+    return '$schedule · $fallback';
   }
-  return '${_statusLabel(l10n, latest.status)} · '
-      '${_relativeTimeShort(latest.startedAt)} · '
-      '${_scheduleLabel(l10n, row.agent.schedule)}';
+  return '$schedule · '
+      '${formatters.date(latest.startedAt.toLocal())} · '
+      '${_statusLabel(l10n, latest.status)}';
 }
 
 String _detailSubtitle(
@@ -1022,14 +1066,6 @@ String _statusLabel(AppLocalizations l10n, AgentRunLifecycleStatus status) {
     AgentRunLifecycleStatus.noFinding => l10n.agentRunStatusNoFinding,
     AgentRunLifecycleStatus.failed => l10n.agentRunStatusFailed,
   };
-}
-
-String _relativeTimeShort(DateTime at) {
-  final delta = DateTime.now().toUtc().difference(at.toUtc());
-  if (delta.inMinutes < 1) return '0m';
-  if (delta.inHours < 1) return '${delta.inMinutes}m';
-  if (delta.inDays < 1) return '${delta.inHours}h';
-  return '${delta.inDays}d';
 }
 
 String _domainLabel(DomainScope domain) {

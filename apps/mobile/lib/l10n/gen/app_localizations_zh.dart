@@ -5212,6 +5212,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsNotifications => '通知';
 
   @override
+  String agentSettingsOverviewEnabled(int enabled, int total) {
+    return '已启用 $enabled/$total';
+  }
+
+  @override
+  String agentSettingsOverviewReady(int count) {
+    return '可查看 $count';
+  }
+
+  @override
+  String agentSettingsOverviewFailed(int count) {
+    return '失败 $count';
+  }
+
+  @override
+  String agentSettingsOverviewNotificationsOn(int count) {
+    return '通知 $count';
+  }
+
+  @override
   String get agentSettingsNeverRun => '尚未运行';
 
   @override
