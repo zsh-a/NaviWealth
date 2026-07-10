@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/ai_trace.dart';
@@ -6,14 +9,24 @@ import 'package:naviwealth/core/ai/trace/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/domain/models/expense.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_pipeline.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_planning_executor.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
 import 'package:naviwealth/features/finance/ingest/data/vision_ingest_client.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
+import '../../data/repositories/_stub_stamper.dart';
 
 void main() {
   late SharedPreferences prefs;
@@ -32,14 +45,25 @@ void main() {
   ProviderContainer buildContainer({
     VisionIngestClient? visionClient,
     String ownerUserId = 'owner-1',
+    String Function()? ownerUserIdReader,
+    IngestPlanningExecutor? planningExecutor,
+    JournalEntryRepository? journalRepository,
   }) {
     return ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         appDatabaseProvider.overrideWith((_) async => db),
-        activeUserIdProvider.overrideWithValue(ownerUserId),
+        activeUserIdProvider.overrideWith(
+          (_) => ownerUserIdReader?.call() ?? ownerUserId,
+        ),
         if (visionClient != null)
           visionIngestClientProvider.overrideWithValue(visionClient),
+        if (planningExecutor != null)
+          ingestPlanningExecutorProvider.overrideWithValue(planningExecutor),
+        if (journalRepository != null)
+          journalEntryRepositoryProvider.overrideWith(
+            (_) async => journalRepository,
+          ),
       ],
     );
   }
@@ -117,6 +141,171 @@ void main() {
         ]),
       );
     });
+
+    test(
+      'concurrent identical imports serialize snapshot through putAll',
+      () async {
+        final container = buildContainer();
+        addTearDown(container.dispose);
+        final store = await readyStore(container);
+        const source = IngestSource(
+          kind: IngestSourceKind.csv,
+          payload:
+              'date,description,amount,currency\n'
+              '2026-06-18,Concurrent Coffee,-18.00,CNY\n',
+        );
+        final controller = container.read(ingestControllerProvider);
+
+        final results = await Future.wait([
+          controller.ingest(source),
+          controller.ingest(source),
+        ]);
+
+        expect(results.first.drafts.single.verdict, DedupVerdict.newTxn);
+        expect(results.last.drafts.single.verdict, DedupVerdict.duplicate);
+        expect(
+          results.last.drafts.single.dedupTargetEntryId,
+          results.first.drafts.single.draftId,
+        );
+        expect(await store.listByStatus(DraftStatus.pending), hasLength(2));
+      },
+    );
+
+    test('planning failure releases the FIFO for the next import', () async {
+      var calls = 0;
+      Future<IngestPlanningAnalysis> executor(
+        IngestPlanningRequest request,
+      ) async {
+        calls++;
+        if (calls == 1) throw StateError('worker failed');
+        return analyzeIngestPlanning(request);
+      }
+
+      final container = buildContainer(planningExecutor: executor);
+      addTearDown(container.dispose);
+      await readyStore(container);
+      const source = IngestSource(
+        kind: IngestSourceKind.csv,
+        payload:
+            'date,description,amount,currency\n'
+            '2026-06-18,Queue Recovery,-18.00,CNY\n',
+      );
+      final controller = container.read(ingestControllerProvider);
+
+      final first = controller.ingest(source);
+      final second = controller.ingest(source);
+
+      await expectLater(first, throwsStateError);
+      final recovered = await second.timeout(const Duration(seconds: 2));
+      expect(recovered.drafts.single.verdict, DedupVerdict.newTxn);
+      expect(calls, 2);
+    });
+
+    test(
+      'blocked Vision parse does not occupy the local planning FIFO',
+      () async {
+        final vision = _BlockingVisionIngestClient([
+          ParsedTransaction(
+            description: 'Vision row',
+            amountMinor: -4200,
+            currency: 'CNY',
+            occurredAt: DateTime.utc(2026, 6, 18),
+          ),
+        ]);
+        final container = buildContainer(visionClient: vision);
+        addTearDown(container.dispose);
+        await readyStore(container);
+        final controller = container.read(ingestControllerProvider);
+
+        final visionResult = controller.ingest(
+          const IngestSource(
+            kind: IngestSourceKind.receiptImage,
+            payload: 'base64-image',
+            mime: 'image/png',
+          ),
+        );
+        await vision.started.future;
+
+        final csvResult = await controller
+            .ingest(
+              const IngestSource(
+                kind: IngestSourceKind.csv,
+                payload:
+                    'date,description,amount,currency\n'
+                    '2026-06-18,CSV wins,-18.00,CNY\n',
+              ),
+            )
+            .timeout(const Duration(seconds: 2));
+        expect(csvResult.drafts.single.verdict, DedupVerdict.newTxn);
+
+        vision.release.complete();
+        expect((await visionResult).drafts, hasLength(1));
+      },
+    );
+
+    test(
+      'Vision keeps captured owner and filters another owner ledger',
+      () async {
+        var activeOwner = 'owner-a';
+        final otherOwnerExpense = Expense(
+          id: 'owner-b-expense',
+          expenseAccountId: 'expense:coffee',
+          amount: Decimal.parse('38'),
+          currency: 'CNY',
+          tradeDate: DateTime.utc(2026, 6, 18),
+          note: 'Shared Merchant',
+          sync: SyncMeta(
+            ownerUserId: 'owner-b',
+            updatedAt: DateTime.utc(2026, 6, 18),
+            updatedByDevice: 'device-b',
+            hlc: Hlc.zero('device-b'),
+          ),
+        );
+        final journal = _StaticExpenseJournalRepository(
+          db: db,
+          expenses: [otherOwnerExpense],
+        );
+        final vision = _BlockingVisionIngestClient([
+          ParsedTransaction(
+            description: 'Shared Merchant',
+            amountMinor: -3800,
+            currency: 'CNY',
+            occurredAt: DateTime.utc(2026, 6, 18),
+          ),
+        ]);
+        final container = buildContainer(
+          ownerUserIdReader: () => activeOwner,
+          visionClient: vision,
+          journalRepository: journal,
+        );
+        addTearDown(container.dispose);
+        final ownerAStore = await readyStore(container);
+        final controller = container.read(ingestControllerProvider);
+
+        final resultFuture = controller.ingest(
+          const IngestSource(
+            kind: IngestSourceKind.receiptImage,
+            payload: 'base64-image',
+            mime: 'image/png',
+          ),
+        );
+        await vision.started.future;
+        activeOwner = 'owner-b';
+        container.invalidate(activeUserIdProvider);
+        final ownerBStore = container.read(ingestDraftStoreProvider)!;
+
+        vision.release.complete();
+        final result = await resultFuture;
+
+        expect(result.drafts.single.ownerUserId, 'owner-a');
+        expect(result.drafts.single.verdict, DedupVerdict.newTxn);
+        expect(
+          await ownerAStore.listByStatus(DraftStatus.pending),
+          hasLength(1),
+        );
+        expect(await ownerBStore.listByStatus(DraftStatus.pending), isEmpty);
+      },
+    );
 
     test('privacy gate blocks Vision before touching the client', () async {
       final vision = _RecordingVisionIngestClient(
@@ -251,4 +440,39 @@ final class _RecordingVisionIngestClient implements VisionIngestClient {
     lastContentBase64 = contentBase64;
     return parsed;
   }
+}
+
+final class _BlockingVisionIngestClient implements VisionIngestClient {
+  _BlockingVisionIngestClient(this.parsed);
+
+  final List<ParsedTransaction> parsed;
+  final Completer<void> started = Completer<void>();
+  final Completer<void> release = Completer<void>();
+
+  @override
+  Future<List<ParsedTransaction>> parse({
+    required IngestSourceKind kind,
+    required String mime,
+    required String contentBase64,
+    String? currencyHint,
+  }) async {
+    started.complete();
+    await release.future;
+    return parsed;
+  }
+}
+
+final class _StaticExpenseJournalRepository extends JournalEntryRepository {
+  _StaticExpenseJournalRepository({required super.db, required this.expenses})
+    : super(
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+        fxRateSource: const IdentityFxRateSource(),
+        baseCurrency: 'CNY',
+      );
+
+  final List<Expense> expenses;
+
+  @override
+  Stream<List<Expense>> watchExpenses() => Stream.value(expenses);
 }

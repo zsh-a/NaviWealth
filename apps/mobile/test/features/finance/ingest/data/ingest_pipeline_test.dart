@@ -214,4 +214,118 @@ void main() {
       isTrue,
     );
   });
+
+  test('pure analysis plus materialization matches the synchronous API', () {
+    const source = IngestSource(
+      kind: IngestSourceKind.csv,
+      payload:
+          'date,description,amount,currency\n'
+          '2026-05-10,STARBUCKS 04291,-38.00,CNY\n'
+          '2026-05-10,STARBUCKS 04291,-38.00,CNY\n',
+      originLabel: 'parity.csv',
+    );
+    final ledger = [
+      TransactionInput(
+        id: 'existing-coffee',
+        description: 'STARBUCKS 04291',
+        amountMinor: '-3800',
+        currency: 'CNY',
+        occurredAt: DateTime.utc(2026, 5, 10),
+      ),
+    ];
+    var syncId = 0;
+    final synchronous =
+        IngestPipeline(
+          clock: () => DateTime.utc(2026, 5, 15, 12),
+          idGen: () => 'draft-${syncId++}',
+        ).plan(
+          source: source,
+          existingLedger: ledger,
+          ownerUserId: 'u1',
+          traceId: 'trace-parity',
+        );
+
+    final analysis = analyzeIngestPlanning(
+      IngestPlanningRequest(
+        payload: DeviceIngestPlanningPayload(
+          kind: IngestSourceKind.csv,
+          raw: source.payload,
+          defaultCurrency: 'CNY',
+        ),
+        existingLedger: ledger,
+      ),
+    );
+    var materializedId = 0;
+    final materialized =
+        IngestPipeline(
+          clock: () => DateTime.utc(2026, 5, 15, 12),
+          idGen: () => 'draft-${materializedId++}',
+        ).materialize(
+          analysis: analysis,
+          source: source,
+          ownerUserId: 'u1',
+          traceId: 'trace-parity',
+        );
+
+    expect(materialized.rejectedReason, synchronous.rejectedReason);
+    expect(materialized.drafts, hasLength(synchronous.drafts.length));
+    for (var index = 0; index < synchronous.drafts.length; index++) {
+      final expected = synchronous.drafts[index];
+      final actual = materialized.drafts[index];
+      expect(actual.parsed.toJson(), expected.parsed.toJson());
+      expect(
+        (
+          actual.draftId,
+          actual.ownerUserId,
+          actual.createdAt,
+          actual.sourceKind,
+          actual.verdict,
+          actual.status,
+          actual.originLabel,
+          actual.dedupTargetEntryId,
+          actual.traceId,
+          actual.expiresAt,
+        ),
+        (
+          expected.draftId,
+          expected.ownerUserId,
+          expected.createdAt,
+          expected.sourceKind,
+          expected.verdict,
+          expected.status,
+          expected.originLabel,
+          expected.dedupTargetEntryId,
+          expected.traceId,
+          expected.expiresAt,
+        ),
+      );
+    }
+  });
+
+  test('materialization rejects forward batch targets', () {
+    final pipeline = build();
+    final analysis = IngestPlanningAnalysis(
+      rows: [
+        AnalyzedIngestRow(
+          parsed: ParsedTransaction(
+            description: 'bad target',
+            amountMinor: -100,
+            currency: 'CNY',
+            occurredAt: DateTime.utc(2026, 5, 10),
+          ),
+          verdict: DedupVerdict.duplicate,
+          target: const BatchRowTarget(0),
+        ),
+      ],
+    );
+
+    expect(
+      () => pipeline.materialize(
+        analysis: analysis,
+        source: const IngestSource(kind: IngestSourceKind.csv, payload: ''),
+        ownerUserId: 'u1',
+      ),
+      throwsStateError,
+    );
+  });
 }

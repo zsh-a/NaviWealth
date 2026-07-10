@@ -14,6 +14,143 @@ import '../domain/ingest_models.dart';
 import 'ingest_dedup.dart';
 import 'statement_ingest_parser.dart';
 
+sealed class IngestPlanningPayload {
+  const IngestPlanningPayload();
+}
+
+final class DeviceIngestPlanningPayload extends IngestPlanningPayload {
+  const DeviceIngestPlanningPayload({
+    required this.kind,
+    required this.raw,
+    required this.defaultCurrency,
+  });
+
+  final IngestSourceKind kind;
+  final String raw;
+  final String defaultCurrency;
+}
+
+final class PreParsedIngestPlanningPayload extends IngestPlanningPayload {
+  PreParsedIngestPlanningPayload(List<ParsedTransaction> rows)
+    : rows = List.unmodifiable(rows);
+
+  final List<ParsedTransaction> rows;
+}
+
+final class IngestPlanningRequest {
+  IngestPlanningRequest({
+    required this.payload,
+    required List<TransactionInput> existingLedger,
+  }) : existingLedger = List.unmodifiable(existingLedger);
+
+  final IngestPlanningPayload payload;
+  final List<TransactionInput> existingLedger;
+}
+
+sealed class PlanningDedupTarget {
+  const PlanningDedupTarget();
+}
+
+final class ExistingEntryTarget extends PlanningDedupTarget {
+  const ExistingEntryTarget(this.id);
+
+  final String id;
+}
+
+final class BatchRowTarget extends PlanningDedupTarget {
+  const BatchRowTarget(this.index);
+
+  final int index;
+}
+
+final class AnalyzedIngestRow {
+  const AnalyzedIngestRow({
+    required this.parsed,
+    required this.verdict,
+    this.target,
+  });
+
+  final ParsedTransaction parsed;
+  final DedupVerdict verdict;
+  final PlanningDedupTarget? target;
+}
+
+final class IngestPlanningAnalysis {
+  IngestPlanningAnalysis({
+    required List<AnalyzedIngestRow> rows,
+    this.rejectedReason,
+  }) : rows = List.unmodifiable(rows);
+
+  final List<AnalyzedIngestRow> rows;
+  final String? rejectedReason;
+
+  bool get isRejected => rejectedReason != null;
+}
+
+/// Parse, normalize and deduplicate without clocks, ids, I/O or closures.
+/// Its object graph is sendable through the background executor seam.
+IngestPlanningAnalysis analyzeIngestPlanning(IngestPlanningRequest request) {
+  final List<ParsedTransaction> parsed;
+  switch (request.payload) {
+    case DeviceIngestPlanningPayload payload:
+      if (!payload.kind.isDeviceParsable) {
+        return IngestPlanningAnalysis(
+          rows: const <AnalyzedIngestRow>[],
+          rejectedReason:
+              '「${payload.kind.name}」来源需模型 Vision 解析，S5a 仅支持 CSV / 粘贴文本',
+        );
+      }
+      parsed = parseStatementLedger(
+        payload.raw,
+        defaultCurrency: payload.defaultCurrency,
+      );
+    case PreParsedIngestPlanningPayload payload:
+      parsed = payload.rows;
+  }
+
+  final index = IngestDedupIndex<PlanningDedupTarget>();
+  for (final entry in request.existingLedger) {
+    index.add(entry, ExistingEntryTarget(entry.id));
+  }
+
+  final rows = <AnalyzedIngestRow>[];
+  for (final row in parsed) {
+    final classification = classifyTransaction(
+      TransactionInput(
+        id: 'ingest-probe',
+        description: row.description,
+        amountMinor: row.amountMinor.toString(),
+        currency: row.currency,
+        occurredAt: row.occurredAt,
+      ),
+    );
+    final normalized = classification == null
+        ? row
+        : row.copyWith(categoryHint: classification.categoryHint);
+    final dedup = index.match(normalized);
+    final rowIndex = rows.length;
+    rows.add(
+      AnalyzedIngestRow(
+        parsed: normalized,
+        verdict: dedup.verdict,
+        target: dedup.target,
+      ),
+    );
+    index.add(
+      TransactionInput(
+        id: 'batch-row-$rowIndex',
+        description: normalized.description,
+        amountMinor: normalized.amountMinor.toString(),
+        currency: normalized.currency,
+        occurredAt: normalized.occurredAt,
+        categoryId: normalized.categoryHint,
+      ),
+      BatchRowTarget(rowIndex),
+    );
+  }
+  return IngestPlanningAnalysis(rows: rows);
+}
+
 class IngestPipeline {
   IngestPipeline({DateTime Function()? clock, String Function()? idGen})
     : _clock = clock ?? (() => DateTime.now().toUtc()),
@@ -35,22 +172,19 @@ class IngestPipeline {
     String defaultCurrency = 'CNY',
     String? traceId,
   }) {
-    if (!source.kind.isDeviceParsable) {
-      return IngestResult(
-        drafts: const <IngestDraft>[],
-        rejectedReason:
-            '「${source.kind.name}」来源需模型 Vision 解析，S5a 仅支持 CSV / 粘贴文本',
-      );
-    }
-
-    final parsed = parseStatementLedger(
-      source.payload,
-      defaultCurrency: defaultCurrency,
+    final analysis = analyzeIngestPlanning(
+      IngestPlanningRequest(
+        payload: DeviceIngestPlanningPayload(
+          kind: source.kind,
+          raw: source.payload,
+          defaultCurrency: defaultCurrency,
+        ),
+        existingLedger: existingLedger,
+      ),
     );
-    return planFromParsed(
-      parsed: parsed,
+    return materialize(
+      analysis: analysis,
       source: source,
-      existingLedger: existingLedger,
       ownerUserId: ownerUserId,
       traceId: traceId,
     );
@@ -65,33 +199,50 @@ class IngestPipeline {
     required String ownerUserId,
     String? traceId,
   }) {
+    final analysis = analyzeIngestPlanning(
+      IngestPlanningRequest(
+        payload: PreParsedIngestPlanningPayload(parsed),
+        existingLedger: existingLedger,
+      ),
+    );
+    return materialize(
+      analysis: analysis,
+      source: source,
+      ownerUserId: ownerUserId,
+      traceId: traceId,
+    );
+  }
+
+  /// Add main-isolate clocks and ids to a pure planning result.
+  IngestResult materialize({
+    required IngestPlanningAnalysis analysis,
+    required IngestSource source,
+    required String ownerUserId,
+    String? traceId,
+  }) {
+    if (analysis.isRejected) {
+      return IngestResult(
+        drafts: const <IngestDraft>[],
+        rejectedReason: analysis.rejectedReason,
+      );
+    }
     final now = _clock();
     final expiresAt = now.add(draftTtl);
 
     final drafts = <IngestDraft>[];
-    final dedupIndex = IngestDedupIndex<String>();
-    for (final entry in existingLedger) {
-      dedupIndex.add(entry, entry.id);
-    }
-    for (final p in parsed) {
-      // ④ Normalize — reuse the on-device classifier rather than
-      // inventing a second heuristic (the ledger is the only computer).
-      final classification = classifyTransaction(
-        TransactionInput(
-          id: 'ingest-probe',
-          description: p.description,
-          amountMinor: p.amountMinor.toString(),
-          currency: p.currency,
-          occurredAt: p.occurredAt,
+    final draftIds = <String>[];
+    for (var index = 0; index < analysis.rows.length; index++) {
+      final row = analysis.rows[index];
+      final targetId = switch (row.target) {
+        null => null,
+        ExistingEntryTarget(:final id) => id,
+        BatchRowTarget(:final index)
+            when index >= 0 && index < draftIds.length =>
+          draftIds[index],
+        BatchRowTarget(:final index) => throw StateError(
+          'Invalid ingest batch target $index at row ${draftIds.length}.',
         ),
-      );
-      final normalized = classification == null
-          ? p
-          : p.copyWith(categoryHint: classification.categoryHint);
-
-      // ⑤ Dedup against device truth.
-      final dedup = dedupIndex.match(normalized);
-
+      };
       final draftId = _idGen();
       drafts.add(
         IngestDraft(
@@ -99,26 +250,16 @@ class IngestPipeline {
           ownerUserId: ownerUserId,
           createdAt: now,
           sourceKind: source.kind,
-          parsed: normalized,
-          verdict: dedup.verdict,
+          parsed: row.parsed,
+          verdict: row.verdict,
           status: DraftStatus.pending,
           originLabel: source.originLabel,
-          dedupTargetEntryId: dedup.target,
+          dedupTargetEntryId: targetId,
           traceId: traceId,
           expiresAt: expiresAt,
         ),
       );
-      dedupIndex.add(
-        TransactionInput(
-          id: draftId,
-          description: normalized.description,
-          amountMinor: normalized.amountMinor.toString(),
-          currency: normalized.currency,
-          occurredAt: normalized.occurredAt,
-          categoryId: normalized.categoryHint,
-        ),
-        draftId,
-      );
+      draftIds.add(draftId);
     }
     return IngestResult(drafts: drafts);
   }

@@ -6,6 +6,8 @@
 /// service reuses the existing `proposalApplierProvider`.
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -27,6 +29,7 @@ import 'ingest_confirm_service.dart';
 import 'ingest_draft_store.dart';
 import 'ingest_llm_client.dart';
 import 'ingest_pipeline.dart';
+import 'ingest_planning_executor.dart';
 import 'ingest_privacy_gate.dart';
 import 'vision_ingest_client.dart';
 
@@ -61,6 +64,10 @@ final pendingIngestReviewItemsProvider =
 
 final ingestPipelineProvider = Provider<IngestPipeline>(
   (ref) => IngestPipeline(),
+);
+
+final ingestPlanningExecutorProvider = Provider<IngestPlanningExecutor>(
+  (ref) => runIngestPlanning,
 );
 
 /// Vision parse runs through the embedded FRB profile-backed LLM bridge when
@@ -100,6 +107,7 @@ class IngestController {
   IngestController(this._ref);
 
   final Ref _ref;
+  Future<void> _planningTail = Future<void>.value();
 
   Future<IngestResult> ingest(IngestSource source) async {
     // §5.10.10 / S5b — privacy gate (隐私门). Image / PDF / email need
@@ -114,30 +122,30 @@ class IngestController {
               '请改用 CSV / 文本粘贴，或在设置中调整 AI 隐私模式',
         );
       case IngestGateVerdict.providerVisionAllowed:
-        return _ingestProviderVision(source);
+        final context = _captureContext();
+        if (context == null) return _databaseUnavailable();
+        return _ingestProviderVision(source, context);
       case IngestGateVerdict.deviceParse:
-        return _ingestDevice(source);
+        final context = _captureContext();
+        if (context == null) return _databaseUnavailable();
+        return _ingestDevice(source, context);
     }
   }
 
-  Future<IngestResult> _ingestDevice(IngestSource source) async {
-    final store = _ref.read(ingestDraftStoreProvider);
-    if (store == null) {
-      return const IngestResult(
-        drafts: <IngestDraft>[],
-        rejectedReason: '数据库尚未就绪，请稍后重试',
-      );
-    }
-    final ownerUserId = _ref.read(activeUserIdProvider) ?? '';
-    final ledger = await _dedupLedgerWithPending(store);
-    final result = _ref
-        .read(ingestPipelineProvider)
-        .plan(source: source, existingLedger: ledger, ownerUserId: ownerUserId);
-    if (!result.isRejected && result.drafts.isNotEmpty) {
-      await store.putAll(result.drafts);
-    }
-    return result;
-  }
+  Future<IngestResult> _ingestDevice(
+    IngestSource source,
+    _CapturedIngestContext context,
+  ) => _enqueuePlanning(
+    () => _analyzeAndPersist(
+      source: source,
+      context: context,
+      payload: DeviceIngestPlanningPayload(
+        kind: source.kind,
+        raw: source.payload,
+        defaultCurrency: 'CNY',
+      ),
+    ),
+  );
 
   /// §5.10.10 / S5b-vision — the Vision branch. Parse (③) runs through
   /// the FRB-backed native provider path ([FrbVisionIngestClient]) using the
@@ -146,27 +154,20 @@ class IngestController {
   /// appended because this *is* a real model round-trip. When no FRB LLM
   /// profile is configured the client surfaces actionable "configure a key"
   /// guidance instead.
-  Future<IngestResult> _ingestProviderVision(IngestSource source) async {
-    final store = _ref.read(ingestDraftStoreProvider);
-    if (store == null) {
-      return const IngestResult(
-        drafts: <IngestDraft>[],
-        rejectedReason: '数据库尚未就绪，请稍后重试',
-      );
-    }
-    final ownerUserId = _ref.read(activeUserIdProvider) ?? '';
-
+  Future<IngestResult> _ingestProviderVision(
+    IngestSource source,
+    _CapturedIngestContext context,
+  ) async {
     final startedAt = DateTime.now().toUtc();
     final requestId = const Uuid().v4();
+    final visionClient = _ref.read(visionIngestClientProvider);
     List<ParsedTransaction> parsed;
     try {
-      parsed = await _ref
-          .read(visionIngestClientProvider)
-          .parse(
-            kind: source.kind,
-            mime: source.mime ?? 'application/octet-stream',
-            contentBase64: source.payload,
-          );
+      parsed = await visionClient.parse(
+        kind: source.kind,
+        mime: source.mime ?? 'application/octet-stream',
+        contentBase64: source.payload,
+      );
     } on VisionIngestException catch (e) {
       return IngestResult(
         drafts: const <IngestDraft>[],
@@ -174,19 +175,14 @@ class IngestController {
       );
     }
 
-    final ledger = await _dedupLedgerWithPending(store);
-    final result = _ref
-        .read(ingestPipelineProvider)
-        .planFromParsed(
-          parsed: parsed,
-          source: source,
-          existingLedger: ledger,
-          ownerUserId: ownerUserId,
-          traceId: requestId,
-        );
-    if (result.drafts.isNotEmpty) {
-      await store.putAll(result.drafts);
-    }
+    final result = await _enqueuePlanning(
+      () => _analyzeAndPersist(
+        source: source,
+        context: context,
+        payload: PreParsedIngestPlanningPayload(parsed),
+        traceId: requestId,
+      ),
+    );
     await _appendProviderVisionTrace(
       requestId: requestId,
       kind: source.kind,
@@ -194,6 +190,70 @@ class IngestController {
       rowCount: result.total,
     );
     return result;
+  }
+
+  _CapturedIngestContext? _captureContext() {
+    final store = _ref.read(ingestDraftStoreProvider);
+    if (store == null) return null;
+    final ownerUserId = _ref.read(activeUserIdProvider) ?? '';
+    if ((store.ownerUserId ?? '') != ownerUserId) return null;
+    return _CapturedIngestContext(
+      ownerUserId: ownerUserId,
+      store: store,
+      pipeline: _ref.read(ingestPipelineProvider),
+      executor: _ref.read(ingestPlanningExecutorProvider),
+    );
+  }
+
+  IngestResult _databaseUnavailable() => const IngestResult(
+    drafts: <IngestDraft>[],
+    rejectedReason: '数据库尚未就绪，请稍后重试',
+  );
+
+  Future<IngestResult> _analyzeAndPersist({
+    required IngestSource source,
+    required _CapturedIngestContext context,
+    required IngestPlanningPayload payload,
+    String? traceId,
+  }) async {
+    context.requireOwnerBinding();
+    final ledger = await _dedupLedgerWithPending(
+      context.store,
+      context.ownerUserId,
+    );
+    final analysis = await context.executor(
+      IngestPlanningRequest(payload: payload, existingLedger: ledger),
+    );
+    final result = context.pipeline.materialize(
+      analysis: analysis,
+      source: source,
+      ownerUserId: context.ownerUserId,
+      traceId: traceId,
+    );
+    context.requireOwnerBinding();
+    if (result.drafts.any(
+      (draft) => draft.ownerUserId != context.ownerUserId,
+    )) {
+      throw StateError('Ingest planning crossed its captured owner boundary.');
+    }
+    if (!result.isRejected && result.drafts.isNotEmpty) {
+      await context.store.putAll(result.drafts);
+    }
+    return result;
+  }
+
+  Future<T> _enqueuePlanning<T>(Future<T> Function() action) {
+    final predecessor = _planningTail;
+    final release = Completer<void>();
+    _planningTail = release.future;
+    return () async {
+      try {
+        await predecessor;
+        return await action();
+      } finally {
+        release.complete();
+      }
+    }();
   }
 
   /// Best-effort transparency record — a Vision parse sends content to the
@@ -238,10 +298,12 @@ class IngestController {
 
   Future<List<TransactionInput>> _dedupLedgerWithPending(
     IngestDraftStore store,
+    String ownerUserId,
   ) async {
     final repository = await _ref.read(journalEntryRepositoryProvider.future);
     final expenses = await repository.watchExpenses().first;
     final ledger = expenses
+        .where((expense) => expense.sync.ownerUserId == ownerUserId)
         .map(expenseToTransactionInput)
         .toList(growable: false);
     final pending = await store.listByStatus(DraftStatus.pending);
@@ -249,14 +311,35 @@ class IngestController {
     return <TransactionInput>[
       ...ledger,
       for (final d in pending)
-        TransactionInput(
-          id: d.draftId,
-          description: d.parsed.description,
-          amountMinor: d.parsed.amountMinor.toString(),
-          currency: d.parsed.currency,
-          occurredAt: d.parsed.occurredAt,
-          categoryId: d.parsed.categoryHint,
-        ),
+        if (d.ownerUserId == ownerUserId)
+          TransactionInput(
+            id: d.draftId,
+            description: d.parsed.description,
+            amountMinor: d.parsed.amountMinor.toString(),
+            currency: d.parsed.currency,
+            occurredAt: d.parsed.occurredAt,
+            categoryId: d.parsed.categoryHint,
+          ),
     ];
+  }
+}
+
+final class _CapturedIngestContext {
+  const _CapturedIngestContext({
+    required this.ownerUserId,
+    required this.store,
+    required this.pipeline,
+    required this.executor,
+  });
+
+  final String ownerUserId;
+  final IngestDraftStore store;
+  final IngestPipeline pipeline;
+  final IngestPlanningExecutor executor;
+
+  void requireOwnerBinding() {
+    if ((store.ownerUserId ?? '') != ownerUserId) {
+      throw StateError('Ingest draft store owner binding changed.');
+    }
   }
 }
