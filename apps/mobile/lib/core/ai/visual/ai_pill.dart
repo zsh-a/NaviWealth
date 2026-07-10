@@ -11,7 +11,6 @@
 /// inherits sizing from [AiType.label]. No elevation, no shadow.
 library;
 
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -96,6 +95,7 @@ class AiPill extends StatelessWidget {
     );
 
     if (onTap == null) return pill;
+    final targetSize = appActionTargetSize(context);
     return FTappable(
       semanticsLabel: label,
       excludeSemantics: false,
@@ -105,17 +105,18 @@ class AiPill extends StatelessWidget {
       focusedOutlineStyle: const FFocusedOutlineStyleDelta.delta(
         borderRadius: BorderRadius.all(Radius.circular(AppRadius.full)),
       ),
-      shortcuts: const <ShortcutActivator, Intent>{
-        SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false):
-            ActivateIntent(),
-        SingleActivator(LogicalKeyboardKey.space, includeRepeats: false):
-            ActivateIntent(),
-        // Consume repeats here so they cannot bubble to WidgetsApp's default
-        // Enter/Space shortcuts, which accept repeated key events.
-        SingleActivator(LogicalKeyboardKey.enter): DoNothingIntent(),
-        SingleActivator(LogicalKeyboardKey.space): DoNothingIntent(),
-      },
-      child: ExcludeSemantics(child: pill),
+      shortcuts: appActionActivationShortcuts,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minWidth: targetSize,
+          minHeight: targetSize,
+        ),
+        child: Center(
+          widthFactor: 1,
+          heightFactor: 1,
+          child: ExcludeSemantics(child: pill),
+        ),
+      ),
     );
   }
 }

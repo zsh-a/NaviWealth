@@ -101,7 +101,7 @@ class _DraftCard extends StatelessWidget {
             ),
             if (!recoveryUnavailable) ...[
               const SizedBox(height: AppSpacing.s10),
-              FButton(
+              AppActionButton(
                 variant: FButtonVariant.primary,
                 onPress: busy ? null : onFinalize,
                 child: Text(l10n.ingestResolveAction),
@@ -111,7 +111,7 @@ class _DraftCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: FButton(
+                  child: AppActionButton(
                     variant: FButtonVariant.outline,
                     onPress: busy ? null : onSkip,
                     child: Flexible(
@@ -125,7 +125,7 @@ class _DraftCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.s8),
                 Expanded(
-                  child: FButton(
+                  child: AppActionButton(
                     variant: FButtonVariant.primary,
                     onPress: busy ? null : onConfirm,
                     child: Flexible(

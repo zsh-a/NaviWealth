@@ -24,7 +24,7 @@ class _EmptyState extends StatelessWidget {
         spacing: AppSpacing.s8,
         runSpacing: AppSpacing.s8,
         children: [
-          FButton(
+          AppActionButton(
             variant: FButtonVariant.outline,
             onPress: onCamera,
             prefix: const Icon(FLucideIcons.camera),
@@ -36,7 +36,7 @@ class _EmptyState extends StatelessWidget {
               ),
             ),
           ),
-          FButton(
+          AppActionButton(
             variant: FButtonVariant.outline,
             onPress: onImport,
             prefix: const Icon(FLucideIcons.paperclip),
@@ -48,7 +48,7 @@ class _EmptyState extends StatelessWidget {
               ),
             ),
           ),
-          FButton(
+          AppActionButton(
             variant: FButtonVariant.outline,
             onPress: onPaste,
             prefix: const Icon(FLucideIcons.clipboard),

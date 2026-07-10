@@ -12,6 +12,7 @@ Future<void> _pumpPill(
   WidgetTester tester, {
   required Widget child,
   TextScaler textScaler = TextScaler.noScaling,
+  bool touch = false,
 }) {
   return tester.pumpWidget(
     MaterialApp(
@@ -24,7 +25,7 @@ Future<void> _pumpPill(
         );
       },
       home: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: buildAppForuiTheme(brightness: Brightness.light, touch: touch),
         child: Scaffold(body: child),
       ),
     ),
@@ -32,6 +33,31 @@ Future<void> _pumpPill(
 }
 
 void main() {
+  for (final touch in <bool>[false, true]) {
+    testWidgets('interactive pill uses ${touch ? 'touch' : 'desktop'} target', (
+      tester,
+    ) async {
+      await _pumpPill(
+        tester,
+        touch: touch,
+        child: Center(
+          child: AiPill(label: 'Review', onTap: () {}),
+        ),
+      );
+
+      final targetRect = tester.getRect(find.byType(AiPill));
+      final visualRect = tester.getRect(
+        find.descendant(
+          of: find.byType(AiPill),
+          matching: find.byType(AnimatedContainer),
+        ),
+      );
+      expect(targetRect.height, touch ? 48 : 40);
+      expect(visualRect.height, lessThan(targetRect.height));
+      expect(visualRect.center, targetRect.center);
+    });
+  }
+
   testWidgets('non-interactive pill is not exposed as a button', (
     tester,
   ) async {

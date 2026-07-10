@@ -68,15 +68,18 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         ],
       ),
       actions: [
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.ingestCameraAction,
           icon: const Icon(FLucideIcons.camera),
           onPress: _isBusy ? null : _captureCamera,
         ),
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.ingestImportFileAction,
           icon: const Icon(FLucideIcons.paperclip),
           onPress: _isBusy ? null : _pickFile,
         ),
-        FHeaderAction(
+        AppHeaderAction(
+          semanticsLabel: l10n.ingestPasteAction,
           icon: const Icon(FLucideIcons.clipboard),
           onPress: _isBusy ? null : _openPasteDialog,
         ),
@@ -141,10 +144,17 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     if (drafts.isEmpty) {
       final busy = _busy;
       if (busy != null) return _ProcessingState(state: busy);
-      return _EmptyState(
-        onPaste: _isBusy ? null : _openPasteDialog,
-        onImport: _isBusy ? null : _pickFile,
-        onCamera: _isBusy ? null : _captureCamera,
+      return LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: _EmptyState(
+              onPaste: _isBusy ? null : _openPasteDialog,
+              onImport: _isBusy ? null : _pickFile,
+              onCamera: _isBusy ? null : _captureCamera,
+            ),
+          ),
+        ),
       );
     }
     final payable = accounts.where((a) => !a.archived).toList(growable: false);
@@ -248,7 +258,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 AppSpacing.s16,
                 AppSpacing.s12,
               ),
-              child: FButton(
+              child: AppActionButton(
                 variant: FButtonVariant.primary,
                 onPress: _isBusy
                     ? null

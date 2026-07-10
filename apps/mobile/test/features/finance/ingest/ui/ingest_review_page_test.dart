@@ -127,6 +127,8 @@ Widget _app({
   required IngestConfirmService service,
   bool failLedgerRead = false,
   List<Account> accounts = const [],
+  bool touch = false,
+  TextScaler textScaler = TextScaler.noScaling,
 }) {
   return ProviderScope(
     overrides: [
@@ -139,13 +141,19 @@ Widget _app({
         ),
     ],
     child: MaterialApp(
-      theme: AppTheme.light(),
+      theme: AppTheme.light(compact: !touch),
       locale: const Locale('en', 'US'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => AppMessenger.init(child: child!),
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(textScaler: textScaler),
+          child: AppMessenger.init(child: child!),
+        );
+      },
       home: FTheme(
-        data: FThemes.slate.light.desktop,
+        data: buildAppForuiTheme(brightness: Brightness.light, touch: touch),
         child: const IngestReviewPage(),
       ),
     ),
@@ -153,6 +161,53 @@ Widget _app({
 }
 
 void main() {
+  testWidgets('touch actions stay 48dp, named, and stable at 2x text', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(
+      _app(
+        store: store,
+        service: service,
+        touch: true,
+        textScaler: const TextScaler.linear(2),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppHeaderAction), findsNWidgets(3));
+    expect(find.byType(AppActionButton), findsNWidgets(3));
+    for (final action in find.byType(AppHeaderAction).evaluate()) {
+      expect(
+        tester.getSize(find.byElementPredicate((e) => e == action)),
+        const Size(48, 48),
+      );
+    }
+    for (final action in find.byType(AppActionButton).evaluate()) {
+      expect(
+        tester.getSize(find.byElementPredicate((e) => e == action)).height,
+        greaterThanOrEqualTo(48),
+      );
+    }
+    expect(find.semantics.byLabel('Take photo'), findsWidgets);
+    expect(find.semantics.byLabel('Import file'), findsWidgets);
+    expect(find.semantics.byLabel('Paste text'), findsWidgets);
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
   testWidgets('empty paste stays open and shows inline validation', (
     tester,
   ) async {
@@ -216,7 +271,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FButton, 'Skip'));
+    await tester.tap(find.widgetWithText(AppActionButton, 'Skip'));
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsNothing);
@@ -242,7 +297,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FButton, 'Record'));
+    await tester.tap(find.widgetWithText(AppActionButton, 'Record'));
     await tester.pumpAndSettle();
     expect(find.text('Coffee receipt'), findsNothing);
     expect(find.text('Recorded'), findsOneWidget);
@@ -268,11 +323,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FButton, 'Record'));
+      await tester.tap(find.widgetWithText(AppActionButton, 'Record'));
       await tester.pumpAndSettle();
 
       expect(find.text('Coffee receipt'), findsOneWidget);
-      expect(find.widgetWithText(FButton, 'Record'), findsNothing);
+      expect(find.widgetWithText(AppActionButton, 'Record'), findsNothing);
       expect(find.text('Resolve review state'), findsOneWidget);
       expect(applier.applyCount, 1);
 
@@ -284,7 +339,7 @@ void main() {
         _app(store: store, service: service, accounts: [_account]),
       );
       await tester.pumpAndSettle();
-      expect(find.widgetWithText(FButton, 'Record'), findsNothing);
+      expect(find.widgetWithText(AppActionButton, 'Record'), findsNothing);
       expect(find.text('Resolve review state'), findsOneWidget);
 
       await tester.tap(find.text('Resolve review state'));
@@ -319,7 +374,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
-    expect(find.widgetWithText(FButton, 'Record'), findsNothing);
+    expect(find.widgetWithText(AppActionButton, 'Record'), findsNothing);
     expect(
       find.textContaining('recovery details are unavailable'),
       findsOneWidget,
@@ -357,7 +412,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
-    expect(find.widgetWithText(FButton, 'Record'), findsOneWidget);
+    expect(find.widgetWithText(AppActionButton, 'Record'), findsOneWidget);
     expect(find.text('Resolve review state'), findsOneWidget);
     expect(
       applier.undone.map((state) => state.appliedEntityId),
@@ -380,7 +435,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FButton, 'Record'));
+    await tester.tap(find.widgetWithText(AppActionButton, 'Record'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();

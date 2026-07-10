@@ -363,7 +363,7 @@ class IngestReviewPageObject {
     expect(card, findsOneWidget, reason: 'draft card missing for $description');
     final skip = find.descendant(
       of: card,
-      matching: find.widgetWithText(FButton, 'Skip'),
+      matching: find.widgetWithText(AppActionButton, 'Skip'),
     );
     expect(
       skip,

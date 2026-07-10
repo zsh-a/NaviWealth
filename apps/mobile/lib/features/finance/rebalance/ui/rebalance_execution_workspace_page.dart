@@ -50,7 +50,7 @@ class _RebalanceExecutionWorkspacePageState
         title: l10n.rebalanceExecutionWorkspaceTitle,
         actions: [
           if (session?.status == RebalanceExecutionSessionStatus.active)
-            FHeaderAction(
+            AppHeaderAction(
               icon: const Icon(FLucideIcons.archive),
               semanticsLabel: l10n.rebalanceExecutionArchiveAction,
               onPress: _busy ? null : _archive,
@@ -319,17 +319,17 @@ class _WorkspaceBody extends StatelessWidget {
                         runSpacing: AppSpacing.s8,
                         children: [
                           if (batchRunning)
-                            FButton(
+                            AppActionButton(
                               variant: FButtonVariant.destructive,
                               onPress: onStop,
                               child: Text(l10n.rebalanceExecutionStopAction),
                             )
                           else ...[
-                            FButton(
+                            AppActionButton(
                               onPress: busy || !ready ? null : onApply,
                               child: Text(l10n.rebalanceExecutionApplyAction),
                             ),
-                            FButton(
+                            AppActionButton(
                               variant: FButtonVariant.outline,
                               onPress: busy || !applied ? null : onUndo,
                               child: Text(l10n.rebalanceExecutionUndoAction),
@@ -417,6 +417,15 @@ class _ExecutionItemRow extends StatelessWidget {
     final direction = item.suggestion.isBuy
         ? l10n.rebalanceBuy
         : l10n.rebalanceSell;
+    final stackAmount =
+        Breakpoints.isMobile(MediaQuery.sizeOf(context).width) &&
+        MediaQuery.textScalerOf(context).scale(1) > 1.5;
+    final amount = AnimatedMoneyText(
+      amount: item.suggestion.amount.amount.toDouble(),
+      currencyCode: item.suggestion.amount.currency,
+      compact: true,
+      showSign: false,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
       child: Row(
@@ -432,10 +441,25 @@ class _ExecutionItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$direction $target',
-                  style: context.theme.typography.body.sm,
-                ),
+                if (stackAmount)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '$direction $target',
+                          style: context.theme.typography.body.sm,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                      amount,
+                    ],
+                  )
+                else
+                  Text(
+                    '$direction $target',
+                    style: context.theme.typography.body.sm,
+                  ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   _stateLabel(l10n, item.state),
@@ -456,35 +480,35 @@ class _ExecutionItemRow extends StatelessWidget {
                   runSpacing: AppSpacing.s6,
                   children: [
                     if (canReview)
-                      FButton(
+                      AppActionButton(
                         variant: FButtonVariant.outline,
                         onPress: busy ? null : onReview,
-                        child: Text(l10n.rebalanceExecutionReviewAction),
+                        child: Flexible(
+                          child: Text(l10n.rebalanceExecutionReviewAction),
+                        ),
                       ),
                     if (canSkip)
-                      FButton(
+                      AppActionButton(
                         variant: FButtonVariant.ghost,
                         onPress: busy ? null : onSkip,
-                        child: Text(l10n.rebalanceExecutionSkipAction),
+                        child: Flexible(
+                          child: Text(l10n.rebalanceExecutionSkipAction),
+                        ),
                       ),
                     if (skipped)
-                      FButton(
+                      AppActionButton(
                         variant: FButtonVariant.outline,
                         onPress: busy ? null : onReopen,
-                        child: Text(l10n.rebalanceExecutionReopenAction),
+                        child: Flexible(
+                          child: Text(l10n.rebalanceExecutionReopenAction),
+                        ),
                       ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.s8),
-          AnimatedMoneyText(
-            amount: item.suggestion.amount.amount.toDouble(),
-            currencyCode: item.suggestion.amount.currency,
-            compact: true,
-            showSign: false,
-          ),
+          if (!stackAmount) ...[const SizedBox(width: AppSpacing.s8), amount],
         ],
       ),
     );
@@ -502,7 +526,7 @@ class _WorkspaceError extends StatelessWidget {
     return AppEmptyState(
       icon: FLucideIcons.triangleAlert,
       title: message,
-      action: FButton(
+      action: AppActionButton(
         variant: FButtonVariant.outline,
         onPress: onRetry,
         child: Text(AppLocalizations.of(context).commonRetry),

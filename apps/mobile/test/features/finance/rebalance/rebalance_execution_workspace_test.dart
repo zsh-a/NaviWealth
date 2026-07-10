@@ -49,6 +49,10 @@ void main() {
     expect(find.text('0 of 1 resolved'), findsOneWidget);
     expect(find.text('Review'), findsOneWidget);
     expect(find.bySemanticsLabel('Archive execution'), findsOneWidget);
+    expect(tester.getSize(find.byType(AppHeaderAction)), const Size(48, 48));
+    for (var i = 0; i < find.byType(AppActionButton).evaluate().length; i++) {
+      expect(tester.getSize(find.byType(AppActionButton).at(i)).height, 48);
+    }
     expect(tester.takeException(), isNull);
   });
 
@@ -60,13 +64,17 @@ void main() {
     expect(find.text('Apply'), findsOneWidget);
     expect(find.text('Undo'), findsOneWidget);
     expect(find.text('Buy Apple'), findsOneWidget);
+    expect(tester.getSize(find.byType(AppHeaderAction)), const Size(40, 40));
+    for (var i = 0; i < find.byType(AppActionButton).evaluate().length; i++) {
+      expect(tester.getSize(find.byType(AppActionButton).at(i)).height, 40);
+    }
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('supports enlarged text without horizontal overflow', (
     tester,
   ) async {
-    await _pumpWorkspace(tester, size: const Size(390, 844), textScale: 1.6);
+    await _pumpWorkspace(tester, size: const Size(390, 844), textScale: 2);
 
     expect(find.text('Needs details'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -255,14 +263,19 @@ Future<void> _pumpReviewEditor(
         ),
       ],
       child: MaterialApp(
-        theme: AppTheme.dark(),
+        theme: AppTheme.dark(compact: true),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () =>
-                showRebalanceExecutionReviewSheet(context: context, item: item),
-            child: const Text('Open review'),
+        home: FTheme(
+          data: buildAppForuiTheme(brightness: Brightness.dark, touch: false),
+          child: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showRebalanceExecutionReviewSheet(
+                context: context,
+                item: item,
+              ),
+              child: const Text('Open review'),
+            ),
           ),
         ),
       ),
@@ -308,6 +321,7 @@ Future<void> _pumpWorkspace(
       ..resetDevicePixelRatio();
   });
   final resolvedSession = session ?? _session();
+  final touch = Breakpoints.isMobile(size.width);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -321,16 +335,21 @@ Future<void> _pumpWorkspace(
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark(),
+        theme: AppTheme.dark(compact: !touch),
         builder: (context, child) => AppMessenger.init(child: child!),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: MediaQuery(
-          data: MediaQueryData(
-            size: size,
-            textScaler: TextScaler.linear(textScale),
+        home: FTheme(
+          data: buildAppForuiTheme(brightness: Brightness.dark, touch: touch),
+          child: MediaQuery(
+            data: MediaQueryData(
+              size: size,
+              textScaler: TextScaler.linear(textScale),
+            ),
+            child: RebalanceExecutionWorkspacePage(
+              sessionId: resolvedSession.id,
+            ),
           ),
-          child: RebalanceExecutionWorkspacePage(sessionId: resolvedSession.id),
         ),
       ),
     ),
