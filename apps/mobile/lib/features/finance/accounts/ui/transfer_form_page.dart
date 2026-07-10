@@ -210,15 +210,17 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         amount != null &&
         amount > Decimal.zero &&
         (!isCrossCurrency || (toAmount != null && toAmount > Decimal.zero));
+    final onSubmit = canSubmit ? _save : null;
 
     return Form(
       key: _formKey,
       child: AppFormScaffoldBody(
+        onSubmit: onSubmit,
         action: SizedBox(
           width: double.infinity,
           child: FButton(
             variant: FButtonVariant.primary,
-            onPress: canSubmit ? _save : null,
+            onPress: onSubmit,
             child: Text(l10n.transferSubmitAction),
           ),
         ),

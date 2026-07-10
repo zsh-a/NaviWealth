@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show Value;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -153,6 +157,45 @@ ProviderScope _wrap(_Harness h, {List<Account>? accounts, String? editingId}) {
   );
 }
 
+ProviderScope _wrapEscHarness(_Harness h, {required VoidCallback onEscape}) {
+  return ProviderScope(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(h.prefs),
+      appDatabaseProvider.overrideWith((_) async => h.db),
+      outboxStoreProvider.overrideWith((_) async => h.outbox),
+      mutationStamperProvider.overrideWith((_) async => h.stamper),
+      accountsStreamProvider.overrideWith((_) => Stream.value(const [])),
+    ],
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => AppMessenger.init(child: child!),
+      initialRoute: '/account',
+      routes: {
+        '/': (_) => const SizedBox(),
+        '/account': (context) => CallbackShortcuts(
+          bindings: <ShortcutActivator, VoidCallback>{
+            const SingleActivator(LogicalKeyboardKey.escape): () {
+              onEscape();
+              // Exercise the guarded back path while proving the new inner
+              // submit-shortcut scope does not consume an ancestor Esc.
+              unawaited(Navigator.of(context, rootNavigator: true).maybePop());
+            },
+          },
+          child: const AccountFormPage(),
+        ),
+      },
+    ),
+  );
+}
+
+Future<void> _pressControlEnter(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.pump();
+}
+
 Future<void> _enlarge(WidgetTester tester) async {
   await tester.binding.setSurfaceSize(const Size(900, 1600));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -223,6 +266,58 @@ void main() {
     await tester.pump();
     expect(saveButton().onPress, isNotNull);
   });
+
+  testWidgets('keyboard submit respects disabled state and commits', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(_wrap(h, accounts: const []));
+    await tester.pumpAndSettle();
+
+    await _pressControlEnter(tester);
+    expect(await h.db.select(h.db.accounts).get(), isEmpty);
+
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Account name'),
+      'Keyboard account',
+    );
+    await tester.pump();
+    await _pressControlEnter(tester);
+    await tester.pumpAndSettle();
+
+    final rows = await h.db.select(h.db.accounts).get();
+    expect(rows, hasLength(1));
+    expect(rows.single.name, 'Keyboard account');
+  });
+
+  testWidgets(
+    'submit shortcut lets Esc reach maybePop and the dirty confirmation',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      try {
+        var escapeCalls = 0;
+        await _enlarge(tester);
+        await tester.pumpWidget(
+          _wrapEscHarness(h, onEscape: () => escapeCalls++),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(FTextFormField, 'Account name'),
+          'Unsaved account',
+        );
+        await tester.pump();
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+
+        expect(escapeCalls, 1);
+        expect(find.byType(AccountFormPage), findsOneWidget);
+        expect(find.text('Discard changes?'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
 
   testWidgets('icon picker tile selection updates the form state', (
     tester,

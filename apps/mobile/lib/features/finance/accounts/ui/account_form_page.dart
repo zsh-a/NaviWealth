@@ -240,6 +240,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
+    final onSubmit = _busy || _nameController.text.trim().isEmpty
+        ? null
+        : _save;
     final initial = _initial;
     final title = widget.isEdit
         ? (initial != null
@@ -266,13 +269,12 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: AppFormScaffoldBody(
+                  onSubmit: onSubmit,
                   action: SizedBox(
                     width: double.infinity,
                     child: FButton(
                       variant: FButtonVariant.primary,
-                      onPress: _busy || _nameController.text.trim().isEmpty
-                          ? null
-                          : _save,
+                      onPress: onSubmit,
                       child: Text(
                         _busy ? l10n.accountFormSaving : l10n.accountFormSave,
                       ),

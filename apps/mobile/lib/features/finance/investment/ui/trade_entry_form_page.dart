@@ -361,6 +361,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   Widget _buildForm(List<Account> accounts) {
     final l10n = AppLocalizations.of(context);
+    final onSubmit = _busy ? null : _submit;
     final eligible = accounts
         .where(
           (a) =>
@@ -386,12 +387,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
+        onSubmit: onSubmit,
         action: SizedBox(
           width: double.infinity,
           child: FButton(
             key: const Key('trade-entry-submit'),
             variant: FButtonVariant.primary,
-            onPress: _busy ? null : _submit,
+            onPress: onSubmit,
             child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
           ),
         ),

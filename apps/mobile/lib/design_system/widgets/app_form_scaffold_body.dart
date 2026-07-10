@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -24,6 +25,7 @@ class AppFormScaffoldBody extends StatelessWidget {
     this.padding = const EdgeInsets.all(AppSpacing.s16),
     this.controller,
     this.physics,
+    this.onSubmit,
   });
 
   final List<Widget> children;
@@ -32,30 +34,72 @@ class AppFormScaffoldBody extends StatelessWidget {
   final ScrollController? controller;
   final ScrollPhysics? physics;
 
+  /// Enables the standard keyboard form-submit shortcuts. Keep this null when
+  /// the primary action is disabled so modified Enter keeps propagating.
+  final VoidCallback? onSubmit;
+
   @override
   Widget build(BuildContext context) {
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return AnimatedPadding(
-      duration: motionDuration(context, Motion.ambient),
-      curve: Motion.standardDecelerate,
-      padding: EdgeInsets.only(bottom: keyboardInset),
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              controller: controller,
-              physics: physics,
-              padding: padding,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: children,
+    final body = FocusTraversalGroup(
+      policy: WidgetOrderTraversalPolicy(),
+      child: AnimatedPadding(
+        duration: motionDuration(context, Motion.ambient),
+        curve: Motion.standardDecelerate,
+        padding: EdgeInsets.only(bottom: keyboardInset),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                controller: controller,
+                physics: physics,
+                padding: padding,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: children,
+                ),
               ),
             ),
-          ),
-          AppFormActionBar(child: action),
-        ],
+            AppFormActionBar(child: action),
+          ],
+        ),
+      ),
+    );
+
+    final submit = onSubmit;
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      descendantsAreFocusable: true,
+      child: CallbackShortcuts(
+        bindings: submit == null
+            ? const <ShortcutActivator, VoidCallback>{}
+            : <ShortcutActivator, VoidCallback>{
+                const SingleActivator(
+                  LogicalKeyboardKey.enter,
+                  meta: true,
+                  includeRepeats: false,
+                ): submit,
+                const SingleActivator(
+                  LogicalKeyboardKey.enter,
+                  control: true,
+                  includeRepeats: false,
+                ): submit,
+                const SingleActivator(
+                  LogicalKeyboardKey.numpadEnter,
+                  meta: true,
+                  includeRepeats: false,
+                ): submit,
+                const SingleActivator(
+                  LogicalKeyboardKey.numpadEnter,
+                  control: true,
+                  includeRepeats: false,
+                ): submit,
+              },
+        child: body,
       ),
     );
   }

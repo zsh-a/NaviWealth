@@ -13,6 +13,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/design_system/widgets/app_form_scaffold_body.dart';
 import 'package:naviwealth/design_system/widgets/app_toast.dart';
 import 'package:naviwealth/features/finance/accounts/ui/transfer_form_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -158,6 +159,25 @@ Future<void> _selectAccount(
   await tester.pumpAndSettle();
 }
 
+void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {
+  final body = tester.widget<AppFormScaffoldBody>(
+    find.byType(AppFormScaffoldBody),
+  );
+  final button = tester.widget<FButton>(
+    find.descendant(
+      of: find.byType(AppFormActionBar),
+      matching: find.byType(FButton),
+    ),
+  );
+  if (enabled) {
+    expect(body.onSubmit, isNotNull);
+    expect(body.onSubmit, same(button.onPress));
+  } else {
+    expect(body.onSubmit, isNull);
+    expect(button.onPress, isNull);
+  }
+}
+
 void main() {
   late _Harness h;
 
@@ -188,10 +208,7 @@ void main() {
     expect(find.text('To account'), findsOneWidget);
 
     // Submit button is rendered but disabled (no accounts picked yet).
-    final submit = tester.widget<FButton>(
-      find.widgetWithText(FButton, 'Transfer'),
-    );
-    expect(submit.onPress, isNull);
+    _expectSubmitWiring(tester, enabled: false);
   });
 
   testWidgets('PostingsPreview surfaces both legs once form is fillable', (
@@ -224,10 +241,7 @@ void main() {
     expect(find.text('-¥1,000'), findsOneWidget);
     expect(find.text('+¥1,000'), findsOneWidget);
 
-    final submit = tester.widget<FButton>(
-      find.widgetWithText(FButton, 'Transfer'),
-    );
-    expect(submit.onPress, isNotNull);
+    _expectSubmitWiring(tester, enabled: true);
   });
 
   testWidgets('selecting the same account on both ends keeps submit disabled', (

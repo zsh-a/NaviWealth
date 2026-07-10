@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,6 +98,7 @@ Future<Widget> _wrap({
   required Map<String, Object> preferences,
   String? editingId,
   double keyboardInset = 0,
+  Future<JournalEntryRepository>? repositoryFuture,
 }) async {
   for (final entry in preferences.entries) {
     await harness.prefs.setString(entry.key, entry.value as String);
@@ -104,7 +107,7 @@ Future<Widget> _wrap({
     overrides: [
       sharedPreferencesProvider.overrideWithValue(harness.prefs),
       journalEntryRepositoryProvider.overrideWith(
-        (_) async => harness.repository,
+        (_) => repositoryFuture ?? Future.value(harness.repository),
       ),
       accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
       allAccountsStreamProvider.overrideWith((_) => Stream.value(allAccounts)),
@@ -147,6 +150,25 @@ Widget _expensePage({String? expenseId, required double keyboardInset}) {
     );
   }
   return FTheme(data: FThemes.slate.light.desktop, child: page);
+}
+
+void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {
+  final body = tester.widget<AppFormScaffoldBody>(
+    find.byType(AppFormScaffoldBody),
+  );
+  final button = tester.widget<FButton>(
+    find.descendant(
+      of: find.byType(AppFormActionBar),
+      matching: find.byType(FButton),
+    ),
+  );
+  if (enabled) {
+    expect(body.onSubmit, isNotNull);
+    expect(body.onSubmit, same(button.onPress));
+  } else {
+    expect(body.onSubmit, isNull);
+    expect(button.onPress, isNull);
+  }
 }
 
 void main() {
@@ -215,9 +237,58 @@ void main() {
 
     final save = find.widgetWithText(FButton, 'Save');
     expect(save, findsOneWidget);
+    _expectSubmitWiring(tester, enabled: true);
     expect(
       tester.getBottomLeft(save).dy,
       moreOrLessEquals(size.height - keyboardInset - 12, epsilon: 1),
+    );
+  });
+
+  testWidgets('expense shortcut and button disable from the same busy state', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final pendingRepository = Completer<JournalEntryRepository>();
+    addTearDown(() {
+      if (!pendingRepository.isCompleted) {
+        pendingRepository.complete(harness.repository);
+      }
+    });
+    await tester.pumpWidget(
+      await _wrap(
+        harness: harness,
+        repositoryFuture: pendingRepository.future,
+        preferences: const {
+          'naviwealth.forms.expense.account': 'cash-1',
+          'naviwealth.forms.expense.category': 'dining',
+          'naviwealth.forms.expense.currency': 'CNY',
+        },
+        accounts: [
+          _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
+        ],
+        allAccounts: [
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Amount'),
+      '12.50',
+    );
+    await tester.pump();
+    _expectSubmitWiring(tester, enabled: true);
+
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pump();
+    _expectSubmitWiring(tester, enabled: false);
+
+    pendingRepository.complete(harness.repository);
+    await tester.pumpAndSettle();
+    expect(
+      await harness.db.select(harness.db.journalEntries).get(),
+      hasLength(1),
     );
   });
 

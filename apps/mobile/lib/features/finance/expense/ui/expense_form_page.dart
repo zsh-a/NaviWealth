@@ -277,6 +277,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
+    final onSubmit = _busy ? null : _save;
     final allAccountsAsync = ref.watch(allAccountsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return guardedScope(
@@ -314,11 +315,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                   topOffset: 8,
                   endOffset: 16,
                   child: AppFormScaffoldBody(
+                    onSubmit: onSubmit,
                     action: SizedBox(
                       width: double.infinity,
                       child: FButton(
                         variant: FButtonVariant.primary,
-                        onPress: _busy ? null : _save,
+                        onPress: onSubmit,
                         child: Text(
                           _busy ? l10n.commonSaving : l10n.commonSave,
                         ),

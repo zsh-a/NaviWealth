@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -175,6 +178,13 @@ Future<void> _pumpReadyTradeForm(
   await tester.pumpAndSettle();
   await tester.tap(find.text('AAPL').last);
   await tester.pumpAndSettle();
+}
+
+Future<void> _pressControlEnter(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.pump();
 }
 
 void main() {
@@ -400,6 +410,39 @@ void main() {
     await tester.pump(const Duration(seconds: 7));
   });
 
+  testWidgets('keyboard submit stays disabled while one trade is in flight', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await _seedBrokerAccount(db);
+    final trades = _BlockingUiTradeService();
+    final service = _submissionService(db, tradeService: trades);
+    await _pumpReadyTradeForm(tester, db: db, service: service);
+
+    await _pressControlEnter(tester);
+    for (var i = 0; i < 5 && trades.calls == 0; i++) {
+      await tester.pump();
+    }
+    expect(trades.calls, 1);
+    expect(
+      tester
+          .widget<FButton>(find.byKey(const Key('trade-entry-submit')))
+          .onPress,
+      isNull,
+    );
+
+    await _pressControlEnter(tester);
+    await _pressControlEnter(tester);
+    expect(trades.calls, 1);
+
+    trades.release();
+    await tester.pumpAndSettle();
+    expect(await db.select(db.journalEntries).get(), hasLength(1));
+  });
+
   testWidgets('trade Undo conflict exposes safe repeated Retry', (
     tester,
   ) async {
@@ -546,6 +589,25 @@ final class _FailOnceUiTradeService extends _UiTradeEntryService {
       _failed = true;
       throw StateError('injected first-attempt failure');
     }
+    return super.buildPlan(draft, openLots: openLots);
+  }
+}
+
+final class _BlockingUiTradeService extends _UiTradeEntryService {
+  final Completer<void> _gate = Completer<void>();
+  var calls = 0;
+
+  void release() {
+    if (!_gate.isCompleted) _gate.complete();
+  }
+
+  @override
+  Future<TradeEntryPlan> buildPlan(
+    TradeDraft draft, {
+    required List<Lot> openLots,
+  }) async {
+    calls += 1;
+    await _gate.future;
     return super.buildPlan(draft, openLots: openLots);
   }
 }
