@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -71,4 +72,7 @@ class JournalEntryRepository
 
   static const String _journalTable = 'journal_entries';
   static const String _postingsTable = 'postings';
+
+  bool isBoundTo(AppDatabase database) =>
+      identical(_db, database) && isOutboxBoundToDatabase(_outbox, database);
 }

@@ -35,6 +35,7 @@ import '../domain/returns/portfolio_return.dart';
 import '../domain/trade_entry/default_trade_entry_service.dart';
 import '../domain/trade_entry/trade_entry_service.dart';
 import 'corporate_action_repository.dart';
+import 'ledger_lot_reader.dart';
 import 'portfolio_return_service.dart';
 
 part 'providers_corporate_actions.dart';

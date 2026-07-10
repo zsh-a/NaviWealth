@@ -9,9 +9,15 @@ import 'rebalance_execution_codecs.dart';
 
 typedef RebalanceExecutionClock = DateTime Function();
 typedef RebalanceApplyMutation =
-    Future<TradeMutationReceipt> Function(RebalanceExecutionItem claimed);
+    Future<TradeMutationReceipt> Function(
+      AppDatabaseTransactionScope scope,
+      RebalanceExecutionItem claimed,
+    );
 typedef RebalanceUndoMutation =
-    Future<void> Function(RebalanceExecutionItem claimed);
+    Future<void> Function(
+      AppDatabaseTransactionScope scope,
+      RebalanceExecutionItem claimed,
+    );
 
 /// Owner-scoped local coordinator for resumable rebalance execution.
 final class RebalanceExecutionStore {
@@ -26,6 +32,8 @@ final class RebalanceExecutionStore {
   final Uuid _uuid;
   final RebalanceExecutionClock _clock;
 
+  bool isBoundTo(AppDatabase database) => identical(_db, database);
+
   Future<RebalanceExecutionSession> createOrResume({
     required String ownerUserId,
     required RebalancePlan plan,
@@ -37,7 +45,7 @@ final class RebalanceExecutionStore {
     final fingerprint = RebalancePlanFingerprint.compute(plan);
     final now = _now();
 
-    return _db.transaction(() async {
+    return _db.transactionWithScope((scope) async {
       if (archiveExisting) {
         final active = await _activeSessionRow(ownerUserId);
         if (active != null) {
@@ -340,14 +348,14 @@ final class RebalanceExecutionStore {
     required RebalanceApplyMutation mutate,
   }) async {
     _requireOwner(ownerUserId);
-    return _db.transaction(() async {
+    return _db.transactionWithScope((scope) async {
       final claimed = await _claimedForTransaction(
         ownerUserId: ownerUserId,
         itemId: itemId,
         attemptToken: attemptToken,
         phase: RebalanceExecutionPhase.apply,
       );
-      final receipt = await mutate(claimed);
+      final receipt = await mutate(scope, claimed);
       return _finalizeApply(
         ownerUserId: ownerUserId,
         itemId: itemId,
@@ -370,14 +378,14 @@ final class RebalanceExecutionStore {
     required RebalanceUndoMutation mutate,
   }) async {
     _requireOwner(ownerUserId);
-    return _db.transaction(() async {
+    return _db.transactionWithScope((scope) async {
       final claimed = await _claimedForTransaction(
         ownerUserId: ownerUserId,
         itemId: itemId,
         attemptToken: attemptToken,
         phase: RebalanceExecutionPhase.undo,
       );
-      await mutate(claimed);
+      await mutate(scope, claimed);
       return _finalizeUndo(
         ownerUserId: ownerUserId,
         itemId: itemId,
@@ -533,7 +541,9 @@ final class RebalanceExecutionStore {
           ' AND s.owner_user_id = i.owner_user_id '
           'WHERE i.owner_user_id = ?1 AND i.session_id = ?2 '
           "  AND s.status = 'active' "
-          "  AND i.state IN ('applied', 'undoFailed', 'undoing') "
+          "  AND (i.state IN ('applied', 'undoFailed', 'undoing') "
+          "    OR (i.state = 'recoveryBlocked' "
+          '      AND i.recovery_was_applied = 1)) '
           'ORDER BY i.applied_sequence DESC',
           variables: [
             Variable.withString(ownerUserId),
@@ -587,12 +597,24 @@ final class RebalanceExecutionStore {
         ? 'request_json IS NOT NULL AND receipt_json IS NULL '
         : 'request_json IS NOT NULL AND receipt_json IS NOT NULL '
               'AND applied_sequence IS NOT NULL ';
+    final undoOrderBarrier = applying
+        ? ''
+        : 'AND NOT EXISTS ('
+              'SELECT 1 FROM rebalance_execution_items blocker '
+              'WHERE blocker.session_id = rebalance_execution_items.session_id '
+              '  AND blocker.owner_user_id = ?5 '
+              '  AND blocker.applied_sequence > '
+              '      rebalance_execution_items.applied_sequence '
+              "  AND (blocker.state IN ('applied', 'undoFailed', 'undoing') "
+              "    OR (blocker.state = 'recoveryBlocked' "
+              '      AND blocker.recovery_was_applied = 1))) ';
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
       'SET state = \'$state\', attempt_token = ?1, lease_until_iso = ?3, '
       '    error = NULL, updated_at_iso = ?2 '
       'WHERE id = ?4 AND owner_user_id = ?5 AND $eligible '
       '  AND $requiredPayload '
+      '  $undoOrderBarrier '
       '  AND EXISTS (SELECT 1 FROM rebalance_execution_sessions s '
       '    WHERE s.id = rebalance_execution_items.session_id '
       '      AND s.owner_user_id = ?5 AND s.status = \'active\')',

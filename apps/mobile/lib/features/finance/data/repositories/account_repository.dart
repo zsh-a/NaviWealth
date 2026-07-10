@@ -526,10 +526,10 @@ class AccountRepository {
       color: row.color,
       sync: SyncMeta(
         ownerUserId: row.ownerUserId,
-        updatedAt: row.updatedAt,
+        updatedAt: row.updatedAt.toUtc(),
         updatedByDevice: row.updatedByDevice,
         hlc: row.hlc,
-        deletedAt: row.deletedAt,
+        deletedAt: row.deletedAt?.toUtc(),
       ),
     );
   }

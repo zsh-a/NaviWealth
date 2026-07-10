@@ -77,6 +77,8 @@ class _LedgerHoldingService implements HoldingService {
   final HoldingPriceSource prices;
   final CurrencyConverter converter;
 
+  LedgerLotReader get _lotReader => LedgerLotReader(_db);
+
   @override
   Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async {
     final lots = await lotsAt(asOf);
@@ -148,40 +150,8 @@ class _LedgerHoldingService implements HoldingService {
   }
 
   @override
-  Future<List<Lot>> lotsAt(DateTime asOf) async {
-    final rows = await _postingRowsThrough(_db, ownerUserId, asOf);
-    final lots = <Lot>[];
-    for (final row in rows) {
-      final posting = row.posting;
-      final cost = posting.costPerUnit;
-      final costCurrency = posting.costCurrency;
-      if (cost == null || costCurrency == null) continue;
-      if (posting.units > Decimal.zero) {
-        lots.add(
-          Lot(
-            id: posting.costLotId ?? posting.id,
-            openingTransactionId: posting.journalEntryId,
-            accountId: posting.accountId,
-            assetId: posting.unit,
-            currency: costCurrency,
-            originalQuantity: posting.units,
-            remainingQuantity: posting.units,
-            costPerUnit: cost,
-            openedAt: posting.costAcquiredOn ?? row.date,
-          ),
-        );
-      } else if (posting.units < Decimal.zero) {
-        _reduceLots(
-          lots,
-          accountId: posting.accountId,
-          assetId: posting.unit,
-          lotId: posting.costLotId,
-          quantity: -posting.units,
-        );
-      }
-    }
-    return lots;
-  }
+  Future<List<Lot>> lotsAt(DateTime asOf) =>
+      _lotReader.allLotsAt(ownerUserId: ownerUserId, asOf: asOf.toUtc());
 
   @override
   Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) async {
@@ -196,39 +166,6 @@ class _LedgerHoldingService implements HoldingService {
   @override
   Future<void> invalidateFrom(DateTime from) async {}
 
-  void _reduceLots(
-    List<Lot> lots, {
-    required String accountId,
-    required String assetId,
-    required String? lotId,
-    required Decimal quantity,
-  }) {
-    var remaining = quantity;
-    final candidates =
-        lots
-            .where(
-              (lot) =>
-                  !lot.isClosed &&
-                  lot.accountId == accountId &&
-                  lot.assetId == assetId &&
-                  (lotId == null || lot.id == lotId),
-            )
-            .toList()
-          ..sort((a, b) => a.openedAt.compareTo(b.openedAt));
-
-    for (final lot in candidates) {
-      if (remaining <= Decimal.zero) break;
-      final closeQty = lot.remainingQuantity < remaining
-          ? lot.remainingQuantity
-          : remaining;
-      final index = lots.indexOf(lot);
-      lots[index] = lot.copyWith(
-        remainingQuantity: lot.remainingQuantity - closeQty,
-      );
-      remaining -= closeQty;
-    }
-  }
-
   static DateTime _utcDay(DateTime d) {
     final u = d.toUtc();
     return DateTime.utc(u.year, u.month, u.day);
@@ -240,45 +177,6 @@ class _LedgerHoldingService implements HoldingService {
         .add(const Duration(days: 1))
         .subtract(const Duration(microseconds: 1));
   }
-}
-
-Future<List<_LedgerPostingRow>> _postingRowsThrough(
-  AppDatabase db,
-  String ownerUserId,
-  DateTime asOf,
-) async {
-  final query =
-      db.select(db.postings).join([
-          innerJoin(
-            db.journalEntries,
-            db.journalEntries.id.equalsExp(db.postings.journalEntryId),
-          ),
-          innerJoin(db.assets, db.assets.id.equalsExp(db.postings.unit)),
-        ])
-        ..where(db.postings.ownerUserId.equals(ownerUserId))
-        ..where(db.postings.deletedAt.isNull())
-        ..where(db.journalEntries.deletedAt.isNull())
-        ..where(db.journalEntries.date.isSmallerOrEqualValue(asOf))
-        ..orderBy([
-          OrderingTerm.asc(db.journalEntries.date),
-          OrderingTerm.asc(db.postings.position),
-          OrderingTerm.asc(db.postings.id),
-        ]);
-  final rows = await query.get();
-  return [
-    for (final row in rows)
-      _LedgerPostingRow(
-        posting: row.readTable(db.postings),
-        date: row.readTable(db.journalEntries).date,
-      ),
-  ];
-}
-
-class _LedgerPostingRow {
-  const _LedgerPostingRow({required this.posting, required this.date});
-
-  final PostingRow posting;
-  final DateTime date;
 }
 
 class _HoldingAccumulator {

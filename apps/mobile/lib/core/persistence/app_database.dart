@@ -18,6 +18,47 @@ part 'app_database.g.dart';
 
 const String defaultDbFileName = 'naviwealth.db';
 
+enum AppDatabaseTransactionScopeErrorCode { inactive, databaseMismatch }
+
+final class AppDatabaseTransactionScopeError implements Exception {
+  const AppDatabaseTransactionScopeError(this.code, this.message);
+
+  final AppDatabaseTransactionScopeErrorCode code;
+  final String message;
+
+  @override
+  String toString() => 'AppDatabaseTransactionScopeError($code): $message';
+}
+
+/// Capability proving that code is running inside one active DB transaction.
+///
+/// Only [AppDatabase.transactionWithScope] can construct this value. It is
+/// invalidated as soon as that transaction callback completes.
+final class AppDatabaseTransactionScope {
+  AppDatabaseTransactionScope._(this._database);
+
+  final AppDatabase _database;
+  bool _active = true;
+
+  AppDatabase requireDatabase(AppDatabase database) {
+    if (!_active) {
+      throw const AppDatabaseTransactionScopeError(
+        AppDatabaseTransactionScopeErrorCode.inactive,
+        'Transaction scope is no longer active.',
+      );
+    }
+    if (!identical(_database, database)) {
+      throw const AppDatabaseTransactionScopeError(
+        AppDatabaseTransactionScopeErrorCode.databaseMismatch,
+        'Transaction scope belongs to a different AppDatabase.',
+      );
+    }
+    return database;
+  }
+
+  void _deactivate() => _active = false;
+}
+
 /// Local NaviWealth database.
 ///
 /// The app is now forward-only on the Beancount-style ledger. Historical
@@ -78,6 +119,19 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.open({String? dbFileName})
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
+
+  Future<T> transactionWithScope<T>(
+    Future<T> Function(AppDatabaseTransactionScope scope) action,
+  ) {
+    return transaction(() async {
+      final scope = AppDatabaseTransactionScope._(this);
+      try {
+        return await action(scope);
+      } finally {
+        scope._deactivate();
+      }
+    });
+  }
 
   @override
   int get schemaVersion => 36;

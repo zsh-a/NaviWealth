@@ -93,7 +93,10 @@ Widget _wrap(Widget child) {
   );
 }
 
-TradeEntrySubmissionService _submissionService(AppDatabase db) {
+TradeEntrySubmissionService _submissionService(
+  AppDatabase db, {
+  TradeEntryService tradeService = const _UiTradeEntryService(),
+}) {
   final outbox = DriftOutboxStore(db);
   final stamper = makeStubStamper();
   return TradeEntrySubmissionService(
@@ -103,7 +106,7 @@ TradeEntrySubmissionService _submissionService(AppDatabase db) {
       outbox: outbox,
       stamper: stamper,
     ),
-    tradeService: const _UiTradeEntryService(),
+    tradeService: tradeService,
     journalEntryRepo: JournalEntryRepository(
       db: db,
       outbox: outbox,
@@ -365,6 +368,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final db = makeTestDatabase();
     addTearDown(db.close);
+    await _seedBrokerAccount(db);
     final service = _submissionService(db);
     await _pumpReadyTradeForm(tester, db: db, service: service);
 
@@ -403,6 +407,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final db = makeTestDatabase();
     addTearDown(db.close);
+    await _seedBrokerAccount(db);
     final service = _submissionService(db);
     await _pumpReadyTradeForm(tester, db: db, service: service);
 
@@ -454,7 +459,51 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 7));
   });
+
+  testWidgets('failed form retry reuses one stable transaction id', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await _seedBrokerAccount(db);
+    final trades = _FailOnceUiTradeService();
+    final service = _submissionService(db, tradeService: trades);
+    await _pumpReadyTradeForm(tester, db: db, service: service);
+
+    await tester.tap(find.byKey(const Key('trade-entry-submit')));
+    await tester.pumpAndSettle();
+    expect(await db.select(db.journalEntries).get(), isEmpty);
+
+    await tester.tap(find.byKey(const Key('trade-entry-submit')));
+    await tester.pumpAndSettle();
+
+    expect(await db.select(db.journalEntries).get(), hasLength(1));
+    expect(trades.transactionIds, hasLength(3));
+    expect(trades.transactionIds.toSet(), hasLength(1));
+    expect(
+      (await db.select(db.journalEntries).getSingle()).id,
+      trades.transactionIds.first,
+    );
+  });
 }
+
+Future<void> _seedBrokerAccount(AppDatabase db) => db
+    .into(db.accounts)
+    .insert(
+      AccountsCompanion.insert(
+        id: 'broker',
+        type: AccountCategory.broker,
+        name: 'Broker',
+        currency: 'USD',
+        category: const Value(AccountSide.asset),
+        ownerUserId: 'u-test',
+        updatedAt: DateTime.utc(2026),
+        updatedByDevice: 'dev-test',
+        hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'dev-test'),
+      ),
+    );
 
 class _UiTradeEntryService implements TradeEntryService {
   const _UiTradeEntryService();
@@ -466,7 +515,7 @@ class _UiTradeEntryService implements TradeEntryService {
   }) async {
     return TradeEntryPlan(
       trade: PlannedTrade(
-        id: 'tx-ui',
+        id: draft.transactionId!,
         accountId: draft.accountId,
         assetId: draft.asset.id,
         type: draft.type,
@@ -480,5 +529,23 @@ class _UiTradeEntryService implements TradeEntryService {
       ),
       pricing: PriceProvenance.userSupplied,
     );
+  }
+}
+
+final class _FailOnceUiTradeService extends _UiTradeEntryService {
+  final List<String> transactionIds = [];
+  var _failed = false;
+
+  @override
+  Future<TradeEntryPlan> buildPlan(
+    TradeDraft draft, {
+    required List<Lot> openLots,
+  }) async {
+    transactionIds.add(draft.transactionId!);
+    if (!_failed) {
+      _failed = true;
+      throw StateError('injected first-attempt failure');
+    }
+    return super.buildPlan(draft, openLots: openLots);
   }
 }

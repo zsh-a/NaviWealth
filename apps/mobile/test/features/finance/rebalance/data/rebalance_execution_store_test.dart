@@ -266,7 +266,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: finalApply.token,
-        mutate: (_) async => testReceipt(ready.id),
+        mutate: (_, _) async => testReceipt(ready.id),
       );
       expect(applied.state, RebalanceExecutionItemState.applied);
       expect(applied.appliedSequence, 1);
@@ -332,7 +332,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: finalUndo.token,
-        mutate: (_) async {},
+        mutate: (_, _) async {},
       );
       expect(undone.state, RebalanceExecutionItemState.undone);
       expect(undone.receipt, isNotNull);
@@ -383,7 +383,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: claim.token,
-        mutate: (_) async => testReceipt(ready.id, owner: 'owner-b'),
+        mutate: (_, _) async => testReceipt(ready.id, owner: 'owner-b'),
       ),
       throwsA(isA<RebalanceExecutionConflict>()),
     );
@@ -427,7 +427,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: claim.token,
-          mutate: (_) async => testReceipt(ready.id),
+          mutate: (_, _) async => testReceipt(ready.id),
         ),
         throwsA(isA<RebalanceExecutionConflict>()),
       );
@@ -477,7 +477,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: claim.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             await db.customInsert(
               "INSERT INTO rebalance_tx_probe VALUES ('request-cas')",
             );
@@ -517,7 +517,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: old.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             expiredMutationCalled = true;
             return testReceipt(ready.id);
           },
@@ -547,7 +547,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: old.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             staleMutationCalled = true;
             return testReceipt(ready.id);
           },
@@ -559,7 +559,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: reclaimed.token,
-        mutate: (_) async => testReceipt(ready.id),
+        mutate: (_, _) async => testReceipt(ready.id),
       );
       expect(applied.state, RebalanceExecutionItemState.applied);
     },
@@ -614,7 +614,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: item.id,
           attemptToken: claim.token,
-          mutate: (_) async => testReceipt(item.id),
+          mutate: (_, _) async => testReceipt(item.id),
         );
       }
 
@@ -633,6 +633,100 @@ void main() {
     },
   );
 
+  test('undo claim enforces the database reverse-order barrier', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    var now = testNow;
+    final first = RebalanceExecutionStore(db, clock: () => now);
+    final second = RebalanceExecutionStore(db, clock: () => now);
+    final session = await first.createOrResume(
+      ownerUserId: 'owner-a',
+      plan: testPlan(),
+    );
+    for (final item in session.items) {
+      await first.saveRequest(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        request: testRequest(item.id),
+      );
+      final apply = (await first.claimApply(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        leaseDuration: const Duration(minutes: 5),
+      ))!;
+      await first.runApplyTransaction(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        attemptToken: apply.token,
+        mutate: (_, _) async => testReceipt(item.id),
+      );
+    }
+    final lower = session.items.first;
+    final higher = session.items.last;
+
+    Future<void> expectLowerBlocked() async {
+      expect(
+        await second.claimUndo(
+          ownerUserId: 'owner-a',
+          itemId: lower.id,
+          leaseDuration: const Duration(minutes: 5),
+        ),
+        isNull,
+      );
+    }
+
+    await expectLowerBlocked(); // higher applied
+    var highAttempt = (await first.claimUndo(
+      ownerUserId: 'owner-a',
+      itemId: higher.id,
+      leaseDuration: const Duration(minutes: 5),
+    ))!;
+    await first.markUndoFailed(
+      ownerUserId: 'owner-a',
+      itemId: higher.id,
+      attemptToken: highAttempt.token,
+      error: 'injected',
+    );
+    await expectLowerBlocked(); // higher undoFailed
+
+    highAttempt = (await first.claimUndo(
+      ownerUserId: 'owner-a',
+      itemId: higher.id,
+      leaseDuration: const Duration(minutes: 5),
+    ))!;
+    await expectLowerBlocked(); // higher unexpired undoing
+    now = now.add(const Duration(minutes: 6));
+    await expectLowerBlocked(); // higher expired undoing still blocks
+
+    await db.customUpdate(
+      'UPDATE rebalance_execution_items '
+      "SET state = 'recoveryBlocked', attempt_token = NULL, "
+      'lease_until_iso = NULL, recovery_was_applied = 1 WHERE id = ?',
+      variables: [Variable.withString(higher.id)],
+    );
+    await expectLowerBlocked();
+    final undoList = await first.listAppliedForUndo(
+      ownerUserId: 'owner-a',
+      sessionId: session.id,
+    );
+    expect(undoList.first.id, higher.id);
+    expect(undoList.first.state, RebalanceExecutionItemState.recoveryBlocked);
+
+    await db.customUpdate(
+      'UPDATE rebalance_execution_items '
+      "SET state = 'undone', recovery_was_applied = 0 WHERE id = ?",
+      variables: [Variable.withString(higher.id)],
+    );
+    expect(
+      await second.claimUndo(
+        ownerUserId: 'owner-a',
+        itemId: lower.id,
+        leaseDuration: const Duration(minutes: 5),
+      ),
+      isNotNull,
+    );
+  });
+
   test(
     'corrupt applied receipt becomes recoveryBlocked and cannot be claimed',
     () async {
@@ -649,7 +743,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: claim.token,
-        mutate: (_) async => testReceipt(ready.id),
+        mutate: (_, _) async => testReceipt(ready.id),
       );
       await db.customUpdate(
         "UPDATE rebalance_execution_items SET receipt_json = '{broken' "
@@ -747,7 +841,7 @@ void main() {
       ownerUserId: 'owner-a',
       itemId: ready.id,
       attemptToken: claim.token,
-      mutate: (_) async => testReceipt(ready.id),
+      mutate: (_, _) async => testReceipt(ready.id),
     );
     await db.customUpdate(
       "UPDATE rebalance_execution_items SET receipt_json = '{broken', "
@@ -950,7 +1044,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: claim.token,
-        mutate: (claimed) async {
+        mutate: (_, claimed) async {
           expect(claimed.id, ready.id);
           expect(claimed.state, RebalanceExecutionItemState.applying);
           expect(claimed.attemptToken, claim.token);
@@ -987,7 +1081,7 @@ void main() {
             ownerUserId: 'owner-a',
             itemId: ready.id,
             attemptToken: claim.token,
-            mutate: (_) async {
+            mutate: (_, _) async {
               await db.customInsert(
                 "INSERT INTO rebalance_tx_probe VALUES ('callback', 'written')",
               );
@@ -1030,7 +1124,7 @@ void main() {
             ownerUserId: 'owner-a',
             itemId: ready.id,
             attemptToken: claim.token,
-            mutate: (_) async {
+            mutate: (_, _) async {
               await db.customInsert(
                 "INSERT INTO rebalance_tx_probe VALUES ('codec', 'written')",
               );
@@ -1044,7 +1138,7 @@ void main() {
             ownerUserId: 'owner-a',
             itemId: ready.id,
             attemptToken: claim.token,
-            mutate: (_) async {
+            mutate: (_, _) async {
               await db.customInsert(
                 "INSERT INTO rebalance_tx_probe VALUES ('owner', 'written')",
               );
@@ -1058,7 +1152,7 @@ void main() {
             ownerUserId: 'owner-a',
             itemId: ready.id,
             attemptToken: claim.token,
-            mutate: (_) async {
+            mutate: (_, _) async {
               await db.customInsert(
                 "INSERT INTO rebalance_tx_probe VALUES ('tx', 'written')",
               );
@@ -1096,7 +1190,7 @@ void main() {
             ownerUserId: 'owner-a',
             itemId: ready.id,
             attemptToken: claim.token,
-            mutate: (_) async {
+            mutate: (_, _) async {
               await db.customInsert(
                 "INSERT INTO rebalance_tx_probe VALUES ('expired', 'written')",
               );
@@ -1133,7 +1227,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: apply.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             await db.customInsert(
               "INSERT INTO rebalance_tx_probe VALUES ('effect', 'applied')",
             );
@@ -1151,7 +1245,7 @@ void main() {
             ownerUserId: 'owner-a',
             itemId: ready.id,
             attemptToken: undo.token,
-            mutate: (_) async {
+            mutate: (_, _) async {
               await db.customUpdate(
                 "DELETE FROM rebalance_tx_probe WHERE id = 'effect'",
               );
@@ -1171,7 +1265,7 @@ void main() {
             ownerUserId: 'owner-a',
             itemId: ready.id,
             attemptToken: undo.token,
-            mutate: (claimed) async {
+            mutate: (_, claimed) async {
               expect(claimed.receipt, isNotNull);
               expect(claimed.appliedSequence, 1);
               await db.customUpdate(
@@ -1205,7 +1299,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: apply.token,
-        mutate: (_) async {
+        mutate: (_, _) async {
           await db.customInsert(
             "INSERT INTO rebalance_tx_probe VALUES ('effect', 'applied')",
           );
@@ -1227,7 +1321,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: undo.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             await db.customUpdate(
               "DELETE FROM rebalance_tx_probe WHERE id = 'effect'",
             );
@@ -1262,7 +1356,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: undo.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             await db.customUpdate(
               "DELETE FROM rebalance_tx_probe WHERE id = 'effect'",
             );
@@ -1307,7 +1401,7 @@ void main() {
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: apply.token,
-        mutate: (_) async {
+        mutate: (_, _) async {
           await db.customInsert(
             "INSERT INTO rebalance_tx_probe VALUES ('effect', 'applied')",
           );
@@ -1332,7 +1426,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: undo.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             await db.customUpdate(
               "DELETE FROM rebalance_tx_probe WHERE id = 'effect'",
             );
@@ -1381,7 +1475,7 @@ void main() {
           ownerUserId: 'owner-a',
           itemId: ready.id,
           attemptToken: claim.token,
-          mutate: (_) async {
+          mutate: (_, _) async {
             await db.customInsert(
               "INSERT INTO rebalance_tx_probe VALUES ('sql', 'written')",
             );

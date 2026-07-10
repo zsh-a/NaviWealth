@@ -9,6 +9,53 @@ import 'package:sqlite3/sqlite3.dart';
 import 'test_database.dart';
 
 void main() {
+  test('transaction scope is active only for its bound transaction', () async {
+    final db = makeTestDatabase();
+    final other = makeTestDatabase();
+    addTearDown(db.close);
+    addTearDown(other.close);
+    await db.customStatement('CREATE TABLE scope_probe (id TEXT PRIMARY KEY)');
+    late AppDatabaseTransactionScope captured;
+
+    await db.transactionWithScope((scope) async {
+      captured = scope;
+      expect(scope.requireDatabase(db), same(db));
+      await db.customInsert("INSERT INTO scope_probe VALUES ('committed')");
+    });
+    expect(
+      await db.customSelect('SELECT * FROM scope_probe').get(),
+      hasLength(1),
+    );
+    expect(
+      () => captured.requireDatabase(db),
+      throwsA(
+        isA<AppDatabaseTransactionScopeError>().having(
+          (error) => error.code,
+          'code',
+          AppDatabaseTransactionScopeErrorCode.inactive,
+        ),
+      ),
+    );
+
+    await expectLater(
+      db.transactionWithScope((scope) async {
+        scope.requireDatabase(other);
+        await db.customInsert("INSERT INTO scope_probe VALUES ('wrong-db')");
+      }),
+      throwsA(
+        isA<AppDatabaseTransactionScopeError>().having(
+          (error) => error.code,
+          'code',
+          AppDatabaseTransactionScopeErrorCode.databaseMismatch,
+        ),
+      ),
+    );
+    expect(
+      await db.customSelect('SELECT * FROM scope_probe').get(),
+      hasLength(1),
+    );
+  });
+
   test('opens with SQLite foreign keys enabled', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);

@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:uuid/uuid.dart';
 
 import '../application/trade_entry_submission_service.dart';
 import '../data/providers.dart';
@@ -62,6 +63,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   final _feeController = TextEditingController(text: '0');
   final _taxController = TextEditingController(text: '0');
   final _noteController = TextEditingController();
+  final String _transactionId = const Uuid().v4();
 
   // Focus chain: quantity → price → fee → tax → note. Submit fires from
   // the last `done` action so the user can complete an entry without
@@ -302,6 +304,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       ),
       commit: () => submissionService.submit(
         TradeEntrySubmissionRequest(
+          transactionId: _transactionId,
           symbol: selected.symbol,
           market: selected.market,
           assetType: selected.type,

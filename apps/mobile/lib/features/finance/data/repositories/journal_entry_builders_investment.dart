@@ -10,6 +10,7 @@ JournalEntryBuild _buildBuyJournalEntry({
   required String quoteCurrency,
   String? lotId,
   DateTime? acquiredOn,
+  bool capitalizeFeeIntoLot = false,
   Decimal? feeAmount,
   String? feeAccountId,
   String? feeCurrency,
@@ -23,7 +24,14 @@ JournalEntryBuild _buildBuyJournalEntry({
 }) {
   _assertPositive(qty, 'qty');
   _assertPositive(price, 'price');
-  final fee = _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');
+  final fee = capitalizeFeeIntoLot
+      ? _normalizeCapitalizedBuyFee(
+          feeAmount,
+          feeAccountId,
+          feeCurrency,
+          quoteCurrency,
+        )
+      : _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');
   final tax = _normalizeOptionalAmount(taxAmount, taxAccountId, label: 'tax');
 
   final notional = qty * price;
@@ -45,14 +53,16 @@ JournalEntryBuild _buildBuyJournalEntry({
       units: qty,
       unit: assetUnit,
       cost: Cost(
-        perUnit: price,
+        perUnit: capitalizeFeeIntoLot && fee != null
+            ? ((notional + fee) / qty).toDecimal(scaleOnInfinitePrecision: 16)
+            : price,
         currency: quoteCurrency,
         lotId: lotId,
         acquiredOn: acquiredOn ?? date,
       ),
     ),
   ];
-  if (fee != null) {
+  if (fee != null && !capitalizeFeeIntoLot) {
     postings.add(
       PostingDraft(
         position: postings.length,
@@ -116,19 +126,43 @@ JournalEntryBuild _buildBuyJournalEntry({
   );
 }
 
-JournalEntryBuild _buildSellJournalEntry({
+Decimal? _normalizeCapitalizedBuyFee(
+  Decimal? amount,
+  String? accountId,
+  String? currency,
+  String quoteCurrency,
+) {
+  if (accountId != null) {
+    throw ArgumentError.value(
+      accountId,
+      'feeAccountId',
+      'must be null when the buy fee is capitalized into the lot',
+    );
+  }
+  if (amount == null || amount == Decimal.zero) return null;
+  if (amount < Decimal.zero) {
+    throw ArgumentError.value(amount, 'feeAmount', 'must be >= 0');
+  }
+  final effectiveCurrency = currency ?? quoteCurrency;
+  if (effectiveCurrency != quoteCurrency) {
+    throw ArgumentError.value(
+      effectiveCurrency,
+      'feeCurrency',
+      'must match quoteCurrency when the buy fee is capitalized',
+    );
+  }
+  return amount;
+}
+
+JournalEntryBuild _buildSellLotsJournalEntry({
   required DateTime date,
   required String accountId,
   required String cashAccountId,
   required String capitalGainsAccountId,
   required String assetUnit,
-  required Decimal qty,
+  required List<SellLotAllocation> allocations,
   required Decimal price,
   required String quoteCurrency,
-  required Decimal costPerUnit,
-  required String costCurrency,
-  String? lotId,
-  DateTime? acquiredOn,
   Decimal? feeAmount,
   String? feeAccountId,
   String? feeCurrency,
@@ -140,20 +174,41 @@ JournalEntryBuild _buildSellJournalEntry({
   DateTime? settledOn,
   List<String> tagIds = const <String>[],
 }) {
-  _assertPositive(qty, 'qty');
+  if (allocations.isEmpty) {
+    throw ArgumentError.value(allocations, 'allocations', 'must not be empty');
+  }
   _assertPositive(price, 'price');
-  if (costCurrency != quoteCurrency) {
-    throw ArgumentError(
-      'sell currently requires costCurrency ($costCurrency) to match '
-      'quoteCurrency ($quoteCurrency); cross-currency lot closure '
-      'is unsupported territory.',
-    );
+  for (var index = 0; index < allocations.length; index++) {
+    final allocation = allocations[index];
+    _assertPositive(allocation.quantity, 'allocations[$index].quantity');
+    if (allocation.costPerUnit < Decimal.zero) {
+      throw ArgumentError.value(
+        allocation.costPerUnit,
+        'allocations[$index].costPerUnit',
+        'must be >= 0',
+      );
+    }
+    if (allocation.costCurrency != quoteCurrency) {
+      throw ArgumentError(
+        'sell currently requires costCurrency '
+        '(${allocation.costCurrency}) to match quoteCurrency '
+        '($quoteCurrency); cross-currency lot closure is unsupported.',
+      );
+    }
   }
   final fee = _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');
   final tax = _normalizeOptionalAmount(taxAmount, taxAccountId, label: 'tax');
 
+  final qty = allocations.fold<Decimal>(
+    Decimal.zero,
+    (sum, allocation) => sum + allocation.quantity,
+  );
   final grossProceeds = qty * price;
-  final realisedPnl = (price - costPerUnit) * qty;
+  final realisedPnl = allocations.fold<Decimal>(
+    Decimal.zero,
+    (sum, allocation) =>
+        sum + (price - allocation.costPerUnit) * allocation.quantity,
+  );
 
   final feeCcy = feeCurrency ?? quoteCurrency;
   final taxCcy = taxCurrency ?? quoteCurrency;
@@ -165,31 +220,34 @@ JournalEntryBuild _buildSellJournalEntry({
   if (fee != null && feeCcy == quoteCurrency) cashIn -= fee;
   if (tax != null && taxCcy == quoteCurrency) cashIn -= tax;
 
-  final postings = <PostingDraft>[
-    PostingDraft(
-      position: 0,
-      accountId: accountId,
-      units: -qty,
-      unit: assetUnit,
-      // cost ties this leg back to the open lot for cost-basis
-      // bookkeeping; price records the realised market price for
-      // analytics + Beancount export.
-      cost: Cost(
-        perUnit: costPerUnit,
-        currency: costCurrency,
-        lotId: lotId,
-        acquiredOn: acquiredOn,
+  final postings = <PostingDraft>[];
+  for (final allocation in allocations) {
+    postings.add(
+      PostingDraft(
+        position: postings.length,
+        accountId: accountId,
+        units: -allocation.quantity,
+        unit: assetUnit,
+        // Keep every consumed lot distinct for deterministic lot reduction.
+        cost: Cost(
+          perUnit: allocation.costPerUnit,
+          currency: allocation.costCurrency,
+          lotId: allocation.lotId,
+          acquiredOn: allocation.acquiredOn,
+        ),
+        price: Price(perUnit: price, currency: quoteCurrency),
       ),
-      price: Price(perUnit: price, currency: quoteCurrency),
-    ),
-    // Income:CapitalGains leg. Negative units = credit to income.
+    );
+  }
+  // Income:CapitalGains leg. Negative units = credit to income.
+  postings.add(
     PostingDraft(
-      position: 1,
+      position: postings.length,
       accountId: capitalGainsAccountId,
       units: -realisedPnl,
       unit: quoteCurrency,
     ),
-  ];
+  );
   if (fee != null) {
     postings.add(
       PostingDraft(

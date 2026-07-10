@@ -177,6 +177,64 @@ void main() {
       );
     });
 
+    test('capitalized fee increases lot cost without an expense leg', () {
+      final build = JournalEntryBuilders.buy(
+        date: DateTime.utc(2026, 1, 15),
+        accountId: 'a-brokerage',
+        cashAccountId: 'a-cash',
+        assetUnit: 'NASDAQ:AAPL',
+        qty: Decimal.fromInt(10),
+        price: Decimal.fromInt(100),
+        quoteCurrency: 'USD',
+        capitalizeFeeIntoLot: true,
+        feeAmount: Decimal.fromInt(10),
+        taxAmount: Decimal.fromInt(5),
+        taxAccountId: 'a-tax',
+      );
+
+      expect(_checkBalance(build).isBalanced, isTrue);
+      expect(build.postings, hasLength(3));
+      expect(build.postings[0].cost!.perUnit, Decimal.fromInt(101));
+      expect(build.postings[1].accountId, 'a-tax');
+      expect(build.postings[1].units, Decimal.fromInt(5));
+      expect(build.postings[2].accountId, 'a-cash');
+      expect(build.postings[2].units, Decimal.fromInt(-1015));
+    });
+
+    test('capitalized zero fee keeps price cost and rejects foreign fee', () {
+      final zero = JournalEntryBuilders.buy(
+        date: DateTime.utc(2026),
+        accountId: 'a',
+        cashAccountId: 'c',
+        assetUnit: 'X',
+        qty: Decimal.fromInt(2),
+        price: Decimal.fromInt(50),
+        quoteCurrency: 'USD',
+        capitalizeFeeIntoLot: true,
+        feeAmount: Decimal.zero,
+      );
+      expect(_checkBalance(zero).isBalanced, isTrue);
+      expect(zero.postings, hasLength(2));
+      expect(zero.postings.first.cost!.perUnit, Decimal.fromInt(50));
+      expect(zero.postings.last.units, Decimal.fromInt(-100));
+
+      expect(
+        () => JournalEntryBuilders.buy(
+          date: DateTime.utc(2026),
+          accountId: 'a',
+          cashAccountId: 'c',
+          assetUnit: 'X',
+          qty: Decimal.one,
+          price: Decimal.one,
+          quoteCurrency: 'USD',
+          capitalizeFeeIntoLot: true,
+          feeAmount: Decimal.one,
+          feeCurrency: 'CNY',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('rejects negative quantity', () {
       expect(
         () => JournalEntryBuilders.buy(
@@ -269,6 +327,54 @@ void main() {
       // Fee leg lands at +5 (debit to expense).
       final fee = build.postings.firstWhere((p) => p.accountId == 'a-fee');
       expect(fee.units, Decimal.parse('5'));
+    });
+
+    test('sellLots preserves each lot and aggregates gains and cash once', () {
+      final build = JournalEntryBuilders.sellLots(
+        date: DateTime.utc(2026, 6, 1),
+        accountId: 'a',
+        cashAccountId: 'cash',
+        capitalGainsAccountId: 'gains',
+        assetUnit: 'NASDAQ:AAPL',
+        allocations: [
+          SellLotAllocation(
+            quantity: Decimal.fromInt(2),
+            costPerUnit: Decimal.fromInt(100),
+            costCurrency: 'USD',
+            lotId: 'lot-1',
+            acquiredOn: DateTime.utc(2025, 1, 1),
+          ),
+          SellLotAllocation(
+            quantity: Decimal.fromInt(3),
+            costPerUnit: Decimal.fromInt(120),
+            costCurrency: 'USD',
+            lotId: 'lot-2',
+            acquiredOn: DateTime.utc(2025, 2, 1),
+          ),
+        ],
+        price: Decimal.fromInt(150),
+        quoteCurrency: 'USD',
+        feeAmount: Decimal.fromInt(5),
+        feeAccountId: 'fee',
+      );
+
+      expect(_checkBalance(build).isBalanced, isTrue);
+      expect(build.postings.map((posting) => posting.position), [
+        0,
+        1,
+        2,
+        3,
+        4,
+      ]);
+      expect(build.postings[0].cost!.lotId, 'lot-1');
+      expect(build.postings[0].units, Decimal.fromInt(-2));
+      expect(build.postings[1].cost!.lotId, 'lot-2');
+      expect(build.postings[1].units, Decimal.fromInt(-3));
+      expect(build.postings[2].accountId, 'gains');
+      expect(build.postings[2].units, Decimal.fromInt(-190));
+      expect(build.postings[3].accountId, 'fee');
+      expect(build.postings[4].accountId, 'cash');
+      expect(build.postings[4].units, Decimal.fromInt(745));
     });
 
     test('cross-currency sell is rejected (FIR-132)', () {

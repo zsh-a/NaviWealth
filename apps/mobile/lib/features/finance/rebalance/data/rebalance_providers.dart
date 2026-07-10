@@ -2,18 +2,56 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/preferences/theme_preferences.dart';
+import '../application/rebalance_execution_coordinator.dart';
+import '../application/rebalance_trade_validation.dart';
 import '../domain/allocation_schemes.dart';
 import '../domain/rebalance_engine.dart';
 import '../domain/rebalance_models.dart';
+import 'rebalance_execution_store.dart';
 
 const _kTargetAllocationKey = 'naviwealth.rebalance.target_allocation';
 const _kWarningThresholdKey = 'naviwealth.rebalance.warning_threshold';
 const _kCriticalThresholdKey = 'naviwealth.rebalance.critical_threshold';
+
+final rebalanceExecutionStoreProvider = FutureProvider<RebalanceExecutionStore>(
+  (ref) async {
+    final db = await ref.watch(appDatabaseProvider.future);
+    return RebalanceExecutionStore(db);
+  },
+);
+
+final rebalanceTradeValidationProvider =
+    FutureProvider<RebalanceTradeValidation>((ref) async {
+      final db = await ref.watch(appDatabaseProvider.future);
+      return RebalanceTradeValidation(db);
+    });
+
+final rebalanceExecutionCoordinatorProvider =
+    FutureProvider<RebalanceExecutionCoordinator>((ref) async {
+      final db = await ref.watch(appDatabaseProvider.future);
+      final store = await ref.watch(rebalanceExecutionStoreProvider.future);
+      final validation = await ref.watch(
+        rebalanceTradeValidationProvider.future,
+      );
+      final tradeSubmission = await ref.watch(
+        tradeEntrySubmissionServiceProvider.future,
+      );
+      return RebalanceExecutionCoordinator(
+        db: db,
+        store: store,
+        validation: validation,
+        tradeSubmission: tradeSubmission,
+        currentUserId: ref.watch(currentUserIdProvider),
+      );
+    });
 
 /// The rebalance engine instance. Thresholds are user-configurable via
 /// [warningThresholdProvider] / [criticalThresholdProvider].

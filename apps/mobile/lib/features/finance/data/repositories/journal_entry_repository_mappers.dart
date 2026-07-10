@@ -45,18 +45,18 @@ JournalEntry _journalToDomain(JournalEntryRow row) {
   final tagIds = (jsonDecode(row.tagIdsJson) as List<dynamic>).cast<String>();
   return JournalEntry(
     id: row.id,
-    date: row.date,
-    settledOn: row.settledOn,
+    date: row.date.toUtc(),
+    settledOn: row.settledOn?.toUtc(),
     narration: row.narration,
     payee: row.payee,
     tagIds: List.unmodifiable(tagIds),
     flag: row.flag,
     sync: SyncMeta(
       ownerUserId: row.ownerUserId,
-      updatedAt: row.updatedAt,
+      updatedAt: row.updatedAt.toUtc(),
       updatedByDevice: row.updatedByDevice,
       hlc: row.hlc,
-      deletedAt: row.deletedAt,
+      deletedAt: row.deletedAt?.toUtc(),
     ),
   );
 }
@@ -68,7 +68,7 @@ Posting _postingToDomain(PostingRow row) {
       perUnit: row.costPerUnit!,
       currency: row.costCurrency!,
       lotId: row.costLotId,
-      acquiredOn: row.costAcquiredOn,
+      acquiredOn: row.costAcquiredOn?.toUtc(),
     );
   }
   Price? price;
@@ -86,10 +86,10 @@ Posting _postingToDomain(PostingRow row) {
     price: price,
     sync: SyncMeta(
       ownerUserId: row.ownerUserId,
-      updatedAt: row.updatedAt,
+      updatedAt: row.updatedAt.toUtc(),
       updatedByDevice: row.updatedByDevice,
       hlc: row.hlc,
-      deletedAt: row.deletedAt,
+      deletedAt: row.deletedAt?.toUtc(),
     ),
   );
 }

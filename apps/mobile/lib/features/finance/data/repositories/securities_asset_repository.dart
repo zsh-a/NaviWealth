@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -39,6 +40,9 @@ class SecuritiesAssetRepository {
   final MutationStamper _stamper;
 
   static const String _tableName = 'assets';
+
+  bool isBoundTo(AppDatabase database) =>
+      identical(_db, database) && isOutboxBoundToDatabase(_outbox, database);
 
   // ---------- Reads ----------
 
@@ -349,10 +353,10 @@ class SecuritiesAssetRepository {
       metadataJson: row.metadataJson,
       sync: SyncMeta(
         ownerUserId: row.ownerUserId,
-        updatedAt: row.updatedAt,
+        updatedAt: row.updatedAt.toUtc(),
         updatedByDevice: row.updatedByDevice,
         hlc: row.hlc,
-        deletedAt: row.deletedAt,
+        deletedAt: row.deletedAt?.toUtc(),
       ),
     );
   }

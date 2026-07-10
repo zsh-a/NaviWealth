@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -33,6 +34,9 @@ class PriceRepository {
   final Uuid _uuid;
 
   static const String _tableName = 'prices';
+
+  bool isBoundTo(AppDatabase database) =>
+      identical(_db, database) && isOutboxBoundToDatabase(_outbox, database);
 
   // ---------- Reads ----------
 
@@ -252,15 +256,15 @@ class PriceRepository {
     id: row.id,
     unit: row.unit,
     quoteCurrency: row.quoteCurrency,
-    observedOn: row.observedOn,
+    observedOn: row.observedOn.toUtc(),
     perUnit: row.perUnit,
     source: row.source,
     sync: SyncMeta(
       ownerUserId: row.ownerUserId,
-      updatedAt: row.updatedAt,
+      updatedAt: row.updatedAt.toUtc(),
       updatedByDevice: row.updatedByDevice,
       hlc: row.hlc,
-      deletedAt: row.deletedAt,
+      deletedAt: row.deletedAt?.toUtc(),
     ),
   );
 }

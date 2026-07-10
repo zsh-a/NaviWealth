@@ -34,11 +34,9 @@ final realizedPnlProvider = FutureProvider.autoDispose<List<RealizedPnL>>((
   ref.watch(_ledgerRevisionProvider);
   final db = await ref.watch(appDatabaseProvider.future);
   final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
-  final rows = await _postingRowsThrough(
+  final rows = await LedgerLotReader(
     db,
-    ownerUserId,
-    DateTime.now().toUtc(),
-  );
+  ).allMovementsThrough(ownerUserId: ownerUserId, asOf: DateTime.now().toUtc());
   return _realizedPnlFromRows(rows);
 });
 
@@ -59,7 +57,7 @@ final portfolioReturnServiceProvider = FutureProvider<PortfolioReturnService>((
   );
 });
 
-List<RealizedPnL> _realizedPnlFromRows(List<_LedgerPostingRow> rows) {
+List<RealizedPnL> _realizedPnlFromRows(List<LedgerLotMovement> rows) {
   var id = 0;
   final engine = CostBasisEngine(
     strategy: const FifoStrategy(),
