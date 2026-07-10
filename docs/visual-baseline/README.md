@@ -30,45 +30,77 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 | FIRE OS cards | `apps/mobile/test/golden/fire_os_cards_golden_test.dart` | dark / colorblind |
 | Sync status diagnostics | `apps/mobile/test/golden/sync_status_page_golden_test.dart` | dark / colorblind |
 | AI visual primitives / renderers | `apps/mobile/test/golden/ai_surfaces_golden_test.dart` | component-scoped light surfaces |
+| Task flows (Ingest, forms, Undo, Rebalance) | `apps/mobile/test/golden/task_flow_responsive_golden_test.dart` | dark responsive N / W / T matrix |
 
-16 test files currently produce **48 PNG baselines** under
-`apps/mobile/test/golden/goldens/`. Light-mode page variants were dropped — see
-*Variant choice* below — but AI primitive/component goldens keep their own
-minimal light surfaces to isolate the visual language from app chrome.
+17 test files produce **61 PNG baselines** under
+`apps/mobile/test/golden/goldens/`: the legacy 48-PNG theme matrix plus a new
+13-PNG dark responsive task-flow matrix. Light-mode page variants were
+dropped — see *Variant choice* below — but AI primitive/component goldens keep
+their own minimal light surfaces to isolate the visual language from app
+chrome.
 
-Mobile-only for now. Tablet and desktop snapshots are deferred — those layouts use the same primitives the mobile goldens already cover, and the master-detail surfaces add CI flake without a visual signal we don't already get from the unit suite.
+The responsive profiles are N (`390×844 @2x`, text scale 1), W
+(`1280×900 @1x`, text scale 1), and T (the N canvas at text scale 2.0). The 13
+dark baselines are:
+
+- `task_flow_ingest_n.png`, `task_flow_ingest_w.png`, `task_flow_ingest_t.png`
+- `task_flow_account_n.png`, `task_flow_expense_n.png`
+- `task_flow_transfer_w.png`, `task_flow_transfer_t.png`
+- `task_flow_trade_n.png`
+- `task_flow_persistent_undo_n.png`, `task_flow_persistent_undo_t.png`
+- `task_flow_rebalance_n.png`, `task_flow_rebalance_w.png`, `task_flow_rebalance_t.png`
 
 ### Variant choice
 
-Two variants: dark (red-up-green-down) and dark-colorblind (blue+orange). Both exercise `MarketColors`, `GlassTokens`, and the type ramp under different accent regimes. A light variant adds CI cost without catching anything the dark+colorblind pair doesn't.
+The legacy 48 baselines keep two variants: dark (red-up-green-down) and
+dark-colorblind (blue+orange). Both exercise `MarketColors`, `GlassTokens`,
+and the type ramp under different accent regimes. The 13 responsive task-flow
+baselines are dark-only so the matrix spends its budget on width and 2× text
+rather than repeating accent coverage.
 
 ### Where the baselines come from
 
 Goldens are byte-compared PNGs and depend on the rasteriser. **Linux is the source of truth** — `mobile.yml`'s `golden regression (mobile)` job runs on `ubuntu-latest` and asserts against the checked-in PNGs.
 
-`apps/mobile/test/golden/flutter_test_config.dart` skips the byte comparison off-Linux so devs on macOS / Windows still see a green bar locally; the matcher still executes (a render-time exception still fails the test). `--update-goldens` always writes, regardless of platform.
+`apps/mobile/test/golden/flutter_test_config.dart` skips the PNG matcher
+off-Linux so macOS / Windows do not compare incompatible raster output. The
+responsive harness still pumps the full surface and separately fails on any
+render-time exception before reaching that policy. `--update-goldens` invokes
+the matcher and writes regardless of platform.
 
 ### Workflow
 
 ```bash
 cd apps/mobile
 
-# Regenerate the baseline locally (only meaningful on Linux; macOS / Windows
-# baselines won't match what CI generates):
-flutter test test/golden --tags=golden --update-goldens
+# Regenerate only the responsive baseline on Linux. This leaves the legacy
+# 48 PNGs byte-for-byte unchanged:
+flutter test test/golden/task_flow_responsive_golden_test.dart \
+  --tags=responsive-golden --update-goldens
 
-# Verify against the committed baseline:
+# PR verification (responsive task flows only):
+flutter test test/golden/task_flow_responsive_golden_test.dart \
+  --tags=responsive-golden
+
+# Main verification (all legacy + responsive goldens):
 flutter test test/golden --tags=golden
 ```
 
 In CI:
 
 - `analyze + test (coverage)` runs `flutter test --exclude-tags=golden` for the unit / widget suite.
-- `golden regression (mobile)` runs `flutter test test/golden --tags=golden`. Fails the PR on byte-diff. On failure the diff PNGs (`apps/mobile/test/golden/failures/`) are uploaded as a workflow artifact (7-day retention).
+- Pull requests run the independent `responsive task-flow goldens` job, which
+  needs `prepare-font-assets` and runs only the double-tagged responsive file.
+- Main runs `golden regression (mobile)` with `--tags=golden`, so it compares
+  all 61 baselines. On failure the diff PNGs
+  (`apps/mobile/test/golden/failures/`) are uploaded as a workflow artifact.
 
 ### Adding a new golden
 
-1. Add a test file under `apps/mobile/test/golden/`. Reuse `pumpAndSnapshotMobile` + `runAllVariants(name, body)` from `_golden_setup.dart` — they handle device profile, font fallback, theme variants, motion suppression.
+1. Add a test file under `apps/mobile/test/golden/`. Legacy theme-matrix tests
+   use `pumpAndSnapshotMobile` + `runAllVariants(name, body)`. Responsive tests
+   use the separate `pumpAndSnapshotResponsive` + `runResponsiveGolden` path
+   and carry both `golden` and `responsive-golden` tags.
 2. Override every `StreamProvider` / `FutureProvider` that would otherwise reach the real Drift DB (`appDatabaseProvider` / `outboxStoreProvider` / `syncEngineProvider` leave a stream-query timer dangling at scope dispose). When in doubt, copy the override block from a sibling page test.
 3. Run with `--update-goldens` on a Linux box (locally or via a "regenerate goldens" PR) and commit the resulting `goldens/<name>_<variant>.png`.
 
@@ -94,7 +126,7 @@ docker run --rm \
     flutter pub get && \
     tool/build-cn-fonts.sh && \
     tool/build-latin-fonts.sh && \
-    flutter test test/golden --tags=golden --update-goldens --reporter=expanded'
+    flutter test test/golden/task_flow_responsive_golden_test.dart --tags=responsive-golden --update-goldens --reporter=expanded'
 ```
 
 Do not commit goldens generated directly on macOS or Windows; those platforms

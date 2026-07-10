@@ -80,7 +80,15 @@ class AiPill extends StatelessWidget {
             leading!,
             const SizedBox(width: AppSpacing.s6),
           ],
-          Text(label, style: AiType.label(context).copyWith(color: fg)),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              semanticsLabel: label,
+              style: AiType.label(context).copyWith(color: fg),
+            ),
+          ),
         ],
       ),
     );

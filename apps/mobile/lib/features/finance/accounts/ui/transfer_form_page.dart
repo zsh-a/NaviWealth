@@ -59,7 +59,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
 
   String? _fromAccountId;
   String? _toAccountId;
-  DateTime _date = DateTime.now();
+  late DateTime _date;
   bool _busy = false;
 
   /// Tracks whether the user has typed into the to-amount field. Until
@@ -71,6 +71,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   @override
   void initState() {
     super.initState();
+    _date = ref.read(formClockProvider)();
     // `_toAmountController` is auto-filled from the FX rate, so it must
     // not be bound — only an explicit user edit (tracked by
     // `_onToAmountTyped`) counts as dirty.

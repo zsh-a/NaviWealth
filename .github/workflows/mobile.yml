@@ -228,6 +228,38 @@ jobs:
       - working-directory: ${{ github.workspace }}
         run: echo "static checks, test shards, and coverage upload passed"
 
+  responsive-golden-pr:
+    name: responsive task-flow goldens
+    runs-on: ubuntu-latest
+    needs: prepare-font-assets
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: mobile-font-assets
+          path: apps/mobile/assets/fonts
+      - run: flutter pub get
+      - name: Run responsive task-flow golden suite
+        run: >
+          flutter test test/golden/task_flow_responsive_golden_test.dart
+          --tags=responsive-golden
+          --reporter=expanded
+      - name: Upload responsive golden diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: responsive-task-flow-golden-failures
+          path: |
+            apps/mobile/test/golden/failures/**
+            apps/mobile/test/golden/goldens/**
+          if-no-files-found: ignore
+          retention-days: 7
+
   golden-regression:
     name: golden regression (mobile)
     runs-on: ubuntu-latest

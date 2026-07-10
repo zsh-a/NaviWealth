@@ -52,13 +52,14 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   String? _expenseAccountId;
   String? _fromAccountId;
   String? _currency = 'CNY';
-  DateTime _date = DateTime.now();
+  late DateTime _date;
   bool _busy = false;
   JournalEntryWithPostings? _initial;
 
   @override
   void initState() {
     super.initState();
+    _date = ref.read(formClockProvider)();
     dirty.bindTextControllers([_amountController, _noteController]);
     if (widget.isEdit) {
       _loadInitial();

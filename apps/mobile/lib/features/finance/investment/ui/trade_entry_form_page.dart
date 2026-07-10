@@ -79,7 +79,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   String? _accountId;
   String? _cashAccountId;
   String? _currency = 'CNY';
-  DateTime _tradeDate = DateTime.now();
+  late DateTime _tradeDate;
   LocalSecurityChoice? _selected;
   bool _busy = false;
   bool _hydratedDefaults = false;
@@ -105,6 +105,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   @override
   void initState() {
     super.initState();
+    _tradeDate = ref.read(formClockProvider)();
     // Constructor-supplied pre-selection wins over the persisted default.
     _accountId = widget.accountId;
     final defaults = ref.read(formDefaultsProvider);

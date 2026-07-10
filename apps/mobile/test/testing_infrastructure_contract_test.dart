@@ -414,16 +414,41 @@ void main() {
           .where((file) => file.path.endsWith('.png'))
           .toList(growable: false);
 
-      expect(goldenFiles, hasLength(16));
-      expect(pngFiles, hasLength(48));
+      const responsivePngs = <String>{
+        'task_flow_ingest_n.png',
+        'task_flow_ingest_w.png',
+        'task_flow_ingest_t.png',
+        'task_flow_account_n.png',
+        'task_flow_expense_n.png',
+        'task_flow_transfer_w.png',
+        'task_flow_transfer_t.png',
+        'task_flow_trade_n.png',
+        'task_flow_persistent_undo_n.png',
+        'task_flow_persistent_undo_t.png',
+        'task_flow_rebalance_n.png',
+        'task_flow_rebalance_w.png',
+        'task_flow_rebalance_t.png',
+      };
+      final pngNames = pngFiles
+          .map((file) => file.uri.pathSegments.last)
+          .toSet();
+      final responsivePresent = pngNames.intersection(responsivePngs);
+
+      expect(goldenFiles, hasLength(17));
+      expect(responsivePresent, equals(responsivePngs));
+      expect(pngFiles, hasLength(61));
 
       final repoRoot = appRoot.parent.parent;
       final docs = File('${repoRoot.path}/docs/visual-baseline/README.md');
       expect(docs.existsSync(), isTrue);
       final text = docs.readAsStringSync();
-      expect(text, contains('16 test files'));
-      expect(text, contains('48 PNG baselines'));
+      expect(text, contains('17 test files'));
+      expect(text, contains('61 PNG baselines'));
       expect(text, contains('sync_status_page_golden_test.dart'));
+      expect(text, contains('task_flow_responsive_golden_test.dart'));
+      for (final filename in responsivePngs) {
+        expect(text, contains(filename));
+      }
     });
 
     test('Phase 1 roadmap testing status matches current contracts', () {
