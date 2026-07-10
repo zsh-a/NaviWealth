@@ -142,4 +142,76 @@ void main() {
       first.drafts.single.draftId,
     );
   });
+
+  test('planning preserves one clock read and one id per accepted row', () {
+    var clockReads = 0;
+    var idReads = 0;
+    final pipeline = IngestPipeline(
+      clock: () {
+        clockReads++;
+        return DateTime.utc(2026, 5, 15, 12);
+      },
+      idGen: () => 'counted-${idReads++}',
+    );
+
+    final rejected = pipeline.plan(
+      source: const IngestSource(
+        kind: IngestSourceKind.receiptImage,
+        payload: '<bytes>',
+      ),
+      existingLedger: const [],
+      ownerUserId: 'u1',
+    );
+    expect(rejected.isRejected, isTrue);
+    expect((clockReads, idReads), (0, 0));
+
+    final empty = pipeline.plan(
+      source: const IngestSource(kind: IngestSourceKind.csv, payload: ''),
+      existingLedger: const [],
+      ownerUserId: 'u1',
+    );
+    expect(empty.drafts, isEmpty);
+    expect((clockReads, idReads), (1, 0));
+
+    final rows = pipeline.planFromParsed(
+      parsed: [
+        ParsedTransaction(
+          description: 'A',
+          amountMinor: -100,
+          currency: 'CNY',
+          occurredAt: DateTime.utc(2026, 5, 10),
+        ),
+        ParsedTransaction(
+          description: 'B',
+          amountMinor: -200,
+          currency: 'CNY',
+          occurredAt: DateTime.utc(2026, 5, 11),
+        ),
+      ],
+      source: const IngestSource(
+        kind: IngestSourceKind.csv,
+        payload: '',
+        originLabel: 'counted.csv',
+      ),
+      existingLedger: const [],
+      ownerUserId: 'u1',
+      traceId: 'trace-counted',
+    );
+    expect((clockReads, idReads), (2, 2));
+    expect(rows.drafts.map((draft) => draft.draftId), [
+      'counted-0',
+      'counted-1',
+    ]);
+    expect(rows.drafts.map((draft) => draft.createdAt).toSet(), {
+      DateTime.utc(2026, 5, 15, 12),
+    });
+    expect(
+      rows.drafts.every((draft) => draft.traceId == 'trace-counted'),
+      isTrue,
+    );
+    expect(
+      rows.drafts.every((draft) => draft.originLabel == 'counted.csv'),
+      isTrue,
+    );
+  });
 }

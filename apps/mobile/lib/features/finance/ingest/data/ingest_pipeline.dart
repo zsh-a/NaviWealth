@@ -69,7 +69,10 @@ class IngestPipeline {
     final expiresAt = now.add(draftTtl);
 
     final drafts = <IngestDraft>[];
-    final dedupLedger = existingLedger.toList(growable: true);
+    final dedupIndex = IngestDedupIndex<String>();
+    for (final entry in existingLedger) {
+      dedupIndex.add(entry, entry.id);
+    }
     for (final p in parsed) {
       // ④ Normalize — reuse the on-device classifier rather than
       // inventing a second heuristic (the ledger is the only computer).
@@ -87,7 +90,7 @@ class IngestPipeline {
           : p.copyWith(categoryHint: classification.categoryHint);
 
       // ⑤ Dedup against device truth.
-      final dedup = classifyDedup(normalized, dedupLedger);
+      final dedup = dedupIndex.match(normalized);
 
       final draftId = _idGen();
       drafts.add(
@@ -100,12 +103,12 @@ class IngestPipeline {
           verdict: dedup.verdict,
           status: DraftStatus.pending,
           originLabel: source.originLabel,
-          dedupTargetEntryId: dedup.targetEntryId,
+          dedupTargetEntryId: dedup.target,
           traceId: traceId,
           expiresAt: expiresAt,
         ),
       );
-      dedupLedger.add(
+      dedupIndex.add(
         TransactionInput(
           id: draftId,
           description: normalized.description,
@@ -114,6 +117,7 @@ class IngestPipeline {
           occurredAt: normalized.occurredAt,
           categoryId: normalized.categoryHint,
         ),
+        draftId,
       );
     }
     return IngestResult(drafts: drafts);
