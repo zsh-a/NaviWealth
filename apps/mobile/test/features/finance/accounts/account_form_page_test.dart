@@ -14,6 +14,7 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/accounts/ui/account_form_page.dart';
+import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -130,6 +131,7 @@ ProviderScope _wrap(_Harness h, {List<Account>? accounts, String? editingId}) {
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => AppMessenger.init(child: child!),
       // Minimal router so `context.go` calls inside the form don't blow
       // up the test. The destination route renders an empty page; the
       // tests that follow assert on the form behaviour before pop.
@@ -305,5 +307,112 @@ void main() {
       batch.any((op) => op.table == 'accounts' && op.rowId == saved.id),
       isTrue,
     );
+  });
+
+  testWidgets('create success offers Undo and tombstones the account', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(_wrap(h, accounts: const []));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Account name'),
+      'Undo account',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    final saved = await (h.db.select(
+      h.db.accounts,
+    )..where((row) => row.name.equals('Undo account'))).getSingle();
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    final tombstoned = await (h.db.select(
+      h.db.accounts,
+    )..where((row) => row.id.equals(saved.id))).getSingle();
+    expect(tombstoned.deletedAt, isNotNull);
+    expect(find.text('Change undone'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 7));
+  });
+
+  testWidgets('edit success Undo restores the complete prior account', (
+    tester,
+  ) async {
+    final repository = AccountRepository(
+      db: h.db,
+      outbox: h.outbox,
+      stamper: h.stamper,
+    );
+    final original = await repository.create(
+      type: AccountCategory.bank,
+      name: 'Original account',
+      currency: 'CNY',
+      institution: 'Original bank',
+      note: 'Original note',
+    );
+    await _enlarge(tester);
+    await tester.pumpWidget(
+      _wrap(h, accounts: [original], editingId: original.id),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Account name'),
+      'Edited account',
+    );
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Institution'),
+      '',
+    );
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect((await repository.findById(original.id))!.name, 'Edited account');
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    final restored = (await repository.findById(original.id))!;
+    expect(restored.name, 'Original account');
+    expect(restored.institution, 'Original bank');
+    expect(restored.note, 'Original note');
+    await tester.pump(const Duration(seconds: 7));
+  });
+
+  testWidgets('Undo conflict exposes Retry and never overwrites later edit', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(_wrap(h, accounts: const []));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Account name'),
+      'Committed account',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    final repository = AccountRepository(
+      db: h.db,
+      outbox: h.outbox,
+      stamper: h.stamper,
+    );
+    final committed = (await repository.listActive()).single;
+    await repository.update(committed.id, name: 'Later edit');
+
+    await tester.tap(find.text('Undo'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text("Couldn't undo the change. Try again."), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect((await repository.findById(committed.id))!.name, 'Later edit');
+    expect(find.text('Change undone'), findsNothing);
+    await tester.pump(const Duration(seconds: 7));
   });
 }

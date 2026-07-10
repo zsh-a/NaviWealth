@@ -65,6 +65,23 @@ class JournalEntryWithPostings {
   final List<Posting> postings;
 }
 
+/// Versioned journal mutation that can be conditionally reversed.
+final class JournalMutationReceipt {
+  const JournalMutationReceipt({required this.before, required this.after});
+
+  final JournalEntryWithPostings? before;
+  final JournalEntryWithPostings after;
+}
+
+final class JournalMutationConflict implements Exception {
+  const JournalMutationConflict(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'JournalMutationConflict: $message';
+}
+
 /// Thrown by [JournalEntryRepository] when a JE write would violate the
 /// SUM(weight) = 0 invariant. Carries the structured report so callers
 /// can render targeted errors instead of a generic "won't save" toast.

@@ -3,6 +3,8 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/op_outbox.dart';
+import 'package:naviwealth/features/finance/data/repositories/account_mutation_receipt.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
@@ -10,6 +12,19 @@ import 'package:naviwealth/features/finance/expense/domain/expense_category_taxo
 import '../../../../core/persistence/test_database.dart';
 import '../../../../core/sync/_outbox_test_ext.dart';
 import '_stub_stamper.dart';
+
+class _FailingOutbox implements OutboxStore {
+  int calls = 0;
+
+  @override
+  Future<int> depth() async => 0;
+
+  @override
+  Future<void> enqueue({required String table, required String rowId}) async {
+    calls += 1;
+    throw StateError('outbox unavailable');
+  }
+}
 
 void main() {
   late AppDatabase db;
@@ -84,6 +99,163 @@ void main() {
     expect(batch, hasLength(1));
     expect(batch.single.table, 'accounts');
     expect(batch.single.rowId, account.id);
+  });
+
+  group('manual account mutation receipts', () {
+    test(
+      'full editable save round-trips every field and Undo restores before',
+      () async {
+        final created = await repo.saveEditable(
+          type: AccountCategory.bank,
+          name: 'Before',
+          currency: 'CNY',
+          category: AccountSide.asset,
+          archived: false,
+          institution: 'Bank',
+          accountNumber: '1234',
+          note: 'Before note',
+          parentId: 'parent-before',
+          icon: 'wallet',
+          color: '#111111',
+        );
+        final edit = await repo.saveEditable(
+          id: created.after.id,
+          type: AccountCategory.liability,
+          name: 'After',
+          currency: 'USD',
+          category: AccountSide.liability,
+          archived: true,
+          institution: null,
+          accountNumber: null,
+          note: null,
+          parentId: null,
+          icon: null,
+          color: null,
+        );
+
+        expect(edit.before, created.after);
+        expect(edit.after.type, AccountCategory.liability);
+        expect(edit.after.category, AccountSide.liability);
+        expect(edit.after.archived, isTrue);
+        expect(edit.after.institution, isNull);
+        expect(edit.after.accountNumber, isNull);
+        expect(edit.after.note, isNull);
+        expect(edit.after.parentId, isNull);
+        expect(edit.after.icon, isNull);
+        expect(edit.after.color, isNull);
+
+        await repo.undoMutation(edit);
+        final restored = await repo.findById(created.after.id);
+        expect(restored!.type, AccountCategory.bank);
+        expect(restored.category, AccountSide.asset);
+        expect(restored.archived, isFalse);
+        expect(restored.institution, 'Bank');
+        expect(restored.accountNumber, '1234');
+        expect(restored.note, 'Before note');
+        expect(restored.parentId, 'parent-before');
+        expect(restored.icon, 'wallet');
+        expect(restored.color, '#111111');
+      },
+    );
+
+    test('Undo create tombstones the exact committed version', () async {
+      final receipt = await repo.saveEditable(
+        type: AccountCategory.cash,
+        name: 'Temporary',
+        currency: 'CNY',
+        category: AccountSide.asset,
+        archived: false,
+        institution: null,
+        accountNumber: null,
+        note: null,
+        parentId: null,
+        icon: null,
+        color: null,
+      );
+      outbox.clearQueued();
+
+      await repo.undoMutation(receipt);
+
+      expect(
+        (await repo.findById(receipt.after.id))!.sync.deletedAt,
+        isNotNull,
+      );
+      expect(outbox.queued, hasLength(1));
+      expect(outbox.queued.single.rowId, receipt.after.id);
+    });
+
+    test(
+      'later account version rejects Undo without writes or outbox',
+      () async {
+        final created = await repo.saveEditable(
+          type: AccountCategory.bank,
+          name: 'Before',
+          currency: 'CNY',
+          category: AccountSide.asset,
+          archived: false,
+          institution: null,
+          accountNumber: null,
+          note: null,
+          parentId: null,
+          icon: null,
+          color: null,
+        );
+        final edit = await repo.saveEditable(
+          id: created.after.id,
+          type: AccountCategory.bank,
+          name: 'Committed',
+          currency: 'CNY',
+          category: AccountSide.asset,
+          archived: false,
+          institution: null,
+          accountNumber: null,
+          note: null,
+          parentId: null,
+          icon: null,
+          color: null,
+        );
+        await repo.update(created.after.id, name: 'Later edit');
+        outbox.clearQueued();
+
+        await expectLater(
+          repo.undoMutation(edit),
+          throwsA(isA<AccountMutationConflict>()),
+        );
+
+        expect((await repo.findById(created.after.id))!.name, 'Later edit');
+        expect(outbox.queued, isEmpty);
+      },
+    );
+
+    test('outbox failure rolls the conditional Undo back atomically', () async {
+      final receipt = await repo.saveEditable(
+        type: AccountCategory.bank,
+        name: 'Committed',
+        currency: 'CNY',
+        category: AccountSide.asset,
+        archived: false,
+        institution: null,
+        accountNumber: null,
+        note: null,
+        parentId: null,
+        icon: null,
+        color: null,
+      );
+      final failingOutbox = _FailingOutbox();
+      final failingRepo = AccountRepository(
+        db: db,
+        outbox: failingOutbox,
+        stamper: makeStubStamper(initialMillis: 1_800_000_000_000),
+      );
+
+      await expectLater(
+        failingRepo.undoMutation(receipt),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(await repo.findById(receipt.after.id), receipt.after);
+      expect(failingOutbox.calls, 1);
+    });
   });
 
   test('listActive excludes archived and deleted accounts', () async {

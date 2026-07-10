@@ -148,17 +148,27 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
             currency: currency,
           ),
     );
-    await submitFormAndLeave<void>(
+    late JournalEntryRepository repository;
+    await submitFormAndLeave<JournalMutationReceipt>(
       dirty: dirty,
       onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.activityExpenses,
       tag: 'expense',
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
+      undo: FormUndoPresentation<JournalMutationReceipt>(
+        buildAction: (receipt) =>
+            FormUndoAction(() => repository.undoMutation(receipt)),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (_) => l10n.commonUndoFailed,
+        retryLabel: l10n.commonRetry,
+      ),
       commit: () async {
         final journalRepo = await ref.read(
           journalEntryRepositoryProvider.future,
         );
+        repository = journalRepo;
         final build = JournalEntryBuilders.expense(
           date: date,
           expenseAccountId: expenseAccountId,
@@ -168,17 +178,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           narration: note,
         );
         if (initial == null) {
-          await journalRepo.create(
-            entry: build.entry,
-            postings: build.postings,
-          );
-        } else {
-          await journalRepo.replacePostings(
-            id: initial.entry.id,
+          return journalRepo.createWithReceipt(
             entry: build.entry,
             postings: build.postings,
           );
         }
+        return journalRepo.replacePostingsWithReceipt(
+          id: initial.entry.id,
+          entry: build.entry,
+          postings: build.postings,
+        );
       },
     );
   }

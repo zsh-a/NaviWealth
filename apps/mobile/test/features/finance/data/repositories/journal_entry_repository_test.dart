@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -22,6 +23,19 @@ class _IdentityFx implements FxRateSource {
     required String to,
     required DateTime asOf,
   }) => from == to ? Decimal.one : Decimal.one;
+}
+
+class _FailingOutbox implements OutboxStore {
+  int calls = 0;
+
+  @override
+  Future<int> depth() async => 0;
+
+  @override
+  Future<void> enqueue({required String table, required String rowId}) async {
+    calls += 1;
+    throw StateError('outbox unavailable');
+  }
 }
 
 void main() {
@@ -172,6 +186,317 @@ void main() {
       expect(tables, {'journal_entries', 'postings'});
     },
   );
+
+  group('journal mutation receipts', () {
+    test('Undo create tombstones the entry and every posting', () async {
+      final receipt = await repo.createWithReceipt(
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026, 1, 15),
+          narration: 'Temporary transfer',
+        ),
+        postings: [cashLeg('a', '-10'), cashLeg('b', '10')],
+      );
+      outbox.clearQueued();
+
+      await repo.undoMutation(receipt);
+
+      expect(await repo.getById(receipt.after.entry.id), isNull);
+      expect(outbox.queued, hasLength(3));
+      expect(outbox.queued.map((op) => op.table).toSet(), {
+        'journal_entries',
+        'postings',
+      });
+    });
+
+    test('outbox failure rolls Undo back atomically', () async {
+      final receipt = await repo.createWithReceipt(
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026, 1, 15),
+          narration: 'Keep after failed Undo',
+        ),
+        postings: [cashLeg('a', '-10'), cashLeg('b', '10')],
+      );
+      final failingOutbox = _FailingOutbox();
+      final failingRepo = JournalEntryRepository(
+        db: db,
+        outbox: failingOutbox,
+        stamper: makeStubStamper(initialMillis: 1_800_000_000_000),
+        fxRateSource: const _IdentityFx(),
+        baseCurrency: 'USD',
+      );
+
+      await expectLater(
+        failingRepo.undoMutation(receipt),
+        throwsA(isA<StateError>()),
+      );
+
+      final current = (await repo.getById(receipt.after.entry.id))!;
+      expect(current.entry.sync.deletedAt, isNull);
+      expect(
+        current.postings.map((posting) => posting.id),
+        receipt.after.postings.map((posting) => posting.id),
+      );
+      expect(
+        current.postings.every((posting) => posting.sync.deletedAt == null),
+        isTrue,
+      );
+      expect(failingOutbox.calls, 1);
+    });
+
+    test(
+      'Undo edit restores economic content with fresh posting ids',
+      () async {
+        final original = await repo.createWithReceipt(
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026, 1, 1),
+            settledOn: DateTime.utc(2026, 1, 2),
+            narration: 'Original expense',
+            payee: 'Original payee',
+            tagIds: const ['before'],
+            flag: EntryFlag.pending,
+          ),
+          postings: [cashLeg('food', '25'), cashLeg('cash', '-25')],
+        );
+        final edit = await repo.replacePostingsWithReceipt(
+          id: original.after.entry.id,
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026, 2, 1),
+            narration: 'Edited expense',
+            payee: 'Edited payee',
+            tagIds: const ['after'],
+          ),
+          postings: [cashLeg('travel', '40'), cashLeg('bank', '-40')],
+        );
+        final tombstonedIds = {
+          ...edit.before!.postings.map((posting) => posting.id),
+          ...edit.after.postings.map((posting) => posting.id),
+        };
+
+        await repo.undoMutation(edit);
+        final restored = (await repo.getById(edit.after.entry.id))!;
+
+        expect(restored.entry.date, edit.before!.entry.date);
+        expect(restored.entry.settledOn, edit.before!.entry.settledOn);
+        expect(restored.entry.narration, edit.before!.entry.narration);
+        expect(restored.entry.payee, edit.before!.entry.payee);
+        expect(restored.entry.tagIds, edit.before!.entry.tagIds);
+        expect(restored.entry.flag, edit.before!.entry.flag);
+        expect(restored.postings.map((posting) => posting.accountId), [
+          'food',
+          'cash',
+        ]);
+        expect(restored.postings.map((posting) => posting.units), [
+          Decimal.parse('25'),
+          Decimal.parse('-25'),
+        ]);
+        expect(
+          restored.postings.every(
+            (posting) => !tombstonedIds.contains(posting.id),
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'later journal version rejects Undo without partial restoration',
+      () async {
+        final original = await repo.createWithReceipt(
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026, 1, 1),
+            narration: 'Before',
+          ),
+          postings: [cashLeg('a', '-10'), cashLeg('b', '10')],
+        );
+        final edit = await repo.replacePostingsWithReceipt(
+          id: original.after.entry.id,
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026, 1, 2),
+            narration: 'Committed',
+          ),
+          postings: [cashLeg('a', '-20'), cashLeg('b', '20')],
+        );
+        await (db.update(
+          db.journalEntries,
+        )..where((row) => row.id.equals(edit.after.entry.id))).write(
+          const JournalEntriesCompanion(
+            narration: Value('Later synced edit'),
+            hlc: Value(Hlc(wallMillis: 9_000, counter: 0, nodeId: 'remote')),
+          ),
+        );
+        outbox.clearQueued();
+
+        await expectLater(
+          repo.undoMutation(edit),
+          throwsA(isA<JournalMutationConflict>()),
+        );
+
+        final current = (await repo.getById(edit.after.entry.id))!;
+        expect(current.entry.narration, 'Later synced edit');
+        expect(
+          current.postings.map((posting) => posting.id),
+          edit.after.postings.map((posting) => posting.id),
+        );
+        expect(outbox.queued, isEmpty);
+      },
+    );
+
+    test('later posting version rejects Undo with no partial writes', () async {
+      final original = await repo.createWithReceipt(
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026, 1, 1),
+          narration: 'Before',
+        ),
+        postings: [cashLeg('a', '-10'), cashLeg('b', '10')],
+      );
+      final edit = await repo.replacePostingsWithReceipt(
+        id: original.after.entry.id,
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026, 1, 2),
+          narration: 'Committed',
+        ),
+        postings: [cashLeg('a', '-20'), cashLeg('b', '20')],
+      );
+      final changedPosting = edit.after.postings.first;
+      await (db.update(
+        db.postings,
+      )..where((row) => row.id.equals(changedPosting.id))).write(
+        PostingsCompanion(
+          units: Value(Decimal.parse('-21')),
+          hlc: const Value(
+            Hlc(wallMillis: 9_001, counter: 0, nodeId: 'remote'),
+          ),
+        ),
+      );
+      outbox.clearQueued();
+
+      await expectLater(
+        repo.undoMutation(edit),
+        throwsA(isA<JournalMutationConflict>()),
+      );
+
+      final current = (await repo.getById(edit.after.entry.id))!;
+      expect(current.entry.narration, 'Committed');
+      expect(current.postings.first.units, Decimal.parse('-21'));
+      expect(current.postings, hasLength(2));
+      expect(outbox.queued, isEmpty);
+    });
+
+    test(
+      'extra live posting rejects Undo without any mutation or outbox',
+      () async {
+        final receipt = await repo.createWithReceipt(
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026, 1, 1),
+            narration: 'Committed',
+          ),
+          postings: [cashLeg('a', '-10'), cashLeg('b', '10')],
+        );
+        final addedAt = DateTime.utc(2026, 1, 2);
+        await db
+            .into(db.postings)
+            .insert(
+              PostingsCompanion.insert(
+                ownerUserId: 'u-remote',
+                updatedAt: addedAt,
+                updatedByDevice: 'remote',
+                hlc: const Hlc(wallMillis: 9_100, counter: 0, nodeId: 'remote'),
+                id: 'posting-extra-live',
+                journalEntryId: receipt.after.entry.id,
+                position: 2,
+                accountId: 'c',
+                units: Decimal.zero,
+                unit: 'USD',
+              ),
+            );
+        final entryBefore = await (db.select(
+          db.journalEntries,
+        )..where((row) => row.id.equals(receipt.after.entry.id))).getSingle();
+        final postingsBefore =
+            await (db.select(db.postings)..where(
+                  (row) => row.journalEntryId.equals(receipt.after.entry.id),
+                ))
+                .get();
+        outbox.clearQueued();
+
+        await expectLater(
+          repo.undoMutation(receipt),
+          throwsA(isA<JournalMutationConflict>()),
+        );
+
+        expect(
+          await (db.select(
+            db.journalEntries,
+          )..where((row) => row.id.equals(receipt.after.entry.id))).getSingle(),
+          entryBefore,
+        );
+        expect(
+          await (db.select(db.postings)..where(
+                (row) => row.journalEntryId.equals(receipt.after.entry.id),
+              ))
+              .get(),
+          unorderedEquals(postingsBefore),
+        );
+        expect(outbox.queued, isEmpty);
+      },
+    );
+
+    test(
+      'missing committed posting rejects Undo without mutation or outbox',
+      () async {
+        final receipt = await repo.createWithReceipt(
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026, 1, 1),
+            narration: 'Committed',
+          ),
+          postings: [cashLeg('a', '-10'), cashLeg('b', '10')],
+        );
+        final removedAt = DateTime.utc(2026, 1, 2);
+        final removedId = receipt.after.postings.first.id;
+        await (db.update(
+          db.postings,
+        )..where((row) => row.id.equals(removedId))).write(
+          PostingsCompanion(
+            updatedAt: Value(removedAt),
+            updatedByDevice: const Value('remote'),
+            hlc: const Value(
+              Hlc(wallMillis: 9_101, counter: 0, nodeId: 'remote'),
+            ),
+            deletedAt: Value(removedAt),
+          ),
+        );
+        final entryBefore = await (db.select(
+          db.journalEntries,
+        )..where((row) => row.id.equals(receipt.after.entry.id))).getSingle();
+        final postingsBefore =
+            await (db.select(db.postings)..where(
+                  (row) => row.journalEntryId.equals(receipt.after.entry.id),
+                ))
+                .get();
+        outbox.clearQueued();
+
+        await expectLater(
+          repo.undoMutation(receipt),
+          throwsA(isA<JournalMutationConflict>()),
+        );
+
+        expect(
+          await (db.select(
+            db.journalEntries,
+          )..where((row) => row.id.equals(receipt.after.entry.id))).getSingle(),
+          entryBefore,
+        );
+        expect(
+          await (db.select(db.postings)..where(
+                (row) => row.journalEntryId.equals(receipt.after.entry.id),
+              ))
+              .get(),
+          unorderedEquals(postingsBefore),
+        );
+        expect(outbox.queued, isEmpty);
+      },
+    );
+  });
 
   group('watchAllWithPostings', () {
     test('emits an empty list when the ledger has no entries', () async {

@@ -13,6 +13,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/design_system/widgets/app_toast.dart';
 import 'package:naviwealth/features/finance/accounts/ui/transfer_form_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
@@ -118,6 +119,7 @@ Widget _wrap(
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => AppMessenger.init(child: child!),
       // Minimal router so the form's submit navigation lands on a valid
       // stub instead of silently failing, which matters for the
       // cross-currency submit test that inspects DB state after the
@@ -133,6 +135,7 @@ Widget _wrap(
             path: AppRoutes.wealthAccounts,
             builder: (_, _) => const SizedBox(),
           ),
+          GoRoute(path: AppRoutes.wealth, builder: (_, _) => const SizedBox()),
         ],
       ),
     ),
@@ -392,6 +395,85 @@ void main() {
       final srcLeg = postings.firstWhere((p) => p.unit == 'USD');
       expect(srcLeg.priceCurrency, isNull);
       expect(srcLeg.pricePerUnit, isNull);
+
+      expect(find.text('Undo'), findsOneWidget);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      final entry = await h.db.select(h.db.journalEntries).getSingle();
+      expect(entry.deletedAt, isNotNull);
+      final tombstonedPostings = await h.db.select(h.db.postings).get();
+      expect(
+        tombstonedPostings.every((posting) => posting.deletedAt != null),
+        isTrue,
+      );
+      await tester.pump(const Duration(seconds: 7));
     },
   );
+
+  testWidgets('transfer Undo conflict exposes Retry and preserves later edit', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(
+      _wrap(
+        h,
+        accounts: [
+          _account(id: 'a-bank-a', name: 'Bank A', category: AccountSide.asset),
+          _account(id: 'a-bank-b', name: 'Bank B', category: AccountSide.asset),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _selectAccount(tester, pickerIndex: 0, accountName: 'Bank A');
+    await _selectAccount(tester, pickerIndex: 1, accountName: 'Bank B');
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Amount (CNY)'),
+      '100',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FButton, 'Transfer'));
+    await tester.pumpAndSettle();
+
+    final committed = await h.db.select(h.db.journalEntries).getSingle();
+    final laterAt = DateTime.utc(2026, 7, 1);
+    await (h.db.update(
+      h.db.journalEntries,
+    )..where((row) => row.id.equals(committed.id))).write(
+      JournalEntriesCompanion(
+        narration: const Value('Later transfer edit'),
+        updatedAt: Value(laterAt),
+        updatedByDevice: const Value('remote'),
+        hlc: const Value(Hlc(wallMillis: 9_200, counter: 0, nodeId: 'remote')),
+      ),
+    );
+
+    await tester.tap(find.text('Undo'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text("Couldn't undo the change. Try again."), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Change undone'), findsNothing);
+    var current = await (h.db.select(
+      h.db.journalEntries,
+    )..where((row) => row.id.equals(committed.id))).getSingle();
+    expect(current.narration, 'Later transfer edit');
+    expect(current.deletedAt, isNull);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text("Couldn't undo the change. Try again."), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Change undone'), findsNothing);
+    current = await (h.db.select(
+      h.db.journalEntries,
+    )..where((row) => row.id.equals(committed.id))).getSingle();
+    expect(current.narration, 'Later transfer edit');
+    expect(current.deletedAt, isNull);
+    await tester.pump(const Duration(seconds: 7));
+  });
 }

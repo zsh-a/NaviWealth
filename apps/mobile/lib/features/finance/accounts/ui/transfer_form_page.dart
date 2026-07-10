@@ -544,13 +544,18 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       toCurrency: isCross ? toCcy : null,
       narration: note.isEmpty ? null : note,
     );
-    await submitFormAndLeave<void>(
+    late JournalEntryRepository repository;
+    await submitFormAndLeave<JournalMutationReceipt>(
       dirty: dirty,
       onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.wealth,
       commit: () async {
         final repo = await ref.read(journalEntryRepositoryProvider.future);
-        await repo.create(entry: build.entry, postings: build.postings);
+        repository = repo;
+        return repo.createWithReceipt(
+          entry: build.entry,
+          postings: build.postings,
+        );
       },
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>
@@ -558,6 +563,14 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         _ => l10n.transferFailedError('$e'),
       },
       successMessage: l10n.commonSaved,
+      undo: FormUndoPresentation<JournalMutationReceipt>(
+        buildAction: (receipt) =>
+            FormUndoAction(() => repository.undoMutation(receipt)),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (_) => l10n.commonUndoFailed,
+        retryLabel: l10n.commonRetry,
+      ),
       tag: 'transfer-form',
     );
   }

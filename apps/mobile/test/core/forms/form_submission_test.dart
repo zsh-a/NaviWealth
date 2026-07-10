@@ -102,6 +102,57 @@ void main() {
       expect(find.byType(_ProbeForm), findsNothing);
       await tester.pump(const Duration(seconds: 7));
     });
+
+    testWidgets('typed receipt builds one Undo action after commit and leave', (
+      tester,
+    ) async {
+      final events = <String>[];
+      var undoCalls = 0;
+      await _pumpProbe(
+        tester,
+        logger: logger,
+        commit: () async {
+          events.add('commit');
+          return 'receipt-1';
+        },
+        onCommitted: (receipt) => events.add('committed:$receipt'),
+        onLeave: () => events.add('leave'),
+        undo: FormUndoPresentation<String>(
+          buildAction: (receipt) {
+            events.add('build:$receipt');
+            return FormUndoAction(() async {
+              undoCalls += 1;
+              events.add('undo');
+            });
+          },
+          actionLabel: 'Undo',
+          successMessage: 'Change undone',
+          failureMessage: (_) => 'Could not undo',
+          retryLabel: 'Retry',
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('submit')));
+      await tester.pump();
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(events, [
+        'commit',
+        'committed:receipt-1',
+        'build:receipt-1',
+        'leave',
+      ]);
+      expect(find.text('Undo'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(events.last, 'undo');
+      expect(undoCalls, 1);
+      expect(find.text('Change undone'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 7));
+    });
   });
 
   group('FormUndoAction', () {
@@ -185,6 +236,7 @@ Future<void> _pumpProbe(
   required Future<String> Function() commit,
   required ValueChanged<String> onCommitted,
   required VoidCallback onLeave,
+  FormUndoPresentation<String>? undo,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -201,6 +253,7 @@ Future<void> _pumpProbe(
                       commit: commit,
                       onCommitted: onCommitted,
                       onLeave: onLeave,
+                      undo: undo,
                     ),
                   ),
                 );
@@ -221,11 +274,13 @@ class _ProbeForm extends ConsumerStatefulWidget {
     required this.commit,
     required this.onCommitted,
     required this.onLeave,
+    this.undo,
   });
 
   final Future<String> Function() commit;
   final ValueChanged<String> onCommitted;
   final VoidCallback onLeave;
+  final FormUndoPresentation<String>? undo;
 
   @override
   ConsumerState<_ProbeForm> createState() => _ProbeFormState();
@@ -260,6 +315,7 @@ class _ProbeFormState extends ConsumerState<_ProbeForm>
       },
       failureMessage: (error) => 'Could not save: $error',
       successMessage: 'Saved',
+      undo: widget.undo,
       tag: 'probe',
     );
   }

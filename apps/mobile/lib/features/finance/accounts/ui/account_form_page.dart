@@ -6,6 +6,8 @@ import 'package:naviwealth/core/ai/write/write.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
+import 'package:naviwealth/features/finance/data/repositories/account_mutation_receipt.dart';
+import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -147,47 +149,38 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     final icon = _icon;
     final color = _color;
 
-    await submitFormAndLeave<Account>(
+    late AccountRepository repository;
+    await submitFormAndLeave<AccountMutationReceipt>(
       dirty: dirty,
       onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.wealthAccounts,
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
+      undo: FormUndoPresentation<AccountMutationReceipt>(
+        buildAction: (receipt) =>
+            FormUndoAction(() => repository.undoMutation(receipt)),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (_) => l10n.commonUndoFailed,
+        retryLabel: l10n.commonRetry,
+      ),
       tag: 'account',
       commit: () async {
         final repo = await ref.read(accountRepositoryProvider.future);
-        if (initial == null) {
-          return repo.create(
-            type: type,
-            name: name,
-            currency: currency,
-            category: category,
-            institution: institution,
-            accountNumber: accountNumber,
-            note: note,
-            parentId: parentId,
-            icon: icon,
-            color: color,
-          );
-        }
-        return repo.update(
-          initial.id,
+        repository = repo;
+        return repo.saveEditable(
+          id: initial?.id,
+          type: type,
           name: name,
           currency: currency,
-          category: category != initial.category ? category : null,
-          institution: institution ?? '',
-          clearInstitution: institution == null,
-          accountNumber: accountNumber ?? '',
-          clearAccountNumber: accountNumber == null,
-          note: note ?? '',
-          clearNote: note == null,
+          category: category,
+          institution: institution,
+          accountNumber: accountNumber,
+          note: note,
           archived: archived,
-          parentId: parentId ?? '',
-          clearParentId: parentId == null,
-          icon: icon ?? '',
-          clearIcon: icon == null,
-          color: color ?? '',
-          clearColor: color == null,
+          parentId: parentId,
+          icon: icon,
+          color: color,
         );
       },
     );

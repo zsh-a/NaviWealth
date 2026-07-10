@@ -9,6 +9,23 @@ import '../logging/providers.dart';
 
 typedef FormFailureMessageBuilder = String Function(Object error);
 
+/// Builds and presents Undo for a typed repository commit result.
+final class FormUndoPresentation<T> {
+  const FormUndoPresentation({
+    required this.buildAction,
+    required this.actionLabel,
+    required this.successMessage,
+    required this.failureMessage,
+    required this.retryLabel,
+  });
+
+  final FormUndoAction Function(T result) buildAction;
+  final String actionLabel;
+  final String successMessage;
+  final FormFailureMessageBuilder failureMessage;
+  final String retryLabel;
+}
+
 /// Commit-first submission protocol for local forms.
 ///
 /// The form remains mounted until [commit] completes. While the operation is
@@ -30,6 +47,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     required FormFailureMessageBuilder failureMessage,
     required String successMessage,
     void Function(T result)? onCommitted,
+    FormUndoPresentation<T>? undo,
     String tag = 'form',
   }) {
     final current = _submission;
@@ -45,6 +63,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
           failureMessage: failureMessage,
           successMessage: successMessage,
           onCommitted: onCommitted,
+          undo: undo,
           tag: tag,
         ).whenComplete(() {
           if (identical(_submission, operation)) _submission = null;
@@ -62,6 +81,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     required FormFailureMessageBuilder failureMessage,
     required String successMessage,
     void Function(T result)? onCommitted,
+    FormUndoPresentation<T>? undo,
     String tag = 'form',
   }) {
     return submitForm<T>(
@@ -72,6 +92,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       failureMessage: failureMessage,
       successMessage: successMessage,
       onCommitted: onCommitted,
+      undo: undo,
       tag: tag,
     );
   }
@@ -84,8 +105,13 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     required FormFailureMessageBuilder failureMessage,
     required String successMessage,
     required void Function(T result)? onCommitted,
+    required FormUndoPresentation<T>? undo,
     required String tag,
   }) async {
+    // Preserve the element before any async gap. It remains safe to pass to
+    // AppMessenger after navigation because the toaster lookup catches an
+    // unmounted element and falls back to the cached overlay.
+    final feedbackContext = context;
     final logger = ref.read(loggerProvider);
     onBusyChanged(true);
     dirty.busy = true;
@@ -109,16 +135,47 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
         }
       }
 
+      FormUndoAction? undoAction;
+      if (undo != null) {
+        try {
+          undoAction = undo.buildAction(result);
+        } catch (error, stack) {
+          logger.e(
+            'form-$tag undo builder failed',
+            error: error,
+            stackTrace: stack,
+          );
+        }
+      }
+
       dirty.markPristine();
       dirty.busy = false;
       onBusyChanged(false);
       // PopScope reads canPop during build. Give FormDirtyGuard one frame to
       // publish the pristine/non-busy state before asking Navigator to pop.
       await _nextFrame();
-      if (!mounted) return;
-      AppMessenger.cacheOverlay(context);
+      if (!mounted || !feedbackContext.mounted) return;
+      AppMessenger.cacheOverlay(feedbackContext);
       leave();
-      AppMessenger.show(context, ToastKind.success, successMessage);
+      AppMessenger.show(
+        feedbackContext,
+        ToastKind.success,
+        successMessage,
+        actionLabel: undoAction == null ? null : undo!.actionLabel,
+        onAction: undoAction == null
+            ? null
+            : () => unawaited(
+                runFormUndoWithFeedback(
+                  context: feedbackContext,
+                  action: undoAction!,
+                  logger: logger,
+                  successMessage: undo!.successMessage,
+                  failureMessage: undo.failureMessage,
+                  retryLabel: undo.retryLabel,
+                  tag: tag,
+                ),
+              ),
+      );
     } catch (error, stack) {
       if (committed) rethrow;
       logger.e('form-$tag commit failed', error: error, stackTrace: stack);

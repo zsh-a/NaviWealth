@@ -8,6 +8,8 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:uuid/uuid.dart';
 
+import 'account_mutation_receipt.dart';
+
 part 'account_repository_system_accounts.dart';
 part 'account_repository_system_account_seeds.dart';
 part 'account_repository_tree.dart';
@@ -100,6 +102,7 @@ class AccountRepository {
     String? parentId,
     String? icon,
     String? color,
+    bool archived = false,
   }) async {
     final stamp = await _stamper.stamp();
     final id = _uuid.v4();
@@ -116,11 +119,13 @@ class AccountRepository {
       parentId: Value(parentId),
       icon: Value(icon),
       color: Value(color),
+      archived: Value(archived),
       ownerUserId: stamp.ownerUserId,
       updatedAt: stamp.now,
       updatedByDevice: stamp.deviceId,
       hlc: stamp.hlc,
     );
+    late final Account created;
     await _db.transaction(() async {
       await _db.into(_db.accounts).insert(companion);
       await _outbox.enqueue(table: _tableName, rowId: id);
@@ -136,14 +141,177 @@ class AccountRepository {
           'institution': institution,
           'account_number': accountNumber,
           'note': note,
-          'archived': false,
+          'archived': archived,
           'parent_id': parentId,
           'icon': icon,
           'color': color,
         },
       );
+      final persisted = await (_db.select(
+        _db.accounts,
+      )..where((t) => t.id.equals(id))).getSingle();
+      created = _toAccount(persisted);
     });
-    return (await findById(id))!;
+    return created;
+  }
+
+  /// Saves every user-editable account field and returns an Undo receipt.
+  Future<AccountMutationReceipt> saveEditable({
+    String? id,
+    required AccountCategory type,
+    required String name,
+    required String currency,
+    required AccountSide category,
+    required bool archived,
+    required String? institution,
+    required String? accountNumber,
+    required String? note,
+    required String? parentId,
+    required String? icon,
+    required String? color,
+  }) async {
+    if (id == null) {
+      final created = await create(
+        type: type,
+        name: name,
+        currency: currency,
+        category: category,
+        institution: institution,
+        accountNumber: accountNumber,
+        note: note,
+        parentId: parentId,
+        icon: icon,
+        color: color,
+        archived: archived,
+      );
+      return AccountMutationReceipt(before: null, after: created);
+    }
+
+    final stamp = await _stamper.stamp();
+    late final Account before;
+    late final Account after;
+    await _db.transaction(() async {
+      final row =
+          await (_db.select(_db.accounts)
+                ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+              .getSingleOrNull();
+      if (row == null) throw StateError('Account $id not found');
+      before = _toAccount(row);
+      await (_db.update(_db.accounts)..where((t) => t.id.equals(id))).write(
+        AccountsCompanion(
+          type: Value(type),
+          name: Value(name),
+          currency: Value(currency),
+          category: Value(category),
+          institution: Value(institution),
+          accountNumber: Value(accountNumber),
+          note: Value(note),
+          archived: Value(archived),
+          parentId: Value(parentId),
+          icon: Value(icon),
+          color: Value(color),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
+          hlc: Value(stamp.hlc),
+        ),
+      );
+      await _outbox.enqueue(table: _tableName, rowId: id);
+      await _eventLog.recordFieldChanged(
+        entityTable: _tableName,
+        entityId: id,
+        stamp: stamp,
+        before: _editableValues(before),
+        after: <String, Object?>{
+          'type': type.name,
+          'name': name,
+          'currency': currency,
+          'category': category.name,
+          'institution': institution,
+          'account_number': accountNumber,
+          'note': note,
+          'archived': archived,
+          'parent_id': parentId,
+          'icon': icon,
+          'color': color,
+        },
+      );
+      final savedRow = await (_db.select(
+        _db.accounts,
+      )..where((t) => t.id.equals(id))).getSingle();
+      after = _toAccount(savedRow);
+    });
+    return AccountMutationReceipt(before: before, after: after);
+  }
+
+  /// Reverses [receipt] only while the complete committed version still wins.
+  Future<void> undoMutation(AccountMutationReceipt receipt) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      final currentRow =
+          await (_db.select(_db.accounts)..where(
+                (t) => t.id.equals(receipt.after.id) & t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      final current = currentRow == null ? null : _toAccount(currentRow);
+      if (current != receipt.after) {
+        throw AccountMutationConflict(
+          'Account ${receipt.after.id} changed after the saved version.',
+        );
+      }
+
+      final before = receipt.before;
+      if (before == null) {
+        await (_db.update(
+          _db.accounts,
+        )..where((t) => t.id.equals(receipt.after.id))).write(
+          AccountsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: Value(stamp.now),
+          ),
+        );
+        await _outbox.enqueue(table: _tableName, rowId: receipt.after.id);
+        await _eventLog.recordSoftDeleted(
+          entityTable: _tableName,
+          entityId: receipt.after.id,
+          stamp: stamp,
+          reason: 'undo account create',
+        );
+        return;
+      }
+
+      await (_db.update(
+        _db.accounts,
+      )..where((t) => t.id.equals(receipt.after.id))).write(
+        AccountsCompanion(
+          type: Value(before.type),
+          name: Value(before.name),
+          currency: Value(before.currency),
+          category: Value(before.category),
+          institution: Value(before.institution),
+          accountNumber: Value(before.accountNumber),
+          note: Value(before.note),
+          archived: Value(before.archived),
+          parentId: Value(before.parentId),
+          icon: Value(before.icon),
+          color: Value(before.color),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
+          hlc: Value(stamp.hlc),
+          deletedAt: const Value(null),
+        ),
+      );
+      await _outbox.enqueue(table: _tableName, rowId: receipt.after.id);
+      await _eventLog.recordFieldChanged(
+        entityTable: _tableName,
+        entityId: receipt.after.id,
+        stamp: stamp,
+        before: _editableValues(receipt.after),
+        after: _editableValues(before),
+        reason: 'undo account edit',
+      );
+    });
   }
 
   /// Updates only the named fields. Returns the refreshed [Account].
@@ -365,6 +533,20 @@ class AccountRepository {
       ),
     );
   }
+
+  Map<String, Object?> _editableValues(Account account) => <String, Object?>{
+    'type': account.type.name,
+    'name': account.name,
+    'currency': account.currency,
+    'category': account.category.name,
+    'institution': account.institution,
+    'account_number': account.accountNumber,
+    'note': account.note,
+    'archived': account.archived,
+    'parent_id': account.parentId,
+    'icon': account.icon,
+    'color': account.color,
+  };
 
   // ---------- System / virtual accounts ----------
 
