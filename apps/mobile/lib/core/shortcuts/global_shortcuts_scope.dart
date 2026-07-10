@@ -214,8 +214,9 @@ class _GuardedContextAction<T extends Intent> extends ContextAction<T> {
 /// Precedence mirrors [smartPop] so Esc, the toolbar back arrow, system
 /// back, and post-save `popOrGo` always agree on what "back" means:
 ///
-///  1. **root `Navigator.pop()`** — closes a modal sheet / dialog if any
-///     overlay is on top (the original behavior).
+///  1. **root `Navigator.maybePop()`** — closes a modal sheet / dialog if any
+///     overlay is on top while respecting a route's `PopScope` (for example,
+///     a dirty form that must confirm before leaving).
 ///  2. **clear `?selected=`** — desktop master-detail; unmounts the
 ///     detail pane without leaving the list page.
 ///  3. **`GoRouter.pop()`** — pages pushed inside a shell branch.
@@ -242,8 +243,7 @@ class _DismissOverlayAction extends ContextAction<DismissOverlayIntent> {
     if (context == null) return null;
     final rootNav = Navigator.of(context, rootNavigator: true);
     if (rootNav.canPop()) {
-      rootNav.pop();
-      return null;
+      return rootNav.maybePop();
     }
     if (clearSelectedDetail(context)) return null;
     final router = GoRouter.maybeOf(context);
