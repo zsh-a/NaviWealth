@@ -43,12 +43,21 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
   late final TextEditingController _fee;
   late final TextEditingController _tax;
   late final TextEditingController _note;
+  late final FocusNode _priceFocus;
   String? _accountId;
   String? _cashAccountId;
   String? _assetId;
   late String _currency;
   late DateTime _tradeDate;
   bool _busy = false;
+  bool _priceFocusScheduled = false;
+
+  bool get _needsManualPrice =>
+      widget.item.request?.price == null &&
+      const {
+        RebalanceExecutionIssueCode.priceRequired,
+        RebalanceExecutionIssueCode.applyUnavailable,
+      }.contains(widget.item.issue?.code);
 
   @override
   void initState() {
@@ -64,6 +73,7 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
     _fee = TextEditingController(text: request?.fee?.toString() ?? '0');
     _tax = TextEditingController(text: request?.tax?.toString() ?? '0');
     _note = TextEditingController(text: request?.note ?? '');
+    _priceFocus = FocusNode(debugLabel: 'rebalance-execution-price');
   }
 
   @override
@@ -73,6 +83,7 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
     _fee.dispose();
     _tax.dispose();
     _note.dispose();
+    _priceFocus.dispose();
     super.dispose();
   }
 
@@ -86,9 +97,17 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
     }
     final dependencyError = accountsAsync.error ?? assetsAsync.error;
     if (dependencyError != null) {
+      final dependencyStack = accountsAsync.hasError
+          ? accountsAsync.stackTrace
+          : assetsAsync.stackTrace;
       return AppEmptyState(
         icon: FLucideIcons.triangleAlert,
-        title: dependencyError.toString(),
+        title: userSafeErrorMessage(
+          context,
+          dependencyError,
+          stackTrace: dependencyStack,
+          operation: 'load rebalance review dependencies',
+        ),
         action: FButton(
           variant: FButtonVariant.outline,
           onPress: () {
@@ -142,6 +161,12 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
         : compatibleAssets
               .where((asset) => asset.id == lockedAssetId)
               .toList(growable: false);
+    if (_needsManualPrice && !_priceFocusScheduled) {
+      _priceFocusScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _priceFocus.requestFocus();
+      });
+    }
 
     return PopScope(
       canPop: !_busy,
@@ -190,13 +215,19 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
             AmountField(
               label: l10n.tradeEntryQuantityLabel,
               controller: _quantity,
+              allowZero: false,
             ),
             const SizedBox(height: AppSpacing.s12),
             AmountField(
               label: l10n.tradeEntryPriceLabel,
               controller: _price,
               currencyCode: _currency,
-              required: false,
+              required: _needsManualPrice,
+              allowZero: !_needsManualPrice,
+              helperText: _needsManualPrice
+                  ? l10n.rebalanceExecutionManualPriceHelper
+                  : null,
+              focusNode: _priceFocus,
             ),
             const SizedBox(height: AppSpacing.s12),
             DateField(
@@ -277,7 +308,15 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
     required List<Account> accounts,
     required List<Asset> assets,
   }) async {
-    if (!_formKey.currentState!.validate()) return;
+    final enteredPrice = Decimal.tryParse(_price.text.trim());
+    final formValid = _formKey.currentState!.validate();
+    if (!formValid) {
+      if (_needsManualPrice &&
+          (enteredPrice == null || enteredPrice <= Decimal.zero)) {
+        _priceFocus.requestFocus();
+      }
+      return;
+    }
     final account = _findById(accounts, _accountId);
     final cash = _cashAccountId == null
         ? null
@@ -294,6 +333,10 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
         ToastKind.error,
         AppLocalizations.of(context).formAmountFieldInvalid,
       );
+      return;
+    }
+    if (_needsManualPrice && (price == null || price <= Decimal.zero)) {
+      _priceFocus.requestFocus();
       return;
     }
 
@@ -320,9 +363,18 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
         ),
       );
       if (mounted) Navigator.of(context).pop(true);
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) return;
-      AppMessenger.show(context, ToastKind.error, error.toString());
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'save rebalance execution review',
+        ),
+      );
       setState(() => _busy = false);
     }
   }

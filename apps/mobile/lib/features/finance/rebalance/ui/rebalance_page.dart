@@ -98,9 +98,18 @@ Future<void> _openExecution({
     if (context.mounted) {
       context.go(FinanceRoutes.planRebalanceExecutionSession(session.id));
     }
-  } catch (error) {
+  } catch (error, stackTrace) {
     if (context.mounted) {
-      AppMessenger.show(context, ToastKind.error, error.toString());
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'open rebalance execution',
+        ),
+      );
     }
   }
 }

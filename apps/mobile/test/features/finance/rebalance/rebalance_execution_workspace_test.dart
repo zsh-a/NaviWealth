@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -107,6 +108,24 @@ void main() {
     expect(find.text('Skip'), findsNothing);
   });
 
+  testWidgets('undo failure retries only from the session control', (
+    tester,
+  ) async {
+    final session = _session(
+      itemState: RebalanceExecutionItemState.undoFailed,
+      issue: RebalanceExecutionIssue(
+        RebalanceExecutionIssueCode.undoUnavailable,
+        'undo details stay private',
+      ),
+    );
+    await _pumpWorkspace(tester, size: const Size(390, 844), session: session);
+
+    expect(find.text('Retry undo'), findsOneWidget);
+    expect(find.text('Skip'), findsNothing);
+    expect(find.text('Review'), findsNothing);
+    expect(find.text('Add price'), findsNothing);
+  });
+
   testWidgets('classified issue debug text is never rendered raw', (
     tester,
   ) async {
@@ -132,6 +151,81 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(gateway.skippedIds, [session.items.single.id]);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'offline pricing exposes honest batch retry and manual price actions',
+    (tester) async {
+      final session = _session(
+        itemState: RebalanceExecutionItemState.applyFailed,
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.applyUnavailable,
+          'RAW_OFFLINE_DETAILS',
+        ),
+        includePrice: false,
+      );
+      final gateway = _FakeGateway(session);
+      await _pumpWorkspace(
+        tester,
+        size: const Size(390, 844),
+        textScale: 2,
+        session: session,
+        gateway: gateway,
+      );
+
+      expect(find.text('Retry execution'), findsOneWidget);
+      expect(find.text('Add price'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
+      expect(find.textContaining('RAW_OFFLINE_DETAILS'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      await tester.ensureVisible(find.text('Retry execution'));
+      await tester.tap(find.text('Retry execution'));
+      await tester.pumpAndSettle();
+      expect(gateway.applyCalls, 1);
+    },
+  );
+
+  testWidgets('existing manual price keeps temporary failure retry-only', (
+    tester,
+  ) async {
+    final session = _session(
+      itemState: RebalanceExecutionItemState.applyFailed,
+      issue: RebalanceExecutionIssue(
+        RebalanceExecutionIssueCode.applyUnavailable,
+        'temporary failure',
+      ),
+    );
+    await _pumpWorkspace(tester, size: const Size(390, 844), session: session);
+
+    expect(find.text('Retry execution'), findsOneWidget);
+    expect(find.text('Add price'), findsNothing);
+    expect(find.text('Review'), findsNothing);
+    expect(find.text('Skip'), findsOneWidget);
+  });
+
+  testWidgets('batch exceptions render only the common safe message', (
+    tester,
+  ) async {
+    const sentinel = 'RAW_BATCH_EXCEPTION';
+    final session = _session(itemState: RebalanceExecutionItemState.ready);
+    final gateway = _FakeGateway(session, applyError: StateError(sentinel));
+    await _pumpWorkspace(
+      tester,
+      size: const Size(390, 844),
+      session: session,
+      gateway: gateway,
+    );
+
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(sentinel), findsNothing);
+    expect(
+      find.text(AppLocalizationsEn().commonSafeErrorMessage),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(seconds: 3));
   });
 
   testWidgets('skip action delegates exactly once', (tester) async {
@@ -180,6 +274,48 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets('mixed batch failures use the highest safe severity', (
+    tester,
+  ) async {
+    final session = _session(itemState: RebalanceExecutionItemState.ready);
+    final gateway = _FakeGateway(
+      session,
+      applyResult: RebalanceExecutionBatchResult(
+        completedItemIds: const [],
+        failures: [
+          RebalanceExecutionFailure(
+            code: RebalanceExecutionFailureCode.businessFailed,
+            issue: RebalanceExecutionIssue(
+              RebalanceExecutionIssueCode.applyUnavailable,
+              'temporary',
+            ),
+          ),
+          RebalanceExecutionFailure(
+            code: RebalanceExecutionFailureCode.businessFailed,
+            issue: RebalanceExecutionIssue(
+              RebalanceExecutionIssueCode.internal,
+              'fatal',
+            ),
+          ),
+        ],
+        stopped: true,
+      ),
+    );
+    await _pumpWorkspace(
+      tester,
+      size: const Size(390, 844),
+      session: session,
+      gateway: gateway,
+    );
+
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(FLucideIcons.circleX), findsOneWidget);
+    expect(find.text('The batch stopped; 2 need attention.'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('new review never infers quantity or price', (tester) async {
     final item = _reviewItem();
     final gateway = _FakeGateway(_session());
@@ -193,6 +329,78 @@ void main() {
       tester.widget<EditableText>(_amountField('Price')).controller.text,
       isEmpty,
     );
+  });
+
+  testWidgets('missing offline price is required, focused, and saved locally', (
+    tester,
+  ) async {
+    final request = _withPrice(testRequest('review-item'), null);
+    final item = _reviewItem(
+      request: request,
+      issue: RebalanceExecutionIssue(
+        RebalanceExecutionIssueCode.applyUnavailable,
+        'offline',
+      ),
+    );
+    final gateway = _FakeGateway(_session());
+    await _pumpReviewEditor(tester, item: item, gateway: gateway);
+
+    final priceEditor = tester.widget<EditableText>(_amountField('Price'));
+    expect(priceEditor.focusNode.hasFocus, isTrue);
+    expect(
+      find.text(
+        'Automatic pricing is unavailable. Enter a price to continue without a quote.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.enterText(_amountField('Price'), '0');
+    await tester.ensureVisible(find.text('Save review'));
+    await tester.tap(find.text('Save review'));
+    await tester.pumpAndSettle();
+    expect(gateway.savedRequests, 0);
+    expect(find.text('Amount must be greater than zero'), findsOneWidget);
+
+    await tester.enterText(_amountField('Price'), '123.45');
+    await tester.tap(find.text('Save review'));
+    await tester.pumpAndSettle();
+
+    expect(gateway.savedRequests, 1);
+    expect(gateway.lastRequest?.price, Decimal.parse('123.45'));
+    expect(gateway.applyCalls, 0);
+    expect(gateway.undoCalls, 0);
+  });
+
+  testWidgets('review save failure preserves input and hides technical copy', (
+    tester,
+  ) async {
+    const sentinel = 'RAW_SAVE_EXCEPTION';
+    final request = _withPrice(testRequest('review-item'), null);
+    final item = _reviewItem(
+      request: request,
+      issue: RebalanceExecutionIssue(
+        RebalanceExecutionIssueCode.priceRequired,
+        'missing',
+      ),
+    );
+    final gateway = _FakeGateway(_session(), saveError: StateError(sentinel));
+    await _pumpReviewEditor(tester, item: item, gateway: gateway);
+
+    await tester.enterText(_amountField('Price'), '88.50');
+    await tester.ensureVisible(find.text('Save review'));
+    await tester.tap(find.text('Save review'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(sentinel), findsNothing);
+    expect(
+      find.text(AppLocalizationsEn().commonSafeErrorMessage),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<EditableText>(_amountField('Price')).controller.text,
+      '88.50',
+    );
+    await tester.pump(const Duration(seconds: 3));
   });
 
   testWidgets('cash picker excludes cash accounts in another currency', (
@@ -291,6 +499,7 @@ Future<void> _pumpReviewEditor(
       ],
       child: MaterialApp(
         theme: AppTheme.dark(compact: true),
+        builder: (context, child) => AppMessenger.init(child: child!),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: FTheme(
@@ -312,7 +521,10 @@ Future<void> _pumpReviewEditor(
   await tester.pumpAndSettle();
 }
 
-RebalanceExecutionItem _reviewItem({RebalanceExecutionRequest? request}) {
+RebalanceExecutionItem _reviewItem({
+  RebalanceExecutionRequest? request,
+  RebalanceExecutionIssue? issue,
+}) {
   final plan = testPlan(reverseCollections: true);
   return RebalanceExecutionItem(
     id: 'review-item',
@@ -321,9 +533,12 @@ RebalanceExecutionItem _reviewItem({RebalanceExecutionRequest? request}) {
     position: 0,
     suggestion: plan.trades.first,
     request: request,
-    state: request == null
+    state: issue != null
+        ? RebalanceExecutionItemState.applyFailed
+        : request == null
         ? RebalanceExecutionItemState.needsDetails
         : RebalanceExecutionItemState.ready,
+    issue: issue,
     rawRequestJson: request == null
         ? null
         : RebalanceExecutionRequestCodec.encode(request),
@@ -392,13 +607,18 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
       failures: [],
       stopped: false,
     ),
+    this.applyError,
+    this.saveError,
   });
 
   RebalanceExecutionSession value;
   final RebalanceExecutionBatchResult applyResult;
+  final Object? applyError;
+  final Object? saveError;
   final List<String> skippedIds = [];
   int savedRequests = 0;
   int applyCalls = 0;
+  int undoCalls = 0;
   RebalanceExecutionRequest? lastRequest;
 
   @override
@@ -413,6 +633,7 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   }) async {
     applyCalls += 1;
+    if (applyError case final error?) throw error;
     return applyResult;
   }
 
@@ -436,6 +657,7 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
     required RebalanceExecutionItem expected,
     required RebalanceExecutionRequest request,
   }) async {
+    if (saveError case final error?) throw error;
     savedRequests += 1;
     lastRequest = request;
     return expected;
@@ -454,11 +676,14 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
   Future<RebalanceExecutionBatchResult> undo(
     String sessionId, {
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
-  }) async => const RebalanceExecutionBatchResult(
-    completedItemIds: [],
-    failures: [],
-    stopped: false,
-  );
+  }) async {
+    undoCalls += 1;
+    return const RebalanceExecutionBatchResult(
+      completedItemIds: [],
+      failures: [],
+      stopped: false,
+    );
+  }
 }
 
 RebalanceExecutionSession _session({
@@ -467,12 +692,17 @@ RebalanceExecutionSession _session({
   RebalanceExecutionItemState itemState =
       RebalanceExecutionItemState.needsDetails,
   RebalanceExecutionIssue? issue,
+  bool includePrice = true,
 }) {
   final plan = testPlan(reverseCollections: true);
   final request =
       itemState == RebalanceExecutionItemState.ready ||
-          itemState == RebalanceExecutionItemState.applyFailed
-      ? testRequest('item-1')
+          itemState == RebalanceExecutionItemState.applyFailed ||
+          itemState == RebalanceExecutionItemState.undoFailed
+      ? _withPrice(
+          testRequest('item-1'),
+          includePrice ? Decimal.parse('123.45') : null,
+        )
       : null;
   final item = RebalanceExecutionItem(
     id: 'item-1',
@@ -481,6 +711,9 @@ RebalanceExecutionSession _session({
     position: 0,
     suggestion: plan.trades.first,
     request: request,
+    receipt: itemState == RebalanceExecutionItemState.undoFailed
+        ? testReceipt('item-1')
+        : null,
     state: itemState,
     issue:
         issue ??
@@ -493,6 +726,12 @@ RebalanceExecutionSession _session({
     rawRequestJson: request == null
         ? null
         : RebalanceExecutionRequestCodec.encode(request),
+    rawReceiptJson: itemState == RebalanceExecutionItemState.undoFailed
+        ? TradeMutationReceiptCodec.encode(testReceipt('item-1'))
+        : null,
+    appliedSequence: itemState == RebalanceExecutionItemState.undoFailed
+        ? 1
+        : null,
     createdAt: testNow,
     updatedAt: testNow,
   );
@@ -511,3 +750,21 @@ RebalanceExecutionSession _session({
         : null,
   );
 }
+
+RebalanceExecutionRequest _withPrice(
+  RebalanceExecutionRequest request,
+  Decimal? price,
+) => RebalanceExecutionRequest(
+  transactionId: request.transactionId,
+  account: request.account,
+  cashAccount: request.cashAccount,
+  asset: request.asset,
+  type: request.type,
+  quantity: request.quantity,
+  price: price,
+  currency: request.currency,
+  tradeDate: request.tradeDate,
+  fee: request.fee,
+  tax: request.tax,
+  note: request.note,
+);

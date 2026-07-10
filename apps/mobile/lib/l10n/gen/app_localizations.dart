@@ -6186,6 +6186,24 @@ abstract class AppLocalizations {
   /// **'Review'**
   String get rebalanceExecutionReviewAction;
 
+  /// No description provided for @rebalanceExecutionAddPriceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add price'**
+  String get rebalanceExecutionAddPriceAction;
+
+  /// No description provided for @rebalanceExecutionRetryApplyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry execution'**
+  String get rebalanceExecutionRetryApplyAction;
+
+  /// No description provided for @rebalanceExecutionRetryUndoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry undo'**
+  String get rebalanceExecutionRetryUndoAction;
+
   /// No description provided for @rebalanceExecutionSkipAction.
   ///
   /// In en, this message translates to:
@@ -6233,6 +6251,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cash account (optional)'**
   String get rebalanceExecutionCashAccountLabel;
+
+  /// No description provided for @rebalanceExecutionManualPriceHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic pricing is unavailable. Enter a price to continue without a quote.'**
+  String get rebalanceExecutionManualPriceHelper;
+
+  /// No description provided for @rebalanceExecutionIssuePriceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'No usable price is available. Add a price to continue.'**
+  String get rebalanceExecutionIssuePriceRequired;
+
+  /// No description provided for @rebalanceExecutionIssueInvalidReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Some trade details are invalid. Review them before continuing.'**
+  String get rebalanceExecutionIssueInvalidReview;
+
+  /// No description provided for @rebalanceExecutionIssueStaleReview.
+  ///
+  /// In en, this message translates to:
+  /// **'This review is out of date. Review the latest details before continuing.'**
+  String get rebalanceExecutionIssueStaleReview;
+
+  /// No description provided for @rebalanceExecutionIssueHoldingsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Available holdings changed. Review the quantity before continuing.'**
+  String get rebalanceExecutionIssueHoldingsChanged;
+
+  /// No description provided for @rebalanceExecutionIssueOwnerChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The active profile changed, so this trade cannot be executed safely.'**
+  String get rebalanceExecutionIssueOwnerChanged;
+
+  /// No description provided for @rebalanceExecutionIssueApplyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Price lookup or execution is temporarily unavailable. Retry the execution, or add a price if one is missing.'**
+  String get rebalanceExecutionIssueApplyUnavailable;
+
+  /// No description provided for @rebalanceExecutionIssueUndoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo is temporarily unavailable. Retry the undo operation.'**
+  String get rebalanceExecutionIssueUndoUnavailable;
+
+  /// No description provided for @rebalanceExecutionIssueUnsafe.
+  ///
+  /// In en, this message translates to:
+  /// **'This trade cannot be continued safely. Skip it or archive the execution.'**
+  String get rebalanceExecutionIssueUnsafe;
+
+  /// No description provided for @rebalanceExecutionIssueRecoveryCorrupt.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery data is incomplete. Verify the ledger before archiving this execution.'**
+  String get rebalanceExecutionIssueRecoveryCorrupt;
+
+  /// No description provided for @rebalanceExecutionIssueLegacyApplyFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'A previous execution attempt failed. Retry the execution.'**
+  String get rebalanceExecutionIssueLegacyApplyFailure;
+
+  /// No description provided for @rebalanceExecutionIssueLegacyUndoFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'A previous undo attempt failed. Retry the undo operation.'**
+  String get rebalanceExecutionIssueLegacyUndoFailure;
 
   /// No description provided for @rebalanceExecutionStateNeedsDetails.
   ///
@@ -8525,6 +8615,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount cannot be negative'**
   String get formAmountFieldNegativeNotAllowed;
+
+  /// AmountField validator: zero where the caller requires a positive value.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount must be greater than zero'**
+  String get formAmountFieldZeroNotAllowed;
 
   /// Default label for the shared NoteField.
   ///

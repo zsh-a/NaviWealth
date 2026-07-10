@@ -296,6 +296,53 @@ void main() {
     },
   );
 
+  test(
+    'manual price closes an offline quote failure without another lookup',
+    () async {
+      final service = _OfflineUntilManualPriceTradeService();
+      final harness = await _makeHarness(service);
+      addTearDown(harness.db.close);
+      var session = await harness.store.createOrResume(
+        ownerUserId: 'owner-a',
+        plan: _buyPlan(1),
+      );
+      final item = session.items.single;
+      final automaticRequest = _requestWithPrice(testRequest(item.id), null);
+      await harness.store.saveRequest(
+        ownerUserId: 'owner-a',
+        expected: item,
+        request: automaticRequest,
+      );
+
+      final offline = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
+      expect(
+        offline.failures.single.issue?.code,
+        RebalanceExecutionIssueCode.applyUnavailable,
+      );
+      expect(service.automaticPriceAttempts, 1);
+
+      session = (await harness.store.getSession(
+        ownerUserId: 'owner-a',
+        id: session.id,
+      ))!;
+      final failed = session.items.single;
+      await harness.store.saveRequest(
+        ownerUserId: 'owner-a',
+        expected: failed,
+        request: _requestWithPrice(automaticRequest, Decimal.parse('123.45')),
+      );
+      final applied = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
+
+      expect(applied.completedItemIds, [item.id]);
+      expect(service.automaticPriceAttempts, 1);
+      expect(service.manualPriceAttempts, greaterThan(0));
+    },
+  );
+
   test('expired prepare failure with a new token stops as stale', () async {
     var now = testNow;
     final racer = _FailWithCallbackTradeService();
@@ -676,6 +723,24 @@ Future<RebalanceExecutionSession> _readySession(
   return session;
 }
 
+RebalanceExecutionRequest _requestWithPrice(
+  RebalanceExecutionRequest request,
+  Decimal? price,
+) => RebalanceExecutionRequest(
+  transactionId: request.transactionId,
+  account: request.account,
+  cashAccount: request.cashAccount,
+  asset: request.asset,
+  type: request.type,
+  quantity: request.quantity,
+  price: price,
+  currency: request.currency,
+  tradeDate: request.tradeDate,
+  fee: request.fee,
+  tax: request.tax,
+  note: request.note,
+);
+
 RebalancePlan _buyPlan(int count) {
   final base = testPlan(reverseCollections: true);
   final buy = base.trades.first;
@@ -812,6 +877,28 @@ final class _TemporaryFirstTradeService extends _EchoTradeService {
         cause: const NetworkException('offline'),
       );
     }
+    return super.buildPlan(draft, openLots: openLots);
+  }
+}
+
+final class _OfflineUntilManualPriceTradeService extends _EchoTradeService {
+  var automaticPriceAttempts = 0;
+  var manualPriceAttempts = 0;
+
+  @override
+  Future<TradeEntryPlan> buildPlan(
+    TradeDraft draft, {
+    required List<Lot> openLots,
+  }) async {
+    if (draft.price == null) {
+      automaticPriceAttempts += 1;
+      throw TradeEntryException(
+        TradeEntryErrorCode.priceUnavailable,
+        'automatic quote unavailable',
+        cause: const NetworkException('offline'),
+      );
+    }
+    manualPriceAttempts += 1;
     return super.buildPlan(draft, openLots: openLots);
   }
 }

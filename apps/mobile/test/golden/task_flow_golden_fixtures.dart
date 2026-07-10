@@ -6,10 +6,12 @@ import 'package:naviwealth/features/finance/data/securities_catalog/asset_search
 import 'package:naviwealth/features/finance/data/securities_catalog/securities_search_service.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_execution_codecs.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_execution.dart';
@@ -201,6 +203,64 @@ RebalanceExecutionSession taskFlowRebalanceSession() {
     items: items,
     createdAt: taskFlowUtc,
     updatedAt: taskFlowUtc,
+  );
+}
+
+RebalanceExecutionSession taskFlowRebalanceOfflineSession() {
+  final base = taskFlowRebalanceSession();
+  final original = base.items.first;
+  final broker = taskFlowAccounts.firstWhere(
+    (account) => account.type == AccountCategory.broker,
+  );
+  final cash = taskFlowAccounts.firstWhere(
+    (account) => account.id == 'golden-bank-usd',
+  );
+  final request = RebalanceExecutionRequest(
+    transactionId: original.id,
+    account: broker,
+    cashAccount: cash,
+    asset: Asset(
+      id: 'us_stock:AAPL',
+      type: AssetType.stock,
+      symbol: 'AAPL',
+      currency: 'USD',
+      name: 'Apple',
+      market: 'us_stock',
+      sync: _sync(5),
+    ),
+    type: TradeType.buy,
+    quantity: Decimal.parse('25'),
+    currency: 'USD',
+    tradeDate: taskFlowUtc,
+    fee: Decimal.zero,
+    tax: Decimal.zero,
+  );
+  final failed = RebalanceExecutionItem(
+    id: original.id,
+    sessionId: original.sessionId,
+    ownerUserId: original.ownerUserId,
+    position: original.position,
+    suggestion: original.suggestion,
+    request: request,
+    state: RebalanceExecutionItemState.applyFailed,
+    issue: RebalanceExecutionIssue(
+      RebalanceExecutionIssueCode.applyUnavailable,
+      'offline quote details must stay private',
+    ),
+    rawRequestJson: RebalanceExecutionRequestCodec.encode(request),
+    createdAt: original.createdAt,
+    updatedAt: original.updatedAt,
+  );
+  return RebalanceExecutionSession(
+    id: base.id,
+    ownerUserId: base.ownerUserId,
+    status: base.status,
+    plan: base.plan,
+    rawPlanJson: base.rawPlanJson,
+    planFingerprint: base.planFingerprint,
+    items: [failed, ...base.items.skip(1)],
+    createdAt: base.createdAt,
+    updatedAt: base.updatedAt,
   );
 }
 

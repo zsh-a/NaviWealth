@@ -3571,6 +3571,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rebalanceExecutionReviewAction => 'Review';
 
   @override
+  String get rebalanceExecutionAddPriceAction => 'Add price';
+
+  @override
+  String get rebalanceExecutionRetryApplyAction => 'Retry execution';
+
+  @override
+  String get rebalanceExecutionRetryUndoAction => 'Retry undo';
+
+  @override
   String get rebalanceExecutionSkipAction => 'Skip';
 
   @override
@@ -3595,6 +3604,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceExecutionCashAccountLabel => 'Cash account (optional)';
+
+  @override
+  String get rebalanceExecutionManualPriceHelper =>
+      'Automatic pricing is unavailable. Enter a price to continue without a quote.';
+
+  @override
+  String get rebalanceExecutionIssuePriceRequired =>
+      'No usable price is available. Add a price to continue.';
+
+  @override
+  String get rebalanceExecutionIssueInvalidReview =>
+      'Some trade details are invalid. Review them before continuing.';
+
+  @override
+  String get rebalanceExecutionIssueStaleReview =>
+      'This review is out of date. Review the latest details before continuing.';
+
+  @override
+  String get rebalanceExecutionIssueHoldingsChanged =>
+      'Available holdings changed. Review the quantity before continuing.';
+
+  @override
+  String get rebalanceExecutionIssueOwnerChanged =>
+      'The active profile changed, so this trade cannot be executed safely.';
+
+  @override
+  String get rebalanceExecutionIssueApplyUnavailable =>
+      'Price lookup or execution is temporarily unavailable. Retry the execution, or add a price if one is missing.';
+
+  @override
+  String get rebalanceExecutionIssueUndoUnavailable =>
+      'Undo is temporarily unavailable. Retry the undo operation.';
+
+  @override
+  String get rebalanceExecutionIssueUnsafe =>
+      'This trade cannot be continued safely. Skip it or archive the execution.';
+
+  @override
+  String get rebalanceExecutionIssueRecoveryCorrupt =>
+      'Recovery data is incomplete. Verify the ledger before archiving this execution.';
+
+  @override
+  String get rebalanceExecutionIssueLegacyApplyFailure =>
+      'A previous execution attempt failed. Retry the execution.';
+
+  @override
+  String get rebalanceExecutionIssueLegacyUndoFailure =>
+      'A previous undo attempt failed. Retry the undo operation.';
 
   @override
   String get rebalanceExecutionStateNeedsDetails => 'Needs details';
@@ -4995,6 +5052,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formAmountFieldNegativeNotAllowed => 'Amount cannot be negative';
+
+  @override
+  String get formAmountFieldZeroNotAllowed =>
+      'Amount must be greater than zero';
 
   @override
   String get formNoteFieldLabelDefault => 'Notes';

@@ -18,6 +18,7 @@ class AmountField extends StatefulWidget {
     this.controller,
     this.currencyCode,
     this.allowNegative = false,
+    this.allowZero = true,
     this.required = true,
     this.helperText,
     this.onChanged,
@@ -31,6 +32,7 @@ class AmountField extends StatefulWidget {
   final TextEditingController? controller;
   final String? currencyCode;
   final bool allowNegative;
+  final bool allowZero;
   final bool required;
   final String? helperText;
   final void Function(Decimal? value)? onChanged;
@@ -118,6 +120,9 @@ class _AmountFieldState extends State<AmountField> {
         if (parsed == null) return l10n.formAmountFieldInvalid;
         if (!widget.allowNegative && parsed < Decimal.zero) {
           return l10n.formAmountFieldNegativeNotAllowed;
+        }
+        if (!widget.allowZero && parsed == Decimal.zero) {
+          return l10n.formAmountFieldZeroNotAllowed;
         }
         return null;
       },

@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/investment/application/trade_entry_submission_service.dart';
@@ -167,6 +168,17 @@ final class RebalanceExecutionStore {
     if (expected.ownerUserId != ownerUserId) {
       throw const RebalanceExecutionNotFound('Execution item not found.');
     }
+    if (const {
+          RebalanceExecutionIssueCode.priceRequired,
+          RebalanceExecutionIssueCode.applyUnavailable,
+        }.contains(expected.issue?.code) &&
+        (expected.request?.price != null ||
+            request.price == null ||
+            request.price! <= Decimal.zero)) {
+      throw const RebalanceExecutionConflict(
+        'Unavailable automatic pricing requires a new positive manual price.',
+      );
+    }
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
       "SET request_json = ?1, state = 'ready', failure_code = NULL, "
@@ -174,10 +186,11 @@ final class RebalanceExecutionStore {
       '    attempt_token = NULL, lease_until_iso = NULL, updated_at_iso = ?2 '
       'WHERE id = ?3 AND owner_user_id = ?4 '
       '  AND state = ?5 AND updated_at_iso = ?6 AND request_json IS ?7 '
+      '  AND failure_code IS ?8 '
       "  AND state IN ('needsDetails', 'ready', 'applyFailed') "
       "  AND (state != 'applyFailed' OR failure_code IN ("
       "    'priceRequired', 'invalidReview', 'staleReview', "
-      "    'holdingsChanged')) "
+      "    'holdingsChanged', 'applyUnavailable')) "
       '  AND EXISTS (SELECT 1 FROM rebalance_execution_sessions s '
       '    WHERE s.id = rebalance_execution_items.session_id '
       '      AND s.owner_user_id = ?4 AND s.status = \'active\')',
@@ -189,6 +202,7 @@ final class RebalanceExecutionStore {
         Variable.withString(expected.state.name),
         Variable.withString(_iso(expected.updatedAt)),
         _nullableStringVariable(expected.rawRequestJson),
+        _nullableStringVariable(expected.issue?.code.name),
       ],
     );
     if (changed != 1) {

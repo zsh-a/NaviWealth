@@ -55,6 +55,23 @@ void main() {
     expect(readAmount(controller), Decimal.parse('12345.6789'));
   });
 
+  testWidgets('rejects zero when a positive value is required', (tester) async {
+    final formKey = GlobalKey<FormState>();
+    await tester.pumpWidget(
+      _wrap(
+        Form(
+          key: formKey,
+          child: const AmountField(label: '金额', allowZero: false),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(EditableText), '0');
+    expect(formKey.currentState!.validate(), isFalse);
+    await tester.pumpAndSettle();
+    expect(find.text('金额必须大于零'), findsOneWidget);
+  });
+
   testWidgets('blocks negative input when allowNegative is false', (
     tester,
   ) async {

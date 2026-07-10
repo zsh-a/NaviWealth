@@ -24,6 +24,7 @@ import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_prefill.dart';
 import 'package:naviwealth/features/finance/investment/ui/trade_entry_form_page.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_execution.dart';
 import 'package:naviwealth/features/finance/rebalance/ui/rebalance_execution_workspace_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -169,9 +170,10 @@ void main() {
   Future<void> pumpRebalance(
     WidgetTester tester,
     ResponsiveGoldenProfile profile,
-    String name,
-  ) {
-    final session = taskFlowRebalanceSession();
+    String name, [
+    RebalanceExecutionSession? providedSession,
+  ]) {
+    final session = providedSession ?? taskFlowRebalanceSession();
     return pumpAndSnapshotResponsive(
       tester,
       name: name,
@@ -290,5 +292,15 @@ void main() {
     profile: ResponsiveGoldenProfile.textScale,
     body: (tester, profile) =>
         pumpRebalance(tester, profile, 'task_flow_rebalance_t'),
+  );
+  runResponsiveGolden(
+    'task flow rebalance offline failure — narrow',
+    profile: ResponsiveGoldenProfile.narrow,
+    body: (tester, profile) => pumpRebalance(
+      tester,
+      profile,
+      'task_flow_rebalance_offline_n',
+      taskFlowRebalanceOfflineSession(),
+    ),
   );
 }

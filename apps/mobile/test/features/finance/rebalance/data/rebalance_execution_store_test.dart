@@ -474,12 +474,12 @@ void main() {
         itemId: item.id,
         attemptToken: editableAttempt.token,
         issue: RebalanceExecutionIssue(
-          RebalanceExecutionIssueCode.priceRequired,
+          RebalanceExecutionIssueCode.invalidReview,
           List.filled(600, 'x').join(),
         ),
       );
       item = (await store.getItem(ownerUserId: 'owner-a', id: item.id))!;
-      expect(item.issue?.code, RebalanceExecutionIssueCode.priceRequired);
+      expect(item.issue?.code, RebalanceExecutionIssueCode.invalidReview);
       expect(item.issue?.debugMessage, hasLength(512));
       final persistedIssue = await _rawItem(db, item.id);
       expect(persistedIssue.read<String>('error'), hasLength(512));
@@ -499,6 +499,32 @@ void main() {
       );
       expect(item.state, RebalanceExecutionItemState.ready);
       expect(item.issue, isNull);
+
+      final pricedTemporaryAttempt = (await store.claimApply(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        leaseDuration: const Duration(minutes: 5),
+      ))!;
+      await store.markApplyFailed(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        attemptToken: pricedTemporaryAttempt.token,
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.applyUnavailable,
+          'temporary provider failure',
+        ),
+      );
+      item = (await store.getItem(ownerUserId: 'owner-a', id: item.id))!;
+      await expectLater(
+        store.saveRequest(
+          ownerUserId: 'owner-a',
+          expected: item,
+          request: testRequest(item.id),
+        ),
+        throwsA(isA<RebalanceExecutionConflict>()),
+      );
+      await store.markSkipped(ownerUserId: 'owner-a', itemId: item.id);
+      item = await store.reopenSkipped(ownerUserId: 'owner-a', itemId: item.id);
 
       final fatalAttempt = (await store.claimApply(
         ownerUserId: 'owner-a',
@@ -540,6 +566,71 @@ void main() {
       expect(skipped.issue, isNull);
     },
   );
+
+  for (final issueCode in [
+    RebalanceExecutionIssueCode.priceRequired,
+    RebalanceExecutionIssueCode.applyUnavailable,
+  ]) {
+    test('${issueCode.name} requires a new positive manual price', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = RebalanceExecutionStore(db, clock: () => testNow);
+      final session = await store.createOrResume(
+        ownerUserId: 'owner-a',
+        plan: testPlan(),
+      );
+      final initial = session.items.first;
+      final automaticRequest = _requestWithPrice(testRequest(initial.id), null);
+      var item = await store.saveRequest(
+        ownerUserId: 'owner-a',
+        expected: initial,
+        request: automaticRequest,
+      );
+      final attempt = (await store.claimApply(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        leaseDuration: const Duration(minutes: 5),
+      ))!;
+      await store.markApplyFailed(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        attemptToken: attempt.token,
+        issue: RebalanceExecutionIssue(
+          issueCode,
+          'automatic price unavailable',
+        ),
+      );
+      item = (await store.getItem(ownerUserId: 'owner-a', id: item.id))!;
+
+      for (final invalid in [
+        automaticRequest,
+        _requestWithPrice(automaticRequest, Decimal.zero),
+        _requestWithPrice(automaticRequest, Decimal.parse('-1')),
+      ]) {
+        await expectLater(
+          store.saveRequest(
+            ownerUserId: 'owner-a',
+            expected: item,
+            request: invalid,
+          ),
+          throwsA(isA<RebalanceExecutionConflict>()),
+        );
+      }
+      expect(
+        (await store.getItem(ownerUserId: 'owner-a', id: item.id))?.state,
+        RebalanceExecutionItemState.applyFailed,
+      );
+
+      final resolved = await store.saveRequest(
+        ownerUserId: 'owner-a',
+        expected: item,
+        request: _requestWithPrice(automaticRequest, Decimal.parse('123.45')),
+      );
+      expect(resolved.state, RebalanceExecutionItemState.ready);
+      expect(resolved.issue, isNull);
+      expect(resolved.request?.price, Decimal.parse('123.45'));
+    });
+  }
 
   test('owner-B request cannot bind owner-A item', () async {
     final db = makeTestDatabase();
@@ -1746,6 +1837,24 @@ Future<RebalanceExecutionItem> _readyFirst(
     request: testRequest(item.id),
   );
 }
+
+RebalanceExecutionRequest _requestWithPrice(
+  RebalanceExecutionRequest request,
+  Decimal? price,
+) => RebalanceExecutionRequest(
+  transactionId: request.transactionId,
+  account: request.account,
+  cashAccount: request.cashAccount,
+  asset: request.asset,
+  type: request.type,
+  quantity: request.quantity,
+  price: price,
+  currency: request.currency,
+  tradeDate: request.tradeDate,
+  fee: request.fee,
+  tax: request.tax,
+  note: request.note,
+);
 
 Future<QueryRow> _rawItem(AppDatabase db, String id) => db
     .customSelect(

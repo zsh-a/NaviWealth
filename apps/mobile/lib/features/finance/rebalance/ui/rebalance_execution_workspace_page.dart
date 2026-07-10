@@ -11,6 +11,7 @@ import '../application/rebalance_execution_coordinator.dart';
 import '../application/rebalance_execution_workspace_gateway.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/rebalance_execution.dart';
+import 'rebalance_execution_issue_presentation.dart';
 import 'rebalance_execution_review_sheet.dart';
 
 class RebalanceExecutionWorkspacePage extends ConsumerStatefulWidget {
@@ -59,8 +60,15 @@ class _RebalanceExecutionWorkspacePageState
         childPad: false,
         child: sessionAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) =>
-              _WorkspaceError(message: error.toString(), onRetry: _refresh),
+          error: (error, stackTrace) => _WorkspaceError(
+            message: userSafeErrorMessage(
+              context,
+              error,
+              stackTrace: stackTrace,
+              operation: 'load rebalance execution workspace',
+            ),
+            onRetry: _refresh,
+          ),
           data: (session) => session == null
               ? _WorkspaceError(
                   message: l10n.rebalanceExecutionNotFound,
@@ -125,9 +133,18 @@ class _RebalanceExecutionWorkspacePageState
       await gateway.archive(widget.sessionId);
       ref.invalidate(activeRebalanceExecutionProvider);
       if (mounted) context.go(FinanceRoutes.planRebalance);
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (mounted) {
-        AppMessenger.show(context, ToastKind.error, error.toString());
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'archive rebalance execution',
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -153,9 +170,20 @@ class _RebalanceExecutionWorkspacePageState
           : await gateway.apply(widget.sessionId, stop: stop);
       if (mounted) _showBatchResult(result);
       if (mounted) _refresh();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (mounted) {
-        AppMessenger.show(context, ToastKind.error, error.toString());
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: undo
+                ? 'undo rebalance execution'
+                : 'apply rebalance execution',
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -195,15 +223,19 @@ class _RebalanceExecutionWorkspacePageState
     }
     if (result.failures.isNotEmpty) {
       final completed = result.completedItemIds.length;
+      final singleIssue = completed == 0 && result.failures.length == 1
+          ? result.failures.single.issue
+          : null;
       AppMessenger.show(
         context,
-        ToastKind.error,
-        completed == 0
-            ? l10n.rebalanceExecutionFailedToast(result.failures.length)
-            : l10n.rebalanceExecutionPartialToast(
-                completed,
-                result.failures.length,
-              ),
+        _batchFailureToastKind(result.failures),
+        singleIssue?.userMessage(l10n) ??
+            (completed == 0
+                ? l10n.rebalanceExecutionFailedToast(result.failures.length)
+                : l10n.rebalanceExecutionPartialToast(
+                    completed,
+                    result.failures.length,
+                  )),
       );
       return;
     }
@@ -225,9 +257,18 @@ class _RebalanceExecutionWorkspacePageState
       );
       await action(gateway);
       if (mounted) _refresh();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (mounted) {
-        AppMessenger.show(context, ToastKind.error, error.toString());
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'mutate rebalance execution item',
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -268,10 +309,17 @@ class _WorkspaceBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final resolved = session.items.where((item) => item.isResolved).length;
-    final ready = session.items.any(
+    final retryApply = session.items.any(
       (item) =>
-          item.state == RebalanceExecutionItemState.ready ||
           item.issue?.recoveryAction == RebalanceRecoveryAction.retryApply,
+    );
+    final ready =
+        retryApply ||
+        session.items.any(
+          (item) => item.state == RebalanceExecutionItemState.ready,
+        );
+    final retryUndo = session.items.any(
+      (item) => item.issue?.recoveryAction == RebalanceRecoveryAction.retryUndo,
     );
     final applied = session.items.any((item) => item.isEconomicallyApplied);
     final mutable = session.status == RebalanceExecutionSessionStatus.active;
@@ -321,18 +369,40 @@ class _WorkspaceBody extends StatelessWidget {
                           if (batchRunning)
                             AppActionButton(
                               variant: FButtonVariant.destructive,
+                              mainAxisSize: MainAxisSize.min,
                               onPress: onStop,
-                              child: Text(l10n.rebalanceExecutionStopAction),
+                              child: Flexible(
+                                child: Text(
+                                  l10n.rebalanceExecutionStopAction,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                             )
                           else ...[
                             AppActionButton(
+                              mainAxisSize: MainAxisSize.min,
                               onPress: busy || !ready ? null : onApply,
-                              child: Text(l10n.rebalanceExecutionApplyAction),
+                              child: Flexible(
+                                child: Text(
+                                  retryApply
+                                      ? l10n.rebalanceExecutionRetryApplyAction
+                                      : l10n.rebalanceExecutionApplyAction,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                             ),
                             AppActionButton(
                               variant: FButtonVariant.outline,
+                              mainAxisSize: MainAxisSize.min,
                               onPress: busy || !applied ? null : onUndo,
-                              child: Text(l10n.rebalanceExecutionUndoAction),
+                              child: Flexible(
+                                child: Text(
+                                  retryUndo
+                                      ? l10n.rebalanceExecutionRetryUndoAction
+                                      : l10n.rebalanceExecutionUndoAction,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                             ),
                           ],
                         ],
@@ -402,6 +472,12 @@ class _ExecutionItemRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final reviewAction = item.issue?.recoveryAction;
+    final canEnterManualPrice =
+        item.request?.price == null &&
+        const {
+          RebalanceExecutionIssueCode.priceRequired,
+          RebalanceExecutionIssueCode.applyUnavailable,
+        }.contains(item.issue?.code);
     final canReview =
         mutable &&
         (const {
@@ -409,7 +485,8 @@ class _ExecutionItemRow extends StatelessWidget {
               RebalanceExecutionItemState.ready,
             }.contains(item.state) ||
             reviewAction == RebalanceRecoveryAction.enterPrice ||
-            reviewAction == RebalanceRecoveryAction.editReview);
+            reviewAction == RebalanceRecoveryAction.editReview ||
+            canEnterManualPrice);
     final canSkip =
         mutable &&
         const {
@@ -473,6 +550,18 @@ class _ExecutionItemRow extends StatelessWidget {
                   _stateLabel(l10n, item.state),
                   style: context.captionStyle,
                 ),
+                if (item.issue case final issue?) ...[
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    issue.userMessage(l10n),
+                    style: context.captionStyle.copyWith(
+                      color:
+                          issue.recoveryAction == RebalanceRecoveryAction.none
+                          ? context.theme.colors.destructive
+                          : context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.s8),
                 Wrap(
                   spacing: AppSpacing.s6,
@@ -481,14 +570,20 @@ class _ExecutionItemRow extends StatelessWidget {
                     if (canReview)
                       AppActionButton(
                         variant: FButtonVariant.outline,
+                        mainAxisSize: MainAxisSize.min,
                         onPress: busy ? null : onReview,
                         child: Flexible(
-                          child: Text(l10n.rebalanceExecutionReviewAction),
+                          child: Text(
+                            canEnterManualPrice
+                                ? l10n.rebalanceExecutionAddPriceAction
+                                : l10n.rebalanceExecutionReviewAction,
+                          ),
                         ),
                       ),
                     if (canSkip)
                       AppActionButton(
                         variant: FButtonVariant.ghost,
+                        mainAxisSize: MainAxisSize.min,
                         onPress: busy ? null : onSkip,
                         child: Flexible(
                           child: Text(l10n.rebalanceExecutionSkipAction),
@@ -497,6 +592,7 @@ class _ExecutionItemRow extends StatelessWidget {
                     if (skipped)
                       AppActionButton(
                         variant: FButtonVariant.outline,
+                        mainAxisSize: MainAxisSize.min,
                         onPress: busy ? null : onReopen,
                         child: Flexible(
                           child: Text(l10n.rebalanceExecutionReopenAction),
@@ -553,3 +649,14 @@ String _stateLabel(
   RebalanceExecutionItemState.recoveryBlocked =>
     l10n.rebalanceExecutionStateRecoveryBlocked,
 };
+
+ToastKind _batchFailureToastKind(List<RebalanceExecutionFailure> failures) {
+  for (final failure in failures) {
+    if (failure.code == RebalanceExecutionFailureCode.stopped) continue;
+    final issue = failure.issue;
+    if (issue == null || issue.recoveryAction == RebalanceRecoveryAction.none) {
+      return ToastKind.error;
+    }
+  }
+  return ToastKind.warning;
+}

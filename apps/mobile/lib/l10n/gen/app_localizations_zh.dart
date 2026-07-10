@@ -3425,6 +3425,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalanceExecutionReviewAction => '核对';
 
   @override
+  String get rebalanceExecutionAddPriceAction => '填写价格';
+
+  @override
+  String get rebalanceExecutionRetryApplyAction => '重试执行';
+
+  @override
+  String get rebalanceExecutionRetryUndoAction => '重试撤销';
+
+  @override
   String get rebalanceExecutionSkipAction => '跳过';
 
   @override
@@ -3447,6 +3456,44 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rebalanceExecutionCashAccountLabel => '现金账户（可选）';
+
+  @override
+  String get rebalanceExecutionManualPriceHelper => '自动报价暂不可用。填写价格后可在无行情时继续。';
+
+  @override
+  String get rebalanceExecutionIssuePriceRequired => '当前没有可用价格，请填写价格后继续。';
+
+  @override
+  String get rebalanceExecutionIssueInvalidReview => '部分交易信息无效，请核对后继续。';
+
+  @override
+  String get rebalanceExecutionIssueStaleReview => '核对信息已经过期，请按最新数据重新核对。';
+
+  @override
+  String get rebalanceExecutionIssueHoldingsChanged => '可用持仓已经变化，请重新核对交易数量。';
+
+  @override
+  String get rebalanceExecutionIssueOwnerChanged => '当前用户环境已经变化，无法安全执行这笔交易。';
+
+  @override
+  String get rebalanceExecutionIssueApplyUnavailable =>
+      '行情或执行服务暂不可用。可以重试执行；缺少价格时也可手动填写。';
+
+  @override
+  String get rebalanceExecutionIssueUndoUnavailable => '暂时无法撤销，请重试撤销操作。';
+
+  @override
+  String get rebalanceExecutionIssueUnsafe => '无法安全继续这笔交易。请跳过，或归档执行任务。';
+
+  @override
+  String get rebalanceExecutionIssueRecoveryCorrupt =>
+      '恢复数据不完整。归档执行任务前，请先核对账本。';
+
+  @override
+  String get rebalanceExecutionIssueLegacyApplyFailure => '此前的执行尝试失败，请重试执行。';
+
+  @override
+  String get rebalanceExecutionIssueLegacyUndoFailure => '此前的撤销尝试失败，请重试撤销。';
 
   @override
   String get rebalanceExecutionStateNeedsDetails => '待补充';
@@ -4761,6 +4808,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get formAmountFieldNegativeNotAllowed => '金额不能为负';
+
+  @override
+  String get formAmountFieldZeroNotAllowed => '金额必须大于零';
 
   @override
   String get formNoteFieldLabelDefault => '备注';
