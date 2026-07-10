@@ -39,9 +39,11 @@ dropped — see *Variant choice* below — but AI primitive/component goldens ke
 their own minimal light surfaces to isolate the visual language from app
 chrome.
 
-The responsive profiles are N (`390×844 @2x`, text scale 1), W
-(`1280×900 @1x`, text scale 1), and T (the N canvas at text scale 2.0). The 13
-dark baselines are:
+The responsive profiles mirror production platform behavior: N (`390×844
+@2x`, text scale 1) and T (the N canvas at text scale 2.0) use the dark iOS
+touch theme with non-compact Material density; W (`1280×900 @1x`, text scale
+1) uses the dark Linux desktop theme with compact density. The 13 dark
+baselines are:
 
 - `task_flow_ingest_n.png`, `task_flow_ingest_w.png`, `task_flow_ingest_t.png`
 - `task_flow_account_n.png`, `task_flow_expense_n.png`
@@ -52,11 +54,11 @@ dark baselines are:
 
 ### Variant choice
 
-The legacy 48 baselines keep two variants: dark (red-up-green-down) and
-dark-colorblind (blue+orange). Both exercise `MarketColors`, `GlassTokens`,
-and the type ramp under different accent regimes. The 13 responsive task-flow
-baselines are dark-only so the matrix spends its budget on width and 2× text
-rather than repeating accent coverage.
+The legacy 48 baselines keep their existing harness and remain unchanged: dark
+(red-up-green-down) and dark-colorblind (blue+orange). Both exercise
+`MarketColors`, `GlassTokens`, and the type ramp under different accent
+regimes. The 13 responsive task-flow baselines are dark-only so the matrix
+spends its budget on width and 2× text rather than repeating accent coverage.
 
 ### Where the baselines come from
 

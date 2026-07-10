@@ -40,12 +40,11 @@ class AppTheme {
     final f = isDark ? FColors.slateDark : FColors.slateLight;
     // Override Slate's slate-grey primary with the cyan brand accent so the
     // Material side of the tree (residual MaterialButton / Switch / etc.)
-    // reads the same brand interaction color as the forui side. See app.dart
-    // for the matching FColors.copyWith on the forui surface.
+    // reads the same brand interaction color as the Forui side. See
+    // buildAppForuiTheme for the matching Forui palette overrides.
     final accent = AccentColors.primary(brightness);
     final onAccent = AccentColors.onPrimary(brightness);
-    // Keep residual Material surfaces aligned with the FTheme background
-    // overrides in app.dart.
+    // Keep residual Material surfaces aligned with buildAppForuiTheme.
     final pageBackground = isDark
         ? ColorPalette.navy950
         : ColorPalette.neutralGlass;

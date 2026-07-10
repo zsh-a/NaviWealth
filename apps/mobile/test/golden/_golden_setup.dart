@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -230,6 +232,23 @@ extension ResponsiveGoldenProfileData on ResponsiveGoldenProfile {
     ResponsiveGoldenProfile.textScale => const TextScaler.linear(2),
     _ => TextScaler.noScaling,
   };
+
+  TargetPlatform get targetPlatform => switch (this) {
+    ResponsiveGoldenProfile.narrow ||
+    ResponsiveGoldenProfile.textScale => TargetPlatform.iOS,
+    ResponsiveGoldenProfile.wide => TargetPlatform.linux,
+  };
+
+  bool get touch => switch (this) {
+    ResponsiveGoldenProfile.narrow || ResponsiveGoldenProfile.textScale => true,
+    ResponsiveGoldenProfile.wide => false,
+  };
+
+  bool get compact => switch (this) {
+    ResponsiveGoldenProfile.narrow ||
+    ResponsiveGoldenProfile.textScale => false,
+    ResponsiveGoldenProfile.wide => true,
+  };
 }
 
 const _responsiveGoldenMediaKey = ValueKey('responsive-golden.media-query');
@@ -244,70 +263,101 @@ Future<void> pumpAndSnapshotResponsive(
   List<Override> overrides = const [],
   Locale locale = const Locale('en'),
 }) async {
-  await loadGoldenFonts();
-  final logicalSize = profile.logicalSize;
-  final dpr = profile.devicePixelRatio;
-  await tester.binding.setSurfaceSize(logicalSize);
-  tester.view
-    ..physicalSize = Size(logicalSize.width * dpr, logicalSize.height * dpr)
-    ..devicePixelRatio = dpr;
-  addTearDown(() async {
-    await tester.binding.setSurfaceSize(null);
-    tester.view
-      ..resetPhysicalSize()
-      ..resetDevicePixelRatio();
+  final previousPlatformOverride = debugDefaultTargetPlatformOverride;
+  debugDefaultTargetPlatformOverride = profile.targetPlatform;
+  addTearDown(() {
+    debugDefaultTargetPlatformOverride = previousPlatformOverride;
   });
 
-  final router = GoRouter(
-    routes: [GoRoute(path: '/', builder: (_, _) => child)],
-    errorBuilder: (_, _) => const SizedBox.shrink(),
-  );
-  addTearDown(router.dispose);
+  try {
+    final materialTheme = AppTheme.dark(compact: profile.compact);
+    await loadGoldenFonts();
+    final logicalSize = profile.logicalSize;
+    final dpr = profile.devicePixelRatio;
+    await tester.binding.setSurfaceSize(logicalSize);
+    tester.view
+      ..physicalSize = Size(logicalSize.width * dpr, logicalSize.height * dpr)
+      ..devicePixelRatio = dpr;
+    addTearDown(() async {
+      await tester.binding.setSurfaceSize(null);
+      tester.view
+        ..resetPhysicalSize()
+        ..resetDevicePixelRatio();
+    });
 
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: overrides,
-      child: MarketColorsScope(
-        colors: GoldenTheme.dark.marketColors,
-        child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          theme: GoldenTheme.dark.buildTheme(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: locale,
-          routerConfig: router,
-          builder: (context, child) {
-            final media = MediaQuery.of(context);
-            return MediaQuery(
-              key: _responsiveGoldenMediaKey,
-              data: media.copyWith(
-                disableAnimations: true,
-                textScaler: profile.textScaler,
-              ),
-              child: child!,
-            );
-          },
+    final router = GoRouter(
+      routes: [GoRoute(path: '/', builder: (_, _) => child)],
+      errorBuilder: (_, _) => const SizedBox.shrink(),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MarketColorsScope(
+          colors: GoldenTheme.dark.marketColors,
+          child: MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            theme: materialTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: locale,
+            routerConfig: router,
+            builder: (context, child) {
+              final media = MediaQuery.of(context);
+              return MediaQuery(
+                data: media.copyWith(
+                  disableAnimations: true,
+                  textScaler: profile.textScaler,
+                ),
+                child: FTheme(
+                  data: buildAppForuiTheme(
+                    brightness: Brightness.dark,
+                    touch: profile.touch,
+                  ),
+                  child: Builder(
+                    key: _responsiveGoldenMediaKey,
+                    builder: (_) => child!,
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 100));
-  await tester.pump(const Duration(milliseconds: 200));
-  await tester.pump(const Duration(milliseconds: 200));
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 200));
 
-  final expectedPhysical = profile == ResponsiveGoldenProfile.wide
-      ? const Size(1280, 900)
-      : const Size(780, 1688);
-  expect(tester.view.physicalSize, expectedPhysical);
-  final mediaContext = tester.element(find.byKey(_responsiveGoldenMediaKey));
-  expect(MediaQuery.sizeOf(mediaContext), logicalSize);
-  expect(
-    MediaQuery.textScalerOf(mediaContext).scale(10),
-    profile == ResponsiveGoldenProfile.textScale ? 20 : 10,
-  );
-  expect(tester.takeException(), isNull);
-  await expectGoldenSurface('goldens/$name.png');
+    final expectedPhysical = profile == ResponsiveGoldenProfile.wide
+        ? const Size(1280, 900)
+        : const Size(780, 1688);
+    expect(tester.view.physicalSize, expectedPhysical);
+    final mediaContext = tester.element(find.byKey(_responsiveGoldenMediaKey));
+    expect(MediaQuery.sizeOf(mediaContext), logicalSize);
+    expect(
+      MediaQuery.textScalerOf(mediaContext).scale(10),
+      profile == ResponsiveGoldenProfile.textScale ? 20 : 10,
+    );
+    final foruiTheme = FTheme.of(mediaContext);
+    expect(
+      foruiTheme.buttonStyles.primary.md.contentStyle.constraints.minHeight,
+      profile.touch ? 44 : 36,
+    );
+    expect(foruiTheme.colors.primary, AccentColors.primary(Brightness.dark));
+    final materialThemeAtProfile = Theme.of(mediaContext);
+    expect(materialThemeAtProfile.platform, profile.targetPlatform);
+    expect(
+      materialThemeAtProfile.visualDensity,
+      profile.compact ? VisualDensity.compact : VisualDensity.standard,
+    );
+    expect(tester.takeException(), isNull);
+    await expectGoldenSurface('goldens/$name.png');
+  } finally {
+    debugDefaultTargetPlatformOverride = previousPlatformOverride;
+  }
 }
 
 void runResponsiveGolden(

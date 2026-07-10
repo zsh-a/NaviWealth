@@ -68,38 +68,14 @@ class NaviWealthApp extends ConsumerWidget {
           ThemeMode.light => false,
           ThemeMode.system => platformBrightness == Brightness.dark,
         };
-        final platform = isDark ? FThemes.slate.dark : FThemes.slate.light;
         final isTouch =
             !kIsWeb &&
             (defaultTargetPlatform == TargetPlatform.iOS ||
                 defaultTargetPlatform == TargetPlatform.android);
-        final baseFTheme = isTouch ? platform.touch : platform.desktop;
-        // Layer cyan brand accent over Slate and override the page
-        // background + text colors to match the fintech spec:
-        //   Light: cool-white (#F8FCFC), navy text, cyan accent.
-        //   Dark:  deep navy (#0A1F28), light navy text, bright cyan accent.
-        //
-        // Forui 0.22 dropped `colors` from `FThemeData.copyWith` — colour
-        // overrides now require rebuilding via the factory constructor.
         final brightness = isDark ? Brightness.dark : Brightness.light;
-        final fTheme = FThemeData(
+        final fTheme = buildAppForuiTheme(
+          brightness: brightness,
           touch: isTouch,
-          colors: baseFTheme.colors.copyWith(
-            primary: AccentColors.primary(brightness),
-            primaryForeground: AccentColors.onPrimary(brightness),
-            background: isDark
-                ? ColorPalette.navy950
-                : ColorPalette.neutralGlass,
-            foreground: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
-            mutedForeground: isDark
-                ? ColorPalette.navy400
-                : ColorPalette.navy400,
-            card: isDark ? ColorPalette.navyGlass : ColorPalette.neutral0,
-            border: isDark
-                ? ColorPalette.navy800
-                : ColorPalette.neutralGlassBorder,
-            muted: isDark ? ColorPalette.navyGlass : ColorPalette.neutralTint,
-          ),
         );
         // Sync brightnessProvider so marketColorsProvider derives correctly.
         WidgetsBinding.instance.addPostFrameCallback((_) {
