@@ -1,27 +1,39 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/asset_search_hit.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/providers.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/securities_search_service.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/investment/application/trade_entry_submission_service.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_prefill.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/investment/ui/trade_entry_form_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
+import '../../data/repositories/_stub_stamper.dart';
 
 class _FakeSearch extends SecuritiesSearchService {
   _FakeSearch({required super.db});
@@ -71,12 +83,95 @@ Account _account({
 
 Widget _wrap(Widget child) {
   return MaterialApp(
-    builder: (context, child) => AppMessenger.init(child: child!),
+    builder: (context, child) => AppMessenger.init(
+      child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+    ),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en', 'US'),
-    home: FTheme(data: FThemes.slate.light.desktop, child: child),
+    home: child,
   );
+}
+
+TradeEntrySubmissionService _submissionService(AppDatabase db) {
+  final outbox = DriftOutboxStore(db);
+  final stamper = makeStubStamper();
+  return TradeEntrySubmissionService(
+    db: db,
+    securitiesRepo: SecuritiesAssetRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+    ),
+    tradeService: const _UiTradeEntryService(),
+    journalEntryRepo: JournalEntryRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+      fxRateSource: const IdentityFxRateSource(),
+      baseCurrency: 'USD',
+    ),
+    priceRepo: PriceRepository(db: db, outbox: outbox, stamper: stamper),
+    currentUserId: () async => 'u-test',
+  );
+}
+
+Future<void> _pumpReadyTradeForm(
+  WidgetTester tester, {
+  required AppDatabase db,
+  required TradeEntrySubmissionService service,
+}) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((_) async => db),
+        accountsStreamProvider.overrideWith(
+          (_) => Stream.value([
+            _account(
+              id: 'broker',
+              name: 'Broker',
+              type: AccountCategory.broker,
+              currency: 'USD',
+            ),
+          ]),
+        ),
+        securitiesSearchServiceProvider.overrideWith(
+          (_) async => _FakeSearch(db: db),
+        ),
+        tradeEntrySubmissionServiceProvider.overrideWith((_) async => service),
+      ],
+      child: _wrap(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => TradeEntryFormPage(
+                  accountId: 'broker',
+                  prefill: TradeEntryPrefill(
+                    type: TradeType.valuationAdjust,
+                    quantity: Decimal.one,
+                    price: Decimal.fromInt(150),
+                    currency: 'USD',
+                  ),
+                ),
+              ),
+            ),
+            child: const Text('Open trade'),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.tap(find.text('Open trade'));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byKey(const Key('symbol-field-search')), 'AAPL');
+  await tester.pump(const Duration(milliseconds: 250));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('AAPL').last);
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -262,4 +357,128 @@ void main() {
     expect(find.text('2.5'), findsOneWidget);
     expect(find.text('Rebalance suggestion'), findsOneWidget);
   });
+
+  testWidgets('successful trade offers Undo for journal and price', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final service = _submissionService(db);
+    await _pumpReadyTradeForm(tester, db: db, service: service);
+
+    await tester.tap(find.byKey(const Key('trade-entry-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Undo'), findsOneWidget);
+    expect(await db.select(db.assets).get(), hasLength(1));
+    expect(await db.select(db.journalEntries).get(), hasLength(1));
+    expect(await db.select(db.postings).get(), hasLength(2));
+    expect(await db.select(db.prices).get(), hasLength(1));
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(
+      (await db.select(db.journalEntries).getSingle()).deletedAt,
+      isNotNull,
+    );
+    expect(
+      (await db.select(db.postings).get()).every(
+        (posting) => posting.deletedAt != null,
+      ),
+      isTrue,
+    );
+    expect((await db.select(db.prices).getSingle()).deletedAt, isNotNull);
+    expect((await db.select(db.assets).getSingle()).deletedAt, isNull);
+    expect(find.text('Change undone'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 7));
+  });
+
+  testWidgets('trade Undo conflict exposes safe repeated Retry', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final service = _submissionService(db);
+    await _pumpReadyTradeForm(tester, db: db, service: service);
+
+    await tester.tap(find.byKey(const Key('trade-entry-submit')));
+    await tester.pumpAndSettle();
+
+    final committedPrice = await db.select(db.prices).getSingle();
+    await (db.update(
+      db.prices,
+    )..where((row) => row.id.equals(committedPrice.id))).write(
+      PricesCompanion(
+        perUnit: Value(Decimal.fromInt(175)),
+        updatedAt: Value(DateTime.utc(2027)),
+        updatedByDevice: const Value('remote'),
+        hlc: const Value(Hlc(wallMillis: 21_000, counter: 0, nodeId: 'remote')),
+      ),
+    );
+
+    await tester.tap(find.text('Undo'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text("Couldn't undo the change. Try again."), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Change undone'), findsNothing);
+    expect(
+      (await db.select(db.prices).getSingle()).perUnit,
+      Decimal.fromInt(175),
+    );
+    expect((await db.select(db.journalEntries).getSingle()).deletedAt, isNull);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text("Couldn't undo the change. Try again."), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Change undone'), findsNothing);
+    expect(
+      (await db.select(db.prices).getSingle()).perUnit,
+      Decimal.fromInt(175),
+    );
+    expect((await db.select(db.journalEntries).getSingle()).deletedAt, isNull);
+    expect(
+      (await db.select(db.postings).get()).every(
+        (posting) => posting.deletedAt == null,
+      ),
+      isTrue,
+    );
+    await tester.pump(const Duration(seconds: 7));
+  });
+}
+
+class _UiTradeEntryService implements TradeEntryService {
+  const _UiTradeEntryService();
+
+  @override
+  Future<TradeEntryPlan> buildPlan(
+    TradeDraft draft, {
+    required List<Lot> openLots,
+  }) async {
+    return TradeEntryPlan(
+      trade: PlannedTrade(
+        id: 'tx-ui',
+        accountId: draft.accountId,
+        assetId: draft.asset.id,
+        type: draft.type,
+        quantity: draft.quantity,
+        price: draft.price ?? Decimal.one,
+        currency: draft.currency,
+        tradeDate: draft.tradeDate,
+        fee: draft.fee,
+        tax: draft.tax,
+        note: draft.note,
+      ),
+      pricing: PriceProvenance.userSupplied,
+    );
+  }
 }

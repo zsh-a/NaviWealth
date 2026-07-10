@@ -7,6 +7,8 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/domain/models/price_observation.dart';
 import 'package:uuid/uuid.dart';
 
+import 'price_mutation_receipt.dart';
+
 /// DAO for the append-only `prices` time-series. Every price update
 /// is a new row; current price = MAX(observed_on) over the matching
 /// `(unit, quoteCurrency)`.
@@ -75,6 +77,14 @@ class PriceRepository {
     return row == null ? null : _toDomain(row);
   }
 
+  /// Reads one observation by its stable row id, including tombstones.
+  Future<PriceObservation?> findById(String id) async {
+    final row = await (_db.select(
+      _db.prices,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _toDomain(row);
+  }
+
   // ---------- Writes ----------
 
   /// Inserts a new observation. Idempotency / dedup is the caller's
@@ -126,6 +136,95 @@ class PriceRepository {
       await _outbox.enqueue(table: _tableName, rowId: id);
     });
     return domain;
+  }
+
+  /// Inserts or replaces a stable observation and returns its Undo receipt.
+  ///
+  /// Trade submission uses the planned transaction id as [id], making the
+  /// journal entry and its price observation one versioned logical mutation.
+  Future<PriceMutationReceipt> upsertWithReceipt({
+    required String id,
+    required String unit,
+    required String quoteCurrency,
+    required DateTime observedOn,
+    required Decimal perUnit,
+    required String source,
+    bool allowZero = false,
+  }) async {
+    if (allowZero ? perUnit < Decimal.zero : perUnit <= Decimal.zero) {
+      throw ArgumentError.value(perUnit, 'perUnit', 'must be positive');
+    }
+    final stamp = await _stamper.stamp();
+    PriceObservation? before;
+    late final PriceObservation after;
+    await _db.transaction(() async {
+      before = await findById(id);
+      final companion = PricesCompanion.insert(
+        id: id,
+        unit: unit,
+        quoteCurrency: quoteCurrency,
+        observedOn: observedOn,
+        perUnit: perUnit,
+        source: source,
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+        deletedAt: const Value(null),
+      );
+      await _db.into(_db.prices).insertOnConflictUpdate(companion);
+      await _outbox.enqueue(table: _tableName, rowId: id);
+      after = (await findById(id))!;
+    });
+    return PriceMutationReceipt(before: before, after: after);
+  }
+
+  /// Verifies that [receipt.after] is still the complete persisted version.
+  Future<void> validateUndo(PriceMutationReceipt receipt) async {
+    final current = await findById(receipt.after.id);
+    if (current != receipt.after) {
+      throw PriceMutationConflict(
+        'Price observation ${receipt.after.id} changed after commit.',
+      );
+    }
+  }
+
+  /// Reverses [receipt] only while its exact committed version is current.
+  Future<void> undoMutation(PriceMutationReceipt receipt) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      await validateUndo(receipt);
+      final before = receipt.before;
+      if (before == null) {
+        await (_db.update(
+          _db.prices,
+        )..where((t) => t.id.equals(receipt.after.id))).write(
+          PricesCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: Value(stamp.now),
+          ),
+        );
+      } else {
+        await (_db.update(
+          _db.prices,
+        )..where((t) => t.id.equals(receipt.after.id))).write(
+          PricesCompanion(
+            unit: Value(before.unit),
+            quoteCurrency: Value(before.quoteCurrency),
+            observedOn: Value(before.observedOn),
+            perUnit: Value(before.perUnit),
+            source: Value(before.source),
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: Value(before.sync.deletedAt == null ? null : stamp.now),
+          ),
+        );
+      }
+      await _outbox.enqueue(table: _tableName, rowId: receipt.after.id);
+    });
   }
 
   /// Soft-delete an observation. Useful when a manually entered price

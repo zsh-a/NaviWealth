@@ -14,6 +14,7 @@ final tradeEntryServiceProvider = FutureProvider<TradeEntryService>((
 
 final tradeEntrySubmissionServiceProvider =
     FutureProvider<TradeEntrySubmissionService>((ref) async {
+      final db = await ref.watch(appDatabaseProvider.future);
       final securitiesRepo = await ref.watch(
         securitiesAssetRepositoryProvider.future,
       );
@@ -23,6 +24,7 @@ final tradeEntrySubmissionServiceProvider =
       );
       final priceRepo = await ref.watch(priceRepositoryProvider.future);
       return TradeEntrySubmissionService(
+        db: db,
         securitiesRepo: securitiesRepo,
         tradeService: tradeService,
         journalEntryRepo: journalEntryRepo,

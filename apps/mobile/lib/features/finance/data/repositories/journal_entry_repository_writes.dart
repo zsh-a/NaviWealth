@@ -267,12 +267,8 @@ mixin JournalEntryRepositoryWriteMixin {
   Future<void> undoMutation(JournalMutationReceipt receipt) async {
     final stamp = await _stamper.stamp();
     await _db.transaction(() async {
+      await validateUndo(receipt);
       final current = await _liveEntry(receipt.after.entry.id);
-      if (!_sameEntry(current, receipt.after)) {
-        throw JournalMutationConflict(
-          'Journal entry ${receipt.after.entry.id} changed after commit.',
-        );
-      }
 
       final id = receipt.after.entry.id;
       final postingTombstone = PostingsCompanion(
@@ -367,6 +363,16 @@ mixin JournalEntryRepositoryWriteMixin {
         );
       }
     });
+  }
+
+  /// Verifies the complete JE and every live posting without writing.
+  Future<void> validateUndo(JournalMutationReceipt receipt) async {
+    final current = await _liveEntry(receipt.after.entry.id);
+    if (!_sameEntry(current, receipt.after)) {
+      throw JournalMutationConflict(
+        'Journal entry ${receipt.after.entry.id} changed after commit.',
+      );
+    }
   }
 
   Future<JournalEntryWithPostings?> _liveEntry(String id) async {

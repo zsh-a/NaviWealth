@@ -278,7 +278,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       _setBusy(false);
     }
 
-    await submitForm<void>(
+    await submitForm<TradeMutationReceipt>(
       dirty: dirty,
       onBusyChanged: _setBusy,
       // Use the underlying Navigator (rather than `context.pop()`) so the
@@ -292,30 +292,36 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       // instead of a generic "save failed".
       failureMessage: failureMessage,
       successMessage: l10n.commonSaved,
-      commit: () async {
-        await submissionService.submit(
-          TradeEntrySubmissionRequest(
-            symbol: selected.symbol,
-            market: selected.market,
-            assetType: selected.type,
-            assetCurrency: selected.currency,
-            assetName: selected.name,
-            isin: selected.isin,
-            type: type,
-            accountId: accountId,
-            cashAccountId: _cashAccountId,
-            quantity: quantity,
-            price: price,
-            currency: currency,
-            tradeDate: tradeDate,
-            fee: fee,
-            tax: tax,
-            note: note,
-            defaultNarration: (asset) =>
-                _tradeNarration(type, quantity, asset, l10n),
-          ),
-        );
-      },
+      undo: FormUndoPresentation<TradeMutationReceipt>(
+        buildAction: (receipt) =>
+            FormUndoAction(() => submissionService.undoMutation(receipt)),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (_) => l10n.commonUndoFailed,
+        retryLabel: l10n.commonRetry,
+      ),
+      commit: () => submissionService.submit(
+        TradeEntrySubmissionRequest(
+          symbol: selected.symbol,
+          market: selected.market,
+          assetType: selected.type,
+          assetCurrency: selected.currency,
+          assetName: selected.name,
+          isin: selected.isin,
+          type: type,
+          accountId: accountId,
+          cashAccountId: _cashAccountId,
+          quantity: quantity,
+          price: price,
+          currency: currency,
+          tradeDate: tradeDate,
+          fee: fee,
+          tax: tax,
+          note: note,
+          defaultNarration: (asset) =>
+              _tradeNarration(type, quantity, asset, l10n),
+        ),
+      ),
     );
   }
 

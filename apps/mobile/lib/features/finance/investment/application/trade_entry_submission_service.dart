@@ -1,13 +1,18 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/price_mutation_receipt.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
@@ -19,17 +24,20 @@ import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 /// ledger construction details.
 class TradeEntrySubmissionService {
   const TradeEntrySubmissionService({
+    required AppDatabase db,
     required SecuritiesAssetRepository securitiesRepo,
     required TradeEntryService tradeService,
     required JournalEntryRepository journalEntryRepo,
     required PriceRepository priceRepo,
     required Future<String> Function() currentUserId,
-  }) : _securitiesRepo = securitiesRepo,
+  }) : _db = db,
+       _securitiesRepo = securitiesRepo,
        _tradeService = tradeService,
        _journalEntryRepo = journalEntryRepo,
        _priceRepo = priceRepo,
        _currentUserId = currentUserId;
 
+  final AppDatabase _db;
   final SecuritiesAssetRepository _securitiesRepo;
   final TradeEntryService _tradeService;
   final JournalEntryRepository _journalEntryRepo;
@@ -40,15 +48,12 @@ class TradeEntrySubmissionService {
     return _journalEntryRepo.balanceByAccountUnit(accountId, unit);
   }
 
-  Future<void> submit(TradeEntrySubmissionRequest request) async {
-    final asset = await _securitiesRepo.upsertSecurity(
-      symbol: request.symbol,
-      market: request.market,
-      type: request.assetType,
-      currency: request.assetCurrency,
-      name: request.assetName,
-      isin: request.isin,
-    );
+  /// Resolves every external/domain dependency without opening a DB write.
+  Future<PreparedTradeSubmission> prepare(
+    TradeEntrySubmissionRequest request,
+  ) async {
+    final uid = await _currentUserId();
+    final asset = _assetInput(request, uid);
     final draft = TradeDraft(
       type: request.type,
       asset: asset,
@@ -62,8 +67,98 @@ class TradeEntrySubmissionService {
       note: request.note,
     );
     final plan = await _tradeService.buildPlan(draft, openLots: <Lot>[]);
+    final journal = _journalBuild(request, asset, plan, uid);
+    return PreparedTradeSubmission(
+      request: request,
+      assetInput: asset,
+      plan: plan,
+      journal: _withEntryId(journal, plan.trade.id),
+      priceSource: request.type == TradeType.valuationAdjust
+          ? 'manual'
+          : 'trade',
+    );
+  }
+
+  /// Commits security metadata, ledger rows, price, and outbox atomically.
+  Future<TradeMutationReceipt> commit(PreparedTradeSubmission prepared) async {
+    return _db.transaction(() async {
+      final request = prepared.request;
+      final assetAfter = await _securitiesRepo.upsertSecurity(
+        symbol: prepared.assetInput.symbol,
+        market: request.market,
+        type: request.assetType,
+        currency: request.assetCurrency,
+        name: request.assetName,
+        isin: request.isin,
+      );
+      final journalReceipt = await _journalEntryRepo.createWithReceipt(
+        entry: prepared.journal.entry,
+        postings: prepared.journal.postings,
+      );
+      final tx = prepared.plan.trade;
+      final priceReceipt = await _priceRepo.upsertWithReceipt(
+        id: tx.id,
+        unit: tx.assetId,
+        quoteCurrency: request.currency,
+        observedOn: tx.tradeDate,
+        perUnit: tx.price,
+        source: prepared.priceSource,
+      );
+      return TradeMutationReceipt(
+        transactionId: tx.id,
+        assetAfter: assetAfter,
+        journal: journalReceipt,
+        price: priceReceipt,
+      );
+    });
+  }
+
+  Future<TradeMutationReceipt> submit(
+    TradeEntrySubmissionRequest request,
+  ) async {
+    final prepared = await prepare(request);
+    return commit(prepared);
+  }
+
+  /// Reverses price + journal atomically while preserving security metadata.
+  Future<void> undoMutation(TradeMutationReceipt receipt) async {
+    await _db.transaction(() async {
+      // Every conflict check must complete before either repository writes.
+      await _journalEntryRepo.validateUndo(receipt.journal);
+      final price = receipt.price;
+      if (price != null) await _priceRepo.validateUndo(price);
+
+      if (price != null) await _priceRepo.undoMutation(price);
+      await _journalEntryRepo.undoMutation(receipt.journal);
+    });
+  }
+
+  Asset _assetInput(TradeEntrySubmissionRequest request, String userId) {
+    const device = 'trade-preparation';
+    return Asset(
+      id: Asset.idFor(request.market, request.symbol),
+      type: request.assetType,
+      symbol: request.symbol.trim(),
+      currency: request.assetCurrency,
+      name: request.assetName,
+      market: request.market.wire,
+      isin: request.isin,
+      sync: SyncMeta(
+        ownerUserId: userId,
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        updatedByDevice: device,
+        hlc: Hlc.zero(device),
+      ),
+    );
+  }
+
+  JournalEntryBuild _journalBuild(
+    TradeEntrySubmissionRequest request,
+    Asset asset,
+    TradeEntryPlan plan,
+    String uid,
+  ) {
     final tx = plan.trade;
-    final uid = await _currentUserId();
 
     if (request.type == TradeType.buy || request.type == TradeType.sell) {
       final cashAccountId = request.cashAccountId ?? request.accountId;
@@ -80,7 +175,7 @@ class TradeEntrySubmissionService {
           : request.defaultNarration(asset);
 
       if (request.type == TradeType.buy) {
-        final build = JournalEntryBuilders.buy(
+        return JournalEntryBuilders.buy(
           date: tx.tradeDate,
           accountId: request.accountId,
           cashAccountId: cashAccountId,
@@ -98,17 +193,6 @@ class TradeEntrySubmissionService {
           taxCurrency: tx.tax != null ? request.currency : null,
           narration: narration,
         );
-        await _journalEntryRepo.create(
-          entry: build.entry,
-          postings: build.postings,
-        );
-        await _recordTradePrice(
-          tx.assetId,
-          request.currency,
-          tx.tradeDate,
-          tx.price,
-        );
-        return;
       }
 
       final capGainsAccountId = AccountRepository.systemAccountIdForPath(
@@ -134,7 +218,7 @@ class TradeEntrySubmissionService {
         costPerUnit = tx.price;
         costCurrency = request.currency;
       }
-      final build = JournalEntryBuilders.sell(
+      return JournalEntryBuilders.sell(
         date: tx.tradeDate,
         accountId: request.accountId,
         cashAccountId: cashAccountId,
@@ -155,24 +239,13 @@ class TradeEntrySubmissionService {
         taxCurrency: tx.tax != null ? request.currency : null,
         narration: narration,
       );
-      await _journalEntryRepo.create(
-        entry: build.entry,
-        postings: build.postings,
-      );
-      await _recordTradePrice(
-        tx.assetId,
-        request.currency,
-        tx.tradeDate,
-        tx.price,
-      );
-      return;
     }
 
     final equityAccountId = AccountRepository.systemAccountIdForPath(
       'equity:adjustments',
       ownerUserId: uid,
     );
-    final build = JournalEntryBuilders.valuationAdjust(
+    return JournalEntryBuilders.valuationAdjust(
       date: tx.tradeDate,
       accountId: request.accountId,
       equityAccountId: equityAccountId,
@@ -182,33 +255,57 @@ class TradeEntrySubmissionService {
       currency: request.currency,
       narration: request.note,
     );
-    await _journalEntryRepo.create(
-      entry: build.entry,
-      postings: build.postings,
-    );
-    await _priceRepo.record(
-      unit: tx.assetId,
-      quoteCurrency: request.currency,
-      observedOn: tx.tradeDate,
-      perUnit: tx.price,
-      source: 'manual',
-    );
   }
 
-  Future<void> _recordTradePrice(
-    String assetId,
-    String currency,
-    DateTime observedOn,
-    Decimal price,
-  ) {
-    return _priceRepo.record(
-      unit: assetId,
-      quoteCurrency: currency,
-      observedOn: observedOn,
-      perUnit: price,
-      source: 'trade',
+  JournalEntryBuild _withEntryId(JournalEntryBuild build, String id) {
+    final entry = build.entry;
+    return JournalEntryBuild(
+      entry: JournalEntryDraft(
+        id: id,
+        date: entry.date,
+        settledOn: entry.settledOn,
+        narration: entry.narration,
+        payee: entry.payee,
+        tagIds: entry.tagIds,
+        flag: entry.flag,
+      ),
+      postings: build.postings,
     );
   }
+}
+
+/// Fully resolved input for the single local commit transaction.
+final class PreparedTradeSubmission {
+  const PreparedTradeSubmission({
+    required this.request,
+    required this.assetInput,
+    required this.plan,
+    required this.journal,
+    required this.priceSource,
+  });
+
+  final TradeEntrySubmissionRequest request;
+  final Asset assetInput;
+  final TradeEntryPlan plan;
+  final JournalEntryBuild journal;
+  final String priceSource;
+}
+
+/// Versioned rows produced by one committed trade.
+final class TradeMutationReceipt {
+  const TradeMutationReceipt({
+    required this.transactionId,
+    required this.assetAfter,
+    required this.journal,
+    required this.price,
+  });
+
+  final String transactionId;
+  final Asset assetAfter;
+  final JournalMutationReceipt journal;
+  final PriceMutationReceipt? price;
+
+  String get assetId => assetAfter.id;
 }
 
 class TradeEntrySubmissionRequest {
