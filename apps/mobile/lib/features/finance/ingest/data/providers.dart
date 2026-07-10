@@ -1,7 +1,7 @@
 /// §5.10.10 / S5a — Riverpod surface for the Layer 4 ingest pipeline.
 ///
 /// Wiring only. The store is owner-scoped (like `undoStackProvider`),
-/// the dedup ledger snapshot is projected from the live expense stream
+/// the dedup ledger snapshot is read directly from the journal repository
 /// via the shared `expenseToTransactionInput` adapter, and the confirm
 /// service reuses the existing `proposalApplierProvider`.
 library;
@@ -79,14 +79,6 @@ final visionIngestClientProvider = Provider<VisionIngestClient>((ref) {
         : FrbVisionIngestClient(llmClient: llmClient),
   );
 });
-
-/// Dedup ledger snapshot — the device's expense truth, projected into
-/// the neutral skill shape. Resolved fresh per ingest run.
-final _ledgerSnapshotProvider =
-    FutureProvider.autoDispose<List<TransactionInput>>((ref) async {
-      final expenses = await ref.watch(journalExpensesStreamProvider.future);
-      return expenses.map(expenseToTransactionInput).toList(growable: false);
-    });
 
 final ingestConfirmServiceProvider = FutureProvider<IngestConfirmService?>((
   ref,
@@ -247,7 +239,11 @@ class IngestController {
   Future<List<TransactionInput>> _dedupLedgerWithPending(
     IngestDraftStore store,
   ) async {
-    final ledger = await _ref.read(_ledgerSnapshotProvider.future);
+    final repository = await _ref.read(journalEntryRepositoryProvider.future);
+    final expenses = await repository.watchExpenses().first;
+    final ledger = expenses
+        .map(expenseToTransactionInput)
+        .toList(growable: false);
     final pending = await store.listByStatus(DraftStatus.pending);
     if (pending.isEmpty) return ledger;
     return <TransactionInput>[

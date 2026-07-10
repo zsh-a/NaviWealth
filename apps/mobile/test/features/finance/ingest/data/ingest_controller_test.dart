@@ -7,7 +7,6 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
 import 'package:naviwealth/features/finance/ingest/data/vision_ingest_client.dart';
@@ -39,9 +38,6 @@ void main() {
         sharedPreferencesProvider.overrideWithValue(prefs),
         appDatabaseProvider.overrideWith((_) async => db),
         activeUserIdProvider.overrideWithValue(ownerUserId),
-        journalExpensesStreamProvider.overrideWith(
-          (_) => Stream.value(const []),
-        ),
         if (visionClient != null)
           visionIngestClientProvider.overrideWithValue(visionClient),
       ],
@@ -50,13 +46,6 @@ void main() {
 
   Future<IngestDraftStore> readyStore(ProviderContainer container) async {
     await container.read(appDatabaseProvider.future);
-    final ledgerSubscription = container.listen(
-      journalExpensesStreamProvider,
-      (_, _) {},
-      fireImmediately: true,
-    );
-    addTearDown(ledgerSubscription.close);
-    await container.read(journalExpensesStreamProvider.future);
     final store = container.read(ingestDraftStoreProvider);
     expect(store, isNotNull);
     return store!;

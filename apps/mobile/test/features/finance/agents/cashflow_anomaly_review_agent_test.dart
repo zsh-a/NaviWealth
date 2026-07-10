@@ -1,8 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/domain_packs/finance_pack.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
+import 'package:naviwealth/core/ai/agents/agent_registry.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
@@ -129,6 +134,15 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'u'),
+          agentRegistrationProvider.overrideWith(
+            (ref) => domainAgentRegistrations(ref, [kFinancePack]),
+          ),
+          agentPresentationSpecsProvider.overrideWithValue(
+            domainAgentPresentationSpecs([kFinancePack]),
+          ),
+          agent_providers.agentRunStoreProvider.overrideWith(
+            (ref) async => InMemoryAgentRunStore(),
+          ),
           agent_providers.agentArtifactStoreProvider.overrideWith(
             (ref) async => artifactStore,
           ),

@@ -1,6 +1,7 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/domain_packs/finance_pack.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
@@ -8,15 +9,12 @@ import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
 import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
-import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
   test(
@@ -66,18 +64,10 @@ void main() {
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           agentRegistrationProvider.overrideWith((ref) {
-            return [
-              for (final agent in ref.watch(
-                finance_agent_providers.financeAgentsProvider,
-              ))
-                DomainAgentRegistration(
-                  agent: agent,
-                  domain: DomainScope.finance,
-                ),
-            ];
+            return domainAgentRegistrations(ref, [kFinancePack]);
           }),
           agentPresentationSpecsProvider.overrideWithValue(
-            _financePresentationSpecs,
+            domainAgentPresentationSpecs([kFinancePack]),
           ),
           agent_providers.agentRunStoreProvider.overrideWith(
             (ref) async => InMemoryAgentRunStore(),
@@ -112,45 +102,6 @@ void main() {
     },
   );
 }
-
-const _financePresentationSpecs = <String, AgentPresentationSpec>{
-  kWeeklyWealthReviewAgentId: AgentPresentationSpec(
-    agentId: kWeeklyWealthReviewAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-  kCashflowAnomalyReviewAgentId: AgentPresentationSpec(
-    agentId: kCashflowAnomalyReviewAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-  kFirePlanDriftMonitorAgentId: AgentPresentationSpec(
-    agentId: kFirePlanDriftMonitorAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-  kOptionsIncomeRiskReviewAgentId: AgentPresentationSpec(
-    agentId: kOptionsIncomeRiskReviewAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-};
-
-String _agentLabel(AppLocalizations _) => 'Agent';
-
-String _agentDescription(AppLocalizations _) => 'Agent';
 
 class _FakeArtifactStore implements AgentArtifactStore {
   _FakeArtifactStore(List<AgentArtifact> artifacts) : _artifacts = artifacts;

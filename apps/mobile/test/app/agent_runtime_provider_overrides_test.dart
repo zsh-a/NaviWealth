@@ -199,8 +199,11 @@ void main() {
           activeDomainPacksProvider.overrideWith(
             (ref) => [kHealthPack, kKnowledgePack],
           ),
-          agentRegistryProvider.overrideWith(
-            (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
+          agentRegistrationProvider.overrideWith(
+            (ref) => domainAgentRegistrations(
+              ref,
+              ref.watch(activeDomainPacksProvider),
+            ),
           ),
           agentRuntimeNativeBridgeProvider.overrideWithValue(native),
           agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
@@ -244,8 +247,11 @@ void main() {
           activeDomainPacksProvider.overrideWith(
             (ref) => [kHealthPack, kKnowledgePack, kExecutionPack],
           ),
-          agentRegistryProvider.overrideWith(
-            (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
+          agentRegistrationProvider.overrideWith(
+            (ref) => domainAgentRegistrations(
+              ref,
+              ref.watch(activeDomainPacksProvider),
+            ),
           ),
           agentRuntimeNativeStepRunnerProvider.overrideWith((ref) {
             throw StateError('step runner should be read lazily');
