@@ -88,11 +88,16 @@ class _UndoRow extends StatelessWidget {
               const AiSparkle(),
               const SizedBox(width: AppSpacing.s8),
               Expanded(
-                child: Text(
-                  summary,
-                  style: AiType.body(context),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Semantics(
+                  liveRegion: true,
+                  label: summary,
+                  excludeSemantics: true,
+                  child: Text(
+                    summary,
+                    style: AiType.body(context),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),

@@ -11,7 +11,9 @@
 /// inherits sizing from [AiType.label]. No elevation, no shadow.
 library;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import 'ai_motion.dart';
@@ -94,10 +96,26 @@ class AiPill extends StatelessWidget {
     );
 
     if (onTap == null) return pill;
-    return GestureDetector(
-      onTap: onTap,
+    return FTappable(
+      semanticsLabel: label,
+      excludeSemantics: false,
+      selected: state == AiPillState.selected,
       behavior: HitTestBehavior.opaque,
-      child: pill,
+      onPress: onTap,
+      focusedOutlineStyle: const FFocusedOutlineStyleDelta.delta(
+        borderRadius: BorderRadius.all(Radius.circular(AppRadius.full)),
+      ),
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false):
+            ActivateIntent(),
+        SingleActivator(LogicalKeyboardKey.space, includeRepeats: false):
+            ActivateIntent(),
+        // Consume repeats here so they cannot bubble to WidgetsApp's default
+        // Enter/Space shortcuts, which accept repeated key events.
+        SingleActivator(LogicalKeyboardKey.enter): DoNothingIntent(),
+        SingleActivator(LogicalKeyboardKey.space): DoNothingIntent(),
+      },
+      child: ExcludeSemantics(child: pill),
     );
   }
 }
