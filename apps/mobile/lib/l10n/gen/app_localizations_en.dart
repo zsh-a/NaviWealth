@@ -1992,7 +1992,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSaving => 'Saving…';
 
   @override
+  String get commonSaved => 'Saved';
+
+  @override
   String get commonDelete => 'Delete';
+
+  @override
+  String get commonDeleted => 'Deleted';
 
   @override
   String get commonClose => 'Close';
@@ -2019,10 +2025,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonLoadFailed => 'Couldn\'t load this view. Please try again.';
 
   @override
-  String get commonSaveFailed => 'Couldn\'t save your changes. Tap retry.';
+  String get commonSaveFailed => 'Couldn\'t save your changes. Try again.';
+
+  @override
+  String get commonDeleteFailed => 'Couldn\'t delete this item. Try again.';
 
   @override
   String get commonUndo => 'Undo';
+
+  @override
+  String get commonUndoSucceeded => 'Change undone';
+
+  @override
+  String get commonUndoFailed => 'Couldn\'t undo the change. Try again.';
 
   @override
   String get deferredLoadFailedTitle => 'Couldn\'t load this section';

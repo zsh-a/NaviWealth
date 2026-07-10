@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -36,7 +35,7 @@ class ValuationUpdateSheet extends ConsumerStatefulWidget {
 }
 
 class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
-    with OptimisticFormSubmit<ValuationUpdateSheet> {
+    with FormSubmission<ValuationUpdateSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _amountCtrl;
   final TextEditingController _noteCtrl = TextEditingController();
@@ -127,32 +126,33 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _saving = true);
     final l10n = AppLocalizations.of(context);
-    final repo = await ref.read(physicalAssetRepositoryProvider.future);
-    if (!mounted) return;
 
     final assetId = widget.asset.id;
     final amount = Decimal.parse(_amountCtrl.text.trim());
     final asOf = _asOf;
     final note = _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim();
 
-    // The record is being persisted — the post-save pop must not prompt.
-    widget.dirty.markPristine();
-    await submitOptimistic(
-      pop: () {
-        Haptics.success();
-        Navigator.of(context).pop(true);
-      },
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
       tag: 'valuation',
       failureMessage: (_) => l10n.commonSaveFailed,
-      retryLabel: l10n.commonRetry,
-      write: () => repo.updateValuation(
-        assetId: assetId,
-        newValuation: amount,
-        asOf: asOf,
-        note: note,
-      ),
+      successMessage: l10n.commonSaved,
+      commit: () async {
+        final repo = await ref.read(physicalAssetRepositoryProvider.future);
+        await repo.updateValuation(
+          assetId: assetId,
+          newValuation: amount,
+          asOf: asOf,
+          note: note,
+        );
+      },
     );
+  }
+
+  void _setSaving(bool value) {
+    if (mounted && _saving != value) setState(() => _saving = value);
   }
 }

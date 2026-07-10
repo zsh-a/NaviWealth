@@ -1078,7 +1078,9 @@
   "commonConfirm": "Confirm",
   "commonSave": "Save",
   "commonSaving": "Saving…",
+  "commonSaved": "Saved",
   "commonDelete": "Delete",
+  "commonDeleted": "Deleted",
   "commonClose": "Close",
   "commonLoading": "Loading…",
   "commonError": "Something went wrong",
@@ -1092,12 +1094,15 @@
   "@commonLoadFailed": {
     "description": "Generic load failure message that hides raw exception details from the UI."
   },
-  "commonSaveFailed": "Couldn't save your changes. Tap retry.",
+  "commonSaveFailed": "Couldn't save your changes. Try again.",
   "@commonSaveFailed": {
-    "description": "Generic failure snackbar shown when an optimistic form submit fails after the form has already popped."
+    "description": "Generic failure toast shown when a commit-first form submission fails."
   },
+  "commonDeleteFailed": "Couldn't delete this item. Try again.",
   "commonUndo": "Undo",
   "@commonUndo": { "description": "Generic undo affordance label." },
+  "commonUndoSucceeded": "Change undone",
+  "commonUndoFailed": "Couldn't undo the change. Try again.",
 
   "deferredLoadFailedTitle": "Couldn't load this section",
   "@deferredLoadFailedTitle": {

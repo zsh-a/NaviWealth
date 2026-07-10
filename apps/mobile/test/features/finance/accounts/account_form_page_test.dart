@@ -264,7 +264,7 @@ void main() {
     await tester.tap(find.widgetWithText(FButton, 'Save'));
     await tester.pumpAndSettle();
 
-    // The repo-driven write completes optimistically (pop-then-write).
+    // The repo-driven write completes before the form leaves.
     // Inspect the freshly inserted row directly.
     final rows = await h.db.select(h.db.accounts).get();
     expect(rows, hasLength(1));

@@ -28,7 +28,7 @@ class AppMessenger {
 
   /// Cached toaster state — set on first [show] call with a valid context
   /// or via [cacheOverlay]. Survives after the originating context has
-  /// been popped so optimistic-form failures can still surface.
+  /// been popped so post-navigation feedback can still surface.
   FToasterState? _cachedToaster;
 
   /// Install the toaster host. Call in [MaterialApp.builder].

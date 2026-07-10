@@ -3572,11 +3572,23 @@ abstract class AppLocalizations {
   /// **'Saving…'**
   String get commonSaving;
 
+  /// No description provided for @commonSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get commonSaved;
+
   /// No description provided for @commonDelete.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get commonDelete;
+
+  /// No description provided for @commonDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get commonDeleted;
 
   /// No description provided for @commonClose.
   ///
@@ -3620,17 +3632,35 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load this view. Please try again.'**
   String get commonLoadFailed;
 
-  /// Generic failure snackbar shown when an optimistic form submit fails after the form has already popped.
+  /// Generic failure toast shown when a commit-first form submission fails.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t save your changes. Tap retry.'**
+  /// **'Couldn\'t save your changes. Try again.'**
   String get commonSaveFailed;
+
+  /// No description provided for @commonDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete this item. Try again.'**
+  String get commonDeleteFailed;
 
   /// Generic undo affordance label.
   ///
   /// In en, this message translates to:
   /// **'Undo'**
   String get commonUndo;
+
+  /// No description provided for @commonUndoSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Change undone'**
+  String get commonUndoSucceeded;
+
+  /// No description provided for @commonUndoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t undo the change. Try again.'**
+  String get commonUndoFailed;
 
   /// Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.).
   ///

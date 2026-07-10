@@ -121,7 +121,7 @@ Widget _wrap(
       // Minimal router so the form's submit navigation lands on a valid
       // stub instead of silently failing, which matters for the
       // cross-currency submit test that inspects DB state after the
-      // optimistic pop.
+      // commit-first pop.
       routerConfig: GoRouter(
         initialLocation: '/transfer',
         routes: [

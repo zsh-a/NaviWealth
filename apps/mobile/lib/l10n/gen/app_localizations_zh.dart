@@ -1922,7 +1922,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonSaving => '保存中…';
 
   @override
+  String get commonSaved => '已保存';
+
+  @override
   String get commonDelete => '删除';
+
+  @override
+  String get commonDeleted => '已删除';
 
   @override
   String get commonClose => '关闭';
@@ -1948,10 +1954,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonLoadFailed => '加载失败，请稍后重试。';
 
   @override
-  String get commonSaveFailed => '保存失败，点击重试';
+  String get commonSaveFailed => '保存失败，请重试';
+
+  @override
+  String get commonDeleteFailed => '删除失败，请重试';
 
   @override
   String get commonUndo => '撤销';
+
+  @override
+  String get commonUndoSucceeded => '已撤销更改';
+
+  @override
+  String get commonUndoFailed => '撤销失败，请重试';
 
   @override
   String get deferredLoadFailedTitle => '该页面加载失败';

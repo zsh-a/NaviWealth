@@ -99,7 +99,10 @@ mixin FormDirtyGuard<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   }
 
   /// Pass as `backHeaderAction(context, confirmLeave: handleBackIntent)`.
-  Future<bool> handleBackIntent() => confirmDiscardIfDirty(context, dirty);
+  Future<bool> handleBackIntent() async {
+    if (dirty.busy) return false;
+    return confirmDiscardIfDirty(context, dirty);
+  }
 
   @mustCallSuper
   @override

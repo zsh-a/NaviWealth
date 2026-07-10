@@ -45,9 +45,7 @@ final SyncMeta _previewSync = SyncMeta(
 );
 
 class _TransferFormPageState extends ConsumerState<TransferFormPage>
-    with
-        OptimisticFormSubmit<TransferFormPage>,
-        FormDirtyGuard<TransferFormPage> {
+    with FormSubmission<TransferFormPage>, FormDirtyGuard<TransferFormPage> {
   @override
   String get leaveFallback => FinanceRoutes.wealth;
 
@@ -534,9 +532,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       }
     }
 
-    setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
-    final repo = await ref.read(journalEntryRepositoryProvider.future);
     final note = _noteController.text.trim();
     final build = JournalEntryBuilders.transfer(
       date: _date,
@@ -548,19 +544,25 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       toCurrency: isCross ? toCcy : null,
       narration: note.isEmpty ? null : note,
     );
-    // The record is being persisted — the post-save pop must not prompt.
-    dirty.markPristine();
-    await submitOptimisticAndLeave(
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.wealth,
-      write: () => repo.create(entry: build.entry, postings: build.postings),
+      commit: () async {
+        final repo = await ref.read(journalEntryRepositoryProvider.future);
+        await repo.create(entry: build.entry, postings: build.postings);
+      },
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>
           l10n.transferRejectedError(message),
         _ => l10n.transferFailedError('$e'),
       },
-      retryLabel: l10n.transferRetryLabel,
+      successMessage: l10n.commonSaved,
       tag: 'transfer-form',
     );
-    if (mounted) setState(() => _busy = false);
+  }
+
+  void _setBusy(bool value) {
+    if (mounted && _busy != value) setState(() => _busy = value);
   }
 }

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/providers.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
+import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -51,7 +51,7 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
 
 class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     with
-        OptimisticFormSubmit<TradeEntryFormPage>,
+        FormSubmission<TradeEntryFormPage>,
         FormDirtyGuard<TradeEntryFormPage> {
   @override
   String get leaveFallback => FinanceRoutes.activity;
@@ -162,6 +162,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   }
 
   Future<void> _submit() async {
+    if (_busy) return;
     if (!_formKey.currentState!.validate()) return;
     final l10n = AppLocalizations.of(context);
     final selected = _selected;
@@ -191,12 +192,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       return;
     }
 
-    setState(() => _busy = true);
-    final submissionService = await ref.read(
-      tradeEntrySubmissionServiceProvider.future,
-    );
-    if (!mounted) return;
-
     final type = _type;
     final tradeDate = _tradeDate;
     // Normalise zero to null so the JE builder's _normalizeOptionalAmount
@@ -206,6 +201,12 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final note = _noteController.text.trim().isEmpty
         ? null
         : _noteController.text.trim();
+
+    String failureMessage(Object error) => l10n.tradeEntryFailure(
+      error is TradeEntryException
+          ? error.message
+          : userSafeErrorMessage(context, error, operation: 'record trade'),
+    );
 
     // Record this entry's account / currency as the next default.
     // Failure is silent — saving defaults is a UX nicety, not part of
@@ -220,58 +221,78 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           ),
     );
 
-    // For buys with a known price, check whether the cash account would
-    // go negative and prompt the user to confirm.
-    if (type == TradeType.buy && price != null) {
-      final cashOut =
-          quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
-      final cashAccountId = _cashAccountId ?? accountId;
-      final currentBalance = await submissionService.balanceByAccountUnit(
-        cashAccountId,
-        currency,
+    late final TradeEntrySubmissionService submissionService;
+    _setBusy(true);
+    dirty.busy = true;
+    try {
+      submissionService = await ref.read(
+        tradeEntrySubmissionServiceProvider.future,
       );
       if (!mounted) return;
-      final resulting = currentBalance - cashOut;
-      if (resulting < Decimal.zero) {
-        final resultingLabel = context
-            .formatters(ref)
-            .currency(resulting, code: currency);
-        final confirmed = await showConfirmDialog(
-          context: context,
-          title: Text(l10n.tradeEntryCashOverdrawTitle),
-          body: Text(l10n.tradeEntryCashOverdrawMessage(resultingLabel)),
-          cancelLabel: l10n.commonCancel,
-          confirmLabel: l10n.tradeEntryCashOverdrawProceed,
+
+      // For buys with a known price, check whether the cash account would
+      // go negative and prompt the user to confirm.
+      if (type == TradeType.buy && price != null) {
+        final cashOut =
+            quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
+        final cashAccountId = _cashAccountId ?? accountId;
+        final currentBalance = await submissionService.balanceByAccountUnit(
+          cashAccountId,
+          currency,
         );
-        if (confirmed != true) {
-          setState(() => _busy = false);
-          return;
+        if (!mounted) return;
+        final resulting = currentBalance - cashOut;
+        if (resulting < Decimal.zero) {
+          final resultingLabel = context
+              .formatters(ref)
+              .currency(resulting, code: currency);
+          final confirmed = await showConfirmDialog(
+            context: context,
+            title: Text(l10n.tradeEntryCashOverdrawTitle),
+            body: Text(l10n.tradeEntryCashOverdrawMessage(resultingLabel)),
+            cancelLabel: l10n.commonCancel,
+            confirmLabel: l10n.tradeEntryCashOverdrawProceed,
+          );
+          if (confirmed != true) return;
         }
       }
+    } catch (error, stack) {
+      ref
+          .read(loggerProvider)
+          .e(
+            'form-trade-entry preflight failed',
+            error: error,
+            stackTrace: stack,
+          );
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          failureMessage(error),
+          duration: const Duration(seconds: 6),
+        );
+      }
+      return;
+    } finally {
+      dirty.busy = false;
+      _setBusy(false);
     }
 
-    // The record is being persisted — the post-save pop must not prompt.
-    dirty.markPristine();
-    await submitOptimistic(
+    await submitForm<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
       // Use the underlying Navigator (rather than `context.pop()`) so the
       // form is portable to test surfaces that mount it without a router.
       // GoRouter sub-routes sit on the same Navigator stack, so this is
       // a no-op difference in production.
-      pop: () {
-        Haptics.success();
-        Navigator.of(context).pop(true);
-      },
+      leave: () => Navigator.of(context).pop(true),
       tag: 'trade-entry',
       // `TradeEntryException` carries a user-facing message; pass it
       // through so the snackbar reads "Couldn't record trade: <reason>"
       // instead of a generic "save failed".
-      failureMessage: (error) => l10n.tradeEntryFailure(
-        error is TradeEntryException
-            ? error.message
-            : userSafeErrorMessage(context, error, operation: 'record trade'),
-      ),
-      retryLabel: l10n.commonRetry,
-      write: () async {
+      failureMessage: failureMessage,
+      successMessage: l10n.commonSaved,
+      commit: () async {
         await submissionService.submit(
           TradeEntrySubmissionRequest(
             symbol: selected.symbol,
@@ -296,6 +317,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         );
       },
     );
+  }
+
+  void _setBusy(bool value) {
+    if (mounted && _busy != value) setState(() => _busy = value);
   }
 
   @override
@@ -368,6 +393,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           const SizedBox(height: AppSpacing.s12),
 
           AccountPicker(
+            key: const Key('trade-entry-account'),
             accounts: eligible.isEmpty ? accounts : eligible,
             value: _accountId,
             onChanged: (v) => setState(() {
@@ -435,6 +461,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           const SizedBox(height: AppSpacing.s12),
 
           CurrencyPicker(
+            key: const Key('trade-entry-currency'),
             value: _currency,
             onChanged: (v) => setState(() {
               _currency = v;

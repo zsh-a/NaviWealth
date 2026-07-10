@@ -7,7 +7,6 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
-import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../shared/ui/forms/forms.dart';
@@ -29,9 +28,7 @@ class LiabilityFormPage extends ConsumerStatefulWidget {
 }
 
 class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
-    with
-        OptimisticFormSubmit<LiabilityFormPage>,
-        FormDirtyGuard<LiabilityFormPage> {
+    with FormSubmission<LiabilityFormPage>, FormDirtyGuard<LiabilityFormPage> {
   @override
   String get leaveFallback => FinanceRoutes.wealthLiabilities;
 
@@ -419,22 +416,20 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
     final l10n = AppLocalizations.of(context);
-    final repo = await ref.read(liabilityRepositoryProvider.future);
-    if (!mounted) return;
 
     final liabilityId = widget.liabilityId;
     final note = _note.text.trim();
     if (liabilityId != null) {
-      dirty.markPristine();
-      await submitOptimisticAndLeave(
+      await submitFormAndLeave<void>(
+        dirty: dirty,
+        onBusyChanged: _setSaving,
         leaveFallback: FinanceRoutes.wealthLiability(liabilityId),
-        onBeforeLeave: Haptics.success,
         tag: 'liability',
         failureMessage: (_) => l10n.commonSaveFailed,
-        retryLabel: l10n.commonRetry,
-        write: () async {
+        successMessage: l10n.commonSaved,
+        commit: () async {
+          final repo = await ref.read(liabilityRepositoryProvider.future);
           await repo.updateMetadata(
             id: liabilityId,
             name: _name.text.trim(),
@@ -469,15 +464,15 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
       ref.read(formDefaultsProvider.notifier).rememberAsset(currency: currency),
     );
 
-    // The record is being persisted — the post-save pop must not prompt.
-    dirty.markPristine();
-    await submitOptimisticAndLeave(
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setSaving,
       leaveFallback: FinanceRoutes.wealthLiabilities,
-      onBeforeLeave: Haptics.success,
       tag: 'liability',
       failureMessage: (_) => l10n.commonSaveFailed,
-      retryLabel: l10n.commonRetry,
-      write: () async {
+      successMessage: l10n.commonSaved,
+      commit: () async {
+        final repo = await ref.read(liabilityRepositoryProvider.future);
         await repo.create(
           type: type,
           name: name,
@@ -494,5 +489,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         );
       },
     );
+  }
+
+  void _setSaving(bool value) {
+    if (mounted && _saving != value) setState(() => _saving = value);
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
@@ -39,7 +38,7 @@ class AccountFormPage extends ConsumerStatefulWidget {
 }
 
 class _AccountFormPageState extends ConsumerState<AccountFormPage>
-    with FormDirtyGuard<AccountFormPage> {
+    with FormSubmission<AccountFormPage>, FormDirtyGuard<AccountFormPage> {
   @override
   String get leaveFallback => FinanceRoutes.wealthAccounts;
 
@@ -139,36 +138,39 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       );
       return;
     }
-    setState(() => _busy = true);
-    dirty.busy = true;
-    try {
-      final repo = await ref.read(accountRepositoryProvider.future);
-      if (!mounted) return;
+    final institution = _emptyToNull(_institutionController.text);
+    final accountNumber = _emptyToNull(_accountNumberController.text);
+    final note = _emptyToNull(_noteController.text);
+    final archived = _archived;
+    final initial = _initial;
+    final parentId = _parentId;
+    final icon = _icon;
+    final color = _color;
 
-      final institution = _emptyToNull(_institutionController.text);
-      final accountNumber = _emptyToNull(_accountNumberController.text);
-      final note = _emptyToNull(_noteController.text);
-      final archived = _archived;
-      final initial = _initial;
-      final parentId = _parentId;
-      final icon = _icon;
-      final color = _color;
-
-      if (initial == null) {
-        await repo.create(
-          type: type,
-          name: name,
-          currency: currency,
-          category: category,
-          institution: institution,
-          accountNumber: accountNumber,
-          note: note,
-          parentId: parentId,
-          icon: icon,
-          color: color,
-        );
-      } else {
-        await repo.update(
+    await submitFormAndLeave<Account>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
+      leaveFallback: FinanceRoutes.wealthAccounts,
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      tag: 'account',
+      commit: () async {
+        final repo = await ref.read(accountRepositoryProvider.future);
+        if (initial == null) {
+          return repo.create(
+            type: type,
+            name: name,
+            currency: currency,
+            category: category,
+            institution: institution,
+            accountNumber: accountNumber,
+            note: note,
+            parentId: parentId,
+            icon: icon,
+            color: color,
+          );
+        }
+        return repo.update(
           initial.id,
           name: name,
           currency: currency,
@@ -187,21 +189,8 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
           color: color ?? '',
           clearColor: color == null,
         );
-      }
-      if (!mounted) return;
-      dirty.markPristine();
-      Haptics.success();
-      popOrGo(context, fallback: FinanceRoutes.wealthAccounts);
-    } on Object {
-      if (!mounted) return;
-      Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
-    } finally {
-      if (mounted) {
-        dirty.busy = false;
-        setState(() => _busy = false);
-      }
-    }
+      },
+    );
   }
 
   Future<void> _delete() async {
@@ -216,16 +205,23 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       destructive: true,
     );
     if (ok != true) return;
-    setState(() => _busy = true);
-    try {
-      final repo = await ref.read(accountRepositoryProvider.future);
-      await repo.softDelete(_initial!.id);
-      if (!mounted) return;
-      dirty.markPristine();
-      popOrGo(context, fallback: FinanceRoutes.wealthAccounts);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    final id = _initial!.id;
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
+      leaveFallback: FinanceRoutes.wealthAccounts,
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.commonDeleted,
+      tag: 'account-delete',
+      commit: () async {
+        final repo = await ref.read(accountRepositoryProvider.future);
+        await repo.softDelete(id);
+      },
+    );
+  }
+
+  void _setBusy(bool value) {
+    if (mounted && _busy != value) setState(() => _busy = value);
   }
 
   String? _emptyToNull(String raw) {

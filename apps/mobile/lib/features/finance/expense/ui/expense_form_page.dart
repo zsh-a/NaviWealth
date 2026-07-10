@@ -9,7 +9,6 @@ import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/core/ai/visual/ai_hover_overlay.dart';
 import 'package:naviwealth/core/ai/visual/ai_object_capsule.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
@@ -38,9 +37,7 @@ class ExpenseFormPage extends ConsumerStatefulWidget {
 }
 
 class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
-    with
-        OptimisticFormSubmit<ExpenseFormPage>,
-        FormDirtyGuard<ExpenseFormPage> {
+    with FormSubmission<ExpenseFormPage>, FormDirtyGuard<ExpenseFormPage> {
   @override
   String get leaveFallback => FinanceRoutes.activityExpenses;
 
@@ -136,7 +133,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       );
       return;
     }
-    setState(() => _busy = true);
     final note = _noteController.text.trim().isEmpty
         ? null
         : _noteController.text.trim();
@@ -152,15 +148,14 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
             currency: currency,
           ),
     );
-    // The record is being persisted — the post-save pop must not prompt.
-    dirty.markPristine();
-    await submitOptimisticAndLeave(
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.activityExpenses,
-      onBeforeLeave: Haptics.success,
       tag: 'expense',
       failureMessage: (_) => l10n.commonSaveFailed,
-      retryLabel: l10n.commonRetry,
-      write: () async {
+      successMessage: l10n.commonSaved,
+      commit: () async {
         final journalRepo = await ref.read(
           journalEntryRepositoryProvider.future,
         );
@@ -188,6 +183,10 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     );
   }
 
+  void _setBusy(bool value) {
+    if (mounted && _busy != value) setState(() => _busy = value);
+  }
+
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
@@ -200,16 +199,21 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       destructive: true,
     );
     if (ok != true) return;
-    setState(() => _busy = true);
-    try {
-      final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
-      await journalRepo.softDelete(_initial!.entry.id);
-      if (!mounted) return;
-      dirty.markPristine();
-      popOrGo(context, fallback: FinanceRoutes.activityExpenses);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    final id = _initial!.entry.id;
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
+      leaveFallback: FinanceRoutes.activityExpenses,
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.commonDeleted,
+      tag: 'expense-delete',
+      commit: () async {
+        final journalRepo = await ref.read(
+          journalEntryRepositoryProvider.future,
+        );
+        await journalRepo.softDelete(id);
+      },
+    );
   }
 
   @override
