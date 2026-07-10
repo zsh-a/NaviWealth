@@ -354,6 +354,32 @@ class IngestReviewPageObject {
   void expectConfirmAllCount(int count) {
     expect(find.text('Confirm all · new only ($count)'), findsOneWidget);
   }
+
+  Future<void> skipDraft(String description) async {
+    final card = find.ancestor(
+      of: find.textContaining(description).first,
+      matching: find.byType(SoftCard),
+    );
+    expect(card, findsOneWidget, reason: 'draft card missing for $description');
+    final skip = find.descendant(
+      of: card,
+      matching: find.widgetWithText(FButton, 'Skip'),
+    );
+    expect(
+      skip,
+      findsOneWidget,
+      reason: 'skip action missing for $description',
+    );
+    await tester.tap(skip);
+    await settle(tester);
+  }
+
+  Future<void> undoLastAction() async {
+    final undo = find.text('Undo');
+    expect(undo, findsOneWidget, reason: 'undo toast action missing');
+    await tester.tap(undo);
+    await settle(tester);
+  }
 }
 
 /// Global settings landing page.

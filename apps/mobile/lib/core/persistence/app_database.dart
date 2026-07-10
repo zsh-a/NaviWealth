@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 34;
+  int get schemaVersion => 35;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -510,6 +510,28 @@ class AppDatabase extends _$AppDatabase {
           table: 'agent_artifacts',
           column: 'snoozed_until',
           definition: 'INTEGER',
+        );
+      }
+      // v34 -> v35: persist ingest recovery after a ledger write succeeds but
+      // its draft lifecycle update cannot be finalized. The review page can
+      // reconstruct a finalize-only action after navigation or restart,
+      // preventing the same draft from being applied twice.
+      if (from < 35) {
+        // Some early/partial fixtures can report a post-v8 user_version
+        // without the local-only side table. Recreate it idempotently before
+        // adding columns so every supported upgrade path remains bootable.
+        await _createIngestTables(this);
+        await _addColumnIfMissing(
+          this,
+          table: 'ingest_drafts',
+          column: 'recovery_kind',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'ingest_drafts',
+          column: 'recovery_apply_state_json',
+          definition: 'TEXT',
         );
       }
     },

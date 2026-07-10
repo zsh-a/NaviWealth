@@ -1,12 +1,16 @@
 part of '../ingest_review_page.dart';
 
+enum _IngestAction { parsing, confirming, confirmingBatch, undoing }
+
 class _IngestBusyState {
   const _IngestBusyState({
+    required this.action,
     required this.title,
     required this.message,
     required this.icon,
   });
 
+  final _IngestAction action;
   final String title;
   final String message;
   final IconData icon;
@@ -52,6 +56,7 @@ class _ProcessingPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return SoftCard(
+      key: ValueKey(state.action),
       padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.sm),

@@ -4,14 +4,20 @@ class _DraftCard extends StatelessWidget {
   const _DraftCard({
     required this.draft,
     required this.busy,
+    required this.pendingFinalize,
+    required this.recoveryUnavailable,
     required this.onConfirm,
     required this.onSkip,
+    required this.onFinalize,
   });
 
   final IngestDraft draft;
   final bool busy;
+  final bool pendingFinalize;
+  final bool recoveryUnavailable;
   final VoidCallback onConfirm;
   final VoidCallback onSkip;
+  final VoidCallback? onFinalize;
 
   @override
   Widget build(BuildContext context) {
@@ -73,37 +79,66 @@ class _DraftCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s10),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: busy ? null : onSkip,
-                  child: Flexible(
-                    child: Text(
-                      l10n.ingestSkip,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+          if (pendingFinalize || recoveryUnavailable) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  FLucideIcons.triangleAlert,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.destructive,
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: Text(
+                    recoveryUnavailable
+                        ? l10n.ingestRecoveryUnavailableHint
+                        : l10n.ingestNeedsReviewHint,
+                    style: context.bodyCaptionStyle,
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: busy ? null : onConfirm,
-                  child: Flexible(
-                    child: Text(
-                      l10n.ingestConfirm,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
+              ],
+            ),
+            if (!recoveryUnavailable) ...[
+              const SizedBox(height: AppSpacing.s10),
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: busy ? null : onFinalize,
+                child: Text(l10n.ingestResolveAction),
               ),
             ],
-          ),
+          ] else
+            Row(
+              children: [
+                Expanded(
+                  child: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: busy ? null : onSkip,
+                    child: Flexible(
+                      child: Text(
+                        l10n.ingestSkip,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: busy ? null : onConfirm,
+                    child: Flexible(
+                      child: Text(
+                        l10n.ingestConfirm,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

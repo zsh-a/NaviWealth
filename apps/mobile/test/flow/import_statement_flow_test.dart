@@ -22,7 +22,7 @@ void main() {
       await data.dispose();
     });
 
-    testWidgets('user pastes a statement and gets reviewable drafts', (
+    testWidgets('user reviews an import and can undo a skipped draft', (
       tester,
     ) async {
       await bootApp(tester, liveData: data);
@@ -43,6 +43,12 @@ void main() {
 
       ingest.expectDraftVisible('STARBUCKS 04291');
       ingest.expectDraftVisible('Metro Groceries');
+      ingest.expectConfirmAllCount(2);
+
+      await ingest.skipDraft('STARBUCKS 04291');
+      expect(find.textContaining('STARBUCKS 04291'), findsNothing);
+      await ingest.undoLastAction();
+      ingest.expectDraftVisible('STARBUCKS 04291');
       ingest.expectConfirmAllCount(2);
       await closeApp(tester);
     }, tags: 'flow');

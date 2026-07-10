@@ -11,10 +11,13 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../../core/persistence/app_database.dart';
 import '../domain/ingest_models.dart';
+import 'ingest_confirm_service.dart'
+    show ConfirmedIngestItem, IngestDraftLifecycleStore, IngestReviewItem;
 
-class IngestDraftStore {
+class IngestDraftStore implements IngestDraftLifecycleStore {
   IngestDraftStore(this._db, {this.ownerUserId});
 
   final AppDatabase _db;
@@ -95,6 +98,33 @@ class IngestDraftStore {
     }
   }
 
+  Future<List<IngestReviewItem>> listPendingReviewItems({
+    int limit = 200,
+  }) async {
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM ingest_drafts '
+          'WHERE owner_user_id = ?1 AND status = ?2 '
+          'ORDER BY created_at_iso DESC LIMIT ?3',
+          variables: [
+            Variable.withString(_owner),
+            Variable.withString(DraftStatus.pending.wire),
+            Variable.withInt(limit),
+          ],
+        )
+        .get();
+    return rows.map(_rowToReviewItem).toList(growable: false);
+  }
+
+  Stream<List<IngestReviewItem>> watchPendingReviewItems({
+    int limit = 200,
+  }) async* {
+    yield await listPendingReviewItems(limit: limit);
+    await for (final _ in _changes.stream) {
+      yield await listPendingReviewItems(limit: limit);
+    }
+  }
+
   Future<int> countByStatus(DraftStatus status) async {
     final rows = await _db
         .customSelect(
@@ -110,11 +140,30 @@ class IngestDraftStore {
     return rows.first.read<int>('n');
   }
 
+  @override
   Future<void> updateStatus(String draftId, DraftStatus status) async {
     await _db.customStatement(
-      'UPDATE ingest_drafts SET status = ?1 '
+      'UPDATE ingest_drafts SET status = ?1, '
+      'recovery_kind = NULL, recovery_apply_state_json = NULL '
       'WHERE draft_id = ?2 AND owner_user_id = ?3',
       [status.wire, draftId, _owner],
+    );
+    _notify();
+  }
+
+  @override
+  Future<void> markNeedsFinalize(ConfirmedIngestItem item) async {
+    await _db.customStatement(
+      'UPDATE ingest_drafts SET status = ?1, recovery_kind = ?2, '
+      'recovery_apply_state_json = ?3 '
+      'WHERE draft_id = ?4 AND owner_user_id = ?5',
+      [
+        DraftStatus.pending.wire,
+        'finalize_applied',
+        jsonEncode(item.applyState.toJson()),
+        item.draft.draftId,
+        _owner,
+      ],
     );
     _notify();
   }
@@ -150,6 +199,37 @@ class IngestDraftStore {
       traceId: row.read<String?>('trace_id'),
       expiresAt: expiresIso == null ? null : DateTime.tryParse(expiresIso),
     );
+  }
+
+  IngestReviewItem _rowToReviewItem(QueryRow row) {
+    final draft = _rowToDraft(row);
+    final recoveryKind = row.read<String?>('recovery_kind');
+    if (recoveryKind == null) {
+      return IngestReviewItem(draft: draft);
+    }
+    if (recoveryKind != 'finalize_applied') {
+      return IngestReviewItem(draft: draft, recoveryUnreadable: true);
+    }
+    final raw = row.read<String?>('recovery_apply_state_json');
+    if (raw == null) {
+      return IngestReviewItem(draft: draft, recoveryUnreadable: true);
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, Object?>) {
+        return IngestReviewItem(draft: draft, recoveryUnreadable: true);
+      }
+      final state = ProposalApplyState.fromJson(decoded);
+      if (state.appliedEntityId == null) {
+        return IngestReviewItem(draft: draft, recoveryUnreadable: true);
+      }
+      return IngestReviewItem(
+        draft: draft,
+        pendingFinalize: ConfirmedIngestItem(draft: draft, applyState: state),
+      );
+    } catch (_) {
+      return IngestReviewItem(draft: draft, recoveryUnreadable: true);
+    }
   }
 
   void dispose() {

@@ -7871,6 +7871,72 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String ingestRecordedPartial(int success, int failed) {
+    return 'Recorded $success; $failed need attention';
+  }
+
+  @override
+  String ingestRecordingProgress(int completed, int total) {
+    return 'Recording $completed of $total entries.';
+  }
+
+  @override
+  String get ingestRecordFailed => 'Couldn’t record this entry. Try again.';
+
+  @override
+  String get ingestRecordNeedsReview =>
+      'This entry may already be recorded. Resolve its review state before taking another action.';
+
+  @override
+  String get ingestNeedsReviewHint =>
+      'This write may already exist in Activity. Resolve the review state instead of recording it again.';
+
+  @override
+  String get ingestRecoveryUnavailableHint =>
+      'This entry may already exist in Activity, but its recovery details are unavailable. Recording it again is blocked.';
+
+  @override
+  String get ingestResolveAction => 'Resolve review state';
+
+  @override
+  String get ingestResolvingTitle => 'Resolving review state';
+
+  @override
+  String get ingestResolvingBody =>
+      'Finishing the review state without recording the entry again.';
+
+  @override
+  String get ingestResolveSucceeded => 'Review state resolved';
+
+  @override
+  String get ingestResolveFailed =>
+      'Couldn’t resolve the review state. Check Activity before trying again.';
+
+  @override
+  String get ingestSkipped => 'Entry skipped';
+
+  @override
+  String get ingestSkipFailed => 'Couldn’t skip this entry. Try again.';
+
+  @override
+  String get ingestRestored => 'Entry restored';
+
+  @override
+  String get ingestUndoSucceeded => 'Entry restored to review';
+
+  @override
+  String get ingestUndoingTitle => 'Restoring entries';
+
+  @override
+  String get ingestUndoFailed =>
+      'Couldn’t undo every entry. Review the remaining records.';
+
+  @override
+  String ingestUndoProgress(int completed, int total) {
+    return 'Restoring $completed of $total entries.';
+  }
+
+  @override
   String get ingestPasteTitle => 'Paste statement text';
 
   @override
@@ -7878,7 +7944,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Paste Alipay / WeChat Pay / bank CSV text\ne.g. 2026-05-10,Starbucks,-38.00,CNY';
 
   @override
+  String get ingestPasteRequired => 'Paste statement text before parsing.';
+
+  @override
   String get ingestParseAction => 'Parse';
+
+  @override
+  String get ingestParseFailed => 'Couldn’t parse this import. Try again.';
+
+  @override
+  String get ingestCaptureFailed => 'Couldn’t read that source. Try again.';
 
   @override
   String get ingestNoTransactions => 'No recognizable transactions';

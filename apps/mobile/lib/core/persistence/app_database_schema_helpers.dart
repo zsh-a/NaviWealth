@@ -416,6 +416,8 @@ Future<void> _createIngestTables(AppDatabase db) async {
     '  dedup_target_entry_id TEXT,' //          matched journal_entries.id
     '  trace_id              TEXT,' //          AiTrace.requestId
     '  status                TEXT NOT NULL,' // pending/confirmed/dismissed
+    '  recovery_kind         TEXT,' // finalize_applied
+    '  recovery_apply_state_json TEXT,' // ProposalApplyState continuation
     '  expires_at_iso        TEXT'
     ')',
   );

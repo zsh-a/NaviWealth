@@ -1582,4 +1582,77 @@ void main() {
       contains('merged_into_id'),
     );
   });
+
+  test('migrates v34 ingest drafts with persisted recovery columns', () async {
+    final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
+
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy
+        ..execute('''
+          CREATE TABLE ingest_drafts (
+            draft_id TEXT PRIMARY KEY,
+            owner_user_id TEXT NOT NULL,
+            created_at_iso TEXT NOT NULL,
+            source_kind TEXT NOT NULL,
+            origin_label TEXT,
+            parsed_json TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            dedup_verdict TEXT NOT NULL,
+            dedup_target_entry_id TEXT,
+            trace_id TEXT,
+            status TEXT NOT NULL,
+            expires_at_iso TEXT
+          )
+        ''')
+        ..execute('PRAGMA user_version = 34');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final columns = await db
+        .customSelect('PRAGMA table_info(ingest_drafts)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      containsAll(['recovery_kind', 'recovery_apply_state_json']),
+    );
+  });
+
+  test('migrates a partial v34 database with no ingest side table', () async {
+    final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
+
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy.execute('PRAGMA user_version = 34');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final columns = await db
+        .customSelect('PRAGMA table_info(ingest_drafts)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      containsAll(['draft_id', 'recovery_kind', 'recovery_apply_state_json']),
+    );
+  });
 }

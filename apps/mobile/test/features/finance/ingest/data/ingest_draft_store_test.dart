@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
@@ -80,6 +82,58 @@ void main() {
     expect(initial.map((d) => d.draftId), containsAll(<String>['d1', 'd2']));
 
     store.dispose();
+    await db.close();
+  });
+
+  test('pending recovery round-trips across store recreation', () async {
+    final db = makeTestDatabase();
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final draft = _draft('d1');
+    await store.putAll([draft]);
+    final state = ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: 'entry-d1',
+      appliedTable: 'journal_entries',
+      appliedAt: DateTime.utc(2026, 5, 10, 10),
+      undoData: const {'source': 'ingest'},
+    );
+
+    await store.markNeedsFinalize(
+      ConfirmedIngestItem(draft: draft, applyState: state),
+    );
+
+    final reopened = IngestDraftStore(db, ownerUserId: 'u1');
+    final review = await reopened.listPendingReviewItems();
+    expect(review.single.draft.draftId, 'd1');
+    expect(review.single.pendingFinalize?.applyState.toJson(), state.toJson());
+
+    await reopened.updateStatus('d1', DraftStatus.confirmed);
+    expect(await reopened.listPendingReviewItems(), isEmpty);
+    await db.close();
+  });
+
+  test('corrupt recovery stays fail-closed', () async {
+    final db = makeTestDatabase();
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([_draft('d1')]);
+    await db.customStatement(
+      'UPDATE ingest_drafts SET recovery_kind = ?, '
+      'recovery_apply_state_json = ? WHERE draft_id = ?',
+      ['finalize_applied', '{not-json', 'd1'],
+    );
+
+    final review = await store.listPendingReviewItems();
+    expect(review.single.blocksApply, isTrue);
+    expect(review.single.recoveryUnreadable, isTrue);
+    expect(review.single.pendingFinalize, isNull);
+
+    await db.customStatement(
+      'UPDATE ingest_drafts SET recovery_kind = ? WHERE draft_id = ?',
+      ['unknown_recovery', 'd1'],
+    );
+    final unknown = await store.listPendingReviewItems();
+    expect(unknown.single.blocksApply, isTrue);
+    expect(unknown.single.recoveryUnreadable, isTrue);
     await db.close();
   });
 

@@ -48,15 +48,15 @@ final ingestDraftStoreProvider = Provider<IngestDraftStore?>((ref) {
   );
 });
 
-/// Live pending-draft queue watched by the review page.
-final pendingIngestDraftsProvider =
-    StreamProvider.autoDispose<List<IngestDraft>>((ref) async* {
+/// Live pending queue with any persisted apply-recovery continuation.
+final pendingIngestReviewItemsProvider =
+    StreamProvider.autoDispose<List<IngestReviewItem>>((ref) async* {
       final store = ref.watch(ingestDraftStoreProvider);
       if (store == null) {
-        yield const <IngestDraft>[];
+        yield const <IngestReviewItem>[];
         return;
       }
-      yield* store.watchByStatus(DraftStatus.pending);
+      yield* store.watchPendingReviewItems();
     });
 
 final ingestPipelineProvider = Provider<IngestPipeline>(

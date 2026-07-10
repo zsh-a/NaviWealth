@@ -8,6 +8,8 @@
 /// allowlist by nature, see §5.10.9).
 library;
 
+import 'dart:async';
+
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,13 +42,14 @@ class IngestReviewPage extends ConsumerStatefulWidget {
 class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   String? _accountId;
   _IngestBusyState? _busy;
+  final Map<String, ConfirmedIngestItem> _pendingFinalize = {};
 
   bool get _isBusy => _busy != null;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final draftsAsync = ref.watch(pendingIngestDraftsProvider);
+    final reviewItemsAsync = ref.watch(pendingIngestReviewItemsProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return AppPageScaffold(
@@ -89,11 +92,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             context: context,
             error: (e, _) =>
                 Center(child: Text(userSafeErrorMessage(context, e))),
-            data: (accounts) => draftsAsync.whenOrLoading(
+            data: (accounts) => reviewItemsAsync.whenOrLoading(
               context: context,
               error: (e, _) =>
                   Center(child: Text(userSafeErrorMessage(context, e))),
-              data: (drafts) => _content(l10n, accounts, drafts),
+              data: (items) => _content(l10n, accounts, items),
             ),
           ),
         ),
@@ -102,25 +105,39 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Future<void> _captureCamera() async {
-    final source = await ref.read(cameraIngestCaptureProvider).capture();
-    if (source == null || !mounted) return;
-    await _runIngest(source);
+    try {
+      final source = await ref.read(cameraIngestCaptureProvider).capture();
+      if (source == null || !mounted) return;
+      await _runIngest(source);
+    } catch (_) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      _showRetry(l10n.ingestCaptureFailed, _captureCamera);
+    }
   }
 
   Future<void> _onDrop(DropDoneDetails detail) async {
     if (detail.files.isEmpty) return;
     for (final file in detail.files) {
-      final source = await xFileToIngestSource(file);
-      if (source == null || !mounted) continue;
-      await _runIngest(source);
+      try {
+        final source = await xFileToIngestSource(file);
+        if (source == null || !mounted) continue;
+        await _runIngest(source);
+      } catch (_) {
+        if (!mounted) return;
+        final l10n = AppLocalizations.of(context);
+        _showRetry(l10n.ingestCaptureFailed, () => _onDrop(detail));
+        return;
+      }
     }
   }
 
   Widget _content(
     AppLocalizations l10n,
     List<Account> accounts,
-    List<IngestDraft> drafts,
+    List<IngestReviewItem> items,
   ) {
+    final drafts = items.map((item) => item.draft).toList(growable: false);
     if (drafts.isEmpty) {
       final busy = _busy;
       if (busy != null) return _ProcessingState(state: busy);
@@ -132,7 +149,15 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     }
     final payable = accounts.where((a) => !a.archived).toList(growable: false);
     final selectedId = _accountId ?? _defaultAccountId(payable);
-    final freshCount = drafts
+    final actionableDrafts = items
+        .where(
+          (item) =>
+              !item.blocksApply &&
+              !_pendingFinalize.containsKey(item.draft.draftId),
+        )
+        .map((item) => item.draft)
+        .toList(growable: false);
+    final freshCount = actionableDrafts
         .where((d) => d.verdict == DedupVerdict.newTxn)
         .length;
 
@@ -194,12 +219,23 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             ),
             itemCount: drafts.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-            itemBuilder: (context, i) => _DraftCard(
-              draft: drafts[i],
-              busy: _isBusy,
-              onConfirm: () => _confirm(drafts[i], selectedId),
-              onSkip: () => _skip(drafts[i]),
-            ),
+            itemBuilder: (context, i) {
+              final item = items[i];
+              final draft = item.draft;
+              final pending =
+                  item.pendingFinalize ?? _pendingFinalize[draft.draftId];
+              return _DraftCard(
+                draft: draft,
+                busy: _isBusy,
+                pendingFinalize: pending != null,
+                recoveryUnavailable: item.recoveryUnreadable,
+                onConfirm: () => _confirm(draft, selectedId),
+                onSkip: () => _skip(draft),
+                onFinalize: pending == null
+                    ? null
+                    : () => _finalizeApplied(pending),
+              );
+            },
           ),
         ),
         if (freshCount > 0)
@@ -216,7 +252,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 variant: FButtonVariant.primary,
                 onPress: _isBusy
                     ? null
-                    : () => _confirmAllFresh(drafts, selectedId),
+                    : () => _confirmAllFresh(actionableDrafts, selectedId),
                 child: Flexible(
                   child: Text(
                     l10n.ingestConfirmAllFresh(freshCount),
@@ -252,6 +288,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     }
     setState(
       () => _busy = _IngestBusyState(
+        action: _IngestAction.confirming,
         title: l10n.ingestRecordingTitle,
         message: l10n.ingestRecordingBody,
         icon: FLucideIcons.badgeCheck,
@@ -261,28 +298,80 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       final svc = await ref.read(ingestConfirmServiceProvider.future);
       if (svc == null) {
         if (mounted) {
-          AppMessenger.show(
-            context,
-            ToastKind.error,
+          _showRetry(
             l10n.ingestServiceNotReady,
+            () => _confirm(draft, accountId),
           );
         }
         return;
       }
-      await svc.confirm(draft, fromAccountId: accountId);
+      final confirmed = await svc.confirm(draft, fromAccountId: accountId);
       if (mounted) {
-        AppMessenger.show(context, ToastKind.success, l10n.ingestRecorded);
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.ingestRecorded,
+          actionLabel: l10n.commonUndo,
+          onAction: () => unawaited(_undoConfirmed(svc, confirmed)),
+        );
       }
-    } on IngestConfirmException catch (e) {
-      if (mounted) AppMessenger.show(context, ToastKind.error, e.message);
+    } on IngestConfirmException catch (error) {
+      if (!mounted) return;
+      final item = error.item;
+      if (error.recovery == IngestRecovery.finalizeApplied && item != null) {
+        setState(() => _pendingFinalize[draft.draftId] = item);
+        AppMessenger.show(
+          context,
+          ToastKind.warning,
+          l10n.ingestRecordNeedsReview,
+        );
+      } else {
+        _showRetry(l10n.ingestRecordFailed, () => _confirm(draft, accountId));
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(l10n.ingestRecordFailed, () => _confirm(draft, accountId));
+      }
     } finally {
       if (mounted) setState(() => _busy = null);
     }
   }
 
   Future<void> _skip(IngestDraft draft) async {
-    final svc = await ref.read(ingestConfirmServiceProvider.future);
-    await svc?.dismiss(draft);
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.confirming,
+        title: l10n.ingestRecordingTitle,
+        message: l10n.ingestRecordingBody,
+        icon: FLucideIcons.archive,
+      ),
+    );
+    try {
+      final svc = await ref.read(ingestConfirmServiceProvider.future);
+      if (svc == null) {
+        if (mounted) {
+          _showRetry(l10n.ingestServiceNotReady, () => _skip(draft));
+        }
+        return;
+      }
+      await svc.dismiss(draft);
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.ingestSkipped,
+          actionLabel: l10n.commonUndo,
+          onAction: () => unawaited(_restoreDismissed(svc, draft)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(l10n.ingestSkipFailed, () => _skip(draft));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
   }
 
   Future<void> _confirmAllFresh(
@@ -300,6 +389,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     }
     setState(
       () => _busy = _IngestBusyState(
+        action: _IngestAction.confirmingBatch,
         title: l10n.ingestRecordingTitle,
         message: l10n.ingestRecordingBody,
         icon: FLucideIcons.badgeCheck,
@@ -307,13 +397,66 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     );
     try {
       final svc = await ref.read(ingestConfirmServiceProvider.future);
-      if (svc == null) return;
-      final n = await svc.confirmAllFresh(drafts, fromAccountId: accountId);
-      if (mounted) {
-        AppMessenger.show(context, ToastKind.success, l10n.ingestRecordedN(n));
+      if (svc == null) {
+        if (mounted) {
+          _showRetry(
+            l10n.ingestServiceNotReady,
+            () => _confirmAllFresh(drafts, accountId),
+          );
+        }
+        return;
       }
-    } on IngestConfirmException catch (e) {
-      if (mounted) AppMessenger.show(context, ToastKind.error, e.message);
+      final result = await svc.confirmAllFresh(
+        drafts,
+        fromAccountId: accountId,
+        onProgress: (completed, total) {
+          if (!mounted) return;
+          setState(
+            () => _busy = _IngestBusyState(
+              action: _IngestAction.confirmingBatch,
+              title: l10n.ingestRecordingTitle,
+              message: l10n.ingestRecordingProgress(completed, total),
+              icon: FLucideIcons.badgeCheck,
+            ),
+          );
+        },
+      );
+      if (mounted) {
+        final unresolved = <ConfirmedIngestItem>[
+          for (final failure in result.failures)
+            if (failure.error.recovery == IngestRecovery.finalizeApplied &&
+                failure.error.item != null)
+              failure.error.item!,
+        ];
+        if (unresolved.isNotEmpty) {
+          setState(() {
+            for (final item in unresolved) {
+              _pendingFinalize[item.draft.draftId] = item;
+            }
+          });
+        }
+        final failed = result.failures.length;
+        AppMessenger.show(
+          context,
+          failed == 0 ? ToastKind.success : ToastKind.warning,
+          unresolved.isNotEmpty
+              ? l10n.ingestRecordNeedsReview
+              : failed == 0
+              ? l10n.ingestRecordedN(result.confirmed.length)
+              : l10n.ingestRecordedPartial(result.confirmed.length, failed),
+          actionLabel: result.confirmed.isEmpty ? null : l10n.commonUndo,
+          onAction: result.confirmed.isEmpty
+              ? null
+              : () => unawaited(_undoAllConfirmed(svc, result.confirmed)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(
+          l10n.ingestRecordFailed,
+          () => _confirmAllFresh(drafts, accountId),
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = null);
     }
@@ -324,11 +467,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       context: context,
       builder: (_, dirty) => _PasteSheet(dirty: dirty),
     );
-    if (text == null || text.trim().isEmpty) return;
+    if (text == null) return;
     await _runIngest(
       IngestSource(
         kind: IngestSourceKind.pasteText,
-        payload: text,
+        payload: text.trim(),
         // Stable non-display breadcrumb (persisted + traced).
         originLabel: 'paste',
       ),
@@ -338,9 +481,15 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   Future<void> _pickFile() async {
     // The system picker provides its own modal UI; _runIngest owns the
     // busy state for the parse that follows.
-    final source = await ref.read(ingestCaptureSourceProvider).pickFile();
-    if (source == null || !mounted) return;
-    await _runIngest(source);
+    try {
+      final source = await ref.read(ingestCaptureSourceProvider).pickFile();
+      if (source == null || !mounted) return;
+      await _runIngest(source);
+    } catch (_) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      _showRetry(l10n.ingestCaptureFailed, _pickFile);
+    }
   }
 
   /// Shared tail for every capture entry (paste / file): run the
@@ -348,18 +497,19 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   Future<void> _runIngest(IngestSource source) async {
     final l10n = AppLocalizations.of(context);
     final sourceLabel = _sourceLabel(l10n, source);
-    setState(
-      () => _busy = _IngestBusyState(
+    setState(() {
+      _busy = _IngestBusyState(
+        action: _IngestAction.parsing,
         title: l10n.ingestProcessingTitle,
         message: l10n.ingestProcessingBody(sourceLabel),
         icon: _sourceIcon(source.kind),
-      ),
-    );
+      );
+    });
     try {
       final result = await ref.read(ingestControllerProvider).ingest(source);
       if (!mounted) return;
       if (result.isRejected) {
-        AppMessenger.show(context, ToastKind.warning, result.rejectedReason!);
+        _showRetry(result.rejectedReason!, () => _runIngest(source));
       } else if (result.total == 0) {
         AppMessenger.show(context, ToastKind.info, l10n.ingestNoTransactions);
       } else {
@@ -373,9 +523,224 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           ),
         );
       }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(l10n.ingestParseFailed, () => _runIngest(source));
+      }
     } finally {
       if (mounted) setState(() => _busy = null);
     }
+  }
+
+  Future<void> _undoConfirmed(
+    IngestConfirmService service,
+    ConfirmedIngestItem item,
+  ) async {
+    if (!mounted || _isBusy) return;
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.undoing,
+        title: l10n.ingestUndoingTitle,
+        message: l10n.ingestUndoProgress(0, 1),
+        icon: FLucideIcons.undo2,
+      ),
+    );
+    try {
+      await service.undoConfirmed(item);
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.success, l10n.ingestUndoSucceeded);
+      }
+    } on IngestConfirmException catch (error) {
+      if (!mounted) return;
+      if (error.recovery == IngestRecovery.restoreDraft) {
+        _showRetry(
+          l10n.ingestUndoFailed,
+          () => _resumeUndo(service, error.item ?? item),
+        );
+      } else {
+        _showRetry(l10n.ingestUndoFailed, () => _undoConfirmed(service, item));
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(l10n.ingestUndoFailed, () => _undoConfirmed(service, item));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _undoAllConfirmed(
+    IngestConfirmService service,
+    List<ConfirmedIngestItem> items, {
+    List<IngestBatchItemFailure<ConfirmedIngestItem>> retryFailures = const [],
+  }) async {
+    if (!mounted || _isBusy || (items.isEmpty && retryFailures.isEmpty)) return;
+    final l10n = AppLocalizations.of(context);
+    final total = retryFailures.isEmpty ? items.length : retryFailures.length;
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.undoing,
+        title: l10n.ingestUndoingTitle,
+        message: l10n.ingestUndoProgress(0, total),
+        icon: FLucideIcons.undo2,
+      ),
+    );
+    try {
+      void onProgress(int completed, int total) {
+        if (!mounted) return;
+        setState(
+          () => _busy = _IngestBusyState(
+            action: _IngestAction.undoing,
+            title: l10n.ingestUndoingTitle,
+            message: l10n.ingestUndoProgress(completed, total),
+            icon: FLucideIcons.undo2,
+          ),
+        );
+      }
+
+      final result = retryFailures.isEmpty
+          ? await service.undoAllConfirmed(items, onProgress: onProgress)
+          : await service.retryUndoFailures(
+              retryFailures,
+              onProgress: onProgress,
+            );
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          result.failures.isEmpty ? ToastKind.success : ToastKind.warning,
+          result.failures.isEmpty
+              ? l10n.ingestUndoSucceeded
+              : l10n.ingestUndoFailed,
+          actionLabel: result.failures.isEmpty ? null : l10n.commonRetry,
+          onAction: result.failures.isEmpty
+              ? null
+              : () => unawaited(
+                  _undoAllConfirmed(
+                    service,
+                    const [],
+                    retryFailures: result.failures,
+                  ),
+                ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(
+          l10n.ingestUndoFailed,
+          () => _undoAllConfirmed(service, items, retryFailures: retryFailures),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _resumeUndo(
+    IngestConfirmService service,
+    ConfirmedIngestItem item,
+  ) async {
+    if (!mounted || _isBusy) return;
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.undoing,
+        title: l10n.ingestUndoingTitle,
+        message: l10n.ingestUndoProgress(0, 1),
+        icon: FLucideIcons.undo2,
+      ),
+    );
+    try {
+      await service.resumeUndo(item);
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.success, l10n.ingestUndoSucceeded);
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(l10n.ingestUndoFailed, () => _resumeUndo(service, item));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _finalizeApplied(ConfirmedIngestItem item) async {
+    if (!mounted || _isBusy) return;
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.confirming,
+        title: l10n.ingestResolvingTitle,
+        message: l10n.ingestResolvingBody,
+        icon: FLucideIcons.shieldCheck,
+      ),
+    );
+    try {
+      final service = await ref.read(ingestConfirmServiceProvider.future);
+      if (service == null) {
+        if (mounted) {
+          _showRetry(l10n.ingestServiceNotReady, () => _finalizeApplied(item));
+        }
+        return;
+      }
+      await service.finalizeApplied(item);
+      if (mounted) {
+        setState(() => _pendingFinalize.remove(item.draft.draftId));
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.ingestResolveSucceeded,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(l10n.ingestResolveFailed, () => _finalizeApplied(item));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _restoreDismissed(
+    IngestConfirmService service,
+    IngestDraft draft,
+  ) async {
+    if (!mounted || _isBusy) return;
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.undoing,
+        title: l10n.ingestUndoingTitle,
+        message: l10n.ingestUndoProgress(0, 1),
+        icon: FLucideIcons.undo2,
+      ),
+    );
+    try {
+      await service.restore(draft);
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.success, l10n.ingestRestored);
+      }
+    } catch (_) {
+      if (mounted) {
+        _showRetry(
+          l10n.ingestUndoFailed,
+          () => _restoreDismissed(service, draft),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  void _showRetry(String message, Future<void> Function() retry) {
+    final l10n = AppLocalizations.of(context);
+    AppMessenger.show(
+      context,
+      ToastKind.error,
+      message,
+      actionLabel: l10n.commonRetry,
+      onAction: () => unawaited(retry()),
+    );
   }
 
   static IconData _sourceIcon(IngestSourceKind kind) {

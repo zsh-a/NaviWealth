@@ -13414,6 +13414,114 @@ abstract class AppLocalizations {
   /// **'Recorded {count}'**
   String ingestRecordedN(int count);
 
+  /// Ingest review: partial batch confirm result
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded {success}; {failed} need attention'**
+  String ingestRecordedPartial(int success, int failed);
+
+  /// Ingest review: batch confirmation progress
+  ///
+  /// In en, this message translates to:
+  /// **'Recording {completed} of {total} entries.'**
+  String ingestRecordingProgress(int completed, int total);
+
+  /// Ingest review: confirmation failure
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t record this entry. Try again.'**
+  String get ingestRecordFailed;
+
+  /// Ingest review: applied write needs lifecycle reconciliation
+  ///
+  /// In en, this message translates to:
+  /// **'This entry may already be recorded. Resolve its review state before taking another action.'**
+  String get ingestRecordNeedsReview;
+
+  /// Ingest draft card: unsafe retry guard
+  ///
+  /// In en, this message translates to:
+  /// **'This write may already exist in Activity. Resolve the review state instead of recording it again.'**
+  String get ingestNeedsReviewHint;
+
+  /// Ingest draft card: corrupt recovery fail-closed state
+  ///
+  /// In en, this message translates to:
+  /// **'This entry may already exist in Activity, but its recovery details are unavailable. Recording it again is blocked.'**
+  String get ingestRecoveryUnavailableHint;
+
+  /// Ingest draft card: finalize an already-applied write
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve review state'**
+  String get ingestResolveAction;
+
+  /// Ingest review: reconciliation progress title
+  ///
+  /// In en, this message translates to:
+  /// **'Resolving review state'**
+  String get ingestResolvingTitle;
+
+  /// Ingest review: reconciliation progress body
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing the review state without recording the entry again.'**
+  String get ingestResolvingBody;
+
+  /// Ingest review: reconciliation success
+  ///
+  /// In en, this message translates to:
+  /// **'Review state resolved'**
+  String get ingestResolveSucceeded;
+
+  /// Ingest review: reconciliation failure
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t resolve the review state. Check Activity before trying again.'**
+  String get ingestResolveFailed;
+
+  /// Ingest review: dismiss success
+  ///
+  /// In en, this message translates to:
+  /// **'Entry skipped'**
+  String get ingestSkipped;
+
+  /// Ingest review: dismiss failure
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t skip this entry. Try again.'**
+  String get ingestSkipFailed;
+
+  /// Ingest review: restore success
+  ///
+  /// In en, this message translates to:
+  /// **'Entry restored'**
+  String get ingestRestored;
+
+  /// Ingest review: confirm undo success
+  ///
+  /// In en, this message translates to:
+  /// **'Entry restored to review'**
+  String get ingestUndoSucceeded;
+
+  /// Ingest review: in-page title while undo is running
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring entries'**
+  String get ingestUndoingTitle;
+
+  /// Ingest review: undo failure or partial undo
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t undo every entry. Review the remaining records.'**
+  String get ingestUndoFailed;
+
+  /// Ingest review: batch undo progress
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring {completed} of {total} entries.'**
+  String ingestUndoProgress(int completed, int total);
+
   /// Ingest paste dialog title
   ///
   /// In en, this message translates to:
@@ -13426,11 +13534,29 @@ abstract class AppLocalizations {
   /// **'Paste Alipay / WeChat Pay / bank CSV text\ne.g. 2026-05-10,Starbucks,-38.00,CNY'**
   String get ingestPasteHint;
 
+  /// Ingest paste sheet: empty input validation
+  ///
+  /// In en, this message translates to:
+  /// **'Paste statement text before parsing.'**
+  String get ingestPasteRequired;
+
   /// Ingest paste dialog confirm button
   ///
   /// In en, this message translates to:
   /// **'Parse'**
   String get ingestParseAction;
+
+  /// Ingest review: parsing exception
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t parse this import. Try again.'**
+  String get ingestParseFailed;
+
+  /// Ingest review: camera/file capture exception
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read that source. Try again.'**
+  String get ingestCaptureFailed;
 
   /// Ingest review: parse produced zero rows
   ///

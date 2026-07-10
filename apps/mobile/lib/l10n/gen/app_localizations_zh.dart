@@ -7505,6 +7505,66 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String ingestRecordedPartial(int success, int failed) {
+    return '已记录 $success 笔，$failed 笔需要处理';
+  }
+
+  @override
+  String ingestRecordingProgress(int completed, int total) {
+    return '正在记录第 $completed/$total 笔。';
+  }
+
+  @override
+  String get ingestRecordFailed => '暂时无法记录，请重试。';
+
+  @override
+  String get ingestRecordNeedsReview => '此记录可能已写入，请先修复待确认状态，再执行其他操作。';
+
+  @override
+  String get ingestNeedsReviewHint => '此记录可能已出现在流水中，请修复待确认状态，不要重复记录。';
+
+  @override
+  String get ingestRecoveryUnavailableHint => '此记录可能已出现在流水中，但恢复信息不可用，已阻止重复记录。';
+
+  @override
+  String get ingestResolveAction => '修复待确认状态';
+
+  @override
+  String get ingestResolvingTitle => '正在修复待确认状态';
+
+  @override
+  String get ingestResolvingBody => '仅完成待确认状态，不会再次写入记录。';
+
+  @override
+  String get ingestResolveSucceeded => '待确认状态已修复';
+
+  @override
+  String get ingestResolveFailed => '暂时无法修复，请先检查流水后再重试。';
+
+  @override
+  String get ingestSkipped => '已跳过此记录';
+
+  @override
+  String get ingestSkipFailed => '暂时无法跳过，请重试。';
+
+  @override
+  String get ingestRestored => '记录已恢复';
+
+  @override
+  String get ingestUndoSucceeded => '记录已恢复至待确认';
+
+  @override
+  String get ingestUndoingTitle => '正在恢复记录';
+
+  @override
+  String get ingestUndoFailed => '部分记录未能撤销，请检查剩余记录。';
+
+  @override
+  String ingestUndoProgress(int completed, int total) {
+    return '正在恢复第 $completed/$total 笔。';
+  }
+
+  @override
   String get ingestPasteTitle => '粘贴账单文本';
 
   @override
@@ -7512,7 +7572,16 @@ class AppLocalizationsZh extends AppLocalizations {
       '粘贴支付宝 / 微信 / 银行 CSV 账单文本\n例如：2026-05-10,星巴克,-38.00,CNY';
 
   @override
+  String get ingestPasteRequired => '请先粘贴账单文本再解析。';
+
+  @override
   String get ingestParseAction => '解析';
+
+  @override
+  String get ingestParseFailed => '暂时无法解析导入内容，请重试。';
+
+  @override
+  String get ingestCaptureFailed => '暂时无法读取此来源，请重试。';
 
   @override
   String get ingestNoTransactions => '未解析出可识别的交易';
