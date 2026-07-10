@@ -191,6 +191,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planHeroEmpty => '完成 FIRE 设置后，进度会显示在这里。';
 
   @override
+  String get planHeroConfigure => '开始设置 FIRE 计划';
+
+  @override
   String planHeroYearsToFire(String years) {
     return '距离 FIRE 还有 $years 年';
   }
@@ -209,6 +212,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wealthHubSubtitle => '你拥有什么，欠了什么。';
+
+  @override
+  String get wealthEmptyTitle => '从一个账户开始';
+
+  @override
+  String get wealthEmptyBody => '先添加资金所在的账户，再按需记录持仓和负债。';
+
+  @override
+  String get wealthEmptyAction => '添加账户';
 
   @override
   String get wealthAccountsSectionTitle => '账户';
@@ -1920,6 +1932,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commonError => '出错了';
+
+  @override
+  String get commonSafeErrorMessage => '暂时无法完成，请稍后重试。';
+
+  @override
+  String get shellMoreActions => '更多操作';
 
   @override
   String commonLoadError(String error) {
@@ -4827,7 +4845,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get accountsEmptyHint => '还没有账户。点击右下角新建一个，再去录入资产。';
+  String get accountsEmptyHint => '添加第一个账户，开始记录你的资产。';
 
   @override
   String get accountCategoryCash => '现金';

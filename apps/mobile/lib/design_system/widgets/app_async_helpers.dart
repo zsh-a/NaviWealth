@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../core/errors/user_safe_error.dart';
 import 'app_empty_state.dart';
 
 /// Default loading widget: centred [FCircularProgress].
@@ -11,10 +12,14 @@ const Widget kDefaultLoading = Center(child: FCircularProgress());
 ///
 /// Renders an [AppEmptyState.error] with the error's [toString] as the
 /// message and an optional [onRetry] callback surfaced as a ghost button.
-Widget kDefaultError(Object error, _, {VoidCallback? onRetry}) {
+Widget kDefaultError(
+  BuildContext context,
+  Object error,
+  StackTrace stackTrace, {
+  VoidCallback? onRetry,
+}) {
   return AppEmptyState.error(
-    title: 'Something went wrong',
-    message: '$error',
+    title: userSafeErrorMessage(context, error, stackTrace: stackTrace),
     action: onRetry != null
         ? FButton(
             variant: FButtonVariant.ghost,
@@ -37,6 +42,7 @@ Widget kDefaultError(Object error, _, {VoidCallback? onRetry}) {
 extension AsyncValueWhenX<T> on AsyncValue<T> {
   /// Like [when], but supplies a default [FCircularProgress] for loading.
   Widget whenOrLoading({
+    required BuildContext context,
     required Widget Function(T data) data,
     Widget Function(Object error, StackTrace stack)? error,
     VoidCallback? onRetry,
@@ -45,7 +51,8 @@ extension AsyncValueWhenX<T> on AsyncValue<T> {
   }) {
     return when(
       loading: () => kDefaultLoading,
-      error: error ?? (e, st) => kDefaultError(e, st, onRetry: onRetry),
+      error:
+          error ?? (e, st) => kDefaultError(context, e, st, onRetry: onRetry),
       data: data,
       skipLoadingOnRefresh: skipLoadingOnRefresh,
       skipLoadingOnReload: skipLoadingOnReload,
@@ -54,13 +61,15 @@ extension AsyncValueWhenX<T> on AsyncValue<T> {
 
   /// Like [when], but supplies default loading AND error widgets.
   Widget whenOrError({
+    required BuildContext context,
     required Widget Function(T data) data,
     Widget Function(Object error, StackTrace stack)? error,
     VoidCallback? onRetry,
   }) {
     return when(
       loading: () => kDefaultLoading,
-      error: error ?? (e, st) => kDefaultError(e, st, onRetry: onRetry),
+      error:
+          error ?? (e, st) => kDefaultError(context, e, st, onRetry: onRetry),
       data: data,
     );
   }

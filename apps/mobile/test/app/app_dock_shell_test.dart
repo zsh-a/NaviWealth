@@ -7,7 +7,7 @@
 //   2. Health opt-in: mobile exposes a compact current-domain switcher
 //      above the bottom nav, and tapping it shows a sheet that routes to
 //      the picked domain.
-//      Desktop keeps the always-visible left dock at ≥ 600 px.
+//      Compact widths keep icon rails; the full tab sidebar starts at 1280.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +21,7 @@ import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/shell/desktop_sidebar.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
@@ -117,6 +118,43 @@ void main() {
   });
 
   group('Multi-domain dock (Health opt-in)', () {
+    for (final testCase in <({double width, bool mobile, bool desktop})>[
+      (width: 599, mobile: true, desktop: false),
+      (width: 600, mobile: false, desktop: false),
+      (width: 1279, mobile: false, desktop: false),
+      (width: 1280, mobile: false, desktop: true),
+      (width: 1440, mobile: false, desktop: true),
+    ]) {
+      testWidgets('uses one shell tier at ${testCase.width}px', (tester) async {
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await _pumpAt(
+          tester,
+          initialLocation: AppRoutes.activity,
+          viewportSize: Size(testCase.width, 900),
+          domains: <DomainShellSpec>[
+            financeDomainShell(l10n),
+            healthDomainShell(l10n),
+          ],
+        );
+
+        expect(
+          find.byType(FloatingGlassNavBar),
+          testCase.mobile ? findsOneWidget : findsNothing,
+        );
+        expect(
+          find.byType(DesktopSidebar),
+          testCase.desktop ? findsOneWidget : findsNothing,
+        );
+        final switcher = find.byType(DomainSwitcherChip);
+        if (testCase.mobile) {
+          expect(switcher, findsOneWidget);
+          expect(tester.getSize(switcher).width, greaterThan(0));
+        } else if (switcher.evaluate().isNotEmpty) {
+          expect(tester.getSize(switcher), Size.zero);
+        }
+      });
+    }
+
     testWidgets('mobile exposes current-domain switcher above bottom nav', (
       tester,
     ) async {

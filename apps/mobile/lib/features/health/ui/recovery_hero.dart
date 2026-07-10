@@ -122,7 +122,7 @@ class _RecoveryAlertPanel extends ConsumerWidget {
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.triangleAlert,
           title: l10n.commonError,
-          message: l10n.commonLoadError('${artifactAsync.error}'),
+          message: userSafeErrorMessage(context, artifactAsync.error!),
           error: true,
           onRetry: () => ref.invalidate(
             health_agent_providers.latestRecoveryAlertArtifactProvider,
@@ -163,7 +163,7 @@ class _RecoveryAlertPanel extends ConsumerWidget {
           child: AgentResultPanelStateCard(
             icon: FLucideIcons.triangleAlert,
             title: l10n.commonError,
-            message: l10n.commonLoadError('$error'),
+            message: userSafeErrorMessage(context, error),
             error: true,
             onRetry: () => ref.invalidate(
               health_agent_providers.latestRecoveryAlertRunProvider,

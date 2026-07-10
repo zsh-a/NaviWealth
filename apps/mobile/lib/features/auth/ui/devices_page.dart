@@ -74,10 +74,16 @@ class DevicesPage extends ConsumerWidget {
       ],
       childPad: false,
       child: state.whenOrLoading(
+        context: context,
         data: (data) => _DevicesList(response: data),
-        error: (error, _) => _ErrorView(
+        error: (error, stackTrace) => _ErrorView(
           message: l10n.authDevicesLoadError,
-          details: error is AuthException ? error.message : '$error',
+          details: userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'load authenticated devices',
+          ),
           onRetry: () => ref.invalidate(devicesProvider),
         ),
       ),

@@ -8,6 +8,8 @@ import '../../../../core/format/formatters.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/activity_feed_provider.dart';
+import 'activity_action_panel.dart';
+import 'activity_feed_filter_sheet.dart';
 import 'activity_feed_grouping.dart';
 import 'activity_feed_row.dart';
 
@@ -33,6 +35,12 @@ class ActivityFeed extends ConsumerWidget {
               message: page.isFiltered
                   ? l10n.activityFeedFilteredEmpty
                   : l10n.activityFeedEmpty,
+              actionLabel: page.isFiltered
+                  ? l10n.activityFeedFilterTitle
+                  : l10n.activityAddAction,
+              onAction: page.isFiltered
+                  ? () => ActivityFeedFilterSheet.show(context)
+                  : () => showActivityActionPanel(context),
             ),
           );
         }
@@ -211,9 +219,15 @@ class _DateSectionHeader extends StatelessWidget {
 }
 
 class _EmptyFeed extends StatelessWidget {
-  const _EmptyFeed({required this.message});
+  const _EmptyFeed({
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
 
   final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +236,15 @@ class _EmptyFeed extends StatelessWidget {
       children: [
         SizedBox(
           height: MediaQuery.sizeOf(context).height * 0.55,
-          child: AppEmptyState(icon: FLucideIcons.workflow, title: message),
+          child: AppEmptyState(
+            icon: FLucideIcons.workflow,
+            title: message,
+            action: FButton(
+              onPress: onAction,
+              prefix: const Icon(FLucideIcons.plus),
+              child: Text(actionLabel),
+            ),
+          ),
         ),
       ],
     );

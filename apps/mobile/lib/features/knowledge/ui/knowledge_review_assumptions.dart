@@ -98,7 +98,12 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     title: l10n.knowledgeReviewAssumptionsTitle,
                     children: [
                       KnowledgeErrorState(
-                        title: l10n.knowledgeReviewLoadFailed('${snap.error}'),
+                        title: userSafeErrorMessage(
+                          context,
+                          snap.error!,
+                          stackTrace: snap.stackTrace,
+                          operation: 'load assumption reviews',
+                        ),
                         density: KnowledgeStateDensity.section,
                       ),
                     ],

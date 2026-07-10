@@ -234,7 +234,7 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.triangleAlert,
           title: l10n.commonError,
-          message: l10n.commonLoadError('${resultsAsync.error}'),
+          message: userSafeErrorMessage(context, resultsAsync.error!),
           error: true,
           onRetry: () => ref.invalidate(
             knowledge_agent_providers.latestKnowledgeReviewResultsProvider,

@@ -385,8 +385,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           ),
                           child: FProgress(),
                         ),
-                        error: (e, _) =>
-                            Text(l10n.expenseFormCategoriesLoadError('$e')),
+                        error: (e, _) => Text(userSafeErrorMessage(context, e)),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       accountsAsync.when(
@@ -418,8 +417,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           );
                         },
                         loading: () => const FProgress(),
-                        error: (e, _) =>
-                            Text(l10n.expenseFormAccountsLoadError('$e')),
+                        error: (e, _) => Text(userSafeErrorMessage(context, e)),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       DateField(

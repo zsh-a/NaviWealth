@@ -28,6 +28,7 @@ class LiabilityDetailPage extends ConsumerWidget {
       title: l10n.liabilitiesAppBarTitle,
       childPad: false,
       child: summaryAsync.whenOrError(
+        context: context,
         data: (summary) {
           if (summary == null) {
             return Center(child: Text(l10n.liabilityNotFound));

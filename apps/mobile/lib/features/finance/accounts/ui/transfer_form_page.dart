@@ -119,6 +119,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
         confirmLeave: handleBackIntent,
         child: accountsAsync.whenOrLoading(
+          context: context,
           data: (accounts) => _buildForm(context, accounts, convertMode),
           error: (_, _) => Center(
             child: AppEmptyState.error(

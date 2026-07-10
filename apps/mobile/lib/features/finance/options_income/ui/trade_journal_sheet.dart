@@ -216,6 +216,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
         busy: _busy,
       ),
       child: accountsAsync.whenOrLoading(
+        context: context,
         error: (_, _) => _buildForm(l10n, const <Account>[]),
         data: (accounts) => _buildForm(l10n, accounts),
       ),

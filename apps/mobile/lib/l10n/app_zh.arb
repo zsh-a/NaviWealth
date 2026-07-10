@@ -64,6 +64,7 @@
   "investmentEventRights": "配股",
   "investmentEventDrip": "DRIP 红利再投",
   "planHeroEmpty": "完成 FIRE 设置后，进度会显示在这里。",
+  "planHeroConfigure": "开始设置 FIRE 计划",
   "planHeroYearsToFire": "距离 FIRE 还有 {years} 年",
   "@planHeroYearsToFire": {
     "placeholders": { "years": { "type": "String" } }
@@ -74,6 +75,9 @@
 
   "wealthHubTitle": "资产",
   "wealthHubSubtitle": "你拥有什么，欠了什么。",
+  "wealthEmptyTitle": "从一个账户开始",
+  "wealthEmptyBody": "先添加资金所在的账户，再按需记录持仓和负债。",
+  "wealthEmptyAction": "添加账户",
   "wealthAccountsSectionTitle": "账户",
   "wealthAccountsSectionSubtitle": "现金、银行、券商、加密",
   "wealthHoldingsSectionTitle": "持仓",
@@ -599,6 +603,8 @@
   "commonClose": "关闭",
   "commonLoading": "加载中…",
   "commonError": "出错了",
+  "commonSafeErrorMessage": "暂时无法完成，请稍后重试。",
+  "shellMoreActions": "更多操作",
   "commonLoadError": "加载失败：{error}",
   "commonLoadFailed": "加载失败，请稍后重试。",
   "commonSaveFailed": "保存失败，点击重试",
@@ -1505,7 +1511,7 @@
   "accountsDetailEmpty": "请在左侧选择账户以编辑详情。",
   "accountsCreateAction": "新建账户",
   "accountsLoadError": "加载失败：{error}",
-  "accountsEmptyHint": "还没有账户。点击右下角新建一个，再去录入资产。",
+  "accountsEmptyHint": "添加第一个账户，开始记录你的资产。",
 
   "accountCategoryCash": "现金",
   "accountCategoryBank": "银行",

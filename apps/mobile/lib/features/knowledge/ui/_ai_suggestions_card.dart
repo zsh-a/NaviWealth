@@ -82,7 +82,12 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                   title: l10n.knowledgeAiSuggestionsTitle,
                   children: [
                     KnowledgeErrorState(
-                      title: l10n.knowledgeLoadFailed('${snap.error}'),
+                      title: userSafeErrorMessage(
+                        context,
+                        snap.error!,
+                        stackTrace: snap.stackTrace,
+                        operation: 'load knowledge AI suggestions',
+                      ),
                       density: KnowledgeStateDensity.section,
                     ),
                   ],

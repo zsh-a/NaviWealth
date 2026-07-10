@@ -18,8 +18,9 @@ const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 /// same height as the tab destinations so the dock does not cover page-level
 /// floating actions.
 ///
-/// The bar splits tabs evenly around the optional center button:
-///   [tab₀] [tab₁] ··· [centerAction] ··· [tab₂] [tab₃]
+/// Tabs share the remaining width evenly. The optional assistant action is a
+/// separate, low-emphasis affordance at the trailing edge so it never reads as
+/// a selected navigation destination.
 ///
 /// When [onCenterAction] is null, no center button is rendered and tabs
 /// fill the full width evenly.
@@ -113,8 +114,7 @@ class FloatingGlassNavBar extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    // Left tabs.
-                    for (var i = 0; i < _leftCount; i++)
+                    for (var i = 0; i < items.length; i++)
                       Expanded(
                         child: _NavTabButton(
                           tab: items[i],
@@ -123,26 +123,13 @@ class FloatingGlassNavBar extends StatelessWidget {
                           isDark: isDark,
                         ),
                       ),
-                    // Center action button (optional).
                     if (onCenterAction != null)
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s4,
-                        ),
+                        padding: const EdgeInsets.only(left: AppSpacing.s8),
                         child: _CenterActionButton(
                           icon: centerIcon,
                           label: centerLabel,
                           onTap: onCenterAction!,
-                          isDark: isDark,
-                        ),
-                      ),
-                    // Right tabs.
-                    for (var i = _leftCount; i < items.length; i++)
-                      Expanded(
-                        child: _NavTabButton(
-                          tab: items[i],
-                          selected: i == selectedIndex,
-                          onTap: () => onIndexChanged(i),
                           isDark: isDark,
                         ),
                       ),
@@ -155,9 +142,6 @@ class FloatingGlassNavBar extends StatelessWidget {
       ),
     );
   }
-
-  /// Number of tabs placed to the left of the center button.
-  int get _leftCount => onCenterAction != null ? items.length ~/ 2 : 0;
 }
 
 /// A single tab destination for [FloatingGlassNavBar].
@@ -323,11 +307,11 @@ class _CenterActionButtonState extends State<_CenterActionButton>
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final buttonColor = widget.isDark
-        ? ColorPalette.cyanBrand500
-        : ColorPalette.cyanBrand600;
+        ? ColorPalette.navy800.withValues(alpha: AppOpacity.strong)
+        : ColorPalette.navy950.withValues(alpha: AppOpacity.faint);
     final iconColor = widget.isDark
-        ? ColorPalette.navy950
-        : ColorPalette.navy950;
+        ? ColorPalette.cyanBrand300
+        : ColorPalette.navy500;
 
     return Semantics(
       button: true,
@@ -381,13 +365,10 @@ class _CenterActionButtonSurface extends StatelessWidget {
       decoration: BoxDecoration(
         color: buttonColor,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-            color: buttonColor.withValues(alpha: AppOpacity.muted),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(
+          color: iconColor.withValues(alpha: AppOpacity.subtle),
+          width: AppStroke.hairline,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

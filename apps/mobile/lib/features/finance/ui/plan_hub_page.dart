@@ -116,7 +116,7 @@ class _FireSummaryCard extends ConsumerWidget {
           FButton(
             variant: FButtonVariant.primary,
             onPress: () => context.push(FinanceRoutes.planFire),
-            child: Text(l10n.planHeroSeePlan),
+            child: Text(l10n.planHeroConfigure),
           ),
         ],
       ),
@@ -136,7 +136,7 @@ class _FireSummaryCard extends ConsumerWidget {
       tinted: false,
       child: AppEmptyState.error(
         title: l10n.commonLoadFailed,
-        message: '$error',
+        message: userSafeErrorMessage(context, error),
         action: FButton(
           variant: FButtonVariant.ghost,
           onPress: () => ref.invalidate(fireDashboardViewProvider),

@@ -200,6 +200,8 @@ void main() {
   });
 
   testWidgets('overview strip exposes tappable action filters', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     var selected = ExecutionTodayFilter.focus;
     const snapshot = ExecutionOverviewSnapshot(
       todayCount: 3,
@@ -229,7 +231,11 @@ void main() {
     expect(find.text('Focus'), findsOneWidget);
     expect(find.text('Backlog'), findsOneWidget);
     expect(find.text('Blocked'), findsOneWidget);
-    expect(find.text('7d progress'), findsOneWidget);
+    expect(find.textContaining('7d progress'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Focus')).dy,
+      closeTo(tester.getTopLeft(find.text('Blocked')).dy, 1),
+    );
 
     await tester.tap(find.text('Blocked'));
     await tester.pump(const Duration(milliseconds: 200));
@@ -243,6 +249,35 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));
+  });
+
+  testWidgets('overview hides zero summary-only metrics', (tester) async {
+    const snapshot = ExecutionOverviewSnapshot(
+      todayCount: 0,
+      blockedCount: 0,
+      backlogCount: 0,
+      highPriorityCount: 0,
+      dueCount: 0,
+      activeProjectCount: 0,
+      activeCommitmentCount: 0,
+      recentProgressCount: 0,
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        ExecutionOverviewStrip(
+          snapshot: snapshot,
+          selectedFilter: ExecutionTodayFilter.focus,
+          onFilterChanged: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.text('Projects'), findsNothing);
+    expect(find.text('Commitments'), findsNothing);
+    expect(find.textContaining('7d progress'), findsNothing);
+    expect(find.text('Focus'), findsOneWidget);
+    expect(find.text('Due'), findsOneWidget);
   });
 
   testWidgets('action card exposes edit and status actions', (tester) async {

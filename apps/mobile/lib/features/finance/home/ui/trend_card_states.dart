@@ -16,12 +16,15 @@ class _TrendError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
       child: Center(
         child: Text(
-          l10n.dashboardTrendError('$error'),
+          userSafeErrorMessage(
+            context,
+            error,
+            operation: 'load dashboard trend',
+          ),
           style: context.captionStyle.copyWith(
             color: context.theme.colors.destructive,
           ),

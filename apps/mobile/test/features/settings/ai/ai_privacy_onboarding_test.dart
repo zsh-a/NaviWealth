@@ -38,8 +38,9 @@ void main() {
   testWidgets('AI privacy onboarding sheet fits a compact viewport', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 640));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(390, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
     await tester.pumpWidget(await _wrap());
     await tester.tap(find.text('open'));
@@ -47,5 +48,27 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('选择你的 AI 隐私偏好'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('ai-privacy-onboarding-dialog')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('AI privacy onboarding uses a centered desktop dialog', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(await _wrap());
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.byKey(const ValueKey<String>('ai-privacy-onboarding-dialog')),
+      findsOneWidget,
+    );
   });
 }

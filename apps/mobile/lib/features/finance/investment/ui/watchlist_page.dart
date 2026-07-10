@@ -69,6 +69,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
       ],
       childPad: false,
       child: items.whenOrError(
+        context: context,
         data: (items) => _WatchlistBody(
           items: items,
           snapshots: quotes.value ?? const [],
@@ -80,7 +81,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         ),
         error: (error, _) => AppEmptyState.error(
           title: l10n.commonLoadFailed,
-          message: '$error',
+          message: userSafeErrorMessage(context, error),
           action: FButton(
             variant: FButtonVariant.ghost,
             onPress: () {

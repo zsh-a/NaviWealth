@@ -60,8 +60,13 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
       childPad: false,
       child: state.when(
         loading: () => const _PortfolioHubSkeleton(),
-        error: (error, _) => AppEmptyState.error(
-          title: l10n.portfolioHubLoadError('$error'),
+        error: (error, stackTrace) => AppEmptyState.error(
+          title: userSafeErrorMessage(
+            context,
+            error,
+            stackTrace: stackTrace,
+            operation: 'load portfolio hub',
+          ),
           action: FButton(
             variant: FButtonVariant.ghost,
             onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),

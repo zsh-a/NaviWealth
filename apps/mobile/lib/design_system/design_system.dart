@@ -4,6 +4,7 @@
 /// See `apps/mobile/design_tokens/README.md` for the contract.
 library;
 
+export '../core/errors/user_safe_error.dart';
 export 'charts/charts.dart';
 export 'preferences/theme_preferences.dart';
 export 'theme/accent_colors.dart';

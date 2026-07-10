@@ -6,7 +6,7 @@ import '../../design_system/design_system.dart';
 import 'selection_query.dart';
 import 'shell_preferences.dart';
 
-/// Two-pane master-detail surface used by the desktop shell at ≥ 1240dp.
+/// Two-pane master-detail surface used by the desktop shell at ≥ 1280dp.
 /// The list pane lives on the left at the user's preferred width
 /// (clamped 320–520) and the detail pane fills the remainder. A draggable
 /// hairline between the two acts as the splitter.
@@ -25,7 +25,7 @@ class MasterDetailLayout extends ConsumerWidget {
   final Widget detail;
 
   static bool shouldUseMasterDetail(double width) =>
-      width >= Breakpoints.desktop;
+      width >= Breakpoints.shellDesktop;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

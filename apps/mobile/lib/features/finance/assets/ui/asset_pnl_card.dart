@@ -43,7 +43,7 @@ class AssetPnLCard extends ConsumerWidget {
     }
     if (snapshotAsync.hasError) {
       return AssetDetailErrorCard(
-        message: l10n.assetDetailPnLLoadError('${snapshotAsync.error}'),
+        message: userSafeErrorMessage(context, snapshotAsync.error!),
       );
     }
 

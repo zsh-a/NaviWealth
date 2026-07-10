@@ -233,7 +233,7 @@ class _AgentRunStatusCardState extends State<AgentRunStatusCard> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(context).commonLoadError('$error'),
+        userSafeErrorMessage(context, error),
       );
     } finally {
       if (mounted) setState(() => _retrying = false);
@@ -572,9 +572,11 @@ class _AgentArtifactDetailBodyState
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(
+        userSafeErrorMessage(
           context,
-        ).agentResultVisibilityActionFailed('$error'),
+          error,
+          operation: 'update agent result visibility',
+        ),
       );
     } finally {
       if (mounted) setState(() => _visibilityBusy = null);

@@ -40,6 +40,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
       ],
       childPad: false,
       child: assetAsync.whenOrLoading(
+        context: context,
         error: (e, st) => Center(child: Text('$e')),
         data: (asset) {
           if (asset == null) {
@@ -150,6 +151,7 @@ class _DetailBody extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 historyAsync.whenOrLoading(
+                  context: context,
                   error: (e, st) => Text('$e'),
                   data: (history) {
                     final projection = _projectionFor(asset, history);

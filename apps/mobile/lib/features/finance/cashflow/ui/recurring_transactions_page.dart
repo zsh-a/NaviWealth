@@ -36,8 +36,13 @@ class RecurringTransactionsPage extends ConsumerWidget {
         isLoading: rulesAsync.isLoading,
         child: rulesAsync.when(
           loading: () => const _RecurringSkeleton(),
-          error: (error, _) => AppEmptyState.error(
-            title: l10n.recurringLoadError('$error'),
+          error: (error, stackTrace) => AppEmptyState.error(
+            title: userSafeErrorMessage(
+              context,
+              error,
+              stackTrace: stackTrace,
+              operation: 'load recurring transactions',
+            ),
             action: FButton(
               variant: FButtonVariant.ghost,
               onPress: () => ref.invalidate(recurringTransactionsProvider),

@@ -38,9 +38,12 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
             builder: (context, principlesSnap) {
               if (principlesSnap.hasError) {
                 return KnowledgeErrorState(
-                  title: AppLocalizations.of(
+                  title: userSafeErrorMessage(
                     context,
-                  ).knowledgeLoadFailed('${principlesSnap.error}'),
+                    principlesSnap.error!,
+                    stackTrace: principlesSnap.stackTrace,
+                    operation: 'load decision principles',
+                  ),
                   density: KnowledgeStateDensity.section,
                 );
               }
@@ -49,9 +52,12 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                 builder: (context, assumptionsSnap) {
                   if (assumptionsSnap.hasError) {
                     return KnowledgeErrorState(
-                      title: AppLocalizations.of(
+                      title: userSafeErrorMessage(
                         context,
-                      ).knowledgeLoadFailed('${assumptionsSnap.error}'),
+                        assumptionsSnap.error!,
+                        stackTrace: assumptionsSnap.stackTrace,
+                        operation: 'load decision assumptions',
+                      ),
                       density: KnowledgeStateDensity.section,
                     );
                   }

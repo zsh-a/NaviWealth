@@ -146,7 +146,11 @@ class _BodyState extends ConsumerState<_Body> {
     final error = _error;
     if (error != null) {
       return KnowledgeErrorState(
-        title: AppLocalizations.of(context).knowledgeLoadFailed('$error'),
+        title: userSafeErrorMessage(
+          context,
+          error,
+          operation: 'load knowledge decision',
+        ),
         onRetry: _load,
       );
     }

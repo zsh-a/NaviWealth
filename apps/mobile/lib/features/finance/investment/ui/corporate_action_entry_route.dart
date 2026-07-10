@@ -57,7 +57,7 @@ class CorporateActionEntryRoute extends ConsumerWidget {
     if (error != null) {
       return _ScaffoldMessage(
         title: l10n.corpActionTitle,
-        child: Text(l10n.commonLoadError('$error')),
+        child: Text(userSafeErrorMessage(context, error)),
       );
     }
 

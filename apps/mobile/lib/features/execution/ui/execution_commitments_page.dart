@@ -29,20 +29,22 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.executionCommitmentsTitle,
       actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.folder),
-          semanticsLabel: l10n.executionCreateProjectTitle,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.folder,
+          label: l10n.executionCreateProjectTitle,
           onPress: () => showExecutionProjectSheet(context: context, ref: ref),
+          order: 20,
         ),
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.target),
-          semanticsLabel: l10n.executionCreateCommitmentTitle,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.target,
+          label: l10n.executionCreateCommitmentTitle,
           onPress: () =>
               showExecutionCommitmentSheet(context: context, ref: ref),
+          order: 10,
         ),
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.plus),
-          semanticsLabel: l10n.executionCreateActionTitle,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.executionCreateActionTitle,
           onPress: () => showExecutionActionSheet(context: context, ref: ref),
         ),
       ],
@@ -92,7 +94,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       return ExecutionStateView(
         icon: FLucideIcons.circleX,
         title: l10n.commonError,
-        message: '$error',
+        message: userSafeErrorMessage(context, error),
       );
     }
     if ((actionsAsync.isLoading && !actionsAsync.hasValue) ||

@@ -86,11 +86,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         child: Material(
           color: Colors.transparent,
           child: accountsAsync.whenOrLoading(
+            context: context,
             error: (e, _) =>
-                Center(child: Text(l10n.ingestAccountsLoadError('$e'))),
+                Center(child: Text(userSafeErrorMessage(context, e))),
             data: (accounts) => draftsAsync.whenOrLoading(
+              context: context,
               error: (e, _) =>
-                  Center(child: Text(l10n.ingestQueueLoadError('$e'))),
+                  Center(child: Text(userSafeErrorMessage(context, e))),
               data: (drafts) => _content(l10n, accounts, drafts),
             ),
           ),

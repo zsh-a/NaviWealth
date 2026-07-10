@@ -633,7 +633,11 @@ void main() {
     await tester.tap(find.text('Run now'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("Couldn't run agent"), findsOneWidget);
+    expect(
+      find.text("We couldn't complete that. Please try again."),
+      findsOneWidget,
+    );
+    expect(find.textContaining('runtime unavailable'), findsNothing);
     expect(find.text('Run now'), findsOneWidget);
     expect(
       await runStore.latestForAgent(ownerUserId: 'user-1', agentId: agent.id),

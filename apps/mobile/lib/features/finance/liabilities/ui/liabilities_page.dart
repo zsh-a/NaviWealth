@@ -28,6 +28,7 @@ class LiabilitiesPage extends ConsumerWidget {
     final summaries = summariesAsync.value ?? const {};
 
     final body = asyncList.whenOrError(
+      context: context,
       data: (items) {
         if (items.isEmpty) {
           return _LiabilitiesEmptyState(l10n: l10n);
@@ -53,7 +54,7 @@ class LiabilitiesPage extends ConsumerWidget {
       },
       error: (error, _) => AppEmptyState.error(
         title: l10n.commonLoadFailed,
-        message: '$error',
+        message: userSafeErrorMessage(context, error),
         action: FButton(
           variant: FButtonVariant.ghost,
           onPress: () {

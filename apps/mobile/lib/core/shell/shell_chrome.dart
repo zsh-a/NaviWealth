@@ -8,13 +8,15 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 /// Width at or above which the persistent left dock + sidebar own the
 /// global chrome, so the header/greeting don't repeat it.
 const double kTabBarOffset = 80;
-const double _desktopChromeBreakpoint = Breakpoints.desktop;
+const double _desktopChromeBreakpoint = Breakpoints.shellDesktop;
 
 bool _showInlineChrome(BuildContext context) =>
     MediaQuery.sizeOf(context).width < _desktopChromeBreakpoint;
@@ -23,7 +25,7 @@ typedef ShellChromeLeadingBuilder =
     Widget? Function(BuildContext context, WidgetRef ref);
 
 typedef ShellChromeHeaderActionsBuilder =
-    List<Widget> Function(BuildContext context, WidgetRef ref);
+    List<ShellHeaderActionSpec> Function(BuildContext context, WidgetRef ref);
 
 typedef ShellChromeActionRowBuilder =
     Widget? Function(BuildContext context, WidgetRef ref);
@@ -58,8 +60,12 @@ class ShellChromeBuilders {
   Widget? buildLeading(BuildContext context, WidgetRef ref) =>
       leadingBuilder?.call(context, ref);
 
-  List<Widget> buildHeaderActions(BuildContext context, WidgetRef ref) =>
-      headerActionsBuilder?.call(context, ref) ?? const <Widget>[];
+  List<ShellHeaderActionSpec> buildHeaderActions(
+    BuildContext context,
+    WidgetRef ref,
+  ) =>
+      headerActionsBuilder?.call(context, ref) ??
+      const <ShellHeaderActionSpec>[];
 
   Widget? buildActionRow(BuildContext context, WidgetRef ref) =>
       actionRowBuilder?.call(context, ref);
@@ -74,6 +80,25 @@ class ShellChromeBuilders {
 final shellChromeBuildersProvider = Provider<ShellChromeBuilders>(
   (ref) => ShellChromeBuilders.empty,
 );
+
+/// Semantic description of a shell header action.
+///
+/// Domain and app-global actions share this type so [ShellTabScaffold] can
+/// apply one ordering and compact-width budget instead of letting every page
+/// grow an independent icon row. Lower [order] values are shown first.
+class ShellHeaderActionSpec {
+  const ShellHeaderActionSpec({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+    this.order = 0,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+  final int order;
+}
 
 /// Page padding for top-level domain tabs.
 ///
@@ -115,7 +140,7 @@ class ShellTabScaffold extends ConsumerWidget {
     super.key,
     required this.title,
     required this.child,
-    this.actions = const <Widget>[],
+    this.actions = const <ShellHeaderActionSpec>[],
     this.childPad = false,
     this.collapseOnScroll = true,
   });
@@ -128,7 +153,7 @@ class ShellTabScaffold extends ConsumerWidget {
 
   /// Domain-owned trailing header actions (`+`, filter, …). The injected
   /// global actions are appended automatically.
-  final List<Widget> actions;
+  final List<ShellHeaderActionSpec> actions;
 
   /// Forwarded to [DomainTabScaffold.childPad].
   final bool childPad;
@@ -140,18 +165,63 @@ class ShellTabScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final inline = _showInlineChrome(context);
     final chrome = ref.watch(shellChromeBuildersProvider);
+    final mergedActions = <ShellHeaderActionSpec>[
+      ...actions,
+      if (inline) ...chrome.buildHeaderActions(context, ref),
+    ]..sort((a, b) => a.order.compareTo(b.order));
+    final directActionBudget = inline ? 2 : mergedActions.length;
+    final directActions = mergedActions
+        .take(directActionBudget)
+        .toList(growable: false);
+    final overflowActions = mergedActions
+        .skip(directActionBudget)
+        .toList(growable: false);
     return DomainTabScaffold(
       title: title,
       childPad: childPad,
       collapseOnScroll: collapseOnScroll,
       leading: inline ? chrome.buildLeading(context, ref) : null,
-      actions: [
-        ...actions,
-        if (inline) ...chrome.buildHeaderActions(context, ref),
+      actions: <Widget>[
+        for (final action in directActions)
+          FHeaderAction(
+            icon: Icon(action.icon),
+            semanticsLabel: action.label,
+            onPress: action.onPress,
+          ),
+        if (overflowActions.isNotEmpty)
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.ellipsis),
+            semanticsLabel: AppLocalizations.of(context).shellMoreActions,
+            onPress: () => _showHeaderActionOverflow(context, overflowActions),
+          ),
       ],
       child: child,
     );
   }
+}
+
+Future<void> _showHeaderActionOverflow(
+  BuildContext context,
+  List<ShellHeaderActionSpec> actions,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final selected = await showAppSheet<ShellHeaderActionSpec>(
+    context: context,
+    title: l10n.shellMoreActions,
+    builder: (sheetContext) => AppActionSheetList(
+      children: <AppActionSheetTile>[
+        for (final action in actions)
+          AppActionSheetTile(
+            icon: action.icon,
+            title: action.label,
+            subtitle: '',
+            onPress: () => Navigator.of(sheetContext).pop(action),
+          ),
+      ],
+    ),
+  );
+  if (selected == null || !context.mounted) return;
+  selected.onPress();
 }
 
 /// In-content shell chrome slot for surfaces without an `FHeader`.

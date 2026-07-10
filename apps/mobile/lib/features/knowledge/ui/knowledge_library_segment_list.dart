@@ -68,7 +68,12 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
       builder: (context, snap) {
         if (snap.hasError) {
           return KnowledgeErrorState(
-            title: l10n.knowledgeLibraryLoadFailed('${snap.error}'),
+            title: userSafeErrorMessage(
+              context,
+              snap.error!,
+              stackTrace: snap.stackTrace,
+              operation: 'load knowledge library segment',
+            ),
           );
         }
         final items = snap.data ?? <T>[];

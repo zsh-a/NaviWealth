@@ -196,6 +196,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planHeroEmpty => 'Set up your FIRE plan to see progress here.';
 
   @override
+  String get planHeroConfigure => 'Set up FIRE plan';
+
+  @override
   String planHeroYearsToFire(String years) {
     return '$years years to FIRE';
   }
@@ -214,6 +217,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wealthHubSubtitle => 'What you own, what you owe.';
+
+  @override
+  String get wealthEmptyTitle => 'Start with an account';
+
+  @override
+  String get wealthEmptyBody =>
+      'Add where you keep money, then record holdings and liabilities as needed.';
+
+  @override
+  String get wealthEmptyAction => 'Add account';
 
   @override
   String get wealthAccountsSectionTitle => 'Accounts';
@@ -1989,6 +2002,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonError => 'Something went wrong';
+
+  @override
+  String get commonSafeErrorMessage =>
+      'We couldn\'t complete that. Please try again.';
+
+  @override
+  String get shellMoreActions => 'More actions';
 
   @override
   String commonLoadError(String error) {
@@ -5061,7 +5081,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsEmptyHint =>
-      'No accounts yet. Tap the bottom-right button to add one, then come back to record assets.';
+      'Add your first account to start tracking assets.';
 
   @override
   String get accountCategoryCash => 'Cash';

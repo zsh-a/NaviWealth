@@ -15,7 +15,8 @@ import 'accounts_master.dart';
 /// archived-accounts surface is intentionally separate so the primary list
 /// stays focused on the user's day-to-day book of accounts.
 ///
-/// At desktop width (≥ 1240) the page renders as a master-detail surface:
+/// At desktop window width (≥ 1280) the page renders as a master-detail
+/// surface:
 /// the list lives on the left, and the account edit form for
 /// the `?selected=<id>` row lives on the right.
 class AccountsPage extends ConsumerWidget {
@@ -23,28 +24,21 @@ class AccountsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final masterDetail = MasterDetailLayout.shouldUseMasterDetail(
-          constraints.maxWidth,
-        );
-        final selected = selectedQueryOf(context);
-        if (masterDetail) {
-          return AppCanvasScaffold(
-            childPad: false,
-            child: MasterDetailLayout(
-              master: AccountsMaster(
-                selectedId: selected,
-                inMasterDetail: true,
-              ),
-              detail: selected == null
-                  ? const AccountsDetailEmpty()
-                  : AccountFormPage(accountId: selected),
-            ),
-          );
-        }
-        return const AccountsMaster(selectedId: null, inMasterDetail: false);
-      },
+    final masterDetail = MasterDetailLayout.shouldUseMasterDetail(
+      MediaQuery.sizeOf(context).width,
     );
+    final selected = selectedQueryOf(context);
+    if (masterDetail) {
+      return AppCanvasScaffold(
+        childPad: false,
+        child: MasterDetailLayout(
+          master: AccountsMaster(selectedId: selected, inMasterDetail: true),
+          detail: selected == null
+              ? const AccountsDetailEmpty()
+              : AccountFormPage(accountId: selected),
+        ),
+      );
+    }
+    return const AccountsMaster(selectedId: null, inMasterDetail: false);
   }
 }

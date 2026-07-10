@@ -10,8 +10,9 @@ import 'account_labels.dart';
 ///
 /// Replaces the legacy `FSelect` dropdown. Renders 8 cards (cash / bank /
 /// broker / crypto / credit / loan / asset / liability), each with an
-/// icon + name + one-line affordance hint. The grid is responsive: 2
-/// columns on phones, 4 on tablet+.
+/// icon + name + one-line affordance hint. The compact grid is responsive: 2
+/// columns on phones, 4 on tablet+ without turning the form into a wall of
+/// oversized cards.
 ///
 /// Picking is the only interaction — the AccountSide is auto-derived
 /// outside this widget, so the user never sees an "asset vs liability"
@@ -33,7 +34,7 @@ class AccountCategoryPicker extends StatelessWidget {
       builder: (context, constraints) {
         // 2 columns under 480, 4 columns at tablet width.
         final cols = constraints.maxWidth >= 600 ? 4 : 2;
-        final aspectRatio = cols == 2 ? 1.2 : 1.1;
+        final aspectRatio = cols == 2 ? 2.65 : 2.35;
         return GridView.count(
           crossAxisCount: cols,
           shrinkWrap: true,
@@ -122,19 +123,16 @@ class _CategoryCard extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s12,
-            AppSpacing.s12,
-            AppSpacing.s12,
-            AppSpacing.s10,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s10,
+            vertical: AppSpacing.s8,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: AppOpacity.medium),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -142,21 +140,28 @@ class _CategoryCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Icon(icon, size: AppIconSizes.h18, color: iconColor),
               ),
-              const SizedBox(height: AppSpacing.s10),
-              Text(
-                label,
-                style: context.labelStyle.copyWith(
-                  color: selected ? colors.primary : colors.foreground,
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: context.labelStyle.copyWith(
+                        color: selected ? colors.primary : colors.foreground,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      hint,
+                      style: context.microCaptionStyle.copyWith(height: 1.15),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                hint,
-                style: context.microCaptionStyle.copyWith(height: 1.25),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

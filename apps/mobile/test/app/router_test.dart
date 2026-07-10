@@ -108,7 +108,7 @@ class _StaticDevicesNotifier extends DevicesNotifier {
 }
 
 // Standard test surface sizes for the three responsive shell breakpoints.
-// _RootShell switches at 600 (rail) and 1240 (drawer); these sit comfortably
+// _RootShell switches at 600 (rail) and 1280 (drawer); these sit comfortably
 // inside each band so a small change to the breakpoints doesn't accidentally
 // flip a test into a different layout.
 const Size _mobileSize = Size(400, 800);
@@ -587,10 +587,15 @@ void main() {
           initialLocation: AppRoutes.activity,
           viewportSize: _mobileSize,
         );
-        final searchAction = find.byIcon(FLucideIcons.search);
-        expect(searchAction, findsOneWidget);
-
         final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+        final moreActions = find.byIcon(FLucideIcons.ellipsis);
+        expect(moreActions, findsOneWidget);
+        await tester.tap(moreActions);
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.shellMoreActions), findsOneWidget);
+
+        final searchAction = find.text(l10n.navSearch);
+        expect(searchAction, findsOneWidget);
         await tester.tap(searchAction);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));

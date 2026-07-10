@@ -17,7 +17,7 @@ class ExecutionOverviewStrip extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
-    final tiles = <_OverviewTileData>[
+    final filters = <_OverviewTileData>[
       _OverviewTileData(
         label: l10n.executionOverviewFocus,
         value: snapshot.todayCount,
@@ -53,57 +53,111 @@ class ExecutionOverviewStrip extends StatelessWidget {
         color: colors.primary,
         filter: ExecutionTodayFilter.due,
       ),
-      _OverviewTileData(
-        label: l10n.executionOverviewProjects,
-        value: snapshot.activeProjectCount,
-        icon: FLucideIcons.folder,
-        color: colors.primary,
-      ),
-      _OverviewTileData(
-        label: l10n.executionOverviewCommitments,
-        value: snapshot.activeCommitmentCount,
-        icon: FLucideIcons.target,
-        color: colors.primary,
-      ),
-      _OverviewTileData(
-        label: l10n.executionOverviewProgress7d,
-        value: snapshot.recentProgressCount,
-        icon: FLucideIcons.clipboardCheck,
-        color: semantic.success,
-      ),
+    ];
+    final summaries = <_OverviewTileData>[
+      if (snapshot.activeProjectCount > 0)
+        _OverviewTileData(
+          label: l10n.executionOverviewProjects,
+          value: snapshot.activeProjectCount,
+          icon: FLucideIcons.folder,
+          color: colors.primary,
+        ),
+      if (snapshot.activeCommitmentCount > 0)
+        _OverviewTileData(
+          label: l10n.executionOverviewCommitments,
+          value: snapshot.activeCommitmentCount,
+          icon: FLucideIcons.target,
+          color: colors.primary,
+        ),
+      if (snapshot.recentProgressCount > 0)
+        _OverviewTileData(
+          label: l10n.executionOverviewProgress7d,
+          value: snapshot.recentProgressCount,
+          icon: FLucideIcons.clipboardCheck,
+          color: semantic.success,
+        ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = AppSpacing.s8;
         final maxWidth = constraints.maxWidth;
-        final columns = maxWidth >= 760
-            ? 4
-            : maxWidth >= 360
-            ? 2
-            : 1;
+        // Keep a genuinely useful two-column overview on phone content
+        // widths (390dp viewport -> 358dp after page padding). Additional
+        // columns appear only when every tile retains a readable minimum.
+        final columns = ((maxWidth + gap) / (168 + gap)).floor().clamp(2, 4);
         final tileWidth = maxWidth.isFinite
             ? (maxWidth - gap * (columns - 1)) / columns
             : AppControlWidths.metricTile;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (final tile in tiles)
-              SizedBox(
-                width: tileWidth,
-                child: _ExecutionOverviewTile(
-                  data: tile,
-                  selected:
-                      tile.filter != null && tile.filter == selectedFilter,
-                  onPress: tile.filter == null
-                      ? null
-                      : () => onFilterChanged(tile.filter!),
-                ),
+            Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [
+                for (final tile in filters)
+                  SizedBox(
+                    width: tileWidth,
+                    child: _ExecutionOverviewTile(
+                      data: tile,
+                      selected: tile.filter == selectedFilter,
+                      onPress: () => onFilterChanged(tile.filter!),
+                    ),
+                  ),
+              ],
+            ),
+            if (summaries.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s10),
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  for (final summary in summaries)
+                    _ExecutionOverviewSummary(data: summary),
+                ],
               ),
+            ],
           ],
         );
       },
+    );
+  }
+}
+
+class _ExecutionOverviewSummary extends StatelessWidget {
+  const _ExecutionOverviewSummary({required this.data});
+
+  final _OverviewTileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Semantics(
+      label: '${data.label}: ${data.value}',
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s6,
+        ),
+        decoration: BoxDecoration(
+          color: colors.muted.withValues(alpha: AppOpacity.medium),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(data.icon, size: AppIconSizes.xs, color: data.color),
+            const SizedBox(width: AppSpacing.s6),
+            Text(
+              '${data.label} ${data.value}',
+              style: context.captionMediumStyle.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -119,6 +119,7 @@
   "@investmentEventDrip": { "description": "Label on a DRIP reinvestment event row" },
   "planHeroEmpty": "Set up your FIRE plan to see progress here.",
   "@planHeroEmpty": { "description": "Plan hero shown when FIRE engine has no data yet" },
+  "planHeroConfigure": "Set up FIRE plan",
   "planHeroYearsToFire": "{years} years to FIRE",
   "@planHeroYearsToFire": {
     "description": "Plan hero — years remaining to financial independence",
@@ -134,6 +135,9 @@
   "wealthHubTitle": "Wealth",
   "@wealthHubTitle": { "description": "Wealth hub page title (IA contract §1: owned objects + current state)" },
   "wealthHubSubtitle": "What you own, what you owe.",
+  "wealthEmptyTitle": "Start with an account",
+  "wealthEmptyBody": "Add where you keep money, then record holdings and liabilities as needed.",
+  "wealthEmptyAction": "Add account",
   "@wealthHubSubtitle": { "description": "Wealth hub subtitle" },
   "wealthAccountsSectionTitle": "Accounts",
   "@wealthAccountsSectionTitle": { "description": "Wealth hub: accounts section title" },
@@ -1078,6 +1082,8 @@
   "commonClose": "Close",
   "commonLoading": "Loading…",
   "commonError": "Something went wrong",
+  "commonSafeErrorMessage": "We couldn't complete that. Please try again.",
+  "shellMoreActions": "More actions",
   "commonLoadError": "Failed to load: {error}",
   "@commonLoadError": {
     "placeholders": { "error": { "type": "String" } }
@@ -2683,7 +2689,7 @@
   "@accountsLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },
-  "accountsEmptyHint": "No accounts yet. Tap the bottom-right button to add one, then come back to record assets.",
+  "accountsEmptyHint": "Add your first account to start tracking assets.",
 
   "accountCategoryCash": "Cash",
   "@accountCategoryCash": { "description": "Wealth container category — physical cash, e-wallets (Alipay, Wechat Pay, etc.)" },

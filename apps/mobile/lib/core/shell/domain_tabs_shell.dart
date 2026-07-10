@@ -9,7 +9,7 @@ import 'desktop_sidebar.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
 
-const double _kMobileDockHorizontalPadding = AppSpacing.s28;
+const double _kMobileDockHorizontalPadding = AppSpacing.s16;
 const double _kMobileDockTopPadding = AppSpacing.s4;
 const double _kMobileDockBottomPadding = AppSpacing.s10;
 
@@ -36,7 +36,7 @@ class DomainTabsShell extends ConsumerStatefulWidget {
 
   // Breakpoints from design_system/tokens/breakpoints.dart
   static const double _tabletBreakpoint = Breakpoints.mobile;
-  static const double _desktopBreakpoint = Breakpoints.desktop;
+  static const double _desktopBreakpoint = Breakpoints.shellDesktop;
 
   @override
   ConsumerState<DomainTabsShell> createState() => _DomainTabsShellState();
@@ -94,7 +94,10 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
+        // Navigation chrome is a window-level decision. The outer domain dock
+        // and the inner tab rail both consume horizontal space, so using this
+        // widget's reduced constraints would make the desktop threshold drift.
+        final width = MediaQuery.sizeOf(context).width;
         if (width >= DomainTabsShell._desktopBreakpoint) {
           return _DesktopLayout(
             tabs: tabs,

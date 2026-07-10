@@ -162,7 +162,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
             ? const Center(child: FCircularProgress())
             : loadError != null
             ? AppEmptyState.error(
-                title: l10n.commonLoadError('$loadError'),
+                title: userSafeErrorMessage(context, loadError),
                 action: FButton(
                   variant: FButtonVariant.ghost,
                   onPress: () {

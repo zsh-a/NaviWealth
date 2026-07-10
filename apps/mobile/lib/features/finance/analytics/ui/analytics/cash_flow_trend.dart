@@ -36,7 +36,7 @@ class _CashFlowTrendCard extends ConsumerWidget {
               ),
               error: (error, _) => AppEmptyState.error(
                 title: l10n.analyticsCashFlowTrendLoadError,
-                message: '$error',
+                message: userSafeErrorMessage(context, error),
                 icon: FLucideIcons.circleX,
               ),
               data: (summary) {

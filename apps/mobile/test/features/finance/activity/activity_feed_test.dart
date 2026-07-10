@@ -121,6 +121,20 @@ void main() {
 
     expect(find.textContaining('No activity yet'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.workflow), findsOneWidget);
+    expect(find.text('Add'), findsOneWidget);
+  });
+
+  testWidgets('filtered empty state offers an inline filter action', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(
+      _wrap(entries: const [], accounts: const [], isFiltered: true),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No activity matches these filters.'), findsOneWidget);
+    expect(find.text('Filter'), findsOneWidget);
   });
 
   testWidgets('renders a dated journal row with payee and headline amount', (

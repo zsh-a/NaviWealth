@@ -9,6 +9,30 @@ import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 
+/// Shows arbitrary app-styled dialog content in a centered, width-constrained
+/// frame. Feature code should use this seam instead of calling [showFDialog]
+/// directly so desktop dialog geometry stays consistent.
+Future<T?> showAppContentDialog<T>({
+  required BuildContext context,
+  required Widget child,
+  double maxWidth = 560,
+  bool barrierDismissible = true,
+}) {
+  return showFDialog<T>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    builder: (context, style, animation) => Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: child,
+        ),
+      ),
+    ),
+  );
+}
+
 /// Show a forui-styled confirm dialog with frosted glass surface.
 ///
 /// Returns `true` when the user taps the confirm action, `false` for

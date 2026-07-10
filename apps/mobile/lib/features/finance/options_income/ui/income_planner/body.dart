@@ -164,7 +164,7 @@ class _OpportunitiesBody extends StatelessWidget {
     if (state is ScanFailure) {
       return _ErrorCard(
         title: l10n.incomePlannerRefreshFailedTitle,
-        message: '${(state as ScanFailure).error}',
+        message: userSafeErrorMessage(context, (state as ScanFailure).error),
       );
     }
     return opportunitiesAsync.when(

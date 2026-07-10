@@ -94,7 +94,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('Portfolio failed to load: Bad state: boom'), findsOne);
+    expect(find.text("We couldn't complete that. Please try again."), findsOne);
+    expect(find.textContaining('Bad state: boom'), findsNothing);
     expect(find.text('Retry'), findsOne);
     expect(find.text('No investment holdings yet.'), findsNothing);
     expect(notifier.fetchCount, 1);

@@ -165,7 +165,7 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.triangleAlert,
           title: l10n.financeAgentResultsErrorTitle,
-          message: l10n.financeAgentResultsErrorBody('${resultsAsync.error}'),
+          message: userSafeErrorMessage(context, resultsAsync.error!),
           error: true,
           onRetry: () => ref.invalidate(
             finance_agent_providers.latestFinanceAgentResultsProvider,

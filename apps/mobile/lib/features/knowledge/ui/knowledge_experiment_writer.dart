@@ -228,9 +228,12 @@ class _AssumptionTargetPicker extends ConsumerWidget {
             builder: (context, snap) {
               if (snap.hasError) {
                 return KnowledgeErrorState(
-                  title: AppLocalizations.of(
+                  title: userSafeErrorMessage(
                     context,
-                  ).knowledgeLoadFailed('${snap.error}'),
+                    snap.error!,
+                    stackTrace: snap.stackTrace,
+                    operation: 'load knowledge experiment',
+                  ),
                   density: KnowledgeStateDensity.section,
                 );
               }

@@ -41,7 +41,10 @@ mixin _AiLlmCredentialsRuntimeMixin on _AiLlmCredentialsPageStateBase {
         _runtimeChecking = false;
         _runtimeError = error;
       });
-      _toast(ToastKind.error, l10n.aiLlmRuntimeCheckFailed('$error'));
+      _toast(
+        ToastKind.error,
+        userSafeErrorMessage(context, error, operation: 'check AI runtime'),
+      );
     }
   }
 
@@ -85,7 +88,14 @@ mixin _AiLlmCredentialsRuntimeMixin on _AiLlmCredentialsPageStateBase {
           'error': '$error',
         };
       });
-      _toast(ToastKind.error, l10n.aiLlmRuntimeProposalFailed('$error'));
+      _toast(
+        ToastKind.error,
+        userSafeErrorMessage(
+          context,
+          error,
+          operation: 'apply AI runtime proposal',
+        ),
+      );
     }
   }
 

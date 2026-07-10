@@ -104,7 +104,7 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
               child: Center(child: FCircularProgress()),
             ),
             error: (e, _) => SliverToBoxAdapter(
-              child: Center(child: Text(l10n.aiTransparencyLoadError('$e'))),
+              child: Center(child: Text(userSafeErrorMessage(context, e))),
             ),
           ),
         ],
@@ -126,14 +126,14 @@ class AiTransparencyDetailPage extends ConsumerWidget {
       title: l10n.aiTransparencyDetailTitle,
       childPad: false,
       child: traceAsync.whenOrLoading(
+        context: context,
         data: (trace) {
           if (trace == null) {
             return Center(child: Text(l10n.aiTransparencyTraceNotFound));
           }
           return _TraceWaterfallBody(trace: trace);
         },
-        error: (e, _) =>
-            Center(child: Text(l10n.aiTransparencyLoadError('$e'))),
+        error: (e, _) => Center(child: Text(userSafeErrorMessage(context, e))),
       ),
     );
   }

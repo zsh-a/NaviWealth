@@ -26,6 +26,7 @@ class WheelLifecyclePage extends ConsumerWidget {
       title: l10n.planWheelTitle,
       childPad: false,
       child: cyclesAsync.whenOrLoading(
+        context: context,
         error: (_, _) => Center(
           child: AppEmptyState(
             icon: FLucideIcons.refreshCw,

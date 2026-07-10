@@ -94,7 +94,8 @@ void main() {
 
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.commonLoadFailed), findsOneWidget);
-    expect(find.text('Bad state: fire failed'), findsOneWidget);
+    expect(find.text(l10n.commonSafeErrorMessage), findsOneWidget);
+    expect(find.text('Bad state: fire failed'), findsNothing);
     expect(find.text(l10n.commonRetry), findsOneWidget);
     expect(find.text(l10n.planStrategyToolsSectionTitle), findsOneWidget);
   });
@@ -110,7 +111,7 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planHubTitle), findsWidgets);
     expect(find.text(l10n.planHeroEmpty), findsOneWidget);
-    expect(find.text(l10n.planHeroSeePlan), findsOneWidget);
+    expect(find.text(l10n.planHeroConfigure), findsOneWidget);
     expect(find.text(l10n.planFireSectionTitle), findsWidgets);
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
@@ -197,7 +198,7 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
-    await tester.tap(find.text(l10n.planHeroSeePlan));
+    await tester.tap(find.text(l10n.planHeroConfigure));
     await tester.pumpAndSettle();
 
     expect(find.text('fire-route'), findsOneWidget);

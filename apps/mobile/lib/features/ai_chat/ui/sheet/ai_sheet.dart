@@ -297,7 +297,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
               child: Text(
                 _loginRequired
                     ? l10n.aiChatLoginRequired
-                    : l10n.commonLoadError(_errorDetail!),
+                    : userSafeErrorMessage(context, _errorDetail!),
                 style: context.theme.typography.body.sm.copyWith(
                   color: context.theme.colors.destructive,
                 ),

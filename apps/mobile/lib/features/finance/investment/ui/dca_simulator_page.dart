@@ -90,7 +90,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
           state.when(
             loading: () => const SkeletonBox(height: 360, radius: 8),
             error: (error, _) =>
-                _ErrorState(message: l10n.dcaSimulatorLoadError('$error')),
+                _ErrorState(message: userSafeErrorMessage(context, error)),
             data: (data) =>
                 _DcaResults(state: data, onDraft: () => _draftTrades(data)),
           ),

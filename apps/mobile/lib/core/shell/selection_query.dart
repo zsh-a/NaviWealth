@@ -16,11 +16,11 @@ export '../../design_system/widgets/back_navigation.dart'
 String? selectedQueryOf(BuildContext context) {
   final router = GoRouter.maybeOf(context);
   if (router == null) return null;
-  final raw = router
-      .routeInformationProvider
-      .value
-      .uri
-      .queryParameters[kSelectedQueryKey];
+  // GoRouterState.of establishes an inherited dependency, so changing only
+  // `?selected=` rebuilds the master-detail consumer. Reading the router's
+  // routeInformationProvider.value directly would update the URL without
+  // necessarily rebuilding the active route widget.
+  final raw = GoRouterState.of(context).uri.queryParameters[kSelectedQueryKey];
   if (raw == null || raw.isEmpty) return null;
   return raw;
 }

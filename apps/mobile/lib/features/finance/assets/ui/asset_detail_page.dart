@@ -35,7 +35,7 @@ class AssetDetailPage extends ConsumerWidget {
       error: (e, _) => AppPageScaffold(
         title: l10n.assetDetailUnknown,
         childPad: false,
-        child: Center(child: Text(l10n.assetDetailLoadError('$e'))),
+        child: Center(child: Text(userSafeErrorMessage(context, e))),
       ),
       data: (repo) {
         return FutureBuilder<Asset?>(

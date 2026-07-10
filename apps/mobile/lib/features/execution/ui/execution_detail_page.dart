@@ -55,7 +55,7 @@ class ExecutionActionDetailPage extends ConsumerWidget {
         error: (error, _) => ExecutionStateView(
           icon: FLucideIcons.circleX,
           title: l10n.commonError,
-          message: '$error',
+          message: userSafeErrorMessage(context, error),
         ),
         data: (action) {
           if (action == null) {
@@ -114,7 +114,7 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
         error: (error, _) => ExecutionStateView(
           icon: FLucideIcons.circleX,
           title: l10n.commonError,
-          message: '$error',
+          message: userSafeErrorMessage(context, error),
         ),
         data: (commitment) {
           if (commitment == null) {
@@ -252,7 +252,7 @@ class _RelatedActionsSection extends ConsumerWidget {
       error: (error, _) => ExecutionStateView(
         icon: FLucideIcons.circleX,
         title: l10n.commonError,
-        message: '$error',
+        message: userSafeErrorMessage(context, error),
       ),
       data: (actions) {
         return Column(
@@ -323,7 +323,7 @@ class _ProgressTimeline extends StatelessWidget {
       error: (error, _) => ExecutionStateView(
         icon: FLucideIcons.circleX,
         title: l10n.commonError,
-        message: '$error',
+        message: userSafeErrorMessage(context, error),
       ),
       data: (items) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

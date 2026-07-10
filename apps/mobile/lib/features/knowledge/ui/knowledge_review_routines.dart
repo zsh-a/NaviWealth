@@ -45,7 +45,12 @@ class _DueRoutinesCard extends ConsumerWidget {
                     title: l10n.knowledgeReviewRoutinesTitle,
                     children: [
                       KnowledgeErrorState(
-                        title: l10n.knowledgeReviewLoadFailed('${snap.error}'),
+                        title: userSafeErrorMessage(
+                          context,
+                          snap.error!,
+                          stackTrace: snap.stackTrace,
+                          operation: 'load routine reviews',
+                        ),
                         density: KnowledgeStateDensity.section,
                       ),
                     ],

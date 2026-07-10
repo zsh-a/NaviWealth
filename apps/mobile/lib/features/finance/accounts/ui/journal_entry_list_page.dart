@@ -32,6 +32,7 @@ class JournalEntryListPage extends ConsumerWidget {
       title: l10n.journalTitle,
       childPad: false,
       child: journalAsync.whenOrLoading(
+        context: context,
         data: (entries) {
           if (entries.isEmpty) return const _EmptyJournal();
           final accountsById = <String, Account>{

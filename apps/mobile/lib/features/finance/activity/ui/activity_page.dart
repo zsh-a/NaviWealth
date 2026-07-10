@@ -61,20 +61,22 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         // §5.10.10 / S5a — Layer 4 ingest review queue entry. Calm
         // by design: a plain outlined inbox, no badge/glow; the
         // pending count lives inside the review page.
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.inbox),
-          semanticsLabel: l10n.ingestReviewTitle,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.inbox,
+          label: l10n.ingestReviewTitle,
           onPress: () => context.push(FinanceRoutes.activityIngest),
+          order: 20,
         ),
         if (!isDesktop) ...[
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.filter),
-            semanticsLabel: l10n.activityFeedFilterTitle,
+          ShellHeaderActionSpec(
+            icon: FLucideIcons.filter,
+            label: l10n.activityFeedFilterTitle,
             onPress: () => ActivityFeedFilterSheet.show(context),
+            order: 10,
           ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.plus),
-            semanticsLabel: l10n.activityAddAction,
+          ShellHeaderActionSpec(
+            icon: FLucideIcons.plus,
+            label: l10n.activityAddAction,
             onPress: () => showActivityActionPanel(context),
           ),
         ],
@@ -85,6 +87,11 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
               ? AdaptiveContentFrame(
                   maxWidth: AdaptiveMaxWidth.dashboard,
                   layout: AdaptiveFrameLayout.cockpit,
+                  // A 1280 window leaves 984dp after the domain dock and
+                  // expanded tab sidebar, still enough for a 620dp feed plus
+                  // this 340dp rail. Keep the cockpit instead of stacking two
+                  // independently scrolling surfaces.
+                  columnBreakpoint: 960,
                   rightRailWidth: 340,
                   primary: const ActivityFeed(),
                   secondary: _ActivityRightRail(

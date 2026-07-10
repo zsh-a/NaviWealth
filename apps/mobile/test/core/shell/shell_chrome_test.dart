@@ -47,7 +47,7 @@ void main() {
 
       expect(find.text('Activity'), findsOneWidget);
       expect(find.byKey(const Key('shell.leading')), findsOneWidget);
-      expect(find.byKey(const Key('shell.action')), findsOneWidget);
+      expect(find.bySemanticsLabel('Global action'), findsOneWidget);
     });
 
     testWidgets('leaves desktop global chrome to dock/sidebar', (tester) async {
@@ -65,7 +65,85 @@ void main() {
 
       expect(find.text('Activity'), findsOneWidget);
       expect(find.byKey(const Key('shell.leading')), findsNothing);
-      expect(find.byKey(const Key('shell.action')), findsNothing);
+      expect(find.bySemanticsLabel('Global action'), findsNothing);
+    });
+
+    testWidgets('keeps all domain actions direct on desktop', (tester) async {
+      await _setSurface(tester, const Size(1440, 900));
+
+      await tester.pumpWidget(
+        _wrap(
+          ShellTabScaffold(
+            title: 'Activity',
+            actions: <ShellHeaderActionSpec>[
+              for (var index = 0; index < 3; index++)
+                ShellHeaderActionSpec(
+                  icon: FLucideIcons.circle,
+                  label: 'Domain action $index',
+                  onPress: () {},
+                  order: index,
+                ),
+            ],
+            child: const Text('body'),
+          ),
+        ),
+      );
+
+      for (var index = 0; index < 3; index++) {
+        expect(find.bySemanticsLabel('Domain action $index'), findsOneWidget);
+      }
+      expect(find.bySemanticsLabel('More actions'), findsNothing);
+    });
+
+    testWidgets('budgets combined actions and moves the rest to overflow', (
+      tester,
+    ) async {
+      await _setSurface(tester, const Size(400, 800));
+      var thirdActionSelected = false;
+
+      await tester.pumpWidget(
+        _wrap(
+          ShellTabScaffold(
+            title: 'Activity',
+            actions: <ShellHeaderActionSpec>[
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.plus,
+                label: 'Primary action',
+                onPress: () {},
+              ),
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.filter,
+                label: 'Filter action',
+                onPress: () {},
+                order: 10,
+              ),
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.inbox,
+                label: 'Third action',
+                onPress: () => thirdActionSelected = true,
+                order: 20,
+              ),
+            ],
+            child: const Text('body'),
+          ),
+          chrome: const ShellChromeBuilders(
+            leadingBuilder: _leading,
+            headerActionsBuilder: _actions,
+          ),
+        ),
+      );
+
+      expect(find.bySemanticsLabel('Primary action'), findsOneWidget);
+      expect(find.bySemanticsLabel('Filter action'), findsOneWidget);
+      expect(find.bySemanticsLabel('Third action'), findsNothing);
+      await tester.tap(find.bySemanticsLabel('More actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Third action'), findsOneWidget);
+      expect(find.text('Global action'), findsOneWidget);
+      await tester.tap(find.text('Third action'));
+      await tester.pumpAndSettle();
+      expect(thirdActionSelected, isTrue);
+      expect(find.text('Third action'), findsNothing);
     });
   });
 
@@ -117,8 +195,15 @@ Widget _leading(BuildContext context, WidgetRef ref) {
   return const Text('domain', key: Key('shell.leading'));
 }
 
-List<Widget> _actions(BuildContext context, WidgetRef ref) {
-  return const <Widget>[Text('global', key: Key('shell.action'))];
+List<ShellHeaderActionSpec> _actions(BuildContext context, WidgetRef ref) {
+  return <ShellHeaderActionSpec>[
+    ShellHeaderActionSpec(
+      icon: FLucideIcons.circle,
+      label: 'Global action',
+      onPress: () {},
+      order: 100,
+    ),
+  ];
 }
 
 final _forbiddenRootScaffold = RegExp(

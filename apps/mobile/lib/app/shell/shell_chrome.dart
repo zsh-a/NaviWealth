@@ -37,26 +37,30 @@ Widget _buildShellLeading(BuildContext context, WidgetRef ref) {
   return const DomainSwitcherChip();
 }
 
-/// The global Search + Settings header actions, as `FHeaderAction`s for
-/// use in a [DomainTabScaffold] header suffix list.
+/// The global Search + Settings header actions.
 ///
 /// Search opens the cross-domain command palette via the global
 /// [OpenCommandPaletteIntent] action (registered in
 /// `core/shortcuts/global_shortcuts_scope.dart`); Settings pushes
 /// `/settings` outside the shell so back returns to the current tab.
-List<Widget> _buildShellGlobalActions(BuildContext context, WidgetRef ref) {
+List<ShellHeaderActionSpec> _buildShellGlobalActions(
+  BuildContext context,
+  WidgetRef ref,
+) {
   final l10n = AppLocalizations.of(context);
-  return <Widget>[
-    FHeaderAction(
-      icon: const Icon(FLucideIcons.search),
-      semanticsLabel: l10n.navSearch,
+  return <ShellHeaderActionSpec>[
+    ShellHeaderActionSpec(
+      icon: FLucideIcons.search,
+      label: l10n.navSearch,
       onPress: () =>
           Actions.maybeInvoke(context, const OpenCommandPaletteIntent()),
+      order: 100,
     ),
-    FHeaderAction(
-      icon: const Icon(FLucideIcons.settings),
-      semanticsLabel: l10n.navSettingsTooltip,
+    ShellHeaderActionSpec(
+      icon: FLucideIcons.settings,
+      label: l10n.navSettingsTooltip,
       onPress: () => context.push(SettingsRoutes.root),
+      order: 110,
     ),
   ];
 }
@@ -72,6 +76,9 @@ class DomainSwitcherChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (MediaQuery.sizeOf(context).width >= Breakpoints.mobile) {
+      return const SizedBox.shrink();
+    }
     final specs = ref.watch(activeDomainShellsProvider);
     if (specs.length < 2) return const SizedBox.shrink();
 

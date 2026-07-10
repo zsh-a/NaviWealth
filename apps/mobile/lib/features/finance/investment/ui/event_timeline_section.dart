@@ -42,7 +42,7 @@ class EventTimelineSection extends ConsumerWidget {
           ),
           error: (error, _) => AppEmptyState.error(
             title: l10n.investmentEventTimelineError,
-            message: '$error',
+            message: userSafeErrorMessage(context, error),
             action: FButton(
               variant: FButtonVariant.ghost,
               onPress: () {

@@ -106,9 +106,10 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final defaultAsync = ref.watch(defaultChatSessionProvider(userId));
 
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final isDesktop = MasterDetailLayout.shouldUseMasterDetail(width);
+      builder: (context, _) {
+        final isDesktop = MasterDetailLayout.shouldUseMasterDetail(
+          MediaQuery.sizeOf(context).width,
+        );
         // `?selected=` is used by expand-from-sheet and by the desktop
         // master-detail list. Explicit in-page selection wins; otherwise the
         // provider resolves the default thread.
@@ -477,7 +478,7 @@ class _BootstrapErrorPane extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(
-              l10n.commonLoadError(error.toString()),
+              userSafeErrorMessage(context, error),
               textAlign: TextAlign.center,
               style: context.theme.typography.body.sm.copyWith(
                 color: context.theme.colors.foreground,

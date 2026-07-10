@@ -92,7 +92,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
         error: (e, _) => _PanelMessage(
           icon: FLucideIcons.circleAlert,
           iconColor: context.theme.colors.destructive,
-          message: l10n.commonLoadError(e.toString()),
+          message: userSafeErrorMessage(context, e),
         ),
         data: (sessions) {
           if (sessions.isEmpty) {

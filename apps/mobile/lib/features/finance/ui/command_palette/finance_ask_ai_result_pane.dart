@@ -124,7 +124,7 @@ class _FinanceAskAiResultPaneState extends State<FinanceAskAiResultPane> {
       if (!mounted || seq != _runSeq) return;
       setState(() {
         _status = _PaneStatus.error;
-        _errorMessage = e.toString();
+        _errorMessage = userSafeErrorMessage(context, e);
       });
     }
   }

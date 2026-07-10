@@ -106,7 +106,11 @@ class _ErrorBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return AppEmptyState.error(
-      title: l10n.dashboardSnapshotError('$error'),
+      title: userSafeErrorMessage(
+        context,
+        error,
+        operation: 'load dashboard snapshot',
+      ),
       action: AppQuietButton(
         label: l10n.commonRetry,
         onPress: () => ref.invalidate(dashboardSnapshotProvider),

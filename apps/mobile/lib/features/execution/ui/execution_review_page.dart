@@ -30,9 +30,9 @@ class ExecutionReviewPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.executionReviewTitle,
       actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.plus),
-          semanticsLabel: l10n.executionCreateProgressTitle,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.executionCreateProgressTitle,
           onPress: () => showExecutionProgressSheet(context: context, ref: ref),
         ),
       ],
@@ -67,7 +67,7 @@ class _ReviewBody extends ConsumerWidget {
       return ExecutionStateView(
         icon: FLucideIcons.circleX,
         title: l10n.commonError,
-        message: '$error',
+        message: userSafeErrorMessage(context, error),
       );
     }
     if ((progressAsync.isLoading && !progressAsync.hasValue) ||
@@ -190,7 +190,7 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
         child: AgentResultPanelStateCard(
           icon: FLucideIcons.triangleAlert,
           title: l10n.commonError,
-          message: l10n.commonLoadError('${resultsAsync.error}'),
+          message: userSafeErrorMessage(context, resultsAsync.error!),
           error: true,
           onRetry: () => ref.invalidate(
             execution_agent_providers.latestExecutionReviewResultsProvider,

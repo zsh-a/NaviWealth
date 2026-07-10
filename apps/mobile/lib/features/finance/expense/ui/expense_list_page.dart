@@ -46,6 +46,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     final accountsAsync = ref.watch(allAccountsStreamProvider);
 
     final body = expensesAsync.whenOrLoading(
+      context: context,
       data: (all) {
         final accounts = accountsAsync.value ?? const <Account>[];
         final expenseAccountById = {
@@ -90,7 +91,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
       },
       error: (e, _) => AppEmptyState.error(
         title: l10n.commonLoadFailed,
-        message: l10n.commonLoadError('$e'),
+        message: userSafeErrorMessage(context, e),
         action: FButton(
           variant: FButtonVariant.ghost,
           onPress: () {

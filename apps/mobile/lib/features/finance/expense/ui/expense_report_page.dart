@@ -17,7 +17,8 @@ class ExpenseReportPage extends ConsumerWidget {
       title: l10n.expenseReportAppBarTitle,
       childPad: false,
       child: reportAsync.whenOrLoading(
-        error: (e, _) => Center(child: Text(l10n.expenseReportLoadError('$e'))),
+        context: context,
+        error: (e, _) => Center(child: Text(userSafeErrorMessage(context, e))),
         data: (report) => ExpenseReportBody(report: report),
       ),
     );

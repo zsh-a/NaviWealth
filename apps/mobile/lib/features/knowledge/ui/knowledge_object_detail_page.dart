@@ -284,7 +284,11 @@ class _KnowledgeObjectDetailPageState
     final error = _error;
     if (error != null) {
       return KnowledgeErrorState(
-        title: AppLocalizations.of(context).knowledgeLoadFailed('$error'),
+        title: userSafeErrorMessage(
+          context,
+          error,
+          operation: 'load knowledge object',
+        ),
         onRetry: _load,
       );
     }

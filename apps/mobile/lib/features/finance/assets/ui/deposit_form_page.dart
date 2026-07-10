@@ -260,9 +260,10 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
             ),
         ],
         child: accountsAsync.whenOrLoading(
+          context: context,
           error: (e, _) => AppEmptyState.error(
             title: l10n.commonLoadFailed,
-            message: l10n.commonLoadError('$e'),
+            message: userSafeErrorMessage(context, e),
             action: FButton(
               variant: FButtonVariant.ghost,
               onPress: () => ref.invalidate(accountsStreamProvider),

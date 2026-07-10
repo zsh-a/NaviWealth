@@ -72,9 +72,9 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
     return ShellTabScaffold(
       title: l10n.healthTodayTitle,
       actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.scale),
-          semanticsLabel: l10n.healthRecordBodyMetricAction,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.scale,
+          label: l10n.healthRecordBodyMetricAction,
           onPress: () async {
             final saved = await showBodyMeasurementEntrySheet(
               context: context,

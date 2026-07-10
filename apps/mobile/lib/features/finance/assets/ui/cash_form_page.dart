@@ -203,6 +203,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
             ),
         ],
         child: accountsAsync.whenOrLoading(
+          context: context,
           error: (e, _) => AppEmptyState.error(
             title: l10n.commonLoadFailed,
             message: l10n.cashFormLoadError('$e'),

@@ -33,7 +33,7 @@ class AssetFxPnlCard extends ConsumerWidget {
     }
     if (reportAsync.hasError) {
       return AssetDetailErrorCard(
-        message: l10n.assetDetailFxPnlLoadError('${reportAsync.error}'),
+        message: userSafeErrorMessage(context, reportAsync.error!),
       );
     }
 

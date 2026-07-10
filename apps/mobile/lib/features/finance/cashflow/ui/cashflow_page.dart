@@ -77,7 +77,7 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
         child: summaryAsync.when(
           loading: () => const CashFlowSkeleton(),
           error: (error, _) => _LoadError(
-            message: l10n.cashFlowLoadError('$error'),
+            message: userSafeErrorMessage(context, error),
             onRetry: () => ref.invalidate(cashFlowSummaryProvider(request)),
           ),
           data: (summary) => summary.buckets.isEmpty

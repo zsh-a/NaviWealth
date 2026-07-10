@@ -62,9 +62,23 @@ void resetAiPrivacyOnboardingForTest() {
   _onboardingInFlight = false;
 }
 
-Future<void> showAiPrivacyOnboardingSheet(BuildContext context) {
+Future<void> showAiPrivacyOnboardingSheet(BuildContext context) async {
   final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
+  if (MediaQuery.sizeOf(context).width >= Breakpoints.mobile) {
+    await showAppContentDialog<void>(
+      context: context,
+      child: const SoftCard(
+        key: ValueKey<String>('ai-privacy-onboarding-dialog'),
+        level: SoftCardLevel.raised,
+        padding: EdgeInsets.all(AppSpacing.s24),
+        child: SingleChildScrollView(
+          child: _AiPrivacyOnboardingSheet(showTitle: true),
+        ),
+      ),
+    );
+    return;
+  }
+  await showAppSheet<void>(
     context: context,
     title: l10n.aiPrivacyOnboardingTitle,
     maxHeightFactor: 0.9,
@@ -73,7 +87,9 @@ Future<void> showAiPrivacyOnboardingSheet(BuildContext context) {
 }
 
 class _AiPrivacyOnboardingSheet extends ConsumerWidget {
-  const _AiPrivacyOnboardingSheet();
+  const _AiPrivacyOnboardingSheet({this.showTitle = false});
+
+  final bool showTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -85,6 +101,10 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        if (showTitle) ...[
+          Text(l10n.aiPrivacyOnboardingTitle, style: context.titleLabelStyle),
+          const SizedBox(height: AppSpacing.s16),
+        ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

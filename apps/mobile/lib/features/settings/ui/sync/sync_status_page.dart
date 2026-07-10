@@ -38,10 +38,11 @@ class SyncStatusPage extends ConsumerWidget {
       ],
       childPad: false,
       child: eventAsync.whenOrLoading(
+        context: context,
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s24),
-            child: Text(l10n.syncStatusBusError(e.toString())),
+            child: Text(userSafeErrorMessage(context, e)),
           ),
         ),
         data: (event) => _Body(event: event, now: now),

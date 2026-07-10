@@ -35,9 +35,9 @@ class WealthHubPage extends ConsumerWidget {
       title: l10n.wealthHubTitle,
       childPad: false,
       actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.plus),
-          semanticsLabel: l10n.accountsActionsTitle,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.accountsActionsTitle,
           onPress: () => showWealthActionPanel(context),
         ),
       ],
@@ -111,6 +111,20 @@ class _WealthHubBody extends ConsumerWidget {
             totalAssets: totalAssets,
             totalLiabilities: totalLiabilities,
           ),
+          if (totalAssets == Decimal.zero &&
+              totalLiabilities == Decimal.zero) ...[
+            const SizedBox(height: AppSpacing.s16),
+            AppEmptyState(
+              icon: FLucideIcons.landmark,
+              title: AppLocalizations.of(context).wealthEmptyTitle,
+              message: AppLocalizations.of(context).wealthEmptyBody,
+              action: FButton(
+                onPress: () => context.push(FinanceRoutes.wealthAccountNew),
+                prefix: const Icon(FLucideIcons.plus),
+                child: Text(AppLocalizations.of(context).wealthEmptyAction),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.s16),
           const _WealthSectionGrid(),
           const SizedBox(height: AppSpacing.s16),

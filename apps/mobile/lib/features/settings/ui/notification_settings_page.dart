@@ -109,7 +109,7 @@ class _NotificationPermissionBannerState
       ),
       error: (error, _) => AppStatusBanner(
         kind: AppStatusKind.error,
-        message: l10n.settingsNotificationsPermissionFailed('$error'),
+        message: userSafeErrorMessage(context, error),
         action: FButton(
           variant: FButtonVariant.outline,
           onPress: () =>

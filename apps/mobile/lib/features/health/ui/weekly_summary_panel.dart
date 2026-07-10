@@ -107,7 +107,7 @@ class _WeeklySummaryFallback extends ConsumerWidget {
           AgentResultPanelStateCard(
             icon: FLucideIcons.triangleAlert,
             title: l10n.commonError,
-            message: l10n.commonLoadError('$agentLoadError'),
+            message: userSafeErrorMessage(context, agentLoadError),
             error: true,
             onRetry: () => ref.invalidate(
               health_agent_providers.latestHealthReviewAgentResultsProvider,
@@ -140,7 +140,7 @@ class _WeeklySummaryFallback extends ConsumerWidget {
           AgentResultPanelStateCard(
             icon: FLucideIcons.triangleAlert,
             title: l10n.commonError,
-            message: l10n.commonLoadError('${runAsync.error}'),
+            message: userSafeErrorMessage(context, runAsync.error!),
             error: true,
             onRetry: () => ref.invalidate(
               health_agent_providers.latestHealthReviewAgentResultsProvider,

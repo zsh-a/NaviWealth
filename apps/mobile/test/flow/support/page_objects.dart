@@ -163,8 +163,25 @@ class ActivityPageObject {
 
   Future<void> openIngestQueue() async {
     final action = find.byIcon(FLucideIcons.inbox);
-    expect(action, findsWidgets, reason: 'ingest queue action missing');
-    await tester.tap(action.first);
+    if (action.evaluate().isNotEmpty) {
+      await tester.tap(action.first);
+    } else {
+      final moreActions = find.byIcon(FLucideIcons.ellipsis);
+      expect(
+        moreActions,
+        findsOneWidget,
+        reason: 'activity overflow action missing',
+      );
+      await tester.tap(moreActions);
+      await settle(tester);
+      final ingestAction = find.text('Review entries');
+      expect(
+        ingestAction,
+        findsOneWidget,
+        reason: 'ingest queue action missing from overflow',
+      );
+      await tester.tap(ingestAction);
+    }
     await settle(tester);
   }
 
@@ -601,7 +618,7 @@ class AccountsPageObject {
 
   void expectEmptyState() {
     expect(
-      find.textContaining('No accounts yet'),
+      find.textContaining('Add your first account'),
       findsOneWidget,
       reason: 'expected first-run accounts empty state',
     );

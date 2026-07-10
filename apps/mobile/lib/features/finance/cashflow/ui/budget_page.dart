@@ -28,6 +28,7 @@ class PlanBudgetPage extends ConsumerWidget {
       title: l10n.planBudgetTitle,
       childPad: false,
       child: budgetsAsync.whenOrLoading(
+        context: context,
         error: (_, _) => Center(
           child: AppEmptyState(
             icon: FLucideIcons.piggyBank,
@@ -407,7 +408,7 @@ class _BudgetEditSheetState extends State<_BudgetEditSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = l10n.planBudgetSaveFailed('$e');
+          _error = userSafeErrorMessage(context, e);
         });
       }
     }

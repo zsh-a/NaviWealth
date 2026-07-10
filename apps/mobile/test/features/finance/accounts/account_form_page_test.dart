@@ -203,6 +203,25 @@ void main() {
     expect(find.text('• Income'), findsNothing);
   });
 
+  testWidgets('save stays disabled until the required name is valid', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(_wrap(h, accounts: const []));
+    await tester.pumpAndSettle();
+
+    FButton saveButton() =>
+        tester.widget<FButton>(find.widgetWithText(FButton, 'Save'));
+
+    expect(saveButton().onPress, isNull);
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Account name'),
+      'Everyday bank',
+    );
+    await tester.pump();
+    expect(saveButton().onPress, isNotNull);
+  });
+
   testWidgets('icon picker tile selection updates the form state', (
     tester,
   ) async {

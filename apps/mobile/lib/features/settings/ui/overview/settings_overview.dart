@@ -219,6 +219,8 @@ class SettingsOverview extends ConsumerWidget {
                         accountGroup,
                         const SizedBox(height: AppSpacing.s20),
                         appearanceGroup,
+                        const SizedBox(height: AppSpacing.s20),
+                        dataGroup,
                       ],
                     )
                   : allGroupsSingleColumn,
@@ -227,8 +229,6 @@ class SettingsOverview extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         aiGroup,
-                        const SizedBox(height: AppSpacing.s20),
-                        dataGroup,
                         const SizedBox(height: AppSpacing.s20),
                         domainsGroup,
                         const SizedBox(height: AppSpacing.s20),

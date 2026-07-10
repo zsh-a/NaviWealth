@@ -109,7 +109,7 @@ class AgentsSettingsPage extends ConsumerWidget {
             ),
             error: (error, _) => AppStatusBanner(
               kind: AppStatusKind.error,
-              message: '$error',
+              message: userSafeErrorMessage(context, error),
               icon: FLucideIcons.triangleAlert,
             ),
             data: (items) {
@@ -394,7 +394,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(context).agentSettingsSaveFailed('$error'),
+        userSafeErrorMessage(context, error, operation: 'save agent settings'),
       );
     } finally {
       if (mounted) setState(() => _savingEnabled = false);
@@ -446,7 +446,7 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(context).agentSettingsRunFailed('$error'),
+        userSafeErrorMessage(context, error, operation: 'run agent'),
       );
     } finally {
       if (mounted) setState(() => _running = false);
@@ -662,7 +662,7 @@ class _AgentSettingsDetailSheetState
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(context).agentSettingsSaveFailed('$error'),
+        userSafeErrorMessage(context, error, operation: 'save agent settings'),
       );
     } finally {
       if (mounted) setState(() => _savingEnabled = false);
@@ -684,7 +684,11 @@ class _AgentSettingsDetailSheetState
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(context).agentSettingsSaveFailed('$error'),
+        userSafeErrorMessage(
+          context,
+          error,
+          operation: 'save agent notification settings',
+        ),
       );
     } finally {
       if (mounted) setState(() => _savingNotifications = false);

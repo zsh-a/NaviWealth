@@ -87,6 +87,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       _accountNumberController,
       _noteController,
     ]);
+    _nameController.addListener(_onNameChanged);
     if (widget.isEdit) {
       _loadInitial();
     } else {
@@ -95,6 +96,10 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       // pick the right currency manually for every account.
       _currency = ref.read(baseCurrencyProvider);
     }
+  }
+
+  void _onNameChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadInitial() async {
@@ -230,6 +235,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
 
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _institutionController.dispose();
     _accountNumberController.dispose();
@@ -275,7 +281,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     width: double.infinity,
                     child: FButton(
                       variant: FButtonVariant.primary,
-                      onPress: _busy ? null : _save,
+                      onPress: _busy || _nameController.text.trim().isEmpty
+                          ? null
+                          : _save,
                       child: Text(
                         _busy ? l10n.accountFormSaving : l10n.accountFormSave,
                       ),

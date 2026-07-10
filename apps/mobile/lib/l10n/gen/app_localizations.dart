@@ -434,6 +434,12 @@ abstract class AppLocalizations {
   /// **'Set up your FIRE plan to see progress here.'**
   String get planHeroEmpty;
 
+  /// No description provided for @planHeroConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up FIRE plan'**
+  String get planHeroConfigure;
+
   /// Plan hero — years remaining to financial independence
   ///
   /// In en, this message translates to:
@@ -469,6 +475,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What you own, what you owe.'**
   String get wealthHubSubtitle;
+
+  /// No description provided for @wealthEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with an account'**
+  String get wealthEmptyTitle;
+
+  /// No description provided for @wealthEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add where you keep money, then record holdings and liabilities as needed.'**
+  String get wealthEmptyBody;
+
+  /// No description provided for @wealthEmptyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add account'**
+  String get wealthEmptyAction;
 
   /// Wealth hub: accounts section title
   ///
@@ -3571,6 +3595,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong'**
   String get commonError;
+
+  /// No description provided for @commonSafeErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t complete that. Please try again.'**
+  String get commonSafeErrorMessage;
+
+  /// No description provided for @shellMoreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get shellMoreActions;
 
   /// No description provided for @commonLoadError.
   ///
@@ -8654,7 +8690,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountsEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'No accounts yet. Tap the bottom-right button to add one, then come back to record assets.'**
+  /// **'Add your first account to start tracking assets.'**
   String get accountsEmptyHint;
 
   /// Wealth container category — physical cash, e-wallets (Alipay, Wechat Pay, etc.)

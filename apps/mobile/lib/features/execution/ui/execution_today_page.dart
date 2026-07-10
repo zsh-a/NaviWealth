@@ -24,9 +24,9 @@ class ExecutionTodayPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.executionTodayTitle,
       actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.plus),
-          semanticsLabel: l10n.executionCreateActionTitle,
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.executionCreateActionTitle,
           onPress: () => showExecutionActionSheet(context: context, ref: ref),
         ),
       ],

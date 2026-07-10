@@ -18,26 +18,19 @@ class AssetsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final masterDetail = MasterDetailLayout.shouldUseMasterDetail(
-          constraints.maxWidth,
-        );
-        final selected = selectedQueryOf(context);
-        if (masterDetail) {
-          final detail = selected == null
-              ? const AssetsDetailEmpty()
-              : AssetDetailPage(assetId: selected);
-          return MasterDetailLayout(
-            master: AssetsMaster(
-              selectedAssetId: selected,
-              inMasterDetail: true,
-            ),
-            detail: detail,
-          );
-        }
-        return const AssetsMaster(selectedAssetId: null, inMasterDetail: false);
-      },
+    final masterDetail = MasterDetailLayout.shouldUseMasterDetail(
+      MediaQuery.sizeOf(context).width,
     );
+    final selected = selectedQueryOf(context);
+    if (masterDetail) {
+      final detail = selected == null
+          ? const AssetsDetailEmpty()
+          : AssetDetailPage(assetId: selected);
+      return MasterDetailLayout(
+        master: AssetsMaster(selectedAssetId: selected, inMasterDetail: true),
+        detail: detail,
+      );
+    }
+    return const AssetsMaster(selectedAssetId: null, inMasterDetail: false);
   }
 }

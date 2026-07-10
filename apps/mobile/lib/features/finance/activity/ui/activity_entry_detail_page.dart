@@ -140,7 +140,7 @@ class ActivityEntryDetailRoute extends ConsumerWidget {
         title: l10n.activityEntryDetailTitle,
         child: AppEmptyState.error(
           title: l10n.commonLoadFailed,
-          message: '$error',
+          message: userSafeErrorMessage(context, error),
           action: FButton(
             variant: FButtonVariant.ghost,
             onPress: () =>

@@ -36,8 +36,8 @@ Future<void> _pumpLayout(
 
 void main() {
   test('shouldUseMasterDetail follows the desktop breakpoint', () {
-    expect(MasterDetailLayout.shouldUseMasterDetail(1239), isFalse);
-    expect(MasterDetailLayout.shouldUseMasterDetail(1240), isTrue);
+    expect(MasterDetailLayout.shouldUseMasterDetail(1279), isFalse);
+    expect(MasterDetailLayout.shouldUseMasterDetail(1280), isTrue);
   });
 
   testWidgets('uses the default master pane width', (tester) async {

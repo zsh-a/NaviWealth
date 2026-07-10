@@ -32,10 +32,11 @@ class OptionsTradeStatsPage extends ConsumerWidget {
       title: l10n.incomePlannerStatsTitle,
       childPad: false,
       child: statsAsync.whenOrLoading(
+        context: context,
         error: (error, _) => Center(
           child: AppEmptyState.error(
             title: l10n.commonLoadFailed,
-            message: '$error',
+            message: userSafeErrorMessage(context, error),
           ),
         ),
         data: (stats) {

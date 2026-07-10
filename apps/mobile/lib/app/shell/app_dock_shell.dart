@@ -38,9 +38,6 @@ class AppDockShell extends ConsumerStatefulWidget {
 
   final Widget child;
 
-  // Breakpoint from design_system/tokens/breakpoints.dart
-  static const double _tabletBreakpoint = Breakpoints.mobile;
-
   @override
   ConsumerState<AppDockShell> createState() => _AppDockShellState();
 }
@@ -142,8 +139,8 @@ class _DockChrome extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < AppDockShell._tabletBreakpoint;
-        if (isCompact) {
+        final viewportWidth = MediaQuery.sizeOf(context).width;
+        if (viewportWidth < Breakpoints.mobile) {
           // Mobile: the per-page DomainSwitcherTitle (AppBar / FHeader)
           // is the only switch surface — keeps vertical space free.
           return child;

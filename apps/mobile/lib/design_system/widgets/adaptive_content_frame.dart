@@ -143,7 +143,9 @@ class _FrameContent extends StatelessWidget {
 
     if (layout == AdaptiveFrameLayout.cockpit) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: expandBody
+            ? CrossAxisAlignment.stretch
+            : CrossAxisAlignment.start,
         children: [
           Expanded(child: primary),
           SizedBox(width: columnGap),
@@ -153,7 +155,9 @@ class _FrameContent extends StatelessWidget {
     }
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: expandBody
+          ? CrossAxisAlignment.stretch
+          : CrossAxisAlignment.start,
       children: [
         Expanded(flex: primaryFlex, child: primary),
         SizedBox(width: columnGap),

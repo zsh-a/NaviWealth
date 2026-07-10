@@ -266,7 +266,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       // through so the snackbar reads "Couldn't record trade: <reason>"
       // instead of a generic "save failed".
       failureMessage: (error) => l10n.tradeEntryFailure(
-        error is TradeEntryException ? error.message : '$error',
+        error is TradeEntryException
+            ? error.message
+            : userSafeErrorMessage(context, error, operation: 'record trade'),
       ),
       retryLabel: l10n.commonRetry,
       write: () async {
@@ -306,9 +308,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         title: Text(l10n.tradeEntryAppBarTitle),
         confirmLeave: handleBackIntent,
         child: accountsAsync.whenOrLoading(
+          context: context,
           error: (e, _) => AppEmptyState.error(
             title: l10n.commonLoadFailed,
-            message: l10n.commonLoadError('$e'),
+            message: userSafeErrorMessage(context, e),
             action: FButton(
               variant: FButtonVariant.ghost,
               onPress: () => ref.invalidate(accountsStreamProvider),

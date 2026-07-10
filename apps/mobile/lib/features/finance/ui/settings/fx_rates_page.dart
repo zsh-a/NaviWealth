@@ -32,7 +32,10 @@ class FxRatesPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: ratesAsync.whenOrError(data: (rates) => _RateList(rates: rates)),
+      child: ratesAsync.whenOrError(
+        context: context,
+        data: (rates) => _RateList(rates: rates),
+      ),
     );
   }
 

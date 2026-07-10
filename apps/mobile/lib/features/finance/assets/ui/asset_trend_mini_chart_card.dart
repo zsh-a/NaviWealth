@@ -102,7 +102,12 @@ class _ChartBody extends StatelessWidget {
         height: AppChartHeights.standard,
         child: Center(
           child: Text(
-            l10n.assetDetailTrendLoadError('${history.error}'),
+            userSafeErrorMessage(
+              context,
+              history.error!,
+              stackTrace: history.stackTrace,
+              operation: 'load asset trend',
+            ),
             style: context.theme.typography.body.xs,
             textAlign: TextAlign.center,
           ),

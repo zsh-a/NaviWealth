@@ -50,7 +50,12 @@ class _DueReviewsCard extends ConsumerWidget {
                     title: l10n.knowledgeReviewDecisionsTitle,
                     children: [
                       KnowledgeErrorState(
-                        title: l10n.knowledgeReviewLoadFailed('${snap.error}'),
+                        title: userSafeErrorMessage(
+                          context,
+                          snap.error!,
+                          stackTrace: snap.stackTrace,
+                          operation: 'load decision reviews',
+                        ),
                         density: KnowledgeStateDensity.section,
                       ),
                     ],

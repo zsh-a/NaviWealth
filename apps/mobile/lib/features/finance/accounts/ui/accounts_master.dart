@@ -36,6 +36,7 @@ class AccountsMaster extends ConsumerWidget {
         .toList();
 
     final body = accountsAsync.whenOrLoading(
+      context: context,
       data: (accounts) {
         final visibleAccounts = accounts.where((a) => !a.archived).toList();
         return visibleAccounts.isEmpty

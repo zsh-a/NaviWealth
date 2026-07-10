@@ -35,7 +35,8 @@ class HealthPlanPage extends ConsumerWidget {
           FadeSlideIn(
             child: async.when(
               loading: () => const _LoadingCard(),
-              error: (e, _) => _ErrorCard(message: '$e'),
+              error: (e, _) =>
+                  _ErrorCard(message: userSafeErrorMessage(context, e)),
               data: (out) {
                 if (out == null) return const _OffCard();
                 return Column(

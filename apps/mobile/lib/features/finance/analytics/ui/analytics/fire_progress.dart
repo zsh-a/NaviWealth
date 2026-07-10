@@ -32,7 +32,7 @@ class _FireProgressCard extends ConsumerWidget {
               ),
               error: (error, _) => AppEmptyState.error(
                 title: l10n.analyticsFireProgressLoadError,
-                message: '$error',
+                message: userSafeErrorMessage(context, error),
                 icon: FLucideIcons.circleX,
               ),
               data: (state) => _FireProgressContent(state: state),
