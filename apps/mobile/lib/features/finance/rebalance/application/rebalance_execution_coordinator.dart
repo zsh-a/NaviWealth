@@ -3,6 +3,7 @@ import 'package:naviwealth/features/finance/investment/application/trade_entry_s
 
 import '../data/rebalance_execution_store.dart';
 import '../domain/rebalance_execution.dart';
+import 'rebalance_execution_issue_classifier.dart';
 import 'rebalance_trade_validation.dart';
 
 abstract interface class RebalanceStopSignal {
@@ -35,6 +36,7 @@ enum RebalanceExecutionFailureCode {
   validationFailed,
   businessFailed,
   staleAttempt,
+  reviewRequired,
 }
 
 final class RebalanceExecutionFailure {
@@ -42,11 +44,13 @@ final class RebalanceExecutionFailure {
     required this.code,
     this.itemId,
     this.cause,
+    this.issue,
   });
 
   final RebalanceExecutionFailureCode code;
   final String? itemId;
   final Object? cause;
+  final RebalanceExecutionIssue? issue;
 }
 
 final class RebalanceExecutionBatchResult {
@@ -139,6 +143,21 @@ final class RebalanceExecutionCoordinator {
           item.state != RebalanceExecutionItemState.applying) {
         continue;
       }
+      final existingIssue = item.issue;
+      if (item.state == RebalanceExecutionItemState.applyFailed &&
+          existingIssue?.recoveryAction != RebalanceRecoveryAction.retryApply) {
+        failures.add(
+          RebalanceExecutionFailure(
+            code: RebalanceExecutionFailureCode.reviewRequired,
+            itemId: item.id,
+            issue: existingIssue,
+          ),
+        );
+        if (_isFatal(existingIssue)) {
+          return _result(completed, failures, stopped: true);
+        }
+        continue;
+      }
       RebalanceExecutionAttempt? attempt;
       try {
         attempt = await _store.claimApply(
@@ -183,7 +202,15 @@ final class RebalanceExecutionCoordinator {
         final request = _validation.validateSnapshot(attempt.item);
         prepared = await _tradeSubmission.prepare(request);
       } catch (error) {
-        final outcome = await _markApplyFailedIfCurrent(owner, attempt, error);
+        final classified = classifyRebalanceExecutionIssue(
+          error,
+          phase: RebalanceExecutionPhase.apply,
+        );
+        final outcome = await _markApplyFailedIfCurrent(
+          owner,
+          attempt,
+          classified.issue,
+        );
         if (outcome == _AttemptMutationOutcome.stale) {
           failures.add(_staleFailure(item.id, error));
           return _result(completed, failures, stopped: true);
@@ -195,8 +222,12 @@ final class RebalanceExecutionCoordinator {
                 : RebalanceExecutionFailureCode.businessFailed,
             itemId: item.id,
             cause: error,
+            issue: classified.issue,
           ),
         );
+        if (classified.stopBatch) {
+          return _result(completed, failures, stopped: true);
+        }
         continue;
       }
       if (stop.isStopped) {
@@ -272,7 +303,15 @@ final class RebalanceExecutionCoordinator {
         );
         return _result(completed, failures, stopped: true);
       } catch (error) {
-        final outcome = await _markApplyFailedIfCurrent(owner, attempt, error);
+        final classified = classifyRebalanceExecutionIssue(
+          error,
+          phase: RebalanceExecutionPhase.apply,
+        );
+        final outcome = await _markApplyFailedIfCurrent(
+          owner,
+          attempt,
+          classified.issue,
+        );
         if (outcome == _AttemptMutationOutcome.stale) {
           failures.add(_staleFailure(item.id, error));
           return _result(completed, failures, stopped: true);
@@ -284,8 +323,12 @@ final class RebalanceExecutionCoordinator {
                 : RebalanceExecutionFailureCode.businessFailed,
             itemId: item.id,
             cause: error,
+            issue: classified.issue,
           ),
         );
+        if (classified.stopBatch) {
+          return _result(completed, failures, stopped: true);
+        }
       }
     }
     return _result(completed, failures, stopped: stop.isStopped);
@@ -411,7 +454,15 @@ final class RebalanceExecutionCoordinator {
         );
         return _result(completed, failures, stopped: true);
       } catch (error) {
-        final outcome = await _markUndoFailedIfCurrent(owner, attempt, error);
+        final classified = classifyRebalanceExecutionIssue(
+          error,
+          phase: RebalanceExecutionPhase.undo,
+        );
+        final outcome = await _markUndoFailedIfCurrent(
+          owner,
+          attempt,
+          classified.issue,
+        );
         if (outcome == _AttemptMutationOutcome.stale) {
           failures.add(_staleFailure(item.id, error));
           return _result(completed, failures, stopped: true);
@@ -421,6 +472,7 @@ final class RebalanceExecutionCoordinator {
             code: RebalanceExecutionFailureCode.businessFailed,
             itemId: item.id,
             cause: error,
+            issue: classified.issue,
           ),
         );
         return _result(completed, failures, stopped: true);
@@ -458,14 +510,14 @@ final class RebalanceExecutionCoordinator {
   Future<_AttemptMutationOutcome> _markApplyFailedIfCurrent(
     String owner,
     RebalanceExecutionAttempt attempt,
-    Object error,
+    RebalanceExecutionIssue issue,
   ) async {
     try {
       await _store.markApplyFailed(
         ownerUserId: owner,
         itemId: attempt.item.id,
         attemptToken: attempt.token,
-        error: error.toString(),
+        issue: issue,
       );
       return _AttemptMutationOutcome.updated;
     } on RebalanceStaleAttempt {
@@ -492,14 +544,14 @@ final class RebalanceExecutionCoordinator {
   Future<_AttemptMutationOutcome> _markUndoFailedIfCurrent(
     String owner,
     RebalanceExecutionAttempt attempt,
-    Object error,
+    RebalanceExecutionIssue issue,
   ) async {
     try {
       await _store.markUndoFailed(
         ownerUserId: owner,
         itemId: attempt.item.id,
         attemptToken: attempt.token,
-        error: error.toString(),
+        issue: issue,
       );
       return _AttemptMutationOutcome.updated;
     } on RebalanceStaleAttempt {
@@ -543,6 +595,13 @@ final class RebalanceExecutionCoordinator {
         itemId: itemId,
         cause: cause,
       );
+
+  bool _isFatal(RebalanceExecutionIssue? issue) => switch (issue?.code) {
+    RebalanceExecutionIssueCode.ownerChanged ||
+    RebalanceExecutionIssueCode.internal ||
+    RebalanceExecutionIssueCode.unknown => true,
+    _ => false,
+  };
 }
 
 enum _AttemptMutationOutcome { updated, stale }

@@ -271,7 +271,7 @@ class _WorkspaceBody extends StatelessWidget {
     final ready = session.items.any(
       (item) =>
           item.state == RebalanceExecutionItemState.ready ||
-          item.state == RebalanceExecutionItemState.applyFailed,
+          item.issue?.recoveryAction == RebalanceRecoveryAction.retryApply,
     );
     final applied = session.items.any((item) => item.isEconomicallyApplied);
     final mutable = session.status == RebalanceExecutionSessionStatus.active;
@@ -401,14 +401,22 @@ class _ExecutionItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final reviewAction = item.issue?.recoveryAction;
     final canReview =
+        mutable &&
+        (const {
+              RebalanceExecutionItemState.needsDetails,
+              RebalanceExecutionItemState.ready,
+            }.contains(item.state) ||
+            reviewAction == RebalanceRecoveryAction.enterPrice ||
+            reviewAction == RebalanceRecoveryAction.editReview);
+    final canSkip =
         mutable &&
         const {
           RebalanceExecutionItemState.needsDetails,
           RebalanceExecutionItemState.ready,
           RebalanceExecutionItemState.applyFailed,
         }.contains(item.state);
-    final canSkip = canReview;
     final skipped =
         mutable && item.state == RebalanceExecutionItemState.skipped;
     final target =
@@ -465,15 +473,6 @@ class _ExecutionItemRow extends StatelessWidget {
                   _stateLabel(l10n, item.state),
                   style: context.captionStyle,
                 ),
-                if (item.error != null) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    item.error!,
-                    style: context.captionStyle.copyWith(
-                      color: context.theme.colors.destructive,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: AppSpacing.s8),
                 Wrap(
                   spacing: AppSpacing.s6,

@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/securities_asset_repository.dart';
@@ -10,6 +11,7 @@ import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/investment/application/trade_entry_submission_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_errors.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/rebalance/application/rebalance_execution_coordinator.dart';
@@ -163,39 +165,136 @@ void main() {
     },
   );
 
-  test('apply business failure continues to the next reviewed item', () async {
-    final harness = await _makeHarness(_FailFirstTradeService());
-    addTearDown(harness.db.close);
-    final session = await _readySession(harness.store, itemCount: 2);
+  test(
+    'price-required continues and a second apply does not prepare it',
+    () async {
+      final service = _FailFirstTradeService();
+      final harness = await _makeHarness(service);
+      addTearDown(harness.db.close);
+      final session = await _readySession(harness.store, itemCount: 2);
 
-    final result = await harness.coordinator.applySession(
-      sessionId: session.id,
-    );
+      final result = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
 
-    expect(
-      result.completedItemIds,
-      [session.items[1].id],
-      reason: result.failures.map((failure) => failure.cause).join('\n'),
-    );
-    expect(
-      result.failures.single.code,
-      RebalanceExecutionFailureCode.businessFailed,
-    );
-    expect(
-      (await harness.store.getItem(
+      expect(
+        result.completedItemIds,
+        [session.items[1].id],
+        reason: result.failures.map((failure) => failure.cause).join('\n'),
+      );
+      expect(
+        result.failures.single.code,
+        RebalanceExecutionFailureCode.businessFailed,
+      );
+      expect(
+        (await harness.store.getItem(
+          ownerUserId: 'owner-a',
+          id: session.items[0].id,
+        ))?.state,
+        RebalanceExecutionItemState.applyFailed,
+      );
+      expect(
+        (await harness.store.getItem(
+          ownerUserId: 'owner-a',
+          id: session.items[0].id,
+        ))?.issue?.code,
+        RebalanceExecutionIssueCode.priceRequired,
+      );
+      expect(
+        (await harness.store.getItem(
+          ownerUserId: 'owner-a',
+          id: session.items[1].id,
+        ))?.state,
+        RebalanceExecutionItemState.applied,
+      );
+
+      final callsAfterFirst = service.calls;
+      final second = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
+      expect(second.completedItemIds, isEmpty);
+      expect(
+        second.failures.single.code,
+        RebalanceExecutionFailureCode.reviewRequired,
+      );
+      expect(service.calls, callsAfterFirst);
+    },
+  );
+
+  test(
+    'unknown apply failure is fatal and leaves later items untouched',
+    () async {
+      final harness = await _makeHarness(_FatalFirstTradeService());
+      addTearDown(harness.db.close);
+      final session = await _readySession(harness.store, itemCount: 2);
+
+      final result = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
+
+      expect(result.stopped, isTrue);
+      expect(result.completedItemIds, isEmpty);
+      expect(
+        result.failures.single.issue?.code,
+        RebalanceExecutionIssueCode.unknown,
+      );
+      expect(
+        (await harness.store.getItem(
+          ownerUserId: 'owner-a',
+          id: session.items[1].id,
+        ))?.state,
+        RebalanceExecutionItemState.ready,
+      );
+    },
+  );
+
+  test(
+    'temporary and legacy apply failures remain explicitly retryable',
+    () async {
+      final service = _TemporaryFirstTradeService();
+      final harness = await _makeHarness(service);
+      addTearDown(harness.db.close);
+      final session = await _readySession(harness.store, itemCount: 2);
+
+      final first = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
+      expect(first.completedItemIds, [session.items[1].id]);
+      expect(
+        first.failures.single.issue?.code,
+        RebalanceExecutionIssueCode.applyUnavailable,
+      );
+      final retry = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
+      expect(retry.completedItemIds, [session.items[0].id]);
+      await harness.store.archive(
         ownerUserId: 'owner-a',
-        id: session.items[0].id,
-      ))?.state,
-      RebalanceExecutionItemState.applyFailed,
-    );
-    expect(
-      (await harness.store.getItem(
+        sessionId: session.id,
+      );
+
+      final legacySession = await _readySession(harness.store, itemCount: 1);
+      final legacyItem = legacySession.items.single;
+      final attempt = (await harness.store.claimApply(
         ownerUserId: 'owner-a',
-        id: session.items[1].id,
-      ))?.state,
-      RebalanceExecutionItemState.applied,
-    );
-  });
+        itemId: legacyItem.id,
+        leaseDuration: const Duration(minutes: 2),
+      ))!;
+      await harness.store.markApplyFailed(
+        ownerUserId: 'owner-a',
+        itemId: legacyItem.id,
+        attemptToken: attempt.token,
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.legacyApplyFailure,
+          'legacy',
+        ),
+      );
+      final legacyRetry = await harness.coordinator.applySession(
+        sessionId: legacySession.id,
+      );
+      expect(legacyRetry.completedItemIds, [legacyItem.id]);
+    },
+  );
 
   test('expired prepare failure with a new token stops as stale', () async {
     var now = testNow;
@@ -677,7 +776,42 @@ final class _FailFirstTradeService extends _EchoTradeService {
     required List<Lot> openLots,
   }) async {
     calls += 1;
-    if (calls == 1) throw StateError('injected prepare failure');
+    if (calls == 1) {
+      throw TradeEntryException(
+        TradeEntryErrorCode.priceUnavailable,
+        'injected missing price',
+      );
+    }
+    return super.buildPlan(draft, openLots: openLots);
+  }
+}
+
+final class _FatalFirstTradeService extends _EchoTradeService {
+  @override
+  Future<TradeEntryPlan> buildPlan(
+    TradeDraft draft, {
+    required List<Lot> openLots,
+  }) async {
+    throw StateError('injected fatal failure');
+  }
+}
+
+final class _TemporaryFirstTradeService extends _EchoTradeService {
+  var calls = 0;
+
+  @override
+  Future<TradeEntryPlan> buildPlan(
+    TradeDraft draft, {
+    required List<Lot> openLots,
+  }) async {
+    calls += 1;
+    if (calls == 1) {
+      throw TradeEntryException(
+        TradeEntryErrorCode.priceUnavailable,
+        'temporary quote failure',
+        cause: const NetworkException('offline'),
+      );
+    }
     return super.buildPlan(draft, openLots: openLots);
   }
 }

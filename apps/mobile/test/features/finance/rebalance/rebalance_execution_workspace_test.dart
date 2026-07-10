@@ -107,6 +107,33 @@ void main() {
     expect(find.text('Skip'), findsNothing);
   });
 
+  testWidgets('classified issue debug text is never rendered raw', (
+    tester,
+  ) async {
+    const sentinel = 'RAW_INTERNAL_SENTINEL';
+    final session = _session(
+      itemState: RebalanceExecutionItemState.applyFailed,
+      issue: RebalanceExecutionIssue(
+        RebalanceExecutionIssueCode.internal,
+        sentinel,
+      ),
+    );
+    final gateway = _FakeGateway(session);
+    await _pumpWorkspace(
+      tester,
+      size: const Size(390, 844),
+      session: session,
+      gateway: gateway,
+    );
+
+    expect(find.textContaining(sentinel), findsNothing);
+    expect(find.text('Skip'), findsOneWidget);
+    await tester.tap(find.text('Skip'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(gateway.skippedIds, [session.items.single.id]);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('skip action delegates exactly once', (tester) async {
     final session = _session();
     final gateway = _FakeGateway(session);
@@ -439,9 +466,12 @@ RebalanceExecutionSession _session({
       RebalanceExecutionSessionStatus.active,
   RebalanceExecutionItemState itemState =
       RebalanceExecutionItemState.needsDetails,
+  RebalanceExecutionIssue? issue,
 }) {
   final plan = testPlan(reverseCollections: true);
-  final request = itemState == RebalanceExecutionItemState.ready
+  final request =
+      itemState == RebalanceExecutionItemState.ready ||
+          itemState == RebalanceExecutionItemState.applyFailed
       ? testRequest('item-1')
       : null;
   final item = RebalanceExecutionItem(
@@ -452,6 +482,14 @@ RebalanceExecutionSession _session({
     suggestion: plan.trades.first,
     request: request,
     state: itemState,
+    issue:
+        issue ??
+        (itemState == RebalanceExecutionItemState.recoveryBlocked
+            ? RebalanceExecutionIssue(
+                RebalanceExecutionIssueCode.recoveryCorrupt,
+                'corrupt persisted payload',
+              )
+            : null),
     rawRequestJson: request == null
         ? null
         : RebalanceExecutionRequestCodec.encode(request),

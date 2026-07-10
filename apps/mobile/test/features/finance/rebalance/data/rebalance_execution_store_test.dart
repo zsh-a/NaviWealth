@@ -321,11 +321,30 @@ void main() {
         itemId: ready.id,
         leaseDuration: const Duration(minutes: 5),
       ))!;
+      await expectLater(
+        store.markApplyFailed(
+          ownerUserId: 'owner-a',
+          itemId: ready.id,
+          attemptToken: failedApply.token,
+          issue: RebalanceExecutionIssue(
+            RebalanceExecutionIssueCode.undoUnavailable,
+            'wrong phase',
+          ),
+        ),
+        throwsA(isA<RebalanceExecutionInvariantError>()),
+      );
+      expect(
+        (await store.getItem(ownerUserId: 'owner-a', id: ready.id))?.state,
+        RebalanceExecutionItemState.applying,
+      );
       await store.markApplyFailed(
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: failedApply.token,
-        error: 'broker unavailable',
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.applyUnavailable,
+          'broker unavailable',
+        ),
       );
       final failedItem = await store.getItem(
         ownerUserId: 'owner-a',
@@ -378,11 +397,30 @@ void main() {
         itemId: ready.id,
         leaseDuration: const Duration(minutes: 5),
       ))!;
+      await expectLater(
+        store.markUndoFailed(
+          ownerUserId: 'owner-a',
+          itemId: ready.id,
+          attemptToken: failedUndo.token,
+          issue: RebalanceExecutionIssue(
+            RebalanceExecutionIssueCode.applyUnavailable,
+            'wrong phase',
+          ),
+        ),
+        throwsA(isA<RebalanceExecutionInvariantError>()),
+      );
+      expect(
+        (await store.getItem(ownerUserId: 'owner-a', id: ready.id))?.state,
+        RebalanceExecutionItemState.undoing,
+      );
       await store.markUndoFailed(
         ownerUserId: 'owner-a',
         itemId: ready.id,
         attemptToken: failedUndo.token,
-        error: 'version conflict',
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.undoUnavailable,
+          'version conflict',
+        ),
       );
       final undoFailed = await store.getItem(
         ownerUserId: 'owner-a',
@@ -415,6 +453,91 @@ void main() {
       expect(undone.receipt, isNotNull);
       expect(undone.appliedSequence, 1);
       expect(undone.isEconomicallyApplied, isFalse);
+    },
+  );
+
+  test(
+    'issue policy gates claims and review while clearing atomically',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = RebalanceExecutionStore(db, clock: () => testNow);
+      var item = await _readyFirst(store);
+
+      final editableAttempt = (await store.claimApply(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        leaseDuration: const Duration(minutes: 5),
+      ))!;
+      await store.markApplyFailed(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        attemptToken: editableAttempt.token,
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.priceRequired,
+          List.filled(600, 'x').join(),
+        ),
+      );
+      item = (await store.getItem(ownerUserId: 'owner-a', id: item.id))!;
+      expect(item.issue?.code, RebalanceExecutionIssueCode.priceRequired);
+      expect(item.issue?.debugMessage, hasLength(512));
+      final persistedIssue = await _rawItem(db, item.id);
+      expect(persistedIssue.read<String>('error'), hasLength(512));
+      expect(
+        await store.claimApply(
+          ownerUserId: 'owner-a',
+          itemId: item.id,
+          leaseDuration: const Duration(minutes: 5),
+        ),
+        isNull,
+      );
+
+      item = await store.saveRequest(
+        ownerUserId: 'owner-a',
+        expected: item,
+        request: testRequest(item.id),
+      );
+      expect(item.state, RebalanceExecutionItemState.ready);
+      expect(item.issue, isNull);
+
+      final fatalAttempt = (await store.claimApply(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        leaseDuration: const Duration(minutes: 5),
+      ))!;
+      await store.markApplyFailed(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+        attemptToken: fatalAttempt.token,
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.internal,
+          'database mismatch',
+        ),
+      );
+      item = (await store.getItem(ownerUserId: 'owner-a', id: item.id))!;
+      await expectLater(
+        store.saveRequest(
+          ownerUserId: 'owner-a',
+          expected: item,
+          request: testRequest(item.id),
+        ),
+        throwsA(isA<RebalanceExecutionConflict>()),
+      );
+      expect(
+        await store.claimApply(
+          ownerUserId: 'owner-a',
+          itemId: item.id,
+          leaseDuration: const Duration(minutes: 5),
+        ),
+        isNull,
+      );
+
+      final skipped = await store.markSkipped(
+        ownerUserId: 'owner-a',
+        itemId: item.id,
+      );
+      expect(skipped.state, RebalanceExecutionItemState.skipped);
+      expect(skipped.issue, isNull);
     },
   );
 
@@ -762,7 +885,10 @@ void main() {
       ownerUserId: 'owner-a',
       itemId: higher.id,
       attemptToken: highAttempt.token,
-      error: 'injected',
+      issue: RebalanceExecutionIssue(
+        RebalanceExecutionIssueCode.undoUnavailable,
+        'injected',
+      ),
     );
     await expectLowerBlocked(); // higher undoFailed
 
@@ -777,8 +903,9 @@ void main() {
 
     await db.customUpdate(
       'UPDATE rebalance_execution_items '
-      "SET state = 'recoveryBlocked', attempt_token = NULL, "
-      'lease_until_iso = NULL, recovery_was_applied = 1 WHERE id = ?',
+      "SET state = 'recoveryBlocked', failure_code = 'recoveryCorrupt', "
+      "error = 'injected', attempt_token = NULL, lease_until_iso = NULL, "
+      'recovery_was_applied = 1 WHERE id = ?',
       variables: [Variable.withString(higher.id)],
     );
     await expectLowerBlocked();
@@ -791,7 +918,8 @@ void main() {
 
     await db.customUpdate(
       'UPDATE rebalance_execution_items '
-      "SET state = 'undone', recovery_was_applied = 0 WHERE id = ?",
+      "SET state = 'undone', failure_code = NULL, error = NULL, "
+      'recovery_was_applied = 0 WHERE id = ?',
       variables: [Variable.withString(higher.id)],
     );
     expect(
@@ -989,7 +1117,7 @@ void main() {
     expect(persisted.read<String>('suggestion_json'), replacement);
   });
 
-  test('stale recovery snapshot re-checks an error-only change', () async {
+  test('stale recovery snapshot re-checks an issue-only change', () async {
     final db = _RecoveryRaceDatabase();
     addTearDown(db.close);
     final store = RebalanceExecutionStore(db, clock: () => testNow);
@@ -1008,7 +1136,8 @@ void main() {
     }
     db.beforeRecoveryCas = (database) => database
         .customUpdate(
-          'UPDATE rebalance_execution_items SET error = ? WHERE id = ?',
+          "UPDATE rebalance_execution_items SET state = 'applyFailed', "
+          "failure_code = 'internal', error = ? WHERE id = ?",
           variables: [
             Variable.withString(latestError),
             Variable.withString(ready.id),
@@ -1019,11 +1148,36 @@ void main() {
     final item = await store.getItem(ownerUserId: 'owner-a', id: ready.id);
 
     expect(item?.state, RebalanceExecutionItemState.recoveryBlocked);
-    expect(item?.error, latestError);
+    expect(item?.issue?.debugMessage, latestError);
     expect(db.recoveryCasCount, 2);
     final persisted = await _rawItem(db, ready.id);
     expect(persisted.read<String>('state'), 'recoveryBlocked');
     expect(persisted.read<String>('error'), latestError);
+  });
+
+  test('recovery diagnostics are bounded before persistence', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = RebalanceExecutionStore(db, clock: () => testNow);
+    final ready = await _readyFirst(store);
+    final envelope = jsonDecode(ready.rawRequestJson!) as Map<String, Object?>;
+    final payload = envelope['payload']! as Map<String, Object?>;
+    for (var index = 0; index < 160; index++) {
+      payload['unexpected_field_${index.toString().padLeft(3, '0')}'] = index;
+    }
+    await db.customUpdate(
+      'UPDATE rebalance_execution_items SET request_json = ? WHERE id = ?',
+      variables: [
+        Variable.withString(jsonEncode(envelope)),
+        Variable.withString(ready.id),
+      ],
+    );
+
+    final blocked = await store.getItem(ownerUserId: 'owner-a', id: ready.id);
+
+    expect(blocked?.state, RebalanceExecutionItemState.recoveryBlocked);
+    final persisted = await _rawItem(db, ready.id);
+    expect(persisted.read<String>('error'), hasLength(512));
   });
 
   test('corrupt suggestion fails closed without any recovery write', () async {

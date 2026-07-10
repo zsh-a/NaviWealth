@@ -23,6 +23,103 @@ enum RebalanceExecutionItemState {
 
 enum RebalanceExecutionPhase { apply, undo }
 
+enum RebalanceExecutionIssueCode {
+  priceRequired,
+  invalidReview,
+  staleReview,
+  holdingsChanged,
+  ownerChanged,
+  applyUnavailable,
+  undoUnavailable,
+  internal,
+  recoveryCorrupt,
+  legacyApplyFailure,
+  legacyUndoFailure,
+  unknown,
+}
+
+enum RebalanceRecoveryAction {
+  enterPrice,
+  editReview,
+  retryApply,
+  retryUndo,
+  none,
+}
+
+final class RebalanceExecutionIssue {
+  factory RebalanceExecutionIssue(
+    RebalanceExecutionIssueCode code,
+    String debugMessage,
+  ) => RebalanceExecutionIssue._(code, _truncateDebugMessage(debugMessage));
+
+  const RebalanceExecutionIssue._(this.code, this.debugMessage);
+
+  factory RebalanceExecutionIssue.fromWire({
+    required String? code,
+    required String? debugMessage,
+  }) {
+    final parsed = RebalanceExecutionIssueCode.values.where(
+      (value) => value.name == code,
+    );
+    return RebalanceExecutionIssue(
+      parsed.isEmpty ? RebalanceExecutionIssueCode.unknown : parsed.single,
+      debugMessage ?? '',
+    );
+  }
+
+  final RebalanceExecutionIssueCode code;
+  final String debugMessage;
+
+  RebalanceRecoveryAction get recoveryAction => switch (code) {
+    RebalanceExecutionIssueCode.priceRequired =>
+      RebalanceRecoveryAction.enterPrice,
+    RebalanceExecutionIssueCode.invalidReview ||
+    RebalanceExecutionIssueCode.staleReview ||
+    RebalanceExecutionIssueCode.holdingsChanged =>
+      RebalanceRecoveryAction.editReview,
+    RebalanceExecutionIssueCode.applyUnavailable ||
+    RebalanceExecutionIssueCode.legacyApplyFailure =>
+      RebalanceRecoveryAction.retryApply,
+    RebalanceExecutionIssueCode.undoUnavailable ||
+    RebalanceExecutionIssueCode.legacyUndoFailure =>
+      RebalanceRecoveryAction.retryUndo,
+    _ => RebalanceRecoveryAction.none,
+  };
+
+  bool isValidForFailureState(RebalanceExecutionItemState state) =>
+      switch (state) {
+        RebalanceExecutionItemState.applyFailed => switch (code) {
+          RebalanceExecutionIssueCode.priceRequired ||
+          RebalanceExecutionIssueCode.invalidReview ||
+          RebalanceExecutionIssueCode.staleReview ||
+          RebalanceExecutionIssueCode.holdingsChanged ||
+          RebalanceExecutionIssueCode.ownerChanged ||
+          RebalanceExecutionIssueCode.applyUnavailable ||
+          RebalanceExecutionIssueCode.internal ||
+          RebalanceExecutionIssueCode.legacyApplyFailure ||
+          RebalanceExecutionIssueCode.unknown => true,
+          _ => false,
+        },
+        RebalanceExecutionItemState.undoFailed => switch (code) {
+          RebalanceExecutionIssueCode.undoUnavailable ||
+          RebalanceExecutionIssueCode.legacyUndoFailure ||
+          RebalanceExecutionIssueCode.unknown => true,
+          _ => false,
+        },
+        RebalanceExecutionItemState.recoveryBlocked =>
+          code == RebalanceExecutionIssueCode.recoveryCorrupt ||
+              code == RebalanceExecutionIssueCode.unknown,
+        _ => false,
+      };
+}
+
+const int _maxRebalanceIssueDebugLength = 512;
+
+String _truncateDebugMessage(String value) =>
+    value.length <= _maxRebalanceIssueDebugLength
+    ? value
+    : value.substring(0, _maxRebalanceIssueDebugLength);
+
 /// Callback-free, strictly serializable input for Commit 2's trade mapper.
 final class RebalanceExecutionRequest {
   const RebalanceExecutionRequest({
@@ -98,7 +195,7 @@ final class RebalanceExecutionItem {
     required this.updatedAt,
     this.request,
     this.receipt,
-    this.error,
+    this.issue,
     this.attemptToken,
     this.leaseUntil,
     this.appliedSequence,
@@ -117,7 +214,7 @@ final class RebalanceExecutionItem {
   final RebalanceExecutionRequest? request;
   final TradeMutationReceipt? receipt;
   final RebalanceExecutionItemState state;
-  final String? error;
+  final RebalanceExecutionIssue? issue;
   final String? attemptToken;
   final DateTime? leaseUntil;
   final int? appliedSequence;
@@ -170,6 +267,17 @@ final class RebalanceExecutionItem {
       );
     }
     if (leaseUntil != null) _requireUtc(leaseUntil!, 'leaseUntil');
+    final failed = switch (state) {
+      RebalanceExecutionItemState.applyFailed ||
+      RebalanceExecutionItemState.undoFailed ||
+      RebalanceExecutionItemState.recoveryBlocked => true,
+      _ => false,
+    };
+    _require(
+      failed
+          ? issue != null && issue!.isValidForFailureState(state)
+          : issue == null,
+    );
 
     switch (state) {
       case RebalanceExecutionItemState.needsDetails:

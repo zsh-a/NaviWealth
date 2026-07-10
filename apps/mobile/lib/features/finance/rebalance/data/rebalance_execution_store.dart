@@ -169,11 +169,15 @@ final class RebalanceExecutionStore {
     }
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
-      "SET request_json = ?1, state = 'ready', error = NULL, "
+      "SET request_json = ?1, state = 'ready', failure_code = NULL, "
+      '    error = NULL, '
       '    attempt_token = NULL, lease_until_iso = NULL, updated_at_iso = ?2 '
       'WHERE id = ?3 AND owner_user_id = ?4 '
       '  AND state = ?5 AND updated_at_iso = ?6 AND request_json IS ?7 '
       "  AND state IN ('needsDetails', 'ready', 'applyFailed') "
+      "  AND (state != 'applyFailed' OR failure_code IN ("
+      "    'priceRequired', 'invalidReview', 'staleReview', "
+      "    'holdingsChanged')) "
       '  AND EXISTS (SELECT 1 FROM rebalance_execution_sessions s '
       '    WHERE s.id = rebalance_execution_items.session_id '
       '      AND s.owner_user_id = ?4 AND s.status = \'active\')',
@@ -202,7 +206,8 @@ final class RebalanceExecutionStore {
     _requireOwner(ownerUserId);
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
-      "SET state = 'skipped', error = NULL, attempt_token = NULL, "
+      "SET state = 'skipped', failure_code = NULL, error = NULL, "
+      '    attempt_token = NULL, '
       '    lease_until_iso = NULL, updated_at_iso = ?1 '
       'WHERE id = ?2 AND owner_user_id = ?3 '
       "  AND state IN ('needsDetails', 'ready', 'applyFailed') "
@@ -232,7 +237,7 @@ final class RebalanceExecutionStore {
       'UPDATE rebalance_execution_items '
       "SET state = CASE WHEN request_json IS NULL THEN 'needsDetails' "
       "                 ELSE 'ready' END, "
-      '    error = NULL, attempt_token = NULL, lease_until_iso = NULL, '
+      '    failure_code = NULL, error = NULL, attempt_token = NULL, '
       '    updated_at_iso = ?1 '
       "WHERE id = ?2 AND owner_user_id = ?3 AND state = 'skipped' "
       '  AND EXISTS (SELECT 1 FROM rebalance_execution_sessions s '
@@ -310,21 +315,21 @@ final class RebalanceExecutionStore {
     attemptToken: attemptToken,
     phase: RebalanceExecutionPhase.apply,
     nextState: RebalanceExecutionItemState.ready,
-    error: null,
+    issue: null,
   );
 
   Future<void> markApplyFailed({
     required String ownerUserId,
     required String itemId,
     required String attemptToken,
-    required String error,
+    required RebalanceExecutionIssue issue,
   }) => _finishAttempt(
     ownerUserId: ownerUserId,
     itemId: itemId,
     attemptToken: attemptToken,
     phase: RebalanceExecutionPhase.apply,
     nextState: RebalanceExecutionItemState.applyFailed,
-    error: error,
+    issue: issue,
   );
 
   Future<void> releaseUndo({
@@ -337,21 +342,21 @@ final class RebalanceExecutionStore {
     attemptToken: attemptToken,
     phase: RebalanceExecutionPhase.undo,
     nextState: RebalanceExecutionItemState.applied,
-    error: null,
+    issue: null,
   );
 
   Future<void> markUndoFailed({
     required String ownerUserId,
     required String itemId,
     required String attemptToken,
-    required String error,
+    required RebalanceExecutionIssue issue,
   }) => _finishAttempt(
     ownerUserId: ownerUserId,
     itemId: itemId,
     attemptToken: attemptToken,
     phase: RebalanceExecutionPhase.undo,
     nextState: RebalanceExecutionItemState.undoFailed,
-    error: error,
+    issue: issue,
   );
 
   /// Runs the trade mutation and execution-state finalization atomically.
@@ -446,8 +451,9 @@ final class RebalanceExecutionStore {
       '    applied_sequence = (SELECT COALESCE(MAX(peer.applied_sequence), 0) + 1 '
       '      FROM rebalance_execution_items peer '
       '      WHERE peer.session_id = rebalance_execution_items.session_id), '
-      '    error = NULL, attempt_token = NULL, lease_until_iso = NULL, '
-      '    recovery_was_applied = 0, updated_at_iso = ?2 '
+      '    failure_code = NULL, error = NULL, attempt_token = NULL, '
+      '    lease_until_iso = NULL, recovery_was_applied = 0, '
+      '    updated_at_iso = ?2 '
       'WHERE id = ?3 AND owner_user_id = ?4 AND state = \'applying\' '
       '  AND attempt_token = ?5 AND lease_until_iso > ?2 '
       '  AND request_json = ?6 '
@@ -476,7 +482,8 @@ final class RebalanceExecutionStore {
     final now = _now();
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
-      "SET state = 'undone', error = NULL, attempt_token = NULL, "
+      "SET state = 'undone', failure_code = NULL, error = NULL, "
+      '    attempt_token = NULL, '
       '    lease_until_iso = NULL, updated_at_iso = ?1 '
       'WHERE id = ?2 AND owner_user_id = ?3 AND state = \'undoing\' '
       '  AND attempt_token = ?4 AND lease_until_iso > ?1 '
@@ -607,10 +614,14 @@ final class RebalanceExecutionStore {
     final applying = phase == RebalanceExecutionPhase.apply;
     final state = applying ? 'applying' : 'undoing';
     final eligible = applying
-        ? "(state IN ('ready', 'applyFailed') OR "
-              "(state = 'applying' AND lease_until_iso <= ?2))"
-        : "(state IN ('applied', 'undoFailed') OR "
-              "(state = 'undoing' AND lease_until_iso <= ?2))";
+        ? "(state = 'ready' OR "
+              "(state = 'applying' AND lease_until_iso <= ?2) OR "
+              "(state = 'applyFailed' AND failure_code IN "
+              "('applyUnavailable', 'legacyApplyFailure')))"
+        : "(state = 'applied' OR "
+              "(state = 'undoing' AND lease_until_iso <= ?2) OR "
+              "(state = 'undoFailed' AND failure_code IN "
+              "('undoUnavailable', 'legacyUndoFailure')))";
     final requiredPayload = applying
         ? 'request_json IS NOT NULL AND receipt_json IS NULL '
         : 'request_json IS NOT NULL AND receipt_json IS NOT NULL '
@@ -629,7 +640,7 @@ final class RebalanceExecutionStore {
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
       'SET state = \'$state\', attempt_token = ?1, lease_until_iso = ?3, '
-      '    error = NULL, updated_at_iso = ?2 '
+      '    failure_code = NULL, error = NULL, updated_at_iso = ?2 '
       'WHERE id = ?4 AND owner_user_id = ?5 AND $eligible '
       '  AND $requiredPayload '
       '  $undoOrderBarrier '
@@ -699,25 +710,36 @@ final class RebalanceExecutionStore {
     required String attemptToken,
     required RebalanceExecutionPhase phase,
     required RebalanceExecutionItemState nextState,
-    required String? error,
+    required RebalanceExecutionIssue? issue,
   }) async {
     _requireOwner(ownerUserId);
+    final failed =
+        nextState == RebalanceExecutionItemState.applyFailed ||
+        nextState == RebalanceExecutionItemState.undoFailed;
+    if (failed
+        ? issue == null || !issue.isValidForFailureState(nextState)
+        : issue != null) {
+      throw const RebalanceExecutionInvariantError(
+        'Execution issue does not match the attempt phase.',
+      );
+    }
     final now = _now();
     final state = phase == RebalanceExecutionPhase.apply
         ? 'applying'
         : 'undoing';
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
-      'SET state = ?1, error = ?2, attempt_token = NULL, '
-      '    lease_until_iso = NULL, updated_at_iso = ?3 '
-      'WHERE id = ?4 AND owner_user_id = ?5 AND state = ?6 '
-      '  AND attempt_token = ?7 AND lease_until_iso > ?3 '
+      'SET state = ?1, failure_code = ?2, error = ?3, attempt_token = NULL, '
+      '    lease_until_iso = NULL, updated_at_iso = ?4 '
+      'WHERE id = ?5 AND owner_user_id = ?6 AND state = ?7 '
+      '  AND attempt_token = ?8 AND lease_until_iso > ?4 '
       '  AND EXISTS (SELECT 1 FROM rebalance_execution_sessions s '
       '    WHERE s.id = rebalance_execution_items.session_id '
-      '      AND s.owner_user_id = ?5 AND s.status = \'active\')',
+      '      AND s.owner_user_id = ?6 AND s.status = \'active\')',
       variables: [
         Variable.withString(nextState.name),
-        _nullableStringVariable(error),
+        _nullableStringVariable(issue?.code.name),
+        _nullableStringVariable(issue?.debugMessage),
         Variable.withString(_iso(now)),
         Variable.withString(itemId),
         Variable.withString(ownerUserId),
@@ -834,7 +856,7 @@ final class RebalanceExecutionStore {
         request: request,
         receipt: receipt,
         state: state,
-        error: row.read<String?>('error'),
+        issue: _issueFromRow(row),
         attemptToken: row.read<String?>('attempt_token'),
         leaseUntil: _storedNullableDate(row, 'lease_until_iso'),
         appliedSequence: row.read<int?>('applied_sequence'),
@@ -929,7 +951,10 @@ final class RebalanceExecutionStore {
     position: row.read<int>('position'),
     suggestion: suggestion,
     state: RebalanceExecutionItemState.recoveryBlocked,
-    error: error ?? row.read<String?>('error'),
+    issue: RebalanceExecutionIssue(
+      RebalanceExecutionIssueCode.recoveryCorrupt,
+      error ?? row.read<String?>('error') ?? '',
+    ),
     appliedSequence: row.read<int?>('applied_sequence'),
     rawRequestJson: rawRequest,
     rawReceiptJson: rawReceipt,
@@ -944,20 +969,25 @@ final class RebalanceExecutionStore {
     required bool wasApplied,
   }) async {
     final now = _now();
+    final debugMessage = RebalanceExecutionIssue(
+      RebalanceExecutionIssueCode.recoveryCorrupt,
+      error.toString(),
+    ).debugMessage;
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
-      "SET state = 'recoveryBlocked', error = ?1, attempt_token = NULL, "
-      '    lease_until_iso = NULL, recovery_was_applied = ?2, '
-      '    updated_at_iso = ?3 '
+      "SET state = 'recoveryBlocked', failure_code = 'recoveryCorrupt', "
+      '    error = ?1, attempt_token = NULL, lease_until_iso = NULL, '
+      '    recovery_was_applied = ?2, updated_at_iso = ?3 '
       'WHERE id = ?4 AND owner_user_id = ?5 AND state = ?6 '
       '  AND attempt_token IS ?7 AND lease_until_iso IS ?8 '
       '  AND request_json IS ?9 AND receipt_json IS ?10 '
       '  AND applied_sequence IS ?11 AND updated_at_iso = ?12 '
       '  AND session_id = ?13 AND position = ?14 '
-      '  AND suggestion_json = ?15 AND error IS ?16 '
-      '  AND recovery_was_applied = ?17 AND created_at_iso = ?18',
+      '  AND suggestion_json = ?15 AND failure_code IS ?16 '
+      '  AND error IS ?17 AND recovery_was_applied = ?18 '
+      '  AND created_at_iso = ?19',
       variables: [
-        Variable.withString(error.toString()),
+        Variable.withString(debugMessage),
         Variable.withInt(wasApplied ? 1 : 0),
         Variable.withString(_iso(now)),
         Variable.withString(row.read<String>('id')),
@@ -972,6 +1002,7 @@ final class RebalanceExecutionStore {
         Variable.withString(row.read<String>('session_id')),
         Variable.withInt(row.read<int>('position')),
         Variable.withString(row.read<String>('suggestion_json')),
+        _nullableStringVariable(row.read<String?>('failure_code')),
         _nullableStringVariable(row.read<String?>('error')),
         Variable.withInt(row.read<int>('recovery_was_applied')),
         Variable.withString(row.read<String>('created_at_iso')),
@@ -1028,11 +1059,11 @@ final class RebalanceExecutionStore {
       await _db.customInsert(
         'INSERT INTO rebalance_execution_items '
         '(id, session_id, owner_user_id, position, suggestion_json, '
-        ' request_json, receipt_json, state, error, attempt_token, '
+        ' request_json, receipt_json, state, failure_code, error, attempt_token, '
         ' lease_until_iso, applied_sequence, recovery_was_applied, '
         ' created_at_iso, updated_at_iso) '
         "VALUES (?1, ?2, ?3, ?4, ?5, NULL, NULL, 'needsDetails', "
-        'NULL, NULL, NULL, NULL, 0, ?6, ?6)',
+        'NULL, NULL, NULL, NULL, NULL, 0, ?6, ?6)',
         variables: [
           Variable.withString(itemId),
           Variable.withString(sessionId),
@@ -1092,6 +1123,15 @@ final class RebalanceExecutionStore {
       if (value.name == raw) return value;
     }
     throw RebalanceExecutionCodecError('Unknown item state $raw.');
+  }
+
+  RebalanceExecutionIssue? _issueFromRow(QueryRow row) {
+    final code = row.read<String?>('failure_code');
+    if (code == null) return null;
+    return RebalanceExecutionIssue.fromWire(
+      code: code,
+      debugMessage: row.read<String?>('error'),
+    );
   }
 
   DateTime _storedDate(QueryRow row, String field) {

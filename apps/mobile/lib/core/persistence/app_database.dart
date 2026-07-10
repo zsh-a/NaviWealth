@@ -134,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 36;
+  int get schemaVersion => 37;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -594,6 +594,27 @@ class AppDatabase extends _$AppDatabase {
       // device; ledger truth continues to sync through its normal tables.
       if (from < 36) {
         await _createRebalanceExecutionTables(this);
+      }
+      // v36 -> v37: persist classified execution failures separately from
+      // bounded developer diagnostics so retry/edit policy survives restart.
+      if (from < 37) {
+        await _addColumnIfMissing(
+          this,
+          table: 'rebalance_execution_items',
+          column: 'failure_code',
+          definition: 'TEXT',
+        );
+        await customStatement(
+          'UPDATE rebalance_execution_items '
+          'SET failure_code = CASE state '
+          "  WHEN 'applyFailed' THEN 'legacyApplyFailure' "
+          "  WHEN 'undoFailed' THEN 'legacyUndoFailure' "
+          "  WHEN 'recoveryBlocked' THEN 'recoveryCorrupt' "
+          '  ELSE NULL END, '
+          "error = CASE WHEN state IN ('applyFailed', 'undoFailed', "
+          "  'recoveryBlocked') THEN substr(error, 1, 512) ELSE NULL END",
+        );
+        await _createRebalanceExecutionIssueTriggers(this);
       }
     },
     beforeOpen: (details) async {

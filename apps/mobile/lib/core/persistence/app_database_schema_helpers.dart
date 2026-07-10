@@ -483,6 +483,7 @@ Future<void> _createRebalanceExecutionTables(AppDatabase db) async {
     "  state TEXT NOT NULL CHECK (state IN ('needsDetails', 'ready', "
     "    'applying', 'applied', 'applyFailed', 'undoing', 'undone', "
     "    'undoFailed', 'skipped', 'recoveryBlocked')),"
+    '  failure_code TEXT,'
     '  error TEXT,'
     '  attempt_token TEXT,'
     '  lease_until_iso TEXT,'
@@ -516,7 +517,13 @@ Future<void> _createRebalanceExecutionTables(AppDatabase db) async {
     '      AND lease_until_iso IS NULL)'
     '  ),'
     '  CHECK (recovery_was_applied = 0 OR '
-    "    (state = 'recoveryBlocked' AND applied_sequence IS NOT NULL))"
+    "    (state = 'recoveryBlocked' AND applied_sequence IS NOT NULL)),"
+    '  CHECK ('
+    "    (state IN ('applyFailed', 'undoFailed', 'recoveryBlocked') AND "
+    '      failure_code IS NOT NULL) OR '
+    "    (state NOT IN ('applyFailed', 'undoFailed', 'recoveryBlocked') AND "
+    '      failure_code IS NULL AND error IS NULL)'
+    '  )'
     ')',
   );
   await db.customStatement(
@@ -532,5 +539,29 @@ Future<void> _createRebalanceExecutionTables(AppDatabase db) async {
   await db.customStatement(
     'CREATE INDEX IF NOT EXISTS idx_rebalance_execution_items_state '
     'ON rebalance_execution_items(owner_user_id, session_id, state)',
+  );
+  await _createRebalanceExecutionIssueTriggers(db);
+}
+
+Future<void> _createRebalanceExecutionIssueTriggers(AppDatabase db) async {
+  const invalidIssueState =
+      "((NEW.state IN ('applyFailed', 'undoFailed', 'recoveryBlocked') "
+      'AND NEW.failure_code IS NULL) OR '
+      "(NEW.state NOT IN ('applyFailed', 'undoFailed', 'recoveryBlocked') "
+      'AND (NEW.failure_code IS NOT NULL OR NEW.error IS NOT NULL)))';
+  await db.customStatement(
+    'CREATE TRIGGER IF NOT EXISTS '
+    'trg_rebalance_execution_issue_insert '
+    'BEFORE INSERT ON rebalance_execution_items '
+    'WHEN $invalidIssueState '
+    "BEGIN SELECT RAISE(ABORT, 'invalid rebalance execution issue'); END",
+  );
+  await db.customStatement(
+    'CREATE TRIGGER IF NOT EXISTS '
+    'trg_rebalance_execution_issue_update '
+    'BEFORE UPDATE OF state, failure_code, error '
+    'ON rebalance_execution_items '
+    'WHEN $invalidIssueState '
+    "BEGIN SELECT RAISE(ABORT, 'invalid rebalance execution issue'); END",
   );
 }
