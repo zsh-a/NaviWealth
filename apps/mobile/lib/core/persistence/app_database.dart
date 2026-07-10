@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 35;
+  int get schemaVersion => 36;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -103,6 +103,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAgentRuns(this);
       await _createAgentArtifacts(this);
       await _createAgentPreferences(this);
+      await _createRebalanceExecutionTables(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -533,6 +534,12 @@ class AppDatabase extends _$AppDatabase {
           column: 'recovery_apply_state_json',
           definition: 'TEXT',
         );
+      }
+      // v35 -> v36: local-only durable rebalance execution sessions. The
+      // lease/state rows coordinate resumable apply and Undo work on this
+      // device; ledger truth continues to sync through its normal tables.
+      if (from < 36) {
+        await _createRebalanceExecutionTables(this);
       }
     },
     beforeOpen: (details) async {

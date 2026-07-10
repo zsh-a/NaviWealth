@@ -440,3 +440,97 @@ Future<void> _createIngestTables(AppDatabase db) async {
     ')',
   );
 }
+
+Future<void> _createRebalanceExecutionTables(AppDatabase db) async {
+  // Local-only workflow state. These rows are intentionally absent from the
+  // Drift table list and sync registry; committed trades still flow through
+  // assets/journal_entries/postings/prices and their normal outbox writes.
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS rebalance_execution_sessions ('
+    '  id TEXT PRIMARY KEY,'
+    '  owner_user_id TEXT NOT NULL,'
+    "  status TEXT NOT NULL CHECK (status IN ('active', 'archived')),"
+    '  plan_json TEXT NOT NULL,'
+    '  plan_fingerprint TEXT NOT NULL,'
+    '  created_at_iso TEXT NOT NULL,'
+    '  updated_at_iso TEXT NOT NULL,'
+    '  archived_at_iso TEXT,'
+    '  UNIQUE (id, owner_user_id),'
+    "  CHECK ((status = 'active' AND archived_at_iso IS NULL) OR "
+    "         (status = 'archived' AND archived_at_iso IS NOT NULL))"
+    ')',
+  );
+  await db.customStatement(
+    'CREATE UNIQUE INDEX IF NOT EXISTS '
+    'idx_rebalance_execution_one_active_owner '
+    'ON rebalance_execution_sessions(owner_user_id) '
+    "WHERE status = 'active'",
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_rebalance_execution_sessions_owner '
+    'ON rebalance_execution_sessions(owner_user_id, updated_at_iso DESC)',
+  );
+
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS rebalance_execution_items ('
+    '  id TEXT PRIMARY KEY,'
+    '  session_id TEXT NOT NULL,'
+    '  owner_user_id TEXT NOT NULL,'
+    '  position INTEGER NOT NULL CHECK (position >= 0),'
+    '  suggestion_json TEXT NOT NULL,'
+    '  request_json TEXT,'
+    '  receipt_json TEXT,'
+    "  state TEXT NOT NULL CHECK (state IN ('needsDetails', 'ready', "
+    "    'applying', 'applied', 'applyFailed', 'undoing', 'undone', "
+    "    'undoFailed', 'skipped', 'recoveryBlocked')),"
+    '  error TEXT,'
+    '  attempt_token TEXT,'
+    '  lease_until_iso TEXT,'
+    '  applied_sequence INTEGER CHECK (applied_sequence IS NULL OR '
+    '    applied_sequence > 0),'
+    '  recovery_was_applied INTEGER NOT NULL DEFAULT 0 '
+    '    CHECK (recovery_was_applied IN (0, 1)),'
+    '  created_at_iso TEXT NOT NULL,'
+    '  updated_at_iso TEXT NOT NULL,'
+    '  UNIQUE (session_id, position),'
+    '  FOREIGN KEY (session_id, owner_user_id) '
+    '    REFERENCES rebalance_execution_sessions(id, owner_user_id) '
+    '    ON DELETE CASCADE,'
+    '  CHECK ('
+    "    (state = 'needsDetails' AND request_json IS NULL AND "
+    '      receipt_json IS NULL AND applied_sequence IS NULL) OR '
+    "    (state IN ('ready', 'applying', 'applyFailed') AND "
+    '      request_json IS NOT NULL AND receipt_json IS NULL AND '
+    '      applied_sequence IS NULL) OR '
+    "    (state IN ('applied', 'undoing', 'undone', 'undoFailed') AND "
+    '      request_json IS NOT NULL AND receipt_json IS NOT NULL AND '
+    '      applied_sequence IS NOT NULL) OR '
+    "    (state = 'skipped' AND receipt_json IS NULL AND "
+    '      applied_sequence IS NULL) OR '
+    "    state = 'recoveryBlocked'"
+    '  ),'
+    '  CHECK ('
+    "    (state IN ('applying', 'undoing') AND attempt_token IS NOT NULL "
+    '      AND lease_until_iso IS NOT NULL) OR '
+    "    (state NOT IN ('applying', 'undoing') AND attempt_token IS NULL "
+    '      AND lease_until_iso IS NULL)'
+    '  ),'
+    '  CHECK (recovery_was_applied = 0 OR '
+    "    (state = 'recoveryBlocked' AND applied_sequence IS NOT NULL))"
+    ')',
+  );
+  await db.customStatement(
+    'CREATE UNIQUE INDEX IF NOT EXISTS '
+    'idx_rebalance_execution_applied_sequence '
+    'ON rebalance_execution_items(session_id, applied_sequence) '
+    'WHERE applied_sequence IS NOT NULL',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_rebalance_execution_items_session '
+    'ON rebalance_execution_items(owner_user_id, session_id, position)',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_rebalance_execution_items_state '
+    'ON rebalance_execution_items(owner_user_id, session_id, state)',
+  );
+}
