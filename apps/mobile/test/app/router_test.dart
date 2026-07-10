@@ -65,6 +65,10 @@ import 'package:naviwealth/features/finance/investment/domain/holding_service.da
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
+import 'package:naviwealth/features/finance/rebalance/data/rebalance_execution_codecs.dart';
+import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_execution.dart';
+import 'package:naviwealth/features/finance/rebalance/ui/rebalance_execution_workspace_page.dart';
 import 'package:naviwealth/features/finance/rebalance/ui/rebalance_page.dart';
 import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
 import 'package:naviwealth/features/finance/ui/settings/fire_stress_settings_page.dart';
@@ -78,6 +82,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
+import '../features/finance/rebalance/data/rebalance_execution_test_fixtures.dart';
 
 class _OfflineBenchmarkSource implements BenchmarkHistorySource {
   @override
@@ -119,6 +124,7 @@ Future<ProviderContainer> _pumpAt(
   WidgetTester tester, {
   String initialLocation = '/',
   Size viewportSize = _mobileSize,
+  RebalanceExecutionSession? executionSession,
 }) async {
   tester.view.physicalSize = viewportSize;
   tester.view.devicePixelRatio = 1.0;
@@ -214,6 +220,10 @@ Future<ProviderContainer> _pumpAt(
         ),
       ),
       devicesProvider.overrideWith(_StaticDevicesNotifier.new),
+      if (executionSession != null)
+        rebalanceExecutionSessionProvider(
+          executionSession.id,
+        ).overrideWith((_) async => executionSession),
     ],
   );
   addTearDown(container.dispose);
@@ -239,6 +249,32 @@ String _currentPath(ProviderContainer container) {
       .value
       .uri
       .path;
+}
+
+RebalanceExecutionSession _executionSession() {
+  final plan = testPlan(reverseCollections: true);
+  return RebalanceExecutionSession(
+    id: 'router-session',
+    ownerUserId: 'owner-a',
+    status: RebalanceExecutionSessionStatus.active,
+    plan: plan,
+    rawPlanJson: RebalancePlanCodec.encode(plan),
+    planFingerprint: RebalancePlanFingerprint.compute(plan),
+    items: [
+      RebalanceExecutionItem(
+        id: 'router-item',
+        sessionId: 'router-session',
+        ownerUserId: 'owner-a',
+        position: 0,
+        suggestion: plan.trades.first,
+        state: RebalanceExecutionItemState.needsDetails,
+        createdAt: testNow,
+        updatedAt: testNow,
+      ),
+    ],
+    createdAt: testNow,
+    updatedAt: testNow,
+  );
 }
 
 /// Drain pending animation timers (SuperFab pulse, AnimatedContainer, etc.)
@@ -350,6 +386,23 @@ void main() {
     testWidgets('/plan/rebalance renders Rebalance', (tester) async {
       await _pumpAt(tester, initialLocation: AppRoutes.planRebalance);
       expect(find.byType(RebalancePage), findsOneWidget);
+      await _drainTimers(tester);
+    });
+
+    testWidgets('/plan/rebalance/execution/:sessionId restores workspace', (
+      tester,
+    ) async {
+      final session = _executionSession();
+      final location = AppRoutes.planRebalanceExecutionSession(session.id);
+      final container = await _pumpAt(
+        tester,
+        initialLocation: location,
+        executionSession: session,
+      );
+
+      expect(find.byType(RebalanceExecutionWorkspacePage), findsOneWidget);
+      expect(find.text('0 of 1 resolved'), findsOneWidget);
+      expect(_currentPath(container), location);
       await _drainTimers(tester);
     });
 

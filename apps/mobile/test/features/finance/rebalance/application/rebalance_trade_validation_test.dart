@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
-import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -111,9 +110,9 @@ void main() {
       for (final scenario in _FreshScenario.values) {
         final db = makeTestDatabase();
         try {
-          await _seedFreshScenario(db, scenario);
-          final validation = RebalanceTradeValidation(db);
           final request = testRequest('item-1');
+          await _seedFreshScenario(db, scenario, request);
+          final validation = RebalanceTradeValidation(db);
           final item = _item(
             request,
             testPlan(reverseCollections: true).trades.first,
@@ -142,10 +141,6 @@ void main() {
   test('broker account may execute a trade in another currency', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    await _seedFreshScenario(db, _FreshScenario.cashWrongCurrency);
-    await (db.update(db.accounts)
-          ..where((row) => row.id.equals('broker-account')))
-        .write(const AccountsCompanion(currency: Value('CNY')));
     final base = testRequest('item-1');
     final request = RebalanceExecutionRequest(
       transactionId: base.transactionId,
@@ -168,6 +163,7 @@ void main() {
       tax: base.tax,
       note: base.note,
     );
+    await _seedReviewedRequest(db, request);
     final item = _item(
       request,
       testPlan(reverseCollections: true).trades.first,
@@ -218,31 +214,35 @@ RebalanceExecutionRequest _request(
 );
 
 enum _FreshScenario {
-  assetMissing(RebalanceTradeValidationCode.assetInvalid),
-  assetDeleted(RebalanceTradeValidationCode.assetInvalid),
-  assetForeign(RebalanceTradeValidationCode.assetInvalid),
-  assetMutated(RebalanceTradeValidationCode.assetInvalid),
-  primaryMissing(RebalanceTradeValidationCode.accountInvalid),
-  primaryDeleted(RebalanceTradeValidationCode.accountInvalid),
-  primaryArchived(RebalanceTradeValidationCode.accountInvalid),
-  primaryForeign(RebalanceTradeValidationCode.accountInvalid),
-  primaryNonAsset(RebalanceTradeValidationCode.accountInvalid),
-  cashMissing(RebalanceTradeValidationCode.cashAccountInvalid),
-  cashDeleted(RebalanceTradeValidationCode.cashAccountInvalid),
-  cashArchived(RebalanceTradeValidationCode.cashAccountInvalid),
-  cashForeign(RebalanceTradeValidationCode.cashAccountInvalid),
-  cashNonAsset(RebalanceTradeValidationCode.cashAccountInvalid),
-  cashWrongCurrency(RebalanceTradeValidationCode.cashAccountInvalid);
+  assetMissing(RebalanceTradeValidationCode.staleSnapshot),
+  assetDeleted(RebalanceTradeValidationCode.staleSnapshot),
+  assetForeign(RebalanceTradeValidationCode.staleSnapshot),
+  assetMutated(RebalanceTradeValidationCode.staleSnapshot),
+  primaryMissing(RebalanceTradeValidationCode.staleSnapshot),
+  primaryDeleted(RebalanceTradeValidationCode.staleSnapshot),
+  primaryArchived(RebalanceTradeValidationCode.staleSnapshot),
+  primaryForeign(RebalanceTradeValidationCode.staleSnapshot),
+  primaryNonAsset(RebalanceTradeValidationCode.staleSnapshot),
+  cashMissing(RebalanceTradeValidationCode.staleSnapshot),
+  cashDeleted(RebalanceTradeValidationCode.staleSnapshot),
+  cashArchived(RebalanceTradeValidationCode.staleSnapshot),
+  cashForeign(RebalanceTradeValidationCode.staleSnapshot),
+  cashNonAsset(RebalanceTradeValidationCode.staleSnapshot),
+  cashWrongCurrency(RebalanceTradeValidationCode.staleSnapshot);
 
   const _FreshScenario(this.expected);
   final RebalanceTradeValidationCode expected;
 }
 
-Future<void> _seedFreshScenario(AppDatabase db, _FreshScenario scenario) async {
+Future<void> _seedFreshScenario(
+  AppDatabase db,
+  _FreshScenario scenario,
+  RebalanceExecutionRequest request,
+) async {
   if (scenario != _FreshScenario.primaryMissing) {
     await _insertAccount(
       db,
-      id: 'broker-account',
+      account: request.account,
       type: scenario == _FreshScenario.primaryNonAsset
           ? AccountCategory.liability
           : AccountCategory.broker,
@@ -250,7 +250,7 @@ Future<void> _seedFreshScenario(AppDatabase db, _FreshScenario scenario) async {
           ? AccountSide.liability
           : AccountSide.asset,
       owner: scenario == _FreshScenario.primaryForeign ? 'owner-b' : 'owner-a',
-      currency: 'USD',
+      currency: request.account.currency,
       archived: scenario == _FreshScenario.primaryArchived,
       deleted: scenario == _FreshScenario.primaryDeleted,
     );
@@ -258,7 +258,7 @@ Future<void> _seedFreshScenario(AppDatabase db, _FreshScenario scenario) async {
   if (scenario != _FreshScenario.cashMissing) {
     await _insertAccount(
       db,
-      id: 'cash-account',
+      account: request.cashAccount!,
       type: scenario == _FreshScenario.cashNonAsset
           ? AccountCategory.liability
           : AccountCategory.cash,
@@ -266,7 +266,9 @@ Future<void> _seedFreshScenario(AppDatabase db, _FreshScenario scenario) async {
           ? AccountSide.liability
           : AccountSide.asset,
       owner: scenario == _FreshScenario.cashForeign ? 'owner-b' : 'owner-a',
-      currency: scenario == _FreshScenario.cashWrongCurrency ? 'EUR' : 'USD',
+      currency: scenario == _FreshScenario.cashWrongCurrency
+          ? 'EUR'
+          : request.cashAccount!.currency,
       archived: scenario == _FreshScenario.cashArchived,
       deleted: scenario == _FreshScenario.cashDeleted,
     );
@@ -276,17 +278,25 @@ Future<void> _seedFreshScenario(AppDatabase db, _FreshScenario scenario) async {
         .into(db.assets)
         .insert(
           AssetsCompanion.insert(
-            id: 'us_stock:AAPL',
-            type: AssetType.stock,
-            symbol: 'AAPL',
-            currency: scenario == _FreshScenario.assetMutated ? 'EUR' : 'USD',
-            market: const Value('us_stock'),
+            id: request.asset.id,
+            type: request.asset.type,
+            symbol: request.asset.symbol,
+            currency: scenario == _FreshScenario.assetMutated
+                ? 'EUR'
+                : request.asset.currency,
+            name: Value(request.asset.name),
+            market: Value(request.asset.market),
+            industry: Value(request.asset.industry),
+            region: Value(request.asset.region),
+            isin: Value(request.asset.isin),
+            logoUrl: Value(request.asset.logoUrl),
+            metadataJson: Value(request.asset.metadataJson),
             ownerUserId: scenario == _FreshScenario.assetForeign
                 ? 'owner-b'
-                : 'owner-a',
-            updatedAt: testNow,
-            updatedByDevice: 'device-a',
-            hlc: _hlc,
+                : request.asset.sync.ownerUserId,
+            updatedAt: request.asset.sync.updatedAt,
+            updatedByDevice: request.asset.sync.updatedByDevice,
+            hlc: request.asset.sync.hlc,
             deletedAt: Value(
               scenario == _FreshScenario.assetDeleted ? testNow : null,
             ),
@@ -297,7 +307,7 @@ Future<void> _seedFreshScenario(AppDatabase db, _FreshScenario scenario) async {
 
 Future<void> _insertAccount(
   AppDatabase db, {
-  required String id,
+  required Account account,
   required AccountCategory type,
   required AccountSide side,
   required String owner,
@@ -308,22 +318,59 @@ Future<void> _insertAccount(
     .into(db.accounts)
     .insert(
       AccountsCompanion.insert(
-        id: id,
+        id: account.id,
         type: type,
-        name: id,
+        name: account.name,
         currency: currency,
+        institution: Value(account.institution),
+        accountNumber: Value(account.accountNumber),
+        note: Value(account.note),
         category: Value(side),
+        parentId: Value(account.parentId),
+        icon: Value(account.icon),
+        color: Value(account.color),
         archived: Value(archived),
         ownerUserId: owner,
-        updatedAt: testNow,
-        updatedByDevice: 'device-a',
-        hlc: _hlc,
+        updatedAt: account.sync.updatedAt,
+        updatedByDevice: account.sync.updatedByDevice,
+        hlc: account.sync.hlc,
         deletedAt: Value(deleted ? testNow : null),
       ),
     );
 
-final _hlc = Hlc(
-  wallMillis: testNow.millisecondsSinceEpoch,
-  counter: 0,
-  nodeId: 'device-a',
-);
+Future<void> _seedReviewedRequest(
+  AppDatabase db,
+  RebalanceExecutionRequest request,
+) async {
+  await _insertAccount(
+    db,
+    account: request.account,
+    type: request.account.type,
+    side: request.account.category,
+    owner: request.account.sync.ownerUserId,
+    currency: request.account.currency,
+    archived: request.account.archived,
+    deleted: request.account.sync.deletedAt != null,
+  );
+  await db
+      .into(db.assets)
+      .insert(
+        AssetsCompanion.insert(
+          id: request.asset.id,
+          type: request.asset.type,
+          symbol: request.asset.symbol,
+          currency: request.asset.currency,
+          name: Value(request.asset.name),
+          market: Value(request.asset.market),
+          industry: Value(request.asset.industry),
+          region: Value(request.asset.region),
+          isin: Value(request.asset.isin),
+          logoUrl: Value(request.asset.logoUrl),
+          metadataJson: Value(request.asset.metadataJson),
+          ownerUserId: request.asset.sync.ownerUserId,
+          updatedAt: request.asset.sync.updatedAt,
+          updatedByDevice: request.asset.sync.updatedByDevice,
+          hlc: request.asset.sync.hlc,
+        ),
+      );
+}

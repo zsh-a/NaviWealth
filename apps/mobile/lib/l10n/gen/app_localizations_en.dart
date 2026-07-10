@@ -3498,34 +3498,133 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rebalanceExecuteAction => 'Rebalance now';
 
   @override
-  String get rebalanceExecutionSheetTitle => 'Confirm rebalance';
+  String get rebalanceExecutionWorkspaceTitle => 'Execution';
 
   @override
-  String rebalanceExecutionSheetSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Review $count draft trades before continuing.',
-      one: 'Review 1 draft trade before continuing.',
-    );
-    return '$_temp0';
+  String get rebalanceExecutionResumeAction => 'Resume execution';
+
+  @override
+  String get rebalanceExecutionReplaceTitle => 'Replace active execution?';
+
+  @override
+  String get rebalanceExecutionReplaceBody =>
+      'Your active execution was created from a different plan. Trades already recorded remain in the ledger. Undo from the old queue is permanently disabled when this plan starts.';
+
+  @override
+  String get rebalanceExecutionReplaceAction => 'Replace and continue';
+
+  @override
+  String rebalanceExecutionProgress(int done, int total) {
+    return '$done of $total resolved';
   }
 
   @override
-  String get rebalanceExecutionCreateDrafts => 'Create drafts';
+  String get rebalanceExecutionApplyAction => 'Apply';
 
   @override
-  String get rebalanceExecutionTradeValue => 'Suggested value';
+  String get rebalanceExecutionUndoAction => 'Undo';
 
   @override
-  String rebalanceExecutionDraftNote(
-    Object direction,
-    Object category,
-    Object amount,
-    Object currency,
-  ) {
-    return 'Rebalance suggestion: $direction $category for $amount $currency';
+  String get rebalanceExecutionStopAction => 'Stop after current';
+
+  @override
+  String get rebalanceExecutionStoppedToast =>
+      'Stopped after the current trade.';
+
+  @override
+  String get rebalanceExecutionCompletedToast =>
+      'The batch completed successfully.';
+
+  @override
+  String rebalanceExecutionPartialToast(int completed, int failed) {
+    return '$completed completed; $failed need attention.';
   }
+
+  @override
+  String rebalanceExecutionFailedToast(int failed) {
+    return 'The batch stopped; $failed need attention.';
+  }
+
+  @override
+  String get rebalanceExecutionRecoveryToast =>
+      'The batch stopped because an item needs recovery.';
+
+  @override
+  String get rebalanceExecutionArchiveAction => 'Archive execution';
+
+  @override
+  String get rebalanceExecutionArchiveTitle => 'Archive this execution?';
+
+  @override
+  String get rebalanceExecutionArchiveBody =>
+      'Archiving closes this queue. Trades already recorded remain in the ledger, and Undo from this queue is permanently disabled. Reviewed details and progress remain visible, but skipped and pending trades can no longer be changed.';
+
+  @override
+  String get rebalanceExecutionArchiveAppliedBody =>
+      'Applied trades will not be undone. Undo them before archiving if you need to reverse their ledger entries.';
+
+  @override
+  String get rebalanceExecutionBusyLeaveBlocked =>
+      'Finish or stop the current operation before leaving.';
+
+  @override
+  String get rebalanceExecutionReviewAction => 'Review';
+
+  @override
+  String get rebalanceExecutionSkipAction => 'Skip';
+
+  @override
+  String get rebalanceExecutionReopenAction => 'Reopen';
+
+  @override
+  String get rebalanceExecutionNotFound =>
+      'This execution is unavailable or belongs to another user.';
+
+  @override
+  String get rebalanceExecutionEmptyQueue =>
+      'This plan has no trades to execute.';
+
+  @override
+  String get rebalanceExecutionEditorTitle => 'Review trade';
+
+  @override
+  String get rebalanceExecutionSaveReviewAction => 'Save review';
+
+  @override
+  String get rebalanceExecutionAssetLabel => 'Security';
+
+  @override
+  String get rebalanceExecutionCashAccountLabel => 'Cash account (optional)';
+
+  @override
+  String get rebalanceExecutionStateNeedsDetails => 'Needs details';
+
+  @override
+  String get rebalanceExecutionStateReady => 'Ready';
+
+  @override
+  String get rebalanceExecutionStateApplying => 'Applying';
+
+  @override
+  String get rebalanceExecutionStateApplied => 'Applied';
+
+  @override
+  String get rebalanceExecutionStateApplyFailed => 'Apply failed';
+
+  @override
+  String get rebalanceExecutionStateUndoing => 'Undoing';
+
+  @override
+  String get rebalanceExecutionStateUndone => 'Undone';
+
+  @override
+  String get rebalanceExecutionStateUndoFailed => 'Undo failed';
+
+  @override
+  String get rebalanceExecutionStateSkipped => 'Skipped';
+
+  @override
+  String get rebalanceExecutionStateRecoveryBlocked => 'Needs recovery';
 
   @override
   String get rebalanceEmptyTitle => 'No data yet';

@@ -70,7 +70,8 @@ final class RebalanceExecutionCoordinator {
     required RebalanceTradeValidation validation,
     required TradeEntrySubmissionService tradeSubmission,
     required Future<String> Function() currentUserId,
-  }) : _store = store,
+  }) : _db = db,
+       _store = store,
        _validation = validation,
        _tradeSubmission = tradeSubmission,
        _currentUserId = currentUserId {
@@ -84,10 +85,13 @@ final class RebalanceExecutionCoordinator {
     }
   }
 
+  final AppDatabase _db;
   final RebalanceExecutionStore _store;
   final RebalanceTradeValidation _validation;
   final TradeEntrySubmissionService _tradeSubmission;
   final Future<String> Function() _currentUserId;
+
+  bool isBoundTo(AppDatabase database) => identical(_db, database);
 
   Future<RebalanceExecutionBatchResult> applySession({
     required String sessionId,

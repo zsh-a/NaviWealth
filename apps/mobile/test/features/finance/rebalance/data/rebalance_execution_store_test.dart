@@ -130,7 +130,7 @@ void main() {
     });
 
     test(
-      'different fingerprint conflicts unless archive is explicit',
+      'different fingerprint conflicts unless expected active is replaced',
       () async {
         final db = makeTestDatabase();
         addTearDown(db.close);
@@ -147,10 +147,11 @@ void main() {
           ),
           throwsA(isA<RebalanceExecutionConflict>()),
         );
-        final replacement = await store.createOrResume(
+        final replacement = await store.replaceActive(
           ownerUserId: 'owner-a',
+          expectedSessionId: original.id,
+          expectedFingerprint: original.planFingerprint,
           plan: testPlan(buyAmount: Decimal.fromInt(101)),
-          archiveExisting: true,
         );
 
         expect(replacement.id, isNot(original.id));
@@ -182,10 +183,11 @@ void main() {
       ''');
 
         await expectLater(
-          store.createOrResume(
+          store.replaceActive(
             ownerUserId: 'owner-a',
+            expectedSessionId: original.id,
+            expectedFingerprint: original.planFingerprint,
             plan: testPlan(buyAmount: Decimal.fromInt(101)),
-            archiveExisting: true,
           ),
           throwsA(anything),
         );
@@ -195,6 +197,81 @@ void main() {
         expect(active?.status, RebalanceExecutionSessionStatus.active);
       },
     );
+
+    test(
+      'replace rejects a stale expected active without archiving winner',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final store = RebalanceExecutionStore(db, clock: () => testNow);
+        final original = await store.createOrResume(
+          ownerUserId: 'owner-a',
+          plan: testPlan(),
+        );
+        final winner = await store.replaceActive(
+          ownerUserId: 'owner-a',
+          expectedSessionId: original.id,
+          expectedFingerprint: original.planFingerprint,
+          plan: testPlan(buyAmount: Decimal.fromInt(101)),
+        );
+
+        await expectLater(
+          store.replaceActive(
+            ownerUserId: 'owner-a',
+            expectedSessionId: original.id,
+            expectedFingerprint: original.planFingerprint,
+            plan: testPlan(buyAmount: Decimal.fromInt(102)),
+          ),
+          throwsA(isA<RebalanceExecutionConflict>()),
+        );
+
+        expect((await store.getActive('owner-a'))?.id, winner.id);
+        expect(
+          (await store.getSession(
+            ownerUserId: 'owner-a',
+            id: winner.id,
+          ))?.status,
+          RebalanceExecutionSessionStatus.active,
+        );
+      },
+    );
+
+    test('reopen skipped restores request-aware editable state', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = RebalanceExecutionStore(db, clock: () => testNow);
+      final session = await store.createOrResume(
+        ownerUserId: 'owner-a',
+        plan: testPlan(reverseCollections: true),
+      );
+      final withoutRequest = session.items.first;
+      await store.markSkipped(
+        ownerUserId: 'owner-a',
+        itemId: withoutRequest.id,
+      );
+      expect(
+        (await store.reopenSkipped(
+          ownerUserId: 'owner-a',
+          itemId: withoutRequest.id,
+        )).state,
+        RebalanceExecutionItemState.needsDetails,
+      );
+
+      final withRequest = session.items.last;
+      await store.saveRequest(
+        ownerUserId: 'owner-a',
+        expected: withRequest,
+        request: testRequest(withRequest.id),
+      );
+      await store.markSkipped(ownerUserId: 'owner-a', itemId: withRequest.id);
+      expect(
+        (await store.reopenSkipped(
+          ownerUserId: 'owner-a',
+          itemId: withRequest.id,
+        )).state,
+        RebalanceExecutionItemState.ready,
+      );
+    });
   });
 
   test(
@@ -354,7 +431,7 @@ void main() {
     await expectLater(
       store.saveRequest(
         ownerUserId: 'owner-a',
-        itemId: item.id,
+        expected: item,
         request: testRequest(item.id, owner: 'owner-b'),
       ),
       throwsA(isA<RebalanceExecutionConflict>()),
@@ -602,7 +679,7 @@ void main() {
       for (final item in session.items) {
         await store.saveRequest(
           ownerUserId: 'owner-a',
-          itemId: item.id,
+          expected: item,
           request: testRequest(item.id),
         );
         final claim = (await store.claimApply(
@@ -646,7 +723,7 @@ void main() {
     for (final item in session.items) {
       await first.saveRequest(
         ownerUserId: 'owner-a',
-        itemId: item.id,
+        expected: item,
         request: testRequest(item.id),
       );
       final apply = (await first.claimApply(
@@ -1019,7 +1096,7 @@ void main() {
       await expectLater(
         store.saveRequest(
           ownerUserId: 'owner-a',
-          itemId: ready.id,
+          expected: ready,
           request: testRequest(ready.id),
         ),
         throwsA(isA<RebalanceExecutionConflict>()),
@@ -1511,7 +1588,7 @@ Future<RebalanceExecutionItem> _readyFirst(
   final item = session.items.first;
   return store.saveRequest(
     ownerUserId: 'owner-a',
-    itemId: item.id,
+    expected: item,
     request: testRequest(item.id),
   );
 }

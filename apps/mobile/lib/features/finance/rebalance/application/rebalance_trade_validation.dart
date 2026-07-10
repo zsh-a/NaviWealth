@@ -21,6 +21,7 @@ enum RebalanceTradeValidationCode {
   accountInvalid,
   cashAccountInvalid,
   assetInvalid,
+  staleSnapshot,
 }
 
 final class RebalanceTradeValidationError implements Exception {
@@ -48,6 +49,13 @@ final class RebalanceTradeValidation {
         'Execution item has no reviewed request.',
       );
     }
+    return validateReviewedRequest(item, request);
+  }
+
+  TradeEntrySubmissionRequest validateReviewedRequest(
+    RebalanceExecutionItem item,
+    RebalanceExecutionRequest request,
+  ) {
     if (item.id != request.transactionId) {
       throw const RebalanceTradeValidationError(
         RebalanceTradeValidationCode.identityMismatch,
@@ -150,67 +158,104 @@ final class RebalanceTradeValidation {
     RebalanceExecutionItem claimed,
   ) async {
     scope.requireDatabase(_db);
-    final mapped = validateSnapshot(claimed);
-    final owner = claimed.ownerUserId;
-    final primary = await _liveAccount(mapped.accountId, owner);
-    if (primary == null ||
-        primary.category != AccountSide.asset ||
-        !const {
-          AccountCategory.broker,
-          AccountCategory.crypto,
-        }.contains(primary.type)) {
+    final request = claimed.request;
+    if (request == null) {
       throw const RebalanceTradeValidationError(
-        RebalanceTradeValidationCode.accountInvalid,
-        'Primary account is no longer live and tradable.',
+        RebalanceTradeValidationCode.missingRequest,
+        'Execution item has no reviewed request.',
       );
     }
-    final cashId = mapped.cashAccountId;
-    final cash = cashId == null ? primary : await _liveAccount(cashId, owner);
-    if (cash == null ||
-        cash.category != AccountSide.asset ||
-        !const {
-          AccountCategory.cash,
-          AccountCategory.bank,
-          AccountCategory.broker,
-          AccountCategory.crypto,
-        }.contains(cash.type) ||
-        const {
-              AccountCategory.cash,
-              AccountCategory.bank,
-            }.contains(cash.type) &&
-            cash.currency.toUpperCase() != mapped.currency.toUpperCase()) {
-      throw const RebalanceTradeValidationError(
-        RebalanceTradeValidationCode.cashAccountInvalid,
-        'Cash account is no longer live, compatible, or owned.',
-      );
+    validateReviewedRequest(claimed, request);
+    await validateReviewedSnapshotsFresh(
+      scope,
+      ownerUserId: claimed.ownerUserId,
+      request: request,
+    );
+  }
+
+  Future<void> validateReviewedSnapshotsFresh(
+    AppDatabaseTransactionScope scope, {
+    required String ownerUserId,
+    required RebalanceExecutionRequest request,
+  }) async {
+    scope.requireDatabase(_db);
+    final primary = await _accountRow(request.account.id, ownerUserId);
+    if (primary == null || !_sameAccount(primary, request.account)) {
+      _throwStale('The reviewed primary account changed or is no longer live.');
     }
-    final asset =
-        await (_db.select(_db.assets)
-              ..where((row) => row.id.equals(claimed.request!.asset.id))
-              ..where((row) => row.ownerUserId.equals(owner))
-              ..where((row) => row.deletedAt.isNull()))
-            .getSingleOrNull();
-    final reviewed = claimed.request!.asset;
-    if (asset == null ||
-        asset.id != reviewed.id ||
-        asset.market != reviewed.market ||
-        asset.symbol != reviewed.symbol ||
-        asset.type != reviewed.type ||
-        asset.currency.toUpperCase() != reviewed.currency.toUpperCase()) {
-      throw const RebalanceTradeValidationError(
-        RebalanceTradeValidationCode.assetInvalid,
-        'Reviewed asset is missing, deleted, or changed.',
-      );
+    final reviewedCash = request.cashAccount;
+    if (reviewedCash != null) {
+      final cash = await _accountRow(reviewedCash.id, ownerUserId);
+      if (cash == null || !_sameAccount(cash, reviewedCash)) {
+        _throwStale('The reviewed cash account changed or is no longer live.');
+      }
+    }
+    final asset = await _assetRow(request.asset.id, ownerUserId);
+    if (asset == null || !_sameAsset(asset, request.asset)) {
+      _throwStale('The reviewed security changed or is no longer live.');
     }
   }
 
-  Future<AccountRow?> _liveAccount(String id, String owner) =>
+  Future<AccountRow?> _accountRow(String id, String owner) =>
       (_db.select(_db.accounts)
             ..where((row) => row.id.equals(id))
-            ..where((row) => row.ownerUserId.equals(owner))
-            ..where((row) => row.deletedAt.isNull())
-            ..where((row) => row.archived.equals(false)))
+            ..where((row) => row.ownerUserId.equals(owner)))
           .getSingleOrNull();
+
+  Future<AssetRow?> _assetRow(String id, String owner) =>
+      (_db.select(_db.assets)
+            ..where((row) => row.id.equals(id))
+            ..where((row) => row.ownerUserId.equals(owner)))
+          .getSingleOrNull();
+
+  bool _sameAccount(AccountRow row, Account reviewed) =>
+      row.deletedAt == null &&
+      !row.archived &&
+      reviewed.sync.deletedAt == null &&
+      reviewed.sync.updatedAt.isUtc &&
+      row.id == reviewed.id &&
+      row.type == reviewed.type &&
+      row.name == reviewed.name &&
+      row.currency == reviewed.currency &&
+      row.institution == reviewed.institution &&
+      row.accountNumber == reviewed.accountNumber &&
+      row.note == reviewed.note &&
+      row.archived == reviewed.archived &&
+      row.category == reviewed.category &&
+      row.parentId == reviewed.parentId &&
+      row.icon == reviewed.icon &&
+      row.color == reviewed.color &&
+      row.ownerUserId == reviewed.sync.ownerUserId &&
+      row.updatedAt.toUtc() == reviewed.sync.updatedAt &&
+      row.updatedByDevice == reviewed.sync.updatedByDevice &&
+      row.hlc == reviewed.sync.hlc;
+
+  bool _sameAsset(AssetRow row, Asset reviewed) =>
+      row.deletedAt == null &&
+      reviewed.sync.deletedAt == null &&
+      reviewed.sync.updatedAt.isUtc &&
+      row.id == reviewed.id &&
+      row.type == reviewed.type &&
+      row.symbol == reviewed.symbol &&
+      row.currency == reviewed.currency &&
+      row.name == reviewed.name &&
+      row.market == reviewed.market &&
+      row.industry == reviewed.industry &&
+      row.region == reviewed.region &&
+      row.isin == reviewed.isin &&
+      row.logoUrl == reviewed.logoUrl &&
+      row.metadataJson == reviewed.metadataJson &&
+      row.ownerUserId == reviewed.sync.ownerUserId &&
+      row.updatedAt.toUtc() == reviewed.sync.updatedAt &&
+      row.updatedByDevice == reviewed.sync.updatedByDevice &&
+      row.hlc == reviewed.sync.hlc;
+
+  Never _throwStale(String message) {
+    throw RebalanceTradeValidationError(
+      RebalanceTradeValidationCode.staleSnapshot,
+      message,
+    );
+  }
 
   void _validateAccountSnapshot(Account account, {required bool primary}) {
     final allowed = primary

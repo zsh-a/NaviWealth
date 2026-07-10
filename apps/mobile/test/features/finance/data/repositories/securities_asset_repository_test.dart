@@ -195,6 +195,39 @@ void main() {
     },
   );
 
+  test(
+    'watchSecuritiesForOwner excludes foreign assets at SQL level',
+    () async {
+      await repo.upsertSecurity(
+        symbol: 'AAPL',
+        market: AssetMarket.usStock,
+        type: AssetType.stock,
+        currency: 'USD',
+        name: 'Owner Apple',
+      );
+      final foreign = SecuritiesAssetRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(userId: 'u-foreign'),
+      );
+      await foreign.upsertSecurity(
+        symbol: 'MSFT',
+        market: AssetMarket.usStock,
+        type: AssetType.stock,
+        currency: 'USD',
+        name: 'Foreign Secret Microsoft',
+      );
+
+      final visible = await repo.watchSecuritiesForOwner('u-test').first;
+
+      expect(visible.map((asset) => asset.symbol), ['AAPL']);
+      expect(
+        visible.map((asset) => asset.name),
+        isNot(contains('Foreign Secret Microsoft')),
+      );
+    },
+  );
+
   test('watchSecurities skips manual-valuation assets even when they share '
       'the table', () async {
     // Insert a "cash" row directly to mimic the ManualAssetRepository

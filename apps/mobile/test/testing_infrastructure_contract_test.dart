@@ -260,8 +260,8 @@ void main() {
         // Rebalance: engine behavior and both editing / execution surfaces
         // need separate regression coverage.
         'test/features/finance/rebalance/domain/rebalance_engine_test.dart': 5,
-        'test/features/finance/rebalance/rebalance_execution_sheet_test.dart':
-            4,
+        'test/features/finance/rebalance/rebalance_execution_workspace_test.dart':
+            3,
         'test/features/finance/rebalance/target_allocation_editor_sheet_test.dart':
             4,
 
@@ -414,15 +414,15 @@ void main() {
           .where((file) => file.path.endsWith('.png'))
           .toList(growable: false);
 
-      expect(goldenFiles, hasLength(17));
-      expect(pngFiles, hasLength(50));
+      expect(goldenFiles, hasLength(16));
+      expect(pngFiles, hasLength(48));
 
       final repoRoot = appRoot.parent.parent;
       final docs = File('${repoRoot.path}/docs/visual-baseline/README.md');
       expect(docs.existsSync(), isTrue);
       final text = docs.readAsStringSync();
-      expect(text, contains('17 test files'));
-      expect(text, contains('50 PNG baselines'));
+      expect(text, contains('16 test files'));
+      expect(text, contains('48 PNG baselines'));
       expect(text, contains('sync_status_page_golden_test.dart'));
     });
 

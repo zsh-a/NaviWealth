@@ -101,6 +101,35 @@ void main() {
     expect(batch.single.rowId, account.id);
   });
 
+  test(
+    'watchActiveForOwner excludes foreign account names at SQL level',
+    () async {
+      await repo.create(
+        type: AccountCategory.broker,
+        name: 'Owner Broker',
+        currency: 'USD',
+      );
+      final foreign = AccountRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(userId: 'u-foreign'),
+      );
+      await foreign.create(
+        type: AccountCategory.broker,
+        name: 'Foreign Secret Broker',
+        currency: 'USD',
+      );
+
+      final visible = await repo.watchActiveForOwner('u-test').first;
+
+      expect(visible.map((account) => account.name), ['Owner Broker']);
+      expect(
+        visible.map((account) => account.name),
+        isNot(contains('Foreign Secret Broker')),
+      );
+    },
+  );
+
   group('manual account mutation receipts', () {
     test(
       'full editable save round-trips every field and Undo restores before',

@@ -6,14 +6,20 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/preferences/theme_preferences.dart';
 import '../application/rebalance_execution_coordinator.dart';
+import '../application/rebalance_execution_workspace_gateway.dart';
 import '../application/rebalance_trade_validation.dart';
 import '../domain/allocation_schemes.dart';
 import '../domain/rebalance_engine.dart';
+import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
 import 'rebalance_execution_store.dart';
 
@@ -50,6 +56,71 @@ final rebalanceExecutionCoordinatorProvider =
         validation: validation,
         tradeSubmission: tradeSubmission,
         currentUserId: ref.watch(currentUserIdProvider),
+      );
+    });
+
+final rebalanceExecutionWorkspaceGatewayProvider =
+    FutureProvider<RebalanceExecutionWorkspaceGateway>((ref) async {
+      ref.watch(activeUserIdProvider);
+      final db = await ref.watch(appDatabaseProvider.future);
+      final store = await ref.watch(rebalanceExecutionStoreProvider.future);
+      final validation = await ref.watch(
+        rebalanceTradeValidationProvider.future,
+      );
+      final coordinator = await ref.watch(
+        rebalanceExecutionCoordinatorProvider.future,
+      );
+      return DefaultRebalanceExecutionWorkspaceGateway(
+        db: db,
+        store: store,
+        validation: validation,
+        coordinator: coordinator,
+        currentUserId: ref.watch(currentUserIdProvider),
+      );
+    });
+
+final activeRebalanceExecutionProvider =
+    FutureProvider.autoDispose<RebalanceExecutionSession?>((ref) async {
+      ref.watch(activeUserIdProvider);
+      final gateway = await ref.watch(
+        rebalanceExecutionWorkspaceGatewayProvider.future,
+      );
+      return gateway.active();
+    });
+
+final rebalanceExecutionSessionProvider = FutureProvider.autoDispose
+    .family<RebalanceExecutionSession?, String>((ref, sessionId) async {
+      ref.watch(activeUserIdProvider);
+      final gateway = await ref.watch(
+        rebalanceExecutionWorkspaceGatewayProvider.future,
+      );
+      return gateway.session(sessionId);
+    });
+
+final rebalanceOwnedAccountsProvider =
+    StreamProvider.autoDispose<List<Account>>((ref) async* {
+      final owner = ref.watch(activeUserIdProvider);
+      if (owner == null || owner.isEmpty) {
+        yield const <Account>[];
+        return;
+      }
+      final repository = await ref.watch(accountRepositoryProvider.future);
+      yield* repository.watchActiveForOwner(owner);
+    });
+
+final rebalanceOwnedSecuritiesProvider =
+    StreamProvider.autoDispose<List<Asset>>((ref) async* {
+      final owner = ref.watch(activeUserIdProvider);
+      if (owner == null || owner.isEmpty) {
+        yield const <Asset>[];
+        return;
+      }
+      final repository = await ref.watch(
+        securitiesAssetRepositoryProvider.future,
+      );
+      yield* repository.watchSecuritiesForOwner(
+        owner,
+        types: kSecuritiesAssetTypes,
       );
     });
 

@@ -3,18 +3,15 @@ import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/securities_asset_repository.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/investment/application/trade_entry_submission_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
-import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/rebalance/application/rebalance_execution_coordinator.dart';
 import 'package:naviwealth/features/finance/rebalance/application/rebalance_trade_validation.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_execution_store.dart';
@@ -494,37 +491,52 @@ _makeHarness(
     baseCurrency: 'USD',
   );
   final prices = PriceRepository(db: db, outbox: outbox, stamper: stamper);
-  for (final (id, type) in const [
-    ('broker-account', AccountCategory.broker),
-    ('cash-account', AccountCategory.cash),
-  ]) {
+  final reviewed = testRequest('snapshot-template');
+  for (final account in [reviewed.account, reviewed.cashAccount!]) {
     await db
         .into(db.accounts)
         .insert(
           AccountsCompanion.insert(
-            id: id,
-            type: type,
-            name: id,
-            currency: 'USD',
-            category: const Value(AccountSide.asset),
-            ownerUserId: 'owner-a',
-            updatedAt: testNow,
-            updatedByDevice: 'device-a',
-            hlc: Hlc(
-              wallMillis: testNow.millisecondsSinceEpoch,
-              counter: 0,
-              nodeId: 'device-a',
-            ),
+            id: account.id,
+            type: account.type,
+            name: account.name,
+            currency: account.currency,
+            institution: Value(account.institution),
+            accountNumber: Value(account.accountNumber),
+            note: Value(account.note),
+            category: Value(account.category),
+            parentId: Value(account.parentId),
+            icon: Value(account.icon),
+            color: Value(account.color),
+            ownerUserId: account.sync.ownerUserId,
+            updatedAt: account.sync.updatedAt,
+            updatedByDevice: account.sync.updatedByDevice,
+            hlc: account.sync.hlc,
           ),
         );
   }
-  await securities.upsertSecurity(
-    symbol: 'AAPL',
-    market: AssetMarket.usStock,
-    type: AssetType.stock,
-    currency: 'USD',
-    name: 'Apple',
-  );
+  final asset = reviewed.asset;
+  await db
+      .into(db.assets)
+      .insert(
+        AssetsCompanion.insert(
+          id: asset.id,
+          type: asset.type,
+          symbol: asset.symbol,
+          currency: asset.currency,
+          name: Value(asset.name),
+          market: Value(asset.market),
+          industry: Value(asset.industry),
+          region: Value(asset.region),
+          isin: Value(asset.isin),
+          logoUrl: Value(asset.logoUrl),
+          metadataJson: Value(asset.metadataJson),
+          ownerUserId: asset.sync.ownerUserId,
+          updatedAt: asset.sync.updatedAt,
+          updatedByDevice: asset.sync.updatedByDevice,
+          hlc: asset.sync.hlc,
+        ),
+      );
   final submission = TradeEntrySubmissionService(
     db: db,
     securitiesRepo: securities,
@@ -557,7 +569,7 @@ Future<RebalanceExecutionSession> _readySession(
   for (final item in session.items) {
     await store.saveRequest(
       ownerUserId: 'owner-a',
-      itemId: item.id,
+      expected: item,
       request: testRequest(item.id),
     );
   }

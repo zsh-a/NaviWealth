@@ -87,6 +87,27 @@ class SecuritiesAssetRepository {
     return query.watch().map((rows) => rows.map(_toAsset).toList());
   }
 
+  /// Owner-scoped stream for security-sensitive trade review surfaces.
+  Stream<List<Asset>> watchSecuritiesForOwner(
+    String ownerUserId, {
+    Set<AssetType>? types,
+  }) {
+    if (ownerUserId.isEmpty) return const Stream.empty();
+    final filter = (types == null || types.isEmpty)
+        ? kSecuritiesAssetTypes
+        : types;
+    final query = _db.select(_db.assets)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.market.isNotNull())
+      ..where((t) => t.type.isIn(filter.map((e) => e.name).toList()))
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.market),
+        (t) => OrderingTerm(expression: t.symbol),
+      ]);
+    return query.watch().map((rows) => rows.map(_toAsset).toList());
+  }
+
   // ---------- Writes ----------
 
   /// Idempotent on `(market, symbol)`. If no row exists for the derived

@@ -31,6 +31,7 @@ abstract final class FinanceRoutes {
 
   static const planFire = '/plan/fire';
   static const planRebalance = '/plan/rebalance';
+  static const planRebalanceExecution = '/plan/rebalance/execution/:sessionId';
   static const planIncome = '/plan/income';
   static const planIncomeStats = '/plan/income/stats';
   static const planDca = '/plan/dca';
@@ -58,6 +59,9 @@ abstract final class FinanceRoutes {
   static String activityEntry(String id) =>
       '/activity/entry/${Uri.encodeComponent(id)}';
 
+  static String planRebalanceExecutionSession(String sessionId) =>
+      '/plan/rebalance/execution/${Uri.encodeComponent(sessionId)}';
+
   static String tradeForAsset(String id) =>
       '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
 }
@@ -83,6 +87,7 @@ abstract final class FinanceRouteNames {
   static const plan = 'plan';
   static const planFire = 'plan-fire';
   static const planRebalance = 'plan-rebalance';
+  static const planRebalanceExecution = 'plan-rebalance-execution';
   static const planIncome = 'plan-income';
   static const planIncomeStats = 'plan-income-stats';
   static const planDca = 'plan-dca';

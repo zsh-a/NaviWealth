@@ -6066,40 +6066,233 @@ abstract class AppLocalizations {
   /// **'Rebalance now'**
   String get rebalanceExecuteAction;
 
-  /// No description provided for @rebalanceExecutionSheetTitle.
+  /// No description provided for @rebalanceExecutionWorkspaceTitle.
   ///
   /// In en, this message translates to:
-  /// **'Confirm rebalance'**
-  String get rebalanceExecutionSheetTitle;
+  /// **'Execution'**
+  String get rebalanceExecutionWorkspaceTitle;
 
-  /// No description provided for @rebalanceExecutionSheetSubtitle.
+  /// No description provided for @rebalanceExecutionResumeAction.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{Review 1 draft trade before continuing.} other{Review {count} draft trades before continuing.}}'**
-  String rebalanceExecutionSheetSubtitle(int count);
+  /// **'Resume execution'**
+  String get rebalanceExecutionResumeAction;
 
-  /// No description provided for @rebalanceExecutionCreateDrafts.
+  /// No description provided for @rebalanceExecutionReplaceTitle.
   ///
   /// In en, this message translates to:
-  /// **'Create drafts'**
-  String get rebalanceExecutionCreateDrafts;
+  /// **'Replace active execution?'**
+  String get rebalanceExecutionReplaceTitle;
 
-  /// No description provided for @rebalanceExecutionTradeValue.
+  /// No description provided for @rebalanceExecutionReplaceBody.
   ///
   /// In en, this message translates to:
-  /// **'Suggested value'**
-  String get rebalanceExecutionTradeValue;
+  /// **'Your active execution was created from a different plan. Trades already recorded remain in the ledger. Undo from the old queue is permanently disabled when this plan starts.'**
+  String get rebalanceExecutionReplaceBody;
 
-  /// No description provided for @rebalanceExecutionDraftNote.
+  /// No description provided for @rebalanceExecutionReplaceAction.
   ///
   /// In en, this message translates to:
-  /// **'Rebalance suggestion: {direction} {category} for {amount} {currency}'**
-  String rebalanceExecutionDraftNote(
-    Object direction,
-    Object category,
-    Object amount,
-    Object currency,
-  );
+  /// **'Replace and continue'**
+  String get rebalanceExecutionReplaceAction;
+
+  /// No description provided for @rebalanceExecutionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} resolved'**
+  String rebalanceExecutionProgress(int done, int total);
+
+  /// No description provided for @rebalanceExecutionApplyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get rebalanceExecutionApplyAction;
+
+  /// No description provided for @rebalanceExecutionUndoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get rebalanceExecutionUndoAction;
+
+  /// No description provided for @rebalanceExecutionStopAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop after current'**
+  String get rebalanceExecutionStopAction;
+
+  /// No description provided for @rebalanceExecutionStoppedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped after the current trade.'**
+  String get rebalanceExecutionStoppedToast;
+
+  /// No description provided for @rebalanceExecutionCompletedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'The batch completed successfully.'**
+  String get rebalanceExecutionCompletedToast;
+
+  /// No description provided for @rebalanceExecutionPartialToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed} completed; {failed} need attention.'**
+  String rebalanceExecutionPartialToast(int completed, int failed);
+
+  /// No description provided for @rebalanceExecutionFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'The batch stopped; {failed} need attention.'**
+  String rebalanceExecutionFailedToast(int failed);
+
+  /// No description provided for @rebalanceExecutionRecoveryToast.
+  ///
+  /// In en, this message translates to:
+  /// **'The batch stopped because an item needs recovery.'**
+  String get rebalanceExecutionRecoveryToast;
+
+  /// No description provided for @rebalanceExecutionArchiveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive execution'**
+  String get rebalanceExecutionArchiveAction;
+
+  /// No description provided for @rebalanceExecutionArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this execution?'**
+  String get rebalanceExecutionArchiveTitle;
+
+  /// No description provided for @rebalanceExecutionArchiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Archiving closes this queue. Trades already recorded remain in the ledger, and Undo from this queue is permanently disabled. Reviewed details and progress remain visible, but skipped and pending trades can no longer be changed.'**
+  String get rebalanceExecutionArchiveBody;
+
+  /// No description provided for @rebalanceExecutionArchiveAppliedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied trades will not be undone. Undo them before archiving if you need to reverse their ledger entries.'**
+  String get rebalanceExecutionArchiveAppliedBody;
+
+  /// No description provided for @rebalanceExecutionBusyLeaveBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish or stop the current operation before leaving.'**
+  String get rebalanceExecutionBusyLeaveBlocked;
+
+  /// No description provided for @rebalanceExecutionReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get rebalanceExecutionReviewAction;
+
+  /// No description provided for @rebalanceExecutionSkipAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get rebalanceExecutionSkipAction;
+
+  /// No description provided for @rebalanceExecutionReopenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen'**
+  String get rebalanceExecutionReopenAction;
+
+  /// No description provided for @rebalanceExecutionNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This execution is unavailable or belongs to another user.'**
+  String get rebalanceExecutionNotFound;
+
+  /// No description provided for @rebalanceExecutionEmptyQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'This plan has no trades to execute.'**
+  String get rebalanceExecutionEmptyQueue;
+
+  /// No description provided for @rebalanceExecutionEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review trade'**
+  String get rebalanceExecutionEditorTitle;
+
+  /// No description provided for @rebalanceExecutionSaveReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save review'**
+  String get rebalanceExecutionSaveReviewAction;
+
+  /// No description provided for @rebalanceExecutionAssetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get rebalanceExecutionAssetLabel;
+
+  /// No description provided for @rebalanceExecutionCashAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash account (optional)'**
+  String get rebalanceExecutionCashAccountLabel;
+
+  /// No description provided for @rebalanceExecutionStateNeedsDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs details'**
+  String get rebalanceExecutionStateNeedsDetails;
+
+  /// No description provided for @rebalanceExecutionStateReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get rebalanceExecutionStateReady;
+
+  /// No description provided for @rebalanceExecutionStateApplying.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying'**
+  String get rebalanceExecutionStateApplying;
+
+  /// No description provided for @rebalanceExecutionStateApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied'**
+  String get rebalanceExecutionStateApplied;
+
+  /// No description provided for @rebalanceExecutionStateApplyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply failed'**
+  String get rebalanceExecutionStateApplyFailed;
+
+  /// No description provided for @rebalanceExecutionStateUndoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Undoing'**
+  String get rebalanceExecutionStateUndoing;
+
+  /// No description provided for @rebalanceExecutionStateUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Undone'**
+  String get rebalanceExecutionStateUndone;
+
+  /// No description provided for @rebalanceExecutionStateUndoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo failed'**
+  String get rebalanceExecutionStateUndoFailed;
+
+  /// No description provided for @rebalanceExecutionStateSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get rebalanceExecutionStateSkipped;
+
+  /// No description provided for @rebalanceExecutionStateRecoveryBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs recovery'**
+  String get rebalanceExecutionStateRecoveryBlocked;
 
   /// No description provided for @rebalanceEmptyTitle.
   ///

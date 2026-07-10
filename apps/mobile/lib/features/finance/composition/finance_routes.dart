@@ -56,6 +56,8 @@ import '../accounts/ui/transfer_form_page.dart';
 import '../activity/ui/activity_entry_detail_page.dart';
 import '../activity/ui/activity_page.dart';
 import '../ingest/ui/ingest_review_page.dart';
+import '../rebalance/ui/rebalance_execution_workspace_page.dart'
+    deferred as rebalance_execution_lib;
 import '../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../ui/plan_hub_page.dart';
 import '../ui/wealth/wealth_hub_page.dart';
@@ -340,6 +342,22 @@ StatefulShellRoute financeShellRoute() {
                   load: rebalance_lib.loadLibrary,
                   builder: (_) => rebalance_lib.RebalancePage(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'execution/:sessionId',
+                    name: FinanceRouteNames.planRebalanceExecution,
+                    builder: (context, state) {
+                      final sessionId = state.pathParameters['sessionId']!;
+                      return DeferredRoute(
+                        load: rebalance_execution_lib.loadLibrary,
+                        builder: (_) =>
+                            rebalance_execution_lib.RebalanceExecutionWorkspacePage(
+                              sessionId: sessionId,
+                            ),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'income',
@@ -401,5 +419,6 @@ Future<void> preloadFinanceDeferredRoutesForTest() async {
     portfolio_hub_lib.loadLibrary(),
     watchlist_lib.loadLibrary(),
     rebalance_lib.loadLibrary(),
+    rebalance_execution_lib.loadLibrary(),
   ]);
 }

@@ -25,14 +25,13 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 | Portfolio Hub | `apps/mobile/test/golden/portfolio_hub_page_golden_test.dart` | dark / colorblind |
 | Watchlist | `apps/mobile/test/golden/watchlist_page_golden_test.dart` | dark / colorblind |
 | DCA simulator | `apps/mobile/test/golden/dca_simulator_page_golden_test.dart` | dark / colorblind |
-| Rebalance execution sheet | `apps/mobile/test/golden/rebalance_execution_sheet_golden_test.dart` | dark / colorblind |
 | Target allocation editor sheet | `apps/mobile/test/golden/target_allocation_editor_sheet_golden_test.dart` | dark / colorblind |
 | Asset FX PnL card | `apps/mobile/test/golden/asset_fx_pnl_card_golden_test.dart` | dark / colorblind |
 | FIRE OS cards | `apps/mobile/test/golden/fire_os_cards_golden_test.dart` | dark / colorblind |
 | Sync status diagnostics | `apps/mobile/test/golden/sync_status_page_golden_test.dart` | dark / colorblind |
 | AI visual primitives / renderers | `apps/mobile/test/golden/ai_surfaces_golden_test.dart` | component-scoped light surfaces |
 
-17 test files currently produce **50 PNG baselines** under
+16 test files currently produce **48 PNG baselines** under
 `apps/mobile/test/golden/goldens/`. Light-mode page variants were dropped — see
 *Variant choice* below — but AI primitive/component goldens keep their own
 minimal light surfaces to isolate the visual language from app chrome.

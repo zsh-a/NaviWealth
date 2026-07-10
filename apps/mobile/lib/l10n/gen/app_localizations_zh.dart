@@ -3356,28 +3356,127 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalanceExecuteAction => '按此调仓';
 
   @override
-  String get rebalanceExecutionSheetTitle => '确认调仓';
+  String get rebalanceExecutionWorkspaceTitle => '调仓执行台';
 
   @override
-  String rebalanceExecutionSheetSubtitle(int count) {
-    return '继续前请核对 $count 笔交易草稿。';
+  String get rebalanceExecutionResumeAction => '继续执行';
+
+  @override
+  String get rebalanceExecutionReplaceTitle => '替换当前执行任务？';
+
+  @override
+  String get rebalanceExecutionReplaceBody =>
+      '当前执行任务来自另一份方案。已经记账的交易会保留；替换会永久关闭旧队列的撤销能力，并按当前方案重新开始。';
+
+  @override
+  String get rebalanceExecutionReplaceAction => '替换并继续';
+
+  @override
+  String rebalanceExecutionProgress(int done, int total) {
+    return '已处理 $done/$total';
   }
 
   @override
-  String get rebalanceExecutionCreateDrafts => '生成草稿';
+  String get rebalanceExecutionApplyAction => '执行';
 
   @override
-  String get rebalanceExecutionTradeValue => '建议金额';
+  String get rebalanceExecutionUndoAction => '撤销';
 
   @override
-  String rebalanceExecutionDraftNote(
-    Object direction,
-    Object category,
-    Object amount,
-    Object currency,
-  ) {
-    return '再平衡建议：$direction$category，金额 $amount $currency';
+  String get rebalanceExecutionStopAction => '当前项完成后停止';
+
+  @override
+  String get rebalanceExecutionStoppedToast => '已在当前交易完成后停止。';
+
+  @override
+  String get rebalanceExecutionCompletedToast => '批量操作已完成。';
+
+  @override
+  String rebalanceExecutionPartialToast(int completed, int failed) {
+    return '已完成 $completed 项，$failed 项需要处理。';
   }
+
+  @override
+  String rebalanceExecutionFailedToast(int failed) {
+    return '批量操作已停止，$failed 项需要处理。';
+  }
+
+  @override
+  String get rebalanceExecutionRecoveryToast => '批量操作已停止，其中一项需要恢复处理。';
+
+  @override
+  String get rebalanceExecutionArchiveAction => '归档执行任务';
+
+  @override
+  String get rebalanceExecutionArchiveTitle => '归档该执行任务？';
+
+  @override
+  String get rebalanceExecutionArchiveBody =>
+      '归档会关闭当前队列。已经记账的交易会保留，并永久关闭该队列的撤销能力。核对信息和执行进度仍可查看，但待处理与已跳过交易不能再修改。';
+
+  @override
+  String get rebalanceExecutionArchiveAppliedBody =>
+      '已执行交易不会自动撤销。如需回滚账本记录，请先执行撤销。';
+
+  @override
+  String get rebalanceExecutionBusyLeaveBlocked => '请等待当前操作完成，或先停止操作再离开。';
+
+  @override
+  String get rebalanceExecutionReviewAction => '核对';
+
+  @override
+  String get rebalanceExecutionSkipAction => '跳过';
+
+  @override
+  String get rebalanceExecutionReopenAction => '重新打开';
+
+  @override
+  String get rebalanceExecutionNotFound => '该执行任务不可用，或不属于当前用户。';
+
+  @override
+  String get rebalanceExecutionEmptyQueue => '当前方案没有需要执行的交易。';
+
+  @override
+  String get rebalanceExecutionEditorTitle => '核对交易';
+
+  @override
+  String get rebalanceExecutionSaveReviewAction => '保存核对结果';
+
+  @override
+  String get rebalanceExecutionAssetLabel => '证券';
+
+  @override
+  String get rebalanceExecutionCashAccountLabel => '现金账户（可选）';
+
+  @override
+  String get rebalanceExecutionStateNeedsDetails => '待补充';
+
+  @override
+  String get rebalanceExecutionStateReady => '就绪';
+
+  @override
+  String get rebalanceExecutionStateApplying => '执行中';
+
+  @override
+  String get rebalanceExecutionStateApplied => '已执行';
+
+  @override
+  String get rebalanceExecutionStateApplyFailed => '执行失败';
+
+  @override
+  String get rebalanceExecutionStateUndoing => '撤销中';
+
+  @override
+  String get rebalanceExecutionStateUndone => '已撤销';
+
+  @override
+  String get rebalanceExecutionStateUndoFailed => '撤销失败';
+
+  @override
+  String get rebalanceExecutionStateSkipped => '已跳过';
+
+  @override
+  String get rebalanceExecutionStateRecoveryBlocked => '待恢复';
 
   @override
   String get rebalanceEmptyTitle => '暂无数据';

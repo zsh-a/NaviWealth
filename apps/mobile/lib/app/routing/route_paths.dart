@@ -108,6 +108,7 @@ abstract final class AppRoutes {
   // ── Plan sub-flows (decisions + future state) ──────────────────────────
   static const planFire = FinanceRoutes.planFire;
   static const planRebalance = FinanceRoutes.planRebalance;
+  static const planRebalanceExecution = FinanceRoutes.planRebalanceExecution;
   static const planIncome = FinanceRoutes.planIncome;
   static const planIncomeStats = FinanceRoutes.planIncomeStats;
   static const planDca = FinanceRoutes.planDca;
@@ -155,6 +156,9 @@ abstract final class AppRoutes {
   static String expense(String id) => FinanceRoutes.expense(id);
 
   static String activityEntry(String id) => FinanceRoutes.activityEntry(id);
+
+  static String planRebalanceExecutionSession(String sessionId) =>
+      FinanceRoutes.planRebalanceExecutionSession(sessionId);
 
   static String tradeForAsset(String id) => FinanceRoutes.tradeForAsset(id);
 
@@ -232,6 +236,8 @@ abstract final class AppRouteNames {
   static const plan = FinanceRouteNames.plan;
   static const planFire = FinanceRouteNames.planFire;
   static const planRebalance = FinanceRouteNames.planRebalance;
+  static const planRebalanceExecution =
+      FinanceRouteNames.planRebalanceExecution;
   static const planIncome = FinanceRouteNames.planIncome;
   static const planIncomeStats = FinanceRouteNames.planIncomeStats;
   static const planDca = FinanceRouteNames.planDca;

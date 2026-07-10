@@ -61,6 +61,18 @@ class AccountRepository {
     return query.watch().map((rows) => rows.map(_toAccount).toList());
   }
 
+  /// Owner-scoped variant for security-sensitive pickers.
+  Stream<List<Account>> watchActiveForOwner(String ownerUserId) {
+    if (ownerUserId.isEmpty) return const Stream.empty();
+    final query = _db.select(_db.accounts)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.archived.equals(false))
+      ..where((t) => t.id.like('$_systemAccountIdPrefix%').not())
+      ..orderBy([(t) => OrderingTerm(expression: t.name)]);
+    return query.watch().map((rows) => rows.map(_toAccount).toList());
+  }
+
   /// Like [watchActive] but includes system accounts. Used by the expense
   /// category picker which needs to display seeded system expense accounts.
   Stream<List<Account>> watchActiveIncludingSystem() {

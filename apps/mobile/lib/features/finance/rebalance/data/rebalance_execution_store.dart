@@ -37,7 +37,6 @@ final class RebalanceExecutionStore {
   Future<RebalanceExecutionSession> createOrResume({
     required String ownerUserId,
     required RebalancePlan plan,
-    bool archiveExisting = false,
   }) async {
     _requireOwner(ownerUserId);
     final planJson = RebalancePlanCodec.encode(plan);
@@ -46,72 +45,54 @@ final class RebalanceExecutionStore {
     final now = _now();
 
     return _db.transactionWithScope((scope) async {
-      if (archiveExisting) {
-        final active = await _activeSessionRow(ownerUserId);
-        if (active != null) {
-          final existingFingerprint = active.read<String>('plan_fingerprint');
-          if (existingFingerprint == fingerprint) {
-            return _sessionFromRow(active);
-          }
-          await _archiveRow(
-            ownerUserId: ownerUserId,
-            sessionId: active.read<String>('id'),
-            now: now,
-          );
-        }
-      }
-
-      final sessionId = _uuid.v4();
-      final inserted = await _db.customUpdate(
-        'INSERT INTO rebalance_execution_sessions '
-        '(id, owner_user_id, status, plan_json, plan_fingerprint, '
-        ' created_at_iso, updated_at_iso, archived_at_iso) '
-        "VALUES (?1, ?2, 'active', ?3, ?4, ?5, ?5, NULL) "
-        "ON CONFLICT(owner_user_id) WHERE status = 'active' DO NOTHING",
-        variables: [
-          Variable.withString(sessionId),
-          Variable.withString(ownerUserId),
-          Variable.withString(planJson),
-          Variable.withString(fingerprint),
-          Variable.withString(_iso(now)),
-        ],
+      return _insertSession(
+        ownerUserId: ownerUserId,
+        planJson: planJson,
+        canonicalPlan: canonicalPlan,
+        fingerprint: fingerprint,
+        now: now,
       );
-      if (inserted == 0) {
-        final winner = await _activeSessionRow(ownerUserId);
-        if (winner?.read<String>('plan_fingerprint') == fingerprint) {
-          return _sessionFromRow(winner!);
-        }
+    });
+  }
+
+  Future<RebalanceExecutionSession> replaceActive({
+    required String ownerUserId,
+    required String expectedSessionId,
+    required String expectedFingerprint,
+    required RebalancePlan plan,
+  }) async {
+    _requireOwner(ownerUserId);
+    final planJson = RebalancePlanCodec.encode(plan);
+    final canonicalPlan = RebalancePlanCodec.decode(planJson);
+    final fingerprint = RebalancePlanFingerprint.compute(plan);
+    final now = _now();
+    return _db.transactionWithScope((scope) async {
+      final active = await _activeSessionRow(ownerUserId);
+      if (active == null ||
+          active.read<String>('id') != expectedSessionId ||
+          active.read<String>('plan_fingerprint') != expectedFingerprint) {
         throw const RebalanceExecutionConflict(
-          'A different rebalance plan won the active-session race.',
+          'The active rebalance changed; review it again before replacing.',
         );
       }
-      for (
-        var position = 0;
-        position < canonicalPlan.trades.length;
-        position++
-      ) {
-        final itemId = _uuid.v4();
-        await _db.customInsert(
-          'INSERT INTO rebalance_execution_items '
-          '(id, session_id, owner_user_id, position, suggestion_json, '
-          ' request_json, receipt_json, state, error, attempt_token, '
-          ' lease_until_iso, applied_sequence, recovery_was_applied, '
-          ' created_at_iso, updated_at_iso) '
-          "VALUES (?1, ?2, ?3, ?4, ?5, NULL, NULL, 'needsDetails', "
-          'NULL, NULL, NULL, NULL, 0, ?6, ?6)',
-          variables: [
-            Variable.withString(itemId),
-            Variable.withString(sessionId),
-            Variable.withString(ownerUserId),
-            Variable.withInt(position),
-            Variable.withString(
-              RebalanceSuggestionCodec.encode(canonicalPlan.trades[position]),
-            ),
-            Variable.withString(_iso(now)),
-          ],
+      if (fingerprint == expectedFingerprint) return _sessionFromRow(active);
+      final archived = await _archiveRow(
+        ownerUserId: ownerUserId,
+        sessionId: expectedSessionId,
+        now: now,
+      );
+      if (archived != 1) {
+        throw const RebalanceExecutionConflict(
+          'The expected active rebalance could not be archived.',
         );
       }
-      return (await getSession(ownerUserId: ownerUserId, id: sessionId))!;
+      return _insertSession(
+        ownerUserId: ownerUserId,
+        planJson: planJson,
+        canonicalPlan: canonicalPlan,
+        fingerprint: fingerprint,
+        now: now,
+      );
     });
   }
 
@@ -167,10 +148,11 @@ final class RebalanceExecutionStore {
 
   Future<RebalanceExecutionItem> saveRequest({
     required String ownerUserId,
-    required String itemId,
+    required RebalanceExecutionItem expected,
     required RebalanceExecutionRequest request,
   }) async {
     _requireOwner(ownerUserId);
+    final itemId = expected.id;
     if (request.transactionId != itemId) {
       throw const RebalanceExecutionInvariantError(
         'Request transactionId must equal the item id.',
@@ -182,11 +164,15 @@ final class RebalanceExecutionStore {
         'Request snapshots do not belong to the caller.',
       );
     }
+    if (expected.ownerUserId != ownerUserId) {
+      throw const RebalanceExecutionNotFound('Execution item not found.');
+    }
     final changed = await _db.customUpdate(
       'UPDATE rebalance_execution_items '
       "SET request_json = ?1, state = 'ready', error = NULL, "
       '    attempt_token = NULL, lease_until_iso = NULL, updated_at_iso = ?2 '
       'WHERE id = ?3 AND owner_user_id = ?4 '
+      '  AND state = ?5 AND updated_at_iso = ?6 AND request_json IS ?7 '
       "  AND state IN ('needsDetails', 'ready', 'applyFailed') "
       '  AND EXISTS (SELECT 1 FROM rebalance_execution_sessions s '
       '    WHERE s.id = rebalance_execution_items.session_id '
@@ -196,6 +182,9 @@ final class RebalanceExecutionStore {
         Variable.withString(_iso(_now())),
         Variable.withString(itemId),
         Variable.withString(ownerUserId),
+        Variable.withString(expected.state.name),
+        Variable.withString(_iso(expected.updatedAt)),
+        _nullableStringVariable(expected.rawRequestJson),
       ],
     );
     if (changed != 1) {
@@ -229,6 +218,35 @@ final class RebalanceExecutionStore {
     if (changed != 1) {
       throw const RebalanceExecutionConflict(
         'Item cannot be skipped in its current state.',
+      );
+    }
+    return (await getItem(ownerUserId: ownerUserId, id: itemId))!;
+  }
+
+  Future<RebalanceExecutionItem> reopenSkipped({
+    required String ownerUserId,
+    required String itemId,
+  }) async {
+    _requireOwner(ownerUserId);
+    final changed = await _db.customUpdate(
+      'UPDATE rebalance_execution_items '
+      "SET state = CASE WHEN request_json IS NULL THEN 'needsDetails' "
+      "                 ELSE 'ready' END, "
+      '    error = NULL, attempt_token = NULL, lease_until_iso = NULL, '
+      '    updated_at_iso = ?1 '
+      "WHERE id = ?2 AND owner_user_id = ?3 AND state = 'skipped' "
+      '  AND EXISTS (SELECT 1 FROM rebalance_execution_sessions s '
+      '    WHERE s.id = rebalance_execution_items.session_id '
+      '      AND s.owner_user_id = ?3 AND s.status = \'active\')',
+      variables: [
+        Variable.withString(_iso(_now())),
+        Variable.withString(itemId),
+        Variable.withString(ownerUserId),
+      ],
+    );
+    if (changed != 1) {
+      throw const RebalanceExecutionConflict(
+        'Only a skipped item in an active owned session can be reopened.',
       );
     }
     return (await getItem(ownerUserId: ownerUserId, id: itemId))!;
@@ -971,6 +989,63 @@ final class RebalanceExecutionStore {
         )
         .get();
     return rows.isEmpty ? null : rows.single;
+  }
+
+  Future<RebalanceExecutionSession> _insertSession({
+    required String ownerUserId,
+    required String planJson,
+    required RebalancePlan canonicalPlan,
+    required String fingerprint,
+    required DateTime now,
+  }) async {
+    final sessionId = _uuid.v4();
+    final inserted = await _db.customUpdate(
+      'INSERT INTO rebalance_execution_sessions '
+      '(id, owner_user_id, status, plan_json, plan_fingerprint, '
+      ' created_at_iso, updated_at_iso, archived_at_iso) '
+      "VALUES (?1, ?2, 'active', ?3, ?4, ?5, ?5, NULL) "
+      "ON CONFLICT(owner_user_id) WHERE status = 'active' DO NOTHING",
+      variables: [
+        Variable.withString(sessionId),
+        Variable.withString(ownerUserId),
+        Variable.withString(planJson),
+        Variable.withString(fingerprint),
+        Variable.withString(_iso(now)),
+      ],
+    );
+    if (inserted != 1) {
+      final winner = await _activeSessionRow(ownerUserId);
+      if (winner != null &&
+          winner.read<String>('plan_fingerprint') == fingerprint) {
+        return _sessionFromRow(winner);
+      }
+      throw const RebalanceExecutionConflict(
+        'Another active rebalance won the session creation race.',
+      );
+    }
+    for (var position = 0; position < canonicalPlan.trades.length; position++) {
+      final itemId = _uuid.v4();
+      await _db.customInsert(
+        'INSERT INTO rebalance_execution_items '
+        '(id, session_id, owner_user_id, position, suggestion_json, '
+        ' request_json, receipt_json, state, error, attempt_token, '
+        ' lease_until_iso, applied_sequence, recovery_was_applied, '
+        ' created_at_iso, updated_at_iso) '
+        "VALUES (?1, ?2, ?3, ?4, ?5, NULL, NULL, 'needsDetails', "
+        'NULL, NULL, NULL, NULL, 0, ?6, ?6)',
+        variables: [
+          Variable.withString(itemId),
+          Variable.withString(sessionId),
+          Variable.withString(ownerUserId),
+          Variable.withInt(position),
+          Variable.withString(
+            RebalanceSuggestionCodec.encode(canonicalPlan.trades[position]),
+          ),
+          Variable.withString(_iso(now)),
+        ],
+      );
+    }
+    return (await getSession(ownerUserId: ownerUserId, id: sessionId))!;
   }
 
   Future<QueryRow?> _itemRow({

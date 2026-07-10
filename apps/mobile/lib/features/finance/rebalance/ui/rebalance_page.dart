@@ -1,18 +1,19 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/risk_appetite_preferences.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
-import 'package:naviwealth/features/finance/investment/ui/trade_entry_form_page.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../application/rebalance_trade_entry_prefills.dart';
+import '../data/rebalance_execution_codecs.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/allocation_schemes.dart';
+import '../domain/rebalance_execution.dart';
 import '../domain/rebalance_models.dart';
 import 'deviation_bar.dart';
-import 'rebalance_execution_sheet.dart';
 import 'target_allocation_editor_sheet.dart';
 
 /// Rebalance page — shows target vs actual allocation, deviation bars,
@@ -25,6 +26,7 @@ class RebalancePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final plan = ref.watch(rebalancePlanProvider);
     final scheme = ref.watch(selectedSchemeProvider);
+    final active = ref.watch(activeRebalanceExecutionProvider).value;
 
     return AppPageScaffold(
       title: l10n.rebalanceTitle,
@@ -36,8 +38,8 @@ class RebalancePage extends ConsumerWidget {
       ],
       childPad: false,
       child: plan == null
-          ? _EmptyState()
-          : _RebalanceBody(plan: plan, scheme: scheme),
+          ? _EmptyState(active: active)
+          : _RebalanceBody(plan: plan, scheme: scheme, active: active),
     );
   }
 
@@ -50,23 +52,92 @@ class RebalancePage extends ConsumerWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
+Future<void> _openExecution({
+  required BuildContext context,
+  required WidgetRef ref,
+  RebalancePlan? plan,
+  RebalanceExecutionSession? active,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  if (plan == null && active != null) {
+    context.go(FinanceRoutes.planRebalanceExecutionSession(active.id));
+    return;
+  }
+  if (plan == null) return;
+
+  try {
+    final fingerprint = RebalancePlanFingerprint.compute(plan);
+    if (active != null && active.planFingerprint == fingerprint) {
+      context.go(FinanceRoutes.planRebalanceExecutionSession(active.id));
+      return;
+    }
+    final gateway = await ref.read(
+      rebalanceExecutionWorkspaceGatewayProvider.future,
+    );
+    if (!context.mounted) return;
+    late final RebalanceExecutionSession session;
+    if (active == null) {
+      session = await gateway.createOrResume(plan);
+    } else {
+      final confirmed = await showConfirmDialog(
+        context: context,
+        title: Text(l10n.rebalanceExecutionReplaceTitle),
+        body: Text(l10n.rebalanceExecutionReplaceBody),
+        cancelLabel: l10n.commonCancel,
+        confirmLabel: l10n.rebalanceExecutionReplaceAction,
+        icon: FLucideIcons.refreshCw,
+      );
+      if (confirmed != true || !context.mounted) return;
+      session = await gateway.replaceActive(
+        expectedSessionId: active.id,
+        expectedFingerprint: active.planFingerprint,
+        plan: plan,
+      );
+    }
+    ref.invalidate(activeRebalanceExecutionProvider);
+    if (context.mounted) {
+      context.go(FinanceRoutes.planRebalanceExecutionSession(session.id));
+    }
+  } catch (error) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, error.toString());
+    }
+  }
+}
+
+class _EmptyState extends ConsumerWidget {
+  const _EmptyState({required this.active});
+
+  final RebalanceExecutionSession? active;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return AppEmptyState(
       icon: FLucideIcons.scale,
       title: l10n.rebalanceEmptyTitle,
       message: l10n.rebalanceEmptyHint,
+      action: active == null
+          ? null
+          : FButton(
+              onPress: () =>
+                  _openExecution(context: context, ref: ref, active: active),
+              child: Text(l10n.rebalanceExecutionResumeAction),
+            ),
     );
   }
 }
 
 class _RebalanceBody extends StatelessWidget {
-  const _RebalanceBody({required this.plan, required this.scheme});
+  const _RebalanceBody({
+    required this.plan,
+    required this.scheme,
+    required this.active,
+  });
 
   final RebalancePlan plan;
   final AllocationSchemePreset scheme;
+  final RebalanceExecutionSession? active;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +154,7 @@ class _RebalanceBody extends StatelessWidget {
             SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
             ResponsiveTwoColumn(
               left: _DriftOverview(plan: plan),
-              right: _TradeList(plan: plan),
+              right: _TradeList(plan: plan, active: active),
             ),
           ],
         );
@@ -258,13 +329,14 @@ class _DriftOverview extends StatelessWidget {
   }
 }
 
-class _TradeList extends StatelessWidget {
-  const _TradeList({required this.plan});
+class _TradeList extends ConsumerWidget {
+  const _TradeList({required this.plan, required this.active});
 
   final RebalancePlan plan;
+  final RebalanceExecutionSession? active;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
     if (plan.isBalanced) {
@@ -283,6 +355,18 @@ class _TradeList extends StatelessWidget {
                 l10n.rebalanceBalanced,
                 style: context.theme.typography.body.sm,
               ),
+              if (active != null) ...[
+                const SizedBox(height: AppSpacing.s12),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => _openExecution(
+                    context: context,
+                    ref: ref,
+                    active: active,
+                  ),
+                  child: Text(l10n.rebalanceExecutionResumeAction),
+                ),
+              ],
             ],
           ),
         ),
@@ -355,14 +439,25 @@ class _TradeList extends StatelessWidget {
               width: double.infinity,
               child: FButton(
                 variant: FButtonVariant.primary,
-                onPress: () => _startExecution(context),
+                onPress: () => _openExecution(
+                  context: context,
+                  ref: ref,
+                  plan: plan,
+                  active: active,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(FLucideIcons.listChecks, size: AppIconSizes.h18),
                     const SizedBox(width: AppSpacing.s6),
-                    Text(l10n.rebalanceExecuteAction),
+                    Text(
+                      active != null &&
+                              active!.planFingerprint ==
+                                  RebalancePlanFingerprint.compute(plan)
+                          ? l10n.rebalanceExecutionResumeAction
+                          : l10n.rebalanceExecuteAction,
+                    ),
                   ],
                 ),
               ),
@@ -371,34 +466,6 @@ class _TradeList extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _startExecution(BuildContext context) async {
-    final l10n = AppLocalizations.of(context);
-    final confirmed = await showRebalanceExecutionSheet(
-      context: context,
-      plan: plan,
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final drafts = buildRebalanceTradeEntryPrefills(
-      plan: plan,
-      tradeDate: DateTime.now(),
-      noteBuilder: (trade) => l10n.rebalanceExecutionDraftNote(
-        trade.isBuy ? l10n.rebalanceBuy : l10n.rebalanceSell,
-        _tradeTargetLabel(l10n, trade),
-        trade.amount.amount.toString(),
-        trade.amount.currency,
-      ),
-    );
-    for (final draft in drafts) {
-      final recorded = await Navigator.of(context).push<bool>(
-        PageRouteBuilder<bool>(
-          pageBuilder: (_, _, _) => TradeEntryFormPage(prefill: draft),
-        ),
-      );
-      if (!context.mounted || recorded != true) return;
-    }
   }
 }
 
