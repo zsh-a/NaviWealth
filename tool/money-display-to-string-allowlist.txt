@@ -76,6 +76,7 @@ apps/mobile/lib/features/finance/rebalance/ui/deviation_bar.dart	' / ${(targetWe
 apps/mobile/lib/features/finance/rebalance/ui/deviation_bar.dart	final text = '$sign${(deviation * 100).toStringAsFixed(1)}%';	percent-display
 apps/mobile/lib/features/finance/rebalance/ui/rebalance_page.dart	'${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/finance/rebalance/ui/rebalance_page.dart	'${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/finance/rebalance/ui/rebalance_execution_workspace_page.dart	'${(session.plan.driftAfterPct * 100).toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/finance/rebalance/ui/rebalance_page.dart	Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),	percent-display
 apps/mobile/lib/features/finance/rebalance/ui/rebalance_page.dart	Text('${((0.05 + v * 0.25) * 100).toStringAsFixed(0)}%'),	percent-display
 apps/mobile/lib/features/finance/rebalance/ui/target_allocation_editor_sheet.dart	return value.toStringAsFixed(1);	percent-display
@@ -101,7 +102,7 @@ apps/mobile/lib/features/settings/ui/ai/models/shared.dart	return '${(bytes / (1
 # formatter. Same categories as the existing entries above.
 apps/mobile/lib/core/format/formatters.dart	Decimal.parse(v.toStringAsFixed(scale));	decimal-rounding
 apps/mobile/lib/features/health/ui/health_today_page.dart	? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(l10n, m.capturedAt)}'	distance-display
-apps/mobile/lib/features/health/agents/briefing_synthesizer.dart	return 'HRV ${value.toStringAsFixed(0)}ms';	hrv-display
+apps/mobile/lib/features/health/agents/briefing_synthesizer.dart	return l10n.healthAgentMorningHrvLine(value.toStringAsFixed(0));	hrv-display
 apps/mobile/lib/features/health/agents/weekly_summary_agent.dart	if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';	compact-steps-label
 apps/mobile/lib/features/finance/fire/ai_tools/propose_fire_bucket_rule_tool.dart	final pctPart = pct != null ? '(${(pct * 100).toStringAsFixed(0)}%)' : '';	percent-display
 apps/mobile/lib/features/finance/fire/ai_tools/simulate_fire_plan_tool.dart	if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));	decimal-rounding-before-currency-formatter
