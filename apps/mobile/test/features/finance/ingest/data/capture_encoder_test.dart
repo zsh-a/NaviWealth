@@ -5,6 +5,7 @@ import 'package:charset/charset.dart' as charset;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/capture_encoder.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_capture_policy.dart';
+import 'package:naviwealth/features/finance/ingest/data/statement_ingest_parser.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 Uint8List _bytes(String value) => Uint8List.fromList(utf8.encode(value));
@@ -38,16 +39,24 @@ void main() {
           fileName: '支付宝交易明细.csv',
           bytes: Uint8List.fromList(
             charset.gbk.encode(
-              '交易时间,交易分类,交易对方,商品说明,收/支,金额,交易状态\n'
-              '2026-05-30 18:50:44,餐饮美食,麦当劳,食品,支出,31.50,交易成功\n',
+              '支付宝支付科技有限公司 电子客户回单\n'
+              '交易时间,交易分类,交易对方,对方账号,商品说明,收/支,金额,'
+              '收/付款方式,交易状态,交易订单号,商家订单号,备注,\n'
+              '2026-05-30 18:50:44,餐饮美食,示例餐厅,merchant@example.com,'
+              '食品,支出,31.50,余额,交易成功,trade-1,order-1,,\n',
             ),
           ),
         ),
       );
 
       expect(source.payload, contains('交易时间'));
-      expect(source.payload, contains('麦当劳'));
+      expect(source.payload, contains('示例餐厅'));
       expect(source.payload, contains('支出'));
+      expect(detectStatementProvider(source.payload), StatementProvider.alipay);
+      final rows = parseStatementLedger(source.payload);
+      expect(rows, hasLength(1));
+      expect(rows.single.amountMinor, -3150);
+      expect(rows.single.categoryHint, 'dining');
     });
 
     test('encodes PDF and image bytes only after the boundary', () {

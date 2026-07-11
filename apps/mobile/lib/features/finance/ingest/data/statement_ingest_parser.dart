@@ -16,7 +16,11 @@ enum StatementProvider { auto, generic, alipay, wechatPay, bank, broker }
 StatementProvider detectStatementProvider(String raw) {
   final compact = raw.replaceAll(RegExp(r'\s+'), '');
   if (compact.contains('支付宝交易记录明细') ||
-      compact.contains('交易号,商家订单号,交易创建时间,付款时间')) {
+      compact.contains('交易号,商家订单号,交易创建时间,付款时间') ||
+      compact.contains('支付宝支付科技有限公司电子客户回单') ||
+      (compact.contains('交易时间,交易分类,交易对方') &&
+          compact.contains('商品说明,收/支,金额,收/付款方式') &&
+          compact.contains('交易订单号,商家订单号'))) {
     return StatementProvider.alipay;
   }
   if (compact.contains('微信支付账单明细') ||
@@ -64,8 +68,8 @@ List<ParsedTransaction> parseStatementLedger(
       raw,
       defaultCurrency: defaultCurrency,
     ),
-    StatementProvider.alipay => parseCsvLedger(
-      _preferAlipayPaidAt(raw),
+    StatementProvider.alipay => _parseAlipayLedger(
+      raw,
       defaultCurrency: defaultCurrency,
     ),
     StatementProvider.wechatPay => parseCsvLedger(
@@ -81,6 +85,42 @@ List<ParsedTransaction> parseStatementLedger(
       defaultCurrency: defaultCurrency == 'CNY' ? 'USD' : defaultCurrency,
     ),
   };
+}
+
+List<ParsedTransaction> _parseAlipayLedger(
+  String raw, {
+  required String defaultCurrency,
+}) {
+  return parseCsvLedger(
+        _preferAlipayPaidAt(raw),
+        defaultCurrency: defaultCurrency,
+      )
+      .map((row) {
+        final categoryHint = _alipayCategoryHint(row.description);
+        return categoryHint == null
+            ? row
+            : row.copyWith(categoryHint: categoryHint);
+      })
+      .toList(growable: false);
+}
+
+/// Only map Alipay categories that have an unambiguous equivalent in the
+/// FinanceOS taxonomy. Broad buckets such as “充值缴费” and “商业服务” stay
+/// unset so the review step does not receive a confident but wrong category.
+String? _alipayCategoryHint(String description) {
+  const hints = <String, String>{
+    '餐饮美食': 'dining',
+    '日用百货': 'groceries',
+    '住房物业': 'housing',
+    '数码电器': 'shopping',
+    '文化休闲': 'entertainment',
+    '其他': 'other',
+  };
+  for (final part in description.split(' · ')) {
+    final hint = hints[part.trim()];
+    if (hint != null) return hint;
+  }
+  return null;
 }
 
 /// Alipay exports carry both creation and payment timestamps. The user's

@@ -115,15 +115,17 @@ IngestPlanningAnalysis analyzeIngestPlanning(IngestPlanningRequest request) {
 
   final rows = <AnalyzedIngestRow>[];
   for (final row in parsed) {
-    final classification = classifyTransaction(
-      TransactionInput(
-        id: 'ingest-probe',
-        description: row.description,
-        amountMinor: row.amountMinor.toString(),
-        currency: row.currency,
-        occurredAt: row.occurredAt,
-      ),
-    );
+    final classification = row.categoryHint == null
+        ? classifyTransaction(
+            TransactionInput(
+              id: 'ingest-probe',
+              description: row.description,
+              amountMinor: row.amountMinor.toString(),
+              currency: row.currency,
+              occurredAt: row.occurredAt,
+            ),
+          )
+        : null;
     final normalized = classification == null
         ? row
         : row.copyWith(categoryHint: classification.categoryHint);

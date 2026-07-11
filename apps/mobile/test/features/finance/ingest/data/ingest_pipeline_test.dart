@@ -60,6 +60,42 @@ void main() {
     expect(result.duplicateCount, 1);
   });
 
+  test('Alipay category wins over merchant fallback and still dedups', () {
+    final result = build().plan(
+      source: const IngestSource(
+        kind: IngestSourceKind.csv,
+        payload:
+            '支付宝支付科技有限公司 电子客户回单\n'
+            '交易时间,交易分类,交易对方,对方账号,商品说明,收/支,金额,'
+            '收/付款方式,交易状态,交易订单号,商家订单号,备注,\n'
+            '2026-07-10 12:30:01,日用百货,麦当劳,merchant@example.com,'
+            '家庭装纸巾,支出,31.50,余额,交易成功,trade-1,order-1,,\n'
+            '2026-07-09 18:00:00,餐饮美食,示例餐厅,food@example.com,'
+            '晚餐,支出,28.00,余额,交易成功,trade-2,order-2,,\n'
+            '2026-07-08 09:00:00,投资理财,示例基金,finance@example.com,'
+            '基金申购,不计收支,1000.00,余额宝,交易成功,trade-3,order-3,,\n',
+        originLabel: '支付宝交易明细.csv',
+      ),
+      existingLedger: [
+        TransactionInput(
+          id: 'existing-paper',
+          description: '麦当劳 · 家庭装纸巾 · 日用百货 · 余额',
+          amountMinor: '-3150',
+          currency: 'CNY',
+          occurredAt: DateTime.utc(2026, 7, 10),
+        ),
+      ],
+      ownerUserId: 'u1',
+    );
+
+    expect(result.total, 2);
+    expect(result.drafts[0].parsed.categoryHint, 'groceries');
+    expect(result.drafts[0].verdict, DedupVerdict.duplicate);
+    expect(result.drafts[0].dedupTargetEntryId, 'existing-paper');
+    expect(result.drafts[1].parsed.categoryHint, 'dining');
+    expect(result.drafts[1].verdict, DedupVerdict.newTxn);
+  });
+
   test('non-device-parsable sources are rejected, never silently dropped', () {
     final result = build().plan(
       source: const IngestSource(

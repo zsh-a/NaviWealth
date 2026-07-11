@@ -9,6 +9,14 @@ void main() {
         StatementProvider.alipay,
       );
       expect(
+        detectStatementProvider(
+          '支付宝支付科技有限公司 电子客户回单\n'
+          '交易时间,交易分类,交易对方,对方账号,商品说明,收/支,金额,'
+          '收/付款方式,交易状态,交易订单号,商家订单号,备注,',
+        ),
+        StatementProvider.alipay,
+      );
+      expect(
         detectStatementProvider('#微信支付账单明细\n交易时间,交易类型,交易对方,商品,收/支'),
         StatementProvider.wechatPay,
       );
@@ -41,6 +49,34 @@ void main() {
       expect(rows.single.occurredAt, DateTime.utc(2026, 5, 10));
       expect(rows.single.description, '便利店 · 早餐 · 即时到账');
       expect(rows.single.amountMinor, -1230);
+    });
+
+    test('parses Alipay electronic receipt export conservatively', () {
+      final rows = parseStatementLedger(
+        '----------------支付宝交易明细列表----------------\n'
+        '支付宝支付科技有限公司 电子客户回单\n'
+        '交易时间,交易分类,交易对方,对方账号,商品说明,收/支,金额,'
+        '收/付款方式,交易状态,交易订单号,商家订单号,备注,\n'
+        '2026-07-10 12:30:01,餐饮美食,示例餐厅,merchant@example.com,'
+        '午餐,支出,31.50,余额,交易成功,trade-1,order-1,,\n'
+        '2026-07-09 09:00:00,投资理财,示例基金,finance@example.com,'
+        '基金申购,不计收支,1000.00,余额宝,交易成功,trade-2,order-2,,\n'
+        '2026-07-08 08:00:00,其他,示例用户,user@example.com,'
+        '退款,收入,10.00,余额,交易成功,trade-3,order-3,,\n'
+        '2026-07-07 19:00:00,日用百货,示例超市,shop@example.com,'
+        '"纸巾,家庭装",支出,28.80,银行卡,交易成功,trade-4,order-4,,\n'
+        '2026-07-06 20:00:00,文化休闲,示例影院,cinema@example.com,'
+        '电影票,支出,45.00,余额,已退款,trade-5,order-5,,\n',
+      );
+
+      expect(rows, hasLength(2));
+      expect(rows[0].occurredAt, DateTime.utc(2026, 7, 10));
+      expect(rows[0].amountMinor, -3150);
+      expect(rows[0].description, '示例餐厅 · 午餐 · 餐饮美食 · 余额');
+      expect(rows[0].categoryHint, 'dining');
+      expect(rows[1].amountMinor, -2880);
+      expect(rows[1].description, '示例超市 · 纸巾,家庭装 · 日用百货 · 银行卡');
+      expect(rows[1].categoryHint, 'groceries');
     });
 
     test('keeps WeChat Pay expense parsing and refund skipping', () {
