@@ -17,6 +17,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../../../design_system/tokens/app_motion_policy.dart';
 import 'ai_motion.dart';
 
 class AiHoverOverlay extends StatefulWidget {
@@ -92,11 +93,19 @@ class _AiHoverOverlayState extends State<AiHoverOverlay> {
                 ignoring: !visible,
                 child: AnimatedSlide(
                   offset: visible ? Offset.zero : const Offset(0, -0.2),
-                  duration: AiMotion.duration(context, AiMotion.short),
+                  duration: AppMotionPolicy.duration(
+                    context,
+                    AiMotion.short,
+                    role: AppMotionRole.decorative,
+                  ),
                   curve: AiMotion.standard,
                   child: AnimatedOpacity(
                     opacity: visible ? 1 : 0,
-                    duration: AiMotion.duration(context, AiMotion.short),
+                    duration: AppMotionPolicy.duration(
+                      context,
+                      AiMotion.short,
+                      role: AppMotionRole.decorative,
+                    ),
                     curve: AiMotion.standard,
                     child: widget.capsule,
                   ),

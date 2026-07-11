@@ -111,7 +111,7 @@ class MessageBubble extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: ValueKey(message.id),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: motionDuration(context, Motion.medium),
+      duration: AppMotionPolicy.duration(context, Motion.medium),
       curve: Motion.standardDecelerate,
       builder: (context, value, child) {
         return Opacity(

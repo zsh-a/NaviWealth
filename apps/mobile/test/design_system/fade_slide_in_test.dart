@@ -45,4 +45,23 @@ void main() {
 
     expect(find.text('delayed'), findsNothing);
   });
+
+  testWidgets('reacts when reduced motion changes while mounted', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(const FadeSlideIn(child: Text('ready'))));
+    await tester.pump(const Duration(milliseconds: 40));
+
+    await tester.pumpWidget(
+      _wrap(const FadeSlideIn(child: Text('ready')), disableAnimations: true),
+    );
+    await tester.pump();
+
+    final opacity = tester.widget<FadeTransition>(
+      find.byWidgetPredicate(
+        (widget) => widget is FadeTransition && widget.child is AnimatedBuilder,
+      ),
+    );
+    expect(opacity.opacity.value, 1);
+  });
 }

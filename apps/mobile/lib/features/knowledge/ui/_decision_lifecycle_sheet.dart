@@ -185,7 +185,7 @@ class _DecisionLifecycleSheetState
                     return FTappable(
                       onPress: () => setState(() => _status = s),
                       child: AnimatedContainer(
-                        duration: motionDuration(context, Motion.fast),
+                        duration: AppMotionPolicy.duration(context, Motion.fast),
                         curve: Motion.standardDecelerate,
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.s8,

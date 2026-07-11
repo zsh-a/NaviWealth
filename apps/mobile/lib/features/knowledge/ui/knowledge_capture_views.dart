@@ -167,7 +167,7 @@ class _CaptureSharedTextLine extends StatelessWidget {
     final colors = context.theme.colors;
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(end: promoted ? 1 : 0),
-      duration: motionDuration(context, Motion.medium),
+      duration: AppMotionPolicy.duration(context, Motion.medium),
       curve: Motion.standardDecelerate,
       builder: (context, progress, child) {
         final scale = 0.985 + 0.015 * progress;
@@ -183,7 +183,7 @@ class _CaptureSharedTextLine extends StatelessWidget {
             scale: scale,
             alignment: Alignment.centerLeft,
             child: AnimatedDefaultTextStyle(
-              duration: motionDuration(context, Motion.fast),
+              duration: AppMotionPolicy.duration(context, Motion.fast),
               curve: Motion.standardDecelerate,
               style: style.copyWith(color: color),
               child: child!,
@@ -296,7 +296,7 @@ class _CaptureKindChip extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: AnimatedContainer(
-        duration: motionDuration(context, Motion.fast),
+        duration: AppMotionPolicy.duration(context, Motion.fast),
         curve: Motion.standardDecelerate,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s10,

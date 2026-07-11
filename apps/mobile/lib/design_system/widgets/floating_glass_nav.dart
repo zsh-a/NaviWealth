@@ -3,10 +3,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 import '../tokens/typography_tokens.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
@@ -191,7 +191,7 @@ class _NavTabButton extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: AnimatedContainer(
-          duration: motionDuration(context, Motion.fast),
+          duration: AppMotionPolicy.duration(context, Motion.fast),
           curve: Motion.standardDecelerate,
           height: 52,
           padding: const EdgeInsets.symmetric(
@@ -214,7 +214,7 @@ class _NavTabButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedContainer(
-                duration: motionDuration(context, Motion.fast),
+                duration: AppMotionPolicy.duration(context, Motion.fast),
                 curve: Motion.standardDecelerate,
                 width: 26,
                 height: 26,
@@ -305,7 +305,10 @@ class _CenterActionButtonState extends State<_CenterActionButton>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final motionEnabled = AppMotionPolicy.isEnabled(
+      context,
+      role: AppMotionRole.decorative,
+    );
     final buttonColor = widget.isDark
         ? ColorPalette.navy800.withValues(alpha: AppOpacity.strong)
         : ColorPalette.navy950.withValues(alpha: AppOpacity.faint);
@@ -317,20 +320,14 @@ class _CenterActionButtonState extends State<_CenterActionButton>
       button: true,
       label: widget.label ?? 'AI',
       child: GestureDetector(
-        onTapDown: reduceMotion ? null : (_) => _controller.forward(),
+        onTapDown: motionEnabled ? (_) => _controller.forward() : null,
         onTapUp: (_) {
-          if (!reduceMotion) _controller.reverse();
+          if (motionEnabled) _controller.reverse();
           widget.onTap();
         },
-        onTapCancel: reduceMotion ? null : () => _controller.reverse(),
-        child: reduceMotion
-            ? _CenterActionButtonSurface(
-                icon: widget.icon,
-                label: widget.label,
-                buttonColor: buttonColor,
-                iconColor: iconColor,
-              )
-            : ScaleTransition(
+        onTapCancel: motionEnabled ? () => _controller.reverse() : null,
+        child: motionEnabled
+            ? ScaleTransition(
                 scale: _scale,
                 child: _CenterActionButtonSurface(
                   icon: widget.icon,
@@ -338,6 +335,12 @@ class _CenterActionButtonState extends State<_CenterActionButton>
                   buttonColor: buttonColor,
                   iconColor: iconColor,
                 ),
+              )
+            : _CenterActionButtonSurface(
+                icon: widget.icon,
+                label: widget.label,
+                buttonColor: buttonColor,
+                iconColor: iconColor,
               ),
       ),
     );

@@ -2,9 +2,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 import '../tokens/text_style_presets.dart';
 
 /// Unified scaffold for a domain's **top-level tab / hub page** (Today,
@@ -115,7 +115,7 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
         ? const <Widget>[]
         : <Widget>[widget.leading!];
     final header = AnimatedSize(
-      duration: motionDuration(context, Motion.medium),
+      duration: AppMotionPolicy.duration(context, Motion.medium),
       curve: Motion.standard,
       alignment: Alignment.topCenter,
       child: _headerVisible

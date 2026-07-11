@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 import 'money_text.dart';
 
 /// CountUp-style wrapper around [MoneyText] that smoothly animates between
@@ -98,7 +98,10 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final motionEnabled = AppMotionPolicy.isEnabled(
+      context,
+      role: AppMotionRole.status,
+    );
     final target = widget.amount;
 
     // Null in or null out → no number to interpolate. Defer to MoneyText's
@@ -107,7 +110,7 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
       return _staticMoneyText(target);
     }
 
-    if (reduceMotion) {
+    if (!motionEnabled) {
       return _staticMoneyText(target);
     }
 
@@ -125,7 +128,11 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
         '${widget.currencyCode}|${widget.compact}|${widget.symbolStyle.index}',
       ),
       tween: Tween<double>(begin: from, end: to),
-      duration: motionDuration(context, duration),
+      duration: AppMotionPolicy.duration(
+        context,
+        duration,
+        role: AppMotionRole.status,
+      ),
       curve: widget.curve,
       builder: (context, value, _) => _staticMoneyText(value),
     );

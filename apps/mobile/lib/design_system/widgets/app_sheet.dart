@@ -4,9 +4,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_busy_button.dart';
 import 'app_gradient_divider.dart';
@@ -300,7 +300,7 @@ class AppSheet extends StatelessWidget {
         _header(context),
         Flexible(
           child: AnimatedSize(
-            duration: motionDuration(context, Motion.fast),
+            duration: AppMotionPolicy.duration(context, Motion.fast),
             curve: Motion.standardDecelerate,
             alignment: Alignment.topCenter,
             child: body,

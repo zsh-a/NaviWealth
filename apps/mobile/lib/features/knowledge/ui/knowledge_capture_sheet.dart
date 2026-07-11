@@ -444,7 +444,7 @@ class _KnowledgeCaptureSheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AnimatedSwitcher(
-            duration: motionDuration(context, Motion.medium),
+            duration: AppMotionPolicy.duration(context, Motion.medium),
             switchInCurve: Motion.standardDecelerate,
             switchOutCurve: Motion.standardAccelerate,
             transitionBuilder: _capturePreviewTransition,
@@ -464,7 +464,7 @@ class _KnowledgeCaptureSheetState
           ),
           if (showSavedPreview) const SizedBox(height: AppSpacing.s12),
           AnimatedSwitcher(
-            duration: motionDuration(context, Motion.medium),
+            duration: AppMotionPolicy.duration(context, Motion.medium),
             switchInCurve: Motion.standardDecelerate,
             switchOutCurve: Motion.standardAccelerate,
             transitionBuilder: _captureStageTransition,

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 
@@ -77,8 +78,9 @@ class _SkeletonBoxState extends State<SkeletonBox>
   }
 
   void _syncAnimation() {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final shouldRun = widget.shimmer && !reduceMotion;
+    final shouldRun =
+        widget.shimmer &&
+        AppMotionPolicy.isEnabled(context, role: AppMotionRole.decorative);
     if (shouldRun == _running) return;
     _running = shouldRun;
     if (shouldRun) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/app_motion_policy.dart';
+
 /// `Hero` wrapper that becomes a no-op when [enabled] is false.
 ///
 /// List → detail Hero animations only make sense when navigation actually
@@ -33,7 +35,10 @@ class OptionalHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!enabled) return child;
+    if (!enabled ||
+        !AppMotionPolicy.isEnabled(context, role: AppMotionRole.transition)) {
+      return child;
+    }
     return Hero(
       tag: tag,
       flightShuttleBuilder: flightShuttleBuilder ?? _defaultShuttle,

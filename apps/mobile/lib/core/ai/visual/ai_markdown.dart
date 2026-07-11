@@ -127,7 +127,7 @@ class _AiMarkdownState extends State<AiMarkdown> {
     // AnimatedSize keyed off the parsed AST shape, the height change
     // glides on the AI motion curve.
     return AnimatedSize(
-      duration: AiMotion.duration(context, AiMotion.short),
+      duration: AppMotionPolicy.duration(context, AiMotion.short),
       curve: AiMotion.standard,
       alignment: Alignment.topLeft,
       child: Column(

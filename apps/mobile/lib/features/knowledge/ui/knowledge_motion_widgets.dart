@@ -38,14 +38,14 @@ class KnowledgeFloatingActionMotion extends StatelessWidget {
     return IgnorePointer(
       ignoring: hidden,
       child: AnimatedSlide(
-        duration: motionDuration(
+        duration: AppMotionPolicy.duration(
           context,
           _kKnowledgeFloatingActionMotionDuration,
         ),
         curve: Motion.standardDecelerate,
         offset: hidden ? const Offset(0, 1.25) : Offset.zero,
         child: AnimatedOpacity(
-          duration: motionDuration(
+          duration: AppMotionPolicy.duration(
             context,
             _kKnowledgeFloatingActionMotionDuration,
           ),
@@ -108,10 +108,10 @@ class _KnowledgeFloatingActionSurfaceState
           onTapCancel: () => setState(() => _pressed = false),
           child: AnimatedScale(
             scale: _pressed ? 0.92 : 1,
-            duration: motionDuration(context, Motion.fast),
+            duration: AppMotionPolicy.duration(context, Motion.fast),
             curve: Motion.standardDecelerate,
             child: AnimatedContainer(
-              duration: motionDuration(context, Motion.fast),
+              duration: AppMotionPolicy.duration(context, Motion.fast),
               curve: Motion.standardDecelerate,
               width: AppSpacing.s48,
               height: AppSpacing.s48,
@@ -239,7 +239,7 @@ class _KnowledgePullToRefreshState extends State<KnowledgePullToRefresh> {
           right: 0,
           child: IgnorePointer(
             child: AnimatedOpacity(
-              duration: motionDuration(context, Motion.fast),
+              duration: AppMotionPolicy.duration(context, Motion.fast),
               opacity: visible ? 1 : 0,
               child: Center(
                 child: Padding(

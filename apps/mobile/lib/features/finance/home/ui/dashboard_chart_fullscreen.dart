@@ -9,7 +9,8 @@ Future<void> showDashboardChartFullscreen({
   required Widget child,
 }) {
   return Navigator.of(context).push<void>(
-    PageRouteBuilder<void>(
+    buildAppPageRoute<void>(
+      context: context,
       fullscreenDialog: true,
       pageBuilder: (_, _, _) =>
           _DashboardChartFullscreenPage(title: title, child: child),

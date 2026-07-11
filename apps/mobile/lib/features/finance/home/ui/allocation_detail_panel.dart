@@ -53,7 +53,11 @@ Future<void> showAllocationDetailPanel({
     barrierLabel: 'allocation-detail-panel',
     barrierDismissible: true,
     barrierColor: SemanticColors.of(context).scrim,
-    transitionDuration: Motion.medium,
+    transitionDuration: AppMotionPolicy.duration(
+      context,
+      Motion.medium,
+      role: AppMotionRole.transition,
+    ),
     pageBuilder: (_, _, _) => _DesktopAllocationInspector(snapshot: snapshot),
     transitionBuilder: (context, animation, _, child) {
       final curved = CurvedAnimation(

@@ -24,7 +24,7 @@ class KnowledgeCreateTile extends StatelessWidget {
     return FTappable(
       onPress: onPress,
       child: AnimatedContainer(
-        duration: motionDuration(context, Motion.fast),
+        duration: AppMotionPolicy.duration(context, Motion.fast),
         curve: Motion.standardDecelerate,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s12,

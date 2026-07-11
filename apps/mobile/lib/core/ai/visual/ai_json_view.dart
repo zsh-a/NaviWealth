@@ -216,7 +216,7 @@ class _JsonNodeState extends State<_JsonNode> {
       children: [
         header,
         AnimatedSize(
-          duration: AiMotion.duration(context, AiMotion.short),
+          duration: AppMotionPolicy.duration(context, AiMotion.short),
           curve: AiMotion.standard,
           alignment: Alignment.topLeft,
           child: !_expanded

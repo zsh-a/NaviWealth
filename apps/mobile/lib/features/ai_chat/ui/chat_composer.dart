@@ -191,7 +191,7 @@ class _TrailingButton extends StatelessWidget {
         // isStreaming flips — toggling `canSend` keeps the same key, so
         // a keystroke doesn't trigger a transition.
         return AnimatedSwitcher(
-          duration: motionDuration(context, Motion.fast),
+          duration: AppMotionPolicy.duration(context, Motion.fast),
           transitionBuilder: (child, anim) =>
               FadeTransition(opacity: anim, child: child),
           child: current(canSend),

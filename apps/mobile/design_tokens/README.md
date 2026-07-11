@@ -28,6 +28,11 @@ import 'package:naviwealth/design_system/design_system.dart';
 
 // Static tokens — no theme required:
 Motion.medium;          // Duration(milliseconds: 220)
+AppMotionPolicy.duration(
+  context,
+  Motion.medium,
+  role: AppMotionRole.transition,
+);                      // Duration.zero when the OS requests less motion
 Breakpoints.mobile;     // 600
 AppSpacing.s16;         // 16.0
 AppRadius.lg;           // 16.0
@@ -40,6 +45,13 @@ return DeltaText(value: 0.0123, format: DeltaFormat.percent);
 ```
 
 Spacing and radius come from the `AppSpacing` / `AppRadius` scales in `dimens_tokens.dart` — chrome (sheets, cards, headers) references the scale instead of inlining magic numbers, which is what makes a global restyle a one-file change. Elevation/shadow still comes from Forui (e.g. `FCard`); there is no `AppElevations` class today.
+
+Application-owned animation must go through `AppMotionPolicy`. Choose a
+semantic role (`transition`, `decorative`, or `status`) and never read
+`MediaQuery.disableAnimationsOf` from feature code. Imperative navigation uses
+`buildAppPageRoute`, and shared-element navigation uses `OptionalHero`; both
+disable spatial motion automatically when requested by the operating system.
+`tool/lint-motion-policy.sh` enforces these boundaries in mobile CI.
 
 ## Direction-sensitive (market) colors
 

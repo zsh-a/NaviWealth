@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 
 /// Full-screen form body with a scrollable field area and a pinned action bar.
 ///
@@ -45,7 +45,7 @@ class AppFormScaffoldBody extends StatelessWidget {
     final body = FocusTraversalGroup(
       policy: WidgetOrderTraversalPolicy(),
       child: AnimatedPadding(
-        duration: motionDuration(context, Motion.ambient),
+        duration: AppMotionPolicy.duration(context, Motion.ambient),
         curve: Motion.standardDecelerate,
         padding: EdgeInsets.only(bottom: keyboardInset),
         child: Column(

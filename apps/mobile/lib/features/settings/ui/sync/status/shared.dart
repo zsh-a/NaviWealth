@@ -16,25 +16,32 @@ class _StatusOrbState extends State<_StatusOrb>
     vsync: this,
     duration: Motion.shimmerCycle,
   );
+  bool _running = false;
 
   @override
-  void initState() {
-    super.initState();
-    _updateAnimation();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimation();
   }
 
   @override
   void didUpdateWidget(covariant _StatusOrb oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.status != widget.status) _updateAnimation();
+    if (oldWidget.status != widget.status) _syncAnimation();
   }
 
-  void _updateAnimation() {
-    if (widget.status == SyncStatus.syncing) {
+  void _syncAnimation() {
+    final shouldRun =
+        widget.status == SyncStatus.syncing &&
+        AppMotionPolicy.isEnabled(context, role: AppMotionRole.status);
+    if (shouldRun == _running) return;
+    _running = shouldRun;
+    if (shouldRun) {
       _ctrl.repeat(reverse: true);
     } else {
-      _ctrl.stop();
-      _ctrl.value = 0;
+      _ctrl
+        ..stop()
+        ..value = 0;
     }
   }
 

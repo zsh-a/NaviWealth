@@ -74,7 +74,7 @@ class _ViewChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: Motion.medium,
+        duration: AppMotionPolicy.duration(context, Motion.medium),
         curve: Motion.emphasizedDecelerate,
         padding: const EdgeInsets.symmetric(
           vertical: AppSpacing.s8,

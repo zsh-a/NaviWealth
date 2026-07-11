@@ -421,7 +421,7 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
           ],
         ),
         AnimatedSwitcher(
-          duration: motionDuration(context, Motion.fast),
+          duration: AppMotionPolicy.duration(context, Motion.fast),
           child: _expanded
               ? Padding(
                   key: const ValueKey<String>('details'),

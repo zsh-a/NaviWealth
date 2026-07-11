@@ -35,7 +35,7 @@ class DesktopSidebar extends ConsumerWidget {
     final collapsed = ref.watch(sidebarCollapsedProvider);
     final colors = context.theme.colors;
     return AnimatedContainer(
-      duration: motionDuration(context, Motion.fast),
+      duration: AppMotionPolicy.duration(context, Motion.fast),
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
       decoration: BoxDecoration(

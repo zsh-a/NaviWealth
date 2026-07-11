@@ -280,7 +280,8 @@ class _PreviewRow extends StatelessWidget {
     }
 
     Navigator.of(context).push<void>(
-      PageRouteBuilder<void>(
+      buildAppPageRoute<void>(
+        context: context,
         pageBuilder: (_, _, _) => ActivityEntryDetailPage(
           entry: args.entry,
           accountsById: args.accountsById,

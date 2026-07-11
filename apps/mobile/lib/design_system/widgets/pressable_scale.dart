@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/haptics/haptics.dart';
+import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 
 /// A lightweight tap-feedback wrapper that scales its child down on press.
 ///
@@ -61,7 +61,11 @@ class _PressableScaleState extends State<PressableScale> {
       },
       child: AnimatedScale(
         scale: _pressed ? widget.scaleFactor : 1,
-        duration: motionDuration(context, Motion.fast),
+        duration: AppMotionPolicy.duration(
+          context,
+          Motion.fast,
+          role: AppMotionRole.decorative,
+        ),
         curve: Motion.standardDecelerate,
         child: widget.child,
       ),

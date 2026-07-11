@@ -149,8 +149,8 @@ Future<void> pumpAndSnapshotMobile(
 
   await tester.pumpWidget(
     // `disableAnimations: true` quiets the SkeletonBox shimmer
-    // AnimationController (it gates on MediaQuery.disableAnimationsOf in
-    // _syncAnimation) and stops fl_chart entry tweens. Without it the
+    // AnimationController (it gates on AppMotionPolicy in _syncAnimation)
+    // and stops fl_chart entry tweens. Without it the
     // ticker stays live past the test body and the framework asserts
     // "A Timer is still pending after the widget tree was disposed."
     // Goldens want a still frame, not a partial paint of a moving band,

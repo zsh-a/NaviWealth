@@ -38,7 +38,7 @@ class _MetadataSectionState extends State<_MetadataSection> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.s4),
                 child: AnimatedRotation(
-                  duration: motionDuration(context, Motion.fast),
+                  duration: AppMotionPolicy.duration(context, Motion.fast),
                   turns: _expanded ? 0.5 : 0,
                   child: Icon(
                     FLucideIcons.chevronDown,

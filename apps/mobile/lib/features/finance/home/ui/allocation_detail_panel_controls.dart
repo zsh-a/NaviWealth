@@ -65,7 +65,7 @@ class _DimensionButton extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: AnimatedContainer(
-        duration: Motion.fast,
+        duration: AppMotionPolicy.duration(context, Motion.fast),
         curve: Motion.standardDecelerate,
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
         decoration: BoxDecoration(

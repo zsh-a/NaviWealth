@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 import '../tokens/text_style_presets.dart';
 
 /// Shared Forui-based segmented control with a quiet single-surface chrome.
@@ -95,7 +95,7 @@ class SegmentedRow<T> extends StatelessWidget {
     final selected = option == value;
     final foreground = selected ? colors.foreground : colors.mutedForeground;
     final label = labelOf(option);
-    final duration = motionDuration(context, Motion.fast);
+    final duration = AppMotionPolicy.duration(context, Motion.fast);
 
     final content = AnimatedDefaultTextStyle(
       duration: duration,

@@ -75,7 +75,7 @@ void main() {
         );
   }
 
-  Widget wrap() {
+  Widget wrap({bool disableAnimations = false}) {
     return ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWith((_) async => db),
@@ -100,6 +100,13 @@ void main() {
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) {
+          final media = MediaQuery.of(context);
+          return MediaQuery(
+            data: media.copyWith(disableAnimations: disableAnimations),
+            child: child!,
+          );
+        },
         home: FTheme(
           data: FThemes.slate.light.desktop,
           child: const SyncStatusPage(),
@@ -108,11 +115,15 @@ void main() {
     );
   }
 
-  Future<void> pumpPage(WidgetTester tester, Size size) async {
+  Future<void> pumpPage(
+    WidgetTester tester,
+    Size size, {
+    bool disableAnimations = false,
+  }) async {
     await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await seedDiagnostics();
-    await tester.pumpWidget(wrap());
+    await tester.pumpWidget(wrap(disableAnimations: disableAnimations));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   }
@@ -171,5 +182,22 @@ void main() {
 
     expect((pendingY - localRowsY).abs(), lessThan(1));
     expect((pendingY - lastSyncY).abs(), lessThan(1));
+  });
+
+  testWidgets('syncing status is static when motion is disabled', (
+    tester,
+  ) async {
+    await pumpPage(tester, const Size(900, 1400), disableAnimations: true);
+    bus.emit(
+      SyncStatusEvent(
+        status: SyncStatus.syncing,
+        at: DateTime.utc(2026, 6, 19, 9, 1),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(find.text('Syncing…'), findsOneWidget);
+    expect(tester.binding.hasScheduledFrame, isFalse);
   });
 }

@@ -20,6 +20,7 @@ on:
       - 'tool/check-sync-client-wire-fixtures.sh'
       - 'tool/check-tool-descriptors.sh'
       - 'tool/lint-money-display.sh'
+      - 'tool/lint-motion-policy.sh'
       - 'tool/lint-no-finance-in-core.sh'
       - 'tool/lint-no-feature-in-shared.sh'
       - 'tool/lint-design-system-domain-neutral.sh'
@@ -53,6 +54,7 @@ on:
       - 'tool/check-sync-client-wire-fixtures.sh'
       - 'tool/check-tool-descriptors.sh'
       - 'tool/lint-money-display.sh'
+      - 'tool/lint-motion-policy.sh'
       - 'tool/lint-no-finance-in-core.sh'
       - 'tool/lint-no-feature-in-shared.sh'
       - 'tool/lint-design-system-domain-neutral.sh'
@@ -147,6 +149,7 @@ jobs:
           ./tool/check-sync-client-wire-fixtures.sh
           ./tool/check-tool-descriptors.sh
           ./tool/lint-money-display.sh --strict
+          ./tool/lint-motion-policy.sh
           ./tool/lint-no-finance-in-core.sh
           ./tool/lint-no-feature-in-shared.sh
           ./tool/lint-design-system-domain-neutral.sh

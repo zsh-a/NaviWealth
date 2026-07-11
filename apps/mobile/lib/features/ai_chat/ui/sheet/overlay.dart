@@ -33,7 +33,7 @@ class _SheetFrame extends StatelessWidget {
     return SizedBox(
       height: height,
       child: AnimatedPadding(
-        duration: AiMotion.duration(context, Motion.fast),
+        duration: AppMotionPolicy.duration(context, Motion.fast),
         curve: AiMotion.standard,
         padding: EdgeInsets.only(bottom: keyboard),
         child: child,

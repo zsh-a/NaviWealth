@@ -61,7 +61,7 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _controller.duration = motionDuration(context, Motion.medium);
+    _controller.duration = AppMotionPolicy.duration(context, Motion.medium);
   }
 
   @override
@@ -74,7 +74,7 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   void didUpdateWidget(DomainTabsShell old) {
     super.didUpdateWidget(old);
     if (widget.shell.currentIndex != old.shell.currentIndex) {
-      if (MediaQuery.disableAnimationsOf(context)) {
+      if (!AppMotionPolicy.isEnabled(context, role: AppMotionRole.transition)) {
         _controller.value = 1;
       } else {
         _controller.forward(from: 0);

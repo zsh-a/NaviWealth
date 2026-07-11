@@ -391,7 +391,7 @@ class _DisclaimerCardState extends State<_DisclaimerCard> {
             crossFadeState: _expanded
                 ? CrossFadeState.showFirst
                 : CrossFadeState.showSecond,
-            duration: motionDuration(context, Motion.fast),
+            duration: AppMotionPolicy.duration(context, Motion.fast),
           ),
         ],
       ),

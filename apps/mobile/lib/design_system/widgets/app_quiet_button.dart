@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../theme/semantic_colors.dart';
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 import '../tokens/text_style_presets.dart';
 
 enum AppQuietButtonTone { neutral, danger }
@@ -93,7 +93,7 @@ class AppQuietButton extends StatelessWidget {
       child: FTappable(
         onPress: enabled ? onPress : null,
         child: AnimatedContainer(
-          duration: motionDuration(context, Motion.fast),
+          duration: AppMotionPolicy.duration(context, Motion.fast),
           curve: Motion.standard,
           constraints: const BoxConstraints(minHeight: 36),
           padding: const EdgeInsets.symmetric(

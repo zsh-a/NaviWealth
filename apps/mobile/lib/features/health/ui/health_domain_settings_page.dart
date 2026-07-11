@@ -178,7 +178,7 @@ class _BriefingHourSheet extends StatelessWidget {
           return GestureDetector(
             onTap: () => Navigator.of(context).pop(index),
             child: AnimatedContainer(
-              duration: Motion.medium,
+              duration: AppMotionPolicy.duration(context, Motion.medium),
               curve: Motion.standardDecelerate,
               width: 48,
               alignment: Alignment.center,

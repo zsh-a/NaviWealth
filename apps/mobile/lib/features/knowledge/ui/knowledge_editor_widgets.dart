@@ -184,7 +184,7 @@ class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
           else
             header,
           AnimatedSwitcher(
-            duration: motionDuration(context, Motion.fast),
+            duration: AppMotionPolicy.duration(context, Motion.fast),
             child: _expanded
                 ? Column(
                     key: const ValueKey<String>('expanded'),

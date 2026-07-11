@@ -41,4 +41,20 @@ void main() {
     expect(find.byType(Hero), findsNothing);
     expect(find.text('Apple'), findsNWidgets(2));
   });
+
+  testWidgets('OptionalHero is a no-op when motion is disabled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: OptionalHero(tag: 'asset-1-name', child: Text('Apple')),
+        ),
+      ),
+    );
+
+    expect(find.byType(Hero), findsNothing);
+    expect(find.text('Apple'), findsOneWidget);
+  });
 }

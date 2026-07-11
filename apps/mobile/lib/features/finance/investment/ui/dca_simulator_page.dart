@@ -137,7 +137,8 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     );
     for (final prefill in prefills) {
       final recorded = await Navigator.of(context).push<bool>(
-        PageRouteBuilder<bool>(
+        buildAppPageRoute<bool>(
+          context: context,
           pageBuilder: (_, _, _) => TradeEntryFormPage(prefill: prefill),
         ),
       );

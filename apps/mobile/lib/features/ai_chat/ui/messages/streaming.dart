@@ -162,7 +162,7 @@ class _TypingDotsState extends State<_TypingDots>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context)) {
+    if (!AppMotionPolicy.isEnabled(context, role: AppMotionRole.status)) {
       _ctrl
         ..stop()
         ..value = 1;
@@ -231,7 +231,7 @@ class _StreamingCaretState extends State<_StreamingCaret>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context)) {
+    if (!AppMotionPolicy.isEnabled(context, role: AppMotionRole.status)) {
       _ctrl
         ..stop()
         ..value = 1;

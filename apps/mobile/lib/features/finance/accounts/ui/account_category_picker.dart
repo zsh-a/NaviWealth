@@ -113,7 +113,7 @@ class _CategoryCard extends StatelessWidget {
         : colors.foreground.withValues(alpha: AppOpacity.whisper);
     final iconColor = selected ? colors.primary : colors.mutedForeground;
     return AnimatedContainer(
-      duration: Motion.fast,
+      duration: AppMotionPolicy.duration(context, Motion.fast),
       curve: Motion.standardDecelerate,
       decoration: BoxDecoration(
         color: fill,

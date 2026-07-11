@@ -328,7 +328,7 @@ class _LibraryTabBar extends StatelessWidget {
           return FTappable(
             onPress: () => onChanged(segment),
             child: AnimatedContainer(
-              duration: motionDuration(context, Motion.fast),
+              duration: AppMotionPolicy.duration(context, Motion.fast),
               curve: Motion.standardDecelerate,
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s10,

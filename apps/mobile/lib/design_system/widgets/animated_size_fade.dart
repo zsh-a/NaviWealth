@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 
 /// Combines [AnimatedSize] and [AnimatedOpacity] for content that
 /// expands/collapses with a smooth height animation and fade.
@@ -47,7 +47,7 @@ class AnimatedSizeFade extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveDuration = motionDuration(context, duration);
+    final effectiveDuration = AppMotionPolicy.duration(context, duration);
 
     return AnimatedSize(
       duration: effectiveDuration,

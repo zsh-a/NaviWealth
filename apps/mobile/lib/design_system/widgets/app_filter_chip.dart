@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/motion_utils.dart';
 import '../tokens/text_style_presets.dart';
 
 /// Low-noise selectable filter chip for dense filter rows.
@@ -43,7 +43,7 @@ class AppFilterChip extends StatelessWidget {
       child: FTappable(
         onPress: onPress,
         child: AnimatedContainer(
-          duration: motionDuration(context, Motion.fast),
+          duration: AppMotionPolicy.duration(context, Motion.fast),
           curve: Motion.standard,
           constraints: const BoxConstraints(minHeight: 34),
           padding: const EdgeInsets.symmetric(

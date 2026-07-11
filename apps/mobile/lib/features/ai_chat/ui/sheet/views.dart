@@ -133,19 +133,31 @@ class _BodySkeleton extends StatefulWidget {
 class _BodySkeletonState extends State<_BodySkeleton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(vsync: this);
-  bool _configured = false;
+  bool _running = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_configured) return;
-    _configured = true;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    _ctrl.duration = AiMotion.duration(context, Motion.shimmerCycle);
-    if (widget.animated && !reduceMotion) {
+    _syncAnimation();
+  }
+
+  void _syncAnimation() {
+    _ctrl.duration = AppMotionPolicy.duration(
+      context,
+      Motion.shimmerCycle,
+      role: AppMotionRole.decorative,
+    );
+    final shouldRun =
+        widget.animated &&
+        AppMotionPolicy.isEnabled(context, role: AppMotionRole.decorative);
+    if (shouldRun == _running) return;
+    _running = shouldRun;
+    if (shouldRun) {
       _ctrl.repeat(reverse: true);
     } else {
-      _ctrl.value = 1;
+      _ctrl
+        ..stop()
+        ..value = widget.animated ? 1 : 0;
     }
   }
 
@@ -153,12 +165,7 @@ class _BodySkeletonState extends State<_BodySkeleton>
   void didUpdateWidget(_BodySkeleton oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.animated == oldWidget.animated) return;
-    if (widget.animated) {
-      _ctrl.repeat(reverse: true);
-    } else {
-      _ctrl.stop();
-      _ctrl.value = 0;
-    }
+    _syncAnimation();
   }
 
   @override

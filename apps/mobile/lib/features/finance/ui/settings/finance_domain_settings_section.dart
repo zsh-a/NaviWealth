@@ -257,7 +257,7 @@ class _SettingsChoicePill extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: AnimatedContainer(
-        duration: Motion.medium,
+        duration: AppMotionPolicy.duration(context, Motion.medium),
         curve: Motion.standardDecelerate,
         constraints: const BoxConstraints(minHeight: 34),
         padding: const EdgeInsets.symmetric(

@@ -64,7 +64,7 @@ class AiPill extends StatelessWidget {
     };
 
     final pill = AnimatedContainer(
-      duration: AiMotion.duration(context, AiMotion.short),
+      duration: AppMotionPolicy.duration(context, AiMotion.short),
       curve: AiMotion.standard,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s10,

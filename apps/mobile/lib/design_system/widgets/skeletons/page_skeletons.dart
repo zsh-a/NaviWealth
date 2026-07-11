@@ -14,10 +14,10 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../tokens/app_motion_policy.dart';
 import '../../tokens/breakpoints.dart';
 import '../../tokens/dimens_tokens.dart';
 import '../../tokens/motion_tokens.dart';
-import '../../tokens/motion_utils.dart';
 import '../responsive_two_column.dart';
 import '../skeleton.dart';
 
