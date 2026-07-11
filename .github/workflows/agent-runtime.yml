@@ -7,6 +7,10 @@ on:
       - '.gitmodules'
       - 'third_party/agent-runtime'
       - 'apps/mobile/native/lifeos_native/**'
+      - 'apps/mobile/lib/app/agent_runtime/**'
+      - 'apps/mobile/lib/src/rust/**'
+      - 'apps/mobile/test/app/agent_runtime_*.dart'
+      - 'apps/mobile/test/app/frb_chat_runner_test.dart'
       - 'docs/architecture/agent-runtime-current.md'
       - 'docs/architecture/rust-agent-runtime-mvp.md'
       - '.github/workflows/agent-runtime.yml'
@@ -15,6 +19,10 @@ on:
       - '.gitmodules'
       - 'third_party/agent-runtime'
       - 'apps/mobile/native/lifeos_native/**'
+      - 'apps/mobile/lib/app/agent_runtime/**'
+      - 'apps/mobile/lib/src/rust/**'
+      - 'apps/mobile/test/app/agent_runtime_*.dart'
+      - 'apps/mobile/test/app/frb_chat_runner_test.dart'
       - 'docs/architecture/agent-runtime-current.md'
       - 'docs/architecture/rust-agent-runtime-mvp.md'
       - '.github/workflows/agent-runtime.yml'
@@ -58,3 +66,37 @@ jobs:
         with:
           workspaces: apps/mobile/native/lifeos_native
       - run: cargo test
+
+  flutter-consumer-contracts:
+    name: Flutter embedded-runtime contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Stub web-only font assets so the asset bundle resolves
+        run: |
+          mkdir -p assets/fonts
+          touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
+          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
+                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
+                assets/fonts/outfit-bold.woff2
+      - name: Run embedded-runtime consumer tests
+        run: >
+          flutter test
+          test/app/agent_runtime_catalog_test.dart
+          test/app/agent_runtime_native_bridge_test.dart
+          test/app/agent_runtime_runner_test.dart
+          test/app/agent_runtime_tool_host_test.dart
+          test/app/agent_runtime_proposal_bridge_test.dart
+          test/app/agent_runtime_trace_recorder_test.dart
+          test/app/frb_chat_runner_test.dart
+          --reporter=expanded

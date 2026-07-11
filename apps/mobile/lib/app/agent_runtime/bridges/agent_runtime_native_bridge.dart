@@ -76,7 +76,41 @@ abstract interface class AgentRuntimeNativeApi {
   });
 }
 
-class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
+abstract interface class AgentRuntimeSnapshotNativeApi {
+  Future<String> startProfileTurnSnapshot({
+    required String catalogJson,
+    required String llmRequestJson,
+    required String agentId,
+    required String runMetadataJson,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  });
+  Future<String> startRunSnapshot({
+    required String catalogJson,
+    required String requestJson,
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  });
+  Future<String> continueRunSnapshot({
+    required String catalogJson,
+    required String snapshotJson,
+    required String effectResponseJson,
+    required String agentId,
+  });
+  Future<String> startRequestedSubagentSnapshot({
+    required String catalogJson,
+    required String parentSnapshotJson,
+  });
+  Future<String> resumeParentFromSubagentSnapshot({
+    required String catalogJson,
+    required String parentSnapshotJson,
+    required String childSnapshotJson,
+  });
+}
+
+class FrbAgentRuntimeNativeApi
+    implements AgentRuntimeNativeApi, AgentRuntimeSnapshotNativeApi {
   const FrbAgentRuntimeNativeApi();
 
   @override
@@ -173,6 +207,81 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeNativeApi {
       agentId: agentId,
     );
   }
+
+  @override
+  Future<String> startRunSnapshot({
+    required String catalogJson,
+    required String requestJson,
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) {
+    return rust.agentRuntimeStartRunSnapshot(
+      catalogJson: catalogJson,
+      requestJson: requestJson,
+      agentId: agentId,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
+  }
+
+  @override
+  Future<String> startProfileTurnSnapshot({
+    required String catalogJson,
+    required String llmRequestJson,
+    required String agentId,
+    required String runMetadataJson,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) {
+    return rust.agentRuntimeStartProfileTurnSnapshot(
+      catalogJson: catalogJson,
+      llmRequestJson: llmRequestJson,
+      agentId: agentId,
+      runMetadataJson: runMetadataJson,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
+  }
+
+  @override
+  Future<String> continueRunSnapshot({
+    required String catalogJson,
+    required String snapshotJson,
+    required String effectResponseJson,
+    required String agentId,
+  }) {
+    return rust.agentRuntimeContinueRunSnapshot(
+      catalogJson: catalogJson,
+      snapshotJson: snapshotJson,
+      effectResponseJson: effectResponseJson,
+      agentId: agentId,
+    );
+  }
+
+  @override
+  Future<String> startRequestedSubagentSnapshot({
+    required String catalogJson,
+    required String parentSnapshotJson,
+  }) {
+    return rust.agentRuntimeStartRequestedSubagentSnapshot(
+      catalogJson: catalogJson,
+      parentSnapshotJson: parentSnapshotJson,
+    );
+  }
+
+  @override
+  Future<String> resumeParentFromSubagentSnapshot({
+    required String catalogJson,
+    required String parentSnapshotJson,
+    required String childSnapshotJson,
+  }) {
+    return rust.agentRuntimeResumeParentFromSubagentSnapshot(
+      catalogJson: catalogJson,
+      parentSnapshotJson: parentSnapshotJson,
+      childSnapshotJson: childSnapshotJson,
+    );
+  }
 }
 
 abstract interface class AgentRuntimeNativeBridge {
@@ -212,7 +321,41 @@ abstract interface class AgentRuntimeNativeBridge {
   });
 }
 
-class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
+abstract interface class AgentRuntimeSnapshotBridge {
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  });
+  Future<Map<String, Object?>> startRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  });
+  Future<Map<String, Object?>> continueRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required Map<String, Object?> effectResponse,
+    required String agentId,
+  });
+  Future<Map<String, Object?>> startRequestedSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+  });
+  Future<Map<String, Object?>> resumeParentFromSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+    required Map<String, Object?> childSnapshot,
+  });
+}
+
+class FfiAgentRuntimeNativeBridge
+    implements AgentRuntimeNativeBridge, AgentRuntimeSnapshotBridge {
   FfiAgentRuntimeNativeBridge({
     required AgentRuntimeNativeApi api,
     required LifeosNativeRuntimeInitializer initRuntime,
@@ -370,6 +513,99 @@ class FfiAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
       previousStepJson: jsonEncode(previousStep),
       effectResponseJson: jsonEncode(effectResponse),
       agentId: agentId,
+    );
+    return _decodeObject(json);
+  }
+
+  AgentRuntimeSnapshotNativeApi get _snapshotApi {
+    final api = _api;
+    if (api is AgentRuntimeSnapshotNativeApi) {
+      return api as AgentRuntimeSnapshotNativeApi;
+    }
+    throw UnsupportedError('native runtime does not expose snapshot APIs');
+  }
+
+  @override
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) async {
+    await _ensureInitialized();
+    final json = await _snapshotApi.startProfileTurnSnapshot(
+      catalogJson: jsonEncode(catalog),
+      llmRequestJson: jsonEncode(llmRequest),
+      agentId: agentId,
+      runMetadataJson: jsonEncode(runMetadata),
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> startRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) async {
+    await _ensureInitialized();
+    final json = await _snapshotApi.startRunSnapshot(
+      catalogJson: jsonEncode(catalog),
+      requestJson: jsonEncode(request),
+      agentId: agentId,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> continueRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required Map<String, Object?> effectResponse,
+    required String agentId,
+  }) async {
+    await _ensureInitialized();
+    final json = await _snapshotApi.continueRunSnapshot(
+      catalogJson: jsonEncode(catalog),
+      snapshotJson: jsonEncode(snapshot),
+      effectResponseJson: jsonEncode(effectResponse),
+      agentId: agentId,
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> startRequestedSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+  }) async {
+    await _ensureInitialized();
+    final json = await _snapshotApi.startRequestedSubagentSnapshot(
+      catalogJson: jsonEncode(catalog),
+      parentSnapshotJson: jsonEncode(parentSnapshot),
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> resumeParentFromSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+    required Map<String, Object?> childSnapshot,
+  }) async {
+    await _ensureInitialized();
+    final json = await _snapshotApi.resumeParentFromSubagentSnapshot(
+      catalogJson: jsonEncode(catalog),
+      parentSnapshotJson: jsonEncode(parentSnapshot),
+      childSnapshotJson: jsonEncode(childSnapshot),
     );
     return _decodeObject(json);
   }

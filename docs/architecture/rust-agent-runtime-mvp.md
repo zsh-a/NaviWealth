@@ -129,10 +129,16 @@ Implemented:
   which accepts the previous native step plus the Dart-side effect response,
   validates the continuation envelope, and returns the next native step or a
   terminal native step
-- Dart-side `AgentRuntimeNativeStepRunner` that performs a bounded embedded
-  effect loop: FRB start step -> Dart host-effect dispatch -> FRB
-  continuation step, repeated until a terminal native step or the effect
-  budget is exhausted
+- Versioned embedded-run snapshots exposed through
+  `agentRuntimeStartRunSnapshot`, `agentRuntimeContinueRunSnapshot`,
+  `agentRuntimeStartRequestedSubagentSnapshot`, and
+  `agentRuntimeResumeParentFromSubagentSnapshot`. Rust owns continuation state,
+  the shared parent/child effect budget, subagent depth, and terminal closure;
+  Dart only dispatches requested device effects and returns JSON-RPC responses.
+  The older start/continue step functions remain compatibility entrypoints.
+- Dart-side `AgentRuntimeNativeStepRunner` that prefers the snapshot API for
+  production bridges and retains its previous bounded step loop only as a
+  fallback for legacy/test bridges
 - Dart-side `AgentRuntimeProposalBridge` that parses ready proposal envelopes
   from terminal FRB steps and, after an explicit caller confirmation, dispatches
   them through the existing cross-domain `ProposalApplier`
@@ -146,15 +152,16 @@ Implemented:
   use the current domain composition without manually passing catalog JSON
 - Dart-side `AgentRuntimeProfileTurnRunner` and
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB
-  LLM completion with the bounded native FRB effect loop and return both the
+  LLM completion with the Rust-owned snapshot effect loop and return both the
   LLM response and terminal native step; the runner rejects mismatched native
   turn protocol versions and malformed `llm_response` / `step` objects before
   dispatching Dart host effects
-- FRB-facing native profile-turn step via
-  `agentRuntimeStartProfileTurnStep`, which completes the active-profile LLM
+- FRB-facing native profile-turn snapshot via
+  `agentRuntimeStartProfileTurnSnapshot`, which completes the active-profile LLM
   request in Rust, normalizes `null` run metadata to an object, rejects
-  non-object run metadata, and starts the first native runtime step before Dart
-  resumes bounded host-effect dispatch
+  non-object run metadata, and starts a versioned runtime snapshot before Dart
+  resumes host-effect dispatch. `agentRuntimeStartProfileTurnStep` remains the
+  compatibility fallback.
 - Native FRB effect continuation: `agentRuntimeStartRunStep` seeds
   `input.effects` from run input or LLM response metadata, and
   `agentRuntimeContinueRunStep` consumes each Dart `effect_response` before
@@ -172,9 +179,9 @@ Implemented:
   also exposes `readFromEffectPlan`, so business readers share the same
   run/decode/fallback control flow.
 - The shared trace fixture set includes a valid `closed_early`
-  `agent_runtime_step`; effect-budget exhaustion is now closed through the
-  native FRB continuation path so Rust owns the terminal step/run_state/trace
-  shape while Dart only sends the structured budget-exhausted effect response
+  `agent_runtime_step`; effect-budget exhaustion is closed by the Rust snapshot
+  loop so Rust owns the terminal step/run_state/trace shape and the host does
+  not synthesize a budget response on the production path
 - `trace.schema.json` and the native FRB validator both enforce
   `agent_runtime_step.run_state.status` / `terminal_reason` consistency, so
   terminal state semantics are shared across CLI fixtures, native validation,

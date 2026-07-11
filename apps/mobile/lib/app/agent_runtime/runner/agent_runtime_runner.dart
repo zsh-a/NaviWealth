@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
@@ -62,15 +63,49 @@ class AgentRuntimeProfileTurnRunner
     int? maxEffectSteps,
   }) async {
     final catalog = _catalogReader?.call() ?? _catalog!;
-    final nativeTurn = await _stepRunner.bridge.startProfileTurnStep(
-      catalog: catalog.toJson(),
-      llmRequest: _llmBridge.buildRequest(
-        messages: messages,
-        tools: tools,
-        temperature: temperature,
-        maxOutputTokens: maxOutputTokens,
-        metadata: metadata,
-      ),
+    final catalogJson = catalog.toJson();
+    final llmRequest = _llmBridge.buildRequest(
+      messages: messages,
+      tools: tools,
+      temperature: temperature,
+      maxOutputTokens: maxOutputTokens,
+      metadata: metadata,
+    );
+    final bridge = _stepRunner.bridge;
+    if (bridge is AgentRuntimeSnapshotBridge) {
+      final snapshotBridge = bridge as AgentRuntimeSnapshotBridge;
+      final limit = maxEffectSteps ?? _stepRunner.defaultMaxEffectSteps;
+      if (limit < 0) {
+        throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
+      }
+      final nativeTurn = await snapshotBridge.startProfileTurnSnapshot(
+        catalog: catalogJson,
+        llmRequest: llmRequest,
+        agentId: agentId,
+        runMetadata: metadata,
+        maxEffectSteps: limit,
+        maxSubagentDepth: _stepRunner.defaultMaxSubagentDepth,
+      );
+      _expectProtocolVersion(nativeTurn);
+      final llmResponse = _expectObject(
+        nativeTurn['llm_response'],
+        'llm_response',
+      );
+      final initialSnapshot = _expectObject(nativeTurn['snapshot'], 'snapshot');
+      final stepRun = await _stepRunner.continueSnapshotUntilTerminalWithTrace(
+        catalog: catalogJson,
+        initialSnapshot: initialSnapshot,
+        agentId: agentId,
+      );
+      return core_profile_turn.AgentRuntimeProfileTurnResult(
+        llmResponse: llmResponse,
+        step: stepRun.terminalStep,
+        stepRun: stepRun,
+      );
+    }
+    final nativeTurn = await bridge.startProfileTurnStep(
+      catalog: catalogJson,
+      llmRequest: llmRequest,
       agentId: agentId,
       runMetadata: metadata,
     );
@@ -81,7 +116,7 @@ class AgentRuntimeProfileTurnRunner
     );
     final initialStep = _expectObject(nativeTurn['step'], 'step');
     final stepRun = await _stepRunner.continueUntilTerminalWithTrace(
-      catalog: catalog.toJson(),
+      catalog: catalogJson,
       initialStep: initialStep,
       agentId: agentId,
       maxEffectSteps: maxEffectSteps,

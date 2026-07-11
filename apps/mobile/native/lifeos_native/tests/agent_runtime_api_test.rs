@@ -1,8 +1,10 @@
 use lifeos_native::api::agent_runtime::{
     agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
-    agent_runtime_complete_profile_llm,
+    agent_runtime_complete_profile_llm, agent_runtime_continue_run_snapshot,
     agent_runtime_continue_run_step as raw_agent_runtime_continue_run_step,
-    agent_runtime_protocol_version, agent_runtime_start_profile_turn_step,
+    agent_runtime_protocol_version, agent_runtime_resume_parent_from_subagent_snapshot,
+    agent_runtime_start_profile_turn_snapshot, agent_runtime_start_profile_turn_step,
+    agent_runtime_start_requested_subagent_snapshot, agent_runtime_start_run_snapshot,
     agent_runtime_start_run_step, agent_runtime_validate_chat_turn_request,
     agent_runtime_validate_llm_request, agent_runtime_validate_llm_response,
     agent_runtime_validate_run_request, agent_runtime_validate_tool_spec,
@@ -1204,6 +1206,38 @@ async fn start_profile_turn_step_completes_llm_and_starts_native_step() {
         turn["step"]["output"]["llm_response"]["content"],
         "native turn response"
     );
+}
+
+#[tokio::test]
+async fn start_profile_turn_snapshot_returns_runtime_owned_limits() {
+    let turn_json = agent_runtime_start_profile_turn_snapshot(
+        include_str!(
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
+        )
+        .to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "provider": "mock",
+          "model": "mock-model",
+          "messages": [{"role": "user", "content": "ping"}],
+          "metadata": {"mock_response": "snapshot turn response"}
+        }"#
+        .to_owned(),
+        "ai_chat".to_owned(),
+        r#"{"surface":"rust_test"}"#.to_owned(),
+        3,
+        2,
+    )
+    .await
+    .expect("profile turn snapshot should complete");
+    let turn: Value = serde_json::from_str(&turn_json).expect("turn should be json");
+
+    assert_eq!(turn["protocol_version"], "agent.v1");
+    assert_eq!(turn["llm_response"]["content"], "snapshot turn response");
+    assert_eq!(turn["snapshot"]["snapshot_version"], 1);
+    assert_eq!(turn["snapshot"]["step"]["status"], "completed");
+    assert_eq!(turn["snapshot"]["limits"]["max_effect_steps"], 3);
+    assert_eq!(turn["snapshot"]["limits"]["max_subagent_depth"], 2);
 }
 
 #[tokio::test]
@@ -3470,6 +3504,98 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
     assert_eq!(next["run_state"]["effect_result_count"], 1);
     assert_eq!(next["trace_event"]["status"], "closed_early");
     assert_eq!(next["trace_event"]["tool_name"], "propose_fake");
+}
+
+#[test]
+fn embedded_snapshot_enforces_effect_budget_in_native_runtime() {
+    let catalog = include_str!(
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
+    )
+    .to_owned();
+    let snapshot_json = agent_runtime_start_run_snapshot(
+        catalog.clone(),
+        json!({
+            "protocol_version": "agent.v1",
+            "input": {
+                "effects": [
+                    {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
+                    {"kind": "tool", "name": "propose_fake", "input": {"value": 2}}
+                ]
+            },
+            "trigger": "manual",
+            "metadata": {}
+        })
+        .to_string(),
+        "ai_chat".to_owned(),
+        1,
+        4,
+    )
+    .expect("snapshot starts");
+    let snapshot: Value = serde_json::from_str(&snapshot_json).expect("snapshot json");
+    assert_eq!(snapshot["snapshot_version"], 1);
+    assert_eq!(snapshot["step"]["status"], "effect_requested");
+    let effect_id = snapshot["step"]["effect"]["effect_id"]
+        .as_str()
+        .expect("effect id");
+
+    let terminal_json = agent_runtime_continue_run_snapshot(
+        catalog,
+        snapshot_json,
+        json!({"jsonrpc": "2.0", "id": effect_id, "result": {"ok": true}}).to_string(),
+        "ai_chat".to_owned(),
+    )
+    .expect("snapshot closes at budget");
+    let terminal: Value = serde_json::from_str(&terminal_json).expect("terminal json");
+    assert_eq!(terminal["step"]["status"], "closed_early");
+    assert_eq!(terminal["step"]["error"]["code"], "effect_budget_exhausted");
+    assert_eq!(terminal["progress"]["dispatched_effect_count"], 1);
+    assert_eq!(terminal["progress"]["effect_budget_exhausted"], true);
+}
+
+#[test]
+fn embedded_snapshot_runs_and_resumes_subagent_in_native_runtime() {
+    let catalog = include_str!(
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
+    )
+    .to_owned();
+    let parent_json = agent_runtime_start_run_snapshot(
+        catalog.clone(),
+        json!({
+            "protocol_version": "agent.v1",
+            "input": {
+                "effect": {
+                    "kind": "subagent",
+                    "agent_id": "ai_chat",
+                    "input": {"content": "child result"}
+                }
+            },
+            "trigger": "manual",
+            "metadata": {}
+        })
+        .to_string(),
+        "ai_chat".to_owned(),
+        4,
+        2,
+    )
+    .expect("parent starts");
+    let child_json =
+        agent_runtime_start_requested_subagent_snapshot(catalog.clone(), parent_json.clone())
+            .expect("child starts");
+    let child: Value = serde_json::from_str(&child_json).expect("child json");
+    assert_eq!(child["step"]["status"], "completed");
+    assert_eq!(child["progress"]["subagent_depth"], 1);
+    assert_eq!(child["progress"]["dispatched_effect_count"], 1);
+
+    let parent_json =
+        agent_runtime_resume_parent_from_subagent_snapshot(catalog, parent_json, child_json)
+            .expect("parent resumes");
+    let parent: Value = serde_json::from_str(&parent_json).expect("parent json");
+    assert_eq!(parent["step"]["status"], "completed");
+    assert_eq!(parent["progress"]["dispatched_effect_count"], 1);
+    assert_eq!(
+        parent["step"]["output"]["effect_result"]["agent_id"],
+        "ai_chat"
+    );
 }
 
 fn spawn_openai_compatible_server() -> (String, thread::JoinHandle<()>) {

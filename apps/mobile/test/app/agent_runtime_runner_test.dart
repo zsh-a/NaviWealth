@@ -124,6 +124,28 @@ void main() {
     },
   );
 
+  test('AgentRuntimeProfileTurnRunner prefers Rust-owned snapshots', () async {
+    final native = _FakeProfileSnapshotBridge();
+    final runner = _runner(native: native);
+
+    final result = await runner.run(
+      agentId: 'execution_review',
+      messages: const <Map<String, Object?>>[
+        <String, Object?>{'role': 'user', 'content': 'Summarize today'},
+      ],
+      maxEffectSteps: 2,
+    );
+
+    expect(native.snapshotTurnCount, 1);
+    expect(native.turnRequests, isEmpty);
+    expect(native.lastMaxEffectSteps, 2);
+    expect(native.lastMaxSubagentDepth, 4);
+    expect(result.llmResponse['content'], 'profile response');
+    expect(result.step['status'], 'completed');
+    expect(result.stepRun.maxEffectSteps, 2);
+    expect(result.stepRun.remainingEffectSteps, 2);
+  });
+
   test(
     'AgentRuntimeProfileTurnRunner rejects mismatched native turn protocol',
     () async {
@@ -466,6 +488,107 @@ class _FakeNativeBridge implements AgentRuntimeNativeBridge {
   @override
   Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
     return trace;
+  }
+}
+
+class _FakeProfileSnapshotBridge extends _FakeNativeBridge
+    implements AgentRuntimeSnapshotBridge {
+  int snapshotTurnCount = 0;
+  int? lastMaxEffectSteps;
+  int? lastMaxSubagentDepth;
+
+  @override
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) async {
+    snapshotTurnCount += 1;
+    lastMaxEffectSteps = maxEffectSteps;
+    lastMaxSubagentDepth = maxSubagentDepth;
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': _llmResponse,
+      'snapshot': _terminalSnapshot(
+        agentId: agentId,
+        maxEffectSteps: maxEffectSteps,
+        maxSubagentDepth: maxSubagentDepth,
+      ),
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> startRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) async {
+    return _terminalSnapshot(
+      agentId: agentId,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
+  }
+
+  @override
+  Future<Map<String, Object?>> continueRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required Map<String, Object?> effectResponse,
+    required String agentId,
+  }) {
+    throw UnsupportedError('continuation not used by this fake');
+  }
+
+  @override
+  Future<Map<String, Object?>> startRequestedSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+  }) {
+    throw UnsupportedError('subagent not used by this fake');
+  }
+
+  @override
+  Future<Map<String, Object?>> resumeParentFromSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+    required Map<String, Object?> childSnapshot,
+  }) {
+    throw UnsupportedError('subagent not used by this fake');
+  }
+
+  Map<String, Object?> _terminalSnapshot({
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) {
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'snapshot_version': 1,
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'snapshot_turn',
+        'agent_id': agentId,
+        'step_index': 0,
+        'status': 'completed',
+        'output': <String, Object?>{'content': _llmResponse['content']},
+      },
+      'limits': <String, Object?>{
+        'max_effect_steps': maxEffectSteps,
+        'max_subagent_depth': maxSubagentDepth,
+      },
+      'progress': const <String, Object?>{
+        'dispatched_effect_count': 0,
+        'subagent_depth': 0,
+        'effect_budget_exhausted': false,
+        'subagent_depth_exceeded': false,
+      },
+    };
   }
 }
 

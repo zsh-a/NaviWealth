@@ -93,6 +93,23 @@ Future<String> agentRuntimeStartProfileTurnStep({
   runMetadataJson: runMetadataJson,
 );
 
+Future<String> agentRuntimeStartProfileTurnSnapshot({
+  required String catalogJson,
+  required String llmRequestJson,
+  required String agentId,
+  required String runMetadataJson,
+  required int maxEffectSteps,
+  required int maxSubagentDepth,
+}) => RustLib.instance.api
+    .crateApiAgentRuntimeAgentRuntimeStartProfileTurnSnapshot(
+      catalogJson: catalogJson,
+      llmRequestJson: llmRequestJson,
+      agentId: agentId,
+      runMetadataJson: runMetadataJson,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
+
 Future<String> agentRuntimeStartRunStep({
   required String catalogJson,
   required String requestJson,
@@ -114,3 +131,49 @@ Future<String> agentRuntimeContinueRunStep({
   effectResponseJson: effectResponseJson,
   agentId: agentId,
 );
+
+Future<String> agentRuntimeStartRunSnapshot({
+  required String catalogJson,
+  required String requestJson,
+  required String agentId,
+  required int maxEffectSteps,
+  required int maxSubagentDepth,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStartRunSnapshot(
+  catalogJson: catalogJson,
+  requestJson: requestJson,
+  agentId: agentId,
+  maxEffectSteps: maxEffectSteps,
+  maxSubagentDepth: maxSubagentDepth,
+);
+
+Future<String> agentRuntimeContinueRunSnapshot({
+  required String catalogJson,
+  required String snapshotJson,
+  required String effectResponseJson,
+  required String agentId,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeContinueRunSnapshot(
+  catalogJson: catalogJson,
+  snapshotJson: snapshotJson,
+  effectResponseJson: effectResponseJson,
+  agentId: agentId,
+);
+
+Future<String> agentRuntimeStartRequestedSubagentSnapshot({
+  required String catalogJson,
+  required String parentSnapshotJson,
+}) => RustLib.instance.api
+    .crateApiAgentRuntimeAgentRuntimeStartRequestedSubagentSnapshot(
+      catalogJson: catalogJson,
+      parentSnapshotJson: parentSnapshotJson,
+    );
+
+Future<String> agentRuntimeResumeParentFromSubagentSnapshot({
+  required String catalogJson,
+  required String parentSnapshotJson,
+  required String childSnapshotJson,
+}) => RustLib.instance.api
+    .crateApiAgentRuntimeAgentRuntimeResumeParentFromSubagentSnapshot(
+      catalogJson: catalogJson,
+      parentSnapshotJson: parentSnapshotJson,
+      childSnapshotJson: childSnapshotJson,
+    );
