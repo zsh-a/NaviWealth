@@ -87,6 +87,126 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'desktop master defaults to actionable row and keeps actions in detail',
+    (tester) async {
+      final session = _blockedThenReadySession();
+      await _pumpWorkspace(
+        tester,
+        size: const Size(1440, 900),
+        session: session,
+      );
+
+      final blocked = tester.widget<Semantics>(
+        find.byKey(const ValueKey('rebalance-master-item-2')),
+      );
+      final actionable = tester.widget<Semantics>(
+        find.byKey(const ValueKey('rebalance-master-item-1')),
+      );
+      expect(blocked.properties.selected, isFalse);
+      expect(actionable.properties.selected, isTrue);
+      expect(actionable.properties.enabled, isTrue);
+      expect(actionable.properties.onTap, isNotNull);
+      expect(
+        tester
+            .widgetList<Checkbox>(find.byType(Checkbox))
+            .map((checkbox) => checkbox.semanticLabel),
+        contains('Buy Apple'),
+      );
+      expect(
+        tester.binding.focusManager.primaryFocus?.debugLabel,
+        isNot('rebalance master'),
+      );
+      expect(find.text('Review'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
+    },
+  );
+
+  testWidgets('desktop master exposes named disabled semantics while busy', (
+    tester,
+  ) async {
+    final session = _session(itemState: RebalanceExecutionItemState.ready);
+    final completer = Completer<RebalanceExecutionBatchResult>();
+    final gateway = _FakeGateway(session, applyCompleter: completer);
+    await _pumpWorkspace(
+      tester,
+      size: const Size(1440, 900),
+      session: session,
+      gateway: gateway,
+    );
+
+    await tester.tap(find.text('Apply'));
+    await tester.pump();
+    for (var i = 0; i < 10 && gateway.applyCalls == 0; i++) {
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+
+    final row = tester.widget<Semantics>(
+      find.byKey(const ValueKey('rebalance-master-item-1')),
+    );
+    expect(row.properties.enabled, isFalse);
+    expect(row.properties.onTap, isNull);
+    expect(
+      tester.widget<Checkbox>(find.byType(Checkbox)).semanticLabel,
+      'Buy Apple',
+    );
+
+    completer.complete(
+      const RebalanceExecutionBatchResult(
+        completedItemIds: [],
+        failures: [],
+        stopped: false,
+      ),
+    );
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('desktop empty queue settles without rescheduling focus', (
+    tester,
+  ) async {
+    final empty = _sessionWithItems(_session(), const []);
+    await _pumpWorkspace(tester, size: const Size(1440, 900), session: empty);
+
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('desktop focus falls back when the focused row is removed', (
+    tester,
+  ) async {
+    final initial = _twoReadyItemsSession();
+    final sessionListenable = ValueNotifier(initial);
+    addTearDown(sessionListenable.dispose);
+    await _pumpWorkspace(
+      tester,
+      size: const Size(1440, 900),
+      sessionListenable: sessionListenable,
+    );
+
+    expect(
+      tester
+          .widget<Semantics>(
+            find.byKey(const ValueKey('rebalance-master-item-1')),
+          )
+          .properties
+          .selected,
+      isTrue,
+    );
+    sessionListenable.value = _sessionWithItems(initial, [initial.items.last]);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Semantics>(
+            find.byKey(const ValueKey('rebalance-master-item-2')),
+          )
+          .properties
+          .selected,
+      isTrue,
+    );
+    expect(find.text('Buy Apple'), findsNWidgets(2));
+  });
+
   testWidgets('desktop selection applies only the stable selected ids', (
     tester,
   ) async {
@@ -773,6 +893,7 @@ Future<void> _pumpWorkspace(
   required Size size,
   double textScale = 1,
   RebalanceExecutionSession? session,
+  ValueNotifier<RebalanceExecutionSession>? sessionListenable,
   RebalanceExecutionWorkspaceGateway? gateway,
 }) async {
   tester.view
@@ -783,7 +904,7 @@ Future<void> _pumpWorkspace(
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
-  final resolvedSession = session ?? _session();
+  final resolvedSession = sessionListenable?.value ?? session ?? _session();
   final touch = Breakpoints.isMobile(size.width);
   SharedPreferences.setMockInitialValues({});
   final sharedPreferences = await SharedPreferences.getInstance();
@@ -791,9 +912,16 @@ Future<void> _pumpWorkspace(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-        rebalanceExecutionSessionProvider(
-          resolvedSession.id,
-        ).overrideWith((_) async => resolvedSession),
+        rebalanceExecutionSessionProvider(resolvedSession.id).overrideWith((
+          ref,
+        ) async {
+          final listenable = sessionListenable;
+          if (listenable == null) return resolvedSession;
+          void invalidate() => ref.invalidateSelf();
+          listenable.addListener(invalidate);
+          ref.onDispose(() => listenable.removeListener(invalidate));
+          return listenable.value;
+        }),
         if (gateway != null)
           rebalanceExecutionWorkspaceGatewayProvider.overrideWith(
             (_) async => gateway,
@@ -1072,6 +1200,37 @@ RebalanceExecutionSession _twoReadyItemsSession() {
     updatedAt: testNow,
   );
 }
+
+RebalanceExecutionSession _blockedThenReadySession() {
+  final mixed = _mixedSession();
+  return RebalanceExecutionSession(
+    id: mixed.id,
+    ownerUserId: mixed.ownerUserId,
+    status: mixed.status,
+    plan: mixed.plan,
+    rawPlanJson: mixed.rawPlanJson,
+    planFingerprint: mixed.planFingerprint,
+    items: [mixed.items[1], mixed.items[0]],
+    createdAt: mixed.createdAt,
+    updatedAt: mixed.updatedAt,
+  );
+}
+
+RebalanceExecutionSession _sessionWithItems(
+  RebalanceExecutionSession session,
+  List<RebalanceExecutionItem> items,
+) => RebalanceExecutionSession(
+  id: session.id,
+  ownerUserId: session.ownerUserId,
+  status: session.status,
+  plan: session.plan,
+  rawPlanJson: session.rawPlanJson,
+  planFingerprint: session.planFingerprint,
+  items: items,
+  createdAt: session.createdAt,
+  updatedAt: session.updatedAt,
+  archivedAt: session.archivedAt,
+);
 
 RebalanceExecutionRequest _withPrice(
   RebalanceExecutionRequest request,

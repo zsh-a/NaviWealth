@@ -309,6 +309,118 @@ void main() {
     },
   );
 
+  testWidgets(
+    'desktop master defaults to the first actionable draft without focusing',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(1440, 900)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft(id: 'draft-readonly', description: 'Unreadable recovery'),
+        _draft(id: 'draft-actionable', description: 'Actionable receipt'),
+      ]);
+      await db.customStatement(
+        'UPDATE ingest_drafts SET recovery_kind = ?, '
+        'recovery_apply_state_json = ? WHERE draft_id = ?',
+        ['finalize_applied', '{not-json', 'draft-readonly'],
+      );
+      final service = IngestConfirmService(
+        applier: const _NoopApplier(),
+        store: store,
+      );
+
+      await tester.pumpWidget(
+        _app(store: store, service: service, accounts: [_account]),
+      );
+      await tester.pumpAndSettle();
+
+      final focused = tester.widget<Semantics>(
+        find.byKey(const ValueKey('ingest-master-draft-actionable')),
+      );
+      expect(focused.properties.selected, isTrue);
+      expect(focused.properties.enabled, isTrue);
+      expect(focused.properties.onTap, isNotNull);
+      expect(
+        tester
+            .widgetList<Checkbox>(find.byType(Checkbox))
+            .map((checkbox) => checkbox.semanticLabel),
+        contains('Actionable receipt'),
+      );
+      expect(
+        tester.binding.focusManager.primaryFocus?.debugLabel,
+        isNot('ingest review master'),
+      );
+      expect(find.widgetWithText(AppActionButton, 'Record'), findsOneWidget);
+      expect(find.widgetWithText(AppActionButton, 'Skip'), findsOneWidget);
+    },
+  );
+
+  testWidgets('desktop empty queue settles without rescheduling focus', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1440, 900)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+
+    await tester.pumpWidget(
+      _app(store: store, service: service, accounts: [_account]),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('desktop focus falls back when the focused draft is removed', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1440, 900)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([
+      _draft(id: 'draft-1', description: 'Coffee receipt'),
+      _draft(id: 'draft-2', description: 'Metro receipt'),
+    ]);
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+
+    await tester.pumpWidget(
+      _app(store: store, service: service, accounts: [_account]),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppActionButton, 'Skip'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Semantics>(
+            find.byKey(const ValueKey('ingest-master-draft-2')),
+          )
+          .properties
+          .selected,
+      isTrue,
+    );
+    expect(find.text('Metro receipt'), findsNWidgets(2));
+  });
+
   testWidgets('desktop Enter focuses detail and Space only changes selection', (
     tester,
   ) async {

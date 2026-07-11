@@ -92,7 +92,10 @@ class _RebalanceExecutionWorkspacePageState
   }
 
   Widget _buildSession(RebalanceExecutionSession session) {
-    _schedulePrune(session);
+    final useMasterDetail = MasterDetailLayout.shouldUseMasterDetail(
+      MediaQuery.sizeOf(context).width,
+    );
+    _schedulePrune(session, ensureWideFocus: useMasterDetail);
     final body = _WorkspaceBody(
       session: session,
       selectedIds: _selectedIds,
@@ -126,7 +129,10 @@ class _RebalanceExecutionWorkspacePageState
     );
   }
 
-  void _schedulePrune(RebalanceExecutionSession session) {
+  void _schedulePrune(
+    RebalanceExecutionSession session, {
+    required bool ensureWideFocus,
+  }) {
     final ids = session.items.map((item) => item.id).toSet();
     final now = DateTime.now().toUtc();
     final selectableIds =
@@ -136,17 +142,34 @@ class _RebalanceExecutionWorkspacePageState
               .map((item) => item.id)
               .toSet()
         : <String>{};
+    final focusIsValid = ids.contains(_focusedId);
+    final fallbackFocusId = ensureWideFocus
+        ? _preferredFocusId(session, selectableIds)
+        : null;
     if (_selectedIds.every(selectableIds.contains) &&
-        (_focusedId == null || ids.contains(_focusedId))) {
+        (focusIsValid || _focusedId == fallbackFocusId)) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
         _selectedIds.retainWhere(selectableIds.contains);
-        if (!ids.contains(_focusedId)) _focusedId = null;
+        if (!ids.contains(_focusedId)) {
+          _focusedId = fallbackFocusId;
+        }
       });
     });
+  }
+
+  static String? _preferredFocusId(
+    RebalanceExecutionSession session,
+    Set<String> selectableIds,
+  ) {
+    if (session.items.isEmpty) return null;
+    for (final item in session.items) {
+      if (selectableIds.contains(item.id)) return item.id;
+    }
+    return session.items.first.id;
   }
 
   void _focusItem(String itemId) {
@@ -609,27 +632,15 @@ class _WorkspaceBody extends StatelessWidget {
                             padding: const EdgeInsets.only(
                               bottom: AppSpacing.s8,
                             ),
-                            child: SoftCard(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.s12,
-                                ),
-                                child: _ExecutionItemRow(
-                                  item: item,
-                                  selected: selectedIds.contains(item.id),
-                                  focused: focusedId == item.id,
-                                  selectable:
-                                      mutable && _isSelectable(item, now),
-                                  mutable: mutable,
-                                  busy: busy,
-                                  onReview: () => onReview(item),
-                                  onSkip: () => onSkip(item),
-                                  onReopen: () => onReopen(item),
-                                  onSelectionChanged: (selected) =>
-                                      onSelectionChanged(item.id, selected),
-                                  onFocus: () => onFocus(item.id),
-                                ),
-                              ),
+                            child: _ExecutionMasterRow(
+                              item: item,
+                              selected: selectedIds.contains(item.id),
+                              focused: focusedId == item.id,
+                              selectable: mutable && _isSelectable(item, now),
+                              busy: busy,
+                              onSelectionChanged: (selected) =>
+                                  onSelectionChanged(item.id, selected),
+                              onFocus: () => onFocus(item.id),
                             ),
                           );
                         },
@@ -654,6 +665,7 @@ class _WorkspaceBody extends StatelessWidget {
                                 item: focusedItem,
                                 selected: selectedIds.contains(focusedItem.id),
                                 focused: true,
+                                showSelection: false,
                                 selectable:
                                     mutable && _isSelectable(focusedItem, now),
                                 mutable: mutable,
@@ -1033,6 +1045,118 @@ class _WorkspaceStatePage extends StatelessWidget {
   }
 }
 
+class _ExecutionMasterRow extends StatelessWidget {
+  const _ExecutionMasterRow({
+    required this.item,
+    required this.selected,
+    required this.focused,
+    required this.selectable,
+    required this.busy,
+    required this.onSelectionChanged,
+    required this.onFocus,
+  });
+
+  final RebalanceExecutionItem item;
+  final bool selected;
+  final bool focused;
+  final bool selectable;
+  final bool busy;
+  final ValueChanged<bool> onSelectionChanged;
+  final VoidCallback onFocus;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final target =
+        item.suggestion.targetLabel ??
+        AssetCategoryVisuals.label(l10n, item.suggestion.category);
+    final direction = item.suggestion.isBuy
+        ? l10n.rebalanceBuy
+        : l10n.rebalanceSell;
+    return Semantics(
+      key: ValueKey('rebalance-master-${item.id}'),
+      container: true,
+      button: true,
+      selected: focused,
+      enabled: !busy,
+      onTap: busy ? null : onFocus,
+      child: FTappable(
+        onPress: busy ? null : onFocus,
+        child: AnimatedContainer(
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s10,
+            vertical: AppSpacing.s8,
+          ),
+          decoration: BoxDecoration(
+            color: selected ? colors.muted : colors.background,
+            border: Border.all(
+              color: focused ? colors.primary : colors.border,
+              width: focused ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Row(
+            children: [
+              if (selectable) ...[
+                Checkbox.adaptive(
+                  value: selected,
+                  semanticLabel: '$direction $target',
+                  onChanged: busy
+                      ? null
+                      : (value) => onSelectionChanged(value ?? false),
+                ),
+                const SizedBox(width: AppSpacing.s4),
+              ],
+              Icon(
+                AssetCategoryVisuals.icon(item.suggestion.category),
+                size: AppIconSizes.h18,
+                color: focused ? colors.primary : colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$direction $target',
+                      style: context.labelStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      _stateLabel(l10n, item.state),
+                      style: context.captionStyle.copyWith(
+                        color:
+                            item.issue?.recoveryAction ==
+                                RebalanceRecoveryAction.none
+                            ? colors.destructive
+                            : colors.mutedForeground,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              AnimatedMoneyText(
+                amount: item.suggestion.amount.amount.toDouble(),
+                currencyCode: item.suggestion.amount.currency,
+                compact: true,
+                showSign: false,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ExecutionItemRow extends StatelessWidget {
   const _ExecutionItemRow({
     required this.item,
@@ -1041,6 +1165,7 @@ class _ExecutionItemRow extends StatelessWidget {
     required this.selectable,
     required this.mutable,
     required this.busy,
+    this.showSelection = true,
     required this.onReview,
     required this.onSkip,
     required this.onReopen,
@@ -1054,6 +1179,7 @@ class _ExecutionItemRow extends StatelessWidget {
   final bool selectable;
   final bool mutable;
   final bool busy;
+  final bool showSelection;
   final VoidCallback onReview;
   final VoidCallback onSkip;
   final VoidCallback onReopen;
@@ -1111,7 +1237,7 @@ class _ExecutionItemRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (selectable) ...[
+            if (showSelection && selectable) ...[
               Checkbox.adaptive(
                 value: selected,
                 onChanged: busy

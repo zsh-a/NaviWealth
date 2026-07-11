@@ -1,5 +1,107 @@
 part of '../ingest_review_page.dart';
 
+class _DraftMasterRow extends StatelessWidget {
+  const _DraftMasterRow({
+    required this.draft,
+    required this.selected,
+    required this.selectable,
+    required this.focused,
+    required this.busy,
+    required this.pendingFinalize,
+    required this.recoveryUnavailable,
+    required this.onSelectionChanged,
+    required this.onFocus,
+  });
+
+  final IngestDraft draft;
+  final bool selected;
+  final bool selectable;
+  final bool focused;
+  final bool busy;
+  final bool pendingFinalize;
+  final bool recoveryUnavailable;
+  final ValueChanged<bool> onSelectionChanged;
+  final VoidCallback onFocus;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final parsed = draft.parsed;
+    return Semantics(
+      key: ValueKey('ingest-master-${draft.draftId}'),
+      container: true,
+      button: true,
+      selected: focused,
+      enabled: !busy,
+      onTap: busy ? null : onFocus,
+      child: FTappable(
+        onPress: busy ? null : onFocus,
+        child: AnimatedContainer(
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s10,
+            vertical: AppSpacing.s8,
+          ),
+          decoration: BoxDecoration(
+            color: selected ? colors.muted : colors.background,
+            border: Border.all(
+              color: focused ? colors.primary : colors.border,
+              width: focused ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Row(
+            children: [
+              Checkbox.adaptive(
+                value: selected,
+                semanticLabel: parsed.description,
+                onChanged: selectable && !busy
+                    ? (value) => onSelectionChanged(value ?? false)
+                    : null,
+              ),
+              const SizedBox(width: AppSpacing.s4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      parsed.description,
+                      style: context.labelStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.s4),
+                    Row(
+                      children: [
+                        if (pendingFinalize || recoveryUnavailable) ...[
+                          Icon(
+                            FLucideIcons.triangleAlert,
+                            size: AppIconSizes.xs,
+                            color: colors.destructive,
+                          ),
+                          const SizedBox(width: AppSpacing.s4),
+                        ],
+                        _VerdictIndicator(verdict: draft.verdict),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              MoneyText(
+                amount: parsed.amountMinor.abs() / 100.0,
+                currencyCode: parsed.currency,
+                style: context.strongLabelStyle,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DraftCard extends StatelessWidget {
   const _DraftCard({
     required this.draft,
@@ -9,6 +111,7 @@ class _DraftCard extends StatelessWidget {
     required this.busy,
     required this.pendingFinalize,
     required this.recoveryUnavailable,
+    this.showSelection = true,
     required this.onConfirm,
     required this.onSkip,
     required this.onFinalize,
@@ -23,6 +126,7 @@ class _DraftCard extends StatelessWidget {
   final bool busy;
   final bool pendingFinalize;
   final bool recoveryUnavailable;
+  final bool showSelection;
   final VoidCallback onConfirm;
   final VoidCallback onSkip;
   final VoidCallback? onFinalize;
@@ -48,13 +152,15 @@ class _DraftCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Checkbox.adaptive(
-                  value: selected,
-                  onChanged: selectable && !busy
-                      ? (value) => onSelectionChanged(value ?? false)
-                      : null,
-                ),
-                const SizedBox(width: AppSpacing.s4),
+                if (showSelection) ...[
+                  Checkbox.adaptive(
+                    value: selected,
+                    onChanged: selectable && !busy
+                        ? (value) => onSelectionChanged(value ?? false)
+                        : null,
+                  ),
+                  const SizedBox(width: AppSpacing.s4),
+                ],
                 Expanded(
                   child: Text(
                     p.description,

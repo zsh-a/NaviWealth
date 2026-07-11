@@ -109,6 +109,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     final accountsAsync = ref.watch(accountsStreamProvider);
     final accounts = accountsAsync.value;
     final items = reviewItemsAsync.value;
+    final useMasterDetail = MasterDetailLayout.shouldUseMasterDetail(
+      MediaQuery.sizeOf(context).width,
+    );
     final viewData =
         accountsAsync.hasError ||
             reviewItemsAsync.hasError ||
@@ -121,16 +124,14 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             selectedAccountId: _accountId,
             pendingFinalize: _pendingFinalize,
           );
-    if (viewData != null) _scheduleSelectionPrune(viewData.items);
+    if (viewData != null) {
+      _scheduleSelectionPrune(viewData.items, ensureWideFocus: useMasterDetail);
+    }
     final selectedItems = viewData?.items
         .where((item) => _selectedIds.contains(item.draft.draftId))
         .toList(growable: false);
 
-    final content =
-        MasterDetailLayout.shouldUseMasterDetail(
-              MediaQuery.sizeOf(context).width,
-            ) &&
-            viewData != null
+    final content = useMasterDetail && viewData != null
         ? _wideWorkspace(viewData, selectedItems ?? const [])
         : AppTaskScaffold(
             titleWidget: _title(l10n),
@@ -263,12 +264,29 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                               AppSpacing.s12,
                             ),
                             itemCount: data.items.length,
-                            itemBuilder: (context, index) => Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: AppSpacing.s8,
-                              ),
-                              child: _draftCard(data.items[index], data),
-                            ),
+                            itemBuilder: (context, index) {
+                              final item = data.items[index];
+                              final draftId = item.draft.draftId;
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: AppSpacing.s8,
+                                ),
+                                child: _DraftMasterRow(
+                                  draft: item.draft,
+                                  selected: _selectedIds.contains(draftId),
+                                  selectable: !item.recoveryUnreadable,
+                                  focused: _focusedId == draftId,
+                                  busy: _isBusy,
+                                  pendingFinalize:
+                                      item.pendingFinalize != null ||
+                                      _pendingFinalize.containsKey(draftId),
+                                  recoveryUnavailable: item.recoveryUnreadable,
+                                  onSelectionChanged: (selected) =>
+                                      _toggleSelection(draftId, selected),
+                                  onFocus: () => _focusItem(draftId),
+                                ),
+                              );
+                            },
                           ),
                   ),
                 ],
@@ -280,7 +298,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                     )
                   : ListView(
                       padding: const EdgeInsets.all(AppSpacing.s24),
-                      children: [_draftCard(focused, data)],
+                      children: [
+                        _draftCard(focused, data, showSelection: false),
+                      ],
                     ),
             ),
           ),
@@ -296,7 +316,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     );
   }
 
-  Widget _draftCard(IngestReviewItem item, _IngestReviewViewData data) {
+  Widget _draftCard(
+    IngestReviewItem item,
+    _IngestReviewViewData data, {
+    bool showSelection = true,
+  }) {
     final draft = item.draft;
     final pending = item.pendingFinalize ?? _pendingFinalize[draft.draftId];
     return _DraftCard(
@@ -307,6 +331,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       busy: _isBusy,
       pendingFinalize: pending != null,
       recoveryUnavailable: item.recoveryUnreadable,
+      showSelection: showSelection,
       onConfirm: () => _confirm(draft, data.selectedAccountId),
       onSkip: () => _skip(draft),
       onFinalize: pending == null ? null : () => _finalizeApplied(pending),
@@ -504,19 +529,39 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     });
   }
 
-  void _scheduleSelectionPrune(List<IngestReviewItem> items) {
+  void _scheduleSelectionPrune(
+    List<IngestReviewItem> items, {
+    required bool ensureWideFocus,
+  }) {
     final ids = items.map((item) => item.draft.draftId).toSet();
+    final focusIsValid = ids.contains(_focusedId);
+    final fallbackFocusId = ensureWideFocus ? _preferredFocusId(items) : null;
     if (_selectedIds.every(ids.contains) &&
-        (_focusedId == null || ids.contains(_focusedId))) {
+        (focusIsValid || _focusedId == fallbackFocusId)) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
         _selectedIds.retainWhere(ids.contains);
-        if (!ids.contains(_focusedId)) _focusedId = null;
+        if (!ids.contains(_focusedId)) {
+          _focusedId = fallbackFocusId;
+        }
       });
     });
+  }
+
+  String? _preferredFocusId(List<IngestReviewItem> items) {
+    if (items.isEmpty) return null;
+    for (final item in items) {
+      final draftId = item.draft.draftId;
+      final pending = item.pendingFinalize ?? _pendingFinalize[draftId];
+      if (!item.recoveryUnreadable &&
+          (item.isOrdinaryPending || pending != null)) {
+        return draftId;
+      }
+    }
+    return items.first.draft.draftId;
   }
 
   Future<void> _confirmSelected(
