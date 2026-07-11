@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
@@ -41,6 +42,33 @@ class _ControlledApplier implements ProposalApplier {
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) {
     applyCalls++;
     return onApply();
+  }
+
+  @override
+  Future<void> undo(ProposalApplyState state) async {}
+}
+
+class _DatabaseApplier implements ProposalApplier {
+  _DatabaseApplier(this.db);
+
+  final AppDatabase db;
+  var applyCalls = 0;
+
+  @override
+  Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
+    applyCalls++;
+    await db.transaction(() async {
+      await db.customStatement(
+        'INSERT INTO ingest_batch_probe (id) VALUES (?)',
+        [plan.proposalId],
+      );
+    });
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: 'entry-${plan.proposalId}',
+      appliedTable: 'journal_entries',
+      appliedAt: DateTime.utc(2026, 5, 10, 10),
+    );
   }
 
   @override
@@ -95,6 +123,88 @@ void main() {
     expect(await store.countByStatus(DraftStatus.confirmed), 1);
     final pending = await store.listByStatus(DraftStatus.pending);
     expect(pending.single.draftId, 'd2');
+    await db.close();
+  });
+
+  test('runBatch commits lifecycle transitions atomically', () async {
+    final db = makeTestDatabase();
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([_draft('d1'), _draft('d2')]);
+
+    await store.runBatch(() async {
+      for (final id in ['d1', 'd2']) {
+        final result = await store.transition(
+          IngestLifecycleTransition(
+            ownerUserId: 'u1',
+            draftId: id,
+            expectedStatus: DraftStatus.pending,
+            expectedRevision: 0,
+            nextStatus: DraftStatus.confirmed,
+          ),
+        );
+        expect(result.outcome, IngestLifecycleMutationOutcome.applied);
+      }
+    });
+
+    expect(await store.countByStatus(DraftStatus.pending), 0);
+    expect(await store.countByStatus(DraftStatus.confirmed), 2);
+    await db.close();
+  });
+
+  test('runBatch rolls back the complete chunk on an outer failure', () async {
+    final db = makeTestDatabase();
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([_draft('d1')]);
+
+    await expectLater(
+      store.runBatch<void>(() async {
+        final result = await store.transition(
+          const IngestLifecycleTransition(
+            ownerUserId: 'u1',
+            draftId: 'd1',
+            expectedStatus: DraftStatus.pending,
+            expectedRevision: 0,
+            nextStatus: DraftStatus.confirmed,
+          ),
+        );
+        expect(result.outcome, IngestLifecycleMutationOutcome.applied);
+        throw StateError('abort chunk');
+      }),
+      throwsStateError,
+    );
+
+    expect(await store.countByStatus(DraftStatus.pending), 1);
+    expect(await store.countByStatus(DraftStatus.confirmed), 0);
+    await db.close();
+  });
+
+  test('large confirmation commits nested writes in bounded chunks', () async {
+    final db = makeTestDatabase();
+    await db.customStatement(
+      'CREATE TABLE ingest_batch_probe (id TEXT PRIMARY KEY)',
+    );
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    const total = IngestConfirmService.confirmationChunkSize * 4 + 5;
+    await store.putAll([
+      for (var index = 0; index < total; index++) _draft('row-$index'),
+    ]);
+    final applier = _DatabaseApplier(db);
+    final service = IngestConfirmService(applier: applier, store: store);
+
+    final result = await service.confirmAllFresh(
+      await store.listPendingReviewItems(),
+      fromAccountId: 'account-1',
+    );
+
+    final probeRows = await db
+        .customSelect('SELECT COUNT(*) AS n FROM ingest_batch_probe')
+        .getSingle();
+    expect(result.confirmed, hasLength(total));
+    expect(result.failures, isEmpty);
+    expect(applier.applyCalls, total);
+    expect(probeRows.read<int>('n'), total);
+    expect(await store.countByStatus(DraftStatus.pending), 0);
+    expect(await store.countByStatus(DraftStatus.confirmed), total);
     await db.close();
   });
 

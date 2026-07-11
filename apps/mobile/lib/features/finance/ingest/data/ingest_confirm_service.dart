@@ -56,6 +56,16 @@ abstract interface class IngestDraftLifecycleStore {
   );
 }
 
+/// Optional capability for stores that can group a bounded confirmation
+/// chunk into one durable transaction and coalesce their change notification.
+///
+/// The confirmation service keeps supporting lightweight/fake lifecycle
+/// stores; production [IngestDraftStore] opts into this capability.
+abstract interface class IngestDraftBatchLifecycleStore
+    implements IngestDraftLifecycleStore {
+  Future<T> runBatch<T>(Future<T> Function() action);
+}
+
 enum IngestLifecycleMutationOutcome { applied, conflict, notFound }
 
 class IngestLifecycleMutationResult {
@@ -178,6 +188,10 @@ class IngestConfirmService {
   final ProposalApplier applier;
   final IngestDraftLifecycleStore store;
   final Uuid _uuid;
+
+  /// Keeps transactions short enough for mobile SQLite while reducing a
+  /// 100-row confirmation from 100 outer commits to four.
+  static const int confirmationChunkSize = 25;
 
   /// Apply [draft] as an expense paid from [fromAccountId]. Returns the
   /// applied state. Failures before invocation release the reservation;
@@ -490,16 +504,35 @@ class IngestConfirmService {
         .toList(growable: false);
     final confirmed = <ConfirmedIngestItem>[];
     final failures = <IngestBatchItemFailure<IngestDraft>>[];
-    for (var index = 0; index < eligible.length; index++) {
-      final draft = eligible[index];
-      try {
-        confirmed.add(await confirm(draft, fromAccountId: fromAccountId));
-      } on IngestConfirmException catch (error) {
-        failures.add(IngestBatchItemFailure(item: draft, error: error));
-      }
-      onProgress?.call(index + 1, eligible.length);
+    for (
+      var chunkStart = 0;
+      chunkStart < eligible.length;
+      chunkStart += confirmationChunkSize
+    ) {
+      final chunkEnd = chunkStart + confirmationChunkSize < eligible.length
+          ? chunkStart + confirmationChunkSize
+          : eligible.length;
+      await _runBatch(() async {
+        for (var index = chunkStart; index < chunkEnd; index++) {
+          final draft = eligible[index];
+          try {
+            confirmed.add(await confirm(draft, fromAccountId: fromAccountId));
+          } on IngestConfirmException catch (error) {
+            failures.add(IngestBatchItemFailure(item: draft, error: error));
+          }
+          onProgress?.call(index + 1, eligible.length);
+        }
+      });
     }
     return IngestBatchConfirmResult(confirmed: confirmed, failures: failures);
+  }
+
+  Future<T> _runBatch<T>(Future<T> Function() action) {
+    final lifecycleStore = store;
+    if (lifecycleStore is IngestDraftBatchLifecycleStore) {
+      return lifecycleStore.runBatch(action);
+    }
+    return action();
   }
 
   Future<IngestBatchMutationResult<IngestReviewItem>> dismissSelected(

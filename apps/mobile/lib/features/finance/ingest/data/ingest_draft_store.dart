@@ -17,13 +17,13 @@ import '../domain/ingest_models.dart';
 import 'ingest_confirm_service.dart'
     show
         ConfirmedIngestItem,
-        IngestDraftLifecycleStore,
+        IngestDraftBatchLifecycleStore,
         IngestLifecycleMutationOutcome,
         IngestLifecycleMutationResult,
         IngestLifecycleTransition,
         IngestReviewItem;
 
-class IngestDraftStore implements IngestDraftLifecycleStore {
+class IngestDraftStore implements IngestDraftBatchLifecycleStore {
   IngestDraftStore(this._db, {this.ownerUserId});
 
   final AppDatabase _db;
@@ -32,44 +32,59 @@ class IngestDraftStore implements IngestDraftLifecycleStore {
   String get _owner => ownerUserId ?? '';
 
   final StreamController<void> _changes = StreamController<void>.broadcast();
+  var _batchDepth = 0;
+  var _batchNotificationPending = false;
 
   void _notify() {
+    if (_batchDepth > 0) {
+      _batchNotificationPending = true;
+      return;
+    }
     if (!_changes.isClosed) _changes.add(null);
+  }
+
+  /// Runs a bounded confirmation chunk in one outer transaction. Repository
+  /// transactions opened by the proposal applier become nested savepoints, so
+  /// one rejected row can still roll back independently while successful rows
+  /// commit together. Observers receive one refresh after the chunk commits.
+  @override
+  Future<T> runBatch<T>(Future<T> Function() action) async {
+    _batchDepth++;
+    try {
+      return await _db.transaction(action);
+    } finally {
+      _batchDepth--;
+      if (_batchDepth == 0 && _batchNotificationPending) {
+        _batchNotificationPending = false;
+        if (!_changes.isClosed) _changes.add(null);
+      }
+    }
   }
 
   Future<void> putAll(List<IngestDraft> drafts) async {
     if (drafts.isEmpty) return;
-    await _db.transaction(() async {
+    const sql =
+        'INSERT OR REPLACE INTO ingest_drafts '
+        '(draft_id, owner_user_id, created_at_iso, source_kind, '
+        ' origin_label, parsed_json, confidence, dedup_verdict, '
+        ' dedup_target_entry_id, trace_id, status, expires_at_iso) '
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    await _db.batch((batch) {
       for (final d in drafts) {
-        await _db.customInsert(
-          'INSERT OR REPLACE INTO ingest_drafts '
-          '(draft_id, owner_user_id, created_at_iso, source_kind, '
-          ' origin_label, parsed_json, confidence, dedup_verdict, '
-          ' dedup_target_entry_id, trace_id, status, expires_at_iso) '
-          'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)',
-          variables: [
-            Variable.withString(d.draftId),
-            Variable.withString(_owner),
-            Variable.withString(d.createdAt.toUtc().toIso8601String()),
-            Variable.withString(d.sourceKind.wire),
-            d.originLabel == null
-                ? const Variable<String>(null)
-                : Variable.withString(d.originLabel!),
-            Variable.withString(jsonEncode(d.parsed.toJson())),
-            Variable.withReal(d.confidence),
-            Variable.withString(d.verdict.wire),
-            d.dedupTargetEntryId == null
-                ? const Variable<String>(null)
-                : Variable.withString(d.dedupTargetEntryId!),
-            d.traceId == null
-                ? const Variable<String>(null)
-                : Variable.withString(d.traceId!),
-            Variable.withString(d.status.wire),
-            d.expiresAt == null
-                ? const Variable<String>(null)
-                : Variable.withString(d.expiresAt!.toUtc().toIso8601String()),
-          ],
-        );
+        batch.customStatement(sql, [
+          d.draftId,
+          _owner,
+          d.createdAt.toUtc().toIso8601String(),
+          d.sourceKind.wire,
+          d.originLabel,
+          jsonEncode(d.parsed.toJson()),
+          d.confidence,
+          d.verdict.wire,
+          d.dedupTargetEntryId,
+          d.traceId,
+          d.status.wire,
+          d.expiresAt?.toUtc().toIso8601String(),
+        ]);
       }
     });
     _notify();

@@ -79,6 +79,23 @@ class _FakeLifecycleStore implements IngestDraftLifecycleStore {
   }
 }
 
+class _BatchLifecycleStore extends _FakeLifecycleStore
+    implements IngestDraftBatchLifecycleStore {
+  int batchCalls = 0;
+  final List<int> transitionCounts = [];
+
+  @override
+  Future<T> runBatch<T>(Future<T> Function() action) async {
+    batchCalls++;
+    final before = updates.length;
+    try {
+      return await action();
+    } finally {
+      transitionCounts.add(updates.length - before);
+    }
+  }
+}
+
 void main() {
   group('IngestConfirmService.expensePlanFor', () {
     test('maps a draft to a propose_expense-shaped ready plan', () {
@@ -297,6 +314,31 @@ void main() {
       expect(result.failures.single.item.draftId, 'bad');
       expect(result.completed, 3);
       expect(progress, [(1, 3), (2, 3), (3, 3)]);
+    });
+
+    test('large confirmation uses bounded lifecycle batches', () async {
+      final applier = _FakeApplier(
+        onApply: (plan) async => _applied('entry-${plan.proposalId}'),
+      );
+      final store = _BatchLifecycleStore();
+      final service = IngestConfirmService(applier: applier, store: store);
+      const total = IngestConfirmService.confirmationChunkSize * 4 + 5;
+
+      final result = await service.confirmAllFresh([
+        for (var index = 0; index < total; index++)
+          IngestReviewItem(draft: _draft(id: 'row-$index')),
+      ], fromAccountId: 'acct-cash');
+
+      expect(result.confirmed, hasLength(total));
+      expect(result.failures, isEmpty);
+      expect(store.batchCalls, 5);
+      expect(store.transitionCounts, [
+        IngestConfirmService.confirmationChunkSize * 4,
+        IngestConfirmService.confirmationChunkSize * 4,
+        IngestConfirmService.confirmationChunkSize * 4,
+        IngestConfirmService.confirmationChunkSize * 4,
+        5 * 4,
+      ]);
     });
 
     test('raw lifecycle failure does not abort later batch items', () async {
