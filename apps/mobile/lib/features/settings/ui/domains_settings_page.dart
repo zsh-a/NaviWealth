@@ -105,7 +105,7 @@ class _DomainToggleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return AppGroupedSurface(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: InlineSwitchRow(
         icon: icon,

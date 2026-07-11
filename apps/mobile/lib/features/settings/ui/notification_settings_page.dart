@@ -45,7 +45,7 @@ class NotificationSettingsPage extends ConsumerWidget {
         children: [
           const _NotificationPermissionBanner(),
           const SizedBox(height: AppSpacing.s16),
-          SoftCard(
+          AppGroupedSurface(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(
               children: [

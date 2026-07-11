@@ -66,7 +66,7 @@ class BackupPage extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s12),
           ],
-          SoftCard(
+          AppGroupedSurface(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(
               children: [
@@ -155,7 +155,11 @@ class BackupPage extends ConsumerWidget {
       logger.e('backup_ui: export failed', error: e, stackTrace: st);
       await dismiss();
       if (!context.mounted) return;
-      AppMessenger.show(context, ToastKind.error, e.toString());
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, e, stackTrace: st),
+      );
     }
   }
 
@@ -251,7 +255,11 @@ class BackupPage extends ConsumerWidget {
       );
       await dismiss();
       if (!context.mounted) return;
-      AppMessenger.show(context, ToastKind.error, e.toString());
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, e, stackTrace: st),
+      );
     }
   }
 

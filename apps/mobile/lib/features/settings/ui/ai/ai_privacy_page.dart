@@ -36,7 +36,7 @@ class AiPrivacyPage extends ConsumerWidget {
             child: Text(l10n.aiPrivacyIntro, style: context.bodyCaptionStyle),
           ),
           const SizedBox(height: AppSpacing.s8),
-          SoftCard(
+          AppGroupedSurface(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
@@ -67,7 +67,7 @@ class AiPrivacyPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s16),
-          SoftCard(
+          AppGroupedSurface(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: InlineSwitchRow(
               icon: FLucideIcons.eyeOff,

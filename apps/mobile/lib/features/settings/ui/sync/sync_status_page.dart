@@ -19,42 +19,75 @@ part 'status/status_cards.dart';
 /// Diagnostic page surfacing the current sync engine state at a glance:
 /// hero status, three quick-read stat tiles, and a collapsible details
 /// panel. Reachable from Settings > Sync.
-class SyncStatusPage extends ConsumerWidget {
+class SyncStatusPage extends ConsumerStatefulWidget {
   const SyncStatusPage({super.key, this.now});
 
   final DateTime? now;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SyncStatusPage> createState() => _SyncStatusPageState();
+}
+
+class _SyncStatusPageState extends ConsumerState<SyncStatusPage> {
+  bool _syncing = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final eventAsync = ref.watch(syncStatusEventStreamProvider);
     return AppPageScaffold(
       title: l10n.syncStatusTitle,
       actions: [
         FHeaderAction(
-          icon: const Icon(FLucideIcons.refreshCw),
-          onPress: () => _triggerSyncNow(ref),
+          icon: _syncing
+              ? const SizedBox.square(
+                  dimension: AppIconSizes.h18,
+                  child: FCircularProgress(
+                    size: FCircularProgressSizeVariant.xs,
+                  ),
+                )
+              : const Icon(FLucideIcons.refreshCw),
+          semanticsLabel: l10n.syncStatusActionSyncNow,
+          onPress: _syncing ? null : _triggerSyncNow,
         ),
       ],
       childPad: false,
-      child: eventAsync.whenOrLoading(
-        context: context,
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s24),
-            child: Text(userSafeErrorMessage(context, e)),
-          ),
+      child: eventAsync.when(
+        loading: () =>
+            const AppListPageSkeleton(showControls: false, itemCount: 4),
+        error: (error, stackTrace) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(syncStatusEventStreamProvider),
         ),
-        data: (event) => _Body(event: event, now: now),
+        data: (event) => _Body(
+          event: event,
+          now: widget.now,
+          onSyncNow: _syncing ? null : _triggerSyncNow,
+        ),
       ),
     );
   }
-}
 
-Future<void> _triggerSyncNow(WidgetRef ref) async {
-  final scheduler = await ref.read(syncSchedulerProvider.future);
-  await scheduler?.triggerNow();
-  ref.invalidate(syncCursorProvider);
-  ref.invalidate(syncOutboxDepthProvider);
-  ref.invalidate(localTableCountsProvider);
+  Future<void> _triggerSyncNow() async {
+    if (_syncing) return;
+    setState(() => _syncing = true);
+    try {
+      final scheduler = await ref.read(syncSchedulerProvider.future);
+      await scheduler?.triggerNow();
+      ref.invalidate(syncCursorProvider);
+      ref.invalidate(syncOutboxDepthProvider);
+      ref.invalidate(localTableCountsProvider);
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+      );
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+    }
+  }
 }

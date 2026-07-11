@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/perf/frame_timing_collector.dart';
 import '../../../core/perf/providers.dart';
+import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
@@ -23,17 +24,13 @@ class PerfDiagnosticsPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.settingsPerfTitle,
       childPad: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
-        ),
+      child: SettingsPageFrame(
+        maxWidth: AdaptiveMaxWidth.page,
         children: [
-          _SummaryCard(stats: stats),
-          const SizedBox(height: AppSpacing.s12),
-          _TimingCard(stats: stats),
+          ResponsiveTwoColumn(
+            left: _SummaryCard(stats: stats),
+            right: _TimingCard(stats: stats),
+          ),
         ],
       ),
     );

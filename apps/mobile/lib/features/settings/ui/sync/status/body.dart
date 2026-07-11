@@ -1,10 +1,15 @@
 part of '../sync_status_page.dart';
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.event, required this.now});
+  const _Body({
+    required this.event,
+    required this.now,
+    required this.onSyncNow,
+  });
 
   final SyncStatusEvent event;
   final DateTime? now;
+  final VoidCallback? onSyncNow;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,7 +33,7 @@ class _Body extends ConsumerWidget {
         _HeroCard(
           event: event,
           now: relativeNow,
-          onSyncNow: session == null ? null : () => _triggerSyncNow(ref),
+          onSyncNow: session == null ? null : onSyncNow,
         ),
         const SizedBox(height: AppSpacing.s12),
         _StatGrid(

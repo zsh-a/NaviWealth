@@ -100,11 +100,19 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
                 ],
               );
             },
-            loading: () => const SliverToBoxAdapter(
-              child: Center(child: FCircularProgress()),
-            ),
-            error: (e, _) => SliverToBoxAdapter(
-              child: Center(child: Text(userSafeErrorMessage(context, e))),
+            loading: () =>
+                const SliverToBoxAdapter(child: _TraceListSkeleton()),
+            error: (error, stackTrace) => SliverToBoxAdapter(
+              child: AppEmptyState.error(
+                title: l10n.commonLoadFailed,
+                message: userSafeErrorMessage(
+                  context,
+                  error,
+                  stackTrace: stackTrace,
+                ),
+                retryLabel: l10n.commonRetry,
+                onRetry: () => ref.invalidate(recentAiTracesProvider),
+              ),
             ),
           ),
         ],
@@ -125,15 +133,65 @@ class AiTransparencyDetailPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.aiTransparencyDetailTitle,
       childPad: false,
-      child: traceAsync.whenOrLoading(
-        context: context,
+      child: traceAsync.when(
+        loading: () =>
+            const AppListPageSkeleton(showControls: false, itemCount: 4),
+        error: (error, stackTrace) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(aiTraceByIdProvider(requestId)),
+        ),
         data: (trace) {
           if (trace == null) {
             return Center(child: Text(l10n.aiTransparencyTraceNotFound));
           }
           return _TraceWaterfallBody(trace: trace);
         },
-        error: (e, _) => Center(child: Text(userSafeErrorMessage(context, e))),
+      ),
+    );
+  }
+}
+
+class _TraceListSkeleton extends StatelessWidget {
+  const _TraceListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: AppGroupedSurface(
+        padding: EdgeInsets.zero,
+        child: Column(
+          children: [
+            for (var index = 0; index < 4; index++) ...[
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.s14),
+                child: Row(
+                  children: [
+                    SkeletonBox(
+                      width: AppSpacing.s40,
+                      height: AppSpacing.s40,
+                      radius: AppRadius.sm,
+                    ),
+                    SizedBox(width: AppSpacing.s12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SkeletonBox(width: 180, height: 14),
+                          SizedBox(height: AppSpacing.s8),
+                          SkeletonBox(width: 240, height: 10),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (index != 3) const AppGroupedDivider(),
+            ],
+          ],
+        ),
       ),
     );
   }
