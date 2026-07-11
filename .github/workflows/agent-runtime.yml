@@ -82,6 +82,13 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Stub web-only font assets so the asset bundle resolves
+        run: |
+          mkdir -p assets/fonts
+          touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
+          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
+                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
+                assets/fonts/outfit-bold.woff2
       - name: Run embedded-runtime consumer tests
         run: >
           flutter test
