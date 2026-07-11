@@ -577,6 +577,8 @@
   "fxRatesAsOfLabel": "日期",
   "fxRatesSamePairError": "源币种与目标币种不能相同。",
   "fxRatesInvalidRateError": "汇率必须为正数。",
+  "fxRatesDeleteConfirmTitle": "删除这条汇率？",
+  "fxRatesDeleteConfirmBody": "这会删除该货币对在当前日期记录的汇率。",
   "dashboardCurrencyMismatchBanner": "{count, plural, other{有 {count} 项资产因缺少到 {currency} 的汇率而未计入合计}}",
   "dashboardCurrencyMismatchAction": "查看",
   "dashboardCurrencyMismatchSheetTitle": "未计入合计的资产",

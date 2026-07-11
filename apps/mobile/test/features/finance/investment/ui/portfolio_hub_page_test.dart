@@ -97,6 +97,7 @@ void main() {
     expect(find.text("We couldn't complete that. Please try again."), findsOne);
     expect(find.textContaining('Bad state: boom'), findsNothing);
     expect(find.text('Retry'), findsOne);
+    expect(find.byType(AppActionButton), findsOneWidget);
     expect(find.text('No investment holdings yet.'), findsNothing);
     expect(notifier.fetchCount, 1);
 

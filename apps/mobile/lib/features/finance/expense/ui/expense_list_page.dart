@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
@@ -92,14 +91,11 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
       error: (e, _) => AppEmptyState.error(
         title: l10n.commonLoadFailed,
         message: userSafeErrorMessage(context, e),
-        action: FButton(
-          variant: FButtonVariant.ghost,
-          onPress: () {
-            ref.invalidate(journalExpensesStreamProvider);
-            ref.invalidate(allAccountsStreamProvider);
-          },
-          child: Text(l10n.commonRetry),
-        ),
+        retryLabel: l10n.commonRetry,
+        onRetry: () {
+          ref.invalidate(journalExpensesStreamProvider);
+          ref.invalidate(allAccountsStreamProvider);
+        },
       ),
     );
 

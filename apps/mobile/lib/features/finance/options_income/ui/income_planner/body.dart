@@ -29,11 +29,8 @@ class _ConfiguredBody extends ConsumerWidget {
           error: (e, _) => AppEmptyState.error(
             title: l10n.commonLoadFailed,
             message: '$e',
-            action: FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () => ref.invalidate(approvedUnderlyingsProvider),
-              child: Text(l10n.commonRetry),
-            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(approvedUnderlyingsProvider),
           ),
           data: (items) => items.isEmpty
               ? const _ApprovedEmpty()

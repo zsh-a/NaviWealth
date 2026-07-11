@@ -48,11 +48,8 @@ class _ErrorState extends StatelessWidget {
     return AppEmptyState.error(
       icon: FLucideIcons.circleAlert,
       title: message,
-      action: FButton(
-        variant: FButtonVariant.ghost,
-        onPress: onRetry,
-        child: Text(l10n.fireRetry),
-      ),
+      retryLabel: l10n.fireRetry,
+      onRetry: onRetry,
     );
   }
 }

@@ -1045,6 +1045,8 @@
   "fxRatesAsOfLabel": "As of",
   "fxRatesSamePairError": "Source and target currencies must differ.",
   "fxRatesInvalidRateError": "Rate must be a positive number.",
+  "fxRatesDeleteConfirmTitle": "Delete this FX rate?",
+  "fxRatesDeleteConfirmBody": "This removes the recorded rate for this currency pair and date.",
   "dashboardCurrencyMismatchBanner": "{count, plural, one{1 holding excluded — missing FX rate to {currency}} other{{count} holdings excluded — missing FX rates to {currency}}}",
   "@dashboardCurrencyMismatchBanner": {
     "placeholders": {

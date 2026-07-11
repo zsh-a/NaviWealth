@@ -5,6 +5,7 @@ import 'package:naviwealth/features/finance/data/preferences/base_currency_prefe
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
 
 import '../../../../core/format/providers.dart';
+import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../data/market/sync/fx_rate_sync_providers.dart';
@@ -103,12 +104,23 @@ class _RateList extends ConsumerWidget {
             child: Icon(FLucideIcons.trash2, color: semantic.danger),
           ),
           confirmDismiss: (_) async {
+            final confirmed = await showConfirmDialog(
+              context: ctx,
+              title: Text(l10n.fxRatesDeleteConfirmTitle),
+              body: Text(l10n.fxRatesDeleteConfirmBody),
+              confirmLabel: l10n.commonDelete,
+              cancelLabel: l10n.commonCancel,
+              destructive: true,
+              icon: FLucideIcons.trash2,
+            );
+            if (confirmed != true) return false;
             final repo = await ref.read(fxRateRepositoryProvider.future);
             await repo.deleteByNaturalKey(
               base: r.base,
               quote: r.quote,
               date: r.date,
             );
+            Haptics.destructive();
             return true;
           },
           child: SoftCard(

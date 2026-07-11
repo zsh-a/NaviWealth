@@ -43,14 +43,11 @@ class EventTimelineSection extends ConsumerWidget {
           error: (error, _) => AppEmptyState.error(
             title: l10n.investmentEventTimelineError,
             message: userSafeErrorMessage(context, error),
-            action: FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () {
-                ref.invalidate(corporateActionEventsProvider(symbol));
-                ref.invalidate(upcomingEventsForSymbolProvider(symbol));
-              },
-              child: Text(l10n.commonRetry),
-            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () {
+              ref.invalidate(corporateActionEventsProvider(symbol));
+              ref.invalidate(upcomingEventsForSymbolProvider(symbol));
+            },
           ),
           data: (events) => events.isEmpty
               ? SoftCard(

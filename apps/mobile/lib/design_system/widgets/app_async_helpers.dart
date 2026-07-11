@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../core/errors/user_safe_error.dart';
+import '../../l10n/gen/app_localizations.dart';
 import 'app_empty_state.dart';
 
 /// Default loading widget: centred [FCircularProgress].
@@ -11,7 +12,8 @@ const Widget kDefaultLoading = Center(child: FCircularProgress());
 /// Builds a default error widget from an [Object] error.
 ///
 /// Renders an [AppEmptyState.error] with the error's [toString] as the
-/// message and an optional [onRetry] callback surfaced as a ghost button.
+/// message and an optional [onRetry] callback surfaced as the canonical
+/// primary retry action.
 Widget kDefaultError(
   BuildContext context,
   Object error,
@@ -20,13 +22,10 @@ Widget kDefaultError(
 }) {
   return AppEmptyState.error(
     title: userSafeErrorMessage(context, error, stackTrace: stackTrace),
-    action: onRetry != null
-        ? FButton(
-            variant: FButtonVariant.ghost,
-            onPress: onRetry,
-            child: const Text('Retry'),
-          )
-        : null,
+    retryLabel: onRetry == null
+        ? null
+        : AppLocalizations.of(context).commonRetry,
+    onRetry: onRetry,
   );
 }
 

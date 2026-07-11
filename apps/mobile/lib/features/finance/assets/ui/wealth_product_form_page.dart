@@ -278,11 +278,8 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           error: (e, _) => AppEmptyState.error(
             title: l10n.commonLoadFailed,
             message: userSafeErrorMessage(context, e),
-            action: FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () => ref.invalidate(accountsStreamProvider),
-              child: Text(l10n.commonRetry),
-            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(accountsStreamProvider),
           ),
           data: (accounts) => _buildForm(accounts),
         ),

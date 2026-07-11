@@ -67,11 +67,8 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
             stackTrace: stackTrace,
             operation: 'load portfolio hub',
           ),
-          action: FButton(
-            variant: FButtonVariant.ghost,
-            onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
-            child: Text(l10n.commonRetry),
-          ),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.read(portfolioHubProvider.notifier).refresh(),
         ),
         data: (data) => _PortfolioHubBody(
           data: data,

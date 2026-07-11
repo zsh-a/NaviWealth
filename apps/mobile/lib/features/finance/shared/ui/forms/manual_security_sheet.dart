@@ -186,9 +186,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
 
   Future<SymbolInfo?> _pickFromCandidates(List<SymbolInfo> hits) {
     final l10n = AppLocalizations.of(context);
-    return showFDialog<SymbolInfo>(
+    return showAppContentDialog<SymbolInfo>(
       context: context,
-      builder: (ctx, style, animation) => FDialog.raw(
+      maxWidth: 520,
+      child: FDialog.raw(
         builder: (innerCtx, _) => Padding(
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
@@ -216,7 +217,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   suffix: Text(hit.currency ?? '—'),
-                  onPress: () => Navigator.of(ctx).pop(hit),
+                  onPress: () => Navigator.of(innerCtx).pop(hit),
                 ),
             ],
           ),

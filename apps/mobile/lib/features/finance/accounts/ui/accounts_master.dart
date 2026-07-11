@@ -51,15 +51,12 @@ class AccountsMaster extends ConsumerWidget {
       error: (_, _) => Center(
         child: AppEmptyState.error(
           title: l10n.commonLoadFailed,
-          action: FButton(
-            variant: FButtonVariant.ghost,
-            onPress: () {
-              ref
-                ..invalidate(accountsStreamProvider)
-                ..invalidate(accountBalancesByIdProvider);
-            },
-            child: Text(l10n.commonRetry),
-          ),
+          retryLabel: l10n.commonRetry,
+          onRetry: () {
+            ref
+              ..invalidate(accountsStreamProvider)
+              ..invalidate(accountBalancesByIdProvider);
+          },
         ),
       ),
     );

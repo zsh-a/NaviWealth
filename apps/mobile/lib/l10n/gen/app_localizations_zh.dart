@@ -1852,6 +1852,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fxRatesInvalidRateError => '汇率必须为正数。';
 
   @override
+  String get fxRatesDeleteConfirmTitle => '删除这条汇率？';
+
+  @override
+  String get fxRatesDeleteConfirmBody => '这会删除该货币对在当前日期记录的汇率。';
+
+  @override
   String dashboardCurrencyMismatchBanner(int count, String currency) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

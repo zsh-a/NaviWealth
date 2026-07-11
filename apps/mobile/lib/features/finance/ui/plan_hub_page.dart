@@ -137,11 +137,8 @@ class _FireSummaryCard extends ConsumerWidget {
       child: AppEmptyState.error(
         title: l10n.commonLoadFailed,
         message: userSafeErrorMessage(context, error),
-        action: FButton(
-          variant: FButtonVariant.ghost,
-          onPress: () => ref.invalidate(fireDashboardViewProvider),
-          child: Text(l10n.commonRetry),
-        ),
+        retryLabel: l10n.commonRetry,
+        onRetry: () => ref.invalidate(fireDashboardViewProvider),
       ),
     );
   }

@@ -160,19 +160,16 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
             : loadError != null
             ? AppEmptyState.error(
                 title: userSafeErrorMessage(context, loadError),
-                action: FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () {
-                    final liabilityId = widget.liabilityId;
-                    if (liabilityId == null) return;
-                    setState(() {
-                      _loadingInitial = true;
-                      _loadError = null;
-                    });
-                    unawaited(_loadExisting(liabilityId));
-                  },
-                  child: Text(l10n.commonRetry),
-                ),
+                retryLabel: l10n.commonRetry,
+                onRetry: () {
+                  final liabilityId = widget.liabilityId;
+                  if (liabilityId == null) return;
+                  setState(() {
+                    _loadingInitial = true;
+                    _loadError = null;
+                  });
+                  unawaited(_loadExisting(liabilityId));
+                },
               )
             : Form(
                 key: _formKey,

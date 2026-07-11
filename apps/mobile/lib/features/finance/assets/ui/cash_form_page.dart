@@ -207,11 +207,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
           error: (e, _) => AppEmptyState.error(
             title: l10n.commonLoadFailed,
             message: l10n.cashFormLoadError('$e'),
-            action: FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () => ref.invalidate(accountsStreamProvider),
-              child: Text(l10n.commonRetry),
-            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(accountsStreamProvider),
           ),
           data: (accounts) => _buildForm(l10n, accounts),
         ),

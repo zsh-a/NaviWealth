@@ -82,14 +82,11 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         error: (error, _) => AppEmptyState.error(
           title: l10n.commonLoadFailed,
           message: userSafeErrorMessage(context, error),
-          action: FButton(
-            variant: FButtonVariant.ghost,
-            onPress: () {
-              ref.invalidate(watchlistItemsProvider);
-              ref.invalidate(watchlistQuoteSnapshotsProvider);
-            },
-            child: Text(l10n.commonRetry),
-          ),
+          retryLabel: l10n.commonRetry,
+          onRetry: () {
+            ref.invalidate(watchlistItemsProvider);
+            ref.invalidate(watchlistQuoteSnapshotsProvider);
+          },
         ),
       ),
     );

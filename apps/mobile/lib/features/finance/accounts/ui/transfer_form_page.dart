@@ -123,11 +123,8 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
           error: (_, _) => Center(
             child: AppEmptyState.error(
               title: l10n.commonLoadFailed,
-              action: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => ref.invalidate(accountsStreamProvider),
-                child: Text(l10n.commonRetry),
-              ),
+              retryLabel: l10n.commonRetry,
+              onRetry: () => ref.invalidate(accountsStreamProvider),
             ),
           ),
         ),

@@ -48,59 +48,11 @@ Future<void> showAllocationDetailPanel({
     );
   }
 
-  return showGeneralDialog<void>(
+  return showAppSidePanel<void>(
     context: context,
     barrierLabel: 'allocation-detail-panel',
-    barrierDismissible: true,
-    barrierColor: SemanticColors.of(context).scrim,
-    transitionDuration: AppMotionPolicy.duration(
-      context,
-      Motion.medium,
-      role: AppMotionRole.transition,
-    ),
-    pageBuilder: (_, _, _) => _DesktopAllocationInspector(snapshot: snapshot),
-    transitionBuilder: (context, animation, _, child) {
-      final curved = CurvedAnimation(
-        parent: animation,
-        curve: Motion.standardDecelerate,
-        reverseCurve: Motion.standardAccelerate,
-      );
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(curved),
-        child: child,
-      );
-    },
+    builder: (_) => _AllocationDetailBody(snapshot: snapshot),
   );
-}
-
-class _DesktopAllocationInspector extends StatelessWidget {
-  const _DesktopAllocationInspector({required this.snapshot});
-
-  final DashboardSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Align(
-      alignment: Alignment.centerRight,
-      child: SafeArea(
-        left: false,
-        child: Container(
-          width: 430,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            color: colors.background,
-            border: Border(left: BorderSide(color: colors.border)),
-            boxShadow: AppShadow.panel,
-          ),
-          child: _AllocationDetailBody(snapshot: snapshot),
-        ),
-      ),
-    );
-  }
 }
 
 class _AllocationDetailBody extends StatefulWidget {

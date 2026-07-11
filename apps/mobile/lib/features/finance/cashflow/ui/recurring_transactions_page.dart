@@ -43,11 +43,8 @@ class RecurringTransactionsPage extends ConsumerWidget {
               stackTrace: stackTrace,
               operation: 'load recurring transactions',
             ),
-            action: FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () => ref.invalidate(recurringTransactionsProvider),
-              child: Text(l10n.commonRetry),
-            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(recurringTransactionsProvider),
           ),
           data: (rules) => rules.isEmpty
               ? AppEmptyState(

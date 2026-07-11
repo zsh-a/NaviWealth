@@ -48,11 +48,8 @@ class DividendCenterPage extends ConsumerWidget {
               stackTrace: stackTrace,
               operation: 'load dividend center',
             ),
-            action: FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () => ref.invalidate(dividendCenterSnapshotProvider),
-              child: Text(l10n.commonRetry),
-            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(dividendCenterSnapshotProvider),
           ),
           data: (data) => _DividendCenterBody(snapshot: data),
         ),

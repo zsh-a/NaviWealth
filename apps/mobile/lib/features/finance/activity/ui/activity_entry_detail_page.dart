@@ -141,12 +141,8 @@ class ActivityEntryDetailRoute extends ConsumerWidget {
         child: AppEmptyState.error(
           title: l10n.commonLoadFailed,
           message: userSafeErrorMessage(context, error),
-          action: FButton(
-            variant: FButtonVariant.ghost,
-            onPress: () =>
-                ref.invalidate(_activityEntryDetailProvider(entryId)),
-            child: Text(l10n.commonRetry),
-          ),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(_activityEntryDetailProvider(entryId)),
         ),
       ),
       data: (detail) {

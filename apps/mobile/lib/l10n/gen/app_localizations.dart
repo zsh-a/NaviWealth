@@ -3446,6 +3446,18 @@ abstract class AppLocalizations {
   /// **'Rate must be a positive number.'**
   String get fxRatesInvalidRateError;
 
+  /// No description provided for @fxRatesDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this FX rate?'**
+  String get fxRatesDeleteConfirmTitle;
+
+  /// No description provided for @fxRatesDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the recorded rate for this currency pair and date.'**
+  String get fxRatesDeleteConfirmBody;
+
   /// No description provided for @dashboardCurrencyMismatchBanner.
   ///
   /// In en, this message translates to:

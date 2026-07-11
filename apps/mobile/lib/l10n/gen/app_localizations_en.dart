@@ -1921,6 +1921,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fxRatesInvalidRateError => 'Rate must be a positive number.';
 
   @override
+  String get fxRatesDeleteConfirmTitle => 'Delete this FX rate?';
+
+  @override
+  String get fxRatesDeleteConfirmBody =>
+      'This removes the recorded rate for this currency pair and date.';
+
+  @override
   String dashboardCurrencyMismatchBanner(int count, String currency) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
