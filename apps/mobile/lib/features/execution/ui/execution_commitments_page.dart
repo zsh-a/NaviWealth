@@ -32,20 +32,19 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
         ShellHeaderActionSpec(
           icon: FLucideIcons.folder,
           label: l10n.executionCreateProjectTitle,
-          onPress: () => showExecutionProjectSheet(context: context, ref: ref),
+          onPress: () => showExecutionProjectSheet(context: context),
           order: 20,
         ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.target,
           label: l10n.executionCreateCommitmentTitle,
-          onPress: () =>
-              showExecutionCommitmentSheet(context: context, ref: ref),
+          onPress: () => showExecutionCommitmentSheet(context: context),
           order: 10,
         ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.executionCreateActionTitle,
-          onPress: () => showExecutionActionSheet(context: context, ref: ref),
+          onPress: () => showExecutionActionSheet(context: context),
         ),
       ],
       child: RefreshIndicator(
@@ -142,10 +141,8 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                 : l10n.executionCommitmentsClosedEmptyBody,
             action: showActions
                 ? FButton(
-                    onPress: () => showExecutionCommitmentSheet(
-                      context: context,
-                      ref: ref,
-                    ),
+                    onPress: () =>
+                        showExecutionCommitmentSheet(context: context),
                     child: Text(l10n.executionCreateCommitmentTitle),
                   )
                 : null,
@@ -171,17 +168,14 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                 ),
                 onCreateAction: () => showExecutionActionSheet(
                   context: context,
-                  ref: ref,
                   initialProjectId: project.id,
                 ),
                 onEdit: () => showExecutionProjectSheet(
                   context: context,
-                  ref: ref,
                   project: project,
                 ),
                 onRecordProgress: () => showExecutionProgressSheet(
                   context: context,
-                  ref: ref,
                   projectId: project.id,
                 ),
               ),
@@ -209,18 +203,15 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                 ),
                 onCreateAction: () => showExecutionActionSheet(
                   context: context,
-                  ref: ref,
                   initialProjectId: commitment.projectId,
                   initialCommitmentId: commitment.id,
                 ),
                 onEdit: () => showExecutionCommitmentSheet(
                   context: context,
-                  ref: ref,
                   commitment: commitment,
                 ),
                 onRecordProgress: () => showExecutionProgressSheet(
                   context: context,
-                  ref: ref,
                   projectId: commitment.projectId,
                   commitmentId: commitment.id,
                 ),
@@ -251,14 +242,10 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
                       action.commitmentId,
                     ),
                 onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-                onEdit: () => showExecutionActionSheet(
-                  context: context,
-                  ref: ref,
-                  action: action,
-                ),
+                onEdit: () =>
+                    showExecutionActionSheet(context: context, action: action),
                 onRecordProgress: () => showExecutionProgressSheet(
                   context: context,
-                  ref: ref,
                   action: action,
                 ),
                 blockedProgressNote: l10n.executionProgressBlockedDefault,

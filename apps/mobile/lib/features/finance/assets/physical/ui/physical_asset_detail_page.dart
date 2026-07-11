@@ -39,9 +39,14 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: assetAsync.whenOrLoading(
-        context: context,
-        error: (e, st) => Center(child: Text('$e')),
+      child: assetAsync.when(
+        loading: () => const AssetDetailSkeleton(),
+        error: (error, stackTrace) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(physicalAssetDetailProvider(id)),
+        ),
         data: (asset) {
           if (asset == null) {
             return Center(child: Text(l10n.physicalAssetNotFound));
@@ -150,9 +155,28 @@ class _DetailBody extends ConsumerWidget {
                   style: context.theme.typography.body.md,
                 ),
                 const SizedBox(height: AppSpacing.s12),
-                historyAsync.whenOrLoading(
-                  context: context,
-                  error: (e, st) => Text('$e'),
+                historyAsync.when(
+                  loading: () => const Column(
+                    children: [
+                      SkeletonBox(height: 180),
+                      SizedBox(height: AppSpacing.s12),
+                      SkeletonBox(height: 18),
+                      SizedBox(height: AppSpacing.s8),
+                      SkeletonBox(height: 18),
+                    ],
+                  ),
+                  error: (error, stackTrace) => AppEmptyState.error(
+                    title: l10n.commonLoadFailed,
+                    message: userSafeErrorMessage(
+                      context,
+                      error,
+                      stackTrace: stackTrace,
+                    ),
+                    retryLabel: l10n.commonRetry,
+                    onRetry: () => ref.invalidate(
+                      physicalAssetValuationHistoryProvider(asset.id),
+                    ),
+                  ),
                   data: (history) {
                     final projection = _projectionFor(asset, history);
                     return Column(

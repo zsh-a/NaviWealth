@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/forms/forms.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -13,7 +14,6 @@ import 'execution_widgets.dart';
 
 Future<bool?> showExecutionProgressSheet({
   required BuildContext context,
-  required WidgetRef ref,
   ExecutionAction? action,
   String? projectId,
   String? commitmentId,
@@ -23,7 +23,6 @@ Future<bool?> showExecutionProgressSheet({
     context: context,
     dirtyGuard: dirty,
     builder: (_) => _ExecutionProgressForm(
-      ref: ref,
       dirty: dirty,
       action: action,
       projectId: projectId,
@@ -32,26 +31,26 @@ Future<bool?> showExecutionProgressSheet({
   ).whenComplete(dirty.dispose);
 }
 
-class _ExecutionProgressForm extends StatefulWidget {
+class _ExecutionProgressForm extends ConsumerStatefulWidget {
   const _ExecutionProgressForm({
-    required this.ref,
     required this.dirty,
     required this.action,
     required this.projectId,
     required this.commitmentId,
   });
 
-  final WidgetRef ref;
   final FormDirtyController dirty;
   final ExecutionAction? action;
   final String? projectId;
   final String? commitmentId;
 
   @override
-  State<_ExecutionProgressForm> createState() => _ExecutionProgressFormState();
+  ConsumerState<_ExecutionProgressForm> createState() =>
+      _ExecutionProgressFormState();
 }
 
-class _ExecutionProgressFormState extends State<_ExecutionProgressForm> {
+class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
+    with FormSubmission<_ExecutionProgressForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _note = TextEditingController();
   late ExecutionProgressKind _kind;
@@ -88,30 +87,39 @@ class _ExecutionProgressFormState extends State<_ExecutionProgressForm> {
   Future<void> _save() async {
     if (!_canSave) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(widget.ref);
-      final linkedAction = _linkedAction();
-      await repo.recordProgress(
-        ExecutionProgressEntry(
-          id: kExecutionUuid.v4(),
-          actionId: _actionId,
-          projectId: _projectId,
-          commitmentId: _commitmentId,
-          kind: _kind,
-          note: _note.text.trim(),
-          createdAt: sync.updatedAt,
-          sync: sync,
-        ),
-        linkedAction: _syncActionStatus ? linkedAction : null,
-        linkedActionStatus: _syncActionStatus ? _linkedActionStatus : null,
-      );
-      widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    final note = _note.text.trim();
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
+      tag: 'execution-progress',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      commit: () async {
+        final repo = await ref.read(executionRepositoryProvider.future);
+        final sync = await stampExecutionSync(ref);
+        final linkedAction = _linkedAction();
+        await repo.recordProgress(
+          ExecutionProgressEntry(
+            id: kExecutionUuid.v4(),
+            actionId: _actionId,
+            projectId: _projectId,
+            commitmentId: _commitmentId,
+            kind: _kind,
+            note: note,
+            createdAt: sync.updatedAt,
+            sync: sync,
+          ),
+          linkedAction: _syncActionStatus ? linkedAction : null,
+          linkedActionStatus: _syncActionStatus ? _linkedActionStatus : null,
+        );
+      },
+    );
+  }
+
+  void _setSaving(bool value) {
+    if (mounted && _saving != value) setState(() => _saving = value);
   }
 
   void _markDirty() => widget.dirty.markDirty();
@@ -120,7 +128,7 @@ class _ExecutionProgressFormState extends State<_ExecutionProgressForm> {
     final actionId = _actionId;
     if (actionId == null || actionId.isEmpty) return null;
     final actions =
-        widget.ref.read(executionOpenActionsProvider).value ??
+        ref.read(executionOpenActionsProvider).value ??
         const <ExecutionAction>[];
     for (final action in actions) {
       if (action.id == actionId) return action;
@@ -150,22 +158,20 @@ class _ExecutionProgressFormState extends State<_ExecutionProgressForm> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final actions =
-        widget.ref.watch(executionOpenActionsProvider).value ??
+        ref.watch(executionOpenActionsProvider).value ??
         const <ExecutionAction>[];
     final projects =
-        widget.ref.watch(executionProjectsProvider).value ??
+        ref.watch(executionProjectsProvider).value ??
         const <ExecutionProject>[];
     final commitments =
-        widget.ref.watch(executionCommitmentsProvider).value ??
+        ref.watch(executionCommitmentsProvider).value ??
         const <ExecutionCommitment>[];
     final selectedProject = _projectId == null || _projectId!.isEmpty
         ? null
-        : widget.ref.watch(executionProjectByIdProvider(_projectId!)).value;
+        : ref.watch(executionProjectByIdProvider(_projectId!)).value;
     final selectedCommitment = _commitmentId == null || _commitmentId!.isEmpty
         ? null
-        : widget.ref
-              .watch(executionCommitmentByIdProvider(_commitmentId!))
-              .value;
+        : ref.watch(executionCommitmentByIdProvider(_commitmentId!)).value;
     final linkedStatus = _linkedActionStatus;
     final canSyncActionStatus =
         _actionId != null && _actionId!.isNotEmpty && linkedStatus != null;

@@ -32,11 +32,7 @@ class ExecutionActionDetailPage extends ConsumerWidget {
           icon: const Icon(FLucideIcons.messageSquareText),
           semanticsLabel: l10n.executionCreateProgressTitle,
           onPress: () {
-            showExecutionProgressSheet(
-              context: context,
-              ref: ref,
-              action: currentAction,
-            );
+            showExecutionProgressSheet(context: context, action: currentAction);
           },
         ),
         if (currentAction != null)
@@ -45,7 +41,6 @@ class ExecutionActionDetailPage extends ConsumerWidget {
             semanticsLabel: l10n.executionEditActionTitle,
             onPress: () => showExecutionActionSheet(
               context: context,
-              ref: ref,
               action: currentAction,
             ),
           ),
@@ -92,7 +87,6 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
           onPress: () {
             showExecutionProgressSheet(
               context: context,
-              ref: ref,
               projectId: currentCommitment?.projectId,
               commitmentId: currentCommitment?.id ?? commitmentId,
             );
@@ -104,7 +98,6 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
             semanticsLabel: l10n.executionEditCommitmentTitle,
             onPress: () => showExecutionCommitmentSheet(
               context: context,
-              ref: ref,
               commitment: currentCommitment,
             ),
           ),
@@ -149,16 +142,10 @@ class _ActionDetailBody extends ConsumerWidget {
           action: action,
           projectLabel: relations?.projectLabel(action.projectId),
           commitmentLabel: relations?.commitmentLabel(action.commitmentId),
-          onEdit: () => showExecutionActionSheet(
-            context: context,
-            ref: ref,
-            action: action,
-          ),
-          onRecordProgress: () => showExecutionProgressSheet(
-            context: context,
-            ref: ref,
-            action: action,
-          ),
+          onEdit: () =>
+              showExecutionActionSheet(context: context, action: action),
+          onRecordProgress: () =>
+              showExecutionProgressSheet(context: context, action: action),
           blockedProgressNote: l10n.executionProgressBlockedDefault,
           doneProgressNote: l10n.executionProgressDoneDefault,
           droppedProgressNote: l10n.executionProgressDroppedDefault,
@@ -202,18 +189,15 @@ class _CommitmentDetailBody extends ConsumerWidget {
               .length,
           onCreateAction: () => showExecutionActionSheet(
             context: context,
-            ref: ref,
             initialProjectId: commitment.projectId,
             initialCommitmentId: commitment.id,
           ),
           onEdit: () => showExecutionCommitmentSheet(
             context: context,
-            ref: ref,
             commitment: commitment,
           ),
           onRecordProgress: () => showExecutionProgressSheet(
             context: context,
-            ref: ref,
             projectId: commitment.projectId,
             commitmentId: commitment.id,
           ),
@@ -281,12 +265,10 @@ class _RelatedActionsSection extends ConsumerWidget {
                   onOpen: () => context.push(ExecutionRoutes.action(action.id)),
                   onEdit: () => showExecutionActionSheet(
                     context: context,
-                    ref: ref,
                     action: action,
                   ),
                   onRecordProgress: () => showExecutionProgressSheet(
                     context: context,
-                    ref: ref,
                     action: action,
                   ),
                   blockedProgressNote: l10n.executionProgressBlockedDefault,

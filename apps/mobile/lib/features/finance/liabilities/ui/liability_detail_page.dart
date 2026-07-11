@@ -27,8 +27,14 @@ class LiabilityDetailPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.liabilitiesAppBarTitle,
       childPad: false,
-      child: summaryAsync.whenOrError(
-        context: context,
+      child: summaryAsync.when(
+        loading: () => const AssetDetailSkeleton(),
+        error: (error, stackTrace) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(liabilitySummaryProvider(id)),
+        ),
         data: (summary) {
           if (summary == null) {
             return Center(child: Text(l10n.liabilityNotFound));
@@ -66,13 +72,29 @@ class _LiabilityDetailBody extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.s8),
         scheduleAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s24),
-            child: Center(child: FCircularProgress()),
+          loading: () => const SkeletonCard(
+            padding: EdgeInsets.all(AppSpacing.s16),
+            child: Column(
+              children: [
+                SkeletonBox(height: 18),
+                SizedBox(height: AppSpacing.s8),
+                SkeletonBox(height: 18),
+                SizedBox(height: AppSpacing.s8),
+                SkeletonBox(height: 18),
+              ],
+            ),
           ),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.all(AppSpacing.s16),
-            child: Text('$e'),
+          error: (error, stackTrace) => AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: userSafeErrorMessage(
+              context,
+              error,
+              stackTrace: stackTrace,
+            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(
+              amortizationScheduleStreamProvider(liability.id),
+            ),
           ),
           data: (schedule) {
             if (schedule.isEmpty) {

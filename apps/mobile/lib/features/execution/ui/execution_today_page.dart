@@ -27,7 +27,7 @@ class ExecutionTodayPage extends ConsumerWidget {
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.executionCreateActionTitle,
-          onPress: () => showExecutionActionSheet(context: context, ref: ref),
+          onPress: () => showExecutionActionSheet(context: context),
         ),
       ],
       child: RefreshIndicator(
@@ -117,10 +117,8 @@ class _TodayListState extends ConsumerState<_TodayList> {
                     : l10n.executionTodayFilteredEmptyBody,
                 action: _filter == ExecutionTodayFilter.focus
                     ? FButton(
-                        onPress: () => showExecutionActionSheet(
-                          context: context,
-                          ref: ref,
-                        ),
+                        onPress: () =>
+                            showExecutionActionSheet(context: context),
                         child: Text(l10n.executionCreateActionTitle),
                       )
                     : null,
@@ -147,12 +145,10 @@ class _TodayListState extends ConsumerState<_TodayList> {
                   onOpen: () => context.push(ExecutionRoutes.action(action.id)),
                   onEdit: () => showExecutionActionSheet(
                     context: context,
-                    ref: ref,
                     action: action,
                   ),
                   onRecordProgress: () => showExecutionProgressSheet(
                     context: context,
-                    ref: ref,
                     action: action,
                   ),
                   blockedProgressNote: l10n.executionProgressBlockedDefault,

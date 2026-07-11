@@ -16,38 +16,34 @@ import 'execution_widgets.dart';
 
 Future<bool?> showExecutionCommitmentSheet({
   required BuildContext context,
-  required WidgetRef ref,
   ExecutionCommitment? commitment,
 }) {
   final dirty = FormDirtyController();
   return showAppFormSheet<bool>(
     context: context,
     dirtyGuard: dirty,
-    builder: (_) => _ExecutionCommitmentForm(
-      ref: ref,
-      commitment: commitment,
-      dirty: dirty,
-    ),
+    builder: (_) =>
+        _ExecutionCommitmentForm(commitment: commitment, dirty: dirty),
   ).whenComplete(dirty.dispose);
 }
 
-class _ExecutionCommitmentForm extends StatefulWidget {
+class _ExecutionCommitmentForm extends ConsumerStatefulWidget {
   const _ExecutionCommitmentForm({
-    required this.ref,
     required this.commitment,
     required this.dirty,
   });
 
-  final WidgetRef ref;
   final ExecutionCommitment? commitment;
   final FormDirtyController dirty;
 
   @override
-  State<_ExecutionCommitmentForm> createState() =>
+  ConsumerState<_ExecutionCommitmentForm> createState() =>
       _ExecutionCommitmentFormState();
 }
 
-class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
+class _ExecutionCommitmentFormState
+    extends ConsumerState<_ExecutionCommitmentForm>
+    with FormSubmission<_ExecutionCommitmentForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _description = TextEditingController();
@@ -88,17 +84,21 @@ class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
   Future<void> _save() async {
     if (!_canSave) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l10n = AppLocalizations.of(context);
     final title = _title.text.trim();
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(widget.ref);
-      await repo.upsertCommitment(_buildCommitment(sync, title));
-      widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
+      tag: 'execution-commitment',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      commit: () async {
+        final repo = await ref.read(executionRepositoryProvider.future);
+        final sync = await stampExecutionSync(ref);
+        await repo.upsertCommitment(_buildCommitment(sync, title));
+      },
+    );
   }
 
   Future<void> _delete() async {
@@ -109,16 +109,24 @@ class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
       item: commitment.title,
     );
     if (!confirmed || !mounted) return;
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(widget.ref);
-      await repo.softDeleteCommitment(commitment: commitment, sync: sync);
-      widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
+      tag: 'execution-commitment-delete',
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.commonDeleted,
+      commit: () async {
+        final repo = await ref.read(executionRepositoryProvider.future);
+        final sync = await stampExecutionSync(ref);
+        await repo.softDeleteCommitment(commitment: commitment, sync: sync);
+      },
+    );
+  }
+
+  void _setSaving(bool value) {
+    if (mounted && _saving != value) setState(() => _saving = value);
   }
 
   ExecutionCommitment _buildCommitment(SyncMeta sync, String title) {
@@ -156,11 +164,11 @@ class _ExecutionCommitmentFormState extends State<_ExecutionCommitmentForm> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final projects =
-        widget.ref.watch(executionProjectsProvider).value ??
+        ref.watch(executionProjectsProvider).value ??
         const <ExecutionProject>[];
     final selectedProject = _projectId == null || _projectId!.isEmpty
         ? null
-        : widget.ref.watch(executionProjectByIdProvider(_projectId!)).value;
+        : ref.watch(executionProjectByIdProvider(_projectId!)).value;
     final isEditing = widget.commitment != null;
 
     return AppSheet(

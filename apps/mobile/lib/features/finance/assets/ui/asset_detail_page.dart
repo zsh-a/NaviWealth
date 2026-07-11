@@ -41,11 +41,27 @@ class AssetDetailPage extends ConsumerWidget {
         return FutureBuilder<Asset?>(
           future: repo.findById(assetId),
           builder: (context, snap) {
-            if (!snap.hasData) {
+            if (snap.connectionState != ConnectionState.done) {
               return AppPageScaffold(
                 title: l10n.assetDetailUnknown,
                 childPad: false,
                 child: const AssetDetailSkeleton(),
+              );
+            }
+            if (snap.hasError) {
+              return AppPageScaffold(
+                title: l10n.assetDetailUnknown,
+                childPad: false,
+                child: AppEmptyState.error(
+                  title: l10n.commonLoadFailed,
+                  message: userSafeErrorMessage(
+                    context,
+                    snap.error!,
+                    stackTrace: snap.stackTrace,
+                  ),
+                  retryLabel: l10n.commonRetry,
+                  onRetry: () => ref.invalidate(manualAssetRepositoryProvider),
+                ),
               );
             }
             final asset = snap.data;

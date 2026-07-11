@@ -126,11 +126,27 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
     return FutureBuilder<Asset?>(
       future: _assetFuture,
       builder: (context, snap) {
-        if (!snap.hasData) {
+        if (snap.connectionState != ConnectionState.done) {
           return ObjectDetailScaffold(
             title: l10n.assetDetailUnknown,
             childPad: false,
-            child: const Center(child: FCircularProgress()),
+            child: const AssetDetailSkeleton(),
+          );
+        }
+        if (snap.hasError) {
+          return ObjectDetailScaffold(
+            title: l10n.assetDetailUnknown,
+            childPad: false,
+            child: AppEmptyState.error(
+              title: l10n.commonLoadFailed,
+              message: userSafeErrorMessage(
+                context,
+                snap.error!,
+                stackTrace: snap.stackTrace,
+              ),
+              retryLabel: l10n.commonRetry,
+              onRetry: () => setState(_reload),
+            ),
           );
         }
         final asset = snap.data;
@@ -172,13 +188,17 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               const SizedBox(height: AppSpacing.s8),
               AssetSummaryCard(asset: asset),
               const SizedBox(height: AppSpacing.s12),
-              AssetHoldingCard(asset: asset),
+              ResponsiveTwoColumn(
+                gap: AppSpacing.s12,
+                left: AssetHoldingCard(asset: asset),
+                right: AssetPnLCard(asset: asset),
+              ),
               const SizedBox(height: AppSpacing.s12),
-              AssetPnLCard(asset: asset),
-              const SizedBox(height: AppSpacing.s12),
-              AssetFxPnlCard(assetId: asset.id),
-              const SizedBox(height: AppSpacing.s12),
-              AssetTrendMiniChartCard(asset: asset),
+              ResponsiveTwoColumn(
+                gap: AppSpacing.s12,
+                left: AssetFxPnlCard(assetId: asset.id),
+                right: AssetTrendMiniChartCard(asset: asset),
+              ),
               if (_supportsCorporateActions(asset)) ...[
                 const SizedBox(height: AppSpacing.s16),
                 EventTimelineSection(symbol: asset.symbol),

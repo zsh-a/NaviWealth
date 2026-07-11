@@ -33,7 +33,7 @@ class ExecutionReviewPage extends ConsumerWidget {
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
           label: l10n.executionCreateProgressTitle,
-          onPress: () => showExecutionProgressSheet(context: context, ref: ref),
+          onPress: () => showExecutionProgressSheet(context: context),
         ),
       ],
       child: RefreshIndicator(
@@ -92,8 +92,7 @@ class _ReviewBody extends ConsumerWidget {
             title: l10n.executionReviewEmptyTitle,
             message: l10n.executionReviewEmptyBody,
             action: FButton(
-              onPress: () =>
-                  showExecutionProgressSheet(context: context, ref: ref),
+              onPress: () => showExecutionProgressSheet(context: context),
               child: Text(l10n.executionCreateProgressTitle),
             ),
           ),
@@ -148,16 +147,10 @@ class _ReviewBody extends ConsumerWidget {
                   relations?.commitmentLabel(action.commitmentId) ??
                   _fallbackRelationLabel(action.commitmentId),
               onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-              onEdit: () => showExecutionActionSheet(
-                context: context,
-                ref: ref,
-                action: action,
-              ),
-              onRecordProgress: () => showExecutionProgressSheet(
-                context: context,
-                ref: ref,
-                action: action,
-              ),
+              onEdit: () =>
+                  showExecutionActionSheet(context: context, action: action),
+              onRecordProgress: () =>
+                  showExecutionProgressSheet(context: context, action: action),
               blockedProgressNote: l10n.executionProgressBlockedDefault,
               doneProgressNote: l10n.executionProgressDoneDefault,
               droppedProgressNote: l10n.executionProgressDroppedDefault,

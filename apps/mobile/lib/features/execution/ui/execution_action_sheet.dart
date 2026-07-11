@@ -16,7 +16,6 @@ import 'execution_widgets.dart';
 
 Future<bool?> showExecutionActionSheet({
   required BuildContext context,
-  required WidgetRef ref,
   ExecutionAction? action,
   String? initialProjectId,
   String? initialCommitmentId,
@@ -26,7 +25,6 @@ Future<bool?> showExecutionActionSheet({
     context: context,
     dirtyGuard: dirty,
     builder: (_) => _ExecutionActionForm(
-      ref: ref,
       action: action,
       initialProjectId: initialProjectId,
       initialCommitmentId: initialCommitmentId,
@@ -35,26 +33,26 @@ Future<bool?> showExecutionActionSheet({
   ).whenComplete(dirty.dispose);
 }
 
-class _ExecutionActionForm extends StatefulWidget {
+class _ExecutionActionForm extends ConsumerStatefulWidget {
   const _ExecutionActionForm({
-    required this.ref,
     required this.action,
     required this.initialProjectId,
     required this.initialCommitmentId,
     required this.dirty,
   });
 
-  final WidgetRef ref;
   final ExecutionAction? action;
   final String? initialProjectId;
   final String? initialCommitmentId;
   final FormDirtyController dirty;
 
   @override
-  State<_ExecutionActionForm> createState() => _ExecutionActionFormState();
+  ConsumerState<_ExecutionActionForm> createState() =>
+      _ExecutionActionFormState();
 }
 
-class _ExecutionActionFormState extends State<_ExecutionActionForm> {
+class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
+    with FormSubmission<_ExecutionActionForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _note = TextEditingController();
@@ -101,17 +99,21 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
   Future<void> _save() async {
     if (!_canSave) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l10n = AppLocalizations.of(context);
     final title = _title.text.trim();
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(widget.ref);
-      await repo.upsertAction(_buildAction(sync, title));
-      widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
+      tag: 'execution-action',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      commit: () async {
+        final repo = await ref.read(executionRepositoryProvider.future);
+        final sync = await stampExecutionSync(ref);
+        await repo.upsertAction(_buildAction(sync, title));
+      },
+    );
   }
 
   Future<void> _delete() async {
@@ -122,16 +124,24 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
       item: action.title,
     );
     if (!confirmed || !mounted) return;
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(widget.ref);
-      await repo.softDeleteAction(action: action, sync: sync);
-      widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
+      tag: 'execution-action-delete',
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.commonDeleted,
+      commit: () async {
+        final repo = await ref.read(executionRepositoryProvider.future);
+        final sync = await stampExecutionSync(ref);
+        await repo.softDeleteAction(action: action, sync: sync);
+      },
+    );
+  }
+
+  void _setSaving(bool value) {
+    if (mounted && _saving != value) setState(() => _saving = value);
   }
 
   ExecutionAction _buildAction(SyncMeta sync, String title) {
@@ -171,19 +181,17 @@ class _ExecutionActionFormState extends State<_ExecutionActionForm> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final projects =
-        widget.ref.watch(executionProjectsProvider).value ??
+        ref.watch(executionProjectsProvider).value ??
         const <ExecutionProject>[];
     final commitments =
-        widget.ref.watch(executionCommitmentsProvider).value ??
+        ref.watch(executionCommitmentsProvider).value ??
         const <ExecutionCommitment>[];
     final selectedProject = _projectId == null || _projectId!.isEmpty
         ? null
-        : widget.ref.watch(executionProjectByIdProvider(_projectId!)).value;
+        : ref.watch(executionProjectByIdProvider(_projectId!)).value;
     final selectedCommitment = _commitmentId == null || _commitmentId!.isEmpty
         ? null
-        : widget.ref
-              .watch(executionCommitmentByIdProvider(_commitmentId!))
-              .value;
+        : ref.watch(executionCommitmentByIdProvider(_commitmentId!)).value;
     final isEditing = widget.action != null;
 
     return AppSheet(

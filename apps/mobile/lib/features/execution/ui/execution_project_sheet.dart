@@ -15,34 +15,29 @@ import 'execution_widgets.dart';
 
 Future<bool?> showExecutionProjectSheet({
   required BuildContext context,
-  required WidgetRef ref,
   ExecutionProject? project,
 }) {
   final dirty = FormDirtyController();
   return showAppFormSheet<bool>(
     context: context,
     dirtyGuard: dirty,
-    builder: (_) =>
-        _ExecutionProjectForm(ref: ref, project: project, dirty: dirty),
+    builder: (_) => _ExecutionProjectForm(project: project, dirty: dirty),
   ).whenComplete(dirty.dispose);
 }
 
-class _ExecutionProjectForm extends StatefulWidget {
-  const _ExecutionProjectForm({
-    required this.ref,
-    required this.project,
-    required this.dirty,
-  });
+class _ExecutionProjectForm extends ConsumerStatefulWidget {
+  const _ExecutionProjectForm({required this.project, required this.dirty});
 
-  final WidgetRef ref;
   final ExecutionProject? project;
   final FormDirtyController dirty;
 
   @override
-  State<_ExecutionProjectForm> createState() => _ExecutionProjectFormState();
+  ConsumerState<_ExecutionProjectForm> createState() =>
+      _ExecutionProjectFormState();
 }
 
-class _ExecutionProjectFormState extends State<_ExecutionProjectForm> {
+class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
+    with FormSubmission<_ExecutionProjectForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _description = TextEditingController();
@@ -81,17 +76,21 @@ class _ExecutionProjectFormState extends State<_ExecutionProjectForm> {
   Future<void> _save() async {
     if (!_canSave) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l10n = AppLocalizations.of(context);
     final title = _title.text.trim();
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(widget.ref);
-      await repo.upsertProject(_buildProject(sync, title));
-      widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
+      tag: 'execution-project',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      commit: () async {
+        final repo = await ref.read(executionRepositoryProvider.future);
+        final sync = await stampExecutionSync(ref);
+        await repo.upsertProject(_buildProject(sync, title));
+      },
+    );
   }
 
   Future<void> _delete() async {
@@ -102,16 +101,24 @@ class _ExecutionProjectFormState extends State<_ExecutionProjectForm> {
       item: project.title,
     );
     if (!confirmed || !mounted) return;
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(widget.ref);
-      await repo.softDeleteProject(project: project, sync: sync);
-      widget.dirty.markPristine();
-      if (mounted) Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      leave: () => Navigator.of(context).pop(true),
+      tag: 'execution-project-delete',
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.commonDeleted,
+      commit: () async {
+        final repo = await ref.read(executionRepositoryProvider.future);
+        final sync = await stampExecutionSync(ref);
+        await repo.softDeleteProject(project: project, sync: sync);
+      },
+    );
+  }
+
+  void _setSaving(bool value) {
+    if (mounted && _saving != value) setState(() => _saving = value);
   }
 
   ExecutionProject _buildProject(SyncMeta sync, String title) {
