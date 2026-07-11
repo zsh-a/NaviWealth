@@ -32,9 +32,9 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 | AI visual primitives / renderers | `apps/mobile/test/golden/ai_surfaces_golden_test.dart` | component-scoped light surfaces |
 | Task flows (Ingest, forms, Undo, Rebalance) | `apps/mobile/test/golden/task_flow_responsive_golden_test.dart` | dark responsive N / W / T matrix |
 
-17 test files produce **61 PNG baselines** under
+17 test files produce **62 PNG baselines** under
 `apps/mobile/test/golden/goldens/`: the legacy 48-PNG theme matrix plus a new
-13-PNG dark responsive task-flow matrix. Light-mode page variants were
+14-PNG dark responsive task-flow matrix. Light-mode page variants were
 dropped — see *Variant choice* below — but AI primitive/component goldens keep
 their own minimal light surfaces to isolate the visual language from app
 chrome.
@@ -42,7 +42,7 @@ chrome.
 The responsive profiles mirror production platform behavior: N (`390×844
 @2x`, text scale 1) and T (the N canvas at text scale 2.0) use the dark iOS
 touch theme with non-compact Material density; W (`1280×900 @1x`, text scale
-1) uses the dark Linux desktop theme with compact density. The 13 dark
+1) uses the dark Linux desktop theme with compact density. The 14 dark
 baselines are:
 
 - `task_flow_ingest_n.png`, `task_flow_ingest_w.png`, `task_flow_ingest_t.png`
@@ -50,7 +50,8 @@ baselines are:
 - `task_flow_transfer_w.png`, `task_flow_transfer_t.png`
 - `task_flow_trade_n.png`
 - `task_flow_persistent_undo_n.png`, `task_flow_persistent_undo_t.png`
-- `task_flow_rebalance_n.png`, `task_flow_rebalance_w.png`, `task_flow_rebalance_t.png`
+- `task_flow_rebalance_n.png`, `task_flow_rebalance_offline_n.png`,
+  `task_flow_rebalance_w.png`, `task_flow_rebalance_t.png`
 
 ### Variant choice
 
@@ -94,7 +95,7 @@ In CI:
 - Pull requests run the independent `responsive task-flow goldens` job, which
   needs `prepare-font-assets` and runs only the double-tagged responsive file.
 - Main runs `golden regression (mobile)` with `--tags=golden`, so it compares
-  all 61 baselines. On failure the diff PNGs
+  all 62 baselines. On failure the diff PNGs
   (`apps/mobile/test/golden/failures/`) are uploaded as a workflow artifact.
 
 ### Adding a new golden

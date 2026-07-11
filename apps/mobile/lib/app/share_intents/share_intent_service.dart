@@ -13,6 +13,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
@@ -20,15 +21,16 @@ import '../../core/lifeos/share_intent.dart';
 import 'share_intent_dispatcher.dart';
 
 class ShareIntentService {
-  ShareIntentService(this._ref);
+  ShareIntentService(this._ref, {required bool enabled}) : _enabled = enabled;
 
   final Ref _ref;
+  final bool _enabled;
   StreamSubscription<List<SharedMediaFile>>? _sub;
   bool _started = false;
 
   /// Idempotent. Safe to call from `AppDockShell.initState`.
   void start() {
-    if (_started) return;
+    if (!_enabled || _started) return;
     _started = true;
     try {
       // Cold start: the app was launched by a share.
@@ -81,6 +83,17 @@ class ShareIntentService {
   }
 }
 
+final shareIntentPlatformAvailableProvider = Provider<bool>((_) {
+  if (kIsWeb) return false;
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.android || TargetPlatform.iOS => true,
+    _ => false,
+  };
+});
+
 final shareIntentServiceProvider = Provider<ShareIntentService>(
-  ShareIntentService.new,
+  (ref) => ShareIntentService(
+    ref,
+    enabled: ref.watch(shareIntentPlatformAvailableProvider),
+  ),
 );

@@ -340,7 +340,7 @@ class IngestReviewPageObject {
     final parse = find.text('Parse');
     expect(parse, findsWidgets, reason: 'parse action missing');
     await tester.tap(parse.last);
-    await settle(tester);
+    await settleUntil(tester, find.textContaining('Confirm all'));
   }
 
   void expectDraftVisible(String description) {

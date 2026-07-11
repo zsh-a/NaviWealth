@@ -19,6 +19,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/share_intents/share_intent_service.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
@@ -134,6 +135,7 @@ Future<void> bootApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        shareIntentPlatformAvailableProvider.overrideWithValue(false),
         appDatabaseProvider.overrideWith((_) async => liveData?.db ?? testDb!),
         if (liveData != null) ...[
           outboxStoreProvider.overrideWith((_) async => liveData.outbox),
@@ -220,6 +222,23 @@ Future<void> closeApp(WidgetTester tester) async {
 Future<void> settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 100));
+  }
+  await tester.pump();
+}
+
+/// Pumps until [finder] resolves or a bounded time budget is exhausted.
+///
+/// Use this for work intentionally dispatched to an isolate/background queue;
+/// a fixed frame count becomes flaky when the full suite is CPU-concurrent.
+Future<void> settleUntil(
+  WidgetTester tester,
+  Finder finder, {
+  int maxPumps = 100,
+}) async {
+  for (var i = 0; i < maxPumps; i++) {
+    if (finder.evaluate().isNotEmpty) return;
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
   }
   await tester.pump();
 }
