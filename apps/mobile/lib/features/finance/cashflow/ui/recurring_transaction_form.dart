@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
@@ -50,7 +49,8 @@ class _RecurringTransactionSheet extends ConsumerStatefulWidget {
 }
 
 class _RecurringTransactionSheetState
-    extends ConsumerState<_RecurringTransactionSheet> {
+    extends ConsumerState<_RecurringTransactionSheet>
+    with FormSubmission<_RecurringTransactionSheet> {
   final _formKey = GlobalKey<FormState>();
   final _amountCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
@@ -355,75 +355,72 @@ class _RecurringTransactionSheetState
       );
       return;
     }
-    setState(() => _saving = true);
-    widget.dirty.busy = true;
-    try {
-      final amount = Decimal.tryParse(_amountCtrl.text.trim());
-      if (amount == null || amount <= Decimal.zero) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          l10n.recurringValidationPositive,
-        );
-        return;
-      }
-      final cashUnits = _kind == _RecurringKind.income ? amount : -amount;
-      final narration = _noteCtrl.text.trim().isEmpty
-          ? l10n.recurringDefaultNarration
-          : _noteCtrl.text.trim();
-      final build = JournalEntryBuild(
-        entry: JournalEntryDraft(date: _start, narration: narration),
-        postings: [
-          PostingDraft(
-            position: 0,
-            accountId: _cashAccountId!,
-            units: cashUnits,
-            unit: currency,
-          ),
-          PostingDraft(
-            position: 1,
-            accountId: _counterAccountId!,
-            units: -cashUnits,
-            unit: currency,
-          ),
-        ],
+    final amount = Decimal.tryParse(_amountCtrl.text.trim());
+    if (amount == null || amount <= Decimal.zero) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.recurringValidationPositive,
       );
-      final json = JournalBuildTemplateCodec.encode(build);
-      final rrule = _buildRrule();
-      final repo = await ref.read(
-        recurringTransactionRepositoryProvider.future,
-      );
-      final existing = widget.existing;
-      if (existing == null) {
-        await repo.create(
-          templateJournalBuildJson: json,
-          rrule: rrule,
-          nextDueAt: _start,
-        );
-      } else {
-        await repo.update(
-          existing.id,
-          templateJournalBuildJson: json,
-          rrule: rrule,
-          nextDueAt: _start,
-        );
-      }
-      if (!mounted) return;
-      widget.dirty.markPristine();
-      Haptics.success();
-      Navigator.of(context).pop();
-    } on RecurrenceParseException catch (_) {
-      if (mounted) {
-        AppMessenger.show(context, ToastKind.error, l10n.recurringSaveFailed);
-      }
-    } catch (_) {
-      if (mounted) {
-        AppMessenger.show(context, ToastKind.error, l10n.recurringSaveFailed);
-      }
-    } finally {
-      widget.dirty.busy = false;
-      if (mounted) setState(() => _saving = false);
+      return;
     }
+    final cashAccountId = _cashAccountId!;
+    final counterAccountId = _counterAccountId!;
+    final cashUnits = _kind == _RecurringKind.income ? amount : -amount;
+    final note = _noteCtrl.text.trim();
+    final narration = note.isEmpty ? l10n.recurringDefaultNarration : note;
+    final start = _start;
+    final existing = widget.existing;
+    final build = JournalEntryBuild(
+      entry: JournalEntryDraft(date: start, narration: narration),
+      postings: [
+        PostingDraft(
+          position: 0,
+          accountId: cashAccountId,
+          units: cashUnits,
+          unit: currency,
+        ),
+        PostingDraft(
+          position: 1,
+          accountId: counterAccountId,
+          units: -cashUnits,
+          unit: currency,
+        ),
+      ],
+    );
+    final json = JournalBuildTemplateCodec.encode(build);
+    final rrule = _buildRrule();
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: _setSaving,
+      failureMessage: (_) => l10n.recurringSaveFailed,
+      successMessage: l10n.commonSaved,
+      leave: () => Navigator.of(context).pop(),
+      tag: 'recurring-transaction',
+      commit: () async {
+        final repo = await ref.read(
+          recurringTransactionRepositoryProvider.future,
+        );
+        if (existing == null) {
+          await repo.create(
+            templateJournalBuildJson: json,
+            rrule: rrule,
+            nextDueAt: start,
+          );
+        } else {
+          await repo.update(
+            existing.id,
+            templateJournalBuildJson: json,
+            rrule: rrule,
+            nextDueAt: start,
+          );
+        }
+      },
+    );
+  }
+
+  void _setSaving(bool value) {
+    if (mounted && _saving != value) setState(() => _saving = value);
   }
 }
 

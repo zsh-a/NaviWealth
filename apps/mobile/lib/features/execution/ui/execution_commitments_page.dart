@@ -91,16 +91,23 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     final error =
         actionsAsync.error ?? projectsAsync.error ?? commitmentsAsync.error;
     if (error != null) {
-      return ExecutionStateView(
-        icon: FLucideIcons.circleX,
-        title: l10n.commonError,
+      return AppEmptyState.error(
+        title: l10n.commonLoadFailed,
         message: userSafeErrorMessage(context, error),
+        retryLabel: l10n.commonRetry,
+        onRetry: () {
+          ref.invalidate(executionProjectsProvider);
+          ref.invalidate(executionClosedProjectsProvider);
+          ref.invalidate(executionOpenActionsProvider);
+          ref.invalidate(executionCommitmentsProvider);
+          ref.invalidate(executionClosedCommitmentsProvider);
+        },
       );
     }
     if ((actionsAsync.isLoading && !actionsAsync.hasValue) ||
         (projectsAsync.isLoading && !projectsAsync.hasValue) ||
         (commitmentsAsync.isLoading && !commitmentsAsync.hasValue)) {
-      return const Center(child: FCircularProgress());
+      return AppListPageSkeleton(padding: shellTabContentPadding(context));
     }
 
     final actions = actionsAsync.value ?? const <ExecutionAction>[];

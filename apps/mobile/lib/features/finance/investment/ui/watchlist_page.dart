@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
+import 'package:naviwealth/core/forms/form_submission.dart';
+import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
@@ -134,9 +136,36 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
   }
 
   Future<void> _removeItem(WatchlistItem item) async {
+    final l10n = AppLocalizations.of(context);
     final repo = await ref.read(watchlistRepositoryProvider.future);
     await repo.remove(item);
     ref.invalidate(watchlistQuoteSnapshotsProvider);
+    if (!mounted) return;
+    final undo = FormUndoAction(() async {
+      await repo.add(
+        symbol: item.symbol,
+        market: item.market,
+        rules: item.alertRules,
+      );
+      ref.invalidate(watchlistQuoteSnapshotsProvider);
+    });
+    AppMessenger.show(
+      context,
+      ToastKind.success,
+      l10n.commonDeleted,
+      actionLabel: l10n.commonUndo,
+      onAction: () => unawaited(
+        runFormUndoWithFeedback(
+          context: context,
+          action: undo,
+          logger: ref.read(loggerProvider),
+          successMessage: l10n.commonUndoSucceeded,
+          failureMessage: (_) => l10n.commonUndoFailed,
+          retryLabel: l10n.commonRetry,
+          tag: 'watchlist-remove',
+        ),
+      ),
+    );
   }
 }
 
@@ -159,33 +188,40 @@ class _WatchlistBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        AppSpacing.s8,
-        hPad,
-        kTabBarOffset + MediaQuery.paddingOf(context).bottom,
-      ),
-      children: [
-        if (items.isEmpty)
-          _WatchlistEmpty(onAdd: onAdd)
-        else ...[
-          for (final item in items) ...[
-            _WatchlistRow(
-              item: item,
-              snapshot: byId[item.id],
-              loadingQuote: loadingQuotes && byId[item.id] == null,
-              onEdit: () => onEdit(item),
-              onRemove: () => onRemove(item),
+    return AdaptiveContentFrame(
+      maxWidth: AdaptiveMaxWidth.narrow,
+      expandSinglePrimary: true,
+      primary: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: kTabBarOffset),
+        children: [
+          if (items.isEmpty)
+            _WatchlistEmpty(onAdd: onAdd)
+          else
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var i = 0; i < items.length; i++) ...[
+                    _WatchlistRow(
+                      item: items[i],
+                      snapshot: byId[items[i].id],
+                      loadingQuote: loadingQuotes && byId[items[i].id] == null,
+                      onEdit: () => onEdit(items[i]),
+                      onRemove: () => onRemove(items[i]),
+                    ),
+                    if (i != items.length - 1)
+                      const AppGroupedDivider(
+                        indent: AppSpacing.s12,
+                        endIndent: AppSpacing.s12,
+                      ),
+                  ],
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.s10),
-          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -227,7 +263,7 @@ class _WatchlistRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final quote = snapshot?.quote;
-    return SoftCard(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

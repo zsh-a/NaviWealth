@@ -64,15 +64,19 @@ class _ReviewBody extends ConsumerWidget {
     final relations = ref.watch(executionReviewRelationsProvider).value;
     final error = progressAsync.error ?? closedActionsAsync.error;
     if (error != null) {
-      return ExecutionStateView(
-        icon: FLucideIcons.circleX,
-        title: l10n.commonError,
+      return AppEmptyState.error(
+        title: l10n.commonLoadFailed,
         message: userSafeErrorMessage(context, error),
+        retryLabel: l10n.commonRetry,
+        onRetry: () {
+          ref.invalidate(executionRecentProgressProvider);
+          ref.invalidate(executionClosedActionsProvider);
+        },
       );
     }
     if ((progressAsync.isLoading && !progressAsync.hasValue) ||
         (closedActionsAsync.isLoading && !closedActionsAsync.hasValue)) {
-      return const Center(child: FCircularProgress());
+      return AppListPageSkeleton(padding: shellTabContentPadding(context));
     }
 
     final entries = progressAsync.value ?? const <ExecutionProgressEntry>[];

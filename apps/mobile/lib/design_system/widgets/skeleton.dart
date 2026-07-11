@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'app_grouped_action_list.dart';
 
 /// Pulsing placeholder rectangle for skeleton screens.
 ///
@@ -207,6 +208,87 @@ class SkeletonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return FCard.raw(
       child: Padding(padding: padding, child: child),
+    );
+  }
+}
+
+/// Generic first-load skeleton for dense list and task pages.
+///
+/// The placeholder mirrors the app's inset-grouped list grammar so primary
+/// tabs never collapse to a context-free spinner while local data hydrates.
+/// Use compact progress indicators only for an operation inside an already
+/// resolved surface.
+class AppListPageSkeleton extends StatelessWidget {
+  const AppListPageSkeleton({
+    super.key,
+    this.padding = const EdgeInsets.all(AppSpacing.s16),
+    this.itemCount = 4,
+    this.showControls = true,
+  });
+
+  final EdgeInsetsGeometry padding;
+  final int itemCount;
+  final bool showControls;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: padding,
+      children: [
+        if (showControls) ...[
+          const SkeletonBox(height: 40, radius: AppRadius.full),
+          const SizedBox(height: AppSpacing.s16),
+        ],
+        AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var i = 0; i < itemCount; i++) ...[
+                const _AppListSkeletonRow(),
+                if (i != itemCount - 1)
+                  const AppGroupedDivider(
+                    indent: AppSpacing.s64,
+                    endIndent: AppSpacing.s12,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AppListSkeletonRow extends StatelessWidget {
+  const _AppListSkeletonRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          SkeletonBox(
+            width: AppSpacing.s40,
+            height: AppSpacing.s40,
+            radius: AppRadius.sm,
+          ),
+          SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(width: 156, height: 15, radius: AppRadius.xs),
+                SizedBox(height: AppSpacing.s8),
+                SkeletonBox(width: 220, height: 11, radius: AppRadius.xs),
+              ],
+            ),
+          ),
+          SizedBox(width: AppSpacing.s12),
+          SkeletonBox(width: 56, height: 18, radius: AppRadius.xs),
+        ],
+      ),
     );
   }
 }

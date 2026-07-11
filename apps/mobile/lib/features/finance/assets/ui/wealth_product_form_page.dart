@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
@@ -32,7 +31,9 @@ class WealthProductFormPage extends ConsumerStatefulWidget {
 }
 
 class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
-    with FormDirtyGuard<WealthProductFormPage> {
+    with
+        FormSubmission<WealthProductFormPage>,
+        FormDirtyGuard<WealthProductFormPage> {
   @override
   String get leaveFallback => FinanceRoutes.wealth;
 
@@ -126,84 +127,79 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       );
       return;
     }
-    setState(() => _busy = true);
-    dirty.busy = true;
-    try {
-      final principal = Decimal.tryParse(_principalController.text.trim());
-      final returnPct = Decimal.tryParse(
-        _expectedReturnPctController.text.trim(),
-      );
-      final valuation = _valuationController.text.trim().isEmpty
-          ? null
-          : Decimal.tryParse(_valuationController.text.trim());
-      if (principal == null ||
-          returnPct == null ||
-          (_valuationController.text.trim().isNotEmpty && valuation == null)) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          l10n.formAmountFieldInvalid,
-        );
-        return;
-      }
-      final repo = await ref.read(manualAssetRepositoryProvider.future);
-      final expectedReturn = (returnPct / Decimal.fromInt(100)).toDecimal(
-        scaleOnInfinitePrecision: 12,
-      );
-      if (_initial == null) {
-        await repo.createWealthProduct(
-          accountId: accountId,
-          name: _nameController.text.trim(),
-          currency: currency,
-          principal: principal,
-          expectedAnnualReturn: expectedReturn,
-          startDate: _startDate,
-          maturityDate: _maturityDate,
-          issuer: _emptyToNull(_issuerController.text),
-          productCode: _emptyToNull(_productCodeController.text),
-          currentValuation: valuation,
-        );
-      } else {
-        final newMeta = WealthProductMetadata(
-          accountId: accountId,
-          principal: principal,
-          expectedAnnualReturn: expectedReturn,
-          startDate: _startDate,
-          maturityDate: _maturityDate,
-          issuer: _emptyToNull(_issuerController.text),
-          productCode: _emptyToNull(_productCodeController.text),
-        );
-        await repo.updateMetadata(id: _initial!.id, metadata: newMeta);
-        if (valuation != null) {
-          await repo.recordValuationAdjust(
-            assetId: _initial!.id,
-            newValuation: valuation,
-          );
-        }
-        if (_nameController.text.trim() != (_initial!.name ?? '')) {
-          await repo.updateBasics(
-            id: _initial!.id,
-            name: _nameController.text.trim(),
-          );
-        }
-      }
-      unawaited(
-        ref
-            .read(formDefaultsProvider.notifier)
-            .rememberAsset(accountId: accountId, currency: currency),
-      );
-      if (!mounted) return;
-      dirty.markPristine();
-      Haptics.success();
-      popOrGo(context, fallback: FinanceRoutes.wealth);
-    } on Object {
-      if (!mounted) return;
-      Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
-    } finally {
-      dirty.busy = false;
-      if (mounted) setState(() => _busy = false);
+    final principal = Decimal.tryParse(_principalController.text.trim());
+    final returnPct = Decimal.tryParse(
+      _expectedReturnPctController.text.trim(),
+    );
+    final valuationText = _valuationController.text.trim();
+    final valuation = valuationText.isEmpty
+        ? null
+        : Decimal.tryParse(valuationText);
+    if (principal == null ||
+        returnPct == null ||
+        (valuationText.isNotEmpty && valuation == null)) {
+      AppMessenger.show(context, ToastKind.error, l10n.formAmountFieldInvalid);
+      return;
     }
+    final expectedReturn = (returnPct / Decimal.fromInt(100)).toDecimal(
+      scaleOnInfinitePrecision: 12,
+    );
+    final initial = _initial;
+    final name = _nameController.text.trim();
+    final startDate = _startDate;
+    final maturityDate = _maturityDate;
+    final issuer = _emptyToNull(_issuerController.text);
+    final productCode = _emptyToNull(_productCodeController.text);
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
+      leaveFallback: FinanceRoutes.wealth,
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      tag: 'wealth-product',
+      commit: () async {
+        final repo = await ref.read(manualAssetRepositoryProvider.future);
+        if (initial == null) {
+          await repo.createWealthProduct(
+            accountId: accountId,
+            name: name,
+            currency: currency,
+            principal: principal,
+            expectedAnnualReturn: expectedReturn,
+            startDate: startDate,
+            maturityDate: maturityDate,
+            issuer: issuer,
+            productCode: productCode,
+            currentValuation: valuation,
+          );
+        } else {
+          final newMeta = WealthProductMetadata(
+            accountId: accountId,
+            principal: principal,
+            expectedAnnualReturn: expectedReturn,
+            startDate: startDate,
+            maturityDate: maturityDate,
+            issuer: issuer,
+            productCode: productCode,
+          );
+          await repo.updateMetadata(id: initial.id, metadata: newMeta);
+          if (valuation != null) {
+            await repo.recordValuationAdjust(
+              assetId: initial.id,
+              newValuation: valuation,
+            );
+          }
+          if (name != (initial.name ?? '')) {
+            await repo.updateBasics(id: initial.id, name: name);
+          }
+        }
+        unawaited(
+          ref
+              .read(formDefaultsProvider.notifier)
+              .rememberAsset(accountId: accountId, currency: currency),
+        );
+      },
+    );
   }
 
   Future<void> _delete() async {
@@ -218,18 +214,23 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       destructive: true,
     );
     if (ok != true) return;
-    setState(() => _busy = true);
-    dirty.busy = true;
-    try {
-      final repo = await ref.read(manualAssetRepositoryProvider.future);
-      await repo.softDelete(_initial!.id);
-      if (!mounted) return;
-      dirty.markPristine();
-      popOrGo(context, fallback: FinanceRoutes.wealth);
-    } finally {
-      dirty.busy = false;
-      if (mounted) setState(() => _busy = false);
-    }
+    final id = _initial!.id;
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
+      leaveFallback: FinanceRoutes.wealth,
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.commonDeleted,
+      tag: 'wealth-product-delete',
+      commit: () async {
+        final repo = await ref.read(manualAssetRepositoryProvider.future);
+        await repo.softDelete(id);
+      },
+    );
+  }
+
+  void _setBusy(bool value) {
+    if (mounted && _busy != value) setState(() => _busy = value);
   }
 
   String? _emptyToNull(String s) {
@@ -329,10 +330,11 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       child: AppFormScaffoldBody(
         action: SizedBox(
           width: double.infinity,
-          child: FButton(
-            variant: FButtonVariant.primary,
-            onPress: _busy ? null : _save,
-            child: Text(_busy ? l10n.formSaving : l10n.formSave),
+          child: AppBusyButton(
+            label: l10n.formSave,
+            busyLabel: l10n.formSaving,
+            busy: _busy,
+            onPress: _busy ? null : () => unawaited(_save()),
           ),
         ),
         children: [

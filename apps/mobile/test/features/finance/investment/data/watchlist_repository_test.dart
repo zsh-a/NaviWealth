@@ -55,10 +55,18 @@ void main() {
       await repo.remove(item);
 
       expect(await repo.listActive('u-test'), isEmpty);
+      final restored = await repo.add(
+        symbol: item.symbol,
+        market: item.market,
+        rules: item.alertRules,
+      );
+      expect(restored.id, item.id);
+      expect(restored.alertRules.above, Decimal.parse('200'));
+      expect(await repo.listActive('u-test'), hasLength(1));
       ops = outbox.queued;
-      // insert + update + delete each enqueue one dirty pointer at the same
-      // row.
-      expect(ops, hasLength(3));
+      // Insert + update + delete + restore each enqueue one dirty pointer at
+      // the same row.
+      expect(ops, hasLength(4));
       expect(
         ops.every((o) => o.table == 'watchlist_items' && o.rowId == item.id),
         isTrue,

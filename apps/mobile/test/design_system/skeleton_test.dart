@@ -131,6 +131,25 @@ void main() {
     );
   });
 
+  testWidgets('AppListPageSkeleton mirrors one grouped list surface', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SizedBox(
+          width: 420,
+          height: 700,
+          child: AppListPageSkeleton(itemCount: 3),
+        ),
+        disableAnimations: true,
+      ),
+    );
+
+    expect(find.byType(AppGroupedSurface), findsOneWidget);
+    expect(find.byType(AppGroupedDivider), findsNWidgets(2));
+    expect(find.byType(SkeletonBox), findsNWidgets(13));
+  });
+
   testWidgets('SkeletonBox dark-mode tones come from the active ColorScheme', (
     tester,
   ) async {

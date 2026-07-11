@@ -6,8 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
-import 'package:naviwealth/core/haptics/haptics.dart';
-import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
@@ -33,7 +31,7 @@ class CashFormPage extends ConsumerStatefulWidget {
 }
 
 class _CashFormPageState extends ConsumerState<CashFormPage>
-    with FormDirtyGuard<CashFormPage> {
+    with FormSubmission<CashFormPage>, FormDirtyGuard<CashFormPage> {
   @override
   String get leaveFallback => FinanceRoutes.wealth;
 
@@ -98,80 +96,77 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       );
       return;
     }
-    setState(() => _busy = true);
-    dirty.busy = true;
-    try {
-      final repo = await ref.read(manualAssetRepositoryProvider.future);
-      final balance = Decimal.parse(_balanceController.text.trim());
-      var editing = _editingAsset;
-      var createdNew = false;
-      // Check for existing cash on the same account — each account can
-      // have at most one cash asset (double-entry invariant).
-      editing ??= await repo.findCashByAccountId(accountId);
-      if (editing == null) {
-        createdNew = true;
-        await repo.createCash(
-          accountId: accountId,
-          currency: currency,
-          balance: balance,
-          nickname: _nicknameController.text.trim().isEmpty
-              ? null
-              : _nicknameController.text.trim(),
-        );
-      } else {
-        await repo.recordValuationAdjust(
-          assetId: editing.id,
-          newValuation: balance,
-        );
-        if (_nicknameController.text.trim() != (editing.name ?? '')) {
-          await repo.updateBasics(
-            id: editing.id,
-            name: _nicknameController.text.trim(),
+    final balance = Decimal.tryParse(_balanceController.text.trim());
+    if (balance == null) {
+      AppMessenger.show(context, ToastKind.error, l10n.formAmountFieldInvalid);
+      return;
+    }
+    final nickname = _nicknameController.text.trim();
+    final initial = _editingAsset;
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
+      leaveFallback: FinanceRoutes.wealth,
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      tag: 'cash-balance',
+      commit: () async {
+        final repo = await ref.read(manualAssetRepositoryProvider.future);
+        var editing = initial;
+        var createdNew = false;
+        // Each account can have at most one cash asset. Re-resolve immediately
+        // before committing so a concurrent create cannot duplicate it.
+        editing ??= await repo.findCashByAccountId(accountId);
+        if (editing == null) {
+          createdNew = true;
+          await repo.createCash(
+            accountId: accountId,
+            currency: currency,
+            balance: balance,
+            nickname: nickname.isEmpty ? null : nickname,
+          );
+        } else {
+          await repo.recordValuationAdjust(
+            assetId: editing.id,
+            newValuation: balance,
+          );
+          if (nickname != (editing.name ?? '')) {
+            await repo.updateBasics(id: editing.id, name: nickname);
+          }
+        }
+        if (createdNew) {
+          unawaited(
+            ref
+                .read(formDefaultsProvider.notifier)
+                .rememberAsset(accountId: accountId, currency: currency),
           );
         }
-      }
-      if (createdNew) {
-        unawaited(
-          ref
-              .read(formDefaultsProvider.notifier)
-              .rememberAsset(accountId: accountId, currency: currency),
-        );
-      }
-      if (!mounted) return;
-      dirty.markPristine();
-      Haptics.success();
-      popOrGo(context, fallback: FinanceRoutes.wealth);
-    } on Object catch (error, stack) {
-      AppLogger.instance.e(
-        'cash balance save failed',
-        error: error,
-        stackTrace: stack,
-      );
-      if (!mounted) return;
-      Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
-    } finally {
-      dirty.busy = false;
-      if (mounted) setState(() => _busy = false);
-    }
+      },
+    );
   }
 
   Future<void> _delete() async {
     if (_initial == null) return;
+    final l10n = AppLocalizations.of(context);
     final ok = await confirmManualAssetDelete(context);
     if (ok != true) return;
-    setState(() => _busy = true);
-    dirty.busy = true;
-    try {
-      final repo = await ref.read(manualAssetRepositoryProvider.future);
-      await repo.softDelete(_initial!.id);
-      if (!mounted) return;
-      dirty.markPristine();
-      popOrGo(context, fallback: FinanceRoutes.wealth);
-    } finally {
-      dirty.busy = false;
-      if (mounted) setState(() => _busy = false);
-    }
+    final id = _initial!.id;
+    await submitFormAndLeave<void>(
+      dirty: dirty,
+      onBusyChanged: _setBusy,
+      leaveFallback: FinanceRoutes.wealth,
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.commonDeleted,
+      tag: 'cash-balance-delete',
+      commit: () async {
+        final repo = await ref.read(manualAssetRepositoryProvider.future);
+        await repo.softDelete(id);
+      },
+    );
+  }
+
+  void _setBusy(bool value) {
+    if (mounted && _busy != value) setState(() => _busy = value);
   }
 
   @override
@@ -265,10 +260,11 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       child: AppFormScaffoldBody(
         action: SizedBox(
           width: double.infinity,
-          child: FButton(
-            variant: FButtonVariant.primary,
+          child: AppBusyButton(
+            label: l10n.cashFormSave,
+            busyLabel: l10n.cashFormSaving,
+            busy: _busy,
             onPress: _busy ? null : () => unawaited(_save()),
-            child: Text(_busy ? l10n.cashFormSaving : l10n.cashFormSave),
           ),
         ),
         children: [

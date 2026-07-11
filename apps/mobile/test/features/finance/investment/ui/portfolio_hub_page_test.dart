@@ -109,6 +109,89 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
   });
 
+  testWidgets('portfolio rows share grouped surfaces inside adaptive frame', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = PortfolioHubState(
+      holdings: [
+        _holding(
+          assetId: 'us:AAPL',
+          type: AssetType.stock,
+          currency: 'USD',
+          marketValue: '100',
+          costBasis: '80',
+        ),
+      ],
+      lots: [
+        _lot(
+          id: 'aapl-1',
+          accountId: 'broker-a',
+          assetId: 'us:AAPL',
+          quantity: '10',
+          costPerUnit: '8',
+        ),
+      ],
+      accountById: {
+        'broker-a': Account(
+          id: 'broker-a',
+          type: AccountCategory.broker,
+          name: 'Broker A',
+          currency: 'USD',
+          sync: _meta(),
+        ),
+      },
+      baseCurrency: 'USD',
+      marketValueInBase: _d('100'),
+      costBasisInBase: _d('80'),
+      unrealizedPnlInBase: _d('20'),
+      ytdReturn: PortfolioReturnResult(
+        from: DateTime.utc(2026),
+        to: DateTime.utc(2026, 5, 17),
+        baseCurrency: 'USD',
+        cashFlows: const [],
+        solution: const XirrConverged(rate: 0.12, iterations: 3),
+      ),
+      realizedPnl: const [],
+      dividendForecast: ProjectedDividend.empty(
+        assetId: 'portfolio',
+        currency: 'USD',
+        strategy: 'composite',
+        confidence: DividendForecastConfidence.low,
+      ),
+      dividendEvents: const [],
+      corporateActions: const [],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          portfolioHubProvider.overrideWith(
+            () => _StaticPortfolioHubNotifier(state),
+          ),
+        ],
+        child: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: const PortfolioHubPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AdaptiveContentFrame), findsOneWidget);
+    expect(find.byType(AppGroupedSurface), findsNWidgets(2));
+    expect(find.text('Broker A'), findsOneWidget);
+    expect(find.text('us:AAPL'), findsWidgets);
+  });
+
   test('aggregates holdings by account, currency, and asset class', () {
     final l10n = AppLocalizationsEn();
     final state = PortfolioHubState(
@@ -238,4 +321,13 @@ class _FailingPortfolioHubNotifier extends PortfolioHubNotifier {
     fetchCount += 1;
     throw StateError('boom');
   }
+}
+
+class _StaticPortfolioHubNotifier extends PortfolioHubNotifier {
+  _StaticPortfolioHubNotifier(this.value);
+
+  final PortfolioHubState value;
+
+  @override
+  Future<PortfolioHubState> fetch() async => value;
 }

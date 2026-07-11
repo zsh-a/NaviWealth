@@ -110,15 +110,15 @@ class _ViewChip extends StatelessWidget {
   }
 }
 
-class _GroupRowCard extends StatelessWidget {
-  const _GroupRowCard({required this.group});
+class _GroupRow extends StatelessWidget {
+  const _GroupRow({required this.group});
 
   final PortfolioGroupRow group;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         children: [
@@ -162,8 +162,8 @@ class _GroupRowCard extends StatelessWidget {
   }
 }
 
-class _HoldingRowCard extends StatelessWidget {
-  const _HoldingRowCard({required this.holding});
+class _HoldingRow extends StatelessWidget {
+  const _HoldingRow({required this.holding});
 
   final PortfolioHoldingRow holding;
 
@@ -174,9 +174,9 @@ class _HoldingRowCard extends StatelessWidget {
     final pnl = holding.unrealizedPnlInBase;
     final pnlColor = MarketColors.of(context).forDelta(pnl.toDouble());
     final subtitle = _holdingSubtitle(l10n, holding);
-    return SoftCard(
-      borderless: true,
-      tinted: false,
+    return Semantics(
+      button: true,
+      container: true,
       child: FTappable(
         onPress: () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
         child: Padding(

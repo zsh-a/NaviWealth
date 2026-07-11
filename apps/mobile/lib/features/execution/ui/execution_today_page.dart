@@ -64,11 +64,13 @@ class _TodayListState extends ConsumerState<_TodayList> {
     final progressAsync = ref.watch(executionRecentProgressProvider);
     final relations = ref.watch(executionActionRelationsProvider).value;
     return actionsAsync.when(
-      loading: () => const Center(child: FCircularProgress()),
-      error: (e, _) => ExecutionStateView(
-        icon: FLucideIcons.circleX,
-        title: l10n.commonError,
-        message: '$e',
+      loading: () =>
+          AppListPageSkeleton(padding: shellTabContentPadding(context)),
+      error: (error, stackTrace) => AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        message: userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        retryLabel: l10n.commonRetry,
+        onRetry: () => ref.invalidate(executionTodayActionsProvider),
       ),
       data: (actions) {
         final now = DateTime.now();

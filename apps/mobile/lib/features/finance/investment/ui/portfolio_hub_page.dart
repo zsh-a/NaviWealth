@@ -94,45 +94,65 @@ class _PortfolioHubBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     final groups = data.groupsFor(view, l10n);
+    final visibleHoldings = data.holdings.take(12).toList(growable: false);
 
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        AppSpacing.s8,
-        hPad,
-        kTabBarOffset + MediaQuery.paddingOf(context).bottom,
+    return AdaptiveContentFrame(
+      maxWidth: AdaptiveMaxWidth.page,
+      expandSinglePrimary: true,
+      primary: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: kTabBarOffset),
+        children: [
+          _PortfolioSummary(data: data),
+          const SizedBox(height: AppSpacing.s16),
+          PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
+          const SizedBox(height: AppSpacing.s12),
+          _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
+          if (groups.isEmpty)
+            _EmptyState(message: l10n.portfolioHubEmpty)
+          else
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var i = 0; i < groups.length; i++) ...[
+                    _GroupRow(group: groups[i]),
+                    if (i != groups.length - 1)
+                      const AppGroupedDivider(
+                        indent: AppSpacing.s12,
+                        endIndent: AppSpacing.s12,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+          const SizedBox(height: AppSpacing.s12),
+          _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
+          if (data.holdings.isEmpty)
+            _EmptyState(message: l10n.portfolioHubEmpty)
+          else
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var i = 0; i < visibleHoldings.length; i++) ...[
+                    _HoldingRow(holding: visibleHoldings[i]),
+                    if (i != visibleHoldings.length - 1)
+                      const AppGroupedDivider(
+                        indent: AppSpacing.s12,
+                        endIndent: AppSpacing.s12,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+          const SizedBox(height: AppSpacing.s20),
+          _EngineExposureSection(data: data),
+          const SizedBox(height: AppSpacing.s16),
+          const _DcaSimulatorEntry(),
+        ],
       ),
-      children: [
-        _PortfolioSummary(data: data),
-        const SizedBox(height: AppSpacing.s16),
-        PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
-        const SizedBox(height: AppSpacing.s12),
-        _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
-        if (groups.isEmpty)
-          _EmptyState(message: l10n.portfolioHubEmpty)
-        else
-          for (final group in groups) ...[
-            _GroupRowCard(group: group),
-            const SizedBox(height: AppSpacing.s10),
-          ],
-        const SizedBox(height: AppSpacing.s8),
-        _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
-        if (data.holdings.isEmpty)
-          _EmptyState(message: l10n.portfolioHubEmpty)
-        else
-          for (final holding in data.holdings.take(12)) ...[
-            _HoldingRowCard(holding: holding),
-            const SizedBox(height: AppSpacing.s10),
-          ],
-        const SizedBox(height: AppSpacing.s8),
-        _EngineExposureSection(data: data),
-        const SizedBox(height: AppSpacing.s16),
-        const _DcaSimulatorEntry(),
-      ],
     );
   }
 }

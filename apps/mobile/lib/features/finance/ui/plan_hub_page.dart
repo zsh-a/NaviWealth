@@ -26,26 +26,17 @@ class PlanHubPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.planHubTitle,
       childPad: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          final hPad = Breakpoints.isMobile(width)
-              ? AppSpacing.s16
-              : AppSpacing.s24;
-          return ListView(
-            padding: EdgeInsets.fromLTRB(
-              hPad,
-              AppSpacing.s12,
-              hPad,
-              kTabBarOffset + MediaQuery.paddingOf(context).bottom,
-            ),
-            children: const [
-              _FireSummaryCard(),
-              SizedBox(height: AppSpacing.s16),
-              _PlanActions(),
-            ],
-          );
-        },
+      child: AdaptiveContentFrame(
+        maxWidth: AdaptiveMaxWidth.narrow,
+        expandSinglePrimary: true,
+        primary: ListView(
+          padding: const EdgeInsets.only(bottom: kTabBarOffset),
+          children: const [
+            _FireSummaryCard(),
+            SizedBox(height: AppSpacing.s16),
+            _PlanActions(),
+          ],
+        ),
       ),
     );
   }
