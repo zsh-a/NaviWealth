@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +17,8 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_capture_policy.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_capture_source.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
@@ -30,6 +37,56 @@ class _NoopApplier implements ProposalApplier {
 
   @override
   Future<void> undo(ProposalApplyState state) async {}
+}
+
+class _FixedCaptureSource implements IngestCaptureSource {
+  _FixedCaptureSource(this.outcome);
+
+  final IngestCaptureOutcome outcome;
+  var calls = 0;
+
+  @override
+  Future<IngestCaptureOutcome> pickFile() async {
+    calls++;
+    return outcome;
+  }
+}
+
+class _SequenceCaptureSource implements IngestCaptureSource {
+  _SequenceCaptureSource(this.outcomes);
+
+  final List<IngestCaptureOutcome> outcomes;
+  var calls = 0;
+
+  @override
+  Future<IngestCaptureOutcome> pickFile() async {
+    final outcome = outcomes[calls.clamp(0, outcomes.length - 1)];
+    calls++;
+    return outcome;
+  }
+}
+
+class _DelayedCaptureSource implements IngestCaptureSource {
+  final result = Completer<IngestCaptureOutcome>();
+  var calls = 0;
+
+  @override
+  Future<IngestCaptureOutcome> pickFile() {
+    calls++;
+    return result.future;
+  }
+}
+
+class _RecordingIngestController extends IngestController {
+  _RecordingIngestController(super.ref, this.sources);
+
+  final List<IngestSource> sources;
+
+  @override
+  Future<IngestResult> ingest(IngestSource source) async {
+    sources.add(source);
+    return const IngestResult(drafts: []);
+  }
 }
 
 class _RecordingApplier implements ProposalApplier {
@@ -129,12 +186,23 @@ Widget _app({
   List<Account> accounts = const [],
   bool touch = false,
   TextScaler textScaler = TextScaler.noScaling,
+  IngestCaptureSource? captureSource,
+  int? captureTextLimit,
+  List<IngestSource>? ingestedSources,
 }) {
   return ProviderScope(
     overrides: [
       ingestDraftStoreProvider.overrideWithValue(store),
       ingestConfirmServiceProvider.overrideWith((_) async => service),
       accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
+      if (captureSource != null)
+        ingestCaptureSourceProvider.overrideWithValue(captureSource),
+      if (captureTextLimit != null)
+        ingestCaptureTextLimitProvider.overrideWithValue(captureTextLimit),
+      if (ingestedSources != null)
+        ingestControllerProvider.overrideWith(
+          (ref) => _RecordingIngestController(ref, ingestedSources),
+        ),
       if (failLedgerRead)
         journalEntryRepositoryProvider.overrideWith(
           (_) => throw StateError('ledger unavailable'),
@@ -228,6 +296,165 @@ void main() {
 
     expect(find.text('Paste statement text'), findsOneWidget);
     expect(find.text('Paste statement text before parsing.'), findsOneWidget);
+  });
+
+  testWidgets('oversized paste stays open and preserves inline context', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    await tester.pumpWidget(
+      _app(store: store, service: service, captureTextLimit: 16),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Paste text'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(FTextField), '12345678901234567');
+    await tester.tap(find.text('Parse'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Paste statement text'), findsOneWidget);
+    expect(find.textContaining('16-character import limit'), findsOneWidget);
+    expect(find.byType(FTextField), findsOneWidget);
+  });
+
+  testWidgets('file-picker cancellation is silent', (tester) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final captureSource = _FixedCaptureSource(const IngestCaptureCancelled());
+    await tester.pumpWidget(
+      _app(store: store, service: service, captureSource: captureSource),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Import file'));
+    await tester.pumpAndSettle();
+
+    expect(captureSource.calls, 1);
+    expect(find.textContaining('source'), findsNothing);
+  });
+
+  testWidgets('only one capture may hold its memory budget at a time', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final captureSource = _DelayedCaptureSource();
+    await tester.pumpWidget(
+      _app(store: store, service: service, captureSource: captureSource),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Import file'));
+    await tester.pump();
+    expect(captureSource.calls, 1);
+
+    await tester.tap(find.text('Import file'), warnIfMissed: false);
+    await tester.pump();
+    expect(captureSource.calls, 1);
+
+    captureSource.result.complete(const IngestCaptureCancelled());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('a rejected drop does not block the next valid file', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final ingestedSources = <IngestSource>[];
+    await tester.pumpWidget(
+      _app(store: store, service: service, ingestedSources: ingestedSources),
+    );
+    await tester.pumpAndSettle();
+
+    final validFile = DropItemFile.fromData(
+      Uint8List.fromList(
+        utf8.encode(
+          'date,description,amount,currency\n'
+          '2026-05-10,Coffee,-38.50,CNY',
+        ),
+      ),
+      name: 'statement.csv',
+      path: 'statement.csv',
+    );
+
+    final dropTarget = tester.widget<DropTarget>(find.byType(DropTarget));
+    dropTarget.onDragDone!(
+      DropDoneDetails(
+        files: [
+          DropItemFile.fromData(
+            Uint8List.fromList(const [1]),
+            name: 'unsupported.docx',
+            path: 'unsupported.docx',
+          ),
+          validFile,
+        ],
+        localPosition: Offset.zero,
+        globalPosition: Offset.zero,
+      ),
+    );
+    for (var i = 0; i < 20 && ingestedSources.isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+    await tester.pumpAndSettle();
+
+    expect(ingestedSources, hasLength(1));
+    expect(ingestedSources.single.payload, contains('Coffee'));
+    expect(find.text('This file type isn’t supported.'), findsOneWidget);
+  });
+
+  testWidgets('oversized picked file shows its limit and a specific action', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final captureSource = _FixedCaptureSource(
+      const IngestCaptureFailure(
+        IngestCaptureFailureCode.tooLarge,
+        maxBytes: IngestCaptureLimits.statementPdfBytes,
+      ),
+    );
+    await tester.pumpWidget(
+      _app(store: store, service: service, captureSource: captureSource),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Import file'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('This file exceeds the 12 MiB import limit.'),
+      findsOneWidget,
+    );
+    expect(find.text('Choose file'), findsOneWidget);
+    expect(await store.watchByStatus(DraftStatus.pending).first, isEmpty);
   });
 
   testWidgets('parse exception keeps an actionable retry', (tester) async {
@@ -418,6 +645,46 @@ void main() {
       applier.undone.map((state) => state.appliedEntityId),
       containsAll(['entry-draft-2', 'entry-draft-1']),
     );
+  });
+
+  testWidgets('parse retry reopens capture without retaining its payload', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final captureSource = _SequenceCaptureSource([
+      const IngestCaptureSuccess(
+        IngestSource(
+          kind: IngestSourceKind.csv,
+          payload: 'date,description,amount\n2026-05-10,Coffee,-38.50',
+          originLabel: 'statement.csv',
+        ),
+      ),
+      const IngestCaptureCancelled(),
+    ]);
+    await tester.pumpWidget(
+      _app(
+        store: store,
+        service: service,
+        captureSource: captureSource,
+        failLedgerRead: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Import file'));
+    await tester.pumpAndSettle();
+    expect(find.text('Couldn’t parse this import. Try again.'), findsOneWidget);
+    expect(find.text('Choose file'), findsOneWidget);
+
+    await tester.tap(find.text('Choose file'));
+    await tester.pumpAndSettle();
+    expect(captureSource.calls, 2);
   });
 
   testWidgets('undo restore retry does not invoke ledger undo twice', (

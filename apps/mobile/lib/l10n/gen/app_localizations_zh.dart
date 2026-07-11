@@ -7748,6 +7748,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestCaptureFailed => '暂时无法读取此来源，请重试。';
 
   @override
+  String get ingestCaptureUnsupported => '暂不支持此文件类型。';
+
+  @override
+  String get ingestCaptureEmpty => '此来源没有可导入的内容。';
+
+  @override
+  String ingestCaptureTooLarge(int maxMiB) {
+    return '文件超过 $maxMiB MiB 的导入上限。';
+  }
+
+  @override
+  String ingestCaptureTextTooLong(int maxCharacters) {
+    return '文本超过 $maxCharacters 字符的导入上限。';
+  }
+
+  @override
+  String get ingestCaptureUnreadable => '无法读取此来源，请重新选择。';
+
+  @override
+  String get ingestChooseAnotherFile => '重新选择';
+
+  @override
+  String get ingestRetakePhoto => '重新拍摄';
+
+  @override
+  String ingestDroppedSourcesRejected(int count) {
+    return '有 $count 个拖入文件无法导入。';
+  }
+
+  @override
   String get ingestNoTransactions => '未解析出可识别的交易';
 
   @override

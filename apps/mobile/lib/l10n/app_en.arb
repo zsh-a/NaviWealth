@@ -4422,6 +4422,31 @@
   "@ingestParseFailed": { "description": "Ingest review: parsing exception" },
   "ingestCaptureFailed": "Couldn’t read that source. Try again.",
   "@ingestCaptureFailed": { "description": "Ingest review: camera/file capture exception" },
+  "ingestCaptureUnsupported": "This file type isn’t supported.",
+  "@ingestCaptureUnsupported": { "description": "Ingest capture: unsupported file type" },
+  "ingestCaptureEmpty": "This source is empty.",
+  "@ingestCaptureEmpty": { "description": "Ingest capture: empty file or text" },
+  "ingestCaptureTooLarge": "This file exceeds the {maxMiB} MiB import limit.",
+  "@ingestCaptureTooLarge": {
+    "description": "Ingest capture: file exceeds its memory budget",
+    "placeholders": { "maxMiB": { "type": "int" } }
+  },
+  "ingestCaptureTextTooLong": "Text exceeds the {maxCharacters}-character import limit.",
+  "@ingestCaptureTextTooLong": {
+    "description": "Ingest capture: direct or decoded text exceeds its budget",
+    "placeholders": { "maxCharacters": { "type": "int" } }
+  },
+  "ingestCaptureUnreadable": "This source couldn’t be read. Choose it again.",
+  "@ingestCaptureUnreadable": { "description": "Ingest capture: source content is unavailable or changed while reading" },
+  "ingestChooseAnotherFile": "Choose file",
+  "@ingestChooseAnotherFile": { "description": "Ingest capture failure action: reopen file picker" },
+  "ingestRetakePhoto": "Retake",
+  "@ingestRetakePhoto": { "description": "Ingest capture failure action: reopen camera" },
+  "ingestDroppedSourcesRejected": "Couldn’t import {count} dropped files.",
+  "@ingestDroppedSourcesRejected": {
+    "description": "Ingest drag and drop: aggregate rejected-file count",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "ingestNoTransactions": "No recognizable transactions",
   "@ingestNoTransactions": { "description": "Ingest review: parse produced zero rows" },
   "ingestParseSummary": "Parsed {total} · {fresh} new · {dup} possible dup",

@@ -67,9 +67,10 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _PasteSheet extends StatefulWidget {
-  const _PasteSheet({required this.dirty});
+  const _PasteSheet({required this.dirty, required this.maxTextCodeUnits});
 
   final FormDirtyController dirty;
+  final int maxTextCodeUnits;
 
   @override
   State<_PasteSheet> createState() => _PasteSheetState();
@@ -77,25 +78,31 @@ class _PasteSheet extends StatefulWidget {
 
 class _PasteSheetState extends State<_PasteSheet> {
   final _controller = TextEditingController();
-  bool _showRequiredError = false;
+  _PasteValidationError? _validationError;
 
   @override
   void initState() {
     super.initState();
     widget.dirty.bindTextControllers([_controller]);
-    _controller.addListener(_clearRequiredError);
+    _controller.addListener(_clearValidationError);
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_clearRequiredError);
+    _controller.removeListener(_clearValidationError);
     _controller.dispose();
     super.dispose();
   }
 
-  void _clearRequiredError() {
-    if (_showRequiredError && _controller.text.trim().isNotEmpty) {
-      setState(() => _showRequiredError = false);
+  void _clearValidationError() {
+    final clearsError = switch (_validationError) {
+      _PasteValidationError.required => _controller.text.trim().isNotEmpty,
+      _PasteValidationError.tooLong =>
+        _controller.text.length <= widget.maxTextCodeUnits,
+      null => false,
+    };
+    if (clearsError) {
+      setState(() => _validationError = null);
     }
   }
 
@@ -108,9 +115,13 @@ class _PasteSheetState extends State<_PasteSheet> {
         submitLabel: l10n.ingestParseAction,
         cancelLabel: l10n.commonCancel,
         onSubmit: () {
-          final text = _controller.text.trim();
-          if (text.isEmpty) {
-            setState(() => _showRequiredError = true);
+          final text = _controller.text;
+          if (text.length > widget.maxTextCodeUnits) {
+            setState(() => _validationError = _PasteValidationError.tooLong);
+            return;
+          }
+          if (text.trim().isEmpty) {
+            setState(() => _validationError = _PasteValidationError.required);
             return;
           }
           widget.dirty.markPristine();
@@ -127,10 +138,15 @@ class _PasteSheetState extends State<_PasteSheet> {
             minLines: 6,
             hint: l10n.ingestPasteHint,
           ),
-          if (_showRequiredError) ...[
+          if (_validationError != null) ...[
             const SizedBox(height: AppSpacing.s6),
             Text(
-              l10n.ingestPasteRequired,
+              switch (_validationError!) {
+                _PasteValidationError.required => l10n.ingestPasteRequired,
+                _PasteValidationError.tooLong => l10n.ingestCaptureTextTooLong(
+                  widget.maxTextCodeUnits,
+                ),
+              },
               style: context.bodyCaptionStyle.copyWith(
                 color: context.theme.colors.destructive,
               ),
@@ -141,3 +157,5 @@ class _PasteSheetState extends State<_PasteSheet> {
     );
   }
 }
+
+enum _PasteValidationError { required, tooLong }

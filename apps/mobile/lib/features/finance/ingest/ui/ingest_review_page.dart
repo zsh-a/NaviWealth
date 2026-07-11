@@ -23,10 +23,13 @@ import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../shared/l10n/account_l10n.dart';
 import '../../shared/ui/forms/forms.dart';
+import '../data/capture_encoder.dart';
+import '../data/ingest_capture_policy.dart';
 import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
 import '../domain/ingest_models.dart';
+import 'ingest_capture_presentation.dart';
 
 part 'ingest_review/draft_card.dart';
 part 'ingest_review/empty.dart';
@@ -42,9 +45,10 @@ class IngestReviewPage extends ConsumerStatefulWidget {
 class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   String? _accountId;
   _IngestBusyState? _busy;
+  bool _captureInProgress = false;
   final Map<String, ConfirmedIngestItem> _pendingFinalize = {};
 
-  bool get _isBusy => _busy != null;
+  bool get _isBusy => _busy != null || _captureInProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -108,31 +112,60 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Future<void> _captureCamera() async {
+    if (!_beginCapture()) return;
+    late final IngestCaptureOutcome outcome;
     try {
-      final source = await ref.read(cameraIngestCaptureProvider).capture();
-      if (source == null || !mounted) return;
-      await _runIngest(source);
+      outcome = await ref.read(cameraIngestCaptureProvider).capture();
     } catch (_) {
-      if (!mounted) return;
-      final l10n = AppLocalizations.of(context);
-      _showRetry(l10n.ingestCaptureFailed, _captureCamera);
+      outcome = const IngestCaptureFailure(IngestCaptureFailureCode.unreadable);
     }
+    _endCapture();
+    if (!mounted) return;
+    await _handleCaptureOutcome(
+      outcome,
+      retry: _captureCamera,
+      actionLabel: AppLocalizations.of(context).ingestRetakePhoto,
+    );
   }
 
   Future<void> _onDrop(DropDoneDetails detail) async {
-    if (detail.files.isEmpty) return;
-    for (final file in detail.files) {
-      try {
-        final source = await xFileToIngestSource(file);
-        if (source == null || !mounted) continue;
-        await _runIngest(source);
-      } catch (_) {
-        if (!mounted) return;
-        final l10n = AppLocalizations.of(context);
-        _showRetry(l10n.ingestCaptureFailed, () => _onDrop(detail));
-        return;
+    if (detail.files.isEmpty || !_beginCapture()) return;
+    final failures = <IngestCaptureFailure>[];
+    try {
+      for (final file in detail.files) {
+        try {
+          final outcome = await xFileToIngestSource(file);
+          if (!mounted) return;
+          switch (outcome) {
+            case IngestCaptureSuccess(:final source):
+              await _runIngest(source);
+            case IngestCaptureFailure():
+              failures.add(outcome);
+            case IngestCaptureCancelled():
+              break;
+          }
+        } catch (_) {
+          if (!mounted) return;
+          failures.add(
+            IngestCaptureFailure(
+              IngestCaptureFailureCode.unreadable,
+              fileName: file.name,
+            ),
+          );
+        }
       }
+    } finally {
+      _endCapture();
     }
+    if (!mounted || failures.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    AppMessenger.show(
+      context,
+      ToastKind.error,
+      failures.length == 1
+          ? localizedIngestCaptureFailure(l10n, failures.single)
+          : l10n.ingestDroppedSourcesRejected(failures.length),
+    );
   }
 
   Widget _content(
@@ -475,36 +508,91 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   Future<void> _openPasteDialog() async {
     final text = await showGuardedFormSheet<String>(
       context: context,
-      builder: (_, dirty) => _PasteSheet(dirty: dirty),
+      builder: (_, dirty) => _PasteSheet(
+        dirty: dirty,
+        maxTextCodeUnits: ref.read(ingestCaptureTextLimitProvider),
+      ),
     );
     if (text == null) return;
-    await _runIngest(
-      IngestSource(
-        kind: IngestSourceKind.pasteText,
-        payload: text.trim(),
-        // Stable non-display breadcrumb (persisted + traced).
-        originLabel: 'paste',
-      ),
+    final outcome = ingestSourceFromTextCapture(
+      text: text,
+      // Stable non-display breadcrumb (persisted + traced).
+      originLabel: 'paste',
+    );
+    if (!mounted) return;
+    await _handleCaptureOutcome(
+      outcome,
+      retry: _openPasteDialog,
+      actionLabel: AppLocalizations.of(context).commonRetry,
     );
   }
 
   Future<void> _pickFile() async {
     // The system picker provides its own modal UI; _runIngest owns the
     // busy state for the parse that follows.
+    if (!_beginCapture()) return;
+    late final IngestCaptureOutcome outcome;
     try {
-      final source = await ref.read(ingestCaptureSourceProvider).pickFile();
-      if (source == null || !mounted) return;
-      await _runIngest(source);
+      outcome = await ref.read(ingestCaptureSourceProvider).pickFile();
     } catch (_) {
-      if (!mounted) return;
-      final l10n = AppLocalizations.of(context);
-      _showRetry(l10n.ingestCaptureFailed, _pickFile);
+      outcome = const IngestCaptureFailure(IngestCaptureFailureCode.unreadable);
     }
+    _endCapture();
+    if (!mounted) return;
+    await _handleCaptureOutcome(
+      outcome,
+      retry: _pickFile,
+      actionLabel: AppLocalizations.of(context).ingestChooseAnotherFile,
+    );
+  }
+
+  bool _beginCapture() {
+    if (_isBusy) return false;
+    setState(() => _captureInProgress = true);
+    return true;
+  }
+
+  void _endCapture() {
+    if (mounted) setState(() => _captureInProgress = false);
+  }
+
+  Future<void> _handleCaptureOutcome(
+    IngestCaptureOutcome outcome, {
+    Future<void> Function()? retry,
+    String? actionLabel,
+  }) async {
+    switch (outcome) {
+      case IngestCaptureSuccess(:final source):
+        await _runIngest(source, retry: retry, retryLabel: actionLabel);
+      case IngestCaptureFailure():
+        _showCaptureFailure(outcome, retry: retry, actionLabel: actionLabel);
+      case IngestCaptureCancelled():
+        break;
+    }
+  }
+
+  void _showCaptureFailure(
+    IngestCaptureFailure failure, {
+    Future<void> Function()? retry,
+    String? actionLabel,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    AppMessenger.show(
+      context,
+      ToastKind.error,
+      localizedIngestCaptureFailure(l10n, failure),
+      actionLabel: retry == null ? null : actionLabel,
+      onAction: retry == null ? null : () => unawaited(retry()),
+    );
   }
 
   /// Shared tail for every capture entry (paste / file): run the
   /// pipeline and surface the outcome with one consistent toast set.
-  Future<void> _runIngest(IngestSource source) async {
+  Future<void> _runIngest(
+    IngestSource source, {
+    Future<void> Function()? retry,
+    String? retryLabel,
+  }) async {
     final l10n = AppLocalizations.of(context);
     final sourceLabel = _sourceLabel(l10n, source);
     setState(() {
@@ -519,7 +607,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       final result = await ref.read(ingestControllerProvider).ingest(source);
       if (!mounted) return;
       if (result.isRejected) {
-        _showRetry(result.rejectedReason!, () => _runIngest(source));
+        _showCaptureParseFailure(
+          result.rejectedReason!,
+          retry: retry,
+          retryLabel: retryLabel,
+        );
       } else if (result.total == 0) {
         AppMessenger.show(context, ToastKind.info, l10n.ingestNoTransactions);
       } else {
@@ -535,11 +627,29 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       }
     } catch (_) {
       if (mounted) {
-        _showRetry(l10n.ingestParseFailed, () => _runIngest(source));
+        _showCaptureParseFailure(
+          l10n.ingestParseFailed,
+          retry: retry,
+          retryLabel: retryLabel,
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = null);
     }
+  }
+
+  void _showCaptureParseFailure(
+    String message, {
+    Future<void> Function()? retry,
+    String? retryLabel,
+  }) {
+    AppMessenger.show(
+      context,
+      ToastKind.error,
+      message,
+      actionLabel: retry == null ? null : retryLabel,
+      onAction: retry == null ? null : () => unawaited(retry()),
+    );
   }
 
   Future<void> _undoConfirmed(

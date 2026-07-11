@@ -8131,6 +8131,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestCaptureFailed => 'Couldn’t read that source. Try again.';
 
   @override
+  String get ingestCaptureUnsupported => 'This file type isn’t supported.';
+
+  @override
+  String get ingestCaptureEmpty => 'This source is empty.';
+
+  @override
+  String ingestCaptureTooLarge(int maxMiB) {
+    return 'This file exceeds the $maxMiB MiB import limit.';
+  }
+
+  @override
+  String ingestCaptureTextTooLong(int maxCharacters) {
+    return 'Text exceeds the $maxCharacters-character import limit.';
+  }
+
+  @override
+  String get ingestCaptureUnreadable =>
+      'This source couldn’t be read. Choose it again.';
+
+  @override
+  String get ingestChooseAnotherFile => 'Choose file';
+
+  @override
+  String get ingestRetakePhoto => 'Retake';
+
+  @override
+  String ingestDroppedSourcesRejected(int count) {
+    return 'Couldn’t import $count dropped files.';
+  }
+
+  @override
   String get ingestNoTransactions => 'No recognizable transactions';
 
   @override

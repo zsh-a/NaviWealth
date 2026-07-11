@@ -13877,6 +13877,54 @@ abstract class AppLocalizations {
   /// **'Couldn’t read that source. Try again.'**
   String get ingestCaptureFailed;
 
+  /// Ingest capture: unsupported file type
+  ///
+  /// In en, this message translates to:
+  /// **'This file type isn’t supported.'**
+  String get ingestCaptureUnsupported;
+
+  /// Ingest capture: empty file or text
+  ///
+  /// In en, this message translates to:
+  /// **'This source is empty.'**
+  String get ingestCaptureEmpty;
+
+  /// Ingest capture: file exceeds its memory budget
+  ///
+  /// In en, this message translates to:
+  /// **'This file exceeds the {maxMiB} MiB import limit.'**
+  String ingestCaptureTooLarge(int maxMiB);
+
+  /// Ingest capture: direct or decoded text exceeds its budget
+  ///
+  /// In en, this message translates to:
+  /// **'Text exceeds the {maxCharacters}-character import limit.'**
+  String ingestCaptureTextTooLong(int maxCharacters);
+
+  /// Ingest capture: source content is unavailable or changed while reading
+  ///
+  /// In en, this message translates to:
+  /// **'This source couldn’t be read. Choose it again.'**
+  String get ingestCaptureUnreadable;
+
+  /// Ingest capture failure action: reopen file picker
+  ///
+  /// In en, this message translates to:
+  /// **'Choose file'**
+  String get ingestChooseAnotherFile;
+
+  /// Ingest capture failure action: reopen camera
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get ingestRetakePhoto;
+
+  /// Ingest drag and drop: aggregate rejected-file count
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t import {count} dropped files.'**
+  String ingestDroppedSourcesRejected(int count);
+
   /// Ingest review: parse produced zero rows
   ///
   /// In en, this message translates to:

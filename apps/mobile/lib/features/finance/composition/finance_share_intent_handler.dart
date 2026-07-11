@@ -5,6 +5,8 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/lifeos/share_intent.dart';
+import '../ingest/data/capture_encoder.dart';
+import '../ingest/data/ingest_capture_policy.dart';
 import '../ingest/data/ingest_capture_source.dart';
 import '../ingest/data/providers.dart';
 import '../ingest/domain/ingest_models.dart';
@@ -30,20 +32,26 @@ class FinanceShareIntentHandler extends DomainShareIntentHandler {
   }
 
   Future<IngestSource?> _toSource(SharedIntentPayload payload) async {
+    final IngestCaptureOutcome outcome;
     if (payload.kind == SharedIntentKind.text ||
         payload.kind == SharedIntentKind.url) {
-      final text = payload.value.trim();
-      if (text.isEmpty) return null;
-      return IngestSource(
-        kind: IngestSourceKind.pasteText,
-        payload: text,
+      outcome = ingestSourceFromTextCapture(
+        text: payload.value,
         originLabel: 'share',
       );
-    }
-    if (payload.kind == SharedIntentKind.image ||
+    } else if (payload.kind == SharedIntentKind.image ||
         payload.kind == SharedIntentKind.file) {
-      return xFileToIngestSource(XFile(payload.value));
+      outcome = await xFileToIngestSource(
+        XFile(payload.value),
+        mimeType: payload.mimeType,
+        trustedImage: payload.kind == SharedIntentKind.image,
+      );
+    } else {
+      return null;
     }
-    return null;
+    return switch (outcome) {
+      IngestCaptureSuccess(:final source) => source,
+      IngestCaptureCancelled() || IngestCaptureFailure() => null,
+    };
   }
 }
