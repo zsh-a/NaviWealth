@@ -3,11 +3,13 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import '../../core/persistence/app_database.dart';
 import 'drift_sync_storage.dart';
 
-/// Account-less HLC stamper used by the local-only mode.
+/// Drift-backed HLC stamper used by every locally-authored mutation.
 ///
-/// Mirrors [SyncEngine.stampHlc] but doesn't require an authenticated
-/// session — the device id is the locally-generated identity (not a
-/// backend-issued one) and there's no sync engine to coordinate with.
+/// Mirrors `SyncEngine.stampHlc` without depending on the engine lifecycle.
+/// Cloud sessions pass their backend-issued device id; local-only mode passes
+/// the install identity. Both advance the same `sync.local_hlc` cursor, so
+/// writes remain ordered while repository availability stays independent of
+/// sync initialization and historical backfill work.
 class LocalHlcStamper {
   LocalHlcStamper({required AppDatabase db, required this.deviceId})
     : _cursors = DriftCursorStore(db);

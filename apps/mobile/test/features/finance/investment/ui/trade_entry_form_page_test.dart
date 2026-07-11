@@ -199,7 +199,7 @@ Future<void> _pressControlEnter(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('preflight failure keeps the trade form retryable', (
+  testWidgets('preflight timeout keeps the trade form retryable', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 1600));
@@ -237,8 +237,11 @@ void main() {
           ),
           tradeEntrySubmissionServiceProvider.overrideWith((_) async {
             providerReads += 1;
-            throw StateError('service unavailable');
+            return Completer<TradeEntrySubmissionService>().future;
           }),
+          tradeEntryPreflightTimeoutProvider.overrideWithValue(
+            const Duration(milliseconds: 20),
+          ),
         ],
         child: _wrap(
           TradeEntryFormPage(

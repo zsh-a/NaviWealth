@@ -242,12 +242,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     );
 
     late final TradeEntrySubmissionService submissionService;
+    final preflightTimeout = ref.read(tradeEntryPreflightTimeoutProvider);
     _setBusy(true);
     dirty.busy = true;
     try {
-      submissionService = await ref.read(
-        tradeEntrySubmissionServiceProvider.future,
-      );
+      submissionService = await ref
+          .read(tradeEntrySubmissionServiceProvider.future)
+          .timeout(preflightTimeout);
       if (!mounted) return;
 
       // For buys with a known price, check whether the cash account would
@@ -256,10 +257,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         final cashOut =
             quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
         final cashAccountId = _cashAccountId ?? accountId;
-        final currentBalance = await submissionService.balanceByAccountUnit(
-          cashAccountId,
-          currency,
-        );
+        final currentBalance = await submissionService
+            .balanceByAccountUnit(cashAccountId, currency)
+            .timeout(preflightTimeout);
         if (!mounted) return;
         final resulting = currentBalance - cashOut;
         if (resulting < Decimal.zero) {

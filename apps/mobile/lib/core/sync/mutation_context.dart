@@ -5,8 +5,6 @@ import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/local_hlc_stamper.dart';
-import 'package:naviwealth/core/sync/providers.dart';
-import 'package:naviwealth/core/sync/sync_engine.dart';
 
 export 'package:naviwealth/core/auth/current_user.dart'
     show currentUserIdProvider, kLocalOnlyUserId;
@@ -32,9 +30,10 @@ class MutationStamp {
   final DateTime now;
 }
 
-/// Builds [MutationStamp]s. Production wiring resolves user / device ids
-/// and asks the [SyncEngine] for a fresh HLC tick; tests can supply a
-/// fake by overriding [mutationStamperProvider].
+/// Builds [MutationStamp]s. Production wiring resolves user / device ids and
+/// advances the shared local HLC directly in Drift; tests can supply a fake by
+/// overriding [mutationStamperProvider]. Local writes must never wait for sync
+/// engine initialization or a historical sync backfill.
 class MutationStamper {
   MutationStamper({
     required this.currentUserId,
@@ -48,8 +47,8 @@ class MutationStamper {
   /// Resolves the backend-issued device id bound to the active session.
   final Future<String> Function() deviceId;
 
-  /// Generates a fresh HLC tick. Production binding delegates to
-  /// `SyncEngine.stampHlc`; tests inject a deterministic stub.
+  /// Generates a fresh HLC tick. Production binding writes through the shared
+  /// Drift cursor; tests inject a deterministic stub.
   final Future<Hlc> Function() stampHlc;
 
   Future<MutationStamp> stamp() async {
@@ -77,35 +76,22 @@ class MutationStamper {
 final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
   final auth = ref.watch(authStateProvider);
 
-  if (auth is AuthLocalOnly) {
-    // Local-only mode: build a stamper that doesn't depend on the sync
-    // engine. The device id comes from the local install identity (no
-    // backend); HLC ticks go straight through DriftCursorStore.
-    final db = await ref.watch(appDatabaseProvider.future);
-    final deviceId = await ref.read(deviceIdentityStoreProvider).getOrCreate();
-    final stamper = LocalHlcStamper(db: db, deviceId: deviceId);
-    return MutationStamper(
-      currentUserId: ref.watch(currentUserIdProvider),
-      deviceId: () async => deviceId,
-      stampHlc: stamper.stamp,
-    );
+  final String deviceId;
+  switch (auth) {
+    case AuthLocalOnly():
+      deviceId = await ref.read(deviceIdentityStoreProvider).getOrCreate();
+    case AuthLoggedIn(:final session):
+      deviceId = session.deviceId;
+    default:
+      return _unauthenticatedMutationStamper();
   }
 
-  final engine = await ref.watch(syncEngineProvider.future);
-  if (engine == null) {
-    return _unauthenticatedMutationStamper();
-  }
-  final session = ref.watch(authSessionProvider);
-  final user = ref.watch(currentUserIdProvider);
+  final db = await ref.watch(appDatabaseProvider.future);
+  final hlcStamper = LocalHlcStamper(db: db, deviceId: deviceId);
   return MutationStamper(
-    currentUserId: user,
-    deviceId: () async {
-      if (session == null) {
-        throw StateError('MutationStamper requires an authenticated session.');
-      }
-      return session.deviceId;
-    },
-    stampHlc: engine.stampHlc,
+    currentUserId: ref.watch(currentUserIdProvider),
+    deviceId: () async => deviceId,
+    stampHlc: hlcStamper.stamp,
   );
 });
 

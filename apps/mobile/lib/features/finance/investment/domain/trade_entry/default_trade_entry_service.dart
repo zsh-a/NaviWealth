@@ -24,13 +24,19 @@ import 'trade_entry_service.dart';
 /// and optional market price backfill.
 class DefaultTradeEntryService implements TradeEntryService {
   DefaultTradeEntryService({
-    required MarketDataService market,
+    MarketDataService? market,
+    Future<MarketDataService> Function()? marketLoader,
     required CurrencyConverter fx,
     CostBasisEngine? engine,
     String Function()? idGenerator,
     this.permissiveSells = false,
+    this.marketLookupTimeout = const Duration(seconds: 12),
     int decimalScale = 16,
-  }) : _market = market,
+  }) : assert(
+         (market == null) != (marketLoader == null),
+         'Provide exactly one of market or marketLoader.',
+       ),
+       _marketLoader = marketLoader ?? (() async => market!),
        _fx = fx,
        _engine = engine ?? CostBasisEngine(strategy: const FifoStrategy()),
        _idGenerator = idGenerator ?? _defaultId,
@@ -39,7 +45,7 @@ class DefaultTradeEntryService implements TradeEntryService {
   static const Uuid _uuid = Uuid();
   static String _defaultId() => _uuid.v4();
 
-  final MarketDataService _market;
+  final Future<MarketDataService> Function() _marketLoader;
   final CurrencyConverter _fx;
   final CostBasisEngine _engine;
   final String Function() _idGenerator;
@@ -50,6 +56,11 @@ class DefaultTradeEntryService implements TradeEntryService {
   /// `false` is strict — the service throws so the UI can prompt the user
   /// to fix the entry instead of silently writing a negative position.
   final bool permissiveSells;
+
+  /// Total deadline for resolving the market service and fetching historical
+  /// bars. This covers provider initialization, cache reads, rate limiting,
+  /// retries, and HTTP so an interactive form can never wait indefinitely.
+  final Duration marketLookupTimeout;
 
   @override
   Future<TradeEntryPlan> buildPlan(
@@ -173,12 +184,16 @@ class DefaultTradeEntryService implements TradeEntryService {
     late final String source;
     DateTime? barAsOf;
     try {
-      final resp = await _market.getHistorical(
-        draft.asset.symbol,
-        from: from,
-        to: to,
-        market: assetMarket,
-      );
+      final resp = await _marketLoader()
+          .then(
+            (market) => market.getHistorical(
+              draft.asset.symbol,
+              from: from,
+              to: to,
+              market: assetMarket,
+            ),
+          )
+          .timeout(marketLookupTimeout);
       bars = resp.data;
       source = resp.source;
     } catch (e) {

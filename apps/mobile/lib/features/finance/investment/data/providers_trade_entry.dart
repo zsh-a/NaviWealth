@@ -4,12 +4,21 @@ final _tradeCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
   return FxRateCurrencyConverter(InMemoryFxRateLookup(const []));
 });
 
+/// Deadline for dependency resolution and optional market-price backfill
+/// before a trade opens its durable database transaction.
+final tradeEntryPreflightTimeoutProvider = Provider<Duration>(
+  (ref) => const Duration(seconds: 12),
+);
+
 final tradeEntryServiceProvider = FutureProvider<TradeEntryService>((
   ref,
 ) async {
-  final market = await ref.watch(marketDataServiceProvider.future);
   final fx = ref.watch(_tradeCurrencyConverterProvider);
-  return DefaultTradeEntryService(market: market, fx: fx);
+  return DefaultTradeEntryService(
+    marketLoader: () => ref.read(marketDataServiceProvider.future),
+    marketLookupTimeout: ref.watch(tradeEntryPreflightTimeoutProvider),
+    fx: fx,
+  );
 });
 
 final tradeEntrySubmissionServiceProvider =
