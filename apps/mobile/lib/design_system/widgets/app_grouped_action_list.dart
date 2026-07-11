@@ -5,6 +5,62 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 
+/// Shared inset-grouped surface used by settings, action menus and dense
+/// business lists. One surface owns the visual grouping; rows inside it stay
+/// flat and are separated by quiet, indented hairlines.
+class AppGroupedSurface extends StatelessWidget {
+  const AppGroupedSurface({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final background = colors.brightness == Brightness.dark
+        ? colors.card.withValues(alpha: AppOpacity.muted)
+        : ColorPalette.neutral75;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.xlg),
+      ),
+      child: Padding(padding: padding, child: child),
+    );
+  }
+}
+
+/// Standard divider for [AppGroupedSurface].
+class AppGroupedDivider extends StatelessWidget {
+  const AppGroupedDivider({
+    super.key,
+    this.indent = AppSpacing.s48,
+    this.endIndent = 0,
+  });
+
+  final double indent;
+  final double endIndent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsetsDirectional.only(start: indent, end: endIndent),
+      child: SizedBox(
+        height: AppSpacing.hairline,
+        child: ColoredBox(
+          color: context.theme.colors.border.withValues(
+            alpha: AppOpacity.faint,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AppGroupedAction {
   const AppGroupedAction({
     required this.icon,
@@ -30,37 +86,14 @@ class AppGroupedActionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    final background = isDark
-        ? colors.card.withValues(alpha: AppOpacity.muted)
-        : ColorPalette.neutral75;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.xlg),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
-        child: Column(
-          children: [
-            for (var i = 0; i < actions.length; i++) ...[
-              _ActionRow(action: actions[i]),
-              if (i != actions.length - 1)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(
-                    start: AppSpacing.s48,
-                  ),
-                  child: SizedBox(
-                    height: AppSpacing.hairline,
-                    child: ColoredBox(
-                      color: colors.border.withValues(alpha: AppOpacity.faint),
-                    ),
-                  ),
-                ),
-            ],
+    return AppGroupedSurface(
+      child: Column(
+        children: [
+          for (var i = 0; i < actions.length; i++) ...[
+            _ActionRow(action: actions[i]),
+            if (i != actions.length - 1) const AppGroupedDivider(),
           ],
-        ),
+        ],
       ),
     );
   }

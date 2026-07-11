@@ -72,11 +72,14 @@ void main() {
     await tester.pumpAndSettle();
 
     final dialogSize = tester.getSize(
-      find.byKey(const ValueKey<String>('glass-dialog-surface')),
+      find.byKey(const ValueKey<String>('app-dialog-surface')),
     );
     expect(dialogSize.height, lessThan(320));
     expect(dialogSize.height, greaterThan(120));
     expect(dialogSize.width, lessThanOrEqualTo(460));
+    final cancelCenter = tester.getCenter(find.text('Cancel'));
+    final deleteCenter = tester.getCenter(find.text('Delete'));
+    expect((cancelCenter.dy - deleteCenter.dy).abs(), lessThan(4));
   });
 
   testWidgets('progress dialog can be dismissed by returned callback', (

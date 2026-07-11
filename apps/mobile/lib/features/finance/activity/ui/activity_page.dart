@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
@@ -49,6 +50,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     final l10n = AppLocalizations.of(context);
     final isDesktop =
         MediaQuery.sizeOf(context).width >= Breakpoints.contentTwoColumn;
+    final activeFilterCount = _activityFilterCount(
+      ref.watch(activityFeedQueryProvider),
+    );
     ref.listen<ActivityFeedQuery>(activityFeedQueryProvider, (_, next) {
       if (!mounted) return;
       _replaceActivityUrl(query: next);
@@ -73,6 +77,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             label: l10n.activityFeedFilterTitle,
             onPress: () => ActivityFeedFilterSheet.show(context),
             order: 10,
+            badgeCount: activeFilterCount,
           ),
           ShellHeaderActionSpec(
             icon: FLucideIcons.plus,
@@ -145,12 +150,16 @@ class _ActivityRightRail extends ConsumerWidget {
     final controller = ref.read(activityFeedQueryProvider.notifier);
     final selected = query.kinds;
     final allActive = selected.isEmpty;
+    final activeFilterCount = _activityFilterCount(query);
+    final filterLabel = activeFilterCount == 0
+        ? l10n.activityFeedFilterTitle
+        : '${l10n.activityFeedFilterTitle} · $activeFilterCount';
     final chips = <_KindChipSpec>[
       _KindChipSpec(
         label: l10n.activityFilterChipAll,
         active: allActive,
         onTap: () =>
-            controller.setQuery(query.copyWith(kinds: const <ActivityKind>{})),
+            _setActivityKinds(controller, query, const <ActivityKind>{}),
       ),
       for (final kind in const [
         ActivityKind.income,
@@ -162,6 +171,7 @@ class _ActivityRightRail extends ConsumerWidget {
           label: _labelForKind(l10n, kind),
           active: selected.contains(kind),
           onTap: () {
+            Haptics.selection();
             final next = {...selected};
             if (next.contains(kind)) {
               next.remove(kind);
@@ -209,16 +219,23 @@ class _ActivityRightRail extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _QuickLinkTile(
-                      icon: FLucideIcons.receipt,
-                      label: l10n.activityExpenseListLink,
-                      onTap: () => context.push(FinanceRoutes.activityExpenses),
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    _QuickLinkTile(
-                      icon: FLucideIcons.pieChart,
-                      label: l10n.activityExpenseReportLink,
-                      onTap: () => context.push(FinanceRoutes.expenseReport),
+                    AppGroupedActionList(
+                      actions: [
+                        AppGroupedAction(
+                          icon: FLucideIcons.receipt,
+                          title: l10n.activityExpenseListLink,
+                          subtitle: '',
+                          onPress: () =>
+                              context.push(FinanceRoutes.activityExpenses),
+                        ),
+                        AppGroupedAction(
+                          icon: FLucideIcons.pieChart,
+                          title: l10n.activityExpenseReportLink,
+                          subtitle: '',
+                          onPress: () =>
+                              context.push(FinanceRoutes.expenseReport),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -247,7 +264,7 @@ class _ActivityRightRail extends ConsumerWidget {
                   AppSpacing.s16,
                 ),
                 child: AppQuietButton(
-                  label: l10n.activityFeedFilterTitle,
+                  label: filterLabel,
                   onPress: onFilter,
                   expanded: true,
                   prefix: const Icon(FLucideIcons.filter),
@@ -281,7 +298,7 @@ class _ActivityKindFilterRow extends ConsumerWidget {
         label: l10n.activityFilterChipAll,
         active: allActive,
         onTap: () =>
-            controller.setQuery(query.copyWith(kinds: const <ActivityKind>{})),
+            _setActivityKinds(controller, query, const <ActivityKind>{}),
       ),
       for (final kind in const [
         ActivityKind.income,
@@ -293,6 +310,7 @@ class _ActivityKindFilterRow extends ConsumerWidget {
           label: _labelForKind(l10n, kind),
           active: selected.contains(kind),
           onTap: () {
+            Haptics.selection();
             final next = {...selected};
             if (next.contains(kind)) {
               next.remove(kind);
@@ -387,45 +405,17 @@ class _ExpenseQuickLinks extends StatelessWidget {
   }
 }
 
-class _QuickLinkTile extends StatelessWidget {
-  const _QuickLinkTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+int _activityFilterCount(ActivityFeedQuery query) {
+  return query.kinds.length +
+      query.accountIds.length +
+      (query.dateRange == null ? 0 : 1);
+}
 
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return SoftCard(
-      padding: EdgeInsets.zero,
-      child: FTile(
-        onPress: onTap,
-        prefix: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            icon,
-            size: AppIconSizes.h18,
-            color: colors.mutedForeground,
-          ),
-        ),
-        title: Text(label, style: context.mediumLabelStyle),
-        suffix: Icon(
-          FLucideIcons.chevronRight,
-          size: AppIconSizes.sm,
-          color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
-        ),
-      ),
-    );
-  }
+void _setActivityKinds(
+  ActivityFeedQueryController controller,
+  ActivityFeedQuery query,
+  Set<ActivityKind> kinds,
+) {
+  Haptics.selection();
+  controller.setQuery(query.copyWith(kinds: kinds));
 }

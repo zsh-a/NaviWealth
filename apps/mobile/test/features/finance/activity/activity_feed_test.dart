@@ -183,6 +183,8 @@ void main() {
     expect(find.text('Coffee'), findsOneWidget);
     expect(find.text('Blue Bottle'), findsOneWidget);
     expect(find.text('-¥32'), findsOneWidget);
+    expect(find.byType(AppGroupedSurface), findsOneWidget);
+    expect(find.byType(SoftCard), findsNothing);
   });
 
   testWidgets('shows load-more footer when another page exists', (

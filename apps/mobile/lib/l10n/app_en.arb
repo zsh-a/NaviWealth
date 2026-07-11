@@ -1078,6 +1078,7 @@
 
   "commonRetry": "Retry",
   "commonCancel": "Cancel",
+  "commonDone": "Done",
   "commonConfirm": "Confirm",
   "commonSave": "Save",
   "commonSaving": "Saving…",

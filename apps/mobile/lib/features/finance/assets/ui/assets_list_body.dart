@@ -92,11 +92,8 @@ class AssetsBody extends StatelessWidget {
       return AppEmptyState.error(
         title: l10n.commonLoadFailed,
         message: l10n.assetsLoadError('$loadError'),
-        action: FButton(
-          variant: FButtonVariant.ghost,
-          onPress: onRetry,
-          child: Text(l10n.commonRetry),
-        ),
+        retryLabel: l10n.commonRetry,
+        onRetry: onRetry,
       );
     }
     final manual = manualAsync.value ?? const <Asset>[];

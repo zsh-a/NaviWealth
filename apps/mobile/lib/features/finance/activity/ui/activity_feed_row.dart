@@ -50,74 +50,67 @@ class ActivityFeedEntryRow extends StatelessWidget {
         ? entry.entry.payee!
         : _accountSummary(l10n, entry.postings, accountsById);
 
-    return SoftCard(
-      borderless: true,
-      borderRadius: AppRadius.xlg,
-      tinted: false,
-      child: FTappable(
-        onPress: () => _openDetail(context),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s10,
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: AppSpacing.s32,
-                height: AppSpacing.s32,
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Icon(
-                    iconData,
-                    size: AppIconSizes.md,
-                    color: iconTint.withValues(alpha: AppOpacity.prominent),
-                  ),
+    return FTappable(
+      onPress: () => _openDetail(context),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s12,
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: AppSpacing.s32,
+              height: AppSpacing.s32,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Icon(
+                  iconData,
+                  size: AppIconSizes.md,
+                  color: iconTint.withValues(alpha: AppOpacity.prominent),
                 ),
               ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.entry.narration.isEmpty ? '—' : entry.entry.narration,
+                    style: context.labelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
-                      entry.entry.narration.isEmpty
-                          ? '—'
-                          : entry.entry.narration,
-                      style: context.labelStyle,
+                      subtitle,
+                      style: context.captionStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        subtitle,
-                        style: context.captionStyle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
                   ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (headline != null)
-                    SignedMoneyText(
-                      amount: headline.units,
-                      unit: headline.unit,
-                      formatters: formatter,
-                      style: context.strongLabelStyle,
-                    ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(timeStr, style: context.captionStyle),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (headline != null)
+                  SignedMoneyText(
+                    amount: headline.units,
+                    unit: headline.unit,
+                    formatters: formatter,
+                    style: context.strongLabelStyle,
+                  ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(timeStr, style: context.captionStyle),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -111,11 +111,8 @@ class _ErrorBody extends ConsumerWidget {
         error,
         operation: 'load dashboard snapshot',
       ),
-      action: AppQuietButton(
-        label: l10n.commonRetry,
-        onPress: () => ref.invalidate(dashboardSnapshotProvider),
-        prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.sm),
-      ),
+      retryLabel: l10n.commonRetry,
+      onRetry: () => ref.invalidate(dashboardSnapshotProvider),
     );
   }
 }

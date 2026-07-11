@@ -1992,6 +1992,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonCancel => 'Cancel';
 
   @override
+  String get commonDone => 'Done';
+
+  @override
   String get commonConfirm => 'Confirm';
 
   @override

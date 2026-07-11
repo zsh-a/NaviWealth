@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 
 import '../../../../core/format/formatters.dart';
@@ -70,11 +69,8 @@ class ActivityFeed extends ConsumerWidget {
       error: (_, _) => Center(
         child: AppEmptyState.error(
           title: l10n.commonLoadFailed,
-          action: FButton(
-            variant: FButtonVariant.ghost,
-            onPress: () => ref.invalidate(activityFeedProvider),
-            child: Text(l10n.commonRetry),
-          ),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(activityFeedProvider),
         ),
       ),
     );
@@ -110,15 +106,6 @@ class _FeedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = <_FeedItem>[];
-    for (final section in groups) {
-      items.add(_FeedItem.header(section.group));
-      for (final entry in section.entries) {
-        items.add(_FeedItem.entry(entry));
-      }
-    }
-    items.add(_FeedItem.footer(hasMore));
-
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
@@ -127,52 +114,40 @@ class _FeedList extends StatelessWidget {
             64 +
             MediaQuery.paddingOf(context).bottom,
       ),
-      itemCount: items.length,
+      itemCount: groups.length + 1,
       itemBuilder: (context, index) {
-        final item = items[index];
-        return switch (item) {
-          _FeedItemHeader(:final group) => _DateSectionHeader(
-            group: group,
-            l10n: l10n,
+        if (index == groups.length) {
+          return _FeedFooter(canLoadMore: hasMore, l10n: l10n);
+        }
+        final section = groups[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _DateSectionHeader(group: section.group, l10n: l10n),
+              AppGroupedSurface(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    for (var row = 0; row < section.entries.length; row++) ...[
+                      ActivityFeedEntryRow(
+                        entry: section.entries[row],
+                        accountsById: accountsById,
+                        formatter: formatter,
+                      ),
+                      if (row != section.entries.length - 1)
+                        const AppGroupedDivider(indent: AppSpacing.s56),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
-          _FeedItemEntry(:final entry) => Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: ActivityFeedEntryRow(
-              entry: entry,
-              accountsById: accountsById,
-              formatter: formatter,
-            ),
-          ),
-          _FeedItemFooter(:final canLoadMore) => _FeedFooter(
-            canLoadMore: canLoadMore,
-            l10n: l10n,
-          ),
-        };
+        );
       },
     );
   }
-}
-
-sealed class _FeedItem {
-  const _FeedItem();
-  factory _FeedItem.header(ActivityDateGroup group) = _FeedItemHeader;
-  factory _FeedItem.entry(JournalEntryWithPostings entry) = _FeedItemEntry;
-  factory _FeedItem.footer(bool canLoadMore) = _FeedItemFooter;
-}
-
-class _FeedItemHeader extends _FeedItem {
-  const _FeedItemHeader(this.group);
-  final ActivityDateGroup group;
-}
-
-class _FeedItemEntry extends _FeedItem {
-  const _FeedItemEntry(this.entry);
-  final JournalEntryWithPostings entry;
-}
-
-class _FeedItemFooter extends _FeedItem {
-  const _FeedItemFooter(this.canLoadMore);
-  final bool canLoadMore;
 }
 
 class _FeedFooter extends ConsumerWidget {

@@ -40,11 +40,8 @@ Future<void> closeSheetThen(
 /// drag handle, title row, surface tint, padding, keyboard avoidance and
 /// dismiss affordance look identical.
 ///
-/// Background is rendered as iOS-style frosted glass:
-///   - `BackdropFilter(blur 18)` over whatever's underneath
-///   - near-opaque base surface so the page below does not compete
-///   - rounded top corners (20dp) so the sheet reads as a card edge
-///     against the page below
+/// The surface is intentionally near-opaque. Blur is opt-in for rare immersive
+/// overlays; ordinary task sheets stay crisp and inexpensive to render.
 ///
 /// Drop-in replacement for `showFSheet`; the [builder] receives a
 /// `BuildContext` for the sheet body. Pass [title] / [subtitle] /
@@ -224,7 +221,7 @@ class AppSheet extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: context.strongHeadlineStyle,
+                  style: context.titleLabelStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -404,6 +401,29 @@ class AppSheetFooter extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Consistent overline used to split related groups inside a sheet.
+class AppSheetSectionLabel extends StatelessWidget {
+  const AppSheetSectionLabel(this.label, {super.key});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        start: AppSpacing.s4,
+        bottom: AppSpacing.s8,
+      ),
+      child: Text(
+        label,
+        style: context.captionLabelStyle.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
+      ),
     );
   }
 }

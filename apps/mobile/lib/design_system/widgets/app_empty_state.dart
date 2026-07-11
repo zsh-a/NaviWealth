@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_actions.dart';
 
 /// Tone of an [AppEmptyState] — drives the icon tint.
 ///
@@ -32,20 +33,38 @@ class AppEmptyState extends StatelessWidget {
   /// Convenience constructor for "couldn't load" failures with an
   /// optional retry callback. Uses [AppEmptyStateTone.error] and the
   /// standard error icon so error states across the app look the same.
-  const AppEmptyState.error({
+  factory AppEmptyState.error({
     Key? key,
     required String title,
     String? message,
     Widget? action,
+    String? retryLabel,
+    VoidCallback? onRetry,
     IconData icon = FLucideIcons.circleX,
-  }) : this(
-         key: key,
-         icon: icon,
-         title: title,
-         message: message,
-         action: action,
-         tone: AppEmptyStateTone.error,
-       );
+  }) {
+    assert(
+      action == null || onRetry == null,
+      'Provide either action or onRetry, not both.',
+    );
+    assert(
+      onRetry == null || retryLabel != null,
+      'retryLabel is required when onRetry is provided.',
+    );
+    return AppEmptyState(
+      key: key,
+      icon: icon,
+      title: title,
+      message: message,
+      action: onRetry == null
+          ? action
+          : AppActionButton(
+              onPress: onRetry,
+              mainAxisSize: MainAxisSize.max,
+              child: Text(retryLabel!),
+            ),
+      tone: AppEmptyStateTone.error,
+    );
+  }
 
   final IconData icon;
   final String title;
@@ -68,7 +87,18 @@ class AppEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: iconSize, color: iconColor),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: AppOpacity.whisper),
+                shape: BoxShape.circle,
+              ),
+              child: SizedBox.square(
+                dimension: iconSize + AppSpacing.s20,
+                child: Center(
+                  child: Icon(icon, size: iconSize, color: iconColor),
+                ),
+              ),
+            ),
             const SizedBox(height: AppSpacing.s16),
             Text(title, style: typography.body.lg, textAlign: TextAlign.center),
             if (message != null) ...[
@@ -81,7 +111,10 @@ class AppEmptyState extends StatelessWidget {
             ],
             if (action != null) ...[
               const SizedBox(height: AppSpacing.s16),
-              action!,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 320),
+                child: SizedBox(width: double.infinity, child: action!),
+              ),
             ],
           ],
         ),

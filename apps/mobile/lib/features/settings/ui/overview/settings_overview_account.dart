@@ -44,60 +44,22 @@ class _AccountSection extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final l10n = AppLocalizations.of(context);
-    await showAppSheet<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      title: l10n.settingsSwitchToLocalConfirmTitle,
-      builder: (_) => const _SwitchToLocalSheetBody(),
-      footer: const _SwitchToLocalSheetFooter(),
+      title: Text(l10n.settingsSwitchToLocalConfirmTitle),
+      body: Text(l10n.settingsSwitchToLocalConfirmBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.settingsSwitchToLocal,
     );
-  }
-}
-
-/// Sheet body for confirming the cloud -> local-only downgrade.
-class _SwitchToLocalSheetBody extends StatelessWidget {
-  const _SwitchToLocalSheetBody();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Text(
-      l10n.settingsSwitchToLocalConfirmBody,
-      style: context.bodyCaptionStyle,
+    if (confirmed != true || !context.mounted) return;
+    final dismiss = await showProgressDialog(
+      context: context,
+      message: l10n.settingsSwitchToLocal,
     );
-  }
-}
-
-class _SwitchToLocalSheetFooter extends ConsumerStatefulWidget {
-  const _SwitchToLocalSheetFooter();
-
-  @override
-  ConsumerState<_SwitchToLocalSheetFooter> createState() =>
-      _SwitchToLocalSheetFooterState();
-}
-
-class _SwitchToLocalSheetFooterState
-    extends ConsumerState<_SwitchToLocalSheetFooter> {
-  bool _busy = false;
-
-  Future<void> _confirm() async {
-    setState(() => _busy = true);
     try {
       await ref.read(auth_providers.switchToLocalOnlyProvider)();
-      if (mounted) Navigator.of(context).pop(true);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      await dismiss();
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppSheetFooter(
-      cancelLabel: l10n.commonCancel,
-      onCancel: () => Navigator.of(context).pop(false),
-      submitLabel: l10n.settingsSwitchToLocal,
-      onSubmit: _confirm,
-      busy: _busy,
-    );
   }
 }

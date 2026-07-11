@@ -1921,6 +1921,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonCancel => '取消';
 
   @override
+  String get commonDone => '完成';
+
+  @override
   String get commonConfirm => '确认';
 
   @override

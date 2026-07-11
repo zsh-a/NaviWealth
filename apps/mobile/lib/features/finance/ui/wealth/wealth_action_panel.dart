@@ -147,100 +147,19 @@ class _WealthActionSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.s4),
-          child: Text(
-            title,
-            style: context.captionLabelStyle.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final cols = constraints.maxWidth >= 360 ? 2 : 1;
-            final itemWidth = cols == 1
-                ? constraints.maxWidth
-                : (constraints.maxWidth - AppSpacing.s8) / 2;
-            return Wrap(
-              spacing: AppSpacing.s8,
-              runSpacing: AppSpacing.s8,
-              children: [
-                for (final action in actions)
-                  SizedBox(
-                    width: itemWidth,
-                    child: _WealthActionTile(action: action),
-                  ),
-              ],
-            );
-          },
+        AppSheetSectionLabel(title),
+        AppActionSheetList(
+          children: [
+            for (final action in actions)
+              AppActionSheetTile(
+                icon: action.icon,
+                title: action.title,
+                subtitle: action.subtitle,
+                onPress: action.onPress,
+              ),
+          ],
         ),
       ],
-    );
-  }
-}
-
-class _WealthActionTile extends StatelessWidget {
-  const _WealthActionTile({required this.action});
-
-  final _WealthAction action;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return SoftCard(
-      onPress: action.onPress,
-      padding: const EdgeInsets.all(AppSpacing.s10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: AppSpacing.s40,
-            height: AppSpacing.s40,
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: AppOpacity.subtle),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              action.icon,
-              size: AppIconSizes.h18,
-              color: colors.primary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s10),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  action.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.labelStyle,
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  action.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.microCaptionStyle.copyWith(height: 1.2),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s6),
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.sm,
-            color: colors.mutedForeground.withValues(
-              alpha: AppOpacity.prominent,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

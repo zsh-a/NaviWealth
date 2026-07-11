@@ -82,6 +82,11 @@ void main() {
       find.text('No accounts yet — add one from the Accounts tab.'),
       findsOneWidget,
     );
+    expect(find.text('Done'), findsOneWidget);
+
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Filter'), findsNothing);
   });
 
   testWidgets('renders one row per account inside the sheet', (tester) async {

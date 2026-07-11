@@ -50,13 +50,8 @@ class WealthHubPage extends ConsumerWidget {
         error: (_, _) => Center(
           child: AppEmptyState.error(
             title: l10n.commonLoadFailed,
-            action: FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () {
-                ref.invalidate(dashboardSnapshotProvider);
-              },
-              child: Text(l10n.commonRetry),
-            ),
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(dashboardSnapshotProvider),
           ),
         ),
         data: (snapshot) => PageSkeletonShell<Object>(

@@ -92,12 +92,14 @@ class ShellHeaderActionSpec {
     required this.label,
     required this.onPress,
     this.order = 0,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPress;
   final int order;
+  final int badgeCount;
 }
 
 /// Page padding for top-level domain tabs.
@@ -184,8 +186,13 @@ class ShellTabScaffold extends ConsumerWidget {
       actions: <Widget>[
         for (final action in directActions)
           FHeaderAction(
-            icon: Icon(action.icon),
-            semanticsLabel: action.label,
+            icon: _ShellHeaderActionIcon(
+              icon: action.icon,
+              badgeCount: action.badgeCount,
+            ),
+            semanticsLabel: action.badgeCount > 0
+                ? '${action.label} (${action.badgeCount})'
+                : action.label,
             onPress: action.onPress,
           ),
         if (overflowActions.isNotEmpty)
@@ -196,6 +203,56 @@ class ShellTabScaffold extends ConsumerWidget {
           ),
       ],
       child: child,
+    );
+  }
+}
+
+class _ShellHeaderActionIcon extends StatelessWidget {
+  const _ShellHeaderActionIcon({required this.icon, required this.badgeCount});
+
+  final IconData icon;
+  final int badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    if (badgeCount <= 0) return Icon(icon);
+    final label = badgeCount > 9 ? '9+' : '$badgeCount';
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        PositionedDirectional(
+          top: -AppSpacing.s6,
+          end: -AppSpacing.s8,
+          child: ExcludeSemantics(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: context.theme.colors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: AppSpacing.s16,
+                  minHeight: AppSpacing.s16,
+                ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s2,
+                    ),
+                    child: Text(
+                      label,
+                      style: context.microLabelStyle.copyWith(
+                        color: context.theme.colors.primaryForeground,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

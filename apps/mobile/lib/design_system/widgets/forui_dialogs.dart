@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
@@ -33,7 +32,7 @@ Future<T?> showAppContentDialog<T>({
   );
 }
 
-/// Show a forui-styled confirm dialog with frosted glass surface.
+/// Show a compact, calm confirmation dialog.
 ///
 /// Returns `true` when the user taps the confirm action, `false` for
 /// cancel, `null` if the barrier was dismissed.
@@ -50,7 +49,7 @@ Future<bool?> showConfirmDialog({
     context: context,
     barrierDismissible: false,
     builder: (ctx, style, animation) => _DialogFrame(
-      child: _GlassDialog(
+      child: _AppDialog(
         accentColor: destructive
             ? SemanticColors.of(ctx).danger
             : FTheme.of(ctx).colors.primary,
@@ -89,7 +88,7 @@ Future<bool?> showInfoDialog(
   return showFDialog<bool>(
     context: context,
     builder: (ctx, style, animation) => _DialogFrame(
-      child: _GlassDialog(
+      child: _AppDialog(
         accentColor: FTheme.of(ctx).colors.primary,
         icon: icon,
         title: title,
@@ -123,7 +122,7 @@ Future<Future<void> Function()> showProgressDialog({
           }
         });
         return _DialogFrame(
-          child: _GlassDialog(
+          child: _AppDialog(
             accentColor: FTheme.of(ctx).colors.primary,
             title: Row(
               mainAxisSize: MainAxisSize.min,
@@ -175,10 +174,8 @@ class _DialogFrame extends StatelessWidget {
   }
 }
 
-/// Frosted glass dialog surface — matches the sheet aesthetic for a
-/// unified glass-morphism language across the app.
-class _GlassDialog extends StatelessWidget {
-  const _GlassDialog({
+class _AppDialog extends StatelessWidget {
+  const _AppDialog({
     required this.accentColor,
     required this.title,
     required this.actions,
@@ -195,85 +192,81 @@ class _GlassDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    final surface = colors.background.withValues(
-      alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque,
-    );
+    final surface = colors.background;
     final borderColor = colors.foreground.withValues(
-      alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
+      alpha: colors.brightness == Brightness.dark
+          ? AppOpacity.light
+          : AppOpacity.subtle,
     );
 
-    return ClipRRect(
-      key: const ValueKey<String>('glass-dialog-surface'),
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(
-          sigmaX: AppBlur.sheet,
-          sigmaY: AppBlur.sheet,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: borderColor, width: AppStroke.hairline),
+    return DecoratedBox(
+      key: const ValueKey<String>('app-dialog-surface'),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: borderColor, width: AppStroke.hairline),
+        boxShadow: [
+          BoxShadow(
+            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+            blurRadius: AppSpacing.s32,
+            offset: const Offset(0, AppSpacing.s12),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Accent bar — thin colored strip at the top for visual weight.
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: AppOpacity.medium),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.xl),
-                  ),
-                ),
-                child: const SizedBox(height: AppSpacing.accentBar),
-              ),
-              // Content area.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s20,
-                  AppSpacing.s16,
-                  AppSpacing.s20,
-                  AppSpacing.s8,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (icon != null) ...[
-                      Icon(icon, size: AppIconSizes.xl, color: accentColor),
-                      const SizedBox(height: AppSpacing.s12),
-                    ],
-                    DefaultTextStyle(
-                      style: context.titleLabelStyle,
-                      child: title,
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s20,
+              AppSpacing.s20,
+              AppSpacing.s20,
+              AppSpacing.s8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (icon != null) ...[
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: AppOpacity.whisper),
+                      shape: BoxShape.circle,
                     ),
-                    if (body != null) ...[
-                      const SizedBox(height: AppSpacing.s8),
-                      DefaultTextStyle(
-                        style: context.bodyCaptionStyle,
-                        child: body!,
+                    child: SizedBox.square(
+                      dimension: AppSpacing.s40,
+                      child: Icon(
+                        icon,
+                        size: AppIconSizes.h18,
+                        color: accentColor,
                       ),
-                    ],
-                  ],
-                ),
-              ),
-              if (actions.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s20,
-                    AppSpacing.s4,
-                    AppSpacing.s20,
-                    AppSpacing.s20,
+                    ),
                   ),
-                  child: _DialogActions(actions: actions),
-                ),
-            ],
+                  const SizedBox(height: AppSpacing.s12),
+                ],
+                DefaultTextStyle(style: context.titleLabelStyle, child: title),
+                if (body != null) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  DefaultTextStyle(
+                    style: context.bodyCaptionStyle.copyWith(height: 1.45),
+                    child: body!,
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
+          if (actions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s20,
+                AppSpacing.s8,
+                AppSpacing.s20,
+                AppSpacing.s20,
+              ),
+              child: _DialogActions(actions: actions),
+            ),
+        ],
       ),
     );
   }
@@ -289,14 +282,28 @@ class _DialogActions extends StatelessWidget {
     if (actions.length == 1) {
       return SizedBox(width: double.infinity, child: actions.single);
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var i = 0; i < actions.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.s8),
-          actions[i],
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 300) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < actions.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.s8),
+                actions[i],
+              ],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (var i = 0; i < actions.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.s12),
+              Expanded(child: actions[i]),
+            ],
+          ],
+        );
+      },
     );
   }
 }

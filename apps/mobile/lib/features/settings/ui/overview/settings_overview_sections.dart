@@ -12,7 +12,7 @@ class _Section extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(title: title),
-        SoftCard(
+        AppGroupedSurface(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
           child: child,
         ),
@@ -21,8 +21,8 @@ class _Section extends StatelessWidget {
   }
 }
 
-/// iOS-style inset-grouped section header: small, all-caps, muted,
-/// with a subtle left accent bar for visual anchoring.
+/// Quiet inset-grouped section label. Typography carries the hierarchy; no
+/// decorative accent is needed beside every settings group.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -30,32 +30,18 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s12,
+        AppSpacing.s4,
         AppSpacing.s20,
-        AppSpacing.s12,
-        AppSpacing.s6,
+        AppSpacing.s4,
+        AppSpacing.s8,
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 2,
-            height: AppSpacing.s12,
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: AppOpacity.highlight),
-              borderRadius: BorderRadius.circular(AppRadius.full),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Text(
-            title.toUpperCase(),
-            style: context.microLabelStyle.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
-        ],
+      child: Text(
+        title,
+        style: context.captionLabelStyle.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
       ),
     );
   }

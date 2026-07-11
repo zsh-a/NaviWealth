@@ -29,17 +29,17 @@ class AppActionSheetTile extends StatelessWidget with FTileMixin {
     final colors = context.theme.colors;
     return FTile(
       onPress: onPress,
-      // Accent-tinted chip — readable contrast and on-brand, versus the
-      // old washed-out grey-on-grey square.
+      // Compact accent chip: enough identity for scanning without turning
+      // each row into its own card.
       prefix: Container(
-        width: AppSpacing.s40,
-        height: AppSpacing.s40,
+        width: AppSpacing.s32,
+        height: AppSpacing.s32,
         decoration: BoxDecoration(
           color: colors.primary.withValues(alpha: AppOpacity.subtle),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         alignment: Alignment.center,
-        child: Icon(icon, size: AppIconSizes.md, color: colors.primary),
+        child: Icon(icon, size: AppIconSizes.h18, color: colors.primary),
       ),
       title: Text(title, style: context.labelStyle),
       // Single line keeps every row the same height — uneven 1-vs-2

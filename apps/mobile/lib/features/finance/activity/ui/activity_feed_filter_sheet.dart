@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 
@@ -19,11 +20,9 @@ import '../data/activity_feed_provider.dart';
 /// the sheet now stays narrowly focused on the two dimensions inline
 /// chips can't reach.
 ///
-/// Edits apply live (the timeline rebuilds via Riverpod the moment the
-/// query changes); there is no Save button. Dismiss the sheet by
-/// dragging it down or tapping outside. The Clear action in the sheet
-/// header zeroes the date range + accounts (kind chips stay where the
-/// user left them in the inline row).
+/// Edits apply live and the pinned Done action makes that contract explicit.
+/// The Clear action zeroes the date range + accounts (kind chips stay where
+/// the user left them in the inline row).
 class ActivityFeedFilterSheet extends ConsumerWidget {
   const ActivityFeedFilterSheet({super.key});
 
@@ -48,6 +47,11 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
             },
           ),
         ),
+        _HeaderTextAction(
+          label: l10n.commonDone,
+          onPress: () => Navigator.of(context).pop(),
+          emphasized: true,
+        ),
       ],
     );
   }
@@ -65,7 +69,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SheetSectionLabel(text: l10n.activityFeedFilterDateRange),
+        AppSheetSectionLabel(l10n.activityFeedFilterDateRange),
         _DateRangeRow(
           active: activeRange,
           onPick: (range) => controller.mutateQuery(
@@ -84,7 +88,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: AppSpacing.s20),
-        _SheetSectionLabel(text: l10n.activityFeedFilterAccount),
+        AppSheetSectionLabel(l10n.activityFeedFilterAccount),
         if (accounts.isEmpty)
           Padding(
             padding: const EdgeInsets.only(
@@ -204,7 +208,10 @@ class _DateRangeRow extends StatelessWidget {
           AppFilterChip(
             label: label,
             active: active == range,
-            onPress: () => onPick(range),
+            onPress: () {
+              Haptics.selection();
+              onPick(range);
+            },
           ),
         // Custom date pickers feel out-of-place inside a quick-filter
         // sheet on mobile, so we surface a "Pick range…" pill that
@@ -244,10 +251,15 @@ class _DateRangeRow extends StatelessWidget {
 }
 
 class _HeaderTextAction extends StatelessWidget {
-  const _HeaderTextAction({required this.label, required this.onPress});
+  const _HeaderTextAction({
+    required this.label,
+    required this.onPress,
+    this.emphasized = false,
+  });
 
   final String label;
   final VoidCallback onPress;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
@@ -260,32 +272,12 @@ class _HeaderTextAction extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.labelStyle.copyWith(
-            color: context.theme.colors.primary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SheetSectionLabel extends StatelessWidget {
-  const _SheetSectionLabel({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s0,
-        AppSpacing.s0,
-        AppSpacing.s0,
-        AppSpacing.s8,
-      ),
-      child: Text(
-        text.toUpperCase(),
-        style: context.microLabelStyle.copyWith(
-          color: context.theme.colors.mutedForeground,
+          style: (emphasized ? context.labelStyle : context.mediumLabelStyle)
+              .copyWith(
+                color: emphasized
+                    ? context.theme.colors.primary
+                    : context.theme.colors.mutedForeground,
+              ),
         ),
       ),
     );
@@ -306,7 +298,10 @@ class _AccountFilterRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FTappable(
-      onPress: onToggle,
+      onPress: () {
+        Haptics.selection();
+        onToggle();
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s4,
@@ -320,7 +315,13 @@ class _AccountFilterRow extends StatelessWidget {
                 style: context.theme.typography.body.sm,
               ),
             ),
-            FCheckbox(value: selected, onChange: (_) => onToggle()),
+            FCheckbox(
+              value: selected,
+              onChange: (_) {
+                Haptics.selection();
+                onToggle();
+              },
+            ),
           ],
         ),
       ),
