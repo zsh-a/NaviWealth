@@ -8,6 +8,7 @@ import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
@@ -78,11 +79,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   TradeType _type = TradeType.buy;
   String? _accountId;
   String? _cashAccountId;
-  String? _currency = 'CNY';
+  String? _currency;
   late DateTime _tradeDate;
   LocalSecurityChoice? _selected;
   bool _busy = false;
   bool _hydratedDefaults = false;
+  bool _currencyExplicitlySelected = false;
+  bool _cashCurrencyResolved = false;
+  bool _cashAccountClearedForCurrency = false;
 
   // transferIn / transferOut are deliberately absent from this form —
   // they can never be created as a single user-entered leg.
@@ -102,20 +106,27 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     };
   }
 
+  String _typeCompactLabel(AppLocalizations l10n, TradeType type) {
+    return switch (type) {
+      TradeType.buy => l10n.tradeTypeBuy,
+      TradeType.sell => l10n.tradeTypeSell,
+      TradeType.valuationAdjust => l10n.tradeTypeAdjustShort,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
     _tradeDate = ref.read(formClockProvider)();
+    _currency = ref.read(baseCurrencyProvider);
     // Constructor-supplied pre-selection wins over the persisted default.
     _accountId = widget.accountId;
     final defaults = ref.read(formDefaultsProvider);
     _accountId ??= defaults.tradeAccountId;
     _cashAccountId = defaults.tradeCashAccountId;
-    if (defaults.tradeCurrency != null && defaults.tradeCurrency!.isNotEmpty) {
-      _currency = defaults.tradeCurrency;
-    }
     final prefill = widget.prefill;
     if (prefill != null) {
+      _cashCurrencyResolved = true;
       _type = prefill.type;
       _currency = prefill.currency;
       _tradeDate = prefill.tradeDate ?? _tradeDate;
@@ -205,11 +216,17 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         ? null
         : _noteController.text.trim();
 
-    String failureMessage(Object error) => l10n.tradeEntryFailure(
-      error is TradeEntryException
-          ? error.message
-          : userSafeErrorMessage(context, error, operation: 'record trade'),
-    );
+    String failureMessage(Object error) {
+      if (error is TradeSubmissionContractError &&
+          error.code == TradeSubmissionContractErrorCode.lotCurrencyMismatch) {
+        return l10n.tradeEntryLotCurrencyMismatch;
+      }
+      return l10n.tradeEntryFailure(
+        error is TradeEntryException
+            ? error.message
+            : userSafeErrorMessage(context, error, operation: 'record trade'),
+      );
+    }
 
     // Record this entry's account / currency as the next default.
     // Failure is silent — saving defaults is a UX nicety, not part of
@@ -380,6 +397,11 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       } else if (_accountId != null && !pool.any((a) => a.id == _accountId)) {
         _accountId = pool.isEmpty ? null : pool.first.id;
       }
+      if (_cashCurrencyResolved &&
+          _cashAccountId != null &&
+          !_cashAccounts(accounts).any((a) => a.id == _cashAccountId)) {
+        _cashAccountId = null;
+      }
       _hydratedDefaults = true;
     }
 
@@ -398,7 +420,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           ),
         ),
         children: [
-          _buildAssetSearch(),
+          _buildAssetSearch(accounts),
           const SizedBox(height: AppSpacing.s12),
 
           _buildTypeSelector(),
@@ -418,19 +440,23 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             AccountPicker(
               key: const Key('trade-entry-cash-account'),
               label: l10n.tradeEntryCashAccountLabel,
-              accounts: accounts
-                  .where(
-                    (a) =>
-                        a.type == AccountCategory.bank ||
-                        a.type == AccountCategory.cash,
-                  )
-                  .toList(growable: false),
+              accounts: _cashAccounts(accounts),
               value: _cashAccountId,
               onChanged: (v) => setState(() {
                 _cashAccountId = v;
+                _cashAccountClearedForCurrency = false;
                 dirty.markDirty();
               }),
             ),
+            if (_cashAccountClearedForCurrency) ...[
+              const SizedBox(height: AppSpacing.s8),
+              Text(
+                l10n.tradeEntryCashAccountCurrencyChanged,
+                style: context.mutedLabelStyle.copyWith(
+                  color: SemanticColors.of(context).warning,
+                ),
+              ),
+            ],
           ],
           const SizedBox(height: AppSpacing.s12),
 
@@ -475,10 +501,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           CurrencyPicker(
             key: const Key('trade-entry-currency'),
             value: _currency,
-            onChanged: (v) => setState(() {
-              _currency = v;
-              dirty.markDirty();
-            }),
+            onChanged: (v) => _changeCurrency(v, accounts, explicit: true),
           ),
           const SizedBox(height: AppSpacing.s12),
 
@@ -515,14 +538,53 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     );
   }
 
-  Widget _buildAssetSearch() {
+  List<Account> _cashAccounts(List<Account> accounts) => accounts
+      .where(
+        (account) =>
+            (account.type == AccountCategory.bank ||
+                account.type == AccountCategory.cash) &&
+            account.currency == _currency,
+      )
+      .toList(growable: false);
+
+  void _changeCurrency(
+    String? value,
+    List<Account> accounts, {
+    required bool explicit,
+  }) {
+    setState(() {
+      _currency = value;
+      if (explicit) {
+        _currencyExplicitlySelected = true;
+        _cashCurrencyResolved = true;
+      }
+      final cashAccountId = _cashAccountId;
+      if (cashAccountId != null &&
+          !_cashAccounts(accounts).any((a) => a.id == cashAccountId)) {
+        _cashAccountId = null;
+        _cashAccountClearedForCurrency = true;
+      }
+      dirty.markDirty();
+    });
+  }
+
+  Widget _buildAssetSearch(List<Account> accounts) {
     return SymbolField(
       onChanged: (choice) {
         setState(() {
           _selected = choice;
           dirty.markDirty();
-          if (choice != null) {
+          if (choice != null) _cashCurrencyResolved = true;
+          if (choice != null && !_currencyExplicitlySelected) {
             _currency = choice.currency;
+            final cashAccountId = _cashAccountId;
+            if (cashAccountId != null &&
+                !_cashAccounts(accounts).any((a) => a.id == cashAccountId)) {
+              _cashAccountId = null;
+              _cashAccountClearedForCurrency = true;
+            }
+          }
+          if (choice != null) {
             // Hand focus to the first amount field as soon as an asset
             // is picked so the user can keep typing without reaching
             // back up the form.
@@ -535,22 +597,15 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   Widget _buildTypeSelector() {
     final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: AppSpacing.s8,
-      runSpacing: AppSpacing.s8,
-      children: [
-        for (final t in _tradeTypes)
-          FButton(
-            variant: (_type == t)
-                ? FButtonVariant.primary
-                : FButtonVariant.outline,
-            onPress: () => setState(() {
-              _type = t;
-              dirty.markDirty();
-            }),
-            child: Text(_typeLabel(l10n, t)),
-          ),
-      ],
+    return SegmentedRow<TradeType>(
+      options: _tradeTypes,
+      value: _type,
+      labelOf: (type) => _typeCompactLabel(l10n, type),
+      semanticLabelOf: (type) => _typeLabel(l10n, type),
+      onChanged: (type) => setState(() {
+        _type = type;
+        dirty.markDirty();
+      }),
     );
   }
 

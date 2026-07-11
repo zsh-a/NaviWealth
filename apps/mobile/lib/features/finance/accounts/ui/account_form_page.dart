@@ -50,8 +50,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   final _accountNumberController = TextEditingController();
   final _noteController = TextEditingController();
 
-  // Focus chain: name → institution → accountNumber → note.
+  // Focus chain: name → advanced disclosure → institution → account number → note.
   final _nameFocus = FocusNode();
+  final _advancedFocus = FocusNode(debugLabel: 'account-advanced');
   final _institutionFocus = FocusNode();
   final _accountNumberFocus = FocusNode();
   final _noteFocus = FocusNode();
@@ -65,6 +66,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   String? _currency;
   bool _archived = false;
   bool _busy = false;
+  bool _advancedExpanded = false;
   Account? _initial;
 
   /// Selected parent in the Beancount tree. `null` means top-level.
@@ -120,6 +122,13 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       _parentId = existing.parentId;
       _icon = existing.icon;
       _color = existing.color;
+      _advancedExpanded =
+          existing.parentId != null ||
+          existing.icon != null ||
+          existing.color != null ||
+          (existing.institution?.isNotEmpty ?? false) ||
+          (existing.accountNumber?.isNotEmpty ?? false) ||
+          (existing.note?.isNotEmpty ?? false);
     });
     // Hydrating an existing record is not a user edit.
     dirty.snapshotBaseline();
@@ -222,6 +231,27 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     return trimmed.isEmpty ? null : trimmed;
   }
 
+  void _changeType(AccountCategory type) {
+    final side = accountSideForCategory(type);
+    final parentId = _parentId;
+    final accounts = ref.read(accountsStreamProvider).value;
+    final parentRemainsLegal =
+        parentId == null ||
+        (accounts != null &&
+            accounts.any(
+              (account) =>
+                  account.id == parentId &&
+                  account.id != _initial?.id &&
+                  account.category == side,
+            ));
+    setState(() {
+      _type = type;
+      _category = side;
+      if (!parentRemainsLegal) _parentId = null;
+      dirty.markDirty();
+    });
+  }
+
   @override
   void dispose() {
     _nameController.removeListener(_onNameChanged);
@@ -230,6 +260,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     _accountNumberController.dispose();
     _noteController.dispose();
     _nameFocus.dispose();
+    _advancedFocus.dispose();
     _institutionFocus.dispose();
     _accountNumberFocus.dispose();
     _noteFocus.dispose();
@@ -311,16 +342,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         style: context.mutedLabelStyle,
                       ),
                     ),
-                    AccountCategoryPicker(
-                      value: _type,
-                      onChanged: (v) {
-                        setState(() {
-                          _type = v;
-                          _category = accountSideForCategory(v);
-                          dirty.markDirty();
-                        });
-                      },
-                    ),
+                    AccountCategoryPicker(value: _type, onChanged: _changeType),
                     const SizedBox(height: AppSpacing.s16),
                     FTextFormField(
                       control: FTextFieldControl.managed(
@@ -332,34 +354,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? l10n.accountFormNameRequired
                           : null,
-                      onSubmit: (_) => _institutionFocus.requestFocus(),
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    _ParentAccountPickerSection(
-                      currentAccountId: _initial?.id,
-                      category: _category,
-                      parentId: _parentId,
-                      onChanged: (v) => setState(() {
-                        _parentId = v;
-                        dirty.markDirty();
-                      }),
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    _IconPickerSection(
-                      selected: _icon,
-                      color: _color,
-                      onChanged: (v) => setState(() {
-                        _icon = v;
-                        dirty.markDirty();
-                      }),
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    _ColorPickerSection(
-                      selected: _color,
-                      onChanged: (v) => setState(() {
-                        _color = v;
-                        dirty.markDirty();
-                      }),
+                      onSubmit: (_) => _advancedFocus.requestFocus(),
                     ),
                     const SizedBox(height: AppSpacing.s12),
                     CurrencyPicker(
@@ -370,30 +365,95 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                       }),
                     ),
                     const SizedBox(height: AppSpacing.s12),
-                    FTextFormField(
-                      control: FTextFieldControl.managed(
-                        controller: _institutionController,
+                    FAccordion(
+                      control: FAccordionControl.lifted(
+                        expanded: (_) => _advancedExpanded,
+                        onChange: (_, expanded) =>
+                            setState(() => _advancedExpanded = expanded),
                       ),
-                      label: Text(l10n.accountFormInstitutionLabel),
-                      description: Text(l10n.accountFormInstitutionHelper),
-                      focusNode: _institutionFocus,
-                      textInputAction: TextInputAction.next,
-                      onSubmit: (_) => _accountNumberFocus.requestFocus(),
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    FTextFormField(
-                      control: FTextFieldControl.managed(
-                        controller: _accountNumberController,
-                      ),
-                      label: Text(l10n.accountFormAccountNumberLabel),
-                      focusNode: _accountNumberFocus,
-                      textInputAction: TextInputAction.next,
-                      onSubmit: (_) => _noteFocus.requestFocus(),
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    NoteField(
-                      controller: _noteController,
-                      focusNode: _noteFocus,
+                      children: [
+                        FAccordionItem(
+                          key: const Key('account-advanced-disclosure'),
+                          focusNode: _advancedFocus,
+                          title: Semantics(
+                            expanded: _advancedExpanded,
+                            child: Text(l10n.accountFormAdvancedTitle),
+                          ),
+                          child: Offstage(
+                            offstage: !_advancedExpanded,
+                            child: ExcludeFocus(
+                              excluding: !_advancedExpanded,
+                              child: ExcludeSemantics(
+                                excluding: !_advancedExpanded,
+                                child: Column(
+                                  children: [
+                                    _ParentAccountPickerSection(
+                                      currentAccountId: _initial?.id,
+                                      category: _category,
+                                      parentId: _parentId,
+                                      onChanged: (v) => setState(() {
+                                        _parentId = v;
+                                        dirty.markDirty();
+                                      }),
+                                    ),
+                                    const SizedBox(height: AppSpacing.s12),
+                                    _IconPickerSection(
+                                      selected: _icon,
+                                      color: _color,
+                                      onChanged: (v) => setState(() {
+                                        _icon = v;
+                                        dirty.markDirty();
+                                      }),
+                                    ),
+                                    const SizedBox(height: AppSpacing.s12),
+                                    _ColorPickerSection(
+                                      selected: _color,
+                                      onChanged: (v) => setState(() {
+                                        _color = v;
+                                        dirty.markDirty();
+                                      }),
+                                    ),
+                                    const SizedBox(height: AppSpacing.s12),
+                                    FTextFormField(
+                                      control: FTextFieldControl.managed(
+                                        controller: _institutionController,
+                                      ),
+                                      label: Text(
+                                        l10n.accountFormInstitutionLabel,
+                                      ),
+                                      description: Text(
+                                        l10n.accountFormInstitutionHelper,
+                                      ),
+                                      focusNode: _institutionFocus,
+                                      textInputAction: TextInputAction.next,
+                                      onSubmit: (_) =>
+                                          _accountNumberFocus.requestFocus(),
+                                    ),
+                                    const SizedBox(height: AppSpacing.s12),
+                                    FTextFormField(
+                                      control: FTextFieldControl.managed(
+                                        controller: _accountNumberController,
+                                      ),
+                                      label: Text(
+                                        l10n.accountFormAccountNumberLabel,
+                                      ),
+                                      focusNode: _accountNumberFocus,
+                                      textInputAction: TextInputAction.next,
+                                      onSubmit: (_) =>
+                                          _noteFocus.requestFocus(),
+                                    ),
+                                    const SizedBox(height: AppSpacing.s12),
+                                    NoteField(
+                                      controller: _noteController,
+                                      focusNode: _noteFocus,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     if (widget.isEdit) ...[
                       const SizedBox(height: AppSpacing.s12),

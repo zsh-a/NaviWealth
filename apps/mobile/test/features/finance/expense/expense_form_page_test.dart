@@ -21,6 +21,8 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
+import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -99,6 +101,8 @@ Future<Widget> _wrap({
   String? editingId,
   double keyboardInset = 0,
   Future<JournalEntryRepository>? repositoryFuture,
+  Stream<List<Account>>? accountsStream,
+  Stream<List<Account>>? allAccountsStream,
 }) async {
   for (final entry in preferences.entries) {
     await harness.prefs.setString(entry.key, entry.value as String);
@@ -109,8 +113,12 @@ Future<Widget> _wrap({
       journalEntryRepositoryProvider.overrideWith(
         (_) => repositoryFuture ?? Future.value(harness.repository),
       ),
-      accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
-      allAccountsStreamProvider.overrideWith((_) => Stream.value(allAccounts)),
+      accountsStreamProvider.overrideWith(
+        (_) => accountsStream ?? Stream.value(accounts),
+      ),
+      allAccountsStreamProvider.overrideWith(
+        (_) => allAccountsStream ?? Stream.value(allAccounts),
+      ),
     ],
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -182,7 +190,7 @@ void main() {
     await harness.dispose();
   });
 
-  testWidgets('expense creation renders with a remembered uncommon currency', (
+  testWidgets('expense creation derives currency from the remembered account', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 1400));
@@ -197,7 +205,12 @@ void main() {
           'naviwealth.forms.expense.currency': 'CHF',
         },
         accounts: [
-          _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
+          _account(
+            id: 'cash-1',
+            name: 'Cash',
+            category: AccountSide.asset,
+            currency: 'CHF',
+          ),
           _account(id: 'cash-2', name: 'Cash', category: AccountSide.asset),
         ],
         allAccounts: [
@@ -209,7 +222,262 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(ExpenseFormPage), findsOneWidget);
-    expect(find.text('CHF · CHF'), findsOneWidget);
+    expect(
+      tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+      'CHF',
+    );
+    expect(find.byType(CurrencyPicker), findsNothing);
+  });
+
+  testWidgets(
+    'edit preserves historical currency and exposes account conflict',
+    (tester) async {
+      final build = JournalEntryBuilders.expense(
+        date: DateTime.utc(2026, 3, 1),
+        expenseAccountId: 'dining',
+        fromAccountId: 'cash-1',
+        amount: Decimal.parse('15'),
+        currency: 'CNY',
+      );
+      final original = await harness.repository.create(
+        entry: build.entry,
+        postings: build.postings,
+      );
+      await tester.binding.setSurfaceSize(const Size(900, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        await _wrap(
+          harness: harness,
+          editingId: original.entry.id,
+          preferences: const {},
+          accounts: [
+            _account(
+              id: 'cash-1',
+              name: 'Cash',
+              category: AccountSide.asset,
+              currency: 'USD',
+            ),
+          ],
+          allAccounts: [
+            _account(
+              id: 'dining',
+              name: 'Dining',
+              category: AccountSide.expense,
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('recorded in CNY'), findsOneWidget);
+      expect(find.byType(CurrencyPicker), findsOneWidget);
+      expect(
+        tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+        'CNY',
+      );
+    },
+  );
+
+  testWidgets('explicit payment-account switch adopts only its currency', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final accounts = [
+      _account(id: 'cash-1', name: 'Cash CNY', category: AccountSide.asset),
+      _account(
+        id: 'cash-2',
+        name: 'Cash USD',
+        category: AccountSide.asset,
+        currency: 'USD',
+      ),
+    ];
+    await tester.pumpWidget(
+      await _wrap(
+        harness: harness,
+        preferences: const {
+          'naviwealth.forms.expense.account': 'cash-1',
+          'naviwealth.forms.expense.category': 'dining',
+        },
+        accounts: accounts,
+        allAccounts: [
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    final categoryBefore = tester
+        .widget<AccountTreePicker>(find.byType(AccountTreePicker))
+        .value;
+
+    tester
+        .widget<AccountPicker>(find.byType(AccountPicker))
+        .onChanged('cash-2');
+    await tester.pump();
+
+    expect(
+      tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+      'USD',
+    );
+    expect(find.byType(CurrencyPicker), findsNothing);
+    expect(
+      tester.widget<AccountTreePicker>(find.byType(AccountTreePicker)).value,
+      categoryBefore,
+    );
+  });
+
+  testWidgets(
+    'later account disappearance preserves currency and requires pick',
+    (tester) async {
+      final controller = StreamController<List<Account>>();
+      addTearDown(controller.close);
+      await tester.binding.setSurfaceSize(const Size(900, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        await _wrap(
+          harness: harness,
+          preferences: const {
+            'naviwealth.forms.expense.account': 'cash-1',
+            'naviwealth.forms.expense.category': 'dining',
+          },
+          accounts: const [],
+          accountsStream: controller.stream,
+          allAccounts: [
+            _account(
+              id: 'dining',
+              name: 'Dining',
+              category: AccountSide.expense,
+            ),
+          ],
+        ),
+      );
+      controller.add([
+        _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
+      ]);
+      await tester.pumpAndSettle();
+      expect(find.byType(CurrencyPicker), findsNothing);
+
+      controller.add(const []);
+      await tester.pumpAndSettle();
+      expect(find.byType(CurrencyPicker), findsOneWidget);
+      expect(
+        tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+        'CNY',
+      );
+      expect(find.text('Create an account first'), findsOneWidget);
+    },
+  );
+
+  testWidgets('no-account create starts from base currency without dirtying', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      await _wrap(
+        harness: harness,
+        preferences: const {},
+        accounts: const [],
+        allAccounts: [
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+      'CNY',
+    );
+    expect(find.byType(CurrencyPicker), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsNothing);
+  });
+
+  testWidgets('first non-empty account snapshot hydrates create exactly once', (
+    tester,
+  ) async {
+    final controller = StreamController<List<Account>>();
+    addTearDown(controller.close);
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      await _wrap(
+        harness: harness,
+        preferences: const {},
+        accounts: const [],
+        accountsStream: controller.stream,
+        allAccounts: [
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
+        ],
+      ),
+    );
+    controller.add(const []);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+      'CNY',
+    );
+
+    controller.add([
+      _account(
+        id: 'cash-usd',
+        name: 'Cash USD',
+        category: AccountSide.asset,
+        currency: 'USD',
+      ),
+    ]);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+      'USD',
+    );
+    expect(find.byType(CurrencyPicker), findsNothing);
+  });
+
+  testWidgets('late account snapshot never overwrites a chosen currency', (
+    tester,
+  ) async {
+    final controller = StreamController<List<Account>>();
+    addTearDown(controller.close);
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      await _wrap(
+        harness: harness,
+        preferences: const {},
+        accounts: const [],
+        accountsStream: controller.stream,
+        allAccounts: [
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
+        ],
+      ),
+    );
+    controller.add(const []);
+    await tester.pumpAndSettle();
+
+    tester.widget<CurrencyPicker>(find.byType(CurrencyPicker)).onChanged('CHF');
+    await tester.pump();
+    controller.add([
+      _account(
+        id: 'cash-usd',
+        name: 'Cash USD',
+        category: AccountSide.asset,
+        currency: 'USD',
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<AmountField>(find.byType(AmountField)).currencyCode,
+      'CHF',
+    );
+    expect(find.byType(CurrencyPicker), findsOneWidget);
+    expect(
+      tester.widget<AccountPicker>(find.byType(AccountPicker)).value,
+      isNull,
+    );
   });
 
   testWidgets('expense creation keeps save action visible above keyboard', (

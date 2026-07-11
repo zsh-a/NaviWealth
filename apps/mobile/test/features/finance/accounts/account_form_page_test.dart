@@ -201,6 +201,11 @@ Future<void> _enlarge(WidgetTester tester) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
 }
 
+Future<void> _expandAdvanced(WidgetTester tester) async {
+  await tester.tap(find.text('More account details'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   late _Harness h;
 
@@ -234,6 +239,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _expandAdvanced(tester);
 
     // The form defaults to AccountSide.asset (bank carrier). The
     // parent picker filters to same-category — both seeded accounts
@@ -325,6 +331,7 @@ void main() {
     await _enlarge(tester);
     await tester.pumpWidget(_wrap(h, accounts: const []));
     await tester.pumpAndSettle();
+    await _expandAdvanced(tester);
 
     // The catalogue includes "savings" — tap that tile.
     final savingsIcon = _accountIcon('savings');
@@ -343,6 +350,7 @@ void main() {
     await _enlarge(tester);
     await tester.pumpWidget(_wrap(h, accounts: const []));
     await tester.pumpAndSettle();
+    await _expandAdvanced(tester);
 
     // Pick a colour from the palette.
     const targetColor = '#10B981';
@@ -375,6 +383,7 @@ void main() {
     await _enlarge(tester);
     await tester.pumpWidget(_wrap(h, accounts: const []));
     await tester.pumpAndSettle();
+    await _expandAdvanced(tester);
 
     await tester.tap(_accountIcon('savings').last);
     await tester.pumpAndSettle();
@@ -402,6 +411,90 @@ void main() {
       batch.any((op) => op.table == 'accounts' && op.rowId == saved.id),
       isTrue,
     );
+  });
+
+  testWidgets('advanced details stay out of focus and semantics until opened', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await _enlarge(tester);
+    await tester.pumpWidget(_wrap(h, accounts: const []));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel(RegExp('Institution')), findsNothing);
+    await tester.tap(find.widgetWithText(FTextFormField, 'Account name'));
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Account name'),
+      'Keyboard disclosure',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await tester.pump();
+    final disclosure = tester.widget<FAccordionItem>(
+      find.byKey(const Key('account-advanced-disclosure')),
+    );
+    expect(disclosure.focusNode!.hasFocus, isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(RegExp('Institution')), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Institution'),
+      'Kept while collapsed',
+    );
+    await tester.tap(find.text('More account details'));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(RegExp('Institution')), findsNothing);
+
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+    final saved = await h.db.select(h.db.accounts).getSingle();
+    expect(saved.institution, 'Kept while collapsed');
+    semantics.dispose();
+  });
+
+  testWidgets('type changes retain only a still-legal parent', (tester) async {
+    final repository = AccountRepository(
+      db: h.db,
+      outbox: h.outbox,
+      stamper: h.stamper,
+    );
+    final parent = await repository.create(
+      type: AccountCategory.bank,
+      name: 'Asset parent',
+      currency: 'CNY',
+    );
+    final child = await repository.create(
+      type: AccountCategory.bank,
+      name: 'Child account',
+      currency: 'CNY',
+      parentId: parent.id,
+    );
+    await _enlarge(tester);
+    await tester.pumpWidget(
+      _wrap(h, accounts: [parent, child], editingId: child.id),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Brokerage'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect((await repository.findById(child.id))!.parentId, parent.id);
+
+    await tester.pumpWidget(
+      _wrap(
+        h,
+        accounts: [parent, (await repository.findById(child.id))!],
+        editingId: child.id,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Credit'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect((await repository.findById(child.id))!.parentId, isNull);
   });
 
   testWidgets('create success offers Undo and tombstones the account', (

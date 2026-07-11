@@ -6960,6 +6960,18 @@ abstract class AppLocalizations {
   /// **'Cash account'**
   String get tradeEntryCashAccountLabel;
 
+  /// No description provided for @tradeEntryCashAccountCurrencyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous cash account does not support this currency. Pick another cash account.'**
+  String get tradeEntryCashAccountCurrencyChanged;
+
+  /// No description provided for @tradeEntryLotCurrencyMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected currency does not match this holding\'s lots. Change the visible Currency field. If the holding contains lots in multiple currencies, repair or split the holding first.'**
+  String get tradeEntryLotCurrencyMismatch;
+
   /// No description provided for @tradeEntryCatalogLoadError.
   ///
   /// In en, this message translates to:
@@ -7007,6 +7019,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Valuation adjust'**
   String get tradeTypeValuationAdjust;
+
+  /// No description provided for @tradeTypeAdjustShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust'**
+  String get tradeTypeAdjustShort;
 
   /// No description provided for @tradeTypeDividend.
   ///
@@ -7127,6 +7145,21 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account'**
   String get expenseFormAccountLabel;
+
+  /// No description provided for @expenseFormAccountMissingNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous payment account is unavailable. Pick an account to continue.'**
+  String get expenseFormAccountMissingNotice;
+
+  /// No description provided for @expenseFormCurrencyConflictNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This expense is recorded in {expenseCurrency}, but the account now uses {accountCurrency}. Choose the intended currency before saving.'**
+  String expenseFormCurrencyConflictNotice(
+    String accountCurrency,
+    String expenseCurrency,
+  );
 
   /// No description provided for @expenseFormAccountsLoadError.
   ///
@@ -9209,6 +9242,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter the account name'**
   String get accountFormNameRequired;
+
+  /// No description provided for @accountFormAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'More account details'**
+  String get accountFormAdvancedTitle;
 
   /// No description provided for @accountFormInstitutionLabel.
   ///

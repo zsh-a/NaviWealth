@@ -1,4 +1,9 @@
+import 'dart:ui' show Tristate;
+
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -78,5 +83,71 @@ void main() {
     );
     expect(tester.takeException(), isNull);
     expect(find.byType(SingleChildScrollView), findsOneWidget);
+  });
+
+  testWidgets('separates compact labels from full selected semantics', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<String>(
+          options: const ['alpha', 'beta'],
+          value: 'alpha',
+          labelOf: (value) => value == 'alpha' ? 'A' : 'B',
+          semanticLabelOf: (value) => 'Full $value',
+          onChanged: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.text('A'), findsOneWidget);
+    expect(find.bySemanticsLabel('Full alpha'), findsOneWidget);
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Full alpha'))
+          .flagsCollection
+          .isSelected,
+      Tristate.isTrue,
+    );
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Full beta'))
+          .flagsCollection
+          .isSelected,
+      Tristate.isFalse,
+    );
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Full beta'))
+          .getSemanticsData()
+          .hasAction(SemanticsAction.tap),
+      isTrue,
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('segments activate from Enter and Space', (tester) async {
+    String? changedTo;
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<String>(
+          options: const ['a', 'b'],
+          value: 'a',
+          labelOf: (value) => value.toUpperCase(),
+          onChanged: (value) => changedTo = value,
+        ),
+      ),
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(changedTo, 'a');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump();
+    expect(changedTo, 'b');
   });
 }

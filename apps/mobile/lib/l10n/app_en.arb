@@ -2136,6 +2136,8 @@
   "tradeEntryFeeLabel": "Fee",
   "tradeEntryTaxLabel": "Tax",
   "tradeEntryCashAccountLabel": "Cash account",
+  "tradeEntryCashAccountCurrencyChanged": "The previous cash account does not support this currency. Pick another cash account.",
+  "tradeEntryLotCurrencyMismatch": "The selected currency does not match this holding's lots. Change the visible Currency field. If the holding contains lots in multiple currencies, repair or split the holding first.",
   "tradeEntryCatalogLoadError": "Couldn't load catalog: {error}",
   "@tradeEntryCatalogLoadError": {
     "placeholders": { "error": { "type": "String" } }
@@ -2150,6 +2152,7 @@
   "tradeTypeTransferIn": "Transfer in",
   "tradeTypeTransferOut": "Transfer out",
   "tradeTypeValuationAdjust": "Valuation adjust",
+  "tradeTypeAdjustShort": "Adjust",
   "tradeTypeDividend": "Dividend",
   "tradeTypeReinvest": "Reinvest",
   "tradeTypeInterest": "Interest",
@@ -2176,6 +2179,14 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "expenseFormAccountLabel": "Account",
+  "expenseFormAccountMissingNotice": "The previous payment account is unavailable. Pick an account to continue.",
+  "expenseFormCurrencyConflictNotice": "This expense is recorded in {expenseCurrency}, but the account now uses {accountCurrency}. Choose the intended currency before saving.",
+  "@expenseFormCurrencyConflictNotice": {
+    "placeholders": {
+      "accountCurrency": { "type": "String" },
+      "expenseCurrency": { "type": "String" }
+    }
+  },
   "expenseFormAccountsLoadError": "Couldn't load accounts: {error}",
   "@expenseFormAccountsLoadError": {
     "placeholders": { "error": { "type": "String" } }
@@ -2796,6 +2807,7 @@
   "accountFormCategoryHelper": "Where this account sits in the accounting identity. Defaults from the account type — change it if the suggestion doesn't match.",
   "accountFormNameLabel": "Account name",
   "accountFormNameRequired": "Enter the account name",
+  "accountFormAdvancedTitle": "More account details",
   "accountFormInstitutionLabel": "Institution",
   "accountFormInstitutionHelper": "Bank / brokerage / platform (optional)",
   "accountFormAccountNumberLabel": "Account number / last digits (optional)",

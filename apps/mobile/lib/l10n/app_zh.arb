@@ -1201,6 +1201,8 @@
   "tradeEntryFeeLabel": "手续费",
   "tradeEntryTaxLabel": "税费",
   "tradeEntryCashAccountLabel": "资金账户",
+  "tradeEntryCashAccountCurrencyChanged": "原资金账户不支持当前币种，请重新选择资金账户。",
+  "tradeEntryLotCurrencyMismatch": "所选币种与该持仓的批次币种不一致。请修改页面上的“币种”；如果持仓包含多种批次币种，请先修复或拆分持仓。",
   "tradeEntryCatalogLoadError": "目录加载失败：{error}",
   "tradeEntryDecimalScaleHintGeneric": "股票/ETF 最多 8 位小数，加密最多 18 位",
   "tradeEntryDecimalScaleHint": "最多 {scale} 位小数",
@@ -1209,6 +1211,7 @@
   "tradeTypeTransferIn": "转入",
   "tradeTypeTransferOut": "转出",
   "tradeTypeValuationAdjust": "估值调整",
+  "tradeTypeAdjustShort": "调整",
   "tradeTypeDividend": "分红",
   "tradeTypeReinvest": "再投资",
   "tradeTypeInterest": "利息",
@@ -1231,6 +1234,14 @@
   "expenseFormCategoriesLoading": "正在准备默认类目，请稍候…",
   "expenseFormCategoriesLoadError": "类目加载失败：{error}",
   "expenseFormAccountLabel": "账户",
+  "expenseFormAccountMissingNotice": "原付款账户已不可用，请重新选择账户后继续。",
+  "expenseFormCurrencyConflictNotice": "该支出以 {expenseCurrency} 记录，但账户当前使用 {accountCurrency}。保存前请选择正确币种。",
+  "@expenseFormCurrencyConflictNotice": {
+    "placeholders": {
+      "accountCurrency": { "type": "String" },
+      "expenseCurrency": { "type": "String" }
+    }
+  },
   "expenseFormAccountsLoadError": "账户加载失败：{error}",
   "expenseFormDateLabel": "日期时间",
   "expenseFormDeleteDialogTitle": "删除支出",
@@ -1603,6 +1614,7 @@
   "accountFormCategoryHelper": "用于复式记账的会计分类。默认根据账户类型推荐，可手动调整。",
   "accountFormNameLabel": "账户名称",
   "accountFormNameRequired": "请输入账户名称",
+  "accountFormAdvancedTitle": "更多账户信息",
   "accountFormInstitutionLabel": "机构",
   "accountFormInstitutionHelper": "银行 / 券商 / 平台名称（可选）",
   "accountFormAccountNumberLabel": "账号 / 末位号（可选）",

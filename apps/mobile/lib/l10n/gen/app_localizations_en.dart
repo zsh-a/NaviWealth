@@ -4016,6 +4016,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeEntryCashAccountLabel => 'Cash account';
 
   @override
+  String get tradeEntryCashAccountCurrencyChanged =>
+      'The previous cash account does not support this currency. Pick another cash account.';
+
+  @override
+  String get tradeEntryLotCurrencyMismatch =>
+      'The selected currency does not match this holding\'s lots. Change the visible Currency field. If the holding contains lots in multiple currencies, repair or split the holding first.';
+
+  @override
   String tradeEntryCatalogLoadError(String error) {
     return 'Couldn\'t load catalog: $error';
   }
@@ -4043,6 +4051,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeTypeValuationAdjust => 'Valuation adjust';
+
+  @override
+  String get tradeTypeAdjustShort => 'Adjust';
 
   @override
   String get tradeTypeDividend => 'Dividend';
@@ -4107,6 +4118,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseFormAccountLabel => 'Account';
+
+  @override
+  String get expenseFormAccountMissingNotice =>
+      'The previous payment account is unavailable. Pick an account to continue.';
+
+  @override
+  String expenseFormCurrencyConflictNotice(
+    String accountCurrency,
+    String expenseCurrency,
+  ) {
+    return 'This expense is recorded in $expenseCurrency, but the account now uses $accountCurrency. Choose the intended currency before saving.';
+  }
 
   @override
   String expenseFormAccountsLoadError(String error) {
@@ -5360,6 +5383,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormNameRequired => 'Enter the account name';
+
+  @override
+  String get accountFormAdvancedTitle => 'More account details';
 
   @override
   String get accountFormInstitutionLabel => 'Institution';

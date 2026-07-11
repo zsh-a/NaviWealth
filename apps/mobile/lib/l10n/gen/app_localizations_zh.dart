@@ -3844,6 +3844,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeEntryCashAccountLabel => '资金账户';
 
   @override
+  String get tradeEntryCashAccountCurrencyChanged => '原资金账户不支持当前币种，请重新选择资金账户。';
+
+  @override
+  String get tradeEntryLotCurrencyMismatch =>
+      '所选币种与该持仓的批次币种不一致。请修改页面上的“币种”；如果持仓包含多种批次币种，请先修复或拆分持仓。';
+
+  @override
   String tradeEntryCatalogLoadError(String error) {
     return '目录加载失败：$error';
   }
@@ -3870,6 +3877,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tradeTypeValuationAdjust => '估值调整';
+
+  @override
+  String get tradeTypeAdjustShort => '调整';
 
   @override
   String get tradeTypeDividend => '分红';
@@ -3932,6 +3942,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseFormAccountLabel => '账户';
+
+  @override
+  String get expenseFormAccountMissingNotice => '原付款账户已不可用，请重新选择账户后继续。';
+
+  @override
+  String expenseFormCurrencyConflictNotice(
+    String accountCurrency,
+    String expenseCurrency,
+  ) {
+    return '该支出以 $expenseCurrency 记录，但账户当前使用 $accountCurrency。保存前请选择正确币种。';
+  }
 
   @override
   String expenseFormAccountsLoadError(String error) {
@@ -5111,6 +5132,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountFormNameRequired => '请输入账户名称';
+
+  @override
+  String get accountFormAdvancedTitle => '更多账户信息';
 
   @override
   String get accountFormInstitutionLabel => '机构';

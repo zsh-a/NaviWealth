@@ -26,12 +26,17 @@ class SegmentedRow<T> extends StatelessWidget {
     required this.value,
     required this.labelOf,
     required this.onChanged,
+    this.semanticLabelOf,
     this.iconOf,
   });
 
   final List<T> options;
   final T value;
   final String Function(T) labelOf;
+
+  /// Optional accessible label when the compact visible label is ambiguous.
+  /// Defaults to [labelOf].
+  final String Function(T)? semanticLabelOf;
   final ValueChanged<T> onChanged;
   final IconData? Function(T)? iconOf;
 
@@ -95,6 +100,7 @@ class SegmentedRow<T> extends StatelessWidget {
     final selected = option == value;
     final foreground = selected ? colors.foreground : colors.mutedForeground;
     final label = labelOf(option);
+    final semanticLabel = semanticLabelOf?.call(option) ?? label;
     final duration = AppMotionPolicy.duration(context, Motion.fast);
 
     final content = AnimatedDefaultTextStyle(
@@ -126,7 +132,9 @@ class SegmentedRow<T> extends StatelessWidget {
     final segment = Semantics(
       button: true,
       selected: selected,
-      label: label,
+      label: semanticLabel,
+      onTap: () => onChanged(option),
+      excludeSemantics: true,
       child: FTappable(
         onPress: () => onChanged(option),
         child: AnimatedContainer(

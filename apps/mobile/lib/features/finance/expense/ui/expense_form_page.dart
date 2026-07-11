@@ -11,6 +11,7 @@ import 'package:naviwealth/core/ai/visual/ai_object_capsule.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
@@ -51,15 +52,23 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   /// The expense account id (from the `accounts` table where category=expense).
   String? _expenseAccountId;
   String? _fromAccountId;
-  String? _currency = 'CNY';
+  String? _currency;
   late DateTime _date;
   bool _busy = false;
   JournalEntryWithPostings? _initial;
+  bool _paymentAccountsHydrated = false;
+  bool _categoriesHydrated = false;
+  bool _currencyExplicitlySelected = false;
+  late final ProviderSubscription<AsyncValue<List<Account>>>
+  _paymentAccountsSubscription;
+  late final ProviderSubscription<AsyncValue<List<Account>>>
+  _allAccountsSubscription;
 
   @override
   void initState() {
     super.initState();
     _date = ref.read(formClockProvider)();
+    _currency = ref.read(baseCurrencyProvider);
     dirty.bindTextControllers([_amountController, _noteController]);
     if (widget.isEdit) {
       _loadInitial();
@@ -67,11 +76,85 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       final defaults = ref.read(formDefaultsProvider);
       _fromAccountId = defaults.expenseAccountId;
       _expenseAccountId = defaults.expenseCategoryId;
-      if (defaults.expenseCurrency != null &&
-          defaults.expenseCurrency!.isNotEmpty) {
-        _currency = defaults.expenseCurrency;
+      // Currency is derived from the first resolved payment account below.
+      // A remembered currency must never outlive the account it belonged to.
+    }
+    _paymentAccountsSubscription = ref.listenManual(
+      accountsStreamProvider,
+      _onPaymentAccounts,
+      fireImmediately: true,
+    );
+    _allAccountsSubscription = ref.listenManual(
+      allAccountsStreamProvider,
+      _onAllAccounts,
+      fireImmediately: true,
+    );
+  }
+
+  List<Account> _paymentAccounts(List<Account> accounts) => accounts
+      .where(
+        (account) =>
+            account.category == AccountSide.asset &&
+            account.type != AccountCategory.asset,
+      )
+      .toList(growable: false);
+
+  List<Account> _expenseLeafAccounts(List<Account> accounts) => _leafAccounts(
+    accounts
+        .where((account) => account.category == AccountSide.expense)
+        .toList(growable: false),
+  );
+
+  void _onPaymentAccounts(
+    AsyncValue<List<Account>>? _,
+    AsyncValue<List<Account>> next,
+  ) {
+    final accounts = next.value;
+    if (accounts == null || (widget.isEdit && _initial == null)) return;
+    _hydratePaymentAccounts(accounts);
+  }
+
+  void _hydratePaymentAccounts(List<Account> accounts) {
+    if (_paymentAccountsHydrated) return;
+    final candidates = _paymentAccounts(accounts);
+    if (!widget.isEdit) {
+      if (_currencyExplicitlySelected) {
+        _paymentAccountsHydrated = true;
+        if (mounted) setState(() {});
+        return;
+      }
+      if (candidates.isEmpty) return;
+      final remembered = candidates
+          .where((account) => account.id == _fromAccountId)
+          .firstOrNull;
+      final selected = remembered ?? candidates.firstOrNull;
+      _fromAccountId = selected?.id;
+      if (selected != null) _currency = selected.currency;
+    }
+    _paymentAccountsHydrated = true;
+    if (mounted) setState(() {});
+  }
+
+  void _onAllAccounts(
+    AsyncValue<List<Account>>? _,
+    AsyncValue<List<Account>> next,
+  ) {
+    final accounts = next.value;
+    if (accounts == null || (widget.isEdit && _initial == null)) return;
+    _hydrateCategories(accounts);
+  }
+
+  void _hydrateCategories(List<Account> accounts) {
+    if (_categoriesHydrated) return;
+    if (!widget.isEdit) {
+      final candidates = _expenseLeafAccounts(accounts);
+      if (candidates.isEmpty) return;
+      if (!candidates.any((account) => account.id == _expenseAccountId)) {
+        _expenseAccountId = candidates.firstOrNull?.id;
       }
     }
+    _categoriesHydrated = true;
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadInitial() async {
@@ -107,6 +190,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       _currency = currency;
       _date = existing.entry.date;
     });
+    _hydratePaymentAccounts(ref.read(accountsStreamProvider).value ?? const []);
+    _hydrateCategories(ref.read(allAccountsStreamProvider).value ?? const []);
     // Hydrating an existing record is not a user edit.
     dirty.snapshotBaseline();
   }
@@ -228,6 +313,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
 
   @override
   void dispose() {
+    _paymentAccountsSubscription.close();
+    _allAccountsSubscription.close();
     _amountController.dispose();
     _noteController.dispose();
     _amountFocus.dispose();
@@ -344,14 +431,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         focusNode: _amountFocus,
                         onFieldSubmitted: (_) => _noteFocus.requestFocus(),
                       ),
-                      const SizedBox(height: AppSpacing.s12),
-                      CurrencyPicker(
-                        value: _currency,
-                        onChanged: (v) => setState(() {
-                          _currency = v;
-                          dirty.markDirty();
-                        }),
-                      ),
                       const SizedBox(height: AppSpacing.s8),
                       allAccountsAsync.when(
                         data: (allAccounts) {
@@ -368,14 +447,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                               ),
                               child: Text(l10n.expenseFormCategoriesLoading),
                             );
-                          }
-                          // Resolve default: explicit pick > first leaf category.
-                          if (_expenseAccountId == null ||
-                              !selectableExpenseAccounts.any(
-                                (a) => a.id == _expenseAccountId,
-                              )) {
-                            _expenseAccountId =
-                                selectableExpenseAccounts.first.id;
                           }
                           return AccountTreePicker(
                             accounts: expenseAccounts,
@@ -406,30 +477,73 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       const SizedBox(height: AppSpacing.s12),
                       accountsAsync.when(
                         data: (accounts) {
-                          final fromAccounts = accounts
-                              .where(
-                                (a) =>
-                                    a.category == AccountSide.asset &&
-                                    a.type != AccountCategory.asset,
-                              )
-                              .toList(growable: false);
+                          final fromAccounts = _paymentAccounts(accounts);
                           if (fromAccounts.isEmpty) {
-                            return _NoAccountsHint();
+                            return Column(
+                              children: [
+                                _NoAccountsHint(),
+                                const SizedBox(height: AppSpacing.s12),
+                                CurrencyPicker(
+                                  value: _currency,
+                                  onChanged: (value) => setState(() {
+                                    _currency = value;
+                                    _currencyExplicitlySelected = true;
+                                    dirty.markDirty();
+                                  }),
+                                ),
+                              ],
+                            );
                           }
-                          final hasCurrent =
-                              _fromAccountId != null &&
-                              fromAccounts.any((a) => a.id == _fromAccountId);
-                          if (!hasCurrent) {
-                            _fromAccountId = fromAccounts.first.id;
-                          }
-                          return AccountPicker(
-                            accounts: fromAccounts,
-                            value: _fromAccountId,
-                            onChanged: (v) => setState(() {
-                              _fromAccountId = v;
-                              dirty.markDirty();
-                            }),
-                            label: l10n.expenseFormAccountLabel,
+                          final selected = fromAccounts
+                              .where((account) => account.id == _fromAccountId)
+                              .firstOrNull;
+                          final missing =
+                              _fromAccountId == null || selected == null;
+                          final conflict =
+                              selected != null &&
+                              selected.currency != _currency;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AccountPicker(
+                                accounts: fromAccounts,
+                                value: selected?.id,
+                                onChanged: (value) => setState(() {
+                                  _fromAccountId = value;
+                                  final account = fromAccounts
+                                      .where((item) => item.id == value)
+                                      .firstOrNull;
+                                  if (account != null) {
+                                    _currency = account.currency;
+                                  }
+                                  dirty.markDirty();
+                                }),
+                                label: l10n.expenseFormAccountLabel,
+                              ),
+                              if (missing || conflict) ...[
+                                const SizedBox(height: AppSpacing.s8),
+                                Text(
+                                  missing
+                                      ? l10n.expenseFormAccountMissingNotice
+                                      : l10n.expenseFormCurrencyConflictNotice(
+                                          selected.currency,
+                                          _currency ?? '',
+                                        ),
+                                  style: context.mutedLabelStyle.copyWith(
+                                    color: SemanticColors.of(context).warning,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.s8),
+                                CurrencyPicker(
+                                  value: _currency,
+                                  onChanged: (value) => setState(() {
+                                    _currency = value;
+                                    _currencyExplicitlySelected = true;
+                                    dirty.markDirty();
+                                  }),
+                                ),
+                              ],
+                            ],
                           );
                         },
                         loading: () => const FProgress(),

@@ -32,6 +32,7 @@ import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_service.dart';
 import 'package:naviwealth/features/finance/investment/ui/trade_entry_form_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -126,8 +127,11 @@ Future<void> _pumpReadyTradeForm(
   WidgetTester tester, {
   required AppDatabase db,
   required TradeEntrySubmissionService service,
+  bool withCashDefault = false,
 }) async {
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues(
+    withCashDefault ? {'naviwealth.forms.trade.cashAccount': 'cash'} : const {},
+  );
   final prefs = await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
@@ -142,6 +146,13 @@ Future<void> _pumpReadyTradeForm(
               type: AccountCategory.broker,
               currency: 'USD',
             ),
+            if (withCashDefault)
+              _account(
+                id: 'cash',
+                name: 'Cash',
+                type: AccountCategory.cash,
+                currency: 'USD',
+              ),
           ]),
         ),
         securitiesSearchServiceProvider.overrideWith(
@@ -270,7 +281,7 @@ void main() {
     await tester.pump(const Duration(seconds: 7));
   });
 
-  testWidgets('renders when persisted trade currency is outside common list', (
+  testWidgets('new trade starts in base currency, not a stale remembered one', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 1600));
@@ -307,8 +318,89 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('CHF · CHF'), findsOneWidget);
+    expect(
+      tester
+          .widget<CurrencyPicker>(find.byKey(const Key('trade-entry-currency')))
+          .value,
+      'CNY',
+    );
   });
+
+  testWidgets(
+    'remembered cash waits for the asset currency before validation',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(900, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      SharedPreferences.setMockInitialValues({
+        'naviwealth.forms.trade.cashAccount': 'cash',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            appDatabaseProvider.overrideWith((_) async => db),
+            accountsStreamProvider.overrideWith(
+              (_) => Stream.value([
+                _account(
+                  id: 'broker',
+                  name: 'Broker',
+                  type: AccountCategory.broker,
+                  currency: 'USD',
+                ),
+                _account(
+                  id: 'cash',
+                  name: 'Cash USD',
+                  type: AccountCategory.cash,
+                  currency: 'USD',
+                ),
+              ]),
+            ),
+            securitiesSearchServiceProvider.overrideWith(
+              (_) async => _FakeSearch(db: db),
+            ),
+          ],
+          child: _wrap(const TradeEntryFormPage(accountId: 'broker')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<AccountPicker>(
+              find.byKey(const Key('trade-entry-cash-account')),
+            )
+            .value,
+        'cash',
+      );
+      tester
+          .widget<SymbolField>(find.byType(SymbolField))
+          .onChanged
+          ?.call(
+            const LocalSecurityChoice(
+              symbol: 'AAPL',
+              market: AssetMarket.usStock,
+              type: AssetType.stock,
+              currency: 'USD',
+              fromCatalog: true,
+            ),
+          );
+      await tester.pump();
+
+      expect(
+        tester
+            .widget<AccountPicker>(
+              find.byKey(const Key('trade-entry-cash-account')),
+            )
+            .value,
+        'cash',
+      );
+      expect(find.textContaining('previous cash account'), findsNothing);
+    },
+  );
 
   testWidgets('applies upstream trade-entry prefill as pristine defaults', (
     tester,
@@ -369,6 +461,115 @@ void main() {
     expect(find.text('1.25'), findsOneWidget);
     expect(find.text('2.5'), findsOneWidget);
     expect(find.text('Rebalance suggestion'), findsOneWidget);
+  });
+
+  testWidgets('compact trade segments expose full semantics', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await _pumpReadyTradeForm(tester, db: db, service: _submissionService(db));
+
+    expect(find.byType(SegmentedRow<TradeType>), findsOneWidget);
+    expect(find.text('Adjust'), findsOneWidget);
+    expect(find.bySemanticsLabel('Valuation adjust'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('explicit currency wins and clears incompatible cash account', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await _pumpReadyTradeForm(
+      tester,
+      db: db,
+      service: _submissionService(db),
+      withCashDefault: true,
+    );
+
+    tester
+        .widget<SegmentedRow<TradeType>>(find.byType(SegmentedRow<TradeType>))
+        .onChanged(TradeType.buy);
+    await tester.pump();
+    expect(
+      tester
+          .widget<AccountPicker>(
+            find.byKey(const Key('trade-entry-cash-account')),
+          )
+          .value,
+      'cash',
+    );
+
+    tester
+        .widget<CurrencyPicker>(find.byKey(const Key('trade-entry-currency')))
+        .onChanged('CNY');
+    await tester.pump();
+    expect(
+      tester
+          .widget<AccountPicker>(
+            find.byKey(const Key('trade-entry-cash-account')),
+          )
+          .value,
+      isNull,
+    );
+    expect(
+      find.text(
+        'The previous cash account does not support this currency. '
+        'Pick another cash account.',
+      ),
+      findsOneWidget,
+    );
+
+    tester
+        .widget<SymbolField>(find.byType(SymbolField))
+        .onChanged
+        ?.call(
+          const LocalSecurityChoice(
+            symbol: 'AAPL',
+            market: AssetMarket.usStock,
+            type: AssetType.stock,
+            currency: 'USD',
+            fromCatalog: true,
+          ),
+        );
+    await tester.pump();
+    expect(
+      tester
+          .widget<CurrencyPicker>(find.byKey(const Key('trade-entry-currency')))
+          .value,
+      'CNY',
+    );
+  });
+
+  testWidgets('lot currency mismatch is localized and actionable', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await _pumpReadyTradeForm(
+      tester,
+      db: db,
+      service: _submissionService(
+        db,
+        tradeService: const _LotMismatchUiTradeService(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('trade-entry-submit')));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Change the visible Currency field'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('repair or split the holding'), findsOneWidget);
+    expect(find.textContaining('lotCurrencyMismatch'), findsNothing);
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets('successful trade offers Undo for journal and price', (
@@ -571,6 +772,21 @@ class _UiTradeEntryService implements TradeEntryService {
         note: draft.note,
       ),
       pricing: PriceProvenance.userSupplied,
+    );
+  }
+}
+
+final class _LotMismatchUiTradeService extends _UiTradeEntryService {
+  const _LotMismatchUiTradeService();
+
+  @override
+  Future<TradeEntryPlan> buildPlan(
+    TradeDraft draft, {
+    required List<Lot> openLots,
+  }) async {
+    throw const TradeSubmissionContractError(
+      TradeSubmissionContractErrorCode.lotCurrencyMismatch,
+      'technical lot currency details must stay private',
     );
   }
 }
