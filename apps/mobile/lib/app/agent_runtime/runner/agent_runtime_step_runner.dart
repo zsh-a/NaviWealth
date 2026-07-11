@@ -139,6 +139,13 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
           catalog: catalog,
           previousStep: step,
           effectResponse: agentRuntimeEffectBudgetExhaustedResponse(
+            effectId: _effectId(
+              agentRuntimeObject(
+                step['effect'],
+                label: 'native agent-runtime effect',
+              ),
+              step,
+            ),
             maxEffectSteps: budget.max,
             dispatchedEffectCount: budget.dispatched,
           ),
@@ -266,11 +273,13 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       return _HostEffectDispatch(<String, Object?>{
         'jsonrpc': '2.0',
         'id': id,
-        'error': <String, Object?>{
-          'code': 'subagent_depth_exceeded',
-          'message':
-              'subagent depth exceeded '
-              '($_defaultMaxSubagentDepth)',
+        'result': <String, Object?>{
+          'error': <String, Object?>{
+            'code': 'subagent_depth_exceeded',
+            'message':
+                'subagent depth exceeded '
+                '($_defaultMaxSubagentDepth)',
+          },
         },
       }, subagentDepthExceeded: true);
     }
@@ -307,9 +316,11 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       return _HostEffectDispatch(<String, Object?>{
         'jsonrpc': '2.0',
         'id': id,
-        'error': <String, Object?>{
-          'code': 'subagent_run_failed',
-          'message': error.toString(),
+        'result': <String, Object?>{
+          'error': <String, Object?>{
+            'code': 'subagent_run_failed',
+            'message': error.toString(),
+          },
         },
       });
     }

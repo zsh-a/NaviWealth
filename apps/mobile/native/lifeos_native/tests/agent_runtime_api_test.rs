@@ -1,6 +1,7 @@
 use lifeos_native::api::agent_runtime::{
     agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
-    agent_runtime_complete_profile_llm, agent_runtime_continue_run_step,
+    agent_runtime_complete_profile_llm,
+    agent_runtime_continue_run_step as raw_agent_runtime_continue_run_step,
     agent_runtime_protocol_version, agent_runtime_start_profile_turn_step,
     agent_runtime_start_run_step, agent_runtime_validate_chat_turn_request,
     agent_runtime_validate_llm_request, agent_runtime_validate_llm_response,
@@ -11,6 +12,74 @@ use serde_json::{Value, json};
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::thread;
+
+/// Hand-written continuation fixtures predate the runtime-owned durability
+/// metadata now emitted by `start_step`. Keep those fixtures focused on the
+/// validation branch they exercise while preserving strict production
+/// behavior: the raw facade still rejects missing `run_state` / `trace_event`,
+/// which is covered explicitly below.
+fn agent_runtime_continue_run_step(
+    catalog_json: String,
+    previous_step_json: String,
+    effect_response_json: String,
+    agent_id: String,
+) -> anyhow::Result<String> {
+    raw_agent_runtime_continue_run_step(
+        catalog_json,
+        with_runtime_metadata(previous_step_json),
+        effect_response_json,
+        agent_id,
+    )
+}
+
+fn with_runtime_metadata(previous_step_json: String) -> String {
+    let Ok(mut previous_step) = serde_json::from_str::<Value>(&previous_step_json) else {
+        return previous_step_json;
+    };
+    if !previous_step.is_object() {
+        return previous_step_json;
+    }
+
+    let status = previous_step.get("status").cloned().unwrap_or(Value::Null);
+    let step_index = previous_step
+        .get("step_index")
+        .and_then(Value::as_u64)
+        .unwrap_or(0);
+    let remaining_effect_count = previous_step
+        .pointer("/continuation/effects")
+        .and_then(Value::as_array)
+        .map_or(0, Vec::len);
+    let effect_result_count = previous_step
+        .pointer("/continuation/effect_results")
+        .and_then(Value::as_array)
+        .map_or(0, Vec::len);
+    let run_state = previous_step.get("run_state").cloned().unwrap_or_else(|| {
+        json!({
+            "status": status,
+            "step_index": step_index,
+            "remaining_effect_count": remaining_effect_count,
+            "effect_result_count": effect_result_count,
+            "terminal_reason": null
+        })
+    });
+    if previous_step.get("run_state").is_none() {
+        previous_step["run_state"] = run_state.clone();
+    }
+
+    if previous_step.get("trace_event").is_none() {
+        previous_step["trace_event"] = json!({
+            "kind": "agent_runtime_step",
+            "run_id": previous_step.get("run_id").cloned().unwrap_or(Value::Null),
+            "agent_id": previous_step.get("agent_id").cloned().unwrap_or(Value::Null),
+            "status": previous_step.get("status").cloned().unwrap_or(Value::Null),
+            "step_index": step_index,
+            "tool_name": previous_step.pointer("/effect/name").cloned().unwrap_or(Value::Null),
+            "run_state": run_state
+        });
+    }
+
+    previous_step.to_string()
+}
 
 #[test]
 fn exposes_protocol_version() {
@@ -1863,8 +1932,17 @@ fn continue_run_step_completes_native_effects_after_last_item() {
         "effects": [],
         "effect_results": [
           {
-            "effect": {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
-            "effect_response": {"result": {"accepted": true, "value": 1}}
+            "effect": {
+              "kind": "tool",
+              "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
+              "name": "propose_fake",
+              "input": {"value": 1}
+            },
+            "effect_response": {
+              "jsonrpc": "2.0",
+              "id": "tool_018f0000-0000-7000-8000-000000000000",
+              "result": {"accepted": true, "value": 1}
+            }
           }
         ]
       }
@@ -2712,6 +2790,83 @@ fn continue_run_step_rejects_empty_previous_effect_id() {
 }
 
 #[test]
+fn continue_run_step_rejects_missing_previous_run_state() {
+    let err = raw_agent_runtime_continue_run_step(
+        include_str!(
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
+        )
+        .to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "ai_chat",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "ai_chat".to_owned(),
+    )
+    .expect_err("missing previous run_state should fail");
+
+    assert!(err.to_string().contains("run_state is required"));
+}
+
+#[test]
+fn continue_run_step_rejects_missing_previous_trace_event() {
+    let err = raw_agent_runtime_continue_run_step(
+        include_str!(
+            "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
+        )
+        .to_owned(),
+        r#"{
+          "protocol_version": "agent.v1",
+          "run_id": "run_018f0000-0000-7000-8000-000000000000",
+          "agent_id": "ai_chat",
+          "agent_version": "0.1.0",
+          "step_index": 0,
+          "status": "effect_requested",
+          "effect": {
+            "kind": "tool",
+            "effect_id": "tool_expected",
+            "name": "propose_fake",
+            "input": {"value": 7}
+          },
+          "run_state": {
+            "status": "effect_requested",
+            "step_index": 0,
+            "remaining_effect_count": 0,
+            "effect_result_count": 0,
+            "terminal_reason": null
+          }
+        }"#
+        .to_owned(),
+        r#"{
+          "jsonrpc": "2.0",
+          "id": "tool_expected",
+          "result": {"accepted": true}
+        }"#
+        .to_owned(),
+        "ai_chat".to_owned(),
+    )
+    .expect_err("missing previous trace_event should fail");
+
+    assert!(err.to_string().contains("trace_event is required"));
+}
+
+#[test]
 fn continue_run_step_rejects_mismatched_previous_run_state() {
     let err = agent_runtime_continue_run_step(
         include_str!(
@@ -3267,8 +3422,17 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
         "effects": [],
         "effect_results": [
           {
-            "effect": {"kind": "tool", "name": "propose_fake", "input": {"value": 1}},
-            "effect_response": {"result": {"accepted": true, "value": 1}}
+            "effect": {
+              "kind": "tool",
+              "effect_id": "tool_018f0000-0000-7000-8000-000000000000",
+              "name": "propose_fake",
+              "input": {"value": 1}
+            },
+            "effect_response": {
+              "jsonrpc": "2.0",
+              "id": "tool_018f0000-0000-7000-8000-000000000000",
+              "result": {"accepted": true, "value": 1}
+            }
           }
         ]
       }
@@ -3280,11 +3444,15 @@ fn continue_run_step_closes_early_on_tool_budget_exhaustion() {
         .to_owned(),
         step_json.to_owned(),
         r#"{
-          "error": {
-            "code": "effect_budget_exhausted",
-            "message": "agent runtime effect budget exhausted",
-            "max_tool_steps": 1,
-            "dispatched_tool_count": 1
+          "jsonrpc": "2.0",
+          "id": "tool_018f0000-0000-7000-8000-000000000001",
+          "result": {
+            "error": {
+              "code": "effect_budget_exhausted",
+              "message": "agent runtime effect budget exhausted",
+              "max_tool_steps": 1,
+              "dispatched_tool_count": 1
+            }
           }
         }"#
         .to_owned(),

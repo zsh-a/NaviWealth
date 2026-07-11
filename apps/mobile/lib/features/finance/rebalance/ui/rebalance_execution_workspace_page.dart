@@ -10,6 +10,7 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../core/format/formatters.dart';
 import '../../../../core/shell/master_detail_layout.dart';
 import '../../../../core/shortcuts/keyboard_platform.dart';
 import '../../../../core/shortcuts/master_detail_shortcuts.dart';
@@ -845,6 +846,7 @@ class _ExecutionProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
@@ -861,7 +863,7 @@ class _ExecutionProgress extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${(driftAfterPct * 100).toStringAsFixed(1)}%',
+                  formatters.percent(driftAfterPct, decimalDigits: 1),
                   style: context.captionLabelStyle,
                 ),
               ],

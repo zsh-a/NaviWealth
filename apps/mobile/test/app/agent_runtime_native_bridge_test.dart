@@ -466,7 +466,7 @@ void main() {
       expect(bridge.startedAgents, <String>['parent']);
       final response = bridge.continuations.single.effectResponse;
       expect(
-        response['error'],
+        (response['result'] as Map)['error'],
         containsPair('code', 'subagent_depth_exceeded'),
       );
     },
@@ -628,7 +628,15 @@ void main() {
       expect(result.effectResponses, isEmpty);
       expect(bridge.continuations, hasLength(1));
       expect(
-        bridge.continuations.single.effectResponse['error'],
+        bridge.continuations.single.effectResponse,
+        containsPair('jsonrpc', '2.0'),
+      );
+      expect(
+        bridge.continuations.single.effectResponse,
+        containsPair('id', 'call_1'),
+      );
+      expect(
+        (bridge.continuations.single.effectResponse['result'] as Map)['error'],
         containsPair('code', 'effect_budget_exhausted'),
       );
       expect(
@@ -1029,7 +1037,8 @@ class _FakeBridge implements AgentRuntimeNativeBridge {
     if (continuations.length <= _continuationSteps.length) {
       return _continuationSteps[continuations.length - 1];
     }
-    final error = effectResponse['error'];
+    final responseResult = effectResponse['result'];
+    final error = responseResult is Map ? responseResult['error'] : null;
     if (error is Map && error['code'] == 'effect_budget_exhausted') {
       final stepIndex = previousStep['step_index'] ?? 0;
       final runState = <String, Object?>{

@@ -53,15 +53,20 @@ String agentRuntimeEncodeToolCallLine({
 }
 
 Map<String, Object?> agentRuntimeEffectBudgetExhaustedResponse({
+  required Object effectId,
   required int maxEffectSteps,
   required int dispatchedEffectCount,
 }) {
   return <String, Object?>{
-    'error': <String, Object?>{
-      'code': 'effect_budget_exhausted',
-      'message': 'agent runtime effect budget exhausted',
-      'max_effect_steps': maxEffectSteps,
-      'dispatched_effect_count': dispatchedEffectCount,
+    'jsonrpc': '2.0',
+    'id': effectId,
+    'result': <String, Object?>{
+      'error': <String, Object?>{
+        'code': 'effect_budget_exhausted',
+        'message': 'agent runtime effect budget exhausted',
+        'max_effect_steps': maxEffectSteps,
+        'dispatched_effect_count': dispatchedEffectCount,
+      },
     },
   };
 }
