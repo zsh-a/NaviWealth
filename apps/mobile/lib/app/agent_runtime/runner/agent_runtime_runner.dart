@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_checkpoint_store.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
     as core_profile_turn;
@@ -78,6 +79,36 @@ class AgentRuntimeProfileTurnRunner
       if (limit < 0) {
         throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
       }
+      final requestFingerprint = agentRuntimeRequestFingerprint(
+        agentId: agentId,
+        catalog: catalogJson,
+        kind: 'profile_turn',
+        request: <String, Object?>{
+          'llm_request': llmRequest,
+          'run_metadata': metadata,
+          'max_effect_steps': limit,
+          'max_subagent_depth': _stepRunner.defaultMaxSubagentDepth,
+        },
+      );
+      final pending = await _stepRunner.findResumableCheckpoint(
+        agentId: agentId,
+        requestFingerprint: requestFingerprint,
+      );
+      if (pending != null) {
+        final llmResponse = _expectObject(
+          pending.resumeContext['llm_response'],
+          'checkpoint.resume_context.llm_response',
+        );
+        final stepRun = await _stepRunner.continueCheckpointUntilTerminal(
+          catalog: catalogJson,
+          checkpoint: pending,
+        );
+        return core_profile_turn.AgentRuntimeProfileTurnResult(
+          llmResponse: llmResponse,
+          step: stepRun.terminalStep,
+          stepRun: stepRun,
+        );
+      }
       final nativeTurn = await snapshotBridge.startProfileTurnSnapshot(
         catalog: catalogJson,
         llmRequest: llmRequest,
@@ -96,6 +127,8 @@ class AgentRuntimeProfileTurnRunner
         catalog: catalogJson,
         initialSnapshot: initialSnapshot,
         agentId: agentId,
+        requestFingerprint: requestFingerprint,
+        resumeContext: <String, Object?>{'llm_response': llmResponse},
       );
       return core_profile_turn.AgentRuntimeProfileTurnResult(
         llmResponse: llmResponse,

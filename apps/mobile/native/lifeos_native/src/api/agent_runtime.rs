@@ -164,6 +164,15 @@ pub fn agent_runtime_continue_run_snapshot(
     )
 }
 
+pub fn agent_runtime_cancel_run_snapshot(
+    catalog_json: String,
+    snapshot_json: String,
+    agent_id: String,
+    reason: String,
+) -> Result<String> {
+    runtime::agent_runtime_cancel_run_snapshot(catalog_json, snapshot_json, agent_id, reason)
+}
+
 pub fn agent_runtime_start_requested_subagent_snapshot(
     catalog_json: String,
     parent_snapshot_json: String,

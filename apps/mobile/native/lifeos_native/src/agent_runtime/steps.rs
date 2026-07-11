@@ -79,6 +79,22 @@ pub(super) fn agent_runtime_continue_run_snapshot(
     Ok(serde_json::to_string(&snapshot)?)
 }
 
+pub(super) fn agent_runtime_cancel_run_snapshot(
+    catalog_json: String,
+    snapshot_json: String,
+    agent_id: String,
+    reason: String,
+) -> Result<String> {
+    let catalog: AgentRuntimeCatalog = serde_json::from_str(&catalog_json)?;
+    contracts::require_catalog_contract(&catalog)?;
+    let snapshot: agent_core::EmbeddedRunSnapshot = serde_json::from_str(&snapshot_json)?;
+    let snapshot = agent_runtime_upstream::EffectStepLoop::cancel_snapshot(
+        &catalog, snapshot, &agent_id, &reason,
+    )
+    .map_err(runtime_error)?;
+    Ok(serde_json::to_string(&snapshot)?)
+}
+
 pub(super) fn agent_runtime_start_requested_subagent_snapshot(
     catalog_json: String,
     parent_snapshot_json: String,

@@ -74,6 +74,7 @@ void main() {
         'agent_runs',
         'agent_artifacts',
         'agent_preferences',
+        'agent_runtime_checkpoints',
       };
 
       for (final table in agentLocalOnlyTables) {

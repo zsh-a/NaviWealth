@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0-beta.4";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -541647880;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 197277276;
 
 // Section: executor
 
@@ -229,6 +229,50 @@ fn wire__crate__api__embedder__GemmaEmbedder_load_impl(
                             api_model_dir,
                             api_ort_dylib_path,
                         )?;
+                        Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__agent_runtime__agent_runtime_cancel_run_snapshot_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "agent_runtime_cancel_run_snapshot",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_catalog_json = <String>::sse_decode(&mut deserializer);
+            let api_snapshot_json = <String>::sse_decode(&mut deserializer);
+            let api_agent_id = <String>::sse_decode(&mut deserializer);
+            let api_reason = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok =
+                            crate::api::agent_runtime::agent_runtime_cancel_run_snapshot(
+                                api_catalog_json,
+                                api_snapshot_json,
+                                api_agent_id,
+                                api_reason,
+                            )?;
                         Ok(output_ok)
                     })(),
                 )
@@ -1708,49 +1752,55 @@ fn pde_ffi_dispatcher_primary_impl(
             wire__crate__api__embedder__GemmaEmbedder_embed_impl(port, ptr, rust_vec_len, data_len)
         }
         4 => wire__crate__api__embedder__GemmaEmbedder_load_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__agent_runtime__agent_runtime_catalog_summary_impl(
+        5 => wire__crate__api__agent_runtime__agent_runtime_cancel_run_snapshot_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        6 => wire__crate__api__agent_runtime__agent_runtime_catalog_version_impl(
+        6 => wire__crate__api__agent_runtime__agent_runtime_catalog_summary_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        7 => wire__crate__api__agent_runtime__agent_runtime_complete_mock_llm_impl(
+        7 => wire__crate__api__agent_runtime__agent_runtime_catalog_version_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        8 => wire__crate__api__agent_runtime__agent_runtime_complete_profile_llm_impl(
+        8 => wire__crate__api__agent_runtime__agent_runtime_complete_mock_llm_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        9 => wire__crate__api__agent_runtime__agent_runtime_continue_run_snapshot_impl(
+        9 => wire__crate__api__agent_runtime__agent_runtime_complete_profile_llm_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        10 => wire__crate__api__agent_runtime__agent_runtime_continue_run_step_impl(
+        10 => wire__crate__api__agent_runtime__agent_runtime_continue_run_snapshot_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        11 => wire__crate__api__agent_runtime__agent_runtime_protocol_version_impl(
+        11 => wire__crate__api__agent_runtime__agent_runtime_continue_run_step_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        12 => {
+        12 => wire__crate__api__agent_runtime__agent_runtime_protocol_version_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        13 => {
             wire__crate__api__agent_runtime__agent_runtime_resume_parent_from_subagent_snapshot_impl(
                 port,
                 ptr,
@@ -1758,19 +1808,19 @@ fn pde_ffi_dispatcher_primary_impl(
                 data_len,
             )
         }
-        13 => wire__crate__api__agent_runtime__agent_runtime_start_profile_turn_snapshot_impl(
+        14 => wire__crate__api__agent_runtime__agent_runtime_start_profile_turn_snapshot_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        14 => wire__crate__api__agent_runtime__agent_runtime_start_profile_turn_step_impl(
+        15 => wire__crate__api__agent_runtime__agent_runtime_start_profile_turn_step_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        15 => {
+        16 => {
             wire__crate__api__agent_runtime__agent_runtime_start_requested_subagent_snapshot_impl(
                 port,
                 ptr,
@@ -1778,84 +1828,84 @@ fn pde_ffi_dispatcher_primary_impl(
                 data_len,
             )
         }
-        16 => wire__crate__api__agent_runtime__agent_runtime_start_run_snapshot_impl(
+        17 => wire__crate__api__agent_runtime__agent_runtime_start_run_snapshot_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        17 => wire__crate__api__agent_runtime__agent_runtime_start_run_step_impl(
+        18 => wire__crate__api__agent_runtime__agent_runtime_start_run_step_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        18 => wire__crate__api__agent_runtime__agent_runtime_stream_chat_turn_impl(
+        19 => wire__crate__api__agent_runtime__agent_runtime_stream_chat_turn_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        19 => wire__crate__api__agent_runtime__agent_runtime_stream_mock_llm_impl(
+        20 => wire__crate__api__agent_runtime__agent_runtime_stream_mock_llm_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        20 => wire__crate__api__agent_runtime__agent_runtime_stream_profile_llm_impl(
+        21 => wire__crate__api__agent_runtime__agent_runtime_stream_profile_llm_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        21 => wire__crate__api__agent_runtime__agent_runtime_validate_chat_turn_request_impl(
+        22 => wire__crate__api__agent_runtime__agent_runtime_validate_chat_turn_request_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        22 => wire__crate__api__agent_runtime__agent_runtime_validate_llm_request_impl(
+        23 => wire__crate__api__agent_runtime__agent_runtime_validate_llm_request_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        23 => wire__crate__api__agent_runtime__agent_runtime_validate_llm_response_impl(
+        24 => wire__crate__api__agent_runtime__agent_runtime_validate_llm_response_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        24 => wire__crate__api__agent_runtime__agent_runtime_validate_run_request_impl(
+        25 => wire__crate__api__agent_runtime__agent_runtime_validate_run_request_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        25 => wire__crate__api__agent_runtime__agent_runtime_validate_tool_spec_impl(
+        26 => wire__crate__api__agent_runtime__agent_runtime_validate_tool_spec_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        26 => wire__crate__api__agent_runtime__agent_runtime_validate_trace_impl(
+        27 => wire__crate__api__agent_runtime__agent_runtime_validate_trace_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        29 => wire__crate__api__health__garmin_auth_state_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__health__garmin_authenticate_impl(port, ptr, rust_vec_len, data_len),
-        31 => {
+        30 => wire__crate__api__health__garmin_auth_state_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__health__garmin_authenticate_impl(port, ptr, rust_vec_len, data_len),
+        32 => {
             wire__crate__api__health__garmin_export_session_impl(port, ptr, rust_vec_len, data_len)
         }
-        32 => wire__crate__api__health__garmin_init_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__health__garmin_logout_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__health__garmin_submit_mfa_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__health__garmin_sync_cancel_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__health__garmin_sync_cursors_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__health__garmin_sync_range_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__health__garmin_sync_range_stream_impl(
+        33 => wire__crate__api__health__garmin_init_impl(port, ptr, rust_vec_len, data_len),
+        34 => wire__crate__api__health__garmin_logout_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__health__garmin_submit_mfa_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__health__garmin_sync_cancel_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__health__garmin_sync_cursors_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__health__garmin_sync_range_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__health__garmin_sync_range_stream_impl(
             port,
             ptr,
             rust_vec_len,
@@ -1877,8 +1927,8 @@ fn pde_ffi_dispatcher_sync_impl(
         3 => {
             wire__crate__api__embedder__GemmaEmbedder_fingerprint_impl(ptr, rust_vec_len, data_len)
         }
-        27 => wire__crate__api__embedder__embedder_fingerprint_impl(ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__embedder__embedding_dim_impl(ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__embedder__embedder_fingerprint_impl(ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__embedder__embedding_dim_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

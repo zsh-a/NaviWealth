@@ -111,6 +111,8 @@ apps/mobile/native/lifeos_native/src/api/agent_runtime.rs
 apps/mobile/lib/app/agent_runtime/
   catalog/agent_runtime_catalog.dart           DomainPack -> runtime catalog export
   bridges/agent_runtime_native_bridge.dart     Stable Dart map API over generated FRB
+  persistence/agent_runtime_checkpoint_store.dart
+                                                Drift snapshot/effect journal
   tools/agent_runtime_tool_host.dart           Device tool JSON-RPC host adapter
   runner/agent_runtime_runner.dart             Profile turn + Rust-owned snapshot composition
   bridges/agent_runtime_llm_bridge.dart        LlmProfile -> provider-neutral request
@@ -180,6 +182,16 @@ TUI uses persistent natural input by default. Plain text runs the shared
 - All top-level runtime wire messages carry `protocol_version: "agent.v1"`.
 - Persistable embedded checkpoints carry `snapshot_version: 1`; hosts must
   round-trip the whole snapshot rather than reconstructing continuation state.
+- Flutter persists embedded snapshots in the local-only
+  `agent_runtime_checkpoints` table. Each host effect moves through
+  `awaiting_effect -> dispatching -> effect_recorded` before the next Rust
+  snapshot replaces the row; revisions use optimistic concurrency control.
+- A recovered `effect_recorded` row reuses its stored response and never
+  redispatches the host effect. A recovered `dispatching` row fails closed
+  because the host cannot prove whether the effect completed before shutdown.
+- Profile turns persist the completed LLM response in checkpoint resume
+  context, so recovery does not repeat the provider request. Checkpoint rows
+  are local-only, carry an expiry, and terminal rows can be pruned by the host.
 - Cross-language contracts are JSON-first. Keep envelopes stable and put
   business-specific data in `input`, `output`, `payload`, or `metadata`.
 - Runtime crates must not import Flutter, Dart, Drift, Riverpod, or domain
@@ -204,7 +216,10 @@ These are intentional or pending differences from the long-term design:
   through tool/proposal metadata and host-side confirmation.
 - `ScheduleSpec` supports `manual` and `interval`; cron/plugin/HTTP registries
   remain future work.
-- External cancel/pause/resume is not fully implemented. Flutter ChatTurn uses
+- Snapshot cancellation is exposed through FRB and persists a Rust-produced
+  terminal `cancelled` snapshot without consuming effect budget. General
+  external pause/resume and non-blocking live-run control are not fully
+  implemented. Flutter ChatTurn uses
   a Rust-owned pause/resume state (`chat_state` + `tool_results`) for device
   tool continuation; TUI natural input uses the shared `agent-chat` stream, but
   terminal redraw/cancel is still not a non-blocking live run loop.

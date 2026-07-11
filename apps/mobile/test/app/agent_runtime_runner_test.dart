@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_checkpoint_store.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
@@ -147,6 +148,50 @@ void main() {
   });
 
   test(
+    'AgentRuntimeProfileTurnRunner resumes without a second LLM call',
+    () async {
+      final store = InMemoryAgentRuntimeCheckpointStore();
+      final native = _RecoverableProfileSnapshotBridge();
+      final firstDispatcher = _RecordingDispatcher();
+      final firstRunner = _runner(
+        native: native,
+        dispatcher: firstDispatcher,
+        checkpointStore: store,
+      );
+
+      await expectLater(
+        firstRunner.run(
+          agentId: 'execution_review',
+          messages: const <Map<String, Object?>>[
+            <String, Object?>{'role': 'user', 'content': 'Resume this turn'},
+          ],
+        ),
+        throwsStateError,
+      );
+      expect(firstDispatcher.calls, hasLength(1));
+      expect(native.snapshotTurnCount, 1);
+
+      final secondDispatcher = _RecordingDispatcher();
+      final resumed =
+          await _runner(
+            native: native,
+            dispatcher: secondDispatcher,
+            checkpointStore: store,
+          ).run(
+            agentId: 'execution_review',
+            messages: const <Map<String, Object?>>[
+              <String, Object?>{'role': 'user', 'content': 'Resume this turn'},
+            ],
+          );
+
+      expect(resumed.llmResponse['content'], 'profile response');
+      expect(resumed.step['status'], 'completed');
+      expect(secondDispatcher.calls, isEmpty);
+      expect(native.snapshotTurnCount, 1);
+    },
+  );
+
+  test(
     'AgentRuntimeProfileTurnRunner rejects mismatched native turn protocol',
     () async {
       final native = _FakeNativeBridge(nativeTurnProtocolVersion: 'agent.v0');
@@ -258,6 +303,7 @@ void main() {
 AgentRuntimeProfileTurnRunner _runner({
   required _FakeNativeBridge native,
   _RecordingDispatcher? dispatcher,
+  AgentRuntimeCheckpointStore? checkpointStore,
 }) {
   return AgentRuntimeProfileTurnRunner(
     catalog: _catalog(),
@@ -267,6 +313,7 @@ AgentRuntimeProfileTurnRunner _runner({
       toolHost: AgentRuntimeToolHost(
         dispatcher: dispatcher ?? _RecordingDispatcher(),
       ),
+      checkpointStore: checkpointStore,
     ),
   );
 }
@@ -584,6 +631,90 @@ class _FakeProfileSnapshotBridge extends _FakeNativeBridge
       },
       'progress': const <String, Object?>{
         'dispatched_effect_count': 0,
+        'subagent_depth': 0,
+        'effect_budget_exhausted': false,
+        'subagent_depth_exceeded': false,
+      },
+    };
+  }
+}
+
+class _RecoverableProfileSnapshotBridge extends _FakeProfileSnapshotBridge {
+  bool failNextContinuation = true;
+
+  @override
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) async {
+    snapshotTurnCount += 1;
+    lastMaxEffectSteps = maxEffectSteps;
+    lastMaxSubagentDepth = maxSubagentDepth;
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': _llmResponse,
+      'snapshot': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'snapshot_version': 1,
+        'step': <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'run_id': 'recoverable_profile_turn',
+          'agent_id': agentId,
+          'step_index': 0,
+          'status': 'effect_requested',
+          'effect': const <String, Object?>{
+            'kind': 'tool',
+            'effect_id': 'profile_effect_1',
+            'name': 'read_profile_context',
+            'input': <String, Object?>{},
+          },
+        },
+        'limits': <String, Object?>{
+          'max_effect_steps': maxEffectSteps,
+          'max_subagent_depth': maxSubagentDepth,
+        },
+        'progress': const <String, Object?>{
+          'dispatched_effect_count': 0,
+          'subagent_depth': 0,
+          'effect_budget_exhausted': false,
+          'subagent_depth_exceeded': false,
+        },
+      },
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> continueRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required Map<String, Object?> effectResponse,
+    required String agentId,
+  }) async {
+    if (failNextContinuation) {
+      failNextContinuation = false;
+      throw StateError('simulated profile continuation crash');
+    }
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'snapshot_version': 1,
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'recoverable_profile_turn',
+        'agent_id': agentId,
+        'step_index': 1,
+        'status': 'completed',
+        'output': <String, Object?>{'effect_result': effectResponse['result']},
+      },
+      'limits': <String, Object?>{
+        'max_effect_steps': lastMaxEffectSteps,
+        'max_subagent_depth': lastMaxSubagentDepth,
+      },
+      'progress': const <String, Object?>{
+        'dispatched_effect_count': 1,
         'subagent_depth': 0,
         'effect_budget_exhausted': false,
         'subagent_depth_exceeded': false,

@@ -134,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 38;
+  int get schemaVersion => 39;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -155,6 +155,7 @@ class AppDatabase extends _$AppDatabase {
       await _createMemoryRuntime(this);
       await _createKnowledgeInboxTriage(this);
       await _createAgentRuns(this);
+      await _createAgentRuntimeCheckpoints(this);
       await _createAgentArtifacts(this);
       await _createAgentPreferences(this);
       await _createRebalanceExecutionTables(this);
@@ -639,6 +640,12 @@ class AppDatabase extends _$AppDatabase {
           column: 'invocation_started',
           definition: 'INTEGER NOT NULL DEFAULT 0',
         );
+      }
+      // v38 -> v39: app-owned durable checkpoints for the embedded Rust
+      // agent-runtime loop. Snapshot and effect-journal rows are local-only;
+      // product run history remains in `agent_runs`.
+      if (from < 39) {
+        await _createAgentRuntimeCheckpoints(this);
       }
     },
     beforeOpen: (details) async {

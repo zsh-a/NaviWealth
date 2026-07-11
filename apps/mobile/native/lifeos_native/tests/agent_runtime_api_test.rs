@@ -1,6 +1,7 @@
 use lifeos_native::api::agent_runtime::{
-    agent_runtime_catalog_summary, agent_runtime_complete_mock_llm,
-    agent_runtime_complete_profile_llm, agent_runtime_continue_run_snapshot,
+    agent_runtime_cancel_run_snapshot, agent_runtime_catalog_summary,
+    agent_runtime_complete_mock_llm, agent_runtime_complete_profile_llm,
+    agent_runtime_continue_run_snapshot,
     agent_runtime_continue_run_step as raw_agent_runtime_continue_run_step,
     agent_runtime_protocol_version, agent_runtime_resume_parent_from_subagent_snapshot,
     agent_runtime_start_profile_turn_snapshot, agent_runtime_start_profile_turn_step,
@@ -3550,6 +3551,47 @@ fn embedded_snapshot_enforces_effect_budget_in_native_runtime() {
     assert_eq!(terminal["step"]["error"]["code"], "effect_budget_exhausted");
     assert_eq!(terminal["progress"]["dispatched_effect_count"], 1);
     assert_eq!(terminal["progress"]["effect_budget_exhausted"], true);
+}
+
+#[test]
+fn embedded_snapshot_cancels_without_dispatching_in_native_runtime() {
+    let catalog = include_str!(
+        "../../../../../third_party/agent-runtime/fixtures/contracts/catalog.valid.json"
+    )
+    .to_owned();
+    let snapshot_json = agent_runtime_start_run_snapshot(
+        catalog.clone(),
+        json!({
+            "protocol_version": "agent.v1",
+            "input": {
+                "effect": {"kind": "tool", "name": "propose_fake", "input": {}}
+            },
+            "trigger": "manual",
+            "metadata": {}
+        })
+        .to_string(),
+        "ai_chat".to_owned(),
+        2,
+        1,
+    )
+    .expect("snapshot starts");
+
+    let cancelled_json = agent_runtime_cancel_run_snapshot(
+        catalog,
+        snapshot_json,
+        "ai_chat".to_owned(),
+        "user left the surface".to_owned(),
+    )
+    .expect("snapshot cancels");
+    let cancelled: Value = serde_json::from_str(&cancelled_json).expect("cancelled json");
+
+    assert_eq!(cancelled["step"]["status"], "cancelled");
+    assert_eq!(
+        cancelled["step"]["run_state"]["terminal_reason"],
+        "user_cancel"
+    );
+    assert_eq!(cancelled["step"]["error"]["code"], "user_cancel");
+    assert_eq!(cancelled["progress"]["dispatched_effect_count"], 0);
 }
 
 #[test]

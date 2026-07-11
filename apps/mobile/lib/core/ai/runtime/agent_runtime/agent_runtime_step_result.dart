@@ -13,6 +13,7 @@ class AgentRuntimeNativeStepRunResult {
     this.maxSubagentDepth,
     this.subagentDepthExceeded = false,
     this.traceId,
+    this.terminalSnapshot,
   });
 
   final Map<String, Object?> terminalStep;
@@ -26,6 +27,7 @@ class AgentRuntimeNativeStepRunResult {
   final int? maxSubagentDepth;
   final bool subagentDepthExceeded;
   final String? traceId;
+  final Map<String, Object?>? terminalSnapshot;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'terminal_step': terminalStep,
@@ -40,6 +42,7 @@ class AgentRuntimeNativeStepRunResult {
     if (maxSubagentDepth != null) 'max_subagent_depth': maxSubagentDepth,
     'subagent_depth_exceeded': subagentDepthExceeded,
     if (traceId != null) 'trace_id': traceId,
+    if (terminalSnapshot != null) 'terminal_snapshot': terminalSnapshot,
   };
 
   AgentRuntimeNativeStepRunResult withTraceId(String? traceId) {
@@ -56,6 +59,7 @@ class AgentRuntimeNativeStepRunResult {
       maxSubagentDepth: maxSubagentDepth,
       subagentDepthExceeded: subagentDepthExceeded,
       traceId: traceId,
+      terminalSnapshot: terminalSnapshot,
     );
   }
 }

@@ -139,6 +139,16 @@ Implemented:
 - Dart-side `AgentRuntimeNativeStepRunner` that prefers the snapshot API for
   production bridges and retains its previous bounded step loop only as a
   fallback for legacy/test bridges
+- App-owned durable snapshot recovery in Drift through the local-only
+  `agent_runtime_checkpoints` table. The runner fingerprints logical requests,
+  stores Rust snapshots with optimistic revisions, journals each host effect
+  before and after dispatch, resumes recorded responses without redispatch,
+  and fails closed when recovery finds an ambiguous in-flight dispatch.
+- Profile-turn recovery stores the completed native LLM response beside the
+  snapshot, avoiding a second provider request after process restart.
+- Explicit snapshot cancellation through `agentRuntimeCancelRunSnapshot` and
+  `AgentRuntimeNativeStepRunner.cancelCheckpoint`; cancellation is terminal,
+  durable, and does not consume the pending effect budget.
 - Dart-side `AgentRuntimeProposalBridge` that parses ready proposal envelopes
   from terminal FRB steps and, after an explicit caller confirmation, dispatches
   them through the existing cross-domain `ProposalApplier`

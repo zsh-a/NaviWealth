@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_storage_policy.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_checkpoint_store.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -146,6 +147,174 @@ void main() {
     expect(result.budgetExhausted, isFalse);
     expect(result.steps, hasLength(2));
   });
+
+  test(
+    'snapshot runner resumes a recorded effect without dispatching twice',
+    () async {
+      final store = InMemoryAgentRuntimeCheckpointStore();
+      final bridge = _RecoverableSnapshotBridge();
+      final firstDispatcher = _RecordingDispatcher(
+        output: <String, Object?>{'ok': true},
+      );
+      const catalog = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'catalog_version': 'agent_catalog.v1',
+      };
+      const request = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'input': <String, Object?>{},
+      };
+      final firstRunner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: firstDispatcher),
+        checkpointStore: store,
+      );
+
+      await expectLater(
+        firstRunner.runUntilTerminalWithTrace(
+          catalog: catalog,
+          request: request,
+          agentId: 'execution_review',
+        ),
+        throwsStateError,
+      );
+      expect(firstDispatcher.calls, hasLength(1));
+
+      final secondDispatcher = _RecordingDispatcher(
+        output: <String, Object?>{'unexpected': true},
+      );
+      final secondRunner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: secondDispatcher),
+        checkpointStore: store,
+      );
+      final resumed = await secondRunner.runUntilTerminalWithTrace(
+        catalog: catalog,
+        request: request,
+        agentId: 'execution_review',
+      );
+
+      expect(resumed.terminalStep['status'], 'completed');
+      expect(resumed.terminalSnapshot, isNotNull);
+      expect(secondDispatcher.calls, isEmpty);
+      expect(bridge.snapshotStartCount, 1);
+      expect(bridge.snapshotContinueCount, 1);
+    },
+  );
+
+  test('snapshot runner fails closed after an interrupted dispatch', () async {
+    final store = InMemoryAgentRuntimeCheckpointStore();
+    final bridge = _FakeSnapshotBridge();
+    const catalog = <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'catalog_version': 'agent_catalog.v1',
+    };
+    const request = <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'input': <String, Object?>{},
+    };
+    final fingerprint = agentRuntimeRequestFingerprint(
+      agentId: 'execution_review',
+      catalog: catalog,
+      request: request,
+    );
+    final created = await store.create(
+      requestFingerprint: fingerprint,
+      snapshot: await bridge.startRunSnapshot(
+        catalog: catalog,
+        request: request,
+        agentId: 'execution_review',
+        maxEffectSteps: 4,
+        maxSubagentDepth: 4,
+      ),
+    );
+    await store.reserveEffect(
+      runId: created.runId,
+      expectedRevision: created.revision,
+      effectKind: 'tool',
+      effectId: 'snapshot_tool_1',
+    );
+    final dispatcher = _RecordingDispatcher(
+      output: <String, Object?>{'must_not_run': true},
+    );
+    final runner = AgentRuntimeNativeStepRunner(
+      bridge: bridge,
+      toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+      checkpointStore: store,
+    );
+
+    await expectLater(
+      runner.runUntilTerminalWithTrace(
+        catalog: catalog,
+        request: request,
+        agentId: 'execution_review',
+      ),
+      throwsA(
+        isA<AgentRuntimeCheckpointException>().having(
+          (error) => error.code,
+          'code',
+          AgentRuntimeCheckpointErrorCode.interruptedEffect,
+        ),
+      ),
+    );
+    expect(dispatcher.calls, isEmpty);
+  });
+
+  test(
+    'snapshot runner cancels a durable checkpoint without dispatch',
+    () async {
+      final store = InMemoryAgentRuntimeCheckpointStore();
+      final bridge = _CancellableSnapshotBridge();
+      final dispatcher = _RecordingDispatcher();
+      const catalog = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'catalog_version': 'agent_catalog.v1',
+      };
+      const request = <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'input': <String, Object?>{},
+      };
+      final fingerprint = agentRuntimeRequestFingerprint(
+        agentId: 'execution_review',
+        catalog: catalog,
+        request: request,
+      );
+      final checkpoint = await store.create(
+        requestFingerprint: fingerprint,
+        snapshot: await bridge.startRunSnapshot(
+          catalog: catalog,
+          request: request,
+          agentId: 'execution_review',
+          maxEffectSteps: 4,
+          maxSubagentDepth: 4,
+        ),
+      );
+      final runner = AgentRuntimeNativeStepRunner(
+        bridge: bridge,
+        toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+        checkpointStore: store,
+      );
+
+      final result = await runner.cancelCheckpoint(
+        catalog: catalog,
+        checkpoint: checkpoint,
+        reason: 'user stopped the run',
+      );
+
+      expect(result.terminalStep['status'], 'cancelled');
+      expect(result.terminalStep['error'], containsPair('code', 'user_cancel'));
+      expect(result.dispatchedEffectCount, 0);
+      expect(dispatcher.calls, isEmpty);
+      expect(bridge.cancelCount, 1);
+      expect(
+        await store.findResumable(
+          agentId: 'execution_review',
+          requestFingerprint: fingerprint,
+        ),
+        isNull,
+      );
+    },
+  );
 
   test(
     'FfiAgentRuntimeNativeBridge rejects runtime-owned SQLite policy',
@@ -1502,6 +1671,58 @@ class _FakeSnapshotBridge extends _FakeBridge
         'subagent_depth': 0,
         'effect_budget_exhausted': false,
         'subagent_depth_exceeded': false,
+      },
+    };
+  }
+}
+
+class _RecoverableSnapshotBridge extends _FakeSnapshotBridge {
+  bool failNextContinuation = true;
+
+  @override
+  Future<Map<String, Object?>> continueRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required Map<String, Object?> effectResponse,
+    required String agentId,
+  }) {
+    if (failNextContinuation) {
+      failNextContinuation = false;
+      throw StateError('simulated crash before snapshot replacement');
+    }
+    return super.continueRunSnapshot(
+      catalog: catalog,
+      snapshot: snapshot,
+      effectResponse: effectResponse,
+      agentId: agentId,
+    );
+  }
+}
+
+class _CancellableSnapshotBridge extends _FakeSnapshotBridge
+    implements AgentRuntimeSnapshotControlBridge {
+  int cancelCount = 0;
+
+  @override
+  Future<Map<String, Object?>> cancelRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required String agentId,
+    required String reason,
+  }) async {
+    cancelCount += 1;
+    final step = Map<String, Object?>.from(snapshot['step']! as Map);
+    return <String, Object?>{
+      ...snapshot,
+      'step': <String, Object?>{
+        ...step,
+        'status': 'cancelled',
+        'effect': null,
+        'error': <String, Object?>{'code': 'user_cancel', 'message': reason},
+        'run_state': const <String, Object?>{
+          'status': 'cancelled',
+          'terminal_reason': 'user_cancel',
+        },
       },
     };
   }

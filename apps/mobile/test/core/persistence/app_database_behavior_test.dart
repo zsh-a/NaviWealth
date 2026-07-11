@@ -601,6 +601,8 @@ void main() {
             'idx_knowledge_inbox_triage_owner_triaged',
             'agent_runs',
             'idx_agent_runs_agent_started',
+            'agent_runtime_checkpoints',
+            'idx_agent_runtime_checkpoints_pending',
             'agent_artifacts',
             'idx_agent_artifacts_domain_created',
             'agent_preferences',
@@ -632,6 +634,8 @@ void main() {
         'idx_knowledge_inbox_triage_owner_triaged',
         'agent_runs',
         'idx_agent_runs_agent_started',
+        'agent_runtime_checkpoints',
+        'idx_agent_runtime_checkpoints_pending',
         'agent_artifacts',
         'idx_agent_artifacts_domain_created',
         'agent_preferences',
@@ -1247,6 +1251,37 @@ void main() {
     },
   );
 
+  test('migrates v38 by creating agent runtime checkpoints', () async {
+    final dir = await Directory.systemTemp.createTemp(
+      'naviwealth_checkpoint_migration_',
+    );
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy.execute('PRAGMA user_version = 38');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final tables = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'agent_runtime_checkpoints'",
+        )
+        .get();
+    expect(tables, hasLength(1));
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 39);
+  });
+
   test('migrates v23 options journal rows through v26 additions', () async {
     final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
     addTearDown(() async {
@@ -1780,7 +1815,7 @@ void main() {
       expect(row.readNullable<String>('operation_token'), equals(null));
       expect(row.read<int>('invocation_started'), 0);
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 38);
+      expect(version.read<int>('user_version'), 39);
     },
   );
 }

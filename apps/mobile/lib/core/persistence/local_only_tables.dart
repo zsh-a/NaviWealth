@@ -8,6 +8,9 @@
 ///   Dismiss/snooze state hides the current result without deleting history.
 /// - `agent_preferences` — per-user local agent toggles and notification
 ///   preferences. These are product preferences, not synced source data.
+/// - `agent_runtime_checkpoints` — resumable Rust-owned runtime snapshots and
+///   host-effect journals. These are high-frequency local execution records,
+///   never product sync objects.
 /// - `options_opportunity_cache` — scoring engine output. Each device
 ///   computes its own opportunities from its own chain pull
 ///   (`docs/domains/options-income.md` §6.2).
@@ -58,6 +61,57 @@ const List<String> agentRunDdl = [
   createAgentRuns,
   createAgentRunsAgentStartedIndex,
   createAgentRunsStatusIndex,
+];
+
+const String createAgentRuntimeCheckpoints = '''
+CREATE TABLE IF NOT EXISTS agent_runtime_checkpoints (
+  owner_user_id       TEXT NOT NULL,
+  run_id              TEXT NOT NULL,
+  agent_id            TEXT NOT NULL,
+  request_fingerprint TEXT NOT NULL,
+  snapshot_version    INTEGER NOT NULL,
+  revision            INTEGER NOT NULL DEFAULT 0,
+  status              TEXT NOT NULL,
+  snapshot_json       TEXT NOT NULL,
+  resume_context_json TEXT,
+  effect_kind         TEXT,
+  effect_id           TEXT,
+  effect_payload_json TEXT,
+  created_at          INTEGER NOT NULL,
+  updated_at          INTEGER NOT NULL,
+  expires_at          INTEGER,
+  PRIMARY KEY (owner_user_id, run_id),
+  CHECK (revision >= 0),
+  CHECK (status IN (
+    'awaiting_effect',
+    'dispatching',
+    'effect_recorded',
+    'terminal'
+  )),
+  CHECK (effect_kind IS NULL OR effect_kind IN ('tool', 'subagent'))
+)
+''';
+
+const String createAgentRuntimeCheckpointsPendingIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_runtime_checkpoints_pending
+  ON agent_runtime_checkpoints(
+    owner_user_id,
+    agent_id,
+    request_fingerprint,
+    status,
+    updated_at DESC
+  )
+''';
+
+const String createAgentRuntimeCheckpointsUpdatedIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_runtime_checkpoints_updated
+  ON agent_runtime_checkpoints(owner_user_id, updated_at DESC)
+''';
+
+const List<String> agentRuntimeCheckpointDdl = [
+  createAgentRuntimeCheckpoints,
+  createAgentRuntimeCheckpointsPendingIndex,
+  createAgentRuntimeCheckpointsUpdatedIndex,
 ];
 
 const String createAgentArtifacts = '''

@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 38', () {
-      expect(db.schemaVersion, 38);
+    test('is 39', () {
+      expect(db.schemaVersion, 39);
     });
   });
 
@@ -292,6 +292,33 @@ void main() {
           'memory_id',
           'artifact_id',
           'trace_id',
+        ]),
+      );
+    });
+
+    test('agent_runtime_checkpoints table has journal columns', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(agent_runtime_checkpoints)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>[
+          'owner_user_id',
+          'run_id',
+          'agent_id',
+          'request_fingerprint',
+          'snapshot_version',
+          'revision',
+          'status',
+          'snapshot_json',
+          'resume_context_json',
+          'effect_kind',
+          'effect_id',
+          'effect_payload_json',
+          'created_at',
+          'updated_at',
+          'expires_at',
         ]),
       );
     });

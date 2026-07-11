@@ -158,6 +158,18 @@ Future<String> agentRuntimeContinueRunSnapshot({
   agentId: agentId,
 );
 
+Future<String> agentRuntimeCancelRunSnapshot({
+  required String catalogJson,
+  required String snapshotJson,
+  required String agentId,
+  required String reason,
+}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeCancelRunSnapshot(
+  catalogJson: catalogJson,
+  snapshotJson: snapshotJson,
+  agentId: agentId,
+  reason: reason,
+);
+
 Future<String> agentRuntimeStartRequestedSubagentSnapshot({
   required String catalogJson,
   required String parentSnapshotJson,

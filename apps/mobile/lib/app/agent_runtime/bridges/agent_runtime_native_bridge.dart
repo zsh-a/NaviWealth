@@ -109,8 +109,20 @@ abstract interface class AgentRuntimeSnapshotNativeApi {
   });
 }
 
+abstract interface class AgentRuntimeSnapshotControlNativeApi {
+  Future<String> cancelRunSnapshot({
+    required String catalogJson,
+    required String snapshotJson,
+    required String agentId,
+    required String reason,
+  });
+}
+
 class FrbAgentRuntimeNativeApi
-    implements AgentRuntimeNativeApi, AgentRuntimeSnapshotNativeApi {
+    implements
+        AgentRuntimeNativeApi,
+        AgentRuntimeSnapshotNativeApi,
+        AgentRuntimeSnapshotControlNativeApi {
   const FrbAgentRuntimeNativeApi();
 
   @override
@@ -260,6 +272,21 @@ class FrbAgentRuntimeNativeApi
   }
 
   @override
+  Future<String> cancelRunSnapshot({
+    required String catalogJson,
+    required String snapshotJson,
+    required String agentId,
+    required String reason,
+  }) {
+    return rust.agentRuntimeCancelRunSnapshot(
+      catalogJson: catalogJson,
+      snapshotJson: snapshotJson,
+      agentId: agentId,
+      reason: reason,
+    );
+  }
+
+  @override
   Future<String> startRequestedSubagentSnapshot({
     required String catalogJson,
     required String parentSnapshotJson,
@@ -354,8 +381,20 @@ abstract interface class AgentRuntimeSnapshotBridge {
   });
 }
 
+abstract interface class AgentRuntimeSnapshotControlBridge {
+  Future<Map<String, Object?>> cancelRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required String agentId,
+    required String reason,
+  });
+}
+
 class FfiAgentRuntimeNativeBridge
-    implements AgentRuntimeNativeBridge, AgentRuntimeSnapshotBridge {
+    implements
+        AgentRuntimeNativeBridge,
+        AgentRuntimeSnapshotBridge,
+        AgentRuntimeSnapshotControlBridge {
   FfiAgentRuntimeNativeBridge({
     required AgentRuntimeNativeApi api,
     required LifeosNativeRuntimeInitializer initRuntime,
@@ -525,6 +564,16 @@ class FfiAgentRuntimeNativeBridge
     throw UnsupportedError('native runtime does not expose snapshot APIs');
   }
 
+  AgentRuntimeSnapshotControlNativeApi get _snapshotControlApi {
+    final api = _api;
+    if (api is AgentRuntimeSnapshotControlNativeApi) {
+      return api as AgentRuntimeSnapshotControlNativeApi;
+    }
+    throw UnsupportedError(
+      'native runtime does not expose snapshot control APIs',
+    );
+  }
+
   @override
   Future<Map<String, Object?>> startProfileTurnSnapshot({
     required Map<String, Object?> catalog,
@@ -578,6 +627,23 @@ class FfiAgentRuntimeNativeBridge
       snapshotJson: jsonEncode(snapshot),
       effectResponseJson: jsonEncode(effectResponse),
       agentId: agentId,
+    );
+    return _decodeObject(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> cancelRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required String agentId,
+    required String reason,
+  }) async {
+    await _ensureInitialized();
+    final json = await _snapshotControlApi.cancelRunSnapshot(
+      catalogJson: jsonEncode(catalog),
+      snapshotJson: jsonEncode(snapshot),
+      agentId: agentId,
+      reason: reason,
     );
     return _decodeObject(json);
   }

@@ -9,42 +9,39 @@ import 'package:sqlite3/sqlite3.dart';
 import '../../../../core/persistence/test_database.dart';
 
 void main() {
-  test(
-    'fresh database creates v38 local execution tables and indexes',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
+  test('fresh database creates local execution tables and indexes', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
 
-      expect(db.schemaVersion, 38);
-      final tables = await db.customSelect('''
+    expect(db.schemaVersion, 39);
+    final tables = await db.customSelect('''
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name LIKE 'rebalance_execution_%'
       ORDER BY name
     ''').get();
-      expect(tables.map((row) => row.read<String>('name')), [
-        'rebalance_execution_items',
-        'rebalance_execution_sessions',
-      ]);
-      final indexes = await db.customSelect('''
+    expect(tables.map((row) => row.read<String>('name')), [
+      'rebalance_execution_items',
+      'rebalance_execution_sessions',
+    ]);
+    final indexes = await db.customSelect('''
       SELECT name FROM sqlite_master
       WHERE type = 'index' AND name LIKE 'idx_rebalance_execution_%'
     ''').get();
-      expect(indexes.map((row) => row.read<String>('name')).toSet(), {
-        'idx_rebalance_execution_one_active_owner',
-        'idx_rebalance_execution_sessions_owner',
-        'idx_rebalance_execution_applied_sequence',
-        'idx_rebalance_execution_items_session',
-        'idx_rebalance_execution_items_state',
-      });
-      final columns = await db
-          .customSelect('PRAGMA table_info(rebalance_execution_items)')
-          .get();
-      expect(
-        columns.map((row) => row.read<String>('name')),
-        contains('failure_code'),
-      );
-    },
-  );
+    expect(indexes.map((row) => row.read<String>('name')).toSet(), {
+      'idx_rebalance_execution_one_active_owner',
+      'idx_rebalance_execution_sessions_owner',
+      'idx_rebalance_execution_applied_sequence',
+      'idx_rebalance_execution_items_session',
+      'idx_rebalance_execution_items_state',
+    });
+    final columns = await db
+        .customSelect('PRAGMA table_info(rebalance_execution_items)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      contains('failure_code'),
+    );
+  });
 
   test('v35 migration idempotently creates execution schema', () async {
     final dir = await Directory.systemTemp.createTemp('rebalance_v35_');
@@ -65,7 +62,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 38);
+    expect(version.read<int>('user_version'), 39);
     final tables = await db.customSelect('''
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name IN (

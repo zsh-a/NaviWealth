@@ -93,6 +93,7 @@ jobs:
         run: >
           flutter test
           test/app/agent_runtime_catalog_test.dart
+          test/app/agent_runtime_checkpoint_store_test.dart
           test/app/agent_runtime_native_bridge_test.dart
           test/app/agent_runtime_runner_test.dart
           test/app/agent_runtime_tool_host_test.dart
