@@ -13925,6 +13925,18 @@ abstract class AppLocalizations {
   /// **'Couldn’t import {count} dropped files.'**
   String ingestDroppedSourcesRejected(int count);
 
+  /// Shared ingest: recognized source was rejected by the parser
+  ///
+  /// In en, this message translates to:
+  /// **'This shared source couldn’t be parsed.'**
+  String get ingestSharedParseRejected;
+
+  /// Shared ingest: unexpected processing failure
+  ///
+  /// In en, this message translates to:
+  /// **'Something interrupted this shared import.'**
+  String get ingestSharedParseFailed;
+
   /// Ingest review: parse produced zero rows
   ///
   /// In en, this message translates to:

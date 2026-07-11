@@ -1,5 +1,20 @@
 import '../../../../l10n/gen/app_localizations.dart';
+import '../data/ingest_capture_feedback.dart';
 import '../data/ingest_capture_policy.dart';
+
+String localizedIngestCaptureFeedback(
+  AppLocalizations l10n,
+  IngestCaptureFeedbackEvent event,
+) => switch (event.feedback) {
+  IngestCaptureFailureFeedback(:final failure) => localizedIngestCaptureFailure(
+    l10n,
+    failure,
+  ),
+  IngestProcessingFailureFeedback(:final code) => switch (code) {
+    IngestProcessingFailureCode.rejected => l10n.ingestSharedParseRejected,
+    IngestProcessingFailureCode.failed => l10n.ingestSharedParseFailed,
+  },
+};
 
 String localizedIngestCaptureFailure(
   AppLocalizations l10n,

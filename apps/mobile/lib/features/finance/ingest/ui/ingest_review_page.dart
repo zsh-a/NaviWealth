@@ -24,6 +24,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../shared/l10n/account_l10n.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../data/capture_encoder.dart';
+import '../data/ingest_capture_feedback.dart';
 import '../data/ingest_capture_policy.dart';
 import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
@@ -46,9 +47,53 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   String? _accountId;
   _IngestBusyState? _busy;
   bool _captureInProgress = false;
+  ProviderSubscription<List<IngestCaptureFeedbackEvent>>?
+  _captureFeedbackSubscription;
+  bool _captureFeedbackDrainScheduled = false;
   final Map<String, ConfirmedIngestItem> _pendingFinalize = {};
 
   bool get _isBusy => _busy != null || _captureInProgress;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _captureFeedbackSubscription != null) return;
+      _captureFeedbackSubscription = ref.listenManual(
+        ingestCaptureFeedbackQueueProvider,
+        (_, events) {
+          if (events.isNotEmpty) _scheduleCaptureFeedbackDrain();
+        },
+        fireImmediately: true,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _captureFeedbackSubscription?.close();
+    super.dispose();
+  }
+
+  void _scheduleCaptureFeedbackDrain() {
+    if (_captureFeedbackDrainScheduled) return;
+    _captureFeedbackDrainScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _captureFeedbackDrainScheduled = false;
+      if (!mounted) return;
+      final events = ref
+          .read(ingestCaptureFeedbackQueueProvider.notifier)
+          .drain();
+      final l10n = AppLocalizations.of(context);
+      for (final event in events) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          localizedIngestCaptureFeedback(l10n, event),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

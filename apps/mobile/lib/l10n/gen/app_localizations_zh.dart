@@ -7778,6 +7778,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get ingestSharedParseRejected => '无法解析此共享来源。';
+
+  @override
+  String get ingestSharedParseFailed => '共享导入被意外中断。';
+
+  @override
   String get ingestNoTransactions => '未解析出可识别的交易';
 
   @override

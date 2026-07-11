@@ -4447,6 +4447,10 @@
     "description": "Ingest drag and drop: aggregate rejected-file count",
     "placeholders": { "count": { "type": "int" } }
   },
+  "ingestSharedParseRejected": "This shared source couldn’t be parsed.",
+  "@ingestSharedParseRejected": { "description": "Shared ingest: recognized source was rejected by the parser" },
+  "ingestSharedParseFailed": "Something interrupted this shared import.",
+  "@ingestSharedParseFailed": { "description": "Shared ingest: unexpected processing failure" },
   "ingestNoTransactions": "No recognizable transactions",
   "@ingestNoTransactions": { "description": "Ingest review: parse produced zero rows" },
   "ingestParseSummary": "Parsed {total} · {fresh} new · {dup} possible dup",

@@ -2411,6 +2411,8 @@
   "ingestChooseAnotherFile": "重新选择",
   "ingestRetakePhoto": "重新拍摄",
   "ingestDroppedSourcesRejected": "有 {count} 个拖入文件无法导入。",
+  "ingestSharedParseRejected": "无法解析此共享来源。",
+  "ingestSharedParseFailed": "共享导入被意外中断。",
   "ingestNoTransactions": "未解析出可识别的交易",
   "ingestParseSummary": "解析 {total} 笔（新增 {fresh} · 疑似重复 {dup}）",
   "ingestProcessingTitle": "正在解析导入内容",

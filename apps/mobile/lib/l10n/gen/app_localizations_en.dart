@@ -8162,6 +8162,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get ingestSharedParseRejected =>
+      'This shared source couldn’t be parsed.';
+
+  @override
+  String get ingestSharedParseFailed =>
+      'Something interrupted this shared import.';
+
+  @override
   String get ingestNoTransactions => 'No recognizable transactions';
 
   @override

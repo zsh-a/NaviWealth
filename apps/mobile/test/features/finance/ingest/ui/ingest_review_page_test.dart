@@ -17,6 +17,7 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_capture_feedback.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_capture_policy.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_capture_source.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
@@ -189,6 +190,7 @@ Widget _app({
   IngestCaptureSource? captureSource,
   int? captureTextLimit,
   List<IngestSource>? ingestedSources,
+  IngestCaptureFeedbackQueue? captureFeedbackQueue,
 }) {
   return ProviderScope(
     overrides: [
@@ -202,6 +204,10 @@ Widget _app({
       if (ingestedSources != null)
         ingestControllerProvider.overrideWith(
           (ref) => _RecordingIngestController(ref, ingestedSources),
+        ),
+      if (captureFeedbackQueue != null)
+        ingestCaptureFeedbackQueueProvider.overrideWith(
+          () => captureFeedbackQueue,
         ),
       if (failLedgerRead)
         journalEntryRepositoryProvider.overrideWith(
@@ -343,6 +349,76 @@ void main() {
 
     expect(captureSource.calls, 1);
     expect(find.textContaining('source'), findsNothing);
+  });
+
+  testWidgets('cold-start shared failures drain once after the page mounts', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final feedbackQueue = IngestCaptureFeedbackQueue(
+      initialEvents: const [
+        IngestCaptureFeedbackEvent(
+          id: 1,
+          feedback: IngestCaptureFailureFeedback(
+            IngestCaptureFailure(
+              IngestCaptureFailureCode.tooLarge,
+              maxBytes: IngestCaptureLimits.receiptImageBytes,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _app(store: store, service: service, captureFeedbackQueue: feedbackQueue),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('This file exceeds the 8 MiB import limit.'),
+      findsOneWidget,
+    );
+    await tester.pump();
+    expect(
+      find.text('This file exceeds the 8 MiB import limit.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('active review page consumes every new shared failure', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final feedbackQueue = IngestCaptureFeedbackQueue();
+    await tester.pumpWidget(
+      _app(store: store, service: service, captureFeedbackQueue: feedbackQueue),
+    );
+    await tester.pumpAndSettle();
+
+    feedbackQueue
+      ..enqueueCaptureFailure(
+        const IngestCaptureFailure(IngestCaptureFailureCode.empty),
+      )
+      ..enqueueProcessingFailure(IngestProcessingFailureCode.failed);
+    await tester.pumpAndSettle();
+
+    expect(find.text('This source is empty.'), findsOneWidget);
+    expect(
+      find.text('Something interrupted this shared import.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('only one capture may hold its memory budget at a time', (

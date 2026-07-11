@@ -6,10 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/lifeos/share_intent.dart';
 import '../ingest/data/capture_encoder.dart';
+import '../ingest/data/ingest_capture_feedback.dart';
 import '../ingest/data/ingest_capture_policy.dart';
 import '../ingest/data/ingest_capture_source.dart';
 import '../ingest/data/providers.dart';
-import '../ingest/domain/ingest_models.dart';
 import 'finance_route_paths.dart';
 
 class FinanceShareIntentHandler extends DomainShareIntentHandler {
@@ -22,16 +22,38 @@ class FinanceShareIntentHandler extends DomainShareIntentHandler {
     Ref ref,
     SharedIntentPayload payload,
   ) async {
-    final source = await _toSource(payload);
-    if (source == null) return null;
-    await ref.read(ingestControllerProvider).ingest(source);
-    return const DomainShareIntentResult(
-      destinationPath: FinanceRoutes.activityIngest,
-      navigationPriority: _navigationPriority,
-    );
+    final outcome = await _toOutcome(payload);
+    if (outcome == null || outcome is IngestCaptureCancelled) return null;
+    if (outcome case IngestCaptureFailure()) {
+      if (outcome.code == IngestCaptureFailureCode.unsupported) return null;
+      ref
+          .read(ingestCaptureFeedbackQueueProvider.notifier)
+          .enqueueCaptureFailure(outcome);
+      return _handled;
+    }
+
+    final source = (outcome as IngestCaptureSuccess).source;
+    try {
+      final result = await ref.read(ingestControllerProvider).ingest(source);
+      if (result.isRejected) {
+        ref
+            .read(ingestCaptureFeedbackQueueProvider.notifier)
+            .enqueueProcessingFailure(IngestProcessingFailureCode.rejected);
+      }
+    } catch (_) {
+      ref
+          .read(ingestCaptureFeedbackQueueProvider.notifier)
+          .enqueueProcessingFailure(IngestProcessingFailureCode.failed);
+    }
+    return _handled;
   }
 
-  Future<IngestSource?> _toSource(SharedIntentPayload payload) async {
+  static const _handled = DomainShareIntentResult(
+    destinationPath: FinanceRoutes.activityIngest,
+    navigationPriority: _navigationPriority,
+  );
+
+  Future<IngestCaptureOutcome?> _toOutcome(SharedIntentPayload payload) async {
     final IngestCaptureOutcome outcome;
     if (payload.kind == SharedIntentKind.text ||
         payload.kind == SharedIntentKind.url) {
@@ -49,9 +71,6 @@ class FinanceShareIntentHandler extends DomainShareIntentHandler {
     } else {
       return null;
     }
-    return switch (outcome) {
-      IngestCaptureSuccess(:final source) => source,
-      IngestCaptureCancelled() || IngestCaptureFailure() => null,
-    };
+    return outcome;
   }
 }
