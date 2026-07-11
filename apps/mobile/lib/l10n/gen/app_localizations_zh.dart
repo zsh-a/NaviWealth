@@ -9,6 +9,14 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String commonSelectedCount(int count) {
+    return '已选择 $count 项';
+  }
+
+  @override
+  String get rebalanceExecutionResumeInterruptedAction => '继续中断的操作';
+
+  @override
   String get appTitle => 'NaviWealth';
 
   @override

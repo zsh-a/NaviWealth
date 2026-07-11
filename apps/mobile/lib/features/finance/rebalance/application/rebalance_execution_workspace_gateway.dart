@@ -32,11 +32,13 @@ abstract interface class RebalanceExecutionWorkspaceGateway {
 
   Future<RebalanceExecutionBatchResult> apply(
     String sessionId, {
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   });
 
   Future<RebalanceExecutionBatchResult> undo(
     String sessionId, {
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   });
 }
@@ -160,21 +162,31 @@ final class DefaultRebalanceExecutionWorkspaceGateway
   @override
   Future<RebalanceExecutionBatchResult> apply(
     String sessionId, {
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   }) async {
     final owner = await _currentUserId();
     await _requireSession(owner, sessionId);
-    return _coordinator.applySession(sessionId: sessionId, stop: stop);
+    return _coordinator.applySession(
+      sessionId: sessionId,
+      itemIds: itemIds,
+      stop: stop,
+    );
   }
 
   @override
   Future<RebalanceExecutionBatchResult> undo(
     String sessionId, {
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   }) async {
     final owner = await _currentUserId();
     await _requireSession(owner, sessionId);
-    return _coordinator.undoSession(sessionId: sessionId, stop: stop);
+    return _coordinator.undoSession(
+      sessionId: sessionId,
+      itemIds: itemIds,
+      stop: stop,
+    );
   }
 
   Future<RebalanceExecutionSession> _requireSession(

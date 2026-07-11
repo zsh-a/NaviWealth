@@ -15,7 +15,13 @@ import '../../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../../core/persistence/app_database.dart';
 import '../domain/ingest_models.dart';
 import 'ingest_confirm_service.dart'
-    show ConfirmedIngestItem, IngestDraftLifecycleStore, IngestReviewItem;
+    show
+        ConfirmedIngestItem,
+        IngestDraftLifecycleStore,
+        IngestLifecycleMutationOutcome,
+        IngestLifecycleMutationResult,
+        IngestLifecycleTransition,
+        IngestReviewItem;
 
 class IngestDraftStore implements IngestDraftLifecycleStore {
   IngestDraftStore(this._db, {this.ownerUserId});
@@ -104,11 +110,12 @@ class IngestDraftStore implements IngestDraftLifecycleStore {
     final rows = await _db
         .customSelect(
           'SELECT * FROM ingest_drafts '
-          'WHERE owner_user_id = ?1 AND status = ?2 '
-          'ORDER BY created_at_iso DESC LIMIT ?3',
+          'WHERE owner_user_id = ?1 AND status IN (?2, ?3) '
+          'ORDER BY created_at_iso DESC LIMIT ?4',
           variables: [
             Variable.withString(_owner),
             Variable.withString(DraftStatus.pending.wire),
+            Variable.withString(DraftStatus.confirming.wire),
             Variable.withInt(limit),
           ],
         )
@@ -141,38 +148,71 @@ class IngestDraftStore implements IngestDraftLifecycleStore {
   }
 
   @override
-  Future<void> updateStatus(String draftId, DraftStatus status) async {
-    await _db.customStatement(
-      'UPDATE ingest_drafts SET status = ?1, '
-      'recovery_kind = NULL, recovery_apply_state_json = NULL '
-      'WHERE draft_id = ?2 AND owner_user_id = ?3',
-      [status.wire, draftId, _owner],
-    );
-    _notify();
-  }
-
-  @override
-  Future<void> markNeedsFinalize(ConfirmedIngestItem item) async {
-    await _db.customStatement(
+  Future<IngestLifecycleMutationResult> transition(
+    IngestLifecycleTransition transition,
+  ) async {
+    if (transition.ownerUserId != _owner || _owner.isEmpty) {
+      return const IngestLifecycleMutationResult(
+        IngestLifecycleMutationOutcome.notFound,
+      );
+    }
+    final nextRevision = transition.expectedRevision + 1;
+    final changed = await _db.customUpdate(
       'UPDATE ingest_drafts SET status = ?1, recovery_kind = ?2, '
-      'recovery_apply_state_json = ?3 '
-      'WHERE draft_id = ?4 AND owner_user_id = ?5',
-      [
-        DraftStatus.pending.wire,
-        'finalize_applied',
-        jsonEncode(item.applyState.toJson()),
-        item.draft.draftId,
-        _owner,
+      'recovery_apply_state_json = ?3, revision = ?4, '
+      'operation_token = ?5, invocation_started = ?6 '
+      'WHERE draft_id = ?7 AND owner_user_id = ?8 AND status = ?9 '
+      'AND revision = ?10 AND recovery_kind IS ?11 '
+      'AND operation_token IS ?12 AND invocation_started = ?13',
+      variables: [
+        Variable.withString(transition.nextStatus.wire),
+        _nullableString(transition.nextRecoveryKind),
+        _nullableString(
+          transition.nextRecoveryApplyState == null
+              ? null
+              : jsonEncode(transition.nextRecoveryApplyState!.toJson()),
+        ),
+        Variable.withInt(nextRevision),
+        _nullableString(transition.nextOperationToken),
+        Variable.withInt(transition.nextInvocationStarted ? 1 : 0),
+        Variable.withString(transition.draftId),
+        Variable.withString(_owner),
+        Variable.withString(transition.expectedStatus.wire),
+        Variable.withInt(transition.expectedRevision),
+        _nullableString(transition.expectedRecoveryKind),
+        _nullableString(transition.expectedOperationToken),
+        Variable.withInt(transition.expectedInvocationStarted ? 1 : 0),
       ],
     );
-    _notify();
+    if (changed == 1) {
+      _notify();
+      return IngestLifecycleMutationResult(
+        IngestLifecycleMutationOutcome.applied,
+        revision: nextRevision,
+      );
+    }
+    final visible = await _db
+        .customSelect(
+          'SELECT 1 FROM ingest_drafts WHERE draft_id = ?1 '
+          'AND owner_user_id = ?2 LIMIT 1',
+          variables: [
+            Variable.withString(transition.draftId),
+            Variable.withString(_owner),
+          ],
+        )
+        .getSingleOrNull();
+    return IngestLifecycleMutationResult(
+      visible == null
+          ? IngestLifecycleMutationOutcome.notFound
+          : IngestLifecycleMutationOutcome.conflict,
+    );
   }
 
   /// Drop confirmed/dismissed rows older than [cutoff] (housekeeping).
   Future<void> pruneSettledBefore(DateTime cutoff) async {
     await _db.customStatement(
       'DELETE FROM ingest_drafts '
-      "WHERE owner_user_id = ?1 AND status != 'pending' "
+      "WHERE owner_user_id = ?1 AND status IN ('confirmed', 'dismissed') "
       'AND created_at_iso < ?2',
       [_owner, cutoff.toUtc().toIso8601String()],
     );
@@ -198,12 +238,16 @@ class IngestDraftStore implements IngestDraftLifecycleStore {
       dedupTargetEntryId: row.read<String?>('dedup_target_entry_id'),
       traceId: row.read<String?>('trace_id'),
       expiresAt: expiresIso == null ? null : DateTime.tryParse(expiresIso),
+      revision: row.read<int>('revision'),
     );
   }
 
   IngestReviewItem _rowToReviewItem(QueryRow row) {
     final draft = _rowToDraft(row);
     final recoveryKind = row.read<String?>('recovery_kind');
+    if (draft.status == DraftStatus.confirming) {
+      return IngestReviewItem(draft: draft, recoveryUnreadable: true);
+    }
     if (recoveryKind == null) {
       return IngestReviewItem(draft: draft);
     }
@@ -231,6 +275,9 @@ class IngestDraftStore implements IngestDraftLifecycleStore {
       return IngestReviewItem(draft: draft, recoveryUnreadable: true);
     }
   }
+
+  static Variable<String> _nullableString(String? value) =>
+      value == null ? const Variable<String>(null) : Variable.withString(value);
 
   void dispose() {
     if (!_changes.isClosed) _changes.close();

@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -26,8 +27,11 @@ import 'package:naviwealth/features/finance/ingest/data/providers.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 import 'package:naviwealth/features/finance/ingest/ui/ingest_review_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
+
+late SharedPreferences _sharedPreferences;
 
 class _NoopApplier implements ProposalApplier {
   const _NoopApplier();
@@ -130,21 +134,22 @@ class _FailingLifecycleStore implements IngestDraftLifecycleStore {
   final Set<String> failConfirmDraftIds;
 
   @override
-  Future<void> markNeedsFinalize(ConfirmedIngestItem item) =>
-      delegate.markNeedsFinalize(item);
-
-  @override
-  Future<void> updateStatus(String draftId, DraftStatus status) async {
-    if (status == DraftStatus.confirmed &&
-        (confirmFailures > 0 || failConfirmDraftIds.remove(draftId))) {
+  Future<IngestLifecycleMutationResult> transition(
+    IngestLifecycleTransition transition,
+  ) async {
+    if (transition.nextStatus == DraftStatus.confirmed &&
+        (confirmFailures > 0 ||
+            failConfirmDraftIds.remove(transition.draftId))) {
       if (confirmFailures > 0) confirmFailures--;
       throw StateError('confirm status unavailable');
     }
-    if (status == DraftStatus.pending && pendingFailures > 0) {
+    if (transition.expectedStatus == DraftStatus.confirmed &&
+        transition.nextStatus == DraftStatus.pending &&
+        pendingFailures > 0) {
       pendingFailures--;
       throw StateError('pending status unavailable');
     }
-    await delegate.updateStatus(draftId, status);
+    return delegate.transition(transition);
   }
 }
 
@@ -195,6 +200,7 @@ Widget _app({
 }) {
   return ProviderScope(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(_sharedPreferences),
       ingestDraftStoreProvider.overrideWithValue(store),
       ingestConfirmServiceProvider.overrideWith((_) async => service),
       accountsStreamProvider.overrideWith(
@@ -252,7 +258,86 @@ Future<void> _tapCaptureOption(
   }
 }
 
+Future<void> _settleUntil(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 60 && finder.evaluate().isEmpty; i++) {
+    await tester.pump(const Duration(milliseconds: 25));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+  }
+  await tester.pumpAndSettle();
+}
+
 void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    _sharedPreferences = await SharedPreferences.getInstance();
+  });
+
+  testWidgets(
+    'desktop master-detail selection dismisses only selected drafts',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(1440, 900)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft(id: 'draft-1', description: 'Coffee receipt'),
+        _draft(id: 'draft-2', description: 'Metro receipt'),
+      ]);
+      final service = IngestConfirmService(
+        applier: const _NoopApplier(),
+        store: store,
+      );
+      await tester.pumpWidget(
+        _app(store: store, service: service, accounts: [_account]),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MasterDetailLayout), findsOneWidget);
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+      expect(find.text('1 selected'), findsOneWidget);
+      await tester.tap(find.text('Skip').last);
+      await tester.pumpAndSettle();
+
+      expect(await store.countByStatus(DraftStatus.dismissed), 1);
+      expect(await store.countByStatus(DraftStatus.pending), 1);
+    },
+  );
+
+  testWidgets('desktop Enter focuses detail and Space only changes selection', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1440, 900)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([_draft()]);
+    final applier = _RecordingApplier();
+    final service = IngestConfirmService(applier: applier, store: store);
+    await tester.pumpWidget(
+      _app(store: store, service: service, accounts: [_account]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Coffee receipt').first);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Coffee receipt'), findsNWidgets(2));
+    expect(find.text('1 selected'), findsOneWidget);
+    expect(applier.applyCount, 0);
+  });
+
   testWidgets('wide loading and error states keep capture actions available', (
     tester,
   ) async {
@@ -661,8 +746,10 @@ void main() {
       'date,description,amount\n2026-05-10,Coffee,-38.50',
     );
     await tester.tap(find.text('Parse'));
-    await tester.pumpAndSettle();
-
+    await _settleUntil(
+      tester,
+      find.text('Couldn’t parse this import. Try again.'),
+    );
     expect(find.text('Couldn’t parse this import. Try again.'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });
@@ -827,7 +914,11 @@ void main() {
     expect(find.text('Resolve review state'), findsOneWidget);
     expect(
       applier.undone.map((state) => state.appliedEntityId),
-      containsAll(['entry-draft-2', 'entry-draft-1']),
+      contains('entry-draft-1'),
+    );
+    expect(
+      applier.undone.map((state) => state.appliedEntityId),
+      isNot(contains('entry-draft-2')),
     );
   });
 
@@ -862,6 +953,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await _tapCaptureOption(tester, 'Import file');
+    await _settleUntil(
+      tester,
+      find.text('Couldn’t parse this import. Try again.'),
+    );
     expect(find.text('Couldn’t parse this import. Try again.'), findsOneWidget);
     expect(find.text('Choose file'), findsOneWidget);
 

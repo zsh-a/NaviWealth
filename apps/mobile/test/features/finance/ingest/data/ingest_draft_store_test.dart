@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
+import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
@@ -27,6 +31,29 @@ IngestDraft _draft(
   originLabel: '粘贴文本',
 );
 
+class _ControlledApplier implements ProposalApplier {
+  _ControlledApplier(this.onApply);
+
+  final Future<ProposalApplyState> Function() onApply;
+  int applyCalls = 0;
+
+  @override
+  Future<ProposalApplyState> apply(ReadyProposalPlan plan) {
+    applyCalls++;
+    return onApply();
+  }
+
+  @override
+  Future<void> undo(ProposalApplyState state) async {}
+}
+
+ProposalApplyState _appliedState() => ProposalApplyState(
+  status: ProposalApplyStatus.applied,
+  appliedEntityId: 'entry-d1',
+  appliedTable: 'journal_entries',
+  appliedAt: DateTime.utc(2026, 5, 10, 10),
+);
+
 void main() {
   test(
     'putAll + listByStatus round-trips and preserves parsed fields',
@@ -48,13 +75,22 @@ void main() {
     },
   );
 
-  test('updateStatus moves a draft out of the pending queue', () async {
+  test('owner-scoped CAS moves a draft out of the pending queue', () async {
     final db = makeTestDatabase();
     final store = IngestDraftStore(db, ownerUserId: 'u1');
     await store.putAll([_draft('d1'), _draft('d2')]);
 
-    await store.updateStatus('d1', DraftStatus.confirmed);
+    final result = await store.transition(
+      const IngestLifecycleTransition(
+        ownerUserId: 'u1',
+        draftId: 'd1',
+        expectedStatus: DraftStatus.pending,
+        expectedRevision: 0,
+        nextStatus: DraftStatus.confirmed,
+      ),
+    );
 
+    expect(result.outcome, IngestLifecycleMutationOutcome.applied);
     expect(await store.countByStatus(DraftStatus.pending), 1);
     expect(await store.countByStatus(DraftStatus.confirmed), 1);
     final pending = await store.listByStatus(DraftStatus.pending);
@@ -98,16 +134,35 @@ void main() {
       undoData: const {'source': 'ingest'},
     );
 
-    await store.markNeedsFinalize(
-      ConfirmedIngestItem(draft: draft, applyState: state),
+    final marked = await store.transition(
+      IngestLifecycleTransition(
+        ownerUserId: 'u1',
+        draftId: draft.draftId,
+        expectedStatus: DraftStatus.pending,
+        expectedRevision: 0,
+        nextStatus: DraftStatus.pending,
+        nextRecoveryKind: 'finalize_applied',
+        nextRecoveryApplyState: state,
+      ),
     );
+    expect(marked.outcome, IngestLifecycleMutationOutcome.applied);
 
     final reopened = IngestDraftStore(db, ownerUserId: 'u1');
     final review = await reopened.listPendingReviewItems();
     expect(review.single.draft.draftId, 'd1');
     expect(review.single.pendingFinalize?.applyState.toJson(), state.toJson());
 
-    await reopened.updateStatus('d1', DraftStatus.confirmed);
+    final finalized = await reopened.transition(
+      IngestLifecycleTransition(
+        ownerUserId: 'u1',
+        draftId: 'd1',
+        expectedStatus: DraftStatus.pending,
+        expectedRevision: review.single.draft.revision,
+        expectedRecoveryKind: 'finalize_applied',
+        nextStatus: DraftStatus.confirmed,
+      ),
+    );
+    expect(finalized.outcome, IngestLifecycleMutationOutcome.applied);
     expect(await reopened.listPendingReviewItems(), isEmpty);
     await db.close();
   });
@@ -137,18 +192,173 @@ void main() {
     await db.close();
   });
 
-  test('pruneSettledBefore drops old non-pending rows only', () async {
-    final db = makeTestDatabase();
-    final store = IngestDraftStore(db, ownerUserId: 'u1');
-    await store.putAll([
-      _draft('old-confirmed', status: DraftStatus.confirmed),
-      _draft('pending-keep'),
-    ]);
+  test(
+    'pruneSettledBefore drops only old confirmed and dismissed rows',
+    () async {
+      final db = makeTestDatabase();
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft('old-confirmed', status: DraftStatus.confirmed),
+        _draft('old-dismissed', status: DraftStatus.dismissed),
+        _draft('pending-keep'),
+        _draft('confirming-keep', status: DraftStatus.confirming),
+      ]);
 
-    await store.pruneSettledBefore(DateTime.utc(2026, 5, 11));
+      await store.pruneSettledBefore(DateTime.utc(2026, 5, 11));
 
-    expect(await store.countByStatus(DraftStatus.confirmed), 0);
-    expect(await store.countByStatus(DraftStatus.pending), 1);
-    await db.close();
-  });
+      expect(await store.countByStatus(DraftStatus.confirmed), 0);
+      expect(await store.countByStatus(DraftStatus.dismissed), 0);
+      expect(await store.countByStatus(DraftStatus.pending), 1);
+      expect(await store.countByStatus(DraftStatus.confirming), 1);
+      await db.close();
+    },
+  );
+
+  test(
+    'CAS reports stale conflict and cross-owner notFound privately',
+    () async {
+      final db = makeTestDatabase();
+      final mine = IngestDraftStore(db, ownerUserId: 'u1');
+      final theirs = IngestDraftStore(db, ownerUserId: 'u2');
+      await mine.putAll([_draft('d1')]);
+
+      final applied = await mine.transition(
+        const IngestLifecycleTransition(
+          ownerUserId: 'u1',
+          draftId: 'd1',
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: 0,
+          nextStatus: DraftStatus.dismissed,
+        ),
+      );
+      final stale = await mine.transition(
+        const IngestLifecycleTransition(
+          ownerUserId: 'u1',
+          draftId: 'd1',
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: 0,
+          nextStatus: DraftStatus.confirmed,
+        ),
+      );
+      final privateMiss = await theirs.transition(
+        const IngestLifecycleTransition(
+          ownerUserId: 'u2',
+          draftId: 'd1',
+          expectedStatus: DraftStatus.dismissed,
+          expectedRevision: 1,
+          nextStatus: DraftStatus.pending,
+        ),
+      );
+
+      expect(applied.outcome, IngestLifecycleMutationOutcome.applied);
+      expect(stale.outcome, IngestLifecycleMutationOutcome.conflict);
+      expect(privateMiss.outcome, IngestLifecycleMutationOutcome.notFound);
+      await db.close();
+    },
+  );
+
+  test(
+    'ordinary transition excludes recovery and stale operation tokens',
+    () async {
+      final db = makeTestDatabase();
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([_draft('d1')]);
+      await db.customStatement(
+        'UPDATE ingest_drafts SET recovery_kind = ?, revision = 4 '
+        'WHERE draft_id = ?',
+        ['confirm_ambiguous', 'd1'],
+      );
+
+      final ordinary = await store.transition(
+        const IngestLifecycleTransition(
+          ownerUserId: 'u1',
+          draftId: 'd1',
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: 4,
+          nextStatus: DraftStatus.dismissed,
+        ),
+      );
+      final staleToken = await store.transition(
+        const IngestLifecycleTransition(
+          ownerUserId: 'u1',
+          draftId: 'd1',
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: 4,
+          expectedRecoveryKind: 'confirm_ambiguous',
+          expectedOperationToken: 'wrong',
+          nextStatus: DraftStatus.dismissed,
+        ),
+      );
+
+      expect(ordinary.outcome, IngestLifecycleMutationOutcome.conflict);
+      expect(staleToken.outcome, IngestLifecycleMutationOutcome.conflict);
+      expect((await store.listPendingReviewItems()).single.blocksApply, isTrue);
+      await db.close();
+    },
+  );
+
+  test(
+    'concurrent confirm reserves once and invokes the applier once',
+    () async {
+      final db = makeTestDatabase();
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      final draft = _draft('d1');
+      await store.putAll([draft]);
+      final gate = Completer<ProposalApplyState>();
+      final applier = _ControlledApplier(() => gate.future);
+      final service = IngestConfirmService(applier: applier, store: store);
+
+      final first = service.confirm(draft, fromAccountId: 'account-1');
+      await Future<void>.delayed(Duration.zero);
+      final second = service.confirm(draft, fromAccountId: 'account-1');
+      await expectLater(
+        second,
+        throwsA(
+          isA<IngestConfirmException>().having(
+            (error) => error.code,
+            'code',
+            IngestConfirmError.lifecycleConflict,
+          ),
+        ),
+      );
+      expect(applier.applyCalls, 1);
+      expect((await store.listPendingReviewItems()).single.blocksApply, isTrue);
+
+      gate.complete(_appliedState());
+      await first;
+      expect(await store.countByStatus(DraftStatus.confirmed), 1);
+      await db.close();
+    },
+  );
+
+  test(
+    'post-invocation failure persists fail-closed manual recovery',
+    () async {
+      final db = makeTestDatabase();
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      final draft = _draft('d1');
+      await store.putAll([draft]);
+      final service = IngestConfirmService(
+        applier: _ControlledApplier(() => throw StateError('unknown outcome')),
+        store: store,
+      );
+
+      await expectLater(
+        service.confirm(draft, fromAccountId: 'account-1'),
+        throwsA(
+          isA<IngestConfirmException>().having(
+            (error) => error.code,
+            'code',
+            IngestConfirmError.manualRecoveryRequired,
+          ),
+        ),
+      );
+      final review = (await store.listPendingReviewItems()).single;
+      expect(review.draft.status, DraftStatus.pending);
+      expect(review.recoveryUnreadable, isTrue);
+      expect(review.canBatchConfirm, isFalse);
+      expect(review.canBatchDismiss, isFalse);
+      await db.close();
+    },
+  );
 }

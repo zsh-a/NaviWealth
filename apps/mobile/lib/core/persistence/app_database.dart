@@ -134,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 37;
+  int get schemaVersion => 38;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -615,6 +615,30 @@ class AppDatabase extends _$AppDatabase {
           "  'recoveryBlocked') THEN substr(error, 1, 512) ELSE NULL END",
         );
         await _createRebalanceExecutionIssueTriggers(this);
+      }
+      // v37 -> v38: owner-scoped optimistic lifecycle writes and a durable
+      // pre-invocation reservation for ingest confirmation. A confirming row
+      // whose invocation started is deliberately never reclaimed.
+      if (from < 38) {
+        await _createIngestTables(this);
+        await _addColumnIfMissing(
+          this,
+          table: 'ingest_drafts',
+          column: 'revision',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'ingest_drafts',
+          column: 'operation_token',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'ingest_drafts',
+          column: 'invocation_started',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
       }
     },
     beforeOpen: (details) async {

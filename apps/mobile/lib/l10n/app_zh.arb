@@ -1,4 +1,7 @@
 {
+  "commonSelectedCount": "已选择 {count} 项",
+  "@commonSelectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "rebalanceExecutionResumeInterruptedAction": "继续中断的操作",
   "@@locale": "zh",
   "appTitle": "NaviWealth",
 

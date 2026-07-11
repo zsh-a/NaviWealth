@@ -1702,4 +1702,85 @@ void main() {
       containsAll(['draft_id', 'recovery_kind', 'recovery_apply_state_json']),
     );
   });
+
+  test(
+    'migrates v37 ingest lifecycle rows without losing recovery data',
+    () async {
+      final dir = await Directory.systemTemp.createTemp(
+        'naviwealth_migration_',
+      );
+      addTearDown(() async {
+        if (await dir.exists()) await dir.delete(recursive: true);
+      });
+      final file = File('${dir.path}/naviwealth.db');
+      const recoveryJson =
+          '{"status":"applied","applied_entity_id":"entry-1",'
+          '"applied_table":"journal_entries"}';
+
+      final legacy = sqlite3.open(file.path);
+      try {
+        legacy
+          ..execute('''
+          CREATE TABLE ingest_drafts (
+            draft_id TEXT PRIMARY KEY,
+            owner_user_id TEXT NOT NULL,
+            created_at_iso TEXT NOT NULL,
+            source_kind TEXT NOT NULL,
+            origin_label TEXT,
+            parsed_json TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            dedup_verdict TEXT NOT NULL,
+            dedup_target_entry_id TEXT,
+            trace_id TEXT,
+            status TEXT NOT NULL,
+            recovery_kind TEXT,
+            recovery_apply_state_json TEXT,
+            expires_at_iso TEXT
+          )
+        ''')
+          ..execute(
+            'INSERT INTO ingest_drafts ('
+            'draft_id, owner_user_id, created_at_iso, source_kind, parsed_json, '
+            'confidence, dedup_verdict, status, recovery_kind, '
+            'recovery_apply_state_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+              'draft-1',
+              'owner-1',
+              '2026-07-11T00:00:00.000Z',
+              'csv',
+              '{}',
+              0.9,
+              'newTxn',
+              'pending',
+              'finalize_applied',
+              recoveryJson,
+            ],
+          )
+          ..execute('PRAGMA user_version = 37');
+      } finally {
+        legacy.close();
+      }
+
+      final db = AppDatabase(
+        DatabaseConnection(NativeDatabase(file, logStatements: false)),
+      );
+      addTearDown(db.close);
+
+      final row = await db
+          .customSelect(
+            'SELECT status, recovery_kind, recovery_apply_state_json, revision, '
+            'operation_token, invocation_started FROM ingest_drafts '
+            "WHERE draft_id = 'draft-1'",
+          )
+          .getSingle();
+      expect(row.read<String>('status'), 'pending');
+      expect(row.read<String>('recovery_kind'), 'finalize_applied');
+      expect(row.read<String>('recovery_apply_state_json'), recoveryJson);
+      expect(row.read<int>('revision'), 0);
+      expect(row.readNullable<String>('operation_token'), equals(null));
+      expect(row.read<int>('invocation_started'), 0);
+      final version = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(version.read<int>('user_version'), 38);
+    },
+  );
 }

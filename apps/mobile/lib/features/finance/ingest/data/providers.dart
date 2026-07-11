@@ -33,6 +33,8 @@ import 'ingest_planning_executor.dart';
 import 'ingest_privacy_gate.dart';
 import 'vision_ingest_client.dart';
 
+const ingestDatabaseUnavailableReason = '数据库尚未就绪，请稍后重试';
+
 /// Owner-scoped staging store. Null while the DB is mid-boot.
 final ingestDraftStoreProvider = Provider<IngestDraftStore?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
@@ -207,7 +209,7 @@ class IngestController {
 
   IngestResult _databaseUnavailable() => const IngestResult(
     drafts: <IngestDraft>[],
-    rejectedReason: '数据库尚未就绪，请稍后重试',
+    rejectedReason: ingestDatabaseUnavailableReason,
   );
 
   Future<IngestResult> _analyzeAndPersist({
@@ -300,17 +302,22 @@ class IngestController {
     IngestDraftStore store,
     String ownerUserId,
   ) async {
+    // Snapshot review work first. If a confirmation completes before the
+    // ledger read, the committed row is then visible in the later snapshot;
+    // reading in the opposite order could miss it from both sources.
+    final reviewDrafts = (await store.listPendingReviewItems())
+        .map((item) => item.draft)
+        .toList(growable: false);
     final repository = await _ref.read(journalEntryRepositoryProvider.future);
     final expenses = await repository.watchExpenses().first;
     final ledger = expenses
         .where((expense) => expense.sync.ownerUserId == ownerUserId)
         .map(expenseToTransactionInput)
         .toList(growable: false);
-    final pending = await store.listByStatus(DraftStatus.pending);
-    if (pending.isEmpty) return ledger;
+    if (reviewDrafts.isEmpty) return ledger;
     return <TransactionInput>[
       ...ledger,
-      for (final d in pending)
+      for (final d in reviewDrafts)
         if (d.ownerUserId == ownerUserId)
           TransactionInput(
             id: d.draftId,

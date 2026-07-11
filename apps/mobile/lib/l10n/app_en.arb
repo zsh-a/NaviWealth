@@ -1,4 +1,7 @@
 {
+  "commonSelectedCount": "{count} selected",
+  "@commonSelectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "rebalanceExecutionResumeInterruptedAction": "Resume interrupted work",
   "@@locale": "en",
   "appTitle": "NaviWealth",
   "@appTitle": {

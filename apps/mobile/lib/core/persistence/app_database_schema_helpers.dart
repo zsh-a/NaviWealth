@@ -415,9 +415,12 @@ Future<void> _createIngestTables(AppDatabase db) async {
     '  dedup_verdict         TEXT NOT NULL,' // newTxn/likelyDuplicate/duplicate
     '  dedup_target_entry_id TEXT,' //          matched journal_entries.id
     '  trace_id              TEXT,' //          AiTrace.requestId
-    '  status                TEXT NOT NULL,' // pending/confirmed/dismissed
-    '  recovery_kind         TEXT,' // finalize_applied
+    '  status                TEXT NOT NULL,' // pending/confirming/settled
+    '  recovery_kind         TEXT,' // finalize_applied/confirm_ambiguous
     '  recovery_apply_state_json TEXT,' // ProposalApplyState continuation
+    '  revision              INTEGER NOT NULL DEFAULT 0,'
+    '  operation_token       TEXT,'
+    '  invocation_started    INTEGER NOT NULL DEFAULT 0,'
     '  expires_at_iso        TEXT'
     ')',
   );

@@ -12,6 +12,7 @@ import 'dart:async';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -19,6 +20,9 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 import '../../../../core/ai/visual/visual.dart';
+import '../../../../core/shell/master_detail_layout.dart';
+import '../../../../core/shortcuts/keyboard_platform.dart';
+import '../../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../shared/ui/forms/forms.dart';
@@ -50,6 +54,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   _captureFeedbackSubscription;
   bool _captureFeedbackDrainScheduled = false;
   final Map<String, ConfirmedIngestItem> _pendingFinalize = {};
+  final List<String> _selectedIds = [];
+  final FocusNode _masterFocus = FocusNode(debugLabel: 'ingest review master');
+  String? _focusedId;
 
   bool get _isBusy => _busy != null || _captureInProgress;
 
@@ -71,6 +78,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   @override
   void dispose() {
     _captureFeedbackSubscription?.close();
+    _masterFocus.dispose();
     super.dispose();
   }
 
@@ -113,63 +121,251 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             selectedAccountId: _accountId,
             pendingFinalize: _pendingFinalize,
           );
+    if (viewData != null) _scheduleSelectionPrune(viewData.items);
+    final selectedItems = viewData?.items
+        .where((item) => _selectedIds.contains(item.draft.draftId))
+        .toList(growable: false);
 
+    final content =
+        MasterDetailLayout.shouldUseMasterDetail(
+              MediaQuery.sizeOf(context).width,
+            ) &&
+            viewData != null
+        ? _wideWorkspace(viewData, selectedItems ?? const [])
+        : AppTaskScaffold(
+            titleWidget: _title(l10n),
+            actionsBuilder: (context, wide) => wide
+                ? const <Widget>[]
+                : <Widget>[
+                    _CapturePopoverAction(
+                      enabled: !_isBusy,
+                      onCamera: _captureCamera,
+                      onFile: _pickFile,
+                      onPaste: _openPasteDialog,
+                    ),
+                  ],
+            compactLeadingSliversBuilder: viewData == null
+                ? null
+                : (_) => _compactControlSlivers(viewData),
+            primarySliversBuilder: (_) => _primarySlivers(
+              accountsAsync: accountsAsync,
+              reviewItemsAsync: reviewItemsAsync,
+              data: viewData,
+            ),
+            railBuilder: (_) => _rail(viewData),
+            footerBuilder: _footerBuilder(viewData, selectedItems),
+          );
     return DropTarget(
       onDragDone: _isBusy ? (_) {} : _onDrop,
-      child: AppTaskScaffold(
-        titleWidget: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AiSparkle(size: AppIconSizes.sm),
-            const SizedBox(width: AppSpacing.s6),
-            Flexible(
-              child: Text(
-                l10n.ingestReviewTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+      child: Focus(
+        focusNode: _masterFocus,
+        onKeyEvent: (_, event) => viewData == null
+            ? KeyEventResult.ignored
+            : _onMasterKey(viewData, event),
+        child: MasterDetailShortcuts(
+          onSelectNext: viewData == null ? null : () => _moveFocus(viewData, 1),
+          onSelectPrevious: viewData == null
+              ? null
+              : () => _moveFocus(viewData, -1),
+          child: content,
         ),
-        actionsBuilder: (context, wide) => wide
-            ? const <Widget>[]
-            : <Widget>[
-                _CapturePopoverAction(
-                  enabled: !_isBusy,
-                  onCamera: _captureCamera,
-                  onFile: _pickFile,
-                  onPaste: _openPasteDialog,
-                ),
-              ],
-        compactLeadingSliversBuilder: viewData == null
-            ? null
-            : (_) => _compactControlSlivers(viewData),
-        primarySliversBuilder: (_) => _primarySlivers(
-          accountsAsync: accountsAsync,
-          reviewItemsAsync: reviewItemsAsync,
-          data: viewData,
-        ),
-        railBuilder: (_) => _rail(viewData),
-        footerBuilder: viewData == null || viewData.freshCount == 0
-            ? null
-            : (_) => AppActionButton(
-                variant: FButtonVariant.primary,
-                onPress: _isBusy
-                    ? null
-                    : () => _confirmAllFresh(
-                        viewData.actionableDrafts,
-                        viewData.selectedAccountId,
-                      ),
-                child: Flexible(
-                  child: Text(
-                    l10n.ingestConfirmAllFresh(viewData.freshCount),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
       ),
     );
+  }
+
+  Widget _title(AppLocalizations l10n) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const AiSparkle(size: AppIconSizes.sm),
+      const SizedBox(width: AppSpacing.s6),
+      Flexible(
+        child: Text(
+          l10n.ingestReviewTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ],
+  );
+
+  WidgetBuilder? _footerBuilder(
+    _IngestReviewViewData? data,
+    List<IngestReviewItem>? selectedItems,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    if (selectedItems != null && selectedItems.isNotEmpty) {
+      return (_) => _IngestSelectionActions(
+        count: selectedItems.length,
+        busy: _isBusy,
+        canConfirm: selectedItems.any((item) => item.canBatchConfirm),
+        canDismiss: selectedItems.any((item) => item.canBatchDismiss),
+        canFinalize: selectedItems.any((item) => item.pendingFinalize != null),
+        onConfirm: () =>
+            _confirmSelected(selectedItems, data!.selectedAccountId),
+        onDismiss: () => _dismissSelected(selectedItems),
+        onFinalize: () => _finalizeSelected(selectedItems),
+      );
+    }
+    if (data == null || data.freshCount == 0) return null;
+    return (_) => AppActionButton(
+      variant: FButtonVariant.primary,
+      onPress: _isBusy
+          ? null
+          : () => _confirmAllFresh(data.items, data.selectedAccountId),
+      child: Flexible(
+        child: Text(
+          l10n.ingestConfirmAllFresh(data.freshCount),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  Widget _wideWorkspace(
+    _IngestReviewViewData data,
+    List<IngestReviewItem> selectedItems,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final focused = data.items
+        .where((item) => item.draft.draftId == _focusedId)
+        .firstOrNull;
+    final footer = _footerBuilder(data, selectedItems)?.call(context);
+    return AppPageScaffold(
+      titleWidget: _title(l10n),
+      actions: [
+        _CapturePopoverAction(
+          enabled: !_isBusy,
+          onCamera: _captureCamera,
+          onFile: _pickFile,
+          onPaste: _openPasteDialog,
+        ),
+      ],
+      child: Column(
+        children: [
+          Expanded(
+            child: MasterDetailLayout(
+              master: Column(
+                children: [
+                  if (data.items.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.s12),
+                      child: _accountPicker(data),
+                    ),
+                  Expanded(
+                    child: data.items.isEmpty
+                        ? const _EmptyState()
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.s12,
+                              0,
+                              AppSpacing.s12,
+                              AppSpacing.s12,
+                            ),
+                            itemCount: data.items.length,
+                            itemBuilder: (context, index) => Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.s8,
+                              ),
+                              child: _draftCard(data.items[index], data),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+              detail: focused == null
+                  ? MasterDetailEmpty(
+                      message: l10n.ingestReviewTitle,
+                      icon: FLucideIcons.listChecks,
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.all(AppSpacing.s24),
+                      children: [_draftCard(focused, data)],
+                    ),
+            ),
+          ),
+          if (footer != null)
+            AppFormActionBar(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+                child: footer,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _draftCard(IngestReviewItem item, _IngestReviewViewData data) {
+    final draft = item.draft;
+    final pending = item.pendingFinalize ?? _pendingFinalize[draft.draftId];
+    return _DraftCard(
+      draft: draft,
+      selected: _selectedIds.contains(draft.draftId),
+      selectable: !item.recoveryUnreadable,
+      focused: _focusedId == draft.draftId,
+      busy: _isBusy,
+      pendingFinalize: pending != null,
+      recoveryUnavailable: item.recoveryUnreadable,
+      onConfirm: () => _confirm(draft, data.selectedAccountId),
+      onSkip: () => _skip(draft),
+      onFinalize: pending == null ? null : () => _finalizeApplied(pending),
+      onSelectionChanged: (selected) =>
+          _toggleSelection(draft.draftId, selected),
+      onFocus: () => _focusItem(draft.draftId),
+    );
+  }
+
+  void _focusItem(String draftId) {
+    if (_isBusy) return;
+    setState(() => _focusedId = draftId);
+    _masterFocus.requestFocus();
+  }
+
+  void _moveFocus(_IngestReviewViewData data, int delta) {
+    if (_isBusy || isTextInputFocused() || data.items.isEmpty) return;
+    final current = data.items.indexWhere(
+      (item) => item.draft.draftId == _focusedId,
+    );
+    final next = current < 0
+        ? (delta > 0 ? 0 : data.items.length - 1)
+        : (current + delta).clamp(0, data.items.length - 1);
+    _focusItem(data.items[next].draft.draftId);
+  }
+
+  KeyEventResult _onMasterKey(_IngestReviewViewData data, KeyEvent event) {
+    if (!_masterFocus.hasPrimaryFocus || _isBusy || isTextInputFocused()) {
+      return KeyEventResult.ignored;
+    }
+    if (event is KeyRepeatEvent) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      _moveFocus(data, 1);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      _moveFocus(data, -1);
+      return KeyEventResult.handled;
+    }
+    final focused = data.items
+        .where((item) => item.draft.draftId == _focusedId)
+        .firstOrNull;
+    if (focused == null) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.space) {
+      if (!focused.recoveryUnreadable) {
+        _toggleSelection(
+          focused.draft.draftId,
+          !_selectedIds.contains(focused.draft.draftId),
+        );
+      }
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      _focusItem(focused.draft.draftId);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   Future<void> _captureCamera() async {
@@ -278,6 +474,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
               ),
               child: _DraftCard(
                 draft: draft,
+                selected: _selectedIds.contains(draft.draftId),
+                selectable: !item.recoveryUnreadable,
+                focused: _focusedId == draft.draftId,
                 busy: _isBusy,
                 pendingFinalize: pending != null,
                 recoveryUnavailable: item.recoveryUnreadable,
@@ -286,12 +485,137 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 onFinalize: pending == null
                     ? null
                     : () => _finalizeApplied(pending),
+                onSelectionChanged: (selected) =>
+                    _toggleSelection(draft.draftId, selected),
+                onFocus: () => _focusItem(draft.draftId),
               ),
             );
           },
         ),
       ),
     ];
+  }
+
+  void _toggleSelection(String draftId, bool selected) {
+    if (_isBusy) return;
+    setState(() {
+      _selectedIds.remove(draftId);
+      if (selected) _selectedIds.add(draftId);
+    });
+  }
+
+  void _scheduleSelectionPrune(List<IngestReviewItem> items) {
+    final ids = items.map((item) => item.draft.draftId).toSet();
+    if (_selectedIds.every(ids.contains) &&
+        (_focusedId == null || ids.contains(_focusedId))) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _selectedIds.retainWhere(ids.contains);
+        if (!ids.contains(_focusedId)) _focusedId = null;
+      });
+    });
+  }
+
+  Future<void> _confirmSelected(
+    List<IngestReviewItem> items,
+    String? accountId,
+  ) async {
+    await _confirmAllFresh(items, accountId);
+  }
+
+  Future<void> _dismissSelected(List<IngestReviewItem> items) async {
+    if (_isBusy) return;
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.confirmingBatch,
+        title: l10n.ingestRecordingTitle,
+        message: l10n.ingestRecordingBody,
+        icon: FLucideIcons.archive,
+      ),
+    );
+    try {
+      final service = await ref.read(ingestConfirmServiceProvider.future);
+      if (service == null) return;
+      final result = await service.dismissSelected(items);
+      final dismissed = result.succeeded.map((item) => item.draft).toList();
+      if (!mounted) return;
+      setState(() {
+        final succeeded = dismissed.map((draft) => draft.draftId).toSet();
+        _selectedIds.removeWhere(succeeded.contains);
+      });
+      AppMessenger.show(
+        context,
+        result.failures.isEmpty ? ToastKind.success : ToastKind.warning,
+        result.failures.isEmpty
+            ? l10n.ingestSkipped
+            : l10n.ingestRecordedPartial(
+                result.succeeded.length,
+                result.failures.length,
+              ),
+        actionLabel: dismissed.isEmpty ? null : l10n.commonUndo,
+        onAction: dismissed.isEmpty
+            ? null
+            : () => unawaited(_restoreSelected(service, dismissed)),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _restoreSelected(
+    IngestConfirmService service,
+    List<IngestDraft> drafts,
+  ) async {
+    final result = await service.restoreSelected(drafts);
+    if (!mounted) return;
+    AppMessenger.show(
+      context,
+      result.failures.isEmpty ? ToastKind.success : ToastKind.warning,
+      result.failures.isEmpty
+          ? AppLocalizations.of(context).ingestRestored
+          : AppLocalizations.of(context).ingestUndoFailed,
+    );
+  }
+
+  Future<void> _finalizeSelected(List<IngestReviewItem> items) async {
+    if (_isBusy) return;
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.confirmingBatch,
+        title: l10n.ingestRecordingTitle,
+        message: l10n.ingestRecordingBody,
+        icon: FLucideIcons.badgeCheck,
+      ),
+    );
+    try {
+      final service = await ref.read(ingestConfirmServiceProvider.future);
+      if (service == null) return;
+      final result = await service.finalizeSelected(items);
+      if (!mounted) return;
+      setState(() {
+        final succeeded = result.succeeded
+            .map((item) => item.draft.draftId)
+            .toSet();
+        _selectedIds.removeWhere(succeeded.contains);
+        for (final id in succeeded) {
+          _pendingFinalize.remove(id);
+        }
+      });
+      AppMessenger.show(
+        context,
+        result.failures.isEmpty ? ToastKind.success : ToastKind.warning,
+        result.failures.isEmpty
+            ? l10n.ingestRecorded
+            : l10n.ingestRecordNeedsReview,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
   }
 
   Widget _stateSliver(String message) => SliverFillRemaining(
@@ -416,6 +740,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           ToastKind.warning,
           l10n.ingestRecordNeedsReview,
         );
+      } else if (error.code == IngestConfirmError.manualRecoveryRequired ||
+          error.code == IngestConfirmError.lifecycleConflict) {
+        AppMessenger.show(
+          context,
+          ToastKind.warning,
+          l10n.ingestRecordNeedsReview,
+        );
       } else {
         _showRetry(l10n.ingestRecordFailed, () => _confirm(draft, accountId));
       }
@@ -446,14 +777,14 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         }
         return;
       }
-      await svc.dismiss(draft);
+      final dismissed = await svc.dismiss(draft);
       if (mounted) {
         AppMessenger.show(
           context,
           ToastKind.success,
           l10n.ingestSkipped,
           actionLabel: l10n.commonUndo,
-          onAction: () => unawaited(_restoreDismissed(svc, draft)),
+          onAction: () => unawaited(_restoreDismissed(svc, dismissed)),
         );
       }
     } catch (_) {
@@ -466,7 +797,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Future<void> _confirmAllFresh(
-    List<IngestDraft> drafts,
+    List<IngestReviewItem> items,
     String? accountId,
   ) async {
     final l10n = AppLocalizations.of(context);
@@ -492,13 +823,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         if (mounted) {
           _showRetry(
             l10n.ingestServiceNotReady,
-            () => _confirmAllFresh(drafts, accountId),
+            () => _confirmAllFresh(items, accountId),
           );
         }
         return;
       }
       final result = await svc.confirmAllFresh(
-        drafts,
+        items,
         fromAccountId: accountId,
         onProgress: (completed, total) {
           if (!mounted) return;
@@ -513,6 +844,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         },
       );
       if (mounted) {
+        final confirmedIds = result.confirmed
+            .map((item) => item.draft.draftId)
+            .toSet();
+        setState(() => _selectedIds.removeWhere(confirmedIds.contains));
         final unresolved = <ConfirmedIngestItem>[
           for (final failure in result.failures)
             if (failure.error.recovery == IngestRecovery.finalizeApplied &&
@@ -545,7 +880,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       if (mounted) {
         _showRetry(
           l10n.ingestRecordFailed,
-          () => _confirmAllFresh(drafts, accountId),
+          () => _confirmAllFresh(items, accountId),
         );
       }
     } finally {
@@ -655,8 +990,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       final result = await ref.read(ingestControllerProvider).ingest(source);
       if (!mounted) return;
       if (result.isRejected) {
+        final rejection = result.rejectedReason!;
         _showCaptureParseFailure(
-          result.rejectedReason!,
+          rejection == ingestDatabaseUnavailableReason
+              ? l10n.ingestParseFailed
+              : rejection,
           retry: retry,
           retryLabel: retryLabel,
         );
@@ -959,7 +1297,7 @@ class _IngestReviewViewData {
     final actionableDrafts = items
         .where(
           (item) =>
-              !item.blocksApply &&
+              item.isOrdinaryPending &&
               !pendingFinalize.containsKey(item.draft.draftId),
         )
         .map((item) => item.draft)
@@ -980,6 +1318,72 @@ class _IngestReviewViewData {
   final String? selectedAccountId;
   final List<IngestDraft> actionableDrafts;
   final int freshCount;
+}
+
+class _IngestSelectionActions extends StatelessWidget {
+  const _IngestSelectionActions({
+    required this.count,
+    required this.busy,
+    required this.canConfirm,
+    required this.canDismiss,
+    required this.canFinalize,
+    required this.onConfirm,
+    required this.onDismiss,
+    required this.onFinalize,
+  });
+
+  final int count;
+  final bool busy;
+  final bool canConfirm;
+  final bool canDismiss;
+  final bool canFinalize;
+  final VoidCallback onConfirm;
+  final VoidCallback onDismiss;
+  final VoidCallback onFinalize;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Text(l10n.commonSelectedCount(count), style: context.labelStyle),
+        const SizedBox(width: AppSpacing.s12),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                if (canConfirm)
+                  AppActionButton(
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: busy ? null : onConfirm,
+                    child: Text(l10n.ingestConfirm),
+                  ),
+                if (canDismiss) ...[
+                  const SizedBox(width: AppSpacing.s8),
+                  AppActionButton(
+                    variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: busy ? null : onDismiss,
+                    child: Text(l10n.ingestSkip),
+                  ),
+                ],
+                if (canFinalize) ...[
+                  const SizedBox(width: AppSpacing.s8),
+                  AppActionButton(
+                    variant: FButtonVariant.primary,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: busy ? null : onFinalize,
+                    child: Text(l10n.ingestResolveAction),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _CapturePopoverAction extends StatefulWidget {

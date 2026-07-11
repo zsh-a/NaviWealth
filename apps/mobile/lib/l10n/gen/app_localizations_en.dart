@@ -9,6 +9,15 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String commonSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get rebalanceExecutionResumeInterruptedAction =>
+      'Resume interrupted work';
+
+  @override
   String get appTitle => 'NaviWealth';
 
   @override

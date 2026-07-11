@@ -98,6 +98,18 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @commonSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String commonSelectedCount(int count);
+
+  /// No description provided for @rebalanceExecutionResumeInterruptedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume interrupted work'**
+  String get rebalanceExecutionResumeInterruptedAction;
+
   /// Application name shown in title bar and launchers
   ///
   /// In en, this message translates to:

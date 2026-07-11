@@ -60,20 +60,22 @@ class _FakeApplier implements ProposalApplier {
 
 class _FakeLifecycleStore implements IngestDraftLifecycleStore {
   final List<(String, DraftStatus)> updates = [];
-  final List<ConfirmedIngestItem> recoveryItems = [];
   bool Function(String draftId, DraftStatus status)? shouldThrow;
+  int _revision = 0;
 
   @override
-  Future<void> markNeedsFinalize(ConfirmedIngestItem item) async {
-    recoveryItems.add(item);
-  }
-
-  @override
-  Future<void> updateStatus(String draftId, DraftStatus status) async {
-    updates.add((draftId, status));
-    if (shouldThrow?.call(draftId, status) ?? false) {
+  Future<IngestLifecycleMutationResult> transition(
+    IngestLifecycleTransition transition,
+  ) async {
+    updates.add((transition.draftId, transition.nextStatus));
+    if (shouldThrow?.call(transition.draftId, transition.nextStatus) ?? false) {
       throw StateError('store unavailable');
     }
+    _revision++;
+    return IngestLifecycleMutationResult(
+      IngestLifecycleMutationOutcome.applied,
+      revision: _revision,
+    );
   }
 }
 
@@ -155,11 +157,14 @@ void main() {
       expect(identical(result.applyState, state), isTrue);
       expect(result.entityId, 'entry-1');
       expect(store.updates, <(String, DraftStatus)>[
+        ('d1', DraftStatus.confirming),
+        ('d1', DraftStatus.confirming),
+        ('d1', DraftStatus.pending),
         ('d1', DraftStatus.confirmed),
       ]);
     });
 
-    test('normalizes apply failures and leaves the draft pending', () async {
+    test('normalizes apply failures into manual recovery', () async {
       final applier = _FakeApplier(
         onApply: (_) => throw StateError('database internals'),
       );
@@ -173,19 +178,19 @@ void main() {
               .having(
                 (error) => error.code,
                 'code',
-                IngestConfirmError.applyFailed,
+                IngestConfirmError.manualRecoveryRequired,
               )
               .having(
                 (error) => error.message,
                 'message',
-                'Could not record this entry.',
+                'Recording may have started. Review it manually before retrying.',
               ),
         ),
       );
-      expect(store.updates, isEmpty);
+      expect(store.updates.last, ('d1', DraftStatus.pending));
     });
 
-    test('undoes an applied entry when marking confirmed fails', () async {
+    test('never compensates or reapplies after invocation has begun', () async {
       final state = _applied('entry-1');
       final applier = _FakeApplier(onApply: (_) async => state);
       final store = _FakeLifecycleStore()
@@ -204,41 +209,40 @@ void main() {
               .having(
                 (error) => error.recovery,
                 'recovery',
-                IngestRecovery.retryOperation,
+                IngestRecovery.finalizeApplied,
               ),
         ),
       );
-      expect(applier.undoneStates, <ProposalApplyState>[state]);
+      expect(applier.undoneStates, isEmpty);
     });
 
-    test('reports when status-write compensation also fails', () async {
-      final state = _applied('entry-1');
-      final applier = _FakeApplier(
-        onApply: (_) async => state,
-        onUndo: (_) => throw StateError('undo unavailable'),
-      );
-      final store = _FakeLifecycleStore()
-        ..shouldThrow = (_, status) => status == DraftStatus.confirmed;
-      final service = IngestConfirmService(applier: applier, store: store);
+    test(
+      'returns a finalize-only continuation when finalization fails',
+      () async {
+        final state = _applied('entry-1');
+        final applier = _FakeApplier(onApply: (_) async => state);
+        final store = _FakeLifecycleStore()
+          ..shouldThrow = (_, status) => status == DraftStatus.confirmed;
+        final service = IngestConfirmService(applier: applier, store: store);
 
-      final error = await service
-          .confirm(_draft(), fromAccountId: 'acct-cash')
-          .then<IngestConfirmException>(
-            (_) => throw StateError('confirmation should fail'),
-            onError: (Object error, StackTrace _) =>
-                error as IngestConfirmException,
-          );
+        final error = await service
+            .confirm(_draft(), fromAccountId: 'acct-cash')
+            .then<IngestConfirmException>(
+              (_) => throw StateError('confirmation should fail'),
+              onError: (Object error, StackTrace _) =>
+                  error as IngestConfirmException,
+            );
 
-      expect(error.recovery, IngestRecovery.finalizeApplied);
-      expect(error.item?.applyState, same(state));
-      expect(store.recoveryItems.single.applyState, same(state));
-      expect(applier.appliedPlans, hasLength(1));
+        expect(error.recovery, IngestRecovery.finalizeApplied);
+        expect(error.item?.applyState, same(state));
+        expect(applier.appliedPlans, hasLength(1));
 
-      store.shouldThrow = null;
-      await service.finalizeApplied(error.item!);
-      expect(applier.appliedPlans, hasLength(1));
-      expect(store.updates.last, ('d1', DraftStatus.confirmed));
-    });
+        store.shouldThrow = null;
+        await service.finalizeApplied(error.item!);
+        expect(applier.appliedPlans, hasLength(1));
+        expect(store.updates.last, ('d1', DraftStatus.confirmed));
+      },
+    );
 
     test('dismiss and restore own the draft status transitions', () async {
       final store = _FakeLifecycleStore();
@@ -271,12 +275,16 @@ void main() {
       final progress = <(int, int)>[];
 
       final result = await service.confirmAllFresh(
-        [
-          _draft(id: 'good-1'),
-          _draft(id: 'duplicate', verdict: DedupVerdict.duplicate),
-          _draft(id: 'bad'),
-          _draft(id: 'settled', status: DraftStatus.dismissed),
-          _draft(id: 'good-2'),
+        <IngestReviewItem>[
+          IngestReviewItem(draft: _draft(id: 'good-1')),
+          IngestReviewItem(
+            draft: _draft(id: 'duplicate', verdict: DedupVerdict.duplicate),
+          ),
+          IngestReviewItem(draft: _draft(id: 'bad')),
+          IngestReviewItem(
+            draft: _draft(id: 'settled', status: DraftStatus.dismissed),
+          ),
+          IngestReviewItem(draft: _draft(id: 'good-2')),
         ],
         fromAccountId: 'acct-cash',
         onProgress: (completed, total) => progress.add((completed, total)),
@@ -289,6 +297,119 @@ void main() {
       expect(result.failures.single.item.draftId, 'bad');
       expect(result.completed, 3);
       expect(progress, [(1, 3), (2, 3), (3, 3)]);
+    });
+
+    test('raw lifecycle failure does not abort later batch items', () async {
+      final applier = _FakeApplier(
+        onApply: (plan) async => _applied('entry-${plan.proposalId}'),
+      );
+      final store = _FakeLifecycleStore()
+        ..shouldThrow = (id, status) =>
+            id == 'bad' && status == DraftStatus.confirming;
+      final service = IngestConfirmService(applier: applier, store: store);
+      final progress = <(int, int)>[];
+
+      final result = await service.confirmAllFresh(
+        [
+          IngestReviewItem(draft: _draft(id: 'bad')),
+          IngestReviewItem(draft: _draft(id: 'good')),
+        ],
+        fromAccountId: 'acct-cash',
+        onProgress: (completed, total) => progress.add((completed, total)),
+      );
+
+      expect(result.failures.single.item.draftId, 'bad');
+      expect(result.confirmed.single.draft.draftId, 'good');
+      expect(applier.appliedPlans.single.proposalId, 'good');
+      expect(progress, [(1, 2), (2, 2)]);
+    });
+
+    test(
+      'raw invocation-marker failure releases and continues the batch',
+      () async {
+        var badConfirmingWrites = 0;
+        final applier = _FakeApplier(
+          onApply: (plan) async => _applied('entry-${plan.proposalId}'),
+        );
+        final store = _FakeLifecycleStore()
+          ..shouldThrow = (id, status) {
+            if (id != 'bad' || status != DraftStatus.confirming) return false;
+            badConfirmingWrites += 1;
+            return badConfirmingWrites == 2;
+          };
+        final service = IngestConfirmService(applier: applier, store: store);
+
+        final result = await service.confirmAllFresh([
+          IngestReviewItem(draft: _draft(id: 'bad')),
+          IngestReviewItem(draft: _draft(id: 'good')),
+        ], fromAccountId: 'acct-cash');
+
+        expect(result.failures.single.item.draftId, 'bad');
+        expect(
+          result.failures.single.error.code,
+          IngestConfirmError.lifecycleWriteFailed,
+        );
+        expect(result.confirmed.single.draft.draftId, 'good');
+        expect(applier.appliedPlans.single.proposalId, 'good');
+        expect(
+          store.updates.where((update) => update.$1 == 'bad').map((e) => e.$2),
+          [DraftStatus.confirming, DraftStatus.confirming, DraftStatus.pending],
+        );
+      },
+    );
+
+    test('batch dismiss returns exact per-id partial outcomes', () async {
+      final store = _FakeLifecycleStore()
+        ..shouldThrow = (id, status) =>
+            id == 'bad' && status == DraftStatus.dismissed;
+      final service = IngestConfirmService(
+        applier: _FakeApplier(onApply: (_) async => _applied('unused')),
+        store: store,
+      );
+
+      final result = await service.dismissSelected([
+        IngestReviewItem(draft: _draft(id: 'good')),
+        IngestReviewItem(draft: _draft(id: 'bad')),
+        IngestReviewItem(
+          draft: _draft(id: 'recovery'),
+          recoveryUnreadable: true,
+        ),
+      ]);
+
+      expect(result.succeeded.map((item) => item.draft.draftId), ['good']);
+      expect(result.failures.map((failure) => failure.item.draft.draftId), [
+        'bad',
+      ]);
+      expect(store.updates.map((update) => update.$1), ['good', 'bad']);
+    });
+
+    test('batch finalize attempts only typed finalize continuations', () async {
+      final state = _applied('entry');
+      final store = _FakeLifecycleStore()
+        ..shouldThrow = (id, status) =>
+            id == 'bad' && status == DraftStatus.confirmed;
+      final service = IngestConfirmService(
+        applier: _FakeApplier(onApply: (_) async => state),
+        store: store,
+      );
+      IngestReviewItem pending(String id) {
+        final draft = _draft(id: id);
+        return IngestReviewItem(
+          draft: draft,
+          pendingFinalize: ConfirmedIngestItem(draft: draft, applyState: state),
+        );
+      }
+
+      final result = await service.finalizeSelected([
+        pending('good'),
+        pending('bad'),
+        IngestReviewItem(draft: _draft(id: 'ordinary')),
+      ]);
+
+      expect(result.succeeded.map((item) => item.draft.draftId), ['good']);
+      expect(result.failures.map((failure) => failure.item.draft.draftId), [
+        'bad',
+      ]);
     });
 
     test('batch undo continues after an item failure', () async {

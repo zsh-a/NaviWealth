@@ -10,12 +10,12 @@ import '../../../../core/persistence/test_database.dart';
 
 void main() {
   test(
-    'fresh database creates v37 local execution tables and indexes',
+    'fresh database creates v38 local execution tables and indexes',
     () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
 
-      expect(db.schemaVersion, 37);
+      expect(db.schemaVersion, 38);
       final tables = await db.customSelect('''
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name LIKE 'rebalance_execution_%'
@@ -65,7 +65,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 37);
+    expect(version.read<int>('user_version'), 38);
     final tables = await db.customSelect('''
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name IN (

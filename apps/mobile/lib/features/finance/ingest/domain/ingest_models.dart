@@ -54,7 +54,7 @@ extension DedupVerdictX on DedupVerdict {
 }
 
 /// Lifecycle of a single draft row.
-enum DraftStatus { pending, confirmed, dismissed }
+enum DraftStatus { pending, confirming, confirmed, dismissed }
 
 extension DraftStatusX on DraftStatus {
   String get wire => name;
@@ -152,6 +152,7 @@ class IngestDraft {
     this.dedupTargetEntryId,
     this.traceId,
     this.expiresAt,
+    this.revision = 0,
   });
 
   final String draftId;
@@ -165,10 +166,11 @@ class IngestDraft {
   final String? dedupTargetEntryId;
   final String? traceId;
   final DateTime? expiresAt;
+  final int revision;
 
   double get confidence => parsed.confidence;
 
-  IngestDraft copyWith({DraftStatus? status}) => IngestDraft(
+  IngestDraft copyWith({DraftStatus? status, int? revision}) => IngestDraft(
     draftId: draftId,
     ownerUserId: ownerUserId,
     createdAt: createdAt,
@@ -180,6 +182,7 @@ class IngestDraft {
     dedupTargetEntryId: dedupTargetEntryId,
     traceId: traceId,
     expiresAt: expiresAt,
+    revision: revision ?? this.revision,
   );
 }
 

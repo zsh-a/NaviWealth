@@ -6,11 +6,12 @@
 /// audited write path (repository → Drift → OpLog → AiTouch) instead of
 /// inventing a parallel one, and the AI is never the final writer —
 /// the user's tap is (§5.10.6). Only after the apply succeeds is the
-/// draft marked `confirmed`; a failed apply leaves it `pending` so the
-/// user can retry or edit.
+/// draft marked `confirmed`. Pre-invocation failures release the draft;
+/// post-invocation ambiguity is fail-closed for manual recovery.
 library;
 
 import 'package:decimal/decimal.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/ai/composition/proposal_applier.dart';
 import '../../../../core/ai/composition/proposal_apply_state.dart';
@@ -43,14 +44,55 @@ enum IngestConfirmError {
   undoFailed,
   dismissFailed,
   restoreFailed,
+  lifecycleConflict,
+  manualRecoveryRequired,
 }
 
 enum IngestRecovery { retryOperation, finalizeApplied, restoreDraft }
 
 abstract interface class IngestDraftLifecycleStore {
-  Future<void> updateStatus(String draftId, DraftStatus status);
+  Future<IngestLifecycleMutationResult> transition(
+    IngestLifecycleTransition transition,
+  );
+}
 
-  Future<void> markNeedsFinalize(ConfirmedIngestItem item);
+enum IngestLifecycleMutationOutcome { applied, conflict, notFound }
+
+class IngestLifecycleMutationResult {
+  const IngestLifecycleMutationResult(this.outcome, {this.revision});
+
+  final IngestLifecycleMutationOutcome outcome;
+  final int? revision;
+}
+
+class IngestLifecycleTransition {
+  const IngestLifecycleTransition({
+    required this.ownerUserId,
+    required this.draftId,
+    required this.expectedStatus,
+    required this.expectedRevision,
+    required this.nextStatus,
+    this.expectedRecoveryKind,
+    this.expectedOperationToken,
+    this.expectedInvocationStarted = false,
+    this.nextRecoveryKind,
+    this.nextRecoveryApplyState,
+    this.nextOperationToken,
+    this.nextInvocationStarted = false,
+  });
+
+  final String ownerUserId;
+  final String draftId;
+  final DraftStatus expectedStatus;
+  final int expectedRevision;
+  final String? expectedRecoveryKind;
+  final String? expectedOperationToken;
+  final bool expectedInvocationStarted;
+  final DraftStatus nextStatus;
+  final String? nextRecoveryKind;
+  final ProposalApplyState? nextRecoveryApplyState;
+  final String? nextOperationToken;
+  final bool nextInvocationStarted;
 }
 
 class ConfirmedIngestItem {
@@ -74,6 +116,16 @@ class IngestReviewItem {
   final bool recoveryUnreadable;
 
   bool get blocksApply => pendingFinalize != null || recoveryUnreadable;
+
+  bool get isOrdinaryPending =>
+      draft.status == DraftStatus.pending &&
+      pendingFinalize == null &&
+      !recoveryUnreadable;
+
+  bool get canBatchConfirm =>
+      isOrdinaryPending && draft.verdict == DedupVerdict.newTxn;
+
+  bool get canBatchDismiss => isOrdinaryPending;
 }
 
 class IngestBatchItemFailure<T> {
@@ -104,17 +156,32 @@ class IngestBatchUndoResult {
   int get completed => restored.length + failures.length;
 }
 
+class IngestBatchMutationResult<T> {
+  const IngestBatchMutationResult({
+    required this.succeeded,
+    required this.failures,
+  });
+
+  final List<T> succeeded;
+  final List<IngestBatchItemFailure<T>> failures;
+}
+
 typedef IngestProgressCallback = void Function(int completed, int total);
 
 class IngestConfirmService {
-  IngestConfirmService({required this.applier, required this.store});
+  IngestConfirmService({
+    required this.applier,
+    required this.store,
+    Uuid uuid = const Uuid(),
+  }) : _uuid = uuid;
 
   final ProposalApplier applier;
   final IngestDraftLifecycleStore store;
+  final Uuid _uuid;
 
   /// Apply [draft] as an expense paid from [fromAccountId]. Returns the
-  /// applied state. Throws [IngestConfirmException] on failure
-  /// (the draft stays pending).
+  /// applied state. Failures before invocation release the reservation;
+  /// failures after invocation starts require explicit manual recovery.
   Future<ConfirmedIngestItem> confirm(
     IngestDraft draft, {
     required String fromAccountId,
@@ -126,63 +193,138 @@ class IngestConfirmService {
       );
     }
     final plan = expensePlanFor(draft, fromAccountId: fromAccountId);
+    final token = _uuid.v4();
+    late int revision;
+    try {
+      revision = await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: draft.revision,
+          nextStatus: DraftStatus.confirming,
+          nextOperationToken: token,
+        ),
+      );
+    } on IngestConfirmException {
+      rethrow;
+    } catch (_) {
+      throw const IngestConfirmException(
+        IngestConfirmError.lifecycleWriteFailed,
+        'Could not reserve this review item for recording.',
+      );
+    }
+
+    try {
+      revision = await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.confirming,
+          expectedRevision: revision,
+          expectedOperationToken: token,
+          nextStatus: DraftStatus.confirming,
+          nextOperationToken: token,
+          nextInvocationStarted: true,
+        ),
+      );
+    } on IngestConfirmException {
+      await _releaseBeforeInvocation(draft, token, revision);
+      rethrow;
+    } catch (_) {
+      await _releaseBeforeInvocation(draft, token, revision);
+      throw const IngestConfirmException(
+        IngestConfirmError.lifecycleWriteFailed,
+        'Could not start recording this review item.',
+      );
+    }
 
     final ProposalApplyState state;
     try {
       state = await applier.apply(plan);
     } on ProposalApplyException {
+      await _markInvocationAmbiguous(draft, token, revision);
       throw const IngestConfirmException(
-        IngestConfirmError.applyFailed,
-        'Could not record this entry.',
+        IngestConfirmError.manualRecoveryRequired,
+        'Recording may have started. Review it manually before retrying.',
       );
     } catch (_) {
+      await _markInvocationAmbiguous(draft, token, revision);
       throw const IngestConfirmException(
-        IngestConfirmError.applyFailed,
-        'Could not record this entry.',
+        IngestConfirmError.manualRecoveryRequired,
+        'Recording may have started. Review it manually before retrying.',
       );
     }
     if (state.status != ProposalApplyStatus.applied ||
         state.appliedEntityId == null) {
+      await _markInvocationAmbiguous(draft, token, revision);
       throw const IngestConfirmException(
-        IngestConfirmError.applyFailed,
-        'Could not record this entry.',
+        IngestConfirmError.manualRecoveryRequired,
+        'Recording returned an uncertain result. Review it manually.',
       );
     }
 
+    var item = ConfirmedIngestItem(draft: draft, applyState: state);
     try {
-      await store.updateStatus(draft.draftId, DraftStatus.confirmed);
+      revision = await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.confirming,
+          expectedRevision: revision,
+          expectedOperationToken: token,
+          expectedInvocationStarted: true,
+          nextStatus: DraftStatus.pending,
+          nextRecoveryKind: 'finalize_applied',
+          nextRecoveryApplyState: state,
+        ),
+      );
+      item = ConfirmedIngestItem(
+        draft: draft.copyWith(revision: revision),
+        applyState: state,
+      );
+      revision = await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: revision,
+          expectedRecoveryKind: 'finalize_applied',
+          nextStatus: DraftStatus.confirmed,
+        ),
+      );
+      item = ConfirmedIngestItem(
+        draft: draft.copyWith(
+          status: DraftStatus.confirmed,
+          revision: revision,
+        ),
+        applyState: state,
+      );
     } catch (_) {
-      final item = ConfirmedIngestItem(draft: draft, applyState: state);
-      try {
-        await applier.undo(state);
-      } catch (_) {
-        try {
-          await store.markNeedsFinalize(item);
-        } catch (_) {
-          // Keep the typed continuation in memory even if persistence is
-          // temporarily unavailable. The UI blocks re-apply for this page
-          // lifetime and offers the same finalize-only recovery action.
-        }
-        throw IngestConfirmException(
-          IngestConfirmError.lifecycleWriteFailed,
-          'The entry was recorded but its review state was not finalized.',
-          recovery: IngestRecovery.finalizeApplied,
-          item: item,
-        );
-      }
-      throw const IngestConfirmException(
+      throw IngestConfirmException(
         IngestConfirmError.lifecycleWriteFailed,
-        'The entry could not be finalized.',
+        'The entry was recorded but its review state was not finalized.',
+        recovery: IngestRecovery.finalizeApplied,
+        item: item,
       );
     }
-    return ConfirmedIngestItem(draft: draft, applyState: state);
+    return item;
   }
 
   /// Finalize only the draft lifecycle after an applied write could not be
   /// compensated. This continuation never re-applies the ledger write.
   Future<void> finalizeApplied(ConfirmedIngestItem item) async {
     try {
-      await store.updateStatus(item.draft.draftId, DraftStatus.confirmed);
+      await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: item.draft.ownerUserId,
+          draftId: item.draft.draftId,
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: item.draft.revision,
+          expectedRecoveryKind: 'finalize_applied',
+          nextStatus: DraftStatus.confirmed,
+        ),
+      );
     } catch (_) {
       throw IngestConfirmException(
         IngestConfirmError.lifecycleWriteFailed,
@@ -194,9 +336,18 @@ class IngestConfirmService {
   }
 
   /// Drop [draft] from the queue without writing anything.
-  Future<void> dismiss(IngestDraft draft) async {
+  Future<IngestDraft> dismiss(IngestDraft draft) async {
     try {
-      await store.updateStatus(draft.draftId, DraftStatus.dismissed);
+      final revision = await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: draft.revision,
+          nextStatus: DraftStatus.dismissed,
+        ),
+      );
+      return draft.copyWith(status: DraftStatus.dismissed, revision: revision);
     } catch (_) {
       throw const IngestConfirmException(
         IngestConfirmError.dismissFailed,
@@ -206,9 +357,18 @@ class IngestConfirmService {
   }
 
   /// Put a dismissed draft back in the review queue.
-  Future<void> restore(IngestDraft draft) async {
+  Future<IngestDraft> restore(IngestDraft draft) async {
     try {
-      await store.updateStatus(draft.draftId, DraftStatus.pending);
+      final revision = await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.dismissed,
+          expectedRevision: draft.revision,
+          nextStatus: DraftStatus.pending,
+        ),
+      );
+      return draft.copyWith(status: DraftStatus.pending, revision: revision);
     } catch (_) {
       throw const IngestConfirmException(
         IngestConfirmError.restoreFailed,
@@ -234,7 +394,15 @@ class IngestConfirmService {
   /// this continuation only restores the draft; it never invokes undo twice.
   Future<void> resumeUndo(ConfirmedIngestItem item) async {
     try {
-      await store.updateStatus(item.draft.draftId, DraftStatus.pending);
+      await _requireApplied(
+        IngestLifecycleTransition(
+          ownerUserId: item.draft.ownerUserId,
+          draftId: item.draft.draftId,
+          expectedStatus: DraftStatus.confirmed,
+          expectedRevision: item.draft.revision,
+          nextStatus: DraftStatus.pending,
+        ),
+      );
     } catch (_) {
       throw IngestConfirmException(
         IngestConfirmError.restoreFailed,
@@ -245,11 +413,68 @@ class IngestConfirmService {
     }
   }
 
+  Future<int> _requireApplied(IngestLifecycleTransition transition) async {
+    final result = await store.transition(transition);
+    if (result.outcome == IngestLifecycleMutationOutcome.applied) {
+      return result.revision!;
+    }
+    throw IngestConfirmException(
+      IngestConfirmError.lifecycleConflict,
+      result.outcome == IngestLifecycleMutationOutcome.notFound
+          ? 'This review item is no longer available.'
+          : 'This review item changed. Refresh before continuing.',
+    );
+  }
+
+  Future<void> _releaseBeforeInvocation(
+    IngestDraft draft,
+    String token,
+    int revision,
+  ) async {
+    try {
+      await store.transition(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.confirming,
+          expectedRevision: revision,
+          expectedOperationToken: token,
+          nextStatus: DraftStatus.pending,
+        ),
+      );
+    } catch (_) {
+      // A failed release leaves the draft in the fail-closed confirming state.
+    }
+  }
+
+  Future<void> _markInvocationAmbiguous(
+    IngestDraft draft,
+    String token,
+    int revision,
+  ) async {
+    try {
+      await store.transition(
+        IngestLifecycleTransition(
+          ownerUserId: draft.ownerUserId,
+          draftId: draft.draftId,
+          expectedStatus: DraftStatus.confirming,
+          expectedRevision: revision,
+          expectedOperationToken: token,
+          expectedInvocationStarted: true,
+          nextStatus: DraftStatus.pending,
+          nextRecoveryKind: 'confirm_ambiguous',
+        ),
+      );
+    } catch (_) {
+      // A failed marker write keeps the confirming reservation fail-closed.
+    }
+  }
+
   /// Confirm every still-pending, non-duplicate draft. Duplicates are
   /// left for the user to decide on explicitly. Every eligible draft is
   /// attempted, so one malformed item never blocks the rest of the batch.
   Future<IngestBatchConfirmResult> confirmAllFresh(
-    List<IngestDraft> drafts, {
+    List<IngestReviewItem> items, {
     required String fromAccountId,
     IngestProgressCallback? onProgress,
   }) async {
@@ -259,12 +484,9 @@ class IngestConfirmService {
         'Select an account before recording these entries.',
       );
     }
-    final eligible = drafts
-        .where(
-          (draft) =>
-              draft.status == DraftStatus.pending &&
-              draft.verdict == DedupVerdict.newTxn,
-        )
+    final eligible = items
+        .where((item) => item.canBatchConfirm)
+        .map((item) => item.draft)
         .toList(growable: false);
     final confirmed = <ConfirmedIngestItem>[];
     final failures = <IngestBatchItemFailure<IngestDraft>>[];
@@ -278,6 +500,69 @@ class IngestConfirmService {
       onProgress?.call(index + 1, eligible.length);
     }
     return IngestBatchConfirmResult(confirmed: confirmed, failures: failures);
+  }
+
+  Future<IngestBatchMutationResult<IngestReviewItem>> dismissSelected(
+    List<IngestReviewItem> items, {
+    IngestProgressCallback? onProgress,
+  }) async {
+    final eligible = items.where((item) => item.canBatchDismiss).toList();
+    final succeeded = <IngestReviewItem>[];
+    final failures = <IngestBatchItemFailure<IngestReviewItem>>[];
+    for (var index = 0; index < eligible.length; index++) {
+      final item = eligible[index];
+      try {
+        final dismissed = await dismiss(item.draft);
+        succeeded.add(IngestReviewItem(draft: dismissed));
+      } on IngestConfirmException catch (error) {
+        failures.add(IngestBatchItemFailure(item: item, error: error));
+      }
+      onProgress?.call(index + 1, eligible.length);
+    }
+    return IngestBatchMutationResult(succeeded: succeeded, failures: failures);
+  }
+
+  Future<IngestBatchMutationResult<IngestDraft>> restoreSelected(
+    List<IngestDraft> drafts, {
+    IngestProgressCallback? onProgress,
+  }) async {
+    final eligible = drafts
+        .where((draft) => draft.status == DraftStatus.dismissed)
+        .toList();
+    final succeeded = <IngestDraft>[];
+    final failures = <IngestBatchItemFailure<IngestDraft>>[];
+    for (var index = 0; index < eligible.length; index++) {
+      final draft = eligible[index];
+      try {
+        succeeded.add(await restore(draft));
+      } on IngestConfirmException catch (error) {
+        failures.add(IngestBatchItemFailure(item: draft, error: error));
+      }
+      onProgress?.call(index + 1, eligible.length);
+    }
+    return IngestBatchMutationResult(succeeded: succeeded, failures: failures);
+  }
+
+  Future<IngestBatchMutationResult<IngestReviewItem>> finalizeSelected(
+    List<IngestReviewItem> items, {
+    IngestProgressCallback? onProgress,
+  }) async {
+    final eligible = items
+        .where((item) => item.pendingFinalize != null)
+        .toList();
+    final succeeded = <IngestReviewItem>[];
+    final failures = <IngestBatchItemFailure<IngestReviewItem>>[];
+    for (var index = 0; index < eligible.length; index++) {
+      final item = eligible[index];
+      try {
+        await finalizeApplied(item.pendingFinalize!);
+        succeeded.add(item);
+      } on IngestConfirmException catch (error) {
+        failures.add(IngestBatchItemFailure(item: item, error: error));
+      }
+      onProgress?.call(index + 1, eligible.length);
+    }
+    return IngestBatchMutationResult(succeeded: succeeded, failures: failures);
   }
 
   /// Undo all successfully confirmed items, continuing after item failures.

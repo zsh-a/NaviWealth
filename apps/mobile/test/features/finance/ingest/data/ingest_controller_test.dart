@@ -17,6 +17,7 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/expense.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_pipeline.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_planning_executor.dart';
@@ -141,6 +142,87 @@ void main() {
         ]),
       );
     });
+
+    test('device path dedups re-imports against confirming drafts', () async {
+      final container = buildContainer();
+      addTearDown(container.dispose);
+      final store = await readyStore(container);
+      const source = IngestSource(
+        kind: IngestSourceKind.csv,
+        payload:
+            'date,description,amount,currency\n'
+            '2026-06-18,Netflix,-68.00,CNY\n',
+      );
+
+      final first = await container
+          .read(ingestControllerProvider)
+          .ingest(source);
+      final firstDraft = first.drafts.single;
+      final claimed = await store.transition(
+        IngestLifecycleTransition(
+          ownerUserId: firstDraft.ownerUserId,
+          draftId: firstDraft.draftId,
+          expectedStatus: DraftStatus.pending,
+          expectedRevision: 0,
+          nextStatus: DraftStatus.confirming,
+          nextOperationToken: 'test-claim',
+        ),
+      );
+      expect(claimed.outcome, IngestLifecycleMutationOutcome.applied);
+
+      final second = await container
+          .read(ingestControllerProvider)
+          .ingest(source);
+
+      expect(second.drafts.single.verdict, DedupVerdict.duplicate);
+      expect(second.drafts.single.dedupTargetEntryId, firstDraft.draftId);
+    });
+
+    test(
+      'dedup snapshot cannot miss a draft settling during ledger read',
+      () async {
+        late IngestDraftStore store;
+        late IngestDraft firstDraft;
+        var ledgerReads = 0;
+        final repository = _InterleavingJournalRepository(
+          db: db,
+          beforeEmit: () async {
+            ledgerReads += 1;
+            if (ledgerReads != 2) return;
+            final claimed = await store.transition(
+              IngestLifecycleTransition(
+                ownerUserId: firstDraft.ownerUserId,
+                draftId: firstDraft.draftId,
+                expectedStatus: DraftStatus.pending,
+                expectedRevision: firstDraft.revision,
+                nextStatus: DraftStatus.confirmed,
+              ),
+            );
+            expect(claimed.outcome, IngestLifecycleMutationOutcome.applied);
+          },
+        );
+        final container = buildContainer(journalRepository: repository);
+        addTearDown(container.dispose);
+        store = await readyStore(container);
+        const source = IngestSource(
+          kind: IngestSourceKind.csv,
+          payload:
+              'date,description,amount,currency\n'
+              '2026-06-18,Settling Coffee,-18.00,CNY\n',
+        );
+
+        firstDraft =
+            (await container.read(ingestControllerProvider).ingest(source))
+                .drafts
+                .single;
+        final second = await container
+            .read(ingestControllerProvider)
+            .ingest(source);
+
+        expect(second.drafts.single.verdict, DedupVerdict.duplicate);
+        expect(second.drafts.single.dedupTargetEntryId, firstDraft.draftId);
+      },
+    );
 
     test(
       'concurrent identical imports serialize snapshot through putAll',
@@ -475,4 +557,22 @@ final class _StaticExpenseJournalRepository extends JournalEntryRepository {
 
   @override
   Stream<List<Expense>> watchExpenses() => Stream.value(expenses);
+}
+
+final class _InterleavingJournalRepository extends JournalEntryRepository {
+  _InterleavingJournalRepository({required super.db, required this.beforeEmit})
+    : super(
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+        fxRateSource: const IdentityFxRateSource(),
+        baseCurrency: 'CNY',
+      );
+
+  final Future<void> Function() beforeEmit;
+
+  @override
+  Stream<List<Expense>> watchExpenses() async* {
+    await beforeEmit();
+    yield const <Expense>[];
+  }
 }

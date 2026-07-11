@@ -37,6 +37,10 @@ enum RebalanceExecutionFailureCode {
   businessFailed,
   staleAttempt,
   reviewRequired,
+  duplicateItemId,
+  unknownItemId,
+  crossSessionItemId,
+  undoOrderBlocked,
 }
 
 final class RebalanceExecutionFailure {
@@ -99,6 +103,7 @@ final class RebalanceExecutionCoordinator {
 
   Future<RebalanceExecutionBatchResult> applySession({
     required String sessionId,
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
     Duration leaseDuration = const Duration(minutes: 2),
   }) async {
@@ -126,9 +131,21 @@ final class RebalanceExecutionCoordinator {
         stopped: true,
       );
     }
+    final selection = await _validateSelection(
+      owner: owner,
+      session: session,
+      itemIds: itemIds,
+    );
+    if (selection.failure != null) {
+      return RebalanceExecutionBatchResult(
+        completedItemIds: const [],
+        failures: [selection.failure!],
+        stopped: true,
+      );
+    }
     final completed = <String>[];
     final failures = <RebalanceExecutionFailure>[];
-    for (final item in session.items) {
+    for (final item in selection.items) {
       if (stop.isStopped) {
         failures.add(
           RebalanceExecutionFailure(
@@ -336,6 +353,7 @@ final class RebalanceExecutionCoordinator {
 
   Future<RebalanceExecutionBatchResult> undoSession({
     required String sessionId,
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
     Duration leaseDuration = const Duration(minutes: 2),
   }) async {
@@ -363,10 +381,49 @@ final class RebalanceExecutionCoordinator {
         stopped: true,
       );
     }
-    final items = await _store.listAppliedForUndo(
+    final selection = await _validateSelection(
+      owner: owner,
+      session: session,
+      itemIds: itemIds,
+    );
+    if (selection.failure != null) {
+      return RebalanceExecutionBatchResult(
+        completedItemIds: const [],
+        failures: [selection.failure!],
+        stopped: true,
+      );
+    }
+    final undoOrder = await _store.listAppliedForUndo(
       ownerUserId: owner,
       sessionId: sessionId,
     );
+    late final List<RebalanceExecutionItem> items;
+    if (itemIds == null) {
+      items = undoOrder;
+    } else {
+      final selectedIds = itemIds.toSet();
+      final ordered = undoOrder
+          .where((item) => selectedIds.contains(item.id))
+          .toList(growable: false);
+      final isUndoableSelection = ordered.length == selection.items.length;
+      final isLifoPrefix =
+          isUndoableSelection &&
+          ordered.asMap().entries.every(
+            (entry) => undoOrder[entry.key].id == entry.value.id,
+          );
+      if (!isLifoPrefix) {
+        return const RebalanceExecutionBatchResult(
+          completedItemIds: [],
+          failures: [
+            RebalanceExecutionFailure(
+              code: RebalanceExecutionFailureCode.undoOrderBlocked,
+            ),
+          ],
+          stopped: true,
+        );
+      }
+      items = ordered;
+    }
     final completed = <String>[];
     final failures = <RebalanceExecutionFailure>[];
     for (final item in items) {
@@ -602,6 +659,50 @@ final class RebalanceExecutionCoordinator {
     RebalanceExecutionIssueCode.unknown => true,
     _ => false,
   };
+
+  Future<_SelectionValidation> _validateSelection({
+    required String owner,
+    required RebalanceExecutionSession session,
+    required List<String>? itemIds,
+  }) async {
+    if (itemIds == null) {
+      return _SelectionValidation(items: session.items);
+    }
+    final byId = {for (final item in session.items) item.id: item};
+    final seen = <String>{};
+    final selected = <RebalanceExecutionItem>[];
+    for (final id in itemIds) {
+      if (!seen.add(id)) {
+        return _SelectionValidation(
+          failure: RebalanceExecutionFailure(
+            code: RebalanceExecutionFailureCode.duplicateItemId,
+            itemId: id,
+          ),
+        );
+      }
+      final item = byId[id];
+      if (item == null) {
+        final foreign = await _store.getItem(ownerUserId: owner, id: id);
+        return _SelectionValidation(
+          failure: RebalanceExecutionFailure(
+            code: foreign == null
+                ? RebalanceExecutionFailureCode.unknownItemId
+                : RebalanceExecutionFailureCode.crossSessionItemId,
+            itemId: id,
+          ),
+        );
+      }
+      selected.add(item);
+    }
+    return _SelectionValidation(items: selected);
+  }
 }
 
 enum _AttemptMutationOutcome { updated, stale }
+
+final class _SelectionValidation {
+  const _SelectionValidation({this.items = const [], this.failure});
+
+  final List<RebalanceExecutionItem> items;
+  final RebalanceExecutionFailure? failure;
+}

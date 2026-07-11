@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/rebalance/application/rebalance_execution_coordinator.dart';
@@ -19,6 +21,7 @@ import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_zh.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/rebalance_execution_test_fixtures.dart';
 
@@ -82,6 +85,111 @@ void main() {
       expect(tester.getSize(find.byType(AppActionButton).at(i)).height, 40);
     }
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('desktop selection applies only the stable selected ids', (
+    tester,
+  ) async {
+    final session = _session(itemState: RebalanceExecutionItemState.ready);
+    final gateway = _FakeGateway(session);
+    await _pumpWorkspace(
+      tester,
+      size: const Size(1440, 900),
+      session: session,
+      gateway: gateway,
+    );
+
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    expect(find.text('1 selected'), findsOneWidget);
+
+    await tester.tap(find.text('Apply').last);
+    await tester.pumpAndSettle();
+    expect(gateway.lastItemIds, [session.items.single.id]);
+  });
+
+  testWidgets('partial selected apply keeps only failed rows selected', (
+    tester,
+  ) async {
+    final session = _twoReadyItemsSession();
+    final gateway = _FakeGateway(
+      session,
+      applyResult: RebalanceExecutionBatchResult(
+        completedItemIds: [session.items.first.id],
+        failures: [
+          RebalanceExecutionFailure(
+            code: RebalanceExecutionFailureCode.businessFailed,
+            itemId: session.items.last.id,
+          ),
+        ],
+        stopped: false,
+      ),
+    );
+    await _pumpWorkspace(
+      tester,
+      size: const Size(1440, 900),
+      session: session,
+      gateway: gateway,
+    );
+
+    await tester.tap(find.byType(Checkbox).at(0));
+    await tester.tap(find.byType(Checkbox).at(1));
+    await tester.pumpAndSettle();
+    expect(find.text('2 selected'), findsOneWidget);
+    await tester.tap(find.text('Apply').last);
+    await tester.pumpAndSettle();
+
+    expect(gateway.lastItemIds, session.items.map((item) => item.id).toList());
+    expect(find.text('1 selected'), findsOneWidget);
+  });
+
+  testWidgets('partial selected skip removes successes and reports failures', (
+    tester,
+  ) async {
+    final session = _twoReadyItemsSession();
+    final gateway = _FakeGateway(
+      session,
+      skipFailures: {session.items.last.id},
+    );
+    await _pumpWorkspace(
+      tester,
+      size: const Size(1440, 900),
+      session: session,
+      gateway: gateway,
+    );
+
+    await tester.tap(find.byType(Checkbox).at(0));
+    await tester.tap(find.byType(Checkbox).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Skip').last);
+    await tester.pumpAndSettle();
+
+    expect(gateway.skippedIds, [session.items.first.id]);
+    expect(find.text('1 selected'), findsOneWidget);
+    expect(find.text('1 completed; 1 need attention.'), findsOneWidget);
+  });
+
+  testWidgets('Enter opens desktop detail review without mutating', (
+    tester,
+  ) async {
+    final session = _session(itemState: RebalanceExecutionItemState.ready);
+    final gateway = _FakeGateway(session);
+    await _pumpWorkspace(
+      tester,
+      size: const Size(1440, 900),
+      session: session,
+      gateway: gateway,
+    );
+
+    await tester.tap(find.text('Buy Apple').first);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Review trade'), findsOneWidget);
+    expect(gateway.applyCalls, 0);
+    expect(gateway.skippedIds, isEmpty);
   });
 
   testWidgets('supports enlarged text without horizontal overflow', (
@@ -222,6 +330,48 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(gateway.skippedIds, [session.items.single.id]);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('internal apply failure selection exposes Skip but not Apply', (
+    tester,
+  ) async {
+    final session = _session(
+      itemState: RebalanceExecutionItemState.applyFailed,
+      issue: RebalanceExecutionIssue(
+        RebalanceExecutionIssueCode.internal,
+        'private detail',
+      ),
+    );
+    await _pumpWorkspace(tester, size: const Size(1440, 900), session: session);
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 selected'), findsOneWidget);
+    expect(find.text('Apply'), findsNothing);
+    expect(find.text('Skip'), findsWidgets);
+  });
+
+  testWidgets('non-retry undo failure and undone rows are not selectable', (
+    tester,
+  ) async {
+    for (final session in [
+      _session(
+        itemState: RebalanceExecutionItemState.undoFailed,
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.unknown,
+          'private detail',
+        ),
+      ),
+      _session(itemState: RebalanceExecutionItemState.undone),
+    ]) {
+      await _pumpWorkspace(
+        tester,
+        size: const Size(1440, 900),
+        session: session,
+      );
+      expect(find.byType(Checkbox), findsNothing);
+    }
   });
 
   testWidgets(
@@ -635,9 +785,12 @@ Future<void> _pumpWorkspace(
   });
   final resolvedSession = session ?? _session();
   final touch = Breakpoints.isMobile(size.width);
+  SharedPreferences.setMockInitialValues({});
+  final sharedPreferences = await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         rebalanceExecutionSessionProvider(
           resolvedSession.id,
         ).overrideWith((_) async => resolvedSession),
@@ -681,6 +834,7 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
     this.applyError,
     this.saveError,
     this.applyCompleter,
+    this.skipFailures = const <String>{},
   });
 
   RebalanceExecutionSession value;
@@ -688,12 +842,14 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
   final Object? applyError;
   final Object? saveError;
   final Completer<RebalanceExecutionBatchResult>? applyCompleter;
+  final Set<String> skipFailures;
   final List<String> skippedIds = [];
   int savedRequests = 0;
   int applyCalls = 0;
   int undoCalls = 0;
   RebalanceExecutionRequest? lastRequest;
   RebalanceStopSignal? lastStop;
+  List<String>? lastItemIds;
 
   @override
   Future<RebalanceExecutionSession?> active() async => value;
@@ -704,10 +860,12 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
   @override
   Future<RebalanceExecutionBatchResult> apply(
     String sessionId, {
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   }) async {
     applyCalls += 1;
     lastStop = stop;
+    lastItemIds = itemIds;
     if (applyError case final error?) throw error;
     if (applyCompleter case final completer?) return completer.future;
     return applyResult;
@@ -744,6 +902,7 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
 
   @override
   Future<RebalanceExecutionItem> skip(String itemId) async {
+    if (skipFailures.contains(itemId)) throw StateError('skip failed');
     skippedIds.add(itemId);
     return value.items.firstWhere((item) => item.id == itemId);
   }
@@ -751,9 +910,11 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
   @override
   Future<RebalanceExecutionBatchResult> undo(
     String sessionId, {
+    List<String>? itemIds,
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   }) async {
     undoCalls += 1;
+    lastItemIds = itemIds;
     return const RebalanceExecutionBatchResult(
       completedItemIds: [],
       failures: [],
@@ -771,10 +932,13 @@ RebalanceExecutionSession _session({
   bool includePrice = true,
 }) {
   final plan = testPlan(reverseCollections: true);
+  final hasAppliedReceipt =
+      itemState == RebalanceExecutionItemState.undoFailed ||
+      itemState == RebalanceExecutionItemState.undone;
   final request =
       itemState == RebalanceExecutionItemState.ready ||
           itemState == RebalanceExecutionItemState.applyFailed ||
-          itemState == RebalanceExecutionItemState.undoFailed
+          hasAppliedReceipt
       ? _withPrice(
           testRequest('item-1'),
           includePrice ? Decimal.parse('123.45') : null,
@@ -787,9 +951,7 @@ RebalanceExecutionSession _session({
     position: 0,
     suggestion: plan.trades.first,
     request: request,
-    receipt: itemState == RebalanceExecutionItemState.undoFailed
-        ? testReceipt('item-1')
-        : null,
+    receipt: hasAppliedReceipt ? testReceipt('item-1') : null,
     state: itemState,
     issue:
         issue ??
@@ -802,12 +964,10 @@ RebalanceExecutionSession _session({
     rawRequestJson: request == null
         ? null
         : RebalanceExecutionRequestCodec.encode(request),
-    rawReceiptJson: itemState == RebalanceExecutionItemState.undoFailed
+    rawReceiptJson: hasAppliedReceipt
         ? TradeMutationReceiptCodec.encode(testReceipt('item-1'))
         : null,
-    appliedSequence: itemState == RebalanceExecutionItemState.undoFailed
-        ? 1
-        : null,
+    appliedSequence: hasAppliedReceipt ? 1 : null,
     createdAt: testNow,
     updatedAt: testNow,
   );
@@ -870,6 +1030,40 @@ RebalanceExecutionSession _mixedSession() {
         rawRequestJson: RebalanceExecutionRequestCodec.encode(appliedRequest),
         rawReceiptJson: TradeMutationReceiptCodec.encode(appliedReceipt),
         appliedSequence: 1,
+        createdAt: testNow,
+        updatedAt: testNow,
+      ),
+    ],
+    createdAt: testNow,
+    updatedAt: testNow,
+  );
+}
+
+RebalanceExecutionSession _twoReadyItemsSession() {
+  final firstSession = _session(itemState: RebalanceExecutionItemState.ready);
+  final plan = firstSession.plan;
+  final secondRequest = _withPrice(
+    testRequest('item-2'),
+    Decimal.parse('123.45'),
+  );
+  return RebalanceExecutionSession(
+    id: firstSession.id,
+    ownerUserId: firstSession.ownerUserId,
+    status: firstSession.status,
+    plan: plan,
+    rawPlanJson: firstSession.rawPlanJson,
+    planFingerprint: firstSession.planFingerprint,
+    items: [
+      firstSession.items.single,
+      RebalanceExecutionItem(
+        id: 'item-2',
+        sessionId: firstSession.id,
+        ownerUserId: firstSession.ownerUserId,
+        position: 1,
+        suggestion: plan.trades.first,
+        request: secondRequest,
+        state: RebalanceExecutionItemState.ready,
+        rawRequestJson: RebalanceExecutionRequestCodec.encode(secondRequest),
         createdAt: testNow,
         updatedAt: testNow,
       ),

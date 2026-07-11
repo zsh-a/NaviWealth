@@ -607,6 +607,134 @@ void main() {
       RebalanceExecutionItemState.applied,
     );
   });
+
+  test(
+    'selected ids reject duplicates and unknown ids before mutation',
+    () async {
+      final harness = await _makeHarness(const _EchoTradeService());
+      addTearDown(harness.db.close);
+      final session = await _readySession(harness.store, itemCount: 2);
+
+      final duplicate = await harness.coordinator.applySession(
+        sessionId: session.id,
+        itemIds: [session.items.first.id, session.items.first.id],
+      );
+      final unknown = await harness.coordinator.applySession(
+        sessionId: session.id,
+        itemIds: const ['missing-item'],
+      );
+
+      expect(
+        duplicate.failures.single.code,
+        RebalanceExecutionFailureCode.duplicateItemId,
+      );
+      expect(
+        unknown.failures.single.code,
+        RebalanceExecutionFailureCode.unknownItemId,
+      );
+      expect(await harness.db.select(harness.db.journalEntries).get(), isEmpty);
+      final fresh = await harness.store.getSession(
+        ownerUserId: 'owner-a',
+        id: session.id,
+      );
+      expect(
+        fresh!.items.map((item) => item.state),
+        everyElement(RebalanceExecutionItemState.ready),
+      );
+    },
+  );
+
+  test('selected ids preserve caller order', () async {
+    final harness = await _makeHarness(const _EchoTradeService());
+    addTearDown(harness.db.close);
+    final session = await _readySession(harness.store, itemCount: 2);
+    final requested = session.items.reversed.map((item) => item.id).toList();
+
+    final result = await harness.coordinator.applySession(
+      sessionId: session.id,
+      itemIds: requested,
+    );
+
+    expect(result.completedItemIds, requested);
+  });
+
+  test('selected undo is normalized to persisted LIFO order', () async {
+    final harness = await _makeHarness(const _EchoTradeService());
+    addTearDown(harness.db.close);
+    final session = await _readySession(harness.store, itemCount: 2);
+    final applied = await harness.coordinator.applySession(
+      sessionId: session.id,
+    );
+    expect(applied.isSuccess, isTrue);
+    final undoOrder = await harness.store.listAppliedForUndo(
+      ownerUserId: 'owner-a',
+      sessionId: session.id,
+    );
+
+    final result = await harness.coordinator.undoSession(
+      sessionId: session.id,
+      itemIds: undoOrder.reversed.map((item) => item.id).toList(),
+    );
+
+    expect(result.isSuccess, isTrue);
+    expect(result.completedItemIds, undoOrder.map((item) => item.id).toList());
+  });
+
+  test(
+    'selected undo rejects omitted later dependencies before mutation',
+    () async {
+      final harness = await _makeHarness(const _EchoTradeService());
+      addTearDown(harness.db.close);
+      final session = await _readySession(harness.store, itemCount: 2);
+      final applied = await harness.coordinator.applySession(
+        sessionId: session.id,
+      );
+      expect(applied.isSuccess, isTrue);
+      final undoOrder = await harness.store.listAppliedForUndo(
+        ownerUserId: 'owner-a',
+        sessionId: session.id,
+      );
+
+      final result = await harness.coordinator.undoSession(
+        sessionId: session.id,
+        itemIds: [undoOrder.last.id],
+      );
+
+      expect(result.completedItemIds, isEmpty);
+      expect(result.stopped, isTrue);
+      expect(
+        result.failures.single.code,
+        RebalanceExecutionFailureCode.undoOrderBlocked,
+      );
+      final fresh = await harness.store.getSession(
+        ownerUserId: 'owner-a',
+        id: session.id,
+      );
+      expect(
+        fresh!.items.map((item) => item.state),
+        everyElement(RebalanceExecutionItemState.applied),
+      );
+    },
+  );
+
+  test('selected ids reject a same-owner item from another session', () async {
+    final harness = await _makeHarness(const _EchoTradeService());
+    addTearDown(harness.db.close);
+    final archived = await _readySession(harness.store, itemCount: 1);
+    await harness.store.archive(ownerUserId: 'owner-a', sessionId: archived.id);
+    final active = await _readySession(harness.store, itemCount: 2);
+
+    final result = await harness.coordinator.applySession(
+      sessionId: active.id,
+      itemIds: [archived.items.single.id],
+    );
+
+    expect(
+      result.failures.single.code,
+      RebalanceExecutionFailureCode.crossSessionItemId,
+    );
+    expect(await harness.db.select(harness.db.journalEntries).get(), isEmpty);
+  });
 }
 
 Future<
