@@ -24,6 +24,7 @@ class AdaptiveContentFrame extends StatelessWidget {
     this.primaryFlex = 1,
     this.secondaryFlex = 1,
     this.alignment = Alignment.topCenter,
+    this.expandSinglePrimary = false,
   });
 
   final Widget primary;
@@ -39,6 +40,7 @@ class AdaptiveContentFrame extends StatelessWidget {
   final int primaryFlex;
   final int secondaryFlex;
   final AlignmentGeometry alignment;
+  final bool expandSinglePrimary;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +59,7 @@ class AdaptiveContentFrame extends StatelessWidget {
           secondaryFlex: secondaryFlex,
           useColumns: _shouldUseColumns(width),
           expandBody: constraints.hasBoundedHeight,
+          expandSinglePrimary: expandSinglePrimary,
         );
         return Padding(
           padding: padding ?? _defaultPadding(context, width),
@@ -101,6 +104,7 @@ class _FrameContent extends StatelessWidget {
     required this.secondaryFlex,
     required this.useColumns,
     required this.expandBody,
+    required this.expandSinglePrimary,
   });
 
   final Widget? header;
@@ -114,6 +118,7 @@ class _FrameContent extends StatelessWidget {
   final int secondaryFlex;
   final bool useColumns;
   final bool expandBody;
+  final bool expandSinglePrimary;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +137,7 @@ class _FrameContent extends StatelessWidget {
   Widget _body() {
     final secondary = this.secondary;
     if (!useColumns || secondary == null) {
+      if (secondary == null && expandSinglePrimary) return primary;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

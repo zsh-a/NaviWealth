@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,11 +62,21 @@ void main() {
   testWidgets('keeps primary actions visible on a wide viewport', (
     tester,
   ) async {
-    await _pumpWorkspace(tester, size: const Size(1200, 900));
+    await _pumpWorkspace(
+      tester,
+      size: const Size(1200, 900),
+      session: _session(itemState: RebalanceExecutionItemState.ready),
+    );
 
     expect(find.text('Apply'), findsOneWidget);
-    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('Undo'), findsNothing);
     expect(find.text('Buy Apple'), findsOneWidget);
+    expect(
+      tester
+          .getSize(find.byKey(const Key('rebalance-execution-progress')))
+          .height,
+      lessThan(160),
+    );
     expect(tester.getSize(find.byType(AppHeaderAction)), const Size(40, 40));
     for (var i = 0; i < find.byType(AppActionButton).evaluate().length; i++) {
       expect(tester.getSize(find.byType(AppActionButton).at(i)).height, 40);
@@ -78,6 +90,7 @@ void main() {
     await _pumpWorkspace(tester, size: const Size(390, 844), textScale: 2);
 
     expect(find.text('Needs details'), findsOneWidget);
+    expect(find.byKey(const ValueKey('app.back')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -106,6 +119,64 @@ void main() {
     expect(find.text('Needs recovery'), findsOneWidget);
     expect(find.text('Review'), findsNothing);
     expect(find.text('Skip'), findsNothing);
+  });
+
+  testWidgets(
+    'mixed blocked, ready, and applied items keep safe batch actions',
+    (tester) async {
+      await _pumpWorkspace(
+        tester,
+        size: const Size(390, 844),
+        textScale: 2,
+        session: _mixedSession(),
+      );
+
+      expect(find.text('Needs recovery'), findsOneWidget);
+      expect(find.text('Apply'), findsOneWidget);
+      expect(find.text('Undo'), findsOneWidget);
+      expect(find.text('Review'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('stop replaces every aggregate action while a batch is running', (
+    tester,
+  ) async {
+    final session = _session(itemState: RebalanceExecutionItemState.ready);
+    final completer = Completer<RebalanceExecutionBatchResult>();
+    final gateway = _FakeGateway(session, applyCompleter: completer);
+    await _pumpWorkspace(
+      tester,
+      size: const Size(390, 844),
+      session: session,
+      gateway: gateway,
+    );
+
+    await tester.tap(find.text('Apply'));
+    for (var i = 0; i < 10 && gateway.applyCalls == 0; i++) {
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+    expect(gateway.applyCalls, 1);
+    await tester.pump();
+    expect(find.text('Stop after current'), findsOneWidget);
+    expect(find.text('Apply'), findsNothing);
+    expect(find.text('Undo'), findsNothing);
+
+    await tester.tap(find.text('Stop after current'));
+    expect(gateway.lastStop?.isStopped, isTrue);
+    completer.complete(
+      const RebalanceExecutionBatchResult(
+        completedItemIds: [],
+        failures: [
+          RebalanceExecutionFailure(
+            code: RebalanceExecutionFailureCode.stopped,
+          ),
+        ],
+        stopped: true,
+      ),
+    );
+    await tester.pumpAndSettle();
   });
 
   testWidgets('undo failure retries only from the session control', (
@@ -609,17 +680,20 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
     ),
     this.applyError,
     this.saveError,
+    this.applyCompleter,
   });
 
   RebalanceExecutionSession value;
   final RebalanceExecutionBatchResult applyResult;
   final Object? applyError;
   final Object? saveError;
+  final Completer<RebalanceExecutionBatchResult>? applyCompleter;
   final List<String> skippedIds = [];
   int savedRequests = 0;
   int applyCalls = 0;
   int undoCalls = 0;
   RebalanceExecutionRequest? lastRequest;
+  RebalanceStopSignal? lastStop;
 
   @override
   Future<RebalanceExecutionSession?> active() async => value;
@@ -633,7 +707,9 @@ final class _FakeGateway implements RebalanceExecutionWorkspaceGateway {
     RebalanceStopSignal stop = const NeverRebalanceStopSignal(),
   }) async {
     applyCalls += 1;
+    lastStop = stop;
     if (applyError case final error?) throw error;
+    if (applyCompleter case final completer?) return completer.future;
     return applyResult;
   }
 
@@ -748,6 +824,58 @@ RebalanceExecutionSession _session({
     archivedAt: status == RebalanceExecutionSessionStatus.archived
         ? testNow
         : null,
+  );
+}
+
+RebalanceExecutionSession _mixedSession() {
+  final readySession = _session(itemState: RebalanceExecutionItemState.ready);
+  final plan = readySession.plan;
+  final appliedRequest = _withPrice(
+    testRequest('item-3'),
+    Decimal.parse('123.45'),
+  );
+  final appliedReceipt = testReceipt('item-3');
+  return RebalanceExecutionSession(
+    id: readySession.id,
+    ownerUserId: readySession.ownerUserId,
+    status: RebalanceExecutionSessionStatus.active,
+    plan: plan,
+    rawPlanJson: readySession.rawPlanJson,
+    planFingerprint: readySession.planFingerprint,
+    items: [
+      readySession.items.single,
+      RebalanceExecutionItem(
+        id: 'item-2',
+        sessionId: readySession.id,
+        ownerUserId: readySession.ownerUserId,
+        position: 1,
+        suggestion: plan.trades.first,
+        state: RebalanceExecutionItemState.recoveryBlocked,
+        issue: RebalanceExecutionIssue(
+          RebalanceExecutionIssueCode.recoveryCorrupt,
+          'corrupt persisted payload',
+        ),
+        createdAt: testNow,
+        updatedAt: testNow,
+      ),
+      RebalanceExecutionItem(
+        id: 'item-3',
+        sessionId: readySession.id,
+        ownerUserId: readySession.ownerUserId,
+        position: 2,
+        suggestion: plan.trades.first,
+        request: appliedRequest,
+        receipt: appliedReceipt,
+        state: RebalanceExecutionItemState.applied,
+        rawRequestJson: RebalanceExecutionRequestCodec.encode(appliedRequest),
+        rawReceiptJson: TradeMutationReceiptCodec.encode(appliedReceipt),
+        appliedSequence: 1,
+        createdAt: testNow,
+        updatedAt: testNow,
+      ),
+    ],
+    createdAt: testNow,
+    updatedAt: testNow,
   );
 }
 

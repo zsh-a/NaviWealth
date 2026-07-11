@@ -185,6 +185,7 @@ Widget _app({
   required IngestConfirmService service,
   bool failLedgerRead = false,
   List<Account> accounts = const [],
+  Stream<List<Account>>? accountsStream,
   bool touch = false,
   TextScaler textScaler = TextScaler.noScaling,
   IngestCaptureSource? captureSource,
@@ -196,7 +197,9 @@ Widget _app({
     overrides: [
       ingestDraftStoreProvider.overrideWithValue(store),
       ingestConfirmServiceProvider.overrideWith((_) async => service),
-      accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
+      accountsStreamProvider.overrideWith(
+        (_) => accountsStream ?? Stream.value(accounts),
+      ),
       if (captureSource != null)
         ingestCaptureSourceProvider.overrideWithValue(captureSource),
       if (captureTextLimit != null)
@@ -234,7 +237,63 @@ Widget _app({
   );
 }
 
+Future<void> _tapCaptureOption(
+  WidgetTester tester,
+  String label, {
+  bool settle = true,
+}) async {
+  await tester.tap(find.bySemanticsLabel('Add source'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label));
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+}
+
 void main() {
+  testWidgets('wide loading and error states keep capture actions available', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1200, 600)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final loading = StreamController<List<Account>>();
+    addTearDown(loading.close);
+
+    await tester.pumpWidget(
+      _app(store: store, service: service, accountsStream: loading.stream),
+    );
+    await tester.pump();
+    expect(find.text('Take photo'), findsOneWidget);
+    expect(find.text('Import file'), findsOneWidget);
+    expect(find.text('Paste text'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _app(
+        store: store,
+        service: service,
+        accountsStream: Stream.error(StateError('accounts unavailable')),
+      ),
+    );
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.text('Take photo'), findsOneWidget);
+    expect(find.text('Import file'), findsOneWidget);
+    expect(find.text('Paste text'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('touch actions stay 48dp, named, and stable at 2x text', (
     tester,
   ) async {
@@ -261,25 +320,64 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppHeaderAction), findsNWidgets(3));
-    expect(find.byType(AppActionButton), findsNWidgets(3));
+    expect(find.byType(AppHeaderAction), findsOneWidget);
+    expect(find.byType(AppActionButton), findsNothing);
     for (final action in find.byType(AppHeaderAction).evaluate()) {
       expect(
         tester.getSize(find.byElementPredicate((e) => e == action)),
         const Size(48, 48),
       );
     }
-    for (final action in find.byType(AppActionButton).evaluate()) {
-      expect(
-        tester.getSize(find.byElementPredicate((e) => e == action)).height,
-        greaterThanOrEqualTo(48),
-      );
-    }
-    expect(find.semantics.byLabel('Take photo'), findsWidgets);
-    expect(find.semantics.byLabel('Import file'), findsWidgets);
-    expect(find.semantics.byLabel('Paste text'), findsWidgets);
+    expect(find.semantics.byLabel('Add source'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Add source'));
+    await tester.pumpAndSettle();
+    expect(find.semantics.byLabel('Take photo'), findsOneWidget);
+    expect(find.semantics.byLabel('Import file'), findsOneWidget);
+    expect(find.semantics.byLabel('Paste text'), findsOneWidget);
     expect(tester.takeException(), isNull);
     semantics.dispose();
+  });
+
+  testWidgets('wide low-height account select reaches the last account at 2x', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1200, 500)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([_draft()]);
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    final accounts = List<Account>.generate(
+      20,
+      (index) =>
+          _account.copyWith(id: 'account-$index', name: 'Account $index'),
+    );
+
+    await tester.pumpWidget(
+      _app(
+        store: store,
+        service: service,
+        accounts: accounts,
+        textScaler: const TextScaler.linear(2),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Account 0 · CNY'));
+    await tester.pumpAndSettle();
+    final last = find.text('Account 19 · CNY');
+    await tester.ensureVisible(last);
+    await tester.tap(last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Account 19 · CNY'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('empty paste stays open and shows inline validation', (
@@ -295,8 +393,7 @@ void main() {
     await tester.pumpWidget(_app(store: store, service: service));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Paste text'));
-    await tester.pumpAndSettle();
+    await _tapCaptureOption(tester, 'Paste text');
     await tester.tap(find.text('Parse'));
     await tester.pumpAndSettle();
 
@@ -319,8 +416,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Paste text'));
-    await tester.pumpAndSettle();
+    await _tapCaptureOption(tester, 'Paste text');
     await tester.enterText(find.byType(FTextField), '12345678901234567');
     await tester.tap(find.text('Parse'));
     await tester.pumpAndSettle();
@@ -344,10 +440,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Import file'));
-    await tester.pumpAndSettle();
+    await _tapCaptureOption(tester, 'Import file');
 
     expect(captureSource.calls, 1);
+    expect(
+      tester.widget<AppHeaderAction>(find.byType(AppHeaderAction)).focusNode,
+      isNotNull,
+    );
+    expect(
+      tester
+          .widget<AppHeaderAction>(find.byType(AppHeaderAction))
+          .focusNode!
+          .hasFocus,
+      isTrue,
+    );
     expect(find.textContaining('source'), findsNothing);
   });
 
@@ -437,11 +543,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Import file'));
+    await _tapCaptureOption(tester, 'Import file');
     await tester.pump();
     expect(captureSource.calls, 1);
+    expect(
+      tester.widget<AppHeaderAction>(find.byType(AppHeaderAction)).onPress,
+      isNull,
+    );
 
-    await tester.tap(find.text('Import file'), warnIfMissed: false);
+    await tester.tap(find.bySemanticsLabel('Add source'), warnIfMissed: false);
     await tester.pump();
     expect(captureSource.calls, 1);
 
@@ -522,8 +632,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Import file'));
-    await tester.pumpAndSettle();
+    await _tapCaptureOption(tester, 'Import file');
 
     expect(
       find.text('This file exceeds the 12 MiB import limit.'),
@@ -546,8 +655,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Paste text'));
-    await tester.pumpAndSettle();
+    await _tapCaptureOption(tester, 'Paste text');
     await tester.enterText(
       find.byType(FTextField),
       'date,description,amount\n2026-05-10,Coffee,-38.50',
@@ -753,8 +861,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Import file'));
-    await tester.pumpAndSettle();
+    await _tapCaptureOption(tester, 'Import file');
     expect(find.text('Couldn’t parse this import. Try again.'), findsOneWidget);
     expect(find.text('Choose file'), findsOneWidget);
 

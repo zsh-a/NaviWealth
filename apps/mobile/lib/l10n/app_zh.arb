@@ -2436,6 +2436,7 @@
   "ingestPasteAction": "粘贴文本",
   "ingestImportFileAction": "导入文件",
   "ingestCameraAction": "拍照",
+  "ingestCaptureMenuAction": "添加来源",
 
   "settingsAiTransparencyTitle": "AI 透明度",
   "settingsAiTransparencySubtitle": "查看最近 AI 调用的详细轨迹",

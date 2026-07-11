@@ -7860,6 +7860,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestCameraAction => '拍照';
 
   @override
+  String get ingestCaptureMenuAction => '添加来源';
+
+  @override
   String get settingsAiTransparencyTitle => 'AI 透明度';
 
   @override

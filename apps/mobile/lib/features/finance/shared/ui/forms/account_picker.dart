@@ -16,6 +16,8 @@ class AccountPicker extends StatelessWidget {
     required this.onChanged,
     this.label,
     this.allowedTypes,
+    this.enabled = true,
+    this.contentConstraints = const FAutoWidthPortalConstraints(maxHeight: 300),
   });
 
   final List<Account> accounts;
@@ -23,6 +25,8 @@ class AccountPicker extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final String? label;
   final Set<AccountCategory>? allowedTypes;
+  final bool enabled;
+  final FPortalConstraints contentConstraints;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +46,8 @@ class AccountPicker extends StatelessWidget {
         onChange: onChanged,
       ),
       label: RequiredLabel(label ?? l10n.formAccountPickerLabelDefault),
-      enabled: filtered.isNotEmpty,
+      enabled: enabled && filtered.isNotEmpty,
+      contentConstraints: contentConstraints,
       validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formAccountPickerRequired : null,
       children: [

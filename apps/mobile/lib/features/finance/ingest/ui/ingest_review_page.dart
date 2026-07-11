@@ -21,7 +21,6 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../shared/l10n/account_l10n.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../data/capture_encoder.dart';
 import '../data/ingest_capture_feedback.dart';
@@ -100,58 +99,75 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     final l10n = AppLocalizations.of(context);
     final reviewItemsAsync = ref.watch(pendingIngestReviewItemsProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
+    final accounts = accountsAsync.value;
+    final items = reviewItemsAsync.value;
+    final viewData =
+        accountsAsync.hasError ||
+            reviewItemsAsync.hasError ||
+            accounts == null ||
+            items == null
+        ? null
+        : _IngestReviewViewData.from(
+            accounts: accounts,
+            items: items,
+            selectedAccountId: _accountId,
+            pendingFinalize: _pendingFinalize,
+          );
 
-    return AppPageScaffold(
-      titleWidget: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const AiSparkle(size: AppIconSizes.sm),
-          const SizedBox(width: AppSpacing.s6),
-          Flexible(
-            child: Text(
-              l10n.ingestReviewTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    return DropTarget(
+      onDragDone: _isBusy ? (_) {} : _onDrop,
+      child: AppTaskScaffold(
+        titleWidget: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AiSparkle(size: AppIconSizes.sm),
+            const SizedBox(width: AppSpacing.s6),
+            Flexible(
+              child: Text(
+                l10n.ingestReviewTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-        ],
-      ),
-      actions: [
-        AppHeaderAction(
-          semanticsLabel: l10n.ingestCameraAction,
-          icon: const Icon(FLucideIcons.camera),
-          onPress: _isBusy ? null : _captureCamera,
+          ],
         ),
-        AppHeaderAction(
-          semanticsLabel: l10n.ingestImportFileAction,
-          icon: const Icon(FLucideIcons.paperclip),
-          onPress: _isBusy ? null : _pickFile,
+        actionsBuilder: (context, wide) => wide
+            ? const <Widget>[]
+            : <Widget>[
+                _CapturePopoverAction(
+                  enabled: !_isBusy,
+                  onCamera: _captureCamera,
+                  onFile: _pickFile,
+                  onPaste: _openPasteDialog,
+                ),
+              ],
+        compactLeadingSliversBuilder: viewData == null
+            ? null
+            : (_) => _compactControlSlivers(viewData),
+        primarySliversBuilder: (_) => _primarySlivers(
+          accountsAsync: accountsAsync,
+          reviewItemsAsync: reviewItemsAsync,
+          data: viewData,
         ),
-        AppHeaderAction(
-          semanticsLabel: l10n.ingestPasteAction,
-          icon: const Icon(FLucideIcons.clipboard),
-          onPress: _isBusy ? null : _openPasteDialog,
-        ),
-      ],
-      childPad: false,
-      // §5.10.10 / S5c-native — drag a receipt/statement onto the page
-      // (desktop/web). No-op on touch platforms.
-      child: DropTarget(
-        onDragDone: _isBusy ? (_) {} : _onDrop,
-        child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.whenOrLoading(
-            context: context,
-            error: (e, _) =>
-                Center(child: Text(userSafeErrorMessage(context, e))),
-            data: (accounts) => reviewItemsAsync.whenOrLoading(
-              context: context,
-              error: (e, _) =>
-                  Center(child: Text(userSafeErrorMessage(context, e))),
-              data: (items) => _content(l10n, accounts, items),
-            ),
-          ),
-        ),
+        railBuilder: (_) => _rail(viewData),
+        footerBuilder: viewData == null || viewData.freshCount == 0
+            ? null
+            : (_) => AppActionButton(
+                variant: FButtonVariant.primary,
+                onPress: _isBusy
+                    ? null
+                    : () => _confirmAllFresh(
+                        viewData.actionableDrafts,
+                        viewData.selectedAccountId,
+                      ),
+                child: Flexible(
+                  child: Text(
+                    l10n.ingestConfirmAllFresh(viewData.freshCount),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -213,147 +229,134 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     );
   }
 
-  Widget _content(
-    AppLocalizations l10n,
-    List<Account> accounts,
-    List<IngestReviewItem> items,
-  ) {
-    final drafts = items.map((item) => item.draft).toList(growable: false);
-    if (drafts.isEmpty) {
-      final busy = _busy;
-      if (busy != null) return _ProcessingState(state: busy);
-      return LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: _EmptyState(
-              onPaste: _isBusy ? null : _openPasteDialog,
-              onImport: _isBusy ? null : _pickFile,
-              onCamera: _isBusy ? null : _captureCamera,
-            ),
-          ),
-        ),
-      );
+  List<Widget> _primarySlivers({
+    required AsyncValue<List<Account>> accountsAsync,
+    required AsyncValue<List<IngestReviewItem>> reviewItemsAsync,
+    required _IngestReviewViewData? data,
+  }) {
+    if (accountsAsync.hasError) {
+      return [
+        _stateSliver(userSafeErrorMessage(context, accountsAsync.error!)),
+      ];
     }
-    final payable = accounts.where((a) => !a.archived).toList(growable: false);
-    final selectedId = _accountId ?? _defaultAccountId(payable);
-    final actionableDrafts = items
-        .where(
-          (item) =>
-              !item.blocksApply &&
-              !_pendingFinalize.containsKey(item.draft.draftId),
-        )
-        .map((item) => item.draft)
-        .toList(growable: false);
-    final freshCount = actionableDrafts
-        .where((d) => d.verdict == DedupVerdict.newTxn)
-        .length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (_busy != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s12,
-              AppSpacing.s16,
-              0,
-            ),
-            child: _ProcessingNotice(state: _busy!),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s16,
-            AppSpacing.s12,
-            AppSpacing.s16,
-            AppSpacing.s4,
-          ),
-          child: Text(
-            l10n.ingestExpenseAccountLabel,
-            style: context.captionStyle,
-          ),
+    if (reviewItemsAsync.hasError) {
+      return [
+        _stateSliver(userSafeErrorMessage(context, reviewItemsAsync.error!)),
+      ];
+    }
+    if (data == null) {
+      return const [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(child: CircularProgressIndicator()),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s16,
-            0,
-            AppSpacing.s16,
-            AppSpacing.s8,
-          ),
-          child: Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: [
-              for (final a in payable)
-                AiPill(
-                  label: localizedAccountName(l10n, a),
-                  state: a.id == selectedId
-                      ? AiPillState.selected
-                      : AiPillState.neutral,
-                  onTap: () => setState(() => _accountId = a.id),
-                ),
-            ],
-          ),
+      ];
+    }
+    if (data.items.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _busy == null
+              ? const _EmptyState()
+              : _ProcessingState(state: _busy!),
         ),
-        const FDivider(),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s12,
-              AppSpacing.s16,
-              AppSpacing.s12,
-            ),
-            itemCount: drafts.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-            itemBuilder: (context, i) {
-              final item = items[i];
-              final draft = item.draft;
-              final pending =
-                  item.pendingFinalize ?? _pendingFinalize[draft.draftId];
-              return _DraftCard(
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+        sliver: SliverList.builder(
+          itemCount: data.items.length,
+          itemBuilder: (context, index) {
+            final item = data.items[index];
+            final draft = item.draft;
+            final pending =
+                item.pendingFinalize ?? _pendingFinalize[draft.draftId];
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: index == data.items.length - 1 ? 0 : AppSpacing.s8,
+              ),
+              child: _DraftCard(
                 draft: draft,
                 busy: _isBusy,
                 pendingFinalize: pending != null,
                 recoveryUnavailable: item.recoveryUnreadable,
-                onConfirm: () => _confirm(draft, selectedId),
+                onConfirm: () => _confirm(draft, data.selectedAccountId),
                 onSkip: () => _skip(draft),
                 onFinalize: pending == null
                     ? null
                     : () => _finalizeApplied(pending),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
-        if (freshCount > 0)
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16,
-                0,
-                AppSpacing.s16,
-                AppSpacing.s12,
-              ),
-              child: AppActionButton(
-                variant: FButtonVariant.primary,
-                onPress: _isBusy
-                    ? null
-                    : () => _confirmAllFresh(actionableDrafts, selectedId),
-                child: Flexible(
-                  child: Text(
-                    l10n.ingestConfirmAllFresh(freshCount),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ),
-          ),
+      ),
+    ];
+  }
+
+  Widget _stateSliver(String message) => SliverFillRemaining(
+    hasScrollBody: false,
+    child: Center(child: Text(message)),
+  );
+
+  List<Widget> _compactControlSlivers(_IngestReviewViewData data) {
+    if (data.items.isEmpty) return const <Widget>[];
+    return [
+      SliverToBoxAdapter(child: _accountPicker(data)),
+      if (_busy != null)
+        SliverPadding(
+          padding: const EdgeInsets.only(top: AppSpacing.s12),
+          sliver: SliverToBoxAdapter(child: _ProcessingNotice(state: _busy!)),
+        ),
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s12)),
+    ];
+  }
+
+  Widget _rail(_IngestReviewViewData? data) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (data != null && data.items.isNotEmpty) ...[
+          _accountPicker(data),
+          const SizedBox(height: AppSpacing.s16),
+        ],
+        AppActionButton(
+          variant: FButtonVariant.outline,
+          onPress: _isBusy ? null : _captureCamera,
+          prefix: const Icon(FLucideIcons.camera),
+          child: Flexible(child: Text(l10n.ingestCameraAction)),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        AppActionButton(
+          variant: FButtonVariant.outline,
+          onPress: _isBusy ? null : _pickFile,
+          prefix: const Icon(FLucideIcons.paperclip),
+          child: Flexible(child: Text(l10n.ingestImportFileAction)),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        AppActionButton(
+          variant: FButtonVariant.outline,
+          onPress: _isBusy ? null : _openPasteDialog,
+          prefix: const Icon(FLucideIcons.clipboard),
+          child: Flexible(child: Text(l10n.ingestPasteAction)),
+        ),
+        if (_busy != null) ...[
+          const SizedBox(height: AppSpacing.s16),
+          _ProcessingNotice(state: _busy!),
+        ],
       ],
     );
   }
+
+  Widget _accountPicker(_IngestReviewViewData data) => AccountPicker(
+    accounts: data.payableAccounts,
+    value: data.selectedAccountId,
+    label: AppLocalizations.of(context).ingestExpenseAccountLabel,
+    enabled: !_isBusy,
+    contentConstraints: const FAutoWidthPortalConstraints(maxHeight: 280),
+    onChanged: (value) => setState(() => _accountId = value),
+  );
 
   static String? _defaultAccountId(List<Account> accounts) {
     if (accounts.isEmpty) return null;
@@ -928,5 +931,180 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       IngestSourceKind.statementPdf => l10n.ingestSourcePdf,
       IngestSourceKind.email => l10n.ingestSourceEmail,
     };
+  }
+}
+
+class _IngestReviewViewData {
+  const _IngestReviewViewData({
+    required this.items,
+    required this.payableAccounts,
+    required this.selectedAccountId,
+    required this.actionableDrafts,
+    required this.freshCount,
+  });
+
+  factory _IngestReviewViewData.from({
+    required List<Account> accounts,
+    required List<IngestReviewItem> items,
+    required String? selectedAccountId,
+    required Map<String, ConfirmedIngestItem> pendingFinalize,
+  }) {
+    final payable = accounts
+        .where((account) => !account.archived)
+        .toList(growable: false);
+    final effectiveSelectedId =
+        payable.any((account) => account.id == selectedAccountId)
+        ? selectedAccountId
+        : _IngestReviewPageState._defaultAccountId(payable);
+    final actionableDrafts = items
+        .where(
+          (item) =>
+              !item.blocksApply &&
+              !pendingFinalize.containsKey(item.draft.draftId),
+        )
+        .map((item) => item.draft)
+        .toList(growable: false);
+    return _IngestReviewViewData(
+      items: items,
+      payableAccounts: payable,
+      selectedAccountId: effectiveSelectedId,
+      actionableDrafts: actionableDrafts,
+      freshCount: actionableDrafts
+          .where((draft) => draft.verdict == DedupVerdict.newTxn)
+          .length,
+    );
+  }
+
+  final List<IngestReviewItem> items;
+  final List<Account> payableAccounts;
+  final String? selectedAccountId;
+  final List<IngestDraft> actionableDrafts;
+  final int freshCount;
+}
+
+class _CapturePopoverAction extends StatefulWidget {
+  const _CapturePopoverAction({
+    required this.enabled,
+    required this.onCamera,
+    required this.onFile,
+    required this.onPaste,
+  });
+
+  final bool enabled;
+  final VoidCallback onCamera;
+  final VoidCallback onFile;
+  final VoidCallback onPaste;
+
+  @override
+  State<_CapturePopoverAction> createState() => _CapturePopoverActionState();
+}
+
+class _CapturePopoverActionState extends State<_CapturePopoverAction>
+    with SingleTickerProviderStateMixin {
+  late final FPopoverController _controller;
+  final FocusNode _triggerFocus = FocusNode(debugLabel: 'ingest capture menu');
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = FPopoverController(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _triggerFocus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FPopover(
+      control: FPopoverControl.managed(controller: _controller),
+      popoverAnchor: AlignmentDirectional.topEnd,
+      childAnchor: AlignmentDirectional.bottomEnd,
+      constraints: const FPortalConstraints(
+        minWidth: 200,
+        maxWidth: 280,
+        maxHeight: 360,
+      ),
+      popoverBuilder: (context, _) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _CaptureOption(
+              icon: FLucideIcons.camera,
+              label: l10n.ingestCameraAction,
+              onPress: () => _select(widget.onCamera),
+            ),
+            _CaptureOption(
+              icon: FLucideIcons.paperclip,
+              label: l10n.ingestImportFileAction,
+              onPress: () => _select(widget.onFile),
+            ),
+            _CaptureOption(
+              icon: FLucideIcons.clipboard,
+              label: l10n.ingestPasteAction,
+              onPress: () => _select(widget.onPaste),
+            ),
+          ],
+        ),
+      ),
+      child: AppHeaderAction(
+        semanticsLabel: l10n.ingestCaptureMenuAction,
+        icon: const Icon(FLucideIcons.plus),
+        focusNode: _triggerFocus,
+        onPress: widget.enabled ? _controller.toggle : null,
+      ),
+    );
+  }
+
+  Future<void> _select(VoidCallback action) async {
+    await _controller.hide();
+    if (!mounted) return;
+    _triggerFocus.requestFocus();
+    action();
+  }
+}
+
+class _CaptureOption extends StatelessWidget {
+  const _CaptureOption({
+    required this.icon,
+    required this.label,
+    required this.onPress,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      button: true,
+      label: label,
+      onTap: onPress,
+      excludeSemantics: true,
+      child: FTappable(
+        onPress: onPress,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s10,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: AppIconSizes.sm),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(child: Text(label)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

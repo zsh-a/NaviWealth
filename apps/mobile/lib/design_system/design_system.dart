@@ -50,6 +50,7 @@ export 'widgets/app_quiet_button.dart';
 export 'widgets/app_section.dart';
 export 'widgets/app_sheet.dart';
 export 'widgets/app_status_banner.dart';
+export 'widgets/app_task_scaffold.dart';
 export 'widgets/app_toast.dart';
 export 'widgets/back_header_action.dart';
 export 'widgets/back_navigation.dart';

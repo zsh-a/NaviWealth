@@ -14075,6 +14075,12 @@ abstract class AppLocalizations {
   /// **'Take photo'**
   String get ingestCameraAction;
 
+  /// Ingest review: open the compact capture options menu
+  ///
+  /// In en, this message translates to:
+  /// **'Add source'**
+  String get ingestCaptureMenuAction;
+
   /// Settings tile and page title for AI trace transparency
   ///
   /// In en, this message translates to:

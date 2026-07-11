@@ -8247,6 +8247,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestCameraAction => 'Take photo';
 
   @override
+  String get ingestCaptureMenuAction => 'Add source';
+
+  @override
   String get settingsAiTransparencyTitle => 'AI transparency';
 
   @override

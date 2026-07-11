@@ -1,15 +1,7 @@
 part of '../ingest_review_page.dart';
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.onPaste,
-    required this.onImport,
-    required this.onCamera,
-  });
-
-  final VoidCallback? onPaste;
-  final VoidCallback? onImport;
-  final VoidCallback? onCamera;
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
@@ -19,49 +11,6 @@ class _EmptyState extends StatelessWidget {
       title: l10n.ingestEmptyTitle,
       message: l10n.ingestEmptyBody,
       iconSize: AppIconSizes.xxl,
-      action: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: AppSpacing.s8,
-        runSpacing: AppSpacing.s8,
-        children: [
-          AppActionButton(
-            variant: FButtonVariant.outline,
-            onPress: onCamera,
-            prefix: const Icon(FLucideIcons.camera),
-            child: Flexible(
-              child: Text(
-                l10n.ingestCameraAction,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          AppActionButton(
-            variant: FButtonVariant.outline,
-            onPress: onImport,
-            prefix: const Icon(FLucideIcons.paperclip),
-            child: Flexible(
-              child: Text(
-                l10n.ingestImportFileAction,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          AppActionButton(
-            variant: FButtonVariant.outline,
-            onPress: onPaste,
-            prefix: const Icon(FLucideIcons.clipboard),
-            child: Flexible(
-              child: Text(
-                l10n.ingestPasteAction,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

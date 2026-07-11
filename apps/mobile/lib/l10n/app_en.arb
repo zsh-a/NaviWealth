@@ -4506,6 +4506,8 @@
   "@ingestImportFileAction": { "description": "Ingest review: pick a receipt / statement / CSV file" },
   "ingestCameraAction": "Take photo",
   "@ingestCameraAction": { "description": "Ingest review: snap a receipt with the camera" },
+  "ingestCaptureMenuAction": "Add source",
+  "@ingestCaptureMenuAction": { "description": "Ingest review: open the compact capture options menu" },
 
   "settingsAiTransparencyTitle": "AI transparency",
   "@settingsAiTransparencyTitle": { "description": "Settings tile and page title for AI trace transparency" },

@@ -35,7 +35,6 @@ class _RebalanceExecutionWorkspacePageState
     final sessionAsync = ref.watch(
       rebalanceExecutionSessionProvider(widget.sessionId),
     );
-    final session = sessionAsync.value;
     return PopScope(
       canPop: !_busy,
       onPopInvokedWithResult: (didPop, _) {
@@ -47,20 +46,14 @@ class _RebalanceExecutionWorkspacePageState
           );
         }
       },
-      child: AppPageScaffold(
-        title: l10n.rebalanceExecutionWorkspaceTitle,
-        actions: [
-          if (session?.status == RebalanceExecutionSessionStatus.active)
-            AppHeaderAction(
-              icon: const Icon(FLucideIcons.archive),
-              semanticsLabel: l10n.rebalanceExecutionArchiveAction,
-              onPress: _busy ? null : _archive,
-            ),
-        ],
-        childPad: false,
-        child: sessionAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => _WorkspaceError(
+      child: sessionAsync.when(
+        loading: () => _WorkspaceStatePage(
+          title: l10n.rebalanceExecutionWorkspaceTitle,
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, stackTrace) => _WorkspaceStatePage(
+          title: l10n.rebalanceExecutionWorkspaceTitle,
+          child: _WorkspaceError(
             message: userSafeErrorMessage(
               context,
               error,
@@ -69,24 +62,28 @@ class _RebalanceExecutionWorkspacePageState
             ),
             onRetry: _refresh,
           ),
-          data: (session) => session == null
-              ? _WorkspaceError(
+        ),
+        data: (session) => session == null
+            ? _WorkspaceStatePage(
+                title: l10n.rebalanceExecutionWorkspaceTitle,
+                child: _WorkspaceError(
                   message: l10n.rebalanceExecutionNotFound,
                   onRetry: _refresh,
-                )
-              : _WorkspaceBody(
-                  session: session,
-                  busy: _busy,
-                  batchRunning: _stopSignal != null,
-                  onReview: _review,
-                  onSkip: (item) => _mutate((gateway) => gateway.skip(item.id)),
-                  onReopen: (item) =>
-                      _mutate((gateway) => gateway.reopen(item.id)),
-                  onApply: () => _runBatch(undo: false),
-                  onUndo: () => _runBatch(undo: true),
-                  onStop: _stop,
                 ),
-        ),
+              )
+            : _WorkspaceBody(
+                session: session,
+                busy: _busy,
+                batchRunning: _stopSignal != null,
+                onArchive: _archive,
+                onReview: _review,
+                onSkip: (item) => _mutate((gateway) => gateway.skip(item.id)),
+                onReopen: (item) =>
+                    _mutate((gateway) => gateway.reopen(item.id)),
+                onApply: () => _runBatch(undo: false),
+                onUndo: () => _runBatch(undo: true),
+                onStop: _stop,
+              ),
       ),
     );
   }
@@ -287,6 +284,7 @@ class _WorkspaceBody extends StatelessWidget {
     required this.session,
     required this.busy,
     required this.batchRunning,
+    required this.onArchive,
     required this.onReview,
     required this.onSkip,
     required this.onReopen,
@@ -298,6 +296,7 @@ class _WorkspaceBody extends StatelessWidget {
   final RebalanceExecutionSession session;
   final bool busy;
   final bool batchRunning;
+  final VoidCallback onArchive;
   final ValueChanged<RebalanceExecutionItem> onReview;
   final ValueChanged<RebalanceExecutionItem> onSkip;
   final ValueChanged<RebalanceExecutionItem> onReopen;
@@ -323,131 +322,209 @@ class _WorkspaceBody extends StatelessWidget {
     );
     final applied = session.items.any((item) => item.isEconomicallyApplied);
     final mutable = session.status == RebalanceExecutionSessionStatus.active;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final padding = Breakpoints.isMobile(constraints.maxWidth)
-            ? const EdgeInsets.all(AppSpacing.s16)
-            : const EdgeInsets.all(AppSpacing.s24);
-        return ListView(
-          padding: padding,
-          children: [
-            SoftCard(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.rebalanceExecutionProgress(
-                              resolved,
-                              session.items.length,
-                            ),
-                            style: context.theme.typography.body.sm,
-                          ),
-                        ),
-                        Text(
-                          '${(session.plan.driftAfterPct * 100).toStringAsFixed(1)}%',
-                          style: context.captionLabelStyle,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    LinearProgressIndicator(
-                      value: session.items.isEmpty
-                          ? 0
-                          : resolved / session.items.length,
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    if (mutable)
-                      Wrap(
-                        spacing: AppSpacing.s8,
-                        runSpacing: AppSpacing.s8,
-                        children: [
-                          if (batchRunning)
-                            AppActionButton(
-                              variant: FButtonVariant.destructive,
-                              mainAxisSize: MainAxisSize.min,
-                              onPress: onStop,
-                              child: Flexible(
-                                child: Text(
-                                  l10n.rebalanceExecutionStopAction,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            )
-                          else ...[
-                            AppActionButton(
-                              mainAxisSize: MainAxisSize.min,
-                              onPress: busy || !ready ? null : onApply,
-                              child: Flexible(
-                                child: Text(
-                                  retryApply
-                                      ? l10n.rebalanceExecutionRetryApplyAction
-                                      : l10n.rebalanceExecutionApplyAction,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                            AppActionButton(
-                              variant: FButtonVariant.outline,
-                              mainAxisSize: MainAxisSize.min,
-                              onPress: busy || !applied ? null : onUndo,
-                              child: Flexible(
-                                child: Text(
-                                  retryUndo
-                                      ? l10n.rebalanceExecutionRetryUndoAction
-                                      : l10n.rebalanceExecutionUndoAction,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                  ],
+    final progress = _ExecutionProgress(
+      key: const Key('rebalance-execution-progress'),
+      resolved: resolved,
+      total: session.items.length,
+      driftAfterPct: session.plan.driftAfterPct,
+    );
+    final showFooter = mutable && (batchRunning || ready || applied);
+    return AppTaskScaffold(
+      title: l10n.rebalanceExecutionWorkspaceTitle,
+      actionsBuilder: (_, _) => mutable
+          ? [
+              AppHeaderAction(
+                icon: const Icon(FLucideIcons.archive),
+                semanticsLabel: l10n.rebalanceExecutionArchiveAction,
+                onPress: busy ? null : onArchive,
+              ),
+            ]
+          : const <Widget>[],
+      compactLeadingSliversBuilder: (_) => [
+        SliverToBoxAdapter(child: progress),
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s12)),
+      ],
+      railBuilder: (_) => progress,
+      primarySliversBuilder: (_) => session.items.isEmpty
+          ? [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: AppEmptyState(
+                  icon: FLucideIcons.listChecks,
+                  title: l10n.rebalanceExecutionEmptyQueue,
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            if (session.items.isEmpty)
-              AppEmptyState(
-                icon: FLucideIcons.listChecks,
-                title: l10n.rebalanceExecutionEmptyQueue,
-              )
-            else
-              SoftCard(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s12,
-                  ),
-                  child: Column(
-                    children: [
-                      for (
-                        var index = 0;
-                        index < session.items.length;
-                        index++
-                      ) ...[
-                        if (index > 0) const FDivider(),
-                        _ExecutionItemRow(
-                          item: session.items[index],
+            ]
+          : [
+              SliverList.builder(
+                itemCount: session.items.length,
+                itemBuilder: (context, index) {
+                  final item = session.items[index];
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: index == session.items.length - 1
+                          ? AppSpacing.s12
+                          : AppSpacing.s8,
+                    ),
+                    child: SoftCard(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s12,
+                        ),
+                        child: _ExecutionItemRow(
+                          item: item,
                           mutable: mutable,
                           busy: busy,
-                          onReview: () => onReview(session.items[index]),
-                          onSkip: () => onSkip(session.items[index]),
-                          onReopen: () => onReopen(session.items[index]),
+                          onReview: () => onReview(item),
+                          onSkip: () => onSkip(item),
+                          onReopen: () => onReopen(item),
                         ),
-                      ],
-                    ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+      footerBuilder: showFooter
+          ? (_) => _ExecutionAggregateActions(
+              busy: busy,
+              batchRunning: batchRunning,
+              canApply: ready,
+              retryApply: retryApply,
+              canUndo: applied,
+              retryUndo: retryUndo,
+              onApply: onApply,
+              onUndo: onUndo,
+              onStop: onStop,
+            )
+          : null,
+    );
+  }
+}
+
+class _ExecutionProgress extends StatelessWidget {
+  const _ExecutionProgress({
+    super.key,
+    required this.resolved,
+    required this.total,
+    required this.driftAfterPct,
+  });
+
+  final int resolved;
+  final int total;
+  final double driftAfterPct;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SoftCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.rebalanceExecutionProgress(resolved, total),
+                    style: context.theme.typography.body.sm,
                   ),
                 ),
-              ),
+                Text(
+                  '${(driftAfterPct * 100).toStringAsFixed(1)}%',
+                  style: context.captionLabelStyle,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            LinearProgressIndicator(value: total == 0 ? 0 : resolved / total),
           ],
-        );
-      },
+        ),
+      ),
     );
+  }
+}
+
+class _ExecutionAggregateActions extends StatelessWidget {
+  const _ExecutionAggregateActions({
+    required this.busy,
+    required this.batchRunning,
+    required this.canApply,
+    required this.retryApply,
+    required this.canUndo,
+    required this.retryUndo,
+    required this.onApply,
+    required this.onUndo,
+    required this.onStop,
+  });
+
+  final bool busy;
+  final bool batchRunning;
+  final bool canApply;
+  final bool retryApply;
+  final bool canUndo;
+  final bool retryUndo;
+  final VoidCallback onApply;
+  final VoidCallback onUndo;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (batchRunning) {
+      return AppActionButton(
+        variant: FButtonVariant.destructive,
+        onPress: onStop,
+        child: Text(l10n.rebalanceExecutionStopAction),
+      );
+    }
+    return Wrap(
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
+      children: [
+        if (canApply)
+          AppActionButton(
+            mainAxisSize: MainAxisSize.min,
+            onPress: busy ? null : onApply,
+            child: Flexible(
+              child: Text(
+                retryApply
+                    ? l10n.rebalanceExecutionRetryApplyAction
+                    : l10n.rebalanceExecutionApplyAction,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        if (canUndo)
+          AppActionButton(
+            variant: FButtonVariant.outline,
+            mainAxisSize: MainAxisSize.min,
+            onPress: busy ? null : onUndo,
+            child: Flexible(
+              child: Text(
+                retryUndo
+                    ? l10n.rebalanceExecutionRetryUndoAction
+                    : l10n.rebalanceExecutionUndoAction,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _WorkspaceStatePage extends StatelessWidget {
+  const _WorkspaceStatePage({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPageScaffold(title: title, childPad: false, child: child);
   }
 }
 
