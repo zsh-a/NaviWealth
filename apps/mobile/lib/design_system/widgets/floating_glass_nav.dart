@@ -14,7 +14,7 @@ const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 /// A floating glass-morphism bottom navigation bar.
 ///
 /// Renders as a compact, translucent dock that floats above the content
-/// with a backdrop blur effect. The optional center action sits inside the
+/// with a backdrop blur effect. The optional assistant action sits inside the
 /// same height as the tab destinations so the dock does not cover page-level
 /// floating actions.
 ///
@@ -22,7 +22,7 @@ const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 /// separate, low-emphasis affordance at the trailing edge so it never reads as
 /// a selected navigation destination.
 ///
-/// When [onCenterAction] is null, no center button is rendered and tabs
+/// When [onAssistantAction] is null, no assistant button is rendered and tabs
 /// fill the full width evenly.
 class FloatingGlassNavBar extends StatelessWidget {
   const FloatingGlassNavBar({
@@ -30,9 +30,10 @@ class FloatingGlassNavBar extends StatelessWidget {
     required this.items,
     required this.selectedIndex,
     required this.onIndexChanged,
-    this.onCenterAction,
-    this.centerIcon = FLucideIcons.sparkles,
-    this.centerLabel,
+    this.onAssistantAction,
+    this.assistantIcon = FLucideIcons.sparkles,
+    this.assistantLabel,
+    this.assistantSemanticLabel,
   });
 
   /// Navigation destinations.
@@ -44,15 +45,18 @@ class FloatingGlassNavBar extends StatelessWidget {
   /// Called when a tab is tapped.
   final ValueChanged<int> onIndexChanged;
 
-  /// Called when the center action button is tapped. When `null`, no center
-  /// button is rendered.
-  final VoidCallback? onCenterAction;
+  /// Called when the trailing assistant action is tapped. When `null`, no
+  /// assistant button is rendered.
+  final VoidCallback? onAssistantAction;
 
-  /// Icon for the center action button.
-  final IconData centerIcon;
+  /// Icon for the assistant action button.
+  final IconData assistantIcon;
 
-  /// Optional label beneath the center button.
-  final String? centerLabel;
+  /// Short visible action label, e.g. `Ask AI` / `问 AI`.
+  final String? assistantLabel;
+
+  /// Full localized accessibility label for the assistant action.
+  final String? assistantSemanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -123,14 +127,14 @@ class FloatingGlassNavBar extends StatelessWidget {
                           isDark: isDark,
                         ),
                       ),
-                    if (onCenterAction != null)
+                    if (onAssistantAction != null)
                       Padding(
                         padding: const EdgeInsets.only(left: AppSpacing.s8),
-                        child: _CenterActionButton(
-                          icon: centerIcon,
-                          label: centerLabel,
-                          onTap: onCenterAction!,
-                          isDark: isDark,
+                        child: _AssistantActionButton(
+                          icon: assistantIcon,
+                          label: assistantLabel,
+                          semanticLabel: assistantSemanticLabel,
+                          onTap: onAssistantAction!,
                         ),
                       ),
                   ],
@@ -260,134 +264,58 @@ class _NavTabButton extends StatelessWidget {
   }
 }
 
-class _CenterActionButton extends StatefulWidget {
-  const _CenterActionButton({
+class _AssistantActionButton extends StatelessWidget {
+  const _AssistantActionButton({
     required this.icon,
     required this.label,
+    required this.semanticLabel,
     required this.onTap,
-    required this.isDark,
   });
 
   final IconData icon;
   final String? label;
+  final String? semanticLabel;
   final VoidCallback onTap;
-  final bool isDark;
-
-  @override
-  State<_CenterActionButton> createState() => _CenterActionButtonState();
-}
-
-class _CenterActionButtonState extends State<_CenterActionButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Motion.fast,
-      lowerBound: 0.0,
-      upperBound: 1.0,
-    );
-    _scale = Tween<double>(
-      begin: 1.0,
-      end: 0.94,
-    ).animate(CurvedAnimation(parent: _controller, curve: Motion.standard));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    final motionEnabled = AppMotionPolicy.isEnabled(
-      context,
-      role: AppMotionRole.decorative,
-    );
-    final buttonColor = widget.isDark
-        ? ColorPalette.navy800.withValues(alpha: AppOpacity.strong)
-        : ColorPalette.navy950.withValues(alpha: AppOpacity.faint);
-    final iconColor = widget.isDark
-        ? ColorPalette.cyanBrand300
-        : ColorPalette.navy500;
+    final colors = context.theme.colors;
+    final foreground = colors.primary.withValues(alpha: AppOpacity.emphasis);
 
     return Semantics(
       button: true,
-      label: widget.label ?? 'AI',
-      child: GestureDetector(
-        onTapDown: motionEnabled ? (_) => _controller.forward() : null,
-        onTapUp: (_) {
-          if (motionEnabled) _controller.reverse();
-          widget.onTap();
-        },
-        onTapCancel: motionEnabled ? () => _controller.reverse() : null,
-        child: motionEnabled
-            ? ScaleTransition(
-                scale: _scale,
-                child: _CenterActionButtonSurface(
-                  icon: widget.icon,
-                  label: widget.label,
-                  buttonColor: buttonColor,
-                  iconColor: iconColor,
+      label: semanticLabel ?? label ?? 'AI',
+      child: FTappable(
+        onPress: onTap,
+        child: Container(
+          key: const ValueKey<String>('floating-nav.assistant'),
+          height: AppSpacing.s40,
+          constraints: const BoxConstraints(minWidth: AppSpacing.s64),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: AppOpacity.subtle),
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: foreground, size: AppIconSizes.h18),
+              if (label != null) ...[
+                const SizedBox(width: AppSpacing.s6),
+                Text(
+                  label!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TypographyTokens.labelSmallMedium.copyWith(
+                    color: foreground,
+                    height: 1,
+                  ),
                 ),
-              )
-            : _CenterActionButtonSurface(
-                icon: widget.icon,
-                label: widget.label,
-                buttonColor: buttonColor,
-                iconColor: iconColor,
-              ),
-      ),
-    );
-  }
-}
-
-class _CenterActionButtonSurface extends StatelessWidget {
-  const _CenterActionButtonSurface({
-    required this.icon,
-    required this.label,
-    required this.buttonColor,
-    required this.iconColor,
-  });
-
-  final IconData icon;
-  final String? label;
-  final Color buttonColor;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: AppSpacing.s56,
-      height: 52,
-      decoration: BoxDecoration(
-        color: buttonColor,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: iconColor.withValues(alpha: AppOpacity.subtle),
-          width: AppStroke.hairline,
+              ],
+            ],
+          ),
         ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: iconColor, size: AppIconSizes.lg),
-          if (label != null) ...[
-            const SizedBox(height: AppSpacing.hairline),
-            Text(
-              label!,
-              style: TypographyTokens.labelTiny.copyWith(
-                color: iconColor,
-                height: 1.0,
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }

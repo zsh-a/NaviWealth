@@ -120,9 +120,8 @@ void main() {
   });
 
   group('FloatingGlassNavBar', () {
-    testWidgets('keeps center action within the compact dock height', (
-      tester,
-    ) async {
+    testWidgets('renders a compact trailing assistant action', (tester) async {
+      var assistantTaps = 0;
       await tester.pumpWidget(
         _wrap(
           Center(
@@ -148,8 +147,9 @@ void main() {
                 ],
                 selectedIndex: 1,
                 onIndexChanged: (_) {},
-                onCenterAction: () {},
-                centerLabel: 'AI',
+                onAssistantAction: () => assistantTaps += 1,
+                assistantLabel: 'Ask AI',
+                assistantSemanticLabel: 'Open assistant',
               ),
             ),
           ),
@@ -161,6 +161,20 @@ void main() {
         kFloatingGlassNavBarHeight,
       );
       expect(find.byType(BackdropFilter), findsOneWidget);
+      final assistant = find.byKey(
+        const ValueKey<String>('floating-nav.assistant'),
+      );
+      expect(tester.getSize(assistant).height, AppSpacing.s40);
+      expect(find.text('Ask AI'), findsOneWidget);
+      expect(find.bySemanticsLabel('Open assistant'), findsOneWidget);
+
+      final surface = tester.widget<Container>(assistant);
+      final decoration = surface.decoration! as BoxDecoration;
+      expect(decoration.border, isNull);
+
+      await tester.tap(assistant);
+      await tester.pumpAndSettle();
+      expect(assistantTaps, 1);
     });
   });
 }

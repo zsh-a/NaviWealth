@@ -50,7 +50,7 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     ...appShellChromeOverrides(),
     ...appShareIntentNavigationOverrides(),
     ...aiChatSurfaceOverrides(),
-    domainTabsCenterActionProvider.overrideWith(
+    domainTabsAssistantActionProvider.overrideWith(
       (ref) =>
           (context, widgetRef) => askAi(context, widgetRef),
     ),

@@ -1218,6 +1218,8 @@
   "@commandPaletteNewExpense": { "description": "Command palette: open the new expense form" },
   "commandPaletteOpenAi": "Open assistant",
   "@commandPaletteOpenAi": { "description": "Command palette: open a new AI chat (via askAi helper, routes through aiContextProvider)" },
+  "navAskAi": "Ask AI",
+  "@navAskAi": { "description": "Compact visible label for the assistant action in mobile navigation" },
   "commandPaletteAiHistory": "AI history",
   "@commandPaletteAiHistory": { "description": "Command palette: open the read-only AI session history under Settings" },
   "commandPaletteToggleTheme": "Toggle theme (light / dark)",

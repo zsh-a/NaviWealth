@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../ai/write/persistent_undo_banner.dart';
 import 'desktop_sidebar.dart';
 import 'domain_shell.dart';
@@ -13,10 +14,10 @@ const double _kMobileDockHorizontalPadding = AppSpacing.s16;
 const double _kMobileDockTopPadding = AppSpacing.s4;
 const double _kMobileDockBottomPadding = AppSpacing.s10;
 
-typedef DomainTabsCenterAction =
+typedef DomainTabsAssistantAction =
     void Function(BuildContext context, WidgetRef ref);
 
-final domainTabsCenterActionProvider = Provider<DomainTabsCenterAction?>(
+final domainTabsAssistantActionProvider = Provider<DomainTabsAssistantAction?>(
   (ref) => null,
 );
 
@@ -152,7 +153,8 @@ class _MobileLayout extends ConsumerWidget {
     // shortcut; the discoverable entry is now the header domain chip.
     final specs = ref.watch(activeDomainShellsProvider);
     final hasSwitcher = specs.length >= 2;
-    final centerAction = ref.watch(domainTabsCenterActionProvider);
+    final assistantAction = ref.watch(domainTabsAssistantActionProvider);
+    final l10n = AppLocalizations.of(context);
 
     // Convert domain tabs to FloatingNavTab items.
     final navTabs = [
@@ -239,10 +241,12 @@ class _MobileLayout extends ConsumerWidget {
                                       items: navTabs,
                                       selectedIndex: selectedIndex,
                                       onIndexChanged: onDestinationSelected,
-                                      onCenterAction: centerAction == null
+                                      onAssistantAction: assistantAction == null
                                           ? null
-                                          : () => centerAction(context, ref),
-                                      centerLabel: 'AI',
+                                          : () => assistantAction(context, ref),
+                                      assistantLabel: l10n.navAskAi,
+                                      assistantSemanticLabel:
+                                          l10n.commandPaletteOpenAi,
                                     ),
                                   ),
                                 ),

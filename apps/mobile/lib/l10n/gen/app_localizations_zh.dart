@@ -2123,6 +2123,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandPaletteOpenAi => '打开助理';
 
   @override
+  String get navAskAi => '问 AI';
+
+  @override
   String get commandPaletteAiHistory => 'AI 历史会话';
 
   @override

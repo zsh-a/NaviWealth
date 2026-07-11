@@ -2198,6 +2198,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandPaletteOpenAi => 'Open assistant';
 
   @override
+  String get navAskAi => 'Ask AI';
+
+  @override
   String get commandPaletteAiHistory => 'AI history';
 
   @override

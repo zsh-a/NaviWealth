@@ -3938,6 +3938,12 @@ abstract class AppLocalizations {
   /// **'Open assistant'**
   String get commandPaletteOpenAi;
 
+  /// Compact visible label for the assistant action in mobile navigation
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get navAskAi;
+
   /// Command palette: open the read-only AI session history under Settings
   ///
   /// In en, this message translates to:

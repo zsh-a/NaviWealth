@@ -665,6 +665,7 @@
   "commandPaletteNewTrade": "新增交易",
   "commandPaletteNewExpense": "新增支出",
   "commandPaletteOpenAi": "打开助理",
+  "navAskAi": "问 AI",
   "commandPaletteAiHistory": "AI 历史会话",
   "commandPaletteToggleTheme": "切换主题（亮色 / 暗色）",
   "commandPaletteToggleColorMode": "切换涨跌颜色模式",
