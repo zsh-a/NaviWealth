@@ -22,18 +22,28 @@ class _TimelineSection extends ConsumerWidget {
             for (final event in month.events)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                child: _TimelineRow(
-                  date: formatters.date(event.event.date),
-                  asset: event.assetLabel,
-                  gross: formatters.currency(
-                    event.grossInBase,
-                    code: snapshot.baseCurrency,
+                child: AppAdaptiveActionMenu(
+                  title: l10n.dividendEventActionsTitle,
+                  subtitle:
+                      '${event.assetLabel} · '
+                      '${formatters.date(event.event.date)}',
+                  actions: buildDividendEventActions(context, ref, event),
+                  triggerBuilder: (context, openMenu, focusNode) => Focus(
+                    focusNode: focusNode,
+                    child: _TimelineRow(
+                      date: formatters.date(event.event.date),
+                      asset: event.assetLabel,
+                      gross: formatters.currency(
+                        event.grossInBase,
+                        code: snapshot.baseCurrency,
+                      ),
+                      withholding: formatters.currency(
+                        event.withholdingInBase,
+                        code: snapshot.baseCurrency,
+                      ),
+                      onTap: openMenu,
+                    ),
                   ),
-                  withholding: formatters.currency(
-                    event.withholdingInBase,
-                    code: snapshot.baseCurrency,
-                  ),
-                  onTap: () => showDividendEventActions(context, ref, event),
                 ),
               ),
             const SizedBox(height: AppSpacing.s6),

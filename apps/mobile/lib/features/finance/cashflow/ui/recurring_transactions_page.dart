@@ -149,60 +149,64 @@ class _RecurringRow extends ConsumerWidget {
           const SizedBox(width: AppSpacing.s12),
           Text(amountLabel, style: context.strongLabelStyle),
           const SizedBox(width: AppSpacing.s8),
-          FTappable(
-            onPress: () => _showRowActions(context, ref, rule),
-            child: Icon(
-              FLucideIcons.ellipsisVertical,
-              size: AppIconSizes.md,
-              color: muted,
+          AppAdaptiveActionMenu(
+            title: l10n.recurringRowActionsTitle,
+            actions: <AppAdaptiveAction>[
+              AppAdaptiveAction(
+                icon: FLucideIcons.pencil,
+                title: l10n.recurringActionEdit,
+                subtitle: l10n.recurringActionEditHint,
+                onPress: () {
+                  if (context.mounted) {
+                    return showRecurringTransactionForm(
+                      context,
+                      ref,
+                      existing: rule,
+                    );
+                  }
+                },
+              ),
+              AppAdaptiveAction(
+                icon: FLucideIcons.circlePause,
+                title: l10n.recurringActionDisable,
+                subtitle: l10n.recurringActionDisableHint,
+                onPress: () {
+                  if (context.mounted) return _disableRule(context, ref, rule);
+                },
+              ),
+              AppAdaptiveAction(
+                icon: FLucideIcons.trash2,
+                title: l10n.commonDelete,
+                subtitle: l10n.recurringActionDeleteHint,
+                destructive: true,
+                onPress: () {
+                  if (context.mounted) return _deleteRule(context, ref, rule);
+                },
+              ),
+            ],
+            triggerBuilder: (context, openMenu, focusNode) => Focus(
+              focusNode: focusNode,
+              child: Semantics(
+                button: true,
+                label: l10n.recurringRowActionsTitle,
+                child: FTappable(
+                  onPress: openMenu,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.s8),
+                    child: Icon(
+                      FLucideIcons.ellipsisVertical,
+                      size: AppIconSizes.md,
+                      color: muted,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-Future<void> _showRowActions(
-  BuildContext context,
-  WidgetRef ref,
-  RecurringTransaction rule,
-) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.recurringRowActionsTitle,
-    builder: (sheetContext) => AppActionSheetList(
-      children: [
-        AppActionSheetTile(
-          icon: FLucideIcons.pencil,
-          title: l10n.recurringActionEdit,
-          subtitle: l10n.recurringActionEditHint,
-          onPress: () => closeSheetThen(sheetContext, () {
-            if (context.mounted) {
-              return showRecurringTransactionForm(context, ref, existing: rule);
-            }
-          }),
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.circlePause,
-          title: l10n.recurringActionDisable,
-          subtitle: l10n.recurringActionDisableHint,
-          onPress: () => closeSheetThen(sheetContext, () {
-            if (context.mounted) return _disableRule(context, ref, rule);
-          }),
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.trash2,
-          title: l10n.commonDelete,
-          subtitle: l10n.recurringActionDeleteHint,
-          onPress: () => closeSheetThen(sheetContext, () {
-            if (context.mounted) return _deleteRule(context, ref, rule);
-          }),
-        ),
-      ],
-    ),
-  );
 }
 
 Future<void> _disableRule(

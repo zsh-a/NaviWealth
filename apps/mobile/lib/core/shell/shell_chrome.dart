@@ -196,11 +196,7 @@ class ShellTabScaffold extends ConsumerWidget {
             onPress: action.onPress,
           ),
         if (overflowActions.isNotEmpty)
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.ellipsis),
-            semanticsLabel: AppLocalizations.of(context).shellMoreActions,
-            onPress: () => _showHeaderActionOverflow(context, overflowActions),
-          ),
+          _ShellHeaderOverflow(actions: overflowActions),
       ],
       child: child,
     );
@@ -257,28 +253,32 @@ class _ShellHeaderActionIcon extends StatelessWidget {
   }
 }
 
-Future<void> _showHeaderActionOverflow(
-  BuildContext context,
-  List<ShellHeaderActionSpec> actions,
-) async {
-  final l10n = AppLocalizations.of(context);
-  final selected = await showAppSheet<ShellHeaderActionSpec>(
-    context: context,
-    title: l10n.shellMoreActions,
-    builder: (sheetContext) => AppActionSheetList(
-      children: <AppActionSheetTile>[
+class _ShellHeaderOverflow extends StatelessWidget {
+  const _ShellHeaderOverflow({required this.actions});
+
+  final List<ShellHeaderActionSpec> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = AppLocalizations.of(context).shellMoreActions;
+    return AppAdaptiveActionMenu(
+      title: label,
+      actions: <AppAdaptiveAction>[
         for (final action in actions)
-          AppActionSheetTile(
+          AppAdaptiveAction(
             icon: action.icon,
             title: action.label,
-            subtitle: '',
-            onPress: () => Navigator.of(sheetContext).pop(action),
+            onPress: action.onPress,
           ),
       ],
-    ),
-  );
-  if (selected == null || !context.mounted) return;
-  selected.onPress();
+      triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
+        semanticsLabel: label,
+        icon: const Icon(FLucideIcons.ellipsis),
+        focusNode: focusNode,
+        onPress: openMenu,
+      ),
+    );
+  }
 }
 
 /// In-content shell chrome slot for surfaces without an `FHeader`.

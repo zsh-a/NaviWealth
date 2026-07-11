@@ -4,7 +4,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
@@ -25,50 +24,43 @@ import '../domain/dividend_center.dart';
 ///     corrupt a 3-leg dividend with withholding).
 ///   * **Delete** → [JournalEntryRepository.softDelete]; the dividend
 ///     center snapshot re-derives from the journal stream and refreshes.
-Future<void> showDividendEventActions(
+List<AppAdaptiveAction> buildDividendEventActions(
   BuildContext context,
   WidgetRef ref,
   DividendCenterEvent event,
 ) {
   final l10n = AppLocalizations.of(context);
-  final formatters = context.formatters(ref);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.dividendEventActionsTitle,
-    subtitle: '${event.assetLabel} · ${formatters.date(event.event.date)}',
-    builder: (sheetContext) => AppActionSheetList(
-      children: [
-        AppActionSheetTile(
-          icon: FLucideIcons.receipt,
-          title: l10n.dividendEventViewInActivity,
-          subtitle: l10n.dividendEventViewInActivityHint,
-          onPress: () => closeSheetThen(sheetContext, () {
-            if (context.mounted) return _viewInActivity(context, ref, event);
-          }),
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.pencil,
-          title: l10n.dividendEventEdit,
-          subtitle: l10n.dividendEventEditHint,
-          onPress: () => closeSheetThen(sheetContext, () {
-            if (context.mounted) {
-              context.push(FinanceRoutes.wealthCorporateAction);
-            }
-          }),
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.trash2,
-          title: l10n.commonDelete,
-          subtitle: l10n.dividendEventDeleteHint,
-          onPress: () => closeSheetThen(sheetContext, () {
-            if (context.mounted) {
-              return _deleteDividendEntry(context, ref, event);
-            }
-          }),
-        ),
-      ],
+  return <AppAdaptiveAction>[
+    AppAdaptiveAction(
+      icon: FLucideIcons.receipt,
+      title: l10n.dividendEventViewInActivity,
+      subtitle: l10n.dividendEventViewInActivityHint,
+      onPress: () {
+        if (context.mounted) return _viewInActivity(context, ref, event);
+      },
     ),
-  );
+    AppAdaptiveAction(
+      icon: FLucideIcons.pencil,
+      title: l10n.dividendEventEdit,
+      subtitle: l10n.dividendEventEditHint,
+      onPress: () {
+        if (context.mounted) {
+          context.push(FinanceRoutes.wealthCorporateAction);
+        }
+      },
+    ),
+    AppAdaptiveAction(
+      icon: FLucideIcons.trash2,
+      title: l10n.commonDelete,
+      subtitle: l10n.dividendEventDeleteHint,
+      destructive: true,
+      onPress: () {
+        if (context.mounted) {
+          return _deleteDividendEntry(context, ref, event);
+        }
+      },
+    ),
+  ];
 }
 
 Future<void> _viewInActivity(

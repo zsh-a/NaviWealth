@@ -11,11 +11,12 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 Widget _wrap(
   Widget child, {
   ShellChromeBuilders chrome = ShellChromeBuilders.empty,
+  TargetPlatform platform = TargetPlatform.android,
 }) {
   return ProviderScope(
     overrides: [shellChromeBuildersProvider.overrideWith((_) => chrome)],
     child: MaterialApp(
-      theme: AppTheme.light(),
+      theme: AppTheme.light().copyWith(platform: platform),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
@@ -140,6 +141,61 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Third action'), findsOneWidget);
       expect(find.text('Global action'), findsOneWidget);
+      await tester.tap(find.text('Third action'));
+      await tester.pumpAndSettle();
+      expect(thirdActionSelected, isTrue);
+      expect(find.text('Third action'), findsNothing);
+    });
+
+    testWidgets('uses an anchored overflow menu on desktop platforms', (
+      tester,
+    ) async {
+      await _setSurface(tester, const Size(400, 800));
+      var thirdActionSelected = false;
+
+      await tester.pumpWidget(
+        _wrap(
+          ShellTabScaffold(
+            title: 'Activity',
+            actions: <ShellHeaderActionSpec>[
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.plus,
+                label: 'Primary action',
+                onPress: () {},
+              ),
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.filter,
+                label: 'Filter action',
+                onPress: () {},
+                order: 10,
+              ),
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.inbox,
+                label: 'Third action',
+                onPress: () => thirdActionSelected = true,
+                order: 20,
+              ),
+            ],
+            child: const Text('body'),
+          ),
+          chrome: const ShellChromeBuilders(
+            leadingBuilder: _leading,
+            headerActionsBuilder: _actions,
+          ),
+          platform: TargetPlatform.macOS,
+        ),
+      );
+
+      await tester.tap(find.bySemanticsLabel('More actions'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('app-adaptive-action-menu.popover')),
+        findsOneWidget,
+      );
+      expect(find.byType(AppActionSheetList), findsNothing);
+      expect(find.text('Third action'), findsOneWidget);
+
       await tester.tap(find.text('Third action'));
       await tester.pumpAndSettle();
       expect(thirdActionSelected, isTrue);

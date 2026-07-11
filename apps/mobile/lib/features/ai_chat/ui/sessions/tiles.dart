@@ -76,92 +76,39 @@ class _SessionTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                FTooltip(
-                  tipBuilder: (_, _) => Text(l10n.aiChatSessionMoreTooltip),
-                  child: FButton.icon(
-                    variant: FButtonVariant.ghost,
-                    onPress: () => _showActions(context, l10n),
-                    child: Icon(
-                      FLucideIcons.ellipsis,
-                      size: AppIconSizes.h18,
-                      color: colors.mutedForeground,
+                AppAdaptiveActionMenu(
+                  title: l10n.aiChatSessionActionsTitle,
+                  actions: <AppAdaptiveAction>[
+                    AppAdaptiveAction(
+                      icon: FLucideIcons.pencil,
+                      title: l10n.aiChatSessionRenameAction,
+                      onPress: onRename,
+                    ),
+                    AppAdaptiveAction(
+                      icon: FLucideIcons.trash2,
+                      title: l10n.commonDelete,
+                      destructive: true,
+                      onPress: onDelete,
+                    ),
+                  ],
+                  triggerBuilder: (context, openMenu, focusNode) => Focus(
+                    focusNode: focusNode,
+                    child: FTooltip(
+                      tipBuilder: (_, _) => Text(l10n.aiChatSessionMoreTooltip),
+                      child: FButton.icon(
+                        variant: FButtonVariant.ghost,
+                        onPress: openMenu,
+                        child: Icon(
+                          FLucideIcons.ellipsis,
+                          size: AppIconSizes.h18,
+                          color: colors.mutedForeground,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showActions(BuildContext context, AppLocalizations l10n) {
-    return showAppSheet<void>(
-      context: context,
-      title: l10n.aiChatSessionActionsTitle,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _ActionRow(
-            icon: FLucideIcons.pencil,
-            label: l10n.aiChatSessionRenameAction,
-            onTap: () {
-              Navigator.of(ctx).pop();
-              onRename();
-            },
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          _ActionRow(
-            icon: FLucideIcons.trash2,
-            label: l10n.commonDelete,
-            color: ctx.theme.colors.destructive,
-            onTap: () {
-              Navigator.of(ctx).pop();
-              onDelete();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final fg = color ?? context.theme.colors.foreground;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: FTappable(
-        onPress: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: AppIconSizes.md, color: fg),
-              const SizedBox(width: AppSpacing.s12),
-              Text(
-                label,
-                style: context.theme.typography.body.md.copyWith(color: fg),
-              ),
-            ],
           ),
         ),
       ),

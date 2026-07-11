@@ -506,14 +506,17 @@ class AppSheetSurface extends StatelessWidget {
 
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
-    final surface = colors.background.withValues(
-      alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque,
-    );
+    final surface = frosted
+        ? colors.background.withValues(
+            alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque,
+          )
+        : colors.background;
     final hairline = colors.foreground.withValues(
       alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
     );
 
     final decorated = DecoratedBox(
+      key: const ValueKey<String>('app-sheet.surface'),
       decoration: BoxDecoration(
         color: surface,
         border:

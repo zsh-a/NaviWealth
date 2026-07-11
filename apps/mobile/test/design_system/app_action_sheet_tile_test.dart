@@ -23,7 +23,9 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
-  testWidgets('AppActionSheetList renders one group of tiles', (tester) async {
+  testWidgets('AppActionSheetList renders flat rows with inset dividers', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(
         AppActionSheetList(
@@ -45,10 +47,32 @@ void main() {
       ),
     );
 
-    expect(find.byType(FTileGroup), findsOneWidget);
-    expect(find.byType(FTile), findsNWidgets(2));
+    expect(find.byType(FTileGroup), findsNothing);
+    expect(find.byType(FTile), findsNothing);
+    expect(find.byType(AppGroupedDivider), findsOneWidget);
     expect(find.text('New account'), findsOneWidget);
     expect(find.text('Rate, value date, maturity'), findsOneWidget);
+  });
+
+  testWidgets('title-only actions stay compact and omit subtitle layout', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        AppActionSheetList(
+          children: [
+            AppActionSheetTile(
+              icon: Icons.search,
+              title: 'Search',
+              onPress: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(tester.getSize(find.byType(AppActionSheetTile)).height, 52);
+    expect(find.byType(AppGroupedDivider), findsNothing);
   });
 
   testWidgets('AppActionSheetTile fires onPress', (tester) async {

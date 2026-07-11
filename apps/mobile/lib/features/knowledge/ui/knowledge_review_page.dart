@@ -368,96 +368,90 @@ class _KnowledgeReviewAgentResultRow extends ConsumerWidget {
   }
 }
 
-/// Icon-only FAB that opens the review batch-actions sheet.
+/// Icon-only FAB that opens the adaptive review batch-actions menu.
 class _ReviewActionsFab extends ConsumerWidget {
   const _ReviewActionsFab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return KnowledgeFloatingActionSurface(
-      icon: FLucideIcons.listChecks,
-      tooltip: AppLocalizations.of(context).knowledgeReviewBatchActions,
-      onPress: () => _openActionsSheet(context, ref),
-    );
-  }
-
-  Future<void> _openActionsSheet(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
-    await showAppSheet<void>(
-      context: context,
+    return AppAdaptiveActionMenu(
       title: l10n.knowledgeReviewTitle,
-      builder: (sheetContext) => AppActionSheetList(
-        children: [
-          AppActionSheetTile(
-            icon: FLucideIcons.checkCheck,
-            title: l10n.knowledgeReviewMarkAllDone,
-            subtitle: l10n.knowledgeReviewRoutinesTitle,
-            onPress: () async {
-              Navigator.of(sheetContext).pop();
-              final routines = await _loadReviewRoutines(ref);
-              if (!context.mounted) return;
-              if (routines.isEmpty) {
-                AppMessenger.show(
-                  context,
-                  ToastKind.info,
-                  l10n.knowledgeReviewRoutinesEmpty,
-                );
-                return;
-              }
-              await _markRoutinesDone(
-                context: context,
-                ref: ref,
-                routines: routines,
+      actions: <AppAdaptiveAction>[
+        AppAdaptiveAction(
+          icon: FLucideIcons.checkCheck,
+          title: l10n.knowledgeReviewMarkAllDone,
+          subtitle: l10n.knowledgeReviewRoutinesTitle,
+          onPress: () async {
+            final routines = await _loadReviewRoutines(ref);
+            if (!context.mounted) return;
+            if (routines.isEmpty) {
+              AppMessenger.show(
+                context,
+                ToastKind.info,
+                l10n.knowledgeReviewRoutinesEmpty,
               );
-            },
-          ),
-          AppActionSheetTile(
-            icon: FLucideIcons.calendarCheck,
-            title: l10n.knowledgeReviewMarkAllDecisionsReviewed,
-            subtitle: l10n.knowledgeReviewDecisionsTitle,
-            onPress: () async {
-              Navigator.of(sheetContext).pop();
-              final decisions = await _loadReviewDecisions(ref);
-              if (!context.mounted) return;
-              if (decisions.isEmpty) {
-                AppMessenger.show(
-                  context,
-                  ToastKind.info,
-                  l10n.knowledgeReviewDecisionsEmpty,
-                );
-                return;
-              }
-              await _markDecisionsReviewed(
-                context: context,
-                ref: ref,
-                decisions: decisions,
+              return;
+            }
+            await _markRoutinesDone(
+              context: context,
+              ref: ref,
+              routines: routines,
+            );
+          },
+        ),
+        AppAdaptiveAction(
+          icon: FLucideIcons.calendarCheck,
+          title: l10n.knowledgeReviewMarkAllDecisionsReviewed,
+          subtitle: l10n.knowledgeReviewDecisionsTitle,
+          onPress: () async {
+            final decisions = await _loadReviewDecisions(ref);
+            if (!context.mounted) return;
+            if (decisions.isEmpty) {
+              AppMessenger.show(
+                context,
+                ToastKind.info,
+                l10n.knowledgeReviewDecisionsEmpty,
               );
-            },
-          ),
-          AppActionSheetTile(
-            icon: FLucideIcons.badgeCheck,
-            title: l10n.knowledgeReviewVerifyAllAssumptions,
-            subtitle: l10n.knowledgeReviewAssumptionsTitle,
-            onPress: () async {
-              Navigator.of(sheetContext).pop();
-              final assumptions = await _loadReviewAssumptions(ref);
-              if (!context.mounted) return;
-              if (assumptions.isEmpty) {
-                AppMessenger.show(
-                  context,
-                  ToastKind.info,
-                  l10n.knowledgeReviewAssumptionsEmpty(kAssumptionStaleDays),
-                );
-                return;
-              }
-              await _verifyAssumptions(
-                context: context,
-                ref: ref,
-                assumptions: assumptions,
+              return;
+            }
+            await _markDecisionsReviewed(
+              context: context,
+              ref: ref,
+              decisions: decisions,
+            );
+          },
+        ),
+        AppAdaptiveAction(
+          icon: FLucideIcons.badgeCheck,
+          title: l10n.knowledgeReviewVerifyAllAssumptions,
+          subtitle: l10n.knowledgeReviewAssumptionsTitle,
+          onPress: () async {
+            final assumptions = await _loadReviewAssumptions(ref);
+            if (!context.mounted) return;
+            if (assumptions.isEmpty) {
+              AppMessenger.show(
+                context,
+                ToastKind.info,
+                l10n.knowledgeReviewAssumptionsEmpty(kAssumptionStaleDays),
               );
-            },
-          ),
-        ],
+              return;
+            }
+            await _verifyAssumptions(
+              context: context,
+              ref: ref,
+              assumptions: assumptions,
+            );
+          },
+        ),
+      ],
+      triggerBuilder: (context, openMenu, focusNode) => Focus(
+        focusNode: focusNode,
+        child: KnowledgeFloatingActionSurface(
+          icon: FLucideIcons.listChecks,
+          tooltip: l10n.knowledgeReviewBatchActions,
+          onPress: openMenu,
+        ),
       ),
     );
   }
