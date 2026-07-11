@@ -27,7 +27,8 @@ class AppEmptyState extends StatelessWidget {
     this.message,
     this.action,
     this.tone = AppEmptyStateTone.neutral,
-    this.iconSize = AppIconSizes.xxl,
+    this.iconSize = AppIconSizes.xl,
+    this.compact = false,
   });
 
   /// Convenience constructor for "couldn't load" failures with an
@@ -72,6 +73,7 @@ class AppEmptyState extends StatelessWidget {
   final Widget? action;
   final AppEmptyStateTone tone;
   final double iconSize;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +85,7 @@ class AppEmptyState extends StatelessWidget {
     };
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s24),
+        padding: EdgeInsets.all(compact ? AppSpacing.s16 : AppSpacing.s20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -93,16 +95,17 @@ class AppEmptyState extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: SizedBox.square(
-                dimension: iconSize + AppSpacing.s20,
+                dimension:
+                    iconSize + (compact ? AppSpacing.s12 : AppSpacing.s16),
                 child: Center(
                   child: Icon(icon, size: iconSize, color: iconColor),
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.s16),
+            SizedBox(height: compact ? AppSpacing.s10 : AppSpacing.s14),
             Text(title, style: typography.body.lg, textAlign: TextAlign.center),
             if (message != null) ...[
-              const SizedBox(height: AppSpacing.s8),
+              SizedBox(height: compact ? AppSpacing.s4 : AppSpacing.s8),
               Text(
                 message!,
                 style: context.bodyCaptionStyle,
@@ -110,9 +113,9 @@ class AppEmptyState extends StatelessWidget {
               ),
             ],
             if (action != null) ...[
-              const SizedBox(height: AppSpacing.s16),
+              SizedBox(height: compact ? AppSpacing.s10 : AppSpacing.s16),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 320),
+                constraints: const BoxConstraints(maxWidth: 280),
                 child: SizedBox(width: double.infinity, child: action!),
               ),
             ],

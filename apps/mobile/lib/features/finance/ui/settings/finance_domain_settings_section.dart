@@ -274,15 +274,6 @@ class _SettingsChoicePill extends StatelessWidget {
                 ? colors.primary.withValues(alpha: AppOpacity.prominent)
                 : colors.border.withValues(alpha: AppOpacity.muted),
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: AppOpacity.faint),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
         alignment: Alignment.center,
         child: Text(

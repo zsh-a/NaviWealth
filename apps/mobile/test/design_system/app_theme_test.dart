@@ -9,11 +9,13 @@ void main() {
       expect(theme.brightness, Brightness.light);
       expect(theme.colorScheme.brightness, Brightness.light);
       expect(theme.colorScheme.primary, AccentColors.primary(Brightness.light));
+      expect(theme.colorScheme.onSurfaceVariant, ColorPalette.navy500);
       expect(theme.textTheme.bodyMedium, isNotNull);
     });
 
     test('dark theme uses dark variants', () {
       final theme = AppTheme.dark();
+      expect(theme.colorScheme.onSurfaceVariant, ColorPalette.navy300);
       expect(theme.brightness, Brightness.dark);
       // Dark divider != light divider.
       expect(SemanticColors.dark.divider, isNot(SemanticColors.light.divider));

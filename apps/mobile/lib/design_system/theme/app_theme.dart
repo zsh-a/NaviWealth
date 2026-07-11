@@ -48,13 +48,16 @@ class AppTheme {
     final pageBackground = isDark
         ? ColorPalette.navy950
         : ColorPalette.neutralGlass;
+    final mutedForeground = isDark
+        ? ColorPalette.navy300
+        : ColorPalette.navy500;
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,
       onPrimary: onAccent,
       secondary: f.secondary,
       onSecondary: f.secondaryForeground,
-      tertiary: f.mutedForeground,
+      tertiary: mutedForeground,
       onTertiary: f.background,
       error: f.destructive,
       onError: f.destructiveForeground,
@@ -65,7 +68,7 @@ class AppTheme {
       surfaceContainer: f.muted,
       surfaceContainerHigh: f.muted,
       surfaceContainerHighest: f.secondary,
-      onSurfaceVariant: f.mutedForeground,
+      onSurfaceVariant: mutedForeground,
       outline: f.border,
       outlineVariant: f.border,
       inverseSurface: f.foreground,

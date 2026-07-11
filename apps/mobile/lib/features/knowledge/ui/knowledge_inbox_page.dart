@@ -62,7 +62,7 @@ class _InboxCaptureFab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return KnowledgeFloatingActionSurface(
+    return AppFloatingActionSurface(
       icon: FLucideIcons.plus,
       tooltip: AppLocalizations.of(context).knowledgeCaptureAction,
       onPress: () => showKnowledgeCaptureSheet(context, ref),

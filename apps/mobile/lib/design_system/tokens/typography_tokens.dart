@@ -235,9 +235,10 @@ class TypographyTokens {
     fontFamily: fontFamilyMono,
   );
 
-  /// Section header title — bold, accent-colored (Apple News style).
-  static TextStyle sectionHeaderTitle(Color accentColor) =>
-      titleLarge.copyWith(color: accentColor);
+  /// Section header title — neutral by default so accent remains reserved for
+  /// actions, active state, and key metrics.
+  static TextStyle sectionHeaderTitle(Color color) =>
+      titleLarge.copyWith(color: color);
 
   /// Section header subtitle — muted secondary text.
   static TextStyle sectionHeaderSubtitle(Color onSurfaceVariant) =>

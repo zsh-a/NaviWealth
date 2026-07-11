@@ -161,6 +161,17 @@ void main() {
         kFloatingGlassNavBarHeight,
       );
       expect(find.byType(BackdropFilter), findsOneWidget);
+      final navSurface = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(FloatingGlassNavBar),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final navDecoration = navSurface.decoration! as BoxDecoration;
+      expect(navDecoration.boxShadow, hasLength(1));
+      expect(navDecoration.borderRadius, BorderRadius.circular(AppRadius.nav));
       final assistant = find.byKey(
         const ValueKey<String>('floating-nav.assistant'),
       );

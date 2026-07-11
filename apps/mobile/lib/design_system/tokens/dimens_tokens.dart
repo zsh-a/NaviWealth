@@ -64,7 +64,7 @@ class AppRadius {
   static const double xxl = 28;
   static const double card = 20; // spec: normal cards 16-24
   static const double cardLg = 40; // spec: large cards 32-40
-  static const double nav = 40; // spec: bottom nav 36-44
+  static const double nav = 28;
   static const double full = 9999;
 }
 
@@ -199,7 +199,7 @@ class AppBlur {
   static const double sheet = 18;
 
   /// Floating glass nav bar blur.
-  static const double nav = 18;
+  static const double nav = 12;
 }
 
 /// Canonical shadow sets keyed by surface role.
@@ -231,8 +231,8 @@ class AppShadow {
   static const List<BoxShadow> card = [
     BoxShadow(
       color: ColorPalette.shadowNavy04,
-      blurRadius: 28,
-      offset: Offset(0, 10),
+      blurRadius: 16,
+      offset: Offset(0, 6),
     ),
   ];
 
@@ -240,8 +240,8 @@ class AppShadow {
   static const List<BoxShadow> cardHover = [
     BoxShadow(
       color: ColorPalette.shadowNavy08,
-      blurRadius: 36,
-      offset: Offset(0, 14),
+      blurRadius: 20,
+      offset: Offset(0, 8),
     ),
   ];
 
@@ -272,17 +272,12 @@ class AppShadow {
     ),
   ];
 
-  /// Floating glass nav bar — soft ambient glow.
+  /// Floating glass nav bar — one restrained elevation layer.
   static const List<BoxShadow> nav = [
     BoxShadow(
       color: ColorPalette.shadowNavy10,
-      blurRadius: 36,
-      offset: Offset(0, 14),
-    ),
-    BoxShadow(
-      color: ColorPalette.shadowCyan04,
       blurRadius: 20,
-      offset: Offset(0, -2),
+      offset: Offset(0, 8),
     ),
   ];
 }

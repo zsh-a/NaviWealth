@@ -10,6 +10,16 @@ Widget _wrap(Widget child) {
   );
 }
 
+Widget _wrapDark(Widget child) {
+  return MaterialApp(
+    theme: AppTheme.dark(),
+    home: FTheme(
+      data: buildAppForuiTheme(brightness: Brightness.dark, touch: false),
+      child: child,
+    ),
+  );
+}
+
 BoxDecoration _decoration(WidgetTester tester) {
   final box = tester.widget<DecoratedBox>(find.byType(DecoratedBox).first);
   return box.decoration as BoxDecoration;
@@ -46,6 +56,19 @@ void main() {
       _wrap(const SoftCard(level: SoftCardLevel.raised, child: Text('raised'))),
     );
 
+    expect(_decoration(tester).border, isNotNull);
+  });
+
+  testWidgets('dark raised cards use tonal elevation without shadow', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrapDark(
+        const SoftCard(level: SoftCardLevel.raised, child: Text('raised')),
+      ),
+    );
+
+    expect(_decoration(tester).boxShadow, isNull);
     expect(_decoration(tester).border, isNotNull);
   });
 }

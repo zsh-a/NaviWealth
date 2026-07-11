@@ -51,7 +51,7 @@ class HealthPlanPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s16),
-          const FadeSlideIn(child: _DisclaimerCard()),
+          const _DisclaimerCard(),
         ],
       ),
     );

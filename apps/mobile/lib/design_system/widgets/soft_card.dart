@@ -152,8 +152,8 @@ class _SoftCardState extends State<SoftCard> {
 
     final borderAlpha = switch (widget.level) {
       SoftCardLevel.flat => AppOpacity.transparent,
-      SoftCardLevel.raised => AppOpacity.faint,
-      SoftCardLevel.hero => AppOpacity.subtle,
+      SoftCardLevel.raised => isDark ? AppOpacity.highlight : AppOpacity.faint,
+      SoftCardLevel.hero => isDark ? AppOpacity.muted : AppOpacity.subtle,
     };
     final borderColor =
         widget.borderless || borderAlpha == AppOpacity.transparent
@@ -168,17 +168,11 @@ class _SoftCardState extends State<SoftCard> {
       border: widget.borderless || borderAlpha == AppOpacity.transparent
           ? null
           : Border.all(color: borderColor, width: AppStroke.hairline),
-      boxShadow: _shadows(
-        colors,
-        isDark: isDark,
-        hovered: hovered,
-        pressed: pressed,
-      ),
+      boxShadow: _shadows(isDark: isDark, hovered: hovered, pressed: pressed),
     );
   }
 
-  List<BoxShadow>? _shadows(
-    FColors colors, {
+  List<BoxShadow>? _shadows({
     required bool isDark,
     required bool hovered,
     required bool pressed,
@@ -189,19 +183,12 @@ class _SoftCardState extends State<SoftCard> {
     return switch (level) {
       SoftCardLevel.flat => null,
       SoftCardLevel.raised =>
-        hovered && widget.onPress != null
+        isDark
+            ? null
+            : hovered && widget.onPress != null
             ? AppShadow.cardHover
             : AppShadow.card,
-      SoftCardLevel.hero => [
-        ...AppShadow.card,
-        BoxShadow(
-          color:
-              (isDark ? ColorPalette.cyanBrand400 : ColorPalette.cyanBrand500)
-                  .withValues(alpha: AppOpacity.whisper),
-          blurRadius: 32,
-          offset: const Offset(0, 12),
-        ),
-      ],
+      SoftCardLevel.hero => isDark ? null : AppShadow.card,
     };
   }
 }

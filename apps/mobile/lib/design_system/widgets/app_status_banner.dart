@@ -34,7 +34,7 @@ class AppStatusBanner extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: palette.container,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: palette.foreground.withValues(alpha: AppOpacity.light),
         ),

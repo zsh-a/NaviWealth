@@ -64,22 +64,14 @@ class FloatingGlassNavBar extends StatelessWidget {
     final colors = theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
-    // Unified frosted glass surface. Both themes use the same blur and a
-    // semi-transparent tint; only the tint colour changes with brightness.
+    // One restrained frosted layer. Tonal contrast and a hairline border do
+    // the hierarchy work; extra highlight gradients would make the dock read
+    // glossier than the rest of the app.
     final glassColor = isDark
         ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.emphasis)
-        : ColorPalette.neutral0.withValues(alpha: AppOpacity.strong);
-    final borderColor = isDark
-        ? ColorPalette.neutral0.withValues(alpha: AppOpacity.faint)
-        : ColorPalette.neutral0.withValues(alpha: AppOpacity.emphasis);
-
-    // Top-edge highlight gradient simulates light refracting through the
-    // frosted surface.
-    final highlightColor = isDark
-        ? ColorPalette.neutral0.withValues(alpha: AppOpacity.faint)
-        : ColorPalette.neutral0.withValues(alpha: AppOpacity.medium);
-    final highlightColorTransparent = highlightColor.withValues(
-      alpha: AppOpacity.transparent,
+        : ColorPalette.neutral0.withValues(alpha: AppOpacity.nearOpaque);
+    final borderColor = colors.border.withValues(
+      alpha: isDark ? AppOpacity.emphasis : AppOpacity.strong,
     );
 
     return RepaintBoundary(
@@ -93,54 +85,36 @@ class FloatingGlassNavBar extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: AppBlur.nav, sigmaY: AppBlur.nav),
-          child: Stack(
-            children: [
-              // Base frosted fill.
-              Positioned.fill(child: ColoredBox(color: glassColor)),
-              // Top-edge highlight band — refracted light simulation.
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [highlightColor, highlightColorTransparent],
-                      stops: const [0.0, 0.35],
+          child: ColoredBox(
+            color: glassColor,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s8,
+                vertical: AppSpacing.s6,
+              ),
+              child: Row(
+                children: [
+                  for (var i = 0; i < items.length; i++)
+                    Expanded(
+                      child: _NavTabButton(
+                        tab: items[i],
+                        selected: i == selectedIndex,
+                        onTap: () => onIndexChanged(i),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-              // Navigation content.
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s8,
-                  vertical: AppSpacing.s6,
-                ),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < items.length; i++)
-                      Expanded(
-                        child: _NavTabButton(
-                          tab: items[i],
-                          selected: i == selectedIndex,
-                          onTap: () => onIndexChanged(i),
-                          isDark: isDark,
-                        ),
+                  if (onAssistantAction != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: AppSpacing.s8),
+                      child: _AssistantActionButton(
+                        icon: assistantIcon,
+                        label: assistantLabel,
+                        semanticLabel: assistantSemanticLabel,
+                        onTap: onAssistantAction!,
                       ),
-                    if (onAssistantAction != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: AppSpacing.s8),
-                        child: _AssistantActionButton(
-                          icon: assistantIcon,
-                          label: assistantLabel,
-                          semanticLabel: assistantSemanticLabel,
-                          onTap: onAssistantAction!,
-                        ),
-                      ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -168,22 +142,17 @@ class _NavTabButton extends StatelessWidget {
     required this.tab,
     required this.selected,
     required this.onTap,
-    required this.isDark,
   });
 
   final FloatingNavTab tab;
   final bool selected;
   final VoidCallback onTap;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = selected
-        ? (isDark ? ColorPalette.cyanBrand300 : ColorPalette.navy950)
-        : (isDark ? ColorPalette.navy400 : ColorPalette.navy300);
-    final labelColor = selected
-        ? (isDark ? ColorPalette.navy50 : ColorPalette.navy900)
-        : (isDark ? ColorPalette.navy400 : ColorPalette.navy300);
+    final colors = context.theme.colors;
+    final iconColor = selected ? colors.primary : colors.mutedForeground;
+    final labelColor = selected ? colors.foreground : colors.mutedForeground;
     return Semantics(
       button: true,
       selected: selected,
@@ -200,15 +169,9 @@ class _NavTabButton extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: selected
-                ? (isDark
-                      ? ColorPalette.cyanBrand400.withValues(
-                          alpha: AppOpacity.light,
-                        )
-                      : ColorPalette.navy950.withValues(
-                          alpha: AppOpacity.faint,
-                        ))
+                ? colors.primary.withValues(alpha: AppOpacity.subtle)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -262,7 +225,7 @@ class _AssistantActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final foreground = colors.primary.withValues(alpha: AppOpacity.emphasis);
+    final foreground = colors.primary;
 
     return Semantics(
       button: true,

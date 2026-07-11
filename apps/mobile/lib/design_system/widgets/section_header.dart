@@ -4,7 +4,10 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
-/// Accent-coloured section header used above grouped cards / lists.
+/// Neutral section header used above grouped cards / lists.
+///
+/// [titleColor] remains available for the rare semantic section that needs
+/// emphasis; interactive trailing actions should carry the accent by default.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
@@ -25,7 +28,7 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = titleColor ?? colors.primary;
+    final foreground = titleColor ?? colors.foreground;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -42,7 +45,7 @@ class SectionHeader extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: TypographyTokens.sectionHeaderTitle(accent),
+                        style: TypographyTokens.sectionHeaderTitle(foreground),
                       ),
                       if (subtitle != null) ...[
                         const SizedBox(height: AppSpacing.s4),
@@ -62,7 +65,10 @@ class SectionHeader extends StatelessWidget {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TypographyTokens.sectionHeaderTitle(accent)),
+                Text(
+                  title,
+                  style: TypographyTokens.sectionHeaderTitle(foreground),
+                ),
                 if (subtitle != null) ...[
                   const SizedBox(height: AppSpacing.s4),
                   Text(

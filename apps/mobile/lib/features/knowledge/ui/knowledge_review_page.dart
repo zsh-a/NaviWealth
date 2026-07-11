@@ -448,7 +448,7 @@ class _ReviewActionsFab extends ConsumerWidget {
       ],
       triggerBuilder: (context, openMenu, focusNode) => Focus(
         focusNode: focusNode,
-        child: KnowledgeFloatingActionSurface(
+        child: AppFloatingActionSurface(
           icon: FLucideIcons.listChecks,
           tooltip: l10n.knowledgeReviewBatchActions,
           onPress: openMenu,

@@ -9,8 +9,9 @@ class ColorPalette {
   const ColorPalette._();
 
   // ── Cyan brand (spec primary) — bright turquoise interaction color ─────
-  // The primary brand hue per the fintech UI spec. cyanBrand500 is the
-  // light-mode foreground; cyanBrand400 is the dark-mode foreground.
+  // The primary brand hue per the fintech UI spec. Interaction foregrounds
+  // resolve through AccentColors so text contrast can differ from chart and
+  // decorative cyan roles.
   static const Color cyanBrand50 = Color(0xFFEAFBFC);
   static const Color cyanBrand100 = Color(0xFFD0F7F9);
   static const Color cyanBrand200 = Color(0xFFA8EFF2);

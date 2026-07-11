@@ -231,7 +231,7 @@ class _LibraryCreateFab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return KnowledgeFloatingActionSurface(
+    return AppFloatingActionSurface(
       icon: FLucideIcons.plus,
       tooltip: activeSegment == _LibrarySegment.all
           ? l10n.knowledgeNewChooserTitle

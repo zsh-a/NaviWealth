@@ -37,6 +37,7 @@ export 'widgets/app_close_page_scaffold.dart';
 export 'widgets/app_divider.dart';
 export 'widgets/app_empty_state.dart';
 export 'widgets/app_filter_chip.dart';
+export 'widgets/app_floating_action_surface.dart';
 export 'widgets/app_form_page_scaffold.dart';
 export 'widgets/app_form_scaffold_body.dart';
 export 'widgets/app_gradient_divider.dart';

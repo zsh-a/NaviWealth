@@ -14,16 +14,16 @@ class AccentColors {
 
   /// Foreground / interaction color (used as `colors.primary`).
   ///
-  /// Light mode → a calmer cyan brand shade for premium fintech surfaces.
+  /// Light mode → a deep cyan that stays legible on pale surfaces.
   /// Dark mode  → medium cyan, avoiding the neon read of cyanBrand400.
   static Color primary(Brightness brightness) => brightness == Brightness.dark
       ? ColorPalette.cyanBrand500
-      : ColorPalette.cyanBrand600;
+      : ColorPalette.cyanBrand800;
 
   /// Color drawn on top of `primary` (button labels, badge text).
   ///
-  /// Both modes use a near-white tone — cyanBrand500 / cyanBrand400 both
-  /// pass WCAG AA on white.
+  /// Light mode uses white on the deeper cyan interaction fill. Dark mode
+  /// uses navy on the brighter cyan fill.
   static Color onPrimary(Brightness brightness) => brightness == Brightness.dark
       ? ColorPalette.navy950
       : ColorPalette.neutral0;

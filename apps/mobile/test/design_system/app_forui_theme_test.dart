@@ -27,7 +27,10 @@ void main() {
           theme.colors.foreground,
           isDark ? ColorPalette.navy50 : ColorPalette.navy900,
         );
-        expect(theme.colors.mutedForeground, ColorPalette.navy400);
+        expect(
+          theme.colors.mutedForeground,
+          isDark ? ColorPalette.navy300 : ColorPalette.navy500,
+        );
         expect(
           theme.colors.card,
           isDark ? ColorPalette.navyGlass : ColorPalette.neutral0,
