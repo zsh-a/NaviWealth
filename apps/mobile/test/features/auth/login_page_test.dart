@@ -150,6 +150,25 @@ void main() {
     expect(find.text(l10n.authLoginSubmit), findsOneWidget);
   });
 
+  testWidgets('password visibility can be toggled', (tester) async {
+    final container = _container();
+    addTearDown(container.dispose);
+    await _pump(tester, container);
+    final l10n = await _l10n(tester);
+    final passwordField = find.descendant(
+      of: find.byKey(const ValueKey('login.password')),
+      matching: find.byType(EditableText),
+    );
+
+    expect(tester.widget<EditableText>(passwordField).obscureText, isTrue);
+    await tester.tap(find.bySemanticsLabel(l10n.authPasswordShowTooltip));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(tester.widget<EditableText>(passwordField).obscureText, isFalse);
+    expect(find.bySemanticsLabel(l10n.authPasswordHideTooltip), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 200));
+  });
+
   testWidgets(
     'submitting empty form surfaces both validators and does NOT call API',
     (tester) async {

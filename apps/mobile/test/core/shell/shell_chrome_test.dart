@@ -69,7 +69,7 @@ void main() {
       expect(find.bySemanticsLabel('Global action'), findsNothing);
     });
 
-    testWidgets('keeps all domain actions direct on desktop', (tester) async {
+    testWidgets('keeps desktop headers to two direct actions', (tester) async {
       await _setSurface(tester, const Size(1440, 900));
 
       await tester.pumpWidget(
@@ -90,10 +90,15 @@ void main() {
         ),
       );
 
-      for (var index = 0; index < 3; index++) {
+      for (var index = 0; index < 2; index++) {
         expect(find.bySemanticsLabel('Domain action $index'), findsOneWidget);
       }
-      expect(find.bySemanticsLabel('More actions'), findsNothing);
+      expect(find.bySemanticsLabel('Domain action 2'), findsNothing);
+      expect(find.bySemanticsLabel('More actions'), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel('More actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Domain action 2'), findsOneWidget);
     });
 
     testWidgets('budgets combined actions and moves the rest to overflow', (

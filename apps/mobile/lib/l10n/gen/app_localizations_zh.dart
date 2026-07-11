@@ -728,6 +728,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubPositionsTitle => '持仓';
 
   @override
+  String get portfolioHubShowAllPositions => '查看全部持仓';
+
+  @override
+  String get portfolioHubShowFewerPositions => '收起持仓';
+
+  @override
   String portfolioHubHoldingCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1575,6 +1581,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liabilityFieldNote => '备注';
+
+  @override
+  String get liabilityDetailsTitle => '还款计划详情';
 
   @override
   String get liabilityEditAction => '编辑负债';
@@ -9439,6 +9448,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeLibraryFilterAll => '全部';
+
+  @override
+  String get knowledgeLibraryFilterTitle => '筛选';
+
+  @override
+  String get knowledgeLibraryFilterClear => '清除筛选';
+
+  @override
+  String get knowledgeLibraryFilterStatus => '状态';
+
+  @override
+  String get knowledgeLibraryFilterDate => '日期';
+
+  @override
+  String get knowledgeLibraryFilterFacet => '标签与范围';
 
   @override
   String get knowledgeLibraryDateFilterAll => '任意日期';

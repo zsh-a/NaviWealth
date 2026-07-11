@@ -372,6 +372,30 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   });
 
+  testWidgets('action card supports a read-only detail presentation', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        ExecutionActionCard(
+          action: _action(),
+          showActions: false,
+          onEdit: () {},
+          onStart: () {},
+          onBlock: () {},
+          onResume: () {},
+          onDone: () {},
+          onDrop: () {},
+          onRecordProgress: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Review budget delta'), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.play), findsNothing);
+    expect(find.byIcon(FLucideIcons.ellipsis), findsNothing);
+  });
+
   testWidgets(
     'closed action card exposes resume without block or done actions',
     (tester) async {

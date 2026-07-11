@@ -154,14 +154,22 @@ class _ActionPlanCard extends StatelessWidget {
 }
 
 /// Input metrics displayed in a 2-column grid.
-class _InputMetricsCard extends StatelessWidget {
+class _InputMetricsCard extends StatefulWidget {
   const _InputMetricsCard({required this.out});
   final Map<String, Object?> out;
+
+  @override
+  State<_InputMetricsCard> createState() => _InputMetricsCardState();
+}
+
+class _InputMetricsCardState extends State<_InputMetricsCard> {
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final out = widget.out;
     final score = out['score'];
     final inputs = (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
     final metrics = <_MetricItem>[
@@ -205,34 +213,46 @@ class _InputMetricsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                FLucideIcons.chartColumn,
-                size: AppIconSizes.h18,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Text(
-                l10n.healthInputMetricsTitle,
-                style: context.mutedLabelStyle,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: [
-              for (final m in metrics)
-                AppInfoChip(
-                  icon: m.icon,
-                  value: m.value,
-                  label: m.label,
-                  color: m.color,
+          FTappable(
+            onPress: () => setState(() => _expanded = !_expanded),
+            child: Row(
+              children: [
+                Icon(
+                  FLucideIcons.chartColumn,
+                  size: AppIconSizes.h18,
+                  color: colors.mutedForeground,
                 ),
-            ],
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: Text(
+                    l10n.healthInputMetricsTitle,
+                    style: context.mutedLabelStyle,
+                  ),
+                ),
+                Icon(
+                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
+              ],
+            ),
           ),
+          if (_expanded) ...[
+            const SizedBox(height: AppSpacing.s12),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                for (final m in metrics)
+                  AppInfoChip(
+                    icon: m.icon,
+                    value: m.value,
+                    label: m.label,
+                    color: m.color,
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -334,7 +354,7 @@ class _DisclaimerCard extends StatefulWidget {
 }
 
 class _DisclaimerCardState extends State<_DisclaimerCard> {
-  bool _expanded = true;
+  bool _expanded = false;
   bool _dismissed = false;
 
   @override

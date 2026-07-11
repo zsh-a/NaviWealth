@@ -140,6 +140,7 @@ class _ActionDetailBody extends ConsumerWidget {
       children: [
         ExecutionActionCardController(
           action: action,
+          showActions: false,
           projectLabel: relations?.projectLabel(action.projectId),
           commitmentLabel: relations?.commitmentLabel(action.commitmentId),
           onEdit: () =>
@@ -183,6 +184,7 @@ class _CommitmentDetailBody extends ConsumerWidget {
       children: [
         ExecutionCommitmentCardController(
           commitment: commitment,
+          showActions: false,
           openActionCount: actions.where((action) => action.isOpen).length,
           blockedActionCount: actions
               .where((action) => action.status == ExecutionActionStatus.blocked)

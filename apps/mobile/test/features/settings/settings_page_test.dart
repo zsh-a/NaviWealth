@@ -174,7 +174,7 @@ void main() {
   group('Settings → KnowledgeOS', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('surfaces inbox, library, review, and memory settings', (
+    testWidgets('surfaces only operational KnowledgeOS settings', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
@@ -183,17 +183,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('KnowledgeOS · Inbox'), findsOneWidget);
-      expect(find.text('KnowledgeOS · Library'), findsOneWidget);
-      expect(find.text('KnowledgeOS · Review'), findsOneWidget);
+      expect(find.text('KnowledgeOS · Inbox'), findsNothing);
+      expect(find.text('KnowledgeOS · Library'), findsNothing);
+      expect(find.text('KnowledgeOS · Review'), findsNothing);
       expect(find.text('KnowledgeOS Memory'), findsOneWidget);
+      expect(find.text('Agents'), findsOneWidget);
     });
   });
 
   group('Settings → ExecutionOS', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('surfaces today, commitments, and review settings', (
+    testWidgets('surfaces only operational ExecutionOS settings', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
@@ -202,9 +203,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('ExecutionOS · Today'), findsOneWidget);
-      expect(find.text('ExecutionOS · Commitments'), findsOneWidget);
-      expect(find.text('ExecutionOS · Review'), findsOneWidget);
+      expect(find.text('ExecutionOS · Today'), findsNothing);
+      expect(find.text('ExecutionOS · Commitments'), findsNothing);
+      expect(find.text('ExecutionOS · Review'), findsNothing);
+      expect(find.text('Agents'), findsOneWidget);
     });
   });
 

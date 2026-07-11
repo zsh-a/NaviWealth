@@ -197,6 +197,32 @@ class _SearchAssistChip extends StatelessWidget {
   }
 }
 
+class _LibraryFilterTrigger extends StatelessWidget {
+  const _LibraryFilterTrigger({
+    required this.activeCount,
+    required this.onPress,
+  });
+
+  final int activeCount;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final label = activeCount == 0
+        ? l10n.knowledgeLibraryFilterTitle
+        : '${l10n.knowledgeLibraryFilterTitle} · $activeCount';
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AppQuietButton(
+        label: label,
+        onPress: onPress,
+        prefix: const Icon(FLucideIcons.listFilter, size: AppIconSizes.xs),
+      ),
+    );
+  }
+}
+
 class _FilterChipRow extends StatelessWidget {
   const _FilterChipRow({
     required this.icon,

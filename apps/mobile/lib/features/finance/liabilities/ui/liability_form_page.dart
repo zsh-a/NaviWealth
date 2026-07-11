@@ -59,6 +59,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
   DateTime _startDate = DateTime.now();
   bool _loadingInitial = false;
   bool _saving = false;
+  bool _detailsExpanded = false;
   Object? _loadError;
 
   @override
@@ -277,34 +278,18 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         onSubmit: (_) => _currencyFocus.requestFocus(),
       ),
       const SizedBox(height: AppSpacing.s12),
-      FSelect<LiabilityRateType>(
-        items: {
-          for (final r in LiabilityRateType.values) rateTypeLabel(l10n, r): r,
-        },
-        control: FSelectControl<LiabilityRateType>.managed(
-          initial: _rateType,
-          onChange: (v) => setState(() {
-            _rateType = v ?? _rateType;
-            dirty.markDirty();
-          }),
-        ),
-        label: Text(l10n.liabilityFieldRateType),
-      ),
-      const SizedBox(height: AppSpacing.s12),
       FTextFormField(
         control: FTextFieldControl.managed(controller: _currency),
         label: Text(l10n.liabilityFieldCurrency),
         focusNode: _currencyFocus,
         textInputAction: _isCreditCard
-            ? TextInputAction.next
+            ? TextInputAction.done
             : TextInputAction.next,
         textCapitalization: TextCapitalization.characters,
         validator: (v) => (v == null || v.trim().length < 3)
             ? l10n.liabilityValidationRequired
             : null,
-        onSubmit: (_) => _isCreditCard
-            ? _statementDayFocus.requestFocus()
-            : _termFocus.requestFocus(),
+        onSubmit: (_) => _isCreditCard ? _save() : _termFocus.requestFocus(),
       ),
       if (!_isCreditCard) ...[
         const SizedBox(height: AppSpacing.s12),
@@ -323,66 +308,103 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           },
           onSubmit: (_) => _saving ? null : _save(),
         ),
-        const SizedBox(height: AppSpacing.s12),
-        DateField(
-          label: l10n.liabilityFieldStartDate,
-          initialValue: _startDate,
-          firstDate: DateTime(1990),
-          lastDate: DateTime(2100),
-          required: true,
-          enabled: !_saving,
-          onChanged: (v) {
-            if (v == null) return;
-            setState(() {
-              _startDate = v;
-              dirty.markDirty();
-            });
-          },
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        FSelect<RepaymentMethod>(
-          items: {
-            for (final m in RepaymentMethod.values)
-              repaymentMethodLabel(l10n, m): m,
-          },
-          control: FSelectControl<RepaymentMethod>.managed(
-            initial: _method,
-            onChange: (v) => setState(() {
-              _method = v ?? _method;
-              dirty.markDirty();
-            }),
-          ),
-          label: Text(l10n.liabilityFieldMethod),
-        ),
-      ] else ...[
-        const SizedBox(height: AppSpacing.s12),
-        FTextFormField(
-          control: FTextFieldControl.managed(controller: _statementDay),
-          label: Text(l10n.liabilityFieldStatementDay),
-          focusNode: _statementDayFocus,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.next,
-          validator: _validateOptionalDay(l10n),
-          onSubmit: (_) => _paymentDueDayFocus.requestFocus(),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        FTextFormField(
-          control: FTextFieldControl.managed(controller: _paymentDueDay),
-          label: Text(l10n.liabilityFieldPaymentDueDay),
-          focusNode: _paymentDueDayFocus,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          validator: _validateOptionalDay(l10n),
-          onSubmit: (_) => _saving ? null : _save(),
-        ),
       ],
       const SizedBox(height: AppSpacing.s12),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: _note),
-        label: Text(l10n.liabilityFieldNote),
-        focusNode: _noteFocus,
-        minLines: 3,
-        maxLines: 6,
+      FAccordion(
+        control: FAccordionControl.lifted(
+          expanded: (_) => _detailsExpanded,
+          onChange: (_, expanded) =>
+              setState(() => _detailsExpanded = expanded),
+        ),
+        children: [
+          FAccordionItem(
+            title: Text(l10n.liabilityDetailsTitle),
+            child: Column(
+              children: [
+                FSelect<LiabilityRateType>(
+                  items: {
+                    for (final r in LiabilityRateType.values)
+                      rateTypeLabel(l10n, r): r,
+                  },
+                  control: FSelectControl<LiabilityRateType>.managed(
+                    initial: _rateType,
+                    onChange: (v) => setState(() {
+                      _rateType = v ?? _rateType;
+                      dirty.markDirty();
+                    }),
+                  ),
+                  label: Text(l10n.liabilityFieldRateType),
+                ),
+                if (!_isCreditCard) ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  DateField(
+                    label: l10n.liabilityFieldStartDate,
+                    initialValue: _startDate,
+                    firstDate: DateTime(1990),
+                    lastDate: DateTime(2100),
+                    required: true,
+                    enabled: !_saving,
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() {
+                        _startDate = v;
+                        dirty.markDirty();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                  FSelect<RepaymentMethod>(
+                    items: {
+                      for (final m in RepaymentMethod.values)
+                        repaymentMethodLabel(l10n, m): m,
+                    },
+                    control: FSelectControl<RepaymentMethod>.managed(
+                      initial: _method,
+                      onChange: (v) => setState(() {
+                        _method = v ?? _method;
+                        dirty.markDirty();
+                      }),
+                    ),
+                    label: Text(l10n.liabilityFieldMethod),
+                  ),
+                ] else ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  FTextFormField(
+                    control: FTextFieldControl.managed(
+                      controller: _statementDay,
+                    ),
+                    label: Text(l10n.liabilityFieldStatementDay),
+                    focusNode: _statementDayFocus,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
+                    validator: _validateOptionalDay(l10n),
+                    onSubmit: (_) => _paymentDueDayFocus.requestFocus(),
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                  FTextFormField(
+                    control: FTextFieldControl.managed(
+                      controller: _paymentDueDay,
+                    ),
+                    label: Text(l10n.liabilityFieldPaymentDueDay),
+                    focusNode: _paymentDueDayFocus,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
+                    validator: _validateOptionalDay(l10n),
+                    onSubmit: (_) => _noteFocus.requestFocus(),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.s12),
+                FTextFormField(
+                  control: FTextFieldControl.managed(controller: _note),
+                  label: Text(l10n.liabilityFieldNote),
+                  focusNode: _noteFocus,
+                  minLines: 3,
+                  maxLines: 6,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     ];
   }

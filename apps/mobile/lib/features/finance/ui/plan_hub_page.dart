@@ -203,12 +203,6 @@ class _PlanActions extends StatelessWidget {
           subtitle: l10n.planCoreSectionSubtitle,
           actions: [
             _PlanActionSpec(
-              icon: FLucideIcons.flame,
-              title: l10n.planFireSectionTitle,
-              subtitle: l10n.planFireSectionSubtitle,
-              path: FinanceRoutes.planFire,
-            ),
-            _PlanActionSpec(
               icon: FLucideIcons.scale,
               title: l10n.planRebalanceSectionTitle,
               subtitle: l10n.planRebalanceSectionSubtitle,

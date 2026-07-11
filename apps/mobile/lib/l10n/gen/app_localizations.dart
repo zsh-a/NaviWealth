@@ -1448,6 +1448,18 @@ abstract class AppLocalizations {
   /// **'Positions'**
   String get portfolioHubPositionsTitle;
 
+  /// No description provided for @portfolioHubShowAllPositions.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all positions'**
+  String get portfolioHubShowAllPositions;
+
+  /// No description provided for @portfolioHubShowFewerPositions.
+  ///
+  /// In en, this message translates to:
+  /// **'Show fewer positions'**
+  String get portfolioHubShowFewerPositions;
+
   /// Portfolio hub group row holding count
   ///
   /// In en, this message translates to:
@@ -2935,6 +2947,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note'**
   String get liabilityFieldNote;
+
+  /// No description provided for @liabilityDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule details'**
+  String get liabilityDetailsTitle;
 
   /// Button/title for editing liability metadata
   ///
@@ -16982,6 +17000,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All'**
   String get knowledgeLibraryFilterAll;
+
+  /// No description provided for @knowledgeLibraryFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get knowledgeLibraryFilterTitle;
+
+  /// No description provided for @knowledgeLibraryFilterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get knowledgeLibraryFilterClear;
+
+  /// No description provided for @knowledgeLibraryFilterStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get knowledgeLibraryFilterStatus;
+
+  /// No description provided for @knowledgeLibraryFilterDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get knowledgeLibraryFilterDate;
+
+  /// No description provided for @knowledgeLibraryFilterFacet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags and scope'**
+  String get knowledgeLibraryFilterFacet;
 
   /// No description provided for @knowledgeLibraryDateFilterAll.
   ///

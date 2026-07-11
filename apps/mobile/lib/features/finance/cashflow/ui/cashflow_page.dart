@@ -61,13 +61,26 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
     return AppPageScaffold(
       title: l10n.cashFlowTitle,
       actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.calendarClock),
-          onPress: () => context.push(FinanceRoutes.cashflowRecurring),
-        ),
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.wallet),
-          onPress: () => context.push(FinanceRoutes.cashflowDividends),
+        AppAdaptiveActionMenu(
+          title: l10n.shellMoreActions,
+          actions: [
+            AppAdaptiveAction(
+              icon: FLucideIcons.calendarClock,
+              title: l10n.recurringListTitle,
+              onPress: () => context.push(FinanceRoutes.cashflowRecurring),
+            ),
+            AppAdaptiveAction(
+              icon: FLucideIcons.wallet,
+              title: l10n.dividendCenterTitle,
+              onPress: () => context.push(FinanceRoutes.cashflowDividends),
+            ),
+          ],
+          triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
+            semanticsLabel: l10n.shellMoreActions,
+            icon: const Icon(FLucideIcons.ellipsis),
+            focusNode: focusNode,
+            onPress: openMenu,
+          ),
         ),
       ],
       childPad: false,

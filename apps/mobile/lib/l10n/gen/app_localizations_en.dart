@@ -752,6 +752,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioHubPositionsTitle => 'Positions';
 
   @override
+  String get portfolioHubShowAllPositions => 'Show all positions';
+
+  @override
+  String get portfolioHubShowFewerPositions => 'Show fewer positions';
+
+  @override
   String portfolioHubHoldingCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1632,6 +1638,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liabilityFieldNote => 'Note';
+
+  @override
+  String get liabilityDetailsTitle => 'Schedule details';
 
   @override
   String get liabilityEditAction => 'Edit liability';
@@ -9885,6 +9894,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeLibraryFilterAll => 'All';
+
+  @override
+  String get knowledgeLibraryFilterTitle => 'Filters';
+
+  @override
+  String get knowledgeLibraryFilterClear => 'Clear filters';
+
+  @override
+  String get knowledgeLibraryFilterStatus => 'Status';
+
+  @override
+  String get knowledgeLibraryFilterDate => 'Date';
+
+  @override
+  String get knowledgeLibraryFilterFacet => 'Tags and scope';
 
   @override
   String get knowledgeLibraryDateFilterAll => 'Any date';

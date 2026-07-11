@@ -14,6 +14,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
     this.blockedActionCount,
     this.busy = false,
     this.onOpen,
+    this.showActions = true,
   });
 
   final ExecutionCommitment commitment;
@@ -27,6 +28,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
   final int? blockedActionCount;
   final bool busy;
   final VoidCallback? onOpen;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +65,8 @@ class ExecutionCommitmentCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.s8),
-          if (busy)
+          if (showActions) const SizedBox(width: AppSpacing.s8),
+          if (showActions && busy)
             const SizedBox(
               width: AppIconSizes.xl,
               height: AppIconSizes.xl,
@@ -72,7 +74,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
                 child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
               ),
             )
-          else
+          else if (showActions)
             _LifecycleQuickButtons(
               menuTitle: commitment.title,
               canPause: commitment.status == ExecutionCommitmentStatus.active,
@@ -181,6 +183,7 @@ class ExecutionProjectCard extends StatelessWidget {
     this.openActionCount,
     this.blockedActionCount,
     this.busy = false,
+    this.showActions = true,
   });
 
   final ExecutionProject project;
@@ -193,6 +196,7 @@ class ExecutionProjectCard extends StatelessWidget {
   final int? openActionCount;
   final int? blockedActionCount;
   final bool busy;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -220,8 +224,8 @@ class ExecutionProjectCard extends StatelessWidget {
               blockedActionCount: blockedActionCount,
             ),
           ),
-          const SizedBox(width: AppSpacing.s8),
-          if (busy)
+          if (showActions) const SizedBox(width: AppSpacing.s8),
+          if (showActions && busy)
             const SizedBox(
               width: AppIconSizes.xl,
               height: AppIconSizes.xl,
@@ -229,7 +233,7 @@ class ExecutionProjectCard extends StatelessWidget {
                 child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
               ),
             )
-          else
+          else if (showActions)
             _LifecycleQuickButtons(
               menuTitle: project.title,
               canPause: project.status == ExecutionProjectStatus.active,

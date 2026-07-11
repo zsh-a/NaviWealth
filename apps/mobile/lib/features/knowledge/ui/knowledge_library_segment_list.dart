@@ -98,6 +98,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
         if (_facetFilter != null && !facets.contains(_facetFilter)) {
           _facetFilter = null;
         }
+        final dateOf = widget.dateOf;
         final searchAssist = _SearchAssistRow(
           history: widget.searchHistory,
           suggestions: _suggestionsFor(context, items, normalizedQuery),
@@ -106,6 +107,22 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           onHistoryClear: widget.onSearchHistoryClear,
           onHistoryItemDelete: widget.onSearchHistoryItemDelete,
         );
+        final activeFilterCount =
+            (_statusFilter == null ? 0 : 1) +
+            (_facetFilter == null ? 0 : 1) +
+            (_dateFilter == KnowledgeLibraryDateFilter.all ? 0 : 1);
+        final hasFilterDimensions =
+            statuses.length > 1 || dateOf != null || facets.isNotEmpty;
+        final filterTrigger = hasFilterDimensions
+            ? _LibraryFilterTrigger(
+                activeCount: activeFilterCount,
+                onPress: () => _showFilters(
+                  statuses: statuses,
+                  facets: facets,
+                  showDate: dateOf != null,
+                ),
+              )
+            : null;
 
         final statusFilteredItems = _statusFilter == null || statusOf == null
             ? items
@@ -121,7 +138,6 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
                         .contains(_facetFilter),
                   )
                   .toList(growable: false);
-        final dateOf = widget.dateOf;
         final dateFilteredItems =
             dateOf == null || _dateFilter == KnowledgeLibraryDateFilter.all
             ? facetedItems
@@ -152,29 +168,8 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
               searchAssist,
               if (searchAssist.hasContent)
                 const SizedBox(height: AppSpacing.s8),
-              if (statuses.length > 1) ...[
-                _FilterChipRow(
-                  icon: FLucideIcons.listFilter,
-                  values: statuses,
-                  selected: _statusFilter,
-                  onChanged: (status) => setState(() => _statusFilter = status),
-                ),
-                const SizedBox(height: AppSpacing.s12),
-              ],
-              if (dateOf != null) ...[
-                _DateFilterChipRow(
-                  selected: _dateFilter,
-                  onChanged: (filter) => setState(() => _dateFilter = filter),
-                ),
-                const SizedBox(height: AppSpacing.s12),
-              ],
-              if (facets.isNotEmpty) ...[
-                _FilterChipRow(
-                  icon: FLucideIcons.tags,
-                  values: facets,
-                  selected: _facetFilter,
-                  onChanged: (facet) => setState(() => _facetFilter = facet),
-                ),
+              if (filterTrigger != null) ...[
+                filterTrigger,
                 const SizedBox(height: AppSpacing.s12),
               ],
               Expanded(
@@ -198,28 +193,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
                 widget.tileBuilder(context, visibleItems[i], widget.query),
           ),
         );
-        final filterRows = <Widget>[
-          if (statuses.length > 1)
-            _FilterChipRow(
-              icon: FLucideIcons.listFilter,
-              values: statuses,
-              selected: _statusFilter,
-              onChanged: (status) => setState(() => _statusFilter = status),
-            ),
-          if (dateOf != null)
-            _DateFilterChipRow(
-              selected: _dateFilter,
-              onChanged: (filter) => setState(() => _dateFilter = filter),
-            ),
-          if (facets.isNotEmpty)
-            _FilterChipRow(
-              icon: FLucideIcons.tags,
-              values: facets,
-              selected: _facetFilter,
-              onChanged: (facet) => setState(() => _facetFilter = facet),
-            ),
-        ];
-        if (filterRows.isEmpty) {
+        if (filterTrigger == null) {
           if (!searchAssist.hasContent) return list;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -236,16 +210,110 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           children: [
             searchAssist,
             if (searchAssist.hasContent) const SizedBox(height: AppSpacing.s8),
-            for (var i = 0; i < filterRows.length; i++) ...[
-              if (i > 0) const SizedBox(height: AppSpacing.s8),
-              filterRows[i],
-            ],
-            if (filterRows.isNotEmpty) const SizedBox(height: AppSpacing.s12),
+            filterTrigger,
+            const SizedBox(height: AppSpacing.s12),
             Expanded(child: list),
           ],
         );
       },
     );
+  }
+
+  Future<void> _showFilters({
+    required List<String> statuses,
+    required List<String> facets,
+    required bool showDate,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    var status = _statusFilter;
+    var facet = _facetFilter;
+    var date = _dateFilter;
+    final selection =
+        await showAppSheet<
+          ({String? status, String? facet, KnowledgeLibraryDateFilter date})
+        >(
+          context: context,
+          title: l10n.knowledgeLibraryFilterTitle,
+          footer: Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).pop((
+                    status: null,
+                    facet: null,
+                    date: KnowledgeLibraryDateFilter.all,
+                  )),
+                  child: Text(l10n.knowledgeLibraryFilterClear),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: FButton(
+                  onPress: () => Navigator.of(
+                    context,
+                  ).pop((status: status, facet: facet, date: date)),
+                  child: Text(l10n.commonDone),
+                ),
+              ),
+            ],
+          ),
+          builder: (sheetContext) => StatefulBuilder(
+            builder: (context, setSheetState) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (statuses.length > 1) ...[
+                  Text(
+                    l10n.knowledgeLibraryFilterStatus,
+                    style: context.captionLabelStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  _FilterChipRow(
+                    icon: FLucideIcons.listFilter,
+                    values: statuses,
+                    selected: status,
+                    onChanged: (value) => setSheetState(() => status = value),
+                  ),
+                ],
+                if (showDate) ...[
+                  if (statuses.length > 1)
+                    const SizedBox(height: AppSpacing.s16),
+                  Text(
+                    l10n.knowledgeLibraryFilterDate,
+                    style: context.captionLabelStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  _DateFilterChipRow(
+                    selected: date,
+                    onChanged: (value) => setSheetState(() => date = value),
+                  ),
+                ],
+                if (facets.isNotEmpty) ...[
+                  if (statuses.length > 1 || showDate)
+                    const SizedBox(height: AppSpacing.s16),
+                  Text(
+                    l10n.knowledgeLibraryFilterFacet,
+                    style: context.captionLabelStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  _FilterChipRow(
+                    icon: FLucideIcons.tags,
+                    values: facets,
+                    selected: facet,
+                    onChanged: (value) => setSheetState(() => facet = value),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+    if (!mounted || selection == null) return;
+    setState(() {
+      _statusFilter = selection.status;
+      _facetFilter = selection.facet;
+      _dateFilter = selection.date;
+    });
   }
 
   List<String> _suggestionsFor(

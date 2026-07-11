@@ -16,6 +16,7 @@ class ExecutionProjectCardController extends ConsumerStatefulWidget {
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
+    this.showActions = true,
   });
 
   final ExecutionProject project;
@@ -24,6 +25,7 @@ class ExecutionProjectCardController extends ConsumerStatefulWidget {
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
+  final bool showActions;
 
   @override
   ConsumerState<ExecutionProjectCardController> createState() =>
@@ -66,6 +68,7 @@ class _ExecutionProjectCardControllerState
       openActionCount: widget.openActionCount,
       blockedActionCount: widget.blockedActionCount,
       busy: _busy,
+      showActions: widget.showActions,
       onCreateAction: _busy ? () {} : widget.onCreateAction,
       onEdit: _busy ? () {} : widget.onEdit,
       onRecordProgress: _busy ? () {} : widget.onRecordProgress,
@@ -86,6 +89,7 @@ class ExecutionCommitmentCardController extends ConsumerStatefulWidget {
     this.openActionCount,
     this.blockedActionCount,
     this.onOpen,
+    this.showActions = true,
   });
 
   final ExecutionCommitment commitment;
@@ -95,6 +99,7 @@ class ExecutionCommitmentCardController extends ConsumerStatefulWidget {
   final int? openActionCount;
   final int? blockedActionCount;
   final VoidCallback? onOpen;
+  final bool showActions;
 
   @override
   ConsumerState<ExecutionCommitmentCardController> createState() =>
@@ -138,6 +143,7 @@ class _ExecutionCommitmentCardControllerState
       blockedActionCount: widget.blockedActionCount,
       busy: _busy,
       onOpen: widget.onOpen,
+      showActions: widget.showActions,
       onCreateAction: _busy ? () {} : widget.onCreateAction,
       onEdit: _busy ? () {} : widget.onEdit,
       onRecordProgress: _busy ? () {} : widget.onRecordProgress,

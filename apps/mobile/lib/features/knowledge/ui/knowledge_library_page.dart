@@ -230,12 +230,54 @@ class _LibraryCreateFab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return KnowledgeFloatingActionSurface(
       icon: FLucideIcons.plus,
-      tooltip: AppLocalizations.of(context).knowledgeNewChooserTitle,
-      onPress: () => _openCreateSheet(context, ref),
+      tooltip: activeSegment == _LibrarySegment.all
+          ? l10n.knowledgeNewChooserTitle
+          : _createLabel(l10n, activeSegment),
+      onPress: () => activeSegment == _LibrarySegment.all
+          ? _openCreateSheet(context, ref)
+          : _createForSegment(context, ref, activeSegment),
     );
   }
+
+  void _createForSegment(
+    BuildContext context,
+    WidgetRef ref,
+    _LibrarySegment segment,
+  ) {
+    switch (segment) {
+      case _LibrarySegment.all:
+        _openCreateSheet(context, ref);
+      case _LibrarySegment.decisions:
+        showNewDecisionSheet(context, ref);
+      case _LibrarySegment.principles:
+        showNewPrincipleSheet(context, ref);
+      case _LibrarySegment.assumptions:
+        showNewAssumptionSheet(context, ref);
+      case _LibrarySegment.notes:
+        showKnowledgeCaptureSheet(context, ref);
+      case _LibrarySegment.concepts:
+        showNewConceptSheet(context, ref);
+      case _LibrarySegment.experiments:
+        showNewExperimentSheet(context, ref);
+      case _LibrarySegment.routines:
+        showNewRoutineSheet(context, ref);
+    }
+  }
+
+  String _createLabel(AppLocalizations l10n, _LibrarySegment segment) =>
+      switch (segment) {
+        _LibrarySegment.all => l10n.knowledgeNewChooserTitle,
+        _LibrarySegment.decisions => l10n.knowledgeNewDecision,
+        _LibrarySegment.principles => l10n.knowledgeNewPrinciple,
+        _LibrarySegment.assumptions => l10n.knowledgeNewAssumption,
+        _LibrarySegment.notes => l10n.knowledgeNewNote,
+        _LibrarySegment.concepts => l10n.knowledgeNewConcept,
+        _LibrarySegment.experiments => l10n.knowledgeNewExperiment,
+        _LibrarySegment.routines => l10n.knowledgeNewRoutine,
+      };
 
   Future<void> _openCreateSheet(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);

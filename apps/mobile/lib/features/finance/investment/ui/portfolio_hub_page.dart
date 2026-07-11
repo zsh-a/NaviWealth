@@ -80,7 +80,7 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
   }
 }
 
-class _PortfolioHubBody extends StatelessWidget {
+class _PortfolioHubBody extends StatefulWidget {
   const _PortfolioHubBody({
     required this.data,
     required this.view,
@@ -92,10 +92,21 @@ class _PortfolioHubBody extends StatelessWidget {
   final ValueChanged<PortfolioHubView> onViewChanged;
 
   @override
+  State<_PortfolioHubBody> createState() => _PortfolioHubBodyState();
+}
+
+class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
+  bool _showAllPositions = false;
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final groups = data.groupsFor(view, l10n);
-    final visibleHoldings = data.holdings.take(12).toList(growable: false);
+    final data = widget.data;
+    final groups = data.groupsFor(widget.view, l10n);
+    final visibleHoldings =
+        (_showAllPositions ? data.holdings : data.holdings.take(6)).toList(
+          growable: false,
+        );
 
     return AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.page,
@@ -106,7 +117,10 @@ class _PortfolioHubBody extends StatelessWidget {
         children: [
           _PortfolioSummary(data: data),
           const SizedBox(height: AppSpacing.s16),
-          PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
+          PortfolioHubViewSegment(
+            value: widget.view,
+            onChanged: widget.onViewChanged,
+          ),
           const SizedBox(height: AppSpacing.s12),
           _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
           if (groups.isEmpty)
@@ -147,10 +161,24 @@ class _PortfolioHubBody extends StatelessWidget {
                 ],
               ),
             ),
+          if (data.holdings.length > 6) ...[
+            const SizedBox(height: AppSpacing.s8),
+            AppQuietButton(
+              label: _showAllPositions
+                  ? l10n.portfolioHubShowFewerPositions
+                  : l10n.portfolioHubShowAllPositions,
+              onPress: () =>
+                  setState(() => _showAllPositions = !_showAllPositions),
+              expanded: true,
+              prefix: Icon(
+                _showAllPositions
+                    ? FLucideIcons.chevronUp
+                    : FLucideIcons.chevronDown,
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.s20),
           _EngineExposureSection(data: data),
-          const SizedBox(height: AppSpacing.s16),
-          const _DcaSimulatorEntry(),
         ],
       ),
     );
@@ -218,34 +246,6 @@ class _PortfolioSummary extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-class _DcaSimulatorEntry extends StatelessWidget {
-  const _DcaSimulatorEntry();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.theme.colors.muted.withValues(alpha: AppOpacity.muted),
-        borderRadius: BorderRadius.circular(AppRadius.xlg),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-        child: FTile(
-          onPress: () => context.push(FinanceRoutes.planDca),
-          prefix: Icon(
-            FLucideIcons.calendarClock,
-            color: context.theme.colors.mutedForeground,
-          ),
-          title: Text(l10n.dcaSimulatorTitle),
-          subtitle: Text(l10n.dcaSimulatorAccountsEntrySubtitle),
-          suffix: const Icon(FLucideIcons.chevronRight, size: AppIconSizes.h18),
-        ),
-      ),
     );
   }
 }

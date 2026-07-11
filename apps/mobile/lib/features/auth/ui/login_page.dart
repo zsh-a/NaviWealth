@@ -23,7 +23,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordFocus = FocusNode();
   _AuthMode _mode = _AuthMode.signIn;
   bool _submitting = false;
-  final bool _obscurePassword = true;
+  bool _obscurePassword = true;
   AuthErrorKind? _lastErrorKind;
   String? _lastErrorMessage;
 
@@ -233,6 +233,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             focusNode: _passwordFocus,
                             textInputAction: TextInputAction.done,
                             obscureText: _obscurePassword,
+                            suffixBuilder: (_, _, _) => Padding(
+                              padding: const EdgeInsetsDirectional.only(
+                                end: AppSpacing.s4,
+                              ),
+                              child: FButton.icon(
+                                variant: FButtonVariant.ghost,
+                                onPress: _submitting
+                                    ? null
+                                    : () => setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
+                                      ),
+                                child: Icon(
+                                  _obscurePassword
+                                      ? FLucideIcons.eye
+                                      : FLucideIcons.eyeOff,
+                                  size: AppIconSizes.h18,
+                                  semanticLabel: _obscurePassword
+                                      ? l10n.authPasswordShowTooltip
+                                      : l10n.authPasswordHideTooltip,
+                                ),
+                              ),
+                            ),
                             enabled: !_submitting,
                             autofillHints: [
                               _mode == _AuthMode.signIn

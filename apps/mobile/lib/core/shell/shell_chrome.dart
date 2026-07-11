@@ -171,7 +171,10 @@ class ShellTabScaffold extends ConsumerWidget {
       ...actions,
       if (inline) ...chrome.buildHeaderActions(context, ref),
     ]..sort((a, b) => a.order.compareTo(b.order));
-    final directActionBudget = inline ? 2 : mergedActions.length;
+    // Keep the visual hierarchy stable across window sizes: at most two
+    // actions stay visible and the rest move into the adaptive overflow.
+    // A wider window should add breathing room, not recreate an icon toolbar.
+    const directActionBudget = 2;
     final directActions = mergedActions
         .take(directActionBudget)
         .toList(growable: false);

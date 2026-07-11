@@ -15,6 +15,7 @@ class ExecutionActionCard extends StatelessWidget {
     this.projectLabel,
     this.commitmentLabel,
     this.onOpen,
+    this.showActions = true,
   });
 
   final ExecutionAction action;
@@ -29,6 +30,7 @@ class ExecutionActionCard extends StatelessWidget {
   final String? projectLabel;
   final String? commitmentLabel;
   final VoidCallback? onOpen;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +150,8 @@ class ExecutionActionCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.s8),
-              if (busy)
+              if (showActions) const SizedBox(width: AppSpacing.s8),
+              if (showActions && busy)
                 const SizedBox(
                   width: AppIconSizes.xl,
                   height: AppIconSizes.xl,
@@ -159,7 +161,7 @@ class ExecutionActionCard extends StatelessWidget {
                     ),
                   ),
                 )
-              else
+              else if (showActions)
                 _ActionQuickButtons(
                   menuTitle: action.title,
                   canStart: canStart,

@@ -71,6 +71,18 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           onPress: () => context.push(FinanceRoutes.activityIngest),
           order: 20,
         ),
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.receipt,
+          label: l10n.activityExpenseListLink,
+          onPress: () => context.push(FinanceRoutes.activityExpenses),
+          order: 30,
+        ),
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.pieChart,
+          label: l10n.activityExpenseReportLink,
+          onPress: () => context.push(FinanceRoutes.expenseReport),
+          order: 40,
+        ),
         if (!isDesktop) ...[
           ShellHeaderActionSpec(
             icon: FLucideIcons.filter,
@@ -108,7 +120,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _ActivityKindFilterRow(),
-                    _ExpenseQuickLinks(),
                     Expanded(child: ActivityFeed()),
                   ],
                 );
@@ -208,38 +219,6 @@ class _ActivityRightRail extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.s16),
-              const FDivider(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s16,
-                  AppSpacing.s12,
-                  AppSpacing.s16,
-                  0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppGroupedActionList(
-                      actions: [
-                        AppGroupedAction(
-                          icon: FLucideIcons.receipt,
-                          title: l10n.activityExpenseListLink,
-                          subtitle: '',
-                          onPress: () =>
-                              context.push(FinanceRoutes.activityExpenses),
-                        ),
-                        AppGroupedAction(
-                          icon: FLucideIcons.pieChart,
-                          title: l10n.activityExpenseReportLink,
-                          subtitle: '',
-                          onPress: () =>
-                              context.push(FinanceRoutes.expenseReport),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: AppSpacing.s12),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -367,42 +346,6 @@ class _FilterChip extends StatelessWidget {
 
 String _labelForKind(AppLocalizations l10n, ActivityKind kind) {
   return entryKindLabel(l10n, entryKindFromActivityKind(kind));
-}
-
-/// Two small quick-link tiles for "Expenses" and "Expense Report", giving
-/// users a discoverable entry to the dedicated expense surfaces from the
-/// Activity page.
-class _ExpenseQuickLinks extends StatelessWidget {
-  const _ExpenseQuickLinks();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        0,
-        AppSpacing.s16,
-        AppSpacing.s8,
-      ),
-      child: AppGroupedActionList(
-        actions: [
-          AppGroupedAction(
-            icon: FLucideIcons.receipt,
-            title: l10n.activityExpenseListLink,
-            subtitle: '',
-            onPress: () => context.push(FinanceRoutes.activityExpenses),
-          ),
-          AppGroupedAction(
-            icon: FLucideIcons.pieChart,
-            title: l10n.activityExpenseReportLink,
-            subtitle: '',
-            onPress: () => context.push(FinanceRoutes.expenseReport),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 int _activityFilterCount(ActivityFeedQuery query) {
