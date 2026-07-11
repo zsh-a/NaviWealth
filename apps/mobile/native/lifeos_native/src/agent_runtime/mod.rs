@@ -154,9 +154,55 @@ pub async fn agent_runtime_start_profile_turn_step(
     agent_id: String,
     run_metadata_json: String,
 ) -> Result<String> {
-    let llm_request: LlmRequest = serde_json::from_str(&llm_request_json)?;
+    let (llm_response, request) =
+        profile_turn_request(&llm_request_json, &run_metadata_json).await?;
+    let step_json = steps::agent_runtime_start_run_step(
+        catalog_json,
+        serde_json::to_string(&request)?,
+        agent_id,
+    )?;
+    let step: Value = serde_json::from_str(&step_json)?;
+    let output = json!({
+        "protocol_version": protocol_version(),
+        "llm_response": llm_response,
+        "step": step,
+    });
+    Ok(serde_json::to_string(&output)?)
+}
+
+pub async fn agent_runtime_start_profile_turn_snapshot(
+    catalog_json: String,
+    llm_request_json: String,
+    agent_id: String,
+    run_metadata_json: String,
+    max_effect_steps: u32,
+    max_subagent_depth: u32,
+) -> Result<String> {
+    let (llm_response, request) =
+        profile_turn_request(&llm_request_json, &run_metadata_json).await?;
+    let snapshot_json = steps::agent_runtime_start_run_snapshot(
+        catalog_json,
+        serde_json::to_string(&request)?,
+        agent_id,
+        max_effect_steps,
+        max_subagent_depth,
+    )?;
+    let snapshot: Value = serde_json::from_str(&snapshot_json)?;
+    let output = json!({
+        "protocol_version": protocol_version(),
+        "llm_response": llm_response,
+        "snapshot": snapshot,
+    });
+    Ok(serde_json::to_string(&output)?)
+}
+
+async fn profile_turn_request(
+    llm_request_json: &str,
+    run_metadata_json: &str,
+) -> Result<(LlmResponse, RunRequest)> {
+    let llm_request: LlmRequest = serde_json::from_str(llm_request_json)?;
     let llm_response = llm::complete_profile_llm_response(llm_request).await?;
-    let mut metadata = llm::profile_turn_run_metadata(&run_metadata_json)?;
+    let mut metadata = llm::profile_turn_run_metadata(run_metadata_json)?;
     if let Some(object) = metadata.as_object_mut() {
         object.insert(
             "llm_response".to_owned(),
@@ -176,18 +222,7 @@ pub async fn agent_runtime_start_profile_turn_step(
         workflow: None,
         metadata,
     };
-    let step_json = steps::agent_runtime_start_run_step(
-        catalog_json,
-        serde_json::to_string(&request)?,
-        agent_id,
-    )?;
-    let step: Value = serde_json::from_str(&step_json)?;
-    let output = json!({
-        "protocol_version": protocol_version(),
-        "llm_response": llm_response,
-        "step": step,
-    });
-    Ok(serde_json::to_string(&output)?)
+    Ok((llm_response, request))
 }
 
 pub fn agent_runtime_start_run_step(
@@ -209,6 +244,55 @@ pub fn agent_runtime_continue_run_step(
         previous_step_json,
         effect_response_json,
         agent_id,
+    )
+}
+
+pub fn agent_runtime_start_run_snapshot(
+    catalog_json: String,
+    request_json: String,
+    agent_id: String,
+    max_effect_steps: u32,
+    max_subagent_depth: u32,
+) -> Result<String> {
+    steps::agent_runtime_start_run_snapshot(
+        catalog_json,
+        request_json,
+        agent_id,
+        max_effect_steps,
+        max_subagent_depth,
+    )
+}
+
+pub fn agent_runtime_continue_run_snapshot(
+    catalog_json: String,
+    snapshot_json: String,
+    effect_response_json: String,
+    agent_id: String,
+) -> Result<String> {
+    steps::agent_runtime_continue_run_snapshot(
+        catalog_json,
+        snapshot_json,
+        effect_response_json,
+        agent_id,
+    )
+}
+
+pub fn agent_runtime_start_requested_subagent_snapshot(
+    catalog_json: String,
+    parent_snapshot_json: String,
+) -> Result<String> {
+    steps::agent_runtime_start_requested_subagent_snapshot(catalog_json, parent_snapshot_json)
+}
+
+pub fn agent_runtime_resume_parent_from_subagent_snapshot(
+    catalog_json: String,
+    parent_snapshot_json: String,
+    child_snapshot_json: String,
+) -> Result<String> {
+    steps::agent_runtime_resume_parent_from_subagent_snapshot(
+        catalog_json,
+        parent_snapshot_json,
+        child_snapshot_json,
     )
 }
 

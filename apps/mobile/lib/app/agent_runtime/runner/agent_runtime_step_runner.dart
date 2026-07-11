@@ -38,6 +38,8 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
   final int _defaultMaxSubagentDepth;
 
   AgentRuntimeNativeBridge get bridge => _bridge;
+  int get defaultMaxEffectSteps => _defaultMaxEffectSteps;
+  int get defaultMaxSubagentDepth => _defaultMaxSubagentDepth;
 
   Future<Map<String, Object?>> startAndDispatchFirstEffectStep({
     required Map<String, Object?> catalog,
@@ -73,6 +75,27 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     required String agentId,
     int? maxEffectSteps,
   }) async {
+    final limit = maxEffectSteps ?? _defaultMaxEffectSteps;
+    if (limit < 0) {
+      throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
+    }
+    final bridge = _bridge;
+    if (bridge is AgentRuntimeSnapshotBridge) {
+      final snapshotBridge = bridge as AgentRuntimeSnapshotBridge;
+      final execution = await _runSnapshotUntilTerminal(
+        bridge: snapshotBridge,
+        catalog: catalog,
+        initialSnapshot: await snapshotBridge.startRunSnapshot(
+          catalog: catalog,
+          request: request,
+          agentId: agentId,
+          maxEffectSteps: limit,
+          maxSubagentDepth: _defaultMaxSubagentDepth,
+        ),
+        agentId: agentId,
+      );
+      return execution.result;
+    }
     final step = await _bridge.startRunStep(
       catalog: catalog,
       request: request,
@@ -84,6 +107,110 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       agentId: agentId,
       maxEffectSteps: maxEffectSteps,
     );
+  }
+
+  Future<_SnapshotExecution> _runSnapshotUntilTerminal({
+    required AgentRuntimeSnapshotBridge bridge,
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> initialSnapshot,
+    required String agentId,
+  }) async {
+    var snapshot = initialSnapshot;
+    var step = _snapshotStep(snapshot);
+    final steps = <Map<String, Object?>>[step];
+    final effectResponses = <Map<String, Object?>>[];
+
+    while (_isHostEffectRequested(step)) {
+      final effect = agentRuntimeObject(
+        step['effect'],
+        label: 'native agent-runtime effect',
+      );
+      switch (effect['kind']) {
+        case 'tool':
+          final response = await _dispatchToolCall(step);
+          effectResponses.add(response);
+          snapshot = await bridge.continueRunSnapshot(
+            catalog: catalog,
+            snapshot: snapshot,
+            effectResponse: response,
+            agentId: agentId,
+          );
+        case 'subagent':
+          final subagentId = agentRuntimeString(effect['agent_id']);
+          if (subagentId.isEmpty) {
+            throw const FormatException('native effect.agent_id is required');
+          }
+          final child = await _runSnapshotUntilTerminal(
+            bridge: bridge,
+            catalog: catalog,
+            initialSnapshot: await bridge.startRequestedSubagentSnapshot(
+              catalog: catalog,
+              parentSnapshot: snapshot,
+            ),
+            agentId: subagentId,
+          );
+          snapshot = await bridge.resumeParentFromSubagentSnapshot(
+            catalog: catalog,
+            parentSnapshot: snapshot,
+            childSnapshot: child.snapshot,
+          );
+        default:
+          throw FormatException(
+            'native agent-runtime effect kind is unsupported',
+            effect['kind'],
+          );
+      }
+      step = _snapshotStep(snapshot);
+      steps.add(step);
+    }
+
+    final limits = agentRuntimeObject(
+      snapshot['limits'],
+      label: 'native agent-runtime snapshot limits',
+    );
+    final progress = agentRuntimeObject(
+      snapshot['progress'],
+      label: 'native agent-runtime snapshot progress',
+    );
+    final maxEffectSteps = _snapshotInt(limits, 'max_effect_steps');
+    final dispatchedEffectCount = _snapshotInt(
+      progress,
+      'dispatched_effect_count',
+    );
+    final result = AgentRuntimeNativeStepRunResult(
+      terminalStep: step,
+      steps: steps,
+      effectResponses: effectResponses,
+      nativeTraceEvents: _nativeTraceEvents(steps),
+      dispatchedEffectCount: dispatchedEffectCount,
+      budgetExhausted: progress['effect_budget_exhausted'] == true,
+      maxEffectSteps: maxEffectSteps,
+      remainingEffectSteps: (maxEffectSteps - dispatchedEffectCount).clamp(
+        0,
+        maxEffectSteps,
+      ),
+      maxSubagentDepth: _snapshotInt(limits, 'max_subagent_depth'),
+      subagentDepthExceeded: progress['subagent_depth_exceeded'] == true,
+    );
+    return _SnapshotExecution(snapshot: snapshot, result: result);
+  }
+
+  Future<AgentRuntimeNativeStepRunResult>
+  continueSnapshotUntilTerminalWithTrace({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> initialSnapshot,
+    required String agentId,
+  }) async {
+    final bridge = _bridge;
+    if (bridge is! AgentRuntimeSnapshotBridge) {
+      throw UnsupportedError('native runtime does not expose snapshot APIs');
+    }
+    return (await _runSnapshotUntilTerminal(
+      bridge: bridge as AgentRuntimeSnapshotBridge,
+      catalog: catalog,
+      initialSnapshot: initialSnapshot,
+      agentId: agentId,
+    )).result;
   }
 
   Future<Map<String, Object?>> continueUntilTerminal({
@@ -357,6 +484,13 @@ class _HostEffectDispatch {
   final bool subagentDepthExceeded;
 }
 
+class _SnapshotExecution {
+  const _SnapshotExecution({required this.snapshot, required this.result});
+
+  final Map<String, Object?> snapshot;
+  final AgentRuntimeNativeStepRunResult result;
+}
+
 bool _isHostEffectRequested(Map<String, Object?> step) {
   return switch (step['status']) {
     'effect_requested' => true,
@@ -370,6 +504,22 @@ List<Map<String, Object?>> _nativeTraceEvents(
   return [
     for (final step in steps) ?agentRuntimeObjectOrNull(step['trace_event']),
   ];
+}
+
+Map<String, Object?> _snapshotStep(Map<String, Object?> snapshot) {
+  return agentRuntimeObject(
+    snapshot['step'],
+    label: 'native agent-runtime snapshot step',
+  );
+}
+
+int _snapshotInt(Map<String, Object?> object, String field) {
+  final value = object[field];
+  if (value is int && value >= 0) return value;
+  throw FormatException(
+    'native agent-runtime snapshot $field must be a non-negative integer',
+    value,
+  );
 }
 
 Object _effectId(Map<String, Object?> effect, Map<String, Object?> step) {

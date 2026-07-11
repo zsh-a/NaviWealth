@@ -116,6 +116,37 @@ void main() {
     },
   );
 
+  test('AgentRuntimeNativeStepRunner prefers Rust-owned snapshots', () async {
+    final bridge = _FakeSnapshotBridge();
+    final dispatcher = _RecordingDispatcher(
+      output: <String, Object?>{'ok': true},
+    );
+    final runner = AgentRuntimeNativeStepRunner(
+      bridge: bridge,
+      toolHost: AgentRuntimeToolHost(dispatcher: dispatcher),
+    );
+
+    final result = await runner.runUntilTerminalWithTrace(
+      catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+      request: const <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'input': <String, Object?>{},
+      },
+      agentId: 'execution_review',
+      maxEffectSteps: 3,
+    );
+
+    expect(bridge.snapshotStartCount, 1);
+    expect(bridge.snapshotContinueCount, 1);
+    expect(dispatcher.calls.single.name, 'read_snapshot');
+    expect(result.terminalStep['status'], 'completed');
+    expect(result.dispatchedEffectCount, 1);
+    expect(result.maxEffectSteps, 3);
+    expect(result.remainingEffectSteps, 2);
+    expect(result.budgetExhausted, isFalse);
+    expect(result.steps, hasLength(2));
+  });
+
   test(
     'FfiAgentRuntimeNativeBridge rejects runtime-owned SQLite policy',
     () async {
@@ -1348,6 +1379,129 @@ class _SubagentBudgetBridge extends _SubagentBridge {
         'effect_id': 'child_tool_1',
         'name': 'read_child',
         'input': <String, Object?>{'id': 'child'},
+      },
+    };
+  }
+}
+
+class _FakeSnapshotBridge extends _FakeBridge
+    implements AgentRuntimeSnapshotBridge {
+  int snapshotStartCount = 0;
+  int snapshotContinueCount = 0;
+
+  @override
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> llmRequest,
+    required String agentId,
+    required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) async {
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'llm_response': await completeProfileLlm(request: llmRequest),
+      'snapshot': _requestedSnapshot(
+        agentId: agentId,
+        maxEffectSteps: maxEffectSteps,
+        maxSubagentDepth: maxSubagentDepth,
+      ),
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> startRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> request,
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) async {
+    snapshotStartCount += 1;
+    return _requestedSnapshot(
+      agentId: agentId,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
+  }
+
+  @override
+  Future<Map<String, Object?>> continueRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required Map<String, Object?> effectResponse,
+    required String agentId,
+  }) async {
+    snapshotContinueCount += 1;
+    final limits = Map<String, Object?>.from(snapshot['limits']! as Map);
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'snapshot_version': 1,
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'snapshot_run',
+        'agent_id': agentId,
+        'step_index': 1,
+        'status': 'completed',
+        'output': <String, Object?>{'effect_result': effectResponse['result']},
+      },
+      'limits': limits,
+      'progress': const <String, Object?>{
+        'dispatched_effect_count': 1,
+        'subagent_depth': 0,
+        'effect_budget_exhausted': false,
+        'subagent_depth_exceeded': false,
+      },
+    };
+  }
+
+  @override
+  Future<Map<String, Object?>> startRequestedSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+  }) {
+    throw UnsupportedError('subagent not used by this fake');
+  }
+
+  @override
+  Future<Map<String, Object?>> resumeParentFromSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+    required Map<String, Object?> childSnapshot,
+  }) {
+    throw UnsupportedError('subagent not used by this fake');
+  }
+
+  Map<String, Object?> _requestedSnapshot({
+    required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) {
+    return <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'snapshot_version': 1,
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'snapshot_run',
+        'agent_id': agentId,
+        'step_index': 0,
+        'status': 'effect_requested',
+        'effect': const <String, Object?>{
+          'kind': 'tool',
+          'effect_id': 'snapshot_tool_1',
+          'name': 'read_snapshot',
+          'input': <String, Object?>{},
+        },
+      },
+      'limits': <String, Object?>{
+        'max_effect_steps': maxEffectSteps,
+        'max_subagent_depth': maxSubagentDepth,
+      },
+      'progress': const <String, Object?>{
+        'dispatched_effect_count': 0,
+        'subagent_depth': 0,
+        'effect_budget_exhausted': false,
+        'subagent_depth_exceeded': false,
       },
     };
   }

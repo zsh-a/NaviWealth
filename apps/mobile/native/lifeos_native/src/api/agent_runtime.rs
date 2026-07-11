@@ -93,6 +93,25 @@ pub async fn agent_runtime_start_profile_turn_step(
     .await
 }
 
+pub async fn agent_runtime_start_profile_turn_snapshot(
+    catalog_json: String,
+    llm_request_json: String,
+    agent_id: String,
+    run_metadata_json: String,
+    max_effect_steps: u32,
+    max_subagent_depth: u32,
+) -> Result<String> {
+    runtime::agent_runtime_start_profile_turn_snapshot(
+        catalog_json,
+        llm_request_json,
+        agent_id,
+        run_metadata_json,
+        max_effect_steps,
+        max_subagent_depth,
+    )
+    .await
+}
+
 pub fn agent_runtime_start_run_step(
     catalog_json: String,
     request_json: String,
@@ -112,5 +131,54 @@ pub fn agent_runtime_continue_run_step(
         previous_step_json,
         effect_response_json,
         agent_id,
+    )
+}
+
+pub fn agent_runtime_start_run_snapshot(
+    catalog_json: String,
+    request_json: String,
+    agent_id: String,
+    max_effect_steps: u32,
+    max_subagent_depth: u32,
+) -> Result<String> {
+    runtime::agent_runtime_start_run_snapshot(
+        catalog_json,
+        request_json,
+        agent_id,
+        max_effect_steps,
+        max_subagent_depth,
+    )
+}
+
+pub fn agent_runtime_continue_run_snapshot(
+    catalog_json: String,
+    snapshot_json: String,
+    effect_response_json: String,
+    agent_id: String,
+) -> Result<String> {
+    runtime::agent_runtime_continue_run_snapshot(
+        catalog_json,
+        snapshot_json,
+        effect_response_json,
+        agent_id,
+    )
+}
+
+pub fn agent_runtime_start_requested_subagent_snapshot(
+    catalog_json: String,
+    parent_snapshot_json: String,
+) -> Result<String> {
+    runtime::agent_runtime_start_requested_subagent_snapshot(catalog_json, parent_snapshot_json)
+}
+
+pub fn agent_runtime_resume_parent_from_subagent_snapshot(
+    catalog_json: String,
+    parent_snapshot_json: String,
+    child_snapshot_json: String,
+) -> Result<String> {
+    runtime::agent_runtime_resume_parent_from_subagent_snapshot(
+        catalog_json,
+        parent_snapshot_json,
+        child_snapshot_json,
     )
 }

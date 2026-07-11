@@ -89,7 +89,8 @@ crates/agent-cli/src/
 
 schemas/
   JSON Schema contracts for runtime wire types, including ChatTurn request,
-  state, event, and tool-result resume payloads.
+  state, event, tool-result resume payloads, typed embedded steps, and
+  versioned embedded-run snapshots.
 
 fixtures/contracts/
   Valid and invalid schema fixtures used by contract tests and CLI examples.
@@ -111,7 +112,7 @@ apps/mobile/lib/app/agent_runtime/
   catalog/agent_runtime_catalog.dart           DomainPack -> runtime catalog export
   bridges/agent_runtime_native_bridge.dart     Stable Dart map API over generated FRB
   tools/agent_runtime_tool_host.dart           Device tool JSON-RPC host adapter
-  runner/agent_runtime_runner.dart             Profile turn + native step loop composition
+  runner/agent_runtime_runner.dart             Profile turn + Rust-owned snapshot composition
   bridges/agent_runtime_llm_bridge.dart        LlmProfile -> provider-neutral request
   bridges/agent_runtime_llm_stream_bridge.dart ChatTurn streaming bridge over FRB JSON
   chat/frb_chat_runner.dart                    ChatTurn event mapping and Flutter tool loop
@@ -177,6 +178,8 @@ TUI uses persistent natural input by default. Plain text runs the shared
 ## Invariants
 
 - All top-level runtime wire messages carry `protocol_version: "agent.v1"`.
+- Persistable embedded checkpoints carry `snapshot_version: 1`; hosts must
+  round-trip the whole snapshot rather than reconstructing continuation state.
 - Cross-language contracts are JSON-first. Keep envelopes stable and put
   business-specific data in `input`, `output`, `payload`, or `metadata`.
 - Runtime crates must not import Flutter, Dart, Drift, Riverpod, or domain
@@ -205,9 +208,12 @@ These are intentional or pending differences from the long-term design:
   a Rust-owned pause/resume state (`chat_state` + `tool_results`) for device
   tool continuation; TUI natural input uses the shared `agent-chat` stream, but
   terminal redraw/cancel is still not a non-blocking live run loop.
-- Flutter production agents still keep most business policy in Dart. Rust owns
-  contracts, LLM provider paths, native-planned tool continuation, and trace
-  normalization for migrated seams.
+- Flutter production agents still keep business policy, device tools,
+  proposals, and Drift persistence in Dart. Rust owns contracts, LLM provider
+  paths, embedded continuation snapshots, effect budgets, subagent-depth
+  limits, and trace normalization for migrated seams. Dart dispatches requested
+  host effects and returns their JSON-RPC responses without rebuilding runtime
+  state.
 - Flutter interactive AI Chat uses the same ChatTurn request and event naming
   through the FRB stream bridge. Rust owns ChatTurn state, conversation
   continuation, and tool-round budget through the `chat_state` resume seam;
