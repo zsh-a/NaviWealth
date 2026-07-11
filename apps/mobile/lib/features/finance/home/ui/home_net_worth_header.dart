@@ -17,7 +17,7 @@ class _NetWorthHeader extends ConsumerWidget {
         ? l10n.financePrivacyShowAmountsTooltip
         : l10n.financePrivacyHideAmountsTooltip;
     return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s20),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.xlg,
       borderless: true,
       tinted: false,
@@ -52,7 +52,7 @@ class _NetWorthHeader extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: AppSpacing.s6),
           // Cap dynamic-text scaling on the 32dp hero number so users on
           // 200% system font size don't blow the card out of its row.
           // FittedBox handles long currency strings (¥123,456,789.00)
@@ -76,10 +76,10 @@ class _NetWorthHeader extends ConsumerWidget {
             ),
           ),
           if (hasData) ...[
-            const SizedBox(height: AppSpacing.s8),
+            const SizedBox(height: AppSpacing.s6),
             _DeltaMetricsRow(metrics: metricsAsync),
           ],
-          const SizedBox(height: AppSpacing.s4),
+          const SizedBox(height: AppSpacing.s6),
           // Assets / liabilities breakdown. Uses the same currency
           // formatting (symbol + grouping) as the hero number and
           // mirrors the Accounts-hub net-worth card, so money reads the
@@ -243,38 +243,24 @@ class _DeltaMetricsRow extends StatelessWidget {
             ),
             _MetricCell(
               label: l10n.dashboardHeaderDeltaMonthLabel,
-              child: m.monthlyChangePct == null
-                  ? const DeltaChip(value: null)
-                  : m.monthlyChangePct!.isFinite
+              child: m.monthlyChangePct != null && m.monthlyChangePct!.isFinite
                   ? DeltaChip(
                       value: m.monthlyChangePct! * 100,
                       fractionDigits: 2,
                     )
-                  : DeltaText(
-                      value: m.monthlyChange.amount.toDouble(),
-                      format: DeltaFormat.currency,
-                      currencyCode: m.baseCurrency,
-                    ),
+                  : const DeltaChip(value: null),
             ),
             _MetricCell(
               label: l10n.dashboardHeaderDeltaYtdLabel,
               // Sanity guard: even after the XIRR runaway fix, treat any
               // ratio outside ±100 (i.e. ±10000%) as numerically
-              // meaningless and fall through to the bounded currency
-              // delta. Stops a single bad upstream value from blowing
-              // the hero past the screen.
-              child: _isSaneRatio(m.ytdChangePct)
-                  ? DeltaText.percentFromRatio(
-                      ratio: m.ytdChangePct,
-                      fractionDigits: 2,
-                    )
-                  : m.ytdChange.amount.sign != 0
-                  ? DeltaText(
-                      value: m.ytdChange.amount.toDouble(),
-                      format: DeltaFormat.currency,
-                      currencyCode: m.baseCurrency,
-                    )
-                  : DeltaText.percentFromRatio(ratio: null),
+              // meaningless and show an unavailable value. This keeps
+              // incomparable currency fallbacks from repeating across
+              // every period in the hero.
+              child: DeltaText.percentFromRatio(
+                ratio: _isSaneRatio(m.ytdChangePct) ? m.ytdChangePct : null,
+                fractionDigits: 2,
+              ),
             ),
           ],
         );

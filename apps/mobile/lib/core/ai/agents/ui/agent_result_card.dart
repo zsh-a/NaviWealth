@@ -21,6 +21,15 @@ import '../providers.dart' as agent_providers;
 /// Domain surfaces own when to show an artifact and which actions to attach.
 /// This widget only standardizes the visual shell for briefings, reviews,
 /// alerts, and reminders.
+enum AgentResultCardLayout {
+  /// Full preview with insight excerpts and an explicit review action.
+  detailed,
+
+  /// Calm feed summary: title, state and a short explanation. The whole
+  /// surface opens the detail view, so no duplicate footer action is shown.
+  summary,
+}
+
 class AgentResultCard extends StatelessWidget {
   const AgentResultCard({
     super.key,
@@ -29,13 +38,18 @@ class AgentResultCard extends StatelessWidget {
     this.onOpen,
     this.footer,
     this.maxInsightPreviewCount = 2,
-  });
+    this.layout = AgentResultCardLayout.detailed,
+  }) : assert(
+         layout != AgentResultCardLayout.summary || footer == null,
+         'Summary cards do not support a footer.',
+       );
 
   final AgentArtifact artifact;
   final String metaLabel;
   final VoidCallback? onOpen;
   final Widget? footer;
   final int maxInsightPreviewCount;
+  final AgentResultCardLayout layout;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +57,33 @@ class AgentResultCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final accent = _accentColor(context, artifact.severity);
     final previewInsights = artifact.insights.take(maxInsightPreviewCount);
+
+    if (layout == AgentResultCardLayout.summary) {
+      return SoftCard(
+        level: SoftCardLevel.raised,
+        borderless: true,
+        padding: const EdgeInsets.all(AppSpacing.s14),
+        onPress: onOpen,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _AgentResultHeader(
+              artifact: artifact,
+              metaLabel: metaLabel,
+              accent: accent,
+              showChevron: onOpen != null,
+            ),
+            const SizedBox(height: AppSpacing.s10),
+            Text(
+              artifact.summary,
+              style: typography.body.sm.copyWith(height: 1.35),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      );
+    }
 
     return SoftCard(
       level: SoftCardLevel.raised,
@@ -52,47 +93,10 @@ class AgentResultCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              AppIconTile(
-                icon: _iconForKind(artifact.kind),
-                color: accent,
-                size: 36,
-                iconSize: AppIconSizes.h18,
-                backgroundOpacity: AppOpacity.medium,
-                foregroundOpacity: 1,
-              ),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      artifact.title,
-                      style: context.labelStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      metaLabel,
-                      style: context.captionStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              AppBadge(
-                label: _badgeLabel(l10n, artifact),
-                size: AppBadgeSize.compact,
-                tone: _badgeTone(artifact.severity),
-                icon: artifact.severity == AgentArtifactSeverity.info
-                    ? null
-                    : FLucideIcons.triangleAlert,
-              ),
-            ],
+          _AgentResultHeader(
+            artifact: artifact,
+            metaLabel: metaLabel,
+            accent: accent,
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
@@ -128,6 +132,75 @@ class AgentResultCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _AgentResultHeader extends StatelessWidget {
+  const _AgentResultHeader({
+    required this.artifact,
+    required this.metaLabel,
+    required this.accent,
+    this.showChevron = false,
+  });
+
+  final AgentArtifact artifact;
+  final String metaLabel;
+  final Color accent;
+  final bool showChevron;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      children: [
+        AppIconTile(
+          icon: _iconForKind(artifact.kind),
+          color: accent,
+          size: 36,
+          iconSize: AppIconSizes.h18,
+          backgroundOpacity: AppOpacity.medium,
+          foregroundOpacity: 1,
+        ),
+        const SizedBox(width: AppSpacing.s10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                artifact.title,
+                style: context.labelStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                metaLabel,
+                style: context.captionStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        AppBadge(
+          label: _badgeLabel(l10n, artifact),
+          size: AppBadgeSize.compact,
+          tone: _badgeTone(artifact.severity),
+          icon: artifact.severity == AgentArtifactSeverity.info
+              ? null
+              : FLucideIcons.triangleAlert,
+        ),
+        if (showChevron) ...[
+          const SizedBox(width: AppSpacing.s6),
+          Icon(
+            FLucideIcons.chevronRight,
+            size: AppIconSizes.xs,
+            color: context.theme.colors.mutedForeground,
+          ),
+        ],
+      ],
     );
   }
 }

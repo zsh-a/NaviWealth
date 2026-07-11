@@ -315,18 +315,21 @@ void main() {
     expect(find.text('Project: Execution polish'), findsOneWidget);
     expect(find.text('Commitment: Weekly review'), findsOneWidget);
 
-    await tester.tap(find.byIcon(FLucideIcons.pencil));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
-    await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.play));
     await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.pause));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.check));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.archive));
-    await tester.pump(const Duration(milliseconds: 200));
+
+    Future<void> selectMoreAction(String label) async {
+      await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+    }
+
+    await selectMoreAction('Edit Action');
+    await selectMoreAction('New Progress');
+    await selectMoreAction('Block');
+    await selectMoreAction('Done');
+    await selectMoreAction('Drop');
 
     expect(edited, isTrue);
     expect(started, isTrue);
@@ -451,16 +454,20 @@ void main() {
     expect(find.text('Actions: 3'), findsOneWidget);
     expect(find.text('Blocked: 1'), findsOneWidget);
 
-    await tester.tap(find.byIcon(FLucideIcons.pause));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.check));
-    await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
     await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.plus));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.pencil));
-    await tester.pump(const Duration(milliseconds: 200));
+
+    Future<void> selectMoreAction(String label) async {
+      await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+    }
+
+    await selectMoreAction('Edit Project');
+    await selectMoreAction('New Action');
+    await selectMoreAction('Pause');
+    await selectMoreAction('Complete');
 
     expect(created, isTrue);
     expect(edited, isTrue);
@@ -562,14 +569,18 @@ void main() {
 
     await tester.tap(find.byIcon(FLucideIcons.play));
     await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.check));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.plus));
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byIcon(FLucideIcons.pencil));
-    await tester.pump(const Duration(milliseconds: 200));
+
+    Future<void> selectMoreAction(String label) async {
+      await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+    }
+
+    await selectMoreAction('Edit Commitment');
+    await selectMoreAction('New Progress');
+    await selectMoreAction('New Action');
+    await selectMoreAction('Complete');
 
     expect(created, isTrue);
     expect(edited, isTrue);

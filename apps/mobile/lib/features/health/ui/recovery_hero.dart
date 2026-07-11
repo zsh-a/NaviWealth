@@ -191,6 +191,7 @@ class _RecoveryAlertPanel extends ConsumerWidget {
       child: AgentResultCard(
         artifact: artifact,
         metaLabel: metaLabel,
+        layout: AgentResultCardLayout.summary,
         onOpen: () => showAgentArtifactSheet(
           context: context,
           artifact: artifact,

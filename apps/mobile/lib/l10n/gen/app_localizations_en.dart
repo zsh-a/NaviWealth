@@ -1072,22 +1072,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeGreetingNight => 'Good night';
 
   @override
-  String homeGreetingNetWorthFragment(String pct) {
-    return 'Net worth $pct this month';
-  }
-
-  @override
-  String homeGreetingAgentResultsFragment(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count agent results ready',
-      one: '1 agent result ready',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get financeAgentResultsLoading => 'Checking agent results';
 
   @override
@@ -11226,16 +11210,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financeAgentFireTitle => 'FIRE Plan Drift Monitor';
-
-  @override
-  String financeAgentFireSummary(
-    Object cashBucketMonths,
-    Object headline,
-    Object safety,
-    Object withdrawalRate,
-  ) {
-    return 'FIRE plan drift monitor: $headline. Safety $safety, withdrawal rate $withdrawalRate, cash bucket $cashBucketMonths months.';
-  }
 
   @override
   String get financeAgentFireInsightPlanSnapshotTitle => 'Plan snapshot';

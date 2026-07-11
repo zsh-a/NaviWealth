@@ -78,49 +78,36 @@ class ExecutionOverviewStrip extends StatelessWidget {
         ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const gap = AppSpacing.s8;
-        final maxWidth = constraints.maxWidth;
-        // Keep a genuinely useful two-column overview on phone content
-        // widths (390dp viewport -> 358dp after page padding). Additional
-        // columns appear only when every tile retains a readable minimum.
-        final columns = ((maxWidth + gap) / (168 + gap)).floor().clamp(2, 4);
-        final tileWidth = maxWidth.isFinite
-            ? (maxWidth - gap * (columns - 1)) / columns
-            : AppControlWidths.metricTile;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                for (final tile in filters)
-                  SizedBox(
-                    width: tileWidth,
-                    child: _ExecutionOverviewTile(
-                      data: tile,
-                      selected: tile.filter == selectedFilter,
-                      onPress: () => onFilterChanged(tile.filter!),
-                    ),
-                  ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var index = 0; index < filters.length; index++) ...[
+                if (index > 0) const SizedBox(width: AppSpacing.s6),
+                _ExecutionOverviewTile(
+                  data: filters[index],
+                  selected: filters[index].filter == selectedFilter,
+                  onPress: () => onFilterChanged(filters[index].filter!),
+                ),
               ],
-            ),
-            if (summaries.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.s10),
-              Wrap(
-                spacing: AppSpacing.s8,
-                runSpacing: AppSpacing.s8,
-                children: [
-                  for (final summary in summaries)
-                    _ExecutionOverviewSummary(data: summary),
-                ],
-              ),
             ],
-          ],
-        );
-      },
+          ),
+        ),
+        if (summaries.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s10),
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              for (final summary in summaries)
+                _ExecutionOverviewSummary(data: summary),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }
@@ -195,41 +182,46 @@ class _ExecutionOverviewTile extends StatelessWidget {
     final color = selected ? colors.primary : data.color;
     return Semantics(
       selected: selected,
-      child: SoftCard(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        level: selected ? SoftCardLevel.raised : SoftCardLevel.flat,
+      button: true,
+      child: FTappable(
         onPress: onPress,
-        child: Row(
-          children: [
-            AppIconTile(
-              icon: data.icon,
-              color: color,
-              size: 32,
-              iconSize: AppIconSizes.xs,
-              radius: AppRadius.sm,
+        child: AnimatedContainer(
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          curve: Motion.standardDecelerate,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s10,
+            vertical: AppSpacing.s8,
+          ),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primary.withValues(alpha: AppOpacity.subtle)
+                : colors.muted.withValues(alpha: AppOpacity.subtle),
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            border: Border.all(
+              color: selected
+                  ? colors.primary.withValues(alpha: AppOpacity.light)
+                  : colors.border.withValues(alpha: AppOpacity.subtle),
+              width: AppStroke.hairline,
             ),
-            const SizedBox(width: AppSpacing.s10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data.value.toString(),
-                    style: context.strongTitleStyle.copyWith(color: color),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    data.label,
-                    style: context.captionMediumStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(data.icon, size: AppIconSizes.xs, color: color),
+              const SizedBox(width: AppSpacing.s6),
+              Text(
+                data.label,
+                style: context.captionMediumStyle.copyWith(
+                  color: selected ? colors.foreground : colors.mutedForeground,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: AppSpacing.s6),
+              Text(
+                data.value.toString(),
+                style: context.captionLabelStyle.copyWith(color: color),
+              ),
+            ],
+          ),
         ),
       ),
     );

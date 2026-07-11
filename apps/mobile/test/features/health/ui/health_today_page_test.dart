@@ -118,14 +118,14 @@ void main() {
       find.text('HRV dropped while resting heart rate climbed.'),
       findsOneWidget,
     );
-    expect(find.text('Recovery risk'), findsOneWidget);
+    expect(find.text('Recovery risk'), findsNothing);
 
     expect(find.text('Weekly Summary'), findsOneWidget);
     expect(
       find.text('Training was consistent but sleep lagged.'),
       findsOneWidget,
     );
-    expect(find.text('Weekly pattern'), findsOneWidget);
+    expect(find.text('Weekly pattern'), findsNothing);
     expect(find.text('Review'), findsWidgets);
   });
 

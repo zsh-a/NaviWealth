@@ -148,6 +148,32 @@ void main() {
     expect(opened, isTrue);
   });
 
+  testWidgets('summary layout keeps one calm action surface', (tester) async {
+    var opened = false;
+    await tester.pumpWidget(
+      _wrap(
+        AgentResultCard(
+          artifact: _artifact(),
+          metaLabel: 'Updated just now',
+          onOpen: () => opened = true,
+          layout: AgentResultCardLayout.summary,
+        ),
+      ),
+    );
+
+    expect(
+      find.text('Sleep debt is elevated; keep the first block light.'),
+      findsOneWidget,
+    );
+    expect(find.text('Sleep'), findsNothing);
+    expect(find.text('Review'), findsNothing);
+    expect(find.byIcon(FLucideIcons.chevronRight), findsOneWidget);
+
+    await tester.tap(find.text('Morning Briefing'));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(opened, isTrue);
+  });
+
   testWidgets('compact result row renders light metadata and opens detail', (
     tester,
   ) async {

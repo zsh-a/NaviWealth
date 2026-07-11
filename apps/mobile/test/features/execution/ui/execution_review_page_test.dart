@@ -54,9 +54,8 @@ void main() {
 
     expect(find.text('Execution Review'), findsWidgets);
     expect(find.text('3 actions need attention'), findsOneWidget);
-    expect(find.text('Today focus'), findsOneWidget);
+    expect(find.text('Today focus'), findsNothing);
     expect(find.textContaining('07-05'), findsOneWidget);
-    expect(find.text('Review'), findsWidgets);
   });
 
   testWidgets('review page renders newer failed run before older artifact', (

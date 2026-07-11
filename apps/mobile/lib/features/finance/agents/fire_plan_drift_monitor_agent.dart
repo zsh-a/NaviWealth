@@ -223,12 +223,11 @@ class FirePlanDriftAnalysis {
 
   String summary(AppLocalizations l10n) {
     final headline = concerningFindings.first;
-    return l10n.financeAgentFireSummary(
-      _findingTitle(l10n, headline),
-      review.safetyLevel.name,
-      _rate(review.withdrawalRate),
-      _months(review.cashBucketMonths),
-    );
+    // The feed summary should explain the leading finding in user language.
+    // Diagnostic values remain available in insights and evidence, where
+    // unavailable rates/months have enough context and do not leak raw
+    // `n/a` or enum names into the home cockpit.
+    return _findingBody(l10n, headline);
   }
 
   Map<String, Object?> toPayload() => <String, Object?>{

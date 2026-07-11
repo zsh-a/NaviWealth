@@ -175,38 +175,29 @@ class _AiAssistantBar extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.s6),
-            for (final action in actions) ...[
-              _AiShortcutButton(action: action),
-              if (action != actions.last) const SizedBox(width: AppSpacing.s4),
-            ],
+            AppAdaptiveActionMenu(
+              title: l10n.knowledgeAiSuggestionsTitle,
+              actions: <AppAdaptiveAction>[
+                for (final action in actions)
+                  AppAdaptiveAction(
+                    icon: action.icon,
+                    title: action.label,
+                    onPress: action.onPress,
+                  ),
+              ],
+              triggerBuilder: (context, openMenu, focusNode) => Focus(
+                focusNode: focusNode,
+                child: AppIconButton(
+                  icon: FLucideIcons.ellipsis,
+                  tooltip: l10n.knowledgeAiSuggestionsTitle,
+                  onPress: openMenu,
+                  size: AppSpacing.s40,
+                  iconSize: AppIconSizes.sm,
+                  iconColor: colors.primary,
+                ),
+              ),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AiShortcutButton extends StatelessWidget {
-  const _AiShortcutButton({required this.action});
-
-  final DomainAiPromptAction action;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return AppIconButton(
-      icon: action.icon,
-      tooltip: action.label,
-      onPress: action.onPress,
-      size: AppSpacing.s40,
-      iconSize: AppIconSizes.sm,
-      iconColor: colors.primary,
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: colors.primary.withValues(alpha: AppOpacity.faint),
-          width: AppStroke.hairline,
         ),
       ),
     );

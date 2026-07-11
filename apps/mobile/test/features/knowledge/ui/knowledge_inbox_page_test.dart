@@ -33,17 +33,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  testWidgets('renders Knowledge AI shortcuts as a compact icon strip', (
+  testWidgets('groups Knowledge AI shortcuts in one adaptive menu', (
     tester,
   ) async {
     await pumpInbox(tester);
 
     expect(find.byIcon(FLucideIcons.sparkles), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.gitMerge), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.lightbulb), findsOneWidget);
-
+    expect(find.byIcon(FLucideIcons.gitMerge), findsNothing);
     expect(find.text('Deduplicate'), findsNothing);
-    expect(find.text('Weekly review'), findsNothing);
-    expect(find.text('Search knowledge'), findsNothing);
+
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deduplicate'), findsOneWidget);
+    expect(find.text('Weekly review'), findsOneWidget);
+    expect(find.text('Search knowledge'), findsOneWidget);
   });
 }

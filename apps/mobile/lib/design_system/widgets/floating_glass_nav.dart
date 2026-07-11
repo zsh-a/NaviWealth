@@ -179,15 +179,11 @@ class _NavTabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = selected
-        ? (isDark ? ColorPalette.navy950 : ColorPalette.neutral0)
+        ? (isDark ? ColorPalette.cyanBrand300 : ColorPalette.navy950)
         : (isDark ? ColorPalette.navy400 : ColorPalette.navy300);
     final labelColor = selected
         ? (isDark ? ColorPalette.navy50 : ColorPalette.navy900)
         : (isDark ? ColorPalette.navy400 : ColorPalette.navy300);
-    final badgeColor = selected
-        ? (isDark ? ColorPalette.cyanBrand400 : ColorPalette.navy950)
-        : Colors.transparent;
-
     return Semantics(
       button: true,
       selected: selected,
@@ -217,33 +213,19 @@ class _NavTabButton extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: AppMotionPolicy.duration(context, Motion.fast),
-                curve: Motion.standardDecelerate,
+              SizedBox(
                 width: 26,
                 height: 26,
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  shape: BoxShape.circle,
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color:
-                                (isDark
-                                        ? ColorPalette.cyanBrand400
-                                        : ColorPalette.navy950)
-                                    .withValues(alpha: AppOpacity.light),
-                            blurRadius: 14,
-                            offset: const Offset(0, 5),
-                          ),
-                        ]
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  selected ? tab.selectedIcon : tab.icon,
-                  color: iconColor,
-                  size: AppIconSizes.h18,
+                child: AnimatedSwitcher(
+                  duration: AppMotionPolicy.duration(context, Motion.fast),
+                  switchInCurve: Motion.standardDecelerate,
+                  switchOutCurve: Motion.standardAccelerate,
+                  child: Icon(
+                    selected ? tab.selectedIcon : tab.icon,
+                    key: ValueKey<bool>(selected),
+                    color: iconColor,
+                    size: AppIconSizes.h18,
+                  ),
                 ),
               ),
               Text(
@@ -293,7 +275,7 @@ class _AssistantActionButton extends StatelessWidget {
           constraints: const BoxConstraints(minWidth: AppSpacing.s64),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
           decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: AppOpacity.subtle),
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Row(

@@ -106,11 +106,15 @@ void main() {
       find.text('Net worth moved 2.4% with cashflow pressure.'),
       findsOneWidget,
     );
-    expect(find.text('Net worth'), findsOneWidget);
+    expect(find.text('Net worth'), findsNothing);
     expect(find.text('Cashflow Anomaly Review'), findsOneWidget);
     expect(find.text('Spending moved sharply above baseline.'), findsNothing);
     expect(find.byType(AgentResultCard), findsOneWidget);
     expect(find.byType(AgentCompactResultRow), findsOneWidget);
+    expect(
+      tester.widget<AgentResultCard>(find.byType(AgentResultCard)).layout,
+      AgentResultCardLayout.summary,
+    );
     expect(find.textContaining('FinanceOS'), findsNWidgets(2));
     expect(find.text('No agent results yet'), findsNothing);
   });

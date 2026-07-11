@@ -150,8 +150,11 @@ void main() {
     expect(find.text('A weekly review routine is due.'), findsNothing);
     expect(find.byType(AgentResultCard), findsOneWidget);
     expect(find.byType(AgentCompactResultRow), findsOneWidget);
-    expect(find.text('Decisions due'), findsOneWidget);
-    expect(find.text('Review'), findsWidgets);
+    expect(find.text('Decisions due'), findsNothing);
+    expect(
+      tester.widget<AgentResultCard>(find.byType(AgentResultCard)).layout,
+      AgentResultCardLayout.summary,
+    );
   });
 
   testWidgets('review page renders newer running run before older artifact', (

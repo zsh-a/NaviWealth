@@ -72,6 +72,7 @@ class _WeeklySummaryArtifactCard extends StatelessWidget {
     return AgentResultCard(
       artifact: artifact,
       metaLabel: metaLabel,
+      layout: AgentResultCardLayout.summary,
       onOpen: openArtifact,
     );
   }

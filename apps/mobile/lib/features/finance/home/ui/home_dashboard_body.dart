@@ -1,33 +1,19 @@
 part of 'home_page.dart';
 
-class _DashboardBody extends ConsumerWidget {
+class _DashboardBody extends StatelessWidget {
   const _DashboardBody({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final agentArtifactCount =
-        ref
-            .watch(finance_agent_providers.latestFinanceAgentArtifactsProvider)
-            .value
-            ?.length ??
-        0;
-    return _DashboardBodyContent(
-      snapshot: snapshot,
-      agentArtifactCount: agentArtifactCount,
-    );
-  }
+  Widget build(BuildContext context) =>
+      _DashboardBodyContent(snapshot: snapshot);
 }
 
 class _DashboardBodyContent extends ConsumerWidget {
-  const _DashboardBodyContent({
-    required this.snapshot,
-    required this.agentArtifactCount,
-  });
+  const _DashboardBodyContent({required this.snapshot});
 
   final DashboardSnapshot snapshot;
-  final int agentArtifactCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,12 +58,14 @@ class _DashboardBodyContent extends ConsumerWidget {
                     header: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        HomeGreetingHeader(
-                          agentArtifactCount: agentArtifactCount,
-                        ),
+                        const HomeGreetingHeader(),
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
-                        const HomeQuickActions(),
+                        HomeQuickActions(
+                          mode: snapshot.isEmpty
+                              ? HomeQuickActionMode.onboarding
+                              : HomeQuickActionMode.active,
+                        ),
                       ],
                     ),
                     primary: Column(
@@ -105,12 +93,14 @@ class _DashboardBodyContent extends ConsumerWidget {
                     primary: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        HomeGreetingHeader(
-                          agentArtifactCount: agentArtifactCount,
-                        ),
+                        const HomeGreetingHeader(),
                         _NetWorthHeader(snapshot: snapshot),
                         const SizedBox(height: AppSpacing.s12),
-                        const HomeQuickActions(),
+                        HomeQuickActions(
+                          mode: snapshot.isEmpty
+                              ? HomeQuickActionMode.onboarding
+                              : HomeQuickActionMode.active,
+                        ),
                         const FinanceAgentResultsPanel(
                           showPlaceholderStates: false,
                         ),
@@ -213,6 +203,7 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
             artifact: primary,
             metaLabel: _financeAgentMetaLabel(context, ref, primary.createdAt),
             onOpen: () => _openFinanceAgentArtifact(context, ref, primary),
+            layout: AgentResultCardLayout.summary,
           ),
           if (secondary.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s8),

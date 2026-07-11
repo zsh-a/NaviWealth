@@ -1964,18 +1964,6 @@ abstract class AppLocalizations {
   /// **'Good night'**
   String get homeGreetingNight;
 
-  /// Status line fragment under the home greeting describing month-to-date net worth direction
-  ///
-  /// In en, this message translates to:
-  /// **'Net worth {pct} this month'**
-  String homeGreetingNetWorthFragment(String pct);
-
-  /// Status line fragment under the home greeting describing visible FinanceOS agent results
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 agent result ready} other{{count} agent results ready}}'**
-  String homeGreetingAgentResultsFragment(int count);
-
   /// Home FinanceOS agent result panel loading title
   ///
   /// In en, this message translates to:
@@ -19305,17 +19293,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FIRE Plan Drift Monitor'**
   String get financeAgentFireTitle;
-
-  /// No description provided for @financeAgentFireSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'FIRE plan drift monitor: {headline}. Safety {safety}, withdrawal rate {withdrawalRate}, cash bucket {cashBucketMonths} months.'**
-  String financeAgentFireSummary(
-    Object cashBucketMonths,
-    Object headline,
-    Object safety,
-    Object withdrawalRate,
-  );
 
   /// No description provided for @financeAgentFireInsightPlanSnapshotTitle.
   ///

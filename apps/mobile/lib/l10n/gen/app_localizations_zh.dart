@@ -1041,21 +1041,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeGreetingNight => '夜深了';
 
   @override
-  String homeGreetingNetWorthFragment(String pct) {
-    return '本月净值 $pct';
-  }
-
-  @override
-  String homeGreetingAgentResultsFragment(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 条 agent 结果可查看',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get financeAgentResultsLoading => '正在检查 agent 结果';
 
   @override
@@ -10720,16 +10705,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get financeAgentFireTitle => 'FIRE 计划偏移监控';
-
-  @override
-  String financeAgentFireSummary(
-    Object cashBucketMonths,
-    Object headline,
-    Object safety,
-    Object withdrawalRate,
-  ) {
-    return 'FIRE 计划偏移监控：$headline。安全等级 $safety，提取率 $withdrawalRate，现金桶 $cashBucketMonths 个月。';
-  }
 
   @override
   String get financeAgentFireInsightPlanSnapshotTitle => '计划快照';

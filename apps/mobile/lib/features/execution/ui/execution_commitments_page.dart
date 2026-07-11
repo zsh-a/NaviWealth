@@ -10,7 +10,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../composition/execution_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
-import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
 import 'execution_commitment_sheet.dart';
 import 'execution_lifecycle_card_controller.dart';
@@ -86,7 +85,6 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
           ? executionCommitmentsProvider
           : executionClosedCommitmentsProvider,
     );
-    final relations = ref.watch(executionActionRelationsProvider).value;
     final error =
         actionsAsync.error ?? projectsAsync.error ?? commitmentsAsync.error;
     if (error != null) {
@@ -113,10 +111,7 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     final projects = projectsAsync.value ?? const <ExecutionProject>[];
     final commitments = commitmentsAsync.value ?? const <ExecutionCommitment>[];
     final showActions = _view == _CommitmentsView.active;
-    final empty =
-        projects.isEmpty &&
-        commitments.isEmpty &&
-        (!showActions || actions.isEmpty);
+    final empty = projects.isEmpty && commitments.isEmpty;
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -221,39 +216,6 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
               const SizedBox(height: AppSpacing.s8),
             ],
             const SizedBox(height: AppSpacing.s8),
-          ],
-          if (showActions) ...[
-            ExecutionSectionHeader(
-              title: l10n.executionActionsSection,
-              count: actions.length,
-              icon: FLucideIcons.listTodo,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            for (final action in actions) ...[
-              ExecutionActionCardController(
-                action: action,
-                projectLabel:
-                    relations?.projectLabel(action.projectId) ??
-                    executionProjectRelationLabel(projects, action.projectId),
-                commitmentLabel:
-                    relations?.commitmentLabel(action.commitmentId) ??
-                    executionCommitmentRelationLabel(
-                      commitments,
-                      action.commitmentId,
-                    ),
-                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-                onEdit: () =>
-                    showExecutionActionSheet(context: context, action: action),
-                onRecordProgress: () => showExecutionProgressSheet(
-                  context: context,
-                  action: action,
-                ),
-                blockedProgressNote: l10n.executionProgressBlockedDefault,
-                doneProgressNote: l10n.executionProgressDoneDefault,
-                droppedProgressNote: l10n.executionProgressDroppedDefault,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-            ],
           ],
         ],
       ],

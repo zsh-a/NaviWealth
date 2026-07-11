@@ -74,6 +74,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
             )
           else
             _LifecycleQuickButtons(
+              menuTitle: commitment.title,
               canPause: commitment.status == ExecutionCommitmentStatus.active,
               canResume:
                   commitment.status == ExecutionCommitmentStatus.paused ||
@@ -230,6 +231,7 @@ class ExecutionProjectCard extends StatelessWidget {
             )
           else
             _LifecycleQuickButtons(
+              menuTitle: project.title,
               canPause: project.status == ExecutionProjectStatus.active,
               canResume:
                   project.status == ExecutionProjectStatus.paused ||
@@ -347,6 +349,7 @@ List<Widget> _rollupBadges(
 
 class _LifecycleQuickButtons extends StatelessWidget {
   const _LifecycleQuickButtons({
+    required this.menuTitle,
     required this.canPause,
     required this.canResume,
     required this.canComplete,
@@ -360,6 +363,7 @@ class _LifecycleQuickButtons extends StatelessWidget {
     required this.onEdit,
   });
 
+  final String menuTitle;
   final bool canPause;
   final bool canResume;
   final bool canComplete;
@@ -376,63 +380,73 @@ class _LifecycleQuickButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final semantic = SemanticColors.of(context);
-    return Wrap(
-      spacing: AppSpacing.s2,
-      runSpacing: AppSpacing.s2,
-      alignment: WrapAlignment.end,
+    final primaryIcon = canResume
+        ? FLucideIcons.play
+        : FLucideIcons.messageSquareText;
+    final primaryTooltip = canResume
+        ? l10n.executionLifecycleResume
+        : l10n.executionCreateProgressTitle;
+    final primaryAction = canResume ? onResume : onRecordProgress;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (canResume)
-          AppIconButton(
-            icon: FLucideIcons.play,
-            tooltip: l10n.executionLifecycleResume,
-            onPress: onResume,
-            size: 32,
-            iconSize: AppIconSizes.xs,
-          )
-        else if (canPause)
-          AppIconButton(
-            icon: FLucideIcons.pause,
-            tooltip: l10n.executionLifecyclePause,
-            onPress: onPause,
-            size: 32,
-            iconSize: AppIconSizes.xs,
+        AppIconButton(
+          icon: primaryIcon,
+          tooltip: primaryTooltip,
+          onPress: primaryAction,
+          size: 32,
+          iconSize: AppIconSizes.xs,
+          iconColor: colors.primary,
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: AppOpacity.subtle),
+            borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-        if (canComplete)
-          AppIconButton(
-            icon: FLucideIcons.check,
-            tooltip: l10n.executionLifecycleComplete,
-            onPress: onComplete,
-            size: 32,
-            iconSize: AppIconSizes.xs,
-            iconColor: semantic.success,
-            decoration: BoxDecoration(
-              color: semantic.success.withValues(alpha: AppOpacity.subtle),
-              borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        const SizedBox(width: AppSpacing.s2),
+        AppAdaptiveActionMenu(
+          title: menuTitle,
+          actions: <AppAdaptiveAction>[
+            AppAdaptiveAction(
+              icon: FLucideIcons.pencil,
+              title: editTooltip,
+              onPress: onEdit,
+            ),
+            if (canResume)
+              AppAdaptiveAction(
+                icon: FLucideIcons.messageSquareText,
+                title: l10n.executionCreateProgressTitle,
+                onPress: onRecordProgress,
+              ),
+            if (canCreateAction)
+              AppAdaptiveAction(
+                icon: FLucideIcons.plus,
+                title: l10n.executionCreateActionTitle,
+                onPress: onCreateAction,
+              ),
+            if (canPause)
+              AppAdaptiveAction(
+                icon: FLucideIcons.pause,
+                title: l10n.executionLifecyclePause,
+                onPress: onPause,
+              ),
+            if (canComplete)
+              AppAdaptiveAction(
+                icon: FLucideIcons.check,
+                title: l10n.executionLifecycleComplete,
+                onPress: onComplete,
+              ),
+          ],
+          triggerBuilder: (context, openMenu, focusNode) => Focus(
+            focusNode: focusNode,
+            child: AppIconButton(
+              icon: FLucideIcons.ellipsis,
+              tooltip: l10n.shellMoreActions,
+              onPress: openMenu,
+              size: 32,
+              iconSize: AppIconSizes.xs,
+              iconColor: colors.mutedForeground,
             ),
           ),
-        AppIconButton(
-          icon: FLucideIcons.messageSquareText,
-          tooltip: l10n.executionCreateProgressTitle,
-          onPress: onRecordProgress,
-          size: 32,
-          iconSize: AppIconSizes.xs,
-        ),
-        if (canCreateAction)
-          AppIconButton(
-            icon: FLucideIcons.plus,
-            tooltip: l10n.executionCreateActionTitle,
-            onPress: onCreateAction,
-            size: 32,
-            iconSize: AppIconSizes.xs,
-          ),
-        AppIconButton(
-          icon: FLucideIcons.pencil,
-          tooltip: editTooltip,
-          onPress: onEdit,
-          size: 32,
-          iconSize: AppIconSizes.xs,
-          iconColor: colors.mutedForeground,
         ),
       ],
     );
