@@ -9,7 +9,7 @@ pub(super) fn agent_runtime_start_run_step(
     contracts::require_catalog_contract(&catalog)?;
     let mut request: RunRequest = serde_json::from_str(&request_json)?;
     contracts::normalize_run_request_contract(&mut request)?;
-    let step = agent_runtime_upstream::RunLoop::start_step(&catalog, request, &agent_id)
+    let step = agent_runtime_upstream::EffectStepLoop::start_step(&catalog, request, &agent_id)
         .map_err(runtime_error)?;
     Ok(serde_json::to_string(&step)?)
 }
@@ -24,7 +24,7 @@ pub(super) fn agent_runtime_continue_run_step(
     contracts::require_catalog_contract(&catalog)?;
     let previous_step: Value = serde_json::from_str(&previous_step_json)?;
     let effect_response: Value = serde_json::from_str(&effect_response_json)?;
-    let step = agent_runtime_upstream::RunLoop::continue_step(
+    let step = agent_runtime_upstream::EffectStepLoop::continue_step(
         &catalog,
         previous_step,
         effect_response,

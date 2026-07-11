@@ -39,13 +39,12 @@ name = "agent-core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "futures",
  "schemars",
  "serde",
  "serde_json",
  "thiserror",
  "time",
- "tokio",
- "tokio-util",
  "uuid",
 ]
 

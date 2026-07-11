@@ -12,6 +12,7 @@ fn catalog_json() -> String {
         "generated_at": "2026-06-29T00:00:00Z",
         "agents": [
             {
+                "protocol_version": "agent.v1",
                 "id": "execution_review",
                 "name": "Execution Review",
                 "version": "0.1.0",

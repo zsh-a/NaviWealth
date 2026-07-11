@@ -16,15 +16,15 @@ use agent_chat::{
     chat_turn_initial_state, chat_turn_llm_request, chat_turn_next_round,
 };
 use agent_core::{
-    AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunId, RunRequest, ScheduleSpec,
-    ToolCallId, ToolSpec, catalog_version, protocol_version,
+    AgentRuntimeCatalog, AgentSpec, AgentTrace, ProposalKindSpec, RunRequest, ScheduleSpec,
+    ToolSpec, catalog_version, protocol_version,
 };
 use agent_llm::{
     LlmEvent, LlmEventKind, LlmFinishReason, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
 };
 use anyhow::Result;
 use futures::StreamExt;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{Map, Value, json};
 use std::collections::HashSet;
 
