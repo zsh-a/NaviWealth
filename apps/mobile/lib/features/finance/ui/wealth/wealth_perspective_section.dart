@@ -31,30 +31,76 @@ class WealthPerspectiveSection extends ConsumerWidget {
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     final perspective = ref.watch(wealthPerspectiveProvider);
     final snapshot = snapshotAsync.value;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.s4,
-            bottom: AppSpacing.s8,
+    final canChangePerspective =
+        snapshot != null &&
+        buildWealthAggregation(
+              snapshot: snapshot,
+              perspective: WealthPerspective.byCurrency,
+            ).buckets.length >
+            1;
+    final effectivePerspective = canChangePerspective
+        ? perspective
+        : WealthPerspective.byCategory;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      borderRadius: AppRadius.xlg,
+      level: SoftCardLevel.raised,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (!canChangePerspective) {
+                return Text(
+                  l10n.wealthPerspectiveSectionTitle,
+                  style: context.labelStyle,
+                );
+              }
+              final toggle = _PerspectiveToggle(
+                value: effectivePerspective,
+                onChanged: (next) =>
+                    ref.read(wealthPerspectiveProvider.notifier).state = next,
+              );
+              if (constraints.maxWidth < 340) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      l10n.wealthPerspectiveSectionTitle,
+                      style: context.labelStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s10),
+                    toggle,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.wealthPerspectiveSectionTitle,
+                      style: context.labelStyle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 240),
+                    child: toggle,
+                  ),
+                ],
+              );
+            },
           ),
-          child: Text(
-            l10n.wealthPerspectiveSectionTitle,
-            style: context.mutedLabelStyle,
-          ),
-        ),
-        _PerspectiveToggle(
-          value: perspective,
-          onChanged: (next) =>
-              ref.read(wealthPerspectiveProvider.notifier).state = next,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        if (snapshot == null)
-          const _Skeleton()
-        else
-          _PerspectiveBody(snapshot: snapshot, perspective: perspective),
-      ],
+          const SizedBox(height: AppSpacing.s16),
+          if (snapshot == null)
+            const _Skeleton()
+          else
+            _PerspectiveBody(
+              snapshot: snapshot,
+              perspective: effectivePerspective,
+            ),
+        ],
+      ),
     );
   }
 }
@@ -92,96 +138,173 @@ class _PerspectiveBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    final background = isDark
-        ? colors.card.withValues(alpha: AppOpacity.muted)
-        : ColorPalette.neutral75;
+    final palette = ChartPalette.of(context);
     final aggregation = buildWealthAggregation(
       snapshot: snapshot,
       perspective: perspective,
       categoryLabel: (c) => AssetCategoryVisuals.label(l10n, c),
     );
     if (aggregation.buckets.isEmpty) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(AppRadius.xlg),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          child: Text(
-            l10n.wealthPerspectiveEmpty,
-            style: context.bodyCaptionStyle,
-          ),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+        child: Text(
+          l10n.wealthPerspectiveEmpty,
+          style: context.bodyCaptionStyle,
         ),
       );
     }
     final formatters = context.formatters(ref);
     final totalAmount = aggregation.total.amount;
     final base = aggregation.total.currency;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.xlg),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
-        child: Column(
-          children: [
-            for (var i = 0; i < aggregation.buckets.length; i++) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
-                child: _BucketRow(
-                  bucket: aggregation.buckets[i],
-                  totalAmount: totalAmount.toDouble(),
-                  baseCurrency: base,
-                  formatters: formatters,
-                ),
+    final hasComposition = aggregation.buckets.length > 1;
+    return Column(
+      children: [
+        if (hasComposition) ...[
+          _AllocationCompositionBar(
+            buckets: aggregation.buckets,
+            totalAmount: totalAmount.toDouble(),
+            palette: palette,
+          ),
+          const SizedBox(height: AppSpacing.s10),
+        ],
+        for (var i = 0; i < aggregation.buckets.length; i++) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
+            child: _BucketRow(
+              bucket: aggregation.buckets[i],
+              accent: palette.accentAt(i),
+              totalAmount: totalAmount.toDouble(),
+              baseCurrency: base,
+              formatters: formatters,
+              showShare: hasComposition,
+              itemCountLabel: l10n.wealthPerspectiveItemCount(
+                aggregation.buckets[i].itemCount,
               ),
-              if (i != aggregation.buckets.length - 1)
-                SizedBox(
-                  height: AppSpacing.hairline,
-                  child: ColoredBox(
-                    color: colors.border.withValues(alpha: AppOpacity.faint),
+            ),
+          ),
+          if (i != aggregation.buckets.length - 1)
+            const AppGroupedDivider(indent: AppSpacing.s20),
+        ],
+      ],
+    );
+  }
+}
+
+class _AllocationCompositionBar extends StatelessWidget {
+  const _AllocationCompositionBar({
+    required this.buckets,
+    required this.totalAmount,
+    required this.palette,
+  });
+
+  final List<WealthBucket> buckets;
+  final double totalAmount;
+  final ChartPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Semantics(
+      container: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        child: SizedBox(
+          key: const ValueKey('allocation-composition-bar'),
+          height: AppSpacing.s10,
+          child: ColoredBox(
+            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < buckets.length; i++) ...[
+                  Expanded(
+                    flex: _segmentFlex(buckets[i]),
+                    child: ColoredBox(
+                      key: ValueKey(
+                        'allocation-composition-segment-${buckets[i].key}',
+                      ),
+                      color: palette
+                          .accentAt(i)
+                          .withValues(alpha: AppOpacity.emphasis),
+                    ),
                   ),
-                ),
-            ],
-          ],
+                  if (i != buckets.length - 1)
+                    const SizedBox(width: AppSpacing.s2),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  int _segmentFlex(WealthBucket bucket) {
+    if (totalAmount <= 0) return 1;
+    final share = bucket.valueInBase.amount.toDouble() / totalAmount;
+    return (share * 10000).round().clamp(1, 10000);
   }
 }
 
 class _BucketRow extends StatelessWidget {
   const _BucketRow({
     required this.bucket,
+    required this.accent,
     required this.totalAmount,
     required this.baseCurrency,
     required this.formatters,
+    required this.showShare,
+    required this.itemCountLabel,
   });
 
   final WealthBucket bucket;
+  final Color accent;
   final double totalAmount;
   final String baseCurrency;
   final AppFormatters formatters;
+  final bool showShare;
+  final String itemCountLabel;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final value = bucket.valueInBase.amount.toDouble();
     final share = totalAmount == 0 ? 0.0 : value / totalAmount;
-    final clampedShare = share.clamp(0.0, 1.0).toDouble();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
+    final formattedAmount = formatters.currency(
+      bucket.valueInBase.amount,
+      code: baseCurrency,
+    );
+    final formattedShare = formatters.percent(share, decimalDigits: 1);
+    return Semantics(
+      container: true,
+      label: [
+        bucket.label,
+        itemCountLabel,
+        formattedAmount,
+        if (showShare) formattedShare,
+      ].join(', '),
+      child: ExcludeSemantics(
+        child: Row(
+          key: ValueKey('allocation-bucket-${bucket.key}'),
           children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: AppOpacity.emphasis),
+                shape: BoxShape.circle,
+              ),
+              child: const SizedBox.square(dimension: AppSpacing.s10),
+            ),
+            const SizedBox(width: AppSpacing.s10),
             Expanded(
-              child: Text(
-                bucket.label,
-                style: context.labelStyle,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: bucket.label, style: context.labelStyle),
+                    TextSpan(
+                      text: ' · $itemCountLabel',
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -192,49 +315,19 @@ class _BucketRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  formatters.currency(
-                    bucket.valueInBase.amount,
-                    code: baseCurrency,
-                  ),
+                  formattedAmount,
                   style: context.strongLabelStyle,
+                  maxLines: 1,
                 ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  formatters.percent(share, decimalDigits: 1),
-                  style: context.captionStyle,
-                ),
+                if (showShare) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(formattedShare, style: context.captionStyle),
+                ],
               ],
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.s10),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          child: SizedBox(
-            height: AppSpacing.s4,
-            child: Stack(
-              children: [
-                ColoredBox(
-                  color: colors.foreground.withValues(
-                    alpha: AppOpacity.whisper,
-                  ),
-                  child: const SizedBox.expand(),
-                ),
-                FractionallySizedBox(
-                  widthFactor: clampedShare,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: ColoredBox(
-                    color: colors.primary.withValues(
-                      alpha: AppOpacity.disabled,
-                    ),
-                    child: const SizedBox.expand(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -244,16 +337,13 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SoftCard(
-      padding: EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SkeletonBox(height: 18, radius: 6),
-          SizedBox(height: AppSpacing.s8),
-          SkeletonBox(height: 18, radius: 6),
-        ],
-      ),
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SkeletonBox(height: 18, radius: 6),
+        SizedBox(height: AppSpacing.s8),
+        SkeletonBox(height: 18, radius: 6),
+      ],
     );
   }
 }

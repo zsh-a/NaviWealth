@@ -95,7 +95,7 @@ class _WealthHubBody extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
           hPad,
-          AppSpacing.s12,
+          AppSpacing.s8,
           hPad,
           kTabBarOffset + MediaQuery.paddingOf(context).bottom,
         ),
@@ -120,9 +120,9 @@ class _WealthHubBody extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s12),
           const _WealthSectionGrid(),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s20),
           const WealthPerspectiveSection(),
         ],
       ),
@@ -147,16 +147,43 @@ class _NetWorthHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
+    final colors = context.theme.colors;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
       borderRadius: AppRadius.xlg,
-      borderless: true,
-      tinted: false,
+      level: SoftCardLevel.hero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.homeNetWorthTitle, style: context.mutedLabelStyle),
-          const SizedBox(height: AppSpacing.s8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.homeNetWorthTitle,
+                  style: context.mutedLabelStyle,
+                ),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: AppOpacity.subtle),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s10,
+                    vertical: AppSpacing.s4,
+                  ),
+                  child: Text(
+                    baseCurrency,
+                    style: context.microLabelStyle.copyWith(
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s10),
           MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.3,
             child: Semantics(
@@ -175,26 +202,59 @@ class _NetWorthHero extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.s8),
-          DefaultTextStyle.merge(
-            style: context.captionStyle,
-            child: Wrap(
-              spacing: AppSpacing.s6,
-              children: [
-                Text(
-                  '${l10n.dashboardNetWorthAssetsLabel} '
-                  '${formatters.currency(totalAssets, code: baseCurrency)}',
+          const SizedBox(height: AppSpacing.s20),
+          Row(
+            children: [
+              Expanded(
+                child: _NetWorthBreakdownMetric(
+                  label: l10n.dashboardNetWorthAssetsLabel,
+                  value: formatters.currency(totalAssets, code: baseCurrency),
                 ),
-                const Text('·'),
-                Text(
-                  '${l10n.dashboardNetWorthLiabilitiesLabel} '
-                  '${formatters.currency(totalLiabilities, code: baseCurrency)}',
+              ),
+              Container(
+                width: AppSpacing.hairline,
+                height: AppSpacing.s40,
+                color: colors.border.withValues(alpha: AppOpacity.highlight),
+              ),
+              const SizedBox(width: AppSpacing.s16),
+              Expanded(
+                child: _NetWorthBreakdownMetric(
+                  label: l10n.dashboardNetWorthLiabilitiesLabel,
+                  value: formatters.currency(
+                    totalLiabilities,
+                    code: baseCurrency,
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NetWorthBreakdownMetric extends StatelessWidget {
+  const _NetWorthBreakdownMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: context.captionStyle),
+        const SizedBox(height: AppSpacing.s4),
+        Text(
+          value,
+          style: TypographyTokens.numericBodyStrong,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
@@ -205,6 +265,7 @@ class _WealthSectionGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final palette = ChartPalette.of(context);
     final sections = <_WealthSectionSpec>[
       _WealthSectionSpec(
         icon: FLucideIcons.slidersHorizontal,
@@ -231,16 +292,92 @@ class _WealthSectionGrid extends StatelessWidget {
         path: FinanceRoutes.wealthLiabilities,
       ),
     ];
-    return AppGroupedActionList(
-      actions: [
-        for (final spec in sections)
-          AppGroupedAction(
-            icon: spec.icon,
-            title: spec.title,
-            subtitle: spec.subtitle,
-            onPress: () => context.push(spec.path),
-          ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 760 ? 4 : 2;
+        const gap = AppSpacing.s10;
+        final itemWidth =
+            (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (var index = 0; index < sections.length; index++)
+              SizedBox(
+                width: itemWidth,
+                child: _WealthDestinationCard(
+                  spec: sections[index],
+                  accent: palette.accentAt(index),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WealthDestinationCard extends StatelessWidget {
+  const _WealthDestinationCard({required this.spec, required this.accent});
+
+  final _WealthSectionSpec spec;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return SoftCard(
+      onPress: () => context.push(spec.path),
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      borderRadius: AppRadius.xlg,
+      child: SizedBox(
+        height: 94,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: AppOpacity.light),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: SizedBox.square(
+                    dimension: AppSpacing.s40,
+                    child: Icon(
+                      spec.icon,
+                      size: AppIconSizes.sm,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  FLucideIcons.arrowUpRight,
+                  size: AppIconSizes.sm,
+                  color: colors.mutedForeground.withValues(
+                    alpha: AppOpacity.disabled,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              spec.title,
+              style: context.labelStyle.copyWith(color: colors.foreground),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              spec.subtitle,
+              style: context.captionStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

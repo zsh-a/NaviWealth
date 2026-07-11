@@ -59,6 +59,72 @@ DashboardSnapshot _snapshot() {
   );
 }
 
+DashboardSnapshot _singleCurrencySnapshot() {
+  return DashboardSnapshot(
+    asOf: DateTime.utc(2026, 5, 24),
+    baseCurrency: 'CNY',
+    allocations: [
+      CategoryAllocation(
+        category: AssetCategory.stock,
+        totalInBase: _cny('20000'),
+        items: [
+          CategoryItem(
+            id: '600519',
+            name: 'Moutai',
+            subtitle: null,
+            valueInBase: _cny('20000'),
+            nativeAmount: Decimal.parse('20000'),
+            nativeCurrency: 'CNY',
+          ),
+        ],
+      ),
+      CategoryAllocation(
+        category: AssetCategory.cash,
+        totalInBase: _cny('5000'),
+        items: [
+          CategoryItem(
+            id: 'wallet',
+            name: 'Wallet',
+            subtitle: null,
+            valueInBase: _cny('5000'),
+            nativeAmount: Decimal.parse('5000'),
+            nativeCurrency: 'CNY',
+          ),
+        ],
+      ),
+    ],
+    totalAssets: _cny('25000'),
+    totalLiabilities: _cny('0'),
+    netWorth: _cny('25000'),
+  );
+}
+
+DashboardSnapshot _singleCategorySnapshot() {
+  return DashboardSnapshot(
+    asOf: DateTime.utc(2026, 5, 24),
+    baseCurrency: 'CNY',
+    allocations: [
+      CategoryAllocation(
+        category: AssetCategory.cash,
+        totalInBase: _cny('5000'),
+        items: [
+          CategoryItem(
+            id: 'wallet',
+            name: 'Wallet',
+            subtitle: null,
+            valueInBase: _cny('5000'),
+            nativeAmount: Decimal.parse('5000'),
+            nativeCurrency: 'CNY',
+          ),
+        ],
+      ),
+    ],
+    totalAssets: _cny('5000'),
+    totalLiabilities: _cny('0'),
+    netWorth: _cny('5000'),
+  );
+}
+
 Widget _wrap({DashboardSnapshot? snapshot}) {
   return ProviderScope(
     overrides: [
@@ -91,9 +157,14 @@ void main() {
     expect(find.text('Allocation'), findsOneWidget);
     expect(find.text('By category'), findsOneWidget);
     expect(find.text('By currency'), findsOneWidget);
-    // Two category rows.
-    expect(find.text('Stocks'), findsOneWidget);
-    expect(find.text('Cash'), findsOneWidget);
+    expect(find.byKey(const ValueKey('allocation-composition-bar')), findsOne);
+    expect(find.byKey(const ValueKey('allocation-bucket-stock')), findsOne);
+    expect(find.byKey(const ValueKey('allocation-bucket-cash')), findsOne);
+    expect(
+      find.bySemanticsLabel(RegExp(r'Stocks, 2 holdings')),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel(RegExp(r'Cash, 1 holding')), findsOneWidget);
   });
 
   testWidgets('tapping By currency flips the section to currency buckets', (
@@ -109,8 +180,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Currency dimension buckets the rows by USD / CNY.
-    expect(find.text('USD'), findsOneWidget);
-    expect(find.text('CNY'), findsOneWidget);
+    expect(find.byKey(const ValueKey('allocation-bucket-USD')), findsOne);
+    expect(find.byKey(const ValueKey('allocation-bucket-CNY')), findsOne);
     // Category labels no longer appear in the body rows (the toggle
     // chip itself doesn't read "Stocks" / "Cash").
     expect(find.text('Stocks'), findsNothing);
@@ -135,5 +206,53 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('No holdings yet'), findsOneWidget);
+  });
+
+  testWidgets('keeps header and allocation rows compact on mobile', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Allocation'), findsOneWidget);
+    expect(find.byKey(const ValueKey('allocation-bucket-stock')), findsOne);
+    expect(find.byKey(const ValueKey('allocation-bucket-cash')), findsOne);
+  });
+
+  testWidgets('hides the perspective toggle for a single currency', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_wrap(snapshot: _singleCurrencySnapshot()));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('By category'), findsNothing);
+    expect(find.text('By currency'), findsNothing);
+    expect(find.byKey(const ValueKey('allocation-composition-bar')), findsOne);
+    expect(find.byKey(const ValueKey('allocation-bucket-stock')), findsOne);
+    expect(find.byKey(const ValueKey('allocation-bucket-cash')), findsOne);
+  });
+
+  testWidgets('simplifies a single-category allocation', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_wrap(snapshot: _singleCategorySnapshot()));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.byKey(const ValueKey('allocation-composition-bar')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('allocation-bucket-cash')), findsOne);
+    expect(find.text('100.0%'), findsNothing);
   });
 }
