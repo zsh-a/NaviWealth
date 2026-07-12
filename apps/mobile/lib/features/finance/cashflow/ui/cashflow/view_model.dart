@@ -47,6 +47,10 @@ class _CashFlowViewModel {
       }
       if (bucket.key == currentKey) {
         current.add(bucket);
+        if (!_isIncomeKind(bucket.kind) &&
+            bucket.kind != CashFlowKind.expense) {
+          continue;
+        }
         final magnitude = amount.abs();
         if (magnitude > Decimal.zero) {
           final key = bucket.categoryId ?? bucket.kind.name;
@@ -55,6 +59,7 @@ class _CashFlowViewModel {
             (value) => value..amount += magnitude,
             ifAbsent: () => _CategoryAcc(
               key: key,
+              accountId: bucket.categoryId,
               kind: bucket.kind,
               label: bucket.categoryLabel,
               amount: magnitude,
@@ -69,6 +74,7 @@ class _CashFlowViewModel {
             .map(
               (entry) => _CategoryTotal(
                 key: entry.key,
+                accountId: entry.accountId,
                 kind: entry.kind,
                 label: entry.label,
                 amount: entry.amount,
@@ -122,14 +128,16 @@ class _CurrentAcc {
   void add(CashFlowBucket bucket) {
     final amount = bucket.totalInBase.amount;
     final original = bucket.originalTotal.amount;
-    netBase += amount;
-    _add(netOriginals, bucket.currency, original);
-    if (amount > Decimal.zero) {
+    if (_isIncomeKind(bucket.kind) && amount > Decimal.zero) {
       inflowBase += amount;
       _add(inflowOriginals, bucket.currency, original.abs());
-    } else if (amount < Decimal.zero) {
+      netBase += amount;
+      _add(netOriginals, bucket.currency, original);
+    } else if (bucket.kind == CashFlowKind.expense && amount < Decimal.zero) {
       outflowBase += amount.abs();
       _add(outflowOriginals, bucket.currency, original.abs());
+      netBase += amount;
+      _add(netOriginals, bucket.currency, original);
     }
   }
 
@@ -155,6 +163,7 @@ class _CurrentAcc {
 class _CategoryTotal {
   const _CategoryTotal({
     required this.key,
+    required this.accountId,
     required this.kind,
     required this.label,
     required this.amount,
@@ -162,6 +171,7 @@ class _CategoryTotal {
   });
 
   final String key;
+  final String? accountId;
   final CashFlowKind kind;
   final String? label;
   final Decimal amount;
@@ -171,12 +181,14 @@ class _CategoryTotal {
 class _CategoryAcc {
   _CategoryAcc({
     required this.key,
+    required this.accountId,
     required this.kind,
     required this.label,
     required this.amount,
   });
 
   final String key;
+  final String? accountId;
   final CashFlowKind kind;
   final String? label;
   Decimal amount;
@@ -206,6 +218,44 @@ CashFlowPeriod _periodFromUri(Uri uri) {
     'quarter' => CashFlowPeriod.quarter,
     'year' => CashFlowPeriod.year,
     _ => CashFlowPeriod.month,
+  };
+}
+
+DateTime _anchorFromUri(Uri uri, {required DateTime fallback}) {
+  final parsed = DateTime.tryParse(uri.queryParameters['anchor'] ?? '');
+  final value = parsed ?? fallback;
+  return DateTime.utc(value.year, value.month, value.day);
+}
+
+DateTime _shiftPeriod(DateTime anchor, CashFlowPeriod period, int delta) {
+  final utc = anchor.toUtc();
+  return switch (period) {
+    CashFlowPeriod.month => DateTime.utc(utc.year, utc.month + delta, 1),
+    CashFlowPeriod.quarter => DateTime.utc(
+      utc.year,
+      ((utc.month - 1) ~/ 3) * 3 + 1 + delta * 3,
+      1,
+    ),
+    CashFlowPeriod.year => DateTime.utc(utc.year + delta, 1, 1),
+  };
+}
+
+bool _isAfterPeriod(DateTime candidate, DateTime now, CashFlowPeriod period) =>
+    _periodKey(candidate, period).compareTo(_periodKey(now, period)) > 0;
+
+String _anchorLabel(
+  AppLocalizations l10n,
+  AppFormatters formatter,
+  DateTime anchor,
+  CashFlowPeriod period,
+) {
+  return switch (period) {
+    CashFlowPeriod.month => formatter.monthYear(anchor),
+    CashFlowPeriod.quarter => l10n.cashFlowAnchorQuarter(
+      anchor.year,
+      ((anchor.month - 1) ~/ 3) + 1,
+    ),
+    CashFlowPeriod.year => anchor.year.toString(),
   };
 }
 
@@ -285,8 +335,8 @@ DateTime _periodDate(String key, CashFlowPeriod period) {
 
 String _shortPeriodLabel(String key, CashFlowPeriod period) {
   return switch (period) {
-    CashFlowPeriod.month => key.substring(5, 7),
-    CashFlowPeriod.quarter => key.substring(5),
+    CashFlowPeriod.month => key.substring(2),
+    CashFlowPeriod.quarter => '${key.substring(2, 4)} ${key.substring(5)}',
     CashFlowPeriod.year => key,
   };
 }

@@ -286,6 +286,12 @@ class _WealthDestinations extends StatelessWidget {
         path: FinanceRoutes.wealthPortfolio,
       ),
       _WealthSectionSpec(
+        icon: FLucideIcons.circleDollarSign,
+        title: l10n.dividendCenterTitle,
+        subtitle: l10n.wealthDividendSectionSubtitle,
+        path: FinanceRoutes.cashflowDividends,
+      ),
+      _WealthSectionSpec(
         icon: FLucideIcons.landmark,
         title: l10n.wealthLiabilitiesSectionTitle,
         subtitle: l10n.wealthLiabilitiesSectionSubtitle,

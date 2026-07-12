@@ -34,13 +34,15 @@ final recurringMaterialisationServiceProvider =
       );
     });
 
-final recurringMaterialiseDueProvider = FutureProvider.autoDispose
-    .family<int, DateTime>((ref, now) async {
-      final service = await ref.watch(
-        recurringMaterialisationServiceProvider.future,
-      );
-      return service.materialiseDue(now.toUtc());
-    });
+final recurringMaterialiseDueProvider = FutureProvider.family<int, DateTime>((
+  ref,
+  now,
+) async {
+  final service = await ref.watch(
+    recurringMaterialisationServiceProvider.future,
+  );
+  return service.materialiseDue(now.toUtc());
+});
 
 final recurringTransactionsProvider =
     StreamProvider.autoDispose<List<RecurringTransaction>>((ref) async* {

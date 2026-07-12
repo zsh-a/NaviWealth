@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
+import '../domain/cash_flow_event.dart';
 import '../domain/cash_flow_kind.dart';
 import '../domain/dividend_center.dart';
 import 'cash_flow_ledger_adapters.dart';
@@ -16,23 +18,30 @@ final dividendCenterNowProvider = Provider<DateTime>(
 final dividendCenterSnapshotProvider =
     FutureProvider.autoDispose<DividendCenterSnapshot>((ref) async {
       final dividendAsync = ref.watch(dividendEventsProvider);
-      final dividendEvents = dividendAsync.hasValue
-          ? dividendAsync.value!
-          : (await ref.watch(
-              cashFlowEventsProvider.future,
-            )).where((event) => event.kind == CashFlowKind.dividend).toList();
-
-      final entries = await ref.watch(
+      final cashFlowFuture = ref.watch(cashFlowEventsProvider.future);
+      final entriesFuture = ref.watch(
         journalEntriesWithPostingsStreamProvider.future,
       );
-      final accounts = await ref.watch(allAccountsStreamProvider.future);
-      final assets = await ref.watch(allAssetsStreamProvider.future);
-      final holdings = ref.watch(holdingsSnapshotProvider).value ?? const {};
+      final accountsFuture = ref.watch(allAccountsStreamProvider.future);
+      final assetsFuture = ref.watch(allAssetsStreamProvider.future);
+      final holdingsAsync = ref.watch(holdingsSnapshotProvider);
+      final holdingsFuture = ref.watch(holdingsSnapshotProvider.future);
       final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
       final converter = ref.watch(cashFlowCurrencyConverterProvider);
+      final now = ref.watch(dividendCenterNowProvider);
+
+      final cashFlow = dividendAsync.hasValue
+          ? dividendAsync.requireValue
+          : _dividendCashFlowSnapshot(await cashFlowFuture);
+      final entries = await entriesFuture;
+      final accounts = await accountsFuture;
+      final assets = await assetsFuture;
+      final holdings = holdingsAsync.hasValue
+          ? holdingsAsync.requireValue
+          : await holdingsFuture;
 
       return buildDividendCenterSnapshot(
-        dividendEvents: dividendEvents,
+        dividendEvents: cashFlow.events,
         entriesById: {
           for (final entry in entries)
             entry.entry.id: entry.toCashFlowLedgerEntry(),
@@ -46,16 +55,32 @@ final dividendCenterSnapshotProvider =
         },
         holdings: holdings,
         baseCurrency: baseCurrency,
-        now: ref.watch(dividendCenterNowProvider),
+        now: now,
+        fxExclusions: cashFlow.fxExclusions,
         convertToBaseAmount: (amount, currency, date) {
           if (currency.trim().toUpperCase() == baseCurrency) return amount;
           try {
             return converter
                 .convert(Money(amount, currency), baseCurrency, on: date)
                 .amount;
-          } catch (_) {
+          } on FxRateNotFoundError {
             return null;
           }
         },
       );
     });
+
+CashFlowEventsSnapshot _dividendCashFlowSnapshot(
+  CashFlowEventsSnapshot snapshot,
+) {
+  return CashFlowEventsSnapshot(
+    events: List.unmodifiable(
+      snapshot.events.where((event) => event.kind == CashFlowKind.dividend),
+    ),
+    fxExclusions: List.unmodifiable(
+      snapshot.fxExclusions.where(
+        (event) => event.kind == CashFlowKind.dividend,
+      ),
+    ),
+  );
+}

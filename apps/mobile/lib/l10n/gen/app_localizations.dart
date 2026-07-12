@@ -530,6 +530,12 @@ abstract class AppLocalizations {
   /// **'Positions across all accounts'**
   String get wealthHoldingsSectionSubtitle;
 
+  /// Wealth hub: dividend center destination subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Forecasts, received income, and withholding tax'**
+  String get wealthDividendSectionSubtitle;
+
   /// Wealth hub: watchlist section title
   ///
   /// In en, this message translates to:
@@ -631,6 +637,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yearly'**
   String get cashFlowPeriodYear;
+
+  /// No description provided for @cashFlowPreviousPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous period'**
+  String get cashFlowPreviousPeriod;
+
+  /// No description provided for @cashFlowNextPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Next period'**
+  String get cashFlowNextPeriod;
+
+  /// Cash-flow selected calendar quarter
+  ///
+  /// In en, this message translates to:
+  /// **'{year} Q{quarter}'**
+  String cashFlowAnchorQuarter(int year, int quarter);
+
+  /// Cash-flow completeness warning for missing FX rates
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cash-flow entries were excluded because {currencies} rates are missing.'**
+  String cashFlowFxIncomplete(int count, String currencies);
 
   /// Cash-flow KPI: incoming cash
   ///
@@ -1082,6 +1112,12 @@ abstract class AppLocalizations {
   /// **'Day must be 1–31'**
   String get recurringValidationByMonthDay;
 
+  /// Recurring validation: end date precedes first occurrence
+  ///
+  /// In en, this message translates to:
+  /// **'The end date must include at least one scheduled occurrence'**
+  String get recurringValidationUntilBeforeStart;
+
   /// Recurring validation: accounts required
   ///
   /// In en, this message translates to:
@@ -1208,6 +1244,48 @@ abstract class AppLocalizations {
   /// **'History timeline'**
   String get dividendCenterHistoryTimeline;
 
+  /// Gross dividend amount label
+  ///
+  /// In en, this message translates to:
+  /// **'Gross'**
+  String get dividendCenterGross;
+
+  /// Dividend withholding tax label
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get dividendCenterWithholding;
+
+  /// Expand the complete dividend history
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count} months'**
+  String dividendCenterHistoryShowAll(int count);
+
+  /// Collapse dividend history
+  ///
+  /// In en, this message translates to:
+  /// **'Show recent months'**
+  String get dividendCenterHistoryShowLess;
+
+  /// Dividend ranking portfolio share label
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get dividendCenterRankingShare;
+
+  /// Dividend ranking yield on cost label
+  ///
+  /// In en, this message translates to:
+  /// **'Yield on cost'**
+  String get dividendCenterRankingYieldOnCost;
+
+  /// Dividend ranking withholding label
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get dividendCenterRankingWithholding;
+
   /// Dividend center forecast placeholder title
   ///
   /// In en, this message translates to:
@@ -1217,8 +1295,20 @@ abstract class AppLocalizations {
   /// Dividend center forecast placeholder body
   ///
   /// In en, this message translates to:
-  /// **'Forecasting is not enabled yet.'**
+  /// **'Not enough history or declared payments to forecast yet.'**
   String get dividendCenterForecastUnavailable;
+
+  /// Dividend forecast warning for declared payments excluded due to missing FX
+  ///
+  /// In en, this message translates to:
+  /// **'Missing {currencies} rates'**
+  String dividendCenterForecastFxIncomplete(String currencies);
+
+  /// Dividend center completeness warning for missing FX rates
+  ///
+  /// In en, this message translates to:
+  /// **'{count} dividend entries were excluded because {currencies} rates are missing.'**
+  String dividendCenterFxIncomplete(int count, String currencies);
 
   /// Dividend center forecast source label
   ///

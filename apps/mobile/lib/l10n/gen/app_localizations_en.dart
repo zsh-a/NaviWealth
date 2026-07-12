@@ -250,6 +250,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthHoldingsSectionSubtitle => 'Positions across all accounts';
 
   @override
+  String get wealthDividendSectionSubtitle =>
+      'Forecasts, received income, and withholding tax';
+
+  @override
   String get wealthWatchlistSectionTitle => 'Watchlist';
 
   @override
@@ -308,6 +312,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashFlowPeriodYear => 'Yearly';
+
+  @override
+  String get cashFlowPreviousPeriod => 'Previous period';
+
+  @override
+  String get cashFlowNextPeriod => 'Next period';
+
+  @override
+  String cashFlowAnchorQuarter(int year, int quarter) {
+    return '$year Q$quarter';
+  }
+
+  @override
+  String cashFlowFxIncomplete(int count, String currencies) {
+    return '$count cash-flow entries were excluded because $currencies rates are missing.';
+  }
 
   @override
   String get cashFlowKpiInflow => 'Inflow';
@@ -559,6 +579,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringValidationByMonthDay => 'Day must be 1–31';
 
   @override
+  String get recurringValidationUntilBeforeStart =>
+      'The end date must include at least one scheduled occurrence';
+
+  @override
   String get recurringValidationAccounts => 'Pick both accounts';
 
   @override
@@ -623,11 +647,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dividendCenterHistoryTimeline => 'History timeline';
 
   @override
+  String get dividendCenterGross => 'Gross';
+
+  @override
+  String get dividendCenterWithholding => 'Tax';
+
+  @override
+  String dividendCenterHistoryShowAll(int count) {
+    return 'Show all $count months';
+  }
+
+  @override
+  String get dividendCenterHistoryShowLess => 'Show recent months';
+
+  @override
+  String get dividendCenterRankingShare => 'Share';
+
+  @override
+  String get dividendCenterRankingYieldOnCost => 'Yield on cost';
+
+  @override
+  String get dividendCenterRankingWithholding => 'Tax';
+
+  @override
   String get dividendCenterForecastTitle => 'Next 12 months';
 
   @override
   String get dividendCenterForecastUnavailable =>
-      'Forecasting is not enabled yet.';
+      'Not enough history or declared payments to forecast yet.';
+
+  @override
+  String dividendCenterForecastFxIncomplete(String currencies) {
+    return 'Missing $currencies rates';
+  }
+
+  @override
+  String dividendCenterFxIncomplete(int count, String currencies) {
+    return '$count dividend entries were excluded because $currencies rates are missing.';
+  }
 
   @override
   String dividendCenterForecastSource(String source) {

@@ -53,26 +53,34 @@ class CashFlowSummary {
     required this.baseCurrency,
     required this.buckets,
     required this.totalInBase,
+    this.fxExclusions = const <CashFlowFxExclusion>[],
   });
 
   final CashFlowPeriod period;
   final String baseCurrency;
   final List<CashFlowBucket> buckets;
   final Money totalInBase;
+  final List<CashFlowFxExclusion> fxExclusions;
+
+  Set<String> get missingFxCurrencies => {
+    for (final exclusion in fxExclusions) ...exclusion.currencies,
+  };
 }
 
 CashFlowSummary aggregateCashFlow(
   Iterable<CashFlowEvent> events, {
   required CashFlowPeriod period,
   required String baseCurrency,
+  Iterable<CashFlowFxExclusion> fxExclusions = const [],
 }) {
   final acc = <String, _BucketAcc>{};
   var total = Decimal.zero;
   for (final event in events) {
     final key = _periodKey(event.date.toUtc(), period);
     final currency = event.currency.trim().toUpperCase();
-    final categoryId = event.counterAccountId ?? event.kind.name;
-    final accKey = '$key|${event.kind.name}|$currency|$categoryId';
+    final categoryId = event.counterAccountId;
+    final groupingId = categoryId ?? event.kind.name;
+    final accKey = '$key|${event.kind.name}|$currency|$groupingId';
     final bucket = acc.putIfAbsent(
       accKey,
       () => _BucketAcc(
@@ -114,6 +122,7 @@ CashFlowSummary aggregateCashFlow(
     baseCurrency: baseCurrency,
     buckets: List.unmodifiable(buckets),
     totalInBase: Money(total, baseCurrency),
+    fxExclusions: List.unmodifiable(fxExclusions),
   );
 }
 
@@ -242,7 +251,7 @@ class _BucketAcc {
   final String key;
   final CashFlowKind kind;
   final String currency;
-  final String categoryId;
+  final String? categoryId;
   final String? categoryLabel;
   Decimal base = Decimal.zero;
   Decimal original = Decimal.zero;

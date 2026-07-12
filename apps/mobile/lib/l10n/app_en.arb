@@ -150,6 +150,8 @@
   "@wealthHoldingsSectionTitle": { "description": "Wealth hub: holdings section title (links into portfolio hub)" },
   "wealthHoldingsSectionSubtitle": "Positions across all accounts",
   "@wealthHoldingsSectionSubtitle": { "description": "Wealth hub: holdings section subtitle" },
+  "wealthDividendSectionSubtitle": "Forecasts, received income, and withholding tax",
+  "@wealthDividendSectionSubtitle": { "description": "Wealth hub: dividend center destination subtitle" },
   "wealthWatchlistSectionTitle": "Watchlist",
   "@wealthWatchlistSectionTitle": { "description": "Wealth hub: watchlist section title" },
   "wealthWatchlistSectionSubtitle": "Symbols you're tracking",
@@ -186,6 +188,24 @@
   "cashFlowPeriodQuarter": "Quarterly",
   "@cashFlowPeriodQuarter": { "description": "Cash-flow period selector: quarterly" },
   "cashFlowPeriodYear": "Yearly",
+  "cashFlowPreviousPeriod": "Previous period",
+  "cashFlowNextPeriod": "Next period",
+  "cashFlowAnchorQuarter": "{year} Q{quarter}",
+  "@cashFlowAnchorQuarter": {
+    "description": "Cash-flow selected calendar quarter",
+    "placeholders": {
+      "year": { "type": "int" },
+      "quarter": { "type": "int" }
+    }
+  },
+  "cashFlowFxIncomplete": "{count} cash-flow entries were excluded because {currencies} rates are missing.",
+  "@cashFlowFxIncomplete": {
+    "description": "Cash-flow completeness warning for missing FX rates",
+    "placeholders": {
+      "count": { "type": "int" },
+      "currencies": { "type": "String" }
+    }
+  },
   "@cashFlowPeriodYear": { "description": "Cash-flow period selector: yearly" },
   "cashFlowKpiInflow": "Inflow",
   "@cashFlowKpiInflow": { "description": "Cash-flow KPI: incoming cash" },
@@ -353,6 +373,8 @@
   "@recurringValidationInterval": { "description": "Recurring validation: interval" },
   "recurringValidationByMonthDay": "Day must be 1–31",
   "@recurringValidationByMonthDay": { "description": "Recurring validation: day of month" },
+  "recurringValidationUntilBeforeStart": "The end date must include at least one scheduled occurrence",
+  "@recurringValidationUntilBeforeStart": { "description": "Recurring validation: end date precedes first occurrence" },
   "recurringValidationAccounts": "Pick both accounts",
   "@recurringValidationAccounts": { "description": "Recurring validation: accounts required" },
   "recurringValidationSameAccount": "Cash and category accounts must differ",
@@ -395,9 +417,39 @@
   "@dividendCenterHoldingRanking": { "description": "Dividend center section title for ranked holdings" },
   "dividendCenterHistoryTimeline": "History timeline",
   "@dividendCenterHistoryTimeline": { "description": "Dividend center section title for dividend history" },
+  "dividendCenterGross": "Gross",
+  "@dividendCenterGross": { "description": "Gross dividend amount label" },
+  "dividendCenterWithholding": "Tax",
+  "@dividendCenterWithholding": { "description": "Dividend withholding tax label" },
+  "dividendCenterHistoryShowAll": "Show all {count} months",
+  "@dividendCenterHistoryShowAll": {
+    "description": "Expand the complete dividend history",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dividendCenterHistoryShowLess": "Show recent months",
+  "@dividendCenterHistoryShowLess": { "description": "Collapse dividend history" },
+  "dividendCenterRankingShare": "Share",
+  "@dividendCenterRankingShare": { "description": "Dividend ranking portfolio share label" },
+  "dividendCenterRankingYieldOnCost": "Yield on cost",
+  "@dividendCenterRankingYieldOnCost": { "description": "Dividend ranking yield on cost label" },
+  "dividendCenterRankingWithholding": "Tax",
+  "@dividendCenterRankingWithholding": { "description": "Dividend ranking withholding label" },
   "dividendCenterForecastTitle": "Next 12 months",
   "@dividendCenterForecastTitle": { "description": "Dividend center forecast placeholder title" },
-  "dividendCenterForecastUnavailable": "Forecasting is not enabled yet.",
+  "dividendCenterForecastUnavailable": "Not enough history or declared payments to forecast yet.",
+  "dividendCenterForecastFxIncomplete": "Missing {currencies} rates",
+  "@dividendCenterForecastFxIncomplete": {
+    "description": "Dividend forecast warning for declared payments excluded due to missing FX",
+    "placeholders": { "currencies": { "type": "String" } }
+  },
+  "dividendCenterFxIncomplete": "{count} dividend entries were excluded because {currencies} rates are missing.",
+  "@dividendCenterFxIncomplete": {
+    "description": "Dividend center completeness warning for missing FX rates",
+    "placeholders": {
+      "count": { "type": "int" },
+      "currencies": { "type": "String" }
+    }
+  },
   "@dividendCenterForecastUnavailable": { "description": "Dividend center forecast placeholder body" },
   "dividendCenterForecastSource": "Source: {source}",
   "@dividendCenterForecastSource": {

@@ -82,9 +82,22 @@ class _DividendCenterBody extends StatelessWidget {
         primary: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (snapshot.isEmpty)
-              const _EmptyDividendState()
-            else ...[
+            if (snapshot.fxExclusions.isNotEmpty) ...[
+              AppStatusBanner(
+                kind: AppStatusKind.warning,
+                message: AppLocalizations.of(context)
+                    .dividendCenterFxIncomplete(
+                      snapshot.fxExclusions.length,
+                      snapshot.missingFxCurrencies.join(', '),
+                    ),
+              ),
+              const SizedBox(height: AppSpacing.s16),
+            ],
+            if (snapshot.isEmpty) ...[
+              const _ForecastCard(),
+              const SizedBox(height: AppSpacing.s16),
+              const _EmptyDividendState(),
+            ] else ...[
               _KpiGrid(snapshot: snapshot),
               const SizedBox(height: AppSpacing.s16),
               const _ForecastCard(),

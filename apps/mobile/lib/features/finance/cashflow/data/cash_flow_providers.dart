@@ -13,72 +13,103 @@ import '../domain/cash_flow_event.dart';
 import '../domain/cash_flow_kind.dart';
 import 'cash_flow_ledger_adapters.dart';
 
-final cashFlowEventsProvider = StreamProvider.autoDispose<List<CashFlowEvent>>((
-  ref,
-) async* {
-  final entriesAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
-  final accountsAsync = ref.watch(allAccountsStreamProvider);
-  // Capture both futures before the first async gap. Riverpod refs cannot be
-  // read after a provider has been disposed while an awaited build is still
-  // unwinding; keeping the futures local also starts both reads together.
-  final entriesFuture = ref.watch(
-    journalEntriesWithPostingsStreamProvider.future,
-  );
-  final accountsFuture = ref.watch(allAccountsStreamProvider.future);
-  final converter = ref.watch(cashFlowCurrencyConverterProvider);
-  final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
+final cashFlowEventsProvider =
+    StreamProvider.autoDispose<CashFlowEventsSnapshot>((ref) async* {
+      final entriesAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
+      final accountsAsync = ref.watch(allAccountsStreamProvider);
+      // Capture both futures before the first async gap. Riverpod refs cannot be
+      // read after a provider has been disposed while an awaited build is still
+      // unwinding; keeping the futures local also starts both reads together.
+      final entriesFuture = ref.watch(
+        journalEntriesWithPostingsStreamProvider.future,
+      );
+      final accountsFuture = ref.watch(allAccountsStreamProvider.future);
+      final converter = ref.watch(cashFlowCurrencyConverterProvider);
+      final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
 
-  final entries = entriesAsync.hasValue
-      ? entriesAsync.requireValue
-      : await entriesFuture;
-  final accounts = accountsAsync.hasValue
-      ? accountsAsync.requireValue
-      : await accountsFuture;
-  if (!ref.mounted) return;
+      final entries = entriesAsync.hasValue
+          ? entriesAsync.requireValue
+          : await entriesFuture;
+      final accounts = accountsAsync.hasValue
+          ? accountsAsync.requireValue
+          : await accountsFuture;
+      if (!ref.mounted) return;
 
-  final accountsById = {for (final account in accounts) account.id: account};
+      final accountsById = {
+        for (final account in accounts) account.id: account,
+      };
 
-  final events = <CashFlowEvent>[];
-  for (final entry in entries) {
-    final event = classifyCashFlowEvent(
-      entry.toCashFlowLedgerEntry(),
-      resolveAccount: accountsById.get,
-      convertToBaseAmount: (amount, currency, date) {
-        if (currency.trim().toUpperCase() == baseCurrency) return amount;
-        try {
-          return converter
-              .convert(Money(amount, currency), baseCurrency, on: date)
-              .amount;
-        } on FxRateNotFoundError {
-          return null;
+      final events = <CashFlowEvent>[];
+      final fxExclusions = <CashFlowFxExclusion>[];
+      for (final entry in entries) {
+        final missingCurrencies = <String>{};
+        final event = classifyCashFlowEvent(
+          entry.toCashFlowLedgerEntry(),
+          resolveAccount: accountsById.get,
+          convertToBaseAmount: (amount, currency, date) {
+            if (currency.trim().toUpperCase() == baseCurrency) return amount;
+            try {
+              return converter
+                  .convert(Money(amount, currency), baseCurrency, on: date)
+                  .amount;
+            } on FxRateNotFoundError {
+              missingCurrencies.add(currency.trim().toUpperCase());
+              return null;
+            }
+          },
+        );
+        if (event != null) {
+          events.add(event);
+        } else if (missingCurrencies.isNotEmpty) {
+          final unconverted = classifyCashFlowEvent(
+            entry.toCashFlowLedgerEntry(),
+            resolveAccount: accountsById.get,
+          );
+          if (unconverted != null) {
+            fxExclusions.add(
+              CashFlowFxExclusion(
+                journalEntryId: entry.entry.id,
+                kind: unconverted.kind,
+                currencies: missingCurrencies.toList(growable: false)..sort(),
+              ),
+            );
+          }
         }
-      },
-    );
-    if (event != null) events.add(event);
-  }
-  yield List.unmodifiable(events);
-});
+      }
+      yield CashFlowEventsSnapshot(
+        events: List.unmodifiable(events),
+        fxExclusions: List.unmodifiable(fxExclusions),
+      );
+    });
 
 final cashFlowSummaryProvider = FutureProvider.autoDispose
     .family<CashFlowSummary, CashFlowSummaryRequest>((ref, request) async {
       final eventsFuture = ref.watch(cashFlowEventsProvider.future);
       final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
-      final events = await eventsFuture;
+      final snapshot = await eventsFuture;
       return runInIsolate(
         () => aggregateCashFlow(
-          events,
+          snapshot.events,
           period: request.period,
           baseCurrency: baseCurrency,
+          fxExclusions: snapshot.fxExclusions,
         ),
       );
     });
 
 final dividendEventsProvider =
-    Provider.autoDispose<AsyncValue<List<CashFlowEvent>>>((ref) {
+    Provider.autoDispose<AsyncValue<CashFlowEventsSnapshot>>((ref) {
       final events = ref.watch(cashFlowEventsProvider);
       return events.whenData(
-        (value) => List.unmodifiable(
-          value.where((event) => event.kind == CashFlowKind.dividend),
+        (value) => CashFlowEventsSnapshot(
+          events: List.unmodifiable(
+            value.events.where((event) => event.kind == CashFlowKind.dividend),
+          ),
+          fxExclusions: List.unmodifiable(
+            value.fxExclusions.where(
+              (event) => event.kind == CashFlowKind.dividend,
+            ),
+          ),
         ),
       );
     });

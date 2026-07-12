@@ -44,6 +44,9 @@ class _RankingSection extends ConsumerWidget {
                         row.withholdingInBase,
                         code: snapshot.baseCurrency,
                       ),
+                      shareLabel: l10n.dividendCenterRankingShare,
+                      yieldLabel: l10n.dividendCenterRankingYieldOnCost,
+                      withholdingLabel: l10n.dividendCenterRankingWithholding,
                       onPress: row.assetId == 'unattributed'
                           ? null
                           : () => context.push(
@@ -71,6 +74,9 @@ class _RankRow extends StatelessWidget {
     required this.share,
     required this.yieldOnCost,
     required this.withholding,
+    required this.shareLabel,
+    required this.yieldLabel,
+    required this.withholdingLabel,
     required this.onPress,
   });
 
@@ -80,13 +86,18 @@ class _RankRow extends StatelessWidget {
   final String share;
   final String yieldOnCost;
   final String withholding;
+  final String shareLabel;
+  final String yieldLabel;
+  final String withholdingLabel;
   final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
     final muted = context.theme.colors.mutedForeground;
     if (compact) {
-      final detail = '$share · $yieldOnCost · $withholding';
+      final detail =
+          '$shareLabel $share · $yieldLabel $yieldOnCost · '
+          '$withholdingLabel $withholding';
       final content = Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
         child: Column(
@@ -103,7 +114,7 @@ class _RankRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                Text(amount, style: context.strongLabelStyle),
+                Text(amount, style: TypographyTokens.numericBodyStrong),
               ],
             ),
             const SizedBox(height: AppSpacing.s2),

@@ -180,6 +180,24 @@ void main() {
         'Rent',
       });
     });
+
+    test('preserves missing FX exclusions in the summary', () {
+      final summary = aggregateCashFlow(
+        const <CashFlowEvent>[],
+        period: CashFlowPeriod.month,
+        baseCurrency: 'USD',
+        fxExclusions: const [
+          CashFlowFxExclusion(
+            journalEntryId: 'foreign-dividend',
+            kind: CashFlowKind.dividend,
+            currencies: ['JPY'],
+          ),
+        ],
+      );
+
+      expect(summary.fxExclusions, hasLength(1));
+      expect(summary.missingFxCurrencies, {'JPY'});
+    });
   });
 }
 

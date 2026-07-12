@@ -29,3 +29,31 @@ abstract class CashFlowEvent with _$CashFlowEvent {
     @Default(false) bool isForecast,
   }) = _CashFlowEvent;
 }
+
+@immutable
+class CashFlowFxExclusion {
+  const CashFlowFxExclusion({
+    required this.journalEntryId,
+    required this.kind,
+    required this.currencies,
+  });
+
+  final String journalEntryId;
+  final CashFlowKind kind;
+  final List<String> currencies;
+}
+
+@immutable
+class CashFlowEventsSnapshot {
+  const CashFlowEventsSnapshot({
+    required this.events,
+    this.fxExclusions = const <CashFlowFxExclusion>[],
+  });
+
+  final List<CashFlowEvent> events;
+  final List<CashFlowFxExclusion> fxExclusions;
+
+  Set<String> get missingFxCurrencies => {
+    for (final exclusion in fxExclusions) ...exclusion.currencies,
+  };
+}

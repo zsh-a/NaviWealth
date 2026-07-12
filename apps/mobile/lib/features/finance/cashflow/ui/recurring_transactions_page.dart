@@ -343,7 +343,16 @@ Future<void> _enableRule(
   final l10n = AppLocalizations.of(context);
   try {
     final repo = await ref.read(recurringTransactionRepositoryProvider.future);
-    await repo.update(rule.id, enabled: true);
+    const engine = RecurrenceEngine();
+    final recurrence = engine.parse(rule.rrule);
+    final now = DateTime.now().toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
+    final nextDueAt = engine.advanceToOnOrAfter(
+      recurrence,
+      rule.nextDueAt,
+      today,
+    );
+    await repo.update(rule.id, enabled: true, nextDueAt: nextDueAt);
     if (context.mounted) {
       AppMessenger.show(context, ToastKind.success, l10n.recurringEnabled);
     }
@@ -412,7 +421,10 @@ String _describeRecurrence(AppLocalizations l10n, String rrule) {
 bool _isCompleted(RecurringTransaction rule) {
   try {
     final until = const RecurrenceEngine().parse(rule.rrule).until;
-    return until != null && rule.nextDueAt.isAfter(until);
+    if (until == null) return false;
+    final now = DateTime.now().toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
+    return rule.nextDueAt.isAfter(until) || until.isBefore(today);
   } catch (_) {
     return false;
   }

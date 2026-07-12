@@ -23,11 +23,15 @@ class _ForecastCard extends ConsumerWidget {
               ),
               data: (projection) {
                 final hasForecast = projection.total > Decimal.zero;
-                final subtitle = hasForecast
+                var subtitle = hasForecast
                     ? l10n.dividendCenterForecastSource(
                         _strategyLabel(l10n, _dominantStrategy(projection)),
                       )
                     : l10n.dividendCenterForecastUnavailable;
+                if (projection.excludedDeclaredCurrencies.isNotEmpty) {
+                  subtitle =
+                      '$subtitle · ${l10n.dividendCenterForecastFxIncomplete(projection.excludedDeclaredCurrencies.join(', '))}';
+                }
                 return _ForecastText(
                   title: l10n.dividendCenterForecastTitle,
                   value: hasForecast
@@ -66,7 +70,7 @@ class _ForecastText extends StatelessWidget {
         Text(title, style: context.theme.typography.body.sm),
         if (value != null) ...[
           const SizedBox(height: AppSpacing.s4),
-          Text(value!, style: context.strongTitleStyle),
+          Text(value!, style: TypographyTokens.numericTitleStrong),
         ],
         const SizedBox(height: AppSpacing.s4),
         Text(subtitle, style: context.captionStyle),

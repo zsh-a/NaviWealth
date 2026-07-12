@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/dividend_center_page.dart';
+import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
@@ -36,6 +38,14 @@ void main() {
           dividendCenterSnapshotProvider.overrideWith(
             (_) async => _emptySnapshot(),
           ),
+          dividendForecast12mProvider.overrideWith(
+            (_) async => ProjectedDividend.empty(
+              assetId: 'portfolio',
+              currency: 'USD',
+              strategy: 'composite',
+              confidence: DividendForecastConfidence.low,
+            ),
+          ),
         ],
         child: MaterialApp.router(
           theme: AppTheme.light(),
@@ -48,6 +58,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No dividend records yet'), findsOneWidget);
+    expect(find.text('Next 12 months'), findsOneWidget);
     await tester.tap(find.byKey(const Key('dividend-center-record-cta')));
     await tester.pumpAndSettle();
 

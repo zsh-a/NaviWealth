@@ -57,6 +57,35 @@ void main() {
     expect(dates, [DateTime.utc(2024, 2, 29), DateTime.utc(2028, 2, 29)]);
   });
 
+  test('aligns first monthly occurrence to BYMONTHDAY', () {
+    expect(
+      engine.firstOnOrAfterRule(
+        'FREQ=MONTHLY;BYMONTHDAY=15',
+        DateTime.utc(2026, 7, 20),
+      ),
+      DateTime.utc(2026, 8, 15),
+    );
+    expect(
+      engine.firstOnOrAfterRule(
+        'FREQ=MONTHLY;BYMONTHDAY=31',
+        DateTime.utc(2026, 2, 1),
+      ),
+      DateTime.utc(2026, 3, 31),
+    );
+  });
+
+  test('resume advances missed occurrences without backfilling', () {
+    final rule = engine.parse('FREQ=MONTHLY;BYMONTHDAY=12');
+    expect(
+      engine.advanceToOnOrAfter(
+        rule,
+        DateTime.utc(2026, 1, 12),
+        DateTime.utc(2026, 7, 20),
+      ),
+      DateTime.utc(2026, 8, 12),
+    );
+  });
+
   test('rejects unsupported frequency', () {
     expect(
       () => engine.expand(

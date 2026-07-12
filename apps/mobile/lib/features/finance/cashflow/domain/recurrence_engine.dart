@@ -45,6 +45,55 @@ class RecurrenceEngine {
   DateTime nextAfterRule(String rrule, DateTime after) =>
       nextAfter(parse(rrule), after);
 
+  DateTime firstOnOrAfterRule(String rrule, DateTime start) =>
+      firstOnOrAfter(parse(rrule), start);
+
+  /// Returns the first occurrence on or after [start].
+  DateTime firstOnOrAfter(RecurrenceRule rule, DateTime start) {
+    final cursor = _dateOnlyUtc(start);
+    final targetDay = rule.byMonthDay;
+    if (targetDay == null ||
+        rule.frequency == RecurrenceFrequency.daily ||
+        rule.frequency == RecurrenceFrequency.weekly) {
+      return cursor;
+    }
+    if (rule.frequency == RecurrenceFrequency.monthly) {
+      var year = cursor.year;
+      var month = cursor.month;
+      while (true) {
+        if (_isValidDay(year, month, targetDay)) {
+          final candidate = DateTime.utc(year, month, targetDay);
+          if (!candidate.isBefore(cursor)) return candidate;
+        }
+        final next = DateTime.utc(year, month + rule.interval);
+        year = next.year;
+        month = next.month;
+      }
+    }
+    var year = cursor.year;
+    while (true) {
+      if (_isValidDay(year, cursor.month, targetDay)) {
+        final candidate = DateTime.utc(year, cursor.month, targetDay);
+        if (!candidate.isBefore(cursor)) return candidate;
+      }
+      year += rule.interval;
+    }
+  }
+
+  /// Advances [nextDueAt] to the first occurrence on or after [date].
+  DateTime advanceToOnOrAfter(
+    RecurrenceRule rule,
+    DateTime nextDueAt,
+    DateTime date,
+  ) {
+    final target = _dateOnlyUtc(date);
+    var due = _dateOnlyUtc(nextDueAt);
+    while (due.isBefore(target)) {
+      due = nextAfter(rule, due);
+    }
+    return due;
+  }
+
   DateTime nextAfter(RecurrenceRule rule, DateTime after) {
     final cursor = _dateOnlyUtc(after);
     return switch (rule.frequency) {

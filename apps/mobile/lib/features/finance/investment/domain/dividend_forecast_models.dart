@@ -26,6 +26,7 @@ class ProjectedDividend {
     required this.confidence,
     this.strategyBreakdown = const <String, Decimal>{},
     this.assetStrategies = const <String, String>{},
+    this.excludedDeclaredCurrencies = const <String>{},
   });
 
   final String assetId;
@@ -39,6 +40,21 @@ class ProjectedDividend {
   final DividendForecastConfidence confidence;
   final Map<String, Decimal> strategyBreakdown;
   final Map<String, String> assetStrategies;
+  final Set<String> excludedDeclaredCurrencies;
+
+  ProjectedDividend withExcludedDeclaredCurrencies(Set<String> currencies) {
+    return ProjectedDividend(
+      assetId: assetId,
+      perAsset: perAsset,
+      total: total,
+      currency: currency,
+      strategy: strategy,
+      confidence: confidence,
+      strategyBreakdown: strategyBreakdown,
+      assetStrategies: assetStrategies,
+      excludedDeclaredCurrencies: Set.unmodifiable(currencies),
+    );
+  }
 
   Decimal amountInMonth(DateTime month) {
     final start = DateTime.utc(month.year, month.month);

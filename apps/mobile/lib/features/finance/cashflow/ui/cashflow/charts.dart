@@ -116,14 +116,12 @@ class _CategoryPanel extends StatefulWidget {
   const _CategoryPanel({
     required this.model,
     required this.formatter,
-    required this.onOpenIncome,
-    required this.onOpenExpenses,
+    required this.onOpenCategory,
   });
 
   final _CashFlowViewModel model;
   final AppFormatters formatter;
-  final VoidCallback onOpenIncome;
-  final VoidCallback onOpenExpenses;
+  final ValueChanged<_CategoryTotal> onOpenCategory;
 
   @override
   State<_CategoryPanel> createState() => _CategoryPanelState();
@@ -189,9 +187,7 @@ class _CategoryPanelState extends State<_CategoryPanel> {
               category: category,
               formatter: widget.formatter,
               total: total,
-              onPress: _mode == _CashFlowCategoryMode.expenses
-                  ? widget.onOpenExpenses
-                  : widget.onOpenIncome,
+              onPress: () => widget.onOpenCategory(category),
             ),
           if (_mode == _CashFlowCategoryMode.income &&
               categories.any((c) => c.kind == CashFlowKind.dividend))

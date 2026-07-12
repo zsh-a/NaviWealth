@@ -85,7 +85,7 @@ void financeBackgroundBootstrap(Ref ref) {
   if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
     ref.read(priceSyncCoordinatorBootstrapProvider);
   }
-  unawaited(
-    ref.read(recurringMaterialiseDueProvider(DateTime.now().toUtc()).future),
-  );
+  final now = DateTime.now().toUtc();
+  final today = DateTime.utc(now.year, now.month, now.day);
+  unawaited(ref.read(recurringMaterialiseDueProvider(today).future));
 }

@@ -435,6 +435,16 @@ class _RecurringTransactionSheetState
     );
     final json = JournalBuildTemplateCodec.encode(build);
     final rrule = _buildRrule();
+    final rule = const RecurrenceEngine().parse(rrule);
+    final nextDueAt = const RecurrenceEngine().firstOnOrAfter(rule, start);
+    if (rule.until case final until? when nextDueAt.isAfter(until)) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.recurringValidationUntilBeforeStart,
+      );
+      return;
+    }
     await submitForm<void>(
       dirty: widget.dirty,
       onBusyChanged: _setSaving,
@@ -450,16 +460,20 @@ class _RecurringTransactionSheetState
           await repo.create(
             templateJournalBuildJson: json,
             rrule: rrule,
-            nextDueAt: start,
+            nextDueAt: nextDueAt,
           );
         } else {
           await repo.update(
             existing.id,
             templateJournalBuildJson: json,
             rrule: rrule,
-            nextDueAt: start,
+            nextDueAt: nextDueAt,
           );
         }
+        final now = DateTime.now().toUtc();
+        final today = DateTime.utc(now.year, now.month, now.day);
+        ref.invalidate(recurringMaterialiseDueProvider(today));
+        await ref.read(recurringMaterialiseDueProvider(today).future);
       },
     );
   }

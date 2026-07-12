@@ -5,27 +5,41 @@ class _CashFlowContent extends StatelessWidget {
     required this.period,
     required this.summary,
     required this.formatter,
+    required this.anchor,
     required this.now,
     required this.onPeriodChanged,
+    required this.onAnchorChanged,
   });
 
   final CashFlowPeriod period;
   final CashFlowSummary summary;
   final AppFormatters formatter;
+  final DateTime anchor;
   final DateTime now;
   final ValueChanged<CashFlowPeriod> onPeriodChanged;
+  final ValueChanged<DateTime> onAnchorChanged;
 
   @override
   Widget build(BuildContext context) {
-    final keys = _visibleKeys(period, now.toUtc());
+    final keys = _visibleKeys(period, anchor.toUtc());
     final currentKey = keys.last;
     final model = _CashFlowViewModel.fromSummary(
       summary,
       visibleKeys: keys,
       currentKey: currentKey,
     );
-    void openActivity(ActivityKind? kind) {
-      context.go(cashFlowActivityRoute(period: period, now: now, kind: kind));
+    void openActivity({
+      Set<ActivityKind> kinds = const <ActivityKind>{},
+      Set<String> accountIds = const <String>{},
+    }) {
+      context.go(
+        cashFlowActivityRoute(
+          period: period,
+          anchor: anchor,
+          kinds: kinds,
+          accountIds: accountIds,
+        ),
+      );
     }
 
     return SingleChildScrollView(
@@ -42,14 +56,40 @@ class _CashFlowContent extends StatelessWidget {
         header: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _PeriodSelector(period: period, onChanged: onPeriodChanged),
+            _PeriodSelector(
+              period: period,
+              anchor: anchor,
+              now: now,
+              formatter: formatter,
+              onChanged: onPeriodChanged,
+              onAnchorChanged: onAnchorChanged,
+            ),
+            if (summary.fxExclusions.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s12),
+              AppStatusBanner(
+                kind: AppStatusKind.warning,
+                message: AppLocalizations.of(context).cashFlowFxIncomplete(
+                  summary.fxExclusions.length,
+                  summary.missingFxCurrencies.join(', '),
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.s16),
             _KpiGrid(
               model: model,
               formatter: formatter,
-              onOpenIncome: () => openActivity(ActivityKind.income),
-              onOpenExpenses: () => openActivity(ActivityKind.expense),
-              onOpenNet: () => openActivity(null),
+              onOpenIncome: () => openActivity(
+                kinds: const <ActivityKind>{ActivityKind.income},
+              ),
+              onOpenExpenses: () => openActivity(
+                kinds: const <ActivityKind>{ActivityKind.expense},
+              ),
+              onOpenNet: () => openActivity(
+                kinds: const <ActivityKind>{
+                  ActivityKind.income,
+                  ActivityKind.expense,
+                },
+              ),
             ),
           ],
         ),
@@ -57,8 +97,16 @@ class _CashFlowContent extends StatelessWidget {
         secondary: _CategoryPanel(
           model: model,
           formatter: formatter,
-          onOpenIncome: () => openActivity(ActivityKind.income),
-          onOpenExpenses: () => openActivity(ActivityKind.expense),
+          onOpenCategory: (category) => openActivity(
+            kinds: <ActivityKind>{
+              category.kind == CashFlowKind.expense
+                  ? ActivityKind.expense
+                  : ActivityKind.income,
+            },
+            accountIds: category.accountId == null
+                ? const <String>{}
+                : <String>{category.accountId!},
+          ),
         ),
       ),
     );
@@ -66,19 +114,60 @@ class _CashFlowContent extends StatelessWidget {
 }
 
 class _PeriodSelector extends StatelessWidget {
-  const _PeriodSelector({required this.period, required this.onChanged});
+  const _PeriodSelector({
+    required this.period,
+    required this.anchor,
+    required this.now,
+    required this.formatter,
+    required this.onChanged,
+    required this.onAnchorChanged,
+  });
 
   final CashFlowPeriod period;
+  final DateTime anchor;
+  final DateTime now;
+  final AppFormatters formatter;
   final ValueChanged<CashFlowPeriod> onChanged;
+  final ValueChanged<DateTime> onAnchorChanged;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedRow<CashFlowPeriod>(
-      options: CashFlowPeriod.values,
-      value: period,
-      labelOf: (candidate) => _periodLabel(l10n, candidate),
-      onChanged: onChanged,
+    final previous = _shiftPeriod(anchor, period, -1);
+    final next = _shiftPeriod(anchor, period, 1);
+    final canMoveForward = !_isAfterPeriod(next, now, period);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            AppIconButton(
+              tooltip: l10n.cashFlowPreviousPeriod,
+              icon: FLucideIcons.chevronLeft,
+              onPress: () => onAnchorChanged(previous),
+            ),
+            Expanded(
+              child: Text(
+                _anchorLabel(l10n, formatter, anchor, period),
+                style: context.labelStyle,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            AppIconButton(
+              tooltip: l10n.cashFlowNextPeriod,
+              icon: FLucideIcons.chevronRight,
+              onPress: canMoveForward ? () => onAnchorChanged(next) : null,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        SegmentedRow<CashFlowPeriod>(
+          options: CashFlowPeriod.values,
+          value: period,
+          labelOf: (candidate) => _periodLabel(l10n, candidate),
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 }

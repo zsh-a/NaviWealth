@@ -8,8 +8,9 @@ void main() {
     final uri = Uri.parse(
       cashFlowActivityRoute(
         period: CashFlowPeriod.month,
-        now: DateTime.utc(2026, 7, 12),
-        kind: ActivityKind.expense,
+        anchor: DateTime.utc(2026, 7, 12),
+        kinds: const {ActivityKind.expense},
+        accountIds: const {'expense:dining'},
       ),
     );
 
@@ -17,13 +18,14 @@ void main() {
     expect(uri.queryParameters['from'], '2026-07-01');
     expect(uri.queryParameters['to'], '2026-08-01');
     expect(uri.queryParameters['kinds'], 'expense');
+    expect(uri.queryParameters['accounts'], 'expense:dining');
   });
 
   test('quarterly drill-down uses calendar-quarter boundaries', () {
     final uri = Uri.parse(
       cashFlowActivityRoute(
         period: CashFlowPeriod.quarter,
-        now: DateTime.utc(2026, 7, 12),
+        anchor: DateTime.utc(2026, 7, 12),
       ),
     );
 

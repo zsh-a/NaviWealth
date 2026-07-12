@@ -12,7 +12,6 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
-import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/passive_income_card.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
@@ -41,12 +40,6 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final today = DateTime.now().toUtc();
-    ref.watch(
-      recurringMaterialiseDueProvider(
-        DateTime.utc(today.year, today.month, today.day),
-      ),
-    );
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return ShellCanvasScaffold(
       // The home cockpit owns its hero greeting; we drop the static

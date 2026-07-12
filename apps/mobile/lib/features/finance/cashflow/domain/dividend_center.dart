@@ -77,6 +77,7 @@ class DividendCenterSnapshot {
     required this.events,
     required this.ranking,
     required this.months,
+    this.fxExclusions = const <CashFlowFxExclusion>[],
   });
 
   final String baseCurrency;
@@ -87,6 +88,11 @@ class DividendCenterSnapshot {
   final List<DividendCenterEvent> events;
   final List<DividendHoldingRank> ranking;
   final List<DividendMonthGroup> months;
+  final List<CashFlowFxExclusion> fxExclusions;
+
+  Set<String> get missingFxCurrencies => {
+    for (final exclusion in fxExclusions) ...exclusion.currencies,
+  };
 
   Decimal get yearOverYearDelta => yearToDateGross - priorYearToDateGross;
 
@@ -108,6 +114,7 @@ DividendCenterSnapshot buildDividendCenterSnapshot({
   required Map<String, HoldingSnapshot> holdings,
   required String baseCurrency,
   required DateTime now,
+  Iterable<CashFlowFxExclusion> fxExclusions = const [],
   DividendAmountConverter? convertToBaseAmount,
 }) {
   final enriched = <DividendCenterEvent>[];
@@ -169,6 +176,7 @@ DividendCenterSnapshot buildDividendCenterSnapshot({
     events: List.unmodifiable(enriched),
     ranking: List.unmodifiable(ranking),
     months: List.unmodifiable(_buildMonths(enriched)),
+    fxExclusions: List.unmodifiable(fxExclusions),
   );
 }
 

@@ -243,6 +243,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthHoldingsSectionSubtitle => '所有账户的持仓汇总';
 
   @override
+  String get wealthDividendSectionSubtitle => '预测、到账记录与预扣税';
+
+  @override
   String get wealthWatchlistSectionTitle => '自选';
 
   @override
@@ -294,6 +297,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cashFlowPeriodYear => '按年';
+
+  @override
+  String get cashFlowPreviousPeriod => '上一周期';
+
+  @override
+  String get cashFlowNextPeriod => '下一周期';
+
+  @override
+  String cashFlowAnchorQuarter(int year, int quarter) {
+    return '$year 年第 $quarter 季度';
+  }
+
+  @override
+  String cashFlowFxIncomplete(int count, String currencies) {
+    return '因缺少 $currencies 汇率，已有 $count 笔现金流未计入。';
+  }
 
   @override
   String get cashFlowKpiInflow => '流入';
@@ -539,6 +558,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recurringValidationByMonthDay => '日期需在 1–31 之间';
 
   @override
+  String get recurringValidationUntilBeforeStart => '结束日期必须至少包含一次计划发生日';
+
+  @override
   String get recurringValidationAccounts => '请选择两个账户';
 
   @override
@@ -602,10 +624,43 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dividendCenterHistoryTimeline => '历史时间线';
 
   @override
+  String get dividendCenterGross => '税前';
+
+  @override
+  String get dividendCenterWithholding => '税额';
+
+  @override
+  String dividendCenterHistoryShowAll(int count) {
+    return '查看全部 $count 个月';
+  }
+
+  @override
+  String get dividendCenterHistoryShowLess => '仅看近期';
+
+  @override
+  String get dividendCenterRankingShare => '占比';
+
+  @override
+  String get dividendCenterRankingYieldOnCost => '成本收益率';
+
+  @override
+  String get dividendCenterRankingWithholding => '税额';
+
+  @override
   String get dividendCenterForecastTitle => '未来 12 个月';
 
   @override
-  String get dividendCenterForecastUnavailable => '预测尚未启用。';
+  String get dividendCenterForecastUnavailable => '历史记录或已宣告派息不足，暂无法预测。';
+
+  @override
+  String dividendCenterForecastFxIncomplete(String currencies) {
+    return '缺少 $currencies 汇率';
+  }
+
+  @override
+  String dividendCenterFxIncomplete(int count, String currencies) {
+    return '因缺少 $currencies 汇率，已有 $count 笔股息未计入。';
+  }
 
   @override
   String dividendCenterForecastSource(String source) {
