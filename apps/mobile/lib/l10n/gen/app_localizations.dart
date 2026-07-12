@@ -617,19 +617,19 @@ abstract class AppLocalizations {
   /// Cash-flow period selector: monthly
   ///
   /// In en, this message translates to:
-  /// **'Month'**
+  /// **'Monthly'**
   String get cashFlowPeriodMonth;
 
   /// Cash-flow period selector: quarterly
   ///
   /// In en, this message translates to:
-  /// **'Quarter'**
+  /// **'Quarterly'**
   String get cashFlowPeriodQuarter;
 
   /// Cash-flow period selector: yearly
   ///
   /// In en, this message translates to:
-  /// **'Year'**
+  /// **'Yearly'**
   String get cashFlowPeriodYear;
 
   /// Cash-flow KPI: incoming cash
@@ -667,6 +667,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Category mix'**
   String get cashFlowCategoryTitle;
+
+  /// No description provided for @cashFlowCategoryExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense categories'**
+  String get cashFlowCategoryExpenses;
+
+  /// No description provided for @cashFlowCategoryIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income sources'**
+  String get cashFlowCategoryIncome;
 
   /// Cash-flow page link into the Dividend Center
   ///
@@ -728,10 +740,46 @@ abstract class AppLocalizations {
   /// **'Set up rules for salary, subscriptions or other repeating cash flow.'**
   String get recurringEmptyBody;
 
+  /// No description provided for @recurringFilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get recurringFilterActive;
+
+  /// No description provided for @recurringFilterPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get recurringFilterPaused;
+
+  /// No description provided for @recurringPausedEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No paused rules'**
+  String get recurringPausedEmptyTitle;
+
+  /// No description provided for @recurringPausedEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused and completed rules remain available here.'**
+  String get recurringPausedEmptyBody;
+
+  /// No description provided for @recurringPausedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get recurringPausedBadge;
+
+  /// No description provided for @recurringCompletedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get recurringCompletedBadge;
+
   /// Recurring list empty-state CTA
   ///
   /// In en, this message translates to:
-  /// **'Add recurring rule'**
+  /// **'Add rule'**
   String get recurringEmptyCta;
 
   /// Recurring row next-due label
@@ -776,6 +824,18 @@ abstract class AppLocalizations {
   /// **'Stop generating new entries'**
   String get recurringActionDisableHint;
 
+  /// No description provided for @recurringActionEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get recurringActionEnable;
+
+  /// No description provided for @recurringActionEnableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start generating entries again'**
+  String get recurringActionEnableHint;
+
   /// Subtitle for delete action
   ///
   /// In en, this message translates to:
@@ -811,6 +871,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rule disabled'**
   String get recurringDisabled;
+
+  /// No description provided for @recurringEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule resumed'**
+  String get recurringEnabled;
 
   /// Toast after deleting a rule
   ///

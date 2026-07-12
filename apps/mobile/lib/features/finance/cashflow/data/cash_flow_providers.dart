@@ -16,6 +16,11 @@ import 'cash_flow_ledger_adapters.dart';
 final cashFlowEventsProvider = StreamProvider.autoDispose<List<CashFlowEvent>>((
   ref,
 ) async* {
+  final entriesAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
+  final accountsAsync = ref.watch(allAccountsStreamProvider);
+  // Capture both futures before the first async gap. Riverpod refs cannot be
+  // read after a provider has been disposed while an awaited build is still
+  // unwinding; keeping the futures local also starts both reads together.
   final entriesFuture = ref.watch(
     journalEntriesWithPostingsStreamProvider.future,
   );
@@ -23,8 +28,12 @@ final cashFlowEventsProvider = StreamProvider.autoDispose<List<CashFlowEvent>>((
   final converter = ref.watch(cashFlowCurrencyConverterProvider);
   final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
 
-  final entries = await entriesFuture;
-  final accounts = await accountsFuture;
+  final entries = entriesAsync.hasValue
+      ? entriesAsync.requireValue
+      : await entriesFuture;
+  final accounts = accountsAsync.hasValue
+      ? accountsAsync.requireValue
+      : await accountsFuture;
   if (!ref.mounted) return;
 
   final accountsById = {for (final account in accounts) account.id: account};

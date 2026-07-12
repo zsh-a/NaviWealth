@@ -10,9 +10,9 @@ abstract final class FinanceRoutes {
   static const activityExpenses = '/activity/expenses';
   static const expenseNew = '/activity/expenses/new';
   static const expenseReport = '/activity/expenses/report';
-  static const cashflow = '/cashflow';
-  static const cashflowRecurring = '/cashflow/recurring';
-  static const cashflowDividends = '/activity/cashflow/dividends';
+  static const cashflow = '/activity/cashflow';
+  static const cashflowRecurring = '/activity/cashflow/recurring';
+  static const cashflowDividends = '/wealth/portfolio/dividends';
   static const tradeEntry = '/activity/trade';
   static const transfer = '/activity/transfer';
   static const journalEntries = '/activity/journal';

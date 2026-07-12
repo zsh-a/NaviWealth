@@ -101,6 +101,53 @@ void main() {
     expect(_utcDay(tx!.lastMaterialisedAt!), DateTime.utc(2026, 1, 3));
     expect(_utcDay(tx.nextDueAt), DateTime.utc(2026, 1, 4));
   });
+
+  test('materialiseDue stops at UNTIL and completes the rule', () async {
+    await recurringRepo.create(
+      id: 'rt-limited',
+      templateJournalBuildJson: _templateJson(),
+      rrule: 'FREQ=DAILY;UNTIL=20260102',
+      nextDueAt: DateTime.utc(2026, 1, 1),
+    );
+
+    final count = await service.materialiseDue(DateTime.utc(2026, 1, 5));
+
+    expect(count, 2);
+    expect(
+      await journalRepo.getById(
+        RecurringMaterialisationService.journalEntryId(
+          recurringTransactionId: 'rt-limited',
+          occurrenceDate: DateTime.utc(2026, 1, 3),
+        ),
+      ),
+      isNull,
+    );
+    final tx = await recurringRepo.getById('rt-limited');
+    expect(tx, isNotNull);
+    expect(tx!.enabled, isFalse);
+    expect(_utcDay(tx.lastMaterialisedAt!), DateTime.utc(2026, 1, 2));
+    expect(_utcDay(tx.nextDueAt), DateTime.utc(2026, 1, 3));
+  });
+
+  test('watchAll keeps paused rules visible after active rules', () async {
+    await recurringRepo.create(
+      id: 'rt-paused',
+      templateJournalBuildJson: _templateJson(),
+      rrule: 'FREQ=MONTHLY',
+      nextDueAt: DateTime.utc(2026, 1, 1),
+      enabled: false,
+    );
+    await recurringRepo.create(
+      id: 'rt-active',
+      templateJournalBuildJson: _templateJson(),
+      rrule: 'FREQ=MONTHLY',
+      nextDueAt: DateTime.utc(2026, 2, 1),
+    );
+
+    final rules = await recurringRepo.watchAll().first;
+
+    expect(rules.map((rule) => rule.id), ['rt-active', 'rt-paused']);
+  });
 }
 
 DateTime _utcDay(DateTime value) {

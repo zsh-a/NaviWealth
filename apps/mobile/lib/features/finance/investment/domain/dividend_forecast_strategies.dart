@@ -91,6 +91,15 @@ class DeclaredActionsStrategy implements DividendForecastStrategy {
       if (!date.isAfter(forecastStart) || date.isAfter(horizonEnd)) continue;
       final holding = holdingsByAsset[action.assetId];
       if (holding == null || !_hasOpenQuantity(holding)) continue;
+      final actionCurrency = switch (action) {
+        CashDividendAction a => a.currency,
+        DripAction a => a.currency,
+        _ => null,
+      };
+      if (actionCurrency == null ||
+          actionCurrency.toUpperCase() != holding.baseCurrency.toUpperCase()) {
+        continue;
+      }
       final amountPerShare = switch (action) {
         CashDividendAction a => a.amountPerShare,
         DripAction a => a.amountPerShare,

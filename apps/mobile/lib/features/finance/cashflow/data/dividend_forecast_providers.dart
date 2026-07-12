@@ -5,7 +5,6 @@ import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/cash_dividend.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
-import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import '../domain/dividend_center.dart';
 import 'dividend_center_providers.dart';
 
@@ -20,7 +19,7 @@ final dividendForecast12mProvider =
       final center = await ref.watch(dividendCenterSnapshotProvider.future);
       final holdings = await ref.watch(holdingsSnapshotProvider.future);
       final now = ref.watch(dividendCenterNowProvider);
-      final history = _historyFromDividendCenter(center, holdings);
+      final history = _historyFromDividendCenter(center);
       const service = DividendForecastService();
       return service.forecast(
         holdings: holdings.values,
@@ -30,10 +29,7 @@ final dividendForecast12mProvider =
       );
     });
 
-List<CashDividend> _historyFromDividendCenter(
-  DividendCenterSnapshot center,
-  Map<String, HoldingSnapshot> holdings,
-) {
+List<CashDividend> _historyFromDividendCenter(DividendCenterSnapshot center) {
   return [
     for (final event in center.events)
       CashDividend(
@@ -43,22 +39,14 @@ List<CashDividend> _historyFromDividendCenter(
         assetId: event.assetId,
         currency: center.baseCurrency,
         effectiveDate: event.event.date,
-        shareCount: holdings[event.assetId]?.quantity ?? Decimal.zero,
-        amountPerShare: _amountPerShare(
-          event.grossInBase,
-          holdings[event.assetId],
-        ),
+        shareCount: Decimal.zero,
+        amountPerShare: Decimal.zero,
         grossAmount: event.grossInBase,
         withholdingTax: event.withholdingInBase,
         netAmount: event.netInBase,
         reinvested: false,
       ),
   ];
-}
-
-Decimal _amountPerShare(Decimal amount, HoldingSnapshot? holding) {
-  if (holding == null || holding.quantity <= Decimal.zero) return Decimal.zero;
-  return (amount / holding.quantity).toDecimal(scaleOnInfinitePrecision: 8);
 }
 
 DateTime _addMonths(DateTime date, int delta) {

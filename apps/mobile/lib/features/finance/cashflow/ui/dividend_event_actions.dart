@@ -19,9 +19,6 @@ import '../domain/dividend_center.dart';
 /// ([DividendCenterEvent.event.journalEntryId]), so we reuse the existing
 /// journal-entry surfaces rather than build a parallel editor:
 ///   * **View in activity** → the read-only [ActivityEntryDetailPage].
-///   * **Edit** → re-record via the corporate-action form (there is no
-///     in-place dividend editor; the expense form's 2-posting shape would
-///     corrupt a 3-leg dividend with withholding).
 ///   * **Delete** → [JournalEntryRepository.softDelete]; the dividend
 ///     center snapshot re-derives from the journal stream and refreshes.
 List<AppAdaptiveAction> buildDividendEventActions(
@@ -37,16 +34,6 @@ List<AppAdaptiveAction> buildDividendEventActions(
       subtitle: l10n.dividendEventViewInActivityHint,
       onPress: () {
         if (context.mounted) return _viewInActivity(context, ref, event);
-      },
-    ),
-    AppAdaptiveAction(
-      icon: FLucideIcons.pencil,
-      title: l10n.dividendEventEdit,
-      subtitle: l10n.dividendEventEditHint,
-      onPress: () {
-        if (context.mounted) {
-          context.push(FinanceRoutes.wealthCorporateAction);
-        }
       },
     ),
     AppAdaptiveAction(

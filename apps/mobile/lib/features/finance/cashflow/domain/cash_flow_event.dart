@@ -24,6 +24,8 @@ abstract class CashFlowEvent with _$CashFlowEvent {
     /// User asset account whose cash leg best represents this flow.
     required String accountId,
     required AccountSide counterAccountSide,
+    String? counterAccountId,
+    String? counterAccountName,
     @Default(false) bool isForecast,
   }) = _CashFlowEvent;
 }

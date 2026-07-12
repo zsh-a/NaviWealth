@@ -18,6 +18,7 @@ import 'package:naviwealth/features/finance/assets/physical/data/providers.dart'
 import 'package:naviwealth/features/finance/data/repositories/providers.dart'
     as repo_providers;
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
+import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/liability.dart';
@@ -126,6 +127,9 @@ Future<ProviderContainer> _container({
       // touching the database / market-data service.
       repo_providers.manualAssetsStreamProvider.overrideWith(
         (_) => Stream.value(const <Asset>[]),
+      ),
+      repo_providers.allAccountsStreamProvider.overrideWith(
+        (_) => Stream.value(const <Account>[]),
       ),
       repo_providers.fxRatesStreamProvider.overrideWith(
         (_) => Stream.value(const <dom.FxRate>[]),

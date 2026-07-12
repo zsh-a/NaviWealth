@@ -36,11 +36,13 @@ class RecurringTransactionRepository {
 
   static const String tableName = 'recurring_transactions';
 
-  Stream<List<RecurringTransaction>> watchEnabled() {
+  Stream<List<RecurringTransaction>> watchAll() {
     final query = _db.select(_db.recurringTransactions)
       ..where((t) => t.deletedAt.isNull())
-      ..where((t) => t.enabled.equals(true))
-      ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)]);
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.enabled, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.nextDueAt),
+      ]);
     return query.watch().map(
       (rows) => rows.map(_rowToDomain).toList(growable: false),
     );

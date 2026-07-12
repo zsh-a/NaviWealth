@@ -6,11 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/cash_flow_providers.dart';
-import '../data/recurring_transaction_providers.dart';
 import '../domain/cash_flow_aggregator.dart';
 import '../domain/cash_flow_kind.dart';
 
@@ -27,19 +27,39 @@ class CashFlowPage extends ConsumerStatefulWidget {
   ConsumerState<CashFlowPage> createState() => _CashFlowPageState();
 }
 
+String cashFlowActivityRoute({
+  required CashFlowPeriod period,
+  required DateTime now,
+  ActivityKind? kind,
+}) {
+  final date = now.toUtc();
+  final (start, end) = switch (period) {
+    CashFlowPeriod.month => (
+      DateTime.utc(date.year, date.month),
+      DateTime.utc(date.year, date.month + 1),
+    ),
+    CashFlowPeriod.quarter => (
+      DateTime.utc(date.year, ((date.month - 1) ~/ 3) * 3 + 1),
+      DateTime.utc(date.year, ((date.month - 1) ~/ 3) * 3 + 4),
+    ),
+    CashFlowPeriod.year => (
+      DateTime.utc(date.year),
+      DateTime.utc(date.year + 1),
+    ),
+  };
+  final query = ActivityFeedQuery(
+    dateRange: DateTimeRange(start: start, end: end),
+    kinds: kind == null ? const {} : {kind},
+  );
+  return Uri(
+    path: FinanceRoutes.activity,
+    queryParameters: query.toQueryParameters(),
+  ).toString();
+}
+
 class _CashFlowPageState extends ConsumerState<CashFlowPage> {
   CashFlowPeriod _period = CashFlowPeriod.month;
   bool _hydratedFromUrl = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(
-      () => ref.read(
-        recurringMaterialiseDueProvider(DateTime.now().toUtc()).future,
-      ),
-    );
-  }
 
   @override
   void didChangeDependencies() {
@@ -61,6 +81,14 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
     return AppPageScaffold(
       title: l10n.cashFlowTitle,
       actions: [
+        FHeaderAction(
+          icon: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.navActivity),
+            child: const Icon(FLucideIcons.list),
+          ),
+          semanticsLabel: l10n.navActivity,
+          onPress: () => context.go(FinanceRoutes.activity),
+        ),
         AppAdaptiveActionMenu(
           title: l10n.shellMoreActions,
           actions: [
@@ -110,6 +138,6 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
   void _changePeriod(CashFlowPeriod period) {
     if (period == _period) return;
     setState(() => _period = period);
-    context.go('${FinanceRoutes.cashflow}?period=${period.name}');
+    context.replace('${FinanceRoutes.cashflow}?period=${period.name}');
   }
 }

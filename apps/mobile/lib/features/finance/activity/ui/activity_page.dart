@@ -28,21 +28,25 @@ class ActivityPage extends ConsumerStatefulWidget {
 }
 
 class _ActivityPageState extends ConsumerState<ActivityPage> {
-  bool _hydratedFromUrl = false;
+  String? _hydratedLocation;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_hydratedFromUrl) return;
-    _hydratedFromUrl = true;
     final uri = GoRouter.of(context).routeInformationProvider.value.uri;
+    // ActivityPage remains mounted underneath every nested Activity route.
+    // Its filter state owns only the root timeline URL; hydrating from a
+    // child URL would make the listener below replace that child with
+    // `/activity` as soon as the provider emits.
+    if (uri.path != FinanceRoutes.activity) return;
+    final location = uri.toString();
+    if (_hydratedLocation == location) return;
+    _hydratedLocation = location;
     final query = ActivityFeedQuery.fromUri(uri);
-    if (query.hasFilters) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(activityFeedQueryProvider.notifier).setQuery(query);
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(activityFeedQueryProvider.notifier).setQuery(query);
+    });
   }
 
   @override
@@ -68,22 +72,28 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         // by design: a plain outlined inbox, no badge/glow; the
         // pending count lives inside the review page.
         ShellHeaderActionSpec(
+          icon: FLucideIcons.chartColumnStacked,
+          label: l10n.cashFlowTitle,
+          onPress: () => context.push(FinanceRoutes.cashflow),
+          order: 20,
+        ),
+        ShellHeaderActionSpec(
           icon: FLucideIcons.inbox,
           label: l10n.ingestReviewTitle,
           onPress: () => context.push(FinanceRoutes.activityIngest),
-          order: 20,
+          order: 30,
         ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.receipt,
           label: l10n.activityExpenseListLink,
           onPress: () => context.push(FinanceRoutes.activityExpenses),
-          order: 30,
+          order: 40,
         ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.pieChart,
           label: l10n.activityExpenseReportLink,
           onPress: () => context.push(FinanceRoutes.expenseReport),
-          order: 40,
+          order: 50,
         ),
       ],
       child: AdaptiveContentFrame(
@@ -105,6 +115,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   void _replaceActivityUrl({required ActivityFeedQuery query}) {
     final router = GoRouter.of(context);
     final current = router.routeInformationProvider.value.uri;
+    if (current.path != FinanceRoutes.activity) return;
     final params = <String, String>{...current.queryParameters};
     params.remove('accounts');
     params.remove('kinds');
@@ -113,7 +124,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     params.remove('tab');
     params.addAll(query.toQueryParameters());
     final next = current.replace(
-      path: '/activity',
+      path: FinanceRoutes.activity,
       queryParameters: params.isEmpty ? null : params,
     );
     if (next.toString() != current.toString()) {

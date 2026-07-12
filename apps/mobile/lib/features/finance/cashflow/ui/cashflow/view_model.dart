@@ -33,7 +33,7 @@ class _CashFlowViewModel {
         ),
     };
     final current = _CurrentAcc(summary.baseCurrency);
-    final categoryAcc = <CashFlowKind, Decimal>{};
+    final categoryAcc = <String, _CategoryAcc>{};
 
     for (final bucket in summary.buckets) {
       final amount = bucket.totalInBase.amount;
@@ -49,21 +49,29 @@ class _CashFlowViewModel {
         current.add(bucket);
         final magnitude = amount.abs();
         if (magnitude > Decimal.zero) {
+          final key = bucket.categoryId ?? bucket.kind.name;
           categoryAcc.update(
-            bucket.kind,
-            (value) => value + magnitude,
-            ifAbsent: () => magnitude,
+            key,
+            (value) => value..amount += magnitude,
+            ifAbsent: () => _CategoryAcc(
+              key: key,
+              kind: bucket.kind,
+              label: bucket.categoryLabel,
+              amount: magnitude,
+            ),
           );
         }
       }
     }
 
     final categories =
-        categoryAcc.entries
+        categoryAcc.values
             .map(
               (entry) => _CategoryTotal(
-                kind: entry.key,
-                amount: entry.value,
+                key: entry.key,
+                kind: entry.kind,
+                label: entry.label,
+                amount: entry.amount,
                 currency: summary.baseCurrency,
               ),
             )
@@ -146,14 +154,32 @@ class _CurrentAcc {
 
 class _CategoryTotal {
   const _CategoryTotal({
+    required this.key,
     required this.kind,
+    required this.label,
     required this.amount,
     required this.currency,
   });
 
+  final String key;
   final CashFlowKind kind;
+  final String? label;
   final Decimal amount;
   final String currency;
+}
+
+class _CategoryAcc {
+  _CategoryAcc({
+    required this.key,
+    required this.kind,
+    required this.label,
+    required this.amount,
+  });
+
+  final String key;
+  final CashFlowKind kind;
+  final String? label;
+  Decimal amount;
 }
 
 void _add(Map<String, Decimal> map, String currency, Decimal amount) {

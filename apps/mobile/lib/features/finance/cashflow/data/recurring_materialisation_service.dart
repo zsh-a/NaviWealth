@@ -19,8 +19,14 @@ class RecurringMaterialisationService {
     for (final tx in due) {
       var current = tx;
       var guard = 0;
+      final rule = _recurrenceEngine.parse(current.rrule);
       while (!current.nextDueAt.isAfter(now) && guard < maxOccurrences) {
         final occurrence = current.nextDueAt;
+        final until = rule.until;
+        if (until != null && occurrence.isAfter(until)) {
+          await _recurringRepository.update(current.id, enabled: false);
+          break;
+        }
         final journalId = journalEntryId(
           recurringTransactionId: current.id,
           occurrenceDate: occurrence,
@@ -36,15 +42,16 @@ class RecurringMaterialisationService {
           );
           materialised++;
         }
-        final nextDueAt = _recurrenceEngine.nextAfterRule(
-          current.rrule,
-          occurrence,
-        );
+        final nextDueAt = _recurrenceEngine.nextAfter(rule, occurrence);
         current = await _recurringRepository.markMaterialised(
           id: current.id,
           occurrenceDate: occurrence,
           nextDueAt: nextDueAt,
         );
+        if (until != null && nextDueAt.isAfter(until)) {
+          await _recurringRepository.update(current.id, enabled: false);
+          break;
+        }
         guard++;
       }
     }

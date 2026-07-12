@@ -24,6 +24,9 @@ class _CashFlowContent extends StatelessWidget {
       visibleKeys: keys,
       currentKey: currentKey,
     );
+    void openActivity(ActivityKind? kind) {
+      context.go(cashFlowActivityRoute(period: period, now: now, kind: kind));
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -41,11 +44,22 @@ class _CashFlowContent extends StatelessWidget {
           children: [
             _PeriodSelector(period: period, onChanged: onPeriodChanged),
             const SizedBox(height: AppSpacing.s16),
-            _KpiGrid(model: model, formatter: formatter),
+            _KpiGrid(
+              model: model,
+              formatter: formatter,
+              onOpenIncome: () => openActivity(ActivityKind.income),
+              onOpenExpenses: () => openActivity(ActivityKind.expense),
+              onOpenNet: () => openActivity(null),
+            ),
           ],
         ),
         primary: _ChartsPanel(model: model, formatter: formatter),
-        secondary: _CategoryPanel(model: model, formatter: formatter),
+        secondary: _CategoryPanel(
+          model: model,
+          formatter: formatter,
+          onOpenIncome: () => openActivity(ActivityKind.income),
+          onOpenExpenses: () => openActivity(ActivityKind.expense),
+        ),
       ),
     );
   }
@@ -70,10 +84,19 @@ class _PeriodSelector extends StatelessWidget {
 }
 
 class _KpiGrid extends StatelessWidget {
-  const _KpiGrid({required this.model, required this.formatter});
+  const _KpiGrid({
+    required this.model,
+    required this.formatter,
+    required this.onOpenIncome,
+    required this.onOpenExpenses,
+    required this.onOpenNet,
+  });
 
   final _CashFlowViewModel model;
   final AppFormatters formatter;
+  final VoidCallback onOpenIncome;
+  final VoidCallback onOpenExpenses;
+  final VoidCallback onOpenNet;
 
   @override
   Widget build(BuildContext context) {
@@ -85,12 +108,14 @@ class _KpiGrid extends StatelessWidget {
         money: model.currentInflow,
         formatter: formatter,
         tint: semantic.success,
+        onPress: onOpenIncome,
       ),
       _KpiTile(
         label: l10n.cashFlowKpiOutflow,
         money: model.currentOutflow,
         formatter: formatter,
         tint: semantic.danger,
+        onPress: onOpenExpenses,
       ),
       _KpiTile(
         label: l10n.cashFlowKpiNet,
@@ -100,6 +125,7 @@ class _KpiGrid extends StatelessWidget {
             ? semantic.danger
             : semantic.success,
         signed: true,
+        onPress: onOpenNet,
       ),
     ];
     // Intrinsic-height tiles instead of a fixed-aspect GridView: never
@@ -139,6 +165,7 @@ class _KpiTile extends StatelessWidget {
     required this.money,
     required this.formatter,
     required this.tint,
+    required this.onPress,
     this.signed = false,
   });
 
@@ -147,10 +174,12 @@ class _KpiTile extends StatelessWidget {
   final AppFormatters formatter;
   final Color tint;
   final bool signed;
+  final VoidCallback onPress;
 
   @override
   Widget build(BuildContext context) {
     return SoftCard(
+      onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,6 +192,15 @@ class _KpiTile extends StatelessWidget {
             formatter: formatter,
             signed: signed,
             style: TypographyTokens.numericTitleStrong.copyWith(color: tint),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
         ],
       ),

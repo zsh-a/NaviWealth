@@ -73,6 +73,8 @@ void main() {
       expect(expense.kind, CashFlowKind.expense);
       expect(expense.signedAmount, Decimal.parse('-45'));
       expect(expense.counterAccountSide, AccountSide.expense);
+      expect(expense.counterAccountId, 'food');
+      expect(expense.counterAccountName, 'Food');
 
       final transfer = classify(
         _entry('transfer-je', [_post('cash', '-100'), _post('broker', '100')]),
@@ -143,6 +145,41 @@ void main() {
         expect(expenseTotal, Decimal.parse('1920'));
       },
     );
+
+    test('keeps distinct ledger categories as drill-down buckets', () {
+      final summary = aggregateCashFlow(
+        [
+          _event(
+            'food',
+            CashFlowKind.expense,
+            '2026-03-03',
+            '-120',
+            categoryId: 'expense:food',
+            categoryLabel: 'Food',
+          ),
+          _event(
+            'rent',
+            CashFlowKind.expense,
+            '2026-03-04',
+            '-1800',
+            categoryId: 'expense:rent',
+            categoryLabel: 'Rent',
+          ),
+        ],
+        period: CashFlowPeriod.month,
+        baseCurrency: 'USD',
+      );
+
+      expect(summary.buckets, hasLength(2));
+      expect(summary.buckets.map((bucket) => bucket.categoryId), {
+        'expense:food',
+        'expense:rent',
+      });
+      expect(summary.buckets.map((bucket) => bucket.categoryLabel), {
+        'Food',
+        'Rent',
+      });
+    });
   });
 }
 
@@ -180,7 +217,14 @@ CashFlowLedgerPosting _post(
   unit: unit,
 );
 
-CashFlowEvent _event(String id, CashFlowKind kind, String date, String amount) {
+CashFlowEvent _event(
+  String id,
+  CashFlowKind kind,
+  String date,
+  String amount, {
+  String? categoryId,
+  String? categoryLabel,
+}) {
   final value = Decimal.parse(amount);
   return CashFlowEvent(
     journalEntryId: id,
@@ -190,6 +234,8 @@ CashFlowEvent _event(String id, CashFlowKind kind, String date, String amount) {
     originalAmount: value,
     currency: 'USD',
     accountId: 'cash',
+    counterAccountId: categoryId,
+    counterAccountName: categoryLabel,
     counterAccountSide: kind == CashFlowKind.expense
         ? AccountSide.expense
         : AccountSide.income,

@@ -44,6 +44,11 @@ class _RankingSection extends ConsumerWidget {
                         row.withholdingInBase,
                         code: snapshot.baseCurrency,
                       ),
+                      onPress: row.assetId == 'unattributed'
+                          ? null
+                          : () => context.push(
+                              FinanceRoutes.wealthAsset(row.assetId),
+                            ),
                     ),
                     if (row != rows.last)
                       const SizedBox(height: AppSpacing.s16),
@@ -66,6 +71,7 @@ class _RankRow extends StatelessWidget {
     required this.share,
     required this.yieldOnCost,
     required this.withholding,
+    required this.onPress,
   });
 
   final bool compact;
@@ -74,13 +80,14 @@ class _RankRow extends StatelessWidget {
   final String share;
   final String yieldOnCost;
   final String withholding;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
     final muted = context.theme.colors.mutedForeground;
     if (compact) {
       final detail = '$share · $yieldOnCost · $withholding';
-      return Padding(
+      final content = Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -109,6 +116,9 @@ class _RankRow extends StatelessWidget {
           ],
         ),
       );
+      return onPress == null
+          ? content
+          : FTappable(onPress: onPress, child: content);
     }
     Widget cell(String text, int flex, {Color? color}) => Expanded(
       flex: flex,
@@ -122,7 +132,7 @@ class _RankRow extends StatelessWidget {
             : context.theme.typography.body.sm.copyWith(color: color),
       ),
     );
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
@@ -139,8 +149,19 @@ class _RankRow extends StatelessWidget {
           cell(share, 2),
           cell(yieldOnCost, 2),
           cell(withholding, 3, color: muted),
+          if (onPress != null) ...[
+            const SizedBox(width: AppSpacing.s6),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+              color: muted,
+            ),
+          ],
         ],
       ),
     );
+    return onPress == null
+        ? content
+        : FTappable(onPress: onPress, child: content);
   }
 }

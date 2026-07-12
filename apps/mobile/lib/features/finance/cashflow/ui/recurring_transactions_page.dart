@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -15,11 +16,22 @@ import 'recurring_transaction_form.dart';
 /// recurrence engine, materialisation) already exists; this is the
 /// missing UI for it. Reachable from the cash-flow page header and the
 /// command palette.
-class RecurringTransactionsPage extends ConsumerWidget {
+enum _RecurringFilter { active, paused }
+
+class RecurringTransactionsPage extends ConsumerStatefulWidget {
   const RecurringTransactionsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RecurringTransactionsPage> createState() =>
+      _RecurringTransactionsPageState();
+}
+
+class _RecurringTransactionsPageState
+    extends ConsumerState<RecurringTransactionsPage> {
+  _RecurringFilter _filter = _RecurringFilter.active;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final rulesAsync = ref.watch(recurringTransactionsProvider);
     return AppPageScaffold(
@@ -46,18 +58,61 @@ class RecurringTransactionsPage extends ConsumerWidget {
             retryLabel: l10n.commonRetry,
             onRetry: () => ref.invalidate(recurringTransactionsProvider),
           ),
-          data: (rules) => rules.isEmpty
-              ? AppEmptyState(
-                  icon: FLucideIcons.calendarClock,
-                  iconSize: 56,
-                  title: l10n.recurringEmptyTitle,
-                  message: l10n.recurringEmptyBody,
-                  action: FButton(
-                    onPress: () => showRecurringTransactionForm(context, ref),
-                    child: Text(l10n.recurringEmptyCta),
-                  ),
+          data: (rules) {
+            final visible = rules
+                .where(
+                  (rule) => switch (_filter) {
+                    _RecurringFilter.active => rule.enabled,
+                    _RecurringFilter.paused => !rule.enabled,
+                  },
                 )
-              : _RecurringList(rules: rules),
+                .toList(growable: false);
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s16,
+                    AppSpacing.s12,
+                    AppSpacing.s16,
+                    AppSpacing.s4,
+                  ),
+                  child: SegmentedRow<_RecurringFilter>(
+                    options: _RecurringFilter.values,
+                    value: _filter,
+                    minSegmentWidth: 80,
+                    labelOf: (filter) => switch (filter) {
+                      _RecurringFilter.active => l10n.recurringFilterActive,
+                      _RecurringFilter.paused => l10n.recurringFilterPaused,
+                    },
+                    onChanged: (filter) => setState(() => _filter = filter),
+                  ),
+                ),
+                Expanded(
+                  child: visible.isEmpty
+                      ? AppEmptyState(
+                          icon: FLucideIcons.calendarClock,
+                          iconSize: 56,
+                          title: _filter == _RecurringFilter.active
+                              ? l10n.recurringEmptyTitle
+                              : l10n.recurringPausedEmptyTitle,
+                          message: _filter == _RecurringFilter.active
+                              ? l10n.recurringEmptyBody
+                              : l10n.recurringPausedEmptyBody,
+                          action: _filter == _RecurringFilter.active
+                              ? FButton(
+                                  onPress: () => showRecurringTransactionForm(
+                                    context,
+                                    ref,
+                                  ),
+                                  child: Text(l10n.recurringEmptyCta),
+                                )
+                              : null,
+                        )
+                      : _RecurringList(rules: visible),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -105,8 +160,11 @@ class _RecurringRow extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final muted = context.theme.colors.mutedForeground;
+    final completed = _isCompleted(rule);
 
-    String amountLabel;
+    String title;
+    Decimal? signedAmount;
+    String amountUnit = '';
     try {
       final template = JournalBuildTemplateCodec.decode(
         rule.templateJournalBuildJson,
@@ -114,11 +172,13 @@ class _RecurringRow extends ConsumerWidget {
       final cash = template.postings.isNotEmpty
           ? template.postings.first
           : null;
-      amountLabel = cash == null
-          ? l10n.recurringTemplateCorrupt
-          : formatters.currency(cash.units.abs(), code: cash.unit);
+      title = template.entry.narration.trim().isEmpty
+          ? l10n.recurringDefaultNarration
+          : template.entry.narration;
+      signedAmount = cash?.units;
+      amountUnit = cash?.unit ?? '';
     } catch (_) {
-      amountLabel = l10n.recurringTemplateCorrupt;
+      title = l10n.recurringTemplateCorrupt;
     }
 
     return SoftCard(
@@ -130,15 +190,34 @@ class _RecurringRow extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _describeRecurrence(l10n, rule.rrule),
-                  style: context.labelStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: context.labelStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (!rule.enabled) ...[
+                      const SizedBox(width: AppSpacing.s8),
+                      AppBadge(
+                        label: completed
+                            ? l10n.recurringCompletedBadge
+                            : l10n.recurringPausedBadge,
+                        size: AppBadgeSize.compact,
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 Text(
-                  l10n.recurringNextDue(formatters.date(rule.nextDueAt)),
+                  [
+                    _describeRecurrence(l10n, rule.rrule),
+                    if (rule.enabled)
+                      l10n.recurringNextDue(formatters.date(rule.nextDueAt)),
+                  ].join(' · '),
                   style: context.captionStyle.copyWith(color: muted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -147,7 +226,13 @@ class _RecurringRow extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s12),
-          Text(amountLabel, style: context.strongLabelStyle),
+          if (signedAmount != null)
+            SignedMoneyText(
+              amount: signedAmount,
+              unit: amountUnit,
+              formatters: formatters,
+              style: context.strongLabelStyle,
+            ),
           const SizedBox(width: AppSpacing.s8),
           AppAdaptiveActionMenu(
             title: l10n.recurringRowActionsTitle,
@@ -166,14 +251,28 @@ class _RecurringRow extends ConsumerWidget {
                   }
                 },
               ),
-              AppAdaptiveAction(
-                icon: FLucideIcons.circlePause,
-                title: l10n.recurringActionDisable,
-                subtitle: l10n.recurringActionDisableHint,
-                onPress: () {
-                  if (context.mounted) return _disableRule(context, ref, rule);
-                },
-              ),
+              if (rule.enabled)
+                AppAdaptiveAction(
+                  icon: FLucideIcons.circlePause,
+                  title: l10n.recurringActionDisable,
+                  subtitle: l10n.recurringActionDisableHint,
+                  onPress: () {
+                    if (context.mounted) {
+                      return _disableRule(context, ref, rule);
+                    }
+                  },
+                )
+              else if (!completed)
+                AppAdaptiveAction(
+                  icon: FLucideIcons.play,
+                  title: l10n.recurringActionEnable,
+                  subtitle: l10n.recurringActionEnableHint,
+                  onPress: () {
+                    if (context.mounted) {
+                      return _enableRule(context, ref, rule);
+                    }
+                  },
+                ),
               AppAdaptiveAction(
                 icon: FLucideIcons.trash2,
                 title: l10n.commonDelete,
@@ -236,6 +335,25 @@ Future<void> _disableRule(
   }
 }
 
+Future<void> _enableRule(
+  BuildContext context,
+  WidgetRef ref,
+  RecurringTransaction rule,
+) async {
+  final l10n = AppLocalizations.of(context);
+  try {
+    final repo = await ref.read(recurringTransactionRepositoryProvider.future);
+    await repo.update(rule.id, enabled: true);
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.success, l10n.recurringEnabled);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, l10n.recurringActionFailed);
+    }
+  }
+}
+
 Future<void> _deleteRule(
   BuildContext context,
   WidgetRef ref,
@@ -289,6 +407,15 @@ String _describeRecurrence(AppLocalizations l10n, String rrule) {
     parts.add(l10n.recurringUntil('$y-$m-$d'));
   }
   return parts.join(' · ');
+}
+
+bool _isCompleted(RecurringTransaction rule) {
+  try {
+    final until = const RecurrenceEngine().parse(rule.rrule).until;
+    return until != null && rule.nextDueAt.isAfter(until);
+  } catch (_) {
+    return false;
+  }
 }
 
 class _RecurringSkeleton extends StatelessWidget {

@@ -104,6 +104,7 @@ DividendCenterSnapshot buildDividendCenterSnapshot({
   required Iterable<CashFlowEvent> dividendEvents,
   required Map<String, CashFlowLedgerEntry> entriesById,
   required Map<String, Account> accountsById,
+  Map<String, String> assetLabelsById = const {},
   required Map<String, HoldingSnapshot> holdings,
   required String baseCurrency,
   required DateTime now,
@@ -126,7 +127,8 @@ DividendCenterSnapshot buildDividendCenterSnapshot({
       DividendCenterEvent(
         event: event,
         assetId: resolvedAssetId,
-        assetLabel: _assetLabel(resolvedAssetId),
+        assetLabel:
+            assetLabelsById[resolvedAssetId] ?? _assetLabel(resolvedAssetId),
         withholdingInBase: withholding.inBase,
         withholdingOriginal: withholding.original,
         withholdingCurrency: withholding.currency,
@@ -278,7 +280,7 @@ String? _assetIdFromTags(List<String> tagIds) {
 }
 
 String _assetLabel(String assetId) {
-  if (assetId == 'unattributed') return 'Unattributed';
+  if (assetId == 'unattributed') return '—';
   final colon = assetId.indexOf(':');
   return colon < 0 ? assetId : assetId.substring(colon + 1);
 }

@@ -18,7 +18,7 @@ mixin _$CashFlowEvent {
 /// into user asset accounts; negative means cash leaves them.
  Decimal get signedAmount;/// Signed amount in [currency], before any base-currency conversion.
  Decimal get originalAmount; String get currency;/// User asset account whose cash leg best represents this flow.
- String get accountId; AccountSide get counterAccountSide; bool get isForecast;
+ String get accountId; AccountSide get counterAccountSide; String? get counterAccountId; String? get counterAccountName; bool get isForecast;
 /// Create a copy of CashFlowEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $CashFlowEventCopyWith<CashFlowEvent> get copyWith => _$CashFlowEventCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CashFlowEvent&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.signedAmount, signedAmount) || other.signedAmount == signedAmount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.counterAccountSide, counterAccountSide) || other.counterAccountSide == counterAccountSide)&&(identical(other.isForecast, isForecast) || other.isForecast == isForecast));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CashFlowEvent&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.signedAmount, signedAmount) || other.signedAmount == signedAmount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.counterAccountSide, counterAccountSide) || other.counterAccountSide == counterAccountSide)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.counterAccountName, counterAccountName) || other.counterAccountName == counterAccountName)&&(identical(other.isForecast, isForecast) || other.isForecast == isForecast));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,journalEntryId,date,kind,signedAmount,originalAmount,currency,accountId,counterAccountSide,isForecast);
+int get hashCode => Object.hash(runtimeType,journalEntryId,date,kind,signedAmount,originalAmount,currency,accountId,counterAccountSide,counterAccountId,counterAccountName,isForecast);
 
 @override
 String toString() {
-  return 'CashFlowEvent(journalEntryId: $journalEntryId, date: $date, kind: $kind, signedAmount: $signedAmount, originalAmount: $originalAmount, currency: $currency, accountId: $accountId, counterAccountSide: $counterAccountSide, isForecast: $isForecast)';
+  return 'CashFlowEvent(journalEntryId: $journalEntryId, date: $date, kind: $kind, signedAmount: $signedAmount, originalAmount: $originalAmount, currency: $currency, accountId: $accountId, counterAccountSide: $counterAccountSide, counterAccountId: $counterAccountId, counterAccountName: $counterAccountName, isForecast: $isForecast)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $CashFlowEventCopyWith<$Res>  {
   factory $CashFlowEventCopyWith(CashFlowEvent value, $Res Function(CashFlowEvent) _then) = _$CashFlowEventCopyWithImpl;
 @useResult
 $Res call({
- String journalEntryId, DateTime date, CashFlowKind kind, Decimal signedAmount, Decimal originalAmount, String currency, String accountId, AccountSide counterAccountSide, bool isForecast
+ String journalEntryId, DateTime date, CashFlowKind kind, Decimal signedAmount, Decimal originalAmount, String currency, String accountId, AccountSide counterAccountSide, String? counterAccountId, String? counterAccountName, bool isForecast
 });
 
 
@@ -66,7 +66,7 @@ class _$CashFlowEventCopyWithImpl<$Res>
 
 /// Create a copy of CashFlowEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? journalEntryId = null,Object? date = null,Object? kind = null,Object? signedAmount = null,Object? originalAmount = null,Object? currency = null,Object? accountId = null,Object? counterAccountSide = null,Object? isForecast = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? journalEntryId = null,Object? date = null,Object? kind = null,Object? signedAmount = null,Object? originalAmount = null,Object? currency = null,Object? accountId = null,Object? counterAccountSide = null,Object? counterAccountId = freezed,Object? counterAccountName = freezed,Object? isForecast = null,}) {
   return _then(_self.copyWith(
 journalEntryId: null == journalEntryId ? _self.journalEntryId : journalEntryId // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -76,7 +76,9 @@ as Decimal,originalAmount: null == originalAmount ? _self.originalAmount : origi
 as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as String,counterAccountSide: null == counterAccountSide ? _self.counterAccountSide : counterAccountSide // ignore: cast_nullable_to_non_nullable
-as AccountSide,isForecast: null == isForecast ? _self.isForecast : isForecast // ignore: cast_nullable_to_non_nullable
+as AccountSide,counterAccountId: freezed == counterAccountId ? _self.counterAccountId : counterAccountId // ignore: cast_nullable_to_non_nullable
+as String?,counterAccountName: freezed == counterAccountName ? _self.counterAccountName : counterAccountName // ignore: cast_nullable_to_non_nullable
+as String?,isForecast: null == isForecast ? _self.isForecast : isForecast // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -162,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String journalEntryId,  DateTime date,  CashFlowKind kind,  Decimal signedAmount,  Decimal originalAmount,  String currency,  String accountId,  AccountSide counterAccountSide,  bool isForecast)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String journalEntryId,  DateTime date,  CashFlowKind kind,  Decimal signedAmount,  Decimal originalAmount,  String currency,  String accountId,  AccountSide counterAccountSide,  String? counterAccountId,  String? counterAccountName,  bool isForecast)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CashFlowEvent() when $default != null:
-return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_that.originalAmount,_that.currency,_that.accountId,_that.counterAccountSide,_that.isForecast);case _:
+return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_that.originalAmount,_that.currency,_that.accountId,_that.counterAccountSide,_that.counterAccountId,_that.counterAccountName,_that.isForecast);case _:
   return orElse();
 
 }
@@ -183,10 +185,10 @@ return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String journalEntryId,  DateTime date,  CashFlowKind kind,  Decimal signedAmount,  Decimal originalAmount,  String currency,  String accountId,  AccountSide counterAccountSide,  bool isForecast)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String journalEntryId,  DateTime date,  CashFlowKind kind,  Decimal signedAmount,  Decimal originalAmount,  String currency,  String accountId,  AccountSide counterAccountSide,  String? counterAccountId,  String? counterAccountName,  bool isForecast)  $default,) {final _that = this;
 switch (_that) {
 case _CashFlowEvent():
-return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_that.originalAmount,_that.currency,_that.accountId,_that.counterAccountSide,_that.isForecast);case _:
+return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_that.originalAmount,_that.currency,_that.accountId,_that.counterAccountSide,_that.counterAccountId,_that.counterAccountName,_that.isForecast);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +205,10 @@ return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String journalEntryId,  DateTime date,  CashFlowKind kind,  Decimal signedAmount,  Decimal originalAmount,  String currency,  String accountId,  AccountSide counterAccountSide,  bool isForecast)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String journalEntryId,  DateTime date,  CashFlowKind kind,  Decimal signedAmount,  Decimal originalAmount,  String currency,  String accountId,  AccountSide counterAccountSide,  String? counterAccountId,  String? counterAccountName,  bool isForecast)?  $default,) {final _that = this;
 switch (_that) {
 case _CashFlowEvent() when $default != null:
-return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_that.originalAmount,_that.currency,_that.accountId,_that.counterAccountSide,_that.isForecast);case _:
+return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_that.originalAmount,_that.currency,_that.accountId,_that.counterAccountSide,_that.counterAccountId,_that.counterAccountName,_that.isForecast);case _:
   return null;
 
 }
@@ -218,7 +220,7 @@ return $default(_that.journalEntryId,_that.date,_that.kind,_that.signedAmount,_t
 
 
 class _CashFlowEvent implements CashFlowEvent {
-  const _CashFlowEvent({required this.journalEntryId, required this.date, required this.kind, required this.signedAmount, required this.originalAmount, required this.currency, required this.accountId, required this.counterAccountSide, this.isForecast = false});
+  const _CashFlowEvent({required this.journalEntryId, required this.date, required this.kind, required this.signedAmount, required this.originalAmount, required this.currency, required this.accountId, required this.counterAccountSide, this.counterAccountId, this.counterAccountName, this.isForecast = false});
   
 
 @override final  String journalEntryId;
@@ -233,6 +235,8 @@ class _CashFlowEvent implements CashFlowEvent {
 /// User asset account whose cash leg best represents this flow.
 @override final  String accountId;
 @override final  AccountSide counterAccountSide;
+@override final  String? counterAccountId;
+@override final  String? counterAccountName;
 @override@JsonKey() final  bool isForecast;
 
 /// Create a copy of CashFlowEvent
@@ -245,16 +249,16 @@ _$CashFlowEventCopyWith<_CashFlowEvent> get copyWith => __$CashFlowEventCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CashFlowEvent&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.signedAmount, signedAmount) || other.signedAmount == signedAmount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.counterAccountSide, counterAccountSide) || other.counterAccountSide == counterAccountSide)&&(identical(other.isForecast, isForecast) || other.isForecast == isForecast));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CashFlowEvent&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.signedAmount, signedAmount) || other.signedAmount == signedAmount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.counterAccountSide, counterAccountSide) || other.counterAccountSide == counterAccountSide)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.counterAccountName, counterAccountName) || other.counterAccountName == counterAccountName)&&(identical(other.isForecast, isForecast) || other.isForecast == isForecast));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,journalEntryId,date,kind,signedAmount,originalAmount,currency,accountId,counterAccountSide,isForecast);
+int get hashCode => Object.hash(runtimeType,journalEntryId,date,kind,signedAmount,originalAmount,currency,accountId,counterAccountSide,counterAccountId,counterAccountName,isForecast);
 
 @override
 String toString() {
-  return 'CashFlowEvent(journalEntryId: $journalEntryId, date: $date, kind: $kind, signedAmount: $signedAmount, originalAmount: $originalAmount, currency: $currency, accountId: $accountId, counterAccountSide: $counterAccountSide, isForecast: $isForecast)';
+  return 'CashFlowEvent(journalEntryId: $journalEntryId, date: $date, kind: $kind, signedAmount: $signedAmount, originalAmount: $originalAmount, currency: $currency, accountId: $accountId, counterAccountSide: $counterAccountSide, counterAccountId: $counterAccountId, counterAccountName: $counterAccountName, isForecast: $isForecast)';
 }
 
 
@@ -265,7 +269,7 @@ abstract mixin class _$CashFlowEventCopyWith<$Res> implements $CashFlowEventCopy
   factory _$CashFlowEventCopyWith(_CashFlowEvent value, $Res Function(_CashFlowEvent) _then) = __$CashFlowEventCopyWithImpl;
 @override @useResult
 $Res call({
- String journalEntryId, DateTime date, CashFlowKind kind, Decimal signedAmount, Decimal originalAmount, String currency, String accountId, AccountSide counterAccountSide, bool isForecast
+ String journalEntryId, DateTime date, CashFlowKind kind, Decimal signedAmount, Decimal originalAmount, String currency, String accountId, AccountSide counterAccountSide, String? counterAccountId, String? counterAccountName, bool isForecast
 });
 
 
@@ -282,7 +286,7 @@ class __$CashFlowEventCopyWithImpl<$Res>
 
 /// Create a copy of CashFlowEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? journalEntryId = null,Object? date = null,Object? kind = null,Object? signedAmount = null,Object? originalAmount = null,Object? currency = null,Object? accountId = null,Object? counterAccountSide = null,Object? isForecast = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? journalEntryId = null,Object? date = null,Object? kind = null,Object? signedAmount = null,Object? originalAmount = null,Object? currency = null,Object? accountId = null,Object? counterAccountSide = null,Object? counterAccountId = freezed,Object? counterAccountName = freezed,Object? isForecast = null,}) {
   return _then(_CashFlowEvent(
 journalEntryId: null == journalEntryId ? _self.journalEntryId : journalEntryId // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -292,7 +296,9 @@ as Decimal,originalAmount: null == originalAmount ? _self.originalAmount : origi
 as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as String,counterAccountSide: null == counterAccountSide ? _self.counterAccountSide : counterAccountSide // ignore: cast_nullable_to_non_nullable
-as AccountSide,isForecast: null == isForecast ? _self.isForecast : isForecast // ignore: cast_nullable_to_non_nullable
+as AccountSide,counterAccountId: freezed == counterAccountId ? _self.counterAccountId : counterAccountId // ignore: cast_nullable_to_non_nullable
+as String?,counterAccountName: freezed == counterAccountName ? _self.counterAccountName : counterAccountName // ignore: cast_nullable_to_non_nullable
+as String?,isForecast: null == isForecast ? _self.isForecast : isForecast // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

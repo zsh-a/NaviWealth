@@ -26,6 +26,7 @@ final dividendCenterSnapshotProvider =
         journalEntriesWithPostingsStreamProvider.future,
       );
       final accounts = await ref.watch(allAccountsStreamProvider.future);
+      final assets = await ref.watch(allAssetsStreamProvider.future);
       final holdings = ref.watch(holdingsSnapshotProvider).value ?? const {};
       final baseCurrency = ref.watch(cashFlowBaseCurrencyProvider);
       final converter = ref.watch(cashFlowCurrencyConverterProvider);
@@ -37,6 +38,12 @@ final dividendCenterSnapshotProvider =
             entry.entry.id: entry.toCashFlowLedgerEntry(),
         },
         accountsById: {for (final account in accounts) account.id: account},
+        assetLabelsById: {
+          for (final asset in assets)
+            asset.id: (asset.name?.trim().isNotEmpty ?? false)
+                ? asset.name!.trim()
+                : asset.symbol,
+        },
         holdings: holdings,
         baseCurrency: baseCurrency,
         now: ref.watch(dividendCenterNowProvider),

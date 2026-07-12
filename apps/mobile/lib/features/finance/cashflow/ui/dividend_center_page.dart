@@ -31,7 +31,11 @@ class DividendCenterPage extends ConsumerWidget {
       title: l10n.dividendCenterTitle,
       actions: [
         FHeaderAction(
-          icon: const Icon(FLucideIcons.creditCard),
+          icon: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.dividendCenterRecordAction),
+            child: const Icon(FLucideIcons.plus),
+          ),
+          semanticsLabel: l10n.dividendCenterRecordAction,
           onPress: () => context.push(FinanceRoutes.wealthCorporateAction),
         ),
       ],
@@ -83,9 +87,9 @@ class _DividendCenterBody extends StatelessWidget {
             else ...[
               _KpiGrid(snapshot: snapshot),
               const SizedBox(height: AppSpacing.s16),
-              _RankingSection(snapshot: snapshot),
-              const SizedBox(height: AppSpacing.s16),
               const _ForecastCard(),
+              const SizedBox(height: AppSpacing.s16),
+              _RankingSection(snapshot: snapshot),
               const SizedBox(height: AppSpacing.s16),
               _TimelineSection(snapshot: snapshot),
             ],

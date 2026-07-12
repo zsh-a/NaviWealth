@@ -121,9 +121,17 @@ StatefulShellRoute financeShellRoute() {
                 ],
               ),
               GoRoute(
-                path: 'cashflow/dividends',
-                name: FinanceRouteNames.cashflowDividends,
-                builder: (context, state) => const DividendCenterPage(),
+                path: 'cashflow',
+                name: FinanceRouteNames.cashflow,
+                builder: (context, state) => const CashFlowPage(),
+                routes: [
+                  GoRoute(
+                    path: 'recurring',
+                    name: FinanceRouteNames.cashflowRecurring,
+                    builder: (context, state) =>
+                        const RecurringTransactionsPage(),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'trade',
@@ -181,18 +189,6 @@ StatefulShellRoute financeShellRoute() {
                 path: 'ingest',
                 name: FinanceRouteNames.activityIngest,
                 builder: (context, state) => const IngestReviewPage(),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: FinanceRoutes.cashflow,
-            name: FinanceRouteNames.cashflow,
-            builder: (context, state) => const CashFlowPage(),
-            routes: [
-              GoRoute(
-                path: 'recurring',
-                name: FinanceRouteNames.cashflowRecurring,
-                builder: (context, state) => const RecurringTransactionsPage(),
               ),
             ],
           ),
@@ -266,6 +262,13 @@ StatefulShellRoute financeShellRoute() {
                   load: portfolio_hub_lib.loadLibrary,
                   builder: (_) => portfolio_hub_lib.PortfolioHubPage(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'dividends',
+                    name: FinanceRouteNames.cashflowDividends,
+                    builder: (context, state) => const DividendCenterPage(),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'watchlist',

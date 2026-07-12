@@ -65,6 +65,8 @@ CashFlowEvent? classifyCashFlowEvent(
     currency: primaryLeg.unit.trim().toUpperCase(),
     accountId: primaryLeg.accountId,
     counterAccountSide: counter?.category ?? AccountSide.asset,
+    counterAccountId: counter?.id,
+    counterAccountName: counter?.name,
   );
 }
 

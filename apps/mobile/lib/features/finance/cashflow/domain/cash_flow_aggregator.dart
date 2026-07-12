@@ -32,6 +32,8 @@ class CashFlowBucket {
     required this.totalInBase,
     required this.originalTotal,
     required this.count,
+    this.categoryId,
+    this.categoryLabel,
   });
 
   final String key;
@@ -40,6 +42,8 @@ class CashFlowBucket {
   final Money totalInBase;
   final Money originalTotal;
   final int count;
+  final String? categoryId;
+  final String? categoryLabel;
 }
 
 @immutable
@@ -67,10 +71,17 @@ CashFlowSummary aggregateCashFlow(
   for (final event in events) {
     final key = _periodKey(event.date.toUtc(), period);
     final currency = event.currency.trim().toUpperCase();
-    final accKey = '$key|${event.kind.name}|$currency';
+    final categoryId = event.counterAccountId ?? event.kind.name;
+    final accKey = '$key|${event.kind.name}|$currency|$categoryId';
     final bucket = acc.putIfAbsent(
       accKey,
-      () => _BucketAcc(key: key, kind: event.kind, currency: currency),
+      () => _BucketAcc(
+        key: key,
+        kind: event.kind,
+        currency: currency,
+        categoryId: categoryId,
+        categoryLabel: event.counterAccountName,
+      ),
     );
     bucket.base += event.signedAmount;
     bucket.original += event.originalAmount;
@@ -87,6 +98,8 @@ CashFlowSummary aggregateCashFlow(
           totalInBase: Money(bucket.base, baseCurrency),
           originalTotal: Money(bucket.original, bucket.currency),
           count: bucket.count,
+          categoryId: bucket.categoryId,
+          categoryLabel: bucket.categoryLabel,
         );
       }).toList()..sort((a, b) {
         final c = a.key.compareTo(b.key);
@@ -218,11 +231,19 @@ String _periodKey(DateTime date, CashFlowPeriod period) {
 }
 
 class _BucketAcc {
-  _BucketAcc({required this.key, required this.kind, required this.currency});
+  _BucketAcc({
+    required this.key,
+    required this.kind,
+    required this.currency,
+    required this.categoryId,
+    required this.categoryLabel,
+  });
 
   final String key;
   final CashFlowKind kind;
   final String currency;
+  final String categoryId;
+  final String? categoryLabel;
   Decimal base = Decimal.zero;
   Decimal original = Decimal.zero;
   int count = 0;

@@ -43,6 +43,7 @@ import 'package:naviwealth/features/finance/assets/physical/data/providers.dart'
 import 'package:naviwealth/features/finance/assets/ui/asset_detail_page.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
@@ -197,6 +198,10 @@ Future<ProviderContainer> _pumpAt(
       // dashboard pages settle without hanging on the missing key store.
       holdingServiceProvider.overrideWith(
         (ref) async => _EmptyHoldingService(),
+      ),
+      holdingsSnapshotProvider.overrideWith((ref) async => const {}),
+      recurringTransactionsProvider.overrideWith(
+        (ref) => Stream.value(const []),
       ),
       cashFlowSummaryProvider.overrideWith(
         (ref, request) async => CashFlowSummary(
@@ -406,7 +411,9 @@ void main() {
       await _drainTimers(tester);
     });
 
-    testWidgets('/cashflow?period=year renders CashFlow', (tester) async {
+    testWidgets('/activity/cashflow?period=year renders CashFlow', (
+      tester,
+    ) async {
       final container = await _pumpAt(
         tester,
         initialLocation: '${AppRoutes.cashflow}?period=year',
@@ -415,7 +422,7 @@ void main() {
       expect(_currentPath(container), AppRoutes.cashflow);
     });
 
-    testWidgets('/activity/cashflow/dividends renders Dividend Center', (
+    testWidgets('/wealth/portfolio/dividends renders Dividend Center', (
       tester,
     ) async {
       await _pumpAt(tester, initialLocation: AppRoutes.cashflowDividends);
@@ -759,6 +766,49 @@ void main() {
   });
 
   group('back / forward via URL changes', () {
+    testWidgets('Cash Flow back returns to the Activity timeline', (
+      tester,
+    ) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.cashflow,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('app.back')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(_currentPath(container), AppRoutes.activity);
+      expect(find.byType(ActivityPage), findsOneWidget);
+    });
+
+    testWidgets('Recurring back returns to Cash Flow', (tester) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.cashflowRecurring,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('app.back')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(_currentPath(container), AppRoutes.cashflow);
+      expect(find.byType(CashFlowPage), findsOneWidget);
+    });
+
+    testWidgets('Dividend Center back returns to Portfolio', (tester) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.cashflowDividends,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('app.back')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(_currentPath(container), AppRoutes.wealthPortfolio);
+    });
+
     // The browser back button doesn't pop a Navigator stack here — go_router
     // tracks history via the platform's RouteInformationProvider and replays
     // it as a `setNewRoutePath`. Functionally that's equivalent to the router

@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_buil
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -139,6 +140,26 @@ class _RecurringTransactionSheetState
     final l10n = AppLocalizations.of(context);
     final accounts =
         ref.watch(accountsStreamProvider).value ?? const <Account>[];
+    final currency = _currency?.toUpperCase();
+    final cashAccounts = accounts
+        .where(
+          (account) =>
+              !account.archived &&
+              account.category == AccountSide.asset &&
+              (currency == null || account.currency.toUpperCase() == currency),
+        )
+        .toList(growable: false);
+    final counterSide = _kind == _RecurringKind.income
+        ? AccountSide.income
+        : AccountSide.expense;
+    final counterAccounts = accounts
+        .where(
+          (account) =>
+              !account.archived &&
+              account.category == counterSide &&
+              (currency == null || account.currency.toUpperCase() == currency),
+        )
+        .toList(growable: false);
     final isMonthly =
         _freq == RecurrenceFrequency.monthly ||
         _freq == RecurrenceFrequency.yearly;
@@ -169,6 +190,7 @@ class _RecurringTransactionSheetState
               },
               onChanged: (v) => setState(() {
                 _kind = v;
+                _counterAccountId = null;
                 widget.dirty.markDirty();
               }),
             ),
@@ -197,12 +219,14 @@ class _RecurringTransactionSheetState
               value: _currency,
               onChanged: (v) => setState(() {
                 _currency = v;
+                _cashAccountId = null;
+                _counterAccountId = null;
                 widget.dirty.markDirty();
               }),
             ),
             const SizedBox(height: AppSpacing.s12),
             AccountPicker(
-              accounts: accounts,
+              accounts: cashAccounts,
               value: _cashAccountId,
               label: l10n.recurringFieldCashAccount,
               onChanged: (v) => setState(() {
@@ -212,7 +236,7 @@ class _RecurringTransactionSheetState
             ),
             const SizedBox(height: AppSpacing.s12),
             AccountPicker(
-              accounts: accounts,
+              accounts: counterAccounts,
               value: _counterAccountId,
               label: l10n.recurringFieldCategoryAccount,
               onChanged: (v) => setState(() {
@@ -366,6 +390,27 @@ class _RecurringTransactionSheetState
     }
     final cashAccountId = _cashAccountId!;
     final counterAccountId = _counterAccountId!;
+    final accounts =
+        ref.read(accountsStreamProvider).value ?? const <Account>[];
+    final byId = {for (final account in accounts) account.id: account};
+    final cashAccount = byId[cashAccountId];
+    final counterAccount = byId[counterAccountId];
+    final expectedCounterSide = _kind == _RecurringKind.income
+        ? AccountSide.income
+        : AccountSide.expense;
+    if (cashAccount == null ||
+        cashAccount.category != AccountSide.asset ||
+        cashAccount.currency.toUpperCase() != currency.toUpperCase() ||
+        counterAccount == null ||
+        counterAccount.category != expectedCounterSide ||
+        counterAccount.currency.toUpperCase() != currency.toUpperCase()) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.recurringValidationAccounts,
+      );
+      return;
+    }
     final cashUnits = _kind == _RecurringKind.income ? amount : -amount;
     final note = _noteCtrl.text.trim();
     final narration = note.isEmpty ? l10n.recurringDefaultNarration : note;

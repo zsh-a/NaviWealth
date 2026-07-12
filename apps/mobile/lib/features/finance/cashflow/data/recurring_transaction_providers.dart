@@ -47,7 +47,7 @@ final recurringTransactionsProvider =
       final repo = await ref.watch(
         recurringTransactionRepositoryProvider.future,
       );
-      yield* repo.watchEnabled();
+      yield* repo.watchAll();
     });
 
 final upcomingRecurringEventsProvider = Provider.autoDispose
@@ -55,7 +55,9 @@ final upcomingRecurringEventsProvider = Provider.autoDispose
       ref,
       window,
     ) {
-      final rules = ref.watch(recurringTransactionsProvider).value ?? const [];
+      final rules = (ref.watch(recurringTransactionsProvider).value ?? const [])
+          .where((rule) => rule.enabled)
+          .toList(growable: false);
       const engine = RecurrenceEngine();
       final events = <ForecastedRecurringEvent>[];
       for (final rule in rules) {

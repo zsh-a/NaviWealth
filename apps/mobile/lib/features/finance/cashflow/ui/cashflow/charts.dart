@@ -1,10 +1,19 @@
 part of '../cashflow_page.dart';
 
-class _ChartsPanel extends StatelessWidget {
+enum _CashFlowTrendMode { incomeExpense, net }
+
+class _ChartsPanel extends StatefulWidget {
   const _ChartsPanel({required this.model, required this.formatter});
 
   final _CashFlowViewModel model;
   final AppFormatters formatter;
+
+  @override
+  State<_ChartsPanel> createState() => _ChartsPanelState();
+}
+
+class _ChartsPanelState extends State<_ChartsPanel> {
+  _CashFlowTrendMode _mode = _CashFlowTrendMode.incomeExpense;
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +21,7 @@ class _ChartsPanel extends StatelessWidget {
     final semantic = SemanticColors.of(context);
     final locale = Localizations.localeOf(context).toString();
     final axis = ValueAxis.currency(
-      currencyCode: model.baseCurrency,
+      currencyCode: widget.model.baseCurrency,
       showGrid: true,
       locale: locale,
     );
@@ -21,65 +30,79 @@ class _ChartsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.cashFlowIncomeExpenseTitle, style: context.rowTitleStyle),
-          const SizedBox(height: AppSpacing.s12),
-          NwBarChart(
-            series: [
-              CategorySeries(
-                name: l10n.cashFlowKpiInflow,
-                data: model.periods
-                    .map(
-                      (period) => CategoryDatum(
-                        label: period.label,
-                        value: period.inflow.toDouble(),
-                        colorOverride: semantic.success,
-                      ),
-                    )
-                    .toList(),
-              ),
-              CategorySeries(
-                name: l10n.cashFlowKpiOutflow,
-                data: model.periods
-                    .map(
-                      (period) => CategoryDatum(
-                        label: period.label,
-                        value: period.outflow.toDouble(),
-                        colorOverride: semantic.danger,
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-            yAxis: axis,
-            aspectRatio: 16 / 7,
-            barWidth: 10,
-            semanticLabel: l10n.cashFlowIncomeExpenseTitle,
+          SegmentedRow<_CashFlowTrendMode>(
+            options: _CashFlowTrendMode.values,
+            value: _mode,
+            minSegmentWidth: 96,
+            labelOf: (mode) => switch (mode) {
+              _CashFlowTrendMode.incomeExpense =>
+                l10n.cashFlowIncomeExpenseTitle,
+              _CashFlowTrendMode.net => l10n.cashFlowKpiNet,
+            },
+            onChanged: (mode) => setState(() => _mode = mode),
           ),
-          const SizedBox(height: AppSpacing.s20),
-          Text(l10n.cashFlowNetTrendTitle, style: context.rowTitleStyle),
           const SizedBox(height: AppSpacing.s12),
-          SizedBox(
-            height: AppChartHeights.full,
-            child: NwLineChart(
-              series: [
-                ChartSeries(
-                  name: l10n.cashFlowKpiNet,
-                  points: model.periods
-                      .map(
-                        (period) => ChartPoint(
-                          x: period.date.millisecondsSinceEpoch.toDouble(),
-                          y: period.net.toDouble(),
-                        ),
-                      )
-                      .toList(),
-                  colorOverride: context.theme.colors.primary,
+          AnimatedSwitcher(
+            duration: Motion.fast,
+            child: switch (_mode) {
+              _CashFlowTrendMode.incomeExpense => NwBarChart(
+                key: const ValueKey('cash-flow-income-expense-chart'),
+                series: [
+                  CategorySeries(
+                    name: l10n.cashFlowKpiInflow,
+                    data: widget.model.periods
+                        .map(
+                          (period) => CategoryDatum(
+                            label: period.label,
+                            value: period.inflow.toDouble(),
+                            colorOverride: semantic.success,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  CategorySeries(
+                    name: l10n.cashFlowKpiOutflow,
+                    data: widget.model.periods
+                        .map(
+                          (period) => CategoryDatum(
+                            label: period.label,
+                            value: period.outflow.toDouble(),
+                            colorOverride: semantic.danger,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+                yAxis: axis,
+                aspectRatio: 16 / 7,
+                barWidth: 10,
+                semanticLabel: l10n.cashFlowIncomeExpenseTitle,
+              ),
+              _CashFlowTrendMode.net => SizedBox(
+                key: const ValueKey('cash-flow-net-chart'),
+                height: AppChartHeights.full,
+                child: NwLineChart(
+                  series: [
+                    ChartSeries(
+                      name: l10n.cashFlowKpiNet,
+                      points: widget.model.periods
+                          .map(
+                            (period) => ChartPoint(
+                              x: period.date.millisecondsSinceEpoch.toDouble(),
+                              y: period.net.toDouble(),
+                            ),
+                          )
+                          .toList(),
+                      colorOverride: context.theme.colors.primary,
+                    ),
+                  ],
+                  xAxis: TimeAxis(locale: locale, showGrid: false),
+                  yAxis: axis,
+                  interpolation: ChartInterpolation.linear,
+                  semanticLabel: l10n.cashFlowNetTrendTitle,
                 ),
-              ],
-              xAxis: TimeAxis(locale: locale, showGrid: false),
-              yAxis: axis,
-              interpolation: ChartInterpolation.linear,
-              semanticLabel: l10n.cashFlowNetTrendTitle,
-            ),
+              ),
+            },
           ),
         ],
       ),
@@ -87,19 +110,48 @@ class _ChartsPanel extends StatelessWidget {
   }
 }
 
-class _CategoryPanel extends StatelessWidget {
-  const _CategoryPanel({required this.model, required this.formatter});
+enum _CashFlowCategoryMode { expenses, income }
+
+class _CategoryPanel extends StatefulWidget {
+  const _CategoryPanel({
+    required this.model,
+    required this.formatter,
+    required this.onOpenIncome,
+    required this.onOpenExpenses,
+  });
 
   final _CashFlowViewModel model;
   final AppFormatters formatter;
+  final VoidCallback onOpenIncome;
+  final VoidCallback onOpenExpenses;
+
+  @override
+  State<_CategoryPanel> createState() => _CategoryPanelState();
+}
+
+class _CategoryPanelState extends State<_CategoryPanel> {
+  _CashFlowCategoryMode _mode = _CashFlowCategoryMode.expenses;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final slices = model.categories
+    final categories = widget.model.categories
+        .where((category) {
+          return switch (_mode) {
+            _CashFlowCategoryMode.expenses =>
+              category.kind == CashFlowKind.expense,
+            _CashFlowCategoryMode.income => _isIncomeKind(category.kind),
+          };
+        })
+        .toList(growable: false);
+    final total = categories.fold<Decimal>(
+      Decimal.zero,
+      (sum, category) => sum + category.amount,
+    );
+    final slices = categories
         .map(
           (category) => Slice(
-            label: _kindLabel(l10n, category.kind),
+            label: category.label ?? _kindLabel(l10n, category.kind),
             value: category.amount.toDouble(),
           ),
         )
@@ -109,21 +161,40 @@ class _CategoryPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.cashFlowCategoryTitle, style: context.rowTitleStyle),
-          const SizedBox(height: AppSpacing.s12),
-          NwPieChart(
-            slices: slices,
-            aspectRatio: 4 / 3,
-            semanticLabel: l10n.cashFlowCategoryTitle,
+          SegmentedRow<_CashFlowCategoryMode>(
+            options: _CashFlowCategoryMode.values,
+            value: _mode,
+            minSegmentWidth: 96,
+            labelOf: (mode) => switch (mode) {
+              _CashFlowCategoryMode.expenses => l10n.cashFlowCategoryExpenses,
+              _CashFlowCategoryMode.income => l10n.cashFlowCategoryIncome,
+            },
+            onChanged: (mode) => setState(() => _mode = mode),
           ),
           const SizedBox(height: AppSpacing.s12),
-          for (final category in model.categories)
+          if (categories.isEmpty)
+            const SizedBox(
+              height: AppChartHeights.standard,
+              child: EmptyChartPlaceholder(),
+            )
+          else
+            NwPieChart(
+              slices: slices,
+              aspectRatio: 4 / 3,
+              semanticLabel: l10n.cashFlowCategoryTitle,
+            ),
+          const SizedBox(height: AppSpacing.s12),
+          for (final category in categories)
             _CategoryRow(
               category: category,
-              formatter: formatter,
-              total: model.categoryTotal,
+              formatter: widget.formatter,
+              total: total,
+              onPress: _mode == _CashFlowCategoryMode.expenses
+                  ? widget.onOpenExpenses
+                  : widget.onOpenIncome,
             ),
-          if (model.categories.any((c) => c.kind == CashFlowKind.dividend))
+          if (_mode == _CashFlowCategoryMode.income &&
+              categories.any((c) => c.kind == CashFlowKind.dividend))
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.s12),
               child: FButton(
@@ -144,11 +215,13 @@ class _CategoryRow extends StatelessWidget {
     required this.category,
     required this.formatter,
     required this.total,
+    required this.onPress,
   });
 
   final _CategoryTotal category;
   final AppFormatters formatter;
   final Decimal total;
+  final VoidCallback onPress;
 
   @override
   Widget build(BuildContext context) {
@@ -156,37 +229,46 @@ class _CategoryRow extends StatelessWidget {
     final percent = total == Decimal.zero
         ? 0
         : (category.amount / total).toDouble();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              _kindLabel(l10n, category.kind),
-              style: context.theme.typography.body.sm,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            formatter.percent(percent, decimalDigits: 0),
-            style: context.captionStyle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(width: AppSpacing.s12),
-          Flexible(
-            child: Text(
-              formatter.currency(category.amount, code: category.currency),
-              style: TypographyTokens.numericBody.copyWith(
-                color: context.theme.colors.foreground,
+    return FTappable(
+      onPress: onPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                category.label ?? _kindLabel(l10n, category.kind),
+                style: context.theme.typography.body.sm,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.end,
+            ),
+            Text(
+              formatter.percent(percent, decimalDigits: 0),
+              style: context.captionStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+            const SizedBox(width: AppSpacing.s12),
+            Flexible(
+              child: Text(
+                formatter.currency(category.amount, code: category.currency),
+                style: TypographyTokens.numericBody.copyWith(
+                  color: context.theme.colors.foreground,
+                ),
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s6),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+              color: context.theme.colors.mutedForeground,
+            ),
+          ],
+        ),
       ),
     );
   }

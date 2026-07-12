@@ -301,13 +301,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFlowCommandViewIncome => 'View income';
 
   @override
-  String get cashFlowPeriodMonth => 'Month';
+  String get cashFlowPeriodMonth => 'Monthly';
 
   @override
-  String get cashFlowPeriodQuarter => 'Quarter';
+  String get cashFlowPeriodQuarter => 'Quarterly';
 
   @override
-  String get cashFlowPeriodYear => 'Year';
+  String get cashFlowPeriodYear => 'Yearly';
 
   @override
   String get cashFlowKpiInflow => 'Inflow';
@@ -326,6 +326,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashFlowCategoryTitle => 'Category mix';
+
+  @override
+  String get cashFlowCategoryExpenses => 'Expense categories';
+
+  @override
+  String get cashFlowCategoryIncome => 'Income sources';
 
   @override
   String get cashFlowViewDividendCenter => 'View dividend center';
@@ -364,7 +370,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set up rules for salary, subscriptions or other repeating cash flow.';
 
   @override
-  String get recurringEmptyCta => 'Add recurring rule';
+  String get recurringFilterActive => 'Active';
+
+  @override
+  String get recurringFilterPaused => 'Paused';
+
+  @override
+  String get recurringPausedEmptyTitle => 'No paused rules';
+
+  @override
+  String get recurringPausedEmptyBody =>
+      'Paused and completed rules remain available here.';
+
+  @override
+  String get recurringPausedBadge => 'Paused';
+
+  @override
+  String get recurringCompletedBadge => 'Completed';
+
+  @override
+  String get recurringEmptyCta => 'Add rule';
 
   @override
   String recurringNextDue(String date) {
@@ -390,6 +415,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringActionDisableHint => 'Stop generating new entries';
 
   @override
+  String get recurringActionEnable => 'Resume';
+
+  @override
+  String get recurringActionEnableHint => 'Start generating entries again';
+
+  @override
   String get recurringActionDeleteHint => 'Remove this rule permanently';
 
   @override
@@ -408,6 +439,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringDisabled => 'Rule disabled';
+
+  @override
+  String get recurringEnabled => 'Rule resumed';
 
   @override
   String get recurringDeleted => 'Rule deleted';

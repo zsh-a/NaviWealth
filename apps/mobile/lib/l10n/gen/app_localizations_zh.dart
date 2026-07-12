@@ -287,13 +287,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFlowCommandViewIncome => '查看收入流水';
 
   @override
-  String get cashFlowPeriodMonth => '月';
+  String get cashFlowPeriodMonth => '按月';
 
   @override
-  String get cashFlowPeriodQuarter => '季';
+  String get cashFlowPeriodQuarter => '按季';
 
   @override
-  String get cashFlowPeriodYear => '年';
+  String get cashFlowPeriodYear => '按年';
 
   @override
   String get cashFlowKpiInflow => '流入';
@@ -312,6 +312,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cashFlowCategoryTitle => '类目分布';
+
+  @override
+  String get cashFlowCategoryExpenses => '支出分类';
+
+  @override
+  String get cashFlowCategoryIncome => '收入来源';
 
   @override
   String get cashFlowViewDividendCenter => '查看股息中心';
@@ -348,6 +354,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recurringEmptyBody => '为工资、订阅或其他重复现金流设置规则。';
 
   @override
+  String get recurringFilterActive => '进行中';
+
+  @override
+  String get recurringFilterPaused => '已暂停';
+
+  @override
+  String get recurringPausedEmptyTitle => '暂无已暂停规则';
+
+  @override
+  String get recurringPausedEmptyBody => '暂停或已结束的规则会保留在这里。';
+
+  @override
+  String get recurringPausedBadge => '已暂停';
+
+  @override
+  String get recurringCompletedBadge => '已结束';
+
+  @override
   String get recurringEmptyCta => '新增周期规则';
 
   @override
@@ -374,6 +398,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recurringActionDisableHint => '停止生成新记录';
 
   @override
+  String get recurringActionEnable => '恢复';
+
+  @override
+  String get recurringActionEnableHint => '重新开始生成记录';
+
+  @override
   String get recurringActionDeleteHint => '永久删除该规则';
 
   @override
@@ -390,6 +420,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get recurringDisabled => '规则已停用';
+
+  @override
+  String get recurringEnabled => '规则已恢复';
 
   @override
   String get recurringDeleted => '规则已删除';

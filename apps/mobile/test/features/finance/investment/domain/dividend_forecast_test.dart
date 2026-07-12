@@ -107,6 +107,37 @@ void main() {
   });
 
   group('DividendForecastService', () {
+    test('ignores declared amounts that cannot be converted to base', () {
+      const service = DividendForecastService();
+      final result = service.forecast(
+        holdings: [_holding('asset-a', quantity: '100')],
+        history: [
+          _dividend(
+            'asset-a',
+            DateTime.utc(2026, 2, 1),
+            gross: '25',
+            amountPerShare: '0',
+          ),
+        ],
+        declared: [
+          CashDividendAction(
+            id: 'foreign-declaration',
+            assetId: 'asset-a',
+            effectiveDate: DateTime.utc(2026, 8, 1),
+            transactionId: 'tx-foreign',
+            accountId: 'brokerage',
+            currency: 'CNY',
+            amountPerShare: d('10'),
+            withholdingTax: Decimal.zero,
+          ),
+        ],
+        horizonEnd: DateTime.utc(2027, 5, 17),
+      );
+
+      expect(result.total, d('25'));
+      expect(result.assetStrategies, {'asset-a': 'ttm'});
+    });
+
     test(
       'fills gaps by declared, then DPS, then TTM with source breakdown',
       () {

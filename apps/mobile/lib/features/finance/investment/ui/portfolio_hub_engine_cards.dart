@@ -120,6 +120,7 @@ class _DividendForecastCard extends ConsumerWidget {
     return _EngineCard(
       title: l10n.portfolioHubDividendForecastTitle,
       trailing: _strategyLabel(l10n, forecast.strategy),
+      onPress: () => context.push(FinanceRoutes.cashflowDividends),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -226,15 +227,18 @@ class _EngineCard extends StatelessWidget {
     required this.title,
     required this.trailing,
     required this.child,
+    this.onPress,
   });
 
   final String title;
   final String trailing;
   final Widget child;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
     return SoftCard(
+      onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -244,6 +248,14 @@ class _EngineCard extends StatelessWidget {
               Expanded(child: Text(title, style: context.labelStyle)),
               const SizedBox(width: AppSpacing.s8),
               Text(trailing, style: context.captionStyle),
+              if (onPress != null) ...[
+                const SizedBox(width: AppSpacing.s4),
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
