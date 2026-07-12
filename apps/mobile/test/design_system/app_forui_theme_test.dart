@@ -43,6 +43,21 @@ void main() {
           theme.colors.muted,
           isDark ? ColorPalette.navyGlass : ColorPalette.surfaceOverlay,
         );
+        for (final typeface in <FTypeface>[
+          theme.typography.display,
+          theme.typography.body,
+        ]) {
+          expect(typeface.fontFamily, TypographyTokens.fontFamilySans);
+          expect(
+            typeface.fontFamilyFallback,
+            TypographyTokens.fontFamilyFallback,
+          );
+          expect(typeface.sm.fontFamily, TypographyTokens.fontFamilySans);
+          expect(
+            typeface.sm.fontFamilyFallback,
+            TypographyTokens.fontFamilyFallback,
+          );
+        }
       }
     }
   });

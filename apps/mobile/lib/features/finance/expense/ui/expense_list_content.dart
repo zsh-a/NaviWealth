@@ -35,6 +35,9 @@ class ExpenseFiltersBar extends StatelessWidget {
       for (final entry in expenseAccountById.entries)
         entry.key: localizedAccountPath(l10n, entry.value, expenseAccountById),
     };
+    final chipRailHeight = MediaQuery.textScalerOf(
+      context,
+    ).scale(AppControlHeights.compactChipRail);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -73,7 +76,7 @@ class ExpenseFiltersBar extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           SizedBox(
-            height: AppControlHeights.compactChipRail,
+            height: chipRailHeight,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
@@ -408,54 +411,67 @@ class _ExpenseRow extends StatelessWidget {
               Expanded(
                 child: FTappable(
                   onPress: onTap,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: AppSpacing.s32,
-                        height: AppSpacing.s32,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? categoryAccent.withValues(
-                                  alpha: AppOpacity.faint,
-                                )
-                              : colors.muted,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Icon(
-                          account?.iconData ?? FLucideIcons.banknote,
-                          size: AppIconSizes.sm,
-                          color: iconColor,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.s12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: context.labelStyle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final amountMaxWidth = constraints.maxWidth.isFinite
+                          ? constraints.maxWidth * 0.42
+                          : 160.0;
+                      return Row(
+                        children: [
+                          Container(
+                            width: AppSpacing.s32,
+                            height: AppSpacing.s32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? categoryAccent.withValues(
+                                      alpha: AppOpacity.faint,
+                                    )
+                                  : colors.muted,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
-                            const SizedBox(height: AppSpacing.s2),
-                            Text(
-                              subtitle,
-                              style: context.captionStyle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Icon(
+                              account?.iconData ?? FLucideIcons.banknote,
+                              size: AppIconSizes.sm,
+                              color: iconColor,
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.s12),
-                      MoneyText(
-                        amount: expense.amount.toDouble(),
-                        currencyCode: expense.currency,
-                        style: context.strongLabelStyle,
-                      ),
-                    ],
+                          ),
+                          const SizedBox(width: AppSpacing.s12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: context.labelStyle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: AppSpacing.s2),
+                                Text(
+                                  subtitle,
+                                  style: context.captionStyle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s12),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: amountMaxWidth,
+                            ),
+                            child: MoneyText(
+                              amount: expense.amount.toDouble(),
+                              currencyCode: expense.currency,
+                              style: context.strongLabelStyle,
+                              textAlign: TextAlign.end,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),

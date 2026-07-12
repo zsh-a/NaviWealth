@@ -51,6 +51,71 @@ void main() {
 
     expect(explained.map((expense) => expense.id), ['exp-1']);
   });
+
+  testWidgets('long expense content does not overflow a narrow layout', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final expense = Expense(
+      id: 'exp-long',
+      expenseAccountId: 'food',
+      amount: Decimal.parse('12345678901234567890.12'),
+      currency: 'CNY',
+      tradeDate: DateTime.utc(2026, 7, 12),
+      note: 'Expense with a very long mixed-language note that must truncate',
+      sync: _meta(),
+    );
+    final account = _account('food', '餐饮与日常生活消费的超长分类名称');
+    final keywordController = TextEditingController(text: 'Expense');
+    addTearDown(keywordController.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: FTheme(
+          data: buildAppForuiTheme(brightness: Brightness.light, touch: false),
+          child: MediaQuery(
+            data: const MediaQueryData(
+              size: Size(320, 640),
+              textScaler: TextScaler.linear(1.5),
+            ),
+            child: Scaffold(
+              body: Column(
+                children: [
+                  ExpenseFiltersBar(
+                    accounts: [account],
+                    expenseAccountById: {'food': account},
+                    filters: const ExpenseFilters(expenseAccountId: 'food'),
+                    keywordController: keywordController,
+                    onChanged: (_) {},
+                  ),
+                  Expanded(
+                    child: ExpenseGroupedList(
+                      expenses: [expense],
+                      expenseAccountById: {'food': account},
+                      grouping: ExpenseGrouping.month,
+                      onTap: (_) {},
+                      selectedExpenseIds: const <String>{},
+                      onToggleSelected: (_) {},
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _SelectionHarness extends StatefulWidget {
