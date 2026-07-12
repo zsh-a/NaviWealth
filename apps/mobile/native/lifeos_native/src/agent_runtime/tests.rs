@@ -17,7 +17,7 @@ fn catalog_json() -> String {
                 "name": "Execution Review",
                 "version": "0.1.0",
                 "schedule": {"type": "manual"},
-                "capabilities": ["scheduled_agent"],
+                "capabilities": ["read_first", "read_second"],
                 "metadata": {"domain": "execution"}
             }
         ],
@@ -161,11 +161,18 @@ fn native_effect_plan_steps_own_step_index_and_trace_events() {
     })
     .to_string();
 
-    let first: Value = serde_json::from_str(
-        &agent_runtime_start_run_step(catalog_json(), request_json, "execution_review".to_owned())
-            .expect("start step"),
+    let first_snapshot: Value = serde_json::from_str(
+        &agent_runtime_start_run_snapshot(
+            catalog_json(),
+            request_json,
+            "execution_review".to_owned(),
+            4,
+            2,
+        )
+        .expect("start snapshot"),
     )
-    .expect("first step json");
+    .expect("first snapshot json");
+    let first = &first_snapshot["step"];
     assert_eq!(first["status"], "effect_requested");
     assert_eq!(first["step_index"], 0);
     assert_eq!(first["effect"]["kind"], "tool");
@@ -187,16 +194,17 @@ fn native_effect_plan_steps_own_step_index_and_trace_events() {
         .expect("first effect_id")
         .to_owned();
 
-    let second: Value = serde_json::from_str(
-        &agent_runtime_continue_run_step(
+    let second_snapshot: Value = serde_json::from_str(
+        &agent_runtime_continue_run_snapshot(
             catalog_json(),
-            first.to_string(),
+            first_snapshot.to_string(),
             json!({"jsonrpc": "2.0", "id": first_effect_id, "result": {"ok": true}}).to_string(),
             "execution_review".to_owned(),
         )
-        .expect("second step"),
+        .expect("second snapshot"),
     )
-    .expect("second step json");
+    .expect("second snapshot json");
+    let second = &second_snapshot["step"];
     assert_eq!(second["status"], "effect_requested");
     assert_eq!(second["step_index"], 1);
     assert_eq!(second["effect"]["kind"], "tool");
@@ -217,16 +225,17 @@ fn native_effect_plan_steps_own_step_index_and_trace_events() {
         .expect("second effect_id")
         .to_owned();
 
-    let terminal: Value = serde_json::from_str(
-        &agent_runtime_continue_run_step(
+    let terminal_snapshot: Value = serde_json::from_str(
+        &agent_runtime_continue_run_snapshot(
             catalog_json(),
-            second.to_string(),
+            second_snapshot.to_string(),
             json!({"jsonrpc": "2.0", "id": second_effect_id, "result": {"done": true}}).to_string(),
             "execution_review".to_owned(),
         )
-        .expect("terminal step"),
+        .expect("terminal snapshot"),
     )
-    .expect("terminal step json");
+    .expect("terminal snapshot json");
+    let terminal = &terminal_snapshot["step"];
     assert_eq!(terminal["status"], "completed");
     assert_eq!(terminal["step_index"], 2);
     assert_eq!(terminal["trace_event"]["step_index"], 2);
@@ -260,20 +269,27 @@ fn native_effect_response_errors_set_stream_error_terminal_reason() {
     })
     .to_string();
 
-    let first: Value = serde_json::from_str(
-        &agent_runtime_start_run_step(catalog_json(), request_json, "execution_review".to_owned())
-            .expect("start step"),
+    let first_snapshot: Value = serde_json::from_str(
+        &agent_runtime_start_run_snapshot(
+            catalog_json(),
+            request_json,
+            "execution_review".to_owned(),
+            4,
+            2,
+        )
+        .expect("start snapshot"),
     )
-    .expect("first step json");
+    .expect("first snapshot json");
+    let first = &first_snapshot["step"];
     let first_effect_id = first["effect"]["effect_id"]
         .as_str()
         .expect("first effect_id")
         .to_owned();
 
-    let failed: Value = serde_json::from_str(
-        &agent_runtime_continue_run_step(
+    let failed_snapshot: Value = serde_json::from_str(
+        &agent_runtime_continue_run_snapshot(
             catalog_json(),
-            first.to_string(),
+            first_snapshot.to_string(),
             json!({
                 "jsonrpc": "2.0",
                 "id": first_effect_id,
@@ -282,9 +298,10 @@ fn native_effect_response_errors_set_stream_error_terminal_reason() {
             .to_string(),
             "execution_review".to_owned(),
         )
-        .expect("failed step"),
+        .expect("failed snapshot"),
     )
-    .expect("failed step json");
+    .expect("failed snapshot json");
+    let failed = &failed_snapshot["step"];
 
     assert_eq!(failed["status"], "failed");
     assert_eq!(failed["trace_event"]["status"], "failed");

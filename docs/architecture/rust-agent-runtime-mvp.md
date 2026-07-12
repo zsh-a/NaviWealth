@@ -92,7 +92,7 @@ Implemented:
 - Dart-side app provider wiring via `agentRuntimeNativeBridgeProvider` and
   `agentRuntimeNativeCatalogSummaryProvider`
 - FRB-facing catalog validation rejects mismatched `protocol_version` and
-  `catalog_version` before summary, start-step, or continuation execution, and
+  `catalog_version` before summary or snapshot execution, and
   validates catalog `AgentSpec` / `ProposalKindSpec` identifiers plus catalog /
   LLM `ToolSpec` names, descriptions, and JSON-schema object fields before
   native dispatch; active domain ids must be non-empty; interval schedules must
@@ -120,25 +120,15 @@ Implemented:
   `agent_id`, `mode`) while preserving provider-neutral LLM messages, including
   multimodal content blocks, and streams primitive JSON events with the same
   envelope attached
-- FRB-first native run-step contract via `agentRuntimeStartRunStep`, which
-  validates the active catalog/run request, including `RunRequest.protocol_version`
-  and JSON-object `input`, `metadata`, and `user.metadata` fields, and returns
-  either a completed dry-run step or an `effect_requested` step for Dart-side
-  device dispatch
-- FRB-first native continuation contract via `agentRuntimeContinueRunStep`,
-  which accepts the previous native step plus the Dart-side effect response,
-  validates the continuation envelope, and returns the next native step or a
-  terminal native step
-- Versioned embedded-run snapshots exposed through
+- The only embedded execution contract is the versioned snapshot API exposed through
   `agentRuntimeStartRunSnapshot`, `agentRuntimeContinueRunSnapshot`,
   `agentRuntimeStartRequestedSubagentSnapshot`, and
   `agentRuntimeResumeParentFromSubagentSnapshot`. Rust owns continuation state,
   the shared parent/child effect budget, subagent depth, and terminal closure;
   Dart only dispatches requested device effects and returns JSON-RPC responses.
-  The older start/continue step functions remain compatibility entrypoints.
-- Dart-side `AgentRuntimeNativeStepRunner` that prefers the snapshot API for
-  production bridges and retains its previous bounded step loop only as a
-  fallback for legacy/test bridges
+- Dart-side `AgentRuntimeNativeStepRunner` requires the snapshot execution
+  interface at construction time; unsupported runtimes fail at composition
+  rather than entering a runtime fallback path.
 - App-owned durable snapshot recovery in Drift through the local-only
   `agent_runtime_checkpoints` table. The runner fingerprints logical requests,
   stores Rust snapshots with optimistic revisions, journals each host effect
@@ -164,19 +154,16 @@ Implemented:
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB
   LLM completion with the Rust-owned snapshot effect loop and return both the
   LLM response and terminal native step; the runner rejects mismatched native
-  turn protocol versions and malformed `llm_response` / `step` objects before
+  turn protocol versions and malformed `llm_response` / `snapshot` objects before
   dispatching Dart host effects
 - FRB-facing native profile-turn snapshot via
   `agentRuntimeStartProfileTurnSnapshot`, which completes the active-profile LLM
   request in Rust, normalizes `null` run metadata to an object, rejects
   non-object run metadata, and starts a versioned runtime snapshot before Dart
-  resumes host-effect dispatch. `agentRuntimeStartProfileTurnStep` remains the
-  compatibility fallback.
-- Native FRB effect continuation: `agentRuntimeStartRunStep` seeds
-  `input.effects` from run input or LLM response metadata, and
-  `agentRuntimeContinueRunStep` consumes each Dart `effect_response` before
-  either requesting the next host effect or returning a terminal
-  `frb_effect_loop` output
+  resumes host-effect dispatch.
+- Native snapshot continuation seeds `input.effects` from run input or LLM
+  response metadata and consumes each Dart `effect_response` before either
+  requesting the next host effect or returning a terminal snapshot.
 - Dart-side native step trace summary: `AgentRuntimeNativeStepRunner` now has
   trace-aware run/continue methods that return the terminal step, every native
   step observed, every Dart effect response, dispatch count, and effect-budget
@@ -202,16 +189,14 @@ Implemented:
 - `agent_runtime_step.payload.tool_name` is constrained to `null` or a
   non-empty string in both JSON Schema and the native FRB validator, so trace
   consumers never receive an empty tool label
-- Native FRB effect continuations now validate the previous step and effect
-  response before mutating run state: previous `protocol_version`,
+- Native FRB snapshot continuations validate the previous snapshot and effect
+  response before mutating run state: `protocol_version`,
   `agent_id` / `agent_version` / `run_id`, `step_index`, `effect_id`,
   as a required current effect id, catalog-bound tool names, JSON-object
-  effect inputs, required continuation envelopes, `continuation.next_step_index`,
-  `continuation.effects`, historical `continuation.effect_results`,
-  JSON-RPC effect response envelopes for current and historical results, and effect response
-  ids are rejected when malformed, mismatched, or ambiguous. Previous
-  `run_state` and `trace_event` metadata, when present, must match the native
-  step fields before Rust advances the continuation.
+  effect inputs, typed continuation state, historical effect results, and JSON-RPC effect response envelopes.
+  Effect response ids are rejected when
+  malformed, mismatched, or ambiguous. Derived `run_state` and `trace_event`
+  metadata must match the native step fields before Rust advances the snapshot.
 - Local AI trace persistence adapter: `AgentRuntimeTraceRecorder` converts FRB
   profile-turn results into the existing `AiTrace` span model, and the Settings
   -> AI provider runtime check records its FRB turn into `AiTraceStore`
@@ -896,17 +881,18 @@ implementations backed by `reqwest` with rustls TLS. Wire contracts are under
 `schemas/llm-response.schema.json`.
 
 Flutter production integration is FRB-first. The bridge starts with
-`agentRuntimeStartRunStep`: Dart passes the active `agent_catalog.v1`, a
-`RunRequest`, and an agent id to the native Rust bridge. Rust validates the
-contract and returns a JSON step:
+`agentRuntimeStartRunSnapshot`: Dart passes the active `agent_catalog.v1`, a
+`RunRequest`, an agent id, and execution limits to the native Rust bridge. Rust
+validates the contract and returns a versioned snapshot whose current step is:
 
 - `completed` for a dry-run request without host effects
 - `effect_requested` when the request asks for a catalog tool or subagent
 
 Dart remains responsible for executing local host effects through
 `DeviceToolDispatcher` and will feed effect responses back through
-`agentRuntimeContinueRunStep`. This keeps Rust responsible for
-runtime/protocol/trace contracts while Drift/Riverpod access stays in Flutter.
+`agentRuntimeContinueRunSnapshot`. This keeps Rust responsible for continuation,
+budgets, subagent depth, and runtime/protocol/trace contracts while
+Drift/Riverpod access stays in Flutter.
 
 Flutter also has a library-level JSONL adapter for process-host smoke tests:
 

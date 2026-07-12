@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:naviwealth/app/agent_runtime/bindings/agent_runtime_profile_turn_binding.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
@@ -14,7 +15,6 @@ import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart'
 import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart'
     as llm_credentials;
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart'
     as ai_chat_providers;
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';

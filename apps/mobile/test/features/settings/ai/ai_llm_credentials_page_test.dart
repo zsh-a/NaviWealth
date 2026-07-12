@@ -205,11 +205,13 @@ class _SettingsRuntimeBridge extends FakeAgentRuntimeNativeBridge {
   final startRequests = <_StartRequest>[];
 
   @override
-  Future<Map<String, Object?>> startProfileTurnStep({
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> llmRequest,
     required String agentId,
     required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
     final response = await completeProfileLlm(request: llmRequest);
     final initialStep = _initialStep(
@@ -219,18 +221,48 @@ class _SettingsRuntimeBridge extends FakeAgentRuntimeNativeBridge {
     return <String, Object?>{
       'protocol_version': 'agent.v1',
       'llm_response': response,
-      'step': initialStep,
+      'snapshot': _snapshot(
+        initialStep,
+        maxEffectSteps: maxEffectSteps,
+        maxSubagentDepth: maxSubagentDepth,
+      ),
     };
   }
 
   @override
-  Future<Map<String, Object?>> startRunStep({
+  Future<Map<String, Object?>> startRunSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
-    return _initialStep(request: request, agentId: agentId);
+    return _snapshot(
+      _initialStep(request: request, agentId: agentId),
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
   }
+
+  Map<String, Object?> _snapshot(
+    Map<String, Object?> step, {
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) => <String, Object?>{
+    'protocol_version': 'agent.v1',
+    'snapshot_version': 1,
+    'step': step,
+    'limits': <String, Object?>{
+      'max_effect_steps': maxEffectSteps,
+      'max_subagent_depth': maxSubagentDepth,
+    },
+    'progress': const <String, Object?>{
+      'dispatched_effect_count': 0,
+      'subagent_depth': 0,
+      'effect_budget_exhausted': false,
+      'subagent_depth_exceeded': false,
+    },
+  };
 
   Map<String, Object?> _initialStep({
     required Map<String, Object?> request,

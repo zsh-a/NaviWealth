@@ -8,14 +8,13 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_checkpoint_store.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
     as core_profile_turn;
 
-export 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
+export 'package:naviwealth/app/agent_runtime/bindings/agent_runtime_profile_turn_binding.dart'
     show AgentRuntimeProfileTurnResult, agentRuntimeProfileTurnRunnerProvider;
 
 AgentRuntimeProfileTurnRunner? buildAgentRuntimeProfileTurnRunner(Ref ref) {
@@ -72,63 +71,33 @@ class AgentRuntimeProfileTurnRunner
       maxOutputTokens: maxOutputTokens,
       metadata: metadata,
     );
-    final bridge = _stepRunner.bridge;
-    if (bridge is AgentRuntimeSnapshotBridge) {
-      final snapshotBridge = bridge as AgentRuntimeSnapshotBridge;
-      final limit = maxEffectSteps ?? _stepRunner.defaultMaxEffectSteps;
-      if (limit < 0) {
-        throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
-      }
-      final requestFingerprint = agentRuntimeRequestFingerprint(
-        agentId: agentId,
-        catalog: catalogJson,
-        kind: 'profile_turn',
-        request: <String, Object?>{
-          'llm_request': llmRequest,
-          'run_metadata': metadata,
-          'max_effect_steps': limit,
-          'max_subagent_depth': _stepRunner.defaultMaxSubagentDepth,
-        },
-      );
-      final pending = await _stepRunner.findResumableCheckpoint(
-        agentId: agentId,
-        requestFingerprint: requestFingerprint,
-      );
-      if (pending != null) {
-        final llmResponse = _expectObject(
-          pending.resumeContext['llm_response'],
-          'checkpoint.resume_context.llm_response',
-        );
-        final stepRun = await _stepRunner.continueCheckpointUntilTerminal(
-          catalog: catalogJson,
-          checkpoint: pending,
-        );
-        return core_profile_turn.AgentRuntimeProfileTurnResult(
-          llmResponse: llmResponse,
-          step: stepRun.terminalStep,
-          stepRun: stepRun,
-        );
-      }
-      final nativeTurn = await snapshotBridge.startProfileTurnSnapshot(
-        catalog: catalogJson,
-        llmRequest: llmRequest,
-        agentId: agentId,
-        runMetadata: metadata,
-        maxEffectSteps: limit,
-        maxSubagentDepth: _stepRunner.defaultMaxSubagentDepth,
-      );
-      _expectProtocolVersion(nativeTurn);
+    final limit = maxEffectSteps ?? _stepRunner.defaultMaxEffectSteps;
+    if (limit < 0) {
+      throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
+    }
+    final requestFingerprint = agentRuntimeRequestFingerprint(
+      agentId: agentId,
+      catalog: catalogJson,
+      kind: 'profile_turn',
+      request: <String, Object?>{
+        'llm_request': llmRequest,
+        'run_metadata': metadata,
+        'max_effect_steps': limit,
+        'max_subagent_depth': _stepRunner.defaultMaxSubagentDepth,
+      },
+    );
+    final pending = await _stepRunner.findResumableCheckpoint(
+      agentId: agentId,
+      requestFingerprint: requestFingerprint,
+    );
+    if (pending != null) {
       final llmResponse = _expectObject(
-        nativeTurn['llm_response'],
-        'llm_response',
+        pending.resumeContext['llm_response'],
+        'checkpoint.resume_context.llm_response',
       );
-      final initialSnapshot = _expectObject(nativeTurn['snapshot'], 'snapshot');
-      final stepRun = await _stepRunner.continueSnapshotUntilTerminalWithTrace(
+      final stepRun = await _stepRunner.continueCheckpointUntilTerminal(
         catalog: catalogJson,
-        initialSnapshot: initialSnapshot,
-        agentId: agentId,
-        requestFingerprint: requestFingerprint,
-        resumeContext: <String, Object?>{'llm_response': llmResponse},
+        checkpoint: pending,
       );
       return core_profile_turn.AgentRuntimeProfileTurnResult(
         llmResponse: llmResponse,
@@ -136,23 +105,26 @@ class AgentRuntimeProfileTurnRunner
         stepRun: stepRun,
       );
     }
-    final nativeTurn = await bridge.startProfileTurnStep(
+    final nativeTurn = await _stepRunner.bridge.startProfileTurnSnapshot(
       catalog: catalogJson,
       llmRequest: llmRequest,
       agentId: agentId,
       runMetadata: metadata,
+      maxEffectSteps: limit,
+      maxSubagentDepth: _stepRunner.defaultMaxSubagentDepth,
     );
     _expectProtocolVersion(nativeTurn);
     final llmResponse = _expectObject(
       nativeTurn['llm_response'],
       'llm_response',
     );
-    final initialStep = _expectObject(nativeTurn['step'], 'step');
-    final stepRun = await _stepRunner.continueUntilTerminalWithTrace(
+    final initialSnapshot = _expectObject(nativeTurn['snapshot'], 'snapshot');
+    final stepRun = await _stepRunner.continueSnapshotUntilTerminalWithTrace(
       catalog: catalogJson,
-      initialStep: initialStep,
+      initialSnapshot: initialSnapshot,
       agentId: agentId,
-      maxEffectSteps: maxEffectSteps,
+      requestFingerprint: requestFingerprint,
+      resumeContext: <String, Object?>{'llm_response': llmResponse},
     );
     return core_profile_turn.AgentRuntimeProfileTurnResult(
       llmResponse: llmResponse,

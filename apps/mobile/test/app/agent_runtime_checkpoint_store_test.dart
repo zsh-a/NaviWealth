@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_checkpoint_store.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/drift_agent_runtime_checkpoint_store.dart';
 
 import '../core/persistence/test_database.dart';
 

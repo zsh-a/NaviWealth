@@ -26,25 +26,23 @@ void main() {
     }
   });
 
-  test('rust runtime MVP doc tracks FRB-owned continuation contracts', () {
+  test('rust runtime MVP doc tracks snapshot-only execution contracts', () {
     final root = _repoRoot();
     final text = File(
       '${root.path}/docs/architecture/rust-agent-runtime-mvp.md',
     ).readAsStringSync();
 
-    expect(
-      text,
-      contains('effect-budget exhaustion is now closed through the'),
-    );
-    expect(text, contains('native FRB continuation path'));
-    expect(text, isNot(contains('Dart-synthesised effect-budget-exhausted')));
-    expect(text, contains('Native FRB effect continuations now validate'));
+    expect(text, contains('The only embedded execution contract'));
+    expect(text, contains('requires the snapshot execution'));
+    expect(text, contains('Native FRB snapshot continuations validate'));
+    expect(text, isNot(contains('agentRuntimeStartRunStep')));
+    expect(text, isNot(contains('agentRuntimeContinueRunStep')));
+    expect(text, isNot(contains('compatibility fallback')));
     for (final marker in <String>[
       'effect_id',
       'catalog-bound tool names',
-      'continuation.next_step_index',
-      'continuation.effects',
-      'continuation.effect_results',
+      'typed continuation state',
+      'historical effect results',
       'JSON-RPC effect response envelopes',
     ]) {
       expect(text, contains(marker), reason: marker);

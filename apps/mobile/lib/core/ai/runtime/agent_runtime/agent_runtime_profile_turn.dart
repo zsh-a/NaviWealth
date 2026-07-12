@@ -4,8 +4,6 @@
 /// only needs this small runner/result/binding surface.
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../contracts/contracts.dart';
 import 'agent_runtime_step_result.dart';
 
@@ -29,65 +27,6 @@ typedef AgentRuntimeProfileTurnTraceRecorderFactory =
 
 typedef AgentRuntimeProfileTurnTraceRecordErrorHandler =
     void Function(Object error, StackTrace stackTrace);
-
-final agentRuntimeProfileTurnRunnerProvider =
-    Provider<AgentRuntimeProfileTurnRunner?>((ref) => null);
-
-final agentRuntimeProfileTurnTraceRecorderFactoryProvider =
-    Provider<AgentRuntimeProfileTurnTraceRecorderFactory?>((ref) => null);
-
-final agentRuntimeProfileTurnBindingProvider =
-    Provider.family<
-      AgentRuntimeProfileTurnBinding?,
-      AgentRuntimeProfileTurnBindingKey
-    >((ref, key) {
-      return agentRuntimeProfileTurnBinding(
-        ref,
-        agentId: key.agentId,
-        domain: key.domain,
-        surface: key.surface,
-        resolveAvailability: true,
-      );
-    });
-
-AgentRuntimeProfileTurnBinding? agentRuntimeProfileTurnBinding(
-  Ref ref, {
-  required String agentId,
-  required String domain,
-  required String surface,
-  bool resolveAvailability = true,
-  AgentRuntimeProfileTurnTraceRecordErrorHandler? onRecordTraceError,
-}) {
-  final recorderFactory = ref.read(
-    agentRuntimeProfileTurnTraceRecorderFactoryProvider,
-  );
-  final recorder = recorderFactory?.call(
-    agentId: agentId,
-    domain: domain,
-    surface: surface,
-  );
-  if (!resolveAvailability) {
-    return AgentRuntimeProfileTurnBinding.lazyRunner(
-      agentId: agentId,
-      domain: domain,
-      surface: surface,
-      runnerReader: () => ref.read(agentRuntimeProfileTurnRunnerProvider),
-      recordTrace: recorder,
-      onRecordTraceError: onRecordTraceError,
-    );
-  }
-
-  final runner = ref.watch(agentRuntimeProfileTurnRunnerProvider);
-  if (runner == null) return null;
-  return AgentRuntimeProfileTurnBinding(
-    agentId: agentId,
-    domain: domain,
-    surface: surface,
-    runner: runner,
-    recordTrace: recorder,
-    onRecordTraceError: onRecordTraceError,
-  );
-}
 
 abstract interface class AgentRuntimeProfileTurnRunner {
   Future<AgentRuntimeProfileTurnResult> run({

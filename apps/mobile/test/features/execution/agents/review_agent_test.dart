@@ -465,7 +465,7 @@ AgentContext _context() {
 final _refProvider = Provider<Ref>((ref) => ref);
 
 AgentRuntimeEffectPlanBinding _runtime({
-  required AgentRuntimeNativeBridge bridge,
+  required AgentRuntimeExecutionBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {

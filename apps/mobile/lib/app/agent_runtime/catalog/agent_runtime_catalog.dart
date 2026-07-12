@@ -23,9 +23,7 @@ import 'package:naviwealth/core/lifeos/domain_pack.dart';
 export 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
     show kSettingsLlmRuntimeCheckAgentId;
 export 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_protocol.dart'
-    show kAgentRuntimeProtocolVersion;
-
-const String kAgentRuntimeCatalogVersion = 'agent_catalog.v1';
+    show kAgentRuntimeCatalogVersion, kAgentRuntimeProtocolVersion;
 
 final agentRuntimeCatalogProvider = Provider<AgentRuntimeCatalog>((ref) {
   final packs = ref.watch(activeDomainPacksProvider);

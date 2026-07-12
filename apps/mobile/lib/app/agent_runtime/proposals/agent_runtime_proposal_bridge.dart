@@ -4,9 +4,17 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
+import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_proposal_bridge.dart';
 
 export 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_proposal_bridge.dart';
+
+final agentRuntimeProposalBridgeProvider =
+    FutureProvider<AgentRuntimeProposalBridge>((ref) async {
+      return AgentRuntimeProposalBridge(
+        applier: await ref.watch(proposalApplierProvider.future),
+      );
+    });
 
 final agentRuntimeConfirmedProposalRunnerProvider =
     FutureProvider<AgentRuntimeConfirmedProposalRunner>((ref) async {

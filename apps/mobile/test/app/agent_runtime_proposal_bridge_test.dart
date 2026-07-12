@@ -171,10 +171,16 @@ void main() {
           appliedTable: 'execution_actions',
         ),
       );
+      final bridge = _TerminalBridge(step: _terminalProposalStep());
       final container = ProviderContainer(
         overrides: [
-          agentRuntimeNativeBridgeProvider.overrideWithValue(
-            _TerminalBridge(step: _terminalProposalStep()),
+          agentRuntimeNativeStepRunnerProvider.overrideWithValue(
+            AgentRuntimeNativeStepRunner(
+              bridge: bridge,
+              toolHost: AgentRuntimeToolHost(
+                dispatcher: const _NoopDispatcher(),
+              ),
+            ),
           ),
           agentRuntimeToolHostProvider.overrideWithValue(
             AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
@@ -219,7 +225,14 @@ void main() {
               promptBlocks: const <AgentRuntimePromptBlockSpec>[],
             ),
           ),
-          agentRuntimeNativeBridgeProvider.overrideWithValue(bridge),
+          agentRuntimeNativeStepRunnerProvider.overrideWithValue(
+            AgentRuntimeNativeStepRunner(
+              bridge: bridge,
+              toolHost: AgentRuntimeToolHost(
+                dispatcher: const _NoopDispatcher(),
+              ),
+            ),
+          ),
           agentRuntimeToolHostProvider.overrideWithValue(
             AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
           ),
@@ -282,7 +295,7 @@ class _RecordingApplier implements ProposalApplier {
   Future<void> undo(ProposalApplyState state) async {}
 }
 
-class _TerminalBridge implements AgentRuntimeNativeBridge {
+class _TerminalBridge implements AgentRuntimeHostBridge {
   _TerminalBridge({required Map<String, Object?> step}) : _step = step;
 
   final Map<String, Object?> _step;
@@ -362,39 +375,79 @@ class _TerminalBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
-  Future<Map<String, Object?>> startProfileTurnStep({
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> llmRequest,
     required String agentId,
     required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
     catalogs.add(catalog);
     return <String, Object?>{
       'protocol_version': 'agent.v1',
       'llm_response': await completeProfileLlm(request: llmRequest),
-      'step': _step,
+      'snapshot': _snapshot(maxEffectSteps, maxSubagentDepth),
     };
   }
 
   @override
-  Future<Map<String, Object?>> startRunStep({
+  Future<Map<String, Object?>> startRunSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
     catalogs.add(catalog);
-    return _step;
+    return _snapshot(maxEffectSteps, maxSubagentDepth);
   }
 
   @override
-  Future<Map<String, Object?>> continueRunStep({
+  Future<Map<String, Object?>> continueRunSnapshot({
     required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
+    required Map<String, Object?> snapshot,
     required Map<String, Object?> effectResponse,
     required String agentId,
-  }) async {
-    return _step;
-  }
+  }) async => snapshot;
+
+  @override
+  Future<Map<String, Object?>> cancelRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required String agentId,
+    required String reason,
+  }) async => snapshot;
+
+  @override
+  Future<Map<String, Object?>> startRequestedSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+  }) async => parentSnapshot;
+
+  @override
+  Future<Map<String, Object?>> resumeParentFromSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+    required Map<String, Object?> childSnapshot,
+  }) async => parentSnapshot;
+
+  Map<String, Object?> _snapshot(int maxEffectSteps, int maxSubagentDepth) =>
+      <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'snapshot_version': 1,
+        'step': _step,
+        'limits': <String, Object?>{
+          'max_effect_steps': maxEffectSteps,
+          'max_subagent_depth': maxSubagentDepth,
+        },
+        'progress': const <String, Object?>{
+          'dispatched_effect_count': 0,
+          'subagent_depth': 0,
+          'effect_budget_exhausted': false,
+          'subagent_depth_exceeded': false,
+        },
+      };
 }
 
 class _NoopDispatcher implements DeviceToolDispatcher {

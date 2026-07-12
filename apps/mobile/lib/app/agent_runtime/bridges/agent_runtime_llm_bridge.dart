@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_protocol.dart';
 
 final agentRuntimeLlmBridgeProvider = Provider<AgentRuntimeLlmBridge?>((ref) {
   if (!ref.watch(deviceLlmPlatformSupportedProvider)) return null;
@@ -38,7 +39,7 @@ class AgentRuntimeLlmBridge {
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     return <String, Object?>{
-      'protocol_version': 'agent.v1',
+      'protocol_version': kAgentRuntimeProtocolVersion,
       'provider': _profile.provider.wire,
       'model': _profile.model?.trim().isNotEmpty == true
           ? _profile.model!.trim()

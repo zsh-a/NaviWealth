@@ -148,28 +148,6 @@ pub async fn agent_runtime_stream_chat_turn(
     chat::stream_chat_turn_response(sink, provider, state).await
 }
 
-pub async fn agent_runtime_start_profile_turn_step(
-    catalog_json: String,
-    llm_request_json: String,
-    agent_id: String,
-    run_metadata_json: String,
-) -> Result<String> {
-    let (llm_response, request) =
-        profile_turn_request(&llm_request_json, &run_metadata_json).await?;
-    let step_json = steps::agent_runtime_start_run_step(
-        catalog_json,
-        serde_json::to_string(&request)?,
-        agent_id,
-    )?;
-    let step: Value = serde_json::from_str(&step_json)?;
-    let output = json!({
-        "protocol_version": protocol_version(),
-        "llm_response": llm_response,
-        "step": step,
-    });
-    Ok(serde_json::to_string(&output)?)
-}
-
 pub async fn agent_runtime_start_profile_turn_snapshot(
     catalog_json: String,
     llm_request_json: String,
@@ -223,28 +201,6 @@ async fn profile_turn_request(
         metadata,
     };
     Ok((llm_response, request))
-}
-
-pub fn agent_runtime_start_run_step(
-    catalog_json: String,
-    request_json: String,
-    agent_id: String,
-) -> Result<String> {
-    steps::agent_runtime_start_run_step(catalog_json, request_json, agent_id)
-}
-
-pub fn agent_runtime_continue_run_step(
-    catalog_json: String,
-    previous_step_json: String,
-    effect_response_json: String,
-    agent_id: String,
-) -> Result<String> {
-    steps::agent_runtime_continue_run_step(
-        catalog_json,
-        previous_step_json,
-        effect_response_json,
-        agent_id,
-    )
 }
 
 pub fn agent_runtime_start_run_snapshot(

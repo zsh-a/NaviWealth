@@ -78,21 +78,6 @@ pub async fn agent_runtime_stream_chat_turn(
     runtime::agent_runtime_stream_chat_turn(sink, request_json).await
 }
 
-pub async fn agent_runtime_start_profile_turn_step(
-    catalog_json: String,
-    llm_request_json: String,
-    agent_id: String,
-    run_metadata_json: String,
-) -> Result<String> {
-    runtime::agent_runtime_start_profile_turn_step(
-        catalog_json,
-        llm_request_json,
-        agent_id,
-        run_metadata_json,
-    )
-    .await
-}
-
 pub async fn agent_runtime_start_profile_turn_snapshot(
     catalog_json: String,
     llm_request_json: String,
@@ -110,28 +95,6 @@ pub async fn agent_runtime_start_profile_turn_snapshot(
         max_subagent_depth,
     )
     .await
-}
-
-pub fn agent_runtime_start_run_step(
-    catalog_json: String,
-    request_json: String,
-    agent_id: String,
-) -> Result<String> {
-    runtime::agent_runtime_start_run_step(catalog_json, request_json, agent_id)
-}
-
-pub fn agent_runtime_continue_run_step(
-    catalog_json: String,
-    previous_step_json: String,
-    effect_response_json: String,
-    agent_id: String,
-) -> Result<String> {
-    runtime::agent_runtime_continue_run_step(
-        catalog_json,
-        previous_step_json,
-        effect_response_json,
-        agent_id,
-    )
 }
 
 pub fn agent_runtime_start_run_snapshot(

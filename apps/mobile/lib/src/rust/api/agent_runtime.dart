@@ -81,18 +81,6 @@ Stream<String> agentRuntimeStreamChatTurn({required String requestJson}) =>
       requestJson: requestJson,
     );
 
-Future<String> agentRuntimeStartProfileTurnStep({
-  required String catalogJson,
-  required String llmRequestJson,
-  required String agentId,
-  required String runMetadataJson,
-}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStartProfileTurnStep(
-  catalogJson: catalogJson,
-  llmRequestJson: llmRequestJson,
-  agentId: agentId,
-  runMetadataJson: runMetadataJson,
-);
-
 Future<String> agentRuntimeStartProfileTurnSnapshot({
   required String catalogJson,
   required String llmRequestJson,
@@ -109,28 +97,6 @@ Future<String> agentRuntimeStartProfileTurnSnapshot({
       maxEffectSteps: maxEffectSteps,
       maxSubagentDepth: maxSubagentDepth,
     );
-
-Future<String> agentRuntimeStartRunStep({
-  required String catalogJson,
-  required String requestJson,
-  required String agentId,
-}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeStartRunStep(
-  catalogJson: catalogJson,
-  requestJson: requestJson,
-  agentId: agentId,
-);
-
-Future<String> agentRuntimeContinueRunStep({
-  required String catalogJson,
-  required String previousStepJson,
-  required String effectResponseJson,
-  required String agentId,
-}) => RustLib.instance.api.crateApiAgentRuntimeAgentRuntimeContinueRunStep(
-  catalogJson: catalogJson,
-  previousStepJson: previousStepJson,
-  effectResponseJson: effectResponseJson,
-  agentId: agentId,
-);
 
 Future<String> agentRuntimeStartRunSnapshot({
   required String catalogJson,

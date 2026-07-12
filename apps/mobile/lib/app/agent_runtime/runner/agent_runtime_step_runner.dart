@@ -3,11 +3,11 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_checkpoint_store.dart';
+import 'package:naviwealth/app/agent_runtime/persistence/drift_agent_runtime_checkpoint_store.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_dispatcher.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_json.dart';
-import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_protocol.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 
@@ -28,7 +28,7 @@ final agentRuntimeNativeStepRunnerProvider =
 
 class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
   AgentRuntimeNativeStepRunner({
-    required AgentRuntimeNativeBridge bridge,
+    required AgentRuntimeExecutionBridge bridge,
     required AgentRuntimeToolHost toolHost,
     AgentRuntimeCheckpointStore? checkpointStore,
     int defaultMaxEffectSteps = 4,
@@ -41,28 +41,15 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
        _defaultMaxEffectSteps = defaultMaxEffectSteps,
        _defaultMaxSubagentDepth = defaultMaxSubagentDepth;
 
-  final AgentRuntimeNativeBridge _bridge;
+  final AgentRuntimeExecutionBridge _bridge;
   final AgentRuntimeToolDispatcher _toolDispatcher;
   final AgentRuntimeCheckpointStore? _checkpointStore;
   final int _defaultMaxEffectSteps;
   final int _defaultMaxSubagentDepth;
 
-  AgentRuntimeNativeBridge get bridge => _bridge;
+  AgentRuntimeExecutionBridge get bridge => _bridge;
   int get defaultMaxEffectSteps => _defaultMaxEffectSteps;
   int get defaultMaxSubagentDepth => _defaultMaxSubagentDepth;
-
-  Future<Map<String, Object?>> startAndDispatchFirstEffectStep({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> request,
-    required String agentId,
-  }) {
-    return runUntilTerminal(
-      catalog: catalog,
-      request: request,
-      agentId: agentId,
-      maxEffectSteps: 1,
-    );
-  }
 
   Future<Map<String, Object?>> runUntilTerminal({
     required Map<String, Object?> catalog,
@@ -89,47 +76,32 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     if (limit < 0) {
       throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
     }
-    final bridge = _bridge;
-    if (bridge is AgentRuntimeSnapshotBridge) {
-      final snapshotBridge = bridge as AgentRuntimeSnapshotBridge;
-      final requestFingerprint = agentRuntimeRequestFingerprint(
-        agentId: agentId,
-        catalog: catalog,
-        request: request,
-      );
-      final checkpoint = await _checkpointStore?.findResumable(
-        agentId: agentId,
-        requestFingerprint: requestFingerprint,
-      );
-      final execution = await _runSnapshotUntilTerminal(
-        bridge: snapshotBridge,
-        catalog: catalog,
-        initialSnapshot:
-            checkpoint?.snapshot ??
-            await snapshotBridge.startRunSnapshot(
-              catalog: catalog,
-              request: request,
-              agentId: agentId,
-              maxEffectSteps: limit,
-              maxSubagentDepth: _defaultMaxSubagentDepth,
-            ),
-        agentId: agentId,
-        requestFingerprint: requestFingerprint,
-        initialCheckpoint: checkpoint,
-      );
-      return execution.result;
-    }
-    final step = await _bridge.startRunStep(
+    final requestFingerprint = agentRuntimeRequestFingerprint(
+      agentId: agentId,
       catalog: catalog,
       request: request,
-      agentId: agentId,
     );
-    return continueUntilTerminalWithTrace(
+    final checkpoint = await _checkpointStore?.findResumable(
+      agentId: agentId,
+      requestFingerprint: requestFingerprint,
+    );
+    final execution = await _runSnapshotUntilTerminal(
+      bridge: _bridge,
       catalog: catalog,
-      initialStep: step,
+      initialSnapshot:
+          checkpoint?.snapshot ??
+          await _bridge.startRunSnapshot(
+            catalog: catalog,
+            request: request,
+            agentId: agentId,
+            maxEffectSteps: limit,
+            maxSubagentDepth: _defaultMaxSubagentDepth,
+          ),
       agentId: agentId,
-      maxEffectSteps: maxEffectSteps,
+      requestFingerprint: requestFingerprint,
+      initialCheckpoint: checkpoint,
     );
+    return execution.result;
   }
 
   Future<_SnapshotExecution> _runSnapshotUntilTerminal({
@@ -316,12 +288,8 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     String? requestFingerprint,
     Map<String, Object?> resumeContext = const <String, Object?>{},
   }) async {
-    final bridge = _bridge;
-    if (bridge is! AgentRuntimeSnapshotBridge) {
-      throw UnsupportedError('native runtime does not expose snapshot APIs');
-    }
     return (await _runSnapshotUntilTerminal(
-      bridge: bridge as AgentRuntimeSnapshotBridge,
+      bridge: _bridge,
       catalog: catalog,
       initialSnapshot: initialSnapshot,
       agentId: agentId,
@@ -355,12 +323,8 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     required Map<String, Object?> catalog,
     required AgentRuntimeCheckpoint checkpoint,
   }) async {
-    final bridge = _bridge;
-    if (bridge is! AgentRuntimeSnapshotBridge) {
-      throw UnsupportedError('native runtime does not expose snapshot APIs');
-    }
     return (await _runSnapshotUntilTerminal(
-      bridge: bridge as AgentRuntimeSnapshotBridge,
+      bridge: _bridge,
       catalog: catalog,
       initialSnapshot: checkpoint.snapshot,
       agentId: checkpoint.agentId,
@@ -375,20 +339,12 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     required AgentRuntimeCheckpoint checkpoint,
     required String reason,
   }) async {
-    final bridge = _bridge;
-    if (bridge is! AgentRuntimeSnapshotBridge ||
-        bridge is! AgentRuntimeSnapshotControlBridge) {
-      throw UnsupportedError(
-        'native runtime does not expose snapshot cancellation APIs',
-      );
-    }
-    var cancelledSnapshot = await (bridge as AgentRuntimeSnapshotControlBridge)
-        .cancelRunSnapshot(
-          catalog: catalog,
-          snapshot: checkpoint.snapshot,
-          agentId: checkpoint.agentId,
-          reason: reason,
-        );
+    var cancelledSnapshot = await _bridge.cancelRunSnapshot(
+      catalog: catalog,
+      snapshot: checkpoint.snapshot,
+      agentId: checkpoint.agentId,
+      reason: reason,
+    );
     var cancelledCheckpoint = checkpoint;
     final checkpointStore = _checkpointStore;
     if (checkpointStore != null) {
@@ -402,7 +358,7 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       cancelledSnapshot = cancelledCheckpoint.snapshot;
     }
     return (await _runSnapshotUntilTerminal(
-      bridge: bridge as AgentRuntimeSnapshotBridge,
+      bridge: _bridge,
       catalog: catalog,
       initialSnapshot: cancelledSnapshot,
       agentId: checkpoint.agentId,
@@ -466,120 +422,6 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     }
   }
 
-  Future<Map<String, Object?>> continueUntilTerminal({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> initialStep,
-    required String agentId,
-    int? maxEffectSteps,
-  }) async {
-    return (await continueUntilTerminalWithTrace(
-      catalog: catalog,
-      initialStep: initialStep,
-      agentId: agentId,
-      maxEffectSteps: maxEffectSteps,
-    )).terminalStep;
-  }
-
-  Future<AgentRuntimeNativeStepRunResult> continueUntilTerminalWithTrace({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> initialStep,
-    required String agentId,
-    int? maxEffectSteps,
-  }) async {
-    final limit = maxEffectSteps ?? _defaultMaxEffectSteps;
-    if (limit < 0) {
-      throw RangeError.value(limit, 'maxEffectSteps', 'must be non-negative');
-    }
-    final budget = _EffectRunBudget(limit);
-    return _continueUntilTerminalWithTrace(
-      catalog: catalog,
-      initialStep: initialStep,
-      agentId: agentId,
-      budget: budget,
-      depth: 0,
-    );
-  }
-
-  Future<AgentRuntimeNativeStepRunResult> _continueUntilTerminalWithTrace({
-    required Map<String, Object?> catalog,
-    required Map<String, Object?> initialStep,
-    required String agentId,
-    required _EffectRunBudget budget,
-    required int depth,
-  }) async {
-    var step = initialStep;
-    final steps = <Map<String, Object?>>[step];
-    final effectResponses = <Map<String, Object?>>[];
-    var subagentDepthExceeded = false;
-
-    while (_isHostEffectRequested(step)) {
-      if (!budget.canDispatch) {
-        budget.markExhausted();
-        step = await _bridge.continueRunStep(
-          catalog: catalog,
-          previousStep: step,
-          effectResponse: agentRuntimeEffectBudgetExhaustedResponse(
-            effectId: _effectId(
-              agentRuntimeObject(
-                step['effect'],
-                label: 'native agent-runtime effect',
-              ),
-              step,
-            ),
-            maxEffectSteps: budget.max,
-            dispatchedEffectCount: budget.dispatched,
-          ),
-          agentId: agentId,
-        );
-        steps.add(step);
-        return AgentRuntimeNativeStepRunResult(
-          terminalStep: step,
-          steps: steps,
-          effectResponses: effectResponses,
-          nativeTraceEvents: _nativeTraceEvents(steps),
-          dispatchedEffectCount: budget.dispatched,
-          budgetExhausted: true,
-          maxEffectSteps: budget.max,
-          remainingEffectSteps: budget.remaining,
-          maxSubagentDepth: _defaultMaxSubagentDepth,
-          subagentDepthExceeded: subagentDepthExceeded,
-        );
-      }
-      budget.markDispatched();
-
-      final dispatch = await _dispatchHostEffect(
-        step: step,
-        catalog: catalog,
-        budget: budget,
-        depth: depth,
-      );
-      subagentDepthExceeded =
-          subagentDepthExceeded || dispatch.subagentDepthExceeded;
-      final response = dispatch.response;
-      effectResponses.add(response);
-      step = await _bridge.continueRunStep(
-        catalog: catalog,
-        previousStep: step,
-        effectResponse: response,
-        agentId: agentId,
-      );
-      steps.add(step);
-    }
-
-    return AgentRuntimeNativeStepRunResult(
-      terminalStep: step,
-      steps: steps,
-      effectResponses: effectResponses,
-      nativeTraceEvents: _nativeTraceEvents(steps),
-      dispatchedEffectCount: budget.dispatched,
-      budgetExhausted: budget.exhausted,
-      maxEffectSteps: budget.max,
-      remainingEffectSteps: budget.remaining,
-      maxSubagentDepth: _defaultMaxSubagentDepth,
-      subagentDepthExceeded: subagentDepthExceeded,
-    );
-  }
-
   Future<Map<String, Object?>> _dispatchToolCall(
     Map<String, Object?> step,
   ) async {
@@ -600,141 +442,6 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
       ),
     )).response;
   }
-
-  Future<_HostEffectDispatch> _dispatchHostEffect({
-    required Map<String, Object?> step,
-    required Map<String, Object?> catalog,
-    required _EffectRunBudget budget,
-    required int depth,
-  }) async {
-    if (step['status'] != 'effect_requested') {
-      throw FormatException(
-        'native agent-runtime host effect status is unsupported',
-        step['status'],
-      );
-    }
-    final effect = agentRuntimeObject(
-      step['effect'],
-      label: 'native agent-runtime effect',
-    );
-    return switch (effect['kind']) {
-      'tool' => _dispatchToolCall(
-        step,
-      ).then((response) => _HostEffectDispatch(response)),
-      'subagent' => _dispatchSubagent(
-        step: step,
-        catalog: catalog,
-        budget: budget,
-        depth: depth,
-      ),
-      _ => throw FormatException(
-        'native agent-runtime effect kind is unsupported',
-        effect['kind'],
-      ),
-    };
-  }
-
-  Future<_HostEffectDispatch> _dispatchSubagent({
-    required Map<String, Object?> step,
-    required Map<String, Object?> catalog,
-    required _EffectRunBudget budget,
-    required int depth,
-  }) async {
-    final subagentCall = agentRuntimeObject(
-      step['effect'],
-      label: 'native agent-runtime effect',
-    );
-    final subagentId = agentRuntimeString(subagentCall['agent_id']);
-    if (subagentId.isEmpty) {
-      throw const FormatException('native effect.agent_id is required');
-    }
-    final id = _effectId(subagentCall, step);
-    if (depth >= _defaultMaxSubagentDepth) {
-      return _HostEffectDispatch(<String, Object?>{
-        'jsonrpc': '2.0',
-        'id': id,
-        'result': <String, Object?>{
-          'error': <String, Object?>{
-            'code': 'subagent_depth_exceeded',
-            'message':
-                'subagent depth exceeded '
-                '($_defaultMaxSubagentDepth)',
-          },
-        },
-      }, subagentDepthExceeded: true);
-    }
-    try {
-      final childRun = await _continueUntilTerminalWithTrace(
-        catalog: catalog,
-        initialStep: await _bridge.startRunStep(
-          catalog: catalog,
-          request: _subagentRunRequest(subagentCall),
-          agentId: subagentId,
-        ),
-        agentId: subagentId,
-        budget: budget,
-        depth: depth + 1,
-      );
-      return _HostEffectDispatch(<String, Object?>{
-        'jsonrpc': '2.0',
-        'id': id,
-        'result': <String, Object?>{
-          'agent_id': subagentId,
-          'terminal_step': childRun.terminalStep,
-          'steps': childRun.steps,
-          'effect_responses': childRun.effectResponses,
-          'native_trace_events': childRun.nativeTraceEvents,
-          'dispatched_effect_count': childRun.dispatchedEffectCount,
-          'budget_exhausted': childRun.budgetExhausted,
-          'max_effect_steps': childRun.maxEffectSteps,
-          'remaining_effect_steps': childRun.remainingEffectSteps,
-          'max_subagent_depth': childRun.maxSubagentDepth,
-          'subagent_depth_exceeded': childRun.subagentDepthExceeded,
-        },
-      }, subagentDepthExceeded: childRun.subagentDepthExceeded);
-    } catch (error) {
-      return _HostEffectDispatch(<String, Object?>{
-        'jsonrpc': '2.0',
-        'id': id,
-        'result': <String, Object?>{
-          'error': <String, Object?>{
-            'code': 'subagent_run_failed',
-            'message': error.toString(),
-          },
-        },
-      });
-    }
-  }
-}
-
-class _EffectRunBudget {
-  _EffectRunBudget(this.max) : remaining = max;
-
-  final int max;
-  int remaining;
-  bool exhausted = false;
-
-  int get dispatched => max - remaining;
-
-  bool get canDispatch => remaining > 0;
-
-  void markDispatched() {
-    remaining -= 1;
-  }
-
-  void markExhausted() {
-    exhausted = true;
-  }
-}
-
-class _HostEffectDispatch {
-  const _HostEffectDispatch(
-    this.response, {
-    this.subagentDepthExceeded = false,
-  });
-
-  final Map<String, Object?> response;
-  final bool subagentDepthExceeded;
 }
 
 class _SnapshotExecution {
@@ -810,26 +517,4 @@ Object _effectId(Map<String, Object?> effect, Map<String, Object?> step) {
   final runId = step['run_id'];
   if (runId is String && runId.isNotEmpty) return runId;
   return 'effect';
-}
-
-Map<String, Object?> _subagentRunRequest(Map<String, Object?> subagentCall) {
-  final request = <String, Object?>{
-    'protocol_version': kAgentRuntimeProtocolVersion,
-    if (subagentCall['run_id'] case final String runId when runId.isNotEmpty)
-      'run_id': runId,
-    'input': _subagentInput(subagentCall['input']),
-    'trigger': 'manual',
-    'metadata':
-        agentRuntimeObjectOrNull(subagentCall['metadata']) ??
-        const <String, Object?>{},
-  };
-  final scope = agentRuntimeObjectOrNull(subagentCall['scope']);
-  if (scope != null) request['scope'] = scope;
-  final workflow = agentRuntimeObjectOrNull(subagentCall['workflow']);
-  if (workflow != null) request['workflow'] = workflow;
-  return request;
-}
-
-Map<String, Object?> _subagentInput(Object? input) {
-  return agentRuntimeObjectOrNull(input) ?? <String, Object?>{'value': input};
 }

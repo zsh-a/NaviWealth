@@ -6,18 +6,9 @@
 /// [ProposalApplier]. It does not auto-apply during agent execution.
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../composition/proposal_applier.dart';
 import '../../composition/proposal_apply_state.dart';
 import '../../composition/proposal_plan.dart';
-
-final agentRuntimeProposalBridgeProvider =
-    FutureProvider<AgentRuntimeProposalBridge>((ref) async {
-      return AgentRuntimeProposalBridge(
-        applier: await ref.watch(proposalApplierProvider.future),
-      );
-    });
 
 class AgentRuntimeProposalBridge {
   const AgentRuntimeProposalBridge({required ProposalApplier applier})

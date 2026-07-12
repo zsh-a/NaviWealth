@@ -123,7 +123,7 @@ Current bridge capabilities:
 - Provide a Dart JSONL tool-host adapter compatible with Rust CLI process
   tool calls.
 - Provide a headless Dart tool host entrypoint for local development.
-- Provide FRB/native validation, summary, and first-step run functions for
+- Provide FRB/native validation, summary, and versioned snapshot functions for
   agent runtime wire contracts.
 - Provide FRB/native LLM request/response contract validation and
   deterministic mock LLM completion through the shared `agent-llm` crate.
@@ -133,11 +133,10 @@ Current bridge capabilities:
   `agentRuntimeCompleteProfileLlm`, using the device-local profile metadata
   for OpenAI-compatible and Anthropic-compatible HTTP providers.
 - Provide FRB/native continuation for Dart-dispatched host effects via
-  `agentRuntimeContinueRunStep`.
-- Provide a Dart-side `AgentRuntimeNativeStepRunner` that executes a bounded
-  embedded effect loop without a process host: native start step, Dart
-  host-effect dispatch, native continuation step, repeated until a terminal
-  native step or the effect budget is exhausted.
+  `agentRuntimeContinueRunSnapshot`.
+- Provide a Dart-side `AgentRuntimeNativeStepRunner` that executes the
+  Rust-owned snapshot loop: snapshot start, Dart host-effect dispatch, snapshot
+  continuation, repeated until the snapshot is terminal.
 - Provide a Dart-side `AgentRuntimeProposalBridge` that parses ready proposal
   envelopes from terminal FRB steps and dispatches confirmed proposals through
   the active cross-domain `ProposalApplier`.
@@ -153,15 +152,13 @@ Current bridge capabilities:
   `agentRuntimeProfileTurnRunnerProvider`, which compose active-profile FRB LLM
   completion with the bounded native FRB effect loop and return both the LLM
   response and terminal native step.
-- Provide FRB/native profile-turn first-step execution via
-  `agentRuntimeStartProfileTurnStep`: Rust completes the active-profile LLM
-  request and starts the first native runtime step, then Dart resumes bounded
-  host-effect dispatch from that initial step.
-- Provide native FRB effect continuation: Rust can seed `input.effects` from
-  run input or LLM response metadata, return the first `effect_requested` step,
-  consume each Dart effect response through `agentRuntimeContinueRunStep`, and
-  either request the next host effect or return a terminal `frb_effect_loop`
-  output.
+- Provide FRB/native profile-turn execution via
+  `agentRuntimeStartProfileTurnSnapshot`: Rust completes the active-profile LLM
+  request and starts the versioned snapshot, then Dart resumes host-effect
+  dispatch from that snapshot.
+- Rust seeds `input.effects` from run input or LLM response metadata, returns an
+  `effect_requested` snapshot, consumes each Dart effect response through
+  `agentRuntimeContinueRunSnapshot`, and owns terminal closure.
 - Provide Dart-side native step trace summaries:
   `AgentRuntimeNativeStepRunner` can return the terminal step plus all native
   steps observed, Dart effect responses, dispatch count, and budget-exhaustion

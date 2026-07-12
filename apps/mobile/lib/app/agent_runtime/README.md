@@ -11,12 +11,13 @@ agent runtime. Keep it as adapters only:
 Directory map:
 
 - `bindings/`: profile turn bindings between app seams and runtime calls.
-- `bridges/`: FRB/native/profile completion bridges.
+- `bridges/`: raw FRB API adapters and app-level native/profile bridges.
 - `catalog/`: runtime catalog assembly from active domain packs.
 - `chat/`: FRB chat stream types, runner, and trace mapping.
 - `overrides/`: production provider overrides installed by bootstrap.
 - `proposals/`: proposal application bridge back into app routes.
-- `runner/`: app-owned runtime and step runners.
+- `persistence/`: checkpoint contract/in-memory store plus the Drift adapter.
+- `runner/`: snapshot execution and profile-turn orchestration.
 - `tools/`: tool host, dispatcher, effect-plan binding, and headless process host.
 - `trace/`: local trace capture for runtime-backed execution.
 

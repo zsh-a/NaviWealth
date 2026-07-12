@@ -12,7 +12,7 @@ AgentRuntimeEffectPlanBinding agentRuntimeEffectPlanTestBinding({
   required String agentId,
   required String domain,
   required String surface,
-  required AgentRuntimeNativeBridge bridge,
+  required AgentRuntimeExecutionBridge bridge,
   required DeviceToolDispatcher dispatcher,
   required AgentRuntimeCatalog catalog,
   AgentRuntimeStepTraceRecorder? recordTrace,
@@ -37,10 +37,12 @@ class FakeAgentRuntimeEffectPlanBridge extends FakeAgentRuntimeNativeBridge {
   final _responses = <Map<String, Object?>>[];
 
   @override
-  Future<Map<String, Object?>> startRunStep({
+  Future<Map<String, Object?>> startRunSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
     startRequests.add(
       AgentRuntimeEffectPlanStartRequest(request: request, agentId: agentId),
@@ -49,64 +51,98 @@ class FakeAgentRuntimeEffectPlanBridge extends FakeAgentRuntimeNativeBridge {
     _plan = input['effects']! as List<Object?>;
     _next = 0;
     _responses.clear();
-    return _toolCallStep(agentId);
+    return _toolCallSnapshot(
+      agentId,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
   }
 
   @override
-  Future<Map<String, Object?>> continueRunStep({
+  Future<Map<String, Object?>> continueRunSnapshot({
     required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
+    required Map<String, Object?> snapshot,
     required Map<String, Object?> effectResponse,
     required String agentId,
   }) async {
+    final previousStep = Map<String, Object?>.from(snapshot['step']! as Map);
     _responses.add(<String, Object?>{
       'effect': previousStep['effect'],
       'effect_response': effectResponse,
     });
     _next += 1;
-    if (_next < _plan.length) return _toolCallStep(agentId);
+    final limits = Map<String, Object?>.from(snapshot['limits']! as Map);
+    if (_next < _plan.length) {
+      return _toolCallSnapshot(
+        agentId,
+        maxEffectSteps: limits['max_effect_steps']! as int,
+        maxSubagentDepth: limits['max_subagent_depth']! as int,
+      );
+    }
 
     final effectResults = _effectResults();
     return <String, Object?>{
       'protocol_version': 'agent.v1',
-      'run_id': previousStep['run_id'],
-      'agent_id': agentId,
-      'status': 'completed',
-      'output': <String, Object?>{
-        'mode': effectResults.length > 1
-            ? 'frb_effect_loop'
-            : 'frb_effect_step',
-        'effect': previousStep['effect'],
-        'effect_result': effectResponse['result'],
-        'effect_response': effectResponse,
-        'effect_results': effectResults,
+      'snapshot_version': 1,
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': previousStep['run_id'],
+        'agent_id': agentId,
+        'step_index': _next,
+        'status': 'completed',
+        'output': <String, Object?>{
+          'mode': effectResults.length > 1
+              ? 'frb_effect_loop'
+              : 'frb_effect_step',
+          'effect': previousStep['effect'],
+          'effect_result': effectResponse['result'],
+          'effect_response': effectResponse,
+          'effect_results': effectResults,
+        },
+      },
+      'limits': limits,
+      'progress': <String, Object?>{
+        'dispatched_effect_count': _next,
+        'subagent_depth': 0,
+        'effect_budget_exhausted': false,
+        'subagent_depth_exceeded': false,
       },
     };
   }
 
-  Map<String, Object?> _toolCallStep(String agentId) {
+  Map<String, Object?> _toolCallSnapshot(
+    String agentId, {
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
+  }) {
     final item = _plan[_next]! as Map<String, Object?>;
-    final remaining = _plan.skip(_next + 1).toList(growable: false);
-    final step = <String, Object?>{
+    return <String, Object?>{
       'protocol_version': 'agent.v1',
-      'run_id': 'run_1',
-      'agent_id': agentId,
-      'status': 'effect_requested',
-      'effect': <String, Object?>{
-        'kind': 'tool',
-        'effect_id': 'call_${_next + 1}',
-        'name': item['name'],
-        'input': item['input'],
+      'snapshot_version': 1,
+      'step': <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'run_id': 'run_1',
+        'agent_id': agentId,
+        'step_index': _next,
+        'status': 'effect_requested',
+        'effect': <String, Object?>{
+          'kind': 'tool',
+          'effect_id': 'call_${_next + 1}',
+          'name': item['name'],
+          'input': item['input'],
+        },
+      },
+      'limits': <String, Object?>{
+        'max_effect_steps': maxEffectSteps,
+        'max_subagent_depth': maxSubagentDepth,
+      },
+      'progress': <String, Object?>{
+        'dispatched_effect_count': _next,
+        'subagent_depth': 0,
+        'effect_budget_exhausted': false,
+        'subagent_depth_exceeded': false,
       },
     };
-    if (remaining.isNotEmpty || _responses.isNotEmpty) {
-      step['continuation'] = <String, Object?>{
-        'next_step_index': _next + 1,
-        'effects': remaining,
-        'effect_results': _effectResults(),
-      };
-    }
-    return step;
   }
 
   List<Map<String, Object?>> _effectResults() {
@@ -124,10 +160,12 @@ class FakeAgentRuntimeEffectPlanBridge extends FakeAgentRuntimeNativeBridge {
 class FailingAgentRuntimeEffectPlanBridge
     extends FakeAgentRuntimeEffectPlanBridge {
   @override
-  Future<Map<String, Object?>> startRunStep({
+  Future<Map<String, Object?>> startRunSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
     throw StateError('native unavailable');
   }

@@ -350,7 +350,7 @@ AgentArtifact _recoveryArtifact({
 }
 
 AgentRuntimeEffectPlanBinding _runtime({
-  required AgentRuntimeNativeBridge bridge,
+  required AgentRuntimeExecutionBridge bridge,
   required DeviceToolDispatcher dispatcher,
   Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)? recordTrace,
 }) {

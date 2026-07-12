@@ -1,7 +1,7 @@
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 
-class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
+class FakeAgentRuntimeNativeBridge implements AgentRuntimeHostBridge {
   FakeAgentRuntimeNativeBridge({
     Map<String, Object?>? profileResponse,
     this.profileError,
@@ -27,28 +27,22 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   @override
   Future<Map<String, Object?>> catalogSummary(
     Map<String, Object?> catalog,
-  ) async {
-    return catalog;
-  }
+  ) async => catalog;
 
   @override
   Future<Map<String, Object?>> validateRunRequest(
     Map<String, Object?> request,
-  ) async {
-    return request;
-  }
+  ) async => request;
 
   @override
-  Future<Map<String, Object?>> validateTrace(Map<String, Object?> trace) async {
-    return trace;
-  }
+  Future<Map<String, Object?>> validateTrace(
+    Map<String, Object?> trace,
+  ) async => trace;
 
   @override
   Future<Map<String, Object?>> validateToolSpec(
     Map<String, Object?> tool,
-  ) async {
-    return tool;
-  }
+  ) async => tool;
 
   @override
   Future<Map<String, Object?>> validateLlmRequest(
@@ -62,9 +56,7 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   @override
   Future<Map<String, Object?>> validateLlmResponse(
     Map<String, Object?> response,
-  ) async {
-    return response;
-  }
+  ) async => response;
 
   @override
   Future<Map<String, Object?>> completeMockLlm({
@@ -104,11 +96,13 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
   }
 
   @override
-  Future<Map<String, Object?>> startProfileTurnStep({
+  Future<Map<String, Object?>> startProfileTurnSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> llmRequest,
     required String agentId,
     required Map<String, Object?> runMetadata,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
     final response = await completeProfileLlm(request: llmRequest);
     final initialStep = _initialStepForLlmResponse(response, agentId);
@@ -124,15 +118,21 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
     return <String, Object?>{
       'protocol_version': kAgentRuntimeProtocolVersion,
       'llm_response': response,
-      'step': initialStep,
+      'snapshot': _snapshot(
+        step: initialStep,
+        maxEffectSteps: maxEffectSteps,
+        maxSubagentDepth: maxSubagentDepth,
+      ),
     };
   }
 
   @override
-  Future<Map<String, Object?>> startRunStep({
+  Future<Map<String, Object?>> startRunSnapshot({
     required Map<String, Object?> catalog,
     required Map<String, Object?> request,
     required String agentId,
+    required int maxEffectSteps,
+    required int maxSubagentDepth,
   }) async {
     runRequests.add(
       AgentRuntimeRunStartRequest(
@@ -142,77 +142,123 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
       ),
     );
     final input = request['input'];
-    if (input is Map<String, Object?>) {
-      final effect = input['effect'];
-      if (effect is Map<String, Object?>) {
-        return <String, Object?>{
-          'protocol_version': kAgentRuntimeProtocolVersion,
-          'run_id': 'run_1',
-          'agent_id': agentId,
-          'status': 'effect_requested',
-          'effect': effect,
-        };
-      }
-    }
-    return <String, Object?>{
-      'protocol_version': kAgentRuntimeProtocolVersion,
-      'run_id': 'run_1',
-      'agent_id': agentId,
-      'status': 'completed',
-      'output': input,
-    };
+    final effect = input is Map<String, Object?> ? input['effect'] : null;
+    final step = effect is Map<String, Object?>
+        ? <String, Object?>{
+            'protocol_version': kAgentRuntimeProtocolVersion,
+            'run_id': 'run_1',
+            'agent_id': agentId,
+            'step_index': 0,
+            'status': 'effect_requested',
+            'effect': effect,
+          }
+        : <String, Object?>{
+            'protocol_version': kAgentRuntimeProtocolVersion,
+            'run_id': 'run_1',
+            'agent_id': agentId,
+            'step_index': 0,
+            'status': 'completed',
+            'output': input,
+          };
+    return _snapshot(
+      step: step,
+      maxEffectSteps: maxEffectSteps,
+      maxSubagentDepth: maxSubagentDepth,
+    );
   }
 
   @override
-  Future<Map<String, Object?>> continueRunStep({
+  Future<Map<String, Object?>> continueRunSnapshot({
     required Map<String, Object?> catalog,
-    required Map<String, Object?> previousStep,
+    required Map<String, Object?> snapshot,
     required Map<String, Object?> effectResponse,
     required String agentId,
   }) async {
+    final previousStep = Map<String, Object?>.from(snapshot['step']! as Map);
     continuations.add(
       AgentRuntimeRunContinuation(
         previousStep: previousStep,
         effectResponse: effectResponse,
       ),
     );
+    final limits = Map<String, Object?>.from(snapshot['limits']! as Map);
+    final progress = Map<String, Object?>.from(snapshot['progress']! as Map);
+    final dispatched = (progress['dispatched_effect_count']! as int) + 1;
+    return _snapshot(
+      step: <String, Object?>{
+        'protocol_version': kAgentRuntimeProtocolVersion,
+        'run_id': previousStep['run_id'],
+        'agent_id': agentId,
+        'step_index': dispatched,
+        'status': 'completed',
+        'output': <String, Object?>{
+          'effect': previousStep['effect'],
+          'effect_result': effectResponse['result'],
+          'effect_response': effectResponse,
+        },
+      },
+      maxEffectSteps: limits['max_effect_steps']! as int,
+      maxSubagentDepth: limits['max_subagent_depth']! as int,
+      dispatchedEffectCount: dispatched,
+    );
+  }
+
+  @override
+  Future<Map<String, Object?>> cancelRunSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> snapshot,
+    required String agentId,
+    required String reason,
+  }) async {
+    final step = Map<String, Object?>.from(snapshot['step']! as Map);
     return <String, Object?>{
-      'protocol_version': kAgentRuntimeProtocolVersion,
-      'run_id': previousStep['run_id'],
-      'agent_id': agentId,
-      'status': effectResponse['error'] == null ? 'completed' : 'failed',
-      'output': <String, Object?>{
-        'effect': previousStep['effect'],
-        'effect_result': effectResponse['result'],
-        'effect_response': effectResponse,
+      ...snapshot,
+      'step': <String, Object?>{
+        ...step,
+        'status': 'cancelled',
+        'effect': null,
+        'error': <String, Object?>{'code': 'user_cancel', 'message': reason},
       },
     };
   }
+
+  @override
+  Future<Map<String, Object?>> startRequestedSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+  }) => throw UnsupportedError('subagent not configured by this fake');
+
+  @override
+  Future<Map<String, Object?>> resumeParentFromSubagentSnapshot({
+    required Map<String, Object?> catalog,
+    required Map<String, Object?> parentSnapshot,
+    required Map<String, Object?> childSnapshot,
+  }) => throw UnsupportedError('subagent not configured by this fake');
 
   Map<String, Object?> _initialStepForLlmResponse(
     Map<String, Object?> llmResponse,
     String agentId,
   ) {
     final metadata = llmResponse['metadata'];
-    if (metadata is Map<String, Object?>) {
-      final effects = metadata['effects'];
-      final effect = effects is List && effects.isNotEmpty
-          ? effects.first
-          : null;
-      if (effect is Map<String, Object?>) {
-        return <String, Object?>{
-          'protocol_version': kAgentRuntimeProtocolVersion,
-          'run_id': 'run_1',
-          'agent_id': agentId,
-          'status': 'effect_requested',
-          'effect': effect,
-        };
-      }
+    final effects = metadata is Map<String, Object?>
+        ? metadata['effects']
+        : null;
+    final effect = effects is List && effects.isNotEmpty ? effects.first : null;
+    if (effect is Map<String, Object?>) {
+      return <String, Object?>{
+        'protocol_version': kAgentRuntimeProtocolVersion,
+        'run_id': 'run_1',
+        'agent_id': agentId,
+        'step_index': 0,
+        'status': 'effect_requested',
+        'effect': effect,
+      };
     }
     return <String, Object?>{
       'protocol_version': kAgentRuntimeProtocolVersion,
       'run_id': 'run_1',
       'agent_id': agentId,
+      'step_index': 0,
       'status': 'completed',
       'output': <String, Object?>{
         'content': llmResponse['content'],
@@ -221,6 +267,27 @@ class FakeAgentRuntimeNativeBridge implements AgentRuntimeNativeBridge {
     };
   }
 }
+
+Map<String, Object?> _snapshot({
+  required Map<String, Object?> step,
+  required int maxEffectSteps,
+  required int maxSubagentDepth,
+  int dispatchedEffectCount = 0,
+}) => <String, Object?>{
+  'protocol_version': kAgentRuntimeProtocolVersion,
+  'snapshot_version': 1,
+  'step': step,
+  'limits': <String, Object?>{
+    'max_effect_steps': maxEffectSteps,
+    'max_subagent_depth': maxSubagentDepth,
+  },
+  'progress': <String, Object?>{
+    'dispatched_effect_count': dispatchedEffectCount,
+    'subagent_depth': 0,
+    'effect_budget_exhausted': false,
+    'subagent_depth_exceeded': false,
+  },
+};
 
 class AgentRuntimeProfileTurnStartRequest {
   const AgentRuntimeProfileTurnStartRequest({
