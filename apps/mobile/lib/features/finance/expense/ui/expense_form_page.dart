@@ -10,6 +10,7 @@ import 'package:naviwealth/core/ai/visual/ai_hover_overlay.dart';
 import 'package:naviwealth/core/ai/visual/ai_object_capsule.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/accounts/domain/account_semantics.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
@@ -92,11 +93,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   }
 
   List<Account> _paymentAccounts(List<Account> accounts) => accounts
-      .where(
-        (account) =>
-            account.category == AccountSide.asset &&
-            account.type != AccountCategory.asset,
-      )
+      .where((account) => isCustodyAccountCategory(account.type))
       .toList(growable: false);
 
   List<Account> _expenseLeafAccounts(List<Account> accounts) => _leafAccounts(

@@ -208,7 +208,7 @@ class TradeEntryPageObject {
     expect(find.text('Asset search'), findsOneWidget);
     expect(find.text('Buy'), findsOneWidget);
     expect(find.text('Sell'), findsOneWidget);
-    expect(find.text('Valuation adjust'), findsOneWidget);
+    expect(find.text('Valuation adjust'), findsNothing);
     expect(find.text('Quantity'), findsOneWidget);
     expect(find.text('Price'), findsOneWidget);
   }
@@ -674,7 +674,7 @@ class PortfolioAnalysisPageObject {
     expect(find.text('Portfolio'), findsWidgets);
     expect(find.text('MARKET VALUE'), findsOneWidget);
     expect(find.text('Allocation'), findsOneWidget);
-    expect(find.text('Positions'), findsOneWidget);
+    expect(find.text('Positions'), findsWidgets);
     expect(find.text('No investment holdings yet.'), findsWidgets);
   }
 }
@@ -707,6 +707,13 @@ class AccountsPageObject {
   Future<void> openAccount(String name) async {
     expectAccountVisible(name);
     await tester.tap(find.text(name).first);
+    await settle(tester);
+  }
+
+  Future<void> editOpenAccount() async {
+    final edit = find.bySemanticsLabel('Edit account');
+    expect(edit, findsOneWidget, reason: 'account edit action missing');
+    await tester.tap(edit);
     await settle(tester);
   }
 }

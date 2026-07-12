@@ -39,8 +39,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('添加财富容器'), findsOneWidget);
-    expect(find.byType(AppActionSheetTile), findsNWidgets(7));
+    expect(find.text('添加资产项目'), findsOneWidget);
+    expect(find.byType(AppActionSheetTile), findsNWidgets(6));
     expect(find.byType(SoftCard), findsNothing);
   });
 }

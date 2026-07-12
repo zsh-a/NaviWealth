@@ -441,6 +441,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const Key('trade-entry-settlement-summary')));
+    await tester.pumpAndSettle();
     expect(
       tester
           .widget<CurrencyPicker>(find.byKey(const Key('trade-entry-currency')))
@@ -491,6 +493,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byKey(const Key('trade-entry-settlement-summary')));
+      await tester.pumpAndSettle();
       expect(
         tester
             .widget<AccountPicker>(
@@ -581,13 +585,16 @@ void main() {
     expect(find.text('Sell'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
     expect(find.text('1250.75'), findsOneWidget);
+    await tester.tap(find.text('Trade details'));
+    await tester.pumpAndSettle();
     expect(find.text('1.25'), findsOneWidget);
     expect(find.text('2.5'), findsOneWidget);
     expect(find.text('Rebalance suggestion'), findsOneWidget);
   });
 
-  testWidgets('compact trade segments expose full semantics', (tester) async {
-    final semantics = tester.ensureSemantics();
+  testWidgets('trade segments keep adjustments out of the entry flow', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(900, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final db = makeTestDatabase();
@@ -595,9 +602,15 @@ void main() {
     await _pumpReadyTradeForm(tester, db: db, service: _submissionService(db));
 
     expect(find.byType(SegmentedRow<TradeType>), findsOneWidget);
-    expect(find.text('Adjust'), findsOneWidget);
-    expect(find.bySemanticsLabel('Valuation adjust'), findsOneWidget);
-    semantics.dispose();
+    expect(find.text('Buy'), findsOneWidget);
+    expect(find.text('Sell'), findsOneWidget);
+    expect(find.text('Adjust'), findsNothing);
+    expect(find.text('Trade details'), findsOneWidget);
+
+    await tester.tap(find.text('Trade details'));
+    await tester.pumpAndSettle();
+    expect(find.text('Fee'), findsOneWidget);
+    expect(find.text('Tax'), findsOneWidget);
   });
 
   testWidgets('explicit currency wins and clears incompatible cash account', (
@@ -618,6 +631,8 @@ void main() {
         .widget<SegmentedRow<TradeType>>(find.byType(SegmentedRow<TradeType>))
         .onChanged(TradeType.buy);
     await tester.pump();
+    await tester.tap(find.byKey(const Key('trade-entry-settlement-summary')));
+    await tester.pumpAndSettle();
     expect(
       tester
           .widget<AccountPicker>(

@@ -43,32 +43,12 @@ Future<void> showWealthActionPanel(BuildContext context) {
                 FinanceRoutes.wealthAccountNew,
               ),
             ),
-            _WealthAction(
-              icon: FLucideIcons.banknote,
-              title: l10n.superFabLiability,
-              subtitle: l10n.accountsActionLiabilityHint,
-              onPress: () => _closeAndPush(
-                sheetContext,
-                context,
-                FinanceRoutes.wealthLiabilityNew,
-              ),
-            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s16),
         _WealthActionSection(
           title: l10n.wealthActionPanelFinancialGroup,
           actions: [
-            _WealthAction(
-              icon: FLucideIcons.wallet,
-              title: l10n.assetsAddCashTitle,
-              subtitle: l10n.assetsAddCashSubtitle,
-              onPress: () => _closeAndPush(
-                sheetContext,
-                context,
-                FinanceRoutes.wealthNewCash,
-              ),
-            ),
             _WealthAction(
               icon: FLucideIcons.piggyBank,
               title: l10n.assetsAddDepositTitle,
@@ -113,6 +93,22 @@ Future<void> showWealthActionPanel(BuildContext context) {
                 sheetContext,
                 context,
                 AssetType.vehicle,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        _WealthActionSection(
+          title: l10n.wealthActionPanelLiabilitiesGroup,
+          actions: [
+            _WealthAction(
+              icon: FLucideIcons.landmark,
+              title: l10n.superFabLiability,
+              subtitle: l10n.accountsActionLiabilityHint,
+              onPress: () => _closeAndPush(
+                sheetContext,
+                context,
+                FinanceRoutes.wealthLiabilityNew,
               ),
             ),
           ],

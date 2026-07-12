@@ -11,9 +11,9 @@
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/features/finance/accounts/domain/account_semantics.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
 class ListPaymentAccountsTool implements DeviceTool {
   const ListPaymentAccountsTool();
@@ -94,10 +94,7 @@ class ListPaymentAccountsTool implements DeviceTool {
     final candidates =
         accounts.where((a) {
           if (a.archived) return false;
-          if (a.category != AccountSide.asset) return false;
-          // Exclude the generic manual-valuation `asset` container —
-          // matches the backend `payload.type == "asset"` exclusion.
-          if (a.type == AccountCategory.asset) return false;
+          if (!isCustodyAccountCategory(a.type)) return false;
           if (currencyFilter != null &&
               a.currency.toUpperCase() != currencyFilter) {
             return false;

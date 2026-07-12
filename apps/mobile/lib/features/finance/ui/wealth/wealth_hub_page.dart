@@ -15,11 +15,7 @@ import 'wealth_perspective_section.dart';
 
 /// Wealth hub — landing page for the Wealth tab (IA contract §1).
 ///
-/// Renders a Net Worth Hero + section grid that links to each owned-object
-/// surface that is currently backed by a real workflow: Accounts, Holdings
-/// (portfolio), Watchlist, and Liabilities. Phase C replaced the bare ListView
-/// that lived under
-/// `accounts_master.dart` with this hub.
+/// Renders a Net Worth Hero, compact owned-object navigation, and allocation.
 ///
 /// Boundary rule: Wealth holds *current state of owned things*. Decision
 /// surfaces (FIRE, rebalance, income strategy) live on the Plan hub.
@@ -106,6 +102,8 @@ class _WealthHubBody extends ConsumerWidget {
             totalAssets: totalAssets,
             totalLiabilities: totalLiabilities,
           ),
+          const SizedBox(height: AppSpacing.s12),
+          const _WealthDestinations(),
           if (totalAssets == Decimal.zero &&
               totalLiabilities == Decimal.zero) ...[
             const SizedBox(height: AppSpacing.s16),
@@ -119,11 +117,10 @@ class _WealthHubBody extends ConsumerWidget {
                 child: Text(AppLocalizations.of(context).wealthEmptyAction),
               ),
             ),
+          ] else ...[
+            const SizedBox(height: AppSpacing.s20),
+            const WealthPerspectiveSection(),
           ],
-          const SizedBox(height: AppSpacing.s12),
-          const _WealthSectionGrid(),
-          const SizedBox(height: AppSpacing.s20),
-          const WealthPerspectiveSection(),
         ],
       ),
     );
@@ -259,13 +256,12 @@ class _NetWorthBreakdownMetric extends StatelessWidget {
   }
 }
 
-class _WealthSectionGrid extends StatelessWidget {
-  const _WealthSectionGrid();
+class _WealthDestinations extends StatelessWidget {
+  const _WealthDestinations();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final palette = ChartPalette.of(context);
     final sections = <_WealthSectionSpec>[
       _WealthSectionSpec(
         icon: FLucideIcons.slidersHorizontal,
@@ -280,100 +276,76 @@ class _WealthSectionGrid extends StatelessWidget {
         path: FinanceRoutes.wealthPortfolio,
       ),
       _WealthSectionSpec(
-        icon: FLucideIcons.bellRing,
-        title: l10n.wealthWatchlistSectionTitle,
-        subtitle: l10n.wealthWatchlistSectionSubtitle,
-        path: FinanceRoutes.wealthWatchlist,
-      ),
-      _WealthSectionSpec(
         icon: FLucideIcons.landmark,
         title: l10n.wealthLiabilitiesSectionTitle,
         subtitle: l10n.wealthLiabilitiesSectionSubtitle,
         path: FinanceRoutes.wealthLiabilities,
       ),
     ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 760 ? 4 : 2;
-        const gap = AppSpacing.s10;
-        final itemWidth =
-            (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
+    return SoftCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+        child: Column(
           children: [
-            for (var index = 0; index < sections.length; index++)
-              SizedBox(
-                width: itemWidth,
-                child: _WealthDestinationCard(
-                  spec: sections[index],
-                  accent: palette.accentAt(index),
-                ),
-              ),
+            for (var index = 0; index < sections.length; index++) ...[
+              _WealthDestinationRow(spec: sections[index]),
+              if (index < sections.length - 1) const FDivider(),
+            ],
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-class _WealthDestinationCard extends StatelessWidget {
-  const _WealthDestinationCard({required this.spec, required this.accent});
+class _WealthDestinationRow extends StatelessWidget {
+  const _WealthDestinationRow({required this.spec});
 
   final _WealthSectionSpec spec;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SoftCard(
+    return FTappable(
       onPress: () => context.push(spec.path),
-      padding: const EdgeInsets.all(AppSpacing.s14),
-      borderRadius: AppRadius.lg,
-      child: SizedBox(
-        height: AppControlHeights.compactLoadingState,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+        child: Row(
           children: [
-            Row(
-              children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: AppOpacity.light),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: SizedBox.square(
-                    dimension: AppSpacing.s40,
-                    child: Icon(
-                      spec.icon,
-                      size: AppIconSizes.sm,
-                      color: accent,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  FLucideIcons.arrowUpRight,
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: AppOpacity.subtle),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: SizedBox.square(
+                dimension: AppSpacing.s40,
+                child: Icon(
+                  spec.icon,
                   size: AppIconSizes.sm,
-                  color: colors.mutedForeground.withValues(
-                    alpha: AppOpacity.disabled,
-                  ),
+                  color: colors.primary,
                 ),
-              ],
+              ),
             ),
-            const Spacer(),
-            Text(
-              spec.title,
-              style: context.labelStyle.copyWith(color: colors.foreground),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(spec.title, style: context.labelStyle),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    spec.subtitle,
+                    style: context.captionStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.s2),
-            Text(
-              spec.subtitle,
-              style: context.captionStyle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+              color: colors.mutedForeground,
             ),
           ],
         ),

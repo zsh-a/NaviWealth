@@ -14,36 +14,17 @@ void main() {
   testWidgets(
     'asset summary presents compact quote identity without overflow',
     (tester) async {
-      tester.view.physicalSize = const Size(320, 640);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          child: FTheme(
-            data: FThemes.slate.light.desktop,
-            child: MaterialApp(
-              theme: AppTheme.light(),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: AssetSummaryCard(
-                  asset: Asset(
-                    id: 'custom:AAPL',
-                    type: AssetType.stock,
-                    symbol: 'AAPL',
-                    currency: 'USD',
-                    name: 'Apple Inc.',
-                    sync: _meta(),
-                  ),
-                ),
-              ),
-            ),
-          ),
+      await _pumpCard(
+        tester,
+        Asset(
+          id: 'custom:AAPL',
+          type: AssetType.stock,
+          symbol: 'AAPL',
+          currency: 'USD',
+          name: 'Apple Inc.',
+          sync: _meta(),
         ),
       );
-      await tester.pumpAndSettle();
 
       expect(find.text('AAPL'), findsOneWidget);
       expect(find.text('Apple Inc.'), findsOneWidget);
@@ -52,6 +33,62 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('long security identity stays bounded at larger text scale', (
+    tester,
+  ) async {
+    const symbol = 'VERY-LONG-SECURITY-SYMBOL';
+    const name =
+        'A deliberately long localized security name that must remain bounded';
+    await _pumpCard(
+      tester,
+      Asset(
+        id: 'custom:long',
+        type: AssetType.etf,
+        symbol: symbol,
+        currency: 'USD',
+        name: name,
+        sync: _meta(),
+      ),
+      textScale: 1.5,
+    );
+
+    expect(find.text(symbol), findsOneWidget);
+    expect(find.text(name), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Future<void> _pumpCard(
+  WidgetTester tester,
+  Asset asset, {
+  double textScale = 1,
+}) async {
+  tester.view.physicalSize = const Size(320, 640);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      child: FTheme(
+        data: FThemes.slate.light.desktop,
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
+          home: Scaffold(body: AssetSummaryCard(asset: asset)),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 SyncMeta _meta() => SyncMeta(

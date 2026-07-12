@@ -801,7 +801,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubAssetTypeWealthProduct => '理财产品';
 
   @override
-  String get portfolioHubEnginesTitle => '引擎视图';
+  String get portfolioHubEnginesTitle => '洞察';
+
+  @override
+  String get portfolioHubSectionPositions => '持仓';
+
+  @override
+  String get portfolioHubSectionAllocation => '分布';
+
+  @override
+  String get portfolioHubSectionInsights => '洞察';
 
   @override
   String get portfolioHubRealizedPnlTitle => '已实现盈亏';
@@ -1186,7 +1195,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityActionConvertHint => '在同一账户内换汇';
 
   @override
-  String get accountsActionsTitle => '添加财富容器';
+  String get accountsActionsTitle => '添加资产项目';
 
   @override
   String get wealthActionPanelSubtitle => '选择要纳入净资产的对象。';
@@ -1195,7 +1204,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthActionPanelAccountsGroup => '账户容器';
 
   @override
-  String get wealthActionPanelFinancialGroup => '余额与产品';
+  String get wealthActionPanelFinancialGroup => '存款与理财';
 
   @override
   String get wealthActionPanelPhysicalGroup => '实物资产';
@@ -3864,6 +3873,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeEntryTaxLabel => '税费';
 
   @override
+  String get tradeEntryAdvancedTitle => '交易详情';
+
+  @override
+  String get tradeEntryAdvancedSummary => '当前时间 · 无费用与备注';
+
+  @override
+  String get tradeEntryAdvancedConfigured => '已设置日期、费用或备注';
+
+  @override
   String get tradeEntryCashAccountLabel => '资金账户';
 
   @override
@@ -5081,7 +5099,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get physicalAssetValuationTrendSemanticLabel => '估值走势';
 
   @override
-  String get accountsDetailEmpty => '请在左侧选择账户以编辑详情。';
+  String get accountsDetailEmpty => '请在左侧选择账户，查看余额与活动。';
 
   @override
   String get accountsCreateAction => '新建账户';
@@ -5110,6 +5128,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String accountsCategoryCount(int count) {
     return '$count 个账户';
   }
+
+  @override
+  String get accountDetailEditAction => '编辑账户';
+
+  @override
+  String get accountDetailNotFound => '未找到账户';
+
+  @override
+  String get accountDetailBalanceTitle => '可用余额';
+
+  @override
+  String get accountDetailTransferAction => '转账';
+
+  @override
+  String get accountDetailRecentActivityTitle => '最近活动';
+
+  @override
+  String get accountDetailNoActivity => '该账户暂无活动记录。';
+
+  @override
+  String get accountDetailTypeLabel => '账户类型';
+
+  @override
+  String get accountDetailCurrencyLabel => '主要币种';
+
+  @override
+  String get accountDetailInstitutionLabel => '机构';
+
+  @override
+  String get accountDetailNumberLabel => '账号';
+
+  @override
+  String get accountDetailNotesLabel => '备注';
 
   @override
   String get accountCategoryCash => '现金';
@@ -7279,6 +7330,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assetDetailUnsupportedType => '该资产类型暂不支持手动编辑';
+
+  @override
+  String get manualAssetDetailEditAction => '编辑资产';
+
+  @override
+  String get manualAssetDetailCurrentValue => '当前价值';
+
+  @override
+  String get manualAssetDetailAccount => '持有账户';
+
+  @override
+  String get manualAssetDetailPrincipal => '本金';
+
+  @override
+  String get manualAssetDetailAnnualRate => '年利率';
+
+  @override
+  String get manualAssetDetailExpectedReturn => '预期年化收益';
+
+  @override
+  String get manualAssetDetailStartDate => '起息日';
+
+  @override
+  String get manualAssetDetailMaturityDate => '到期日';
+
+  @override
+  String get manualAssetDetailIssuer => '发行机构';
+
+  @override
+  String get manualAssetDetailProductCode => '产品代码';
 
   @override
   String get assetDetailNoMetadataMatch => '未找到匹配的元数据';

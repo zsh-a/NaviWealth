@@ -187,14 +187,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AdaptiveContentFrame), findsOneWidget);
-    expect(find.byType(AppGroupedSurface), findsNWidgets(2));
-    expect(find.text('Broker A'), findsOneWidget);
+    expect(find.byType(AppGroupedSurface), findsOneWidget);
+    expect(find.text('Broker A'), findsNothing);
     expect(find.text('us:AAPL'), findsWidgets);
     expect(find.text('Cost basis'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text('Positions')).dy,
-      lessThan(tester.getTopLeft(find.text('Allocation')).dy),
-    );
+
+    await tester.tap(find.text('Allocation'));
+    await tester.pumpAndSettle();
+    expect(find.text('Broker A'), findsOneWidget);
 
     await tester.tap(find.text('Class'));
     await tester.pumpAndSettle();

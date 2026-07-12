@@ -33,23 +33,31 @@ class LiabilitiesPage extends ConsumerWidget {
         if (items.isEmpty) {
           return _LiabilitiesEmptyState(l10n: l10n);
         }
-        // Standard two-line ListTile height — lets the scroll view skip
-        // per-item layout during scroll, critical for 120fps.
-        const itemHeight = 72.0 + 8;
-        return ListView.builder(
+        return ListView(
           padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
             bottom:
                 const EdgeInsets.all(AppSpacing.s16).bottom +
                 64 +
                 MediaQuery.paddingOf(context).bottom,
           ),
-          itemCount: items.length,
-          itemExtent: itemHeight,
-          itemBuilder: (context, i) => _LiabilityListTile(
-            liability: items[i],
-            summary: summaries[items[i].id],
-            formatters: formatters,
-          ),
+          children: [
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var i = 0; i < items.length; i++) ...[
+                    _LiabilityListTile(
+                      liability: items[i],
+                      summary: summaries[items[i].id],
+                      formatters: formatters,
+                    ),
+                    if (i < items.length - 1)
+                      const AppGroupedDivider(indent: AppSpacing.s48),
+                  ],
+                ],
+              ),
+            ),
+          ],
         );
       },
       error: (error, _) => AppEmptyState.error(
@@ -65,6 +73,16 @@ class LiabilitiesPage extends ConsumerWidget {
 
     return AppPageScaffold(
       title: l10n.liabilitiesAppBarTitle,
+      actions: [
+        FHeaderAction(
+          icon: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.liabilitiesAddAction),
+            child: const Icon(FLucideIcons.plus),
+          ),
+          semanticsLabel: l10n.liabilitiesAddAction,
+          onPress: () => context.push(FinanceRoutes.wealthLiabilityNew),
+        ),
+      ],
       childPad: false,
       child: body,
     );
@@ -81,6 +99,12 @@ class _LiabilitiesEmptyState extends StatelessWidget {
     return AppEmptyState(
       icon: FLucideIcons.landmark,
       title: l10n.liabilitiesEmptyHint,
+      action: FButton(
+        variant: FButtonVariant.primary,
+        onPress: () => context.push(FinanceRoutes.wealthLiabilityNew),
+        prefix: const Icon(FLucideIcons.plus),
+        child: Text(l10n.liabilitiesAddAction),
+      ),
     );
   }
 }
@@ -101,35 +125,32 @@ class _LiabilityListTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final remaining = summary?.remainingPrincipal;
 
-    return SoftCard(
-      child: FTile(
-        title: Text(liability.name),
-        prefix: CircleAvatar(
-          backgroundColor: AccentColors.tint(context.theme.colors.brightness),
-          child: Icon(
-            _iconFor(liability.type),
-            color: context.theme.colors.primary,
-          ),
+    return FTile(
+      title: Text(liability.name),
+      prefix: CircleAvatar(
+        backgroundColor: AccentColors.tint(context.theme.colors.brightness),
+        child: Icon(
+          _iconFor(liability.type),
+          color: context.theme.colors.primary,
         ),
-        subtitle: Text(
-          '${liabilityTypeLabel(l10n, liability.type)} · '
-          '${formatters.percent(liability.interestRate.toDouble())}',
-        ),
-        suffix: remaining != null
-            ? Text(
-                formatters.currency(remaining, code: liability.currency),
-                style: context.theme.typography.body.md,
-              )
-            : Text(
-                formatters.currency(
-                  liability.principal,
-                  code: liability.currency,
-                ),
-                style: context.theme.typography.body.md,
-              ),
-        onPress: () =>
-            context.push(FinanceRoutes.wealthLiability(liability.id)),
       ),
+      subtitle: Text(
+        '${liabilityTypeLabel(l10n, liability.type)} · '
+        '${formatters.percent(liability.interestRate.toDouble())}',
+      ),
+      suffix: remaining != null
+          ? Text(
+              formatters.currency(remaining, code: liability.currency),
+              style: context.theme.typography.body.md,
+            )
+          : Text(
+              formatters.currency(
+                liability.principal,
+                code: liability.currency,
+              ),
+              style: context.theme.typography.body.md,
+            ),
+      onPress: () => context.push(FinanceRoutes.wealthLiability(liability.id)),
     );
   }
 

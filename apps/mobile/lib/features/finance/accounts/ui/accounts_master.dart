@@ -13,6 +13,7 @@ import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/account_balances_provider.dart';
 import '../domain/account_balances.dart';
+import '../domain/account_semantics.dart';
 import 'account_grouped_sections.dart';
 
 class AccountsMaster extends ConsumerWidget {
@@ -31,14 +32,16 @@ class AccountsMaster extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsStreamProvider);
     final balancesAsync = ref.watch(accountBalancesByIdProvider);
     final allIds = accountsAsync.value
-        ?.where((a) => !a.archived)
+        ?.where((a) => !a.archived && isCustodyAccountCategory(a.type))
         .map((a) => a.id)
         .toList();
 
     final body = accountsAsync.whenOrLoading(
       context: context,
       data: (accounts) {
-        final visibleAccounts = accounts.where((a) => !a.archived).toList();
+        final visibleAccounts = accounts
+            .where((a) => !a.archived && isCustodyAccountCategory(a.type))
+            .toList();
         return visibleAccounts.isEmpty
             ? const _EmptyAccounts()
             : _AccountsByType(
@@ -179,17 +182,6 @@ class _AccountsByType extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
-    final institutions = accounts
-        .map((account) => account.institution?.trim())
-        .whereType<String>()
-        .where((institution) => institution.isNotEmpty)
-        .toSet();
-    final currencies = <String>{
-      for (final account in accounts) account.currency.toUpperCase(),
-      for (final balance in balances.values)
-        for (final leg in balance.legs)
-          if (leg.isFiatLike) leg.unit.toUpperCase(),
-    };
     return ListView(
       padding: EdgeInsets.fromLTRB(
         hPad,
@@ -198,12 +190,8 @@ class _AccountsByType extends StatelessWidget {
         80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
-        _AccountsOverview(
-          accountCount: accounts.length,
-          institutionCount: institutions.length,
-          currencyCount: currencies.length,
-        ),
-        const SizedBox(height: AppSpacing.s20),
+        _AccountPrimaryActions(accountCount: accounts.length),
+        const SizedBox(height: AppSpacing.s16),
         AccountsGroupedSections(
           accounts: accounts,
           balances: balances,
@@ -230,61 +218,10 @@ class _AccountsByType extends StatelessWidget {
   }
 }
 
-class _AccountsOverview extends StatelessWidget {
-  const _AccountsOverview({
-    required this.accountCount,
-    required this.institutionCount,
-    required this.currencyCount,
-  });
+class _AccountPrimaryActions extends StatelessWidget {
+  const _AccountPrimaryActions({required this.accountCount});
 
   final int accountCount;
-  final int institutionCount;
-  final int currencyCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.accountsOverviewTitle, style: context.strongTitleStyle),
-            const SizedBox(height: AppSpacing.s14),
-            Row(
-              children: [
-                Expanded(
-                  child: _OverviewMetric(
-                    value: accountCount,
-                    label: l10n.accountsOverviewAccountsLabel,
-                  ),
-                ),
-                Expanded(
-                  child: _OverviewMetric(
-                    value: institutionCount,
-                    label: l10n.accountsOverviewInstitutionsLabel,
-                  ),
-                ),
-                Expanded(
-                  child: _OverviewMetric(
-                    value: currencyCount,
-                    label: l10n.accountsOverviewCurrenciesLabel,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            const _OverviewActions(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OverviewActions extends StatelessWidget {
-  const _OverviewActions();
 
   @override
   Widget build(BuildContext context) {
@@ -295,55 +232,15 @@ class _OverviewActions extends StatelessWidget {
       prefix: const Icon(FLucideIcons.arrowLeftRight, size: AppIconSizes.sm),
       child: Text(l10n.accountsTransferAction),
     );
-    final journal = FButton(
-      variant: FButtonVariant.secondary,
-      onPress: () => context.push(FinanceRoutes.journalEntries),
-      prefix: const Icon(FLucideIcons.history, size: AppIconSizes.sm),
-      child: Text(l10n.accountsJournalAction),
-    );
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 420) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              transfer,
-              const SizedBox(height: AppSpacing.s8),
-              journal,
-            ],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(child: transfer),
-            const SizedBox(width: AppSpacing.s10),
-            Expanded(child: journal),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _OverviewMetric extends StatelessWidget {
-  const _OverviewMetric({required this.value, required this.label});
-
-  final int value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text('$value', style: context.strongTitleStyle),
-        const SizedBox(height: AppSpacing.s2),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.captionStyle,
+        Expanded(
+          child: Text(
+            l10n.accountsCategoryCount(accountCount),
+            style: context.captionStyle,
+          ),
         ),
+        transfer,
       ],
     );
   }

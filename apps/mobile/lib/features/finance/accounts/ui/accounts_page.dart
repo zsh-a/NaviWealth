@@ -5,19 +5,19 @@ import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 
-import 'account_form_page.dart';
+import 'account_detail_page.dart';
 import 'accounts_master.dart';
 
 /// Lists every active account, grouped by [AccountCategory].
 ///
-/// Tapping an account opens its edit form; the floating action button
+/// Tapping an account opens its read-only detail; the floating action button
 /// creates a new one. Soft-deleted / archived accounts hide here — the
 /// archived-accounts surface is intentionally separate so the primary list
 /// stays focused on the user's day-to-day book of accounts.
 ///
 /// At desktop window width (≥ 1280) the page renders as a master-detail
 /// surface:
-/// the list lives on the left, and the account edit form for
+/// the list lives on the left, and the account detail for
 /// the `?selected=<id>` row lives on the right.
 class AccountsPage extends ConsumerWidget {
   const AccountsPage({super.key});
@@ -35,7 +35,7 @@ class AccountsPage extends ConsumerWidget {
           master: AccountsMaster(selectedId: selected, inMasterDetail: true),
           detail: selected == null
               ? const AccountsDetailEmpty()
-              : AccountFormPage(accountId: selected),
+              : AccountDetailPage(accountId: selected),
         ),
       );
     }

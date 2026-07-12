@@ -4,15 +4,13 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../domain/account_semantics.dart';
 import 'account_labels.dart';
 
 /// Semantic icon-grid picker for [AccountCategory].
 ///
-/// Replaces the legacy `FSelect` dropdown. Renders 8 cards (cash / bank /
-/// broker / crypto / credit / loan / asset / liability), each with an
-/// icon + name + one-line affordance hint. The compact grid is responsive: 2
-/// columns on phones, 4 on tablet+ without turning the form into a wall of
-/// oversized cards.
+/// Renders the four user-owned custody containers. Debt is created in the
+/// liabilities flow and tangible/manual objects are created as assets.
 ///
 /// Picking is the only interaction — the AccountSide is auto-derived
 /// outside this widget, so the user never sees an "asset vs liability"
@@ -43,7 +41,7 @@ class AccountCategoryPicker extends StatelessWidget {
           crossAxisSpacing: 10,
           childAspectRatio: aspectRatio,
           children: [
-            for (final c in AccountCategory.values)
+            for (final c in kCustodyAccountCategories)
               _CategoryCard(
                 category: c,
                 selected: c == value,

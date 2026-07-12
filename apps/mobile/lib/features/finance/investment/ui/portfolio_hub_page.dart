@@ -44,6 +44,7 @@ class PortfolioHubPage extends ConsumerStatefulWidget {
 
 class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
   PortfolioHubView _view = PortfolioHubView.account;
+  _PortfolioSection _section = _PortfolioSection.positions;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +54,14 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
       actions: [
+        FHeaderAction(
+          icon: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.wealthWatchlistSectionTitle),
+            child: const Icon(FLucideIcons.bellRing),
+          ),
+          semanticsLabel: l10n.wealthWatchlistSectionTitle,
+          onPress: () => context.push(FinanceRoutes.wealthWatchlist),
+        ),
         FHeaderAction(
           icon: const Icon(FLucideIcons.plus),
           onPress: () => context.push(FinanceRoutes.tradeEntry),
@@ -78,7 +87,9 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         data: (data) => _PortfolioHubBody(
           data: data,
           view: _view,
+          section: _section,
           onViewChanged: (next) => setState(() => _view = next),
+          onSectionChanged: (next) => setState(() => _section = next),
         ),
       ),
     );
@@ -89,12 +100,16 @@ class _PortfolioHubBody extends StatefulWidget {
   const _PortfolioHubBody({
     required this.data,
     required this.view,
+    required this.section,
     required this.onViewChanged,
+    required this.onSectionChanged,
   });
 
   final PortfolioHubState data;
   final PortfolioHubView view;
+  final _PortfolioSection section;
   final ValueChanged<PortfolioHubView> onViewChanged;
+  final ValueChanged<_PortfolioSection> onSectionChanged;
 
   @override
   State<_PortfolioHubBody> createState() => _PortfolioHubBodyState();
@@ -122,74 +137,140 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
         children: [
           _PortfolioSummary(data: data),
           const SizedBox(height: AppSpacing.s16),
-          _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
-          if (data.holdings.isEmpty)
-            _EmptyState(message: l10n.portfolioHubEmpty)
-          else
-            AppGroupedSurface(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (var i = 0; i < visibleHoldings.length; i++) ...[
-                    _HoldingRow(holding: visibleHoldings[i]),
-                    if (i != visibleHoldings.length - 1)
-                      const AppGroupedDivider(
-                        indent: AppSpacing.s12,
-                        endIndent: AppSpacing.s12,
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          if (data.holdings.length > 6) ...[
-            const SizedBox(height: AppSpacing.s8),
-            AppQuietButton(
-              label: _showAllPositions
-                  ? l10n.portfolioHubShowFewerPositions
-                  : l10n.portfolioHubShowAllPositions,
-              onPress: () =>
-                  setState(() => _showAllPositions = !_showAllPositions),
-              expanded: true,
-              prefix: Icon(
-                _showAllPositions
-                    ? FLucideIcons.chevronUp
-                    : FLucideIcons.chevronDown,
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s20),
-          PortfolioHubViewSegment(
-            value: widget.view,
-            onChanged: widget.onViewChanged,
+          _PortfolioSectionSegment(
+            value: widget.section,
+            onChanged: widget.onSectionChanged,
           ),
-          const SizedBox(height: AppSpacing.s12),
-          _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
-          if (groups.isEmpty)
-            _EmptyState(message: l10n.portfolioHubEmpty)
-          else
-            AppGroupedSurface(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (var i = 0; i < groups.length; i++) ...[
-                    _GroupRow(
-                      group: groups[i],
-                      onPressed: () => _showPortfolioGroupDetail(
-                        context: context,
-                        group: groups[i],
-                      ),
+          const SizedBox(height: AppSpacing.s16),
+          switch (widget.section) {
+            _PortfolioSection.positions => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
+                if (data.holdings.isEmpty)
+                  _EmptyState(message: l10n.portfolioHubEmpty)
+                else
+                  AppGroupedSurface(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < visibleHoldings.length; i++) ...[
+                          _HoldingRow(holding: visibleHoldings[i]),
+                          if (i != visibleHoldings.length - 1)
+                            const AppGroupedDivider(
+                              indent: AppSpacing.s12,
+                              endIndent: AppSpacing.s12,
+                            ),
+                        ],
+                      ],
                     ),
-                    if (i != groups.length - 1)
-                      const AppGroupedDivider(
-                        indent: AppSpacing.s12,
-                        endIndent: AppSpacing.s12,
-                      ),
-                  ],
+                  ),
+                if (data.holdings.length > 6) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppQuietButton(
+                    label: _showAllPositions
+                        ? l10n.portfolioHubShowFewerPositions
+                        : l10n.portfolioHubShowAllPositions,
+                    onPress: () =>
+                        setState(() => _showAllPositions = !_showAllPositions),
+                    expanded: true,
+                    prefix: Icon(
+                      _showAllPositions
+                          ? FLucideIcons.chevronUp
+                          : FLucideIcons.chevronDown,
+                    ),
+                  ),
                 ],
+              ],
+            ),
+            _PortfolioSection.allocation => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                PortfolioHubViewSegment(
+                  value: widget.view,
+                  onChanged: widget.onViewChanged,
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                if (groups.isEmpty)
+                  _EmptyState(message: l10n.portfolioHubEmpty)
+                else
+                  AppGroupedSurface(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < groups.length; i++) ...[
+                          _GroupRow(
+                            group: groups[i],
+                            onPressed: () => _showPortfolioGroupDetail(
+                              context: context,
+                              group: groups[i],
+                            ),
+                          ),
+                          if (i != groups.length - 1)
+                            const AppGroupedDivider(
+                              indent: AppSpacing.s12,
+                              endIndent: AppSpacing.s12,
+                            ),
+                        ],
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            _PortfolioSection.insights => _EngineExposureSection(data: data),
+          },
+        ],
+      ),
+    );
+  }
+}
+
+enum _PortfolioSection { positions, allocation, insights }
+
+class _PortfolioSectionSegment extends StatelessWidget {
+  const _PortfolioSectionSegment({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final _PortfolioSection value;
+  final ValueChanged<_PortfolioSection> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final labels = {
+      _PortfolioSection.positions: l10n.portfolioHubSectionPositions,
+      _PortfolioSection.allocation: l10n.portfolioHubSectionAllocation,
+      _PortfolioSection.insights: l10n.portfolioHubSectionInsights,
+    };
+    final icons = {
+      _PortfolioSection.positions: FLucideIcons.list,
+      _PortfolioSection.allocation: FLucideIcons.chartPie,
+      _PortfolioSection.insights: FLucideIcons.sparkles,
+    };
+    return Container(
+      decoration: BoxDecoration(
+        color: context.theme.colors.secondary.withValues(
+          alpha: AppOpacity.disabled,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.s2),
+      child: Row(
+        children: [
+          for (final section in _PortfolioSection.values)
+            Expanded(
+              child: _ViewChip(
+                label: labels[section]!,
+                icon: icons[section]!,
+                selected: section == value,
+                onTap: () {
+                  Haptics.selection();
+                  onChanged(section);
+                },
               ),
             ),
-          const SizedBox(height: AppSpacing.s20),
-          _EngineExposureSection(data: data),
         ],
       ),
     );

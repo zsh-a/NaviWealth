@@ -8,8 +8,9 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
-import 'package:naviwealth/features/finance/accounts/ui/account_form_page.dart';
+import 'package:naviwealth/features/finance/accounts/ui/account_detail_page.dart';
 import 'package:naviwealth/features/finance/accounts/ui/accounts_page.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -52,6 +53,9 @@ Widget _wrap({required SharedPreferences prefs, required double contentWidth}) {
       sharedPreferencesProvider.overrideWithValue(prefs),
       accountsStreamProvider.overrideWith((_) => Stream.value([_account])),
       accountBalancesByIdProvider.overrideWith((_) => Stream.value(const {})),
+      journalEntriesWithPostingsStreamProvider.overrideWith(
+        (_) => Stream.value(const []),
+      ),
     ],
     child: MaterialApp.router(
       theme: AppTheme.light(),
@@ -88,7 +92,7 @@ void main() {
       selectedQueryOf(tester.element(find.byType(AccountsPage))),
       _account.id,
     );
-    expect(find.byType(AccountFormPage), findsOneWidget);
+    expect(find.byType(AccountDetailPage), findsOneWidget);
     expect(find.text('single-account-detail'), findsNothing);
   });
 
@@ -105,18 +109,15 @@ void main() {
     expect(find.text('single-account-detail'), findsOneWidget);
   });
 
-  testWidgets('shows a compact account overview on mobile', (tester) async {
+  testWidgets('shows compact primary actions on mobile', (tester) async {
     await _setSurface(tester, 320);
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 320));
     await tester.pumpAndSettle();
 
-    expect(find.text('Account overview'), findsOneWidget);
-    expect(find.text('Accounts'), findsOneWidget);
-    expect(find.text('Institutions'), findsOneWidget);
-    expect(find.text('Currencies'), findsOneWidget);
+    expect(find.text('1 account'), findsWidgets);
     expect(find.text('Transfer'), findsOneWidget);
-    expect(find.text('Journal'), findsOneWidget);
+    expect(find.text('Journal'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

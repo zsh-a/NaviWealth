@@ -453,7 +453,9 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('type changes retain only a still-legal parent', (tester) async {
+  testWidgets('custody type changes retain an asset-side parent', (
+    tester,
+  ) async {
     final repository = AccountRepository(
       db: h.db,
       outbox: h.outbox,
@@ -482,19 +484,10 @@ void main() {
     await tester.pumpAndSettle();
     expect((await repository.findById(child.id))!.parentId, parent.id);
 
-    await tester.pumpWidget(
-      _wrap(
-        h,
-        accounts: [parent, (await repository.findById(child.id))!],
-        editingId: child.id,
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Credit'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
-    await tester.pumpAndSettle();
-    expect((await repository.findById(child.id))!.parentId, isNull);
+    expect(find.text('Credit'), findsNothing);
+    expect(find.text('Loan'), findsNothing);
+    expect(find.text('Other asset'), findsNothing);
+    expect(find.text('Other liability'), findsNothing);
   });
 
   testWidgets('create success offers Undo and tombstones the account', (

@@ -55,7 +55,6 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     AccountCategory.cash,
     AccountCategory.broker,
     AccountCategory.crypto,
-    AccountCategory.asset,
   };
 
   @override

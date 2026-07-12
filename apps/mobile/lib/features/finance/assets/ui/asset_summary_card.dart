@@ -36,7 +36,12 @@ class AssetSummaryCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(asset.symbol, style: context.displayTitleStyle),
+                  child: Text(
+                    asset.symbol,
+                    style: context.displayTitleStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 AppBadge(
                   label: asset.market ?? l10n.assetDetailUnknown,
@@ -48,7 +53,12 @@ class AssetSummaryCard extends ConsumerWidget {
             ),
             if (asset.name != null) ...[
               const SizedBox(height: AppSpacing.s4),
-              Text(asset.name!, style: context.bodyCaptionStyle),
+              Text(
+                asset.name!,
+                style: context.bodyCaptionStyle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             const SizedBox(height: AppSpacing.s16),
             Text(l10n.assetDetailLastClose, style: context.captionStyle),

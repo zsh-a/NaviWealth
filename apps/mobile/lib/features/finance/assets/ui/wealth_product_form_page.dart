@@ -64,7 +64,6 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
   static const _eligibleAccountTypes = {
     AccountCategory.bank,
     AccountCategory.broker,
-    AccountCategory.asset,
   };
 
   @override

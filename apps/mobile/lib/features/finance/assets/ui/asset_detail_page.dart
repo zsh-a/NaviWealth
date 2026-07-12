@@ -6,12 +6,10 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import 'cash_form_page.dart';
-import 'deposit_form_page.dart';
 import 'equity_asset_detail_page.dart';
-import 'wealth_product_form_page.dart';
+import 'manual_asset_detail_page.dart';
 
-/// Resolves an asset id to the type-specific edit form.
+/// Resolves an asset id to a read-first type-specific detail surface.
 ///
 /// Centralising the dispatch keeps the route table flat — the router
 /// doesn't need to know which sub-form belongs to which AssetType, and
@@ -73,11 +71,12 @@ class AssetDetailPage extends ConsumerWidget {
               );
             }
             return switch (asset.type) {
-              AssetType.cash => CashFormPage(assetId: asset.id),
+              AssetType.cash ||
               AssetType.bankDepositTerm ||
-              AssetType.bankDepositDemand => DepositFormPage(assetId: asset.id),
-              AssetType.wealthProduct => WealthProductFormPage(
-                assetId: asset.id,
+              AssetType.bankDepositDemand ||
+              AssetType.wealthProduct => ManualAssetDetailPage(
+                asset: asset,
+                repository: repo,
               ),
               AssetType.stock ||
               AssetType.etf ||

@@ -169,7 +169,8 @@ class ActivityFeedSkeleton extends StatelessWidget {
   }
 }
 
-/// Mirrors `AssetsPage`: section header plus repeated manual and physical
+/// Mirrors a compact wealth-object list: section header plus repeated
+/// manual and physical
 /// asset rows.
 class AssetsListSkeleton extends StatelessWidget {
   const AssetsListSkeleton({super.key, this.rowCount = 3});

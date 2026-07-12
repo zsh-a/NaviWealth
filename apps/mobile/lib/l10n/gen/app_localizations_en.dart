@@ -825,7 +825,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioHubAssetTypeWealthProduct => 'Wealth product';
 
   @override
-  String get portfolioHubEnginesTitle => 'Engine views';
+  String get portfolioHubEnginesTitle => 'Insights';
+
+  @override
+  String get portfolioHubSectionPositions => 'Positions';
+
+  @override
+  String get portfolioHubSectionAllocation => 'Allocation';
+
+  @override
+  String get portfolioHubSectionInsights => 'Insights';
 
   @override
   String get portfolioHubRealizedPnlTitle => 'Realized P/L';
@@ -1224,7 +1233,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Exchange currency inside one account';
 
   @override
-  String get accountsActionsTitle => 'Add wealth container';
+  String get accountsActionsTitle => 'Add wealth item';
 
   @override
   String get wealthActionPanelSubtitle =>
@@ -1234,7 +1243,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthActionPanelAccountsGroup => 'Accounts';
 
   @override
-  String get wealthActionPanelFinancialGroup => 'Balances & products';
+  String get wealthActionPanelFinancialGroup => 'Deposits & products';
 
   @override
   String get wealthActionPanelPhysicalGroup => 'Physical assets';
@@ -4037,6 +4046,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeEntryTaxLabel => 'Tax';
 
   @override
+  String get tradeEntryAdvancedTitle => 'Trade details';
+
+  @override
+  String get tradeEntryAdvancedSummary => 'Now · no fees or notes';
+
+  @override
+  String get tradeEntryAdvancedConfigured => 'Custom date, costs or notes';
+
+  @override
   String get tradeEntryCashAccountLabel => 'Cash account';
 
   @override
@@ -5334,7 +5352,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsDetailEmpty =>
-      'Select an account on the left to edit its details.';
+      'Select an account on the left to see its balance and activity.';
 
   @override
   String get accountsCreateAction => 'New account';
@@ -5370,6 +5388,40 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get accountDetailEditAction => 'Edit account';
+
+  @override
+  String get accountDetailNotFound => 'Account not found';
+
+  @override
+  String get accountDetailBalanceTitle => 'Available balance';
+
+  @override
+  String get accountDetailTransferAction => 'Transfer';
+
+  @override
+  String get accountDetailRecentActivityTitle => 'Recent activity';
+
+  @override
+  String get accountDetailNoActivity =>
+      'No activity recorded for this account yet.';
+
+  @override
+  String get accountDetailTypeLabel => 'Account type';
+
+  @override
+  String get accountDetailCurrencyLabel => 'Primary currency';
+
+  @override
+  String get accountDetailInstitutionLabel => 'Institution';
+
+  @override
+  String get accountDetailNumberLabel => 'Account number';
+
+  @override
+  String get accountDetailNotesLabel => 'Notes';
 
   @override
   String get accountCategoryCash => 'Cash';
@@ -7626,6 +7678,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get assetDetailUnsupportedType =>
       'This asset type does not support manual editing';
+
+  @override
+  String get manualAssetDetailEditAction => 'Edit asset';
+
+  @override
+  String get manualAssetDetailCurrentValue => 'Current value';
+
+  @override
+  String get manualAssetDetailAccount => 'Held in';
+
+  @override
+  String get manualAssetDetailPrincipal => 'Principal';
+
+  @override
+  String get manualAssetDetailAnnualRate => 'Annual rate';
+
+  @override
+  String get manualAssetDetailExpectedReturn => 'Expected annual return';
+
+  @override
+  String get manualAssetDetailStartDate => 'Start date';
+
+  @override
+  String get manualAssetDetailMaturityDate => 'Maturity date';
+
+  @override
+  String get manualAssetDetailIssuer => 'Issuer';
+
+  @override
+  String get manualAssetDetailProductCode => 'Product code';
 
   @override
   String get assetDetailNoMetadataMatch => 'No matching metadata found';

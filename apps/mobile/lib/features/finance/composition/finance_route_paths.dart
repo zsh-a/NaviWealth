@@ -41,6 +41,9 @@ abstract final class FinanceRoutes {
   static String wealthAsset(String id) =>
       '/wealth/assets/${Uri.encodeComponent(id)}';
 
+  static String wealthAssetEdit(String id) =>
+      '/wealth/assets/${Uri.encodeComponent(id)}/edit';
+
   static String wealthPhysical(String id) =>
       '/wealth/physical/${Uri.encodeComponent(id)}';
 
@@ -52,6 +55,9 @@ abstract final class FinanceRoutes {
 
   static String wealthAccount(String id) =>
       '/wealth/accounts/${Uri.encodeComponent(id)}';
+
+  static String wealthAccountEdit(String id) =>
+      '/wealth/accounts/${Uri.encodeComponent(id)}/edit';
 
   static String expense(String id) =>
       '/activity/expenses/${Uri.encodeComponent(id)}';

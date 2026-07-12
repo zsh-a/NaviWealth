@@ -13,6 +13,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../shared/ui/account_color.dart';
 import '../../shared/ui/account_icon_catalog.dart';
 import '../domain/account_balances.dart';
+import '../domain/account_semantics.dart';
 import 'account_labels.dart';
 
 typedef AccountPressed = void Function(BuildContext context, Account account);
@@ -65,7 +66,7 @@ Map<AccountCategory, List<Account>> _groupByCategory(List<Account> accounts) {
   }
 
   final out = <AccountCategory, List<Account>>{};
-  for (final cat in _accountCategoryOrder) {
+  for (final cat in kCustodyAccountCategories) {
     final group = grouped[cat];
     if (group == null) continue;
     if (group.isEmpty) continue;
@@ -73,17 +74,6 @@ Map<AccountCategory, List<Account>> _groupByCategory(List<Account> accounts) {
   }
   return out;
 }
-
-const _accountCategoryOrder = [
-  AccountCategory.cash,
-  AccountCategory.bank,
-  AccountCategory.broker,
-  AccountCategory.crypto,
-  AccountCategory.credit,
-  AccountCategory.loan,
-  AccountCategory.asset,
-  AccountCategory.liability,
-];
 
 class _AccountsSection extends StatelessWidget {
   const _AccountsSection({

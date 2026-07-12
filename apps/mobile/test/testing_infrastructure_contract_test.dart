@@ -226,9 +226,9 @@ void main() {
 
     test('review-priority module tests span their risky slices', () {
       const requiredFiles = <String, int>{
-        // Assets: keep provider, physical asset, depreciation, and UI list
-        // model behavior covered directly.
-        'test/features/finance/assets/assets_page_securities_test.dart': 2,
+        // Assets: keep provider, responsive summary, physical asset,
+        // depreciation, and valuation behavior covered directly.
+        'test/features/finance/assets/asset_summary_card_test.dart': 2,
         'test/features/finance/assets/data/asset_detail_providers_test.dart': 4,
         'test/features/finance/assets/data/deposit_maturity_insight_provider_test.dart':
             2,
@@ -236,7 +236,8 @@ void main() {
             4,
         'test/features/finance/assets/physical/domain/vehicle_depreciation_test.dart':
             3,
-        'test/features/finance/assets/ui/assets_list_models_test.dart': 2,
+        'test/features/finance/assets/physical/ui/valuation_update_sheet_test.dart':
+            1,
 
         // Options income: scanner/application, repositories, scoring, AI, and
         // presentation should not collapse back into one broad smoke file.

@@ -1577,8 +1577,26 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioHubEnginesTitle.
   ///
   /// In en, this message translates to:
-  /// **'Engine views'**
+  /// **'Insights'**
   String get portfolioHubEnginesTitle;
+
+  /// No description provided for @portfolioHubSectionPositions.
+  ///
+  /// In en, this message translates to:
+  /// **'Positions'**
+  String get portfolioHubSectionPositions;
+
+  /// No description provided for @portfolioHubSectionAllocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get portfolioHubSectionAllocation;
+
+  /// No description provided for @portfolioHubSectionInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'Insights'**
+  String get portfolioHubSectionInsights;
 
   /// No description provided for @portfolioHubRealizedPnlTitle.
   ///
@@ -2207,7 +2225,7 @@ abstract class AppLocalizations {
   /// Title of the Accounts-page '+' action sheet — only structural creation (account/asset/liability)
   ///
   /// In en, this message translates to:
-  /// **'Add wealth container'**
+  /// **'Add wealth item'**
   String get accountsActionsTitle;
 
   /// Subtitle for the Wealth quick-add panel
@@ -2225,7 +2243,7 @@ abstract class AppLocalizations {
   /// Wealth quick-add section heading for cash/deposit/wealth products
   ///
   /// In en, this message translates to:
-  /// **'Balances & products'**
+  /// **'Deposits & products'**
   String get wealthActionPanelFinancialGroup;
 
   /// Wealth quick-add section heading for real estate and vehicles
@@ -7014,6 +7032,24 @@ abstract class AppLocalizations {
   /// **'Tax'**
   String get tradeEntryTaxLabel;
 
+  /// No description provided for @tradeEntryAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade details'**
+  String get tradeEntryAdvancedTitle;
+
+  /// No description provided for @tradeEntryAdvancedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Now · no fees or notes'**
+  String get tradeEntryAdvancedSummary;
+
+  /// No description provided for @tradeEntryAdvancedConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom date, costs or notes'**
+  String get tradeEntryAdvancedConfigured;
+
   /// No description provided for @tradeEntryCashAccountLabel.
   ///
   /// In en, this message translates to:
@@ -9147,7 +9183,7 @@ abstract class AppLocalizations {
   /// Master-detail empty state for /activity/accounts at desktop width
   ///
   /// In en, this message translates to:
-  /// **'Select an account on the left to edit its details.'**
+  /// **'Select an account on the left to see its balance and activity.'**
   String get accountsDetailEmpty;
 
   /// No description provided for @accountsCreateAction.
@@ -9197,6 +9233,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 account} other{{count} accounts}}'**
   String accountsCategoryCount(int count);
+
+  /// No description provided for @accountDetailEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit account'**
+  String get accountDetailEditAction;
+
+  /// No description provided for @accountDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Account not found'**
+  String get accountDetailNotFound;
+
+  /// No description provided for @accountDetailBalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available balance'**
+  String get accountDetailBalanceTitle;
+
+  /// No description provided for @accountDetailTransferAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get accountDetailTransferAction;
+
+  /// No description provided for @accountDetailRecentActivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get accountDetailRecentActivityTitle;
+
+  /// No description provided for @accountDetailNoActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity recorded for this account yet.'**
+  String get accountDetailNoActivity;
+
+  /// No description provided for @accountDetailTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account type'**
+  String get accountDetailTypeLabel;
+
+  /// No description provided for @accountDetailCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary currency'**
+  String get accountDetailCurrencyLabel;
+
+  /// No description provided for @accountDetailInstitutionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution'**
+  String get accountDetailInstitutionLabel;
+
+  /// No description provided for @accountDetailNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account number'**
+  String get accountDetailNumberLabel;
+
+  /// No description provided for @accountDetailNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get accountDetailNotesLabel;
 
   /// Wealth container category — physical cash, e-wallets (Alipay, Wechat Pay, etc.)
   ///
@@ -12958,6 +13060,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This asset type does not support manual editing'**
   String get assetDetailUnsupportedType;
+
+  /// No description provided for @manualAssetDetailEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit asset'**
+  String get manualAssetDetailEditAction;
+
+  /// No description provided for @manualAssetDetailCurrentValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Current value'**
+  String get manualAssetDetailCurrentValue;
+
+  /// No description provided for @manualAssetDetailAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Held in'**
+  String get manualAssetDetailAccount;
+
+  /// No description provided for @manualAssetDetailPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get manualAssetDetailPrincipal;
+
+  /// No description provided for @manualAssetDetailAnnualRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual rate'**
+  String get manualAssetDetailAnnualRate;
+
+  /// No description provided for @manualAssetDetailExpectedReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected annual return'**
+  String get manualAssetDetailExpectedReturn;
+
+  /// No description provided for @manualAssetDetailStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get manualAssetDetailStartDate;
+
+  /// No description provided for @manualAssetDetailMaturityDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Maturity date'**
+  String get manualAssetDetailMaturityDate;
+
+  /// No description provided for @manualAssetDetailIssuer.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer'**
+  String get manualAssetDetailIssuer;
+
+  /// No description provided for @manualAssetDetailProductCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Product code'**
+  String get manualAssetDetailProductCode;
 
   /// Asset detail: toast — no metadata match
   ///

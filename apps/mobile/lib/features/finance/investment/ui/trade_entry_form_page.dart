@@ -94,16 +94,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   bool _cashCurrencyResolved = false;
   bool _cashAccountClearedForCurrency = false;
   bool _showSettlementDetails = false;
+  bool _showAdvancedDetails = false;
 
   // transferIn / transferOut are deliberately absent from this form —
   // they can never be created as a single user-entered leg.
   // `TransferFormPage` (under `/activity/accounts/transfer`) writes the two
   // legs atomically via `JournalEntryRepository`.
-  static const _tradeTypes = [
-    TradeType.buy,
-    TradeType.sell,
-    TradeType.valuationAdjust,
-  ];
+  static const _tradeTypes = [TradeType.buy, TradeType.sell];
 
   String _typeLabel(AppLocalizations l10n, TradeType type) {
     return switch (type) {
@@ -558,23 +555,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             required: false,
             helperText: l10n.tradeEntryPriceHelper,
             focusNode: _priceFocus,
-            onFieldSubmitted: (_) => _feeFocus.requestFocus(),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-
-          DateField(
-            label: l10n.tradeEntryDateLabel,
-            initialValue: _tradeDate,
-            required: true,
-            includeTime: true,
-            onChanged: (d) {
-              if (d != null) {
-                setState(() {
-                  _tradeDate = d;
-                  dirty.markDirty();
-                });
-              }
-            },
           ),
           const SizedBox(height: AppSpacing.s12),
 
@@ -587,37 +567,112 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               onChanged: (v) => _changeCurrency(v, accounts, explicit: true),
             ),
           const SizedBox(height: AppSpacing.s12),
-
-          Row(
-            children: [
-              Expanded(
-                child: AmountField(
-                  label: l10n.tradeEntryFeeLabel,
-                  controller: _feeController,
-                  currencyCode: _currency,
-                  required: false,
-                  focusNode: _feeFocus,
-                  onFieldSubmitted: (_) => _taxFocus.requestFocus(),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: AmountField(
-                  label: l10n.tradeEntryTaxLabel,
-                  controller: _taxController,
-                  currencyCode: _currency,
-                  required: false,
-                  focusNode: _taxFocus,
-                  onFieldSubmitted: (_) => _noteFocus.requestFocus(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s12),
-
-          NoteField(controller: _noteController, focusNode: _noteFocus),
+          _buildAdvancedSection(),
         ],
       ),
+    );
+  }
+
+  Widget _buildAdvancedSection() {
+    final l10n = AppLocalizations.of(context);
+    final hasCosts =
+        _feeController.text.trim() != '0' || _taxController.text.trim() != '0';
+    final hasNote = _noteController.text.trim().isNotEmpty;
+    final summary = hasCosts || hasNote
+        ? l10n.tradeEntryAdvancedConfigured
+        : l10n.tradeEntryAdvancedSummary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SoftCard(
+          padding: EdgeInsets.zero,
+          child: FTappable(
+            onPress: () =>
+                setState(() => _showAdvancedDetails = !_showAdvancedDetails),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Row(
+                children: [
+                  AppIconTile(
+                    icon: FLucideIcons.slidersHorizontal,
+                    color: context.theme.colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.tradeEntryAdvancedTitle,
+                          style: context.labelStyle,
+                        ),
+                        const SizedBox(height: AppSpacing.s2),
+                        Text(summary, style: context.captionStyle),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _showAdvancedDetails
+                        ? FLucideIcons.chevronUp
+                        : FLucideIcons.chevronDown,
+                    size: AppIconSizes.h18,
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (_showAdvancedDetails)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s12),
+            child: Column(
+              children: [
+                DateField(
+                  label: l10n.tradeEntryDateLabel,
+                  initialValue: _tradeDate,
+                  required: true,
+                  includeTime: true,
+                  onChanged: (date) {
+                    if (date == null) return;
+                    setState(() {
+                      _tradeDate = date;
+                      dirty.markDirty();
+                    });
+                  },
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AmountField(
+                        label: l10n.tradeEntryFeeLabel,
+                        controller: _feeController,
+                        currencyCode: _currency,
+                        required: false,
+                        focusNode: _feeFocus,
+                        onFieldSubmitted: (_) => _taxFocus.requestFocus(),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s12),
+                    Expanded(
+                      child: AmountField(
+                        label: l10n.tradeEntryTaxLabel,
+                        controller: _taxController,
+                        currencyCode: _currency,
+                        required: false,
+                        focusNode: _taxFocus,
+                        onFieldSubmitted: (_) => _noteFocus.requestFocus(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                NoteField(controller: _noteController, focusNode: _noteFocus),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -688,13 +743,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             ),
           ),
         ),
-        AnimatedCrossFade(
-          duration: AppMotionPolicy.duration(context, Motion.medium),
-          crossFadeState: _showSettlementDetails
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          firstChild: const SizedBox.shrink(),
-          secondChild: Padding(
+        if (_showSettlementDetails)
+          Padding(
             key: const Key('trade-entry-settlement-details'),
             padding: const EdgeInsets.only(top: AppSpacing.s12),
             child: Column(
@@ -744,7 +794,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               ],
             ),
           ),
-        ),
       ],
     );
   }

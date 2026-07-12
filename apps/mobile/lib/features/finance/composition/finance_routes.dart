@@ -13,6 +13,7 @@ import 'package:naviwealth/features/finance/assets/physical/ui/physical_asset_de
 import 'package:naviwealth/features/finance/assets/ui/asset_detail_page.dart';
 import 'package:naviwealth/features/finance/assets/ui/cash_form_page.dart';
 import 'package:naviwealth/features/finance/assets/ui/deposit_form_page.dart';
+import 'package:naviwealth/features/finance/assets/ui/manual_asset_edit_page.dart';
 import 'package:naviwealth/features/finance/assets/ui/wealth_product_form_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/budget_page.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_page.dart';
@@ -51,6 +52,7 @@ import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../core/shell/page_transitions.dart';
 import '../../../core/shell/route_error_page.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../accounts/ui/account_detail_page.dart';
 import '../accounts/ui/account_form_page.dart';
 import '../accounts/ui/accounts_page.dart';
 import '../accounts/ui/journal_entry_list_page.dart';
@@ -215,14 +217,20 @@ StatefulShellRoute financeShellRoute() {
                     builder: (context, state) => const AccountFormPage(),
                   ),
                   GoRoute(
+                    path: ':accountId/edit',
+                    builder: (context, state) => AccountFormPage(
+                      accountId: state.pathParameters['accountId'],
+                    ),
+                  ),
+                  GoRoute(
                     path: ':accountId',
                     name: FinanceRouteNames.wealthAccount,
                     pageBuilder: (context, state) =>
                         buildHeroAwareTransitionPage<void>(
                           context: context,
                           state: state,
-                          child: AccountFormPage(
-                            accountId: state.pathParameters['accountId'],
+                          child: AccountDetailPage(
+                            accountId: state.pathParameters['accountId']!,
                           ),
                         ),
                   ),
@@ -265,6 +273,12 @@ StatefulShellRoute financeShellRoute() {
                 builder: (context, state) => DeferredRoute(
                   load: watchlist_lib.loadLibrary,
                   builder: (_) => watchlist_lib.WatchlistPage(),
+                ),
+              ),
+              GoRoute(
+                path: 'assets/:assetId/edit',
+                builder: (context, state) => ManualAssetEditRoute(
+                  assetId: state.pathParameters['assetId']!,
                 ),
               ),
               GoRoute(

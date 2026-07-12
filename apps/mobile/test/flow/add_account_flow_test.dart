@@ -74,6 +74,7 @@ void main() {
 
         final accounts = AccountsPageObject(tester);
         await accounts.openAccount('Flow Checking');
+        await accounts.editOpenAccount();
 
         final form = AccountFormObject(tester);
         form.expectEditMode('Flow Checking');

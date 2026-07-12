@@ -11,7 +11,7 @@ import 'home_section.dart';
 
 /// Compact allocation surface for the home cockpit.
 ///
-/// Replaces the heavy Sankey AllocationCard above the fold with:
+/// Compact allocation summary used above the fold:
 ///   - a single-row stacked bar (one segment per category, sorted desc)
 ///   - the top 3 categories as labelled rows below
 ///   - a footer link into the full Accounts hub for the breakdown
