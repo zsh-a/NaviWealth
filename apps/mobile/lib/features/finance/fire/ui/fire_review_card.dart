@@ -181,7 +181,7 @@ class _DiffPanel extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.s8),
         decoration: BoxDecoration(
           color: colors.muted.withValues(alpha: AppOpacity.muted),
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Text(
           l10n.fireOsReviewDiffNoBaseline,
@@ -201,7 +201,7 @@ class _DiffPanel extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: AppOpacity.muted),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

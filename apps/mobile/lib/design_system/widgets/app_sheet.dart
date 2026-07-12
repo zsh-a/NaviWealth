@@ -481,7 +481,7 @@ class AppSheetSurface extends StatelessWidget {
     super.key,
     required this.child,
     this.borderRadius = const BorderRadius.vertical(
-      top: Radius.circular(AppRadius.xl),
+      top: Radius.circular(AppRadius.lg),
     ),
     this.border,
     this.safeTop = false,

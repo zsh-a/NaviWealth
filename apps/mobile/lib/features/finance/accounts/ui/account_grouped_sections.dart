@@ -110,7 +110,7 @@ class _AccountsSection extends StatelessWidget {
     final isDark = colors.brightness == Brightness.dark;
     final background = isDark
         ? colors.card.withValues(alpha: AppOpacity.muted)
-        : ColorPalette.neutral75;
+        : ColorPalette.surfaceRaised;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s16),
       child: Column(
@@ -128,7 +128,7 @@ class _AccountsSection extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               color: background,
-              borderRadius: BorderRadius.circular(AppRadius.xlg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),

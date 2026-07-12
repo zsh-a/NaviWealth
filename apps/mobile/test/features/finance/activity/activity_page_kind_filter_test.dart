@@ -64,32 +64,31 @@ ProviderContainer _container() {
 }
 
 void main() {
-  testWidgets('mobile shell renders inline kind chip row + empty feed', (
+  testWidgets(
+    'mobile shell keeps filters in the sheet and fixes the main CTA',
+    (tester) async {
+      // Below 1024 dp -> mobile branch without the desktop quick-filter rail.
+      await tester.binding.setSurfaceSize(const Size(760, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final container = _container();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      expect(find.text('All'), findsNothing);
+      expect(find.text('Expense'), findsNothing);
+      expect(find.text('Record entry'), findsOneWidget);
+    },
+  );
+
+  testWidgets('desktop quick filter toggles a kind into the active query', (
     tester,
   ) async {
-    // Below 1024 dp -> mobile branch with inline chip row.
-    await tester.binding.setSurfaceSize(const Size(760, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final container = _container();
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(_wrap(container: container));
-    await tester.pumpAndSettle();
-
-    // All five kind chips render (All + four kinds).
-    expect(find.text('All'), findsOneWidget);
-    expect(find.text('Expense'), findsOneWidget);
-    expect(find.text('Income'), findsOneWidget);
-    expect(find.text('Transfer'), findsOneWidget);
-    expect(find.text('Trade'), findsOneWidget);
-  });
-
-  testWidgets('tapping a kind chip toggles it into the active query', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(500, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1600, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
     final container = _container();
     addTearDown(container.dispose);
@@ -114,9 +113,10 @@ void main() {
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 
-  testWidgets('All chip clears any selected kinds', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(500, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+  testWidgets('desktop All chip clears any selected kinds', (tester) async {
+    tester.view.physicalSize = const Size(1600, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
     final container = _container();
     addTearDown(container.dispose);

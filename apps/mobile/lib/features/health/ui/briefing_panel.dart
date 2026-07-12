@@ -279,7 +279,7 @@ class _BriefingSkeleton extends StatelessWidget {
             children: [
               SkeletonBox(width: 32, height: 32, radius: AppRadius.sm),
               SizedBox(width: AppSpacing.s8),
-              SkeletonBox(width: 120, height: 14, radius: AppRadius.xs),
+              SkeletonBox(width: 120, height: 14, radius: AppRadius.sm),
             ],
           ),
           SizedBox(height: AppSpacing.s12),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
 
+const double kAdaptiveRightRailWidth = 340;
+
 /// Standard page-level frame for responsive content surfaces.
 ///
 /// The app shell decides navigation shape. This frame decides how ordinary
@@ -20,7 +22,7 @@ class AdaptiveContentFrame extends StatelessWidget {
     this.sectionGap = AppSpacing.s20,
     this.columnGap = AppSpacing.s24,
     this.columnBreakpoint = Breakpoints.contentTwoColumn,
-    this.rightRailWidth = 340,
+    this.rightRailWidth = kAdaptiveRightRailWidth,
     this.primaryFlex = 1,
     this.secondaryFlex = 1,
     this.alignment = Alignment.topCenter,

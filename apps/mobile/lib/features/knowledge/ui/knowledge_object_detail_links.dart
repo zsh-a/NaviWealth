@@ -160,7 +160,7 @@ class _RelatedObjectLink extends StatelessWidget {
                 color: (iconColor ?? colors.primary).withValues(
                   alpha: AppOpacity.subtle,
                 ),
-                borderRadius: BorderRadius.circular(AppRadius.xs),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Icon(icon, size: 13, color: iconColor ?? colors.primary),
             ),

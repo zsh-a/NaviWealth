@@ -41,7 +41,7 @@ class _SessionTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: selected ? colors.primary : Colors.transparent,
                     borderRadius: const BorderRadius.all(
-                      Radius.circular(AppRadius.xxs),
+                      Radius.circular(AppRadius.sm),
                     ),
                   ),
                 ),

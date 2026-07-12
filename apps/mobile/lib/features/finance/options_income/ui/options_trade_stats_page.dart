@@ -180,7 +180,7 @@ class _StrategyTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.card,
+      borderRadius: AppRadius.lg,
       child: Row(
         children: [
           Expanded(
@@ -224,7 +224,7 @@ class _SymbolTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.card,
+      borderRadius: AppRadius.lg,
       child: Row(
         children: [
           Expanded(

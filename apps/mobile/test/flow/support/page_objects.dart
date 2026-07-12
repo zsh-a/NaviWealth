@@ -49,7 +49,7 @@ class AppShell {
   }
 
   Future<void> openAi() async {
-    final action = find.descendant(of: bottomNav, matching: find.text('AI'));
+    final action = find.byKey(const ValueKey<String>('floating-nav.assistant'));
     expect(action, findsWidgets, reason: 'AI center action missing');
     await tester.tap(action.first);
     await settle(tester);
@@ -186,9 +186,13 @@ class ActivityPageObject {
   }
 
   Future<void> openExpenseList() async {
+    final moreActions = find.bySemanticsLabel('More actions');
+    expect(moreActions, findsOneWidget, reason: 'activity overflow missing');
+    await tester.tap(moreActions);
+    await settle(tester);
     final action = find.text('Expenses');
-    expect(action, findsWidgets, reason: 'expenses quick link missing');
-    await tester.tap(action.first);
+    expect(action, findsOneWidget, reason: 'expenses overflow action missing');
+    await tester.tap(action);
     await settle(tester);
   }
 }
@@ -328,7 +332,14 @@ class IngestReviewPageObject {
   }
 
   Future<void> pasteStatement(String text) async {
-    final paste = find.text('Paste text');
+    var paste = find.text('Paste text');
+    if (paste.evaluate().isEmpty) {
+      final addSource = find.bySemanticsLabel('Add source');
+      expect(addSource, findsOneWidget, reason: 'capture source menu missing');
+      await tester.tap(addSource);
+      await settle(tester);
+      paste = find.text('Paste text');
+    }
     expect(paste, findsWidgets, reason: 'paste action missing');
     await tester.tap(paste.first);
     await settle(tester);
@@ -370,14 +381,43 @@ class IngestReviewPageObject {
       findsOneWidget,
       reason: 'skip action missing for $description',
     );
+    for (var i = 0; i < 100; i++) {
+      if (tester.widget<AppActionButton>(skip).onPress != null) break;
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    }
+    final onPress = tester.widget<AppActionButton>(skip).onPress;
+    expect(
+      onPress,
+      isNotNull,
+      reason: 'skip action stayed disabled for $description',
+    );
+    await tester.ensureVisible(skip);
+    await tester.pumpAndSettle();
     await tester.tap(skip);
-    await settle(tester);
+    await settleUntil(tester, find.text('Undo'));
+    expect(find.text('Undo'), findsOneWidget, reason: 'skip did not complete');
+    for (var i = 0; i < 20; i++) {
+      if (find.textContaining(description).evaluate().isEmpty) return;
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    }
   }
 
   Future<void> undoLastAction() async {
     final undo = find.text('Undo');
     expect(undo, findsOneWidget, reason: 'undo toast action missing');
-    await tester.tap(undo);
+    var tappableUndo = undo.hitTestable();
+    for (var i = 0; i < 20 && tappableUndo.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+      tappableUndo = undo.hitTestable();
+    }
+    expect(
+      tappableUndo,
+      findsOneWidget,
+      reason: 'undo action stayed offscreen',
+    );
+    await tester.tap(tappableUndo);
     await settle(tester);
   }
 }
@@ -481,9 +521,12 @@ class PlanPageObject {
   final WidgetTester tester;
 
   Future<void> openFireReport() async {
-    final action = find.text('FIRE');
-    expect(action, findsWidgets, reason: 'FIRE planning action missing');
-    await tester.tap(action.first);
+    final configure = find.text('Set up FIRE plan');
+    final action = configure.evaluate().isNotEmpty
+        ? configure
+        : find.text('See plan');
+    expect(action, findsOneWidget, reason: 'FIRE planning action missing');
+    await tester.tap(action);
     await settle(tester);
   }
 

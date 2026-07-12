@@ -121,7 +121,7 @@ void main() {
 
     expect(find.textContaining('No activity yet'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.workflow), findsOneWidget);
-    expect(find.text('Add'), findsOneWidget);
+    expect(find.text('Record entry'), findsNothing);
   });
 
   testWidgets('filtered empty state offers an inline filter action', (

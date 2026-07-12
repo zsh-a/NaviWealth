@@ -143,7 +143,7 @@ class _LogTile extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: AppOpacity.medium),
-                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
                     log.title ?? log.logLevel?.name ?? 'log',

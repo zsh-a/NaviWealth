@@ -40,31 +40,9 @@ class ColorPalette {
   static const Color navyGlass = Color(0xFF0F2A35);
   static const Color navySoftBorder = Color(0xFFCAD7DA);
 
-  // ── Secondary accent (warm orange) — low-frequency highlights ─────────
-  static const Color secondary500 = Color(0xFFFA6400);
-
-  // ── Brand (NaviWealth blue, derived from legacy seed 0xFF1F6FEB) ────────
-  // Retained as info / secondary accent (Sync banner, FxRate badges, etc.).
-  static const Color brand50 = Color(0xFFEFF5FF);
-  static const Color brand100 = Color(0xFFDBE8FE);
-  static const Color brand200 = Color(0xFFBFD5FD);
-  static const Color brand300 = Color(0xFF93B7FB);
-  static const Color brand400 = Color(0xFF608FF6);
-  static const Color brand500 = Color(0xFF1F6FEB);
-  static const Color brand600 = Color(0xFF1758C2);
-  static const Color brand700 = Color(0xFF14479C);
-  static const Color brand800 = Color(0xFF103A7E);
-  static const Color brand900 = Color(0xFF0B2A5C);
-
   // ── Neutral grayscale ───────────────────────────────────────────────────
   static const Color neutral0 = Color(0xFFFFFFFF);
   static const Color neutral50 = Color(0xFFF7F8FA);
-  static const Color neutral75 = Color(0xFFF1F5F5); // cool-toned surface tint
-  static const Color neutralTint = Color(0xFFEAF4F5);
-  static const Color neutralGlass = Color(0xFFF7FAFA);
-  static const Color neutralGlassBorder = Color(0xFFE3ECEE);
-  static const Color neutralCardRaised = Color(0xFFF7FBFB);
-  static const Color neutralCardHero = Color(0xFFF1F7F8);
   static const Color neutral100 = Color(0xFFEFF1F4);
   static const Color neutral200 = Color(0xFFE2E5EA);
   static const Color neutral300 = Color(0xFFCBD0D7);
@@ -76,6 +54,15 @@ class ColorPalette {
   static const Color neutral900 = Color(0xFF111827);
   static const Color neutral950 = Color(0xFF0B1220);
   static const Color neutral1000 = Color(0xFF000000);
+
+  // ── Light surfaces ──────────────────────────────────────────────────────
+  // Four deliberate elevation roles. Components should use these instead of
+  // inventing near-identical cool neutrals for every surface type.
+  static const Color surfaceBackground = Color(0xFFF7FAFA);
+  static const Color surface = neutral0;
+  static const Color surfaceRaised = Color(0xFFF1F5F5);
+  static const Color surfaceOverlay = Color(0xFFEAF4F5);
+  static const Color surfaceHairline = Color(0xFFDCE7E9);
 
   // ── Profit / gain (emerald) ─────────────────────────────────────────────
   // Migrated from legacy "standard green" #16A34A to Tailwind emerald
@@ -212,7 +199,7 @@ class ExpenseCategoryColors {
   static const Color rose = ColorPalette.red600; // local_hospital
   static const Color emerald = ColorPalette.green600; // education (school)
   static const Color pink = Color(0xFFEC4899); // shopping_bag
-  static const Color blue = ColorPalette.brand500; // flight
+  static const Color blue = ColorPalette.cyanBrand700; // flight
   static const Color slateDark = Color(0xFF475569); // phone, credit_card
   static const Color amberLight = Color(0xFFF59E0B); // gifts
   static const Color violet = Color(0xFF8B5CF6); // pets

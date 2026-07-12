@@ -197,11 +197,11 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
           width: sheetSize.width,
           height: sheetSize.height,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: Container(
               decoration: BoxDecoration(
                 color: colors.background,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color: colors.border,
                   width: AppStroke.hairline,

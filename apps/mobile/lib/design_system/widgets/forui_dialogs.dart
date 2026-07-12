@@ -149,7 +149,9 @@ class _DialogButtonLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1));
+    return Flexible(
+      child: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1)),
+    );
   }
 }
 
@@ -203,7 +205,7 @@ class _AppDialog extends StatelessWidget {
       key: const ValueKey<String>('app-dialog-surface'),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: borderColor, width: AppStroke.hairline),
         boxShadow: [
           BoxShadow(

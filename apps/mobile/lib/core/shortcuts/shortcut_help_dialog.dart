@@ -135,7 +135,7 @@ class _ActivatorBadge extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: context.theme.colors.secondary,
-              borderRadius: BorderRadius.circular(AppRadius.xs),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: context.theme.colors.border),
             ),
             child: Text(
@@ -185,7 +185,7 @@ class _KeyLabelBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: context.theme.colors.secondary,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: context.theme.colors.border),
       ),
       child: Text(

@@ -1249,6 +1249,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeQuickRecordEntry => '记一笔';
 
   @override
+  String get homeShowDetails => '展开详情';
+
+  @override
+  String get homeHideDetails => '收起详情';
+
+  @override
   String get homeQuickImport => '导入';
 
   @override
@@ -2117,7 +2123,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandPaletteOpenAi => '打开助理';
 
   @override
-  String get navAskAi => '问 AI';
+  String get navAskAi => '助手';
 
   @override
   String get commandPaletteAiHistory => 'AI 历史会话';
@@ -7582,7 +7588,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioUnassignedAccount => '未分配';
 
   @override
-  String get activityAddAction => '添加';
+  String get activityAddAction => '记一笔';
 
   @override
   String get activityFeedFilterTitle => '筛选';

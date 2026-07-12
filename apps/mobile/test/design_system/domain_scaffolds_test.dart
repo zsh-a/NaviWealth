@@ -171,7 +171,7 @@ void main() {
       );
       final navDecoration = navSurface.decoration! as BoxDecoration;
       expect(navDecoration.boxShadow, hasLength(1));
-      expect(navDecoration.borderRadius, BorderRadius.circular(AppRadius.nav));
+      expect(navDecoration.borderRadius, BorderRadius.circular(AppRadius.full));
       final assistant = find.byKey(
         const ValueKey<String>('floating-nav.assistant'),
       );

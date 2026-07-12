@@ -47,7 +47,7 @@ class AppTheme {
     // Keep residual Material surfaces aligned with buildAppForuiTheme.
     final pageBackground = isDark
         ? ColorPalette.navy950
-        : ColorPalette.neutralGlass;
+        : ColorPalette.surfaceBackground;
     final mutedForeground = isDark
         ? ColorPalette.navy300
         : ColorPalette.navy500;

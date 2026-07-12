@@ -54,7 +54,7 @@ class _ApprovedTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       onPress: () => showApprovedUnderlyingSheet(context, existing: item),
-      borderRadius: AppRadius.card,
+      borderRadius: AppRadius.lg,
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s16,

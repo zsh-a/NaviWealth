@@ -1289,6 +1289,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeQuickRecordEntry => 'Record entry';
 
   @override
+  String get homeShowDetails => 'Explore details';
+
+  @override
+  String get homeHideDetails => 'Hide details';
+
+  @override
   String get homeQuickImport => 'Import';
 
   @override
@@ -2191,7 +2197,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandPaletteOpenAi => 'Open assistant';
 
   @override
-  String get navAskAi => 'Ask AI';
+  String get navAskAi => 'Assistant';
 
   @override
   String get commandPaletteAiHistory => 'AI history';
@@ -7930,7 +7936,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioUnassignedAccount => 'Unassigned';
 
   @override
-  String get activityAddAction => 'Add';
+  String get activityAddAction => 'Record entry';
 
   @override
   String get activityFeedFilterTitle => 'Filter';

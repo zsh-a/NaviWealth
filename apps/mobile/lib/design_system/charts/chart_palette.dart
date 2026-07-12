@@ -85,7 +85,7 @@ class ChartPalette {
       ColorPalette.green600,
       ColorPalette.chartPinkLight,
       ColorPalette.chartYellowLight,
-      ColorPalette.brand500,
+      ColorPalette.cyanBrand700,
       ColorPalette.red600,
     ];
   }

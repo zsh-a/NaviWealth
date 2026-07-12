@@ -45,6 +45,9 @@ final _valuationStatusTickerProvider = StreamProvider.autoDispose<DateTime>((
 });
 
 final _financeAmountsHiddenProvider = StateProvider<bool>((ref) => false);
+final _homeDetailsExpandedProvider = StateProvider.autoDispose<bool>(
+  (ref) => false,
+);
 
 /// Home cockpit.
 ///

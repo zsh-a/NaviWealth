@@ -429,7 +429,7 @@ class _TouchXAxisLabel extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: palette.tooltipBackground,
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -495,7 +495,7 @@ class _DeltaBadge extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: colors.muted.withValues(alpha: AppOpacity.subtle),
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: AmountPrivacyPlaceholder(
           density: AmountPrivacyPlaceholderDensity.compact,
@@ -516,7 +516,7 @@ class _DeltaBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         label,

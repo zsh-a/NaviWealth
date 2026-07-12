@@ -435,16 +435,16 @@ void main() {
           .toSet();
       final responsivePresent = pngNames.intersection(responsivePngs);
 
-      expect(goldenFiles, hasLength(17));
+      expect(goldenFiles, hasLength(18));
       expect(responsivePresent, equals(responsivePngs));
-      expect(pngFiles, hasLength(62));
+      expect(pngFiles, hasLength(63));
 
       final repoRoot = appRoot.parent.parent;
       final docs = File('${repoRoot.path}/docs/visual-baseline/README.md');
       expect(docs.existsSync(), isTrue);
       final text = docs.readAsStringSync();
-      expect(text, contains('17 test files'));
-      expect(text, contains('62 PNG baselines'));
+      expect(text, contains('18 test files'));
+      expect(text, contains('63 PNG baselines'));
       expect(text, contains('sync_status_page_golden_test.dart'));
       expect(text, contains('task_flow_responsive_golden_test.dart'));
       for (final filename in responsivePngs) {

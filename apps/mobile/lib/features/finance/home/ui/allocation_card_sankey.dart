@@ -297,7 +297,7 @@ class _SankeyPainter extends CustomPainter {
       );
       nodePaint.color = flow.color;
       canvas.drawRRect(
-        RRect.fromRectAndRadius(source, const Radius.circular(AppRadius.xs)),
+        RRect.fromRectAndRadius(source, const Radius.circular(AppRadius.sm)),
         nodePaint,
       );
       _drawLabel(
@@ -313,7 +313,7 @@ class _SankeyPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         layout.assetRect,
-        const Radius.circular(AppRadius.xs),
+        const Radius.circular(AppRadius.sm),
       ),
       nodePaint,
     );
@@ -345,7 +345,7 @@ class _SankeyPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         layout.netWorthRect,
-        const Radius.circular(AppRadius.xs),
+        const Radius.circular(AppRadius.sm),
       ),
       nodePaint,
     );
@@ -372,7 +372,7 @@ class _SankeyPainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           layout.liabilityRect!,
-          const Radius.circular(AppRadius.xs),
+          const Radius.circular(AppRadius.sm),
         ),
         nodePaint,
       );

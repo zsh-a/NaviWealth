@@ -28,66 +28,33 @@ class HomeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HomeSectionHeader(
+        SectionHeader(
           title: title,
-          actionLabel: actionLabel,
-          onAction: onAction,
+          padding: const EdgeInsets.only(
+            left: AppSpacing.s4,
+            top: AppSpacing.s4,
+            bottom: AppSpacing.s8,
+          ),
+          trailing: actionLabel != null && onAction != null
+              ? FTappable(
+                  onPress: onAction,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s4,
+                      vertical: AppSpacing.s2,
+                    ),
+                    child: Text(
+                      actionLabel!,
+                      style: context.captionLabelStyle.copyWith(
+                        color: context.theme.colors.primary,
+                      ),
+                    ),
+                  ),
+                )
+              : null,
         ),
         child,
       ],
-    );
-  }
-}
-
-class HomeSectionHeader extends StatelessWidget {
-  const HomeSectionHeader({
-    super.key,
-    required this.title,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final String title;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final actionLabel = this.actionLabel;
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.s4,
-        top: AppSpacing.s4,
-        bottom: AppSpacing.s8,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.mutedLabelStyle,
-            ),
-          ),
-          if (actionLabel != null && onAction != null)
-            FTappable(
-              onPress: onAction,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s4,
-                  vertical: AppSpacing.s2,
-                ),
-                child: Text(
-                  actionLabel,
-                  style: context.captionLabelStyle.copyWith(
-                    color: context.theme.colors.primary,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }
@@ -109,7 +76,7 @@ class HomeSurface extends StatelessWidget {
     return SoftCard(
       onPress: onPress,
       padding: padding,
-      borderRadius: AppRadius.xlg,
+      borderRadius: AppRadius.lg,
       borderless: true,
       level: SoftCardLevel.raised,
       child: child,

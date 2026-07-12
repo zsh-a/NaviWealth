@@ -144,7 +144,7 @@ class _TaskFooterFrame extends StatelessWidget {
                   children: [
                     Expanded(child: AppFormActionBar(child: child)),
                     const SizedBox(width: AppSpacing.s24),
-                    const SizedBox(width: 340),
+                    const SizedBox(width: kAdaptiveRightRailWidth),
                   ],
                 )
               : AppFormActionBar(child: child),

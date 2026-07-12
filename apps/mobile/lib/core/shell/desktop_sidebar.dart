@@ -155,7 +155,7 @@ class _SidebarItem extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.primary,
                 borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(AppRadius.xxs),
+                  right: Radius.circular(AppRadius.sm),
                 ),
               ),
             ),

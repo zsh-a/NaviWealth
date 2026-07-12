@@ -279,14 +279,14 @@ class _AppListSkeletonRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SkeletonBox(width: 156, height: 15, radius: AppRadius.xs),
+                SkeletonBox(width: 156, height: 15, radius: AppRadius.sm),
                 SizedBox(height: AppSpacing.s8),
-                SkeletonBox(width: 220, height: 11, radius: AppRadius.xs),
+                SkeletonBox(width: 220, height: 11, radius: AppRadius.sm),
               ],
             ),
           ),
           SizedBox(width: AppSpacing.s12),
-          SkeletonBox(width: 56, height: 18, radius: AppRadius.xs),
+          SkeletonBox(width: 56, height: 18, radius: AppRadius.sm),
         ],
       ),
     );

@@ -150,7 +150,7 @@ class _ChartBody extends StatelessWidget {
     ];
     return LayoutBuilder(
       builder: (context, constraints) => SizedBox(
-        height: AppChartHeights.medium,
+        height: AppChartHeights.standard,
         child: NwLineChart(
           series: series,
           xAxis: const TimeAxis(format: AxisDateFormat.dayMonth, maxLabels: 4),

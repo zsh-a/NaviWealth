@@ -98,7 +98,7 @@ class _ActionPlanCard extends StatelessWidget {
                   color: colors.primary,
                   size: 28,
                   iconSize: AppIconSizes.sm,
-                  radius: AppRadius.xs,
+                  radius: AppRadius.sm,
                   backgroundOpacity: AppOpacity.light,
                   foregroundOpacity: 1,
                 ),

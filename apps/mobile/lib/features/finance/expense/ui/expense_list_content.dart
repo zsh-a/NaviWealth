@@ -375,8 +375,10 @@ class _ExpenseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final accent =
+    final categoryAccent =
         account?.expenseAccentColor(context) ?? context.theme.colors.primary;
+    final colors = context.theme.colors;
+    final iconColor = selected ? categoryAccent : colors.mutedForeground;
     final title = account == null
         ? l10n.expenseListUncategorized
         : localizedAccountName(l10n, account!);
@@ -408,18 +410,22 @@ class _ExpenseRow extends StatelessWidget {
                   onPress: onTap,
                   child: Row(
                     children: [
-                      SizedBox(
+                      Container(
                         width: AppSpacing.s32,
                         height: AppSpacing.s32,
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Icon(
-                            account?.iconData ?? FLucideIcons.banknote,
-                            size: AppIconSizes.md,
-                            color: accent.withValues(
-                              alpha: AppOpacity.prominent,
-                            ),
-                          ),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? categoryAccent.withValues(
+                                  alpha: AppOpacity.faint,
+                                )
+                              : colors.muted,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Icon(
+                          account?.iconData ?? FLucideIcons.banknote,
+                          size: AppIconSizes.sm,
+                          color: iconColor,
                         ),
                       ),
                       const SizedBox(width: AppSpacing.s12),

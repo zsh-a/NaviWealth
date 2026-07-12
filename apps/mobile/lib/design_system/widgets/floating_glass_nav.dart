@@ -10,6 +10,8 @@ import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
+const double _kDestinationHeight = 52;
+const double _kIconSlotSize = 26;
 
 /// A floating glass-morphism bottom navigation bar.
 ///
@@ -78,7 +80,7 @@ class FloatingGlassNavBar extends StatelessWidget {
       child: Container(
         height: kFloatingGlassNavBarHeight,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.nav),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(color: borderColor, width: AppStroke.hairline),
           boxShadow: AppShadow.nav,
         ),
@@ -162,7 +164,7 @@ class _NavTabButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: AppMotionPolicy.duration(context, Motion.fast),
           curve: Motion.standardDecelerate,
-          height: 52,
+          height: _kDestinationHeight,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s6,
             vertical: AppSpacing.s4,
@@ -177,8 +179,8 @@ class _NavTabButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 26,
-                height: 26,
+                width: _kIconSlotSize,
+                height: _kIconSlotSize,
                 child: AnimatedSwitcher(
                   duration: AppMotionPolicy.duration(context, Motion.fast),
                   switchInCurve: Motion.standardDecelerate,

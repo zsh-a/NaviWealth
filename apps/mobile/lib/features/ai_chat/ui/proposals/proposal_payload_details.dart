@@ -30,7 +30,7 @@ class ProposalPayloadDetails extends ConsumerWidget {
         color: context.theme.colors.background.withValues(
           alpha: AppOpacity.prominent,
         ),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
           color: context.theme.colors.border.withValues(
             alpha: AppOpacity.disabled,

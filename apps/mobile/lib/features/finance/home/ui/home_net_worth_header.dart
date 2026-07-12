@@ -18,9 +18,7 @@ class _NetWorthHeader extends ConsumerWidget {
         : l10n.financePrivacyHideAmountsTooltip;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.xlg,
-      borderless: true,
-      tinted: false,
+      level: SoftCardLevel.hero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -9,10 +9,14 @@ import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/auth/token_store.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
 import 'package:naviwealth/features/auth/data/auth_route_guard.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/test_database.dart';
+
+late SharedPreferences _preferences;
 
 class _Marker extends StatelessWidget {
   const _Marker(this.label);
@@ -36,6 +40,7 @@ ProviderContainer _container({Map<String, String>? seed}) {
   return ProviderContainer(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(keyStore),
+      sharedPreferencesProvider.overrideWithValue(_preferences),
       appDatabaseProvider.overrideWith((_) async => db),
       // Plug the AuthRouteGuard into FIR-15's empty default — same wiring
       // bootstrap.dart does in production.
@@ -85,6 +90,13 @@ String _path(GoRouter router) =>
     router.routeInformationProvider.value.uri.toString();
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{
+      'app.mode.v1': 'cloud',
+    });
+    _preferences = await SharedPreferences.getInstance();
+  });
+
   testWidgets('logged-out user requesting portfolio is bounced to /login', (
     tester,
   ) async {

@@ -503,7 +503,7 @@ class _TradeRow extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: directionColor,
-              borderRadius: BorderRadius.circular(AppRadius.xxs),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
           const SizedBox(width: AppSpacing.s8),

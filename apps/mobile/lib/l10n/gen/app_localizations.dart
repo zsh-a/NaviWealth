@@ -2330,6 +2330,18 @@ abstract class AppLocalizations {
   /// **'Record entry'**
   String get homeQuickRecordEntry;
 
+  /// Finance home disclosure that reveals secondary dashboard modules
+  ///
+  /// In en, this message translates to:
+  /// **'Explore details'**
+  String get homeShowDetails;
+
+  /// Finance home disclosure that collapses secondary dashboard modules
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get homeHideDetails;
+
   /// Home quick action label that opens the activity ingest flow.
   ///
   /// In en, this message translates to:
@@ -3947,7 +3959,7 @@ abstract class AppLocalizations {
   /// Compact visible label for the assistant action in mobile navigation
   ///
   /// In en, this message translates to:
-  /// **'Ask AI'**
+  /// **'Assistant'**
   String get navAskAi;
 
   /// Command palette: open the read-only AI session history under Settings
@@ -13553,7 +13565,7 @@ abstract class AppLocalizations {
   /// Activity feed add action label
   ///
   /// In en, this message translates to:
-  /// **'Add'**
+  /// **'Record entry'**
   String get activityAddAction;
 
   /// Activity feed filter action title

@@ -21,7 +21,7 @@ void main() {
         );
         expect(
           theme.colors.background,
-          isDark ? ColorPalette.navy950 : ColorPalette.neutralGlass,
+          isDark ? ColorPalette.navy950 : ColorPalette.surfaceBackground,
         );
         expect(
           theme.colors.foreground,
@@ -37,11 +37,11 @@ void main() {
         );
         expect(
           theme.colors.border,
-          isDark ? ColorPalette.navy800 : ColorPalette.neutralGlassBorder,
+          isDark ? ColorPalette.navy800 : ColorPalette.surfaceHairline,
         );
         expect(
           theme.colors.muted,
-          isDark ? ColorPalette.navyGlass : ColorPalette.neutralTint,
+          isDark ? ColorPalette.navyGlass : ColorPalette.surfaceOverlay,
         );
       }
     }

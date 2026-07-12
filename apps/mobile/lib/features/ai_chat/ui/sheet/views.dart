@@ -213,7 +213,7 @@ class _BodySkeletonState extends State<_BodySkeleton>
         height: 12,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
     );

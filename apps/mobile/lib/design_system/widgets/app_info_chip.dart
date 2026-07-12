@@ -45,7 +45,7 @@ class AppInfoChip extends StatelessWidget {
               color: color,
               size: AppIconSizes.mlg,
               iconSize: AppIconSizes.xs,
-              radius: AppRadius.xs,
+              radius: AppRadius.sm,
               backgroundOpacity: AppOpacity.whisper,
               foregroundOpacity: 1,
             ),
@@ -66,7 +66,7 @@ class AppInfoChip extends StatelessWidget {
                   ),
                   Text(
                     label,
-                    style: TypographyTokens.labelXSmall.copyWith(
+                    style: TypographyTokens.labelSmall.copyWith(
                       color: colors.mutedForeground,
                       fontWeight: FontWeight.w400,
                     ),

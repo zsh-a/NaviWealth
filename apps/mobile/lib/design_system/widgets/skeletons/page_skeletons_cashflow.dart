@@ -12,7 +12,7 @@ class CashFlowSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonBox(width: 72, height: 12, radius: AppRadius.xs),
+          SkeletonBox(width: 72, height: 12, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s8),
           SkeletonBox(width: 120, height: 24, radius: AppRadius.sm),
         ],
@@ -23,11 +23,11 @@ class CashFlowSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
+          SkeletonBox(width: 140, height: 16, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s12),
           SkeletonBox(height: 180, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s20),
-          SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
+          SkeletonBox(width: 140, height: 16, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s12),
           SkeletonBox(height: 220, radius: AppRadius.sm),
         ],
@@ -38,7 +38,7 @@ class CashFlowSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonBox(width: 120, height: 16, radius: AppRadius.xs),
+          SkeletonBox(width: 120, height: 16, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s12),
           Center(
             child: SkeletonBox(width: 160, height: 160, radius: AppRadius.full),
@@ -101,7 +101,7 @@ class DividendCenterSkeleton extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SkeletonBox(width: 64, height: 12, radius: AppRadius.xs),
+        SkeletonBox(width: 64, height: 12, radius: AppRadius.sm),
         SizedBox(height: AppSpacing.s8),
         SkeletonBox(width: 96, height: 22, radius: AppRadius.sm),
       ],
@@ -113,7 +113,7 @@ class DividendCenterSkeleton extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
+        const SkeletonBox(width: 140, height: 16, radius: AppRadius.sm),
         const SizedBox(height: AppSpacing.s12),
         for (var i = 0; i < rows; i++) ...[
           if (i != 0) const SizedBox(height: AppSpacing.s12),

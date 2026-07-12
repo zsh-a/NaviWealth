@@ -269,7 +269,7 @@ class _BucketAssetList extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: AppOpacity.muted),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +322,7 @@ class _UnmappedSection extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: AppOpacity.muted),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

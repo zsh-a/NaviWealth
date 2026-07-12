@@ -44,6 +44,12 @@ void main() {
       ingest.expectDraftVisible('STARBUCKS 04291');
       ingest.expectDraftVisible('Metro Groceries');
       ingest.expectConfirmAllCount(2);
+      final staged = await data.db
+          .customSelect('SELECT owner_user_id, status FROM ingest_drafts')
+          .get();
+      expect(staged.map((row) => row.data['owner_user_id']).toSet(), {
+        'local-user',
+      });
 
       await ingest.skipDraft('STARBUCKS 04291');
       expect(find.textContaining('STARBUCKS 04291'), findsNothing);

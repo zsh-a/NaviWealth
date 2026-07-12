@@ -102,9 +102,7 @@ class NwBarChart extends StatelessWidget {
             fromY: stackBottom,
             width: barWidth,
             rodStackItems: stackItems,
-            borderRadius: const BorderRadius.all(
-              Radius.circular(AppRadius.xxs),
-            ),
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
           ),
         );
         if (stackTop > maxY) maxY = stackTop;
@@ -122,7 +120,7 @@ class NwBarChart extends StatelessWidget {
               width: barWidth,
               color: color,
               borderRadius: const BorderRadius.all(
-                Radius.circular(AppRadius.xxs),
+                Radius.circular(AppRadius.sm),
               ),
             ),
           );
@@ -238,7 +236,7 @@ class NwBarChart extends StatelessWidget {
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
         getTooltipColor: (_) => palette.tooltipBackground,
-        tooltipBorderRadius: BorderRadius.circular(AppRadius.xs),
+        tooltipBorderRadius: BorderRadius.circular(AppRadius.sm),
         tooltipPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s8,
           vertical: AppSpacing.s6,

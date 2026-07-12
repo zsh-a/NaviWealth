@@ -20,7 +20,7 @@ import '../../../design_system/design_system.dart';
 /// charts still keep semantic identity without turning the page into a rainbow.
 abstract final class HealthMetricColors {
   static const Color recovery = ColorPalette.cyanBrand700;
-  static const Color activity = ColorPalette.brand500;
+  static const Color activity = ColorPalette.cyanBrand500;
   static const Color body = ColorPalette.violet500;
 
   // ── Recovery ──────────────────────────────────────────────────────

@@ -26,7 +26,7 @@ class SoftCard extends StatefulWidget {
     required this.child,
     this.padding = EdgeInsets.zero,
     this.onPress,
-    this.borderRadius = AppRadius.card,
+    this.borderRadius = AppRadius.lg,
     this.tinted = true,
     this.borderless = false,
     this.level = SoftCardLevel.flat,
@@ -127,21 +127,33 @@ class _SoftCardState extends State<SoftCard> {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
-    // Reference style: flat rows stay white; elevated surfaces pick up a
-    // barely-blue wash so dashboard cards read like soft app panels.
+    // Flat rows stay quiet; raised and hero surfaces use the shared four-step
+    // surface scale. Dark levels get a small tonal lift instead of collapsing
+    // onto the same card color.
     final lightSurface = switch (widget.level) {
-      SoftCardLevel.flat => ColorPalette.neutral0,
-      SoftCardLevel.raised => ColorPalette.neutralCardRaised,
-      SoftCardLevel.hero => ColorPalette.neutralCardHero,
+      SoftCardLevel.flat => ColorPalette.surface,
+      SoftCardLevel.raised => ColorPalette.surfaceRaised,
+      SoftCardLevel.hero => ColorPalette.surfaceOverlay,
+    };
+    final darkSurface = switch (widget.level) {
+      SoftCardLevel.flat => colors.card,
+      SoftCardLevel.raised => Color.alphaBlend(
+        colors.foreground.withValues(alpha: AppOpacity.whisper),
+        colors.card,
+      ),
+      SoftCardLevel.hero => Color.alphaBlend(
+        colors.foreground.withValues(alpha: AppOpacity.faint),
+        colors.card,
+      ),
     };
     final baseTint = widget.tinted
-        ? (isDark ? colors.card : lightSurface)
+        ? (isDark ? darkSurface : lightSurface)
         : Colors.transparent;
     final hoverBoost = isDark ? AppOpacity.hoverTintDark : AppOpacity.hoverTint;
     final tint = !widget.onPress.isNull && (hovered || pressed)
         ? (widget.tinted
               ? (isDark
-                    ? colors.card.withValues(
+                    ? darkSurface.withValues(
                         alpha: AppOpacity.opaque - hoverBoost,
                       )
                     : lightSurface.withValues(
@@ -152,8 +164,8 @@ class _SoftCardState extends State<SoftCard> {
 
     final borderAlpha = switch (widget.level) {
       SoftCardLevel.flat => AppOpacity.transparent,
-      SoftCardLevel.raised => isDark ? AppOpacity.highlight : AppOpacity.faint,
-      SoftCardLevel.hero => isDark ? AppOpacity.muted : AppOpacity.subtle,
+      SoftCardLevel.raised => isDark ? AppOpacity.muted : AppOpacity.faint,
+      SoftCardLevel.hero => isDark ? AppOpacity.disabled : AppOpacity.subtle,
     };
     final borderColor =
         widget.borderless || borderAlpha == AppOpacity.transparent

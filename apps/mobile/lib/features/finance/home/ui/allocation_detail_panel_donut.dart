@@ -14,7 +14,7 @@ class _AllocationDonut extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: AppChartHeights.allocationDonut,
+      height: AppChartHeights.full,
       child: Stack(
         alignment: Alignment.center,
         children: [

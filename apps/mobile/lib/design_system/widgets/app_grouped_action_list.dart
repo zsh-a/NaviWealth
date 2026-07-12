@@ -23,11 +23,11 @@ class AppGroupedSurface extends StatelessWidget {
     final colors = context.theme.colors;
     final background = colors.brightness == Brightness.dark
         ? colors.card.withValues(alpha: AppOpacity.muted)
-        : ColorPalette.neutral75;
+        : ColorPalette.surfaceRaised;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.xlg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Padding(padding: padding, child: child),
     );

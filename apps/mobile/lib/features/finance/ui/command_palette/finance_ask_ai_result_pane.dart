@@ -238,7 +238,7 @@ class _StatusBadge extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: colors.background,
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(color: colors.border, width: AppStroke.hairline),
         ),
         child: Text(
@@ -260,7 +260,7 @@ class _SkeletonRow extends StatelessWidget {
       height: 18,
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
     );
   }

@@ -25,6 +25,7 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 | Portfolio Hub | `apps/mobile/test/golden/portfolio_hub_page_golden_test.dart` | dark / colorblind |
 | Watchlist | `apps/mobile/test/golden/watchlist_page_golden_test.dart` | dark / colorblind |
 | DCA simulator | `apps/mobile/test/golden/dca_simulator_page_golden_test.dart` | dark / colorblind |
+| Compact action sheet | `apps/mobile/test/golden/action_sheet_compact_golden_test.dart` | component-scoped light surface |
 | Target allocation editor sheet | `apps/mobile/test/golden/target_allocation_editor_sheet_golden_test.dart` | dark / colorblind |
 | Asset FX PnL card | `apps/mobile/test/golden/asset_fx_pnl_card_golden_test.dart` | dark / colorblind |
 | FIRE OS cards | `apps/mobile/test/golden/fire_os_cards_golden_test.dart` | dark / colorblind |
@@ -32,9 +33,9 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 | AI visual primitives / renderers | `apps/mobile/test/golden/ai_surfaces_golden_test.dart` | component-scoped light surfaces |
 | Task flows (Ingest, forms, Undo, Rebalance) | `apps/mobile/test/golden/task_flow_responsive_golden_test.dart` | dark responsive N / W / T matrix |
 
-17 test files produce **62 PNG baselines** under
-`apps/mobile/test/golden/goldens/`: the legacy 48-PNG theme matrix plus a new
-14-PNG dark responsive task-flow matrix. Light-mode page variants were
+18 test files produce **63 PNG baselines** under
+`apps/mobile/test/golden/goldens/`: the 49-PNG page/component matrix (including
+the compact action sheet) plus a 14-PNG dark responsive task-flow matrix. Light-mode page variants were
 dropped — see *Variant choice* below — but AI primitive/component goldens keep
 their own minimal light surfaces to isolate the visual language from app
 chrome.
@@ -55,10 +56,10 @@ baselines are:
 
 ### Variant choice
 
-The legacy 48 baselines keep their existing harness and remain unchanged: dark
+The 49 page/component baselines keep their existing harness: dark
 (red-up-green-down) and dark-colorblind (blue+orange). Both exercise
 `MarketColors`, `GlassTokens`, and the type ramp under different accent
-regimes. The 13 responsive task-flow baselines are dark-only so the matrix
+regimes. The 14 responsive task-flow baselines are dark-only so the matrix
 spends its budget on width and 2× text rather than repeating accent coverage.
 
 ### Where the baselines come from
@@ -95,7 +96,7 @@ In CI:
 - Pull requests run the independent `responsive task-flow goldens` job, which
   needs `prepare-font-assets` and runs only the double-tagged responsive file.
 - Main runs `golden regression (mobile)` with `--tags=golden`, so it compares
-  all 62 baselines. On failure the diff PNGs
+  all 63 baselines. On failure the diff PNGs
   (`apps/mobile/test/golden/failures/`) are uploaded as a workflow artifact.
 
 ### Adding a new golden

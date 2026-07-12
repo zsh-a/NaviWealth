@@ -254,7 +254,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             padding: const EdgeInsets.all(AppSpacing.s8),
             decoration: BoxDecoration(
               color: context.theme.colors.background,
-              borderRadius: BorderRadius.circular(AppRadius.xs),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(
                 color: context.theme.colors.border.withValues(
                   alpha: AppOpacity.disabled,

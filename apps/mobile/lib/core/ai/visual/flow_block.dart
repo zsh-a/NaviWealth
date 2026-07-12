@@ -392,7 +392,7 @@ class _DecisionBlock extends StatelessWidget {
                       color: AiTone.active(context),
                       width: AppStroke.medium,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.xxs),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                 ),
               ),
@@ -464,7 +464,7 @@ class _BranchBlock extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: AppOpacity.subtle),
-              borderRadius: BorderRadius.circular(AppRadius.xs),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Text(
               label,

@@ -17,7 +17,7 @@ class WealthHubSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 96, height: 14, radius: AppRadius.xs),
+              SkeletonBox(width: 96, height: 14, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
               SkeletonBox(width: 220, height: 36, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s16),
@@ -41,7 +41,7 @@ class WealthHubSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 128, height: 16, radius: AppRadius.xs),
+              SkeletonBox(width: 128, height: 16, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
               SkeletonBox(height: 14),
               SizedBox(height: AppSpacing.s8),
@@ -248,11 +248,11 @@ class AssetDetailSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 88, height: 14, radius: AppRadius.xs),
+              SkeletonBox(width: 88, height: 14, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
               SkeletonBox(width: 220, height: 32, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 160, height: 12, radius: AppRadius.xs),
+              SkeletonBox(width: 160, height: 12, radius: AppRadius.sm),
             ],
           ),
         ),
@@ -262,7 +262,7 @@ class AssetDetailSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 80, height: 14, radius: AppRadius.xs),
+              SkeletonBox(width: 80, height: 14, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
               SkeletonBox(height: 18),
               SizedBox(height: AppSpacing.s8),
@@ -276,7 +276,7 @@ class AssetDetailSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 120, height: 16, radius: AppRadius.xs),
+              SkeletonBox(width: 120, height: 16, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
               SkeletonBox(height: 180, radius: AppRadius.sm),
             ],

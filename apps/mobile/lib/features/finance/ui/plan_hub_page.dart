@@ -51,19 +51,17 @@ class _FireSummaryCard extends ConsumerWidget {
     final viewAsync = ref.watch(fireDashboardViewProvider);
 
     return viewAsync.when(
-      loading: () => const SoftCard(
-        padding: EdgeInsets.all(AppSpacing.s20),
-        borderRadius: AppRadius.xlg,
-        borderless: true,
-        tinted: false,
+      loading: () => SoftCard(
+        padding: const EdgeInsets.all(AppSpacing.s20),
+        level: SoftCardLevel.hero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SkeletonBox(width: 120, height: 16, radius: AppRadius.xs),
-            SizedBox(height: AppSpacing.s8),
-            SkeletonBox(width: 220, height: 34, radius: AppRadius.sm),
-            SizedBox(height: AppSpacing.s16),
-            SkeletonBox(height: 10, radius: AppRadius.full),
+            Text(l10n.planFireSectionTitle, style: context.mutedLabelStyle),
+            const SizedBox(height: AppSpacing.s8),
+            const SkeletonBox(width: 220, height: 34, radius: AppRadius.sm),
+            const SizedBox(height: AppSpacing.s16),
+            const SkeletonBox(height: 10, radius: AppRadius.full),
           ],
         ),
       ),
@@ -100,7 +98,7 @@ class _FireSummaryCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.planHubTitle, style: context.mutedLabelStyle),
+          Text(l10n.planFireSectionTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           Text(l10n.planHeroEmpty, style: context.theme.typography.body.md),
           const SizedBox(height: AppSpacing.s16),

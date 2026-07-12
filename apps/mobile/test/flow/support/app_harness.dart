@@ -22,6 +22,7 @@ import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/share_intents/share_intent_service.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -122,6 +123,7 @@ Future<void> bootApp(
 
   SharedPreferences.setMockInitialValues({
     'naviwealth.locale': 'en',
+    'app.mode.v1': 'local_only',
     ...initialPrefs,
   });
   final prefs = await SharedPreferences.getInstance();
@@ -135,6 +137,8 @@ Future<void> bootApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        activeUserIdProvider.overrideWithValue(kLocalOnlyUserId),
+        currentUserIdProvider.overrideWithValue(() async => kLocalOnlyUserId),
         shareIntentPlatformAvailableProvider.overrideWithValue(false),
         appDatabaseProvider.overrideWith((_) async => liveData?.db ?? testDb!),
         if (liveData != null) ...[

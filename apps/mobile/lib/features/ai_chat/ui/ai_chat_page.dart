@@ -67,7 +67,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       context: context,
       builder: (ctx) => AppSheetSurface(
         borderRadius: const BorderRadius.horizontal(
-          left: Radius.circular(AppRadius.xl),
+          left: Radius.circular(AppRadius.lg),
         ),
         safeTop: true,
         child: SizedBox(

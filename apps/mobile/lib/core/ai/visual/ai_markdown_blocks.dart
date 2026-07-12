@@ -233,7 +233,7 @@ class _TaskCheckbox extends StatelessWidget {
           color: checked ? AiTone.active(context) : AiTone.outline(context),
           width: AppStroke.thin,
         ),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       alignment: Alignment.center,
       child: checked

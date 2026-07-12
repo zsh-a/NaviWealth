@@ -55,7 +55,7 @@ class AiActionCardsRail extends ConsumerWidget {
             ),
           ),
           SizedBox(
-            height: AppChartHeights.mini,
+            height: AppChartHeights.compact,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),

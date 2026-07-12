@@ -75,9 +75,10 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PlanHubPage), findsOneWidget);
-    expect(find.byType(SkeletonBox), findsNWidgets(3));
+    expect(find.text('FIRE'), findsOneWidget);
+    expect(find.byType(SkeletonBox), findsNWidgets(2));
     expect(find.text(l10n.planCoreSectionTitle), findsOneWidget);
-    expect(find.text(l10n.planFireSectionTitle), findsNothing);
+    expect(find.text(l10n.planFireSectionTitle), findsOneWidget);
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
@@ -112,7 +113,7 @@ void main() {
     expect(find.text(l10n.planHubTitle), findsWidgets);
     expect(find.text(l10n.planHeroEmpty), findsOneWidget);
     expect(find.text(l10n.planHeroConfigure), findsOneWidget);
-    expect(find.text(l10n.planFireSectionTitle), findsNothing);
+    expect(find.text(l10n.planFireSectionTitle), findsOneWidget);
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
     expect(find.text(l10n.planStrategyToolsSectionTitle), findsOneWidget);

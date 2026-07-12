@@ -135,7 +135,7 @@ class _StackedBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.xs),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: SizedBox(
         height: AppSpacing.s8,
         child: Row(
@@ -168,7 +168,7 @@ class _SegmentLegendRow extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: segment.color,
-            borderRadius: BorderRadius.circular(AppRadius.xxs),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),
         const SizedBox(width: AppSpacing.s10),

@@ -18,6 +18,7 @@ class _DashboardBodyContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
+    final detailsExpanded = ref.watch(_homeDetailsExpandedProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -101,17 +102,29 @@ class _DashboardBodyContent extends ConsumerWidget {
                               ? HomeQuickActionMode.onboarding
                               : HomeQuickActionMode.active,
                         ),
+                        const SizedBox(height: AppSpacing.s12),
                         const FinanceAgentResultsPanel(
                           showPlaceholderStates: false,
                         ),
-                        const SizedBox(height: AppSpacing.s20),
-                        AllocationSummary(snapshot: snapshot),
-                        const SizedBox(height: AppSpacing.s20),
-                        const _CashFlowCardsGrid(),
-                        const SizedBox(height: AppSpacing.s20),
-                        const TrendCard(),
-                        const SizedBox(height: AppSpacing.s20),
-                        const ActivityTimelinePreview(),
+                        _HomeDetailsDisclosure(
+                          expanded: detailsExpanded,
+                          onToggle: () {
+                            ref
+                                    .read(_homeDetailsExpandedProvider.notifier)
+                                    .state =
+                                !detailsExpanded;
+                          },
+                        ),
+                        if (detailsExpanded) ...[
+                          const SizedBox(height: AppSpacing.s20),
+                          AllocationSummary(snapshot: snapshot),
+                          const SizedBox(height: AppSpacing.s20),
+                          const _CashFlowCardsGrid(),
+                          const SizedBox(height: AppSpacing.s20),
+                          const TrendCard(),
+                          const SizedBox(height: AppSpacing.s20),
+                          const ActivityTimelinePreview(),
+                        ],
                       ],
                     ),
                   ),
@@ -195,7 +208,6 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
     final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
     if (artifacts.isNotEmpty) {
       final primary = artifacts.first;
-      final secondary = artifacts.skip(1).toList(growable: false);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -205,23 +217,6 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
             onOpen: () => _openFinanceAgentArtifact(context, ref, primary),
             layout: AgentResultCardLayout.summary,
           ),
-          if (secondary.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s8),
-            for (var i = 0; i < secondary.length; i++) ...[
-              AgentCompactResultRow(
-                artifact: secondary[i],
-                metaLabel: _financeAgentMetaLabel(
-                  context,
-                  ref,
-                  secondary[i].createdAt,
-                ),
-                onOpen: () =>
-                    _openFinanceAgentArtifact(context, ref, secondary[i]),
-              ),
-              if (i != secondary.length - 1)
-                const SizedBox(height: AppSpacing.s6),
-            ],
-          ],
           const SizedBox(height: AppSpacing.s20),
         ],
       );
@@ -271,6 +266,29 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       subtitle: metaLabel,
       onVisibilityChanged: () => ref.invalidate(
         finance_agent_providers.latestFinanceAgentResultsProvider,
+      ),
+    );
+  }
+}
+
+class _HomeDetailsDisclosure extends StatelessWidget {
+  const _HomeDetailsDisclosure({
+    required this.expanded,
+    required this.onToggle,
+  });
+
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppQuietButton(
+      label: expanded ? l10n.homeHideDetails : l10n.homeShowDetails,
+      onPress: onToggle,
+      expanded: true,
+      prefix: Icon(
+        expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
       ),
     );
   }

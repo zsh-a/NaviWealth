@@ -15,11 +15,18 @@ class SectionHeader extends StatelessWidget {
     this.subtitle,
     this.titleColor,
     this.trailing,
+    this.padding = const EdgeInsets.fromLTRB(
+      AppSpacing.s16,
+      AppSpacing.s20,
+      AppSpacing.s16,
+      AppSpacing.s8,
+    ),
   });
 
   final String title;
   final String? subtitle;
   final Color? titleColor;
+  final EdgeInsetsGeometry padding;
 
   /// Optional trailing widget (e.g. an action button) placed to the right
   /// of the title row.
@@ -30,12 +37,7 @@ class SectionHeader extends StatelessWidget {
     final colors = context.theme.colors;
     final foreground = titleColor ?? colors.foreground;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s20,
-        AppSpacing.s16,
-        AppSpacing.s8,
-      ),
+      padding: padding,
       child: trailing != null
           ? Row(
               children: [

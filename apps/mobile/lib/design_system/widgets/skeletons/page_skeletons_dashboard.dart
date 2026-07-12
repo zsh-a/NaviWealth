@@ -17,7 +17,7 @@ class HomeSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 120, height: 18, radius: AppRadius.xs),
+              SkeletonBox(width: 120, height: 18, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s16),
               Center(
                 child: SkeletonBox(
@@ -37,7 +37,7 @@ class HomeSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 140, height: 18, radius: AppRadius.xs),
+              SkeletonBox(width: 140, height: 18, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
               SkeletonBox(height: 32, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
@@ -49,11 +49,11 @@ class HomeSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 88, height: 14, radius: AppRadius.xs),
+              SkeletonBox(width: 88, height: 14, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
               SkeletonBox(width: 220, height: 36, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 180, height: 12, radius: AppRadius.xs),
+              SkeletonBox(width: 180, height: 12, radius: AppRadius.sm),
             ],
           ),
         );
@@ -99,9 +99,9 @@ class AnalyticsSkeleton extends StatelessWidget {
     const left = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SkeletonBox(width: 160, height: 20, radius: AppRadius.xs),
+        SkeletonBox(width: 160, height: 20, radius: AppRadius.sm),
         SizedBox(height: AppSpacing.s8),
-        SkeletonBox(width: 240, height: 14, radius: AppRadius.xs),
+        SkeletonBox(width: 240, height: 14, radius: AppRadius.sm),
         SizedBox(height: AppSpacing.s16),
         SkeletonBox(height: 40, radius: AppRadius.sm),
         SizedBox(height: AppSpacing.s16),
@@ -128,7 +128,7 @@ class AnalyticsSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
+              SkeletonBox(width: 140, height: 16, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
               SkeletonBox(height: 14),
               SizedBox(height: AppSpacing.s4),
@@ -142,7 +142,7 @@ class AnalyticsSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 160, height: 16, radius: AppRadius.xs),
+              SkeletonBox(width: 160, height: 16, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
               SkeletonBox(height: 140, radius: AppRadius.sm),
             ],

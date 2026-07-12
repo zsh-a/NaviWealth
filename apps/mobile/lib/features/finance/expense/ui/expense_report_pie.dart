@@ -139,7 +139,7 @@ class _LegendRow extends StatelessWidget {
               height: AppSpacing.s12,
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
             const SizedBox(width: AppSpacing.s8),

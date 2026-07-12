@@ -45,7 +45,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s12),
             if (report.byCategory.isEmpty)
               const SizedBox(
-                height: AppChartHeights.card,
+                height: AppChartHeights.standard,
                 child: EmptyChartPlaceholder(icon: FLucideIcons.chartPie),
               )
             else

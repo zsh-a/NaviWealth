@@ -72,7 +72,7 @@ class DeviationBar extends StatelessWidget {
                   children: [
                     // Background bar.
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: SizedBox(
                         height: AppSpacing.s8,
                         child: ColoredBox(

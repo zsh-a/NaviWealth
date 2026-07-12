@@ -150,7 +150,7 @@ class _NetWorthHero extends ConsumerWidget {
     final colors = context.theme.colors;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
-      borderRadius: AppRadius.xlg,
+      borderRadius: AppRadius.lg,
       level: SoftCardLevel.hero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,9 +329,9 @@ class _WealthDestinationCard extends StatelessWidget {
     return SoftCard(
       onPress: () => context.push(spec.path),
       padding: const EdgeInsets.all(AppSpacing.s14),
-      borderRadius: AppRadius.xlg,
+      borderRadius: AppRadius.lg,
       child: SizedBox(
-        height: 94,
+        height: AppControlHeights.compactLoadingState,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

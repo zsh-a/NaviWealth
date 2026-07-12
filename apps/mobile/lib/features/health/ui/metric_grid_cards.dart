@@ -122,7 +122,7 @@ class _SleepStageBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: SizedBox(
               height: AppSpacing.s4,
               child: Row(

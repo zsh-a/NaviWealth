@@ -8,9 +8,13 @@ import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
 import 'package:naviwealth/features/auth/ui/login_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+late SharedPreferences _preferences;
 
 class _StubAuthApi implements AuthApiClient {
   AuthSession? loginResponse;
@@ -102,6 +106,7 @@ ProviderContainer _container({AuthApiClient? api, Map<String, String>? seed}) {
   return ProviderContainer(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(InMemoryKeyStore(seed)),
+      sharedPreferencesProvider.overrideWithValue(_preferences),
       if (api != null) authApiClientProvider.overrideWithValue(api),
     ],
   );
@@ -133,6 +138,13 @@ void main() {
     GlobalMaterialLocalizations.delegate;
     GlobalWidgetsLocalizations.delegate;
     GlobalCupertinoLocalizations.delegate;
+  });
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{
+      'app.mode.v1': 'cloud',
+    });
+    _preferences = await SharedPreferences.getInstance();
   });
 
   testWidgets('renders email + password fields and submit button', (

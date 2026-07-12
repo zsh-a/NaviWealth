@@ -31,7 +31,7 @@ class _CashFlowTrendCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s16),
             async.when(
               loading: () => const SizedBox(
-                height: AppChartHeights.card,
+                height: AppChartHeights.standard,
                 child: Center(child: FCircularProgress()),
               ),
               error: (error, _) => AppEmptyState.error(
@@ -80,12 +80,12 @@ class _CashFlowTrendContent extends ConsumerWidget {
       children: [
         if (!hasData)
           const SizedBox(
-            height: AppChartHeights.card,
+            height: AppChartHeights.standard,
             child: EmptyChartPlaceholder(icon: FLucideIcons.chartColumn),
           )
         else
           SizedBox(
-            height: AppChartHeights.card,
+            height: AppChartHeights.standard,
             child: NwBarChart(
               series: [
                 CategorySeries(

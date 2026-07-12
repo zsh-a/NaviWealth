@@ -27,7 +27,7 @@ class _FireProgressCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s16),
             async.when(
               loading: () => const SizedBox(
-                height: AppChartHeights.card,
+                height: AppChartHeights.standard,
                 child: Center(child: FCircularProgress()),
               ),
               error: (error, _) => AppEmptyState.error(

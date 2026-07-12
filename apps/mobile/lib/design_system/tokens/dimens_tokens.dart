@@ -54,17 +54,9 @@ class AppRadius {
   const AppRadius._();
 
   static const double none = 0;
-  static const double xxs = 2;
-  static const double xs = 4;
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
-  static const double xlg = 18;
-  static const double xl = 20;
-  static const double xxl = 28;
-  static const double card = 20; // spec: normal cards 16-24
-  static const double cardLg = 40; // spec: large cards 32-40
-  static const double nav = 28;
   static const double full = 9999;
 }
 
@@ -291,29 +283,14 @@ class AppChartHeights {
   /// Tiny inline sparkline inside compact metric cards.
   static const double sparkline = AppSpacing.s28;
 
-  /// Inline sparkline in metric rows where 28px is too tight.
-  static const double sparklineLg = AppSpacing.s32;
-
   /// Compact card chart / chart-shaped loading state.
   static const double compact = 140;
 
-  /// Mini sparkline in dashboard cards.
-  static const double mini = 132;
-
-  /// Standard chart in detail pages.
-  static const double standard = 160;
-
-  /// Medium chart inside cards that need a little more vertical room.
-  static const double medium = 180;
-
-  /// Card-sized chart or chart placeholder.
-  static const double card = 200;
+  /// Standard chart in detail pages and dashboard cards.
+  static const double standard = 180;
 
   /// Full-width chart in dedicated analytics views.
   static const double full = 220;
-
-  /// Donut chart container in allocation/detail summaries.
-  static const double allocationDonut = 230;
 }
 
 /// Canonical heights for fixed-format controls.

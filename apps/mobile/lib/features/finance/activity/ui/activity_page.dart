@@ -61,6 +61,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     return ShellTabScaffold(
       title: l10n.navActivity,
       childPad: false,
+      directActionBudget: isDesktop ? 2 : 1,
       actions: [
         // §5.10.10 / S5a — Layer 4 ingest review queue entry. Calm
         // by design: a plain outlined inbox, no badge/glow; the
@@ -91,11 +92,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             order: 10,
             badgeCount: activeFilterCount,
           ),
-          ShellHeaderActionSpec(
-            icon: FLucideIcons.plus,
-            label: l10n.activityAddAction,
-            onPress: () => showActivityActionPanel(context),
-          ),
         ],
       ],
       child: LayoutBuilder(
@@ -109,18 +105,23 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                   // this 340dp rail. Keep the cockpit instead of stacking two
                   // independently scrolling surfaces.
                   columnBreakpoint: 960,
-                  rightRailWidth: 340,
+                  rightRailWidth: kAdaptiveRightRailWidth,
                   primary: const ActivityFeed(),
                   secondary: _ActivityRightRail(
                     onFilter: () => ActivityFeedFilterSheet.show(context),
                     onAdd: () => showActivityActionPanel(context),
                   ),
                 )
-              : const Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              : Stack(
                   children: [
-                    _ActivityKindFilterRow(),
-                    Expanded(child: ActivityFeed()),
+                    const Positioned.fill(child: ActivityFeed()),
+                    PositionedDirectional(
+                      end: AppSpacing.s16,
+                      bottom: shellTabFloatingActionBottom(context),
+                      child: _ActivityPrimaryAction(
+                        onPress: () => showActivityActionPanel(context),
+                      ),
+                    ),
                   ],
                 );
         },
@@ -145,6 +146,28 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     if (next.toString() != current.toString()) {
       router.replace<void>(next.toString());
     }
+  }
+}
+
+class _ActivityPrimaryAction extends StatelessWidget {
+  const _ActivityPrimaryAction({required this.onPress});
+
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(AppRadius.full)),
+        boxShadow: AppShadow.elevation2,
+      ),
+      child: AppActionButton(
+        onPress: onPress,
+        mainAxisSize: MainAxisSize.min,
+        prefix: const Icon(FLucideIcons.plus),
+        child: Text(AppLocalizations.of(context).activityAddAction),
+      ),
+    );
   }
 }
 
@@ -253,66 +276,6 @@ class _ActivityRightRail extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Quick filter chip row above the timeline. Tapping a chip toggles the
-/// corresponding [ActivityKind] in the active feed query — multiple
-/// chips can be active simultaneously. The "All" chip clears the kind
-/// filter (other filters from the sheet are preserved).
-class _ActivityKindFilterRow extends ConsumerWidget {
-  const _ActivityKindFilterRow();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final query = ref.watch(activityFeedQueryProvider);
-    final controller = ref.read(activityFeedQueryProvider.notifier);
-    final selected = query.kinds;
-    final allActive = selected.isEmpty;
-
-    final chips = <_KindChipSpec>[
-      _KindChipSpec(
-        label: l10n.activityFilterChipAll,
-        active: allActive,
-        onTap: () =>
-            _setActivityKinds(controller, query, const <ActivityKind>{}),
-      ),
-      for (final kind in const [
-        ActivityKind.income,
-        ActivityKind.expense,
-        ActivityKind.transfer,
-        ActivityKind.trade,
-      ])
-        _KindChipSpec(
-          label: _labelForKind(l10n, kind),
-          active: selected.contains(kind),
-          onTap: () {
-            Haptics.selection();
-            final next = {...selected};
-            if (next.contains(kind)) {
-              next.remove(kind);
-            } else {
-              next.add(kind);
-            }
-            controller.setQuery(query.copyWith(kinds: next));
-          },
-        ),
-    ];
-
-    return SizedBox(
-      height: AppControlHeights.pickerStrip,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16,
-          vertical: AppSpacing.s8,
-        ),
-        itemCount: chips.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
-        itemBuilder: (context, i) => _FilterChip(spec: chips[i]),
-      ),
     );
   }
 }

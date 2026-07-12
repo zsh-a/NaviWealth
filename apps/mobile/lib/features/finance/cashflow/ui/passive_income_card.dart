@@ -66,7 +66,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
     return SoftCard(
       onPress: () => context.push(FinanceRoutes.cashflowDividends),
       padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.xlg,
+      borderRadius: AppRadius.lg,
       borderless: true,
       level: SoftCardLevel.raised,
       child: ConstrainedBox(
@@ -153,7 +153,7 @@ class _PassiveIncomeSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SoftCard(
       padding: EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.xlg,
+      borderRadius: AppRadius.lg,
       borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(
@@ -185,7 +185,7 @@ class _PassiveIncomeError extends StatelessWidget {
     final colors = context.theme.colors;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.xlg,
+      borderRadius: AppRadius.lg,
       borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(

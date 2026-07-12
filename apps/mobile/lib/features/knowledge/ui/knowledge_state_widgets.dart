@@ -34,15 +34,15 @@ class _KnowledgePageSkeleton extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: SkeletonBox(height: 18, radius: AppRadius.xs)),
+                Expanded(child: SkeletonBox(height: 18, radius: AppRadius.sm)),
                 SizedBox(width: AppSpacing.s16),
                 SkeletonBox(width: 64, height: 22, radius: AppRadius.sm),
               ],
             ),
             SizedBox(height: AppSpacing.s10),
-            SkeletonBox(height: 14, radius: AppRadius.xs),
+            SkeletonBox(height: 14, radius: AppRadius.sm),
             SizedBox(height: AppSpacing.s6),
-            SkeletonBox(width: 220, height: 14, radius: AppRadius.xs),
+            SkeletonBox(width: 220, height: 14, radius: AppRadius.sm),
           ],
         ),
       ),
@@ -60,11 +60,11 @@ class _KnowledgeSectionSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonBox(height: 14, radius: AppRadius.xs),
+          SkeletonBox(height: 14, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s8),
-          SkeletonBox(width: 220, height: 14, radius: AppRadius.xs),
+          SkeletonBox(width: 220, height: 14, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s8),
-          SkeletonBox(width: 160, height: 14, radius: AppRadius.xs),
+          SkeletonBox(width: 160, height: 14, radius: AppRadius.sm),
         ],
       ),
     );

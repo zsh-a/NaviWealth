@@ -21,7 +21,7 @@ class _LongTaskProgressRow extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: active.withValues(alpha: AppOpacity.subtle),
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: active.withValues(alpha: AppOpacity.focusRing),
           ),
@@ -49,7 +49,7 @@ class _LongTaskProgressRow extends StatelessWidget {
               ],
               const SizedBox(height: AppSpacing.s8),
               ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.xxs),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: LinearProgressIndicator(
                   minHeight: 3,
                   value: ratio,
@@ -257,7 +257,7 @@ class _StreamingCaretState extends State<_StreamingCaret>
         height: 14,
         decoration: BoxDecoration(
           color: widget.color,
-          borderRadius: BorderRadius.circular(AppRadius.xxs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
     );

@@ -22,12 +22,14 @@ FThemeData buildAppForuiTheme({
     colors: base.colors.copyWith(
       primary: AccentColors.primary(brightness),
       primaryForeground: AccentColors.onPrimary(brightness),
-      background: isDark ? ColorPalette.navy950 : ColorPalette.neutralGlass,
+      background: isDark
+          ? ColorPalette.navy950
+          : ColorPalette.surfaceBackground,
       foreground: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
       mutedForeground: isDark ? ColorPalette.navy300 : ColorPalette.navy500,
-      card: isDark ? ColorPalette.navyGlass : ColorPalette.neutral0,
-      border: isDark ? ColorPalette.navy800 : ColorPalette.neutralGlassBorder,
-      muted: isDark ? ColorPalette.navyGlass : ColorPalette.neutralTint,
+      card: isDark ? ColorPalette.navyGlass : ColorPalette.surface,
+      border: isDark ? ColorPalette.navy800 : ColorPalette.surfaceHairline,
+      muted: isDark ? ColorPalette.navyGlass : ColorPalette.surfaceOverlay,
     ),
   );
 }

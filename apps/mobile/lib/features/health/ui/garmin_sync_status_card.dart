@@ -306,7 +306,7 @@ class _Syncing extends ConsumerWidget {
         if (hasProgress) ...[
           const SizedBox(height: AppSpacing.s6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 3,

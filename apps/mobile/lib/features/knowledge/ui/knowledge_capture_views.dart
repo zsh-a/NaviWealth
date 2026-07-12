@@ -62,7 +62,7 @@ class _ClassifyingBody extends StatelessWidget {
               child: SkeletonBox(
                 height: 14,
                 width: widths[i],
-                radius: AppRadius.xs,
+                radius: AppRadius.sm,
               ),
             );
           }),
@@ -469,7 +469,7 @@ class _DiffRow extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.s8),
           decoration: BoxDecoration(
             color: colors.muted,
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Text(
             knowledgeExcerpt(before),
@@ -494,7 +494,7 @@ class _DiffRow extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.s8),
           decoration: BoxDecoration(
             color: colors.primary.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: colors.primary.withValues(alpha: AppOpacity.light),
             ),

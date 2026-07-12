@@ -174,7 +174,7 @@ class _WaterfallRow extends StatelessWidget {
           color: selected
               ? AiTone.surfaceTint(context).withValues(alpha: AppOpacity.scrim)
               : null,
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         padding: const EdgeInsets.symmetric(
           vertical: AppSpacing.s4,
@@ -232,7 +232,7 @@ class _WaterfallRow extends StatelessWidget {
                           color: AiTone.outline(
                             context,
                           ).withValues(alpha: AppOpacity.medium),
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                       ),
                       Padding(
@@ -246,7 +246,7 @@ class _WaterfallRow extends StatelessWidget {
                                   ? AppOpacity.overlay
                                   : AppOpacity.prominent,
                             ),
-                            borderRadius: BorderRadius.circular(AppRadius.xs),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                         ),
                       ),

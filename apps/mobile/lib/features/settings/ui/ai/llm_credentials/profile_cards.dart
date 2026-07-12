@@ -137,7 +137,7 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
     ),
     decoration: BoxDecoration(
       color: color.withValues(alpha: AppOpacity.medium),
-      borderRadius: BorderRadius.circular(AppRadius.xs),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
     ),
     child: Text(text, style: context.captionLabelStyle.copyWith(color: color)),
   );

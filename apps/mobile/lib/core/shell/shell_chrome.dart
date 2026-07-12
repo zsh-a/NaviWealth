@@ -145,7 +145,8 @@ class ShellTabScaffold extends ConsumerWidget {
     this.actions = const <ShellHeaderActionSpec>[],
     this.childPad = false,
     this.collapseOnScroll = true,
-  });
+    this.directActionBudget = 2,
+  }) : assert(directActionBudget >= 0);
 
   /// Header title, e.g. `l10n.navActivity` or `'今日 · HealthOS'`.
   final String title;
@@ -163,6 +164,11 @@ class ShellTabScaffold extends ConsumerWidget {
   /// Forwarded to [DomainTabScaffold.collapseOnScroll].
   final bool collapseOnScroll;
 
+  /// Number of actions kept directly in the header before the remainder is
+  /// grouped under the adaptive overflow menu. Pages with a fixed primary
+  /// action can reduce this to keep their chrome intentionally quiet.
+  final int directActionBudget;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inline = _showInlineChrome(context);
@@ -174,7 +180,6 @@ class ShellTabScaffold extends ConsumerWidget {
     // Keep the visual hierarchy stable across window sizes: at most two
     // actions stay visible and the rest move into the adaptive overflow.
     // A wider window should add breathing room, not recreate an icon toolbar.
-    const directActionBudget = 2;
     final directActions = mergedActions
         .take(directActionBudget)
         .toList(growable: false);

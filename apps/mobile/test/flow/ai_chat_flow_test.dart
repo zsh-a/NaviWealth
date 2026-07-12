@@ -64,7 +64,6 @@ void main() {
         tester,
         extraOverrides: [
           authStateProvider.overrideWithValue(const AuthLocalOnly()),
-          activeUserIdProvider.overrideWithValue(kLocalOnlyUserId),
           defaultChatSessionProvider.overrideWith((ref, ownerUserId) async {
             return sessionId;
           }),

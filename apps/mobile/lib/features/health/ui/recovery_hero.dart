@@ -231,7 +231,7 @@ class _RecoverySparkline extends ConsumerWidget {
           label:
               '${l10n.healthRecentHrvLabel}: ${values.map((v) => _round(v)).join(', ')}',
           child: SizedBox(
-            height: AppChartHeights.sparklineLg,
+            height: AppChartHeights.sparkline,
             child: CustomPaint(
               size: Size.infinite,
               painter: _SparklinePainter(

@@ -174,7 +174,7 @@ class _UserBubble extends ConsumerWidget {
                         color: colors.primary,
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(AppRadius.sm),
-                          topRight: Radius.circular(AppRadius.xs),
+                          topRight: Radius.circular(AppRadius.sm),
                           bottomLeft: Radius.circular(AppRadius.sm),
                           bottomRight: Radius.circular(AppRadius.sm),
                         ),

@@ -252,7 +252,7 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
             color: AiTone.surfaceTint(
               context,
             ).withValues(alpha: AppOpacity.scrim),
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(color: AiTone.outline(context)),
           ),
           child: SelectableText(
@@ -450,7 +450,7 @@ InlineSpan _codeSpan(String text, TextStyle base, BuildContext context) {
         color: AiTone.surfaceTint(
           context,
         ).withValues(alpha: AppOpacity.prominent),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         text,

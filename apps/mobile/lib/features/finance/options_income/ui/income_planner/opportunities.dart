@@ -13,7 +13,7 @@ class _OpportunityCard extends StatelessWidget {
     final contract = opportunity.contract;
     return SoftCard(
       onPress: () => showOpportunityDetailSheet(context, opportunity),
-      borderRadius: AppRadius.card,
+      borderRadius: AppRadius.lg,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(

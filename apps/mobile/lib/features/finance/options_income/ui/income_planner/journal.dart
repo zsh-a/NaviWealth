@@ -57,7 +57,7 @@ class _TradeJournalSection extends ConsumerWidget {
                             context,
                             existingId: entry.id,
                           ),
-                          borderRadius: AppRadius.card,
+                          borderRadius: AppRadius.lg,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.s16,
