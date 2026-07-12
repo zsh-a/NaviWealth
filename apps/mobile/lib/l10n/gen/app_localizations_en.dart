@@ -262,6 +262,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthLiabilitiesSectionSubtitle => 'Loans, mortgages, credit';
 
   @override
+  String get wealthTrendTitle => 'Wealth trend';
+
+  @override
+  String get wealthTrendFlatHint => 'No change in the selected period.';
+
+  @override
   String get wealthPerspectiveSectionTitle => 'Allocation';
 
   @override

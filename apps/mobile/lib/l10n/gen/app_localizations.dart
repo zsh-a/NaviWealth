@@ -554,6 +554,18 @@ abstract class AppLocalizations {
   /// **'Loans, mortgages, credit'**
   String get wealthLiabilitiesSectionSubtitle;
 
+  /// Wealth hub: historical net worth, assets, and liabilities trend section title
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth trend'**
+  String get wealthTrendTitle;
+
+  /// Wealth trend chart hint when the selected metric is unchanged across the selected period
+  ///
+  /// In en, this message translates to:
+  /// **'No change in the selected period.'**
+  String get wealthTrendFlatHint;
+
   /// Wealth tab: title for the multi-perspective allocation section
   ///
   /// In en, this message translates to:

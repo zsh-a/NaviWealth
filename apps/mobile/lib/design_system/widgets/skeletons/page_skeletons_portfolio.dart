@@ -1,6 +1,6 @@
 part of 'page_skeletons.dart';
 
-/// Mirrors `WealthHubPage`: net-worth hero, perspective cards, and account rows.
+/// Mirrors `WealthHubPage`: net-worth hero, trend, destinations, and allocation.
 class WealthHubSkeleton extends StatelessWidget {
   const WealthHubSkeleton({super.key});
 
@@ -36,25 +36,35 @@ class WealthHubSkeleton extends StatelessWidget {
           ),
         );
 
-        const perspective = SkeletonCard(
+        const trend = SkeletonCard(
           padding: EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SkeletonBox(width: 128, height: 16, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 14),
-              SizedBox(height: AppSpacing.s8),
-              SkeletonBox(height: 14, width: 180),
+              SkeletonBox(height: 44, radius: AppRadius.full),
+              SizedBox(height: AppSpacing.s16),
+              Row(
+                children: [
+                  Expanded(child: SkeletonBox(height: AppSpacing.s48)),
+                  SizedBox(width: AppSpacing.s16),
+                  Expanded(child: SkeletonBox(height: AppSpacing.s48)),
+                ],
+              ),
+              SizedBox(height: AppSpacing.s16),
+              SkeletonBox(height: AppChartHeights.standard),
+              SizedBox(height: AppSpacing.s16),
+              SkeletonBox(height: 44, radius: AppRadius.full),
             ],
           ),
         );
 
-        final accounts = SkeletonCard(
+        final destinations = SkeletonCard(
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             children: [
-              for (var i = 0; i < 4; i++) ...[
+              for (var i = 0; i < 3; i++) ...[
                 if (i != 0) const FDivider(),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
@@ -86,22 +96,33 @@ class WealthHubSkeleton extends StatelessWidget {
           ),
         );
 
+        const allocation = SkeletonCard(
+          padding: EdgeInsets.all(AppSpacing.s16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 128, height: 16, radius: AppRadius.sm),
+              SizedBox(height: AppSpacing.s16),
+              SkeletonBox(height: AppSpacing.s10, radius: AppRadius.full),
+              SizedBox(height: AppSpacing.s12),
+              SkeletonBox(height: 18),
+              SizedBox(height: AppSpacing.s10),
+              SkeletonBox(height: 18),
+            ],
+          ),
+        );
+
         if (isWide) {
           return ListView(
             padding: padding,
             children: [
               hero,
               const SizedBox(height: AppSpacing.s16),
-              const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: perspective),
-                  SizedBox(width: AppSpacing.s16),
-                  Expanded(child: perspective),
-                ],
-              ),
+              trend,
               const SizedBox(height: AppSpacing.s16),
-              accounts,
+              destinations,
+              const SizedBox(height: AppSpacing.s16),
+              allocation,
             ],
           );
         }
@@ -111,9 +132,11 @@ class WealthHubSkeleton extends StatelessWidget {
           children: [
             hero,
             const SizedBox(height: AppSpacing.s12),
-            perspective,
+            trend,
             const SizedBox(height: AppSpacing.s12),
-            accounts,
+            destinations,
+            const SizedBox(height: AppSpacing.s12),
+            allocation,
           ],
         );
       },

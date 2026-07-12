@@ -89,6 +89,8 @@
   "wealthWatchlistSectionSubtitle": "你在跟踪的标的",
   "wealthLiabilitiesSectionTitle": "负债",
   "wealthLiabilitiesSectionSubtitle": "贷款、按揭、信用",
+  "wealthTrendTitle": "资产趋势",
+  "wealthTrendFlatHint": "所选区间内暂无变化。",
   "wealthPerspectiveSectionTitle": "资产分布",
   "wealthPerspectiveByCategory": "按类别",
   "wealthPerspectiveByCurrency": "按币种",

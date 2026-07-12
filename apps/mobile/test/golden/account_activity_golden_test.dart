@@ -19,6 +19,8 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 
 import '_golden_setup.dart';
@@ -187,8 +189,37 @@ List<Override> _accountOverrides() {
   return [
     accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
     accountBalancesByIdProvider.overrideWith((_) => Stream.value(_balances())),
-    dashboardSnapshotProvider.overrideWith((_) async => _snapshot()),
+    dashboardBaseCurrencyProvider.overrideWith((_) => 'CNY'),
+    dashboardSnapshotProvider.overrideWith((_) => _snapshot()),
+    dashboardTrendProvider.overrideWith((_) => _trend()),
   ];
+}
+
+DashboardTrend _trend() {
+  final range = DashboardTimeRange.resolve(
+    preset: DashboardRangePreset.y1,
+    now: DateTime.utc(2026, 7, 12),
+  );
+  TrendPoint point(DateTime asOf, String assets, String liabilities) {
+    final assetMoney = Money(Decimal.parse(assets), 'CNY');
+    final liabilityMoney = Money(Decimal.parse(liabilities), 'CNY');
+    return TrendPoint(
+      asOf: asOf,
+      assets: assetMoney,
+      liabilities: liabilityMoney,
+      netWorth: assetMoney - liabilityMoney,
+    );
+  }
+
+  return DashboardTrend(
+    range: range,
+    baseCurrency: 'CNY',
+    points: [
+      point(DateTime.utc(2025, 7, 12), '126000', '12400'),
+      point(DateTime.utc(2026, 1, 12), '136400', '10300'),
+      point(DateTime.utc(2026, 7, 12), '146500', '8600.20'),
+    ],
+  );
 }
 
 void main() {

@@ -255,6 +255,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthLiabilitiesSectionSubtitle => '贷款、按揭、信用';
 
   @override
+  String get wealthTrendTitle => '资产趋势';
+
+  @override
+  String get wealthTrendFlatHint => '所选区间内暂无变化。';
+
+  @override
   String get wealthPerspectiveSectionTitle => '资产分布';
 
   @override

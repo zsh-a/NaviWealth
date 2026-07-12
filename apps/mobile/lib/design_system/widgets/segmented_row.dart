@@ -15,7 +15,7 @@ import '../tokens/text_style_presets.dart';
 /// overflow-safe layout. Material's `SegmentedButton` needs a Material ancestor
 /// and breaks inside Forui sheets, so this is the portable replacement.
 ///
-/// Layout: when each segment can be at least [_minSegmentWidth] wide the
+/// Layout: when each segment can be at least [minSegmentWidth] wide the
 /// buttons split the row equally (labels ellipsize within their slot —
 /// the scroll fallback keeps intrinsic-width labels legible on narrow screens).
 /// Below that the row falls back to a horizontally scrollable strip.
@@ -28,6 +28,7 @@ class SegmentedRow<T> extends StatelessWidget {
     required this.onChanged,
     this.semanticLabelOf,
     this.iconOf,
+    this.minSegmentWidth = _defaultMinSegmentWidth,
   });
 
   final List<T> options;
@@ -39,8 +40,9 @@ class SegmentedRow<T> extends StatelessWidget {
   final String Function(T)? semanticLabelOf;
   final ValueChanged<T> onChanged;
   final IconData? Function(T)? iconOf;
+  final double minSegmentWidth;
 
-  static const double _minSegmentWidth = 96;
+  static const double _defaultMinSegmentWidth = 96;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +54,7 @@ class SegmentedRow<T> extends StatelessWidget {
         const gap = AppSpacing.s4;
         final maxW = constraints.maxWidth;
         final fits =
-            maxW.isFinite && (maxW - gap * (n - 1)) / n >= _minSegmentWidth;
+            maxW.isFinite && (maxW - gap * (n - 1)) / n >= minSegmentWidth;
 
         final children = <Widget>[];
         for (var i = 0; i < n; i++) {
@@ -161,7 +163,7 @@ class SegmentedRow<T> extends StatelessWidget {
     return expand
         ? Expanded(child: segment)
         : ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: _minSegmentWidth),
+            constraints: BoxConstraints(minWidth: minSegmentWidth),
             child: segment,
           );
   }

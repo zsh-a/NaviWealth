@@ -12,6 +12,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
 import 'wealth_action_panel.dart';
 import 'wealth_perspective_section.dart';
+import 'wealth_trend_section.dart';
 
 /// Wealth hub — landing page for the Wealth tab (IA contract §1).
 ///
@@ -85,7 +86,11 @@ class _WealthHubBody extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(dashboardSnapshotProvider);
-        await ref.read(dashboardSnapshotProvider.future);
+        ref.invalidate(dashboardTrendProvider);
+        await Future.wait([
+          ref.read(dashboardSnapshotProvider.future),
+          ref.read(dashboardTrendProvider.future),
+        ]);
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -102,6 +107,11 @@ class _WealthHubBody extends ConsumerWidget {
             totalAssets: totalAssets,
             totalLiabilities: totalLiabilities,
           ),
+          if (totalAssets != Decimal.zero ||
+              totalLiabilities != Decimal.zero) ...[
+            const SizedBox(height: AppSpacing.s16),
+            const WealthTrendSection(),
+          ],
           const SizedBox(height: AppSpacing.s12),
           const _WealthDestinations(),
           if (totalAssets == Decimal.zero &&
