@@ -31,6 +31,7 @@ import '../domain/models/realized_pnl.dart';
 import '../domain/returns/portfolio_return.dart';
 
 part 'portfolio_hub_engine_cards.dart';
+part 'portfolio_hub_group_detail.dart';
 part 'portfolio_hub_state.dart';
 part 'portfolio_hub_widgets.dart';
 
@@ -52,6 +53,10 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     return AppPageScaffold(
       title: l10n.portfolioHubTitle,
       actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
+          onPress: () => context.push(FinanceRoutes.tradeEntry),
+        ),
         FHeaderAction(
           icon: const Icon(FLucideIcons.refreshCw),
           onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
@@ -117,31 +122,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
         children: [
           _PortfolioSummary(data: data),
           const SizedBox(height: AppSpacing.s16),
-          PortfolioHubViewSegment(
-            value: widget.view,
-            onChanged: widget.onViewChanged,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
-          if (groups.isEmpty)
-            _EmptyState(message: l10n.portfolioHubEmpty)
-          else
-            AppGroupedSurface(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (var i = 0; i < groups.length; i++) ...[
-                    _GroupRow(group: groups[i]),
-                    if (i != groups.length - 1)
-                      const AppGroupedDivider(
-                        indent: AppSpacing.s12,
-                        endIndent: AppSpacing.s12,
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          const SizedBox(height: AppSpacing.s12),
           _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
           if (data.holdings.isEmpty)
             _EmptyState(message: l10n.portfolioHubEmpty)
@@ -178,6 +158,37 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
             ),
           ],
           const SizedBox(height: AppSpacing.s20),
+          PortfolioHubViewSegment(
+            value: widget.view,
+            onChanged: widget.onViewChanged,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
+          if (groups.isEmpty)
+            _EmptyState(message: l10n.portfolioHubEmpty)
+          else
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var i = 0; i < groups.length; i++) ...[
+                    _GroupRow(
+                      group: groups[i],
+                      onPressed: () => _showPortfolioGroupDetail(
+                        context: context,
+                        group: groups[i],
+                      ),
+                    ),
+                    if (i != groups.length - 1)
+                      const AppGroupedDivider(
+                        indent: AppSpacing.s12,
+                        endIndent: AppSpacing.s12,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+          const SizedBox(height: AppSpacing.s20),
           _EngineExposureSection(data: data),
         ],
       ),
@@ -213,6 +224,9 @@ class _PortfolioSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final xirr = data.xirrRatio;
+    final pnlPercent = data.costBasisInBase.sign <= 0
+        ? null
+        : (data.unrealizedPnlInBase / data.costBasisInBase).toDouble() * 100;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -221,14 +235,30 @@ class _PortfolioSummary extends StatelessWidget {
           style: context.microCaptionStyle,
         ),
         const SizedBox(height: AppSpacing.s4),
-        AnimatedMoneyText(
-          amount: data.marketValueInBase.toDouble(),
-          currencyCode: data.baseCurrency,
-          style: TypographyTokens.numericTitleStrong,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: AnimatedMoneyText(
+                amount: data.marketValueInBase.toDouble(),
+                currencyCode: data.baseCurrency,
+                style: TypographyTokens.numericTitleStrong,
+              ),
+            ),
+            DeltaChip(value: pnlPercent, fractionDigits: 2),
+          ],
         ),
         const SizedBox(height: AppSpacing.s14),
         Row(
           children: [
+            Expanded(
+              child: _SummaryMetric.money(
+                label: l10n.portfolioHubCostBasisLabel,
+                amount: data.costBasisInBase.toDouble(),
+                currency: data.baseCurrency,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: _SummaryMetric(
                 label: l10n.portfolioHubYtdXirrLabel,
@@ -241,6 +271,7 @@ class _PortfolioSummary extends StatelessWidget {
                 label: l10n.portfolioHubAbsoluteReturnLabel,
                 amount: data.unrealizedPnlInBase.toDouble(),
                 currency: data.baseCurrency,
+                showSign: true,
               ),
             ),
           ],
@@ -253,18 +284,21 @@ class _PortfolioSummary extends StatelessWidget {
 class _SummaryMetric extends StatelessWidget {
   const _SummaryMetric({required this.label, required this.value})
     : amount = null,
-      currency = null;
+      currency = null,
+      showSign = false;
 
   const _SummaryMetric.money({
     required this.label,
     required double this.amount,
     required String this.currency,
+    this.showSign = false,
   }) : value = null;
 
   final String label;
   final String? value;
   final double? amount;
   final String? currency;
+  final bool showSign;
 
   @override
   Widget build(BuildContext context) {
@@ -277,7 +311,12 @@ class _SummaryMetric extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: context.captionStyle),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.captionStyle,
+            ),
             const SizedBox(height: AppSpacing.s4),
             if (amount == null)
               Text(value ?? '—', style: context.theme.typography.body.lg)
@@ -285,7 +324,7 @@ class _SummaryMetric extends StatelessWidget {
               AnimatedMoneyText(
                 amount: amount,
                 currencyCode: currency!,
-                showSign: true,
+                showSign: showSign,
                 style: context.strongTitleStyle,
               ),
           ],

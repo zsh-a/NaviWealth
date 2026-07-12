@@ -713,6 +713,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubAbsoluteReturnLabel => '绝对收益';
 
   @override
+  String get portfolioHubCostBasisLabel => '持仓成本';
+
+  @override
   String get portfolioHubViewAccount => '账户';
 
   @override
@@ -3864,6 +3867,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeEntryCashAccountLabel => '资金账户';
 
   @override
+  String get tradeEntryHoldingAccountLabel => '持仓账户';
+
+  @override
+  String get tradeEntrySettlementTitle => '结算方式';
+
+  @override
+  String tradeEntrySettlementBrokerCash(String currency) {
+    return '持仓账户内 $currency 现金';
+  }
+
+  @override
+  String tradeEntrySettlementExternal(String account, String currency) {
+    return '$account · $currency';
+  }
+
+  @override
+  String get tradeEntrySettlementAccountLabel => '外部结算账户';
+
+  @override
+  String get tradeEntrySettlementHelper => '留空时使用券商或交易所账户内的现金结算。';
+
+  @override
+  String tradeEntryCrossCurrencyHint(
+    String assetCurrency,
+    String tradeCurrency,
+  ) {
+    return '该资产以 $assetCurrency 报价；价格、成本和现金将以 $tradeCurrency 记录。';
+  }
+
+  @override
   String get tradeEntryCashAccountCurrencyChanged => '原资金账户不支持当前币种，请重新选择资金账户。';
 
   @override
@@ -5060,6 +5093,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountsEmptyHint => '添加第一个账户，开始记录你的资产。';
+
+  @override
+  String get accountsOverviewTitle => '账户总览';
+
+  @override
+  String get accountsOverviewAccountsLabel => '账户';
+
+  @override
+  String get accountsOverviewInstitutionsLabel => '机构';
+
+  @override
+  String get accountsOverviewCurrenciesLabel => '币种';
+
+  @override
+  String accountsCategoryCount(int count) {
+    return '$count 个账户';
+  }
 
   @override
   String get accountCategoryCash => '现金';
@@ -7247,6 +7297,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assetDetailNewTradeLabel => '新交易';
+
+  @override
+  String get assetDetailLastClose => '最新收盘价';
 
   @override
   String get assetDetailUnknown => '未知';

@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:uuid/uuid.dart';
@@ -37,6 +38,7 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
     this.assetId,
     this.accountId,
     this.prefill,
+    this.initialType,
   });
 
   /// Pre-selected asset id. When null the user picks via [SymbolField].
@@ -47,6 +49,9 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
 
   /// Optional values supplied by an upstream workflow, such as rebalance.
   final TradeEntryPrefill? prefill;
+
+  /// Optional side supplied by a contextual Buy/Sell action.
+  final TradeType? initialType;
 
   @override
   ConsumerState<TradeEntryFormPage> createState() => _TradeEntryFormPageState();
@@ -88,6 +93,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   bool _currencyExplicitlySelected = false;
   bool _cashCurrencyResolved = false;
   bool _cashAccountClearedForCurrency = false;
+  bool _showSettlementDetails = false;
 
   // transferIn / transferOut are deliberately absent from this form —
   // they can never be created as a single user-entered leg.
@@ -120,6 +126,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     super.initState();
     _tradeDate = ref.read(formClockProvider)();
     _currency = ref.read(baseCurrencyProvider);
+    _type = widget.initialType ?? _type;
     // Constructor-supplied pre-selection wins over the persisted default.
     _accountId = widget.accountId;
     final defaults = ref.read(formDefaultsProvider);
@@ -137,6 +144,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       _taxController.text = prefill.tax?.toString() ?? '0';
       _noteController.text = prefill.note ?? '';
     }
+    if (widget.assetId != null) unawaited(_hydrateInitialAsset());
     // `_feeController`/`_taxController` carry a "0" seed — bind here so
     // that default is the baseline, not a user edit.
     dirty.bindTextControllers([
@@ -146,6 +154,33 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       _taxController,
       _noteController,
     ]);
+  }
+
+  Future<void> _hydrateInitialAsset() async {
+    final assetId = widget.assetId;
+    if (assetId == null || assetId.isEmpty) return;
+    try {
+      final repo = await ref.read(securitiesAssetRepositoryProvider.future);
+      final asset = await repo.findById(assetId);
+      if (!mounted || asset == null) return;
+      final choice = LocalSecurityChoice(
+        symbol: asset.symbol,
+        market: assetMarketFromWire(asset.market) ?? AssetMarket.unknown,
+        type: asset.type,
+        currency: asset.currency,
+        fromCatalog: true,
+        name: asset.name,
+        isin: asset.isin,
+      );
+      setState(() {
+        _selected = choice;
+        _cashCurrencyResolved = true;
+        if (!_currencyExplicitlySelected) _currency = choice.currency;
+      });
+    } catch (_) {
+      // Contextual prefill is a convenience. The searchable field remains
+      // available if the referenced asset was removed or cannot be loaded.
+    }
   }
 
   @override
@@ -495,6 +530,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
           AccountPicker(
             key: const Key('trade-entry-account'),
+            label: l10n.tradeEntryHoldingAccountLabel,
             accounts: eligible,
             value: _accountId,
             onChanged: (v) => setState(() {
@@ -502,29 +538,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               dirty.markDirty();
             }),
           ),
-          if (_type == TradeType.buy || _type == TradeType.sell) ...[
-            const SizedBox(height: AppSpacing.s12),
-            AccountPicker(
-              key: const Key('trade-entry-cash-account'),
-              label: l10n.tradeEntryCashAccountLabel,
-              accounts: _cashAccounts(accounts),
-              value: _cashAccountId,
-              onChanged: (v) => setState(() {
-                _cashAccountId = v;
-                _cashAccountClearedForCurrency = false;
-                dirty.markDirty();
-              }),
-            ),
-            if (_cashAccountClearedForCurrency) ...[
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                l10n.tradeEntryCashAccountCurrencyChanged,
-                style: context.mutedLabelStyle.copyWith(
-                  color: SemanticColors.of(context).warning,
-                ),
-              ),
-            ],
-          ],
           const SizedBox(height: AppSpacing.s12),
 
           AmountField(
@@ -565,11 +578,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
 
-          CurrencyPicker(
-            key: const Key('trade-entry-currency'),
-            value: _currency,
-            onChanged: (v) => _changeCurrency(v, accounts, explicit: true),
-          ),
+          if (_type == TradeType.buy || _type == TradeType.sell)
+            _buildSettlementSection(accounts)
+          else
+            CurrencyPicker(
+              key: const Key('trade-entry-currency'),
+              value: _currency,
+              onChanged: (v) => _changeCurrency(v, accounts, explicit: true),
+            ),
           const SizedBox(height: AppSpacing.s12),
 
           Row(
@@ -605,6 +621,134 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     );
   }
 
+  Widget _buildSettlementSection(List<Account> accounts) {
+    final l10n = AppLocalizations.of(context);
+    final currency = _currency ?? '—';
+    Account? cashAccount;
+    for (final account in accounts) {
+      if (account.id == _cashAccountId) {
+        cashAccount = account;
+        break;
+      }
+    }
+    final summary = cashAccount == null
+        ? l10n.tradeEntrySettlementBrokerCash(currency)
+        : l10n.tradeEntrySettlementExternal(cashAccount.name, currency);
+    final assetCurrency = _selected?.currency;
+    final isCrossCurrency =
+        assetCurrency != null &&
+        assetCurrency.toUpperCase() != currency.toUpperCase();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SoftCard(
+          padding: EdgeInsets.zero,
+          child: FTappable(
+            key: const Key('trade-entry-settlement-summary'),
+            onPress: () => setState(
+              () => _showSettlementDetails = !_showSettlementDetails,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Row(
+                children: [
+                  AppIconTile(
+                    icon: FLucideIcons.landmark,
+                    color: context.theme.colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.tradeEntrySettlementTitle,
+                          style: context.labelStyle,
+                        ),
+                        const SizedBox(height: AppSpacing.s2),
+                        Text(
+                          summary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.captionStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _showSettlementDetails
+                        ? FLucideIcons.chevronUp
+                        : FLucideIcons.chevronDown,
+                    size: AppIconSizes.h18,
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          duration: AppMotionPolicy.duration(context, Motion.medium),
+          crossFadeState: _showSettlementDetails
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          firstChild: const SizedBox.shrink(),
+          secondChild: Padding(
+            key: const Key('trade-entry-settlement-details'),
+            padding: const EdgeInsets.only(top: AppSpacing.s12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CurrencyPicker(
+                  key: const Key('trade-entry-currency'),
+                  value: _currency,
+                  onChanged: (v) =>
+                      _changeCurrency(v, accounts, explicit: true),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                AccountPicker(
+                  key: const Key('trade-entry-cash-account'),
+                  label: l10n.tradeEntrySettlementAccountLabel,
+                  accounts: _cashAccounts(accounts),
+                  value: _cashAccountId,
+                  onChanged: (v) => setState(() {
+                    _cashAccountId = v;
+                    _cashAccountClearedForCurrency = false;
+                    dirty.markDirty();
+                  }),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  l10n.tradeEntrySettlementHelper,
+                  style: context.captionStyle,
+                ),
+                if (isCrossCurrency) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    l10n.tradeEntryCrossCurrencyHint(assetCurrency, currency),
+                    style: context.mutedLabelStyle.copyWith(
+                      color: SemanticColors.of(context).warning,
+                    ),
+                  ),
+                ],
+                if (_cashAccountClearedForCurrency) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    l10n.tradeEntryCashAccountCurrencyChanged,
+                    style: context.mutedLabelStyle.copyWith(
+                      color: SemanticColors.of(context).warning,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   List<Account> _cashAccounts(List<Account> accounts) => accounts
       .where(
         (account) =>
@@ -637,6 +781,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   Widget _buildAssetSearch(List<Account> accounts) {
     return SymbolField(
+      key: ValueKey<String>('trade-symbol-${_selected?.symbol ?? 'empty'}'),
+      initialValue: _selected,
       onChanged: (choice) {
         setState(() {
           _selected = choice;

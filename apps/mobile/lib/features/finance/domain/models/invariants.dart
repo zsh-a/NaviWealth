@@ -179,7 +179,14 @@ JournalEntryBalanceReport evaluateEntryBalance({
     );
   }
 
-  var total = Decimal.zero;
+  // Sum weights in their native currency before folding into the user's base
+  // currency. A journal that self-balances within USD (for example, a USD
+  // security purchase paid from a USD cash account) does not need an FX quote
+  // merely because the user's reporting currency is CNY. Besides avoiding a
+  // false missing-rate failure, this also prevents duplicate lookups for every
+  // posting in the same currency.
+  final weightsByCurrency = <String, Decimal>{};
+  final firstPostingIdByCurrency = <String, String>{};
   for (final p in postings) {
     final cost = p.cost;
     final price = p.price;
@@ -207,6 +214,21 @@ JournalEntryBalanceReport evaluateEntryBalance({
       continue;
     }
 
+    weightsByCurrency.update(
+      weightCcy,
+      (sum) => sum + weight,
+      ifAbsent: () => weight,
+    );
+    firstPostingIdByCurrency.putIfAbsent(weightCcy, () => p.id);
+  }
+
+  var total = Decimal.zero;
+  for (final MapEntry(key: weightCcy, value: weight)
+      in weightsByCurrency.entries) {
+    // Exact native-currency cancellation is already balanced. Do not require
+    // a historical FX observation just to convert zero into another zero.
+    if (weight == Decimal.zero) continue;
+
     final folded = weightCcy == baseCurrency
         ? weight
         : (() {
@@ -216,13 +238,15 @@ JournalEntryBalanceReport evaluateEntryBalance({
               asOf: entry.date,
             );
             if (r == null) {
+              final postingId = firstPostingIdByCurrency[weightCcy];
               problems.add(
                 EntryBalanceProblem(
                   kind: EntryBalanceProblemKind.missingFxRate,
                   message:
                       'Missing FX rate $weightCcy → $baseCurrency on '
-                      '${entry.date.toIso8601String()} for posting ${p.id}.',
-                  postingId: p.id,
+                      '${entry.date.toIso8601String()} for currency bucket '
+                      'starting at posting $postingId.',
+                  postingId: postingId,
                 ),
               );
               return null;

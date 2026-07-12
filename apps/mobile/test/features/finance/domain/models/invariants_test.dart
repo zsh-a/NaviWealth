@@ -297,6 +297,27 @@ void main() {
       'EUR/CNY': Decimal.parse('7.8'),
     });
 
+    test('foreign-currency entry self-balances without an FX rate', () {
+      final report = evaluateEntryBalance(
+        entry: _je(narration: 'Buy US ETF'),
+        postings: [
+          _p(
+            id: 'asset',
+            units: '10',
+            unit: 'us_etf:VOO',
+            cost: Cost(perUnit: Decimal.parse('500'), currency: 'USD'),
+          ),
+          _p(id: 'cash', units: '-5000', unit: 'USD', position: 1),
+        ],
+        fx: _MapFx(const {}),
+        baseCurrency: 'CNY',
+      );
+
+      expect(report.isBalanced, isTrue);
+      expect(report.totalBaseWeight, Decimal.zero);
+      expect(report.problems, isEmpty);
+    });
+
     test('multi-currency JE balances when folded to base', () {
       // 100 USD * 7.2 - 720 CNY = 0 in base CNY.
       final je = _je(narration: 'Multi-currency exchange');

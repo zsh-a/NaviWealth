@@ -187,6 +187,54 @@ void main() {
     expect(find.text('Stocks'), findsNothing);
   });
 
+  testWidgets('opens category details from an allocation row', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('allocation-bucket-stock')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('wealth-perspective-detail')),
+      findsOneWidget,
+    );
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('Moutai'), findsOneWidget);
+    expect(find.text('Wallet'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('currency details contain only holdings in that currency', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('By currency'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('allocation-bucket-USD')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('wealth-perspective-detail')),
+      findsOneWidget,
+    );
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('Moutai'), findsNothing);
+    expect(find.text('Wallet'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('renders the empty state when the snapshot has no holdings', (
     tester,
   ) async {

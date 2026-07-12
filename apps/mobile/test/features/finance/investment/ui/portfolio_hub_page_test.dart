@@ -190,6 +190,24 @@ void main() {
     expect(find.byType(AppGroupedSurface), findsNWidgets(2));
     expect(find.text('Broker A'), findsOneWidget);
     expect(find.text('us:AAPL'), findsWidgets);
+    expect(find.text('Cost basis'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Positions')).dy,
+      lessThan(tester.getTopLeft(find.text('Allocation')).dy),
+    );
+
+    await tester.tap(find.text('Class'));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(FLucideIcons.chevronRight), findsOneWidget);
+
+    await tester.tap(find.text('Stock'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('portfolio-group-detail')),
+      findsOneWidget,
+    );
+    expect(find.text('Market value'), findsWidgets);
+    expect(find.text('Unrealized P&L'), findsOneWidget);
   });
 
   test('aggregates holdings by account, currency, and asset class', () {
@@ -276,6 +294,15 @@ void main() {
     expect(accountGroups.map((group) => group.title), ['Broker B', 'Broker A']);
     expect(accountGroups.first.marketValueInBase, _d('350.000000000000'));
     expect(accountGroups.first.holdingsCount, 2);
+    expect(accountGroups.first.holdings.first.assetId, 'hk:2800');
+    expect(accountGroups.first.holdings.first.marketValueInBase, _d('300'));
+    expect(accountGroups.first.holdings.last.assetId, 'us:AAPL');
+    expect(
+      accountGroups.first.holdings.last.marketValueInBase,
+      _d('50.000000000000'),
+    );
+    expect(accountGroups.first.holdings.last.quantity, _d('5'));
+    expect(accountGroups.last.holdings.single.weight, Decimal.one);
 
     final currencyGroups = state.groupsFor(PortfolioHubView.currency, l10n);
     expect(currencyGroups.map((group) => group.title), ['HKD', 'USD']);

@@ -29,6 +29,7 @@ class WealthBucket {
     required this.label,
     required this.valueInBase,
     required this.itemCount,
+    required this.items,
   });
 
   /// Stable machine key (e.g. asset category name, currency code).
@@ -41,6 +42,7 @@ class WealthBucket {
 
   final Money valueInBase;
   final int itemCount;
+  final List<CategoryItem> items;
 
   @override
   bool operator ==(Object other) =>
@@ -48,10 +50,12 @@ class WealthBucket {
       other.key == key &&
       other.label == label &&
       other.valueInBase == valueInBase &&
-      other.itemCount == itemCount;
+      other.itemCount == itemCount &&
+      listEquals(other.items, items);
 
   @override
-  int get hashCode => Object.hash(key, label, valueInBase, itemCount);
+  int get hashCode =>
+      Object.hash(key, label, valueInBase, itemCount, Object.hashAll(items));
 }
 
 /// Pure result of slicing a [DashboardSnapshot] along one perspective.
@@ -110,6 +114,7 @@ WealthAggregation _byCategory(
         label: labelFn(allocation.category),
         valueInBase: allocation.totalInBase,
         itemCount: allocation.items.length,
+        items: List.unmodifiable(allocation.items),
       ),
     );
   }
@@ -125,6 +130,7 @@ WealthAggregation _byCurrency(DashboardSnapshot snapshot) {
   final base = snapshot.baseCurrency;
   final bucketTotals = <String, Decimal>{};
   final bucketCounts = <String, int>{};
+  final bucketItems = <String, List<CategoryItem>>{};
   Decimal total = Decimal.zero;
   for (final allocation in snapshot.allocations) {
     if (allocation.category == AssetCategory.liability) continue;
@@ -136,6 +142,7 @@ WealthAggregation _byCurrency(DashboardSnapshot snapshot) {
       bucketTotals[currency] =
           (bucketTotals[currency] ?? Decimal.zero) + item.valueInBase.amount;
       bucketCounts[currency] = (bucketCounts[currency] ?? 0) + 1;
+      bucketItems.putIfAbsent(currency, () => []).add(item);
       total += item.valueInBase.amount;
     }
   }
@@ -148,6 +155,9 @@ WealthAggregation _byCurrency(DashboardSnapshot snapshot) {
               label: entry.key,
               valueInBase: Money(entry.value, base),
               itemCount: bucketCounts[entry.key] ?? 0,
+              items: List.unmodifiable(
+                bucketItems[entry.key] ?? const <CategoryItem>[],
+              ),
             ),
           )
           .toList()

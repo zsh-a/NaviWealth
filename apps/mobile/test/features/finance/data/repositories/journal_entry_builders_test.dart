@@ -128,6 +128,27 @@ void main() {
       expect(build.entry.tagIds, contains('asset:NASDAQ:AAPL'));
     });
 
+    test('USD buy balances under a CNY base without a historical FX rate', () {
+      final build = JournalEntryBuilders.buy(
+        date: DateTime.utc(2026, 7, 9),
+        accountId: 'a-us-etf',
+        cashAccountId: 'a-usd-cash',
+        assetUnit: 'USSTOCK:VOO',
+        qty: Decimal.parse('2'),
+        price: Decimal.parse('500'),
+        quoteCurrency: 'USD',
+      );
+
+      final report = _checkBalance(
+        build,
+        fx: _MapFxRateSource(const {}),
+        baseCurrency: 'CNY',
+      );
+
+      expect(report.isBalanced, isTrue);
+      expect(report.totalBaseWeight, Decimal.zero);
+    });
+
     test('balances without fee/tax legs', () {
       final build = JournalEntryBuilders.buy(
         date: DateTime.utc(2026, 1, 15),

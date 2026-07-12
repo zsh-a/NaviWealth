@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
@@ -180,12 +181,41 @@ class _PerspectiveBody extends ConsumerWidget {
               itemCountLabel: l10n.wealthPerspectiveItemCount(
                 aggregation.buckets[i].itemCount,
               ),
+              onPressed: () => _showBucketDetail(
+                context: context,
+                bucket: aggregation.buckets[i],
+                baseCurrency: base,
+              ),
             ),
           ),
           if (i != aggregation.buckets.length - 1)
             const AppGroupedDivider(indent: AppSpacing.s20),
         ],
       ],
+    );
+  }
+
+  Future<void> _showBucketDetail({
+    required BuildContext context,
+    required WealthBucket bucket,
+    required String baseCurrency,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    return showAppSheet<void>(
+      context: context,
+      title: bucket.label,
+      subtitle: l10n.wealthPerspectiveItemCount(bucket.itemCount),
+      maxHeightFactor: 0.9,
+      builder: (sheetContext) => _WealthBucketDetail(
+        bucket: bucket,
+        baseCurrency: baseCurrency,
+        onItemPressed: (item) {
+          final route = item.routeHint;
+          if (route == null) return;
+          Navigator.of(sheetContext).pop();
+          if (context.mounted) context.push(route);
+        },
+      ),
     );
   }
 }
@@ -255,6 +285,7 @@ class _BucketRow extends StatelessWidget {
     required this.formatters,
     required this.showShare,
     required this.itemCountLabel,
+    required this.onPressed,
   });
 
   final WealthBucket bucket;
@@ -264,6 +295,7 @@ class _BucketRow extends StatelessWidget {
   final AppFormatters formatters;
   final bool showShare;
   final String itemCountLabel;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -275,6 +307,7 @@ class _BucketRow extends StatelessWidget {
     );
     final formattedShare = formatters.percent(share, decimalDigits: 1);
     return Semantics(
+      button: true,
       container: true,
       label: [
         bucket.label,
@@ -283,51 +316,206 @@ class _BucketRow extends StatelessWidget {
         if (showShare) formattedShare,
       ].join(', '),
       child: ExcludeSemantics(
-        child: Row(
-          key: ValueKey('allocation-bucket-${bucket.key}'),
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: AppOpacity.emphasis),
-                shape: BoxShape.circle,
-              ),
-              child: const SizedBox.square(dimension: AppSpacing.s10),
-            ),
-            const SizedBox(width: AppSpacing.s10),
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: bucket.label, style: context.labelStyle),
-                    TextSpan(
-                      text: ' · $itemCountLabel',
-                      style: context.captionStyle,
-                    ),
-                  ],
+        child: FTappable(
+          onPress: onPressed,
+          child: Row(
+            key: ValueKey('allocation-bucket-${bucket.key}'),
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: AppOpacity.emphasis),
+                  shape: BoxShape.circle,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                child: const SizedBox.square(dimension: AppSpacing.s10),
               ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: bucket.label, style: context.labelStyle),
+                      TextSpan(
+                        text: ' · $itemCountLabel',
+                        style: context.captionStyle,
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    formattedAmount,
+                    style: context.strongLabelStyle,
+                    maxLines: 1,
+                  ),
+                  if (showShare) ...[
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(formattedShare, style: context.captionStyle),
+                  ],
+                ],
+              ),
+              const SizedBox(width: AppSpacing.s6),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.h18,
+                color: context.theme.colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WealthBucketDetail extends StatelessWidget {
+  const _WealthBucketDetail({
+    required this.bucket,
+    required this.baseCurrency,
+    required this.onItemPressed,
+  });
+
+  final WealthBucket bucket;
+  final String baseCurrency;
+  final ValueChanged<CategoryItem> onItemPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: const ValueKey<String>('wealth-perspective-detail'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SoftCard(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.s14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    bucket.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.strongTitleStyle,
+                  ),
+                ),
+                MoneyText(
+                  amount: bucket.valueInBase.amount.toDouble(),
+                  currencyCode: baseCurrency,
+                  style: context.strongTitleStyle,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var i = 0; i < bucket.items.length; i++) ...[
+                _WealthBucketItemRow(
+                  item: bucket.items[i],
+                  baseCurrency: baseCurrency,
+                  onPressed: bucket.items[i].routeHint == null
+                      ? null
+                      : () => onItemPressed(bucket.items[i]),
+                ),
+                if (i != bucket.items.length - 1)
+                  const AppGroupedDivider(
+                    indent: AppSpacing.s12,
+                    endIndent: AppSpacing.s12,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WealthBucketItemRow extends StatelessWidget {
+  const _WealthBucketItemRow({
+    required this.item,
+    required this.baseCurrency,
+    required this.onPressed,
+  });
+
+  final CategoryItem item;
+  final String baseCurrency;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final showNative =
+        item.nativeCurrency.toUpperCase() != baseCurrency.toUpperCase();
+    final content = Padding(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formattedAmount,
-                  style: context.strongLabelStyle,
+                  item.name,
                   maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.labelStyle,
                 ),
-                if (showShare) ...[
+                if (item.subtitle?.isNotEmpty == true) ...[
                   const SizedBox(height: AppSpacing.s2),
-                  Text(formattedShare, style: context.captionStyle),
+                  Text(
+                    item.subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.captionStyle,
+                  ),
                 ],
               ],
             ),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              MoneyText(
+                amount: item.valueInBase.amount.toDouble(),
+                currencyCode: baseCurrency,
+                style: context.labelStyle,
+              ),
+              if (showNative) ...[
+                const SizedBox(height: AppSpacing.s2),
+                MoneyText(
+                  amount: item.nativeAmount.toDouble(),
+                  currencyCode: item.nativeCurrency,
+                  symbolStyle: MoneySymbolStyle.isoCode,
+                  style: context.captionStyle,
+                ),
+              ],
+            ],
+          ),
+          if (onPressed != null) ...[
+            const SizedBox(width: AppSpacing.s6),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.h18,
+              color: context.theme.colors.mutedForeground,
+            ),
           ],
-        ),
+        ],
       ),
+    );
+    if (onPressed == null) return content;
+    return Semantics(
+      button: true,
+      child: FTappable(onPress: onPressed, child: content),
     );
   }
 }

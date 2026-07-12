@@ -168,7 +168,8 @@ class PortfolioHubState {
           .add(
             marketValue: marketValue,
             costBasis: costBasis,
-            holdingId: lot.assetId,
+            quantity: lot.remainingQuantity,
+            holding: holding,
           );
     }
     return _sortedGroups(buckets.values);
@@ -195,7 +196,8 @@ class PortfolioHubState {
           .add(
             marketValue: row.marketValueInBase,
             costBasis: row.costBasisInBase,
-            holdingId: row.assetId,
+            quantity: row.quantity,
+            holding: row,
           );
     }
     return _sortedGroups(buckets.values);
@@ -302,6 +304,7 @@ class PortfolioGroupRow {
     required this.unrealizedPnlInBase,
     required this.weight,
     required this.holdingsCount,
+    required this.holdings,
   });
 
   final String id;
@@ -313,6 +316,7 @@ class PortfolioGroupRow {
   final Decimal unrealizedPnlInBase;
   final Decimal weight;
   final int holdingsCount;
+  final List<PortfolioHoldingRow> holdings;
 }
 
 enum PortfolioHubView { account, currency, assetClass }
@@ -329,18 +333,28 @@ class _GroupAccumulator {
   final String title;
   final String subtitle;
   final String baseCurrency;
-  final Set<String> holdingIds = {};
+  final Map<String, _GroupHoldingAccumulator> holdingBuckets = {};
   Decimal marketValue = Decimal.zero;
   Decimal costBasis = Decimal.zero;
 
   void add({
     required Decimal marketValue,
     required Decimal costBasis,
-    required String holdingId,
+    required Decimal quantity,
+    required PortfolioHoldingRow holding,
   }) {
     this.marketValue += marketValue;
     this.costBasis += costBasis;
-    holdingIds.add(holdingId);
+    holdingBuckets
+        .putIfAbsent(
+          holding.assetId,
+          () => _GroupHoldingAccumulator(holding: holding),
+        )
+        .add(
+          quantity: quantity,
+          marketValue: marketValue,
+          costBasis: costBasis,
+        );
   }
 
   PortfolioGroupRow toRow({required Decimal totalMarketValue}) {
@@ -349,6 +363,10 @@ class _GroupAccumulator {
         : (marketValue / totalMarketValue).toDecimal(
             scaleOnInfinitePrecision: 8,
           );
+    final holdings = [
+      for (final bucket in holdingBuckets.values)
+        bucket.toRow(groupMarketValue: marketValue),
+    ]..sort((a, b) => b.marketValueInBase.compareTo(a.marketValueInBase));
     return PortfolioGroupRow(
       id: id,
       title: title,
@@ -358,7 +376,48 @@ class _GroupAccumulator {
       costBasisInBase: costBasis,
       unrealizedPnlInBase: marketValue - costBasis,
       weight: weight,
-      holdingsCount: holdingIds.length,
+      holdingsCount: holdings.length,
+      holdings: List.unmodifiable(holdings),
+    );
+  }
+}
+
+class _GroupHoldingAccumulator {
+  _GroupHoldingAccumulator({required this.holding});
+
+  final PortfolioHoldingRow holding;
+  Decimal quantity = Decimal.zero;
+  Decimal marketValue = Decimal.zero;
+  Decimal costBasis = Decimal.zero;
+
+  void add({
+    required Decimal quantity,
+    required Decimal marketValue,
+    required Decimal costBasis,
+  }) {
+    this.quantity += quantity;
+    this.marketValue += marketValue;
+    this.costBasis += costBasis;
+  }
+
+  PortfolioHoldingRow toRow({required Decimal groupMarketValue}) {
+    final weight = groupMarketValue.sign <= 0
+        ? Decimal.zero
+        : (marketValue / groupMarketValue).toDecimal(
+            scaleOnInfinitePrecision: 8,
+          );
+    return PortfolioHoldingRow(
+      assetId: holding.assetId,
+      title: holding.title,
+      subtitle: holding.subtitle,
+      assetType: holding.assetType,
+      assetCurrency: holding.assetCurrency,
+      quantity: quantity,
+      marketValueInBase: marketValue,
+      costBasisInBase: costBasis,
+      unrealizedPnlInBase: marketValue - costBasis,
+      weight: weight,
+      baseCurrency: holding.baseCurrency,
     );
   }
 }

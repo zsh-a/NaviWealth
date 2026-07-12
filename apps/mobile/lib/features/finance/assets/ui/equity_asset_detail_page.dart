@@ -188,33 +188,67 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               const SizedBox(height: AppSpacing.s8),
               AssetSummaryCard(asset: asset),
               const SizedBox(height: AppSpacing.s12),
+              _AssetTradeActions(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
+              AssetTrendMiniChartCard(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
               ResponsiveTwoColumn(
                 gap: AppSpacing.s12,
                 left: AssetHoldingCard(asset: asset),
                 right: AssetPnLCard(asset: asset),
               ),
               const SizedBox(height: AppSpacing.s12),
-              ResponsiveTwoColumn(
-                gap: AppSpacing.s12,
-                left: AssetFxPnlCard(assetId: asset.id),
-                right: AssetTrendMiniChartCard(asset: asset),
-              ),
+              AssetFxPnlCard(assetId: asset.id),
               if (_supportsCorporateActions(asset)) ...[
                 const SizedBox(height: AppSpacing.s16),
                 EventTimelineSection(symbol: asset.symbol),
               ],
-              const SizedBox(height: AppSpacing.s16),
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: () =>
-                    context.push(FinanceRoutes.tradeForAsset(asset.id)),
-                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-                child: Text(l10n.assetDetailNewTradeLabel),
-              ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _AssetTradeActions extends StatelessWidget {
+  const _AssetTradeActions({required this.asset});
+
+  final Asset asset;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: FButton(
+            variant: FButtonVariant.secondary,
+            onPress: () => context.push(
+              FinanceRoutes.tradeForAsset(asset.id, side: 'sell'),
+            ),
+            prefix: const Icon(
+              FLucideIcons.arrowUpRight,
+              size: AppIconSizes.sm,
+            ),
+            child: Text(l10n.tradeTypeSell),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s10),
+        Expanded(
+          child: FButton(
+            variant: FButtonVariant.primary,
+            onPress: () => context.push(
+              FinanceRoutes.tradeForAsset(asset.id, side: 'buy'),
+            ),
+            prefix: const Icon(
+              FLucideIcons.arrowDownLeft,
+              size: AppIconSizes.sm,
+            ),
+            child: Text(l10n.tradeTypeBuy),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -111,61 +111,76 @@ class _ViewChip extends StatelessWidget {
 }
 
 class _GroupRow extends StatelessWidget {
-  const _GroupRow({required this.group});
+  const _GroupRow({required this.group, required this.onPressed});
 
   final PortfolioGroupRow group;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        children: [
-          Row(
+    return Semantics(
+      button: true,
+      label: group.title,
+      child: FTappable(
+        onPress: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          child: Column(
             children: [
-              Expanded(
-                child: _TitleSubtitle(
-                  title: group.title,
-                  subtitle:
-                      '${group.subtitle} · ${l10n.portfolioHubHoldingCount(group.holdingsCount)}',
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _TitleSubtitle(
+                      title: group.title,
+                      subtitle:
+                          '${group.subtitle} · ${l10n.portfolioHubHoldingCount(group.holdingsCount)}',
+                    ),
+                  ),
+                  AnimatedMoneyText(
+                    amount: group.marketValueInBase.toDouble(),
+                    currencyCode: group.baseCurrency,
+                    style: context.labelStyle,
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
+                  Icon(
+                    FLucideIcons.chevronRight,
+                    size: AppIconSizes.h18,
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ],
               ),
-              AnimatedMoneyText(
-                amount: group.marketValueInBase.toDouble(),
-                currencyCode: group.baseCurrency,
-                style: context.labelStyle,
+              const SizedBox(height: AppSpacing.s10),
+              _WeightBar(weight: group.weight.toDouble()),
+              const SizedBox(height: AppSpacing.s8),
+              Row(
+                children: [
+                  Text(
+                    _formatRatio(context, group.weight.toDouble()),
+                    style: context.captionStyle,
+                  ),
+                  const Spacer(),
+                  AnimatedMoneyText(
+                    amount: group.unrealizedPnlInBase.toDouble(),
+                    currencyCode: group.baseCurrency,
+                    showSign: true,
+                    style: context.captionStyle,
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s10),
-          _WeightBar(weight: group.weight.toDouble()),
-          const SizedBox(height: AppSpacing.s8),
-          Row(
-            children: [
-              Text(
-                _formatRatio(context, group.weight.toDouble()),
-                style: context.captionStyle,
-              ),
-              const Spacer(),
-              AnimatedMoneyText(
-                amount: group.unrealizedPnlInBase.toDouble(),
-                currencyCode: group.baseCurrency,
-                showSign: true,
-                style: context.captionStyle,
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
 class _HoldingRow extends StatelessWidget {
-  const _HoldingRow({required this.holding});
+  const _HoldingRow({required this.holding, this.onPressed});
 
   final PortfolioHoldingRow holding;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +193,9 @@ class _HoldingRow extends StatelessWidget {
       button: true,
       container: true,
       child: FTappable(
-        onPress: () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
+        onPress:
+            onPressed ??
+            () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(
@@ -186,6 +203,12 @@ class _HoldingRow extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  AppIconTile(
+                    icon: _holdingIcon(holding.assetType),
+                    color: context.theme.colors.primary,
+                    size: AppSpacing.s32,
+                  ),
+                  const SizedBox(width: AppSpacing.s10),
                   Expanded(
                     child: _TitleSubtitle(
                       title: holding.title,
@@ -237,6 +260,14 @@ class _HoldingRow extends StatelessWidget {
     );
   }
 }
+
+IconData _holdingIcon(AssetType type) => switch (type) {
+  AssetType.stock => FLucideIcons.chartCandlestick,
+  AssetType.etf || AssetType.mutualFund => FLucideIcons.chartPie,
+  AssetType.bond => FLucideIcons.landmark,
+  AssetType.crypto => FLucideIcons.bitcoin,
+  _ => FLucideIcons.walletCards,
+};
 
 class _HoldingMetric extends StatelessWidget {
   const _HoldingMetric({required this.label, required this.value});

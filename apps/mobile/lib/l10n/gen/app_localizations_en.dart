@@ -737,6 +737,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioHubAbsoluteReturnLabel => 'Absolute return';
 
   @override
+  String get portfolioHubCostBasisLabel => 'Cost basis';
+
+  @override
   String get portfolioHubViewAccount => 'Account';
 
   @override
@@ -4037,6 +4040,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeEntryCashAccountLabel => 'Cash account';
 
   @override
+  String get tradeEntryHoldingAccountLabel => 'Holding account';
+
+  @override
+  String get tradeEntrySettlementTitle => 'Settlement';
+
+  @override
+  String tradeEntrySettlementBrokerCash(String currency) {
+    return '$currency cash in holding account';
+  }
+
+  @override
+  String tradeEntrySettlementExternal(String account, String currency) {
+    return '$account · $currency';
+  }
+
+  @override
+  String get tradeEntrySettlementAccountLabel => 'External settlement account';
+
+  @override
+  String get tradeEntrySettlementHelper =>
+      'Leave the account empty to settle against cash held inside the brokerage or exchange account.';
+
+  @override
+  String tradeEntryCrossCurrencyHint(
+    String assetCurrency,
+    String tradeCurrency,
+  ) {
+    return 'This instrument quotes in $assetCurrency; price, costs, and cash will be recorded in $tradeCurrency.';
+  }
+
+  @override
   String get tradeEntryCashAccountCurrencyChanged =>
       'The previous cash account does not support this currency. Pick another cash account.';
 
@@ -5313,6 +5347,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get accountsEmptyHint =>
       'Add your first account to start tracking assets.';
+
+  @override
+  String get accountsOverviewTitle => 'Account overview';
+
+  @override
+  String get accountsOverviewAccountsLabel => 'Accounts';
+
+  @override
+  String get accountsOverviewInstitutionsLabel => 'Institutions';
+
+  @override
+  String get accountsOverviewCurrenciesLabel => 'Currencies';
+
+  @override
+  String accountsCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count accounts',
+      one: '1 account',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get accountCategoryCash => 'Cash';
@@ -7588,6 +7645,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetDetailNewTradeLabel => 'New trade';
+
+  @override
+  String get assetDetailLastClose => 'Latest close';
 
   @override
   String get assetDetailUnknown => 'Unknown';

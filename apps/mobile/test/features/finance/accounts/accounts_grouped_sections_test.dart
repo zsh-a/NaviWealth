@@ -89,8 +89,9 @@ void main() {
     );
 
     expect(find.text('Bank'), findsOneWidget);
+    expect(find.text('1 account'), findsOneWidget);
     expect(find.text('Everyday Checking'), findsOneWidget);
-    expect(find.text('Navi Bank'), findsOneWidget);
+    expect(find.text('Navi Bank · USD'), findsOneWidget);
     expect(find.text(r'$1,234.5'), findsOneWidget);
 
     await tester.tap(find.text('Everyday Checking'));
@@ -159,5 +160,42 @@ void main() {
 
     expect(find.text('手续费'), findsOneWidget);
     expect(find.text('Trading Fee'), findsNothing);
+  });
+
+  testWidgets('keeps long account names and balances within a narrow row', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final account = _account(
+      id: 'long-account',
+      name: 'A deliberately very long international brokerage account name',
+      type: AccountCategory.broker,
+      institution: 'A very long institution name for overflow testing',
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        AccountsGroupedSections(
+          accounts: [account],
+          balances: {
+            account.id: AccountBalances(
+              accountId: account.id,
+              legs: [
+                AccountBalanceLeg(
+                  unit: 'USD',
+                  units: Decimal.parse('123456789012345.67'),
+                ),
+              ],
+            ),
+          },
+          onAccountPressed: (_, _) {},
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('international brokerage'), findsOneWidget);
   });
 }

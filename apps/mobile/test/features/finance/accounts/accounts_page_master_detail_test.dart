@@ -21,6 +21,7 @@ final _account = Account(
   type: AccountCategory.bank,
   name: 'Checking account',
   currency: 'USD',
+  institution: 'Navi Bank',
   sync: SyncMeta(
     ownerUserId: 'user-1',
     updatedAt: DateTime.utc(2026, 7, 10),
@@ -102,5 +103,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('single-account-detail'), findsOneWidget);
+  });
+
+  testWidgets('shows a compact account overview on mobile', (tester) async {
+    await _setSurface(tester, 320);
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 320));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Account overview'), findsOneWidget);
+    expect(find.text('Accounts'), findsOneWidget);
+    expect(find.text('Institutions'), findsOneWidget);
+    expect(find.text('Currencies'), findsOneWidget);
+    expect(find.text('Transfer'), findsOneWidget);
+    expect(find.text('Journal'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

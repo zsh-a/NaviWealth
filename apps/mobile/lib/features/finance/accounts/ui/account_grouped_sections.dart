@@ -106,6 +106,7 @@ class _AccountsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
     final background = isDark
@@ -123,7 +124,15 @@ class _AccountsSection extends StatelessWidget {
               AppSpacing.s4,
               AppSpacing.s8,
             ),
-            child: Text(title, style: context.mutedLabelStyle),
+            child: Row(
+              children: [
+                Expanded(child: Text(title, style: context.mutedLabelStyle)),
+                Text(
+                  l10n.accountsCategoryCount(accounts.length),
+                  style: context.microCaptionStyle,
+                ),
+              ],
+            ),
           ),
           DecoratedBox(
             decoration: BoxDecoration(
@@ -212,8 +221,11 @@ class _AccountRowState extends State<_AccountRow> {
       AppLocalizations.of(context),
       account,
     );
-    final institution = account.institution;
-    final hasInstitution = institution != null && institution.isNotEmpty;
+    final institution = account.institution?.trim();
+    final metadata = [
+      if (institution != null && institution.isNotEmpty) institution,
+      account.currency.toUpperCase(),
+    ].join(' · ');
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -261,23 +273,27 @@ class _AccountRowState extends State<_AccountRow> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                if (hasInstitution) ...[
-                                  const SizedBox(height: AppSpacing.s2),
-                                  Text(
-                                    institution,
-                                    style: context.captionStyle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                const SizedBox(height: AppSpacing.s2),
+                                Text(
+                                  metadata,
+                                  style: context.captionStyle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ],
                             ),
                           ),
                           const SizedBox(width: AppSpacing.s12),
-                          if (primaryLeg != null)
-                            _PrimaryAmount(leg: primaryLeg)
-                          else
-                            Text('-', style: context.bodyCaptionStyle),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 128),
+                            child: primaryLeg == null
+                                ? Text(
+                                    '—',
+                                    textAlign: TextAlign.end,
+                                    style: context.bodyCaptionStyle,
+                                  )
+                                : _PrimaryAmount(leg: primaryLeg),
+                          ),
                         ],
                       ),
                     ),
@@ -384,6 +400,7 @@ class _PrimaryAmount extends ConsumerWidget {
       showPositiveSign: false,
       colorBySign: false,
       style: context.labelStyle,
+      textAlign: TextAlign.end,
     );
   }
 }

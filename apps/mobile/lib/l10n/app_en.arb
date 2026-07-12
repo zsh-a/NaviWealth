@@ -485,6 +485,8 @@
   "@portfolioHubYtdXirrLabel": { "description": "Portfolio hub KPI label: year-to-date money-weighted return" },
   "portfolioHubAbsoluteReturnLabel": "Absolute return",
   "@portfolioHubAbsoluteReturnLabel": { "description": "Portfolio hub KPI label: absolute unrealized return" },
+  "portfolioHubCostBasisLabel": "Cost basis",
+  "@portfolioHubCostBasisLabel": { "description": "Portfolio hub KPI label: current total cost basis" },
   "portfolioHubViewAccount": "Account",
   "@portfolioHubViewAccount": { "description": "Portfolio hub grouping view: account" },
   "portfolioHubViewCurrency": "Currency",
@@ -2141,6 +2143,32 @@
   "tradeEntryFeeLabel": "Fee",
   "tradeEntryTaxLabel": "Tax",
   "tradeEntryCashAccountLabel": "Cash account",
+  "tradeEntryHoldingAccountLabel": "Holding account",
+  "@tradeEntryHoldingAccountLabel": { "description": "Trade entry: brokerage or exchange account that owns the position" },
+  "tradeEntrySettlementTitle": "Settlement",
+  "@tradeEntrySettlementTitle": { "description": "Trade entry: collapsed settlement section title" },
+  "tradeEntrySettlementBrokerCash": "{currency} cash in holding account",
+  "@tradeEntrySettlementBrokerCash": {
+    "placeholders": { "currency": { "type": "String" } }
+  },
+  "tradeEntrySettlementExternal": "{account} · {currency}",
+  "@tradeEntrySettlementExternal": {
+    "placeholders": {
+      "account": { "type": "String" },
+      "currency": { "type": "String" }
+    }
+  },
+  "tradeEntrySettlementAccountLabel": "External settlement account",
+  "@tradeEntrySettlementAccountLabel": { "description": "Trade entry: optional external bank or cash account used for settlement" },
+  "tradeEntrySettlementHelper": "Leave the account empty to settle against cash held inside the brokerage or exchange account.",
+  "@tradeEntrySettlementHelper": { "description": "Trade entry: explains the implicit brokerage-cash settlement option" },
+  "tradeEntryCrossCurrencyHint": "This instrument quotes in {assetCurrency}; price, costs, and cash will be recorded in {tradeCurrency}.",
+  "@tradeEntryCrossCurrencyHint": {
+    "placeholders": {
+      "assetCurrency": { "type": "String" },
+      "tradeCurrency": { "type": "String" }
+    }
+  },
   "tradeEntryCashAccountCurrencyChanged": "The previous cash account does not support this currency. Pick another cash account.",
   "tradeEntryBrokerAccountRequiredTitle": "Brokerage account required",
   "tradeEntryBrokerAccountRequiredMessage": "Create a brokerage or crypto account before recording a securities trade.",
@@ -2754,6 +2782,14 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "accountsEmptyHint": "Add your first account to start tracking assets.",
+  "accountsOverviewTitle": "Account overview",
+  "accountsOverviewAccountsLabel": "Accounts",
+  "accountsOverviewInstitutionsLabel": "Institutions",
+  "accountsOverviewCurrenciesLabel": "Currencies",
+  "accountsCategoryCount": "{count, plural, =1{1 account} other{{count} accounts}}",
+  "@accountsCategoryCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
 
   "accountCategoryCash": "Cash",
   "@accountCategoryCash": { "description": "Wealth container category — physical cash, e-wallets (Alipay, Wechat Pay, etc.)" },
@@ -4024,6 +4060,8 @@
   "@assetDetailSyncMetadataTooltip": { "description": "Asset detail: sync metadata button tooltip" },
   "assetDetailNewTradeLabel": "New trade",
   "@assetDetailNewTradeLabel": { "description": "Asset detail: new trade button label" },
+  "assetDetailLastClose": "Latest close",
+  "@assetDetailLastClose": { "description": "Asset detail hero: label above latest available close price" },
   "assetDetailUnknown": "Unknown",
   "@assetDetailUnknown": { "description": "Asset detail: fallback for unknown market" },
   "assetDetailHoldingsLoadError": "Holdings load failed: {error}",

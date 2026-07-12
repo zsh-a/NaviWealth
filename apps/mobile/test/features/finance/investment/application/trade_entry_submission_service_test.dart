@@ -105,6 +105,38 @@ void main() {
     expect(await outbox.depth(), 5);
   });
 
+  test(
+    'USD buy commits under a CNY base without a historical FX rate',
+    () async {
+      final cnyJournal = JournalEntryRepository(
+        db: db,
+        outbox: outbox,
+        stamper: stamper,
+        fxRateSource: const IdentityFxRateSource(),
+        baseCurrency: 'CNY',
+      );
+      final cnyService = TradeEntrySubmissionService(
+        db: db,
+        securitiesRepo: securitiesRepo,
+        tradeService: const _EchoTradeEntryService(),
+        journalEntryRepo: cnyJournal,
+        priceRepo: priceRepo,
+        currentUserId: () async => 'u-test',
+      );
+
+      final receipt = await cnyService.submit(
+        _buyRequest(
+          transactionId: 'usd-buy-cny-base',
+          tradeDate: DateTime.utc(2026, 7, 9),
+        ),
+      );
+
+      expect(receipt.transactionId, 'usd-buy-cny-base');
+      expect(receipt.journal.after.postings, hasLength(2));
+      expect(await cnyJournal.getById('usd-buy-cny-base'), isNotNull);
+    },
+  );
+
   test('cross-database repository binding fails before any write', () async {
     final other = makeTestDatabase();
     addTearDown(other.close);

@@ -244,6 +244,77 @@ void main() {
     expect(find.text('New account'), findsOneWidget);
   });
 
+  testWidgets('contextual trade prefills asset, side, and compact settlement', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    SharedPreferences.setMockInitialValues(const {});
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final outbox = DriftOutboxStore(db);
+    final repo = SecuritiesAssetRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+    );
+    final asset = await repo.upsertSecurity(
+      symbol: 'AAPL',
+      market: AssetMarket.usStock,
+      type: AssetType.stock,
+      currency: 'USD',
+      name: 'Apple',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          appDatabaseProvider.overrideWith((_) async => db),
+          accountsStreamProvider.overrideWith(
+            (_) => Stream.value([
+              _account(
+                id: 'broker',
+                name: 'Broker',
+                type: AccountCategory.broker,
+                currency: 'USD',
+              ),
+            ]),
+          ),
+          securitiesAssetRepositoryProvider.overrideWith((_) async => repo),
+          securitiesSearchServiceProvider.overrideWith(
+            (_) async => _FakeSearch(db: db),
+          ),
+        ],
+        child: _wrap(
+          TradeEntryFormPage(
+            assetId: asset.id,
+            accountId: 'broker',
+            initialType: TradeType.sell,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL — Apple'), findsOneWidget);
+    expect(find.text('Sell'), findsOneWidget);
+    expect(find.text('USD cash in holding account'), findsOneWidget);
+    expect(
+      find.byKey(const Key('trade-entry-settlement-details')).hitTestable(),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('trade-entry-settlement-summary')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('trade-entry-settlement-details')).hitTestable(),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('preflight timeout keeps the trade form retryable', (
     tester,
   ) async {

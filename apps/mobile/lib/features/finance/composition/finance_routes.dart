@@ -24,6 +24,8 @@ import 'package:naviwealth/features/finance/expense/ui/expense_report_page.dart'
 import 'package:naviwealth/features/finance/fire/ui/fire_page.dart'
     deferred as fire_lib;
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart'
+    show TradeType;
 import 'package:naviwealth/features/finance/investment/ui/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import 'package:naviwealth/features/finance/investment/ui/dca_simulator_page.dart'
@@ -127,12 +129,19 @@ StatefulShellRoute financeShellRoute() {
                 pageBuilder: (context, state) {
                   final assetId = state.uri.queryParameters['assetId'];
                   final accountId = state.uri.queryParameters['accountId'];
+                  final initialType =
+                      switch (state.uri.queryParameters['side']) {
+                        'buy' => TradeType.buy,
+                        'sell' => TradeType.sell,
+                        _ => null,
+                      };
                   return buildHeroAwareTransitionPage<void>(
                     context: context,
                     state: state,
                     child: TradeEntryFormPage(
                       assetId: assetId,
                       accountId: accountId,
+                      initialType: initialType,
                     ),
                   );
                 },

@@ -62,8 +62,13 @@ abstract final class FinanceRoutes {
   static String planRebalanceExecutionSession(String sessionId) =>
       '/plan/rebalance/execution/${Uri.encodeComponent(sessionId)}';
 
-  static String tradeForAsset(String id) =>
-      '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
+  static String tradeForAsset(String id, {String? side}) {
+    final asset = Uri.encodeQueryComponent(id);
+    final tradeSide = side == null
+        ? ''
+        : '&side=${Uri.encodeQueryComponent(side)}';
+    return '$tradeEntry?assetId=$asset$tradeSide';
+  }
 }
 
 abstract final class FinanceRouteNames {

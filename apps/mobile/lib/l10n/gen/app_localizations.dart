@@ -1418,6 +1418,12 @@ abstract class AppLocalizations {
   /// **'Absolute return'**
   String get portfolioHubAbsoluteReturnLabel;
 
+  /// Portfolio hub KPI label: current total cost basis
+  ///
+  /// In en, this message translates to:
+  /// **'Cost basis'**
+  String get portfolioHubCostBasisLabel;
+
   /// Portfolio hub grouping view: account
   ///
   /// In en, this message translates to:
@@ -7014,6 +7020,51 @@ abstract class AppLocalizations {
   /// **'Cash account'**
   String get tradeEntryCashAccountLabel;
 
+  /// Trade entry: brokerage or exchange account that owns the position
+  ///
+  /// In en, this message translates to:
+  /// **'Holding account'**
+  String get tradeEntryHoldingAccountLabel;
+
+  /// Trade entry: collapsed settlement section title
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement'**
+  String get tradeEntrySettlementTitle;
+
+  /// No description provided for @tradeEntrySettlementBrokerCash.
+  ///
+  /// In en, this message translates to:
+  /// **'{currency} cash in holding account'**
+  String tradeEntrySettlementBrokerCash(String currency);
+
+  /// No description provided for @tradeEntrySettlementExternal.
+  ///
+  /// In en, this message translates to:
+  /// **'{account} · {currency}'**
+  String tradeEntrySettlementExternal(String account, String currency);
+
+  /// Trade entry: optional external bank or cash account used for settlement
+  ///
+  /// In en, this message translates to:
+  /// **'External settlement account'**
+  String get tradeEntrySettlementAccountLabel;
+
+  /// Trade entry: explains the implicit brokerage-cash settlement option
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the account empty to settle against cash held inside the brokerage or exchange account.'**
+  String get tradeEntrySettlementHelper;
+
+  /// No description provided for @tradeEntryCrossCurrencyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This instrument quotes in {assetCurrency}; price, costs, and cash will be recorded in {tradeCurrency}.'**
+  String tradeEntryCrossCurrencyHint(
+    String assetCurrency,
+    String tradeCurrency,
+  );
+
   /// No description provided for @tradeEntryCashAccountCurrencyChanged.
   ///
   /// In en, this message translates to:
@@ -9116,6 +9167,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add your first account to start tracking assets.'**
   String get accountsEmptyHint;
+
+  /// No description provided for @accountsOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account overview'**
+  String get accountsOverviewTitle;
+
+  /// No description provided for @accountsOverviewAccountsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get accountsOverviewAccountsLabel;
+
+  /// No description provided for @accountsOverviewInstitutionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Institutions'**
+  String get accountsOverviewInstitutionsLabel;
+
+  /// No description provided for @accountsOverviewCurrenciesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currencies'**
+  String get accountsOverviewCurrenciesLabel;
+
+  /// No description provided for @accountsCategoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 account} other{{count} accounts}}'**
+  String accountsCategoryCount(int count);
 
   /// Wealth container category — physical cash, e-wallets (Alipay, Wechat Pay, etc.)
   ///
@@ -12913,6 +12994,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New trade'**
   String get assetDetailNewTradeLabel;
+
+  /// Asset detail hero: label above latest available close price
+  ///
+  /// In en, this message translates to:
+  /// **'Latest close'**
+  String get assetDetailLastClose;
 
   /// Asset detail: fallback for unknown market
   ///
