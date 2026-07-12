@@ -5,6 +5,8 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
+import 'package:naviwealth/core/logging/app_logger.dart';
+import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';

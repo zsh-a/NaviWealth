@@ -5,8 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/auth_state.dart';
+import 'package:naviwealth/core/auth/device_identity_store.dart';
 import 'package:naviwealth/core/auth/providers.dart';
+import 'package:naviwealth/core/config/app_config.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
+import 'package:naviwealth/core/logging/providers.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/security/secure_key_store.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
@@ -17,6 +23,7 @@ import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_errors.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:talker/talker.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../domain/trade_entry/_fakes.dart';
@@ -27,6 +34,22 @@ final _session = AuthSession(
   userId: 'user-1',
   deviceId: 'device-1',
 );
+
+class _HangingSecureKeyStore implements SecureKeyStore {
+  final Completer<String?> readCompleter = Completer<String?>();
+
+  @override
+  Future<bool> contains(String key) async => false;
+
+  @override
+  Future<void> delete(String key) async {}
+
+  @override
+  Future<String?> read(String key) => readCompleter.future;
+
+  @override
+  Future<void> write(String key, String value) async {}
+}
 
 void main() {
   test(
@@ -104,4 +127,66 @@ void main() {
       expect(syncProviderReads, 0);
     },
   );
+
+  test(
+    'local-only trade dependencies do not wait for a blocked Keychain',
+    () async {
+      SharedPreferences.setMockInitialValues(const {});
+      final preferences = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      final container = ProviderContainer(
+        overrides: [
+          authStateProvider.overrideWithValue(const AuthLocalOnly()),
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          secureKeyStoreProvider.overrideWithValue(_HangingSecureKeyStore()),
+          appDatabaseProvider.overrideWith((ref) async => db),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        await db.close();
+      });
+
+      final submission = await container
+          .read(tradeEntrySubmissionServiceProvider.future)
+          .timeout(const Duration(seconds: 2));
+
+      expect(submission.isBoundTo(db), isTrue);
+      expect(preferences.getString(DeviceIdentityStore.storageKey), isNotEmpty);
+    },
+  );
+
+  test('dependency timeout identifies the exact unresolved provider', () async {
+    SharedPreferences.setMockInitialValues(const {});
+    final preferences = await SharedPreferences.getInstance();
+    final databaseGate = Completer<AppDatabase>();
+    final talker = Talker(
+      settings: TalkerSettings(useConsoleLogs: false, useHistory: true),
+    );
+    final logger = AppLogger(environment: AppEnvironment.dev, talker: talker);
+    final container = ProviderContainer(
+      overrides: [
+        authStateProvider.overrideWithValue(AuthLoggedIn(_session)),
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        loggerProvider.overrideWithValue(logger),
+        appDatabaseProvider.overrideWith((ref) => databaseGate.future),
+        tradeEntryDependencyTimeoutProvider.overrideWithValue(
+          const Duration(milliseconds: 30),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await expectLater(
+      container.read(tradeEntrySubmissionServiceProvider.future),
+      throwsA(isA<TimeoutException>()),
+    );
+
+    final messages = talker.history
+        .map((entry) => entry.message ?? '')
+        .join('\n');
+    expect(messages, contains('resolve_database'));
+    expect(messages, contains('finance.trade.dependencies.failed'));
+    expect(messages, isNot(contains('resolve_securities_repository')));
+  });
 }

@@ -18,12 +18,15 @@ String userSafeErrorMessage(
   Object error, {
   StackTrace? stackTrace,
   String operation = 'ui operation',
+  bool logError = true,
 }) {
-  AppLogger.instance.w(
-    '$operation failed',
-    error: error,
-    stackTrace: stackTrace,
-  );
+  if (logError) {
+    AppLogger.instance.w(
+      '$operation failed',
+      error: error,
+      stackTrace: stackTrace,
+    );
+  }
   if (error case final UserFacingError userFacing) {
     return userFacing.userMessage;
   }

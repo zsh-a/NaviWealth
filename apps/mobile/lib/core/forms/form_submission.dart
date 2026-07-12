@@ -49,6 +49,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     void Function(T result)? onCommitted,
     FormUndoPresentation<T>? undo,
     String tag = 'form',
+    AppLogOperation? diagnosticOperation,
   }) {
     final current = _submission;
     if (current != null) return current;
@@ -65,6 +66,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
           onCommitted: onCommitted,
           undo: undo,
           tag: tag,
+          diagnosticOperation: diagnosticOperation,
         ).whenComplete(() {
           if (identical(_submission, operation)) _submission = null;
         });
@@ -83,6 +85,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     void Function(T result)? onCommitted,
     FormUndoPresentation<T>? undo,
     String tag = 'form',
+    AppLogOperation? diagnosticOperation,
   }) {
     return submitForm<T>(
       dirty: dirty,
@@ -94,6 +97,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       onCommitted: onCommitted,
       undo: undo,
       tag: tag,
+      diagnosticOperation: diagnosticOperation,
     );
   }
 
@@ -107,19 +111,34 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     required void Function(T result)? onCommitted,
     required FormUndoPresentation<T>? undo,
     required String tag,
+    required AppLogOperation? diagnosticOperation,
   }) async {
     // Preserve the element before any async gap. It remains safe to pass to
     // AppMessenger after navigation because the toaster lookup catches an
     // unmounted element and falls back to the cached overlay.
     final feedbackContext = context;
     final logger = ref.read(loggerProvider);
+    final operation =
+        diagnosticOperation ??
+        logger.startOperation('form.submit', fields: {'form_type': tag});
     onBusyChanged(true);
     dirty.busy = true;
     var committed = false;
     try {
-      final result = await commit();
+      final result = await operation.step(
+        'commit',
+        commit,
+        // A caller-owned operation may contain more precise child stages.
+        // Keep this parent failure at debug and emit one terminal error below.
+        failureLevel: diagnosticOperation == null
+            ? AppLogLevel.warning
+            : AppLogLevel.debug,
+      );
       committed = true;
-      if (!mounted) return;
+      if (!mounted) {
+        operation.complete(outcome: 'committed_detached');
+        return;
+      }
 
       if (onCommitted != null) {
         try {
@@ -127,8 +146,14 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
         } catch (error, stack) {
           // The local write is already durable. A receipt/undo decoration
           // failure must never make the form look retryable and duplicate it.
-          logger.e(
-            'form-$tag post-commit callback failed',
+          logger.event(
+            '${operation.name}.post_commit_callback.failed',
+            operationId: operation.operationId,
+            level: AppLogLevel.error,
+            fields: const {
+              'stage': 'post_commit_callback',
+              'outcome': 'failed',
+            },
             error: error,
             stackTrace: stack,
           );
@@ -140,8 +165,11 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
         try {
           undoAction = undo.buildAction(result);
         } catch (error, stack) {
-          logger.e(
-            'form-$tag undo builder failed',
+          logger.event(
+            '${operation.name}.undo_builder.failed',
+            operationId: operation.operationId,
+            level: AppLogLevel.error,
+            fields: const {'stage': 'undo_builder', 'outcome': 'failed'},
             error: error,
             stackTrace: stack,
           );
@@ -153,8 +181,15 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       onBusyChanged(false);
       // PopScope reads canPop during build. Give FormDirtyGuard one frame to
       // publish the pristine/non-busy state before asking Navigator to pop.
-      await _nextFrame();
-      if (!mounted || !feedbackContext.mounted) return;
+      await operation.step(
+        'publish_pristine_state',
+        _nextFrame,
+        slowThreshold: const Duration(seconds: 1),
+      );
+      if (!mounted || !feedbackContext.mounted) {
+        operation.complete(outcome: 'committed_detached');
+        return;
+      }
       AppMessenger.cacheOverlay(feedbackContext);
       leave();
       AppMessenger.show(
@@ -176,9 +211,21 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
                 ),
               ),
       );
+      operation.complete();
     } catch (error, stack) {
-      if (committed) rethrow;
-      logger.e('form-$tag commit failed', error: error, stackTrace: stack);
+      if (committed) {
+        operation.complete(
+          outcome: 'committed_feedback_failed',
+          fields: {'error_code': diagnosticErrorCode(error)},
+        );
+        rethrow;
+      }
+      operation.fail(
+        error,
+        stackTrace: stack,
+        stage: 'commit',
+        retryable: true,
+      );
       if (mounted) {
         AppMessenger.show(
           context,
@@ -245,8 +292,12 @@ Future<void> runFormUndoWithFeedback({
   String tag = 'form',
 }) async {
   AppMessenger.cacheOverlay(context);
+  final operation = logger.startOperation(
+    'form.undo',
+    fields: {'form_type': tag},
+  );
   try {
-    final changed = await action();
+    final changed = await operation.step('apply', action.call);
     if (changed) {
       AppMessenger.show(
         context, // ignore: use_build_context_synchronously -- overlay cached above
@@ -254,8 +305,9 @@ Future<void> runFormUndoWithFeedback({
         successMessage,
       );
     }
+    operation.complete(outcome: changed ? 'success' : 'noop');
   } catch (error, stack) {
-    logger.e('form-$tag undo failed', error: error, stackTrace: stack);
+    operation.fail(error, stackTrace: stack, stage: 'apply', retryable: true);
     AppMessenger.show(
       context, // ignore: use_build_context_synchronously -- overlay cached above
       ToastKind.error,

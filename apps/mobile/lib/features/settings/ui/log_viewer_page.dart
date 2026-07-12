@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:talker/talker.dart';
 
+import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -71,7 +72,7 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
   static String _serialize(Talker talker) {
     final buf = StringBuffer();
     for (final entry in talker.history) {
-      buf.writeln(entry.generateTextMessage());
+      buf.writeln(sanitizeDiagnosticExport(entry.generateTextMessage()));
     }
     return buf.toString();
   }

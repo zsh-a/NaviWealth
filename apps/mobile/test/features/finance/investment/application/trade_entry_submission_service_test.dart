@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' show DatabaseConnection, Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -76,6 +77,15 @@ void main() {
 
   tearDown(() async {
     await db.close();
+  });
+
+  test('contract errors expose stable diagnostic codes', () {
+    const error = TradeSubmissionContractError(
+      TradeSubmissionContractErrorCode.accountInvalid,
+      'private detail',
+    );
+
+    expect(diagnosticErrorCode(error), 'trade_account_invalid');
   });
 
   test('success returns a versioned receipt for every committed row', () async {

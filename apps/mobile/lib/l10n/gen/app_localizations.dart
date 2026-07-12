@@ -7008,6 +7008,24 @@ abstract class AppLocalizations {
   /// **'The previous cash account does not support this currency. Pick another cash account.'**
   String get tradeEntryCashAccountCurrencyChanged;
 
+  /// No description provided for @tradeEntryBrokerAccountRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Brokerage account required'**
+  String get tradeEntryBrokerAccountRequiredTitle;
+
+  /// No description provided for @tradeEntryBrokerAccountRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a brokerage or crypto account before recording a securities trade.'**
+  String get tradeEntryBrokerAccountRequiredMessage;
+
+  /// No description provided for @tradeEntryCashAccountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a live cash account that matches the transaction currency.'**
+  String get tradeEntryCashAccountInvalid;
+
   /// No description provided for @tradeEntryLotCurrencyMismatch.
   ///
   /// In en, this message translates to:

@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/auth/auth_state.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/providers.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
+import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/local_hlc_stamper.dart';
@@ -75,24 +77,50 @@ class MutationStamper {
 
 final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
   final auth = ref.watch(authStateProvider);
-
-  final String deviceId;
-  switch (auth) {
-    case AuthLocalOnly():
-      deviceId = await ref.read(deviceIdentityStoreProvider).getOrCreate();
-    case AuthLoggedIn(:final session):
-      deviceId = session.deviceId;
-    default:
-      return _unauthenticatedMutationStamper();
-  }
-
-  final db = await ref.watch(appDatabaseProvider.future);
-  final hlcStamper = LocalHlcStamper(db: db, deviceId: deviceId);
-  return MutationStamper(
-    currentUserId: ref.watch(currentUserIdProvider),
-    deviceId: () async => deviceId,
-    stampHlc: hlcStamper.stamp,
+  final logger = ref.read(loggerProvider);
+  final operation = logger.startOperation(
+    'core.mutation_stamper.resolve',
+    fields: {'auth_type': auth.runtimeType.toString()},
   );
+
+  try {
+    final String deviceId;
+    switch (auth) {
+      case AuthLocalOnly():
+        deviceId = await operation.step(
+          'resolve_device_identity',
+          () => ref.read(deviceIdentityStoreProvider).getOrCreate(),
+          slowThreshold: const Duration(milliseconds: 500),
+        );
+      case AuthLoggedIn(:final session):
+        deviceId = session.deviceId;
+      default:
+        operation.complete(outcome: 'unauthenticated');
+        return _unauthenticatedMutationStamper();
+    }
+
+    final db = await operation.step(
+      'resolve_database',
+      () => ref.watch(appDatabaseProvider.future),
+    );
+    final hlcStamper = LocalHlcStamper(db: db, deviceId: deviceId);
+    final result = MutationStamper(
+      currentUserId: ref.watch(currentUserIdProvider),
+      deviceId: () async => deviceId,
+      stampHlc: hlcStamper.stamp,
+    );
+    operation.complete();
+    return result;
+  } catch (error, stackTrace) {
+    operation.fail(
+      error,
+      stackTrace: stackTrace,
+      stage: 'resolve',
+      retryable: true,
+      level: AppLogLevel.warning,
+    );
+    rethrow;
+  }
 });
 
 MutationStamper _unauthenticatedMutationStamper() {

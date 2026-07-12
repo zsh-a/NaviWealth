@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../core/persistence/providers.dart';
+import '../../design_system/preferences/theme_preferences.dart';
 import '../config/providers.dart';
+import '../logging/app_logger.dart';
 import '../logging/providers.dart';
 import 'auth_api_client.dart';
 import 'auth_interceptor.dart';
@@ -32,7 +34,17 @@ final tokenStoreProvider = Provider<TokenStore>(
 );
 
 final deviceIdentityStoreProvider = Provider<DeviceIdentityStore>(
-  (ref) => DeviceIdentityStore(ref.watch(secureKeyStoreProvider)),
+  (ref) => DeviceIdentityStore.withPreferences(
+    preferences: ref.watch(sharedPreferencesProvider),
+    legacyStore: ref.watch(secureKeyStoreProvider),
+    onWarning: (errorCode) => ref
+        .read(loggerProvider)
+        .event(
+          'core.auth.device_identity.fallback',
+          level: AppLogLevel.warning,
+          fields: {'error_code': errorCode},
+        ),
+  ),
 );
 
 /// Dio used for the auth endpoints themselves (login / refresh / devices /

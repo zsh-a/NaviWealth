@@ -26,6 +26,20 @@ Future<void> _insertAccount(AppDatabase db, String id, {String? name}) {
 }
 
 void main() {
+  group('outbox transaction binding', () {
+    test('accepts same-database Drift and local-only no-op stores', () async {
+      final db = makeTestDatabase();
+      final otherDb = makeTestDatabase();
+      addTearDown(db.close);
+      addTearDown(otherDb.close);
+
+      expect(isOutboxBoundToDatabase(DriftOutboxStore(db), db), isTrue);
+      expect(isOutboxBoundToDatabase(DriftOutboxStore(otherDb), db), isFalse);
+      expect(isOutboxBoundToDatabase(const NoopOutboxStore(), db), isTrue);
+      expect(isOutboxBoundToDatabase(InMemoryOutboxStore(), db), isFalse);
+    });
+  });
+
   group('DriftOutboxStore', () {
     test('each enqueue appends a dirty pointer', () async {
       final db = makeTestDatabase();

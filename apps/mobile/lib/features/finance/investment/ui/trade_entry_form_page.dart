@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -217,14 +218,27 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         : _noteController.text.trim();
 
     String failureMessage(Object error) {
-      if (error is TradeSubmissionContractError &&
-          error.code == TradeSubmissionContractErrorCode.lotCurrencyMismatch) {
-        return l10n.tradeEntryLotCurrencyMismatch;
+      if (error is TradeSubmissionContractError) {
+        switch (error.code) {
+          case TradeSubmissionContractErrorCode.accountInvalid:
+            return l10n.tradeEntryBrokerAccountRequiredMessage;
+          case TradeSubmissionContractErrorCode.cashAccountInvalid:
+            return l10n.tradeEntryCashAccountInvalid;
+          case TradeSubmissionContractErrorCode.lotCurrencyMismatch:
+            return l10n.tradeEntryLotCurrencyMismatch;
+          default:
+            break;
+        }
       }
       return l10n.tradeEntryFailure(
         error is TradeEntryException
             ? error.message
-            : userSafeErrorMessage(context, error, operation: 'record trade'),
+            : userSafeErrorMessage(
+                context,
+                error,
+                operation: 'record trade',
+                logError: false,
+              ),
       );
     }
 
@@ -243,13 +257,31 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
     late final TradeEntrySubmissionService submissionService;
     final preflightTimeout = ref.read(tradeEntryPreflightTimeoutProvider);
+    final logger = ref.read(loggerProvider);
+    final operation = logger.startOperation(
+      'finance.trade.submit',
+      fields: {
+        'trade_type': type,
+        'asset_type': selected.type,
+        'market': selected.market,
+        'has_price': price != null,
+        'has_cash_account': _cashAccountId != null,
+      },
+    );
     _setBusy(true);
     dirty.busy = true;
     try {
-      submissionService = await ref
-          .read(tradeEntrySubmissionServiceProvider.future)
-          .timeout(preflightTimeout);
-      if (!mounted) return;
+      submissionService = await operation.step(
+        'resolve_dependencies',
+        () => ref
+            .read(tradeEntrySubmissionServiceProvider.future)
+            .timeout(preflightTimeout),
+        slowThreshold: const Duration(seconds: 1),
+      );
+      if (!mounted) {
+        operation.cancel(stage: 'resolve_dependencies');
+        return;
+      }
 
       // For buys with a known price, check whether the cash account would
       // go negative and prompt the user to confirm.
@@ -257,10 +289,17 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         final cashOut =
             quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
         final cashAccountId = _cashAccountId ?? accountId;
-        final currentBalance = await submissionService
-            .balanceByAccountUnit(cashAccountId, currency)
-            .timeout(preflightTimeout);
-        if (!mounted) return;
+        final currentBalance = await operation.step(
+          'check_cash_balance',
+          () => submissionService
+              .balanceByAccountUnit(cashAccountId, currency)
+              .timeout(preflightTimeout),
+          slowThreshold: const Duration(seconds: 1),
+        );
+        if (!mounted) {
+          operation.cancel(stage: 'check_cash_balance');
+          return;
+        }
         final resulting = currentBalance - cashOut;
         if (resulting < Decimal.zero) {
           final resultingLabel = context
@@ -273,17 +312,32 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             cancelLabel: l10n.commonCancel,
             confirmLabel: l10n.tradeEntryCashOverdrawProceed,
           );
-          if (confirmed != true) return;
+          logger.event(
+            'finance.trade.submit.confirmation.completed',
+            operationId: operation.operationId,
+            fields: {
+              'stage': 'cash_overdraw_confirmation',
+              'outcome': confirmed == true ? 'confirmed' : 'cancelled',
+            },
+          );
+          if (confirmed != true) {
+            operation.cancel(stage: 'cash_overdraw_confirmation');
+            return;
+          }
         }
       }
     } catch (error, stack) {
-      ref
-          .read(loggerProvider)
-          .e(
-            'form-trade-entry preflight failed',
-            error: error,
-            stackTrace: stack,
-          );
+      if (error is TimeoutException) {
+        // A FutureProvider keeps its in-flight/error state. Drop only this
+        // composition provider so Retry builds a fresh dependency graph.
+        ref.invalidate(tradeEntrySubmissionServiceProvider);
+      }
+      operation.fail(
+        error,
+        stackTrace: stack,
+        stage: 'preflight',
+        retryable: true,
+      );
       if (mounted) {
         AppMessenger.show(
           context,
@@ -307,6 +361,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       // a no-op difference in production.
       leave: () => Navigator.of(context).pop(true),
       tag: 'trade-entry',
+      diagnosticOperation: operation,
       // `TradeEntryException` carries a user-facing message; pass it
       // through so the snackbar reads "Couldn't record trade: <reason>"
       // instead of a generic "save failed".
@@ -342,6 +397,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           defaultNarration: (asset) =>
               _tradeNarration(type, quantity, asset, l10n),
         ),
+        diagnosticOperation: operation,
       ),
     );
   }
@@ -384,11 +440,25 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         )
         .toList(growable: false);
 
+    if (eligible.isEmpty) {
+      return AppEmptyState(
+        icon: FLucideIcons.landmark,
+        title: l10n.tradeEntryBrokerAccountRequiredTitle,
+        message: l10n.tradeEntryBrokerAccountRequiredMessage,
+        action: FButton(
+          variant: FButtonVariant.primary,
+          onPress: () => context.push(FinanceRoutes.wealthAccountNew),
+          prefix: const Icon(FLucideIcons.creditCard),
+          child: Text(l10n.accountFormCreateTitle),
+        ),
+      );
+    }
+
     // Fall back to the first eligible account once we know the workspace
     // contents. Only fires once per page mount so the user can deliberately
     // clear the picker without us re-imposing a default.
     if (!_hydratedDefaults) {
-      final pool = eligible.isEmpty ? accounts : eligible;
+      final pool = eligible;
       if (_accountId == null && pool.isNotEmpty) {
         _accountId = pool.first.id;
       } else if (_accountId != null && !pool.any((a) => a.id == _accountId)) {
@@ -425,7 +495,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
           AccountPicker(
             key: const Key('trade-entry-account'),
-            accounts: eligible.isEmpty ? accounts : eligible,
+            accounts: eligible,
             value: _accountId,
             onChanged: (v) => setState(() {
               _accountId = v;

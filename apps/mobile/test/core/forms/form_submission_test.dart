@@ -60,6 +60,11 @@ void main() {
         expect(events, ['commit-started', 'receipt:r-1', 'leave']);
         expect(find.byType(_ProbeForm), findsNothing);
         expect(find.text('Saved'), findsOneWidget);
+        final logs = logger.talker.history
+            .map((entry) => entry.message ?? '')
+            .join('\n');
+        expect(logs, contains('form.submit.stage.completed'));
+        expect(logs, contains('form.submit.completed'));
         await tester.pump(const Duration(seconds: 4));
       },
     );
@@ -225,6 +230,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Change undone'), findsOneWidget);
       expect(calls, 2);
+      final logs = logger.talker.history
+          .map((entry) => entry.message ?? '')
+          .join('\n');
+      expect(logs, contains('form.undo.failed'));
+      expect(logs, contains('form.undo.completed'));
       await tester.pump(const Duration(seconds: 7));
     });
   });

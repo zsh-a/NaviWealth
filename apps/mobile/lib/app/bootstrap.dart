@@ -60,6 +60,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   final resolvedEmbedderPaths = await resolveEmbedderPaths(effectiveConfig);
 
   final container = ProviderContainer(
+    // Riverpod 3 retries failed async providers by default, which can keep
+    // `.future` consumers in loading indefinitely. Business retries are
+    // explicit (user Retry, sync backoff, provider-specific policy).
+    retry: (_, _) => null,
     overrides: [
       if (config != null) appConfigProvider.overrideWithValue(config),
       sharedPreferencesProvider.overrideWithValue(prefs),

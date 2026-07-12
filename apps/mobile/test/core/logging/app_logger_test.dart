@@ -84,4 +84,74 @@ void main() {
     final logger = AppLogger(environment: AppEnvironment.prod);
     expect(logger.environment, AppEnvironment.prod);
   });
+
+  test('structured events retain safe fields and drop business data', () {
+    final reporter = _RecordingCrashReporter();
+    final logger = AppLogger(
+      environment: AppEnvironment.dev,
+      crashReporter: reporter,
+    );
+
+    logger.event(
+      'finance.trade.submit.failed',
+      operationId: 'op-1',
+      level: AppLogLevel.error,
+      fields: const {
+        'stage': 'prepare',
+        'error_code': 'timeout',
+        'retryable': true,
+        'account_id': 'private-account',
+        'amount': 999,
+      },
+      error: StateError('AAPL 100 shares'),
+    );
+
+    final message = logger.talker.history.last.message!;
+    expect(message, contains('finance.trade.submit.failed'));
+    expect(message, contains('"operation_id":"op-1"'));
+    expect(message, contains('"error_code":"timeout"'));
+    expect(message, isNot(contains('private-account')));
+    expect(message, isNot(contains('999')));
+    expect(message, isNot(contains('AAPL')));
+    expect(reporter.errors.single.error, isA<DiagnosticLogError>());
+  });
+
+  test('operation emits slow-stage and one terminal event', () async {
+    final logger = AppLogger(environment: AppEnvironment.dev);
+    final operation = logger.startOperation(
+      'form.submit',
+      operationId: 'op-2',
+      fields: const {'form_type': 'expense'},
+    );
+
+    await operation.step(
+      'commit',
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      slowThreshold: const Duration(milliseconds: 5),
+    );
+    operation.complete();
+    operation.complete(outcome: 'duplicate');
+
+    final messages = logger.talker.history
+        .map((entry) => entry.message ?? '')
+        .join('\n');
+    expect(messages, contains('form.submit.stage.slow'));
+    expect(messages, contains('form.submit.stage.completed'));
+    expect(
+      RegExp(r'"event":"form\.submit\.completed"').allMatches(messages).length,
+      1,
+    );
+  });
+
+  test('diagnostic export redacts credentials and email addresses', () {
+    final output = sanitizeDiagnosticExport(
+      'Authorization: Bearer abc.def token=secret user@example.com',
+    );
+
+    expect(output, contains('Bearer <redacted>'));
+    expect(output, contains('token=<redacted>'));
+    expect(output, contains('<redacted-email>'));
+    expect(output, isNot(contains('secret')));
+    expect(output, isNot(contains('user@example.com')));
+  });
 }

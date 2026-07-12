@@ -1,8 +1,28 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/device_identity_store.dart';
 import 'package:naviwealth/core/auth/token_store.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
+import 'package:naviwealth/core/security/secure_key_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class _HangingKeyStore implements SecureKeyStore {
+  final Completer<String?> readCompleter = Completer<String?>();
+
+  @override
+  Future<bool> contains(String key) async => false;
+
+  @override
+  Future<void> delete(String key) async {}
+
+  @override
+  Future<String?> read(String key) => readCompleter.future;
+
+  @override
+  Future<void> write(String key, String value) async {}
+}
 
 AuthSession _session({DateTime? expiresAt}) => AuthSession(
   accessToken: 'eyJhbGciOiJIUzI1NiJ9.payload.sig',
@@ -81,6 +101,39 @@ void main() {
       await store.remember('98fa5788-438f-4fa7-b2b8-80cc76d3cd45');
 
       expect(await store.getOrCreate(), '98fa5788-438f-4fa7-b2b8-80cc76d3cd45');
+    });
+
+    test('migrates the legacy Keychain id into preferences', () async {
+      const legacyId = '0711901b-f1a4-4090-b490-117a23d24652';
+      SharedPreferences.setMockInitialValues(const {});
+      final preferences = await SharedPreferences.getInstance();
+      final store = DeviceIdentityStore.withPreferences(
+        preferences: preferences,
+        legacyStore: InMemoryKeyStore({
+          DeviceIdentityStore.storageKey: legacyId,
+        }),
+      );
+
+      expect(await store.getOrCreate(), legacyId);
+      expect(preferences.getString(DeviceIdentityStore.storageKey), legacyId);
+    });
+
+    test('a blocked legacy Keychain cannot block local writes', () async {
+      SharedPreferences.setMockInitialValues(const {});
+      final preferences = await SharedPreferences.getInstance();
+      final warnings = <String>[];
+      final store = DeviceIdentityStore.withPreferences(
+        preferences: preferences,
+        legacyStore: _HangingKeyStore(),
+        legacyReadTimeout: const Duration(milliseconds: 10),
+        onWarning: warnings.add,
+      );
+
+      final id = await store.getOrCreate().timeout(const Duration(seconds: 1));
+
+      expect(id, isNotEmpty);
+      expect(preferences.getString(DeviceIdentityStore.storageKey), id);
+      expect(warnings, contains('legacy_read_timeout'));
     });
   });
 

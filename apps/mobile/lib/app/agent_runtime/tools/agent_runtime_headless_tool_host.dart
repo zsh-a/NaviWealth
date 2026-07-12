@@ -56,6 +56,7 @@ Future<AgentRuntimeHeadlessToolHost> createAgentRuntimeHeadlessToolHost({
   );
 
   final container = ProviderContainer(
+    retry: (_, _) => null,
     overrides: [
       appConfigProvider.overrideWithValue(
         const AppConfig(

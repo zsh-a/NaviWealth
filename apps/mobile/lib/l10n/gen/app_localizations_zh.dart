@@ -3861,6 +3861,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeEntryCashAccountCurrencyChanged => '原资金账户不支持当前币种，请重新选择资金账户。';
 
   @override
+  String get tradeEntryBrokerAccountRequiredTitle => '需要券商账户';
+
+  @override
+  String get tradeEntryBrokerAccountRequiredMessage => '录入证券交易前，请先创建券商或加密账户。';
+
+  @override
+  String get tradeEntryCashAccountInvalid => '请选择有效且币种与交易一致的资金账户。';
+
+  @override
   String get tradeEntryLotCurrencyMismatch =>
       '所选币种与该持仓的批次币种不一致。请修改页面上的“币种”；如果持仓包含多种批次币种，请先修复或拆分持仓。';
 

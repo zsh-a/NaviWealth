@@ -199,6 +199,51 @@ Future<void> _pressControlEnter(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('requires a brokerage account instead of accepting cash', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    SharedPreferences.setMockInitialValues(const {});
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          appDatabaseProvider.overrideWith((_) async => db),
+          accountsStreamProvider.overrideWith(
+            (_) => Stream.value([
+              _account(
+                id: 'cash',
+                name: 'Cash',
+                type: AccountCategory.cash,
+                currency: 'CNY',
+              ),
+            ]),
+          ),
+          securitiesSearchServiceProvider.overrideWith(
+            (_) async => _FakeSearch(db: db),
+          ),
+        ],
+        child: _wrap(const TradeEntryFormPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Brokerage account required'), findsOneWidget);
+    expect(
+      find.text(
+        'Create a brokerage or crypto account before recording a securities trade.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('trade-entry-account')), findsNothing);
+    expect(find.text('New account'), findsOneWidget);
+  });
+
   testWidgets('preflight timeout keeps the trade form retryable', (
     tester,
   ) async {
@@ -281,6 +326,10 @@ void main() {
     );
     expect(submit.onPress, isNotNull);
     expect(find.text('Save'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('trade-entry-submit')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(providerReads, 2);
     await tester.pump(const Duration(seconds: 7));
   });
 

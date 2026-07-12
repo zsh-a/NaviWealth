@@ -4035,6 +4035,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'The previous cash account does not support this currency. Pick another cash account.';
 
   @override
+  String get tradeEntryBrokerAccountRequiredTitle =>
+      'Brokerage account required';
+
+  @override
+  String get tradeEntryBrokerAccountRequiredMessage =>
+      'Create a brokerage or crypto account before recording a securities trade.';
+
+  @override
+  String get tradeEntryCashAccountInvalid =>
+      'Choose a live cash account that matches the transaction currency.';
+
+  @override
   String get tradeEntryLotCurrencyMismatch =>
       'The selected currency does not match this holding\'s lots. Change the visible Currency field. If the holding contains lots in multiple currencies, repair or split the holding first.';
 

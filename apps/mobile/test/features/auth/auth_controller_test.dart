@@ -4,6 +4,7 @@ import 'package:naviwealth/app/routing/route_guard.dart';
 import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/auth/auth_errors.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
+import 'package:naviwealth/core/auth/device_identity_store.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/auth/token_store.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -121,6 +122,9 @@ ProviderContainer _container({Map<String, String>? seed, AuthApiClient? api}) {
   return ProviderContainer(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(keyStore),
+      deviceIdentityStoreProvider.overrideWithValue(
+        DeviceIdentityStore(keyStore),
+      ),
       if (api != null) authApiClientProvider.overrideWithValue(api),
     ],
   );

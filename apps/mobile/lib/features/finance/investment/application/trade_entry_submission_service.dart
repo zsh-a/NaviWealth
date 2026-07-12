@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -103,42 +106,76 @@ class TradeEntrySubmissionService {
   }
 
   /// Commits security metadata, ledger rows, price, and outbox atomically.
-  Future<TradeMutationReceipt> commit(PreparedTradeSubmission prepared) async {
-    final currentOwner = await _currentUserId();
+  Future<TradeMutationReceipt> commit(
+    PreparedTradeSubmission prepared, {
+    AppLogOperation? diagnosticOperation,
+  }) async {
+    final currentOwner = await _trace(
+      diagnosticOperation,
+      'revalidate_owner',
+      _currentUserId,
+    );
     if (currentOwner != prepared.ownerUserId) {
       throw const TradeSubmissionContractError(
         TradeSubmissionContractErrorCode.ownerChanged,
         'Current owner changed after trade preparation.',
       );
     }
-    return _db.transactionWithScope(
-      (scope) => commitInTransaction(scope, prepared),
+    return _trace(
+      diagnosticOperation,
+      'database_transaction',
+      () => _db.transactionWithScope(
+        (scope) => commitInTransaction(
+          scope,
+          prepared,
+          diagnosticOperation: diagnosticOperation,
+        ),
+      ),
+      slowThreshold: const Duration(seconds: 2),
+      failureLevel: AppLogLevel.debug,
     );
   }
 
   Future<TradeMutationReceipt> commitInTransaction(
     AppDatabaseTransactionScope scope,
-    PreparedTradeSubmission prepared,
-  ) async {
+    PreparedTradeSubmission prepared, {
+    AppLogOperation? diagnosticOperation,
+  }) async {
     scope.requireDatabase(_db);
     _requireDatabaseBindings();
     final uid = prepared.ownerUserId;
     _requireOwner(uid);
     final request = prepared.request;
     _requirePreparedContract(prepared);
-    await _validateLiveAccounts(request, uid);
-    await _validateExistingAsset(request, prepared.assetInput.id, uid);
+    await _trace(
+      diagnosticOperation,
+      'validate_accounts',
+      () => _validateLiveAccounts(request, uid),
+    );
+    await _trace(
+      diagnosticOperation,
+      'validate_asset',
+      () => _validateExistingAsset(request, prepared.assetInput.id, uid),
+    );
 
     final freshLots = request.type == TradeType.sell
-        ? await _freshSellLots(request, prepared.assetInput.id, uid)
+        ? await _trace(
+            diagnosticOperation,
+            'load_fresh_lots',
+            () => _freshSellLots(request, prepared.assetInput.id, uid),
+          )
         : const <Lot>[];
-    final plan = await _tradeService.buildPlan(
-      _draft(
-        request: request,
-        asset: prepared.assetInput,
-        price: prepared.frozenPrice,
+    final plan = await _trace(
+      diagnosticOperation,
+      'build_commit_plan',
+      () => _tradeService.buildPlan(
+        _draft(
+          request: request,
+          asset: prepared.assetInput,
+          price: prepared.frozenPrice,
+        ),
+        openLots: freshLots,
       ),
-      openLots: freshLots,
     );
     _requireExactPlan(
       plan: plan,
@@ -164,13 +201,17 @@ class TradeEntrySubmissionService {
       );
     }
 
-    final assetAfter = await _securitiesRepo.upsertSecurity(
-      symbol: prepared.assetInput.symbol,
-      market: request.market,
-      type: request.assetType,
-      currency: request.assetCurrency,
-      name: request.assetName,
-      isin: request.isin,
+    final assetAfter = await _trace(
+      diagnosticOperation,
+      'upsert_security',
+      () => _securitiesRepo.upsertSecurity(
+        symbol: prepared.assetInput.symbol,
+        market: request.market,
+        type: request.assetType,
+        currency: request.assetCurrency,
+        name: request.assetName,
+        isin: request.isin,
+      ),
     );
     if (assetAfter.id != prepared.assetInput.id ||
         assetAfter.sync.ownerUserId != uid ||
@@ -180,18 +221,26 @@ class TradeEntrySubmissionService {
         'Committed asset does not match the prepared live asset.',
       );
     }
-    final journalReceipt = await _journalEntryRepo.createWithReceipt(
-      entry: journal.entry,
-      postings: journal.postings,
+    final journalReceipt = await _trace(
+      diagnosticOperation,
+      'write_journal',
+      () => _journalEntryRepo.createWithReceipt(
+        entry: journal.entry,
+        postings: journal.postings,
+      ),
     );
     final tx = plan.trade;
-    final priceReceipt = await _priceRepo.upsertWithReceipt(
-      id: prepared.transactionId,
-      unit: tx.assetId,
-      quoteCurrency: tx.currency,
-      observedOn: tx.tradeDate,
-      perUnit: tx.price,
-      source: prepared.priceSource,
+    final priceReceipt = await _trace(
+      diagnosticOperation,
+      'write_price',
+      () => _priceRepo.upsertWithReceipt(
+        id: prepared.transactionId,
+        unit: tx.assetId,
+        quoteCurrency: tx.currency,
+        observedOn: tx.tradeDate,
+        perUnit: tx.price,
+        source: prepared.priceSource,
+      ),
     );
     final receipt = TradeMutationReceipt(
       transactionId: prepared.transactionId,
@@ -204,10 +253,32 @@ class TradeEntrySubmissionService {
   }
 
   Future<TradeMutationReceipt> submit(
-    TradeEntrySubmissionRequest request,
-  ) async {
-    final prepared = await prepare(request);
-    return commit(prepared);
+    TradeEntrySubmissionRequest request, {
+    AppLogOperation? diagnosticOperation,
+  }) async {
+    final prepared = await _trace(
+      diagnosticOperation,
+      'prepare',
+      () => prepare(request),
+      slowThreshold: const Duration(seconds: 1),
+    );
+    return commit(prepared, diagnosticOperation: diagnosticOperation);
+  }
+
+  Future<T> _trace<T>(
+    AppLogOperation? operation,
+    String stage,
+    FutureOr<T> Function() action, {
+    Duration slowThreshold = const Duration(seconds: 1),
+    AppLogLevel failureLevel = AppLogLevel.warning,
+  }) {
+    if (operation == null) return Future<T>.sync(action);
+    return operation.step(
+      stage,
+      action,
+      slowThreshold: slowThreshold,
+      failureLevel: failureLevel,
+    );
   }
 
   /// Reverses price + journal atomically while preserving security metadata.
@@ -754,11 +825,14 @@ enum TradeSubmissionContractErrorCode {
   externalResolutionInTransaction,
 }
 
-final class TradeSubmissionContractError implements Exception {
+final class TradeSubmissionContractError implements Exception, DiagnosticError {
   const TradeSubmissionContractError(this.code, this.message);
 
   final TradeSubmissionContractErrorCode code;
   final String message;
+
+  @override
+  String get diagnosticErrorCode => 'trade_${code.name}';
 
   @override
   String toString() => 'TradeSubmissionContractError(${code.name}): $message';

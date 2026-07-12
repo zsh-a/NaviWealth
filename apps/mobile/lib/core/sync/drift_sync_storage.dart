@@ -42,8 +42,13 @@ class DriftOutboxStore implements OutboxStore {
   }
 }
 
+/// Whether [outbox] is safe to use inside a repository transaction for
+/// [database]. Cloud mode requires the Drift-backed outbox to share the exact
+/// connection. Local-only mode deliberately uses [NoopOutboxStore]; it has no
+/// external state and is therefore transaction-safe without a DB binding.
 bool isOutboxBoundToDatabase(OutboxStore outbox, AppDatabase database) =>
-    outbox is DriftOutboxStore && outbox.isBoundTo(database);
+    outbox is NoopOutboxStore ||
+    (outbox is DriftOutboxStore && outbox.isBoundTo(database));
 
 /// Reads `op_outbox` as the set of locally-dirty rows and serialises each
 /// row's current state for push (`docs/sync/sync-v2.md` §7.3).

@@ -112,6 +112,7 @@ class SyncEngine {
   }
 
   Future<SyncCycleResult> _runOnce() async {
+    final operation = _logger.startOperation('core.sync.cycle');
     final errors = <SyncException>[];
     var pushed = 0;
     var pulled = 0;
@@ -123,15 +124,23 @@ class SyncEngine {
     );
 
     try {
-      var since = await cursors.readSeq();
+      var since = await operation.step('read_cursor', cursors.readSeq);
       while (true) {
-        final batch = await _collectBatch();
+        final batch = await operation.step(
+          'collect_batch',
+          _collectBatch,
+          fields: {'batch_size': kSyncMaxChanges},
+        );
         final SyncResponse resp;
         try {
-          resp = await api.sync(
-            deviceId: deviceId,
-            since: since,
-            changes: batch.changes,
+          resp = await operation.step(
+            'api_sync',
+            () => api.sync(
+              deviceId: deviceId,
+              since: since,
+              changes: batch.changes,
+            ),
+            fields: {'batch_size': batch.changes.length},
           );
         } on SyncException catch (e) {
           errors.add(e);
@@ -140,7 +149,11 @@ class SyncEngine {
 
         pushed += resp.accepted.length;
         if (resp.changes.isNotEmpty) {
-          final report = await applier.applyWithReport(resp.changes);
+          final report = await operation.step(
+            'apply_rows',
+            () => applier.applyWithReport(resp.changes),
+            fields: {'row_count': resp.changes.length},
+          );
           pulled += report.written;
           conflicts = conflicts.merge(_conflictsFromApplyReport(report));
           await _mergeHighest(resp.changes);
@@ -148,7 +161,10 @@ class SyncEngine {
         // Acknowledge only rows the server explicitly accepted. Rows dropped
         // at the domain-claim boundary stay dirty so the user can fix their
         // opt-in/token state and retry instead of losing local edits.
-        await pending.clear(batch.acknowledgedOpIds(resp.acceptedKeys));
+        await operation.step(
+          'clear_acknowledged',
+          () => pending.clear(batch.acknowledgedOpIds(resp.acceptedKeys)),
+        );
         since = resp.seq;
         await cursors.writeSeq(since);
 
@@ -167,7 +183,9 @@ class SyncEngine {
       _nextBackoff = null;
       _state = EngineState.idle;
       _lastSuccessAt = _clock.now();
-      _logger.d('sync: cycle complete (pushed=$pushed, pulled=$pulled)');
+      operation.complete(
+        fields: {'pushed_count': pushed, 'pulled_count': pulled},
+      );
       _emitStatus(SyncStatus.online, conflicts: conflicts);
       return SyncCycleResult(
         pushed: pushed,
@@ -176,6 +194,17 @@ class SyncEngine {
         conflicts: conflicts,
       );
     }
+    operation.fail(
+      errors.first,
+      stage: 'cycle',
+      errorCode: 'sync_${errors.first.kind.name}',
+      retryable: errors.first.isRetryable,
+      fields: {
+        'pushed_count': pushed,
+        'pulled_count': pulled,
+        'error_count': errors.length,
+      },
+    );
     return _handleErrors(
       errors,
       pushed: pushed,
@@ -259,7 +288,6 @@ class SyncEngine {
     final fatal = errors.where((e) => !e.isRetryable).toList();
     if (fatal.isNotEmpty) {
       _state = EngineState.halted;
-      _logger.e('sync: engine halted', error: fatal.first);
       _emitStatus(
         SyncStatus.failed,
         lastError: fatal.first.toString(),
@@ -289,10 +317,6 @@ class SyncEngine {
           );
     _nextBackoff = delay;
     _state = EngineState.backoff;
-    _logger.w(
-      'sync: backing off ${delay.inSeconds}s after $_consecutiveFailures failures',
-      error: errors.first,
-    );
     _emitStatus(
       SyncStatus.offline,
       lastError: errors.first.toString(),
