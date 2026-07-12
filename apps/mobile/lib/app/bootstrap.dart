@@ -15,6 +15,7 @@ import '../core/ai/local/memory/providers.dart' as memory_providers;
 import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
 import '../core/config/providers.dart';
+import '../core/data_management/providers.dart';
 import '../core/format/formatters.dart';
 import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
@@ -242,6 +243,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   final authState = container.read(authControllerProvider).value;
   if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
     container.read(syncSchedulerBootstrapProvider);
+    container.read(dataMaintenanceBootstrapProvider);
     _scheduleMemoryRuntimeStartupTasks(container: container, logger: logger);
     container.read(memoryLayerBootstrapProvider);
   } else {

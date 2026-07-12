@@ -1,6 +1,7 @@
 use naviwealth_backend::routes::sync::{RowAck, SyncResponse};
 use naviwealth_backend::sync::store::RowChange;
 use serde_json::json;
+use std::collections::BTreeMap;
 
 fn main() {
     let fixture = std::env::args().nth(1).unwrap_or_else(|| {
@@ -9,10 +10,10 @@ fn main() {
     });
 
     let output = match fixture.as_str() {
-        "sync_v2_server_tombstone_row_change" => {
+        "sync_v3_server_tombstone_row_change" => {
             serde_json::to_string_pretty(&server_tombstone()).unwrap()
         }
-        "sync_v2_server_sync_response" => serde_json::to_string_pretty(&SyncResponse {
+        "sync_v3_server_sync_response" => serde_json::to_string_pretty(&SyncResponse {
             seq: 42,
             changes: vec![server_tombstone()],
             more: false,
@@ -20,27 +21,31 @@ fn main() {
                 table: "fin:accounts".into(),
                 id: "acc-1".into(),
             }],
+            domain_generations: BTreeMap::from([("finance".into(), 0), ("health".into(), 3)]),
         })
         .unwrap(),
-        "sync_v2_server_empty_response" => serde_json::to_string_pretty(&SyncResponse {
+        "sync_v3_server_empty_response" => serde_json::to_string_pretty(&SyncResponse {
             seq: 42,
             changes: vec![],
             more: false,
             accepted: vec![],
+            domain_generations: BTreeMap::from([("finance".into(), 0)]),
         })
         .unwrap(),
-        "sync_v2_server_more_response" => serde_json::to_string_pretty(&SyncResponse {
+        "sync_v3_server_more_response" => serde_json::to_string_pretty(&SyncResponse {
             seq: 42,
             changes: vec![server_tombstone()],
             more: true,
             accepted: vec![],
+            domain_generations: BTreeMap::from([("health".into(), 3)]),
         })
         .unwrap(),
-        "sync_v2_server_no_accepted_response" => serde_json::to_string_pretty(&SyncResponse {
+        "sync_v3_server_no_accepted_response" => serde_json::to_string_pretty(&SyncResponse {
             seq: 41,
             changes: vec![],
             more: false,
             accepted: vec![],
+            domain_generations: BTreeMap::from([("finance".into(), 0)]),
         })
         .unwrap(),
         other => {
@@ -61,5 +66,6 @@ fn server_tombstone() -> RowChange {
         deleted: true,
         device_id: "device-b".into(),
         seq: 42,
+        generation: 3,
     }
 }

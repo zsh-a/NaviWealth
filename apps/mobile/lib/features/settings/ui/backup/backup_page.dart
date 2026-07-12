@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
 import 'package:naviwealth/core/backup/providers.dart';
@@ -46,14 +47,18 @@ final backupRestoreFilePickerProvider = Provider<BackupRestoreFilePicker>((
 });
 
 class BackupPage extends ConsumerWidget {
-  const BackupPage({super.key});
+  const BackupPage({super.key, this.domain});
+
+  final DomainScope? domain;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
     return AppPageScaffold(
-      title: l10n.settingsDataTitle,
+      title: domain == null
+          ? l10n.settingsDataTitle
+          : l10n.backupDomainPageTitle(_domainLabel(domain!)),
       childPad: false,
       child: SettingsPageFrame(
         bottomPadding: AppSpacing.s64,
@@ -115,12 +120,23 @@ class BackupPage extends ConsumerWidget {
 
     try {
       final sw = Stopwatch()..start();
-      final exporter = await ref.read(backupExportRunnerProvider.future);
-      if (exporter == null) {
-        throw StateError('Backup service is not ready.');
+      final Uint8List bytes;
+      if (domain == null) {
+        final exporter = await ref.read(backupExportRunnerProvider.future);
+        if (exporter == null) {
+          throw StateError('Backup service is not ready.');
+        }
+        bytes = await exporter(passphrase: passphrase);
+      } else {
+        final exporter = await ref.read(
+          domainBackupExportRunnerProvider.future,
+        );
+        if (exporter == null) {
+          throw StateError('Backup service is not ready.');
+        }
+        bytes = await exporter(passphrase: passphrase, domain: domain!);
       }
       logger.d('backup_ui: exporter resolved, calling exportBackup');
-      final bytes = await exporter(passphrase: passphrase);
       sw.stop();
       logger.d(
         'backup_ui: encryption done (${bytes.length} bytes, '
@@ -135,7 +151,8 @@ class BackupPage extends ConsumerWidget {
       await Future<void>.delayed(const Duration(milliseconds: 300));
 
       final date = DateTime.now().toIso8601String().substring(0, 10);
-      final fileName = 'naviwealth-backup-$date.bak';
+      final suffix = domain == null ? '' : '-${domain!.wire}';
+      final fileName = 'naviwealth-backup$suffix-$date.bak';
       logger.d('backup_ui: opening save dialog for $fileName');
       final saved = await ref.read(backupFileSaverProvider)(bytes, fileName);
       logger.d('backup_ui: saveBackupFile returned $saved');
@@ -205,16 +222,31 @@ class BackupPage extends ConsumerWidget {
 
     try {
       final sw = Stopwatch()..start();
-      final restore = await ref.read(backupRestoreRunnerProvider.future);
-      if (restore == null) {
-        throw StateError('Backup service is not ready.');
-      }
       logger.d('backup_ui: service resolved, pausing sync and restoring');
 
-      final restoreResult = await restore(
-        passphrase: passphrase,
-        fileBytes: fileBytes,
-      );
+      final RestoreResult restoreResult;
+      if (domain case final expectedDomain?) {
+        final restore = await ref.read(
+          domainBackupRestoreRunnerProvider.future,
+        );
+        if (restore == null) {
+          throw StateError('Backup service is not ready.');
+        }
+        restoreResult = await restore(
+          passphrase: passphrase,
+          fileBytes: fileBytes,
+          domain: expectedDomain,
+        );
+      } else {
+        final restore = await ref.read(backupRestoreRunnerProvider.future);
+        if (restore == null) {
+          throw StateError('Backup service is not ready.');
+        }
+        restoreResult = await restore(
+          passphrase: passphrase,
+          fileBytes: fileBytes,
+        );
+      }
       sw.stop();
       logger.i(
         'backup_ui: restore complete '
@@ -288,6 +320,13 @@ class BackupPage extends ConsumerWidget {
     );
   }
 }
+
+String _domainLabel(DomainScope scope) => switch (scope) {
+  DomainScope.finance => 'FinanceOS',
+  DomainScope.health => 'HealthOS',
+  DomainScope.knowledge => 'KnowledgeOS',
+  DomainScope.execution => 'ExecutionOS',
+};
 
 // ---------------------------------------------------------------------------
 // Private sheet widgets

@@ -8,9 +8,19 @@
       "version": "1716381000124.0000-device-b",
       "deleted": true,
       "device_id": "device-b",
-      "seq": 42
+      "seq": 42,
+      "generation": 3
     }
   ],
-  "more": true,
-  "accepted": []
+  "more": false,
+  "accepted": [
+    {
+      "table": "fin:accounts",
+      "id": "acc-1"
+    }
+  ],
+  "domain_generations": {
+    "finance": 0,
+    "health": 3
+  }
 }

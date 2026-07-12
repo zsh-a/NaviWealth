@@ -25,6 +25,31 @@
 /// See also the parallel pattern in `event_log_tables.dart`.
 library;
 
+const String createDataMaintenanceRuns = '''
+CREATE TABLE IF NOT EXISTS data_maintenance_runs (
+  id             TEXT PRIMARY KEY,
+  owner_user_id  TEXT NOT NULL,
+  action         TEXT NOT NULL,
+  domain         TEXT,
+  status         TEXT NOT NULL,
+  started_at     INTEGER NOT NULL,
+  finished_at    INTEGER,
+  rows_affected  INTEGER NOT NULL DEFAULT 0,
+  detail_json    TEXT NOT NULL DEFAULT '{}',
+  error          TEXT
+)
+''';
+
+const String createDataMaintenanceRunsOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_data_maintenance_runs_owner_started
+  ON data_maintenance_runs(owner_user_id, started_at DESC)
+''';
+
+const List<String> dataMaintenanceRunDdl = <String>[
+  createDataMaintenanceRuns,
+  createDataMaintenanceRunsOwnerIndex,
+];
+
 // ----------------------------------------------------------------------
 // Agent framework state
 // ----------------------------------------------------------------------

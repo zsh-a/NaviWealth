@@ -11,8 +11,8 @@ void main(List<String> args) {
   }
 
   final value = switch (args.single) {
-    'sync_v2_client_push_row_change' => _clientPushChange().toJson(),
-    'sync_v2_client_sync_request' => <String, Object?>{
+    'sync_v3_client_push_row_change' => _clientPushChange().toJson(),
+    'sync_v3_client_sync_request' => <String, Object?>{
       'device_id': 'device-a',
       'since': 41,
       'changes': <Object?>[_clientPushChange().toJson()],

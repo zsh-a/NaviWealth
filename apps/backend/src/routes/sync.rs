@@ -1,4 +1,4 @@
-//! `POST /sync` — the single sync endpoint (docs/sync/sync-v2.md §5.1).
+//! Sync v3 endpoints (docs/sync/sync-v3.md).
 //!
 //! One round trip does push and pull: the client uploads its dirty rows and
 //! its cursor, the server applies them (LWW) and returns everything newer
@@ -11,19 +11,8 @@ use worker::{Request, Response, Result as WorkerResult, RouteContext};
 use crate::auth::middleware::require_auth;
 use crate::error::AppError;
 use crate::routes::common::check_protocol_version;
+use crate::sync::domain::domain_for_wire_table;
 use crate::sync::store::{self, RowChange};
-
-/// Map of wire-prefix → JWT `domains` claim value. Mirrors
-/// `apps/mobile/lib/core/sync/domain_prefix.dart` (D-1.4); kept as a
-/// small constant set rather than parsing because the active LifeOS
-/// domain set is curated, not user-extensible. Note that the wire
-/// prefix is a *short tag* (`fin:`, `health:`) while the claim spells
-/// the domain in full (`finance`, `health`).
-const RECOGNISED_DOMAIN_PREFIXES: &[(&str, &str)] = &[
-    ("fin:", "finance"),
-    ("health:", "health"),
-    ("know:", "knowledge"),
-];
 
 /// True when `wire_table` carries a domain prefix that's both recognised
 /// by the server and present in the caller's `domains` claim.
@@ -31,12 +20,8 @@ const RECOGNISED_DOMAIN_PREFIXES: &[(&str, &str)] = &[
 /// claim revocation (e.g. user disables HealthOS) takes effect on the
 /// next request without an additional `DELETE`.
 fn caller_owns_prefix(wire_table: &str, claim_domains: &[String]) -> bool {
-    for (prefix, domain) in RECOGNISED_DOMAIN_PREFIXES {
-        if wire_table.starts_with(prefix) {
-            return claim_domains.iter().any(|d| d == domain);
-        }
-    }
-    false
+    domain_for_wire_table(wire_table)
+        .is_some_and(|domain| claim_domains.iter().any(|candidate| candidate == domain))
 }
 
 #[cfg(test)]
@@ -119,12 +104,25 @@ pub struct SyncResponse {
     /// clears matching outbox pointers, so rejected-domain rows cannot be
     /// silently lost.
     pub accepted: Vec<RowAck>,
+    /// Authoritative reset generation for every domain in the JWT claim.
+    pub domain_generations: std::collections::BTreeMap<String, i64>,
 }
 
 #[derive(Serialize)]
 pub struct RowAck {
     pub table: String,
     pub id: String,
+}
+
+#[derive(Deserialize)]
+struct ResetDomainRequest {
+    domain: String,
+}
+
+#[derive(Serialize)]
+struct ResetDomainResponse {
+    domain: String,
+    generation: i64,
 }
 
 pub async fn sync(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
@@ -143,6 +141,39 @@ pub async fn sync(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response>
             e.into_response()
         }
     }
+}
+
+pub async fn reset_domain(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
+    let result = reset_domain_inner(&mut req, &ctx).await;
+    match result {
+        Ok(response) => Ok(response),
+        Err(error) => {
+            error.log();
+            error.into_response()
+        }
+    }
+}
+
+async fn reset_domain_inner(
+    req: &mut Request,
+    ctx: &RouteContext<()>,
+) -> Result<Response, AppError> {
+    check_protocol_version(req.headers())?;
+    let auth = require_auth(req, ctx).await?;
+    let body: ResetDomainRequest = req
+        .json()
+        .await
+        .map_err(|error| AppError::BadRequest(format!("invalid JSON: {error}")))?;
+    let db = ctx
+        .env
+        .d1("DB")
+        .map_err(|_| AppError::Internal("DB unbound".into()))?;
+    let generation = store::reset_domain(&db, &auth.user_id, &auth.device_id, &body.domain).await?;
+    Response::from_json(&ResetDomainResponse {
+        domain: body.domain,
+        generation,
+    })
+    .map_err(AppError::from)
 }
 
 async fn sync_inner(
@@ -185,6 +216,7 @@ async fn sync_inner(
         .map_err(|_| AppError::Internal("DB unbound".into()))?;
     let user_id = &auth.user_id;
     let device_id = &auth.device_id;
+    let request_generations = store::load_domain_generations(&db, user_id, &auth.domains).await?;
 
     // D-1.5: drop rows whose domain prefix is not in the caller's
     // `domains` claim. Today every caller's claim is `["finance"]` so
@@ -195,7 +227,13 @@ async fn sync_inner(
     let allowed_changes: Vec<RowChange> = body
         .changes
         .into_iter()
-        .filter(|c| caller_owns_prefix(&c.table, &auth.domains))
+        .filter(|change| {
+            let Some(domain) = domain_for_wire_table(&change.table) else {
+                return false;
+            };
+            caller_owns_prefix(&change.table, &auth.domains)
+                && request_generations.get(domain).copied().unwrap_or(0) == change.generation
+        })
         .collect();
     let accepted: Vec<RowAck> = allowed_changes
         .iter()
@@ -208,16 +246,22 @@ async fn sync_inner(
 
     // Apply the caller's changes first, then pull — so a row the caller just
     // pushed and a peer's newer version of it resolve before the response is
-    // built (docs/sync/sync-v2.md §5.1).
+    // built (docs/sync/sync-v3.md).
     let pushed = store::apply_changes(&db, user_id, device_id, &allowed_changes).await?;
     let mut page = store::pull(&db, user_id, device_id, body.since, PULL_LIMIT).await?;
+    let domain_generations = store::load_domain_generations(&db, user_id, &auth.domains).await?;
 
     // Pull-side filter: the server might have rows in domains the caller
     // can no longer see (e.g. they revoked Health). Drop them here rather
     // than at the client so revocation is server-enforced.
     let before = page.changes.len();
-    page.changes
-        .retain(|c| caller_owns_prefix(&c.table, &auth.domains));
+    page.changes.retain(|change| {
+        let Some(domain) = domain_for_wire_table(&change.table) else {
+            return false;
+        };
+        caller_owns_prefix(&change.table, &auth.domains)
+            && domain_generations.get(domain).copied().unwrap_or(0) == change.generation
+    });
     metrics.dropped_pull = before.saturating_sub(page.changes.len());
 
     metrics.pushed = pushed;
@@ -229,6 +273,7 @@ async fn sync_inner(
         changes: page.changes,
         more: page.more,
         accepted,
+        domain_generations,
     };
     Response::from_json(&resp).map_err(AppError::from)
 }

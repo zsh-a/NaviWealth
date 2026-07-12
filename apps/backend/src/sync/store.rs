@@ -1,9 +1,11 @@
-//! Generic row-state store for sync v2 (docs/sync/sync-v2.md).
+//! Generic row-state store for sync v3 (docs/sync/sync-v3.md).
 //!
 //! The server is schema-agnostic: every business row lives in `sync_rows` as
 //! an opaque JSON `payload` keyed by `(user_id, table_name, row_id)`. Conflict
 //! resolution is per-row last-writer-wins on `(version, device_id)`; the pull
 //! cursor is the monotonic `seq` SQLite mints on every write.
+
+use std::collections::{BTreeMap, HashMap};
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -11,6 +13,7 @@ use serde_json::Value;
 use worker::{D1Database, D1PreparedStatement, D1Type};
 
 use crate::error::AppError;
+use crate::sync::domain::{domain_for_wire_table, prefix_for_domain};
 
 /// Stop accumulating a pull page once it would exceed this serialized size.
 const PULL_BODY_BUDGET: usize = 900 * 1024;
@@ -29,7 +32,7 @@ pub struct RowChange {
     #[serde(default)]
     pub payload: Option<Value>,
     /// Opaque, lexicographically-ordered LWW token the client assigns; the
-    /// server never interprets it (docs/sync/sync-v2.md §4).
+    /// server never interprets it (docs/sync/sync-v3.md).
     pub version: String,
     #[serde(default)]
     pub deleted: bool,
@@ -39,6 +42,9 @@ pub struct RowChange {
     /// Server-assigned cursor value. Meaningful on outbound rows only.
     #[serde(default)]
     pub seq: i64,
+    /// Domain reset generation. A stale generation is never accepted.
+    #[serde(default)]
+    pub generation: i64,
 }
 
 /// One page of a pull.
@@ -65,6 +71,7 @@ struct DbRow {
     version: String,
     device_id: String,
     deleted: i64,
+    generation: i64,
 }
 
 #[derive(Deserialize)]
@@ -72,12 +79,23 @@ struct MaxRow {
     m: Option<i64>,
 }
 
+#[derive(Deserialize)]
+struct GenerationRow {
+    domain: String,
+    generation: i64,
+}
+
+#[derive(Deserialize)]
+struct GenerationValueRow {
+    generation: i64,
+}
+
 fn d1_err(e: impl std::fmt::Display) -> AppError {
     AppError::Internal(format!("d1: {e}"))
 }
 
 /// `incoming` beats `stored` under last-writer-wins. `device_id` only breaks
-/// the exact-version tie so the order is total (docs/sync/sync-v2.md §4.2).
+/// the exact-version tie so the order is total (docs/sync/sync-v3.md).
 fn lww_wins(incoming_version: &str, incoming_device: &str, stored: Option<&MetaRow>) -> bool {
     match stored {
         None => true,
@@ -110,15 +128,21 @@ pub async fn apply_changes(
     let mut writes: Vec<D1PreparedStatement> = Vec::with_capacity(changes.len());
 
     for change in changes {
+        let domain = domain_for_wire_table(&change.table)
+            .ok_or_else(|| AppError::BadRequest("unknown sync domain".into()))?;
+        let generation = i32::try_from(change.generation)
+            .map_err(|_| AppError::BadRequest("invalid domain generation".into()))?;
         let stored: Option<MetaRow> = db
             .prepare(
                 "SELECT version, device_id FROM sync_rows
-                 WHERE user_id = ?1 AND table_name = ?2 AND row_id = ?3",
+                 WHERE user_id = ?1 AND table_name = ?2 AND row_id = ?3
+                   AND generation = ?4",
             )
             .bind_refs([
                 &D1Type::Text(user_id),
                 &D1Type::Text(&change.table),
                 &D1Type::Text(&change.id),
+                &D1Type::Integer(generation),
             ])
             .map_err(d1_err)?
             .first(None)
@@ -145,8 +169,14 @@ pub async fn apply_changes(
         writes.push(
             db.prepare(
                 "INSERT OR REPLACE INTO sync_rows
-                    (user_id, table_name, row_id, payload, version, device_id, deleted, updated_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                    (user_id, table_name, row_id, payload, version, device_id,
+                     deleted, updated_at, generation)
+                 SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9
+                 WHERE ?9 = COALESCE(
+                   (SELECT generation FROM sync_domain_generations
+                    WHERE user_id = ?1 AND domain = ?10),
+                   0
+                 )",
             )
             .bind_refs([
                 &D1Type::Text(user_id),
@@ -157,6 +187,8 @@ pub async fn apply_changes(
                 &D1Type::Text(device_id),
                 &D1Type::Integer(deleted_int),
                 &D1Type::Text(&now),
+                &D1Type::Integer(generation),
+                &D1Type::Text(domain),
             ])
             .map_err(d1_err)?,
         );
@@ -184,7 +216,8 @@ pub async fn pull(
 
     let rows: Vec<DbRow> = db
         .prepare(
-            "SELECT seq, table_name, row_id, payload, version, device_id, deleted
+            "SELECT seq, table_name, row_id, payload, version, device_id,
+                    deleted, generation
              FROM sync_rows
              WHERE user_id = ?1 AND device_id <> ?2 AND seq > ?3
              ORDER BY seq ASC
@@ -222,6 +255,7 @@ pub async fn pull(
             deleted: r.deleted != 0,
             device_id: r.device_id,
             seq: r.seq,
+            generation: r.generation,
         };
         let est = serde_json::to_string(&change).map(|s| s.len()).unwrap_or(0);
         if !changes.is_empty() && body_bytes + est > PULL_BODY_BUDGET {
@@ -245,6 +279,83 @@ pub async fn pull(
     })
 }
 
+/// Current reset generation for every domain visible to the caller.
+pub async fn load_domain_generations(
+    db: &D1Database,
+    user_id: &str,
+    domains: &[String],
+) -> Result<BTreeMap<String, i64>, AppError> {
+    let rows: Vec<GenerationRow> = db
+        .prepare(
+            "SELECT domain, generation FROM sync_domain_generations
+             WHERE user_id = ?1",
+        )
+        .bind_refs([&D1Type::Text(user_id)])
+        .map_err(d1_err)?
+        .all()
+        .await
+        .map_err(d1_err)?
+        .results()
+        .map_err(d1_err)?;
+    let stored = rows
+        .into_iter()
+        .map(|row| (row.domain, row.generation))
+        .collect::<HashMap<_, _>>();
+    Ok(domains
+        .iter()
+        .filter(|domain| prefix_for_domain(domain).is_some())
+        .map(|domain| (domain.clone(), *stored.get(domain).unwrap_or(&0)))
+        .collect())
+}
+
+/// Permanently clears one domain and advances its generation atomically.
+pub async fn reset_domain(
+    db: &D1Database,
+    user_id: &str,
+    device_id: &str,
+    domain: &str,
+) -> Result<i64, AppError> {
+    let prefix = prefix_for_domain(domain)
+        .ok_or_else(|| AppError::BadRequest("unknown sync domain".into()))?;
+    let prefix_like = format!("{prefix}%");
+    let now = Utc::now().to_rfc3339();
+    let bump = db
+        .prepare(
+            "INSERT INTO sync_domain_generations
+               (user_id, domain, generation, reset_at, reset_device_id)
+             VALUES (?1, ?2, 1, ?3, ?4)
+             ON CONFLICT(user_id, domain) DO UPDATE SET
+               generation = sync_domain_generations.generation + 1,
+               reset_at = excluded.reset_at,
+               reset_device_id = excluded.reset_device_id",
+        )
+        .bind_refs([
+            &D1Type::Text(user_id),
+            &D1Type::Text(domain),
+            &D1Type::Text(&now),
+            &D1Type::Text(device_id),
+        ])
+        .map_err(d1_err)?;
+    let clear = db
+        .prepare("DELETE FROM sync_rows WHERE user_id = ?1 AND table_name LIKE ?2")
+        .bind_refs([&D1Type::Text(user_id), &D1Type::Text(&prefix_like)])
+        .map_err(d1_err)?;
+    db.batch(vec![bump, clear]).await.map_err(d1_err)?;
+
+    let row: GenerationValueRow = db
+        .prepare(
+            "SELECT generation FROM sync_domain_generations
+             WHERE user_id = ?1 AND domain = ?2",
+        )
+        .bind_refs([&D1Type::Text(user_id), &D1Type::Text(domain)])
+        .map_err(d1_err)?
+        .first(None)
+        .await
+        .map_err(d1_err)?
+        .ok_or_else(|| AppError::Internal("domain generation missing after reset".into()))?;
+    Ok(row.generation)
+}
+
 /// The user's highest `seq` (their sync horizon). `0` when nothing is stored.
 pub async fn max_seq(db: &D1Database, user_id: &str) -> Result<i64, AppError> {
     let row: Option<MaxRow> = db
@@ -263,9 +374,9 @@ mod tests {
     use serde_json::json;
 
     const CLIENT_PUSH_FIXTURE: &str =
-        include_str!("../../../../docs/fixtures/sync_v2_client_push_row_change.json");
+        include_str!("../../../../docs/fixtures/sync_v3_client_push_row_change.json");
     const SERVER_TOMBSTONE_FIXTURE: &str =
-        include_str!("../../../../docs/fixtures/sync_v2_server_tombstone_row_change.json");
+        include_str!("../../../../docs/fixtures/sync_v3_server_tombstone_row_change.json");
 
     // Version tokens are compared lexically; the client mints them so they
     // sort the same as their intended order (canonical HLC strings do).
@@ -360,6 +471,7 @@ mod tests {
             deleted: true,
             device_id: "device-b".into(),
             seq: 42,
+            generation: 3,
         };
 
         let value = serde_json::to_value(&row).unwrap();
@@ -372,7 +484,8 @@ mod tests {
                 "version": "1716381000124.0000-device-b",
                 "deleted": true,
                 "device_id": "device-b",
-                "seq": 42
+                "seq": 42,
+                "generation": 3
             })
         );
     }

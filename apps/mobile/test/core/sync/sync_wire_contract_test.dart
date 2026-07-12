@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 
 void main() {
-  group('Sync v2 wire contracts', () {
-    test('protocol version is pinned to v2', () {
-      expect(kSyncProtocolVersion, 2);
+  group('Sync v3 wire contracts', () {
+    test('protocol version is pinned to v3', () {
+      expect(kSyncProtocolVersion, 3);
     });
 
     test('RowChange.toJson emits only client-to-server fields', () {
@@ -37,20 +37,21 @@ void main() {
         },
         'version': '1716381000123.0000-device-a',
         'deleted': false,
+        'generation': 0,
       });
     });
 
     test('RowChange.toJson matches the shared client-push fixture', () {
       // This fixture is also consumed by the backend Rust tests, pinning the
       // Dart and Rust serializers to the same row-change wire shape.
-      final fixture = _readFixture('sync_v2_client_push_row_change.json');
+      final fixture = _readFixture('sync_v3_client_push_row_change.json');
       final change = RowChange.fromJson(fixture);
 
       expect(change.toJson(), fixture);
     });
 
     test('client sync request fixture uses RowChange.toJson shape', () {
-      final fixture = _readFixture('sync_v2_client_sync_request.json');
+      final fixture = _readFixture('sync_v3_client_sync_request.json');
       final changesRaw = fixture['changes'] as List<Object?>;
 
       expect(fixture['device_id'], 'device-a');
@@ -80,6 +81,7 @@ void main() {
         'payload': null,
         'version': '1716381000124.0000-device-a',
         'deleted': true,
+        'generation': 0,
       });
     });
 
@@ -95,6 +97,7 @@ void main() {
         'deleted': false,
         'device_id': 'device-b',
         'seq': 1287,
+        'generation': 4,
       });
 
       expect(change.table, 'know:knowledge_notes');
@@ -107,6 +110,7 @@ void main() {
       expect(change.deleted, isFalse);
       expect(change.deviceId, 'device-b');
       expect(change.seq, 1287);
+      expect(change.generation, 4);
     });
 
     test('RowChange.fromJson treats null payload as a tombstone payload', () {
@@ -127,7 +131,7 @@ void main() {
     });
 
     test('RowChange.fromJson reads the shared server tombstone fixture', () {
-      final fixture = _readFixture('sync_v2_server_tombstone_row_change.json');
+      final fixture = _readFixture('sync_v3_server_tombstone_row_change.json');
       final change = RowChange.fromJson(fixture);
 
       expect(change.table, 'health:health_metrics');
@@ -137,6 +141,7 @@ void main() {
       expect(change.deleted, isTrue);
       expect(change.deviceId, 'device-b');
       expect(change.seq, 42);
+      expect(change.generation, 3);
     });
 
     test('RowAck and SyncResponse expose accepted wire keys', () {
@@ -164,7 +169,7 @@ void main() {
 
     test('server sync response fixture parses into SyncResponse shape', () {
       final response = _readSyncResponseFixture(
-        'sync_v2_server_sync_response.json',
+        'sync_v3_server_sync_response.json',
       );
 
       expect(response.seq, 42);
@@ -172,11 +177,12 @@ void main() {
       expect(response.changes.single.table, 'health:health_metrics');
       expect(response.changes.single.deviceId, 'device-b');
       expect(response.acceptedKeys, {'fin:accounts\u{0}acc-1'});
+      expect(response.domainGenerations, containsPair('health', 3));
     });
 
     test('server empty response fixture parses as idle page', () {
       final response = _readSyncResponseFixture(
-        'sync_v2_server_empty_response.json',
+        'sync_v3_server_empty_response.json',
       );
 
       expect(response.seq, 42);
@@ -188,7 +194,7 @@ void main() {
 
     test('server more response fixture preserves pagination flag', () {
       final response = _readSyncResponseFixture(
-        'sync_v2_server_more_response.json',
+        'sync_v3_server_more_response.json',
       );
 
       expect(response.seq, 42);
@@ -200,7 +206,7 @@ void main() {
 
     test('server no-accepted response fixture leaves dirty keys uncleared', () {
       final response = _readSyncResponseFixture(
-        'sync_v2_server_no_accepted_response.json',
+        'sync_v3_server_no_accepted_response.json',
       );
 
       expect(response.seq, 41);
@@ -242,5 +248,11 @@ SyncResponse _readSyncResponseFixture(String name) {
           ),
         )
         .toList(growable: false),
+    domainGenerations:
+        (fixture['domain_generations'] as Map<Object?, Object?>? ??
+                const <Object?, Object?>{})
+            .map(
+              (key, value) => MapEntry(key.toString(), (value as num).toInt()),
+            ),
   );
 }

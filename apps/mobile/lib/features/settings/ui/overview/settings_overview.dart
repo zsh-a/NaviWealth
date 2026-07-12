@@ -108,6 +108,13 @@ class SettingsOverview extends ConsumerWidget {
             const AppGradientDivider(),
           ],
           InlineLinkRow(
+            icon: FLucideIcons.database,
+            label: l10n.settingsDataManagementTitle,
+            subtitle: l10n.settingsDataManagementSubtitle,
+            onTap: () => context.goNamed(SettingsRouteNames.dataManagement),
+          ),
+          const AppGradientDivider(),
+          InlineLinkRow(
             icon: FLucideIcons.cloudUpload,
             label: l10n.settingsDataTitle,
             subtitle: l10n.settingsDataSubtitle,

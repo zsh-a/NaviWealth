@@ -31,6 +31,7 @@ import 'package:naviwealth/features/knowledge/composition/knowledge_routes.dart'
 import 'package:naviwealth/features/knowledge/composition/knowledge_share_intent_handler.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_decision_memory_indexer.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_object_memory_indexers.dart';
+import 'package:naviwealth/features/knowledge/data_management/knowledge_data_management.dart';
 import 'package:naviwealth/features/knowledge/knowledge_ai_tools.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -109,6 +110,7 @@ final DomainPack kKnowledgePack = DomainPack(
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
   shareIntentHandlers: const [KnowledgeShareIntentHandler()],
+  dataManagementSpec: knowledgeDataManagementSpec,
   settingsSpec: domainSettingsSpec(
     icon: FLucideIcons.brain,
     label: 'KnowledgeOS',

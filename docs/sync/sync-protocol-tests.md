@@ -1,6 +1,6 @@
-# Sync v2 Protocol — Test Case Catalogue
+# Sync v3 Protocol — Test Case Catalogue
 
-Companion to [`sync-v2.md`](./sync-v2.md). These are protocol-level
+Companion to [`sync-v3.md`](./sync-v3.md). These are protocol-level
 scenarios that the Flutter client and Cloudflare Worker backend should cover
 for the active row-state sync protocol.
 
@@ -488,6 +488,31 @@ the existing HLC unit-test IDs remain stable.
 
 ---
 
+## K. Domain reset generations
+
+### SP-K-1 — Permanent reset advances generation
+
+- **Setup**: a domain has server rows in generation 0.
+- **Action**: the owner calls `POST /sync/reset-domain`.
+- **Expect**: rows under the domain prefix are physically removed and the
+  response returns generation 1.
+
+### SP-K-2 — Offline stale generation cannot resurrect rows
+
+- **Setup**: a device still holds generation-0 rows after the server reset.
+- **Action**: it reconnects and pushes those rows.
+- **Expect**: the server rejects them, returns generation 1, and the client
+  hard-resets the local domain before applying any pull rows.
+
+### SP-K-3 — Reset racing with sync remains authoritative
+
+- **Setup**: a generation-0 sync write races a reset transaction.
+- **Action**: both reach D1 concurrently.
+- **Expect**: the conditional row write cannot insert after the generation
+  advances; the reset wins regardless of request ordering.
+
+---
+
 ## Coverage matrix
 
 | Spec area | Case IDs |
@@ -502,6 +527,7 @@ the existing HLC unit-test IDs remain stable.
 | Bootstrap and forced resync | SP-H-* |
 | Errors, retry, scheduling | SP-I-* |
 | Diagnostics | SP-J-* |
+| Domain reset generations | SP-K-* |
 
-If `sync-v2.md` adds behavior, add at least one `SP-*` case here and cite the
+If `sync-v3.md` adds behavior, add at least one `SP-*` case here and cite the
 case ID from the test that covers it.

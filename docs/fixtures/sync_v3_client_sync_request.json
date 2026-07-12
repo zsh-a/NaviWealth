@@ -12,7 +12,8 @@
         "deleted_at": null
       },
       "version": "1716381000123.0000-device-a",
-      "deleted": false
+      "deleted": false,
+      "generation": 0
     }
   ]
 }

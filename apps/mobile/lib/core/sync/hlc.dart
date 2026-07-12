@@ -8,9 +8,9 @@
 ///
 /// **Canonical string form:** `<wallMillis>.<counter:%04x>-<nodeId>`. The dot
 /// separator and zero-padded hex counter make it sort lexicographically the
-/// same as the `(wallMillis, counter, nodeId)` tuple — which is why sync v2
+/// same as the `(wallMillis, counter, nodeId)` tuple — which is why sync v3
 /// uses this string directly as the opaque, ordered `version` token
-/// (`docs/sync/sync-v2.md` §4.1).
+/// (`docs/sync/sync-v3.md`).
 class Hlc implements Comparable<Hlc> {
   const Hlc({
     required this.wallMillis,

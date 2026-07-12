@@ -1,5 +1,5 @@
 //! `GET /me` — JWT check plus a cheap "is there anything new" probe
-//! (docs/sync/sync-v2.md §5.2).
+//! (docs/sync/sync-v3.md).
 
 use chrono::Utc;
 use serde::Serialize;

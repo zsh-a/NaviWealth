@@ -21,6 +21,7 @@ import 'package:naviwealth/features/execution/composition/execution_proposal_kin
     show kExecutionProposalKinds;
 import 'package:naviwealth/features/execution/composition/execution_routes.dart';
 import 'package:naviwealth/features/execution/data/execution_memory_indexer.dart';
+import 'package:naviwealth/features/execution/data_management/execution_data_management.dart';
 import 'package:naviwealth/features/execution/execution_ai_tools.dart';
 import 'package:naviwealth/features/execution/ui/execution_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -66,6 +67,7 @@ final DomainPack kExecutionPack = DomainPack(
   backgroundBootstrapBuilder: _executionBackgroundBootstrap,
   commandPaletteEntriesBuilder: executionCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeExecutionProviderOverrides,
+  dataManagementSpec: executionDataManagementSpec,
   settingsSpec: domainSettingsSpec(
     icon: FLucideIcons.listTodo,
     label: 'ExecutionOS',

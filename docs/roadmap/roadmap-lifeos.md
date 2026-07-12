@@ -91,12 +91,12 @@ production diagnostics:
 
 ### 6. Sync Hardening
 
-Sync v2 remains row-state LWW. Near-term work should harden the protocol,
+Sync v3 remains row-state LWW. Near-term work should harden the protocol,
 not redesign it:
 
 - Add Dart-to-Rust wire contract tests.
 - Make conflicts and skipped rows diagnosable.
-- Start E2EE only after the v2 stability window is met.
+- Start E2EE only after the v3 stability window is met.
 - Keep the backend schema-agnostic.
 
 ### 7. Bootstrap And Startup Composition
@@ -138,7 +138,7 @@ Before claiming a roadmap item done, prove it from current state:
 ## Anti-Goals
 
 - Do not add TimeOS, LivingOS, or any future domain without a new ADR.
-- Do not turn sync v2 into CRDT, event sourcing, or schema negotiation.
+- Do not turn sync v3 into CRDT, event sourcing, or schema negotiation.
 - Do not add a backend AI relay.
 - Do not put domain entities into `core/` contracts.
 - Do not introduce social, collaboration, publishing, or entertainment

@@ -39,7 +39,7 @@ fi
 
 raw_frb_agent_runtime_import_violations="$(
   grep -rnE --include='*.dart' "$RAW_FRB_AGENT_RUNTIME_IMPORT_PATTERN" "$LIB" \
-    | grep -vE 'apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_(native|llm_stream)_bridge\.dart' \
+    | grep -vE 'apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_(native_api|native_bridge|llm_stream_bridge)\.dart' \
     || true
 )"
 

@@ -1,7 +1,7 @@
 # NaviWealth Income Planner（期权现金流机会引擎）
 
 > 文档版本：2026-05-21
-> 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-fire-os.md`](../archive/roadmaps/roadmap-fire-os.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v2.md`](../sync/sync-v2.md)
+> 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-fire-os.md`](../archive/roadmaps/roadmap-fire-os.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v3.md`](../sync/sync-v3.md)
 > 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
 >
 > 状态（2026-05-21）：P0–P3 已实现并通过分析与测试。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P4（Wheel / Income Cycle 状态机）与 P5（Tradier OAuth 接入）仍待启动。
@@ -73,7 +73,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 | 约束 | 来源 | 对设计的影响 |
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](../ai/ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
-| Backend 只做 sync_rows 存储 | [`sync-v2.md`](../sync/sync-v2.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
+| Backend 只做 sync_rows 存储 | [`sync-v3.md`](../sync/sync-v3.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
 | Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
@@ -265,7 +265,7 @@ class OpportunityExplanation with _$OpportunityExplanation {
 
 ## 6. 数据层
 
-### 6.1 同步策略（与 sync v2 边界）
+### 6.1 同步策略（与 sync v3 边界）
 
 | 表 | 同步 | 理由 |
 |---|---|---|
@@ -598,7 +598,7 @@ if (kIsWeb) return const SizedBox.shrink();
 | **P4** | Wheel / Income Cycle 状态机 + 复盘视图 | yfinance | ❌ |
 | **P5** | Tradier sandbox 接入 | Tradier (OAuth) | ✅ 新增 `routes/market/options.rs` 透传 |
 
-P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](../sync/sync-v2.md) 的 `sync_rows` 统一存储 opaque payload。
+P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v3.md`](../sync/sync-v3.md) 的 `sync_rows` 统一存储 opaque payload。
 **评分 / 候选生成 / opportunity cache 永远不上 server。** 这条线在 P5 接 OAuth 行情源时也不能松——P5 的 backend route 仅做凭证持有 + HTTP 透传，禁止 normalize / cache / score。
 
 > **2026-05-22 ADR 修订**：sync v2 移除了 per-table materialised D1 表和 `materialise.rs::sql_table_name` 映射。新增同步表只需要端侧进入 row applier allow-list，backend 仍保持 schema-agnostic。

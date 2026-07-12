@@ -26,6 +26,7 @@ import '../ai/runtime/device/tools/device_tool.dart';
 import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
 import '../command_palette/command_palette_entry.dart';
+import '../data_management/data_management.dart';
 import '../shell/domain_shell.dart';
 import 'share_intent.dart';
 
@@ -150,6 +151,7 @@ class DomainPack {
     this.commandPaletteEntriesBuilder,
     this.providerOverridesBuilder,
     this.localTableCountsBuilder,
+    this.dataManagementSpec,
     this.notificationSettingsBuilder,
     this.settingsRoutesBuilder,
     this.settingsSpec,
@@ -241,6 +243,11 @@ class DomainPack {
   /// Debug diagnostics for Settings → Sync. Domains own their table SQL;
   /// the Settings page reads the domain-neutral aggregate provider.
   final DomainLocalTableCountsBuilder? localTableCountsBuilder;
+
+  /// Domain-owned source/cache inventory for Settings → Data & Storage.
+  /// Registered for all packs, including disabled optional domains, so users
+  /// can inspect and clear residual local data without re-enabling a domain.
+  final DomainDataManagementSpec? dataManagementSpec;
 
   /// Rows contributed to Settings → Notifications when this domain is active.
   /// Global notification permission and master enablement stay in Settings;

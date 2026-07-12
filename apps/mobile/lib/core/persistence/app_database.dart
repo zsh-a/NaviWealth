@@ -134,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 39;
+  int get schemaVersion => 40;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -157,6 +157,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAgentRuns(this);
       await _createAgentRuntimeCheckpoints(this);
       await _createAgentArtifacts(this);
+      await _createDataMaintenanceRuns(this);
       await _createAgentPreferences(this);
       await _createRebalanceExecutionTables(this);
     },
@@ -646,6 +647,11 @@ class AppDatabase extends _$AppDatabase {
       // product run history remains in `agent_runs`.
       if (from < 39) {
         await _createAgentRuntimeCheckpoints(this);
+      }
+      // v39 -> v40: local data-maintenance audit records and automatic
+      // retention bookkeeping.
+      if (from < 40) {
+        await _createDataMaintenanceRuns(this);
       }
     },
     beforeOpen: (details) async {

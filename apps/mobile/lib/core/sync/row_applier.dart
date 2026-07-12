@@ -7,7 +7,7 @@ import 'sync_api_client.dart';
 import 'sync_table_registry.dart';
 
 /// Applies pulled row-states to the local Drift tables with per-row LWW
-/// (`docs/sync/sync-v2.md` §7.3).
+/// (`docs/sync/sync-v3.md`).
 ///
 /// Schema-agnostic: column shapes are read from Drift's runtime metadata,
 /// so a new syncable table needs no applier change. This mirrors the

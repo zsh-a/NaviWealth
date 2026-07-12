@@ -18,7 +18,7 @@ FinanceOS already includes:
 - Options Income through wheel lifecycle.
 - Watchlist, event timeline, DCA simulator, analytics, and command palette.
 - Device-only Finance AI tools under Finance-owned feature paths.
-- Sync v2 row-state support with `fin:` row-family prefix.
+- Sync v3 row-state support with `fin:` row-family prefix and reset generation.
 
 ## Near-Term Priorities
 
@@ -85,7 +85,7 @@ These stay out of scheduled work until their trigger is met:
 | Area | Trigger |
 |---|---|
 | FIRE plan sync | A real multi-device FIRE inconsistency report |
-| Sync E2EE | Sync v2 stable for the agreed production window |
+| Sync E2EE | Sync v3 stable for the agreed production window |
 | Provider-specific imports | User sample files or repeated manual-entry pain |
 | Extra locales | A real non-English/Chinese user group |
 | Household or multi-user finance | Explicit user request plus design review |

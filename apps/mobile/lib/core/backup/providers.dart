@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/persistence/providers.dart';
 import '../auth/current_user.dart';
+import '../auth/domain_scope.dart';
 import '../logging/providers.dart';
 import '../sync/outbox_provider.dart';
 import '../sync/providers.dart';
@@ -41,6 +42,21 @@ final backupExportRunnerProvider = FutureProvider<BackupExportRunner?>((
   };
 });
 
+typedef DomainBackupExportRunner =
+    Future<Uint8List> Function({
+      required String passphrase,
+      required DomainScope domain,
+    });
+
+final domainBackupExportRunnerProvider =
+    FutureProvider<DomainBackupExportRunner?>((ref) async {
+      final service = await ref.watch(backupServiceProvider.future);
+      if (service == null) return null;
+      return ({required String passphrase, required DomainScope domain}) {
+        return service.exportBackup(passphrase: passphrase, domain: domain);
+      };
+    });
+
 typedef BackupRestoreRunner =
     Future<RestoreResult> Function({
       required String passphrase,
@@ -62,3 +78,30 @@ final backupRestoreRunnerProvider = FutureProvider<BackupRestoreRunner?>((
     );
   };
 });
+
+typedef DomainBackupRestoreRunner =
+    Future<RestoreResult> Function({
+      required String passphrase,
+      required Uint8List fileBytes,
+      required DomainScope domain,
+    });
+
+final domainBackupRestoreRunnerProvider =
+    FutureProvider<DomainBackupRestoreRunner?>((ref) async {
+      final service = await ref.watch(backupServiceProvider.future);
+      if (service == null) return null;
+      final scheduler = await ref.watch(syncSchedulerProvider.future);
+      return ({
+        required String passphrase,
+        required Uint8List fileBytes,
+        required DomainScope domain,
+      }) {
+        return service.restoreBackup(
+          passphrase: passphrase,
+          fileBytes: fileBytes,
+          expectedDomain: domain,
+          pauseSync: scheduler?.pause,
+          resumeSync: scheduler?.resume,
+        );
+      };
+    });

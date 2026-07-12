@@ -7,7 +7,8 @@
 > clean break — there is no on-wire compatibility with v1. The v1 doc is kept
 > as deleted-history reference only.
 
-Status: **Active v2.0** (2026-05-22).
+Status: **Superseded by [sync v3](sync-v3.md)** (2026-07-12). v2 remains as
+the row-state design history; v3 adds breaking per-domain reset generations.
 
 ## 0. Why v2
 

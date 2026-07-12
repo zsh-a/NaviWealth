@@ -5,12 +5,14 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/biometric_auth_service.dart';
 import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
+import 'package:naviwealth/features/settings/ui/data_management/data_management_page.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
 import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -35,6 +37,11 @@ GoRouter _router({
             name: AppRouteNames.domains,
             builder: (_, _) => const DomainsSettingsPage(),
           ),
+          GoRoute(
+            path: 'data-management',
+            name: AppRouteNames.dataManagement,
+            builder: (_, _) => const DataManagementPage(),
+          ),
           for (final pack in resolvedPacks)
             if (pack.settingsSpec?.routeBuilder != null)
               pack.settingsSpec!.routeBuilder!((child) => child),
@@ -54,6 +61,7 @@ Future<Widget> _wrap(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
+      currentUserIdProvider.overrideWithValue(() async => kLocalOnlyUserId),
       domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
     ],
     child: MaterialApp.router(
@@ -66,6 +74,27 @@ Future<Widget> _wrap(
 }
 
 void main() {
+  group('Settings → Data & storage', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('shows all domains including disabled optional domains', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settingsDataManagement),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Data & storage'), findsOneWidget);
+      expect(find.text('FinanceOS'), findsOneWidget);
+      expect(find.text('HealthOS'), findsOneWidget);
+      expect(find.text('KnowledgeOS'), findsOneWidget);
+      expect(find.text('ExecutionOS'), findsOneWidget);
+      expect(find.text('Disabled'), findsNWidgets(3));
+    });
+  });
+
   group('Settings → Base currency', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -95,6 +124,9 @@ void main() {
             overrides: [
               sharedPreferencesProvider.overrideWithValue(prefs),
               appDatabaseProvider.overrideWith((_) async => db),
+              currentUserIdProvider.overrideWithValue(
+                () async => kLocalOnlyUserId,
+              ),
               domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
             ],
             child: MaterialApp.router(

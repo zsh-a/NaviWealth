@@ -6,6 +6,7 @@ abstract final class SettingsRoutes {
   static const devices = '/settings/devices';
   static const fxRates = '/settings/fx-rates';
   static const backup = '/settings/backup';
+  static const dataManagement = '/settings/data-management';
   static const notifications = '/settings/notifications';
   static const logs = '/settings/logs';
   static const performance = '/settings/performance';
@@ -42,6 +43,7 @@ abstract final class SettingsRouteNames {
   static const devices = 'devices';
   static const fxRates = 'fx-rates';
   static const backup = 'backup';
+  static const dataManagement = 'data-management';
   static const notifications = 'notifications';
   static const logs = 'logs';
   static const performance = 'performance';

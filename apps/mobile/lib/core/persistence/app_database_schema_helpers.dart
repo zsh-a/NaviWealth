@@ -54,6 +54,12 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   }
 }
 
+Future<void> _createDataMaintenanceRuns(AppDatabase db) async {
+  for (final stmt in dataMaintenanceRunDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createSyncTables(AppDatabase db) async {
   for (final stmt in syncTableDdl) {
     await db.customStatement(stmt);

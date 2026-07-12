@@ -1,13 +1,13 @@
-/// Wire types and client interface for sync v2 (`docs/sync/sync-v2.md`).
+/// Wire types and client interface for sync v3 (`docs/sync/sync-v3.md`).
 ///
-/// v2 syncs the *current state* of each row, not a stream of ops. One
+/// v3 syncs the *current state* of each row, not a stream of ops. One
 /// `POST /sync` does push and pull in a single round trip.
 library;
 
-/// Sync wire-protocol version this client speaks (`docs/sync/sync-v2.md` §5).
-const int kSyncProtocolVersion = 2;
+/// Sync wire-protocol version this client speaks.
+const int kSyncProtocolVersion = 3;
 
-/// Hard ceiling on rows per `POST /sync` request (`docs/sync/sync-v2.md` §5.1).
+/// Hard ceiling on rows per `POST /sync` request (`docs/sync/sync-v3.md`).
 const int kSyncMaxChanges = 500;
 
 /// A single row as it travels on the wire, both directions.
@@ -24,6 +24,7 @@ class RowChange {
     required this.deleted,
     this.deviceId = '',
     this.seq = 0,
+    this.generation = 0,
   });
 
   /// Syncable table name (the Drift `actualTableName`).
@@ -48,12 +49,16 @@ class RowChange {
   /// Server-assigned cursor value. Meaningful on inbound rows only.
   final int seq;
 
+  /// Per-domain reset generation. Rows from an older generation are stale.
+  final int generation;
+
   Map<String, Object?> toJson() => {
     'table': table,
     'id': id,
     'payload': payload,
     'version': version,
     'deleted': deleted,
+    'generation': generation,
   };
 
   static RowChange fromJson(Map<String, Object?> j) {
@@ -70,6 +75,7 @@ class RowChange {
       deleted: (j['deleted'] as bool?) ?? false,
       deviceId: (j['device_id'] as String?) ?? '',
       seq: (j['seq'] as num?)?.toInt() ?? 0,
+      generation: (j['generation'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -91,13 +97,14 @@ class RowAck {
       RowAck(table: json['table'] as String, id: json['id'] as String);
 }
 
-/// `POST /sync` response (`docs/sync/sync-v2.md` §5.1).
+/// `POST /sync` response (`docs/sync/sync-v3.md`).
 class SyncResponse {
   const SyncResponse({
     required this.seq,
     required this.changes,
     required this.more,
     this.accepted = const <RowAck>[],
+    this.domainGenerations = const <String, int>{},
   });
 
   /// Cursor the client adopts after applying [changes].
@@ -112,7 +119,17 @@ class SyncResponse {
   /// Push rows accepted by the server in this cycle.
   final List<RowAck> accepted;
 
+  /// Authoritative reset generation for every active LifeOS domain.
+  final Map<String, int> domainGenerations;
+
   Set<String> get acceptedKeys => accepted.map((a) => a.key).toSet();
+}
+
+class DomainResetReceipt {
+  const DomainResetReceipt({required this.domain, required this.generation});
+
+  final String domain;
+  final int generation;
 }
 
 /// HTTP client for the single `POST /sync` endpoint.
@@ -123,4 +140,8 @@ abstract class SyncApiClient {
     required int since,
     required List<RowChange> changes,
   });
+
+  /// Permanently clears a domain on the server and advances its generation.
+  Future<DomainResetReceipt> resetDomain({required String domain}) =>
+      throw UnsupportedError('Domain reset is not implemented by this client');
 }

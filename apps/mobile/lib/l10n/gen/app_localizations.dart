@@ -9663,6 +9663,342 @@ abstract class AppLocalizations {
   /// **'Data'**
   String get settingsDataSection;
 
+  /// Settings tile and page title for LifeOS data management
+  ///
+  /// In en, this message translates to:
+  /// **'Data & storage'**
+  String get settingsDataManagementTitle;
+
+  /// Settings data-management tile and page subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect, export, clean, and reset each OS from one place'**
+  String get settingsDataManagementSubtitle;
+
+  /// No description provided for @dataManagementBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted backup & restore'**
+  String get dataManagementBackupTitle;
+
+  /// No description provided for @dataManagementBackupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a backup before destructive maintenance'**
+  String get dataManagementBackupSubtitle;
+
+  /// No description provided for @dataManagementSafetyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleanup removes only rebuildable local data. OS reset actions require confirmation and are kept separate from cache maintenance.'**
+  String get dataManagementSafetyNotice;
+
+  /// No description provided for @dataManagementAutomaticTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic maintenance'**
+  String get dataManagementAutomaticTitle;
+
+  /// No description provided for @dataManagementAutomaticSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily cleanup of expired AI, agent, ingest, and event history'**
+  String get dataManagementAutomaticSubtitle;
+
+  /// No description provided for @dataManagementRunMaintenanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Run maintenance now'**
+  String get dataManagementRunMaintenanceTitle;
+
+  /// No description provided for @dataManagementRunMaintenanceNever.
+  ///
+  /// In en, this message translates to:
+  /// **'No maintenance run recorded'**
+  String get dataManagementRunMaintenanceNever;
+
+  /// No description provided for @dataManagementRunMaintenanceLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last run removed {count} rows'**
+  String dataManagementRunMaintenanceLast(int count);
+
+  /// No description provided for @dataManagementMaintenanceRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running…'**
+  String get dataManagementMaintenanceRunning;
+
+  /// No description provided for @dataManagementMaintenanceSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance complete · {count} rows removed'**
+  String dataManagementMaintenanceSuccess(int count);
+
+  /// No description provided for @dataManagementDomainEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get dataManagementDomainEnabled;
+
+  /// No description provided for @dataManagementDomainDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get dataManagementDomainDisabled;
+
+  /// No description provided for @dataManagementSourceRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get dataManagementSourceRows;
+
+  /// No description provided for @dataManagementDeletedRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get dataManagementDeletedRows;
+
+  /// No description provided for @dataManagementCacheRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache'**
+  String get dataManagementCacheRows;
+
+  /// No description provided for @dataManagementTableSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{sourceTables} source tables · {cacheTables} cache tables'**
+  String dataManagementTableSummary(int sourceTables, int cacheTables);
+
+  /// No description provided for @dataManagementCacheHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Local derived data; features rebuild it when needed.'**
+  String get dataManagementCacheHelp;
+
+  /// No description provided for @dataManagementClearCacheAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cache'**
+  String get dataManagementClearCacheAction;
+
+  /// No description provided for @dataManagementClearing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearing…'**
+  String get dataManagementClearing;
+
+  /// No description provided for @dataManagementClearCacheConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear {domain} cache?'**
+  String dataManagementClearCacheConfirmTitle(String domain);
+
+  /// No description provided for @dataManagementClearCacheConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes {count} local cache rows. Synced source data is not affected.'**
+  String dataManagementClearCacheConfirmBody(int count);
+
+  /// No description provided for @dataManagementClearCacheSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared {count} cache rows'**
+  String dataManagementClearCacheSuccess(int count);
+
+  /// No description provided for @dataManagementExportDomainAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Export OS'**
+  String get dataManagementExportDomainAction;
+
+  /// No description provided for @dataManagementResetDeviceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset this device'**
+  String get dataManagementResetDeviceAction;
+
+  /// No description provided for @dataManagementResetEverywhereAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete everywhere'**
+  String get dataManagementResetEverywhereAction;
+
+  /// No description provided for @dataManagementResetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Resetting…'**
+  String get dataManagementResetting;
+
+  /// No description provided for @dataManagementResetDeviceConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset {domain} on this device?'**
+  String dataManagementResetDeviceConfirmTitle(String domain);
+
+  /// No description provided for @dataManagementResetDeviceConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Local source data, derived caches, memories, and agent history for this OS will be removed. Cloud data may download again on the next sync.'**
+  String get dataManagementResetDeviceConfirmBody;
+
+  /// No description provided for @dataManagementResetEverywhereConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete {domain}?'**
+  String dataManagementResetEverywhereConfirmTitle(String domain);
+
+  /// No description provided for @dataManagementResetEverywhereConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes this OS from the server and every device. Offline devices cannot restore the old generation.'**
+  String get dataManagementResetEverywhereConfirmBody;
+
+  /// No description provided for @dataManagementResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset complete · {count} local rows removed'**
+  String dataManagementResetSuccess(int count);
+
+  /// No description provided for @dataManagementSharedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI & cross-domain data'**
+  String get dataManagementSharedTitle;
+
+  /// No description provided for @dataManagementSharedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Device-local conversations, traces, memories, event projections, and agent results'**
+  String get dataManagementSharedSubtitle;
+
+  /// No description provided for @dataManagementChatRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get dataManagementChatRows;
+
+  /// No description provided for @dataManagementAiRows.
+  ///
+  /// In en, this message translates to:
+  /// **'AI audit'**
+  String get dataManagementAiRows;
+
+  /// No description provided for @dataManagementMemoryRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory'**
+  String get dataManagementMemoryRows;
+
+  /// No description provided for @dataManagementAgentRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Agents'**
+  String get dataManagementAgentRows;
+
+  /// No description provided for @dataManagementStorageUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Database {used} · {reclaimable} reclaimable'**
+  String dataManagementStorageUsage(String used, String reclaimable);
+
+  /// No description provided for @dataManagementClearSharedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear local history'**
+  String get dataManagementClearSharedAction;
+
+  /// No description provided for @dataManagementClearSharedConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear AI and cross-domain history?'**
+  String get dataManagementClearSharedConfirmTitle;
+
+  /// No description provided for @dataManagementClearSharedConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes {count} local chat, audit, memory, event, and agent-history rows. OS source data and preferences remain.'**
+  String dataManagementClearSharedConfirmBody(int count);
+
+  /// No description provided for @dataManagementClearSharedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared {count} local history rows'**
+  String dataManagementClearSharedSuccess(int count);
+
+  /// No description provided for @dataManagementCompactAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact database'**
+  String get dataManagementCompactAction;
+
+  /// No description provided for @dataManagementCompacting.
+  ///
+  /// In en, this message translates to:
+  /// **'Compacting…'**
+  String get dataManagementCompacting;
+
+  /// No description provided for @dataManagementCompactSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Database compacted'**
+  String get dataManagementCompactSuccess;
+
+  /// No description provided for @dataManagementResetAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All OS data'**
+  String get dataManagementResetAllTitle;
+
+  /// No description provided for @dataManagementResetAllSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use only when you want to start over across FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS. Account, device, settings, and FX configuration remain.'**
+  String get dataManagementResetAllSubtitle;
+
+  /// No description provided for @dataManagementResetAllDeviceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all on this device'**
+  String get dataManagementResetAllDeviceAction;
+
+  /// No description provided for @dataManagementResetAllEverywhereAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all OS data everywhere'**
+  String get dataManagementResetAllEverywhereAction;
+
+  /// No description provided for @dataManagementResetAllDeviceConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset every OS on this device?'**
+  String get dataManagementResetAllDeviceConfirmTitle;
+
+  /// No description provided for @dataManagementResetAllDeviceConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All local OS source data, caches, AI history, memories, and agent results will be removed. Cloud data can download again during sync.'**
+  String get dataManagementResetAllDeviceConfirmBody;
+
+  /// No description provided for @dataManagementResetAllEverywhereConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete every OS?'**
+  String get dataManagementResetAllEverywhereConfirmTitle;
+
+  /// No description provided for @dataManagementResetAllEverywhereConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All OS data will be permanently deleted from the server and every device. Account, device, settings, and FX configuration remain. This cannot be undone.'**
+  String get dataManagementResetAllEverywhereConfirmBody;
+
+  /// No description provided for @backupDomainPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{domain} backup'**
+  String backupDomainPageTitle(String domain);
+
   /// Settings section header for LifeOS domain opt-in management
   ///
   /// In en, this message translates to:

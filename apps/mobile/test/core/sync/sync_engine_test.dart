@@ -8,6 +8,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/domain_enums.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/clock.dart';
+import 'package:naviwealth/core/sync/domain_generation.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/errors.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -67,6 +68,13 @@ class FakePendingRows implements PendingRows {
     final set = opIds.toSet();
     _pointers.removeWhere((p) => set.contains(p.opId));
   }
+}
+
+class RecordingDomainResetHandler implements DomainResetHandler {
+  final List<String> domains = <String>[];
+
+  @override
+  Future<void> resetLocalDomain(String domain) async => domains.add(domain);
 }
 
 /// Recording [RowApplier]-shaped fake. RowApplier is a concrete class, so the
@@ -143,6 +151,32 @@ void main() {
   tearDown(() => db.close());
 
   group('SyncEngine cycle', () {
+    test(
+      'new server generation resets local domain before accepting rows',
+      () async {
+        final generations = InMemoryDomainGenerationStore();
+        final resets = RecordingDomainResetHandler();
+        api.domainGenerations['finance'] = 1;
+        engine = SyncEngine(
+          api: api,
+          pending: pending,
+          cursors: cursors,
+          applier: applier,
+          deviceId: _dev,
+          statusBus: bus,
+          clock: clock,
+          generationStore: generations,
+          resetHandler: resets,
+        );
+
+        final result = await engine.run();
+
+        expect(result.success, isTrue);
+        expect(resets.domains, contains('finance'));
+        expect(generations.values['finance'], 1);
+      },
+    );
+
     test('happy path: pushes dirty rows and clears their pointers', () async {
       pending.put(
         opId: 'op-1',
@@ -373,7 +407,7 @@ void main() {
 
     test('partial pull progress is reported when a later page fails', () async {
       final firstRemote = RowChange(
-        table: 'accounts',
+        table: 'fin:accounts',
         id: 'R1',
         payload: _rowState(
           id: 'R1',
@@ -539,7 +573,7 @@ void main() {
             "SELECT value FROM sync_meta WHERE key = 'sync.applier_version'",
           )
           .getSingle();
-      expect(version.read<String>('value'), '6');
+      expect(version.read<String>('value'), '7');
     });
 
     test('backfills historical local rows into the outbox', () async {

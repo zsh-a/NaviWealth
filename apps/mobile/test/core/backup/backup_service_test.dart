@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
 import 'package:naviwealth/core/backup/backup_table_registry.dart';
@@ -125,6 +126,30 @@ void main() {
     );
   }
 
+  Future<void> insertKnowledgeNote(AppDatabase db) async {
+    final now = DateTime.utc(2026, 1, 1).toIso8601String();
+    const hlc = Hlc(
+      wallMillis: 1700000000003,
+      counter: 0,
+      nodeId: testDeviceId,
+    );
+    await db.customStatement(
+      'INSERT INTO knowledge_notes '
+      '(id, title, body_md, created_at, owner_user_id, updated_at, '
+      'updated_by_device, hlc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      <Object?>[
+        'note-1',
+        'Domain backup',
+        'Knowledge body',
+        now,
+        'user-1',
+        now,
+        testDeviceId,
+        hlc.toString(),
+      ],
+    );
+  }
+
   /// Count rows in a table.
   Future<int> countRows(AppDatabase db, String table) async {
     final row = await db
@@ -196,6 +221,55 @@ void main() {
         expect((tags[0] as Map)['id'], 'tag-1');
       },
     );
+
+    test('domain archive restores only that OS', () async {
+      final sourceDb = makeTestDatabase();
+      addTearDown(sourceDb.close);
+      await insertKnowledgeNote(sourceDb);
+      await insertTestTag(sourceDb);
+
+      service = makeService(sourceDb);
+      final bytes = await service.exportBackup(
+        passphrase: testPassphrase,
+        overrideIterations: testIterations,
+        domain: DomainScope.knowledge,
+      );
+      final envelope = BackupEnvelope.decodeBytes(bytes);
+      final plaintext = await codec.decrypt(
+        passphrase: testPassphrase,
+        envelope: envelope,
+      );
+      final payload =
+          jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
+      final header = payload['header'] as Map<String, Object?>;
+      final data = payload['data'] as Map<String, Object?>;
+      expect(header['domain'], 'knowledge');
+      expect(data.keys, everyElement(startsWith('knowledge_')));
+      expect(data.keys, isNot(contains('tags')));
+
+      final targetDb = makeTestDatabase();
+      addTearDown(targetDb.close);
+      await insertTestTag(targetDb, id: 'existing-tag');
+      final restoreService = makeService(targetDb);
+      await expectLater(
+        restoreService.restoreBackup(
+          passphrase: testPassphrase,
+          fileBytes: bytes,
+          expectedDomain: DomainScope.finance,
+        ),
+        throwsA(isA<BackupValidationException>()),
+      );
+      expect(await countRows(targetDb, 'tags'), 1);
+
+      await restoreService.restoreBackup(
+        passphrase: testPassphrase,
+        fileBytes: bytes,
+        expectedDomain: DomainScope.knowledge,
+      );
+
+      expect(await countRows(targetDb, 'knowledge_notes'), 1);
+      expect(await countRows(targetDb, 'tags'), 1);
+    });
 
     test('round-trip: export then restore into fresh database', () async {
       final sourceDb = makeTestDatabase();

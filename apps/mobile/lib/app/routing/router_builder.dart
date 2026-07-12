@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../core/logging/providers.dart';
 import '../../core/logging/talker_route_observer.dart';
@@ -20,6 +21,7 @@ import '../../features/settings/ui/ai/ai_models_page.dart';
 import '../../features/settings/ui/ai/ai_privacy_page.dart';
 import '../../features/settings/ui/ai/ai_transparency_page.dart';
 import '../../features/settings/ui/backup/backup_page.dart';
+import '../../features/settings/ui/data_management/data_management_page.dart';
 import '../../features/settings/ui/domains_settings_page.dart';
 import '../../features/settings/ui/log_viewer_page.dart';
 import '../../features/settings/ui/notification_settings_page.dart';
@@ -148,7 +150,18 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
       GoRoute(
         path: 'backup',
         name: SettingsRouteNames.backup,
-        builder: (context, state) => _backSafe(const BackupPage()),
+        builder: (context, state) => _backSafe(
+          BackupPage(
+            domain: DomainScope.tryParse(
+              state.uri.queryParameters['domain'] ?? '',
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: 'data-management',
+        name: SettingsRouteNames.dataManagement,
+        builder: (context, state) => _backSafe(const DataManagementPage()),
       ),
       GoRoute(
         path: 'notifications',

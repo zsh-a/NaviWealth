@@ -29,6 +29,7 @@ import 'package:naviwealth/features/finance/composition/finance_routes.dart';
 import 'package:naviwealth/features/finance/composition/finance_settings_routes.dart';
 import 'package:naviwealth/features/finance/composition/finance_share_intent_handler.dart';
 import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.dart';
+import 'package:naviwealth/features/finance/data_management/finance_data_management.dart';
 import 'package:naviwealth/features/finance/finance_ai_tools.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_memory_indexer.dart';
 import 'package:naviwealth/features/finance/ui/settings/finance_domain_settings_section.dart';
@@ -106,6 +107,7 @@ final DomainPack kFinancePack = DomainPack(
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
   providerOverridesBuilder: financeCompositionOverrides,
   localTableCountsBuilder: financeLocalTableCounts,
+  dataManagementSpec: financeDataManagementSpec,
   settingsRoutesBuilder: financeSettingsRoutes,
   shareIntentHandlers: const [FinanceShareIntentHandler()],
   settingsSpec: const DomainSettingsSpec(

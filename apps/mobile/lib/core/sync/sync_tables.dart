@@ -4,7 +4,7 @@
 /// so adding them never requires regenerating `app_database.g.dart`.
 library;
 
-/// Dirty-pointer log (`docs/sync/sync-v2.md` §7.1).
+/// Dirty-pointer log (`docs/sync/sync-v3.md`).
 ///
 /// One entry per local mutation — just enough to point the sync engine at a
 /// dirty row. The engine pushes that row's current state and deletes the

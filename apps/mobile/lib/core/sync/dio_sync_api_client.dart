@@ -9,7 +9,7 @@ import 'sync_api_client.dart';
 /// Dio-backed implementation of [SyncApiClient].
 ///
 /// Translates Dio errors into [SyncException]s with the [SyncErrorKind] the
-/// engine reacts to. The mapping mirrors `docs/sync/sync-v2.md` §5.
+/// engine reacts to. The mapping mirrors `docs/sync/sync-v3.md`.
 class DioSyncApiClient implements SyncApiClient {
   DioSyncApiClient({required Dio dio, required this.tokenProvider})
     : _dio = dio;
@@ -54,6 +54,26 @@ class DioSyncApiClient implements SyncApiClient {
             (m) => RowAck.fromJson(m.map((k, v) => MapEntry(k as String, v))),
           )
           .toList(growable: false),
+      domainGenerations:
+          (res['domain_generations'] as Map<Object?, Object?>? ??
+                  const <Object?, Object?>{})
+              .map(
+                (key, value) =>
+                    MapEntry(key.toString(), (value as num).toInt()),
+              ),
+    );
+  }
+
+  @override
+  Future<DomainResetReceipt> resetDomain({required String domain}) async {
+    final response = await _send<Map<String, Object?>>(
+      method: 'POST',
+      path: '/sync/reset-domain',
+      body: <String, Object?>{'domain': domain},
+    );
+    return DomainResetReceipt(
+      domain: response['domain'] as String,
+      generation: (response['generation'] as num).toInt(),
     );
   }
 

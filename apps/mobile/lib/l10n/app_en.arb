@@ -2933,6 +2933,109 @@
   "@settingsAboutSection": { "description": "Settings section header for the About tile (version, commit, etc.)" },
   "settingsDataSection": "Data",
   "@settingsDataSection": { "description": "Settings section header for sync + backup/restore (AI rows moved to the AI section)" },
+  "settingsDataManagementTitle": "Data & storage",
+  "@settingsDataManagementTitle": { "description": "Settings tile and page title for LifeOS data management" },
+  "settingsDataManagementSubtitle": "Inspect, export, clean, and reset each OS from one place",
+  "@settingsDataManagementSubtitle": { "description": "Settings data-management tile and page subtitle" },
+  "dataManagementBackupTitle": "Encrypted backup & restore",
+  "dataManagementBackupSubtitle": "Create a backup before destructive maintenance",
+  "dataManagementSafetyNotice": "Cache cleanup removes only rebuildable local data. OS reset actions require confirmation and are kept separate from cache maintenance.",
+  "dataManagementAutomaticTitle": "Automatic maintenance",
+  "dataManagementAutomaticSubtitle": "Daily cleanup of expired AI, agent, ingest, and event history",
+  "dataManagementRunMaintenanceTitle": "Run maintenance now",
+  "dataManagementRunMaintenanceNever": "No maintenance run recorded",
+  "dataManagementRunMaintenanceLast": "Last run removed {count} rows",
+  "@dataManagementRunMaintenanceLast": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dataManagementMaintenanceRunning": "Running…",
+  "dataManagementMaintenanceSuccess": "Maintenance complete · {count} rows removed",
+  "@dataManagementMaintenanceSuccess": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dataManagementDomainEnabled": "Enabled",
+  "dataManagementDomainDisabled": "Disabled",
+  "dataManagementSourceRows": "Source",
+  "dataManagementDeletedRows": "Deleted",
+  "dataManagementCacheRows": "Cache",
+  "dataManagementTableSummary": "{sourceTables} source tables · {cacheTables} cache tables",
+  "@dataManagementTableSummary": {
+    "placeholders": {
+      "sourceTables": { "type": "int" },
+      "cacheTables": { "type": "int" }
+    }
+  },
+  "dataManagementCacheHelp": "Local derived data; features rebuild it when needed.",
+  "dataManagementClearCacheAction": "Clear cache",
+  "dataManagementClearing": "Clearing…",
+  "dataManagementClearCacheConfirmTitle": "Clear {domain} cache?",
+  "@dataManagementClearCacheConfirmTitle": {
+    "placeholders": { "domain": { "type": "String" } }
+  },
+  "dataManagementClearCacheConfirmBody": "This removes {count} local cache rows. Synced source data is not affected.",
+  "@dataManagementClearCacheConfirmBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dataManagementClearCacheSuccess": "Cleared {count} cache rows",
+  "@dataManagementClearCacheSuccess": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dataManagementExportDomainAction": "Export OS",
+  "dataManagementResetDeviceAction": "Reset this device",
+  "dataManagementResetEverywhereAction": "Delete everywhere",
+  "dataManagementResetting": "Resetting…",
+  "dataManagementResetDeviceConfirmTitle": "Reset {domain} on this device?",
+  "@dataManagementResetDeviceConfirmTitle": {
+    "placeholders": { "domain": { "type": "String" } }
+  },
+  "dataManagementResetDeviceConfirmBody": "Local source data, derived caches, memories, and agent history for this OS will be removed. Cloud data may download again on the next sync.",
+  "dataManagementResetEverywhereConfirmTitle": "Permanently delete {domain}?",
+  "@dataManagementResetEverywhereConfirmTitle": {
+    "placeholders": { "domain": { "type": "String" } }
+  },
+  "dataManagementResetEverywhereConfirmBody": "This permanently deletes this OS from the server and every device. Offline devices cannot restore the old generation.",
+  "dataManagementResetSuccess": "Reset complete · {count} local rows removed",
+  "@dataManagementResetSuccess": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dataManagementSharedTitle": "AI & cross-domain data",
+  "dataManagementSharedSubtitle": "Device-local conversations, traces, memories, event projections, and agent results",
+  "dataManagementChatRows": "Chat",
+  "dataManagementAiRows": "AI audit",
+  "dataManagementMemoryRows": "Memory",
+  "dataManagementAgentRows": "Agents",
+  "dataManagementStorageUsage": "Database {used} · {reclaimable} reclaimable",
+  "@dataManagementStorageUsage": {
+    "placeholders": {
+      "used": { "type": "String" },
+      "reclaimable": { "type": "String" }
+    }
+  },
+  "dataManagementClearSharedAction": "Clear local history",
+  "dataManagementClearSharedConfirmTitle": "Clear AI and cross-domain history?",
+  "dataManagementClearSharedConfirmBody": "This removes {count} local chat, audit, memory, event, and agent-history rows. OS source data and preferences remain.",
+  "@dataManagementClearSharedConfirmBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dataManagementClearSharedSuccess": "Cleared {count} local history rows",
+  "@dataManagementClearSharedSuccess": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "dataManagementCompactAction": "Compact database",
+  "dataManagementCompacting": "Compacting…",
+  "dataManagementCompactSuccess": "Database compacted",
+  "dataManagementResetAllTitle": "All OS data",
+  "dataManagementResetAllSubtitle": "Use only when you want to start over across FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS. Account, device, settings, and FX configuration remain.",
+  "dataManagementResetAllDeviceAction": "Reset all on this device",
+  "dataManagementResetAllEverywhereAction": "Delete all OS data everywhere",
+  "dataManagementResetAllDeviceConfirmTitle": "Reset every OS on this device?",
+  "dataManagementResetAllDeviceConfirmBody": "All local OS source data, caches, AI history, memories, and agent results will be removed. Cloud data can download again during sync.",
+  "dataManagementResetAllEverywhereConfirmTitle": "Permanently delete every OS?",
+  "dataManagementResetAllEverywhereConfirmBody": "All OS data will be permanently deleted from the server and every device. Account, device, settings, and FX configuration remain. This cannot be undone.",
+  "backupDomainPageTitle": "{domain} backup",
+  "@backupDomainPageTitle": {
+    "placeholders": { "domain": { "type": "String" } }
+  },
   "settingsDomainsSection": "LifeOS Domains",
   "@settingsDomainsSection": { "description": "Settings section header for LifeOS domain opt-in management" },
   "settingsDomainsTitle": "Domain management",

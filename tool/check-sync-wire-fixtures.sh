@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifies checked-in sync-v2 wire fixtures against the Rust serializer.
+# Verifies checked-in sync-v3 wire fixtures against the Rust serializer.
 #
 # The Dart client consumes docs/fixtures/*.json directly. This gate keeps the
 # server-owned outbound fixture generated from the actual Rust RowChange
@@ -23,10 +23,10 @@ check_fixture() {
   diff -u "${FIXTURES}/${fixture}.json" "${actual}"
 }
 
-check_fixture sync_v2_server_tombstone_row_change
-check_fixture sync_v2_server_sync_response
-check_fixture sync_v2_server_empty_response
-check_fixture sync_v2_server_more_response
-check_fixture sync_v2_server_no_accepted_response
+check_fixture sync_v3_server_tombstone_row_change
+check_fixture sync_v3_server_sync_response
+check_fixture sync_v3_server_empty_response
+check_fixture sync_v3_server_more_response
+check_fixture sync_v3_server_no_accepted_response
 
-echo "sync-v2 server fixtures match the Rust serializer."
+echo "sync-v3 server fixtures match the Rust serializer."

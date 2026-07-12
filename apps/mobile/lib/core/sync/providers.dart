@@ -8,6 +8,7 @@ import '../../core/persistence/app_database.dart';
 import '../../core/persistence/providers.dart';
 import '../auth/providers.dart';
 import '../config/providers.dart';
+import '../data_management/providers.dart';
 import '../logging/providers.dart';
 import 'dio_sync_api_client.dart';
 import 'drift_sync_storage.dart';
@@ -47,7 +48,7 @@ final syncApiClientProvider = Provider<SyncApiClient>((ref) {
 });
 
 /// Generic, schema-driven applier for pulled row-states. One class covers
-/// every syncable table (`docs/sync/sync-v2.md` §7.3).
+/// every syncable table (`docs/sync/sync-v3.md`).
 final syncRowApplierProvider = Provider<RowApplier?>((ref) {
   final db = ref.watch(appDatabaseProvider).value;
   if (db == null) return null;
@@ -106,9 +107,12 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   final resetCursor = await _ensureSyncApplierVersion(db);
   if (resetCursor) {
-    ref.read(loggerProvider).i('sync: reset pull cursor for v2 row-state');
+    ref.read(loggerProvider).i('sync: reset pull cursor for v3 row-state');
   }
   final outbox = DriftOutboxStore(db);
+  final resetHandler = await ref.watch(
+    dataManagementDomainResetHandlerProvider.future,
+  );
   final engine = SyncEngine(
     api: ref.watch(syncApiClientProvider),
     pending: DriftPendingRows(db),
@@ -116,6 +120,11 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
     applier: RowApplier(db),
     deviceId: session.deviceId,
     statusBus: ref.watch(syncStatusBusProvider),
+    generationStore: DriftDomainGenerationStore(
+      db,
+      ownerUserId: session.userId,
+    ),
+    resetHandler: resetHandler,
     logger: ref.read(loggerProvider),
   );
 
@@ -136,7 +145,7 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
 /// cursor so the next sync re-pulls from `seq = 0`. v1 → v2 is one such bump
 /// (the v1 cursor was an HLC string, not an integer `seq`).
 const _kSyncApplierVersionKey = 'sync.applier_version';
-const _kSyncApplierVersion = '6';
+const _kSyncApplierVersion = '7';
 
 Future<bool> _ensureSyncApplierVersion(AppDatabase db) async {
   final row = await db

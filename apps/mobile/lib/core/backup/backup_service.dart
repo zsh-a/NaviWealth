@@ -4,8 +4,10 @@ import 'package:drift/drift.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 
 import '../../core/persistence/app_database.dart';
+import '../auth/domain_scope.dart';
 import '../logging/app_logger.dart';
 import '../sync/op_outbox.dart';
+import '../sync/sync_table_registry.dart';
 import 'backup_codec.dart';
 import 'backup_table_registry.dart';
 
@@ -45,7 +47,7 @@ class BackupService {
     required AppDatabase db,
     required BackupCodec codec,
     required OutboxStore outbox,
-    // Retained for call-site compatibility. The sync-v2 outbox is a pure
+    // Retained for call-site compatibility. The sync-v3 outbox is a pure
     // dirty-pointer log, so the restore enqueue no longer needs a device id
     // or an HLC stamp — the sync engine reads each restored row's current
     // state (including its own `hlc`) directly at push time.
@@ -66,6 +68,7 @@ class BackupService {
   Future<Uint8List> exportBackup({
     required String passphrase,
     int? overrideIterations,
+    DomainScope? domain,
   }) async {
     final sw = Stopwatch()..start();
     _logger.i('backup: export starting (schema=${_db.schemaVersion})');
@@ -73,7 +76,15 @@ class BackupService {
     final tableCounts = <String, int>{};
     final data = <String, List<Map<String, Object?>>>{};
 
-    for (final tableName in kBackupTables) {
+    final backupTables = domain == null
+        ? kBackupTables
+        : <String>[
+            for (final registration in kSyncTableRegistrations)
+              if (registration.backupEligible &&
+                  registration.domainPrefix == _prefixForScope(domain))
+                registration.table,
+          ];
+    for (final tableName in backupTables) {
       final rows = await _db.customSelect('SELECT * FROM $tableName').get();
       final rowMaps = <Map<String, Object?>>[];
       for (final row in rows) {
@@ -95,6 +106,7 @@ class BackupService {
         'magic': _backupMagic,
         'schemaVersion': schemaVersion,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
+        'domain': domain?.wire,
         'tables': tableCounts,
       },
       'data': data,
@@ -127,6 +139,7 @@ class BackupService {
   Future<RestoreResult> restoreBackup({
     required String passphrase,
     required Uint8List fileBytes,
+    DomainScope? expectedDomain,
     void Function()? pauseSync,
     void Function()? resumeSync,
   }) async {
@@ -199,6 +212,29 @@ class BackupService {
         throw BackupValidationException('Unknown table: $key');
       }
     }
+    final backupDomainWire = header['domain'] as String?;
+    if (expectedDomain != null && backupDomainWire != expectedDomain.wire) {
+      throw BackupValidationException(
+        'Expected ${expectedDomain.wire} backup, got '
+        '${backupDomainWire ?? 'full archive'}',
+      );
+    }
+    if (backupDomainWire != null) {
+      final backupDomain = DomainScope.tryParse(backupDomainWire);
+      if (backupDomain == null) {
+        throw BackupValidationException(
+          'Unknown backup domain: $backupDomainWire',
+        );
+      }
+      final expectedPrefix = _prefixForScope(backupDomain);
+      for (final key in data.keys) {
+        if (kSyncTableRegistry[key]?.domainPrefix != expectedPrefix) {
+          throw BackupValidationException(
+            'Table $key does not belong to $backupDomainWire',
+          );
+        }
+      }
+    }
 
     final restoreTableCounts = <String, int>{};
     for (final entry in data.entries) {
@@ -224,12 +260,24 @@ class BackupService {
       );
       final txSw = Stopwatch()..start();
       await _db.transaction(() async {
-        // Clear all existing data.
-        for (final tableName in kBackupTables) {
+        await _db.customStatement('PRAGMA defer_foreign_keys = ON');
+        // Full archives contain the complete registry; domain archives contain
+        // only that domain. Replace exactly the tables declared by the archive.
+        for (final tableName in data.keys) {
           await _db.customStatement('DELETE FROM $tableName');
         }
-        await _db.customStatement('DELETE FROM op_outbox');
-        _logger.d('backup: cleared all backup tables + op_outbox');
+        final outboxTables = data.keys.toList(growable: false);
+        if (outboxTables.isNotEmpty) {
+          final placeholders = List<String>.filled(
+            outboxTables.length,
+            '?',
+          ).join(',');
+          await _db.customStatement(
+            'DELETE FROM op_outbox WHERE table_name IN ($placeholders)',
+            outboxTables,
+          );
+        }
+        _logger.d('backup: cleared archive tables + matching outbox rows');
 
         // Insert restored rows and enqueue ops.
         for (final entry in data.entries) {
@@ -305,7 +353,7 @@ class BackupService {
   }
 
   /// Mark a restored row dirty so the sync engine re-pushes it. The
-  /// sync-v2 outbox only needs `(table, rowId)` — the engine reads the
+  /// sync-v3 outbox only needs `(table, rowId)` — the engine reads the
   /// row's current state at push time.
   Future<void> _enqueueRestoreOp(
     String tableName,
@@ -325,3 +373,10 @@ class BackupService {
     return value?.toString() ?? '';
   }
 }
+
+String _prefixForScope(DomainScope scope) => switch (scope) {
+  DomainScope.finance => kFinanceDomainPrefix,
+  DomainScope.health => kHealthDomainPrefix,
+  DomainScope.knowledge => kKnowledgeDomainPrefix,
+  DomainScope.execution => kExecutionDomainPrefix,
+};

@@ -23,7 +23,7 @@ LifeOS value lives in shared infrastructure: identity, memory, sync, AI runtime,
 - Do not generalize for a hypothetical future domain. Add abstractions only when at least two real domains use them or a shell seam already exists.
 - Do not pivot the app into a wide Flutter/Rust local engine. Rust is allowed only for narrow performance or security surfaces.
 - Do not make one domain import another domain's business entities.
-- Do not turn sync v2 into an event platform, CRDT framework, or multi-schema negotiation layer.
+- Do not turn sync v3 into an event platform, CRDT framework, or multi-schema negotiation layer.
 - Do not add social, collaboration, publishing, enterprise SaaS, or entertainment surfaces.
 - Do not write phase plans for untriggered domains.
 
@@ -118,12 +118,14 @@ Shared sync envelope types live in `core/sync/`:
 
 ## Sync Boundaries
 
-Sync v2 is the active protocol:
+Sync v3 is the active protocol:
 
 - Generic row-state store.
 - Last-writer-wins register per row.
 - One `POST /sync` cycle for push and pull.
 - Row kinds are domain-prefixed at the sync boundary.
+- Each domain has an authoritative reset generation so stale offline devices
+  cannot resurrect data after permanent erasure.
 
 Prefixes:
 

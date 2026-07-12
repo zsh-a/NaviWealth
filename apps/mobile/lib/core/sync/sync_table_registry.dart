@@ -1,4 +1,4 @@
-/// Sync v2 row-family namespace and table registry
+/// Sync v3 row-family namespace and table registry
 /// (`docs/architecture/lifeos-shell.md` section 8, D-1.4).
 ///
 /// Local Drift tables stay unprefixed. Rows are tagged only at the sync
@@ -192,7 +192,7 @@ final Map<String, Set<String>> kSyncTablesByDomainPrefix =
     });
 
 /// The closed set of Drift tables that participate in sync
-/// (`docs/sync/sync-v2.md` section 7.1).
+/// (`docs/sync/sync-v3.md`).
 ///
 /// Adding a value is a data-model change only. The server's row store remains
 /// schema-agnostic.

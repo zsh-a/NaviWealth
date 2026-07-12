@@ -152,7 +152,7 @@ types. Today: `test/core/ai/contracts/contracts_roundtrip_test.dart`
 `check-enum-mirror.sh` now gates the mobile-local AI enum wire manifest
 (`docs/fixtures/ai_contract_wire_enums.json`) against
 `apps/mobile/tool/dump_ai_contract_wire_enums.dart`, so enum wire strings are
-generated from Dart code instead of inferred by grep. The `sync-v2` shared
+generated from Dart code instead of inferred by grep. The `sync-v3` shared
 fixtures are partly serializer-owned too: `tool/check-sync-wire-fixtures.sh`
 compares the
 server tombstone fixture consumed by Dart against the backend
@@ -299,7 +299,7 @@ path once the production connection implements database encryption.
   golden surfaces and on-device `integration_test/` coverage rather than adding
   more page-bound smoke tests.
 - Contracts-as-code: AI enum wire manifest now gates against Dart code and
-  `sync-v2` row-change/request/response fixtures gate against Dart/Rust
+  `sync-v3` row-change/request/response fixtures gate against Dart/Rust
   serializers, including edge-case server envelopes. Next work is keeping new
   contract variants fixture-backed as they are introduced.
 - Expand golden coverage to each Task surface + responsive breakpoints.

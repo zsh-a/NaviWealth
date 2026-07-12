@@ -10,7 +10,7 @@ The shell owns cross-domain infrastructure:
 - Domain opt-in.
 - AI tool, prompt, proposal, and agent composition.
 - Memory Runtime and indexer bootstrap.
-- Sync v2 row-family namespace.
+- Sync v3 row-family namespace and per-domain reset generations.
 - Shared persistence adapter.
 - Encrypted local backup and restore.
 - Background jobs and notifications.
@@ -217,6 +217,39 @@ Rules:
   the app bootstrap only loops active packs.
 - Memory embeddings are derived local data and can be rebuilt.
 - `build_context` is the preferred LLM retrieval tool for contextual answers; `query_memory` remains a flat fallback.
+
+## Data Management
+
+The Settings → Data & Storage surface is composed through the same domain
+registry seam:
+
+- Domain-neutral contracts and inspection/maintenance orchestration live in
+  `core/data_management/`.
+- Each domain owns a `features/<domain>/data_management/` spec and registers it
+  through `DomainPack.dataManagementSpec`.
+- The page reads the complete `domainPackRegistryProvider`, not only active
+  packs. Data from a disabled optional domain must remain visible and
+  maintainable.
+- Synced source tables are derived from `sync_table_registry.dart`. Explicit
+  reset actions can erase one OS on the current device or permanently across
+  all devices through the Sync v3 generation protocol.
+- Only tables explicitly registered as local, re-creatable caches may be
+  hard-deleted. Cache cleanup never writes tombstones or the sync outbox.
+- Per-user cache tables are filtered by `owner_user_id`; device-global derived
+  caches may be cleared for the whole device.
+- Per-OS encrypted archives filter the shared backup inventory by row-family
+  prefix and can restore that OS without replacing unrelated domains.
+- AI chat, audit traces, memories, event projections, and agent history are
+  counted and cleaned as a separate cross-domain local resource. Source data,
+  credentials, and preferences are not included in that action.
+- Daily retention maintenance is opt-out, recorded in
+  `data_maintenance_runs`, and can also be run manually. Database compaction is
+  manual because SQLite `VACUUM` can be comparatively expensive.
+
+Disabling a domain does not delete its data. Cache cleanup also does not imply
+server erasure. Permanent erasure increments the domain generation before
+physically deleting its server rows; stale offline writes are rejected and the
+client hard-resets that domain when it observes a newer generation.
 
 ## Embedding Runtime
 

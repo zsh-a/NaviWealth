@@ -5,6 +5,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import '../logging/app_logger.dart';
 import 'clock.dart';
 import 'cursor_store.dart';
+import 'domain_generation.dart';
 import 'errors.dart';
 import 'op_outbox.dart';
 import 'retry.dart';
@@ -32,7 +33,7 @@ class SyncCycleResult {
   bool get success => errors.isEmpty;
 }
 
-/// Coordinates the row-state sync cycle (`docs/sync/sync-v2.md` §7.3).
+/// Coordinates the row-state sync cycle (`docs/sync/sync-v3.md`).
 ///
 /// One cycle drains both directions: it reads the dirty-row set, pushes each
 /// row's current state and pulls peers' newer rows in a single `POST /sync`,
@@ -56,10 +57,14 @@ class SyncEngine {
     BackoffPolicy backoff = const BackoffPolicy(),
     Random? random,
     AppLogger? logger,
+    DomainGenerationStore? generationStore,
+    DomainResetHandler? resetHandler,
   }) : _clock = clock,
        _backoff = backoff,
        _random = random ?? Random(),
-       _logger = logger ?? AppLogger.instance;
+       _logger = logger ?? AppLogger.instance,
+       _generationStore = generationStore ?? InMemoryDomainGenerationStore(),
+       _resetHandler = resetHandler ?? const NoopDomainResetHandler();
 
   final SyncApiClient api;
   final PendingRows pending;
@@ -71,6 +76,8 @@ class SyncEngine {
   final BackoffPolicy _backoff;
   final Random _random;
   final AppLogger _logger;
+  final DomainGenerationStore _generationStore;
+  final DomainResetHandler _resetHandler;
 
   EngineState _state = EngineState.idle;
   EngineState get state => _state;
@@ -126,9 +133,13 @@ class SyncEngine {
     try {
       var since = await operation.step('read_cursor', cursors.readSeq);
       while (true) {
+        final generations = await operation.step(
+          'read_domain_generations',
+          _generationStore.readAll,
+        );
         final batch = await operation.step(
           'collect_batch',
-          _collectBatch,
+          () => _collectBatch(generations),
           fields: {'batch_size': kSyncMaxChanges},
         );
         final SyncResponse resp;
@@ -148,15 +159,26 @@ class SyncEngine {
         }
 
         pushed += resp.accepted.length;
-        if (resp.changes.isNotEmpty) {
+        await operation.step(
+          'reconcile_domain_generations',
+          () => _reconcileDomainGenerations(resp.domainGenerations),
+        );
+        final currentRows = resp.changes
+            .where((row) {
+              final domain = domainWireForWireTable(row.table);
+              if (domain == null) return false;
+              return row.generation == (resp.domainGenerations[domain] ?? 0);
+            })
+            .toList(growable: false);
+        if (currentRows.isNotEmpty) {
           final report = await operation.step(
             'apply_rows',
-            () => applier.applyWithReport(resp.changes),
-            fields: {'row_count': resp.changes.length},
+            () => applier.applyWithReport(currentRows),
+            fields: {'row_count': currentRows.length},
           );
           pulled += report.written;
           conflicts = conflicts.merge(_conflictsFromApplyReport(report));
-          await _mergeHighest(resp.changes);
+          await _mergeHighest(currentRows);
         }
         // Acknowledge only rows the server explicitly accepted. Rows dropped
         // at the domain-claim boundary stay dirty so the user can fix their
@@ -215,7 +237,7 @@ class SyncEngine {
 
   /// Read the dirty-row set, dedupe to one [RowChange] per row, and cap the
   /// batch at [kSyncMaxChanges].
-  Future<_Batch> _collectBatch() async {
+  Future<_Batch> _collectBatch(Map<String, int> generations) async {
     final pointers = await pending.pointers();
     final order = <String>[];
     final opIdsByKey = <String, List<String>>{};
@@ -244,7 +266,12 @@ class SyncEngine {
         staleOpIds.addAll(opIds);
         continue;
       }
-      final change = _toRowChange(pointer.table, pointer.rowId, data);
+      final change = _toRowChange(
+        pointer.table,
+        pointer.rowId,
+        data,
+        generations,
+      );
       changes.add(change);
       opIdsByWireKey[_rowKey(change.table, change.id)] = opIds;
     }
@@ -256,18 +283,38 @@ class SyncEngine {
     );
   }
 
-  RowChange _toRowChange(String table, String id, Map<String, Object?> data) {
+  RowChange _toRowChange(
+    String table,
+    String id,
+    Map<String, Object?> data,
+    Map<String, int> generations,
+  ) {
     final version = (data['hlc'] as String?) ?? Hlc.zero(deviceId).toString();
     // D-1.4: tag every outgoing row with its LifeOS domain prefix. The prefix
     // is dispatched per table ([domainPrefixForTable]): FinanceOS rows ride
-    // `fin:`, HealthOS rows ride `health:`, and KnowledgeOS rows ride `know:`.
+    // `fin:`, HealthOS rows ride `health:`, KnowledgeOS rows ride `know:`,
+    // and ExecutionOS rows ride `exec:`.
     return RowChange(
       table: prefixTable(table),
       id: id,
       payload: data,
       version: version,
       deleted: data['deleted_at'] != null,
+      generation: generations[domainWireForLocalTable(table)] ?? 0,
     );
+  }
+
+  Future<void> _reconcileDomainGenerations(
+    Map<String, int> serverGenerations,
+  ) async {
+    final local = await _generationStore.readAll();
+    for (final entry in serverGenerations.entries) {
+      final current = local[entry.key] ?? 0;
+      if (current != entry.value) {
+        await _resetHandler.resetLocalDomain(entry.key);
+      }
+      await _generationStore.write(entry.key, entry.value);
+    }
   }
 
   Future<void> _mergeHighest(List<RowChange> rows) async {

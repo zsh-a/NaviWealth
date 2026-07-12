@@ -3,13 +3,15 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/persistence/app_database.dart';
+import '../auth/domain_scope.dart';
 import 'cursor_store.dart';
+import 'domain_generation.dart';
 import 'op_outbox.dart';
 import 'sync_table_registry.dart';
 
 /// Drift-backed [OutboxStore] over the `op_outbox` table.
 ///
-/// v2 keeps `op_outbox` purely as a *dirty-pointer log*: the write path
+/// v3 keeps `op_outbox` purely as a *dirty-pointer log*: the write path
 /// (repositories) still enqueues an op per mutation, but the sync engine
 /// only reads the `(table, row_id)` set out of it and pushes each row's
 /// current state. `fields_diff` / `op_type` are no longer interpreted.
@@ -51,7 +53,7 @@ bool isOutboxBoundToDatabase(OutboxStore outbox, AppDatabase database) =>
     (outbox is DriftOutboxStore && outbox.isBoundTo(database));
 
 /// Reads `op_outbox` as the set of locally-dirty rows and serialises each
-/// row's current state for push (`docs/sync/sync-v2.md` §7.3).
+/// row's current state for push (`docs/sync/sync-v3.md`).
 class DriftPendingRows implements PendingRows {
   DriftPendingRows(this._db);
   final AppDatabase _db;
@@ -159,6 +161,42 @@ class DriftCursorStore implements CursorStore {
       'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
       'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
       [key, value],
+    );
+  }
+}
+
+class DriftDomainGenerationStore implements DomainGenerationStore {
+  DriftDomainGenerationStore(this._db, {required String ownerUserId})
+    : _ownerUserId = ownerUserId;
+
+  final AppDatabase _db;
+  final String _ownerUserId;
+
+  String _key(String domain) => 'sync.domain_generation.$_ownerUserId.$domain';
+
+  @override
+  Future<Map<String, int>> readAll() async {
+    final values = <String, int>{};
+    for (final scope in DomainScope.values) {
+      final row = await _db
+          .customSelect(
+            'SELECT value FROM sync_meta WHERE key = ?',
+            variables: <Variable<Object>>[Variable<Object>(_key(scope.wire))],
+          )
+          .getSingleOrNull();
+      if (row != null) {
+        values[scope.wire] = int.tryParse(row.read<String>('value')) ?? 0;
+      }
+    }
+    return values;
+  }
+
+  @override
+  Future<void> write(String domain, int generation) async {
+    await _db.customStatement(
+      'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
+      'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+      [_key(domain), '$generation'],
     );
   }
 }

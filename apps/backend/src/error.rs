@@ -32,7 +32,7 @@ impl AppError {
         }
     }
 
-    /// Push body, batch size or per-row payload over the cap (docs/sync/sync-v2.md §5.1).
+    /// Push body, batch size or per-row payload over the cap (docs/sync/sync-v3.md).
     pub fn payload_too_large() -> Self {
         Self::coded(
             413,

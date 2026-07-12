@@ -5632,6 +5632,215 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataSection => 'Data';
 
   @override
+  String get settingsDataManagementTitle => 'Data & storage';
+
+  @override
+  String get settingsDataManagementSubtitle =>
+      'Inspect, export, clean, and reset each OS from one place';
+
+  @override
+  String get dataManagementBackupTitle => 'Encrypted backup & restore';
+
+  @override
+  String get dataManagementBackupSubtitle =>
+      'Create a backup before destructive maintenance';
+
+  @override
+  String get dataManagementSafetyNotice =>
+      'Cache cleanup removes only rebuildable local data. OS reset actions require confirmation and are kept separate from cache maintenance.';
+
+  @override
+  String get dataManagementAutomaticTitle => 'Automatic maintenance';
+
+  @override
+  String get dataManagementAutomaticSubtitle =>
+      'Daily cleanup of expired AI, agent, ingest, and event history';
+
+  @override
+  String get dataManagementRunMaintenanceTitle => 'Run maintenance now';
+
+  @override
+  String get dataManagementRunMaintenanceNever => 'No maintenance run recorded';
+
+  @override
+  String dataManagementRunMaintenanceLast(int count) {
+    return 'Last run removed $count rows';
+  }
+
+  @override
+  String get dataManagementMaintenanceRunning => 'Running…';
+
+  @override
+  String dataManagementMaintenanceSuccess(int count) {
+    return 'Maintenance complete · $count rows removed';
+  }
+
+  @override
+  String get dataManagementDomainEnabled => 'Enabled';
+
+  @override
+  String get dataManagementDomainDisabled => 'Disabled';
+
+  @override
+  String get dataManagementSourceRows => 'Source';
+
+  @override
+  String get dataManagementDeletedRows => 'Deleted';
+
+  @override
+  String get dataManagementCacheRows => 'Cache';
+
+  @override
+  String dataManagementTableSummary(int sourceTables, int cacheTables) {
+    return '$sourceTables source tables · $cacheTables cache tables';
+  }
+
+  @override
+  String get dataManagementCacheHelp =>
+      'Local derived data; features rebuild it when needed.';
+
+  @override
+  String get dataManagementClearCacheAction => 'Clear cache';
+
+  @override
+  String get dataManagementClearing => 'Clearing…';
+
+  @override
+  String dataManagementClearCacheConfirmTitle(String domain) {
+    return 'Clear $domain cache?';
+  }
+
+  @override
+  String dataManagementClearCacheConfirmBody(int count) {
+    return 'This removes $count local cache rows. Synced source data is not affected.';
+  }
+
+  @override
+  String dataManagementClearCacheSuccess(int count) {
+    return 'Cleared $count cache rows';
+  }
+
+  @override
+  String get dataManagementExportDomainAction => 'Export OS';
+
+  @override
+  String get dataManagementResetDeviceAction => 'Reset this device';
+
+  @override
+  String get dataManagementResetEverywhereAction => 'Delete everywhere';
+
+  @override
+  String get dataManagementResetting => 'Resetting…';
+
+  @override
+  String dataManagementResetDeviceConfirmTitle(String domain) {
+    return 'Reset $domain on this device?';
+  }
+
+  @override
+  String get dataManagementResetDeviceConfirmBody =>
+      'Local source data, derived caches, memories, and agent history for this OS will be removed. Cloud data may download again on the next sync.';
+
+  @override
+  String dataManagementResetEverywhereConfirmTitle(String domain) {
+    return 'Permanently delete $domain?';
+  }
+
+  @override
+  String get dataManagementResetEverywhereConfirmBody =>
+      'This permanently deletes this OS from the server and every device. Offline devices cannot restore the old generation.';
+
+  @override
+  String dataManagementResetSuccess(int count) {
+    return 'Reset complete · $count local rows removed';
+  }
+
+  @override
+  String get dataManagementSharedTitle => 'AI & cross-domain data';
+
+  @override
+  String get dataManagementSharedSubtitle =>
+      'Device-local conversations, traces, memories, event projections, and agent results';
+
+  @override
+  String get dataManagementChatRows => 'Chat';
+
+  @override
+  String get dataManagementAiRows => 'AI audit';
+
+  @override
+  String get dataManagementMemoryRows => 'Memory';
+
+  @override
+  String get dataManagementAgentRows => 'Agents';
+
+  @override
+  String dataManagementStorageUsage(String used, String reclaimable) {
+    return 'Database $used · $reclaimable reclaimable';
+  }
+
+  @override
+  String get dataManagementClearSharedAction => 'Clear local history';
+
+  @override
+  String get dataManagementClearSharedConfirmTitle =>
+      'Clear AI and cross-domain history?';
+
+  @override
+  String dataManagementClearSharedConfirmBody(int count) {
+    return 'This removes $count local chat, audit, memory, event, and agent-history rows. OS source data and preferences remain.';
+  }
+
+  @override
+  String dataManagementClearSharedSuccess(int count) {
+    return 'Cleared $count local history rows';
+  }
+
+  @override
+  String get dataManagementCompactAction => 'Compact database';
+
+  @override
+  String get dataManagementCompacting => 'Compacting…';
+
+  @override
+  String get dataManagementCompactSuccess => 'Database compacted';
+
+  @override
+  String get dataManagementResetAllTitle => 'All OS data';
+
+  @override
+  String get dataManagementResetAllSubtitle =>
+      'Use only when you want to start over across FinanceOS, HealthOS, KnowledgeOS, and ExecutionOS. Account, device, settings, and FX configuration remain.';
+
+  @override
+  String get dataManagementResetAllDeviceAction => 'Reset all on this device';
+
+  @override
+  String get dataManagementResetAllEverywhereAction =>
+      'Delete all OS data everywhere';
+
+  @override
+  String get dataManagementResetAllDeviceConfirmTitle =>
+      'Reset every OS on this device?';
+
+  @override
+  String get dataManagementResetAllDeviceConfirmBody =>
+      'All local OS source data, caches, AI history, memories, and agent results will be removed. Cloud data can download again during sync.';
+
+  @override
+  String get dataManagementResetAllEverywhereConfirmTitle =>
+      'Permanently delete every OS?';
+
+  @override
+  String get dataManagementResetAllEverywhereConfirmBody =>
+      'All OS data will be permanently deleted from the server and every device. Account, device, settings, and FX configuration remain. This cannot be undone.';
+
+  @override
+  String backupDomainPageTitle(String domain) {
+    return '$domain backup';
+  }
+
+  @override
   String get settingsDomainsSection => 'LifeOS Domains';
 
   @override

@@ -182,4 +182,17 @@ void main() {
       expect(await cursors.readLocalHlc(), hlc);
     });
   });
+
+  test('domain generations are isolated by user', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final first = DriftDomainGenerationStore(db, ownerUserId: 'user-a');
+    final second = DriftDomainGenerationStore(db, ownerUserId: 'user-b');
+
+    await first.write('knowledge', 3);
+    await second.write('knowledge', 1);
+
+    expect(await first.readAll(), containsPair('knowledge', 3));
+    expect(await second.readAll(), containsPair('knowledge', 1));
+  });
 }

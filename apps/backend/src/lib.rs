@@ -51,6 +51,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/auth/refresh", routes::auth::refresh)
         .get_async("/me", routes::me::get)
         .post_async("/sync", routes::sync::sync)
+        .post_async("/sync/reset-domain", routes::sync::reset_domain)
         .run(req, env)
         .await?;
 

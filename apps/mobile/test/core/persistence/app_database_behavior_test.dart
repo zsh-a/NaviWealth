@@ -607,6 +607,8 @@ void main() {
             'idx_agent_artifacts_domain_created',
             'agent_preferences',
             'idx_agent_preferences_owner',
+            'data_maintenance_runs',
+            'idx_data_maintenance_runs_owner_started',
             'securities_catalog_fts'
           )
           ''').get();
@@ -640,6 +642,8 @@ void main() {
         'idx_agent_artifacts_domain_created',
         'agent_preferences',
         'idx_agent_preferences_owner',
+        'data_maintenance_runs',
+        'idx_data_maintenance_runs_owner_started',
         'securities_catalog_fts',
       ]),
     );
@@ -1279,7 +1283,7 @@ void main() {
         .get();
     expect(tables, hasLength(1));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 39);
+    expect(version.read<int>('user_version'), 40);
   });
 
   test('migrates v23 options journal rows through v26 additions', () async {
@@ -1815,7 +1819,7 @@ void main() {
       expect(row.readNullable<String>('operation_token'), equals(null));
       expect(row.read<int>('invocation_started'), 0);
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 39);
+      expect(version.read<int>('user_version'), 40);
     },
   );
 }

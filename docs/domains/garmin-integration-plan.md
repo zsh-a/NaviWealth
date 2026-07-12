@@ -719,4 +719,4 @@ continue to expose the Garmin auth, sync, cancel, cursor, logout, export, and
 
 ### Unchanged
 
-`HealthSyncService` (extended, not rewritten), `HealthMetricRepository`, `health_metrics` Drift table, AI tools, memory indexer, Morning Briefing agent, sync v2, DomainPack.
+`HealthSyncService` (extended, not rewritten), `HealthMetricRepository`, `health_metrics` Drift table, AI tools, memory indexer, Morning Briefing agent, sync v3, DomainPack.

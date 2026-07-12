@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifies checked-in sync-v2 client-push fixtures against the Dart serializer.
+# Verifies checked-in sync-v3 client-push fixtures against the Dart serializer.
 
 set -euo pipefail
 
@@ -19,7 +19,7 @@ check_fixture() {
   diff -u "${FIXTURES}/${fixture}.json" "${actual}"
 }
 
-check_fixture sync_v2_client_push_row_change
-check_fixture sync_v2_client_sync_request
+check_fixture sync_v3_client_push_row_change
+check_fixture sync_v3_client_sync_request
 
-echo "sync-v2 client fixtures match the Dart serializer."
+echo "sync-v3 client fixtures match the Dart serializer."

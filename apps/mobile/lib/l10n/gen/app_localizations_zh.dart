@@ -5369,6 +5369,206 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataSection => '数据';
 
   @override
+  String get settingsDataManagementTitle => '数据与存储';
+
+  @override
+  String get settingsDataManagementSubtitle => '集中查看、导出、清理和重置各个 OS 的数据';
+
+  @override
+  String get dataManagementBackupTitle => '加密备份与恢复';
+
+  @override
+  String get dataManagementBackupSubtitle => '执行破坏性维护前先创建备份';
+
+  @override
+  String get dataManagementSafetyNotice =>
+      '缓存清理只移除本地可重建数据。OS 重置需要单独确认，不会与缓存维护混在一起。';
+
+  @override
+  String get dataManagementAutomaticTitle => '自动维护';
+
+  @override
+  String get dataManagementAutomaticSubtitle => '每日清理过期的 AI、Agent、导入草稿和事件历史';
+
+  @override
+  String get dataManagementRunMaintenanceTitle => '立即运行维护';
+
+  @override
+  String get dataManagementRunMaintenanceNever => '尚无维护记录';
+
+  @override
+  String dataManagementRunMaintenanceLast(int count) {
+    return '上次维护移除了 $count 条数据';
+  }
+
+  @override
+  String get dataManagementMaintenanceRunning => '运行中…';
+
+  @override
+  String dataManagementMaintenanceSuccess(int count) {
+    return '维护完成，已移除 $count 条数据';
+  }
+
+  @override
+  String get dataManagementDomainEnabled => '已启用';
+
+  @override
+  String get dataManagementDomainDisabled => '已关闭';
+
+  @override
+  String get dataManagementSourceRows => '主数据';
+
+  @override
+  String get dataManagementDeletedRows => '已删除';
+
+  @override
+  String get dataManagementCacheRows => '缓存';
+
+  @override
+  String dataManagementTableSummary(int sourceTables, int cacheTables) {
+    return '$sourceTables 个主数据表 · $cacheTables 个缓存表';
+  }
+
+  @override
+  String get dataManagementCacheHelp => '本地派生数据，相关功能会在需要时重新生成。';
+
+  @override
+  String get dataManagementClearCacheAction => '清理缓存';
+
+  @override
+  String get dataManagementClearing => '正在清理…';
+
+  @override
+  String dataManagementClearCacheConfirmTitle(String domain) {
+    return '清理 $domain 缓存？';
+  }
+
+  @override
+  String dataManagementClearCacheConfirmBody(int count) {
+    return '将移除 $count 条本地缓存，不影响已同步的主数据。';
+  }
+
+  @override
+  String dataManagementClearCacheSuccess(int count) {
+    return '已清理 $count 条缓存';
+  }
+
+  @override
+  String get dataManagementExportDomainAction => '导出 OS';
+
+  @override
+  String get dataManagementResetDeviceAction => '重置本设备';
+
+  @override
+  String get dataManagementResetEverywhereAction => '从所有设备删除';
+
+  @override
+  String get dataManagementResetting => '正在重置…';
+
+  @override
+  String dataManagementResetDeviceConfirmTitle(String domain) {
+    return '重置本设备上的 $domain？';
+  }
+
+  @override
+  String get dataManagementResetDeviceConfirmBody =>
+      '将移除本 OS 的本地主数据、派生缓存、Memory 和 Agent 历史。开启云同步时，数据可能在下次同步后重新下载。';
+
+  @override
+  String dataManagementResetEverywhereConfirmTitle(String domain) {
+    return '永久删除 $domain？';
+  }
+
+  @override
+  String get dataManagementResetEverywhereConfirmBody =>
+      '将从服务器和所有设备永久删除本 OS。离线设备重新上线后也无法恢复旧 generation。';
+
+  @override
+  String dataManagementResetSuccess(int count) {
+    return '重置完成，已移除 $count 条本地数据';
+  }
+
+  @override
+  String get dataManagementSharedTitle => 'AI 与跨域数据';
+
+  @override
+  String get dataManagementSharedSubtitle => '仅保存在本机的对话、审计轨迹、记忆、事件投影和 Agent 结果';
+
+  @override
+  String get dataManagementChatRows => '对话';
+
+  @override
+  String get dataManagementAiRows => 'AI 审计';
+
+  @override
+  String get dataManagementMemoryRows => '记忆';
+
+  @override
+  String get dataManagementAgentRows => 'Agent';
+
+  @override
+  String dataManagementStorageUsage(String used, String reclaimable) {
+    return '数据库占用 $used · 可回收 $reclaimable';
+  }
+
+  @override
+  String get dataManagementClearSharedAction => '清除本地历史';
+
+  @override
+  String get dataManagementClearSharedConfirmTitle => '清除 AI 与跨域历史？';
+
+  @override
+  String dataManagementClearSharedConfirmBody(int count) {
+    return '将移除 $count 条本地对话、审计、记忆、事件和 Agent 历史。各 OS 的源数据与偏好设置会保留。';
+  }
+
+  @override
+  String dataManagementClearSharedSuccess(int count) {
+    return '已清除 $count 条本地历史';
+  }
+
+  @override
+  String get dataManagementCompactAction => '压缩数据库';
+
+  @override
+  String get dataManagementCompacting => '压缩中…';
+
+  @override
+  String get dataManagementCompactSuccess => '数据库压缩完成';
+
+  @override
+  String get dataManagementResetAllTitle => '全部 OS 数据';
+
+  @override
+  String get dataManagementResetAllSubtitle =>
+      '仅在需要重新开始 FinanceOS、HealthOS、KnowledgeOS 和 ExecutionOS 时使用。账户、设备、设置与汇率配置会保留。';
+
+  @override
+  String get dataManagementResetAllDeviceAction => '重置本机全部 OS';
+
+  @override
+  String get dataManagementResetAllEverywhereAction => '永久删除全部 OS 数据';
+
+  @override
+  String get dataManagementResetAllDeviceConfirmTitle => '重置本机的全部 OS？';
+
+  @override
+  String get dataManagementResetAllDeviceConfirmBody =>
+      '本机的全部 OS 源数据、缓存、AI 历史、记忆和 Agent 结果都会被移除。云端数据可在下次同步时重新下载。';
+
+  @override
+  String get dataManagementResetAllEverywhereConfirmTitle => '永久删除全部 OS？';
+
+  @override
+  String get dataManagementResetAllEverywhereConfirmBody =>
+      '全部 OS 数据会从服务器和所有设备永久删除。账户、设备、设置与汇率配置会保留。此操作无法撤销。';
+
+  @override
+  String backupDomainPageTitle(String domain) {
+    return '$domain 备份';
+  }
+
+  @override
   String get settingsDomainsSection => 'LifeOS 域';
 
   @override

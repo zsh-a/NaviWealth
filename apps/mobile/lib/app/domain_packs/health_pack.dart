@@ -18,6 +18,7 @@ import 'package:naviwealth/features/health/composition/health_command_palette.da
 import 'package:naviwealth/features/health/composition/health_domain_shell.dart';
 import 'package:naviwealth/features/health/composition/health_routes.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
+import 'package:naviwealth/features/health/data_management/health_data_management.dart';
 import 'package:naviwealth/features/health/health_ai_tools.dart';
 import 'package:naviwealth/features/health/ui/health_domain_settings_page.dart';
 import 'package:naviwealth/features/health/ui/settings/health_notification_settings.dart';
@@ -74,6 +75,7 @@ final DomainPack kHealthPack = DomainPack(
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
   providerOverridesBuilder: agentRuntimeHealthProviderOverrides,
   notificationSettingsBuilder: healthNotificationSettings,
+  dataManagementSpec: healthDataManagementSpec,
   settingsSpec: domainSettingsSpec(
     icon: FLucideIcons.heartPulse,
     label: 'HealthOS',
