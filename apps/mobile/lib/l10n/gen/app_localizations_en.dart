@@ -66,18 +66,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planHubSubtitle => 'Decisions, models, and goals.';
 
   @override
-  String get planCoreSectionTitle => 'Planning';
+  String get planCoreSectionTitle => 'Next steps';
 
   @override
   String get planCoreSectionSubtitle =>
-      'Long-term targets and allocation decisions';
+      'Keep your plan moving with clear actions';
 
   @override
-  String get planStrategyToolsSectionTitle => 'Strategy tools';
+  String get planStrategyToolsSectionTitle => 'Strategies';
 
   @override
   String get planStrategyToolsSectionSubtitle =>
-      'Simulate and review investment actions';
+      'Explore optional investing approaches';
 
   @override
   String get planFireSectionTitle => 'FIRE';
@@ -205,7 +205,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planHeroEmpty => 'Set up your FIRE plan to see progress here.';
 
   @override
-  String get planHeroConfigure => 'Set up FIRE plan';
+  String get planHeroConfigure => 'Set up plan';
 
   @override
   String planHeroYearsToFire(String years) {
@@ -1072,12 +1072,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardActivityPreviewViewAll => 'View all';
 
   @override
-  String get dashboardAllocationSummaryTitle => 'Allocation';
-
-  @override
-  String get dashboardAllocationViewBreakdown => 'View breakdown';
-
-  @override
   String get homeGreetingMorning => 'Good morning';
 
   @override
@@ -1088,6 +1082,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeGreetingNight => 'Good night';
+
+  @override
+  String get homeTodayBriefSubtitle => 'Your financial brief for today';
 
   @override
   String get financeAgentResultsLoading => 'Checking agent results';
@@ -1299,12 +1296,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeQuickRecordEntry => 'Record entry';
-
-  @override
-  String get homeShowDetails => 'Explore details';
-
-  @override
-  String get homeHideDetails => 'Hide details';
 
   @override
   String get homeQuickImport => 'Import';
@@ -2393,9 +2384,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboardAllocationTitle => 'Asset allocation';
-
-  @override
-  String get dashboardTrendTitle => 'Net worth trend';
 
   @override
   String get dashboardCategoryStock => 'Stocks';

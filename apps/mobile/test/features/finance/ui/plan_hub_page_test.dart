@@ -14,15 +14,22 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(FireDashboardView view) => _wrapAsync(AsyncValue.data(view));
 
-Widget _wrapAsync(AsyncValue<FireDashboardView> view) => ProviderScope(
-  overrides: [fireDashboardViewProvider.overrideWith((ref) => view)],
-  child: MaterialApp(
-    theme: AppTheme.light(),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: const PlanHubPage(),
-  ),
-);
+Widget _wrapAsync(AsyncValue<FireDashboardView> view, {double textScale = 1}) =>
+    ProviderScope(
+      overrides: [fireDashboardViewProvider.overrideWith((ref) => view)],
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
+        home: const PlanHubPage(),
+      ),
+    );
 
 Widget _wrapRouter(FireDashboardView view) => ProviderScope(
   overrides: [
@@ -138,6 +145,22 @@ void main() {
     expect(find.text(l10n.planFireSectionTitle), findsWidgets);
     expect(find.text('${l10n.planHeroProgressLabel} 25%'), findsOneWidget);
     expect(find.text(l10n.planHeroSeePlan), findsOneWidget);
+  });
+
+  testWidgets('plan hub stays bounded on a narrow scaled viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      _wrapAsync(AsyncValue.data(_view(FireGoal.unset())), textScale: 1.5),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Next steps'), findsOneWidget);
+    expect(find.text('Strategies'), findsOneWidget);
   });
 
   testWidgets('plan action rows navigate to their feature routes', (

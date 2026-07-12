@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -27,15 +27,23 @@ class PlanHubPage extends ConsumerWidget {
       title: l10n.planHubTitle,
       childPad: false,
       child: AdaptiveContentFrame(
-        maxWidth: AdaptiveMaxWidth.narrow,
+        maxWidth: AdaptiveMaxWidth.dashboard,
         expandSinglePrimary: true,
-        primary: ListView(
-          padding: const EdgeInsets.only(bottom: kTabBarOffset),
-          children: const [
-            _FireSummaryCard(),
-            SizedBox(height: AppSpacing.s16),
-            _PlanActions(),
-          ],
+        primary: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(fireDashboardViewProvider);
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(
+              bottom: kTabBarOffset + MediaQuery.paddingOf(context).bottom,
+            ),
+            children: const [
+              _FireSummaryCard(),
+              SizedBox(height: AppSpacing.s20),
+              _PlanActions(),
+            ],
+          ),
         ),
       ),
     );
@@ -91,21 +99,32 @@ class _FireSummaryCard extends ConsumerWidget {
 
   Widget _emptyHero(BuildContext context, AppLocalizations l10n) {
     return SoftCard(
+      onPress: () => context.push(FinanceRoutes.planFire),
       padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.lg,
-      borderless: true,
-      tinted: false,
+      level: SoftCardLevel.hero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.planFireSectionTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           Text(l10n.planHeroEmpty, style: context.theme.typography.body.md),
-          const SizedBox(height: AppSpacing.s16),
-          FButton(
-            variant: FButtonVariant.primary,
-            onPress: () => context.push(FinanceRoutes.planFire),
-            child: Text(l10n.planHeroConfigure),
+          const SizedBox(height: AppSpacing.s14),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.planHeroConfigure,
+                  style: context.captionLabelStyle.copyWith(
+                    color: context.theme.colors.primary,
+                  ),
+                ),
+              ),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.primary,
+              ),
+            ],
           ),
         ],
       ),
@@ -143,10 +162,9 @@ class _FireSummaryCard extends ConsumerWidget {
         : (monthsToTarget / 12).toStringAsFixed(monthsToTarget < 24 ? 1 : 0);
     final progressPct = (progress * 100).clamp(0, 100).toStringAsFixed(0);
     return SoftCard(
+      onPress: () => context.push(FinanceRoutes.planFire),
       padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.lg,
-      borderless: true,
-      tinted: false,
+      level: SoftCardLevel.hero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -169,16 +187,22 @@ class _FireSummaryCard extends ConsumerWidget {
             '${l10n.planHeroProgressLabel} $progressPct%',
             style: context.captionStyle,
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s14),
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: () => context.push(FinanceRoutes.planFire),
-                child: Text(l10n.planHeroSeePlan),
+              Expanded(
+                child: Text(
+                  l10n.planHeroSeePlan,
+                  style: context.captionLabelStyle.copyWith(
+                    color: context.theme.colors.primary,
+                  ),
+                ),
               ),
-              const SizedBox(width: AppSpacing.s8),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.primary,
+              ),
             ],
           ),
         ],
@@ -193,54 +217,70 @@ class _PlanActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PlanActionSection(
-          title: l10n.planCoreSectionTitle,
-          subtitle: l10n.planCoreSectionSubtitle,
-          actions: [
-            _PlanActionSpec(
-              icon: FLucideIcons.scale,
-              title: l10n.planRebalanceSectionTitle,
-              subtitle: l10n.planRebalanceSectionSubtitle,
-              path: FinanceRoutes.planRebalance,
-            ),
-            _PlanActionSpec(
-              icon: FLucideIcons.piggyBank,
-              title: l10n.planBudgetSectionTitle,
-              subtitle: l10n.planBudgetSectionSubtitle,
-              path: FinanceRoutes.planBudget,
-            ),
-          ],
+    final nextSteps = _PlanActionSection(
+      title: l10n.planCoreSectionTitle,
+      subtitle: l10n.planCoreSectionSubtitle,
+      actions: [
+        _PlanActionSpec(
+          icon: FLucideIcons.piggyBank,
+          title: l10n.planBudgetSectionTitle,
+          subtitle: l10n.planBudgetSectionSubtitle,
+          path: FinanceRoutes.planBudget,
         ),
-        const SizedBox(height: AppSpacing.s8),
-        _PlanActionSection(
-          title: l10n.planStrategyToolsSectionTitle,
-          subtitle: l10n.planStrategyToolsSectionSubtitle,
-          actions: [
-            if (!kIsWeb)
-              _PlanActionSpec(
-                icon: FLucideIcons.candlestickChart,
-                title: l10n.planIncomeSectionTitle,
-                subtitle: l10n.planIncomeSectionSubtitle,
-                path: FinanceRoutes.planIncome,
-              ),
-            _PlanActionSpec(
-              icon: FLucideIcons.calendarClock,
-              title: l10n.planDcaSectionTitle,
-              subtitle: l10n.planDcaSectionSubtitle,
-              path: FinanceRoutes.planDca,
-            ),
-            _PlanActionSpec(
-              icon: FLucideIcons.refreshCw,
-              title: l10n.planWheelSectionTitle,
-              subtitle: l10n.planWheelSectionSubtitle,
-              path: FinanceRoutes.planWheel,
-            ),
-          ],
+        _PlanActionSpec(
+          icon: FLucideIcons.scale,
+          title: l10n.planRebalanceSectionTitle,
+          subtitle: l10n.planRebalanceSectionSubtitle,
+          path: FinanceRoutes.planRebalance,
+        ),
+        _PlanActionSpec(
+          icon: FLucideIcons.calendarClock,
+          title: l10n.planDcaSectionTitle,
+          subtitle: l10n.planDcaSectionSubtitle,
+          path: FinanceRoutes.planDca,
         ),
       ],
+    );
+    final strategies = _PlanActionSection(
+      title: l10n.planStrategyToolsSectionTitle,
+      subtitle: l10n.planStrategyToolsSectionSubtitle,
+      actions: [
+        if (!kIsWeb)
+          _PlanActionSpec(
+            icon: FLucideIcons.candlestickChart,
+            title: l10n.planIncomeSectionTitle,
+            subtitle: l10n.planIncomeSectionSubtitle,
+            path: FinanceRoutes.planIncome,
+          ),
+        _PlanActionSpec(
+          icon: FLucideIcons.refreshCw,
+          title: l10n.planWheelSectionTitle,
+          subtitle: l10n.planWheelSectionSubtitle,
+          path: FinanceRoutes.planWheel,
+        ),
+      ],
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < Breakpoints.contentTwoColumn) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              nextSteps,
+              const SizedBox(height: AppSpacing.s12),
+              strategies,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: nextSteps),
+            const SizedBox(width: AppSpacing.s20),
+            Expanded(child: strategies),
+          ],
+        );
+      },
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/shell/shell_chrome.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/activity_feed_provider.dart';
@@ -110,7 +111,7 @@ class _FeedList extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
         bottom:
             const EdgeInsets.all(AppSpacing.s16).bottom +
-            64 +
+            kTabBarOffset +
             MediaQuery.paddingOf(context).bottom,
       ),
       itemCount: groups.length + 1,
@@ -203,20 +204,19 @@ class _EmptyFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
       children: [
-        SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.55,
-          child: AppEmptyState(
-            icon: FLucideIcons.workflow,
-            title: message,
-            action: actionLabel != null && onAction != null
-                ? FButton(
-                    onPress: onAction,
-                    prefix: const Icon(FLucideIcons.filter),
-                    child: Text(actionLabel!),
-                  )
-                : null,
-          ),
+        AppEmptyState(
+          icon: FLucideIcons.workflow,
+          title: message,
+          action: actionLabel != null && onAction != null
+              ? FButton(
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: onAction,
+                  prefix: const Icon(FLucideIcons.filter),
+                  child: Text(actionLabel!),
+                )
+              : null,
         ),
       ],
     );

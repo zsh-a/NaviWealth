@@ -18,12 +18,44 @@ class HomeQuickActions extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return switch (mode) {
       HomeQuickActionMode.onboarding => _OnboardingQuickActions(l10n: l10n),
-      HomeQuickActionMode.active => _PrimaryQuickAction(
-        icon: FLucideIcons.receiptText,
-        label: l10n.homeQuickRecordEntry,
-        onPress: () => context.push(FinanceRoutes.expenseNew),
-      ),
+      HomeQuickActionMode.active => _ActiveQuickActions(l10n: l10n),
     };
+  }
+}
+
+class _ActiveQuickActions extends StatelessWidget {
+  const _ActiveQuickActions({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return HomeSurface(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s6,
+        vertical: AppSpacing.s4,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _HomeQuickAction(
+              icon: FLucideIcons.receiptText,
+              label: l10n.homeQuickRecordEntry,
+              onPress: () => context.push(FinanceRoutes.expenseNew),
+            ),
+          ),
+          _QuickActionDivider(color: colors.border),
+          Expanded(
+            child: _HomeQuickAction(
+              icon: FLucideIcons.arrowLeftRight,
+              label: l10n.superFabTransfer,
+              onPress: () => context.push(FinanceRoutes.transfer),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -112,73 +144,6 @@ class _HomeQuickAction extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PrimaryQuickAction extends StatelessWidget {
-  const _PrimaryQuickAction({
-    required this.icon,
-    required this.label,
-    required this.onPress,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return HomeSurface(
-      padding: EdgeInsets.zero,
-      child: Semantics(
-        button: true,
-        label: label,
-        child: FTappable(
-          onPress: onPress,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 52),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-              child: Row(
-                children: [
-                  Container(
-                    width: AppSpacing.s28,
-                    height: AppSpacing.s28,
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(
-                        alpha: AppOpacity.subtle,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      icon,
-                      size: AppIconSizes.sm,
-                      color: colors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s10),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: context.mediumLabelStyle.copyWith(
-                        color: colors.foreground,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    FLucideIcons.chevronRight,
-                    size: AppIconSizes.xs,
-                    color: colors.mutedForeground,
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ),

@@ -28,8 +28,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('FIRE'), findsOneWidget);
-    expect(find.text('Planning'), findsOneWidget);
-    expect(find.text('Strategy tools'), findsOneWidget);
+    expect(find.text('Next steps'), findsOneWidget);
+    expect(find.text('Strategies'), findsOneWidget);
     expect(find.text('Rebalance'), findsOneWidget);
     expect(find.text('DCA simulator'), findsOneWidget);
     expect(find.text('Budget'), findsOneWidget);

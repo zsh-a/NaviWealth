@@ -83,29 +83,3 @@ class HomeSurface extends StatelessWidget {
     );
   }
 }
-
-class HomeCardHeader extends StatelessWidget {
-  const HomeCardHeader({super.key, required this.title, this.trailing});
-
-  final String title;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TypographyTokens.titleMedium.copyWith(
-              color: context.theme.colors.foreground,
-            ),
-          ),
-        ),
-        ?trailing,
-      ],
-    );
-  }
-}

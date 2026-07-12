@@ -36,27 +36,4 @@ void main() {
     await tester.pumpAndSettle();
     expect(tapped, isTrue);
   });
-
-  testWidgets('HomeCardHeader keeps trailing actions optional', (tester) async {
-    await tester.pumpWidget(
-      _wrap(
-        const HomeSurface(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: [
-              HomeCardHeader(title: 'Trend'),
-              HomeCardHeader(
-                title: 'Expandable',
-                trailing: Icon(Icons.open_in_full),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    expect(find.text('Trend'), findsOneWidget);
-    expect(find.text('Expandable'), findsOneWidget);
-    expect(find.byIcon(Icons.open_in_full), findsOneWidget);
-  });
 }

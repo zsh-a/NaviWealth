@@ -65,16 +65,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planHubSubtitle => '决策、模型与目标。';
 
   @override
-  String get planCoreSectionTitle => '规划决策';
+  String get planCoreSectionTitle => '下一步';
 
   @override
-  String get planCoreSectionSubtitle => '长期目标与资产配置决策';
+  String get planCoreSectionSubtitle => '用清晰的行动持续推进计划';
 
   @override
-  String get planStrategyToolsSectionTitle => '策略工具';
+  String get planStrategyToolsSectionTitle => '策略';
 
   @override
-  String get planStrategyToolsSectionSubtitle => '模拟并复盘投资动作';
+  String get planStrategyToolsSectionSubtitle => '探索可选的投资方法';
 
   @override
   String get planFireSectionTitle => 'FIRE';
@@ -199,7 +199,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planHeroEmpty => '完成 FIRE 设置后，进度会显示在这里。';
 
   @override
-  String get planHeroConfigure => '开始设置 FIRE 计划';
+  String get planHeroConfigure => '设置计划';
 
   @override
   String planHeroYearsToFire(String years) {
@@ -1041,12 +1041,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboardActivityPreviewViewAll => '查看全部';
 
   @override
-  String get dashboardAllocationSummaryTitle => '资产分配';
-
-  @override
-  String get dashboardAllocationViewBreakdown => '查看分布';
-
-  @override
   String get homeGreetingMorning => '早上好';
 
   @override
@@ -1057,6 +1051,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeGreetingNight => '夜深了';
+
+  @override
+  String get homeTodayBriefSubtitle => '这是你今天的财务简报';
 
   @override
   String get financeAgentResultsLoading => '正在检查 agent 结果';
@@ -1259,12 +1256,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeQuickRecordEntry => '记一笔';
-
-  @override
-  String get homeShowDetails => '展开详情';
-
-  @override
-  String get homeHideDetails => '收起详情';
 
   @override
   String get homeQuickImport => '导入';
@@ -2307,9 +2298,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dashboardAllocationTitle => '大类资产分布';
-
-  @override
-  String get dashboardTrendTitle => '净资产趋势';
 
   @override
   String get dashboardCategoryStock => '股票';

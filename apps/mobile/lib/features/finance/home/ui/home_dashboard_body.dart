@@ -18,7 +18,6 @@ class _DashboardBodyContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
-    final detailsExpanded = ref.watch(_homeDetailsExpandedProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -69,21 +68,19 @@ class _DashboardBodyContent extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    primary: Column(
+                    primary: const Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        AllocationSummary(snapshot: snapshot),
-                        const SizedBox(height: AppSpacing.s20),
-                        const _CashFlowCardsGrid(),
-                        const SizedBox(height: AppSpacing.s20),
-                        const TrendCard(),
+                        CashflowCalendarCard(),
+                        SizedBox(height: AppSpacing.s20),
+                        ActivityTimelinePreview(),
                       ],
                     ),
                     secondary: const Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         FinanceAgentResultsPanel(showPlaceholderStates: false),
-                        ActivityTimelinePreview(),
+                        PassiveIncomeCard(),
                       ],
                     ),
                   )
@@ -106,25 +103,9 @@ class _DashboardBodyContent extends ConsumerWidget {
                         const FinanceAgentResultsPanel(
                           showPlaceholderStates: false,
                         ),
-                        _HomeDetailsDisclosure(
-                          expanded: detailsExpanded,
-                          onToggle: () {
-                            ref
-                                    .read(_homeDetailsExpandedProvider.notifier)
-                                    .state =
-                                !detailsExpanded;
-                          },
-                        ),
-                        if (detailsExpanded) ...[
-                          const SizedBox(height: AppSpacing.s20),
-                          AllocationSummary(snapshot: snapshot),
-                          const SizedBox(height: AppSpacing.s20),
-                          const _CashFlowCardsGrid(),
-                          const SizedBox(height: AppSpacing.s20),
-                          const TrendCard(),
-                          const SizedBox(height: AppSpacing.s20),
-                          const ActivityTimelinePreview(),
-                        ],
+                        const CashflowCalendarCard(),
+                        const SizedBox(height: AppSpacing.s20),
+                        const ActivityTimelinePreview(),
                       ],
                     ),
                   ),
@@ -271,29 +252,6 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
   }
 }
 
-class _HomeDetailsDisclosure extends StatelessWidget {
-  const _HomeDetailsDisclosure({
-    required this.expanded,
-    required this.onToggle,
-  });
-
-  final bool expanded;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppQuietButton(
-      label: expanded ? l10n.homeHideDetails : l10n.homeShowDetails,
-      onPress: onToggle,
-      expanded: true,
-      prefix: Icon(
-        expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
-      ),
-    );
-  }
-}
-
 class _FinanceAgentPanelFrame extends StatelessWidget {
   const _FinanceAgentPanelFrame({required this.child});
 
@@ -307,37 +265,6 @@ class _FinanceAgentPanelFrame extends StatelessWidget {
         child,
         const SizedBox(height: AppSpacing.s20),
       ],
-    );
-  }
-}
-
-class _CashFlowCardsGrid extends StatelessWidget {
-  const _CashFlowCardsGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final twoColumns = constraints.maxWidth >= Breakpoints.mobile;
-        if (!twoColumns) {
-          return const Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              PassiveIncomeCard(),
-              SizedBox(height: AppSpacing.s12),
-              CashflowCalendarCard(),
-            ],
-          );
-        }
-        return const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: PassiveIncomeCard()),
-            SizedBox(width: AppSpacing.s12),
-            Expanded(child: CashflowCalendarCard()),
-          ],
-        );
-      },
     );
   }
 }

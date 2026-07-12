@@ -3,13 +3,11 @@ import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-/// Wealth-status hero rendered above the Net Worth card.
+/// Editorial identity row for the FinanceOS Today brief.
 ///
 /// Replaces the static "Overview" page title with a personalized
-/// greeting + a one-line "this is where you stand" status. The goal is
-/// to make the home page feel like a long-term wealth cockpit (Apple
-/// Stocks / Arc-style) rather than a generic dashboard with a chrome
-/// title.
+/// greeting + a concise briefing subtitle, keeping the page task-oriented
+/// rather than presenting another generic dashboard title.
 ///
 /// Financial metrics and agent results render in their own surfaces instead
 /// of competing with this stable page identity row.
@@ -50,6 +48,8 @@ class HomeGreetingHeader extends StatelessWidget {
               const ShellActionRow(),
             ],
           ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(l10n.homeTodayBriefSubtitle, style: context.captionStyle),
         ],
       ),
     );

@@ -521,7 +521,7 @@ class PlanPageObject {
   final WidgetTester tester;
 
   Future<void> openFireReport() async {
-    final configure = find.text('Set up FIRE plan');
+    final configure = find.text('Set up plan');
     final action = configure.evaluate().isNotEmpty
         ? configure
         : find.text('See plan');

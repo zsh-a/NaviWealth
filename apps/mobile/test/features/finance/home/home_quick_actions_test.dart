@@ -6,7 +6,7 @@ import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('active home keeps only the primary capture action', (
+  testWidgets('active home keeps a compact capture and transfer strip', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(240, 420);
@@ -32,9 +32,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Record entry'), findsOneWidget);
+    expect(find.text('Transfer'), findsOneWidget);
     expect(find.text('Add account'), findsNothing);
     expect(find.text('Import'), findsNothing);
-    expect(find.byIcon(FLucideIcons.chevronRight), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

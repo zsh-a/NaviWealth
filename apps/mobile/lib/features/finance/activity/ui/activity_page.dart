@@ -48,11 +48,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isDesktop =
-        MediaQuery.sizeOf(context).width >= Breakpoints.contentTwoColumn;
-    final activeFilterCount = _activityFilterCount(
-      ref.watch(activityFeedQueryProvider),
-    );
     ref.listen<ActivityFeedQuery>(activityFeedQueryProvider, (_, next) {
       if (!mounted) return;
       _replaceActivityUrl(query: next);
@@ -61,8 +56,14 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     return ShellTabScaffold(
       title: l10n.navActivity,
       childPad: false,
-      directActionBudget: isDesktop ? 2 : 1,
+      directActionBudget: 1,
       actions: [
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.activityAddAction,
+          onPress: () => showActivityActionPanel(context),
+          order: 0,
+        ),
         // §5.10.10 / S5a — Layer 4 ingest review queue entry. Calm
         // by design: a plain outlined inbox, no badge/glow; the
         // pending count lives inside the review page.
@@ -84,47 +85,19 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           onPress: () => context.push(FinanceRoutes.expenseReport),
           order: 40,
         ),
-        if (!isDesktop) ...[
-          ShellHeaderActionSpec(
-            icon: FLucideIcons.filter,
-            label: l10n.activityFeedFilterTitle,
-            onPress: () => ActivityFeedFilterSheet.show(context),
-            order: 10,
-            badgeCount: activeFilterCount,
-          ),
-        ],
       ],
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return isDesktop
-              ? AdaptiveContentFrame(
-                  maxWidth: AdaptiveMaxWidth.dashboard,
-                  layout: AdaptiveFrameLayout.cockpit,
-                  // A 1280 window leaves 984dp after the domain dock and
-                  // expanded tab sidebar, still enough for a 620dp feed plus
-                  // this 340dp rail. Keep the cockpit instead of stacking two
-                  // independently scrolling surfaces.
-                  columnBreakpoint: 960,
-                  rightRailWidth: kAdaptiveRightRailWidth,
-                  primary: const ActivityFeed(),
-                  secondary: _ActivityRightRail(
-                    onFilter: () => ActivityFeedFilterSheet.show(context),
-                    onAdd: () => showActivityActionPanel(context),
-                  ),
-                )
-              : Stack(
-                  children: [
-                    const Positioned.fill(child: ActivityFeed()),
-                    PositionedDirectional(
-                      end: AppSpacing.s16,
-                      bottom: shellTabFloatingActionBottom(context),
-                      child: _ActivityPrimaryAction(
-                        onPress: () => showActivityActionPanel(context),
-                      ),
-                    ),
-                  ],
-                );
-        },
+      child: AdaptiveContentFrame(
+        maxWidth: AdaptiveMaxWidth.dashboard,
+        expandSinglePrimary: true,
+        padding: EdgeInsets.zero,
+        primary: Column(
+          children: [
+            _ActivityFilterBar(
+              onMoreFilters: () => ActivityFeedFilterSheet.show(context),
+            ),
+            const Expanded(child: ActivityFeed()),
+          ],
+        ),
       ),
     );
   }
@@ -149,33 +122,10 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   }
 }
 
-class _ActivityPrimaryAction extends StatelessWidget {
-  const _ActivityPrimaryAction({required this.onPress});
+class _ActivityFilterBar extends ConsumerWidget {
+  const _ActivityFilterBar({required this.onMoreFilters});
 
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(AppRadius.full)),
-        boxShadow: AppShadow.elevation2,
-      ),
-      child: AppActionButton(
-        onPress: onPress,
-        mainAxisSize: MainAxisSize.min,
-        prefix: const Icon(FLucideIcons.plus),
-        child: Text(AppLocalizations.of(context).activityAddAction),
-      ),
-    );
-  }
-}
-
-class _ActivityRightRail extends ConsumerWidget {
-  const _ActivityRightRail({required this.onFilter, required this.onAdd});
-
-  final VoidCallback onFilter;
-  final VoidCallback onAdd;
+  final VoidCallback onMoreFilters;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -217,65 +167,37 @@ class _ActivityRightRail extends ConsumerWidget {
         ),
     ];
 
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        SoftCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s16,
-                  AppSpacing.s16,
-                  AppSpacing.s16,
-                  AppSpacing.s12,
-                ),
-                child: Text(l10n.navActivity, style: context.rowTitleStyle),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s8,
+        AppSpacing.s16,
+        AppSpacing.s8,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (var index = 0; index < chips.length; index++) ...[
+                    _FilterChip(spec: chips[index]),
+                    if (index < chips.length - 1)
+                      const SizedBox(width: AppSpacing.s8),
+                  ],
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
-                child: Wrap(
-                  spacing: AppSpacing.s8,
-                  runSpacing: AppSpacing.s8,
-                  children: [for (final chip in chips) _FilterChip(spec: chip)],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              const SizedBox(height: AppSpacing.s12),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s16,
-                  0,
-                  AppSpacing.s16,
-                  0,
-                ),
-                child: FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: onAdd,
-                  prefix: const Icon(FLucideIcons.plus),
-                  child: Text(l10n.activityAddAction),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s16,
-                  0,
-                  AppSpacing.s16,
-                  AppSpacing.s16,
-                ),
-                child: AppQuietButton(
-                  label: filterLabel,
-                  onPress: onFilter,
-                  expanded: true,
-                  prefix: const Icon(FLucideIcons.filter),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: AppSpacing.s8),
+          AppQuietButton(
+            label: filterLabel,
+            onPress: onMoreFilters,
+            prefix: const Icon(FLucideIcons.slidersHorizontal),
+          ),
+        ],
+      ),
     );
   }
 }

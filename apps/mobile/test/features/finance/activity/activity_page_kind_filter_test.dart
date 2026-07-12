@@ -30,7 +30,7 @@ GoRouter _router() {
   );
 }
 
-Widget _wrap({required ProviderContainer container}) {
+Widget _wrap({required ProviderContainer container, double textScale = 1}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
@@ -38,8 +38,12 @@ Widget _wrap({required ProviderContainer container}) {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
-      builder: (context, child) =>
-          FTheme(data: FThemes.slate.light.desktop, child: child!),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: FTheme(data: FThemes.slate.light.desktop, child: child!),
+      ),
     ),
   );
 }
@@ -64,24 +68,41 @@ ProviderContainer _container() {
 }
 
 void main() {
-  testWidgets(
-    'mobile shell keeps filters in the sheet and fixes the main CTA',
-    (tester) async {
-      // Below 1024 dp -> mobile branch without the desktop quick-filter rail.
-      await tester.binding.setSurfaceSize(const Size(760, 900));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+  testWidgets('mobile shell keeps kind filters visible and add in the header', (
+    tester,
+  ) async {
+    // The same filter grammar stays visible across responsive widths.
+    await tester.binding.setSurfaceSize(const Size(760, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final container = _container();
-      addTearDown(container.dispose);
+    final container = _container();
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      expect(find.text('All'), findsNothing);
-      expect(find.text('Expense'), findsNothing);
-      expect(find.text('Record entry'), findsOneWidget);
-    },
-  );
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Expense'), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.plus), findsWidgets);
+  });
+
+  testWidgets('filter bar stays bounded on a narrow scaled viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final container = _container();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container, textScale: 1.5));
+    await tester.pumpAndSettle();
+
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Filter'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('desktop quick filter toggles a kind into the active query', (
     tester,

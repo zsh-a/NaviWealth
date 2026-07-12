@@ -209,25 +209,25 @@ abstract class AppLocalizations {
   /// Plan hub grouped section title for core long-term planning workflows
   ///
   /// In en, this message translates to:
-  /// **'Planning'**
+  /// **'Next steps'**
   String get planCoreSectionTitle;
 
   /// Plan hub grouped section subtitle for core planning workflows
   ///
   /// In en, this message translates to:
-  /// **'Long-term targets and allocation decisions'**
+  /// **'Keep your plan moving with clear actions'**
   String get planCoreSectionSubtitle;
 
   /// Plan hub grouped section title for investment strategy tools
   ///
   /// In en, this message translates to:
-  /// **'Strategy tools'**
+  /// **'Strategies'**
   String get planStrategyToolsSectionTitle;
 
   /// Plan hub grouped section subtitle for investment strategy tools
   ///
   /// In en, this message translates to:
-  /// **'Simulate and review investment actions'**
+  /// **'Explore optional investing approaches'**
   String get planStrategyToolsSectionSubtitle;
 
   /// Plan hub: FIRE section card title
@@ -449,7 +449,7 @@ abstract class AppLocalizations {
   /// No description provided for @planHeroConfigure.
   ///
   /// In en, this message translates to:
-  /// **'Set up FIRE plan'**
+  /// **'Set up plan'**
   String get planHeroConfigure;
 
   /// Plan hero — years remaining to financial independence
@@ -1964,18 +1964,6 @@ abstract class AppLocalizations {
   /// **'View all'**
   String get dashboardActivityPreviewViewAll;
 
-  /// Section header above the home compact allocation summary
-  ///
-  /// In en, this message translates to:
-  /// **'Allocation'**
-  String get dashboardAllocationSummaryTitle;
-
-  /// Link from the home allocation summary into the Accounts hub
-  ///
-  /// In en, this message translates to:
-  /// **'View breakdown'**
-  String get dashboardAllocationViewBreakdown;
-
   /// Home page greeting hero — 5:00 to 12:00
   ///
   /// In en, this message translates to:
@@ -1999,6 +1987,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Good night'**
   String get homeGreetingNight;
+
+  /// Subtitle under the FinanceOS Today greeting
+  ///
+  /// In en, this message translates to:
+  /// **'Your financial brief for today'**
+  String get homeTodayBriefSubtitle;
 
   /// Home FinanceOS agent result panel loading title
   ///
@@ -2353,18 +2347,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record entry'**
   String get homeQuickRecordEntry;
-
-  /// Finance home disclosure that reveals secondary dashboard modules
-  ///
-  /// In en, this message translates to:
-  /// **'Explore details'**
-  String get homeShowDetails;
-
-  /// Finance home disclosure that collapses secondary dashboard modules
-  ///
-  /// In en, this message translates to:
-  /// **'Hide details'**
-  String get homeHideDetails;
 
   /// Home quick action label that opens the activity ingest flow.
   ///
@@ -4315,12 +4297,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Asset allocation'**
   String get dashboardAllocationTitle;
-
-  /// No description provided for @dashboardTrendTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Net worth trend'**
-  String get dashboardTrendTitle;
 
   /// No description provided for @dashboardCategoryStock.
   ///
