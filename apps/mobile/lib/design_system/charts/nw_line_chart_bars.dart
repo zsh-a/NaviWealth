@@ -38,15 +38,21 @@ extension _NwLineChartBars on _NwLineChartState {
       color: effectiveColor,
       dashArray: effectiveDash,
       barWidth: s.strokeWidth ?? defaultStroke,
+      // Resting charts stay line-only by default — dots read as noisy on
+      // wealth / portfolio trends. Opt in with [NwLineChart.showDots] /
+      // [NwLineChart.heroDots] for sparklines that need an end-cap.
       dotData: FlDotData(
-        show: widget.showDots ?? s.points.length <= 60,
+        show: widget.showDots == true || widget.heroDots,
         getDotPainter: widget.heroDots && ordinal == 0
             ? (spot, percent, barData, index) {
                 if (index != s.points.length - 1) {
-                  return FlDotCirclePainter(radius: 2.5, color: effectiveColor);
+                  return FlDotCirclePainter(
+                    radius: 0,
+                    color: Colors.transparent,
+                  );
                 }
                 return FlDotCirclePainter(
-                  radius: 5,
+                  radius: 4,
                   color: effectiveColor,
                   strokeColor: effectiveColor.withValues(
                     alpha: AppOpacity.halo,

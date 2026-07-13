@@ -136,6 +136,8 @@ void main() {
       trend.points[0].componentQualities['manual:deposit-1'],
       TrendComponentQuality.unheld,
     );
+    // Pre-holding days are incomplete so charts never paint a flat zero.
+    expect(trend.points[0].quality, TrendPointQuality.incomplete);
     expect(trend.points[1].quality, TrendPointQuality.incomplete);
     expect(
       trend.points[1].componentQualities['manual:deposit-1'],
@@ -201,6 +203,75 @@ void main() {
       endingInEstimate.latestEstimatedSegment.single.asOf,
       DateTime.utc(2026, 1, 2),
     );
+
+    // Chartable segments never bridge quality gaps (no jump at seams).
+    // Single-sample runs are omitted — they cannot form a polyline.
+    expect(trend.chartableSegments, isEmpty);
+  });
+
+  test('chartableSegments splits complete and estimated without bridging', () {
+    final template = HoldingSnapshot(
+      assetId: 'AAPL',
+      quantity: Decimal.one,
+      costBasisInAssetCurrency: Decimal.parse('100'),
+      marketValueInAssetCurrency: Decimal.parse('100'),
+      assetCurrency: 'USD',
+      costBasisInBase: Decimal.parse('100'),
+      marketValueInBase: Decimal.parse('100'),
+      unrealizedPnlInBase: Decimal.zero,
+      weight: Decimal.one,
+      baseCurrency: 'USD',
+      asOf: DateTime.utc(2026, 1, 1),
+    );
+    final trend =
+        DashboardTrendBuilder(
+          converter: const _MapConverter({}),
+          baseCurrency: 'USD',
+        ).build(
+          range: DashboardTimeRange(
+            preset: DashboardRangePreset.custom,
+            from: DateTime.utc(2026, 1, 1),
+            to: DateTime.utc(2026, 1, 5),
+            granularity: NetWorthGranularity.day,
+          ),
+          manualAssets: const [],
+          physicalAssets: const [],
+          liabilities: const [],
+          liabilitySchedules: const {},
+          securitySamples: [
+            _securitySample(template, DateTime.utc(2026, 1, 1), '100'),
+            _securitySample(template, DateTime.utc(2026, 1, 2), '105'),
+            _securitySample(
+              template,
+              DateTime.utc(2026, 1, 3),
+              '100',
+              estimated: true,
+            ),
+            _securitySample(
+              template,
+              DateTime.utc(2026, 1, 4),
+              '102',
+              estimated: true,
+            ),
+            _securitySample(template, DateTime.utc(2026, 1, 5), '110'),
+            // 1/5 alone is length-1 complete; need another complete day
+            // for a trailing solid segment — use only through 1/5 for now.
+          ],
+        );
+
+    final segments = trend.chartableSegments;
+    // complete [1,2] + estimated [3,4]; trailing complete [5] dropped (<2)
+    expect(segments, hasLength(2));
+    expect(segments[0].isComplete, isTrue);
+    expect(segments[0].points.map((p) => p.asOf), [
+      DateTime.utc(2026, 1, 1),
+      DateTime.utc(2026, 1, 2),
+    ]);
+    expect(segments[1].isEstimated, isTrue);
+    expect(segments[1].points.map((p) => p.asOf), [
+      DateTime.utc(2026, 1, 3),
+      DateTime.utc(2026, 1, 4),
+    ]);
   });
 
   test('manual asset without lifecycle evidence is incomplete, not unheld', () {

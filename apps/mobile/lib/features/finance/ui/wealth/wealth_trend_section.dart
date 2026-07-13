@@ -110,11 +110,9 @@ class _WealthTrendBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completePoints = trend.latestCompleteSegment;
-    final estimatedPoints = trend.latestEstimatedSegment;
-    final estimated = completePoints.isEmpty && estimatedPoints.isNotEmpty;
-    final points = estimated ? estimatedPoints : completePoints;
-    if (points.isEmpty) {
+    final l10n = AppLocalizations.of(context);
+    final segments = trend.chartableSegments;
+    if (segments.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -124,30 +122,76 @@ class _WealthTrendBody extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s10),
           Text(
-            AppLocalizations.of(context).wealthTrendIncompleteDisclosure,
+            l10n.wealthTrendIncompleteDisclosure,
             style: context.captionStyle,
           ),
         ],
       );
     }
 
-    final values = [for (final point in points) metric.valueOf(point)];
-    final chartPoints = [
-      for (var i = 0; i < points.length; i++)
-        ChartPoint(
-          x: points[i].asOf.millisecondsSinceEpoch.toDouble(),
-          y: values[i].toDouble(),
-          meta: points[i],
+    // Period delta uses only the trailing complete run so incomplete /
+    // estimated lead-ins never invent a fake baseline jump.
+    final completeTail = trend.latestCompleteSegment;
+    final summaryPoints = completeTail.length >= 2
+        ? completeTail
+        : segments.last.points;
+    final estimatedOnly = completeTail.length < 2;
+    final values = [for (final p in summaryPoints) metric.valueOf(p)];
+    final allFlat = values.every((value) => value == values.first);
+
+    final seriesName = metric.label(l10n);
+    final series = <ChartSeries>[
+      for (final segment in segments)
+        ChartSeries(
+          name: seriesName,
+          points: [
+            for (final point in segment.points)
+              ChartPoint(
+                x: point.asOf.millisecondsSinceEpoch.toDouble(),
+                y: metric.valueOf(point).toDouble(),
+                meta: point,
+              ),
+          ],
+          intent: metric.intent,
+          emphasis: segment.isEstimated
+              ? SeriesEmphasis.dashed
+              : SeriesEmphasis.solid,
+          // Soft fill only on reliable solid runs — estimated stays airy.
+          fillOpacity: segment.isComplete && !allFlat
+              ? AppOpacity.subtle
+              : AppOpacity.transparent,
+          strokeWidth: segment.isEstimated ? AppStroke.thin : AppStroke.medium,
         ),
     ];
-    final allFlat = values.every((value) => value == values.first);
+
+    // Fit X to real samples only — do not pin to the full selected range
+    // (that left a long empty/zero lead-in and a cliff into first funding).
+    final dataMinX = series
+        .expand((s) => s.points)
+        .map((p) => p.x)
+        .reduce((a, b) => a < b ? a : b);
+    final dataMaxX = series
+        .expand((s) => s.points)
+        .map((p) => p.x)
+        .reduce((a, b) => a > b ? a : b);
+    final coverageStartsLate = segments.first.points.first.asOf.isAfter(
+      trend.range.from.add(const Duration(days: 2)),
+    );
+    final hasPartialCoverage =
+        segments.length > 1 ||
+        segments.any((s) => s.isEstimated) ||
+        coverageStartsLate ||
+        completeTail.length <
+            trend.points
+                .where((p) => p.quality != TrendPointQuality.incomplete)
+                .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _WealthTrendSummary(
           currency: trend.baseCurrency,
-          baseline: !estimated && values.length > 1 ? values.first : null,
+          baseline: !estimatedOnly && values.length > 1 ? values.first : null,
           current: values.last,
         ),
         const SizedBox(height: AppSpacing.s16),
@@ -155,48 +199,37 @@ class _WealthTrendBody extends StatelessWidget {
           key: const ValueKey('wealth-trend-chart'),
           height: allFlat ? AppChartHeights.standard : AppChartHeights.full,
           child: NwLineChart(
-            series: [
-              ChartSeries(
-                name: metric.label(AppLocalizations.of(context)),
-                points: chartPoints,
-                intent: metric.intent,
-                emphasis: estimated
-                    ? SeriesEmphasis.dashed
-                    : SeriesEmphasis.solid,
-                fillOpacity: estimated ? 0 : AppOpacity.subtle,
-                strokeWidth: AppStroke.medium,
-              ),
-            ],
+            series: series,
+            // Tight fit around real data so short histories fill the plot.
+            minX: dataMinX,
+            maxX: dataMaxX <= dataMinX ? null : dataMaxX,
             xAxis: TimeAxis(format: _dateFormatFor(trend.range), maxLabels: 4),
             yAxis: ValueAxis.currency(
               currencyCode: trend.baseCurrency,
               maxLabels: 3,
               showGrid: true,
             ),
-            filled: !estimated && !allFlat,
+            // Only solid complete series receive area fill (see fillOpacity).
+            filled: !estimatedOnly && !allFlat,
             interpolation: ChartInterpolation.linear,
             showDots: false,
+            heroDots: false,
             showYAxis: false,
             showTouchXAxisLabel: true,
             minimal: allFlat,
-            semanticLabel:
-                '${AppLocalizations.of(context).wealthTrendTitle}, '
-                '${metric.label(AppLocalizations.of(context))}',
+            semanticLabel: '${l10n.wealthTrendTitle}, $seriesName',
           ),
         ),
         if (allFlat) ...[
           const SizedBox(height: AppSpacing.s10),
-          Text(
-            AppLocalizations.of(context).wealthTrendFlatHint,
-            style: context.captionStyle,
-          ),
+          Text(l10n.wealthTrendFlatHint, style: context.captionStyle),
         ],
-        if (estimated || completePoints.length < trend.points.length) ...[
+        if (hasPartialCoverage) ...[
           const SizedBox(height: AppSpacing.s10),
           Text(
-            estimated
-                ? AppLocalizations.of(context).wealthTrendEstimatedDisclosure
-                : AppLocalizations.of(context).wealthTrendExcludedDisclosure,
+            estimatedOnly
+                ? l10n.wealthTrendEstimatedDisclosure
+                : l10n.wealthTrendExcludedDisclosure,
             style: context.captionStyle,
           ),
         ],

@@ -57,6 +57,8 @@ class NwLineChart extends StatefulWidget {
     this.showTouchXAxisLabel = false,
     this.minimal = false,
     this.onScrub,
+    this.minX,
+    this.maxX,
   });
 
   final List<ChartSeries> series;
@@ -67,6 +69,11 @@ class NwLineChart extends StatefulWidget {
 
   /// Live scrub sample while the user pans/long-presses. `null` on release.
   final ValueChanged<ChartPoint?>? onScrub;
+
+  /// Optional forced X bounds (e.g. pin to a selected date range so sparse
+  /// history leaves a calm empty lead-in instead of stretching the line).
+  final double? minX;
+  final double? maxX;
 
   /// Auto-apply [downsampleLttb] when a series exceeds [downsampleTarget].
   /// Set to `false` to opt out (e.g. an audit view that must show every tick).
@@ -165,8 +172,8 @@ class _NwLineChartState extends State<NwLineChart> {
     final palette = ChartPalette.of(context);
     final prepared = _prepare(nonEmpty);
     final processed = prepared.processed;
-    final minX = prepared.minX;
-    final maxX = prepared.maxX;
+    final minX = widget.minX ?? prepared.minX;
+    final maxX = widget.maxX ?? prepared.maxX;
     final minY = prepared.minY;
     final maxY = prepared.maxY;
     final yPad = prepared.yPad;

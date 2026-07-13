@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/foundation.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
@@ -115,6 +116,92 @@ class DashboardTrend {
     }
     return List<TrendPoint>.unmodifiable(points.sublist(start));
   }
+
+  /// Continuous chartable runs for premium multi-series rendering.
+  ///
+  /// Incomplete samples are dropped (never plotted as zero). Estimated and
+  /// complete stay in separate segments so the chart never draws a
+  /// discontinuous jump across quality boundaries. Leading "all-zero"
+  /// complete samples (empty book) are also trimmed so the line starts
+  /// when wealth actually appears.
+  List<TrendChartSegment> get chartableSegments {
+    if (points.isEmpty) return const [];
+    final out = <TrendChartSegment>[];
+    List<TrendPoint>? buf;
+    TrendPointQuality? quality;
+    for (final point in points) {
+      if (point.quality == TrendPointQuality.incomplete) {
+        _flushChartSegment(out, quality, buf);
+        buf = null;
+        quality = null;
+        continue;
+      }
+      if (quality == null || point.quality != quality) {
+        _flushChartSegment(out, quality, buf);
+        buf = <TrendPoint>[point];
+        quality = point.quality;
+        continue;
+      }
+      buf!.add(point);
+    }
+    _flushChartSegment(out, quality, buf);
+    return List.unmodifiable(out);
+  }
+
+  /// First index in [points] with non-zero net worth (or assets if NW is
+  /// flat-zero but assets exist). Used by the chart to crop empty lead-in.
+  int? get firstMeaningfulIndex {
+    for (var i = 0; i < points.length; i++) {
+      final p = points[i];
+      if (p.quality == TrendPointQuality.incomplete) continue;
+      if (p.netWorth.amount != Decimal.zero ||
+          p.assets.amount != Decimal.zero ||
+          p.liabilities.amount != Decimal.zero) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  static void _flushChartSegment(
+    List<TrendChartSegment> out,
+    TrendPointQuality? quality,
+    List<TrendPoint>? buf,
+  ) {
+    if (quality == null || buf == null || buf.isEmpty) return;
+    // Drop leading all-zero samples inside a complete run so pre-holding
+    // days never paint a flat baseline that cliffs into first funding.
+    var start = 0;
+    if (quality == TrendPointQuality.complete) {
+      while (start < buf.length &&
+          buf[start].netWorth.amount == Decimal.zero &&
+          buf[start].assets.amount == Decimal.zero &&
+          buf[start].liabilities.amount == Decimal.zero) {
+        start += 1;
+      }
+    }
+    final trimmed = start == 0 ? buf : buf.sublist(start);
+    // A single-sample segment cannot form a polyline; keep only runs ≥ 2.
+    if (trimmed.length < 2) return;
+    out.add(
+      TrendChartSegment(
+        quality: quality,
+        points: List<TrendPoint>.unmodifiable(trimmed),
+      ),
+    );
+  }
+}
+
+/// One continuous polyline on the wealth / net-worth trend chart.
+@immutable
+class TrendChartSegment {
+  const TrendChartSegment({required this.quality, required this.points});
+
+  final TrendPointQuality quality;
+  final List<TrendPoint> points;
+
+  bool get isEstimated => quality == TrendPointQuality.estimated;
+  bool get isComplete => quality == TrendPointQuality.complete;
 }
 
 /// Builds the net-worth trend the dashboard renders.
@@ -376,8 +463,14 @@ class DashboardTrendBuilder {
   }
 
   TrendPointQuality _pointQuality(Iterable<TrendComponentQuality> qualities) {
+    final list = qualities.toList(growable: false);
+    // Pre-holding days (every component unheld) must not plot as a flat
+    // zero line that later cliffs into real balances.
+    if (list.isEmpty || list.every((q) => q == TrendComponentQuality.unheld)) {
+      return TrendPointQuality.incomplete;
+    }
     var estimated = false;
-    for (final quality in qualities) {
+    for (final quality in list) {
       if (quality == TrendComponentQuality.missing) {
         return TrendPointQuality.incomplete;
       }
