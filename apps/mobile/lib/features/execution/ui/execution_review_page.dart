@@ -196,33 +196,28 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
       );
     }
     final bundle = resultsAsync.value;
-    final runToShowBeforeArtifacts = bundle?.runToShowBeforeArtifacts;
-    if (runToShowBeforeArtifacts != null) {
-      return _ExecutionReviewAgentPanelFrame(
-        child: AgentRunStatusCard(
-          record: runToShowBeforeArtifacts,
-          metaLabel: _executionAgentMetaLabel(
-            context,
-            runToShowBeforeArtifacts.startedAt,
-          ),
-          onRetry: () => _retryExecutionReview(ref),
-        ),
-      );
-    }
-
     final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
     final artifact = artifacts.isEmpty ? null : artifacts.first;
-    if (artifact != null) {
-      return _ExecutionReviewAgentPanelFrame(
-        child: _ExecutionReviewArtifactCard(artifact: artifact),
-      );
-    }
     final run = bundle?.latestRun;
-    if (run == null) return const SizedBox.shrink();
+    if (artifact == null && run == null) return const SizedBox.shrink();
+    final metaTime = artifact?.createdAt ?? run!.startedAt;
     return _ExecutionReviewAgentPanelFrame(
-      child: AgentRunStatusCard(
-        record: run,
-        metaLabel: _executionAgentMetaLabel(context, run.startedAt),
+      child: AgentResultSurface(
+        artifact: artifact,
+        run: run,
+        metaLabel: _executionAgentMetaLabel(context, metaTime),
+        layout: AgentResultCardLayout.summary,
+        onOpen: artifact == null
+            ? null
+            : () => showAgentArtifactSheet(
+                context: context,
+                artifact: artifact,
+                subtitle: _executionAgentMetaLabel(context, artifact.createdAt),
+                onVisibilityChanged: () => ref.invalidate(
+                  execution_agent_providers
+                      .latestExecutionReviewResultsProvider,
+                ),
+              ),
         onRetry: () => _retryExecutionReview(ref),
       ),
     );
@@ -242,30 +237,6 @@ class _ExecutionReviewAgentPanelFrame extends StatelessWidget {
         child,
         const SizedBox(height: AppSpacing.s16),
       ],
-    );
-  }
-}
-
-class _ExecutionReviewArtifactCard extends ConsumerWidget {
-  const _ExecutionReviewArtifactCard({required this.artifact});
-
-  final AgentArtifact artifact;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final metaLabel = _executionAgentMetaLabel(context, artifact.createdAt);
-    return AgentResultCard(
-      artifact: artifact,
-      metaLabel: metaLabel,
-      layout: AgentResultCardLayout.summary,
-      onOpen: () => showAgentArtifactSheet(
-        context: context,
-        artifact: artifact,
-        subtitle: metaLabel,
-        onVisibilityChanged: () => ref.invalidate(
-          execution_agent_providers.latestExecutionReviewResultsProvider,
-        ),
-      ),
     );
   }
 }

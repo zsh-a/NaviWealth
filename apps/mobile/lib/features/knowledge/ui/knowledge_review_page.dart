@@ -244,19 +244,21 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
     }
 
     final bundle = resultsAsync.value;
-    final runToShowBeforeArtifacts = bundle?.runToShowBeforeArtifacts;
-    if (runToShowBeforeArtifacts != null) {
-      return _KnowledgeReviewAgentRunStatusCard(
-        record: runToShowBeforeArtifacts,
-      );
-    }
     final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
-    if (artifacts.isNotEmpty) {
-      return _KnowledgeReviewAgentResultList(artifacts: artifacts);
+    final run = bundle?.latestRun;
+    if (artifacts.isEmpty && run == null) return const SizedBox.shrink();
+    if (artifacts.isEmpty) {
+      // First generation / failed only — not a bare ready shell.
+      if (run!.status != AgentRunLifecycleStatus.running &&
+          run.status != AgentRunLifecycleStatus.failed) {
+        return const SizedBox.shrink();
+      }
+      return _KnowledgeReviewAgentRunStatusCard(record: run);
     }
-    final record = bundle?.latestRun;
-    if (record == null) return const SizedBox.shrink();
-    return _KnowledgeReviewAgentRunStatusCard(record: record);
+    return _KnowledgeReviewAgentResultList(
+      artifacts: artifacts,
+      overlayRun: run,
+    );
   }
 }
 
@@ -275,9 +277,13 @@ class _KnowledgeAgentPanelFrame extends StatelessWidget {
 }
 
 class _KnowledgeReviewAgentResultList extends StatelessWidget {
-  const _KnowledgeReviewAgentResultList({required this.artifacts});
+  const _KnowledgeReviewAgentResultList({
+    required this.artifacts,
+    this.overlayRun,
+  });
 
   final List<AgentArtifact> artifacts;
+  final AgentRunRecord? overlayRun;
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +292,10 @@ class _KnowledgeReviewAgentResultList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _KnowledgeReviewAgentResultCard(artifact: primary),
+        _KnowledgeReviewAgentResultCard(
+          artifact: primary,
+          overlayRun: overlayRun,
+        ),
         if (secondary.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s8),
           for (var i = 0; i < secondary.length; i++) ...[
@@ -317,16 +326,21 @@ class _KnowledgeReviewAgentRunStatusCard extends StatelessWidget {
 }
 
 class _KnowledgeReviewAgentResultCard extends ConsumerWidget {
-  const _KnowledgeReviewAgentResultCard({required this.artifact});
+  const _KnowledgeReviewAgentResultCard({
+    required this.artifact,
+    this.overlayRun,
+  });
 
   final AgentArtifact artifact;
+  final AgentRunRecord? overlayRun;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
-    return AgentResultCard(
+    return AgentResultSurface(
       artifact: artifact,
+      run: overlayRun,
       metaLabel: metaLabel,
       layout: AgentResultCardLayout.summary,
       onOpen: () => showAgentArtifactSheet(

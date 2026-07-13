@@ -174,42 +174,33 @@ class _RecoveryAlertPanel extends ConsumerWidget {
 
     final artifact = artifactAsync.value;
     final run = runAsync.value;
-    if (artifact != null &&
-        run != null &&
-        agent_result_providers.AgentResultBundle.shouldPrioritizeRun(
-          run,
-          artifact,
-        )) {
-      return AgentRunStatusCard(
-        record: run,
-        metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
-        onRetry: () => _retryRecoveryAlert(ref),
-      );
-    }
-    if (artifact == null) {
-      final runOnly = runAsync.value;
-      if (runOnly == null) return const SizedBox.shrink();
-      return AgentRunStatusCard(
-        record: runOnly,
-        metaLabel: l10n.healthBriefingUpdated(_ago(l10n, runOnly.startedAt)),
-        onRetry: () => _retryRecoveryAlert(ref),
-      );
+    // Ready runs with no artifact are silent (no status-only noise).
+    if (artifact == null &&
+        (run == null ||
+            (run.status != AgentRunLifecycleStatus.running &&
+                run.status != AgentRunLifecycleStatus.failed))) {
+      return const SizedBox.shrink();
     }
     final metaLabel = l10n.healthBriefingUpdated(
-      _ago(l10n, artifact.createdAt),
+      _ago(l10n, artifact?.createdAt ?? run!.startedAt),
     );
-    return AgentResultCard(
+    return AgentResultSurface(
       artifact: artifact,
+      run: run,
       metaLabel: metaLabel,
       layout: AgentResultCardLayout.summary,
-      onOpen: () => showAgentArtifactSheet(
-        context: context,
-        artifact: artifact,
-        subtitle: metaLabel,
-        onVisibilityChanged: () => ref.invalidate(
-          health_agent_providers.latestRecoveryAlertArtifactProvider,
-        ),
-      ),
+      summaryMaxLines: 5,
+      onOpen: artifact == null
+          ? null
+          : () => showAgentArtifactSheet(
+              context: context,
+              artifact: artifact,
+              subtitle: metaLabel,
+              onVisibilityChanged: () => ref.invalidate(
+                health_agent_providers.latestRecoveryAlertArtifactProvider,
+              ),
+            ),
+      onRetry: () => _retryRecoveryAlert(ref),
     );
   }
 }

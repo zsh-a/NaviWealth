@@ -159,52 +159,11 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
     }
 
     final bundle = resultsAsync.value;
-    final runToShowBeforeArtifacts = bundle?.runToShowBeforeArtifacts;
-    if (runToShowBeforeArtifacts != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AgentRunStatusCard(
-            record: runToShowBeforeArtifacts,
-            metaLabel: _financeAgentMetaLabel(
-              context,
-              ref,
-              runToShowBeforeArtifacts.startedAt,
-            ),
-            onRetry: () async {
-              final controller = await ref.read(
-                agentRunControllerProvider.future,
-              );
-              await controller.runOnceById(runToShowBeforeArtifacts.agentId);
-              ref.invalidate(
-                finance_agent_providers.latestFinanceAgentResultsProvider,
-              );
-            },
-          ),
-          const SizedBox(height: AppSpacing.s20),
-        ],
-      );
-    }
-
     final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
-    if (artifacts.isNotEmpty) {
-      final primary = artifacts.first;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AgentResultCard(
-            artifact: primary,
-            metaLabel: _financeAgentMetaLabel(context, ref, primary.createdAt),
-            onOpen: () => _openFinanceAgentArtifact(context, ref, primary),
-            layout: AgentResultCardLayout.summary,
-          ),
-          const SizedBox(height: AppSpacing.s20),
-        ],
-      );
-    }
-
+    final primary = artifacts.isEmpty ? null : artifacts.first;
     final run = bundle?.latestRun;
-    if (run == null) {
+
+    if (primary == null && run == null) {
       if (!showPlaceholderStates) return const SizedBox.shrink();
       return _FinanceAgentPanelFrame(
         child: AgentResultPanelStateCard(
@@ -214,21 +173,30 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
         ),
       );
     }
+
+    final metaTime = primary?.createdAt ?? run!.startedAt;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AgentRunStatusCard(
-          record: run,
-          metaLabel: _financeAgentMetaLabel(context, ref, run.startedAt),
-          onRetry: () async {
-            final controller = await ref.read(
-              agentRunControllerProvider.future,
-            );
-            await controller.runOnceById(run.agentId);
-            ref.invalidate(
-              finance_agent_providers.latestFinanceAgentResultsProvider,
-            );
-          },
+        AgentResultSurface(
+          artifact: primary,
+          run: run,
+          metaLabel: _financeAgentMetaLabel(context, ref, metaTime),
+          layout: AgentResultCardLayout.summary,
+          onOpen: primary == null
+              ? null
+              : () => _openFinanceAgentArtifact(context, ref, primary),
+          onRetry: run == null
+              ? null
+              : () async {
+                  final controller = await ref.read(
+                    agentRunControllerProvider.future,
+                  );
+                  await controller.runOnceById(run.agentId);
+                  ref.invalidate(
+                    finance_agent_providers.latestFinanceAgentResultsProvider,
+                  );
+                },
         ),
         const SizedBox(height: AppSpacing.s20),
       ],

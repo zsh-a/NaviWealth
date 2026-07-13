@@ -18,15 +18,13 @@ import '../providers.dart' as agent_providers;
 
 /// Domain-neutral presentation for user-visible agent output.
 ///
-/// Domain surfaces own when to show an artifact and which actions to attach.
-/// This widget only standardizes the visual shell for briefings, reviews,
-/// alerts, and reminders.
+/// Prefer [AgentResultSurface] on domain homes — it keeps the artifact
+/// readable and only overlays run status (running / failed).
 enum AgentResultCardLayout {
-  /// Full preview with insight excerpts and an explicit review action.
+  /// Full preview with insight excerpts; primary surface for domain homes.
   detailed,
 
-  /// Calm feed summary: title, state and a short explanation. The whole
-  /// surface opens the detail view, so no duplicate footer action is shown.
+  /// Calm feed summary: longer body text; whole card opens detail.
   summary,
 }
 
@@ -38,18 +36,22 @@ class AgentResultCard extends StatelessWidget {
     this.onOpen,
     this.footer,
     this.maxInsightPreviewCount = 2,
+    this.summaryMaxLines,
     this.layout = AgentResultCardLayout.detailed,
-  }) : assert(
-         layout != AgentResultCardLayout.summary || footer == null,
-         'Summary cards do not support a footer.',
-       );
+  });
 
   final AgentArtifact artifact;
   final String metaLabel;
   final VoidCallback? onOpen;
   final Widget? footer;
   final int maxInsightPreviewCount;
+
+  /// Override body line clamp. Defaults: detailed=6, summary=4.
+  final int? summaryMaxLines;
   final AgentResultCardLayout layout;
+
+  int get _resolvedSummaryLines =>
+      summaryMaxLines ?? (layout == AgentResultCardLayout.summary ? 4 : 6);
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +59,12 @@ class AgentResultCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final accent = _accentColor(context, artifact.severity);
     final previewInsights = artifact.insights.take(maxInsightPreviewCount);
+    final body = Text(
+      artifact.summary,
+      style: typography.body.sm.copyWith(height: 1.4),
+      maxLines: _resolvedSummaryLines,
+      overflow: TextOverflow.ellipsis,
+    );
 
     if (layout == AgentResultCardLayout.summary) {
       return SoftCard(
@@ -74,12 +82,11 @@ class AgentResultCard extends StatelessWidget {
               showChevron: onOpen != null,
             ),
             const SizedBox(height: AppSpacing.s10),
-            Text(
-              artifact.summary,
-              style: typography.body.sm.copyWith(height: 1.35),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            body,
+            if (footer != null) ...[
+              const SizedBox(height: AppSpacing.s12),
+              footer!,
+            ],
           ],
         ),
       );
@@ -89,7 +96,8 @@ class AgentResultCard extends StatelessWidget {
       level: SoftCardLevel.raised,
       borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
-      onPress: footer == null ? onOpen : null,
+      // Whole card opens detail even when a secondary footer is present.
+      onPress: onOpen,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -97,14 +105,10 @@ class AgentResultCard extends StatelessWidget {
             artifact: artifact,
             metaLabel: metaLabel,
             accent: accent,
+            showChevron: onOpen != null && footer != null,
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            artifact.summary,
-            style: typography.body.sm.copyWith(height: 1.4),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          body,
           if (artifact.insights.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s10),
             for (final insight in previewInsights) ...[
@@ -128,6 +132,168 @@ class AgentResultCard extends StatelessWidget {
                   size: AppIconSizes.xs,
                 ),
               ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Result-first surface: artifact body stays visible; run state is an overlay.
+///
+/// - artifact + (optional) running/failed run → card + banner
+/// - no artifact + run → [AgentRunStatusCard] only (first generation / failure)
+class AgentResultSurface extends StatelessWidget {
+  const AgentResultSurface({
+    super.key,
+    this.artifact,
+    this.run,
+    required this.metaLabel,
+    this.onOpen,
+    this.onRetry,
+    this.footer,
+    this.layout = AgentResultCardLayout.detailed,
+    this.summaryMaxLines,
+    this.maxInsightPreviewCount = 2,
+  });
+
+  final AgentArtifact? artifact;
+  final AgentRunRecord? run;
+  final String metaLabel;
+  final VoidCallback? onOpen;
+  final FutureOr<void> Function()? onRetry;
+  final Widget? footer;
+  final AgentResultCardLayout layout;
+  final int? summaryMaxLines;
+  final int maxInsightPreviewCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final art = artifact;
+    final activeRun = run;
+    final overlay =
+        activeRun != null &&
+            agent_providers.AgentResultBundle.shouldPrioritizeRun(
+              activeRun,
+              art,
+            )
+        ? activeRun
+        : null;
+
+    if (art != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (overlay != null) ...[
+            _RunStatusBanner(record: overlay, onRetry: onRetry),
+            const SizedBox(height: AppSpacing.s8),
+          ],
+          AgentResultCard(
+            artifact: art,
+            metaLabel: metaLabel,
+            onOpen: onOpen,
+            footer: footer,
+            layout: layout,
+            summaryMaxLines: summaryMaxLines,
+            maxInsightPreviewCount: maxInsightPreviewCount,
+          ),
+        ],
+      );
+    }
+
+    if (activeRun != null) {
+      return AgentRunStatusCard(
+        record: activeRun,
+        metaLabel: metaLabel,
+        onRetry: onRetry,
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}
+
+/// Slim banner so running/failed does not replace the previous result body.
+class _RunStatusBanner extends StatefulWidget {
+  const _RunStatusBanner({required this.record, this.onRetry});
+
+  final AgentRunRecord record;
+  final FutureOr<void> Function()? onRetry;
+
+  @override
+  State<_RunStatusBanner> createState() => _RunStatusBannerState();
+}
+
+class _RunStatusBannerState extends State<_RunStatusBanner> {
+  bool _retrying = false;
+
+  Future<void> _retry() async {
+    if (_retrying || widget.onRetry == null) return;
+    setState(() => _retrying = true);
+    try {
+      await widget.onRetry!();
+    } on Object catch (error) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error),
+      );
+    } finally {
+      if (mounted) setState(() => _retrying = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final record = widget.record;
+    final failed = record.status == AgentRunLifecycleStatus.failed;
+    final running = record.status == AgentRunLifecycleStatus.running;
+    final accent = failed ? SemanticColors.of(context).danger : colors.primary;
+    final message = failed
+        ? (record.error ?? record.summary ?? l10n.agentResultRetryAction)
+        : (record.summary ?? l10n.agentResultLoadingBody);
+
+    return SoftCard(
+      level: SoftCardLevel.flat,
+      borderless: true,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
+      child: Row(
+        children: [
+          if (running)
+            const SizedBox(
+              width: AppIconSizes.sm,
+              height: AppIconSizes.sm,
+              child: FCircularProgress(),
+            )
+          else
+            Icon(
+              failed ? FLucideIcons.triangleAlert : FLucideIcons.info,
+              size: AppIconSizes.sm,
+              color: accent,
+            ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Text(
+              message,
+              style: context.captionStyle.copyWith(color: accent),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (failed && widget.onRetry != null) ...[
+            const SizedBox(width: AppSpacing.s8),
+            AppQuietButton(
+              label: l10n.agentResultRetryAction,
+              onPress: _retrying ? null : _retry,
+              busy: _retrying,
+              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
             ),
           ],
         ],

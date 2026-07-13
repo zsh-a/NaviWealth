@@ -157,7 +157,7 @@ void main() {
     );
   });
 
-  testWidgets('review page renders newer running run before older artifact', (
+  testWidgets('review page keeps older artifact while newer run overlays', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -204,11 +204,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('Knowledge Review'), findsWidgets);
-    expect(find.text('Running'), findsOneWidget);
+    // Result-first: previous artifact stays; run is a banner overlay.
+    expect(find.text('Old Knowledge Review'), findsOneWidget);
     expect(find.text('Review in progress.'), findsOneWidget);
-    expect(find.text('Old Knowledge Review'), findsNothing);
-    expect(find.byType(AgentRunStatusCard), findsOneWidget);
+    expect(find.byType(AgentRunStatusCard), findsNothing);
   });
 }
 

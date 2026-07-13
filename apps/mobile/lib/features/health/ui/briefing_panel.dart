@@ -114,27 +114,17 @@ class _BriefingArtifactCard extends StatelessWidget {
       artifact: artifact,
       metaLabel: l10n.healthBriefingUpdated(_ago(l10n, artifact.createdAt)),
       onOpen: openArtifact,
-      footer: Wrap(
-        spacing: AppSpacing.s8,
-        runSpacing: AppSpacing.s8,
-        children: [
-          AppQuietButton(
-            label: l10n.agentResultReviewAction,
-            onPress: openArtifact,
-            prefix: const Icon(
-              FLucideIcons.externalLink,
-              size: AppIconSizes.xs,
-            ),
-          ),
-          AppQuietButton(
-            label: running
-                ? l10n.healthBriefingGenerating
-                : l10n.healthBriefingUpdate,
-            onPress: running ? null : onRun,
-            prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-            busy: running,
-          ),
-        ],
+      summaryMaxLines: 8,
+      footer: Align(
+        alignment: Alignment.centerLeft,
+        child: AppQuietButton(
+          label: running
+              ? l10n.healthBriefingGenerating
+              : l10n.healthBriefingUpdate,
+          onPress: running ? null : onRun,
+          prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+          busy: running,
+        ),
       ),
     );
   }

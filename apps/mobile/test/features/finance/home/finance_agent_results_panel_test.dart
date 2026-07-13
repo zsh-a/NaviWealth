@@ -303,7 +303,7 @@ void main() {
     expect(find.byType(AgentRunStatusCard), findsOneWidget);
   });
 
-  testWidgets('renders newer running run before older artifact', (
+  testWidgets('keeps older artifact body while newer run overlays', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -340,11 +340,14 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Weekly Wealth Review'), findsOneWidget);
-    expect(find.text('Running'), findsOneWidget);
+    // Result-first: previous body remains; run is an overlay banner.
+    expect(find.text('Old Wealth Review'), findsOneWidget);
+    expect(
+      find.text('This older review should stay behind the run state.'),
+      findsOneWidget,
+    );
     expect(find.text('Review in progress.'), findsOneWidget);
-    expect(find.text('Old Wealth Review'), findsNothing);
-    expect(find.byType(AgentRunStatusCard), findsOneWidget);
-    expect(find.byType(AgentResultCard), findsNothing);
+    expect(find.byType(AgentResultCard), findsOneWidget);
+    expect(find.byType(AgentRunStatusCard), findsNothing);
   });
 }

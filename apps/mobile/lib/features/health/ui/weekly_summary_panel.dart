@@ -21,21 +21,15 @@ class _WeeklySummaryPanel extends ConsumerWidget {
       ),
       data: (artifact) {
         if (artifact != null) {
-          final run = runAsync.value;
-          if (run != null &&
-              agent_result_providers.AgentResultBundle.shouldPrioritizeRun(
-                run,
-                artifact,
-              )) {
-            return _WeeklySummaryFallback(async: async, runAsync: runAsync);
-          }
           return _WeeklySummaryArtifactCard(
             artifact: artifact,
+            run: runAsync.value,
             onVisibilityChanged: () {
               ref.invalidate(
                 health_agent_providers.latestHealthReviewAgentResultsProvider,
               );
             },
+            onRetry: () => _retryWeekly(ref),
           );
         }
         return _WeeklySummaryFallback(async: async, runAsync: runAsync);
@@ -44,14 +38,24 @@ class _WeeklySummaryPanel extends ConsumerWidget {
   }
 }
 
+Future<void> _retryWeekly(WidgetRef ref) async {
+  final controller = await ref.read(agentRunControllerProvider.future);
+  await controller.runOnceById(kWeeklySummaryAgentId);
+  ref.invalidate(health_agent_providers.latestHealthReviewAgentResultsProvider);
+}
+
 class _WeeklySummaryArtifactCard extends StatelessWidget {
   const _WeeklySummaryArtifactCard({
     required this.artifact,
+    this.run,
     required this.onVisibilityChanged,
+    this.onRetry,
   });
 
   final AgentArtifact artifact;
+  final AgentRunRecord? run;
   final VoidCallback onVisibilityChanged;
+  final FutureOr<void> Function()? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -60,20 +64,19 @@ class _WeeklySummaryArtifactCard extends StatelessWidget {
       _ago(l10n, artifact.createdAt),
     );
 
-    void openArtifact() {
-      showAgentArtifactSheet(
+    return AgentResultSurface(
+      artifact: artifact,
+      run: run,
+      metaLabel: metaLabel,
+      layout: AgentResultCardLayout.summary,
+      summaryMaxLines: 5,
+      onRetry: onRetry,
+      onOpen: () => showAgentArtifactSheet(
         context: context,
         artifact: artifact,
         subtitle: l10n.healthWeeklySummarySubtitle,
         onVisibilityChanged: onVisibilityChanged,
-      );
-    }
-
-    return AgentResultCard(
-      artifact: artifact,
-      metaLabel: metaLabel,
-      layout: AgentResultCardLayout.summary,
-      onOpen: openArtifact,
+      ),
     );
   }
 }
@@ -153,7 +156,12 @@ class _WeeklySummaryFallback extends ConsumerWidget {
       );
     }
     final run = runAsync.value;
-    if (run == null) return _WeeklySummaryMetricsCard(async: async);
+    // Only surface run chrome when generating or failed — not a bare "ready".
+    final showRun =
+        run != null &&
+        (run.status == AgentRunLifecycleStatus.running ||
+            run.status == AgentRunLifecycleStatus.failed);
+    if (!showRun) return _WeeklySummaryMetricsCard(async: async);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

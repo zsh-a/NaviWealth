@@ -75,7 +75,11 @@ class AgentResultBundle {
 
   AgentRunRecord? get latestRun => latestRuns.isEmpty ? null : latestRuns.first;
 
-  AgentRunRecord? get runToShowBeforeArtifacts {
+  /// When true, domain UIs should *overlay* run status on the latest
+  /// artifact — never replace readable result body with a status-only card.
+  ///
+  /// Prefer [AgentResultSurface] which implements this policy.
+  AgentRunRecord? get runOverlay {
     final run = latestRun;
     if (run == null || !shouldPrioritizeRun(run, latestArtifact)) {
       return null;
@@ -83,6 +87,11 @@ class AgentResultBundle {
     return run;
   }
 
+  /// Legacy name — same as [runOverlay]. Prefer [runOverlay].
+  AgentRunRecord? get runToShowBeforeArtifacts => runOverlay;
+
+  /// Whether [run] is a live interrupt (running / failed) relative to [artifact].
+  /// Used as an overlay signal, not as permission to hide the artifact.
   static bool shouldPrioritizeRun(AgentRunRecord run, AgentArtifact? artifact) {
     if (!_runCanInterruptArtifacts(run.status)) return false;
     if (artifact == null) return true;
