@@ -8,6 +8,7 @@ import '../../features/execution/composition/execution_route_paths.dart';
 import '../../features/finance/composition/finance_route_paths.dart';
 import '../../features/health/composition/health_route_paths.dart';
 import '../../features/knowledge/composition/knowledge_route_paths.dart';
+import '../../features/life/composition/life_route_paths.dart';
 
 /// Canonical route paths for NaviWealth's information architecture.
 ///
@@ -46,6 +47,9 @@ abstract final class AppRoutes {
   // ── Auth ────────────────────────────────────────────────────────────────
   static const login = AuthRoutes.login;
   static const onboarding = AuthRoutes.onboarding;
+
+  // ── Life hub (cross-domain spatial layer) ───────────────────────────────
+  static const life = LifeRoutes.home;
 
   // ── Primary tabs ────────────────────────────────────────────────────────
   static const home = FinanceRoutes.home;
@@ -174,6 +178,7 @@ abstract final class AppRoutes {
 abstract final class AppRouteNames {
   static const login = AuthRouteNames.login;
   static const onboarding = AuthRouteNames.onboarding;
+  static const life = LifeRouteNames.home;
   static const home = FinanceRouteNames.home;
   static const settings = SettingsRouteNames.root;
   static const devices = SettingsRouteNames.devices;

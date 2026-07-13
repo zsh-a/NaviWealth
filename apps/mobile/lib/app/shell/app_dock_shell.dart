@@ -187,6 +187,19 @@ class _DesktopDock extends ConsumerWidget {
         child: Column(
           children: [
             const SizedBox(height: AppSpacing.s12),
+            // Life hub (Phase B spatial layer) sits above domain workspaces.
+            _LifeDockIcon(
+              selected:
+                  activePath == AppRoutes.life ||
+                  activePath.startsWith('${AppRoutes.life}/'),
+              onTap: () {
+                AppInteraction.signal(AppInteractionIntent.navigate);
+                GoRouter.of(context).go(AppRoutes.life);
+              },
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            const _DockGroupDivider(),
+            const SizedBox(height: AppSpacing.s4),
             for (final spec in specs)
               _DockIcon(
                 spec: spec,
@@ -248,6 +261,47 @@ class _DockGroupDivider extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.border.withValues(alpha: AppOpacity.medium),
         borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+    );
+  }
+}
+
+class _LifeDockIcon extends StatelessWidget {
+  const _LifeDockIcon({required this.selected, required this.onTap});
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    final iconColor = selected ? colors.primary : colors.mutedForeground;
+    final fill = selected
+        ? colors.primary.withValues(alpha: AppOpacity.subtle)
+        : Colors.transparent;
+    return FTooltip(
+      tipBuilder: (_, _) => Text(l10n.lifeNavLabel),
+      child: FTappable(
+        onPress: onTap,
+        child: Container(
+          width: AppSpacing.s40,
+          height: AppSpacing.s40,
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            selected ? FLucideIcons.house : FLucideIcons.house,
+            color: iconColor,
+            size: AppIconSizes.mlg,
+          ),
+        ),
       ),
     );
   }

@@ -25,11 +25,11 @@ class _DashboardBodyContent extends ConsumerWidget {
         final basePadding = Breakpoints.isMobile(width)
             ? const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s16,
-                vertical: AppSpacing.s16,
+                vertical: AppSpacing.s8,
               )
             : const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s24,
-                vertical: AppSpacing.s24,
+                vertical: AppSpacing.s16,
               );
         final padding = basePadding.copyWith(
           bottom:
@@ -38,81 +38,80 @@ class _DashboardBodyContent extends ConsumerWidget {
               AppSpacing.s16,
         );
 
+        Future<void> onRefresh() async {
+          ref.invalidate(dashboardSnapshotProvider);
+          ref.invalidate(dashboardHeaderMetricsProvider);
+          await ref.read(dashboardSnapshotProvider.future);
+        }
+
         return AmountPrivacyScope(
           hidden: amountsHidden,
-          child: RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(dashboardSnapshotProvider);
-              ref.invalidate(dashboardHeaderMetricsProvider);
-              await ref.read(dashboardSnapshotProvider.future);
-            },
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              children: [
-                if (useCockpit)
-                  AdaptiveContentFrame(
-                    maxWidth: AdaptiveMaxWidth.dashboard,
-                    layout: AdaptiveFrameLayout.cockpit,
-                    padding: padding.copyWith(top: 0),
-                    header: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: useCockpit
+              ? RefreshIndicator(
+                  onRefresh: onRefresh,
+                  child: AppAtmosphere(
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
                       children: [
-                        const HomeGreetingHeader(),
-                        _NetWorthHeader(snapshot: snapshot),
-                        const SizedBox(height: AppPageRhythm.module),
-                        HomeQuickActions(
-                          mode: snapshot.isEmpty
-                              ? HomeQuickActionMode.onboarding
-                              : HomeQuickActionMode.active,
+                        AdaptiveContentFrame(
+                          maxWidth: AdaptiveMaxWidth.dashboard,
+                          layout: AdaptiveFrameLayout.cockpit,
+                          padding: padding.copyWith(top: 0),
+                          header: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const HomeGreetingHeader(),
+                              _NetWorthHeader(snapshot: snapshot),
+                              const SizedBox(height: AppPageRhythm.module),
+                              HomeQuickActions(
+                                mode: snapshot.isEmpty
+                                    ? HomeQuickActionMode.onboarding
+                                    : HomeQuickActionMode.active,
+                              ),
+                            ],
+                          ),
+                          primary: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              CashflowCalendarCard(),
+                              SizedBox(height: AppPageRhythm.section),
+                              ActivityTimelinePreview(),
+                            ],
+                          ),
+                          secondary: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              FinanceAgentResultsPanel(
+                                showPlaceholderStates: false,
+                              ),
+                              SizedBox(height: AppPageRhythm.section),
+                              PassiveIncomeCard(),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                    primary: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        CashflowCalendarCard(),
-                        SizedBox(height: AppPageRhythm.section),
-                        ActivityTimelinePreview(),
-                      ],
-                    ),
-                    secondary: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        FinanceAgentResultsPanel(showPlaceholderStates: false),
-                        SizedBox(height: AppPageRhythm.section),
-                        PassiveIncomeCard(),
-                      ],
-                    ),
-                  )
-                else
-                  AdaptiveContentFrame(
-                    maxWidth: AdaptiveMaxWidth.narrow,
-                    padding: padding.copyWith(top: 0),
-                    primary: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const HomeGreetingHeader(),
-                        _NetWorthHeader(snapshot: snapshot),
-                        const SizedBox(height: AppPageRhythm.module),
-                        HomeQuickActions(
-                          mode: snapshot.isEmpty
-                              ? HomeQuickActionMode.onboarding
-                              : HomeQuickActionMode.active,
-                        ),
-                        const SizedBox(height: AppPageRhythm.section),
-                        const FinanceAgentResultsPanel(
-                          showPlaceholderStates: false,
-                        ),
-                        const CashflowCalendarCard(),
-                        const SizedBox(height: AppPageRhythm.section),
-                        const ActivityTimelinePreview(),
                       ],
                     ),
                   ),
-              ],
-            ),
-          ),
+                )
+              : BriefScaffold(
+                  padding: padding,
+                  onRefresh: onRefresh,
+                  greeting: const HomeGreetingHeader(),
+                  stage: _NetWorthHeader(snapshot: snapshot),
+                  modules: [
+                    HomeQuickActions(
+                      mode: snapshot.isEmpty
+                          ? HomeQuickActionMode.onboarding
+                          : HomeQuickActionMode.active,
+                    ),
+                    const FinanceAgentResultsPanel(
+                      showPlaceholderStates: false,
+                    ),
+                    const CashflowCalendarCard(),
+                  ],
+                  secondary: const [ActivityTimelinePreview()],
+                ),
         );
       },
     );

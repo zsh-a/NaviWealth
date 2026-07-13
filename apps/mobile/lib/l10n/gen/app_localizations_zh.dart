@@ -1159,6 +1159,91 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTodayBriefSubtitle => '这是你今天的财务简报';
 
   @override
+  String get lifeBriefSubtitle => '跨域 Life 今日简报';
+
+  @override
+  String get lifeStageTitle => 'LifeOS';
+
+  @override
+  String get lifeStageHeadline => '一天，所有域';
+
+  @override
+  String lifeStageBody(int count) {
+    return '$count 个工作区就绪 · 进入域或下滑查看生命线';
+  }
+
+  @override
+  String get lifeOpenFinanceBrief => '打开财务简报';
+
+  @override
+  String get lifeWorkbenchTitle => '工作区';
+
+  @override
+  String get lifeOpenWorkbench => '进入工作区';
+
+  @override
+  String get lifeTimelineTitle => '生命线';
+
+  @override
+  String get lifeTimelineEmpty => '来自财务、健康、知识与执行的信号会出现在这里。';
+
+  @override
+  String get lifeDomainFinance => '财务';
+
+  @override
+  String get lifeDomainHealth => '健康';
+
+  @override
+  String get lifeDomainKnowledge => '知识';
+
+  @override
+  String get lifeDomainExecution => '执行';
+
+  @override
+  String get lifeNavLabel => 'Life';
+
+  @override
+  String get lifeEventNetWorthTitle => '净资产';
+
+  @override
+  String lifeEventNetWorthSubtitle(String currency) {
+    return '基础货币 $currency · 打开财务简报';
+  }
+
+  @override
+  String lifeEventRecoveryTitle(String verdict) {
+    return '恢复 · $verdict';
+  }
+
+  @override
+  String get lifeEventRecoverySubtitle => '打开健康简报';
+
+  @override
+  String lifeEventRecoverySubtitleWithScore(String score) {
+    return '评分 $score · 打开健康简报';
+  }
+
+  @override
+  String get lifeEventKnowledgeUntitled => '捕获笔记';
+
+  @override
+  String get lifeEventKnowledgeSubtitle => '知识捕获';
+
+  @override
+  String get lifeEventExecutionUntitled => '行动';
+
+  @override
+  String lifeEventExecutionSubtitle(String status) {
+    return '状态 · $status';
+  }
+
+  @override
+  String get lifeEventActivityUntitled => '活动';
+
+  @override
+  String get lifeEventActivitySubtitle => '账本分录';
+
+  @override
   String get financeAgentResultsLoading => '正在检查 agent 结果';
 
   @override

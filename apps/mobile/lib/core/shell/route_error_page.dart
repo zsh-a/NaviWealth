@@ -9,7 +9,11 @@ import '../../l10n/gen/app_localizations.dart';
 /// no route matched the URL (404). Surface a "back to overview" button so
 /// the user is never trapped on a dead-end page.
 class RouteErrorPage extends StatelessWidget {
-  const RouteErrorPage({super.key, required this.state, this.homePath = '/'});
+  const RouteErrorPage({
+    super.key,
+    required this.state,
+    this.homePath = '/life',
+  });
 
   final GoRouterState state;
   final String homePath;

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show RefreshIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -30,18 +29,7 @@ class ExecutionTodayPage extends ConsumerWidget {
           onPress: () => showExecutionActionSheet(context: context),
         ),
       ],
-      child: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(executionTodayActionsProvider);
-          ref.invalidate(executionOpenActionsProvider);
-          ref.invalidate(executionProjectsProvider);
-          ref.invalidate(executionCommitmentsProvider);
-          ref.invalidate(executionRecentProgressProvider);
-          ref.invalidate(executionActionRelationsProvider);
-          await ref.read(executionTodayActionsProvider.future);
-        },
-        child: _TodayList(),
-      ),
+      child: _TodayList(),
     );
   }
 }
@@ -53,6 +41,16 @@ class _TodayList extends ConsumerStatefulWidget {
 
 class _TodayListState extends ConsumerState<_TodayList> {
   ExecutionTodayFilter _filter = ExecutionTodayFilter.focus;
+
+  Future<void> _refresh() async {
+    ref.invalidate(executionTodayActionsProvider);
+    ref.invalidate(executionOpenActionsProvider);
+    ref.invalidate(executionProjectsProvider);
+    ref.invalidate(executionCommitmentsProvider);
+    ref.invalidate(executionRecentProgressProvider);
+    ref.invalidate(executionActionRelationsProvider);
+    await ref.read(executionTodayActionsProvider.future);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,70 +92,93 @@ class _TodayListState extends ConsumerState<_TodayList> {
           recentProgress: recentProgress,
           now: now,
         );
-        return ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
+
+        final actionModules = <Widget>[
+          if (visibleActions.isEmpty)
+            ExecutionStateView(
+              icon: _filter == ExecutionTodayFilter.focus
+                  ? FLucideIcons.checkCheck
+                  : executionTodayFilterIcon(_filter),
+              title: _filter == ExecutionTodayFilter.focus
+                  ? l10n.executionTodayEmptyTitle
+                  : l10n.executionTodayFilteredEmptyTitle,
+              message: _filter == ExecutionTodayFilter.focus
+                  ? l10n.executionTodayEmptyBody
+                  : l10n.executionTodayFilteredEmptyBody,
+              action: _filter == ExecutionTodayFilter.focus
+                  ? FButton(
+                      onPress: () => showExecutionActionSheet(context: context),
+                      child: Text(l10n.executionCreateActionTitle),
+                    )
+                  : null,
+            )
+          else ...[
+            ExecutionSectionHeader(
+              title: executionTodayFilterLabel(l10n, _filter),
+              count: visibleActions.length,
+              icon: executionTodayFilterIcon(_filter),
+            ),
+            for (final action in visibleActions)
+              ExecutionActionCardController(
+                action: action,
+                projectLabel:
+                    relations?.projectLabel(action.projectId) ??
+                    executionProjectRelationLabel(projects, action.projectId),
+                commitmentLabel:
+                    relations?.commitmentLabel(action.commitmentId) ??
+                    executionCommitmentRelationLabel(
+                      commitments,
+                      action.commitmentId,
+                    ),
+                onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+                onEdit: () =>
+                    showExecutionActionSheet(context: context, action: action),
+                onRecordProgress: () => showExecutionProgressSheet(
+                  context: context,
+                  action: action,
+                ),
+                blockedProgressNote: l10n.executionProgressBlockedDefault,
+                doneProgressNote: l10n.executionProgressDoneDefault,
+                droppedProgressNote: l10n.executionProgressDroppedDefault,
+              ),
+          ],
+        ];
+
+        return BriefScaffold(
           padding: shellTabContentPadding(context),
-          children: [
+          onRefresh: _refresh,
+          greeting: const SizedBox.shrink(),
+          stage: SoftCard.hero(
+            padding: AppPageRhythm.heroPadding,
+            borderless: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.executionTodayTitle, style: context.mutedLabelStyle),
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  l10n.executionOverviewFocus,
+                  style: TypographyTokens.displaySmall,
+                ),
+                const SizedBox(height: AppSpacing.s6),
+                Text(
+                  '${snapshot.todayCount} · ${l10n.executionOverviewBlocked} ${snapshot.blockedCount}',
+                  style: context.captionStyle,
+                ),
+              ],
+            ),
+          ),
+          modules: [
             ExecutionOverviewStrip(
               snapshot: snapshot,
               selectedFilter: _filter,
-              onFilterChanged: (filter) => setState(() => _filter = filter),
+              onFilterChanged: (filter) {
+                AppInteraction.signal(AppInteractionIntent.select);
+                setState(() => _filter = filter);
+              },
             ),
-            const SizedBox(height: AppPageRhythm.section),
-            if (visibleActions.isEmpty)
-              ExecutionStateView(
-                icon: _filter == ExecutionTodayFilter.focus
-                    ? FLucideIcons.checkCheck
-                    : executionTodayFilterIcon(_filter),
-                title: _filter == ExecutionTodayFilter.focus
-                    ? l10n.executionTodayEmptyTitle
-                    : l10n.executionTodayFilteredEmptyTitle,
-                message: _filter == ExecutionTodayFilter.focus
-                    ? l10n.executionTodayEmptyBody
-                    : l10n.executionTodayFilteredEmptyBody,
-                action: _filter == ExecutionTodayFilter.focus
-                    ? FButton(
-                        onPress: () =>
-                            showExecutionActionSheet(context: context),
-                        child: Text(l10n.executionCreateActionTitle),
-                      )
-                    : null,
-              )
-            else ...[
-              ExecutionSectionHeader(
-                title: executionTodayFilterLabel(l10n, _filter),
-                count: visibleActions.length,
-                icon: executionTodayFilterIcon(_filter),
-              ),
-              for (final action in visibleActions) ...[
-                ExecutionActionCardController(
-                  action: action,
-                  projectLabel:
-                      relations?.projectLabel(action.projectId) ??
-                      executionProjectRelationLabel(projects, action.projectId),
-                  commitmentLabel:
-                      relations?.commitmentLabel(action.commitmentId) ??
-                      executionCommitmentRelationLabel(
-                        commitments,
-                        action.commitmentId,
-                      ),
-                  onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-                  onEdit: () => showExecutionActionSheet(
-                    context: context,
-                    action: action,
-                  ),
-                  onRecordProgress: () => showExecutionProgressSheet(
-                    context: context,
-                    action: action,
-                  ),
-                  blockedProgressNote: l10n.executionProgressBlockedDefault,
-                  doneProgressNote: l10n.executionProgressDoneDefault,
-                  droppedProgressNote: l10n.executionProgressDroppedDefault,
-                ),
-                const SizedBox(height: AppPageRhythm.row),
-              ],
-            ],
           ],
+          secondary: actionModules,
         );
       },
     );

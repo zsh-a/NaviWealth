@@ -15,11 +15,14 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
+import '../../features/life/composition/life_route_paths.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'domain_shell.dart';
 
 /// Show the domain-picker sheet. No-op if fewer than 2 domains are
 /// registered (single-domain installs never need the picker).
+///
+/// Always offers the Life hub first when multi-domain is active (Phase B).
 Future<void> showDomainSwitcherSheet(
   BuildContext context,
   List<DomainShellSpec> specs,
@@ -29,24 +32,39 @@ Future<void> showDomainSwitcherSheet(
     context,
   ).routeInformationProvider.value.uri.path;
   final active = activeSpecForPath(specs, activePath);
+  final onLife =
+      activePath == LifeRoutes.home ||
+      activePath.startsWith('${LifeRoutes.home}/');
+  final l10n = AppLocalizations.of(context);
   await showAppSheet<void>(
     context: context,
-    title: AppLocalizations.of(context).shellSwitchDomainTitle,
+    title: l10n.shellSwitchDomainTitle,
     scrollable: false,
     builder: (sheetContext) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          _LifeRow(
+            selected: onLife,
+            onTap: () {
+              Navigator.of(sheetContext).pop();
+              if (!onLife) {
+                AppInteraction.signal(AppInteractionIntent.navigate);
+                GoRouter.of(context).go(LifeRoutes.home);
+              }
+            },
+          ),
           for (final spec in specs)
             _DomainRow(
               spec: spec,
-              selected: spec.scope == active.scope,
+              selected: !onLife && spec.scope == active.scope,
               onTap: () {
                 Navigator.of(sheetContext).pop();
-                if (spec.scope != active.scope) {
+                if (onLife || spec.scope != active.scope) {
                   final target = spec.tabs.isNotEmpty
                       ? spec.tabs.first.routePath
-                      : '/';
+                      : LifeRoutes.home;
+                  AppInteraction.signal(AppInteractionIntent.navigate);
                   GoRouter.of(context).go(target);
                 }
               },
@@ -55,6 +73,52 @@ Future<void> showDomainSwitcherSheet(
       );
     },
   );
+}
+
+class _LifeRow extends StatelessWidget {
+  const _LifeRow({required this.selected, required this.onTap});
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final iconColor = selected ? colors.primary : colors.foreground;
+    return FTappable(
+      onPress: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s12,
+        ),
+        child: Row(
+          children: [
+            Icon(FLucideIcons.house, color: iconColor, size: AppIconSizes.mlg),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context).lifeNavLabel,
+                style:
+                    (selected
+                            ? context.labelStyle
+                            : context.theme.typography.body.sm.copyWith(
+                                fontWeight: FontWeight.w400,
+                              ))
+                        .copyWith(color: iconColor),
+              ),
+            ),
+            if (selected)
+              Icon(
+                FLucideIcons.check,
+                color: colors.primary,
+                size: AppIconSizes.md,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _DomainRow extends StatelessWidget {

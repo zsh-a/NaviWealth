@@ -91,7 +91,13 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   Widget build(BuildContext context) {
     final tabs = widget.spec.tabs;
     final index = widget.shell.currentIndex;
-    final animatedChild = FadeTransition(opacity: _fade, child: widget.shell);
+    // Spatial-ish content cross-fade when switching domain tabs (Phase B/F).
+    final animatedChild = ContentCrossFade(
+      child: KeyedSubtree(
+        key: ValueKey<int>(widget.shell.currentIndex),
+        child: FadeTransition(opacity: _fade, child: widget.shell),
+      ),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {

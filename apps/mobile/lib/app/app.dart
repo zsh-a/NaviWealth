@@ -27,7 +27,8 @@ import 'routing/router.dart';
 ///   g h / g t → Today, g a → Activity, g n / g w → Wealth,
 ///   g p → Plan, g s → Settings (off-nav global).
 const Map<String, String> _kVimGotoRoutes = <String, String>{
-  'home': AppRoutes.home,
+  'home': AppRoutes.life,
+  'life': AppRoutes.life,
   'today': AppRoutes.home,
   'activity': AppRoutes.activity,
   'accounts': AppRoutes.wealth,
@@ -103,7 +104,7 @@ class NaviWealthApp extends ConsumerWidget {
                       invokeCtx,
                       commands: defaultCommandPaletteEntries(
                         AppLocalizations.of(invokeCtx),
-                        homePath: AppRoutes.home,
+                        homePath: AppRoutes.life,
                         settingsPath: AppRoutes.settings,
                         aiHistoryPath: AppRoutes.settingsAiHistory,
                         onToggleTheme: () {

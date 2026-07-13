@@ -15,6 +15,7 @@ import 'package:naviwealth/features/finance/application/read_models/dashboard_pr
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/passive_income_card.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../domain/dashboard_models.dart';

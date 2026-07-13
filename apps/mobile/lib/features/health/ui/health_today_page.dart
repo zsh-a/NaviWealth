@@ -84,7 +84,8 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           },
         ),
       ],
-      child: RefreshIndicator(
+      child: BriefScaffold(
+        padding: shellTabContentPadding(context),
         onRefresh: () async {
           ref.invalidate(healthTodaySnapshotProvider);
           ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
@@ -100,22 +101,17 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           );
           await ref.read(healthTodaySnapshotProvider.future);
         },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: shellTabContentPadding(context),
-          children: const [
-            FadeSlideIn(child: _RecoveryHero()),
-            _RecoveryAlertPanel(),
-            SizedBox(height: AppPageRhythm.section),
-            _MetricGrid(),
-            SizedBox(height: AppPageRhythm.section),
-            _DataSourcePanel(),
-            SizedBox(height: AppPageRhythm.section),
-            _WeeklySummaryPanel(),
-            SizedBox(height: AppPageRhythm.section),
-            _BriefingPanel(),
-          ],
-        ),
+        greeting: const SizedBox.shrink(),
+        stage: const FadeSlideIn(child: _RecoveryHero()),
+        modules: const [
+          _RecoveryAlertPanel(),
+          _MetricGrid(),
+        ],
+        secondary: const [
+          _DataSourcePanel(),
+          _WeeklySummaryPanel(),
+          _BriefingPanel(),
+        ],
       ),
     );
   }

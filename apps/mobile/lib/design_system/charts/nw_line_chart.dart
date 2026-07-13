@@ -56,6 +56,7 @@ class NwLineChart extends StatefulWidget {
     this.showYAxis = true,
     this.showTouchXAxisLabel = false,
     this.minimal = false,
+    this.onScrub,
   });
 
   final List<ChartSeries> series;
@@ -63,6 +64,9 @@ class NwLineChart extends StatefulWidget {
   final ValueAxis yAxis;
   final double? aspectRatio;
   final ChartDrillDown? drillDown;
+
+  /// Live scrub sample while the user pans/long-presses. `null` on release.
+  final ValueChanged<ChartPoint?>? onScrub;
 
   /// Auto-apply [downsampleLttb] when a series exceeds [downsampleTarget].
   /// Set to `false` to opt out (e.g. an audit view that must show every tick).

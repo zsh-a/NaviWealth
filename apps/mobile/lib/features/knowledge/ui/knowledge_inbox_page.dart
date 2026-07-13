@@ -78,11 +78,13 @@ class _InboxBody extends ConsumerWidget {
     // The Inbox is the KnowledgeOS "AI 助理" front door: the bar stays
     // pinned above the note list (visible even while loading / empty) so
     // add / query / dedupe / suggest are always one tap away.
-    return const Column(
-      children: [
-        _AiAssistantBar(),
-        Expanded(child: _NotesList()),
-      ],
+    return const AppAtmosphere(
+      child: Column(
+        children: [
+          _AiAssistantBar(),
+          Expanded(child: _NotesList()),
+        ],
+      ),
     );
   }
 }

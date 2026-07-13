@@ -2180,6 +2180,156 @@ abstract class AppLocalizations {
   /// **'Your financial brief for today'**
   String get homeTodayBriefSubtitle;
 
+  /// Subtitle under the Life hub greeting
+  ///
+  /// In en, this message translates to:
+  /// **'Your cross-domain Life brief'**
+  String get lifeBriefSubtitle;
+
+  /// Hero card eyebrow on the Life hub
+  ///
+  /// In en, this message translates to:
+  /// **'LifeOS'**
+  String get lifeStageTitle;
+
+  /// Hero headline on the Life hub
+  ///
+  /// In en, this message translates to:
+  /// **'One day. Every domain.'**
+  String get lifeStageHeadline;
+
+  /// Hero body on the Life hub
+  ///
+  /// In en, this message translates to:
+  /// **'{count} workspaces ready · open a domain or scroll your life line'**
+  String lifeStageBody(int count);
+
+  /// CTA on Life hub hero
+  ///
+  /// In en, this message translates to:
+  /// **'Open Finance brief'**
+  String get lifeOpenFinanceBrief;
+
+  /// Section title for domain workbench grid
+  ///
+  /// In en, this message translates to:
+  /// **'Workspaces'**
+  String get lifeWorkbenchTitle;
+
+  /// Subtitle on domain workbench tiles
+  ///
+  /// In en, this message translates to:
+  /// **'Enter workspace'**
+  String get lifeOpenWorkbench;
+
+  /// Cross-domain timeline section title
+  ///
+  /// In en, this message translates to:
+  /// **'Life line'**
+  String get lifeTimelineTitle;
+
+  /// Empty state for the life timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Signals from Finance, Health, Knowledge, and Execution appear here.'**
+  String get lifeTimelineEmpty;
+
+  /// Domain chip on life timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get lifeDomainFinance;
+
+  /// Domain chip on life timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get lifeDomainHealth;
+
+  /// Domain chip on life timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge'**
+  String get lifeDomainKnowledge;
+
+  /// Domain chip on life timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Execution'**
+  String get lifeDomainExecution;
+
+  /// Desktop dock / spatial nav label for Life hub
+  ///
+  /// In en, this message translates to:
+  /// **'Life'**
+  String get lifeNavLabel;
+
+  /// Life timeline: finance net-worth signal title
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth'**
+  String get lifeEventNetWorthTitle;
+
+  /// Life timeline: finance net-worth signal subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Base {currency} · open Finance brief'**
+  String lifeEventNetWorthSubtitle(String currency);
+
+  /// Life timeline: health recovery title
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery · {verdict}'**
+  String lifeEventRecoveryTitle(String verdict);
+
+  /// Life timeline: health recovery subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Open Health brief'**
+  String get lifeEventRecoverySubtitle;
+
+  /// Life timeline: health recovery subtitle with score
+  ///
+  /// In en, this message translates to:
+  /// **'Score {score} · open Health brief'**
+  String lifeEventRecoverySubtitleWithScore(String score);
+
+  /// Life timeline: untitled knowledge note
+  ///
+  /// In en, this message translates to:
+  /// **'Captured note'**
+  String get lifeEventKnowledgeUntitled;
+
+  /// Life timeline: knowledge note subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge capture'**
+  String get lifeEventKnowledgeSubtitle;
+
+  /// Life timeline: untitled execution action
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get lifeEventExecutionUntitled;
+
+  /// Life timeline: execution action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Status · {status}'**
+  String lifeEventExecutionSubtitle(String status);
+
+  /// Life timeline: untitled finance activity
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get lifeEventActivityUntitled;
+
+  /// Life timeline: finance activity subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger entry'**
+  String get lifeEventActivitySubtitle;
+
   /// Home FinanceOS agent result panel loading title
   ///
   /// In en, this message translates to:

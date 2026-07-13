@@ -15,6 +15,8 @@ import '../../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../../features/auth/ui/devices_page.dart' deferred as devices_lib;
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/onboarding_page.dart';
+import '../../features/life/composition/life_route_paths.dart';
+import '../../features/life/ui/life_page.dart';
 import '../../features/settings/ui/agents_settings_page.dart';
 import '../../features/settings/ui/ai/ai_llm_credentials_page.dart';
 import '../../features/settings/ui/ai/ai_models_page.dart';
@@ -70,7 +72,7 @@ Future<void> preloadDeferredRoutesForTest({List<DomainPack>? packs}) async {
 /// - Settings, login, onboarding stay outside the dock shell — they
 ///   cover the full canvas while open and pop back into whatever
 ///   domain the user came from.
-GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
+GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
   final packs = ref.read(domainPackRegistryProvider);
   final shellRoutes = <RouteBase>[
     for (final p in packs)
@@ -110,7 +112,16 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
       if (shellRoutes.isNotEmpty)
         ShellRoute(
           builder: (context, state, child) => AppDockShell(child: child),
-          routes: shellRoutes,
+          routes: [
+            // Cross-domain Life hub (Phase B) — sibling of domain shells so
+            // it shares dock chrome without claiming a domain tab stack.
+            GoRoute(
+              path: LifeRoutes.home,
+              name: LifeRouteNames.home,
+              builder: (context, state) => const LifePage(),
+            ),
+            ...shellRoutes,
+          ],
         ),
     ],
   );

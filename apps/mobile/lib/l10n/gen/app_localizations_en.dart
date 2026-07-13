@@ -1196,6 +1196,92 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTodayBriefSubtitle => 'Your financial brief for today';
 
   @override
+  String get lifeBriefSubtitle => 'Your cross-domain Life brief';
+
+  @override
+  String get lifeStageTitle => 'LifeOS';
+
+  @override
+  String get lifeStageHeadline => 'One day. Every domain.';
+
+  @override
+  String lifeStageBody(int count) {
+    return '$count workspaces ready · open a domain or scroll your life line';
+  }
+
+  @override
+  String get lifeOpenFinanceBrief => 'Open Finance brief';
+
+  @override
+  String get lifeWorkbenchTitle => 'Workspaces';
+
+  @override
+  String get lifeOpenWorkbench => 'Enter workspace';
+
+  @override
+  String get lifeTimelineTitle => 'Life line';
+
+  @override
+  String get lifeTimelineEmpty =>
+      'Signals from Finance, Health, Knowledge, and Execution appear here.';
+
+  @override
+  String get lifeDomainFinance => 'Finance';
+
+  @override
+  String get lifeDomainHealth => 'Health';
+
+  @override
+  String get lifeDomainKnowledge => 'Knowledge';
+
+  @override
+  String get lifeDomainExecution => 'Execution';
+
+  @override
+  String get lifeNavLabel => 'Life';
+
+  @override
+  String get lifeEventNetWorthTitle => 'Net worth';
+
+  @override
+  String lifeEventNetWorthSubtitle(String currency) {
+    return 'Base $currency · open Finance brief';
+  }
+
+  @override
+  String lifeEventRecoveryTitle(String verdict) {
+    return 'Recovery · $verdict';
+  }
+
+  @override
+  String get lifeEventRecoverySubtitle => 'Open Health brief';
+
+  @override
+  String lifeEventRecoverySubtitleWithScore(String score) {
+    return 'Score $score · open Health brief';
+  }
+
+  @override
+  String get lifeEventKnowledgeUntitled => 'Captured note';
+
+  @override
+  String get lifeEventKnowledgeSubtitle => 'Knowledge capture';
+
+  @override
+  String get lifeEventExecutionUntitled => 'Action';
+
+  @override
+  String lifeEventExecutionSubtitle(String status) {
+    return 'Status · $status';
+  }
+
+  @override
+  String get lifeEventActivityUntitled => 'Activity';
+
+  @override
+  String get lifeEventActivitySubtitle => 'Ledger entry';
+
+  @override
   String get financeAgentResultsLoading => 'Checking agent results';
 
   @override

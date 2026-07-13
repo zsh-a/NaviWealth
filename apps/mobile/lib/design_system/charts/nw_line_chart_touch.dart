@@ -49,6 +49,7 @@ extension _NwLineChartInteraction on _NwLineChartState {
                   spotIndex: -1,
                   touchStartPoint: null,
                 );
+          _emitScrub(response, processed);
           _fireCrossingHaptic(response, processed);
           HapticFeedback.selectionClick();
           return;
@@ -56,6 +57,7 @@ extension _NwLineChartInteraction on _NwLineChartState {
         if (event is FlLongPressMoveUpdate || event is FlPanUpdateEvent) {
           final touched = _primaryTouchedSpot(response);
           if (touched == null) _lastSpotIndex = -1;
+          _emitScrub(response, processed);
           _fireCrossingHaptic(response, processed);
           return;
         }
@@ -69,6 +71,7 @@ extension _NwLineChartInteraction on _NwLineChartState {
           }
           _lastSpotIndex = -1;
           _touchNotifier.value = null;
+          widget.onScrub?.call(null);
           return;
         }
         if (event is FlTapUpEvent) {
@@ -93,6 +96,7 @@ extension _NwLineChartInteraction on _NwLineChartState {
           }
           _lastSpotIndex = -1;
           _touchNotifier.value = null;
+          widget.onScrub?.call(null);
         }
       },
     );
@@ -105,6 +109,23 @@ extension _NwLineChartInteraction on _NwLineChartState {
       (spot) => spot.barIndex == 0,
       orElse: () => touched.first,
     );
+  }
+
+  void _emitScrub(LineTouchResponse? response, List<ChartSeries> processed) {
+    final onScrub = widget.onScrub;
+    if (onScrub == null) return;
+    final touched = _primaryTouchedSpot(response);
+    if (touched == null) {
+      onScrub(null);
+      return;
+    }
+    final s = processed[touched.barIndex];
+    if (s.points.isEmpty) {
+      onScrub(null);
+      return;
+    }
+    final idx = touched.spotIndex.clamp(0, s.points.length - 1);
+    onScrub(s.points[idx]);
   }
 
   void _fireCrossingHaptic(
