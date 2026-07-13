@@ -1165,27 +1165,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeStageTitle => 'LifeOS';
 
   @override
-  String get lifeStageHeadline => '一天，所有域';
+  String get lifeHeroHeadlineCalm => '各域状态平稳';
 
   @override
-  String lifeStageBody(int count) {
-    return '$count 个工作区就绪 · 进入域或下滑查看生命线';
+  String lifeHeroHeadlineSignals(int count) {
+    return '$count 条信号待看';
   }
 
   @override
-  String get lifeOpenFinanceBrief => '打开财务简报';
+  String lifeHeroHeadlineAttention(int count) {
+    return '$count 条需要关注';
+  }
+
+  @override
+  String lifeHeroBody(int count) {
+    return '$count 个工作区 · 只汇总信号，不是第二本流水';
+  }
 
   @override
   String get lifeWorkbenchTitle => '工作区';
 
   @override
-  String get lifeOpenWorkbench => '进入工作区';
+  String get lifeTimelineTitle => '关注';
 
   @override
-  String get lifeTimelineTitle => '生命线';
-
-  @override
-  String get lifeTimelineEmpty => '来自财务、健康、知识与执行的信号会出现在这里。';
+  String get lifeTimelineEmpty => '暂无跨域信号。工作区仍可一键进入。';
 
   @override
   String get lifeDomainFinance => '财务';
@@ -1203,45 +1207,50 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeNavLabel => 'Life';
 
   @override
-  String get lifeEventNetWorthTitle => '净资产';
-
-  @override
-  String lifeEventNetWorthSubtitle(String currency) {
-    return '基础货币 $currency · 打开财务简报';
+  String lifeSignalFinanceDayTitle(String count) {
+    return '今日 · $count 笔';
   }
 
   @override
-  String lifeEventRecoveryTitle(String verdict) {
-    return '恢复 · $verdict';
+  String lifeSignalFinanceDaySubtitle(String expense, String income) {
+    return '支出 $expense · 收入 $income · 打开流水';
   }
 
   @override
-  String get lifeEventRecoverySubtitle => '打开健康简报';
+  String get lifeSignalRecoveryTitle => '恢复需要关照';
 
   @override
-  String lifeEventRecoverySubtitleWithScore(String score) {
-    return '评分 $score · 打开健康简报';
+  String get lifeSignalRecoverySubtitle => '打开健康简报';
+
+  @override
+  String lifeSignalExecBlockedTitle(String count) {
+    return '$count 个受阻行动';
   }
 
   @override
-  String get lifeEventKnowledgeUntitled => '捕获笔记';
+  String get lifeSignalExecBlockedSubtitle => '打开执行今日';
 
   @override
-  String get lifeEventKnowledgeSubtitle => '知识捕获';
-
-  @override
-  String get lifeEventExecutionUntitled => '行动';
-
-  @override
-  String lifeEventExecutionSubtitle(String status) {
-    return '状态 · $status';
+  String lifeSignalExecDueTitle(String count) {
+    return '$count 个到期行动';
   }
 
   @override
-  String get lifeEventActivityUntitled => '活动';
+  String get lifeSignalExecDueSubtitle => '打开执行今日';
 
   @override
-  String get lifeEventActivitySubtitle => '账本分录';
+  String lifeSignalKnowledgeTitle(String count) {
+    return '收件箱 $count 条笔记';
+  }
+
+  @override
+  String get lifeSignalKnowledgeSubtitle => '在知识域复盘或捕获';
+
+  @override
+  String get lifeSignalAgentTitle => '有新的 Agent 洞察';
+
+  @override
+  String get lifeSignalAgentSubtitle => '打开财务简报';
 
   @override
   String get financeAgentResultsLoading => '正在检查 agent 结果';

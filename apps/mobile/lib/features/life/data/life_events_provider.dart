@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
@@ -5,9 +6,12 @@ import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/execution/composition/execution_route_paths.dart';
 import 'package:naviwealth/features/execution/data/providers.dart'
     as execution_data;
+import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
-import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
+import 'package:naviwealth/features/finance/agents/providers.dart'
+    as finance_agent_providers;
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
 import 'package:naviwealth/features/health/composition/health_route_paths.dart';
 import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
@@ -15,72 +19,122 @@ import 'package:naviwealth/features/knowledge/data/providers.dart'
     as knowledge_data;
 import 'package:naviwealth/features/life/domain/life_event.dart';
 
-/// Aggregates recent cross-domain signals into a single timeline.
-///
-/// Soft-fail per domain: inactive opt-ins or load errors simply omit that
-/// domain's rows so the Life hub stays usable. Copy is localized in the UI
-/// via [LifeEvent.template].
+/// Signal-only life feed (max 7). No raw journal / note / action rows.
 final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
   final optIns = ref.watch(auth.domainOptInsProvider).value;
   bool isActive(DomainScope scope) =>
       optIns?.contains(scope) ?? scope == DomainScope.finance;
 
   final events = <LifeEvent>[];
+  final now = DateTime.now();
 
-  if (isActive(DomainScope.finance)) {
-    final snap = ref.watch(dashboardSnapshotProvider).value;
-    if (snap != null && !snap.isEmpty) {
+  if (isActive(DomainScope.health)) {
+    final out = ref.watch(recoverySignalProvider).value;
+    final verdict = out?['verdict']?.toString();
+    if (verdict == 'strained') {
+      final score = out?['score']?.toString();
       events.add(
         LifeEvent(
-          id: 'fin-networth',
-          at: DateTime.now(),
-          domain: DomainScope.finance,
-          template: LifeEventTemplate.netWorth,
-          params: [snap.baseCurrency],
-          routePath: FinanceRoutes.home,
-          kind: LifeEventKind.finance,
+          id: 'sig-recovery',
+          at: now,
+          domain: DomainScope.health,
+          template: LifeEventTemplate.recoveryAlert,
+          params: [verdict!, ?score],
+          routePath: HealthRoutes.today,
+          priority: LifeSignalPriority.high,
         ),
       );
     }
+  }
 
+  if (isActive(DomainScope.execution)) {
+    final actions =
+        ref.watch(execution_data.executionTodayActionsProvider).value ??
+        const <ExecutionAction>[];
+    final open =
+        ref.watch(execution_data.executionOpenActionsProvider).value ?? actions;
+    final blocked = open
+        .where((a) => a.status == ExecutionActionStatus.blocked)
+        .length;
+    if (blocked > 0) {
+      events.add(
+        LifeEvent(
+          id: 'sig-exec-blocked',
+          at: now,
+          domain: DomainScope.execution,
+          template: LifeEventTemplate.executionBlocked,
+          params: ['$blocked'],
+          routePath: ExecutionRoutes.today,
+          priority: LifeSignalPriority.high,
+        ),
+      );
+    }
+    final due = open.where((a) => a.isDue(now)).length;
+    if (due > 0) {
+      events.add(
+        LifeEvent(
+          id: 'sig-exec-due',
+          at: now,
+          domain: DomainScope.execution,
+          template: LifeEventTemplate.executionDue,
+          params: ['$due'],
+          routePath: ExecutionRoutes.today,
+          priority: LifeSignalPriority.high,
+        ),
+      );
+    }
+  }
+
+  if (isActive(DomainScope.finance)) {
     final feed = ref.watch(activityFeedProvider).value;
     if (feed != null) {
-      for (final row in feed.entries.take(5)) {
-        final entry = row.entry;
-        final title = entry.narration.trim().isEmpty
-            ? (entry.payee?.trim().isNotEmpty == true
-                  ? entry.payee!.trim()
-                  : entry.id)
-            : entry.narration.trim();
+      final todayStart = DateTime(now.year, now.month, now.day);
+      final todayEntries = feed.entries
+          .where((row) {
+            final d = row.entry.date.toLocal();
+            return !d.isBefore(todayStart);
+          })
+          .toList(growable: false);
+
+      if (todayEntries.isNotEmpty) {
+        var expenseCount = 0;
+        var incomeCount = 0;
+        for (final row in todayEntries) {
+          final kind = classifyEntryKind(
+            postings: row.postings,
+            resolveCategory: (id) => feed.accountsById[id]?.category,
+          ).kind;
+          if (kind == EntryKind.expense) expenseCount += 1;
+          if (kind == EntryKind.income) incomeCount += 1;
+        }
         events.add(
           LifeEvent(
-            id: 'fin-act-${entry.id}',
-            at: entry.date,
+            id: 'sig-fin-today',
+            at: now,
             domain: DomainScope.finance,
-            template: LifeEventTemplate.financeActivity,
-            title: title,
-            routePath: FinanceRoutes.activityEntry(entry.id),
-            kind: LifeEventKind.finance,
+            template: LifeEventTemplate.financeDaySummary,
+            params: ['${todayEntries.length}', '$expenseCount', '$incomeCount'],
+            routePath: FinanceRoutes.activity,
           ),
         );
       }
     }
-  }
 
-  if (isActive(DomainScope.health)) {
-    final out = ref.watch(recoverySignalProvider).value;
-    if (out != null) {
-      final verdict = out['verdict']?.toString() ?? 'insufficient_data';
-      final score = out['score']?.toString();
+    final agentBundle = ref
+        .watch(finance_agent_providers.latestFinanceAgentResultsProvider)
+        .value;
+    final artifacts = agentBundle?.artifacts;
+    if (artifacts != null && artifacts.isNotEmpty) {
+      final primary = artifacts.first;
+      final label = primary.title.trim();
       events.add(
         LifeEvent(
-          id: 'health-recovery',
-          at: DateTime.now(),
-          domain: DomainScope.health,
-          template: LifeEventTemplate.recovery,
-          params: [verdict, ?score],
-          routePath: HealthRoutes.today,
-          kind: LifeEventKind.health,
+          id: 'sig-agent-${primary.id}',
+          at: primary.createdAt,
+          domain: DomainScope.finance,
+          template: LifeEventTemplate.agentResult,
+          params: [label],
+          routePath: FinanceRoutes.home,
         ),
       );
     }
@@ -88,50 +142,57 @@ final lifeEventsProvider = Provider<List<LifeEvent>>((ref) {
 
   if (isActive(DomainScope.knowledge)) {
     final notes = ref.watch(knowledge_data.knowledgeInboxNotesProvider).value;
-    if (notes != null) {
-      for (final note in notes.take(3)) {
-        events.add(
-          LifeEvent(
-            id: 'know-${note.id}',
-            at: note.createdAt,
-            domain: DomainScope.knowledge,
-            template: LifeEventTemplate.knowledgeCapture,
-            title: note.title.trim(),
-            routePath: KnowledgeRoutes.inbox,
-            kind: LifeEventKind.knowledge,
-          ),
-        );
-      }
+    final count = notes?.length ?? 0;
+    if (count >= 3) {
+      events.add(
+        LifeEvent(
+          id: 'sig-know-inbox',
+          at: now,
+          domain: DomainScope.knowledge,
+          template: LifeEventTemplate.knowledgeInbox,
+          params: ['$count'],
+          routePath: KnowledgeRoutes.inbox,
+        ),
+      );
     }
   }
 
-  if (isActive(DomainScope.execution)) {
-    final actions = ref
-        .watch(execution_data.executionTodayActionsProvider)
-        .value;
-    if (actions != null) {
-      for (final action in actions.take(4)) {
-        events.add(
-          LifeEvent(
-            id: 'exec-${action.id}',
-            at: action.createdAt,
-            domain: DomainScope.execution,
-            template: LifeEventTemplate.executionAction,
-            title: action.title,
-            params: [action.status.name],
-            routePath: ExecutionRoutes.action(action.id),
-            kind: LifeEventKind.execution,
-          ),
-        );
-      }
-    }
-  }
-
-  events.sort((a, b) => b.at.compareTo(a.at));
-  return List.unmodifiable(events.take(16));
+  events.sort((a, b) {
+    final byPriority = a.priority.index.compareTo(b.priority.index);
+    if (byPriority != 0) return byPriority;
+    return b.at.compareTo(a.at);
+  });
+  return List.unmodifiable(events.take(7));
 });
 
-/// Active domains for the Life workbench grid.
+/// Compact hero metrics for the Life brief (no extra I/O).
+final lifeHeroSummaryProvider = Provider<LifeHeroSummary>((ref) {
+  final signals = ref.watch(lifeEventsProvider);
+  final packs = ref.watch(activeDomainPacksProvider);
+  final high = signals
+      .where((e) => e.priority == LifeSignalPriority.high)
+      .length;
+  return LifeHeroSummary(
+    domainCount: packs.length,
+    signalCount: signals.length,
+    highPriorityCount: high,
+  );
+});
+
+@immutable
+class LifeHeroSummary {
+  const LifeHeroSummary({
+    required this.domainCount,
+    required this.signalCount,
+    required this.highPriorityCount,
+  });
+
+  final int domainCount;
+  final int signalCount;
+  final int highPriorityCount;
+}
+
+/// Active domains for the Life workbench chips.
 final lifeWorkbenchDomainsProvider = Provider<List<DomainPack>>((ref) {
   return ref.watch(activeDomainPacksProvider);
 });

@@ -1,55 +1,63 @@
-import 'package:naviwealth/features/health/ui/recovery_verdict.dart';
+import 'package:naviwealth/features/life/data/life_events_provider.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-/// Resolves [LifeEvent] copy for the timeline UI.
+/// Resolves [LifeEvent] copy for the signal timeline.
 extension LifeEventL10n on LifeEvent {
   String localizedTitle(AppLocalizations l10n) {
     switch (template) {
-      case LifeEventTemplate.netWorth:
-        return l10n.lifeEventNetWorthTitle;
-      case LifeEventTemplate.recovery:
-        final verdict = params.isNotEmpty ? params.first : 'insufficient_data';
-        return l10n.lifeEventRecoveryTitle(
-          RecoveryVerdict.label(verdict, l10n),
-        );
-      case LifeEventTemplate.knowledgeCapture:
-        return title.trim().isEmpty ? l10n.lifeEventKnowledgeUntitled : title;
-      case LifeEventTemplate.executionAction:
-        return title.trim().isEmpty ? l10n.lifeEventExecutionUntitled : title;
-      case LifeEventTemplate.financeActivity:
-        return title.trim().isEmpty ? l10n.lifeEventActivityUntitled : title;
+      case LifeEventTemplate.financeDaySummary:
+        final n = params.isNotEmpty ? params.first : '0';
+        return l10n.lifeSignalFinanceDayTitle(n);
+      case LifeEventTemplate.recoveryAlert:
+        return l10n.lifeSignalRecoveryTitle;
+      case LifeEventTemplate.executionBlocked:
+        final n = params.isNotEmpty ? params.first : '0';
+        return l10n.lifeSignalExecBlockedTitle(n);
+      case LifeEventTemplate.executionDue:
+        final n = params.isNotEmpty ? params.first : '0';
+        return l10n.lifeSignalExecDueTitle(n);
+      case LifeEventTemplate.knowledgeInbox:
+        final n = params.isNotEmpty ? params.first : '0';
+        return l10n.lifeSignalKnowledgeTitle(n);
+      case LifeEventTemplate.agentResult:
+        final t = params.isNotEmpty ? params.first.trim() : '';
+        return t.isEmpty ? l10n.lifeSignalAgentTitle : t;
     }
   }
 
   String localizedSubtitle(AppLocalizations l10n) {
     switch (template) {
-      case LifeEventTemplate.netWorth:
-        final currency = params.isNotEmpty ? params.first : '';
-        return l10n.lifeEventNetWorthSubtitle(currency);
-      case LifeEventTemplate.recovery:
-        if (params.length >= 2) {
-          return l10n.lifeEventRecoverySubtitleWithScore(params[1]);
-        }
-        return l10n.lifeEventRecoverySubtitle;
-      case LifeEventTemplate.knowledgeCapture:
-        return l10n.lifeEventKnowledgeSubtitle;
-      case LifeEventTemplate.executionAction:
-        final status = params.isNotEmpty ? params.first : '';
-        return l10n.lifeEventExecutionSubtitle(_executionStatus(l10n, status));
-      case LifeEventTemplate.financeActivity:
-        return l10n.lifeEventActivitySubtitle;
+      case LifeEventTemplate.financeDaySummary:
+        final expense = params.length > 1 ? params[1] : '0';
+        final income = params.length > 2 ? params[2] : '0';
+        return l10n.lifeSignalFinanceDaySubtitle(expense, income);
+      case LifeEventTemplate.recoveryAlert:
+        return l10n.lifeSignalRecoverySubtitle;
+      case LifeEventTemplate.executionBlocked:
+        return l10n.lifeSignalExecBlockedSubtitle;
+      case LifeEventTemplate.executionDue:
+        return l10n.lifeSignalExecDueSubtitle;
+      case LifeEventTemplate.knowledgeInbox:
+        return l10n.lifeSignalKnowledgeSubtitle;
+      case LifeEventTemplate.agentResult:
+        return l10n.lifeSignalAgentSubtitle;
     }
   }
+}
 
-  static String _executionStatus(AppLocalizations l10n, String wire) {
-    return switch (wire) {
-      'todo' => l10n.executionStatusTodo,
-      'doing' => l10n.executionStatusDoing,
-      'blocked' => l10n.executionStatusBlocked,
-      'done' => l10n.executionStatusDone,
-      'dropped' => l10n.executionStatusDropped,
-      _ => wire,
-    };
+extension LifeHeroSummaryL10n on LifeHeroSummary {
+  String localizedHeadline(AppLocalizations l10n) {
+    if (highPriorityCount > 0) {
+      return l10n.lifeHeroHeadlineAttention(highPriorityCount);
+    }
+    if (signalCount > 0) {
+      return l10n.lifeHeroHeadlineSignals(signalCount);
+    }
+    return l10n.lifeHeroHeadlineCalm;
+  }
+
+  String localizedBody(AppLocalizations l10n) {
+    return l10n.lifeHeroBody(domainCount);
   }
 }

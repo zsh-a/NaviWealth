@@ -2192,46 +2192,46 @@ abstract class AppLocalizations {
   /// **'LifeOS'**
   String get lifeStageTitle;
 
-  /// Hero headline on the Life hub
+  /// Life hero when no signals
   ///
   /// In en, this message translates to:
-  /// **'One day. Every domain.'**
-  String get lifeStageHeadline;
+  /// **'All clear across domains'**
+  String get lifeHeroHeadlineCalm;
 
-  /// Hero body on the Life hub
+  /// Life hero when normal signals exist
   ///
   /// In en, this message translates to:
-  /// **'{count} workspaces ready · open a domain or scroll your life line'**
-  String lifeStageBody(int count);
+  /// **'{count} signals to review'**
+  String lifeHeroHeadlineSignals(int count);
 
-  /// CTA on Life hub hero
+  /// Life hero when high-priority signals exist
   ///
   /// In en, this message translates to:
-  /// **'Open Finance brief'**
-  String get lifeOpenFinanceBrief;
+  /// **'{count} need attention'**
+  String lifeHeroHeadlineAttention(int count);
 
-  /// Section title for domain workbench grid
+  /// Life hero supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'{count} workspaces · signals only, not a second ledger'**
+  String lifeHeroBody(int count);
+
+  /// Section title for domain workspace chips
   ///
   /// In en, this message translates to:
   /// **'Workspaces'**
   String get lifeWorkbenchTitle;
 
-  /// Subtitle on domain workbench tiles
+  /// Cross-domain signal list title
   ///
   /// In en, this message translates to:
-  /// **'Enter workspace'**
-  String get lifeOpenWorkbench;
-
-  /// Cross-domain timeline section title
-  ///
-  /// In en, this message translates to:
-  /// **'Life line'**
+  /// **'Attention'**
   String get lifeTimelineTitle;
 
-  /// Empty state for the life timeline
+  /// Empty state for the life signal list
   ///
   /// In en, this message translates to:
-  /// **'Signals from Finance, Health, Knowledge, and Execution appear here.'**
+  /// **'No cross-domain signals right now. Domain workspaces stay one tap away.'**
   String get lifeTimelineEmpty;
 
   /// Domain chip on life timeline
@@ -2264,71 +2264,77 @@ abstract class AppLocalizations {
   /// **'Life'**
   String get lifeNavLabel;
 
-  /// Life timeline: finance net-worth signal title
+  /// Life signal: finance day summary title
   ///
   /// In en, this message translates to:
-  /// **'Net worth'**
-  String get lifeEventNetWorthTitle;
+  /// **'Today · {count} entries'**
+  String lifeSignalFinanceDayTitle(String count);
 
-  /// Life timeline: finance net-worth signal subtitle
+  /// Life signal: finance day summary subtitle
   ///
   /// In en, this message translates to:
-  /// **'Base {currency} · open Finance brief'**
-  String lifeEventNetWorthSubtitle(String currency);
+  /// **'{expense} expenses · {income} income · open ledger'**
+  String lifeSignalFinanceDaySubtitle(String expense, String income);
 
-  /// Life timeline: health recovery title
+  /// Life signal: strained recovery title
   ///
   /// In en, this message translates to:
-  /// **'Recovery · {verdict}'**
-  String lifeEventRecoveryTitle(String verdict);
+  /// **'Recovery needs care'**
+  String get lifeSignalRecoveryTitle;
 
-  /// Life timeline: health recovery subtitle
+  /// Life signal: recovery subtitle
   ///
   /// In en, this message translates to:
   /// **'Open Health brief'**
-  String get lifeEventRecoverySubtitle;
+  String get lifeSignalRecoverySubtitle;
 
-  /// Life timeline: health recovery subtitle with score
+  /// Life signal: blocked execution title
   ///
   /// In en, this message translates to:
-  /// **'Score {score} · open Health brief'**
-  String lifeEventRecoverySubtitleWithScore(String score);
+  /// **'{count} blocked actions'**
+  String lifeSignalExecBlockedTitle(String count);
 
-  /// Life timeline: untitled knowledge note
+  /// Life signal: blocked execution subtitle
   ///
   /// In en, this message translates to:
-  /// **'Captured note'**
-  String get lifeEventKnowledgeUntitled;
+  /// **'Open Execution today'**
+  String get lifeSignalExecBlockedSubtitle;
 
-  /// Life timeline: knowledge note subtitle
+  /// Life signal: due execution title
   ///
   /// In en, this message translates to:
-  /// **'Knowledge capture'**
-  String get lifeEventKnowledgeSubtitle;
+  /// **'{count} due actions'**
+  String lifeSignalExecDueTitle(String count);
 
-  /// Life timeline: untitled execution action
+  /// Life signal: due execution subtitle
   ///
   /// In en, this message translates to:
-  /// **'Action'**
-  String get lifeEventExecutionUntitled;
+  /// **'Open Execution today'**
+  String get lifeSignalExecDueSubtitle;
 
-  /// Life timeline: execution action subtitle
+  /// Life signal: knowledge inbox title
   ///
   /// In en, this message translates to:
-  /// **'Status · {status}'**
-  String lifeEventExecutionSubtitle(String status);
+  /// **'{count} notes in inbox'**
+  String lifeSignalKnowledgeTitle(String count);
 
-  /// Life timeline: untitled finance activity
+  /// Life signal: knowledge subtitle
   ///
   /// In en, this message translates to:
-  /// **'Activity'**
-  String get lifeEventActivityUntitled;
+  /// **'Review or capture in Knowledge'**
+  String get lifeSignalKnowledgeSubtitle;
 
-  /// Life timeline: finance activity subtitle
+  /// Life signal: agent result fallback title
   ///
   /// In en, this message translates to:
-  /// **'Ledger entry'**
-  String get lifeEventActivitySubtitle;
+  /// **'Agent insight ready'**
+  String get lifeSignalAgentTitle;
+
+  /// Life signal: agent result subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Open Finance brief'**
+  String get lifeSignalAgentSubtitle;
 
   /// Home FinanceOS agent result panel loading title
   ///

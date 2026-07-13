@@ -1,4 +1,4 @@
-/// Cross-domain Life hub — spatial workbench + life timeline (Phase B + G).
+/// Cross-domain Life hub — brief signals, not a third activity feed.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -24,6 +24,7 @@ class LifePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final packs = ref.watch(lifeWorkbenchDomainsProvider);
     final events = ref.watch(lifeEventsProvider);
+    final hero = ref.watch(lifeHeroSummaryProvider);
     final formatters = context.formatters(ref);
 
     return ShellCanvasScaffold(
@@ -32,64 +33,77 @@ class LifePage extends ConsumerWidget {
         bottom: false,
         child: BriefScaffold(
           greeting: _LifeGreeting(l10n: l10n),
-          stage: _LifeStageCard(l10n: l10n, packCount: packs.length),
-          modules: [_WorkbenchGrid(packs: packs, l10n: l10n)],
+          stage: _LifeHero(l10n: l10n, summary: hero),
+          modules: [
+            if (packs.isNotEmpty) _WorkspaceChips(packs: packs, l10n: l10n),
+          ],
           secondary: [
-            SectionHeader(
-              title: l10n.lifeTimelineTitle,
-              padding: const EdgeInsets.only(
-                left: AppSpacing.s4,
-                bottom: AppSpacing.s8,
-              ),
-            ),
-            LifeTimeline(
-              items: [
-                for (final e in events)
-                  LifeTimelineItem(
-                    id: e.id,
-                    at: e.at,
-                    title: e.localizedTitle(l10n),
-                    subtitle: e.localizedSubtitle(l10n),
-                    icon: _iconFor(e),
-                    accent: _accentFor(context, e),
-                    domainLabel: _domainLabel(l10n, e.domain),
-                    onOpen: e.routePath == null
-                        ? null
-                        : () {
-                            AppInteraction.signal(
-                              AppInteractionIntent.navigate,
-                            );
-                            context.go(e.routePath!);
-                          },
-                  ),
-              ],
-              empty: SoftCard.raised(
+            if (events.isEmpty)
+              SoftCard.raised(
                 padding: AppPageRhythm.cardPadding,
+                borderless: true,
                 child: Text(
                   l10n.lifeTimelineEmpty,
                   style: context.bodyCaptionStyle,
                 ),
+              )
+            else ...[
+              SectionHeader(
+                title: l10n.lifeTimelineTitle,
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.s4,
+                  bottom: AppSpacing.s8,
+                ),
               ),
-              timeLabel: (at) => formatters.time(at),
-            ),
+              LifeTimeline(
+                items: [
+                  for (final e in events)
+                    LifeTimelineItem(
+                      id: e.id,
+                      at: e.at,
+                      title: e.localizedTitle(l10n),
+                      subtitle: e.localizedSubtitle(l10n),
+                      icon: _iconFor(e),
+                      accent: _accentFor(context, e),
+                      domainLabel: _domainLabel(l10n, e.domain),
+                      onOpen: e.routePath == null
+                          ? null
+                          : () {
+                              AppInteraction.signal(
+                                AppInteractionIntent.navigate,
+                              );
+                              context.go(e.routePath!);
+                            },
+                    ),
+                ],
+                timeLabel: (at) => formatters.time(at),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  IconData _iconFor(LifeEvent e) => switch (e.kind) {
-    LifeEventKind.finance => FLucideIcons.wallet,
-    LifeEventKind.health => FLucideIcons.heartPulse,
-    LifeEventKind.knowledge => FLucideIcons.bookOpen,
-    LifeEventKind.execution => FLucideIcons.listChecks,
-    LifeEventKind.agent => FLucideIcons.sparkles,
-    LifeEventKind.note => FLucideIcons.circle,
+  IconData _iconFor(LifeEvent e) => switch (e.template) {
+    LifeEventTemplate.financeDaySummary => FLucideIcons.receipt,
+    LifeEventTemplate.recoveryAlert => FLucideIcons.heartPulse,
+    LifeEventTemplate.executionBlocked => FLucideIcons.octagonAlert,
+    LifeEventTemplate.executionDue => FLucideIcons.calendarClock,
+    LifeEventTemplate.knowledgeInbox => FLucideIcons.inbox,
+    LifeEventTemplate.agentResult => FLucideIcons.sparkles,
   };
 
   Color _accentFor(BuildContext context, LifeEvent e) {
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
+    if (e.priority == LifeSignalPriority.high) {
+      return switch (e.domain) {
+        DomainScope.health => colors.destructive,
+        DomainScope.execution => semantic.warning,
+        _ => colors.primary,
+      };
+    }
     return switch (e.domain) {
       DomainScope.finance => colors.primary,
       DomainScope.health => semantic.success,
@@ -152,61 +166,43 @@ class _LifeGreeting extends StatelessWidget {
   }
 }
 
-class _LifeStageCard extends StatelessWidget {
-  const _LifeStageCard({required this.l10n, required this.packCount});
+class _LifeHero extends StatelessWidget {
+  const _LifeHero({required this.l10n, required this.summary});
 
   final AppLocalizations l10n;
-  final int packCount;
+  final LifeHeroSummary summary;
 
   @override
   Widget build(BuildContext context) {
     return SoftCard.hero(
       padding: AppPageRhythm.heroPadding,
-      onPress: AppInteraction.wrap(
-        () => context.go(FinanceRoutes.home),
-        intent: AppInteractionIntent.navigate,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.lifeStageTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s10),
-          Text(l10n.lifeStageHeadline, style: TypographyTokens.displaySmall),
-          const SizedBox(height: AppSpacing.s8),
-          Text(l10n.lifeStageBody(packCount), style: context.bodyCaptionStyle),
-          const SizedBox(height: AppPageRhythm.module),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.lifeOpenFinanceBrief,
-                  style: context.captionLabelStyle.copyWith(
-                    color: context.theme.colors.primary,
-                  ),
-                ),
-              ),
-              Icon(
-                FLucideIcons.chevronRight,
-                size: AppIconSizes.sm,
-                color: context.theme.colors.primary,
-              ),
-            ],
+          Text(
+            summary.localizedHeadline(l10n),
+            style: TypographyTokens.displaySmall,
           ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(summary.localizedBody(l10n), style: context.bodyCaptionStyle),
         ],
       ),
     );
   }
 }
 
-class _WorkbenchGrid extends StatelessWidget {
-  const _WorkbenchGrid({required this.packs, required this.l10n});
+/// Compact horizontal domain chips — replaces the large workbench card wall.
+class _WorkspaceChips extends StatelessWidget {
+  const _WorkspaceChips({required this.packs, required this.l10n});
 
   final List<DomainPack> packs;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    if (packs.isEmpty) return const SizedBox.shrink();
+    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -214,53 +210,38 @@ class _WorkbenchGrid extends StatelessWidget {
           title: l10n.lifeWorkbenchTitle,
           padding: const EdgeInsets.only(
             left: AppSpacing.s4,
-            bottom: AppSpacing.s10,
+            bottom: AppSpacing.s8,
           ),
         ),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 520;
-            final children = [
-              for (final pack in packs)
-                _DomainWorkbenchTile(pack: pack, l10n: l10n),
-            ];
-            if (!wide) {
-              return Column(
-                children: [
-                  for (var i = 0; i < children.length; i++) ...[
-                    if (i > 0) const SizedBox(height: AppPageRhythm.row),
-                    children[i],
-                  ],
-                ],
-              );
-            }
-            return Wrap(
-              spacing: AppSpacing.s12,
-              runSpacing: AppSpacing.s12,
-              children: [
-                for (final child in children)
-                  SizedBox(
-                    width: (constraints.maxWidth - AppSpacing.s12) / 2,
-                    child: child,
-                  ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var i = 0; i < packs.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.s8),
+                _DomainChip(pack: packs[i], l10n: l10n, colors: colors),
               ],
-            );
-          },
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _DomainWorkbenchTile extends StatelessWidget {
-  const _DomainWorkbenchTile({required this.pack, required this.l10n});
+class _DomainChip extends StatelessWidget {
+  const _DomainChip({
+    required this.pack,
+    required this.l10n,
+    required this.colors,
+  });
 
   final DomainPack pack;
   final AppLocalizations l10n;
+  final FColors colors;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final path = pack.tabPaths.isNotEmpty
         ? pack.tabPaths.first
         : FinanceRoutes.home;
@@ -269,33 +250,21 @@ class _DomainWorkbenchTile extends StatelessWidget {
     final icon = spec?.icon ?? FLucideIcons.layers;
 
     return SoftCard.raised(
-      padding: AppPageRhythm.cardPadding,
       borderless: true,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
       onPress: AppInteraction.wrap(
         () => context.go(path),
         intent: AppInteractionIntent.navigate,
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          AppIconTile(icon: icon, color: colors.primary),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: context.rowTitleStyle),
-                const SizedBox(height: AppSpacing.s2),
-                Text(l10n.lifeOpenWorkbench, style: context.captionStyle),
-              ],
-            ),
-          ),
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.h18,
-            color: colors.mutedForeground.withValues(
-              alpha: AppOpacity.disabled,
-            ),
-          ),
+          Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+          const SizedBox(width: AppSpacing.s8),
+          Text(label, style: context.labelStyle),
         ],
       ),
     );

@@ -1202,28 +1202,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeStageTitle => 'LifeOS';
 
   @override
-  String get lifeStageHeadline => 'One day. Every domain.';
+  String get lifeHeroHeadlineCalm => 'All clear across domains';
 
   @override
-  String lifeStageBody(int count) {
-    return '$count workspaces ready · open a domain or scroll your life line';
+  String lifeHeroHeadlineSignals(int count) {
+    return '$count signals to review';
   }
 
   @override
-  String get lifeOpenFinanceBrief => 'Open Finance brief';
+  String lifeHeroHeadlineAttention(int count) {
+    return '$count need attention';
+  }
+
+  @override
+  String lifeHeroBody(int count) {
+    return '$count workspaces · signals only, not a second ledger';
+  }
 
   @override
   String get lifeWorkbenchTitle => 'Workspaces';
 
   @override
-  String get lifeOpenWorkbench => 'Enter workspace';
-
-  @override
-  String get lifeTimelineTitle => 'Life line';
+  String get lifeTimelineTitle => 'Attention';
 
   @override
   String get lifeTimelineEmpty =>
-      'Signals from Finance, Health, Knowledge, and Execution appear here.';
+      'No cross-domain signals right now. Domain workspaces stay one tap away.';
 
   @override
   String get lifeDomainFinance => 'Finance';
@@ -1241,45 +1245,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeNavLabel => 'Life';
 
   @override
-  String get lifeEventNetWorthTitle => 'Net worth';
-
-  @override
-  String lifeEventNetWorthSubtitle(String currency) {
-    return 'Base $currency · open Finance brief';
+  String lifeSignalFinanceDayTitle(String count) {
+    return 'Today · $count entries';
   }
 
   @override
-  String lifeEventRecoveryTitle(String verdict) {
-    return 'Recovery · $verdict';
+  String lifeSignalFinanceDaySubtitle(String expense, String income) {
+    return '$expense expenses · $income income · open ledger';
   }
 
   @override
-  String get lifeEventRecoverySubtitle => 'Open Health brief';
+  String get lifeSignalRecoveryTitle => 'Recovery needs care';
 
   @override
-  String lifeEventRecoverySubtitleWithScore(String score) {
-    return 'Score $score · open Health brief';
+  String get lifeSignalRecoverySubtitle => 'Open Health brief';
+
+  @override
+  String lifeSignalExecBlockedTitle(String count) {
+    return '$count blocked actions';
   }
 
   @override
-  String get lifeEventKnowledgeUntitled => 'Captured note';
+  String get lifeSignalExecBlockedSubtitle => 'Open Execution today';
 
   @override
-  String get lifeEventKnowledgeSubtitle => 'Knowledge capture';
-
-  @override
-  String get lifeEventExecutionUntitled => 'Action';
-
-  @override
-  String lifeEventExecutionSubtitle(String status) {
-    return 'Status · $status';
+  String lifeSignalExecDueTitle(String count) {
+    return '$count due actions';
   }
 
   @override
-  String get lifeEventActivityUntitled => 'Activity';
+  String get lifeSignalExecDueSubtitle => 'Open Execution today';
 
   @override
-  String get lifeEventActivitySubtitle => 'Ledger entry';
+  String lifeSignalKnowledgeTitle(String count) {
+    return '$count notes in inbox';
+  }
+
+  @override
+  String get lifeSignalKnowledgeSubtitle => 'Review or capture in Knowledge';
+
+  @override
+  String get lifeSignalAgentTitle => 'Agent insight ready';
+
+  @override
+  String get lifeSignalAgentSubtitle => 'Open Finance brief';
 
   @override
   String get financeAgentResultsLoading => 'Checking agent results';

@@ -705,23 +705,29 @@
   "@lifeBriefSubtitle": { "description": "Subtitle under the Life hub greeting" },
   "lifeStageTitle": "LifeOS",
   "@lifeStageTitle": { "description": "Hero card eyebrow on the Life hub" },
-  "lifeStageHeadline": "One day. Every domain.",
-  "@lifeStageHeadline": { "description": "Hero headline on the Life hub" },
-  "lifeStageBody": "{count} workspaces ready · open a domain or scroll your life line",
-  "@lifeStageBody": {
-    "description": "Hero body on the Life hub",
+  "lifeHeroHeadlineCalm": "All clear across domains",
+  "@lifeHeroHeadlineCalm": { "description": "Life hero when no signals" },
+  "lifeHeroHeadlineSignals": "{count} signals to review",
+  "@lifeHeroHeadlineSignals": {
+    "description": "Life hero when normal signals exist",
     "placeholders": { "count": { "type": "int" } }
   },
-  "lifeOpenFinanceBrief": "Open Finance brief",
-  "@lifeOpenFinanceBrief": { "description": "CTA on Life hub hero" },
+  "lifeHeroHeadlineAttention": "{count} need attention",
+  "@lifeHeroHeadlineAttention": {
+    "description": "Life hero when high-priority signals exist",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "lifeHeroBody": "{count} workspaces · signals only, not a second ledger",
+  "@lifeHeroBody": {
+    "description": "Life hero supporting line",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "lifeWorkbenchTitle": "Workspaces",
-  "@lifeWorkbenchTitle": { "description": "Section title for domain workbench grid" },
-  "lifeOpenWorkbench": "Enter workspace",
-  "@lifeOpenWorkbench": { "description": "Subtitle on domain workbench tiles" },
-  "lifeTimelineTitle": "Life line",
-  "@lifeTimelineTitle": { "description": "Cross-domain timeline section title" },
-  "lifeTimelineEmpty": "Signals from Finance, Health, Knowledge, and Execution appear here.",
-  "@lifeTimelineEmpty": { "description": "Empty state for the life timeline" },
+  "@lifeWorkbenchTitle": { "description": "Section title for domain workspace chips" },
+  "lifeTimelineTitle": "Attention",
+  "@lifeTimelineTitle": { "description": "Cross-domain signal list title" },
+  "lifeTimelineEmpty": "No cross-domain signals right now. Domain workspaces stay one tap away.",
+  "@lifeTimelineEmpty": { "description": "Empty state for the life signal list" },
   "lifeDomainFinance": "Finance",
   "@lifeDomainFinance": { "description": "Domain chip on life timeline" },
   "lifeDomainHealth": "Health",
@@ -732,40 +738,48 @@
   "@lifeDomainExecution": { "description": "Domain chip on life timeline" },
   "lifeNavLabel": "Life",
   "@lifeNavLabel": { "description": "Desktop dock / spatial nav label for Life hub" },
-  "lifeEventNetWorthTitle": "Net worth",
-  "@lifeEventNetWorthTitle": { "description": "Life timeline: finance net-worth signal title" },
-  "lifeEventNetWorthSubtitle": "Base {currency} · open Finance brief",
-  "@lifeEventNetWorthSubtitle": {
-    "description": "Life timeline: finance net-worth signal subtitle",
-    "placeholders": { "currency": { "type": "String" } }
+  "lifeSignalFinanceDayTitle": "Today · {count} entries",
+  "@lifeSignalFinanceDayTitle": {
+    "description": "Life signal: finance day summary title",
+    "placeholders": { "count": { "type": "String" } }
   },
-  "lifeEventRecoveryTitle": "Recovery · {verdict}",
-  "@lifeEventRecoveryTitle": {
-    "description": "Life timeline: health recovery title",
-    "placeholders": { "verdict": { "type": "String" } }
+  "lifeSignalFinanceDaySubtitle": "{expense} expenses · {income} income · open ledger",
+  "@lifeSignalFinanceDaySubtitle": {
+    "description": "Life signal: finance day summary subtitle",
+    "placeholders": {
+      "expense": { "type": "String" },
+      "income": { "type": "String" }
+    }
   },
-  "lifeEventRecoverySubtitle": "Open Health brief",
-  "@lifeEventRecoverySubtitle": { "description": "Life timeline: health recovery subtitle" },
-  "lifeEventRecoverySubtitleWithScore": "Score {score} · open Health brief",
-  "@lifeEventRecoverySubtitleWithScore": {
-    "description": "Life timeline: health recovery subtitle with score",
-    "placeholders": { "score": { "type": "String" } }
+  "lifeSignalRecoveryTitle": "Recovery needs care",
+  "@lifeSignalRecoveryTitle": { "description": "Life signal: strained recovery title" },
+  "lifeSignalRecoverySubtitle": "Open Health brief",
+  "@lifeSignalRecoverySubtitle": { "description": "Life signal: recovery subtitle" },
+  "lifeSignalExecBlockedTitle": "{count} blocked actions",
+  "@lifeSignalExecBlockedTitle": {
+    "description": "Life signal: blocked execution title",
+    "placeholders": { "count": { "type": "String" } }
   },
-  "lifeEventKnowledgeUntitled": "Captured note",
-  "@lifeEventKnowledgeUntitled": { "description": "Life timeline: untitled knowledge note" },
-  "lifeEventKnowledgeSubtitle": "Knowledge capture",
-  "@lifeEventKnowledgeSubtitle": { "description": "Life timeline: knowledge note subtitle" },
-  "lifeEventExecutionUntitled": "Action",
-  "@lifeEventExecutionUntitled": { "description": "Life timeline: untitled execution action" },
-  "lifeEventExecutionSubtitle": "Status · {status}",
-  "@lifeEventExecutionSubtitle": {
-    "description": "Life timeline: execution action subtitle",
-    "placeholders": { "status": { "type": "String" } }
+  "lifeSignalExecBlockedSubtitle": "Open Execution today",
+  "@lifeSignalExecBlockedSubtitle": { "description": "Life signal: blocked execution subtitle" },
+  "lifeSignalExecDueTitle": "{count} due actions",
+  "@lifeSignalExecDueTitle": {
+    "description": "Life signal: due execution title",
+    "placeholders": { "count": { "type": "String" } }
   },
-  "lifeEventActivityUntitled": "Activity",
-  "@lifeEventActivityUntitled": { "description": "Life timeline: untitled finance activity" },
-  "lifeEventActivitySubtitle": "Ledger entry",
-  "@lifeEventActivitySubtitle": { "description": "Life timeline: finance activity subtitle" },
+  "lifeSignalExecDueSubtitle": "Open Execution today",
+  "@lifeSignalExecDueSubtitle": { "description": "Life signal: due execution subtitle" },
+  "lifeSignalKnowledgeTitle": "{count} notes in inbox",
+  "@lifeSignalKnowledgeTitle": {
+    "description": "Life signal: knowledge inbox title",
+    "placeholders": { "count": { "type": "String" } }
+  },
+  "lifeSignalKnowledgeSubtitle": "Review or capture in Knowledge",
+  "@lifeSignalKnowledgeSubtitle": { "description": "Life signal: knowledge subtitle" },
+  "lifeSignalAgentTitle": "Agent insight ready",
+  "@lifeSignalAgentTitle": { "description": "Life signal: agent result fallback title" },
+  "lifeSignalAgentSubtitle": "Open Finance brief",
+  "@lifeSignalAgentSubtitle": { "description": "Life signal: agent result subtitle" },
   "financeAgentResultsLoading": "Checking agent results",
   "@financeAgentResultsLoading": { "description": "Home FinanceOS agent result panel loading title" },
   "financeAgentResultsLoadingBody": "Recent FinanceOS reviews are loading.",
