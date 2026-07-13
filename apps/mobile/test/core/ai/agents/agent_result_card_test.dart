@@ -47,17 +47,17 @@ Widget _wrapWithRouter(GoRouter router) {
 
 AgentArtifact _artifact({
   List<AgentEvidenceRef> evidence = const [
-    AgentEvidenceRef(type: 'metric', id: 'sleep-1', label: 'Sleep session'),
+    AgentEvidenceRef(
+      type: 'metric',
+      id: 'sleep-1',
+      label: 'Sleep session',
+      description: 'Recorded sleep session from the local health store.',
+      route: '/evidence',
+      details: [AgentMetric(label: 'Duration', value: '6h 12m')],
+    ),
   ],
   List<AgentAction> actions = const [
-    AgentAction(
-      kind: 'review',
-      label: 'Review plan',
-      intent: 'open_plan',
-      objectType: 'execution_action',
-      objectId: 'action-1',
-      payload: <String, Object?>{'proposal_kind': 'action_plan'},
-    ),
+    AgentAction(kind: 'open_route', label: 'Review plan', route: '/plan'),
   ],
 }) {
   return AgentArtifact(
@@ -69,12 +69,26 @@ AgentArtifact _artifact({
     severity: AgentArtifactSeverity.attention,
     title: 'Morning Briefing',
     summary: 'Sleep debt is elevated; keep the first block light.',
+    metrics: const [
+      AgentMetric(label: 'Sleep', value: '6h 12m', context: 'Target 8h'),
+      AgentMetric(label: 'HRV', value: 'Stable'),
+    ],
     insights: const [
-      AgentInsight(title: 'Sleep', body: '6h 12m, below your recent baseline.'),
+      AgentInsight(
+        id: 'sleep',
+        title: 'Sleep',
+        body: '6h 12m, below your recent baseline.',
+        details: [AgentMetric(label: 'Recent baseline', value: '7h 24m')],
+        evidenceIds: ['sleep-1'],
+      ),
       AgentInsight(title: 'HRV', body: 'HRV is stable enough for light work.'),
     ],
     evidence: evidence,
     actions: actions,
+    methodology: const AgentMethodology(
+      title: 'On-device analysis',
+      body: 'Calculated from local health data.',
+    ),
     traceId: 'trace-1',
     createdAt: DateTime.utc(2026, 7, 5, 8),
   );
@@ -202,7 +216,7 @@ void main() {
     expect(opened, isTrue);
   });
 
-  testWidgets('detail body renders artifact evidence and actions', (
+  testWidgets('detail body progressively reveals insight and evidence detail', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -214,18 +228,24 @@ void main() {
     );
 
     expect(find.text('Insights'), findsOneWidget);
-    expect(find.text('Evidence'), findsOneWidget);
-    expect(find.text('Sleep session'), findsOneWidget);
-    expect(find.text('Trace'), findsOneWidget);
-    expect(find.text('Runtime trace'), findsOneWidget);
-    expect(find.textContaining('trace-1'), findsOneWidget);
-    expect(find.text('Actions'), findsOneWidget);
-    expect(find.text('Ask follow-up'), findsNothing);
-    expect(find.text('Show evidence'), findsNothing);
-    expect(find.text('Create plan'), findsNothing);
+    expect(find.text('6h 12m'), findsWidgets);
+    expect(find.text('Evidence & method'), findsOneWidget);
+    expect(find.textContaining('trace-1'), findsNothing);
+    expect(find.text('Ask Agent'), findsNothing);
     expect(find.text('Snooze'), findsOneWidget);
     expect(find.text('Dismiss'), findsOneWidget);
-    expect(find.text('Review plan'), findsOneWidget);
+
+    await tester.tap(find.text('Sleep').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Recent baseline'), findsOneWidget);
+    expect(find.text('Supported by 1 sources'), findsOneWidget);
+
+    await tester.tap(find.text('Evidence & method'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sleep session'), findsOneWidget);
+    expect(find.text('On-device analysis'), findsOneWidget);
+    expect(find.text('Technical details'), findsOneWidget);
+    expect(find.textContaining('trace-1'), findsNothing);
   });
 
   testWidgets('artifact sheet constrains detail body on a compact viewport', (
@@ -298,7 +318,7 @@ void main() {
       ],
     );
 
-    await tester.tap(find.text('Ask follow-up'));
+    await tester.tap(find.text('Ask Agent'));
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(capturedInvocation?.intent, kAgentExplainResultIntent);
@@ -329,13 +349,13 @@ void main() {
       ],
     );
 
-    await tester.tap(find.text('Ask follow-up'));
+    await tester.tap(find.text('Ask Agent'));
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(calls, 1);
     expect(find.byType(FCircularProgress), findsOneWidget);
 
-    await tester.tap(find.text('Ask follow-up'));
+    await tester.tap(find.text('Ask Agent'));
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(calls, 1);
@@ -346,65 +366,103 @@ void main() {
     expect(find.byType(FCircularProgress), findsNothing);
   });
 
-  testWidgets('detail evidence action opens registered evidence intent', (
+  testWidgets('detail evidence opens its registered domain route', (
     tester,
   ) async {
-    AiIntentInvocation? capturedInvocation;
-    await _openArtifactSheet(
-      tester,
-      artifact: _artifact(actions: const <AgentAction>[]),
-      overrides: [
-        askAiSurfaceProvider.overrideWithValue((
-          context, {
-          invocation,
-          objectLabel,
-          prefill,
-        }) async {
-          capturedInvocation = invocation;
-        }),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: FScaffold(
+              childPad: false,
+              child: Center(
+                child: FButton(
+                  onPress: () => unawaited(
+                    showAgentArtifactSheet(
+                      context: context,
+                      artifact: _artifact(),
+                    ),
+                  ),
+                  child: const Text('Open artifact'),
+                ),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/evidence',
+          builder: (_, _) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const FScaffold(
+              childPad: false,
+              child: Text('evidence detail'),
+            ),
+          ),
+        ),
       ],
     );
+    addTearDown(router.dispose);
 
-    await tester.tap(find.text('Show evidence'));
-    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pumpWidget(_wrapWithRouter(router));
+    await tester.tap(find.text('Open artifact'));
+    await tester.pumpAndSettle();
+    final evidenceSection = find.text('Evidence & method');
+    await tester.ensureVisible(evidenceSection);
+    await tester.tap(evidenceSection);
+    await tester.pumpAndSettle();
+    final evidence = find.text('Sleep session');
+    await tester.ensureVisible(evidence);
+    await tester.tap(evidence);
+    await tester.pumpAndSettle();
 
-    expect(capturedInvocation?.intent, kAgentShowEvidenceIntent);
-    expect(capturedInvocation?.object?.type, kAgentArtifactObjectType);
-    expect(capturedInvocation?.object?.id, 'artifact-1');
-    expect(capturedInvocation?.context['follow_up_focus'], 'evidence');
-    expect(capturedInvocation?.context['evidence_refs'], isNotEmpty);
+    expect(find.text('evidence detail'), findsOneWidget);
   });
 
-  testWidgets('detail plan action opens registered plan intent', (
+  testWidgets('detail primary action opens its registered domain route', (
     tester,
   ) async {
-    AiIntentInvocation? capturedInvocation;
-    await _openArtifactSheet(
-      tester,
-      artifact: _artifact(evidence: const [], actions: const <AgentAction>[]),
-      overrides: [
-        askAiSurfaceProvider.overrideWithValue((
-          context, {
-          invocation,
-          objectLabel,
-          prefill,
-        }) async {
-          capturedInvocation = invocation;
-        }),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: FScaffold(
+              childPad: false,
+              child: Center(
+                child: FButton(
+                  onPress: () => unawaited(
+                    showAgentArtifactSheet(
+                      context: context,
+                      artifact: _artifact(),
+                    ),
+                  ),
+                  child: const Text('Open artifact'),
+                ),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/plan',
+          builder: (_, _) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: const FScaffold(childPad: false, child: Text('plan detail')),
+          ),
+        ),
       ],
     );
+    addTearDown(router.dispose);
 
-    await tester.tap(find.text('Create plan'));
-    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pumpWidget(_wrapWithRouter(router));
+    await tester.tap(find.text('Open artifact'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Review plan'));
+    await tester.pumpAndSettle();
 
-    expect(capturedInvocation?.intent, kAgentCreatePlanFromResultIntent);
-    expect(capturedInvocation?.object?.type, kAgentArtifactObjectType);
-    expect(capturedInvocation?.object?.id, 'artifact-1');
-    expect(capturedInvocation?.context['follow_up_focus'], 'plan');
-    expect(
-      capturedInvocation?.capabilities,
-      containsAll(<AiCapability>{AiCapability.chat, AiCapability.proposal}),
-    );
+    expect(find.text('plan detail'), findsOneWidget);
   });
 
   testWidgets('detail custom action opens its intent with object and payload', (
@@ -412,23 +470,31 @@ void main() {
   ) async {
     AiIntentInvocation? capturedInvocation;
     String? capturedObjectLabel;
-    await tester.pumpWidget(
-      _wrap(
-        SingleChildScrollView(
-          child: AgentArtifactDetailBody(artifact: _artifact()),
-        ),
-        overrides: [
-          askAiSurfaceProvider.overrideWithValue((
-            context, {
-            invocation,
-            objectLabel,
-            prefill,
-          }) async {
-            capturedInvocation = invocation;
-            capturedObjectLabel = objectLabel;
-          }),
+    await _openArtifactSheet(
+      tester,
+      artifact: _artifact(
+        actions: const [
+          AgentAction(
+            kind: 'review',
+            label: 'Review plan',
+            intent: 'open_plan',
+            objectType: 'execution_action',
+            objectId: 'action-1',
+            payload: <String, Object?>{'proposal_kind': 'action_plan'},
+          ),
         ],
       ),
+      overrides: [
+        askAiSurfaceProvider.overrideWithValue((
+          context, {
+          invocation,
+          objectLabel,
+          prefill,
+        }) async {
+          capturedInvocation = invocation;
+          capturedObjectLabel = objectLabel;
+        }),
+      ],
     );
 
     final customAction = find.text('Review plan');
@@ -490,7 +556,12 @@ void main() {
     await tester.tap(find.text('Open artifact'));
     await tester.pumpAndSettle();
 
-    final openTrace = find.text('Runtime trace');
+    final evidenceSection = find.text('Evidence & method');
+    await tester.ensureVisible(evidenceSection);
+    await tester.tap(evidenceSection);
+    await tester.pumpAndSettle();
+
+    final openTrace = find.text('Technical details');
     await tester.ensureVisible(openTrace);
     await tester.tap(openTrace);
     await tester.pumpAndSettle();

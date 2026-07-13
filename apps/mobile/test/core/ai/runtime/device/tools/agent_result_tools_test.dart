@@ -67,6 +67,14 @@ void main() {
         severity: AgentArtifactSeverity.attention,
         title: 'Weekly Wealth Review',
         summary: 'Net worth changed.',
+        metrics: const <AgentMetric>[
+          AgentMetric(
+            label: 'Net worth',
+            value: '¥1,000,000',
+            context: '+2.4%',
+            severity: AgentArtifactSeverity.attention,
+          ),
+        ],
         insights: const <AgentInsight>[
           AgentInsight(title: 'Net worth', body: 'Net worth changed.'),
         ],
@@ -76,6 +84,10 @@ void main() {
         actions: const <AgentAction>[
           AgentAction(kind: 'review', label: 'Review wealth'),
         ],
+        methodology: const AgentMethodology(
+          title: 'How this was calculated',
+          body: 'Calculated locally from current account values.',
+        ),
         memoryId: 'memory-1',
         traceId: 'trace-1',
         createdAt: DateTime.utc(2026, 7, 5),
@@ -104,6 +116,17 @@ void main() {
     expect(artifact['trace_id'], 'trace-1');
     expect(artifact['memory_id'], 'memory-1');
     expect(artifact['dismissed_at'], '2026-07-05T10:00:00.000Z');
+    final metrics = artifact['metrics']! as List<Object?>;
+    expect(metrics.single, <String, Object?>{
+      'label': 'Net worth',
+      'value': '¥1,000,000',
+      'context': '+2.4%',
+      'severity': 'attention',
+    });
+    expect(artifact['methodology'], <String, Object?>{
+      'title': 'How this was calculated',
+      'body': 'Calculated locally from current account values.',
+    });
     final evidence = artifact['evidence']! as List<Object?>;
     expect(
       (evidence.single! as Map<String, Object?>)['type'],

@@ -1086,21 +1086,17 @@ void main() {
     expect(row.read<String?>('progress_json'), null);
   });
 
-  test(
-    'migrates v31 agent tables through trace and visibility additions',
-    () async {
-      final dir = await Directory.systemTemp.createTemp(
-        'naviwealth_migration_',
-      );
-      addTearDown(() async {
-        if (await dir.exists()) await dir.delete(recursive: true);
-      });
-      final file = File('${dir.path}/naviwealth.db');
+  test('migrates v31 agent tables through presentation additions', () async {
+    final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
 
-      final legacy = sqlite3.open(file.path);
-      try {
-        legacy
-          ..execute('''
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy
+        ..execute('''
           CREATE TABLE agent_runs (
             id            TEXT PRIMARY KEY,
             owner_user_id TEXT NOT NULL,
@@ -1116,7 +1112,7 @@ void main() {
             artifact_id   TEXT
           )
         ''')
-          ..execute('''
+        ..execute('''
           CREATE TABLE agent_artifacts (
             id             TEXT PRIMARY KEY,
             owner_user_id  TEXT NOT NULL,
@@ -1135,8 +1131,8 @@ void main() {
             expires_at     INTEGER
           )
         ''')
-          ..execute(
-            '''
+        ..execute(
+          '''
           INSERT INTO agent_runs (
             id,
             owner_user_id,
@@ -1151,22 +1147,22 @@ void main() {
             artifact_id
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
-            [
-              'weekly_wealth_review:1',
-              'u1',
-              'weekly_wealth_review',
-              'Weekly Wealth Review',
-              'ready',
-              'schedule',
-              1,
-              2,
-              'Ready',
-              'memory-1',
-              'artifact-1',
-            ],
-          )
-          ..execute(
-            '''
+          [
+            'weekly_wealth_review:1',
+            'u1',
+            'weekly_wealth_review',
+            'Weekly Wealth Review',
+            'ready',
+            'schedule',
+            1,
+            2,
+            'Ready',
+            'memory-1',
+            'artifact-1',
+          ],
+        )
+        ..execute(
+          '''
           INSERT INTO agent_artifacts (
             id,
             owner_user_id,
@@ -1184,76 +1180,76 @@ void main() {
             created_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
-            [
-              'artifact-1',
-              'u1',
-              'weekly_wealth_review',
-              'finance',
-              'review',
-              'info',
-              'Weekly Wealth Review',
-              'Ready',
-              '[]',
-              '[]',
-              '[]',
-              'memory-1',
-              'trace-1',
-              1,
-            ],
-          )
-          ..execute('PRAGMA user_version = 31');
-      } finally {
-        legacy.close();
-      }
+          [
+            'artifact-1',
+            'u1',
+            'weekly_wealth_review',
+            'finance',
+            'review',
+            'info',
+            'Weekly Wealth Review',
+            'Ready',
+            '[]',
+            '[]',
+            '[]',
+            'memory-1',
+            'trace-1',
+            1,
+          ],
+        )
+        ..execute('PRAGMA user_version = 31');
+    } finally {
+      legacy.close();
+    }
 
-      final db = AppDatabase(
-        DatabaseConnection(NativeDatabase(file, logStatements: false)),
-      );
-      addTearDown(db.close);
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
 
-      Future<Set<String>> columns(String table) async {
-        final rows = await db.customSelect('PRAGMA table_info($table)').get();
-        return rows.map((row) => row.read<String>('name')).toSet();
-      }
+    Future<Set<String>> columns(String table) async {
+      final rows = await db.customSelect('PRAGMA table_info($table)').get();
+      return rows.map((row) => row.read<String>('name')).toSet();
+    }
 
-      expect(await columns('agent_runs'), contains('trace_id'));
-      expect(
-        await columns('agent_artifacts'),
-        containsAll(['dismissed_at', 'snoozed_until']),
-      );
+    expect(await columns('agent_runs'), contains('trace_id'));
+    expect(
+      await columns('agent_artifacts'),
+      containsAll(['dismissed_at', 'snoozed_until', 'presentation_json']),
+    );
 
-      final run = await db
-          .customSelect(
-            '''
+    final run = await db
+        .customSelect(
+          '''
           SELECT summary, artifact_id, trace_id
           FROM agent_runs
           WHERE id = ?
           ''',
-            variables: [Variable.withString('weekly_wealth_review:1')],
-          )
-          .getSingle();
-      expect(run.read<String>('summary'), 'Ready');
-      expect(run.read<String>('artifact_id'), 'artifact-1');
-      expect(run.read<String?>('trace_id'), null);
+          variables: [Variable.withString('weekly_wealth_review:1')],
+        )
+        .getSingle();
+    expect(run.read<String>('summary'), 'Ready');
+    expect(run.read<String>('artifact_id'), 'artifact-1');
+    expect(run.read<String?>('trace_id'), null);
 
-      final artifact = await db
-          .customSelect(
-            '''
-          SELECT trace_id, dismissed_at, snoozed_until
+    final artifact = await db
+        .customSelect(
+          '''
+          SELECT trace_id, dismissed_at, snoozed_until, presentation_json
           FROM agent_artifacts
           WHERE id = ?
           ''',
-            variables: [Variable.withString('artifact-1')],
-          )
-          .getSingle();
-      expect(artifact.read<String>('trace_id'), 'trace-1');
-      expect(artifact.read<int?>('dismissed_at'), null);
-      expect(artifact.read<int?>('snoozed_until'), null);
+          variables: [Variable.withString('artifact-1')],
+        )
+        .getSingle();
+    expect(artifact.read<String>('trace_id'), 'trace-1');
+    expect(artifact.read<int?>('dismissed_at'), null);
+    expect(artifact.read<int?>('snoozed_until'), null);
+    expect(artifact.read<String>('presentation_json'), '{}');
 
-      final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), db.schemaVersion);
-    },
-  );
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), db.schemaVersion);
+  });
 
   test('migrates v38 by creating agent runtime checkpoints', () async {
     final dir = await Directory.systemTemp.createTemp(
@@ -1283,7 +1279,7 @@ void main() {
         .get();
     expect(tables, hasLength(1));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 40);
+    expect(version.read<int>('user_version'), 41);
   });
 
   test('migrates v23 options journal rows through v26 additions', () async {
@@ -1819,7 +1815,7 @@ void main() {
       expect(row.readNullable<String>('operation_token'), equals(null));
       expect(row.read<int>('invocation_started'), 0);
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 40);
+      expect(version.read<int>('user_version'), 41);
     },
   );
 }

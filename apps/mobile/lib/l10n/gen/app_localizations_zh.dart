@@ -6170,6 +6170,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentResultEvidenceSection => '证据';
 
   @override
+  String get agentResultEvidenceMethodSection => '依据与方法';
+
+  @override
+  String agentResultEvidenceCount(int count) {
+    return '$count 项依据';
+  }
+
+  @override
+  String get agentResultEvidenceAvailableBody => '查看这项依据对应的数据来源。';
+
+  @override
+  String agentResultEvidenceSupportCount(int count) {
+    return '由 $count 项依据支持';
+  }
+
+  @override
+  String get agentResultOpenRelatedPage => '查看相关页面';
+
+  @override
+  String get agentResultTechnicalDetailsTitle => '技术详情';
+
+  @override
+  String get agentResultTechnicalDetailsBody => '查看本次分析的运行步骤和工具活动。';
+
+  @override
   String get agentResultTraceSection => '链路';
 
   @override
@@ -6185,7 +6210,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentResultActionsSection => '操作';
 
   @override
-  String get agentResultAskFollowUpTitle => '继续追问';
+  String get agentResultAskFollowUpTitle => '问问 Agent';
 
   @override
   String get agentResultAskFollowUpBody => '解释这个结果与它使用的证据。';
@@ -11342,7 +11367,152 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get financeAgentFireEvidenceReviewBody => '当前计划指标、资产状态与风险阈值的确定性快照。';
+
+  @override
   String get financeAgentFireAction => '查看 FIRE 计划';
+
+  @override
+  String get financeAgentFireActionBody => '打开 FIRE 页面，检查并调整计划参数。';
+
+  @override
+  String financeAgentFireSummaryWithdrawal(
+    Object safeRate,
+    Object withdrawalRate,
+  ) {
+    return '当前提取率 $withdrawalRate，安全线 $safeRate';
+  }
+
+  @override
+  String financeAgentFireSummaryStress(int failedCount) {
+    return '$failedCount 个压力场景未通过';
+  }
+
+  @override
+  String get financeAgentFireSummarySeparator => '；';
+
+  @override
+  String get financeAgentFireMetricWithdrawalRate => '当前提取率';
+
+  @override
+  String get financeAgentFireMetricSafeRate => '安全提取率';
+
+  @override
+  String get financeAgentFireMetricCashBucket => '现金缓冲';
+
+  @override
+  String get financeAgentFireMetricTarget => '计划目标';
+
+  @override
+  String financeAgentFireMetricTargetMonths(int months) {
+    return '目标 $months 个月';
+  }
+
+  @override
+  String get financeAgentFireMetricExcess => '高出安全线';
+
+  @override
+  String get financeAgentFireMetricAffectedItems => '受影响项目';
+
+  @override
+  String get financeAgentFireMetricNetWorthAfter => '测试后净资产';
+
+  @override
+  String get financeAgentFireMetricWithdrawalAfter => '测试后提取率';
+
+  @override
+  String get financeAgentFireMetricCashAfter => '测试后现金缓冲';
+
+  @override
+  String financeAgentFireMonthsValue(Object value) {
+    return '$value 个月';
+  }
+
+  @override
+  String financeAgentFirePercentagePoints(Object value) {
+    return '$value 个百分点';
+  }
+
+  @override
+  String financeAgentFireStressGroupTitle(int count) {
+    return '$count 个压力场景未通过';
+  }
+
+  @override
+  String financeAgentFireStressGroupBody(Object scenarios) {
+    return '风险集中在：$scenarios。';
+  }
+
+  @override
+  String get financeAgentFireScenarioSeparator => '、';
+
+  @override
+  String get financeAgentFireScenarioMarketDrawdown => '市场回撤';
+
+  @override
+  String get financeAgentFireScenarioExpenseSurge => '生活成本上升';
+
+  @override
+  String get financeAgentFireScenarioOneOffShock => '一次性大额支出';
+
+  @override
+  String get financeAgentFireScenarioFxShock => '汇率冲击';
+
+  @override
+  String get financeAgentFireScenarioCashDepletion => '现金耗尽';
+
+  @override
+  String get financeAgentFireScenarioUnknown => '其他压力场景';
+
+  @override
+  String get financeAgentFireStressVerdictSafe => '通过';
+
+  @override
+  String get financeAgentFireStressVerdictCautious => '需关注';
+
+  @override
+  String get financeAgentFireStressVerdictDanger => '危险';
+
+  @override
+  String financeAgentFireStressResultContext(
+    Object cashBucketMonths,
+    Object withdrawalRate,
+  ) {
+    return '提取率 $withdrawalRate · 现金缓冲 $cashBucketMonths 个月';
+  }
+
+  @override
+  String get financeAgentFireTrendTitle => '相比上次';
+
+  @override
+  String financeAgentFireTrendBody(Object changes) {
+    return '$changes。';
+  }
+
+  @override
+  String get financeAgentFireTrendWithdrawal => '提取率';
+
+  @override
+  String get financeAgentFireTrendNetWorth => '净资产';
+
+  @override
+  String get financeAgentFireTrendSafety => '安全等级';
+
+  @override
+  String get financeAgentFireMethodTitle => '本地确定性计算';
+
+  @override
+  String get financeAgentFireMethodBody =>
+      '基于 FIRE 计划、资产负债、年度支出与压力测试计算；AI 不参与指标判定。';
+
+  @override
+  String get financeAgentFireMethodPeriodLabel => '分析周期';
+
+  @override
+  String get financeAgentFireMethodModeLabel => '计算方式';
+
+  @override
+  String get financeAgentFireMethodModeValue => '设备本地 · 无云端推断';
 
   @override
   String get financeAgentFireFindingCashBucketBelowTargetTitle => '现金桶低于目标';

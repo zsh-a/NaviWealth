@@ -167,6 +167,32 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
     }
   }
 
+  final actionRoutes = {
+    for (final action in artifact.actions)
+      if (action.route != null) action.route!,
+  };
+  final missingActionRoutes = regressionCase.expectedActionRoutes.difference(
+    actionRoutes,
+  );
+  if (missingActionRoutes.isNotEmpty) {
+    add(
+      'artifact.actions.route',
+      regressionCase.expectedActionRoutes,
+      actionRoutes,
+    );
+  } else {
+    final unexpectedActionRoutes = actionRoutes.difference(
+      regressionCase.expectedActionRoutes,
+    );
+    if (unexpectedActionRoutes.isNotEmpty) {
+      add(
+        'artifact.actions.route',
+        regressionCase.expectedActionRoutes,
+        actionRoutes,
+      );
+    }
+  }
+
   final intentActions = [
     for (final action in artifact.actions)
       if (action.intent != null) action,

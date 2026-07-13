@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
@@ -25,6 +26,7 @@ import 'package:naviwealth/features/finance/agents/options_income_risk_review_ag
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
@@ -32,6 +34,8 @@ import 'package:naviwealth/features/finance/fire/domain/fire_review.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_review_engine.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_state.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_state_service.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_stress_test_engine.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -83,9 +87,16 @@ void main() {
     final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
     final traceStore = InMemoryAiTraceStore();
+    final state = _state(
+      investable: '400000',
+      liquid: '12000',
+      etaMonths: null,
+    );
+    final stressTests = runStressTests(state);
     final review = generateReview(
       kind: FireReviewKind.monthly,
-      state: _state(investable: '400000', liquid: '12000', etaMonths: null),
+      state: state,
+      stressTests: stressTests,
       now: now,
     );
 
@@ -95,6 +106,7 @@ void main() {
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
       runtime: runtime,
+      stressTests: stressTests,
       artifactStore: store,
       traceStore: traceStore,
     );
@@ -110,7 +122,14 @@ void main() {
     expect(artifact!.domain, 'finance');
     expect(artifact.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.warning);
-    expect(artifact.actions.single.intent, 'agent.explainResult');
+    expect(artifact.actions.single.route, FinanceRoutes.planFire);
+    expect(artifact.actions.single.intent, isNull);
+    expect(artifact.metrics.map((metric) => metric.value), [
+      '12.0%',
+      '4.0%',
+      '3.0 months',
+    ]);
+    expect(artifact.methodology?.title, 'Deterministic on-device calculation');
     expect(
       artifact.evidence.map((ref) => ref.type),
       containsAll(['fire_review', 'fire_finding']),
@@ -118,6 +137,18 @@ void main() {
     expect(
       artifact.insights.map((insight) => insight.title),
       contains('Withdrawal rate above safe rate'),
+    );
+    expect(
+      artifact.insights.map((insight) => insight.id),
+      contains('stress_tests'),
+    );
+    expect(
+      artifact.insights.expand((insight) => [insight.title, insight.body]),
+      everyElement(isNot(contains('market_drawdown'))),
+    );
+    expect(
+      artifact.evidence.map((ref) => ref.id).toSet().length,
+      artifact.evidence.length,
     );
     final outcomeFailures = evaluateAgentOutcomeCase(
       regressionCase: agentOutcomeRegressionCaseById(
@@ -146,6 +177,68 @@ void main() {
     expect(trace.intent.domain, kDomainFinance);
     expect(trace.intent.label, 'fire_plan_drift_monitor');
     expect(trace.spans.single.attributes, containsPair('deterministic', true));
+  });
+
+  test('renders Chinese FIRE metrics without placeholder drift', () {
+    final state = _state(
+      investable: '400000',
+      liquid: '12000',
+      etaMonths: null,
+    );
+    final review = generateReview(
+      kind: FireReviewKind.monthly,
+      state: state,
+      now: now,
+    );
+    final artifact = FirePlanDriftAnalysis.fromReview(review).toArtifact(
+      id: 'fire-zh',
+      ownerUserId: 'u',
+      memoryId: 'memory-zh',
+      traceId: null,
+      createdAt: now,
+      l10n: lookupAppLocalizations(const Locale('zh')),
+    );
+
+    expect(artifact.summary, '当前提取率 12.0%，安全线 4.0%');
+    expect(artifact.metrics.map((metric) => metric.value), [
+      '12.0%',
+      '4.0%',
+      '3.0 个月',
+    ]);
+    expect(artifact.metrics.last.context, '目标 12 个月');
+    expect(artifact.insights.first.body, contains('8.0 个百分点'));
+  });
+
+  test('adds a concise comparison when a previous review exists', () {
+    final previous = generateReview(
+      kind: FireReviewKind.monthly,
+      state: _state(investable: '500000', liquid: '12000', etaMonths: null),
+      now: DateTime.utc(2026, 6, 5),
+    );
+    final current = generateReview(
+      kind: FireReviewKind.monthly,
+      state: _state(investable: '400000', liquid: '12000', etaMonths: null),
+      now: now,
+    );
+    final artifact =
+        FirePlanDriftAnalysis.fromReview(
+          current,
+          previousReview: previous,
+        ).toArtifact(
+          id: 'fire-trend',
+          ownerUserId: 'u',
+          memoryId: 'memory-trend',
+          traceId: null,
+          createdAt: now,
+          l10n: lookupAppLocalizations(const Locale('zh')),
+        );
+
+    final trend = artifact.insights.singleWhere(
+      (insight) => insight.id == 'period_change',
+    );
+    expect(trend.title, '相比上次');
+    expect(trend.body, contains('提取率 +2.4 个百分点'));
+    expect(trend.body, contains('净资产 -¥100,000.00'));
   });
 
   test('finance providers include FIRE drift monitor agent', () async {

@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS agent_artifacts (
   severity       TEXT NOT NULL,     -- info|attention|warning
   title          TEXT NOT NULL,
   summary        TEXT NOT NULL,
+  presentation_json TEXT NOT NULL,
   insights_json  TEXT NOT NULL,
   evidence_json  TEXT NOT NULL,
   actions_json   TEXT NOT NULL,

@@ -62,6 +62,7 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         severity,
         title,
         summary,
+        presentation_json,
         insights_json,
         evidence_json,
         actions_json,
@@ -71,7 +72,7 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         expires_at,
         dismissed_at,
         snoozed_until
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
       ON CONFLICT(id) DO UPDATE SET
         owner_user_id = excluded.owner_user_id,
         agent_id = excluded.agent_id,
@@ -80,6 +81,7 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         severity = excluded.severity,
         title = excluded.title,
         summary = excluded.summary,
+        presentation_json = excluded.presentation_json,
         insights_json = excluded.insights_json,
         evidence_json = excluded.evidence_json,
         actions_json = excluded.actions_json,
@@ -107,6 +109,7 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         artifact.severity.wire,
         artifact.title,
         artifact.summary,
+        artifact.encodePresentation(),
         artifact.encodeInsights(),
         artifact.encodeEvidence(),
         artifact.encodeActions(),
@@ -270,6 +273,9 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
 }
 
 AgentArtifact _rowToArtifact(QueryRow row) {
+  final presentation = decodeAgentPresentation(
+    row.read<String>('presentation_json'),
+  );
   final expiresAtMillis = row.read<int?>('expires_at');
   final dismissedAtMillis = row.read<int?>('dismissed_at');
   final snoozedUntilMillis = row.read<int?>('snoozed_until');
@@ -282,9 +288,11 @@ AgentArtifact _rowToArtifact(QueryRow row) {
     severity: agentArtifactSeverityFromWire(row.read<String>('severity')),
     title: row.read<String>('title'),
     summary: row.read<String>('summary'),
+    metrics: presentation.metrics,
     insights: decodeAgentInsights(row.read<String>('insights_json')),
     evidence: decodeAgentEvidenceRefs(row.read<String>('evidence_json')),
     actions: decodeAgentActions(row.read<String>('actions_json')),
+    methodology: presentation.methodology,
     memoryId: row.read<String?>('memory_id'),
     traceId: row.read<String?>('trace_id'),
     createdAt: DateTime.fromMillisecondsSinceEpoch(

@@ -709,67 +709,36 @@ class _AgentArtifactDetailBodyState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _ArtifactSummary(summary: artifact.summary),
+        _ArtifactSummary(
+          summary: artifact.summary,
+          severity: artifact.severity,
+        ),
+        if (artifact.metrics.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          _MetricStrip(metrics: artifact.metrics),
+        ],
         if (artifact.insights.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s16),
           _DetailSection(
             title: l10n.agentResultInsightsSection,
             children: [
               for (final insight in artifact.insights)
-                _DetailTile(
-                  icon: FLucideIcons.sparkles,
-                  title: insight.title,
-                  body: insight.body,
-                  color: _accentColor(
-                    context,
-                    insight.severity ?? artifact.severity,
-                  ),
+                _InsightEntry(
+                  insight: insight,
+                  artifactSeverity: artifact.severity,
                 ),
             ],
           ),
         ],
-        if (artifact.evidence.isNotEmpty) ...[
+        if (artifact.evidence.isNotEmpty ||
+            artifact.methodology != null ||
+            artifact.traceId != null) ...[
           const SizedBox(height: AppSpacing.s16),
-          _DetailSection(
-            title: l10n.agentResultEvidenceSection,
-            children: [
-              for (final evidence in artifact.evidence)
-                _DetailTile(
-                  icon: FLucideIcons.fileText,
-                  title: evidence.label ?? evidence.type,
-                  body: evidence.id,
-                  color: colors.mutedForeground,
-                ),
-            ],
-          ),
-        ],
-        if (artifact.traceId != null) ...[
-          const SizedBox(height: AppSpacing.s16),
-          _DetailSection(
-            title: l10n.agentResultTraceSection,
-            children: [
-              _TraceEntryTile(
-                traceId: artifact.traceId!,
-                title: l10n.agentResultTraceTitle,
-                body: l10n.agentResultTraceBody,
-              ),
-            ],
-          ),
-        ],
-        if (artifact.actions.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s16),
-          _DetailSection(
-            title: l10n.agentResultActionsSection,
-            children: [
-              for (final action in artifact.actions)
-                _AgentActionTile(
-                  action: action,
-                  artifact: artifact,
-                  onPress: action.intent == null
-                      ? null
-                      : () => _askAboutAction(context, ref, action),
-                ),
-            ],
+          _EvidenceMethodAccordion(
+            evidence: artifact.evidence,
+            methodology: artifact.methodology,
+            traceId: artifact.traceId,
+            color: colors.mutedForeground,
           ),
         ],
         const SizedBox(height: AppSpacing.s16),
@@ -821,19 +790,6 @@ class _AgentArtifactDetailBodyState
       if (mounted) setState(() => _visibilityBusy = null);
     }
   }
-
-  Future<void> _askAboutAction(
-    BuildContext context,
-    WidgetRef ref,
-    AgentAction action,
-  ) {
-    return _askAboutAgentAction(
-      context,
-      ref,
-      artifact: widget.artifact,
-      action: action,
-    );
-  }
 }
 
 class _AgentArtifactSheetFooter extends ConsumerStatefulWidget {
@@ -882,18 +838,49 @@ class _AgentArtifactSheetFooterState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final artifact = widget.artifact;
-    final secondaryAction = _footerActionForArtifact(l10n, artifact);
+    final primaryAction = _footerActionForArtifact(l10n, artifact);
     final footerBusy = _primaryBusy || _secondaryBusy;
+    if (primaryAction == null) {
+      return _FooterActionButton(
+        primary: true,
+        onPress: () => _runAction(
+          primary: true,
+          action: () =>
+              _askAboutAgentArtifact(context, ref, artifact: artifact),
+        ),
+        icon: FLucideIcons.messageCircle,
+        label: l10n.agentResultAskFollowUpTitle,
+        busy: _primaryBusy,
+        disabled: footerBusy,
+      );
+    }
+
+    final isDirectNavigation = primaryAction.isDirectNavigation;
+    if (!isDirectNavigation) {
+      return _FooterActionButton(
+        primary: true,
+        onPress: () => _runAction(
+          primary: true,
+          action: () => primaryAction.run(context, ref),
+        ),
+        icon: primaryAction.icon,
+        label: primaryAction.label,
+        busy: _primaryBusy,
+        disabled: footerBusy,
+      );
+    }
+
     return Row(
       children: [
         Expanded(
           child: _FooterActionButton(
             onPress: () => _runAction(
               primary: false,
-              action: () => secondaryAction.run(context, ref),
+              action: () =>
+                  _askAboutAgentArtifact(context, ref, artifact: artifact),
             ),
-            icon: secondaryAction.icon,
-            label: secondaryAction.label,
+            icon: FLucideIcons.messageCircle,
+            label: l10n.agentResultAskFollowUpTitle,
             busy: _secondaryBusy,
             disabled: footerBusy,
           ),
@@ -904,11 +891,10 @@ class _AgentArtifactSheetFooterState
             primary: true,
             onPress: () => _runAction(
               primary: true,
-              action: () =>
-                  _askAboutAgentArtifact(context, ref, artifact: artifact),
+              action: () => primaryAction.run(context, ref),
             ),
-            icon: FLucideIcons.messageCircle,
-            label: l10n.agentResultAskFollowUpTitle,
+            icon: primaryAction.icon,
+            label: primaryAction.label,
             busy: _primaryBusy,
             disabled: footerBusy,
           ),
@@ -922,46 +908,42 @@ class _ArtifactFooterAction {
   const _ArtifactFooterAction({
     required this.icon,
     required this.label,
+    required this.isDirectNavigation,
     required this.run,
   });
 
   final IconData icon;
   final String label;
+  final bool isDirectNavigation;
   final Future<void> Function(BuildContext context, WidgetRef ref) run;
 }
 
-_ArtifactFooterAction _footerActionForArtifact(
+_ArtifactFooterAction? _footerActionForArtifact(
   AppLocalizations l10n,
   AgentArtifact artifact,
 ) {
   for (final action in artifact.actions) {
-    if (action.intent == null) continue;
+    if (action.route == null && action.intent == null) continue;
     final presentation = _agentActionPresentation(l10n, action, artifact);
     return _ArtifactFooterAction(
       icon: presentation.icon,
       label: presentation.title,
-      run: (context, ref) => _askAboutAgentAction(
-        context,
-        ref,
-        artifact: artifact,
-        action: action,
-      ),
+      isDirectNavigation: action.route != null,
+      run: (context, ref) async {
+        if (action.route case final route?) {
+          _openArtifactRoute(context, route);
+          return;
+        }
+        await _askAboutAgentAction(
+          context,
+          ref,
+          artifact: artifact,
+          action: action,
+        );
+      },
     );
   }
-  if (artifact.evidence.isNotEmpty) {
-    return _ArtifactFooterAction(
-      icon: FLucideIcons.fileText,
-      label: l10n.agentResultShowEvidenceTitle,
-      run: (context, ref) =>
-          _showEvidenceForAgentArtifact(context, ref, artifact: artifact),
-    );
-  }
-  return _ArtifactFooterAction(
-    icon: FLucideIcons.listChecks,
-    label: l10n.agentResultCreatePlanTitle,
-    run: (context, ref) =>
-        _createPlanFromAgentArtifact(context, ref, artifact: artifact),
-  );
+  return null;
 }
 
 class _FooterActionButton extends StatelessWidget {
@@ -1121,49 +1103,6 @@ Future<void> _askAboutAgentAction(
   );
 }
 
-Future<void> _showEvidenceForAgentArtifact(
-  BuildContext context,
-  WidgetRef ref, {
-  required AgentArtifact artifact,
-}) {
-  return askAi(
-    context,
-    ref,
-    intent: kAgentShowEvidenceIntent,
-    object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
-    objectLabel: artifact.title,
-    attrs: <String, Object?>{
-      ..._agentArtifactAttrs(artifact),
-      'follow_up_focus': 'evidence',
-    },
-    source: 'agent_artifact_detail',
-    capabilities: const <AiCapability>{AiCapability.chat},
-  );
-}
-
-Future<void> _createPlanFromAgentArtifact(
-  BuildContext context,
-  WidgetRef ref, {
-  required AgentArtifact artifact,
-}) {
-  return askAi(
-    context,
-    ref,
-    intent: kAgentCreatePlanFromResultIntent,
-    object: AiObjectRef(type: kAgentArtifactObjectType, id: artifact.id),
-    objectLabel: artifact.title,
-    attrs: <String, Object?>{
-      ..._agentArtifactAttrs(artifact),
-      'follow_up_focus': 'plan',
-    },
-    source: 'agent_artifact_detail',
-    capabilities: const <AiCapability>{
-      AiCapability.chat,
-      AiCapability.proposal,
-    },
-  );
-}
-
 Map<String, Object?> _agentArtifactAttrs(AgentArtifact artifact) {
   return <String, Object?>{
     'artifact_id': artifact.id,
@@ -1174,9 +1113,34 @@ Map<String, Object?> _agentArtifactAttrs(AgentArtifact artifact) {
     'artifact_summary': artifact.summary,
     if (artifact.memoryId != null) 'memory_id': artifact.memoryId,
     if (artifact.traceId != null) 'trace_id': artifact.traceId,
+    if (artifact.metrics.isNotEmpty)
+      'metrics': [
+        for (final metric in artifact.metrics)
+          <String, Object?>{
+            'label': metric.label,
+            'value': metric.value,
+            if (metric.context != null) 'context': metric.context,
+          },
+      ],
     if (artifact.insights.isNotEmpty)
-      'insight_titles': [
-        for (final insight in artifact.insights.take(6)) insight.title,
+      'insights': [
+        for (final insight in artifact.insights.take(6))
+          <String, Object?>{
+            if (insight.id != null) 'id': insight.id,
+            'title': insight.title,
+            'body': insight.body,
+            if (insight.details.isNotEmpty)
+              'details': [
+                for (final detail in insight.details)
+                  <String, Object?>{
+                    'label': detail.label,
+                    'value': detail.value,
+                    if (detail.context != null) 'context': detail.context,
+                  },
+              ],
+            if (insight.evidenceIds.isNotEmpty)
+              'evidence_ids': insight.evidenceIds,
+          },
       ],
     if (artifact.evidence.isNotEmpty)
       'evidence_refs': [
@@ -1185,25 +1149,54 @@ Map<String, Object?> _agentArtifactAttrs(AgentArtifact artifact) {
             'type': evidence.type,
             'id': evidence.id,
             if (evidence.label != null) 'label': evidence.label,
+            if (evidence.description != null)
+              'description': evidence.description,
           },
       ],
   };
 }
 
 class _ArtifactSummary extends StatelessWidget {
-  const _ArtifactSummary({required this.summary});
+  const _ArtifactSummary({required this.summary, required this.severity});
 
   final String summary;
+  final AgentArtifactSeverity severity;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
-    return Text(
-      summary,
-      style: typography.body.sm.copyWith(
-        height: 1.5,
-        color: colors.mutedForeground,
+    final accent = _accentColor(context, severity);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.whisper),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 3,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(AppRadius.full),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s10),
+            Expanded(
+              child: Text(
+                summary,
+                style: typography.body.sm.copyWith(
+                  height: 1.5,
+                  color: colors.foreground,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1368,6 +1361,307 @@ class _InsightPreview extends StatelessWidget {
   }
 }
 
+class _MetricStrip extends StatelessWidget {
+  const _MetricStrip({required this.metrics});
+
+  final List<AgentMetric> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final visible = metrics.take(3).toList(growable: false);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.whisper),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: colors.border.withValues(alpha: AppOpacity.medium),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var index = 0; index < visible.length; index++) ...[
+              if (index > 0)
+                Container(
+                  width: 1,
+                  height: 44,
+                  color: colors.border.withValues(alpha: AppOpacity.medium),
+                ),
+              Expanded(child: _MetricCell(metric: visible[index])),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCell extends StatelessWidget {
+  const _MetricCell({required this.metric});
+
+  final AgentMetric metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final valueColor = metric.severity == null
+        ? colors.foreground
+        : _accentColor(context, metric.severity!);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            metric.value,
+            style: context.strongTitleStyle.copyWith(color: valueColor),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            metric.label,
+            style: context.captionStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (metric.context case final contextLabel?) ...[
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              contextLabel,
+              style: context.captionStyle.copyWith(
+                color: colors.mutedForeground,
+                fontSize: 10,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightEntry extends StatelessWidget {
+  const _InsightEntry({required this.insight, required this.artifactSeverity});
+
+  final AgentInsight insight;
+  final AgentArtifactSeverity artifactSeverity;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final color = _accentColor(context, insight.severity ?? artifactSeverity);
+    final expandable =
+        insight.details.isNotEmpty ||
+        insight.evidenceIds.isNotEmpty ||
+        insight.route != null;
+    final title = _DetailTile(
+      icon: FLucideIcons.sparkles,
+      title: insight.title,
+      body: insight.body,
+      color: color,
+    );
+    if (!expandable) return title;
+    return FAccordion(
+      children: [
+        FAccordionItem(
+          title: title,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s40,
+              0,
+              AppSpacing.s4,
+              AppSpacing.s10,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (insight.details.isNotEmpty)
+                  _MetricDetails(metrics: insight.details),
+                if (insight.evidenceIds.isNotEmpty) ...[
+                  if (insight.details.isNotEmpty)
+                    const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    l10n.agentResultEvidenceSupportCount(
+                      insight.evidenceIds.length,
+                    ),
+                    style: context.captionStyle,
+                  ),
+                ],
+                if (insight.route case final route?) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppQuietButton(
+                    label: l10n.agentResultOpenRelatedPage,
+                    onPress: () => _openArtifactRoute(context, route),
+                    prefix: const Icon(
+                      FLucideIcons.externalLink,
+                      size: AppIconSizes.xs,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricDetails extends StatelessWidget {
+  const _MetricDetails({required this.metrics});
+
+  final List<AgentMetric> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Column(
+      children: [
+        for (final metric in metrics)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(metric.label, style: context.captionStyle),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        metric.value,
+                        style: context.captionLabelStyle.copyWith(
+                          color: metric.severity == null
+                              ? colors.foreground
+                              : _accentColor(context, metric.severity!),
+                        ),
+                        textAlign: TextAlign.end,
+                      ),
+                      if (metric.context case final contextLabel?)
+                        Text(
+                          contextLabel,
+                          style: context.captionStyle,
+                          textAlign: TextAlign.end,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _EvidenceMethodAccordion extends StatelessWidget {
+  const _EvidenceMethodAccordion({
+    required this.evidence,
+    required this.methodology,
+    required this.traceId,
+    required this.color,
+  });
+
+  final List<AgentEvidenceRef> evidence;
+  final AgentMethodology? methodology;
+  final String? traceId;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FAccordion(
+      children: [
+        FAccordionItem(
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.agentResultEvidenceMethodSection,
+                  style: context.captionLabelStyle,
+                ),
+              ),
+              if (evidence.isNotEmpty)
+                AppBadge(
+                  label: l10n.agentResultEvidenceCount(evidence.length),
+                  size: AppBadgeSize.compact,
+                  tone: AppBadgeTone.neutral,
+                ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (methodology case final method?) ...[
+                  _DetailTile(
+                    icon: FLucideIcons.binary,
+                    title: method.title,
+                    body: method.body,
+                    color: color,
+                  ),
+                  if (method.details.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.s40,
+                        0,
+                        AppSpacing.s4,
+                        AppSpacing.s8,
+                      ),
+                      child: _MetricDetails(metrics: method.details),
+                    ),
+                ],
+                for (final ref in evidence) ...[
+                  _DetailTile(
+                    icon: FLucideIcons.fileText,
+                    title: ref.label ?? l10n.agentResultEvidenceSection,
+                    body:
+                        ref.description ??
+                        l10n.agentResultEvidenceAvailableBody,
+                    color: color,
+                    trailingIcon: ref.route == null
+                        ? null
+                        : FLucideIcons.externalLink,
+                    onPress: ref.route == null
+                        ? null
+                        : () => _openArtifactRoute(context, ref.route!),
+                  ),
+                  if (ref.details.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.s40,
+                        0,
+                        AppSpacing.s4,
+                        AppSpacing.s8,
+                      ),
+                      child: _MetricDetails(metrics: ref.details),
+                    ),
+                ],
+                if (traceId case final id?)
+                  _TraceEntryTile(
+                    traceId: id,
+                    title: l10n.agentResultTechnicalDetailsTitle,
+                    body: l10n.agentResultTechnicalDetailsBody,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _DetailSection extends StatelessWidget {
   const _DetailSection({required this.title, required this.children});
 
@@ -1473,35 +1767,6 @@ class _DetailTile extends StatelessWidget {
     return Semantics(
       button: true,
       child: FTappable(onPress: onPress, child: content),
-    );
-  }
-}
-
-class _AgentActionTile extends StatelessWidget {
-  const _AgentActionTile({
-    required this.action,
-    required this.artifact,
-    this.onPress,
-  });
-
-  final AgentAction action;
-  final AgentArtifact artifact;
-  final VoidCallback? onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final presentation = _agentActionPresentation(
-      AppLocalizations.of(context),
-      action,
-      artifact,
-    );
-    return _DetailTile(
-      icon: presentation.icon,
-      title: presentation.title,
-      body: presentation.body,
-      color: context.theme.colors.primary,
-      trailingIcon: onPress == null ? null : FLucideIcons.messageCircle,
-      onPress: onPress,
     );
   }
 }
@@ -1619,18 +1884,20 @@ class _TraceEntryTile extends StatelessWidget {
     return _DetailTile(
       icon: FLucideIcons.network,
       title: title,
-      body: '$body\n$traceId',
+      body: body,
       color: colors.primary,
       trailingIcon: FLucideIcons.externalLink,
-      onPress: () {
-        final router = GoRouter.of(context);
-        if (appSheetOverlayDepthListenable.value > 0) {
-          unawaited(closeSheetThen(context, () => router.push<void>(route)));
-        } else {
-          unawaited(router.push<void>(route));
-        }
-      },
+      onPress: () => _openArtifactRoute(context, route),
     );
+  }
+}
+
+void _openArtifactRoute(BuildContext context, String route) {
+  final router = GoRouter.of(context);
+  if (appSheetOverlayDepthListenable.value > 0) {
+    unawaited(closeSheetThen(context, () => router.push<void>(route)));
+  } else {
+    unawaited(router.push<void>(route));
   }
 }
 

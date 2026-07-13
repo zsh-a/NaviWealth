@@ -126,10 +126,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Weekly pattern'), findsNothing);
-    expect(find.text('Review'), findsWidgets);
+    expect(find.text('Review'), findsNothing);
   });
 
-  testWidgets('today page renders newer recovery run before older artifact', (
+  testWidgets('today page overlays newer recovery run on the older artifact', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1000, 1600);
@@ -198,9 +198,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('Running'), findsOneWidget);
+    expect(find.text('Running'), findsNothing);
     expect(find.text('Recovery check in progress.'), findsOneWidget);
-    expect(find.text('Old Recovery Alert'), findsNothing);
+    expect(find.text('Old Recovery Alert'), findsOneWidget);
   });
 }
 

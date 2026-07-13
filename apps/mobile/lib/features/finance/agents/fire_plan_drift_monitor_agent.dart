@@ -5,10 +5,12 @@
 /// healthy plans are recorded as skipped runs so schedules still advance.
 library;
 
+import 'package:decimal/decimal.dart';
+import 'package:flutter/widgets.dart';
+
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
-import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
@@ -21,10 +23,15 @@ import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/finance_route_paths.dart';
+import '../domain/fx/money.dart';
 import '../fire/data/fire_providers.dart';
+import '../fire/data/fire_review_cache.dart';
 import '../fire/domain/fire_action.dart';
 import '../fire/domain/fire_review.dart';
 import '../fire/domain/fire_review_engine.dart';
+import '../fire/domain/fire_state.dart';
+import '../fire/domain/fire_stress_test.dart';
 
 const String kFirePlanDriftMonitorAgentId = 'fire_plan_drift_monitor';
 const String kFirePlanDriftMonitorMemorySource =
@@ -56,9 +63,11 @@ class FirePlanDriftMonitorAgent implements Agent {
       agent_providers.agentArtifactStoreProvider.future,
     );
     final traceStore = ctx.ref.read(aiTraceStoreProvider);
-    final review = await reader.read(ctx);
+    final snapshot = await reader.read(ctx);
     return synthesize(
-      review: review,
+      review: snapshot?.review,
+      stressTests: snapshot?.stressTests ?? const <FireStressResult>[],
+      previousReview: snapshot?.previousReview,
       ownerUserId: ownerUserId,
       startedAt: startedAt,
       finishedAt: DateTime.now().toUtc(),
@@ -75,6 +84,8 @@ class FirePlanDriftMonitorAgent implements Agent {
     required DateTime startedAt,
     required DateTime finishedAt,
     required MemoryRuntime runtime,
+    List<FireStressResult> stressTests = const <FireStressResult>[],
+    FireReview? previousReview,
     AgentArtifactStore? artifactStore,
     AiTraceStore? traceStore,
     AppLocalizations? l10n,
@@ -89,7 +100,11 @@ class FirePlanDriftMonitorAgent implements Agent {
       );
     }
 
-    final analysis = FirePlanDriftAnalysis.fromReview(review);
+    final analysis = FirePlanDriftAnalysis.fromReview(
+      review,
+      stressTests: stressTests,
+      previousReview: previousReview,
+    );
     if (!analysis.hasDrift) {
       return AgentRunResult.skipped(
         agentId: kFirePlanDriftMonitorAgentId,
@@ -172,34 +187,66 @@ class FirePlanDriftMonitorAgent implements Agent {
 }
 
 abstract class FirePlanDriftMonitorReader {
-  Future<FireReview?> read(AgentContext ctx);
+  Future<FirePlanDriftSnapshot?> read(AgentContext ctx);
 }
 
 class ProviderFirePlanDriftMonitorReader implements FirePlanDriftMonitorReader {
   const ProviderFirePlanDriftMonitorReader();
 
   @override
-  Future<FireReview?> read(AgentContext ctx) async {
+  Future<FirePlanDriftSnapshot?> read(AgentContext ctx) async {
     final state = ctx.ref.read(fireStateProvider).value;
     if (state == null || !state.isConfigured) return null;
     final stress = ctx.ref.read(fireStressTestsProvider).value ?? const [];
-    return generateReview(
+    final review = generateReview(
       kind: FireReviewKind.monthly,
       state: state,
       stressTests: stress,
       now: ctx.now,
     );
+    FireReview? previousReview;
+    for (final cached in ctx.ref.read(fireReviewCacheProvider)) {
+      if (cached.kind == FireReviewKind.monthly &&
+          cached.periodKey != review.periodKey) {
+        previousReview = cached;
+        break;
+      }
+    }
+    await ctx.ref.read(fireReviewCacheProvider.notifier).upsert(review);
+    return FirePlanDriftSnapshot(
+      review: review,
+      stressTests: stress,
+      previousReview: previousReview,
+    );
   }
+}
+
+class FirePlanDriftSnapshot {
+  const FirePlanDriftSnapshot({
+    required this.review,
+    required this.stressTests,
+    this.previousReview,
+  });
+
+  final FireReview review;
+  final List<FireStressResult> stressTests;
+  final FireReview? previousReview;
 }
 
 class FirePlanDriftAnalysis {
   const FirePlanDriftAnalysis({
     required this.review,
     required this.concerningFindings,
+    required this.stressTests,
+    required this.diff,
     required this.severity,
   });
 
-  factory FirePlanDriftAnalysis.fromReview(FireReview review) {
+  factory FirePlanDriftAnalysis.fromReview(
+    FireReview review, {
+    List<FireStressResult> stressTests = const <FireStressResult>[],
+    FireReview? previousReview,
+  }) {
     final findings = review.findings
         .where((finding) => finding.severity != FireActionSeverity.info)
         .toList(growable: false);
@@ -209,6 +256,10 @@ class FirePlanDriftAnalysis {
     return FirePlanDriftAnalysis(
       review: review,
       concerningFindings: findings,
+      stressTests: stressTests
+          .where((result) => result.verdict != FireStressVerdict.safe)
+          .toList(growable: false),
+      diff: FireReviewDiff(before: previousReview, after: review),
       severity: hasCritical
           ? AgentArtifactSeverity.warning
           : AgentArtifactSeverity.attention,
@@ -217,17 +268,35 @@ class FirePlanDriftAnalysis {
 
   final FireReview review;
   final List<FireReviewFinding> concerningFindings;
+  final List<FireStressResult> stressTests;
+  final FireReviewDiff diff;
   final AgentArtifactSeverity severity;
 
   bool get hasDrift => concerningFindings.isNotEmpty;
 
   String summary(AppLocalizations l10n) {
-    final headline = concerningFindings.first;
-    // The feed summary should explain the leading finding in user language.
-    // Diagnostic values remain available in insights and evidence, where
-    // unavailable rates/months have enough context and do not leak raw
-    // `n/a` or enum names into the home cockpit.
-    return _findingBody(l10n, headline);
+    final parts = <String>[];
+    if (review.withdrawalRate.isFinite) {
+      parts.add(
+        _withdrawalSummary(
+          l10n,
+          safeRate: _rate(review.safeWithdrawalRate),
+          withdrawalRate: _rate(review.withdrawalRate),
+        ),
+      );
+    } else {
+      parts.add(_findingBody(l10n, concerningFindings.first));
+    }
+    final failedCount = _stressFailureCount;
+    if (failedCount > 0) {
+      parts.add(l10n.financeAgentFireSummaryStress(failedCount));
+    }
+    return parts.join(l10n.financeAgentFireSummarySeparator);
+  }
+
+  int get _stressFailureCount {
+    if (stressTests.isNotEmpty) return stressTests.length;
+    return concerningFindings.where(_isStressFinding).length;
   }
 
   Map<String, Object?> toPayload() => <String, Object?>{
@@ -247,6 +316,14 @@ class FirePlanDriftAnalysis {
     'fire_eta_months': review.fireEtaMonths,
     'finding_count': concerningFindings.length,
     'findings': [for (final finding in concerningFindings) finding.toJson()],
+    if (stressTests.isNotEmpty)
+      'stress_tests': [for (final result in stressTests) result.toJson()],
+    if (diff.before != null) ...<String, Object?>{
+      'previous_period_key': diff.before!.periodKey,
+      'withdrawal_rate_delta': diff.withdrawalRateDelta,
+      'net_worth_delta': diff.netWorthDelta?.toString(),
+      'safety_level_changed': diff.safetyLevelChanged,
+    },
   };
 
   AgentArtifact toArtifact({
@@ -257,6 +334,15 @@ class FirePlanDriftAnalysis {
     required DateTime createdAt,
     required AppLocalizations l10n,
   }) {
+    final metrics = _headlineMetrics(l10n);
+    final primaryFindings = concerningFindings
+        .where((finding) => !_isStressFinding(finding))
+        .take(4)
+        .toList(growable: false);
+    final stressFindings = concerningFindings
+        .where(_isStressFinding)
+        .toList(growable: false);
+    final trendDetails = _trendDetails(l10n);
     return AgentArtifact(
       id: id,
       ownerUserId: ownerUserId,
@@ -266,63 +352,308 @@ class FirePlanDriftAnalysis {
       severity: severity,
       title: l10n.financeAgentFireTitle,
       summary: summary(l10n),
+      metrics: metrics,
       insights: <AgentInsight>[
-        for (final finding in concerningFindings.take(4))
+        for (final finding in primaryFindings)
           AgentInsight(
+            id: _findingEvidenceId(finding),
             title: _findingTitle(l10n, finding),
             body: _findingBody(l10n, finding),
             severity: _severity(finding.severity),
+            details: _findingDetails(l10n, finding),
+            evidenceIds: <String>[_findingEvidenceId(finding)],
+            route: FinanceRoutes.planFire,
             payload: finding.toJson(),
           ),
-        AgentInsight(
-          title: l10n.financeAgentFireInsightPlanSnapshotTitle,
-          body: l10n.financeAgentFireInsightPlanSnapshotBody(
-            _rate(review.withdrawalRate),
-            _rate(review.safeWithdrawalRate),
-            _months(review.cashBucketMonths),
-            review.targetCashBucketMonths,
+        if (stressTests.isNotEmpty || stressFindings.isNotEmpty)
+          AgentInsight(
+            id: 'stress_tests',
+            title: l10n.financeAgentFireStressGroupTitle(_stressFailureCount),
+            body: _stressGroupBody(l10n, stressFindings),
+            severity: severity,
+            details: _stressDetails(l10n, stressFindings),
+            evidenceIds: _stressEvidenceIds(stressFindings),
+            route: FinanceRoutes.planFire,
+            payload: <String, Object?>{
+              'failed_count': _stressFailureCount,
+              if (stressTests.isNotEmpty)
+                'results': [for (final result in stressTests) result.toJson()],
+            },
           ),
-          payload: <String, Object?>{
-            'withdrawal_rate': review.withdrawalRate.isFinite
-                ? review.withdrawalRate
-                : null,
-            'safe_withdrawal_rate': review.safeWithdrawalRate,
-            'cash_bucket_months': review.cashBucketMonths.isFinite
-                ? review.cashBucketMonths
-                : null,
-            'target_cash_bucket_months': review.targetCashBucketMonths,
-          },
-        ),
+        if (trendDetails.isNotEmpty)
+          AgentInsight(
+            id: 'period_change',
+            title: l10n.financeAgentFireTrendTitle,
+            body: l10n.financeAgentFireTrendBody(
+              trendDetails
+                  .map((detail) => '${detail.label} ${detail.value}')
+                  .join(l10n.financeAgentFireSummarySeparator),
+            ),
+            details: trendDetails,
+            route: FinanceRoutes.planFire,
+          ),
       ],
       evidence: <AgentEvidenceRef>[
         AgentEvidenceRef(
           type: 'fire_review',
           id: review.periodKey,
           label: l10n.financeAgentFireEvidenceReviewLabel(review.periodKey),
+          description: l10n.financeAgentFireEvidenceReviewBody,
+          route: FinanceRoutes.planFire,
+          details: metrics,
           payload: review.toJson(),
         ),
-        for (final finding in concerningFindings.take(6))
+        for (final finding in primaryFindings)
           AgentEvidenceRef(
             type: 'fire_finding',
-            id: finding.code.name,
+            id: _findingEvidenceId(finding),
             label: _findingTitle(l10n, finding),
+            description: _findingBody(l10n, finding),
+            route: FinanceRoutes.planFire,
+            details: _findingDetails(l10n, finding),
             payload: finding.toJson(),
           ),
+        if (stressTests.isNotEmpty)
+          for (final result in stressTests)
+            AgentEvidenceRef(
+              type: 'fire_stress_test',
+              id: 'stress:${_scenarioWire(result.scenario)}',
+              label: _scenarioLabel(l10n, result.scenario),
+              description: _stressResultContext(l10n, result),
+              route: FinanceRoutes.planFire,
+              details: _stressResultDetails(l10n, result),
+              payload: result.toJson(),
+            )
+        else
+          for (final finding in stressFindings)
+            AgentEvidenceRef(
+              type: 'fire_stress_test',
+              id: _findingEvidenceId(finding),
+              label: _scenarioLabelFromCode(l10n, finding.scenarioCode),
+              description: _findingBody(l10n, finding),
+              route: FinanceRoutes.planFire,
+              payload: finding.toJson(),
+            ),
       ],
       actions: <AgentAction>[
         AgentAction(
-          kind: 'review',
+          kind: 'open_route',
           label: l10n.financeAgentFireAction,
-          intent: kAgentExplainResultIntent,
-          objectType: kAgentArtifactObjectType,
-          objectId: id,
+          description: l10n.financeAgentFireActionBody,
+          route: FinanceRoutes.planFire,
         ),
       ],
+      methodology: AgentMethodology(
+        title: l10n.financeAgentFireMethodTitle,
+        body: l10n.financeAgentFireMethodBody,
+        details: <AgentMetric>[
+          AgentMetric(
+            label: l10n.financeAgentFireMethodPeriodLabel,
+            value: review.periodKey,
+          ),
+          AgentMetric(
+            label: l10n.financeAgentFireMethodModeLabel,
+            value: l10n.financeAgentFireMethodModeValue,
+          ),
+        ],
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
     );
+  }
+
+  List<AgentMetric> _headlineMetrics(AppLocalizations l10n) => <AgentMetric>[
+    AgentMetric(
+      label: l10n.financeAgentFireMetricWithdrawalRate,
+      value: _rate(review.withdrawalRate),
+      severity: review.withdrawalRate > review.safeWithdrawalRate
+          ? AgentArtifactSeverity.warning
+          : AgentArtifactSeverity.info,
+    ),
+    AgentMetric(
+      label: l10n.financeAgentFireMetricSafeRate,
+      value: _rate(review.safeWithdrawalRate),
+    ),
+    AgentMetric(
+      label: l10n.financeAgentFireMetricCashBucket,
+      value: l10n.financeAgentFireMonthsValue(_months(review.cashBucketMonths)),
+      context: l10n.financeAgentFireMetricTargetMonths(
+        review.targetCashBucketMonths,
+      ),
+      severity: review.cashBucketMonths < review.targetCashBucketMonths
+          ? AgentArtifactSeverity.attention
+          : AgentArtifactSeverity.info,
+    ),
+  ];
+
+  List<AgentMetric> _findingDetails(
+    AppLocalizations l10n,
+    FireReviewFinding finding,
+  ) => switch (finding.code) {
+    FireReviewFindingCode.withdrawalRateAboveSwr => <AgentMetric>[
+      AgentMetric(
+        label: l10n.financeAgentFireMetricWithdrawalRate,
+        value: _rate(review.withdrawalRate),
+        severity: _severity(finding.severity),
+      ),
+      AgentMetric(
+        label: l10n.financeAgentFireMetricSafeRate,
+        value: _rate(review.safeWithdrawalRate),
+      ),
+      if (finding.pct case final pct?)
+        AgentMetric(
+          label: l10n.financeAgentFireMetricExcess,
+          value: _percentagePoints(l10n, pct),
+          severity: _severity(finding.severity),
+        ),
+    ],
+    FireReviewFindingCode.belowTargetCashBucket => <AgentMetric>[
+      AgentMetric(
+        label: l10n.financeAgentFireMetricCashBucket,
+        value: l10n.financeAgentFireMonthsValue(
+          _months(review.cashBucketMonths),
+        ),
+        severity: _severity(finding.severity),
+      ),
+      AgentMetric(
+        label: l10n.financeAgentFireMetricTarget,
+        value: l10n.financeAgentFireMonthsValue(
+          review.targetCashBucketMonths.toString(),
+        ),
+      ),
+    ],
+    FireReviewFindingCode.currencyGapPresent ||
+    FireReviewFindingCode.unmappedHoldingsPresent => <AgentMetric>[
+      AgentMetric(
+        label: l10n.financeAgentFireMetricAffectedItems,
+        value: (finding.months ?? 0).toString(),
+        severity: _severity(finding.severity),
+      ),
+    ],
+    _ => const <AgentMetric>[],
+  };
+
+  String _stressGroupBody(
+    AppLocalizations l10n,
+    List<FireReviewFinding> findings,
+  ) {
+    final labels = stressTests.isNotEmpty
+        ? [
+            for (final result in stressTests)
+              _scenarioLabel(l10n, result.scenario),
+          ]
+        : [
+            for (final finding in findings)
+              _scenarioLabelFromCode(l10n, finding.scenarioCode),
+          ];
+    return l10n.financeAgentFireStressGroupBody(
+      labels.join(l10n.financeAgentFireScenarioSeparator),
+    );
+  }
+
+  List<AgentMetric> _stressDetails(
+    AppLocalizations l10n,
+    List<FireReviewFinding> findings,
+  ) {
+    if (stressTests.isNotEmpty) {
+      return [
+        for (final result in stressTests)
+          AgentMetric(
+            label: _scenarioLabel(l10n, result.scenario),
+            value: _stressVerdictLabel(l10n, result.verdict),
+            context: _stressResultContext(l10n, result),
+            severity: result.verdict == FireStressVerdict.danger
+                ? AgentArtifactSeverity.warning
+                : AgentArtifactSeverity.attention,
+          ),
+      ];
+    }
+    return [
+      for (final finding in findings)
+        AgentMetric(
+          label: _scenarioLabelFromCode(l10n, finding.scenarioCode),
+          value: finding.severity == FireActionSeverity.critical
+              ? l10n.financeAgentFireStressVerdictDanger
+              : l10n.financeAgentFireStressVerdictCautious,
+          severity: _severity(finding.severity),
+        ),
+    ];
+  }
+
+  List<String> _stressEvidenceIds(List<FireReviewFinding> findings) {
+    if (stressTests.isNotEmpty) {
+      return [
+        for (final result in stressTests)
+          'stress:${_scenarioWire(result.scenario)}',
+      ];
+    }
+    return [for (final finding in findings) _findingEvidenceId(finding)];
+  }
+
+  List<AgentMetric> _stressResultDetails(
+    AppLocalizations l10n,
+    FireStressResult result,
+  ) => <AgentMetric>[
+    AgentMetric(
+      label: l10n.financeAgentFireMetricNetWorthAfter,
+      value: _money(result.netWorthAfter, l10n),
+    ),
+    AgentMetric(
+      label: l10n.financeAgentFireMetricWithdrawalAfter,
+      value: _rate(result.withdrawalRateAfter),
+      severity: result.verdict == FireStressVerdict.danger
+          ? AgentArtifactSeverity.warning
+          : AgentArtifactSeverity.attention,
+    ),
+    AgentMetric(
+      label: l10n.financeAgentFireMetricCashAfter,
+      value: l10n.financeAgentFireMonthsValue(
+        _months(result.cashBucketMonthsAfter),
+      ),
+    ),
+  ];
+
+  List<AgentMetric> _trendDetails(AppLocalizations l10n) {
+    if (diff.before == null) return const <AgentMetric>[];
+    final details = <AgentMetric>[];
+    if (diff.withdrawalRateDelta case final delta?) {
+      if (delta.abs() >= 0.00005) {
+        details.add(
+          AgentMetric(
+            label: l10n.financeAgentFireTrendWithdrawal,
+            value: _percentagePoints(l10n, delta, signed: true),
+            severity: delta > 0
+                ? AgentArtifactSeverity.warning
+                : AgentArtifactSeverity.info,
+          ),
+        );
+      }
+    }
+    if (diff.netWorthDelta case final delta?) {
+      if (delta.sign != 0) {
+        details.add(
+          AgentMetric(
+            label: l10n.financeAgentFireTrendNetWorth,
+            value: _signedMoney(delta, review.baseCurrency, l10n),
+            severity: delta.sign < 0 ? AgentArtifactSeverity.attention : null,
+          ),
+        );
+      }
+    }
+    if (diff.safetyLevelChanged) {
+      details.add(
+        AgentMetric(
+          label: l10n.financeAgentFireTrendSafety,
+          value:
+              '${_safetyLabel(l10n, diff.before!.safetyLevel)} → '
+              '${_safetyLabel(l10n, review.safetyLevel)}',
+          severity: severity,
+        ),
+      );
+    }
+    return details;
   }
 
   AiTrace toTrace({
@@ -372,6 +703,102 @@ class FirePlanDriftAnalysis {
   }
 }
 
+bool _isStressFinding(FireReviewFinding finding) =>
+    finding.code == FireReviewFindingCode.stressTestDanger ||
+    finding.code == FireReviewFindingCode.stressTestCautious;
+
+String _findingEvidenceId(FireReviewFinding finding) {
+  final scenario = finding.scenarioCode;
+  return scenario == null
+      ? 'finding:${finding.code.name}'
+      : 'finding:${finding.code.name}:$scenario';
+}
+
+String _scenarioWire(FireStressScenario scenario) => switch (scenario) {
+  FireStressScenario.marketDrawdown => 'market_drawdown',
+  FireStressScenario.expenseSurge => 'expense_surge',
+  FireStressScenario.oneOffShock => 'one_off_shock',
+  FireStressScenario.fxShock => 'fx_shock',
+  FireStressScenario.cashDepletion => 'cash_depletion',
+};
+
+String _scenarioLabel(
+  AppLocalizations l10n,
+  FireStressScenario scenario,
+) => switch (scenario) {
+  FireStressScenario.marketDrawdown =>
+    l10n.financeAgentFireScenarioMarketDrawdown,
+  FireStressScenario.expenseSurge => l10n.financeAgentFireScenarioExpenseSurge,
+  FireStressScenario.oneOffShock => l10n.financeAgentFireScenarioOneOffShock,
+  FireStressScenario.fxShock => l10n.financeAgentFireScenarioFxShock,
+  FireStressScenario.cashDepletion =>
+    l10n.financeAgentFireScenarioCashDepletion,
+};
+
+String _scenarioLabelFromCode(AppLocalizations l10n, String? code) =>
+    switch (code) {
+      'market_drawdown' => l10n.financeAgentFireScenarioMarketDrawdown,
+      'expense_surge' => l10n.financeAgentFireScenarioExpenseSurge,
+      'one_off_shock' => l10n.financeAgentFireScenarioOneOffShock,
+      'fx_shock' => l10n.financeAgentFireScenarioFxShock,
+      'cash_depletion' => l10n.financeAgentFireScenarioCashDepletion,
+      _ => l10n.financeAgentFireScenarioUnknown,
+    };
+
+String _stressVerdictLabel(AppLocalizations l10n, FireStressVerdict verdict) =>
+    switch (verdict) {
+      FireStressVerdict.safe => l10n.financeAgentFireStressVerdictSafe,
+      FireStressVerdict.cautious => l10n.financeAgentFireStressVerdictCautious,
+      FireStressVerdict.danger => l10n.financeAgentFireStressVerdictDanger,
+    };
+
+String _stressResultContext(AppLocalizations l10n, FireStressResult result) =>
+    l10n.financeAgentFireStressResultContext(
+      _months(result.cashBucketMonthsAfter),
+      _rate(result.withdrawalRateAfter),
+    );
+
+String _withdrawalSummary(
+  AppLocalizations l10n, {
+  required String safeRate,
+  required String withdrawalRate,
+}) => l10n.financeAgentFireSummaryWithdrawal(safeRate, withdrawalRate);
+
+String _percentagePoints(
+  AppLocalizations l10n,
+  double value, {
+  bool signed = false,
+}) {
+  if (!value.isFinite) return 'n/a';
+  final points = value * 100;
+  final prefix = signed && points > 0 ? '+' : '';
+  final formatted = '$prefix${Fmt.number(points, decimalDigits: 1)}';
+  return l10n.financeAgentFirePercentagePoints(formatted);
+}
+
+String _money(Money money, AppLocalizations l10n) {
+  final locale = Locale(l10n.localeName);
+  return AppFormatters(
+    locale: locale,
+    baseCurrency: money.currency,
+  ).currency(money.amount, code: money.currency);
+}
+
+String _signedMoney(Decimal value, String currency, AppLocalizations l10n) {
+  final formatted = _money(Money(value.abs(), currency), l10n);
+  if (value.sign > 0) return '+$formatted';
+  if (value.sign < 0) return '-$formatted';
+  return formatted;
+}
+
+String _safetyLabel(AppLocalizations l10n, FireSafetyLevel level) =>
+    switch (level) {
+      FireSafetyLevel.unconfigured => l10n.fireOsSafetyUnconfigured,
+      FireSafetyLevel.safe => l10n.fireOsSafetySafe,
+      FireSafetyLevel.cautious => l10n.fireOsSafetyCautious,
+      FireSafetyLevel.danger => l10n.fireOsSafetyDanger,
+    };
+
 AgentArtifactSeverity _severity(FireActionSeverity severity) =>
     switch (severity) {
       FireActionSeverity.info => AgentArtifactSeverity.info,
@@ -410,7 +837,7 @@ String _findingBody(AppLocalizations l10n, FireReviewFinding finding) {
       ),
     FireReviewFindingCode.withdrawalRateAboveSwr =>
       l10n.financeAgentFireFindingWithdrawalRateAboveSwrBody(
-        _rate(finding.pct ?? 0),
+        _percentagePoints(l10n, finding.pct ?? 0),
       ),
     FireReviewFindingCode.withdrawalRateInfinite =>
       l10n.financeAgentFireFindingWithdrawalRateInfiniteBody,
@@ -422,11 +849,11 @@ String _findingBody(AppLocalizations l10n, FireReviewFinding finding) {
       l10n.financeAgentFireFindingUnmappedHoldingsBody(finding.months ?? 0),
     FireReviewFindingCode.stressTestDanger =>
       l10n.financeAgentFireFindingStressDangerBody(
-        finding.scenarioCode ?? 'unknown',
+        _scenarioLabelFromCode(l10n, finding.scenarioCode),
       ),
     FireReviewFindingCode.stressTestCautious =>
       l10n.financeAgentFireFindingStressCautiousBody(
-        finding.scenarioCode ?? 'unknown',
+        _scenarioLabelFromCode(l10n, finding.scenarioCode),
       ),
     FireReviewFindingCode.netWorthBroken =>
       l10n.financeAgentFireFindingNetWorthBrokenBody,

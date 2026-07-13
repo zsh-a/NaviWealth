@@ -186,7 +186,12 @@ void main() {
         expect(c.expectedTopInsightTitles, isNotEmpty, reason: c.id);
         expect(c.expectedEvidenceTypes, isNotEmpty, reason: c.id);
         expect(c.expectedActionKinds, isNotEmpty, reason: c.id);
-        expect(c.expectedActionIntents, isNotEmpty, reason: c.id);
+        expect(
+          c.expectedActionIntents.isNotEmpty ||
+              c.expectedActionRoutes.isNotEmpty,
+          isTrue,
+          reason: c.id,
+        );
       }
     });
 
@@ -200,13 +205,18 @@ void main() {
         expect(c.expectedEvidenceTypes, isEmpty, reason: c.id);
         expect(c.expectedActionKinds, isEmpty, reason: c.id);
         expect(c.expectedActionIntents, isEmpty, reason: c.id);
+        expect(c.expectedActionRoutes, isEmpty, reason: c.id);
       }
     });
 
     test(
       'ready action kinds stay within the unified artifact action model',
       () {
-        const allowedActionKinds = <String>{'review', 'open_object'};
+        const allowedActionKinds = <String>{
+          'review',
+          'open_object',
+          'open_route',
+        };
 
         for (final c in agentOutcomeRegressionCorpus.where(
           (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
@@ -219,6 +229,18 @@ void main() {
         }
       },
     );
+
+    test('route actions declare a canonical in-app destination', () {
+      for (final c in agentOutcomeRegressionCorpus.where(
+        (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
+      )) {
+        final opensRoute = c.expectedActionKinds.contains('open_route');
+        expect(c.expectedActionRoutes.isNotEmpty, opensRoute, reason: c.id);
+        for (final route in c.expectedActionRoutes) {
+          expect(route, startsWith('/'), reason: c.id);
+        }
+      }
+    });
 
     test('ready action intents are registered for agent artifacts', () {
       final descriptorsByName = <String, IntentDescriptor>{};
@@ -251,26 +273,39 @@ void main() {
       }
     });
 
-    test('FinanceOS agent actions stay follow-up only', () {
-      const financeFollowUpIntents = <String>{
-        kAgentExplainResultIntent,
-        kFinanceReviewWealthIntent,
-      };
+    test(
+      'FinanceOS agent actions stay follow-up or direct navigation only',
+      () {
+        const financeFollowUpIntents = <String>{
+          kAgentExplainResultIntent,
+          kFinanceReviewWealthIntent,
+        };
 
-      for (final c in agentOutcomeRegressionCorpus.where(
-        (c) =>
-            c.domain == 'finance' &&
-            c.expectedStatus == AgentOutcomeRegressionStatus.ready,
-      )) {
-        expect(c.expectedActionIntents, isNotEmpty, reason: c.id);
-        expect(
-          financeFollowUpIntents.containsAll(c.expectedActionIntents),
-          isTrue,
-          reason: c.id,
-        );
-        expect(c.expectedProposalKinds, isEmpty, reason: c.id);
-      }
-    });
+        for (final c in agentOutcomeRegressionCorpus.where(
+          (c) =>
+              c.domain == 'finance' &&
+              c.expectedStatus == AgentOutcomeRegressionStatus.ready,
+        )) {
+          expect(
+            c.expectedActionIntents.isNotEmpty ||
+                c.expectedActionRoutes.isNotEmpty,
+            isTrue,
+            reason: c.id,
+          );
+          expect(
+            financeFollowUpIntents.containsAll(c.expectedActionIntents),
+            isTrue,
+            reason: c.id,
+          );
+          expect(
+            c.expectedActionRoutes.every((route) => route.startsWith('/plan/')),
+            isTrue,
+            reason: c.id,
+          );
+          expect(c.expectedProposalKinds, isEmpty, reason: c.id);
+        }
+      },
+    );
 
     test('status classes and proposal expectations stay represented', () {
       final statuses = {

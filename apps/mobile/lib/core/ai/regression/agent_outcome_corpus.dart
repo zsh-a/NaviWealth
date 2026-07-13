@@ -25,6 +25,7 @@ class AgentOutcomeRegressionCase {
     this.expectedEvidenceTypes = const <String>{},
     this.expectedActionKinds = const <String>{},
     this.expectedActionIntents = const <String>{},
+    this.expectedActionRoutes = const <String>{},
     this.expectedProposalKinds = const <String>{},
     this.tags = const <String>{},
   });
@@ -50,6 +51,7 @@ class AgentOutcomeRegressionCase {
   final Set<String> expectedEvidenceTypes;
   final Set<String> expectedActionKinds;
   final Set<String> expectedActionIntents;
+  final Set<String> expectedActionRoutes;
 
   /// Proposal kinds expected to be created or referenced by the outcome.
   /// Empty means the agent should not emit a proposal in this fixture.
@@ -138,11 +140,17 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{
       'Withdrawal rate above safe rate',
-      'Plan snapshot',
+      'Cash bucket below target',
+      'FIRE ETA unreachable',
+      '5 stress scenarios did not pass',
     },
-    expectedEvidenceTypes: <String>{'fire_review', 'fire_finding'},
-    expectedActionKinds: <String>{'review'},
-    expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedEvidenceTypes: <String>{
+      'fire_review',
+      'fire_finding',
+      'fire_stress_test',
+    },
+    expectedActionKinds: <String>{'open_route'},
+    expectedActionRoutes: <String>{'/plan/fire'},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.fire_plan_drift_monitor.no_llm_profile_fallback',
@@ -154,11 +162,17 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedSeverity: AgentArtifactSeverity.warning,
     expectedTopInsightTitles: <String>{
       'Withdrawal rate above safe rate',
-      'Plan snapshot',
+      'Cash bucket below target',
+      'FIRE ETA unreachable',
+      '5 stress scenarios did not pass',
     },
-    expectedEvidenceTypes: <String>{'fire_review', 'fire_finding'},
-    expectedActionKinds: <String>{'review'},
-    expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedEvidenceTypes: <String>{
+      'fire_review',
+      'fire_finding',
+      'fire_stress_test',
+    },
+    expectedActionKinds: <String>{'open_route'},
+    expectedActionRoutes: <String>{'/plan/fire'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(

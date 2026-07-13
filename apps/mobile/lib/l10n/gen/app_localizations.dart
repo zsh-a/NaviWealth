@@ -11034,6 +11034,48 @@ abstract class AppLocalizations {
   /// **'Evidence'**
   String get agentResultEvidenceSection;
 
+  /// Collapsed agent detail section for evidence and analysis method.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence & method'**
+  String get agentResultEvidenceMethodSection;
+
+  /// No description provided for @agentResultEvidenceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sources'**
+  String agentResultEvidenceCount(int count);
+
+  /// Fallback description for an evidence reference.
+  ///
+  /// In en, this message translates to:
+  /// **'View the data source behind this evidence.'**
+  String get agentResultEvidenceAvailableBody;
+
+  /// No description provided for @agentResultEvidenceSupportCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Supported by {count} sources'**
+  String agentResultEvidenceSupportCount(int count);
+
+  /// Open the domain page related to an insight.
+  ///
+  /// In en, this message translates to:
+  /// **'Open related page'**
+  String get agentResultOpenRelatedPage;
+
+  /// Title for the low-level agent trace entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical details'**
+  String get agentResultTechnicalDetailsTitle;
+
+  /// Description for the low-level agent trace entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the analysis steps and tool activity for this result.'**
+  String get agentResultTechnicalDetailsBody;
+
   /// Agent detail section title for the linked AI transparency trace.
   ///
   /// In en, this message translates to:
@@ -11067,7 +11109,7 @@ abstract class AppLocalizations {
   /// Agent detail action title for asking a follow-up question.
   ///
   /// In en, this message translates to:
-  /// **'Ask follow-up'**
+  /// **'Ask Agent'**
   String get agentResultAskFollowUpTitle;
 
   /// Agent detail action description for asking a follow-up question.
@@ -20400,11 +20442,257 @@ abstract class AppLocalizations {
   /// **'FIRE review {periodKey}'**
   String financeAgentFireEvidenceReviewLabel(Object periodKey);
 
+  /// No description provided for @financeAgentFireEvidenceReviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A deterministic snapshot of current plan metrics, assets, and risk thresholds.'**
+  String get financeAgentFireEvidenceReviewBody;
+
   /// No description provided for @financeAgentFireAction.
   ///
   /// In en, this message translates to:
   /// **'Review FIRE plan'**
   String get financeAgentFireAction;
+
+  /// No description provided for @financeAgentFireActionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open FIRE to review and adjust plan assumptions.'**
+  String get financeAgentFireActionBody;
+
+  /// No description provided for @financeAgentFireSummaryWithdrawal.
+  ///
+  /// In en, this message translates to:
+  /// **'Current withdrawal rate is {withdrawalRate}; the safe rate is {safeRate}'**
+  String financeAgentFireSummaryWithdrawal(
+    Object safeRate,
+    Object withdrawalRate,
+  );
+
+  /// No description provided for @financeAgentFireSummaryStress.
+  ///
+  /// In en, this message translates to:
+  /// **'{failedCount} stress scenarios did not pass'**
+  String financeAgentFireSummaryStress(int failedCount);
+
+  /// No description provided for @financeAgentFireSummarySeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'. '**
+  String get financeAgentFireSummarySeparator;
+
+  /// No description provided for @financeAgentFireMetricWithdrawalRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate'**
+  String get financeAgentFireMetricWithdrawalRate;
+
+  /// No description provided for @financeAgentFireMetricSafeRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe rate'**
+  String get financeAgentFireMetricSafeRate;
+
+  /// No description provided for @financeAgentFireMetricCashBucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash runway'**
+  String get financeAgentFireMetricCashBucket;
+
+  /// No description provided for @financeAgentFireMetricTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan target'**
+  String get financeAgentFireMetricTarget;
+
+  /// No description provided for @financeAgentFireMetricTargetMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {months} months'**
+  String financeAgentFireMetricTargetMonths(int months);
+
+  /// No description provided for @financeAgentFireMetricExcess.
+  ///
+  /// In en, this message translates to:
+  /// **'Above safe rate'**
+  String get financeAgentFireMetricExcess;
+
+  /// No description provided for @financeAgentFireMetricAffectedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Affected items'**
+  String get financeAgentFireMetricAffectedItems;
+
+  /// No description provided for @financeAgentFireMetricNetWorthAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth after test'**
+  String get financeAgentFireMetricNetWorthAfter;
+
+  /// No description provided for @financeAgentFireMetricWithdrawalAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate after test'**
+  String get financeAgentFireMetricWithdrawalAfter;
+
+  /// No description provided for @financeAgentFireMetricCashAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash runway after test'**
+  String get financeAgentFireMetricCashAfter;
+
+  /// No description provided for @financeAgentFireMonthsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} months'**
+  String financeAgentFireMonthsValue(Object value);
+
+  /// No description provided for @financeAgentFirePercentagePoints.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} pp'**
+  String financeAgentFirePercentagePoints(Object value);
+
+  /// No description provided for @financeAgentFireStressGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} stress scenarios did not pass'**
+  String financeAgentFireStressGroupTitle(int count);
+
+  /// No description provided for @financeAgentFireStressGroupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk is concentrated in: {scenarios}.'**
+  String financeAgentFireStressGroupBody(Object scenarios);
+
+  /// No description provided for @financeAgentFireScenarioSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **', '**
+  String get financeAgentFireScenarioSeparator;
+
+  /// No description provided for @financeAgentFireScenarioMarketDrawdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Market drawdown'**
+  String get financeAgentFireScenarioMarketDrawdown;
+
+  /// No description provided for @financeAgentFireScenarioExpenseSurge.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher living costs'**
+  String get financeAgentFireScenarioExpenseSurge;
+
+  /// No description provided for @financeAgentFireScenarioOneOffShock.
+  ///
+  /// In en, this message translates to:
+  /// **'One-off expense'**
+  String get financeAgentFireScenarioOneOffShock;
+
+  /// No description provided for @financeAgentFireScenarioFxShock.
+  ///
+  /// In en, this message translates to:
+  /// **'FX shock'**
+  String get financeAgentFireScenarioFxShock;
+
+  /// No description provided for @financeAgentFireScenarioCashDepletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash depletion'**
+  String get financeAgentFireScenarioCashDepletion;
+
+  /// No description provided for @financeAgentFireScenarioUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Other stress scenario'**
+  String get financeAgentFireScenarioUnknown;
+
+  /// No description provided for @financeAgentFireStressVerdictSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get financeAgentFireStressVerdictSafe;
+
+  /// No description provided for @financeAgentFireStressVerdictCautious.
+  ///
+  /// In en, this message translates to:
+  /// **'Attention'**
+  String get financeAgentFireStressVerdictCautious;
+
+  /// No description provided for @financeAgentFireStressVerdictDanger.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger'**
+  String get financeAgentFireStressVerdictDanger;
+
+  /// No description provided for @financeAgentFireStressResultContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate {withdrawalRate} · cash runway {cashBucketMonths} months'**
+  String financeAgentFireStressResultContext(
+    Object cashBucketMonths,
+    Object withdrawalRate,
+  );
+
+  /// No description provided for @financeAgentFireTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Since last review'**
+  String get financeAgentFireTrendTitle;
+
+  /// No description provided for @financeAgentFireTrendBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{changes}.'**
+  String financeAgentFireTrendBody(Object changes);
+
+  /// No description provided for @financeAgentFireTrendWithdrawal.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate'**
+  String get financeAgentFireTrendWithdrawal;
+
+  /// No description provided for @financeAgentFireTrendNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth'**
+  String get financeAgentFireTrendNetWorth;
+
+  /// No description provided for @financeAgentFireTrendSafety.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety level'**
+  String get financeAgentFireTrendSafety;
+
+  /// No description provided for @financeAgentFireMethodTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deterministic on-device calculation'**
+  String get financeAgentFireMethodTitle;
+
+  /// No description provided for @financeAgentFireMethodBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated from the FIRE plan, assets, annual spending, and stress tests; AI does not determine the metrics.'**
+  String get financeAgentFireMethodBody;
+
+  /// No description provided for @financeAgentFireMethodPeriodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Review period'**
+  String get financeAgentFireMethodPeriodLabel;
+
+  /// No description provided for @financeAgentFireMethodModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculation'**
+  String get financeAgentFireMethodModeLabel;
+
+  /// No description provided for @financeAgentFireMethodModeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'On device · no cloud inference'**
+  String get financeAgentFireMethodModeValue;
 
   /// No description provided for @financeAgentFireFindingCashBucketBelowTargetTitle.
   ///

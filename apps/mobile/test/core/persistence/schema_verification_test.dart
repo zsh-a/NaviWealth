@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 40', () {
-      expect(db.schemaVersion, 40);
+    test('is 41', () {
+      expect(db.schemaVersion, 41);
     });
   });
 
@@ -339,6 +339,7 @@ void main() {
           'severity',
           'title',
           'summary',
+          'presentation_json',
           'insights_json',
           'evidence_json',
           'actions_json',

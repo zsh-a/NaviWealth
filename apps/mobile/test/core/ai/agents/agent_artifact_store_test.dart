@@ -19,11 +19,18 @@ void main() {
       severity: AgentArtifactSeverity.attention,
       title: 'Morning briefing',
       summary: 'Recovery is mixed.',
+      metrics: const [
+        AgentMetric(label: 'Sleep', value: '5.8h', context: 'Target 8h'),
+      ],
       insights: const [
         AgentInsight(
+          id: 'sleep-debt',
           title: 'Sleep debt',
           body: 'Sleep was below target for two nights.',
           severity: AgentArtifactSeverity.warning,
+          details: [AgentMetric(label: 'Two-night average', value: '5.8h')],
+          evidenceIds: ['sleep:2026-07-05'],
+          route: '/health/trend',
           payload: <String, Object?>{'sleep_hours': 5.8},
         ),
       ],
@@ -32,18 +39,25 @@ void main() {
           type: 'health_metric',
           id: 'sleep:2026-07-05',
           label: 'Sleep',
+          description: 'Recorded by the local health store.',
           route: '/health/trend',
+          details: [AgentMetric(label: 'Duration', value: '5.8h')],
         ),
       ],
       actions: const [
         AgentAction(
           kind: 'follow_up',
           label: 'Explain recovery',
+          route: '/health/trend',
           intent: 'health.explainRecoveryAlert',
           objectType: 'agent_artifact',
           objectId: 'artifact-1',
         ),
       ],
+      methodology: const AgentMethodology(
+        title: 'On-device calculation',
+        body: 'Calculated from local health metrics.',
+      ),
       memoryId: 'memory-1',
       traceId: 'trace-1',
       createdAt: createdAt,
@@ -55,8 +69,14 @@ void main() {
     final saved = await store.read('artifact-1');
     expect(saved?.kind, AgentArtifactKind.briefing);
     expect(saved?.severity, AgentArtifactSeverity.attention);
+    expect(saved?.metrics.single.value, '5.8h');
+    expect(saved?.methodology?.title, 'On-device calculation');
+    expect(saved?.insights.single.id, 'sleep-debt');
+    expect(saved?.insights.single.details.single.value, '5.8h');
     expect(saved?.insights.single.payload['sleep_hours'], 5.8);
+    expect(saved?.evidence.single.description, contains('local health'));
     expect(saved?.evidence.single.route, '/health/trend');
+    expect(saved?.actions.single.route, '/health/trend');
     expect(saved?.actions.single.intent, 'health.explainRecoveryAlert');
     expect(saved?.memoryId, 'memory-1');
     expect(saved?.traceId, 'trace-1');

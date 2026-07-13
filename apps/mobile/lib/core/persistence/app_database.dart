@@ -134,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 40;
+  int get schemaVersion => 41;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -652,6 +652,18 @@ class AppDatabase extends _$AppDatabase {
       // retention bookkeeping.
       if (from < 40) {
         await _createDataMaintenanceRuns(this);
+      }
+      // v40 -> v41: typed metrics and methodology for user-facing agent
+      // results. Agent artifacts are local and regenerable, so the new
+      // presentation envelope starts empty for existing rows.
+      if (from < 41) {
+        await _createAgentArtifacts(this);
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_artifacts',
+          column: 'presentation_json',
+          definition: "TEXT NOT NULL DEFAULT '{}'",
+        );
       }
     },
     beforeOpen: (details) async {

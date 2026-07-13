@@ -6463,6 +6463,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentResultEvidenceSection => 'Evidence';
 
   @override
+  String get agentResultEvidenceMethodSection => 'Evidence & method';
+
+  @override
+  String agentResultEvidenceCount(int count) {
+    return '$count sources';
+  }
+
+  @override
+  String get agentResultEvidenceAvailableBody =>
+      'View the data source behind this evidence.';
+
+  @override
+  String agentResultEvidenceSupportCount(int count) {
+    return 'Supported by $count sources';
+  }
+
+  @override
+  String get agentResultOpenRelatedPage => 'Open related page';
+
+  @override
+  String get agentResultTechnicalDetailsTitle => 'Technical details';
+
+  @override
+  String get agentResultTechnicalDetailsBody =>
+      'Review the analysis steps and tool activity for this result.';
+
+  @override
   String get agentResultTraceSection => 'Trace';
 
   @override
@@ -6479,7 +6506,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentResultActionsSection => 'Actions';
 
   @override
-  String get agentResultAskFollowUpTitle => 'Ask follow-up';
+  String get agentResultAskFollowUpTitle => 'Ask Agent';
 
   @override
   String get agentResultAskFollowUpBody =>
@@ -11876,7 +11903,157 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get financeAgentFireEvidenceReviewBody =>
+      'A deterministic snapshot of current plan metrics, assets, and risk thresholds.';
+
+  @override
   String get financeAgentFireAction => 'Review FIRE plan';
+
+  @override
+  String get financeAgentFireActionBody =>
+      'Open FIRE to review and adjust plan assumptions.';
+
+  @override
+  String financeAgentFireSummaryWithdrawal(
+    Object safeRate,
+    Object withdrawalRate,
+  ) {
+    return 'Current withdrawal rate is $withdrawalRate; the safe rate is $safeRate';
+  }
+
+  @override
+  String financeAgentFireSummaryStress(int failedCount) {
+    return '$failedCount stress scenarios did not pass';
+  }
+
+  @override
+  String get financeAgentFireSummarySeparator => '. ';
+
+  @override
+  String get financeAgentFireMetricWithdrawalRate => 'Withdrawal rate';
+
+  @override
+  String get financeAgentFireMetricSafeRate => 'Safe rate';
+
+  @override
+  String get financeAgentFireMetricCashBucket => 'Cash runway';
+
+  @override
+  String get financeAgentFireMetricTarget => 'Plan target';
+
+  @override
+  String financeAgentFireMetricTargetMonths(int months) {
+    return 'Target $months months';
+  }
+
+  @override
+  String get financeAgentFireMetricExcess => 'Above safe rate';
+
+  @override
+  String get financeAgentFireMetricAffectedItems => 'Affected items';
+
+  @override
+  String get financeAgentFireMetricNetWorthAfter => 'Net worth after test';
+
+  @override
+  String get financeAgentFireMetricWithdrawalAfter =>
+      'Withdrawal rate after test';
+
+  @override
+  String get financeAgentFireMetricCashAfter => 'Cash runway after test';
+
+  @override
+  String financeAgentFireMonthsValue(Object value) {
+    return '$value months';
+  }
+
+  @override
+  String financeAgentFirePercentagePoints(Object value) {
+    return '$value pp';
+  }
+
+  @override
+  String financeAgentFireStressGroupTitle(int count) {
+    return '$count stress scenarios did not pass';
+  }
+
+  @override
+  String financeAgentFireStressGroupBody(Object scenarios) {
+    return 'Risk is concentrated in: $scenarios.';
+  }
+
+  @override
+  String get financeAgentFireScenarioSeparator => ', ';
+
+  @override
+  String get financeAgentFireScenarioMarketDrawdown => 'Market drawdown';
+
+  @override
+  String get financeAgentFireScenarioExpenseSurge => 'Higher living costs';
+
+  @override
+  String get financeAgentFireScenarioOneOffShock => 'One-off expense';
+
+  @override
+  String get financeAgentFireScenarioFxShock => 'FX shock';
+
+  @override
+  String get financeAgentFireScenarioCashDepletion => 'Cash depletion';
+
+  @override
+  String get financeAgentFireScenarioUnknown => 'Other stress scenario';
+
+  @override
+  String get financeAgentFireStressVerdictSafe => 'Passed';
+
+  @override
+  String get financeAgentFireStressVerdictCautious => 'Attention';
+
+  @override
+  String get financeAgentFireStressVerdictDanger => 'Danger';
+
+  @override
+  String financeAgentFireStressResultContext(
+    Object cashBucketMonths,
+    Object withdrawalRate,
+  ) {
+    return 'Withdrawal rate $withdrawalRate · cash runway $cashBucketMonths months';
+  }
+
+  @override
+  String get financeAgentFireTrendTitle => 'Since last review';
+
+  @override
+  String financeAgentFireTrendBody(Object changes) {
+    return '$changes.';
+  }
+
+  @override
+  String get financeAgentFireTrendWithdrawal => 'Withdrawal rate';
+
+  @override
+  String get financeAgentFireTrendNetWorth => 'Net worth';
+
+  @override
+  String get financeAgentFireTrendSafety => 'Safety level';
+
+  @override
+  String get financeAgentFireMethodTitle =>
+      'Deterministic on-device calculation';
+
+  @override
+  String get financeAgentFireMethodBody =>
+      'Calculated from the FIRE plan, assets, annual spending, and stress tests; AI does not determine the metrics.';
+
+  @override
+  String get financeAgentFireMethodPeriodLabel => 'Review period';
+
+  @override
+  String get financeAgentFireMethodModeLabel => 'Calculation';
+
+  @override
+  String get financeAgentFireMethodModeValue =>
+      'On device · no cloud inference';
 
   @override
   String get financeAgentFireFindingCashBucketBelowTargetTitle =>

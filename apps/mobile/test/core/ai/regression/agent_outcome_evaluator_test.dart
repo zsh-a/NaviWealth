@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 
 void main() {
@@ -56,6 +57,59 @@ void main() {
       );
 
       expect(failures, isEmpty);
+    });
+
+    test('validates direct route actions', () {
+      const regressionCase = AgentOutcomeRegressionCase(
+        id: 'finance.route.ready',
+        agentId: 'route_agent',
+        domain: 'finance',
+        snapshotId: 'finance.route.fixture',
+        expectedStatus: AgentOutcomeRegressionStatus.ready,
+        expectedArtifactKind: AgentArtifactKind.review,
+        expectedSeverity: AgentArtifactSeverity.info,
+        expectedActionKinds: <String>{'open_route'},
+        expectedActionRoutes: <String>{'/plan/fire'},
+      );
+      final result = AgentRunResult(
+        agentId: 'route_agent',
+        status: AgentRunStatus.completed,
+        startedAt: DateTime.utc(2026, 7, 5),
+        finishedAt: DateTime.utc(2026, 7, 5, 0, 0, 1),
+        artifactId: 'artifact-1',
+      );
+
+      AgentArtifact artifact(String route) => AgentArtifact(
+        id: 'artifact-1',
+        ownerUserId: 'u',
+        agentId: 'route_agent',
+        domain: 'finance',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Route result',
+        summary: 'Open the related plan.',
+        actions: <AgentAction>[
+          AgentAction(kind: 'open_route', label: 'Open plan', route: route),
+        ],
+        createdAt: DateTime.utc(2026, 7, 5),
+      );
+
+      expect(
+        evaluateAgentOutcomeCase(
+          regressionCase: regressionCase,
+          result: result,
+          artifact: artifact('/plan/fire'),
+        ),
+        isEmpty,
+      );
+      expect(
+        evaluateAgentOutcomeCase(
+          regressionCase: regressionCase,
+          result: result,
+          artifact: artifact('/plan/budget'),
+        ).map((failure) => failure.field),
+        ['artifact.actions.route'],
+      );
     });
 
     test('reports mismatched status and artifact shape', () {

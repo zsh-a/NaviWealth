@@ -209,6 +209,9 @@ Map<String, Object?> _artifactToWire(AgentArtifact artifact) {
     'severity': artifact.severity.wire,
     'title': artifact.title,
     'summary': artifact.summary,
+    'metrics': artifact.metrics
+        .map((metric) => metric.toJson())
+        .toList(growable: false),
     'insights': artifact.insights
         .map((insight) => insight.toJson())
         .toList(growable: false),
@@ -218,6 +221,8 @@ Map<String, Object?> _artifactToWire(AgentArtifact artifact) {
     'actions': artifact.actions
         .map((action) => action.toJson())
         .toList(growable: false),
+    if (artifact.methodology != null)
+      'methodology': artifact.methodology!.toJson(),
     if (artifact.memoryId != null) 'memory_id': artifact.memoryId,
     if (artifact.traceId != null) 'trace_id': artifact.traceId,
     'created_at': artifact.createdAt.toUtc().toIso8601String(),
