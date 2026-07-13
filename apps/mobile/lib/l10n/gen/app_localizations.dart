@@ -10044,6 +10044,66 @@ abstract class AppLocalizations {
   /// **'Earlier'**
   String get activityFeedEarlier;
 
+  /// Activity feed page summary: expense total label
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get activityFeedSummaryExpense;
+
+  /// Activity feed page summary: income total label
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get activityFeedSummaryIncome;
+
+  /// Activity feed page summary: loaded entry count
+  ///
+  /// In en, this message translates to:
+  /// **'Entries'**
+  String get activityFeedSummaryCount;
+
+  /// Activity day section trailing expense total
+  ///
+  /// In en, this message translates to:
+  /// **'Out {amount}'**
+  String activityFeedDayExpense(String amount);
+
+  /// Activity day section trailing income total
+  ///
+  /// In en, this message translates to:
+  /// **'In {amount}'**
+  String activityFeedDayIncome(String amount);
+
+  /// Toggle activity search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get activityFeedSearchAction;
+
+  /// Activity search field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search narration or payee'**
+  String get activityFeedSearchHint;
+
+  /// Active search filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'“{query}”'**
+  String activityFeedSearchTag(String query);
+
+  /// Confirm dialog title when deleting a journal entry
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this entry?'**
+  String get activityEntryDeleteTitle;
+
+  /// Confirm dialog body when deleting a journal entry
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the journal entry from your ledger. This cannot be undone from this screen.'**
+  String get activityEntryDeleteBody;
+
   /// Accounts page app bar: transfer action tooltip
   ///
   /// In en, this message translates to:

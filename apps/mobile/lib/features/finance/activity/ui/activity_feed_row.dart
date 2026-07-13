@@ -13,72 +13,70 @@ import '../../../../core/format/formatters.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../shared/l10n/account_l10n.dart';
+import '../../shared/l10n/entry_kind_labels.dart';
 import 'activity_entry_detail_page.dart';
+import 'activity_feed_grouping.dart';
 
-/// One row in the unified Activity timeline (iOS Wallet style).
+/// One row in the unified Activity timeline.
 ///
-/// Layout: rounded tinted icon disc · stacked title/subtitle · right-aligned
-/// signed amount + time. Tapping pushes [ActivityEntryDetailPage] which
-/// owns the full breakdown — no inline accordion expansion any more
-/// (consistent with the calm-finance "row is the action target" rule).
+/// Layout: tinted icon disc · title/subtitle · signed amount + time.
+/// Tap opens [ActivityEntryDetailPage].
 class ActivityFeedEntryRow extends StatelessWidget {
   const ActivityFeedEntryRow({
     super.key,
     required this.entry,
     required this.accountsById,
     required this.formatter,
+    this.compact = false,
   });
 
   final JournalEntryWithPostings entry;
   final Map<String, Account> accountsById;
   final AppFormatters formatter;
 
+  /// Tighter padding for home preview.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
     );
-    final headline = _headlinePosting(entry.postings, accountsById);
-    final timeStr = _formatTime(entry.entry.date);
-    final iconData = _iconForKind(classification.kind);
-    final iconTint = _tintForKind(classification.kind, colors);
-
-    final subtitle = entry.entry.payee?.isNotEmpty == true
-        ? entry.entry.payee!
-        : _accountSummary(l10n, entry.postings, accountsById);
+    final headline = activityHeadlinePosting(entry.postings, accountsById);
+    final title = entry.entry.narration.isEmpty ? '—' : entry.entry.narration;
+    final subtitle = activityRowSubtitle(
+      l10n: l10n,
+      entry: entry,
+      accountsById: accountsById,
+      kind: classification.kind,
+    );
+    final timeStr = formatter.time(entry.entry.date);
+    final iconTint = activityKindTint(classification.kind, colors, semantic);
+    final iconData = activityKindIcon(classification.kind);
+    final padH = compact ? AppSpacing.s14 : AppSpacing.s12;
+    final padV = compact ? AppSpacing.s10 : AppSpacing.s12;
 
     return FTappable(
       onPress: () => _openDetail(context),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s12,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
         child: Row(
           children: [
-            SizedBox(
-              width: AppSpacing.s32,
-              height: AppSpacing.s32,
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Icon(
-                  iconData,
-                  size: AppIconSizes.md,
-                  color: iconTint.withValues(alpha: AppOpacity.prominent),
-                ),
-              ),
-            ),
+            _KindDisc(icon: iconData, tint: iconTint),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    entry.entry.narration.isEmpty ? '—' : entry.entry.narration,
-                    style: context.labelStyle,
+                    title,
+                    style: compact
+                        ? context.mediumLabelStyle
+                        : context.labelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -104,7 +102,9 @@ class ActivityFeedEntryRow extends StatelessWidget {
                     amount: headline.units,
                     unit: headline.unit,
                     formatters: formatter,
-                    style: context.strongLabelStyle,
+                    style: compact
+                        ? context.labelStyle
+                        : context.strongLabelStyle,
                   ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(timeStr, style: context.captionStyle),
@@ -143,7 +143,129 @@ class ActivityFeedEntryRow extends StatelessWidget {
   }
 }
 
-IconData _iconForKind(EntryKind kind) {
+class _KindDisc extends StatelessWidget {
+  const _KindDisc({required this.icon, required this.tint});
+
+  final IconData icon;
+  final Color tint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppSpacing.s32,
+      height: AppSpacing.s32,
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: AppOpacity.light),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: AppIconSizes.sm, color: tint),
+    );
+  }
+}
+
+/// Subtitle: prefer payee · account path; transfers show A → B when possible.
+String? activityRowSubtitle({
+  required AppLocalizations l10n,
+  required JournalEntryWithPostings entry,
+  required Map<String, Account> accountsById,
+  required EntryKind kind,
+}) {
+  if (kind == EntryKind.transfer) {
+    final ends = _transferEnds(entry.postings, accountsById, l10n);
+    if (ends != null) return ends;
+  }
+  if (kind == EntryKind.trade) {
+    final symbol = _firstAssetSymbol(entry.postings);
+    final cash = _firstCashAccountName(entry.postings, accountsById, l10n);
+    if (symbol != null && cash != null) return '$symbol · $cash';
+    if (symbol != null) return symbol;
+  }
+
+  final parts = <String>[];
+  final payee = entry.entry.payee;
+  if (payee != null && payee.isNotEmpty) parts.add(payee);
+
+  final account = _primaryAccountLabel(entry.postings, accountsById, l10n);
+  if (account != null && !parts.contains(account)) parts.add(account);
+
+  if (parts.isEmpty) {
+    final kindLabel = entryKindLabel(l10n, kind);
+    return kindLabel;
+  }
+  return parts.join(' · ');
+}
+
+String? _transferEnds(
+  List<Posting> postings,
+  Map<String, Account> accounts,
+  AppLocalizations l10n,
+) {
+  String? from;
+  String? to;
+  for (final p in postings) {
+    final a = accounts[p.accountId];
+    if (a == null || a.category != AccountSide.asset) continue;
+    final name = localizedAccountName(l10n, a);
+    if (p.units < Decimal.zero) {
+      from ??= name;
+    } else if (p.units > Decimal.zero) {
+      to ??= name;
+    }
+  }
+  if (from != null && to != null) return '$from → $to';
+  return from ?? to;
+}
+
+String? _firstAssetSymbol(List<Posting> postings) {
+  for (final p in postings) {
+    if (p.unit.contains(':')) {
+      return p.unit.substring(p.unit.indexOf(':') + 1);
+    }
+  }
+  return null;
+}
+
+String? _firstCashAccountName(
+  List<Posting> postings,
+  Map<String, Account> accounts,
+  AppLocalizations l10n,
+) {
+  for (final p in postings) {
+    if (p.unit.contains(':')) continue;
+    final a = accounts[p.accountId];
+    if (a != null && a.category == AccountSide.asset) {
+      return localizedAccountName(l10n, a);
+    }
+  }
+  return null;
+}
+
+String? _primaryAccountLabel(
+  List<Posting> postings,
+  Map<String, Account> accounts,
+  AppLocalizations l10n,
+) {
+  // Prefer expense/income category account names for daily spend readability.
+  for (final side in const [
+    AccountSide.expense,
+    AccountSide.income,
+    AccountSide.asset,
+    AccountSide.liability,
+  ]) {
+    for (final p in postings) {
+      final a = accounts[p.accountId];
+      if (a == null || a.category != side) continue;
+      if (p.unit.contains(':')) {
+        return p.unit.substring(p.unit.indexOf(':') + 1);
+      }
+      return localizedAccountName(l10n, a);
+    }
+  }
+  return null;
+}
+
+IconData activityKindIcon(EntryKind kind) {
   switch (kind) {
     case EntryKind.income:
       return FLucideIcons.arrowDownLeft;
@@ -164,62 +286,25 @@ IconData _iconForKind(EntryKind kind) {
   }
 }
 
-Color _tintForKind(EntryKind kind, FColors colors) {
+Color activityKindTint(
+  EntryKind kind,
+  FColors colors,
+  SemanticColors semantic,
+) {
   switch (kind) {
     case EntryKind.income:
+      return semantic.success;
     case EntryKind.trade:
       return colors.primary;
     case EntryKind.expense:
     case EntryKind.payment:
+      return semantic.danger;
     case EntryKind.transfer:
+      return semantic.info;
     case EntryKind.adjustment:
+      return semantic.warning;
     case EntryKind.opening:
     case EntryKind.other:
       return colors.mutedForeground;
   }
-}
-
-String _formatTime(DateTime date) {
-  final h = date.hour.toString().padLeft(2, '0');
-  final m = date.minute.toString().padLeft(2, '0');
-  return '$h:$m';
-}
-
-String? _accountSummary(
-  AppLocalizations l10n,
-  List<Posting> postings,
-  Map<String, Account> accounts,
-) {
-  for (final p in postings) {
-    // Asset posting: show the symbol (e.g. "AAPL") instead of the
-    // raw unit ID ("usStock:AAPL").
-    if (p.unit.contains(':')) {
-      return p.unit.substring(p.unit.indexOf(':') + 1);
-    }
-    final a = accounts[p.accountId];
-    if (a != null) return localizedAccountName(l10n, a);
-  }
-  return null;
-}
-
-Posting? _headlinePosting(
-  List<Posting> postings,
-  Map<String, Account> accounts,
-) {
-  Posting? headline;
-  Decimal? best;
-  for (final p in postings) {
-    final account = accounts[p.accountId];
-    if (account == null) continue;
-    if (account.category != AccountSide.asset &&
-        account.category != AccountSide.liability) {
-      continue;
-    }
-    final magnitude = p.units.abs();
-    if (best == null || magnitude > best) {
-      best = magnitude;
-      headline = p;
-    }
-  }
-  return headline;
 }

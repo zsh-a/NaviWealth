@@ -100,7 +100,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('All'), findsOneWidget);
-    expect(find.text('Filter'), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.slidersHorizontal), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

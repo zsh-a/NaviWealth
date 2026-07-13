@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -6,8 +6,11 @@ import 'package:naviwealth/core/haptics/haptics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../shared/l10n/account_l10n.dart';
 import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_feed_provider.dart';
 import '../data/activity_feed_query.dart';
@@ -15,11 +18,7 @@ import 'activity_action_panel.dart';
 import 'activity_feed.dart';
 import 'activity_feed_filter_sheet.dart';
 
-/// Activity tab — single timeline of every journal entry, with a filter
-/// chip row for quickly slicing by entry kind. The legacy three-segment
-/// layout (Expenses / Accounts / Feed) is gone; expenses and accounts
-/// each have their own first-class detail flow now reachable via deep
-/// link or the global action panel ("+").
+/// Activity tab — single timeline of every journal entry.
 class ActivityPage extends ConsumerStatefulWidget {
   const ActivityPage({super.key});
 
@@ -34,10 +33,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final uri = GoRouter.of(context).routeInformationProvider.value.uri;
-    // ActivityPage remains mounted underneath every nested Activity route.
-    // Its filter state owns only the root timeline URL; hydrating from a
-    // child URL would make the listener below replace that child with
-    // `/activity` as soon as the provider emits.
     if (uri.path != FinanceRoutes.activity) return;
     final location = uri.toString();
     if (_hydratedLocation == location) return;
@@ -68,9 +63,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           onPress: () => showActivityActionPanel(context),
           order: 0,
         ),
-        // §5.10.10 / S5a — Layer 4 ingest review queue entry. Calm
-        // by design: a plain outlined inbox, no badge/glow; the
-        // pending count lives inside the review page.
         ShellHeaderActionSpec(
           icon: FLucideIcons.chartColumnStacked,
           label: l10n.cashFlowTitle,
@@ -96,16 +88,14 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           order: 50,
         ),
       ],
-      child: AdaptiveContentFrame(
+      child: const AdaptiveContentFrame(
         maxWidth: AdaptiveMaxWidth.dashboard,
         expandSinglePrimary: true,
         padding: EdgeInsets.zero,
         primary: Column(
           children: [
-            _ActivityFilterBar(
-              onMoreFilters: () => ActivityFeedFilterSheet.show(context),
-            ),
-            const Expanded(child: ActivityFeed()),
+            _ActivityFilterBar(),
+            Expanded(child: ActivityFeed()),
           ],
         ),
       ),
@@ -121,6 +111,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     params.remove('kinds');
     params.remove('from');
     params.remove('to');
+    params.remove('q');
     params.remove('tab');
     params.addAll(query.toQueryParameters());
     final next = current.replace(
@@ -133,22 +124,50 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   }
 }
 
-class _ActivityFilterBar extends ConsumerWidget {
-  const _ActivityFilterBar({required this.onMoreFilters});
-
-  final VoidCallback onMoreFilters;
+class _ActivityFilterBar extends ConsumerStatefulWidget {
+  const _ActivityFilterBar();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ActivityFilterBar> createState() => _ActivityFilterBarState();
+}
+
+class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
+  late final TextEditingController _searchController;
+  bool _searchOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final query = ref.watch(activityFeedQueryProvider);
     final controller = ref.read(activityFeedQueryProvider.notifier);
     final selected = query.kinds;
     final allActive = selected.isEmpty;
-    final activeFilterCount = _activityFilterCount(query);
-    final filterLabel = activeFilterCount == 0
+    final sheetFilterCount =
+        (query.dateRange == null ? 0 : 1) + query.accountIds.length;
+    final filterLabel = sheetFilterCount == 0
         ? l10n.activityFeedFilterTitle
-        : '${l10n.activityFeedFilterTitle} · $activeFilterCount';
+        : '${l10n.activityFeedFilterTitle} · $sheetFilterCount';
+
+    // Keep search field text in sync when URL hydrates a query.
+    if (!_searchOpen &&
+        query.searchText.isNotEmpty &&
+        _searchController.text != query.searchText) {
+      _searchController.text = query.searchText;
+      _searchOpen = true;
+    }
+
     final chips = <_KindChipSpec>[
       _KindChipSpec(
         label: l10n.activityFilterChipAll,
@@ -183,30 +202,132 @@ class _ActivityFilterBar extends ConsumerWidget {
         AppSpacing.s16,
         AppSpacing.s8,
         AppSpacing.s16,
-        AppSpacing.s8,
+        AppSpacing.s4,
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (var index = 0; index < chips.length; index++) ...[
+                        _FilterChip(spec: chips[index]),
+                        if (index < chips.length - 1)
+                          const SizedBox(width: AppSpacing.s8),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              AppIconButton(
+                icon: FLucideIcons.search,
+                tooltip: l10n.activityFeedSearchAction,
+                onPress: () => setState(() => _searchOpen = !_searchOpen),
+              ),
+              AppIconButton(
+                icon: FLucideIcons.slidersHorizontal,
+                tooltip: filterLabel,
+                onPress: () => ActivityFeedFilterSheet.show(context),
+              ),
+            ],
+          ),
+          if (_searchOpen) ...[
+            const SizedBox(height: AppSpacing.s8),
+            FTextField(
+              control: FTextFieldControl.managed(
+                controller: _searchController,
+                onChange: (value) {
+                  controller.mutateQuery(
+                    (q) => q.copyWith(searchText: value.text),
+                  );
+                },
+              ),
+              hint: l10n.activityFeedSearchHint,
+            ),
+          ],
+          if (query.hasSheetFilters || query.searchText.trim().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            _ActiveFilterTags(query: query),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveFilterTags extends ConsumerWidget {
+  const _ActiveFilterTags({required this.query});
+
+  final ActivityFeedQuery query;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final controller = ref.read(activityFeedQueryProvider.notifier);
+    final accounts =
+        ref.watch(accountsStreamProvider).value ?? const <Account>[];
+    final byId = {for (final a in accounts) a.id: a};
+    final tags = <Widget>[];
+
+    if (query.searchText.trim().isNotEmpty) {
+      tags.add(
+        AppFilterChip(
+          label: l10n.activityFeedSearchTag(query.searchText.trim()),
+          active: true,
+          onPress: () {},
+          onClear: () =>
+              controller.mutateQuery((q) => q.copyWith(searchText: '')),
+          icon: FLucideIcons.search,
+        ),
+      );
+    }
+    if (query.dateRange != null) {
+      tags.add(
+        AppFilterChip(
+          label: l10n.activityFeedFilterDateRange,
+          active: true,
+          onPress: () => ActivityFeedFilterSheet.show(context),
+          onClear: () =>
+              controller.mutateQuery((q) => q.copyWith(dateRange: null)),
+          icon: FLucideIcons.calendar,
+        ),
+      );
+    }
+    for (final id in query.accountIds) {
+      final name = byId[id] != null
+          ? localizedAccountName(l10n, byId[id]!)
+          : id;
+      tags.add(
+        AppFilterChip(
+          label: name,
+          active: true,
+          onPress: () => ActivityFeedFilterSheet.show(context),
+          onClear: () {
+            controller.mutateQuery((q) {
+              final ids = {...q.accountIds}..remove(id);
+              return q.copyWith(accountIds: ids);
+            });
+          },
+          icon: FLucideIcons.wallet,
+        ),
+      );
+    }
+
+    if (tags.isEmpty) return const SizedBox.shrink();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (var index = 0; index < chips.length; index++) ...[
-                    _FilterChip(spec: chips[index]),
-                    if (index < chips.length - 1)
-                      const SizedBox(width: AppSpacing.s8),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          AppQuietButton(
-            label: filterLabel,
-            onPress: onMoreFilters,
-            prefix: const Icon(FLucideIcons.slidersHorizontal),
-          ),
+          for (var i = 0; i < tags.length; i++) ...[
+            tags[i],
+            if (i < tags.length - 1) const SizedBox(width: AppSpacing.s8),
+          ],
         ],
       ),
     );
@@ -242,12 +363,6 @@ class _FilterChip extends StatelessWidget {
 
 String _labelForKind(AppLocalizations l10n, ActivityKind kind) {
   return entryKindLabel(l10n, entryKindFromActivityKind(kind));
-}
-
-int _activityFilterCount(ActivityFeedQuery query) {
-  return query.kinds.length +
-      query.accountIds.length +
-      (query.dateRange == null ? 0 : 1);
 }
 
 void _setActivityKinds(

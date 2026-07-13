@@ -3079,6 +3079,35 @@
   "@activityFeedThisWeek": { "description": "Activity feed date section: this week" },
   "activityFeedEarlier": "Earlier",
   "@activityFeedEarlier": { "description": "Activity feed date section: earlier" },
+  "activityFeedSummaryExpense": "Expense",
+  "@activityFeedSummaryExpense": { "description": "Activity feed page summary: expense total label" },
+  "activityFeedSummaryIncome": "Income",
+  "@activityFeedSummaryIncome": { "description": "Activity feed page summary: income total label" },
+  "activityFeedSummaryCount": "Entries",
+  "@activityFeedSummaryCount": { "description": "Activity feed page summary: loaded entry count" },
+  "activityFeedDayExpense": "Out {amount}",
+  "@activityFeedDayExpense": {
+    "description": "Activity day section trailing expense total",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "activityFeedDayIncome": "In {amount}",
+  "@activityFeedDayIncome": {
+    "description": "Activity day section trailing income total",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "activityFeedSearchAction": "Search",
+  "@activityFeedSearchAction": { "description": "Toggle activity search field" },
+  "activityFeedSearchHint": "Search narration or payee",
+  "@activityFeedSearchHint": { "description": "Activity search field hint" },
+  "activityFeedSearchTag": "“{query}”",
+  "@activityFeedSearchTag": {
+    "description": "Active search filter chip",
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "activityEntryDeleteTitle": "Delete this entry?",
+  "@activityEntryDeleteTitle": { "description": "Confirm dialog title when deleting a journal entry" },
+  "activityEntryDeleteBody": "This removes the journal entry from your ledger. This cannot be undone from this screen.",
+  "@activityEntryDeleteBody": { "description": "Confirm dialog body when deleting a journal entry" },
   "accountsTransferAction": "Transfer",
   "@accountsTransferAction": { "description": "Accounts page app bar: transfer action tooltip" },
   "accountsJournalAction": "Journal",

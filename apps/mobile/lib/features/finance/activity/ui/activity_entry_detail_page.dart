@@ -7,7 +7,6 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
-import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 
 import '../../../../core/ai/write/write.dart';
@@ -20,6 +19,9 @@ import '../../data/repositories/providers.dart';
 import '../../shared/l10n/account_l10n.dart';
 import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_entry_insight_client.dart';
+import '../data/activity_feed_provider.dart';
+import 'activity_feed_grouping.dart';
+import 'activity_feed_row.dart';
 
 part 'activity_entry_detail_helpers.dart';
 part 'activity_entry_detail_hero.dart';
@@ -33,7 +35,7 @@ part 'activity_entry_detail_ledger.dart';
 ///  1. Hero amount + title + date / time
 ///  2. Local insight block for deterministic transaction patterns
 ///  3. Posting breakdown (debits / credits in the existing widget)
-///  4. (Future) tags, notes, edit / delete actions
+///  4. Edit (expense) + delete
 class ActivityEntryDetailPage extends ConsumerWidget {
   const ActivityEntryDetailPage({
     super.key,
@@ -71,6 +73,10 @@ class ActivityEntryDetailPage extends ConsumerWidget {
             icon: const Icon(FLucideIcons.pencil),
             onPress: () => context.go(FinanceRoutes.expense(entry.entry.id)),
           ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.trash2),
+          onPress: () => _confirmDelete(context, ref, entry.entry.id),
+        ),
       ],
       childPad: false,
       child: ListView(
@@ -81,8 +87,6 @@ class ActivityEntryDetailPage extends ConsumerWidget {
           AppSpacing.s32,
         ),
         children: [
-          // AiTouchMark: surfaces when this journal entry was created
-          // by an accepted AI proposal. Self-gating: hidden otherwise.
           Align(
             alignment: Alignment.centerLeft,
             child: AiTouchMark(
@@ -109,6 +113,39 @@ class ActivityEntryDetailPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+Future<void> _confirmDelete(
+  BuildContext context,
+  WidgetRef ref,
+  String entryId,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final confirmed = await showConfirmDialog(
+    context: context,
+    title: Text(l10n.activityEntryDeleteTitle),
+    body: Text(l10n.activityEntryDeleteBody),
+    cancelLabel: l10n.commonCancel,
+    confirmLabel: l10n.commonDelete,
+    destructive: true,
+  );
+  if (confirmed != true) return;
+  try {
+    final repo = await ref.read(journalEntryRepositoryProvider.future);
+    await repo.softDelete(entryId);
+    ref.invalidate(activityFeedProvider);
+    if (context.mounted) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go(FinanceRoutes.activity);
+      }
+    }
+  } catch (_) {
+    if (context.mounted) {
+      // Soft-fail: keep the user on the detail page with no crash.
+    }
   }
 }
 

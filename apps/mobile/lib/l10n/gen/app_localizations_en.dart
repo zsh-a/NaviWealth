@@ -5845,6 +5845,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityFeedEarlier => 'Earlier';
 
   @override
+  String get activityFeedSummaryExpense => 'Expense';
+
+  @override
+  String get activityFeedSummaryIncome => 'Income';
+
+  @override
+  String get activityFeedSummaryCount => 'Entries';
+
+  @override
+  String activityFeedDayExpense(String amount) {
+    return 'Out $amount';
+  }
+
+  @override
+  String activityFeedDayIncome(String amount) {
+    return 'In $amount';
+  }
+
+  @override
+  String get activityFeedSearchAction => 'Search';
+
+  @override
+  String get activityFeedSearchHint => 'Search narration or payee';
+
+  @override
+  String activityFeedSearchTag(String query) {
+    return '“$query”';
+  }
+
+  @override
+  String get activityEntryDeleteTitle => 'Delete this entry?';
+
+  @override
+  String get activityEntryDeleteBody =>
+      'This removes the journal entry from your ledger. This cannot be undone from this screen.';
+
+  @override
   String get accountsTransferAction => 'Transfer';
 
   @override

@@ -5570,6 +5570,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedEarlier => '更早';
 
   @override
+  String get activityFeedSummaryExpense => '支出';
+
+  @override
+  String get activityFeedSummaryIncome => '收入';
+
+  @override
+  String get activityFeedSummaryCount => '笔数';
+
+  @override
+  String activityFeedDayExpense(String amount) {
+    return '出 $amount';
+  }
+
+  @override
+  String activityFeedDayIncome(String amount) {
+    return '入 $amount';
+  }
+
+  @override
+  String get activityFeedSearchAction => '搜索';
+
+  @override
+  String get activityFeedSearchHint => '搜索备注或收款方';
+
+  @override
+  String activityFeedSearchTag(String query) {
+    return '“$query”';
+  }
+
+  @override
+  String get activityEntryDeleteTitle => '删除这笔流水？';
+
+  @override
+  String get activityEntryDeleteBody => '将从账本中移除该日记账分录。此操作无法在此页撤销。';
+
+  @override
   String get accountsTransferAction => '转账';
 
   @override

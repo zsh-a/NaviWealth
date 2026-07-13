@@ -45,15 +45,25 @@ final activityFeedProvider = StreamProvider.autoDispose<ActivityFeedPage>((
           pageSize: query.pageSize,
         ),
       )
-      .map(
-        (page) => ActivityFeedPage(
-          entries: page.entries,
-          totalCount: page.entries.length,
+      .map((page) {
+        final needle = query.searchText.trim().toLowerCase();
+        final entries = needle.isEmpty
+            ? page.entries
+            : page.entries
+                  .where((entry) {
+                    final narration = entry.entry.narration.toLowerCase();
+                    final payee = (entry.entry.payee ?? '').toLowerCase();
+                    return narration.contains(needle) || payee.contains(needle);
+                  })
+                  .toList(growable: false);
+        return ActivityFeedPage(
+          entries: entries,
+          totalCount: entries.length,
           hasMore: page.hasMore,
           isFiltered: query.hasFilters,
           accountsById: accountsById,
-        ),
-      );
+        );
+      });
 });
 
 class ActivityFeedQueryController extends StateNotifier<ActivityFeedQuery> {

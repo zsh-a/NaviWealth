@@ -19,21 +19,31 @@ class ActivityFeedQuery {
     this.dateRange,
     this.accountIds = const <String>{},
     this.kinds = const <ActivityKind>{},
+    this.searchText = '',
     this.pageSize = 50,
   });
 
   final DateTimeRange? dateRange;
   final Set<String> accountIds;
   final Set<ActivityKind> kinds;
+
+  /// Case-insensitive match against narration / payee.
+  final String searchText;
   final int pageSize;
 
   bool get hasFilters =>
-      dateRange != null || accountIds.isNotEmpty || kinds.isNotEmpty;
+      dateRange != null ||
+      accountIds.isNotEmpty ||
+      kinds.isNotEmpty ||
+      searchText.trim().isNotEmpty;
+
+  bool get hasSheetFilters => dateRange != null || accountIds.isNotEmpty;
 
   ActivityFeedQuery copyWith({
     Object? dateRange = _sentinel,
     Set<String>? accountIds,
     Set<ActivityKind>? kinds,
+    String? searchText,
     int? pageSize,
   }) {
     return ActivityFeedQuery(
@@ -42,6 +52,7 @@ class ActivityFeedQuery {
           : dateRange as DateTimeRange?,
       accountIds: accountIds ?? this.accountIds,
       kinds: kinds ?? this.kinds,
+      searchText: searchText ?? this.searchText,
       pageSize: pageSize ?? this.pageSize,
     );
   }
@@ -62,10 +73,12 @@ class ActivityFeedQuery {
             start: from ?? DateTime.utc(1970),
             end: to ?? DateTime.utc(9999, 12, 31),
           );
+    final q = params['q']?.trim() ?? '';
     return ActivityFeedQuery(
       dateRange: dateRange,
       accountIds: accounts,
       kinds: kinds,
+      searchText: q,
     );
   }
 
@@ -82,6 +95,8 @@ class ActivityFeedQuery {
       out['from'] = _dateOnly(range.start);
       out['to'] = _dateOnly(range.end);
     }
+    final q = searchText.trim();
+    if (q.isNotEmpty) out['q'] = q;
     return out;
   }
 }
@@ -132,6 +147,15 @@ List<JournalEntryWithPostings> filterActivityEntries({
           if (!query.kinds.contains(
             _activityKindFromEntryKind(classification.kind),
           )) {
+            return false;
+          }
+        }
+
+        final needle = query.searchText.trim().toLowerCase();
+        if (needle.isNotEmpty) {
+          final narration = entry.entry.narration.toLowerCase();
+          final payee = (entry.entry.payee ?? '').toLowerCase();
+          if (!narration.contains(needle) && !payee.contains(needle)) {
             return false;
           }
         }

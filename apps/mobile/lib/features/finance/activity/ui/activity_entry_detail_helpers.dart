@@ -4,68 +4,13 @@ Posting? _headlinePosting(
   List<Posting> postings,
   Map<String, Account> accounts,
 ) {
-  Posting? headline;
-  Decimal? best;
-  Posting? fallback;
-  Decimal? fallbackBest;
-  for (final p in postings) {
-    final magnitude = p.units.abs();
-    if (fallbackBest == null || magnitude > fallbackBest) {
-      fallbackBest = magnitude;
-      fallback = p;
-    }
-
-    final account = accounts[p.accountId];
-    if (account == null) continue;
-    if (account.category != AccountSide.asset &&
-        account.category != AccountSide.liability) {
-      continue;
-    }
-    if (best == null || magnitude > best) {
-      best = magnitude;
-      headline = p;
-    }
-  }
-  return headline ?? fallback;
+  return activityHeadlinePosting(postings, accounts);
 }
 
-IconData _iconForKind(EntryKind kind) {
-  switch (kind) {
-    case EntryKind.income:
-      return FLucideIcons.arrowDownLeft;
-    case EntryKind.expense:
-      return FLucideIcons.shoppingBag;
-    case EntryKind.payment:
-      return FLucideIcons.banknote;
-    case EntryKind.transfer:
-      return FLucideIcons.arrowLeftRight;
-    case EntryKind.trade:
-      return FLucideIcons.chartLine;
-    case EntryKind.adjustment:
-      return FLucideIcons.slidersHorizontal;
-    case EntryKind.opening:
-      return FLucideIcons.flag;
-    case EntryKind.other:
-      return FLucideIcons.receipt;
-  }
-}
+IconData _iconForKind(EntryKind kind) => activityKindIcon(kind);
 
 Color _tintForKind(EntryKind kind, FColors colors, SemanticColors semantic) {
-  switch (kind) {
-    case EntryKind.income:
-    case EntryKind.trade:
-      return colors.primary;
-    case EntryKind.expense:
-    case EntryKind.payment:
-      return semantic.danger;
-    case EntryKind.transfer:
-      return semantic.info;
-    case EntryKind.adjustment:
-      return semantic.warning;
-    case EntryKind.opening:
-    case EntryKind.other:
-      return colors.mutedForeground;
-  }
+  return activityKindTint(kind, colors, semantic);
 }
 
 String _costLabel(Cost cost) {

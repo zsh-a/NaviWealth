@@ -1758,6 +1758,25 @@
   "activityFeedYesterday": "昨天",
   "activityFeedThisWeek": "本周",
   "activityFeedEarlier": "更早",
+  "activityFeedSummaryExpense": "支出",
+  "activityFeedSummaryIncome": "收入",
+  "activityFeedSummaryCount": "笔数",
+  "activityFeedDayExpense": "出 {amount}",
+  "@activityFeedDayExpense": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "activityFeedDayIncome": "入 {amount}",
+  "@activityFeedDayIncome": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "activityFeedSearchAction": "搜索",
+  "activityFeedSearchHint": "搜索备注或收款方",
+  "activityFeedSearchTag": "“{query}”",
+  "@activityFeedSearchTag": {
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "activityEntryDeleteTitle": "删除这笔流水？",
+  "activityEntryDeleteBody": "将从账本中移除该日记账分录。此操作无法在此页撤销。",
   "accountsTransferAction": "转账",
   "accountsJournalAction": "日记账",
   "expenseReportTitle": "支出报表",
