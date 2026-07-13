@@ -272,6 +272,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthTrendFlatHint => 'No change in the selected period.';
 
   @override
+  String get wealthTrendEstimatedDisclosure =>
+      'Estimated from cost basis because a market price is unavailable. Period change is unavailable.';
+
+  @override
+  String get wealthTrendExcludedDisclosure =>
+      'Earlier incomplete or estimated valuations are excluded from the trend and period change.';
+
+  @override
+  String get wealthTrendIncompleteDisclosure =>
+      'A complete current valuation is unavailable, so no partial total is plotted.';
+
+  @override
   String get wealthPerspectiveSectionTitle => 'Allocation';
 
   @override

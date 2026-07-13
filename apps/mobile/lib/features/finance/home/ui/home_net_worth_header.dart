@@ -102,21 +102,23 @@ class _TodayDeltaMetric extends StatelessWidget {
     return metrics.when(
       loading: () => const SkeletonBox(width: 96, height: 14, radius: 4),
       error: (_, _) => const SizedBox.shrink(),
-      data: (m) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            l10n.dashboardHeaderDeltaTodayLabel,
-            style: context.captionStyle,
-          ),
-          const SizedBox(width: AppSpacing.s6),
-          DeltaText(
-            value: m.dailyChange.amount.toDouble(),
-            format: DeltaFormat.currency,
-            currencyCode: m.baseCurrency,
-          ),
-        ],
-      ),
+      data: (m) => m.dailyChange == null
+          ? const SizedBox.shrink()
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.dashboardHeaderDeltaTodayLabel,
+                  style: context.captionStyle,
+                ),
+                const SizedBox(width: AppSpacing.s6),
+                DeltaText(
+                  value: m.dailyChange!.amount.toDouble(),
+                  format: DeltaFormat.currency,
+                  currencyCode: m.baseCurrency,
+                ),
+              ],
+            ),
     );
   }
 }

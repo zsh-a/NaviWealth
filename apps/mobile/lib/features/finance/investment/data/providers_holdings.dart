@@ -62,7 +62,7 @@ final holdingsSnapshotProvider =
       return service.computeAt(DateTime.now().toUtc());
     });
 
-class _LedgerHoldingService implements HoldingService {
+class _LedgerHoldingService implements SampledHoldingService {
   _LedgerHoldingService({
     required AppDatabase db,
     required this.ownerUserId,
@@ -81,7 +81,25 @@ class _LedgerHoldingService implements HoldingService {
 
   @override
   Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async {
-    final lots = await lotsAt(asOf);
+    final samples = await computeAtSamples([asOf]);
+    return samples.isEmpty ? const {} : samples.single.snapshots;
+  }
+
+  @override
+  Future<List<HoldingSample>> computeAtSamples(Iterable<DateTime> dates) async {
+    final sorted = dates.map((date) => date.toUtc()).toSet().toList()..sort();
+    if (sorted.isEmpty) return const [];
+    final lotsByDate = await _lotReader.allLotsAtSamples(
+      ownerUserId: ownerUserId,
+      dates: sorted,
+    );
+    return [
+      for (final date in sorted)
+        _valueLots(date, lotsByDate[date] ?? const <Lot>[]),
+    ];
+  }
+
+  HoldingSample _valueLots(DateTime asOf, List<Lot> lots) {
     final byAsset = <String, _HoldingAccumulator>{};
     for (final lot in lots.where((l) => !l.isClosed)) {
       final acc = byAsset.putIfAbsent(
@@ -92,30 +110,65 @@ class _LedgerHoldingService implements HoldingService {
     }
 
     final snapshots = <String, HoldingSnapshot>{};
+    final issues = <HoldingValuationIssue>[];
     var totalMarketValue = Decimal.zero;
     for (final entry in byAsset.entries) {
       final acc = entry.value;
       if (acc.quantity == Decimal.zero) continue;
 
+      final observedPrice = prices.priceFor(entry.key, asOf: asOf);
       final price =
-          prices.priceFor(entry.key, asOf: asOf) ??
-          HoldingPrice(price: acc.averageCostPerUnit, currency: acc.currency);
+          observedPrice ??
+          HoldingPrice(
+            price: acc.averageCostPerUnit,
+            currency: acc.currency,
+            confidence: PriceConfidence.estimated,
+            source: 'cost_basis',
+            asOf: asOf,
+          );
+      if (observedPrice == null) {
+        issues.add(
+          HoldingValuationIssue(
+            assetId: entry.key,
+            currency: acc.currency,
+            cause: HoldingValuationIssueCause.missingPrice,
+          ),
+        );
+      }
       final marketValue = acc.quantity * price.price;
 
-      Money costBase;
-      Money valueBase;
+      final Money costBase;
       try {
         costBase = converter.convert(
           Money(acc.costBasis, acc.currency),
           baseCurrency,
           on: asOf,
         );
+      } on FxRateNotFoundError {
+        issues.add(
+          HoldingValuationIssue(
+            assetId: entry.key,
+            currency: acc.currency,
+            cause: HoldingValuationIssueCause.missingFx,
+          ),
+        );
+        continue;
+      }
+      final Money valueBase;
+      try {
         valueBase = converter.convert(
           Money(marketValue, price.currency),
           baseCurrency,
           on: asOf,
         );
       } on FxRateNotFoundError {
+        issues.add(
+          HoldingValuationIssue(
+            assetId: entry.key,
+            currency: price.currency,
+            cause: HoldingValuationIssueCause.missingFx,
+          ),
+        );
         continue;
       }
 
@@ -138,15 +191,20 @@ class _LedgerHoldingService implements HoldingService {
       );
     }
 
-    if (totalMarketValue == Decimal.zero) return snapshots;
-    return {
-      for (final entry in snapshots.entries)
-        entry.key: entry.value.copyWith(
-          weight: (entry.value.marketValueInBase / totalMarketValue).toDecimal(
-            scaleOnInfinitePrecision: 8,
-          ),
-        ),
-    };
+    final weighted = totalMarketValue == Decimal.zero
+        ? snapshots
+        : {
+            for (final entry in snapshots.entries)
+              entry.key: entry.value.copyWith(
+                weight: (entry.value.marketValueInBase / totalMarketValue)
+                    .toDecimal(scaleOnInfinitePrecision: 8),
+              ),
+          };
+    return HoldingSample(
+      asOf: asOf,
+      snapshots: Map.unmodifiable(weighted),
+      issues: List.unmodifiable(issues),
+    );
   }
 
   @override

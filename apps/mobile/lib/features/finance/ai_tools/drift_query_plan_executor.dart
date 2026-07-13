@@ -23,6 +23,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/models/expense.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 
 import '../data/repositories/journal_entry_providers.dart';
@@ -51,9 +52,21 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
   }
 
   Future<QueryResult> _netWorthTrend(NetWorthTrendPlan plan) async {
+    final from = DateTime.tryParse(plan.range.fromInclusive)?.toUtc();
+    final toExclusive = DateTime.tryParse(plan.range.toExclusive)?.toUtc();
+    final fallbackRange = ref.read(dashboardTimeRangeProvider);
+    final range =
+        from != null && toExclusive != null && toExclusive.isAfter(from)
+        ? DashboardTimeRange.resolve(
+            preset: DashboardRangePreset.custom,
+            now: toExclusive,
+            customFrom: from,
+            customTo: toExclusive.subtract(const Duration(microseconds: 1)),
+          )
+        : fallbackRange;
     final DashboardTrend trend;
     try {
-      trend = await ref.read(dashboardTrendProvider.future);
+      trend = await ref.read(dashboardTrendProvider(range).future);
     } catch (e) {
       return QueryResult(
         plan: plan,
@@ -61,12 +74,13 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
         note: 'net-worth trend unavailable: $e',
       );
     }
-    final from = DateTime.tryParse(plan.range.fromInclusive);
-    final to = DateTime.tryParse(plan.range.toExclusive);
-    final points = trend.points
+    final completeSegment = trend.latestCompleteSegment;
+    final points = completeSegment
         .where((p) {
           if (from != null && p.asOf.isBefore(from)) return false;
-          if (to != null && !p.asOf.isBefore(to)) return false;
+          if (toExclusive != null && !p.asOf.isBefore(toExclusive)) {
+            return false;
+          }
           return true;
         })
         .toList(growable: false);
@@ -84,6 +98,13 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
           ),
         )
         .toList(growable: false);
+    final excluded = trend.points.length - completeSegment.length;
+    final note = rows.isEmpty
+        ? 'no complete net-worth samples in requested range; '
+              '$excluded samples outside the latest complete segment excluded'
+        : excluded > 0
+        ? '$excluded samples outside the latest complete segment excluded'
+        : null;
     return QueryResult(
       plan: plan,
       rows: rows,
@@ -94,7 +115,7 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
               currency: trend.baseCurrency,
               rowCount: rows.length,
             ),
-      note: rows.isEmpty ? 'no net-worth samples in requested range' : null,
+      note: note,
     );
   }
 

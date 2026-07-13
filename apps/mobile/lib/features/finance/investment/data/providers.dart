@@ -20,6 +20,7 @@ import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/market/domain/price_confidence.dart';
 
 import '../application/trade_entry_submission_service.dart';
 import '../domain/cost_basis/fifo_strategy.dart';

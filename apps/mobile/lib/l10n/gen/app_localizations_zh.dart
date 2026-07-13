@@ -264,6 +264,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthTrendFlatHint => '所选区间内暂无变化。';
 
   @override
+  String get wealthTrendEstimatedDisclosure => '缺少市场价格，当前按成本估算；暂不提供区间变化。';
+
+  @override
+  String get wealthTrendExcludedDisclosure => '趋势及区间变化已排除较早的不完整或估算数据。';
+
+  @override
+  String get wealthTrendIncompleteDisclosure => '当前估值数据不完整，因此不会绘制部分资产合计。';
+
+  @override
   String get wealthPerspectiveSectionTitle => '资产分布';
 
   @override

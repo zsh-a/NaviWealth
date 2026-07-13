@@ -46,6 +46,8 @@ class _AnalyticsOverviewGrid extends ConsumerWidget {
             loading: () => const _OverviewSkeleton(),
             error: (_, _) => const _OverviewUnavailable(),
             data: (metrics) {
+              final change = metrics.monthlyChange;
+              if (change == null) return const _OverviewUnavailable();
               final formatters = ref.watch(
                 appFormattersProvider(Localizations.localeOf(context)),
               );
@@ -55,7 +57,7 @@ class _AnalyticsOverviewGrid extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SignedMoneyText(
-                    amount: metrics.monthlyChange.amount,
+                    amount: change.amount,
                     unit: metrics.baseCurrency,
                     formatters: formatters,
                     style: context.theme.typography.body.lg,

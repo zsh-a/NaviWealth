@@ -25,90 +25,68 @@ class DashboardHeaderMetrics {
   });
 
   final String baseCurrency;
-  final Money dailyChange;
-  final Money monthlyChange;
+  final Money? dailyChange;
+  final Money? monthlyChange;
   final double? monthlyChangePct;
-  final Money ytdChange;
+  final Money? ytdChange;
   final double? ytdChangePct;
 }
 
 final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
   ref,
 ) async {
-  // Establish the same postings-derived invalidation edge as the dashboard
-  // snapshot. The return service does the historical XIRR query below.
-  final manualList = await _manualAssetValuationsForHeader(ref);
-  final physicalList = await ref.watch(physicalAssetsListProvider.future);
-  final liabList = await ref.watch(liabilitiesStreamProvider.future);
-  final assetList = await ref.watch(allAssetsStreamProvider.future);
-  final holdingsByAsset = await ref.watch(holdingsSnapshotProvider.future);
-  final priceRows = await ref.watch(dashboardPriceRowsProvider.future);
-  final fxRows = await ref.watch(fxRatesStreamProvider.future);
-  final converter = FxRateCurrencyConverter(InMemoryFxRateLookup(fxRows));
   final base = ref.watch(dashboardBaseCurrencyProvider);
-  final schedules = await _liabilitySchedulesForTrend(ref, liabList);
-  final securities = _buildSecurityHoldings(
-    holdingsByAsset: holdingsByAsset,
-    assets: assetList,
-  );
-  final securityPrices = _buildSecurityPriceHistory(
-    assets: assetList,
-    priceRows: priceRows,
-  );
-
-  final builder = DashboardTrendBuilder(
-    converter: converter,
-    baseCurrency: base,
-  );
-
-  Money nwAt(DateTime date) {
-    final range = DashboardTimeRange(
-      preset: DashboardRangePreset.custom,
-      from: date,
-      to: date,
-      granularity: NetWorthGranularity.day,
-    );
-    final trend = builder.build(
-      range: range,
-      manualAssets: manualList,
-      physicalAssets: dashboardPhysicalAssetsFrom(physicalList),
-      liabilities: liabList,
-      liabilitySchedules: schedules,
-      securitiesHoldings: securities,
-      securityPrices: securityPrices,
-    );
-    return trend.points.isEmpty
-        ? Money.zero(base)
-        : trend.points.first.netWorth;
-  }
-
   final now = DateTime.now().toUtc();
   final today = DateTime.utc(now.year, now.month, now.day);
   final yesterday = today.subtract(const Duration(days: 1));
   final monthStart = DateTime.utc(today.year, today.month, 1);
   final yearStart = DateTime.utc(today.year, 1, 1);
+  final rangeFrom = yesterday.isBefore(yearStart) ? yesterday : yearStart;
 
-  final nwToday = nwAt(today);
-  final nwYesterday = nwAt(yesterday);
-  final nwMonthStart = nwAt(monthStart);
-  final nwYearStart = nwAt(yearStart);
+  final range = DashboardTimeRange(
+    preset: DashboardRangePreset.custom,
+    from: rangeFrom,
+    to: today,
+    granularity: NetWorthGranularity.day,
+  );
+  final trend = await ref.watch(dashboardTrendProvider(range).future);
+  final byDate = {for (final point in trend.points) point.asOf: point};
+  final todayPoint = byDate[today];
+  final yesterdayPoint = byDate[yesterday];
+  final monthStartPoint = byDate[monthStart];
+  final yearStartPoint = byDate[yearStart];
 
-  double? pctChange(Money current, Money baseline) {
-    if (baseline.amount.sign == 0) {
-      return current.amount.sign == 0 ? null : double.infinity;
+  bool reliable(TrendPoint? point) =>
+      point?.quality == TrendPointQuality.complete;
+
+  Money? change(TrendPoint? current, TrendPoint? baseline) {
+    if (!reliable(current) || !reliable(baseline)) return null;
+    return current!.netWorth - baseline!.netWorth;
+  }
+
+  double? pctChange(TrendPoint? current, TrendPoint? baseline) {
+    if (!reliable(current) || !reliable(baseline)) return null;
+    final currentMoney = current!.netWorth;
+    final baselineMoney = baseline!.netWorth;
+    if (baselineMoney.amount.sign == 0) {
+      return currentMoney.amount.sign == 0 ? null : double.infinity;
     }
-    final ratio = (current.amount - baseline.amount) / baseline.amount;
+    final ratio =
+        (currentMoney.amount - baselineMoney.amount) / baselineMoney.amount;
     return ratio.toDecimal(scaleOnInfinitePrecision: 8).toDouble();
   }
 
-  final ytdRatio = await _ytdRatio(ref, from: yearStart, to: today);
+  final ytdReliable = reliable(todayPoint) && reliable(yearStartPoint);
+  final ytdRatio = ytdReliable
+      ? await _ytdRatio(ref, from: yearStart, to: today)
+      : null;
 
   return DashboardHeaderMetrics(
     baseCurrency: base,
-    dailyChange: nwToday - nwYesterday,
-    monthlyChange: nwToday - nwMonthStart,
-    monthlyChangePct: pctChange(nwToday, nwMonthStart),
-    ytdChange: nwToday - nwYearStart,
+    dailyChange: change(todayPoint, yesterdayPoint),
+    monthlyChange: change(todayPoint, monthStartPoint),
+    monthlyChangePct: pctChange(todayPoint, monthStartPoint),
+    ytdChange: change(todayPoint, yearStartPoint),
     ytdChangePct: ytdRatio,
   );
 });

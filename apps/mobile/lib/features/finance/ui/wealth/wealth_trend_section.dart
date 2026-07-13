@@ -25,7 +25,8 @@ class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final trendAsync = ref.watch(dashboardTrendProvider);
+    final range = ref.watch(dashboardTimeRangeProvider);
+    final trendAsync = ref.watch(dashboardTrendProvider(range));
     final baseCurrency = ref.watch(dashboardBaseCurrencyProvider);
 
     return SoftCard(
@@ -58,7 +59,7 @@ class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
             child: trendAsync.when(
               loading: () => const _WealthTrendSkeleton(),
               error: (_, _) => _WealthTrendError(
-                onRetry: () => ref.invalidate(dashboardTrendProvider),
+                onRetry: () => ref.invalidate(dashboardTrendProvider(range)),
               ),
               data: (trend) => _WealthTrendBody(
                 key: ValueKey('wealth-trend-${_metric.name}'),
@@ -109,11 +110,24 @@ class _WealthTrendBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final points = trend.points;
+    final completePoints = trend.latestCompleteSegment;
+    final estimatedPoints = trend.latestEstimatedSegment;
+    final estimated = completePoints.isEmpty && estimatedPoints.isNotEmpty;
+    final points = estimated ? estimatedPoints : completePoints;
     if (points.isEmpty) {
-      return const SizedBox(
-        height: AppChartHeights.full,
-        child: EmptyChartPlaceholder(),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(
+            height: AppChartHeights.standard,
+            child: EmptyChartPlaceholder(),
+          ),
+          const SizedBox(height: AppSpacing.s10),
+          Text(
+            AppLocalizations.of(context).wealthTrendIncompleteDisclosure,
+            style: context.captionStyle,
+          ),
+        ],
       );
     }
 
@@ -133,8 +147,8 @@ class _WealthTrendBody extends StatelessWidget {
       children: [
         _WealthTrendSummary(
           currency: trend.baseCurrency,
-          first: values.first,
-          last: values.last,
+          baseline: !estimated && values.length > 1 ? values.first : null,
+          current: values.last,
         ),
         const SizedBox(height: AppSpacing.s16),
         SizedBox(
@@ -146,7 +160,10 @@ class _WealthTrendBody extends StatelessWidget {
                 name: metric.label(AppLocalizations.of(context)),
                 points: chartPoints,
                 intent: metric.intent,
-                fillOpacity: AppOpacity.subtle,
+                emphasis: estimated
+                    ? SeriesEmphasis.dashed
+                    : SeriesEmphasis.solid,
+                fillOpacity: estimated ? 0 : AppOpacity.subtle,
                 strokeWidth: AppStroke.medium,
               ),
             ],
@@ -156,7 +173,7 @@ class _WealthTrendBody extends StatelessWidget {
               maxLabels: 3,
               showGrid: true,
             ),
-            filled: !allFlat,
+            filled: !estimated && !allFlat,
             interpolation: ChartInterpolation.linear,
             showDots: false,
             showYAxis: false,
@@ -174,6 +191,15 @@ class _WealthTrendBody extends StatelessWidget {
             style: context.captionStyle,
           ),
         ],
+        if (estimated || completePoints.length < trend.points.length) ...[
+          const SizedBox(height: AppSpacing.s10),
+          Text(
+            estimated
+                ? AppLocalizations.of(context).wealthTrendEstimatedDisclosure
+                : AppLocalizations.of(context).wealthTrendExcludedDisclosure,
+            style: context.captionStyle,
+          ),
+        ],
       ],
     );
   }
@@ -188,23 +214,23 @@ class _WealthTrendBody extends StatelessWidget {
 class _WealthTrendSummary extends StatelessWidget {
   const _WealthTrendSummary({
     required this.currency,
-    required this.first,
-    required this.last,
+    required this.baseline,
+    required this.current,
   });
 
   final String currency;
-  final Decimal first;
-  final Decimal last;
+  final Decimal? baseline;
+  final Decimal current;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final delta = last - first;
-    final firstDouble = first.toDouble();
-    final ratio = firstDouble.abs() <= 0
+    final delta = baseline == null ? null : current - baseline!;
+    final baselineDouble = baseline?.toDouble();
+    final ratio = baselineDouble == null || baselineDouble.abs() <= 0
         ? null
-        : delta.toDouble() / firstDouble.abs();
+        : delta!.toDouble() / baselineDouble.abs();
     final hidden = AmountPrivacyScope.isHiddenOf(context);
 
     return Row(
@@ -214,7 +240,7 @@ class _WealthTrendSummary extends StatelessWidget {
           child: _TrendMetricValue(
             label: l10n.dashboardTrendMetricCurrent,
             child: MoneyText(
-              amount: last.toDouble(),
+              amount: current.toDouble(),
               currencyCode: currency,
               compact: true,
               style: TypographyTokens.numericTitleStrong,
@@ -233,14 +259,17 @@ class _WealthTrendSummary extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DeltaText(
-                  value: delta.toDouble(),
-                  format: DeltaFormat.currency,
-                  currencyCode: currency,
-                  fractionDigits: 0,
-                  showIcon: false,
-                  style: TypographyTokens.numericBodyStrong,
-                ),
+                if (delta == null)
+                  Text('—', style: TypographyTokens.numericBodyStrong)
+                else
+                  DeltaText(
+                    value: delta.toDouble(),
+                    format: DeltaFormat.currency,
+                    currencyCode: currency,
+                    fractionDigits: 0,
+                    showIcon: false,
+                    style: TypographyTokens.numericBodyStrong,
+                  ),
                 if (ratio != null && !hidden) ...[
                   const SizedBox(height: AppSpacing.s2),
                   DeltaText.percentFromRatio(

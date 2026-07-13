@@ -6,12 +6,15 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/ai_tools/drift_query_plan_executor.dart';
 import 'package:naviwealth/features/finance/ai_tools/query_plan/query_plan.dart';
+import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../data/repositories/_stub_stamper.dart';
@@ -113,6 +116,65 @@ void main() {
 
     expect(result.rows, isEmpty);
   });
+
+  test('net-worth trend emits only the latest complete segment', () async {
+    final container = ProviderContainer(
+      overrides: [
+        dashboardTrendProvider.overrideWith(
+          (_, range) async => DashboardTrend(
+            range: range,
+            baseCurrency: 'CNY',
+            points: [
+              _trendPoint(
+                DateTime.utc(2026, 4, 1),
+                100,
+                TrendPointQuality.estimated,
+              ),
+              _trendPoint(
+                DateTime.utc(2026, 4, 2),
+                1000,
+                TrendPointQuality.complete,
+              ),
+              _trendPoint(
+                DateTime.utc(2026, 4, 3),
+                1100,
+                TrendPointQuality.complete,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final result = await container
+        .read(driftQueryPlanExecutorProvider)
+        .run(
+          const NetWorthTrendPlan(
+            range: DateRange(
+              fromInclusive: '2026-04-01T00:00:00.000Z',
+              toExclusive: '2026-04-04T00:00:00.000Z',
+            ),
+          ),
+        );
+
+    expect(result.rows, hasLength(2));
+    expect(result.rows.first.values['net_worth'], '1000');
+    expect(
+      result.note,
+      contains('1 samples outside the latest complete segment excluded'),
+    );
+  });
+}
+
+TrendPoint _trendPoint(DateTime asOf, int amount, TrendPointQuality quality) {
+  final money = Money(Decimal.fromInt(amount), 'CNY');
+  return TrendPoint(
+    asOf: asOf,
+    assets: money,
+    liabilities: Money.zero('CNY'),
+    netWorth: money,
+    quality: quality,
+  );
 }
 
 Future<void> _recordExpense({

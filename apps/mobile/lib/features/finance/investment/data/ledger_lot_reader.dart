@@ -41,6 +41,33 @@ final class LedgerLotReader {
     required DateTime asOf,
   }) => _movementsThrough(ownerUserId: ownerUserId, asOf: asOf);
 
+  /// Replays all requested instants from a single ordered movement query.
+  /// Each movement is applied once even when a chart requests hundreds of
+  /// samples.
+  Future<Map<DateTime, List<Lot>>> allLotsAtSamples({
+    required String ownerUserId,
+    required Iterable<DateTime> dates,
+  }) async {
+    final sorted = dates.map((date) => date.toUtc()).toSet().toList()..sort();
+    if (sorted.isEmpty) return const {};
+    final movements = await _movementsThrough(
+      ownerUserId: ownerUserId,
+      asOf: sorted.last,
+    );
+    final lots = <Lot>[];
+    final result = <DateTime, List<Lot>>{};
+    var movementIndex = 0;
+    for (final date in sorted) {
+      while (movementIndex < movements.length &&
+          !movements[movementIndex].date.isAfter(date)) {
+        _applyMovement(lots, movements[movementIndex]);
+        movementIndex += 1;
+      }
+      result[date] = List<Lot>.unmodifiable(List<Lot>.of(lots));
+    }
+    return Map<DateTime, List<Lot>>.unmodifiable(result);
+  }
+
   Future<DateTime?> latestRelevantMovementAt({
     required String ownerUserId,
     required String accountId,
@@ -163,35 +190,39 @@ final class LedgerLotReader {
   List<Lot> _reduce(List<LedgerLotMovement> rows) {
     final lots = <Lot>[];
     for (final row in rows) {
-      final posting = row.posting;
-      final cost = posting.costPerUnit;
-      final costCurrency = posting.costCurrency;
-      if (cost == null || costCurrency == null) continue;
-      if (posting.units > Decimal.zero) {
-        lots.add(
-          Lot(
-            id: posting.costLotId ?? posting.id,
-            openingTransactionId: posting.journalEntryId,
-            accountId: posting.accountId,
-            assetId: posting.unit,
-            currency: costCurrency,
-            originalQuantity: posting.units,
-            remainingQuantity: posting.units,
-            costPerUnit: cost,
-            openedAt: posting.costAcquiredOn ?? row.date,
-          ),
-        );
-      } else if (posting.units < Decimal.zero) {
-        _reduceLots(
-          lots,
-          accountId: posting.accountId,
-          assetId: posting.unit,
-          lotId: posting.costLotId,
-          quantity: -posting.units,
-        );
-      }
+      _applyMovement(lots, row);
     }
     return List<Lot>.unmodifiable(lots);
+  }
+
+  void _applyMovement(List<Lot> lots, LedgerLotMovement row) {
+    final posting = row.posting;
+    final cost = posting.costPerUnit;
+    final costCurrency = posting.costCurrency;
+    if (cost == null || costCurrency == null) return;
+    if (posting.units > Decimal.zero) {
+      lots.add(
+        Lot(
+          id: posting.costLotId ?? posting.id,
+          openingTransactionId: posting.journalEntryId,
+          accountId: posting.accountId,
+          assetId: posting.unit,
+          currency: costCurrency,
+          originalQuantity: posting.units,
+          remainingQuantity: posting.units,
+          costPerUnit: cost,
+          openedAt: posting.costAcquiredOn ?? row.date,
+        ),
+      );
+    } else if (posting.units < Decimal.zero) {
+      _reduceLots(
+        lots,
+        accountId: posting.accountId,
+        assetId: posting.unit,
+        lotId: posting.costLotId,
+        quantity: -posting.units,
+      );
+    }
   }
 
   void _reduceLots(

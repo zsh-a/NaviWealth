@@ -23,6 +23,7 @@ import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/features/finance/liabilities/domain/liability_summary.dart';
@@ -46,7 +47,8 @@ final dashboardCurrencyMismatchesProvider = Provider<List<CurrencyMismatch>>((
   ref,
 ) {
   final snapshot = ref.watch(dashboardSnapshotProvider).value;
-  final trend = ref.watch(dashboardTrendProvider).value;
+  final range = ref.watch(dashboardTimeRangeProvider);
+  final trend = ref.watch(dashboardTrendProvider(range)).value;
   final seen = <String>{};
   final out = <CurrencyMismatch>[];
   for (final m in [
@@ -196,37 +198,6 @@ List<DashboardPhysicalAsset> dashboardPhysicalAssetsFrom(
   ];
 }
 
-/// Build historical price series for securities so the trend builder can
-/// look up per-date prices instead of using the current snapshot value.
-Map<String, List<ManualAssetValuePoint>> _buildSecurityPriceHistory({
-  required List<Asset> assets,
-  required List<PriceRow> priceRows,
-}) {
-  if (priceRows.isEmpty || assets.isEmpty) return const {};
-  final pricesByUnit = <String, List<PriceRow>>{};
-  for (final row in priceRows) {
-    pricesByUnit.putIfAbsent(row.unit, () => <PriceRow>[]).add(row);
-  }
-  final out = <String, List<ManualAssetValuePoint>>{};
-  for (final asset in assets) {
-    if (!kSecuritiesAssetTypes.contains(asset.type)) continue;
-    final rows =
-        (pricesByUnit[asset.id] ?? const <PriceRow>[])
-            .where((row) => row.quoteCurrency == asset.currency)
-            .toList(growable: false)
-          ..sort((a, b) => a.observedOn.compareTo(b.observedOn));
-    if (rows.isEmpty) continue;
-    out[asset.id] = [
-      for (final row in rows)
-        ManualAssetValuePoint(
-          observedOn: _floorToDay(row.observedOn),
-          value: row.perUnit,
-        ),
-    ];
-  }
-  return out;
-}
-
 /// Schedule rows for every liability, keyed by liability id. The trend
 /// builder needs the schedule so it can walk outstanding balance back
 /// through time. We watch each schedule provider individually so a paid
@@ -266,60 +237,88 @@ Future<Map<String, List<AmortizationEntry>>> _liabilitySchedulesForTrend(
 /// Net-worth trend timeseries for the dashboard line chart, scoped to the
 /// selected [DashboardTimeRange]. Re-evaluates when the range changes or
 /// any upstream stream emits.
-final dashboardTrendProvider = FutureProvider<DashboardTrend>((ref) async {
-  final manualList = await _manualAssetValuationsForHeader(ref);
-  final physical = ref.watch(physicalAssetsListProvider);
-  final liab = ref.watch(liabilitiesStreamProvider);
-  final rates = ref.watch(fxRatesStreamProvider);
-  final base = ref.watch(dashboardBaseCurrencyProvider);
-  final range = ref.watch(dashboardTimeRangeProvider);
-  final holdings = ref.watch(holdingsSnapshotProvider);
-  final assets = ref.watch(allAssetsStreamProvider);
-  final prices = ref.watch(dashboardPriceRowsProvider);
+final dashboardTrendProvider = FutureProvider.autoDispose
+    .family<DashboardTrend, DashboardTimeRange>((ref, range) async {
+      final manualList = await _manualAssetValuationsForHeader(ref);
+      final physical = ref.watch(physicalAssetsListProvider);
+      final liab = ref.watch(liabilitiesStreamProvider);
+      final assets = ref.watch(allAssetsStreamProvider);
+      final rates = ref.watch(fxRatesStreamProvider);
+      final base = ref.watch(dashboardBaseCurrencyProvider);
+      // Establish the postings invalidation edge while historical samples are
+      // computed in one replay by HoldingService.
+      ref.watch(holdingsSnapshotProvider);
 
-  final physicalList =
-      physical.value ??
-      await ref.watch(physicalAssetsListProvider.future) ??
-      const <PhysicalAsset>[];
-  final liabList =
-      liab.value ??
-      await ref.watch(liabilitiesStreamProvider.future) ??
-      const <Liability>[];
-  final schedules = await _liabilitySchedulesForTrend(ref, liabList);
-  final assetList =
-      assets.value ??
-      await ref.watch(allAssetsStreamProvider.future) ??
-      const <Asset>[];
-  final holdingsByAsset =
-      holdings.value ??
-      await ref.watch(holdingsSnapshotProvider.future) ??
-      const <String, HoldingSnapshot>{};
-  final priceRows =
-      prices.value ??
-      await ref.watch(dashboardPriceRowsProvider.future) ??
-      const <PriceRow>[];
-  final fxRows =
-      rates.value ?? await ref.watch(fxRatesStreamProvider.future) ?? const [];
-  final securities = _buildSecurityHoldings(
-    holdingsByAsset: holdingsByAsset,
-    assets: assetList,
-  );
-  final securityPrices = _buildSecurityPriceHistory(
-    assets: assetList,
-    priceRows: priceRows,
-  );
+      final physicalList =
+          physical.value ??
+          await ref.watch(physicalAssetsListProvider.future) ??
+          const <PhysicalAsset>[];
+      final liabList =
+          liab.value ??
+          await ref.watch(liabilitiesStreamProvider.future) ??
+          const <Liability>[];
+      final assetList =
+          assets.value ??
+          await ref.watch(allAssetsStreamProvider.future) ??
+          const <Asset>[];
+      final securityAssetIds = {
+        for (final asset in assetList)
+          if (kSecuritiesAssetTypes.contains(asset.type)) asset.id,
+      };
+      final schedules = await _liabilitySchedulesForTrend(ref, liabList);
+      final fxRows =
+          rates.value ??
+          await ref.watch(fxRatesStreamProvider.future) ??
+          const [];
+      final service = await ref.watch(holdingServiceProvider.future);
+      final sampleDates = dashboardTrendSampleDates(range);
+      final sampleInstants = [
+        for (final date in sampleDates) _endOfUtcDay(date),
+      ];
+      final rawSamples = await service.computeAtSamples(sampleInstants);
+      final rawByInstant = {
+        for (final sample in rawSamples) sample.asOf: sample,
+      };
+      final securitySamples = [
+        for (var i = 0; i < sampleDates.length; i++)
+          HoldingSample(
+            asOf: sampleDates[i],
+            snapshots: {
+              for (final entry
+                  in (rawByInstant[sampleInstants[i]]?.snapshots ??
+                          const <String, HoldingSnapshot>{})
+                      .entries)
+                if (securityAssetIds.contains(entry.key))
+                  entry.key: entry.value,
+            },
+            issues: [
+              for (final issue
+                  in rawByInstant[sampleInstants[i]]?.issues ??
+                      const <HoldingValuationIssue>[])
+                if (securityAssetIds.contains(issue.assetId)) issue,
+            ],
+          ),
+      ];
 
-  return runInIsolate(
-    () => buildDashboardTrend(
-      range: range,
-      baseCurrency: base,
-      fxRates: fxRows,
-      manualAssets: manualList,
-      physicalAssets: dashboardPhysicalAssetsFrom(physicalList),
-      liabilities: liabList,
-      liabilitySchedules: schedules,
-      securitiesHoldings: securities,
-      securityPrices: securityPrices,
-    ),
-  );
-});
+      return runInIsolate(
+        () => buildDashboardTrend(
+          range: range,
+          baseCurrency: base,
+          fxRates: fxRows,
+          manualAssets: manualList,
+          physicalAssets: dashboardPhysicalAssetsFrom(physicalList),
+          liabilities: liabList,
+          liabilitySchedules: schedules,
+          securitySamples: securitySamples,
+        ),
+      );
+    });
+
+DateTime _endOfUtcDay(DateTime date) {
+  final utc = date.toUtc();
+  return DateTime.utc(
+    utc.year,
+    utc.month,
+    utc.day + 1,
+  ).subtract(const Duration(microseconds: 1));
+}

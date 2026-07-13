@@ -191,7 +191,7 @@ List<Override> _accountOverrides() {
     accountBalancesByIdProvider.overrideWith((_) => Stream.value(_balances())),
     dashboardBaseCurrencyProvider.overrideWith((_) => 'CNY'),
     dashboardSnapshotProvider.overrideWith((_) => _snapshot()),
-    dashboardTrendProvider.overrideWith((_) => _trend()),
+    dashboardTrendProvider.overrideWith((_, _) => _trend()),
   ];
 }
 

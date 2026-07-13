@@ -77,7 +77,13 @@ class InMemoryHoldingPriceSource implements HoldingPriceSource {
     for (var i = observations.length - 1; i >= 0; i--) {
       final obs = observations[i];
       if (!obs.asOf.isAfter(asOf)) {
-        return HoldingPrice(price: obs.price, currency: obs.currency);
+        return HoldingPrice(
+          price: obs.price,
+          currency: obs.currency,
+          confidence: obs.confidence,
+          source: obs.source,
+          asOf: obs.asOf,
+        );
       }
     }
     return null;
@@ -104,12 +110,16 @@ class HoldingPriceObservation {
     required this.price,
     required this.currency,
     required this.asOf,
+    this.confidence,
+    this.source,
   });
 
   final String assetId;
   final Decimal price;
   final String currency;
   final DateTime asOf;
+  final PriceConfidence? confidence;
+  final String? source;
 }
 
 /// [HoldingPriceSource] composed of two layers:
@@ -143,7 +153,10 @@ class ResolvedPriceHoldingSource implements HoldingPriceSource {
     final lookback = resolvedAt.difference(asOf).abs();
     if (lookback <= resolvedFreshness) {
       final r = _resolved[assetId];
-      if (r != null) {
+      // A now-ish resolver result is only valid for this sample when the
+      // observation itself is not in the future. Without this guard, a quote
+      // fetched today could leak into yesterday's end-of-day trend point.
+      if (r != null && !r.asOf.isAfter(asOf)) {
         return HoldingPrice(
           price: r.value,
           currency: r.currency,

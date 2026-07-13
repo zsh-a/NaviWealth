@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_granularity.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_trend_section.dart';
@@ -47,6 +48,41 @@ void main() {
     expect(find.byKey(const ValueKey('wealth-trend-section')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('uses only the latest complete suffix as the delta baseline', (
+    tester,
+  ) async {
+    await _setSurface(tester, width: 390);
+    final trend = _trendWithQualities([
+      (100, TrendPointQuality.estimated),
+      (1000, TrendPointQuality.complete),
+      (1200, TrendPointQuality.complete),
+    ]);
+    await tester.pumpWidget(_wrap(trend: trend));
+    await tester.pumpAndSettle();
+
+    final series = _chart(tester).series.single;
+    expect(series.points.map((point) => point.y), [1000, 1200]);
+    expect(series.emphasis, SeriesEmphasis.solid);
+    expect(find.text('—'), findsNothing);
+    expect(find.textContaining('Earlier incomplete'), findsOneWidget);
+  });
+
+  testWidgets('estimate-only trend is dashed and has no period delta', (
+    tester,
+  ) async {
+    await _setSurface(tester, width: 390);
+    final trend = _trendWithQualities([
+      (1000, TrendPointQuality.estimated),
+      (1200, TrendPointQuality.estimated),
+    ]);
+    await tester.pumpWidget(_wrap(trend: trend));
+    await tester.pumpAndSettle();
+
+    expect(_chart(tester).series.single.emphasis, SeriesEmphasis.dashed);
+    expect(find.text('—'), findsOneWidget);
+    expect(find.textContaining('Estimated from cost basis'), findsOneWidget);
+  });
 }
 
 NwLineChart _chart(WidgetTester tester) =>
@@ -56,7 +92,7 @@ Widget _wrap({required DashboardTrend trend, double textScale = 1}) {
   return ProviderScope(
     overrides: [
       dashboardBaseCurrencyProvider.overrideWith((_) => trend.baseCurrency),
-      dashboardTrendProvider.overrideWith((_) async => trend),
+      dashboardTrendProvider.overrideWith((_, _) async => trend),
     ],
     child: MaterialApp(
       theme: AppTheme.light(),
@@ -91,6 +127,32 @@ DashboardTrend _trend() {
       _point(DateTime.utc(2025, 7, 12), assets: 1500, liabilities: 500),
       _point(DateTime.utc(2026, 1, 12), assets: 1650, liabilities: 550),
       _point(DateTime.utc(2026, 7, 12), assets: 1800, liabilities: 600),
+    ],
+  );
+}
+
+DashboardTrend _trendWithQualities(
+  List<(int value, TrendPointQuality quality)> values,
+) {
+  final from = DateTime.utc(2026, 1, 1);
+  final to = from.add(Duration(days: values.length - 1));
+  return DashboardTrend(
+    range: DashboardTimeRange(
+      preset: DashboardRangePreset.custom,
+      from: from,
+      to: to,
+      granularity: NetWorthGranularity.day,
+    ),
+    baseCurrency: 'USD',
+    points: [
+      for (var i = 0; i < values.length; i++)
+        TrendPoint(
+          asOf: from.add(Duration(days: i)),
+          assets: Money(Decimal.fromInt(values[i].$1), 'USD'),
+          liabilities: Money.zero('USD'),
+          netWorth: Money(Decimal.fromInt(values[i].$1), 'USD'),
+          quality: values[i].$2,
+        ),
     ],
   );
 }

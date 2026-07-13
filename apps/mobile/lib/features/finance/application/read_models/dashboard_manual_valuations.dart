@@ -203,19 +203,10 @@ List<ManualAssetValuation> _buildManualAssetValuations({
         continue;
       }
 
-      // 3. Last resort: zero-value stub so the row appears in the
-      //    snapshot even before any balance has been recorded.
-      out.add(
-        ManualAssetValuation(
-          asset: asset,
-          observations: [
-            ManualAssetValuePoint(
-              observedOn: _floorToDay(asset.sync.updatedAt),
-              value: Decimal.zero,
-            ),
-          ],
-        ),
-      );
+      // 3. No posting/valuation yet. Keep the asset in the trend input so
+      //    lifecycle quality can classify it as unheld instead of inventing
+      //    a zero-valued observation.
+      out.add(ManualAssetValuation(asset: asset, observations: const []));
       continue;
     }
     // Non-cash manual assets: use price-row observations.
@@ -237,6 +228,8 @@ List<ManualAssetValuation> _buildManualAssetValuations({
           ],
         ),
       );
+    } else {
+      out.add(ManualAssetValuation(asset: asset, observations: const []));
     }
   }
   return List.unmodifiable(out);

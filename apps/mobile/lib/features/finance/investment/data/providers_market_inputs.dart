@@ -42,6 +42,10 @@ final holdingPriceSourceProvider = FutureProvider<HoldingPriceSource>((
         asOf: _floorToDay(row.observedOn),
         price: row.perUnit,
         currency: row.quoteCurrency,
+        confidence: row.source == 'manual'
+            ? PriceConfidence.manual
+            : PriceConfidence.dailyClose,
+        source: row.source,
       ),
   ]);
   final assets = ref.watch(allAssetsStreamProvider).value ?? const <Asset>[];

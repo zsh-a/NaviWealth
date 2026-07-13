@@ -572,6 +572,24 @@ abstract class AppLocalizations {
   /// **'No change in the selected period.'**
   String get wealthTrendFlatHint;
 
+  /// Disclosure below a dashed wealth trend that contains estimated valuations.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated from cost basis because a market price is unavailable. Period change is unavailable.'**
+  String get wealthTrendEstimatedDisclosure;
+
+  /// Disclosure when the reliable wealth trend starts after the selected range.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier incomplete or estimated valuations are excluded from the trend and period change.'**
+  String get wealthTrendExcludedDisclosure;
+
+  /// Disclosure when missing valuation inputs prevent a reliable current wealth trend.
+  ///
+  /// In en, this message translates to:
+  /// **'A complete current valuation is unavailable, so no partial total is plotted.'**
+  String get wealthTrendIncompleteDisclosure;
+
   /// Wealth tab: title for the multi-perspective allocation section
   ///
   /// In en, this message translates to:

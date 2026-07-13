@@ -85,11 +85,12 @@ class _WealthHubBody extends ConsumerWidget {
     final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     return RefreshIndicator(
       onRefresh: () async {
+        final range = ref.read(dashboardTimeRangeProvider);
         ref.invalidate(dashboardSnapshotProvider);
-        ref.invalidate(dashboardTrendProvider);
+        ref.invalidate(dashboardTrendProvider(range));
         await Future.wait([
           ref.read(dashboardSnapshotProvider.future),
-          ref.read(dashboardTrendProvider.future),
+          ref.read(dashboardTrendProvider(range).future),
         ]);
       },
       child: ListView(

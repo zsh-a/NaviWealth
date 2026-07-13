@@ -1,13 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
-import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
-import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
-import 'package:naviwealth/features/finance/domain/models/liability.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
-import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 
 import '../../domain/benchmark/benchmark_comparison.dart';
 import '../../domain/benchmark/benchmark_index.dart';
@@ -56,48 +52,18 @@ final benchmarkComparisonTimeRangeProvider = Provider<DashboardTimeRange>((
 /// while keeping this curve as the chart series.
 final benchmarkComparisonPortfolioSeriesProvider =
     Provider<AsyncValue<List<TimeSeriesPoint>>>((ref) {
-      final manual = ref.watch(dashboardManualAssetValuationsProvider);
-      final physical = ref.watch(physicalAssetsListProvider);
-      final liab = ref.watch(liabilitiesStreamProvider);
-      final converter = ref.watch(dashboardCurrencyConverterProvider);
-      final base = ref.watch(dashboardBaseCurrencyProvider);
       final range = ref.watch(benchmarkComparisonTimeRangeProvider);
-      final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
-
-      if (manual.isLoading || physical.isLoading || liab.isLoading) {
-        return const AsyncValue.loading();
-      }
-      final err = manual.error ?? physical.error ?? liab.error;
-      if (err != null) {
-        return AsyncValue.error(
-          err,
-          manual.stackTrace ??
-              physical.stackTrace ??
-              liab.stackTrace ??
-              StackTrace.current,
-        );
-      }
-      final builder = DashboardTrendBuilder(
-        converter: converter,
-        baseCurrency: base,
-      );
-      final trend = builder.build(
-        range: range,
-        manualAssets: manual.value ?? const [],
-        physicalAssets: dashboardPhysicalAssetsFrom(
-          physical.value ?? const <PhysicalAsset>[],
-        ),
-        liabilities: liab.value ?? const <Liability>[],
-        liabilitySchedules: schedules,
-      );
-      final points = [
-        for (final point in trend.points)
-          TimeSeriesPoint(
-            asOf: point.asOf,
-            value: point.netWorth.amount.toDouble(),
-          ),
-      ];
-      return AsyncValue.data(points);
+      return ref
+          .watch(dashboardTrendProvider(range))
+          .whenData(
+            (trend) => [
+              for (final point in trend.latestCompleteSegment)
+                TimeSeriesPoint(
+                  asOf: point.asOf,
+                  value: point.netWorth.amount.toDouble(),
+                ),
+            ],
+          );
     });
 
 /// Override hook for the [BenchmarkHistorySource]. Production wiring uses
