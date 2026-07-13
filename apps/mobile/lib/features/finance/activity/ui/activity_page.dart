@@ -279,7 +279,7 @@ class _ActiveFilterTags extends ConsumerWidget {
         AppFilterChip(
           label: l10n.activityFeedSearchTag(query.searchText.trim()),
           active: true,
-          onPress: () {},
+          onPress: null,
           onClear: () =>
               controller.mutateQuery((q) => q.copyWith(searchText: '')),
           icon: FLucideIcons.search,

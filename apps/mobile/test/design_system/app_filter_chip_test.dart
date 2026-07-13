@@ -36,4 +36,25 @@ void main() {
     await tester.pump(const Duration(milliseconds: 120));
     expect(cleared, isTrue);
   });
+
+  testWidgets('does not advertise a non-interactive chip as a button', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const AppFilterChip(
+          label: 'Search: groceries',
+          active: true,
+          onPress: null,
+        ),
+      ),
+    );
+
+    final semantics = tester.widget<Semantics>(
+      find.byWidgetPredicate(
+        (widget) => widget is Semantics && widget.properties.selected == true,
+      ),
+    );
+    expect(semantics.properties.button, isFalse);
+  });
 }

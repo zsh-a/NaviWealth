@@ -75,36 +75,6 @@ Future<bool?> showConfirmDialog({
   );
 }
 
-/// Show a forui-styled dialog that hosts arbitrary [child] content with
-/// a single OK action. Returns `true` when OK is pressed, `null` on
-/// barrier dismiss.
-Future<bool?> showInfoDialog(
-  BuildContext context, {
-  required Widget title,
-  Widget? body,
-  required String okLabel,
-  IconData? icon,
-}) {
-  return showFDialog<bool>(
-    context: context,
-    builder: (ctx, style, animation) => _DialogFrame(
-      child: _AppDialog(
-        accentColor: FTheme.of(ctx).colors.primary,
-        icon: icon,
-        title: title,
-        body: body,
-        actions: [
-          FButton(
-            variant: FButtonVariant.primary,
-            onPress: () => Navigator.of(ctx).pop(true),
-            child: _DialogButtonLabel(okLabel),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 /// Show a non-dismissable progress dialog and return a callback that closes it.
 Future<Future<void> Function()> showProgressDialog({
   required BuildContext context,

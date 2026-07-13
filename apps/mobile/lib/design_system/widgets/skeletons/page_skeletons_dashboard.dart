@@ -89,7 +89,7 @@ class HomeSkeleton extends StatelessWidget {
   }
 }
 
-/// Mirrors `AnalyticsPage`: allocation content on the left, risk and
+/// Displays allocation content on the left, risk and
 /// benchmark content on the right; collapses to one column on mobile.
 class AnalyticsSkeleton extends StatelessWidget {
   const AnalyticsSkeleton({super.key});

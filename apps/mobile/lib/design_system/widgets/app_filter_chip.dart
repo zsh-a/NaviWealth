@@ -38,7 +38,7 @@ class AppFilterChip extends StatelessWidget {
         : colors.border.withValues(alpha: AppOpacity.highlight);
 
     return Semantics(
-      button: true,
+      button: onPress != null,
       selected: active,
       child: FTappable(
         onPress: onPress,
