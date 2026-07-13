@@ -3,20 +3,12 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'fire_action.dart';
-import 'fire_bucket.dart';
-import 'fire_bucket_allocator.dart';
 import 'fire_plan.dart';
 import 'fire_state.dart';
 import 'fire_stress_test.dart';
 
 /// Pure function: turn a [FirePlan] + actuals into a [FireState]. No I/O,
 /// no providers, no LLM — every output is derivable from the inputs.
-/// That keeps the state engine unit-testable, reproducible inside an
-/// isolate, and shape-compatible with the `get_fire_state` AI tool.
-///
-/// Buckets and stress tests are passed in (rather than computed here) so
-/// Phase 2 and Phase 3 can layer on top without restructuring this
-/// function.
 FireState computeFireState({
   required FirePlan plan,
   required Money netWorth,
@@ -26,9 +18,7 @@ FireState computeFireState({
   required int? fireEtaMonths,
   required int currencyMismatchCount,
   required DateTime computedAt,
-  List<FireBucketState> buckets = const <FireBucketState>[],
   List<FireStressResult> stressTests = const <FireStressResult>[],
-  List<FireUnmappedHolding> unmappedHoldings = const <FireUnmappedHolding>[],
 }) {
   final base = plan.baseCurrency;
   _requireBase(base, netWorth, 'netWorth');
@@ -96,14 +86,12 @@ FireState computeFireState({
     fireEtaMonths: plan.isConfigured ? fireEtaMonths : null,
     safetyLevel: safetyLevel,
     suggestedActions: actions,
-    buckets: buckets,
     stressTests: stressTests,
     currencyMismatchCount: currencyMismatchCount,
     computedAt: computedAt,
     annualSpendSource: usingTrailing
         ? FireAnnualSpendSource.trailing12m
         : FireAnnualSpendSource.plan,
-    unmappedHoldings: unmappedHoldings,
   );
 }
 

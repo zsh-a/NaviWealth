@@ -2817,6 +2817,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireEditGoal => '修改目标';
 
   @override
+  String get fireDepthTitle => '压力测试与模拟';
+
+  @override
+  String get fireDepthSubtitle => '韧性检查与计划假设推演';
+
+  @override
+  String fireHeroProgressLine(String progress, String current, String target) {
+    return '$progress · $current / $target';
+  }
+
+  @override
+  String get fireHeroNextStepLabel => '下一步';
+
+  @override
   String get fireGoalSheetTitle => 'FIRE 目标';
 
   @override
@@ -4560,11 +4574,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiIntentReviewCashBucketLabel => '检查现金桶';
+  String get aiIntentReviewCashBucketLabel => '检查现金覆盖';
 
   @override
   String aiIntentReviewCashBucketPrompt(Object objectLabel) {
-    return '请用 get_fire_buckets 检查当前现金桶覆盖月数；如低于目标 $objectLabel，请给出补足金额，并准备好 propose_fire_plan_update 或 propose_fire_bucket_rule 的建议。';
+    return '请用 get_fire_state 检查现金覆盖月数是否达到目标 $objectLabel；如不足，请给出补足金额，并准备好 propose_fire_plan_update 的建议。';
   }
 
   @override

@@ -61,8 +61,6 @@ IconData toolIcon(String wireName) {
     'get_transfer_links' => FLucideIcons.arrowLeftRight,
     // FIRE
     'get_fire_state' || 'get_fire_plan' => FLucideIcons.flag,
-    'get_fire_buckets' => FLucideIcons.folderTree,
-    'get_fire_review' => FLucideIcons.history,
     'get_fire_stress_tests' ||
     'simulate_fire_plan' => FLucideIcons.flaskConical,
     // Options income

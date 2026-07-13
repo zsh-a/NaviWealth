@@ -891,6 +891,17 @@
   "fireEmptyHint": "填写目标净资产、月支出与月结余，量化追踪距离财务自由还有多远。",
   "fireEmptySetGoalCta": "设定目标",
   "fireEditGoal": "修改目标",
+  "fireDepthTitle": "压力测试与模拟",
+  "fireDepthSubtitle": "韧性检查与计划假设推演",
+  "fireHeroProgressLine": "{progress} · {current} / {target}",
+  "@fireHeroProgressLine": {
+    "placeholders": {
+      "progress": { "type": "String" },
+      "current": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "fireHeroNextStepLabel": "下一步",
 
   "fireGoalSheetTitle": "FIRE 目标",
   "fireGoalSheetSubtitle": "数据仅保存在本地，目标按下方通胀率折算购买力。",
@@ -1417,8 +1428,8 @@
   "aiIntentTransactionsExplainSelectionPrompt": "请解读用户选中的这些交易（{objectLabel}），给出共同点、异常和可能归类。",
   "aiIntentExplainFireStateLabel": "解读 FIRE 状态",
   "aiIntentExplainFireStatePrompt": "请基于 get_fire_state 的结果，向我解释当前 {objectLabel} 的安全等级、提取率、现金桶覆盖和 FIRE ETA，并指出最值得关注的一两条 suggested_actions。",
-  "aiIntentReviewCashBucketLabel": "检查现金桶",
-  "aiIntentReviewCashBucketPrompt": "请用 get_fire_buckets 检查当前现金桶覆盖月数；如低于目标 {objectLabel}，请给出补足金额，并准备好 propose_fire_plan_update 或 propose_fire_bucket_rule 的建议。",
+  "aiIntentReviewCashBucketLabel": "检查现金覆盖",
+  "aiIntentReviewCashBucketPrompt": "请用 get_fire_state 检查现金覆盖月数是否达到目标 {objectLabel}；如不足，请给出补足金额，并准备好 propose_fire_plan_update 的建议。",
   "aiIntentSimulateFireChangeLabel": "模拟一下",
   "aiIntentSimulateFireChangePrompt": "请用 simulate_fire_plan 模拟 {objectLabel} 的变化（支出、结余、SWR、现金桶月数等）对 FIRE 状态的影响。明确告诉我这只是模拟，没有写入计划。",
   "aiIntentExplainStressTestLabel": "解释压力测试",

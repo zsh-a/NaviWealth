@@ -7,6 +7,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_projection.dart';
 import 'fire_dashboard_content.dart';
+import 'fire_goal_form.dart';
 
 class FirePage extends ConsumerWidget {
   const FirePage({super.key});
@@ -15,9 +16,17 @@ class FirePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final viewAsync = ref.watch(fireDashboardViewProvider);
+    final configured = viewAsync.value?.goal.isConfigured == true;
     return AppPageScaffold(
       title: l10n.fireAppBarTitle,
       childPad: false,
+      actions: [
+        if (configured)
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.pencil, size: AppIconSizes.md),
+            onPress: () => showFireGoalSheet(context),
+          ),
+      ],
       child: PageSkeletonShell<FireDashboardView>(
         skeleton: const FireSkeleton(),
         isLoading: viewAsync.isLoading,

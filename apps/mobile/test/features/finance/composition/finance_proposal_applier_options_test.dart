@@ -39,7 +39,6 @@ void main() {
   late TradeJournalRepository journalRepo;
   late FinanceProposalApplier applier;
   Map<String, Object?>? firePlanAfter;
-  Map<String, Object?>? fireBucketPayload;
 
   ReadyProposalPlan plan(String kind, Map<String, Object?> payload) =>
       ReadyProposalPlan(
@@ -86,7 +85,6 @@ void main() {
       stamper: stamper,
     );
     firePlanAfter = null;
-    fireBucketPayload = null;
     applier = FinanceProposalApplier(
       tradeEntryService: _FakeTradeEntryService(),
       journalEntryRepo: journalEntryRepo,
@@ -102,10 +100,6 @@ void main() {
       fireApplier: FireProposalApplier(
         planWriter: (after) async {
           firePlanAfter = after;
-        },
-        bucketRuleWriter: (payload) async {
-          fireBucketPayload = payload;
-          return payload['target_id'] as String;
         },
       ),
       currentUserId: () async => 'u-test',
@@ -277,7 +271,7 @@ void main() {
     expect(price!.perUnit, Decimal.parse('150'));
   });
 
-  test('FIRE proposal branches delegate to injected writers', () async {
+  test('FIRE plan update delegates to injected writer', () async {
     final firePlanState = await applier.apply(
       plan('fire_plan_update', {
         'after': {'target_net_worth': '1000000', 'monthly_expenses': '20000'},
@@ -285,18 +279,6 @@ void main() {
     );
     expect(firePlanState.appliedTable, 'fire_plans');
     expect(firePlanAfter, containsPair('target_net_worth', '1000000'));
-
-    final bucketState = await applier.apply(
-      plan('fire_bucket_rule', {
-        'role': 'growth',
-        'target_table': 'assets',
-        'target_id': 'asset-growth',
-        'allocation_pct': 0.6,
-      }),
-    );
-    expect(bucketState.appliedTable, 'fire_bucket_rules');
-    expect(bucketState.appliedEntityId, 'asset-growth');
-    expect(fireBucketPayload, containsPair('role', 'growth'));
   });
 
   test('options_profile_update updates Income Planner profile', () async {

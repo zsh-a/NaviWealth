@@ -1,9 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
 import '../domain/fire_action.dart';
-import '../domain/fire_bucket.dart';
 import '../domain/fire_state.dart';
 import '../domain/fire_stress_test.dart';
 
@@ -20,23 +18,6 @@ Color fireSafetyColor(SemanticColors sem, FireSafetyLevel level) {
       return sem.danger;
     case FireSafetyLevel.unconfigured:
       return sem.divider;
-  }
-}
-
-Color fireBucketStatusColor(
-  SemanticColors sem,
-  FColors colors,
-  FireBucketStatus status,
-) {
-  switch (status) {
-    case FireBucketStatus.onTrack:
-      return sem.success;
-    case FireBucketStatus.underTarget:
-      return sem.warning;
-    case FireBucketStatus.overTarget:
-      return sem.info;
-    case FireBucketStatus.empty:
-      return colors.mutedForeground;
   }
 }
 

@@ -11,17 +11,14 @@ void main() {
     const expectedTools = <String>[
       'get_fire_state',
       'get_fire_plan',
-      'get_fire_buckets',
       'get_fire_stress_tests',
-      'get_fire_review',
       'simulate_fire_plan',
       'propose_fire_plan_update',
-      'propose_fire_bucket_rule',
     ];
 
     final registry = productionDeviceToolRegistry;
 
-    test('all 8 tools registered in the device registry', () {
+    test('all FIRE tools registered in the device registry', () {
       for (final name in expectedTools) {
         expect(
           registry.lookup(name),
@@ -31,7 +28,7 @@ void main() {
       }
     });
 
-    test('all 8 tools have descriptors with consistent shape', () {
+    test('all FIRE tools have descriptors with consistent shape', () {
       for (final name in expectedTools) {
         final desc = productionToolDescriptors[name];
         expect(desc, isNotNull, reason: 'descriptor missing for $name');

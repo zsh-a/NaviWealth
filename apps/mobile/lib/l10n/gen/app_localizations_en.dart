@@ -2930,6 +2930,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fireEditGoal => 'Edit goal';
 
   @override
+  String get fireDepthTitle => 'Stress & simulate';
+
+  @override
+  String get fireDepthSubtitle => 'Resilience checks and plan what-ifs';
+
+  @override
+  String fireHeroProgressLine(String progress, String current, String target) {
+    return '$progress · $current of $target';
+  }
+
+  @override
+  String get fireHeroNextStepLabel => 'Next step';
+
+  @override
   String get fireGoalSheetTitle => 'FIRE goal';
 
   @override
@@ -4808,11 +4822,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aiIntentReviewCashBucketLabel => 'Check cash bucket';
+  String get aiIntentReviewCashBucketLabel => 'Check cash runway';
 
   @override
   String aiIntentReviewCashBucketPrompt(Object objectLabel) {
-    return 'Use get_fire_buckets to check current cash-bucket coverage. If it is below the target for $objectLabel, give the refill amount and prepare a propose_fire_plan_update or propose_fire_bucket_rule suggestion.';
+    return 'Use get_fire_state to check cash-runway months vs target for $objectLabel. If short, give the refill amount and prepare a propose_fire_plan_update suggestion.';
   }
 
   @override

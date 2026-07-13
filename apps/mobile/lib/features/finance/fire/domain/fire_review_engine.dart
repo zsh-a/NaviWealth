@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 
 import 'fire_action.dart';
-import 'fire_bucket.dart';
 import 'fire_review.dart';
 import 'fire_state.dart';
 import 'fire_stress_test.dart';
@@ -154,22 +153,13 @@ List<FireReviewFinding> _findings(
     );
   }
 
-  // FX / unmapped surfaces.
+  // FX gaps.
   if (state.currencyMismatchCount > 0) {
     findings.add(
       FireReviewFinding(
         code: FireReviewFindingCode.currencyGapPresent,
         severity: FireActionSeverity.warning,
         months: state.currencyMismatchCount,
-      ),
-    );
-  }
-  if (state.unmappedHoldings.isNotEmpty) {
-    findings.add(
-      FireReviewFinding(
-        code: FireReviewFindingCode.unmappedHoldingsPresent,
-        severity: FireActionSeverity.info,
-        months: state.unmappedHoldings.length,
       ),
     );
   }
@@ -252,9 +242,4 @@ class FireReviewDiff {
   /// Did the headline safety level change?
   bool get safetyLevelChanged =>
       before != null && before!.safetyLevel != after.safetyLevel;
-
-  /// Did the bucket coverage status change for any of the five roles?
-  /// Phase 4 doesn't ship per-bucket diff yet because buckets are
-  /// computed from the snapshot and not persisted with the review.
-  bool bucketStatusChangedFor(FireBucketRole _) => false;
 }

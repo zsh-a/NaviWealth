@@ -1,17 +1,11 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import 'package:naviwealth/core/format/formatters.dart';
-import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../domain/fire_projection.dart';
-import 'fire_buckets_card.dart';
 import 'fire_goal_form.dart';
-import 'fire_progress_gauge.dart';
-import 'fire_review_card.dart';
 import 'fire_scenarios_chart.dart';
 import 'fire_simulations_card.dart';
 import 'fire_state_hero_card.dart';
@@ -38,6 +32,7 @@ class FireUnconfiguredBody extends StatelessWidget {
   }
 }
 
+/// Slim FIRE workspace: hero story, projection, collapsible resilience.
 class FireConfiguredBody extends ConsumerWidget {
   const FireConfiguredBody({super.key, required this.view});
 
@@ -45,40 +40,17 @@ class FireConfiguredBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final formatters = ref.watch(
-      appFormattersProvider(Localizations.localeOf(context)),
-    );
-    final left = Column(
+    final primary = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const FireStateHeroCard(),
+        FireStateHeroCard(view: view),
         const SizedBox(height: AppPageRhythm.section),
-        const FireBucketsCard(),
-        const SizedBox(height: AppPageRhythm.module),
-        _ProgressHeaderCard(view: view, formatters: formatters),
-        const SizedBox(height: AppPageRhythm.module),
-        _CountdownCard(view: view, formatters: formatters),
-      ],
-    );
-    final right = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const FireStressTestsCard(),
-        const SizedBox(height: AppPageRhythm.module),
-        const FireSimulationsCard(),
-        const SizedBox(height: AppPageRhythm.module),
         _ProjectionCard(view: view),
-        const SizedBox(height: AppPageRhythm.module),
-        _ScenariosTable(view: view),
-        const SizedBox(height: AppPageRhythm.module),
-        _SafeWithdrawalCard(view: view, formatters: formatters),
-        const SizedBox(height: AppPageRhythm.module),
-        _SensitivityCard(view: view),
-        const SizedBox(height: AppPageRhythm.module),
-        const FireReviewCard(),
       ],
     );
+
+    const depth = _FireDepthSection();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
@@ -87,14 +59,13 @@ class FireConfiguredBody extends ConsumerWidget {
               ? const EdgeInsets.all(AppSpacing.s24)
               : const EdgeInsets.all(AppSpacing.s16),
           children: [
-            ResponsiveTwoColumn(left: left, right: right),
-            const SizedBox(height: AppSpacing.s16),
-            FButton(
-              variant: FButtonVariant.outline,
-              onPress: () => showFireGoalSheet(context),
-              prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
-              child: Text(l10n.fireEditGoal),
-            ),
+            if (isWide)
+              ResponsiveTwoColumn(left: primary, right: depth)
+            else ...[
+              primary,
+              const SizedBox(height: AppPageRhythm.section),
+              depth,
+            ],
           ],
         );
       },
@@ -102,145 +73,7 @@ class FireConfiguredBody extends ConsumerWidget {
   }
 }
 
-class _ProgressHeaderCard extends StatelessWidget {
-  const _ProgressHeaderCard({required this.view, required this.formatters});
-
-  final FireDashboardView view;
-  final AppFormatters formatters;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final ratio = view.progressRatio ?? 0;
-    final percentLabel = formatters.percent(
-      ratio,
-      decimalDigits: ratio >= 0.1 ? 0 : 1,
-    );
-    final current = view.currentNetWorth.toDouble();
-    final target = view.goal.targetAmount.toDouble();
-    final gap = target - current;
-
-    return SoftCard.raised(
-      padding: AppPageRhythm.heroPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.fireProgressTitle, style: context.mutedLabelStyle),
-          const SizedBox(height: AppSpacing.s12),
-          Center(
-            child: FireProgressGauge(
-              progress: ratio,
-              centerLabel: percentLabel,
-              caption: l10n.fireProgressGaugeCaption,
-            ),
-          ),
-          const SizedBox(height: AppPageRhythm.module),
-          _LabelValueRow(
-            label: l10n.fireProgressCurrent,
-            child: AnimatedMoneyText(
-              amount: current,
-              currencyCode: view.baseCurrency,
-              style: TypographyTokens.numericBodyStrong,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          _LabelValueRow(
-            label: l10n.fireProgressTarget,
-            child: AnimatedMoneyText(
-              amount: target,
-              currencyCode: view.baseCurrency,
-              style: context.theme.typography.body.sm,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          _LabelValueRow(
-            label: l10n.fireProgressGap,
-            child: AnimatedMoneyText(
-              amount: gap > 0 ? gap : 0,
-              currencyCode: view.baseCurrency,
-              style: context.theme.typography.body.sm,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountdownCard extends StatelessWidget {
-  const _CountdownCard({required this.view, required this.formatters});
-
-  final FireDashboardView view;
-  final AppFormatters formatters;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final months = view.sensitivity.baselineMonths;
-    final referenceLabel = _baselineTier(view) == FireScenarioTier.live
-        ? l10n.fireScenarioLive
-        : l10n.fireScenarioNeutral;
-
-    final body = months == null
-        ? Text(
-            l10n.fireCountdownUnreachable,
-            style: context.theme.typography.body.sm,
-          )
-        : months == 0
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.fireCountdownReachedTitle,
-                style: context.theme.typography.body.xl,
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                l10n.fireCountdownReachedSubtitle,
-                style: context.bodyCaptionStyle,
-              ),
-            ],
-          )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _formatYearsMonths(l10n, months),
-                style: context.theme.typography.body.xl,
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                l10n.fireCountdownDaysAprox(_approxDays(months)),
-                style: context.bodyCaptionStyle,
-              ),
-            ],
-          );
-
-    return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.fireCountdownTitle(referenceLabel),
-            style: context.theme.typography.body.md,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          body,
-        ],
-      ),
-    );
-  }
-
-  static FireScenarioTier _baselineTier(FireDashboardView view) {
-    return view.scenarios.any((s) => s.tier == FireScenarioTier.live)
-        ? FireScenarioTier.live
-        : FireScenarioTier.neutral;
-  }
-
-  static int _approxDays(int months) => (months * 30.44).round();
-}
-
+/// Projection is the only secondary story card on the main path.
 class _ProjectionCard extends StatelessWidget {
   const _ProjectionCard({required this.view});
 
@@ -249,21 +82,19 @@ class _ProjectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final scenarios = view.scenarios;
     return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: AppPageRhythm.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.fireProjectionTitle,
-            style: context.theme.typography.body.md,
-          ),
+          Text(l10n.fireProjectionTitle, style: context.rowTitleStyle),
           const SizedBox(height: AppSpacing.s4),
           Text(l10n.fireProjectionSubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
           LayoutBuilder(
             builder: (context, c) => FireScenariosChart(
-              scenarios: view.scenarios,
+              scenarios: scenarios,
               baseCurrency: view.baseCurrency,
               locale: Localizations.localeOf(context).toString(),
               scenarioLabel: (tier) => _scenarioLabel(l10n, tier),
@@ -308,189 +139,66 @@ class _ScenarioLegend extends StatelessWidget {
   }
 }
 
-class _ScenariosTable extends StatelessWidget {
-  const _ScenariosTable({required this.view});
+/// Stress + what-if simulations — off the critical path.
+class _FireDepthSection extends StatefulWidget {
+  const _FireDepthSection();
 
-  final FireDashboardView view;
+  @override
+  State<_FireDepthSection> createState() => _FireDepthSectionState();
+}
+
+class _FireDepthSectionState extends State<_FireDepthSection> {
+  bool _open = false;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard.raised(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s16,
-              AppSpacing.s16,
-              AppSpacing.s8,
-            ),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                l10n.fireScenariosTableTitle,
-                style: context.theme.typography.body.md,
-              ),
-            ),
-          ),
-          for (final scenario in view.scenarios)
-            FTile(
-              title: Text(_scenarioLabel(l10n, scenario.tier)),
-              subtitle: Text(
-                l10n.fireScenarioRateLabel(
-                  (scenario.annualReturn * 100).toStringAsFixed(1),
-                ),
-              ),
-              suffix: SizedBox(
-                width: AppControlWidths.scenarioSuffix,
-                child: Text(
-                  scenario.monthsToTarget == null
-                      ? l10n.fireCountdownUnreachableShort
-                      : _formatYearsMonths(l10n, scenario.monthsToTarget!),
-                  textAlign: TextAlign.end,
-                  style: context.theme.typography.body.sm,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SafeWithdrawalCard extends StatelessWidget {
-  const _SafeWithdrawalCard({required this.view, required this.formatters});
-
-  final FireDashboardView view;
-  final AppFormatters formatters;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final monthly = view.safeMonthlyWithdrawalAmount;
-    final surplus = view.safeWithdrawalSurplus;
-    final monthlyExpenses = view.goal.monthlyExpenses.toDouble();
-
-    final coverageHint = monthlyExpenses == 0
-        ? l10n.fireSafeWithdrawalNoExpenses
-        : surplus >= 0
-        ? l10n.fireSafeWithdrawalCovers(
-            formatters.currency(
-              _toFixedDecimal(surplus.abs()),
-              code: view.baseCurrency,
-            ),
-          )
-        : l10n.fireSafeWithdrawalShortfall(
-            formatters.currency(
-              _toFixedDecimal(surplus.abs()),
-              code: view.baseCurrency,
-            ),
-          );
-
-    return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.fireSafeWithdrawalTitle,
-            style: context.theme.typography.body.md,
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(l10n.fireSafeWithdrawalSubtitle, style: context.captionStyle),
-          const SizedBox(height: AppSpacing.s12),
-          _LabelValueRow(
-            label: l10n.fireSafeWithdrawalMonthly,
-            value: formatters.currency(
-              _toFixedDecimal(monthly),
-              code: view.baseCurrency,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          _LabelValueRow(
-            label: l10n.fireSafeWithdrawalAnnual,
-            value: formatters.currency(
-              _toFixedDecimal(monthly * 12),
-              code: view.baseCurrency,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            coverageHint,
-            style: context.captionStyle.copyWith(
-              color: surplus >= 0 || monthlyExpenses == 0
-                  ? context.theme.colors.mutedForeground
-                  : context.theme.colors.destructive,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SensitivityCard extends StatelessWidget {
-  const _SensitivityCard({required this.view});
-
-  final FireDashboardView view;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final s = view.sensitivity;
-
-    return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.fireSensitivityTitle,
-            style: context.theme.typography.body.md,
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(l10n.fireSensitivitySubtitle, style: context.captionStyle),
-          const SizedBox(height: AppSpacing.s12),
-          _LabelValueRow(
-            label: l10n.fireSensitivityHigherSurplus,
-            value: _formatOptionalMonths(l10n, s.highSurplusMonths),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          _LabelValueRow(
-            label: l10n.fireSensitivityBaseline,
-            value: _formatOptionalMonths(l10n, s.baselineMonths),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          _LabelValueRow(
-            label: l10n.fireSensitivityLowerSurplus,
-            value: _formatOptionalMonths(l10n, s.lowSurplusMonths),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LabelValueRow extends StatelessWidget {
-  const _LabelValueRow({required this.label, this.value, this.child})
-    : assert(
-        value != null || child != null,
-        'either value or child must be provided',
-      );
-
-  final String label;
-  final String? value;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(child: Text(label, style: context.bodyCaptionStyle)),
-        const SizedBox(width: AppSpacing.s8),
-        child ?? Text(value!, style: context.theme.typography.body.sm),
+        SoftCard.raised(
+          borderless: true,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s14,
+            vertical: AppSpacing.s12,
+          ),
+          onPress: () {
+            AppInteraction.signal(AppInteractionIntent.reveal);
+            setState(() => _open = !_open);
+          },
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.fireDepthTitle, style: context.rowTitleStyle),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(l10n.fireDepthSubtitle, style: context.captionStyle),
+                  ],
+                ),
+              ),
+              Icon(
+                _open ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                size: AppIconSizes.md,
+                color: colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+        AnimatedSizeFade(
+          visible: _open,
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: AppPageRhythm.module),
+              FireStressTestsCard(),
+              SizedBox(height: AppPageRhythm.module),
+              FireSimulationsCard(),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -530,20 +238,6 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-String _formatOptionalMonths(AppLocalizations l10n, int? months) {
-  if (months == null) return l10n.fireCountdownUnreachableShort;
-  if (months == 0) return l10n.fireScenarioReachedNow;
-  return _formatYearsMonths(l10n, months);
-}
-
-String _formatYearsMonths(AppLocalizations l10n, int totalMonths) {
-  final years = totalMonths ~/ 12;
-  final months = totalMonths % 12;
-  if (years == 0) return l10n.fireCountdownMonthsOnly(months);
-  if (months == 0) return l10n.fireCountdownYearsOnly(years);
-  return l10n.fireCountdownYearsMonths(years, months);
-}
-
 String _scenarioLabel(AppLocalizations l10n, FireScenarioTier tier) {
   switch (tier) {
     case FireScenarioTier.conservative:
@@ -573,5 +267,3 @@ Color _colorForTier(
       return context.theme.colors.primary;
   }
 }
-
-Decimal _toFixedDecimal(double value) => DecimalX.fromDouble(value);

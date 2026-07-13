@@ -8,7 +8,6 @@ import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart'
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
-import '../domain/fire_bucket_allocator.dart';
 import '../domain/fire_calculator.dart';
 import '../domain/fire_plan.dart';
 import '../domain/fire_projection.dart';
@@ -18,7 +17,6 @@ import '../domain/fire_state.dart';
 import '../domain/fire_state_service.dart';
 import '../domain/fire_stress_test.dart';
 import '../domain/fire_stress_test_engine.dart';
-import 'fire_bucket_rules_preferences.dart';
 import 'fire_goal_preferences.dart';
 import 'fire_plan_preferences.dart';
 import 'fire_review_cache.dart';
@@ -93,36 +91,6 @@ final firePlanProvider = Provider<FirePlan>((ref) {
   );
 });
 
-/// Per-role bucket coverage + the assets the allocator couldn't slot.
-/// Watches the snapshot, the plan, and the user's bucket rules so the
-/// FIRE state and the buckets card stay in sync.
-final fireBucketAllocationProvider = Provider<AsyncValue<FireBucketAllocation>>(
-  (ref) {
-    final plan = ref.watch(firePlanProvider);
-    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-    final rules = ref.watch(fireBucketRulesProvider);
-
-    return snapshotAsync.when(
-      loading: () => const AsyncValue.loading(),
-      error: (e, st) => AsyncValue.error(e, st),
-      data: (snapshot) {
-        final base = snapshot.baseCurrency;
-        final activePlan = plan.baseCurrency == base
-            ? plan
-            : plan.copyWith(baseCurrency: base);
-        return AsyncValue.data(
-          allocateBuckets(
-            plan: activePlan,
-            snapshot: snapshot,
-            monthlyExpense: activePlan.monthlyExpenseMoney,
-            userRules: rules,
-          ),
-        );
-      },
-    );
-  },
-);
-
 /// The FIRE OS read model. Recomputes whenever the plan, the dashboard
 /// snapshot, the trailing cashflow summary, or the projection changes.
 final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
@@ -169,10 +137,6 @@ final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
       final liquid = _computeLiquidAssets(snapshot);
       final trailing = trailingAnnualSpend(summaryAsync.requireValue, now: now);
 
-      final allocation = ref
-          .watch(fireBucketAllocationProvider)
-          .maybeWhen(data: (a) => a, orElse: () => null);
-
       final etaMonths = fireView.whenOrNull(
         data: (view) {
           if (view.scenarios.isEmpty) return null;
@@ -196,8 +160,6 @@ final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
           fireEtaMonths: etaMonths,
           currencyMismatchCount: snapshot.currencyMismatches.length,
           computedAt: now,
-          buckets: allocation?.buckets ?? const [],
-          unmappedHoldings: allocation?.unmappedHoldings ?? const [],
         ),
       );
     },

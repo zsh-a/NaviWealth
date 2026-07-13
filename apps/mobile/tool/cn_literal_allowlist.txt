@@ -79,12 +79,9 @@ lib/features/finance/liabilities/ai_tools/propose_liability_payment_tool.dart
 # FIRE OS (roadmap-fire-os.md) + Income Planner (options-income.md) AI
 # device tools landed 2026-05-20 / 05-21. Identical category to the
 # device-tool entries above.
-lib/features/finance/fire/ai_tools/get_fire_buckets_tool.dart
 lib/features/finance/fire/ai_tools/get_fire_plan_tool.dart
-lib/features/finance/fire/ai_tools/get_fire_review_tool.dart
 lib/features/finance/fire/ai_tools/get_fire_state_tool.dart
 lib/features/finance/fire/ai_tools/get_fire_stress_tests_tool.dart
-lib/features/finance/fire/ai_tools/propose_fire_bucket_rule_tool.dart
 lib/features/finance/fire/ai_tools/propose_fire_plan_update_tool.dart
 lib/features/finance/fire/ai_tools/simulate_fire_plan_tool.dart
 lib/features/finance/options_income/ai_tools/get_options_income_opportunities_tool.dart

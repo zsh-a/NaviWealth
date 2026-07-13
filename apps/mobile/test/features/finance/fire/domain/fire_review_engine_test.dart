@@ -157,7 +157,7 @@ void main() {
       }
     });
 
-    test('currency mismatches and unmapped holdings surface as findings', () {
+    test('currency mismatches surface as findings', () {
       final state = _state(currencyMismatch: 2);
       final review = generateReview(
         kind: FireReviewKind.monthly,

@@ -1675,6 +1675,21 @@
   "fireEmptyHint": "Enter your target net worth, monthly expenses and savings to see how far you are from financial independence.",
   "fireEmptySetGoalCta": "Set goal",
   "fireEditGoal": "Edit goal",
+  "fireDepthTitle": "Stress & simulate",
+  "@fireDepthTitle": { "description": "Expandable FIRE depth section title" },
+  "fireDepthSubtitle": "Resilience checks and plan what-ifs",
+  "@fireDepthSubtitle": { "description": "Expandable FIRE depth section subtitle" },
+  "fireHeroProgressLine": "{progress} · {current} of {target}",
+  "@fireHeroProgressLine": {
+    "description": "FIRE hero progress caption under the slim bar",
+    "placeholders": {
+      "progress": { "type": "String" },
+      "current": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "fireHeroNextStepLabel": "Next step",
+  "@fireHeroNextStepLabel": { "description": "Label above the single suggested FIRE action" },
 
   "fireGoalSheetTitle": "FIRE goal",
   "fireGoalSheetSubtitle": "Inputs are stored on this device only and are inflation-adjusted with the rate below.",
@@ -2534,8 +2549,8 @@
   "aiIntentTransactionsExplainSelectionPrompt": "Interpret these selected transactions ({objectLabel}); identify common patterns, anomalies, and possible categorization.",
   "aiIntentExplainFireStateLabel": "Explain FIRE state",
   "aiIntentExplainFireStatePrompt": "Use get_fire_state to explain the current safety level, withdrawal rate, cash-bucket coverage, and FIRE ETA for {objectLabel}; call out the one or two suggested_actions that matter most.",
-  "aiIntentReviewCashBucketLabel": "Check cash bucket",
-  "aiIntentReviewCashBucketPrompt": "Use get_fire_buckets to check current cash-bucket coverage. If it is below the target for {objectLabel}, give the refill amount and prepare a propose_fire_plan_update or propose_fire_bucket_rule suggestion.",
+  "aiIntentReviewCashBucketLabel": "Check cash runway",
+  "aiIntentReviewCashBucketPrompt": "Use get_fire_state to check cash-runway months vs target for {objectLabel}. If short, give the refill amount and prepare a propose_fire_plan_update suggestion.",
   "aiIntentSimulateFireChangeLabel": "Simulate",
   "aiIntentSimulateFireChangePrompt": "Use simulate_fire_plan to model how changes to {objectLabel} affect FIRE status, including expenses, balance, SWR, and cash-bucket months. Make clear this is a simulation and does not write to the plan.",
   "aiIntentExplainStressTestLabel": "Explain stress test",

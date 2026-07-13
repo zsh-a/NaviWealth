@@ -5172,6 +5172,30 @@ abstract class AppLocalizations {
   /// **'Edit goal'**
   String get fireEditGoal;
 
+  /// Expandable FIRE depth section title
+  ///
+  /// In en, this message translates to:
+  /// **'Stress & simulate'**
+  String get fireDepthTitle;
+
+  /// Expandable FIRE depth section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Resilience checks and plan what-ifs'**
+  String get fireDepthSubtitle;
+
+  /// FIRE hero progress caption under the slim bar
+  ///
+  /// In en, this message translates to:
+  /// **'{progress} · {current} of {target}'**
+  String fireHeroProgressLine(String progress, String current, String target);
+
+  /// Label above the single suggested FIRE action
+  ///
+  /// In en, this message translates to:
+  /// **'Next step'**
+  String get fireHeroNextStepLabel;
+
   /// No description provided for @fireGoalSheetTitle.
   ///
   /// In en, this message translates to:
@@ -8199,13 +8223,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiIntentReviewCashBucketLabel.
   ///
   /// In en, this message translates to:
-  /// **'Check cash bucket'**
+  /// **'Check cash runway'**
   String get aiIntentReviewCashBucketLabel;
 
   /// No description provided for @aiIntentReviewCashBucketPrompt.
   ///
   /// In en, this message translates to:
-  /// **'Use get_fire_buckets to check current cash-bucket coverage. If it is below the target for {objectLabel}, give the refill amount and prepare a propose_fire_plan_update or propose_fire_bucket_rule suggestion.'**
+  /// **'Use get_fire_state to check cash-runway months vs target for {objectLabel}. If short, give the refill amount and prepare a propose_fire_plan_update suggestion.'**
   String aiIntentReviewCashBucketPrompt(Object objectLabel);
 
   /// No description provided for @aiIntentSimulateFireChangeLabel.

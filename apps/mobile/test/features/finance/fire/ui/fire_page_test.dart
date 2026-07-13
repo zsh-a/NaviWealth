@@ -13,15 +13,18 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_goal_preferences.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_projection.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_state.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_page.dart';
-import 'package:naviwealth/features/finance/fire/ui/fire_progress_gauge.dart';
+import 'package:naviwealth/features/finance/fire/ui/fire_state_hero_card.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
@@ -44,22 +47,48 @@ Asset _cash(String id) => Asset(
   sync: _meta(),
 );
 
+FireState _stubFireState(FireGoal goal, {Decimal? currentNetWorth}) {
+  final plan = FirePlan.fromGoal(goal, baseCurrency: 'CNY');
+  final nw = currentNetWorth ?? Decimal.zero;
+  final configured = goal.isConfigured;
+  return FireState(
+    plan: plan,
+    baseCurrency: 'CNY',
+    netWorth: Money(nw, 'CNY'),
+    investableAssets: Money(nw, 'CNY'),
+    liquidAssets: Money(Decimal.parse('36000'), 'CNY'),
+    annualSpend: Money((goal.monthlyExpenses * Decimal.fromInt(12)), 'CNY'),
+    monthlyExpense: Money(goal.monthlyExpenses, 'CNY'),
+    withdrawalRate: configured ? 0.0615 : 0,
+    cashBucketMonths: configured ? 9.0 : 0,
+    fireEtaMonths: configured ? 84 : null,
+    safetyLevel: configured
+        ? FireSafetyLevel.cautious
+        : FireSafetyLevel.unconfigured,
+    suggestedActions: const [],
+    stressTests: const [],
+    currencyMismatchCount: 0,
+    computedAt: DateTime.utc(2026, 5, 6),
+  );
+}
+
 Future<Widget> _wrap({
   required SharedPreferences prefs,
   List<Asset> manualAssets = const [],
   FireGoal? goal,
   Decimal? currentNetWorth,
 }) async {
+  final resolvedGoal = goal ?? FireGoal.unset();
+  final nw = currentNetWorth ?? Decimal.zero;
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       fireDashboardViewProvider.overrideWith(
-        (ref) => AsyncValue.data(
-          _view(
-            goal ?? FireGoal.unset(),
-            currentNetWorth: currentNetWorth ?? Decimal.zero,
-          ),
-        ),
+        (ref) => AsyncValue.data(_view(resolvedGoal, currentNetWorth: nw)),
+      ),
+      fireStateProvider.overrideWith(
+        (ref) =>
+            AsyncValue.data(_stubFireState(resolvedGoal, currentNetWorth: nw)),
       ),
       manualAssetsStreamProvider.overrideWith(
         (ref) => Stream.value(manualAssets),
@@ -102,54 +131,45 @@ void main() {
 
     expect(find.text('Set your FIRE goal'), findsOneWidget);
     expect(find.text('Set goal'), findsOneWidget);
-    expect(find.byType(FireProgressGauge), findsNothing);
+    expect(find.byType(FireStateHeroCard), findsNothing);
   });
 
-  testWidgets('renders the gauge and scenario table once a goal is saved', (
-    tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({
-      'naviwealth.fire.target_amount': '1000000',
-      'naviwealth.fire.monthly_expenses': '4000',
-      'naviwealth.fire.monthly_surplus': '5000',
-      'naviwealth.fire.inflation_rate': 0.03,
-    });
-    final prefs = await SharedPreferences.getInstance();
+  testWidgets(
+    'renders hero, projection legend, and header edit once configured',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'naviwealth.fire.target_amount': '1000000',
+        'naviwealth.fire.monthly_expenses': '4000',
+        'naviwealth.fire.monthly_surplus': '5000',
+        'naviwealth.fire.inflation_rate': 0.03,
+      });
+      final prefs = await SharedPreferences.getInstance();
 
-    await tester.pumpWidget(
-      await _wrap(
-        prefs: prefs,
-        manualAssets: [_cash('cash-1')],
-        goal: FireGoal(
-          targetAmount: Decimal.parse('1000000'),
-          monthlyExpenses: Decimal.parse('4000'),
-          monthlySurplus: Decimal.parse('5000'),
-          inflationRate: 0.03,
+      await tester.pumpWidget(
+        await _wrap(
+          prefs: prefs,
+          manualAssets: [_cash('cash-1')],
+          goal: FireGoal(
+            targetAmount: Decimal.parse('1000000'),
+            monthlyExpenses: Decimal.parse('4000'),
+            monthlySurplus: Decimal.parse('5000'),
+            inflationRate: 0.03,
+          ),
+          currentNetWorth: Decimal.parse('250000'),
         ),
-        currentNetWorth: Decimal.parse('250000'),
-      ),
-    );
-    await _pumpFrames(tester);
+      );
+      await _pumpFrames(tester);
 
-    expect(find.byType(FireProgressGauge), findsOneWidget);
-    // Scenario tier labels appear in the chart legend ("Conservative (3.0%)")
-    // and again as standalone labels in the scenarios table further down
-    // the list. textContaining matches both forms regardless of which one
-    // is currently mounted in the viewport.
-    expect(find.textContaining('Conservative'), findsWidgets);
-    expect(find.textContaining('Neutral'), findsWidgets);
-    expect(find.textContaining('Aggressive'), findsWidgets);
+      expect(find.byType(FireStateHeroCard), findsOneWidget);
+      // Scenario tier labels appear in the chart legend ("Conservative (3.0%)").
+      expect(find.textContaining('Conservative'), findsWidgets);
+      expect(find.textContaining('Neutral'), findsWidgets);
+      expect(find.textContaining('Aggressive'), findsWidgets);
 
-    // Scroll the page until the Edit goal CTA at the bottom of the list
-    // appears — under the 800×600 test viewport it sits below the fold.
-    final editGoal = find.text('Edit goal');
-    await tester.scrollUntilVisible(
-      editGoal,
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(editGoal, findsOneWidget);
-  });
+      // Edit lives in the app-bar as a pencil action (no bottom CTA).
+      expect(find.byIcon(FLucideIcons.pencil), findsOneWidget);
+    },
+  );
 
   testWidgets('saves a goal entered in the goal sheet', (tester) async {
     final prefs = await SharedPreferences.getInstance();

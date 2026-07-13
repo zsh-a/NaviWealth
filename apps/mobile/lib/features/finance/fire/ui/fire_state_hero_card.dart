@@ -4,7 +4,6 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
-import 'package:naviwealth/core/ai/visual/ai_hover_overlay.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -12,19 +11,15 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/fire_providers.dart';
 import '../domain/fire_action.dart';
+import '../domain/fire_projection.dart';
 import '../domain/fire_state.dart';
-import 'fire_ai_capsule.dart';
 import 'fire_status_colors.dart';
 
-/// "自由状态" hero card — the headline of the FIRE OS page.
-///
-/// Composes the safety pill, the four core metrics (WR, cash bucket, FIRE
-/// ETA, net worth), and the top suggested next steps. Pure read — saves
-/// nothing, mutates nothing. On device builds where the AI runtime is
-/// usable the "Explain" pill opens a contextual bottom sheet wired to
-/// the `explain_fire_state` intent; web (no on-device AI) hides it.
+/// Single visual anchor for the FIRE page: ETA, progress, and key rates.
 class FireStateHeroCard extends ConsumerWidget {
-  const FireStateHeroCard({super.key});
+  const FireStateHeroCard({super.key, required this.view});
+
+  final FireDashboardView view;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,7 +43,8 @@ class FireStateHeroCard extends ConsumerWidget {
     return stateAsync.when(
       loading: () => const _HeroSkeleton(),
       error: (e, _) => _HeroErrorCard(message: '$e'),
-      data: (state) => _HeroBody(l10n: l10n, state: state, onExplain: explain),
+      data: (state) =>
+          _HeroBody(l10n: l10n, state: state, view: view, onExplain: explain),
     );
   }
 }
@@ -57,11 +53,13 @@ class _HeroBody extends ConsumerWidget {
   const _HeroBody({
     required this.l10n,
     required this.state,
+    required this.view,
     required this.onExplain,
   });
 
   final AppLocalizations l10n;
   final FireState state;
+  final FireDashboardView view;
   final VoidCallback? onExplain;
 
   @override
@@ -74,21 +72,22 @@ class _HeroBody extends ConsumerWidget {
       state.safetyLevel,
     );
     final safetyLabel = _safetyLabel(l10n, state.safetyLevel);
+    final progress = view.progressRatio ?? 0;
+    final etaMonths = state.fireEtaMonths ?? view.sensitivity.baselineMonths;
+    final etaHeadline = _etaHeadline(l10n, etaMonths);
+    final swrMonthly = view.safeMonthlyWithdrawalAmount;
 
     return SoftCard.hero(
+      padding: AppPageRhythm.heroPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.fireOsHeroTitle, style: context.mutedLabelStyle),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(l10n.fireOsHeroSubtitle, style: context.captionStyle),
-                  ],
+                child: Text(
+                  l10n.fireOsHeroTitle,
+                  style: context.mutedLabelStyle,
                 ),
               ),
               AppBadge(
@@ -99,12 +98,96 @@ class _HeroBody extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.s12),
+          Text(etaHeadline, style: TypographyTokens.displaySmall),
+          const SizedBox(height: AppSpacing.s8),
+          // Slim progress rail — replaces the large gauge card.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            child: SizedBox(
+              height: 6,
+              child: Stack(
+                children: [
+                  ColoredBox(
+                    color: context.theme.colors.muted.withValues(
+                      alpha: AppOpacity.muted,
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: progress.clamp(0.0, 1.0),
+                    child: ColoredBox(color: accent),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s6),
+          Text(
+            l10n.fireHeroProgressLine(
+              formatters.percent(
+                progress,
+                decimalDigits: progress >= 0.1 ? 0 : 1,
+              ),
+              formatters.currency(
+                view.currentNetWorth,
+                code: view.baseCurrency,
+              ),
+              formatters.currency(
+                view.goal.targetAmount,
+                code: view.baseCurrency,
+              ),
+            ),
+            style: context.captionStyle,
+          ),
           const SizedBox(height: AppPageRhythm.module),
-          _MetricsGrid(state: state, formatters: formatters, l10n: l10n),
-          const SizedBox(height: AppPageRhythm.module),
-          _SuggestedActions(state: state, formatters: formatters, l10n: l10n),
+          Row(
+            children: [
+              Expanded(
+                child: _MetricTile(
+                  label: l10n.fireOsHeroWithdrawalRateLabel,
+                  value: state.withdrawalRate.isFinite
+                      ? l10n.fireOsHeroWithdrawalRateValue(
+                          (state.withdrawalRate * 100).toStringAsFixed(2),
+                          (state.plan.safeWithdrawalRate * 100).toStringAsFixed(
+                            1,
+                          ),
+                        )
+                      : l10n.fireOsHeroWithdrawalRateInfinite,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s10),
+              Expanded(
+                child: _MetricTile(
+                  label: l10n.fireOsHeroCashBucketLabel,
+                  value: state.cashBucketMonths.isFinite
+                      ? l10n.fireOsHeroCashBucketValue(
+                          state.cashBucketMonths.toStringAsFixed(1),
+                          state.plan.targetCashBucketMonths,
+                        )
+                      : l10n.fireOsHeroCashBucketInfinite,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s10),
+          _MetricTile(
+            label: l10n.fireSafeWithdrawalMonthly,
+            value: formatters.currency(
+              DecimalX.fromDouble(swrMonthly),
+              code: view.baseCurrency,
+            ),
+          ),
+          if (state.suggestedActions.isNotEmpty) ...[
+            const SizedBox(height: AppPageRhythm.module),
+            _NextAction(
+              action: state.suggestedActions.first,
+              formatters: formatters,
+              l10n: l10n,
+            ),
+          ],
           if (onExplain != null) ...[
-            const SizedBox(height: AppPageRhythm.row),
+            const SizedBox(height: AppSpacing.s8),
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: FButton(
@@ -122,105 +205,8 @@ class _HeroBody extends ConsumerWidget {
       ),
     );
   }
-}
 
-class _MetricsGrid extends StatelessWidget {
-  const _MetricsGrid({
-    required this.state,
-    required this.formatters,
-    required this.l10n,
-  });
-
-  final FireState state;
-  final AppFormatters formatters;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final swrPct = (state.plan.safeWithdrawalRate * 100).toStringAsFixed(1);
-    final wrLabel = state.withdrawalRate.isFinite
-        ? l10n.fireOsHeroWithdrawalRateValue(
-            (state.withdrawalRate * 100).toStringAsFixed(2),
-            swrPct,
-          )
-        : l10n.fireOsHeroWithdrawalRateInfinite;
-
-    final cashLabel = state.cashBucketMonths.isFinite
-        ? l10n.fireOsHeroCashBucketValue(
-            state.cashBucketMonths.toStringAsFixed(1),
-            state.plan.targetCashBucketMonths,
-          )
-        : (state.cashBucketMonths == 0
-              ? l10n.fireOsHeroCashBucketInfinite
-              : l10n.fireOsHeroCashBucketInfinite);
-
-    final etaLabel = _etaLabel(l10n, state.fireEtaMonths);
-    final netWorth = formatters.currency(
-      state.netWorth.amount,
-      code: state.baseCurrency,
-    );
-    final annualSpend = formatters.currency(
-      state.annualSpend.amount,
-      code: state.baseCurrency,
-    );
-    final spendSourceLabel =
-        state.annualSpendSource == FireAnnualSpendSource.trailing12m
-        ? l10n.fireOsAnnualSpendSourceTrailing
-        : l10n.fireOsAnnualSpendSourcePlan;
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _MetricTile(
-                label: l10n.fireOsHeroWithdrawalRateLabel,
-                value: wrLabel,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: _MetricTile(
-                label: l10n.fireOsHeroCashBucketLabel,
-                value: cashLabel,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            Expanded(
-              child: _MetricTile(
-                label: l10n.fireOsHeroEtaLabel,
-                value: etaLabel,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: _MetricTile(
-                label: l10n.fireOsHeroNetWorthLabel,
-                value: netWorth,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            Expanded(
-              child: _MetricTile(
-                label: l10n.fireOsHeroAnnualSpendLabel,
-                value: '$annualSpend · $spendSourceLabel',
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  static String _etaLabel(AppLocalizations l10n, int? months) {
+  static String _etaHeadline(AppLocalizations l10n, int? months) {
     if (months == null) return l10n.fireOsHeroEtaUnreachable;
     if (months == 0) return l10n.fireOsHeroEtaReached;
     final years = months ~/ 12;
@@ -231,80 +217,8 @@ class _MetricsGrid extends StatelessWidget {
   }
 }
 
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.muted),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: context.captionStyle),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            value,
-            style: context.labelStyle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SuggestedActions extends StatelessWidget {
-  const _SuggestedActions({
-    required this.state,
-    required this.formatters,
-    required this.l10n,
-  });
-
-  final FireState state;
-  final AppFormatters formatters;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    if (state.suggestedActions.isEmpty) return const SizedBox.shrink();
-    return AiHoverOverlay(
-      topOffset: 0,
-      endOffset: 0,
-      capsule: FireAiCapsule(
-        intent: 'suggest_fire_actions',
-        source: 'fire_os_hero_actions',
-        objectLabel: l10n.fireOsSuggestedActionsTitle,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.fireOsSuggestedActionsTitle,
-            style: context.bodyCaptionStyle,
-          ),
-          const SizedBox(height: AppSpacing.s6),
-          for (final action in state.suggestedActions.take(3)) ...[
-            _ActionRow(action: action, formatters: formatters, l10n: l10n),
-            const SizedBox(height: AppSpacing.s6),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
+class _NextAction extends StatelessWidget {
+  const _NextAction({
     required this.action,
     required this.formatters,
     required this.l10n,
@@ -339,6 +253,11 @@ class _ActionRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                l10n.fireHeroNextStepLabel,
+                style: context.microCaptionStyle,
+              ),
+              const SizedBox(height: AppSpacing.s2),
               Text(title, style: context.theme.typography.body.sm),
               if (detail != null) ...[
                 const SizedBox(height: AppSpacing.s2),
@@ -352,23 +271,54 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.muted),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            value,
+            style: context.labelStyle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HeroSkeleton extends StatelessWidget {
   const _HeroSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s20),
+    return const SoftCard.hero(
+      padding: AppPageRhythm.heroPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(width: 120, height: 18, color: context.theme.colors.muted),
-          const SizedBox(height: AppSpacing.s16),
-          Container(
-            width: double.infinity,
-            height: 64,
-            color: context.theme.colors.muted,
-          ),
+          SkeletonBox(width: 120, height: 14, radius: AppRadius.sm),
+          SizedBox(height: AppSpacing.s16),
+          SkeletonBox(width: 200, height: 32, radius: AppRadius.sm),
+          SizedBox(height: AppSpacing.s12),
+          SkeletonBox(height: 6, radius: AppRadius.full),
         ],
       ),
     );
@@ -383,7 +333,7 @@ class _HeroErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: AppPageRhythm.cardPadding,
       child: Row(
         children: [
           Icon(
@@ -408,8 +358,6 @@ class _HeroErrorCard extends StatelessWidget {
   }
 }
 
-/// Localise [FireAction.kind] → headline. Public so other surfaces
-/// (Phase 5 AI explain sheet, home insights) share the same copy.
 String fireActionTitle(AppLocalizations l10n, FireAction action) {
   switch (action.kind) {
     case FireActionKind.configurePlan:
@@ -433,9 +381,6 @@ String fireActionTitle(AppLocalizations l10n, FireAction action) {
   }
 }
 
-/// Localise the structured params on a [FireAction] into a short detail
-/// sentence. Returns `null` when there's no param payload — the title
-/// alone is enough.
 String? fireActionDetail(
   AppLocalizations l10n,
   FireAction action,

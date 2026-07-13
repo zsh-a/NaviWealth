@@ -1,33 +1,38 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_action.dart';
-import 'package:naviwealth/features/finance/fire/domain/fire_bucket.dart';
-import 'package:naviwealth/features/finance/fire/domain/fire_bucket_allocator.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
+import 'package:naviwealth/features/finance/fire/domain/fire_projection.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_state.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_stress_test.dart';
-import 'package:naviwealth/features/finance/fire/ui/fire_buckets_card.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_state_hero_card.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_stress_tests_card.dart';
-import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
 import '_golden_setup.dart';
 
-FireState _stubState() {
-  final plan = FirePlan.fromGoal(
-    FireGoal(
-      targetAmount: Decimal.parse('1000000'),
-      monthlyExpenses: Decimal.parse('4000'),
-      monthlySurplus: Decimal.parse('5000'),
-      inflationRate: 0.03,
-    ),
+FireGoal _stubGoal() => FireGoal(
+  targetAmount: Decimal.parse('1000000'),
+  monthlyExpenses: Decimal.parse('4000'),
+  monthlySurplus: Decimal.parse('5000'),
+  inflationRate: 0.03,
+);
+
+FireDashboardView _stubView() {
+  return const FireCalculator().buildView(
+    goal: _stubGoal(),
+    currentNetWorth: Decimal.parse('820000'),
     baseCurrency: 'CNY',
+    start: DateTime.utc(2026, 5, 20),
   );
+}
+
+FireState _stubState() {
+  final plan = FirePlan.fromGoal(_stubGoal(), baseCurrency: 'CNY');
   return FireState(
     plan: plan,
     baseCurrency: 'CNY',
@@ -52,72 +57,9 @@ FireState _stubState() {
         pct: 0.0215,
       ),
     ],
-    buckets: const [],
     stressTests: const [],
     currencyMismatchCount: 0,
     computedAt: DateTime.utc(2026, 5, 20),
-  );
-}
-
-FireBucketAllocation _stubAllocation() {
-  return FireBucketAllocation(
-    buckets: [
-      FireBucketState(
-        role: FireBucketRole.cash,
-        currentValue: Money(Decimal.parse('36000'), 'CNY'),
-        targetValue: Money(Decimal.parse('48000'), 'CNY'),
-        status: FireBucketStatus.underTarget,
-        coverageRatio: 0.75,
-        assetIds: const ['cash-1', 'cash-2'],
-      ),
-      FireBucketState(
-        role: FireBucketRole.defensive,
-        currentValue: Money(Decimal.parse('60000'), 'CNY'),
-        targetValue: Money.zero('CNY'),
-        status: FireBucketStatus.onTrack,
-        coverageRatio: null,
-        assetIds: const ['bond-1'],
-      ),
-      FireBucketState(
-        role: FireBucketRole.growth,
-        currentValue: Money(Decimal.parse('660000'), 'CNY'),
-        targetValue: Money.zero('CNY'),
-        status: FireBucketStatus.onTrack,
-        coverageRatio: null,
-        assetIds: const ['etf-qqq', 'etf-voo'],
-      ),
-      FireBucketState(
-        role: FireBucketRole.riskReserve,
-        currentValue: Money.zero('CNY'),
-        targetValue: Money.zero('CNY'),
-        status: FireBucketStatus.empty,
-        coverageRatio: null,
-        assetIds: const [],
-      ),
-      FireBucketState(
-        role: FireBucketRole.dream,
-        currentValue: Money.zero('CNY'),
-        targetValue: Money.zero('CNY'),
-        status: FireBucketStatus.empty,
-        coverageRatio: null,
-        assetIds: const [],
-      ),
-    ],
-    unmappedHoldings: [
-      FireUnmappedHolding(
-        id: 'house',
-        name: 'Primary residence',
-        value: Money.parse('1500000', 'CNY'),
-        reason: 'category_not_drawable',
-      ),
-    ],
-  );
-}
-
-DashboardSnapshot _stubSnapshot() {
-  return DashboardSnapshot.empty(
-    asOf: DateTime.utc(2026, 5, 20),
-    baseCurrency: 'CNY',
   );
 }
 
@@ -198,22 +140,7 @@ void main() {
       overrides: [
         fireStateProvider.overrideWith((ref) => AsyncValue.data(_stubState())),
       ],
-      child: _wrapCard(const FireStateHeroCard()),
-    );
-  });
-
-  runAllVariants('fire_os_buckets', (tester, variant) async {
-    await pumpAndSnapshotMobile(
-      tester,
-      name: 'fire_os_buckets',
-      variant: variant,
-      overrides: [
-        fireBucketAllocationProvider.overrideWith(
-          (ref) => AsyncValue.data(_stubAllocation()),
-        ),
-        dashboardSnapshotProvider.overrideWith((ref) async => _stubSnapshot()),
-      ],
-      child: _wrapCard(const FireBucketsCard()),
+      child: _wrapCard(FireStateHeroCard(view: _stubView())),
     );
   });
 

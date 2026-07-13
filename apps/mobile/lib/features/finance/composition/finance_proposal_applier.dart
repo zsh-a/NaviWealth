@@ -133,7 +133,6 @@ class FinanceProposalApplier implements ProposalApplier {
         'account_create' => await coreApplier.applyAccountCreate(plan, at),
         'asset_valuation' => await coreApplier.applyAssetValuation(plan, at),
         'fire_plan_update' => await fireApplier.applyPlanUpdate(plan, at),
-        'fire_bucket_rule' => await fireApplier.applyBucketRule(plan, at),
         'options_profile_update' => await optionsApplier.applyProfileUpdate(
           plan,
         ),

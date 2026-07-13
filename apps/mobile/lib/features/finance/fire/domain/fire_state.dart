@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'fire_action.dart';
-import 'fire_bucket.dart';
-import 'fire_bucket_allocator.dart';
 import 'fire_plan.dart';
 import 'fire_stress_test.dart';
 
@@ -16,8 +14,7 @@ enum FireSafetyLevel { unconfigured, safe, cautious, danger }
 
 /// The full FIRE OS read model. `FireState` is *computed* from the local
 /// ledger, holdings, cashflow and [FirePlan] (see
-/// `fire_state_service.dart`) — it is never persisted directly. That
-/// keeps the sync protocol untouched in MVP per roadmap §7.1.
+/// `fire_state_service.dart`) — it is never persisted directly.
 @immutable
 class FireState {
   const FireState({
@@ -33,12 +30,10 @@ class FireState {
     required this.fireEtaMonths,
     required this.safetyLevel,
     required this.suggestedActions,
-    required this.buckets,
     required this.stressTests,
     required this.currencyMismatchCount,
     required this.computedAt,
     this.annualSpendSource = FireAnnualSpendSource.plan,
-    this.unmappedHoldings = const <FireUnmappedHolding>[],
   });
 
   /// The plan inputs this state was computed against. Carrying it on
@@ -55,8 +50,7 @@ class FireState {
   /// withdraw from. Excludes real estate and vehicles.
   final Money investableAssets;
 
-  /// Cash + demand deposits. The cash-bucket coverage divides this by
-  /// the monthly expense.
+  /// Cash + demand deposits. Cash runway divides this by monthly expense.
   final Money liquidAssets;
 
   /// Annualised expense in base currency. Drawn from trailing 12-month
@@ -64,7 +58,7 @@ class FireState {
   /// See [annualSpendSource] for which.
   final Money annualSpend;
 
-  /// `annualSpend / 12` as money — used for the cash-bucket math.
+  /// `annualSpend / 12` as money — used for cash-runway math.
   final Money monthlyExpense;
 
   /// `annualSpend / investableAssets`. `0` when there is no spend at
@@ -88,10 +82,8 @@ class FireState {
   /// these — it explains them and may [propose] changes to the plan.
   final List<FireAction> suggestedActions;
 
-  /// Phase-2-and-up: per-bucket coverage. Empty list in Phase 1.
-  final List<FireBucketState> buckets;
-
-  /// Phase-3-and-up: stress-test verdicts. Empty list in Phase 1.
+  /// Stress-test verdicts. Often empty on the state itself; live stress
+  /// lives on [fireStressTestsProvider].
   final List<FireStressResult> stressTests;
 
   /// Number of holdings whose FX rate could not be resolved into
@@ -100,39 +92,25 @@ class FireState {
   final int currencyMismatchCount;
 
   /// Anchor timestamp — set by the caller (usually `DateTime.now()`).
-  /// Stored on the state for the AI tool output and the diagnostics
-  /// header.
   final DateTime computedAt;
 
-  /// Which source [annualSpend] was sourced from. The AI tool surfaces
-  /// this so the user knows whether the engine inferred from history or
-  /// fell back on their stated plan.
+  /// Which source [annualSpend] was sourced from.
   final FireAnnualSpendSource annualSpendSource;
-
-  /// Assets the allocator couldn't slot into any bucket (real estate,
-  /// vehicles, etc.). The user can override with an explicit
-  /// [FireBucketRule]; until then they sit on the side of the buckets
-  /// view, surfaced to keep the picture honest.
-  final List<FireUnmappedHolding> unmappedHoldings;
 
   bool get isConfigured => plan.isConfigured;
 
   /// Convenience: a withdrawal rate that downstream consumers can safely
-  /// format. `null` when [withdrawalRate] is infinite (spend > 0 but no
-  /// investable assets) so callers don't accidentally render `inf%`.
+  /// format. `null` when [withdrawalRate] is infinite.
   double? get finiteWithdrawalRate =>
       withdrawalRate.isFinite ? withdrawalRate : null;
 
-  /// Convenience: months of runway clamped to a representable integer
-  /// for the gauge. `null` when there is no monthly expense at all (the
-  /// "infinite" case the UI displays as "—").
+  /// Months of runway rounded for display. `null` when infinite.
   int? get cashBucketMonthsRounded {
     if (!cashBucketMonths.isFinite) return null;
     return cashBucketMonths.round();
   }
 
-  /// JSON shape consumed by `get_fire_state` (Phase 5). Stable; do not
-  /// reshape silently — AI prompts pin on these key names.
+  /// JSON shape consumed by `get_fire_state`.
   Map<String, Object?> toJson() {
     double? finite(double v) => v.isFinite ? v : null;
     return <String, Object?>{
@@ -157,44 +135,18 @@ class FireState {
       'suggested_actions': suggestedActions
           .map((a) => a.toJson())
           .toList(growable: false),
-      'buckets': buckets
-          .map(
-            (b) => <String, Object?>{
-              'role': b.role.name,
-              'current_value': b.currentValue.amount.toString(),
-              'target_value': b.targetValue.amount.toString(),
-              'coverage_ratio': b.coverageRatio,
-              'status': b.status.name,
-              'asset_ids': b.assetIds,
-            },
-          )
-          .toList(growable: false),
       'stress_tests': stressTests
           .map((s) => s.toJson())
-          .toList(growable: false),
-      'unmapped_holdings': unmappedHoldings
-          .map(
-            (u) => <String, Object?>{
-              'id': u.id,
-              'name': u.name,
-              'value': u.value.amount.toString(),
-              'currency': u.value.currency,
-              'reason': u.reason,
-            },
-          )
           .toList(growable: false),
     };
   }
 }
 
-/// Which source supplied [FireState.annualSpend]. Surfaced so the user (and
-/// the AI) know whether the engine is reading actuals or planning input.
+/// Which source supplied [FireState.annualSpend].
 enum FireAnnualSpendSource {
-  /// Trailing 12-month cashflow expense, annualised. Preferred when
-  /// there is at least one month of ledger data.
+  /// Trailing 12-month cashflow expense, annualised.
   trailing12m,
 
-  /// `plan.annualExpense` — the user's stated planning input. Used
-  /// during onboarding before any ledger history exists.
+  /// `plan.annualExpense` — stated planning input.
   plan,
 }

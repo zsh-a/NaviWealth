@@ -123,7 +123,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
       AiCapability.chat,
       AiCapability.proposal,
     },
-    preferredReadModels: <String>['fire_state', 'fire_buckets'],
+    preferredReadModels: <String>['fire_state'],
   ),
   IntentDescriptor(
     name: 'simulate_fire_change',
@@ -156,10 +156,6 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
       AiCapability.chat,
       AiCapability.proposal,
     },
-    preferredReadModels: <String>[
-      'fire_state',
-      'fire_buckets',
-      'fire_stress_tests',
-    ],
+    preferredReadModels: <String>['fire_state', 'fire_stress_tests'],
   ),
 ];

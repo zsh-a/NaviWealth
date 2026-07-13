@@ -67,13 +67,6 @@ const List<ProposalKindMeta> kFinanceProposalKinds = [
     previewRows: _firePlanUpdateRows,
   ),
   ProposalKindMeta(
-    kind: 'fire_bucket_rule',
-    icon: FLucideIcons.slidersHorizontal,
-    label: _fireBucketRuleLabel,
-    toolName: 'propose_fire_bucket_rule',
-    previewRows: _fireBucketRuleRows,
-  ),
-  ProposalKindMeta(
     kind: 'options_profile_update',
     icon: FLucideIcons.slidersHorizontal,
     label: _optionsProfileUpdateLabel,
@@ -107,8 +100,6 @@ String _assetValuationLabel(AppLocalizations l) =>
     l.aiChatProposalKindAssetValuation;
 String _firePlanUpdateLabel(AppLocalizations l) =>
     l.aiChatProposalKindFirePlanUpdate;
-String _fireBucketRuleLabel(AppLocalizations l) =>
-    l.aiChatProposalKindFireBucketRule;
 String _optionsProfileUpdateLabel(AppLocalizations l) =>
     l.aiChatProposalKindOptionsProfileUpdate;
 String _optionsJournalEntryLabel(AppLocalizations l) =>
@@ -351,17 +342,6 @@ List<ProposalKindRow> _firePlanUpdateRows(
   Map<String, Object?>? overrides,
 ) {
   return [ProposalKindRow(l10n.aiChatRowNote, plan.summaryZh)];
-}
-
-List<ProposalKindRow> _fireBucketRuleRows(
-  AppLocalizations l10n,
-  ReadyProposalPlan plan,
-  Map<String, Object?>? overrides,
-) {
-  String? r(String k) => _read(plan, overrides, k);
-  return [
-    if (r('role') != null) ProposalKindRow(l10n.aiChatRowNote, plan.summaryZh),
-  ];
 }
 
 List<ProposalKindRow> _optionsProfileUpdateRows(
