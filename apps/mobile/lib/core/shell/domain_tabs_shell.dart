@@ -91,13 +91,10 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   Widget build(BuildContext context) {
     final tabs = widget.spec.tabs;
     final index = widget.shell.currentIndex;
-    // Spatial-ish content cross-fade when switching domain tabs (Phase B/F).
-    final animatedChild = ContentCrossFade(
-      child: KeyedSubtree(
-        key: ValueKey<int>(widget.shell.currentIndex),
-        child: FadeTransition(opacity: _fade, child: widget.shell),
-      ),
-    );
+    // StatefulNavigationShell owns a GlobalKey and must stay mounted exactly
+    // once. Animate its presentation in place instead of cross-fading two
+    // keyed snapshots, which would retain the same shell in both subtrees.
+    final animatedChild = FadeTransition(opacity: _fade, child: widget.shell);
 
     return LayoutBuilder(
       builder: (context, constraints) {
