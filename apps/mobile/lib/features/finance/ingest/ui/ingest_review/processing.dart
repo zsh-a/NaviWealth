@@ -55,7 +55,7 @@ class _ProcessingPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.raised(
       key: ValueKey(state.action),
       padding: EdgeInsets.zero,
       child: ClipRRect(

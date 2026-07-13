@@ -35,6 +35,23 @@ class AppSpacing {
   static const double s64 = 64;
 }
 
+/// Page composition rhythm — prefer these over ad-hoc spacing between modules.
+///
+/// - [section]: major beats (hero → metrics → timeline)
+/// - [module]: related cards in one column
+/// - [row]: dense list rows / chips
+class AppPageRhythm {
+  const AppPageRhythm._();
+
+  static const double section = AppSpacing.s24;
+  static const double module = AppSpacing.s16;
+  static const double row = AppSpacing.s8;
+
+  static const EdgeInsets cardPadding = EdgeInsets.all(AppSpacing.s16);
+  static const EdgeInsets heroPadding = EdgeInsets.all(AppSpacing.s20);
+  static const EdgeInsets densePadding = EdgeInsets.all(AppSpacing.s12);
+}
+
 class AppStroke {
   const AppStroke._();
 
@@ -57,6 +74,13 @@ class AppRadius {
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
+
+  /// Hero cards, large glass docks, and marquee surfaces.
+  static const double xl = 20;
+
+  /// Sheets and full-bleed panels that need a softer outer clip.
+  static const double xxl = 24;
+
   static const double full = 9999;
 }
 
@@ -228,12 +252,49 @@ class AppShadow {
     ),
   ];
 
+  /// Dark raised modules — soft black lift so cards leave the canvas.
+  static const List<BoxShadow> cardDark = [
+    BoxShadow(
+      color: ColorPalette.shadowDarkRaised,
+      blurRadius: 20,
+      offset: Offset(0, 8),
+    ),
+  ];
+
   /// Card hover / pressed state — slightly deeper.
   static const List<BoxShadow> cardHover = [
     BoxShadow(
       color: ColorPalette.shadowNavy08,
       blurRadius: 20,
       offset: Offset(0, 8),
+    ),
+  ];
+
+  /// Hero card — deeper ambient shadow + brand whisper.
+  static const List<BoxShadow> hero = [
+    BoxShadow(
+      color: ColorPalette.shadowNavy08,
+      blurRadius: 28,
+      offset: Offset(0, 10),
+    ),
+    BoxShadow(
+      color: ColorPalette.shadowCyan04,
+      blurRadius: 40,
+      offset: Offset(0, 16),
+    ),
+  ];
+
+  /// Dark hero — depth plus a restrained cyan halo.
+  static const List<BoxShadow> heroDark = [
+    BoxShadow(
+      color: ColorPalette.shadowDarkHero,
+      blurRadius: 32,
+      offset: Offset(0, 12),
+    ),
+    BoxShadow(
+      color: ColorPalette.shadowCyan04,
+      blurRadius: 28,
+      offset: Offset(0, 6),
     ),
   ];
 

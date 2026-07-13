@@ -53,11 +53,11 @@ class FireConfiguredBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const FireStateHeroCard(),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.section),
         const FireBucketsCard(),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         _ProgressHeaderCard(view: view, formatters: formatters),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         _CountdownCard(view: view, formatters: formatters),
       ],
     );
@@ -65,17 +65,17 @@ class FireConfiguredBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const FireStressTestsCard(),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         const FireSimulationsCard(),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         _ProjectionCard(view: view),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         _ScenariosTable(view: view),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         _SafeWithdrawalCard(view: view, formatters: formatters),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         _SensitivityCard(view: view),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         const FireReviewCard(),
       ],
     );
@@ -120,12 +120,12 @@ class _ProgressHeaderCard extends StatelessWidget {
     final target = view.goal.targetAmount.toDouble();
     final gap = target - current;
 
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s20),
+    return SoftCard.raised(
+      padding: AppPageRhythm.heroPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.fireProgressTitle, style: context.theme.typography.body.md),
+          Text(l10n.fireProgressTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s12),
           Center(
             child: FireProgressGauge(
@@ -134,13 +134,13 @@ class _ProgressHeaderCard extends StatelessWidget {
               caption: l10n.fireProgressGaugeCaption,
             ),
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppPageRhythm.module),
           _LabelValueRow(
             label: l10n.fireProgressCurrent,
             child: AnimatedMoneyText(
               amount: current,
               currencyCode: view.baseCurrency,
-              style: context.theme.typography.body.sm,
+              style: TypographyTokens.numericBodyStrong,
             ),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -216,7 +216,7 @@ class _CountdownCard extends StatelessWidget {
             ],
           );
 
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,7 +249,7 @@ class _ProjectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,7 +316,7 @@ class _ScenariosTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       child: Column(
         children: [
           Padding(
@@ -388,7 +388,7 @@ class _SafeWithdrawalCard extends StatelessWidget {
             ),
           );
 
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,7 +440,7 @@ class _SensitivityCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final s = view.sensitivity;
 
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

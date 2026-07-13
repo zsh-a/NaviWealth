@@ -34,7 +34,7 @@ class MonthlyExpenseSettingsPage extends ConsumerWidget {
         children: [
           SettingsHintText(l10n.settingsMonthlyExpenseHint),
           const SizedBox(height: AppSpacing.s12),
-          const SoftCard(
+          const SoftCard.raised(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: MonthlyExpenseSettings(),
           ),

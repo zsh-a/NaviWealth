@@ -237,7 +237,7 @@ class _EngineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.flat(
       onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(

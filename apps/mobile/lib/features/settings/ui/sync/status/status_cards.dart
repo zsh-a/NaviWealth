@@ -17,7 +17,7 @@ class _HeroCard extends StatelessWidget {
     final palette = _palette(context, event.status);
     final syncing = event.status == SyncStatus.syncing;
 
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s20,
         AppSpacing.s20,
@@ -157,7 +157,7 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s12,
         AppSpacing.s12,
@@ -196,7 +196,7 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final semantic = SemanticColors.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +231,7 @@ class _ConflictCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final semantic = SemanticColors.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

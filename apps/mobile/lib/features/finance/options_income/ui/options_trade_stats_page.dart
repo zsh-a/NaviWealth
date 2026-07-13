@@ -95,7 +95,7 @@ class _OverviewCard extends StatelessWidget {
       locale: Localizations.localeOf(context),
       baseCurrency: primary?.currency ?? 'CNY',
     );
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +178,7 @@ class _StrategyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.lg,
       child: Row(
@@ -222,7 +222,7 @@ class _SymbolTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.lg,
       child: Row(

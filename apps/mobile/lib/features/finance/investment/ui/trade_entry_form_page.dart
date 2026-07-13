@@ -584,7 +584,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard(
+        SoftCard.flat(
           padding: EdgeInsets.zero,
           child: FTappable(
             onPress: () =>
@@ -697,7 +697,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard(
+        SoftCard.flat(
           padding: EdgeInsets.zero,
           child: FTappable(
             key: const Key('trade-entry-settlement-summary'),

@@ -138,7 +138,7 @@ class _AccountDetailBody extends ConsumerWidget {
             ),
           )
         else
-          SoftCard(
+          SoftCard.raised(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
               child: Column(
@@ -171,7 +171,7 @@ class _BalanceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
@@ -231,7 +231,7 @@ class _FactsCard extends StatelessWidget {
     final institution = account.institution?.trim();
     final number = account.accountNumber?.trim();
     final note = account.note?.trim();
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(

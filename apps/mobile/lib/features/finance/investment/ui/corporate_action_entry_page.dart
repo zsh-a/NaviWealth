@@ -324,7 +324,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             ..._fieldsForType(l10n),
             if (_previewError != null) ...[
               const SizedBox(height: AppSpacing.s16),
-              SoftCard(
+              SoftCard.raised(
                 padding: const EdgeInsets.all(AppSpacing.s12),
                 child: Text(
                   _previewError!,

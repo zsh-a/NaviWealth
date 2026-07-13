@@ -13,7 +13,7 @@ class _BundleCard extends ConsumerWidget {
     final semantic = SemanticColors.of(context);
     final colors = context.theme.colors;
 
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

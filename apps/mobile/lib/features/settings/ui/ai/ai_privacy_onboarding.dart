@@ -203,7 +203,7 @@ class _OnboardingChoiceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = mode == selected;
-    return SoftCard(
+    return SoftCard.flat(
       onPress: () => onSelect(mode),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,

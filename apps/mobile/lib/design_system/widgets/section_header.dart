@@ -17,9 +17,9 @@ class SectionHeader extends StatelessWidget {
     this.trailing,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.s16,
-      AppSpacing.s20,
+      AppSpacing.s24,
       AppSpacing.s16,
-      AppSpacing.s8,
+      AppSpacing.s10,
     ),
   });
 
@@ -36,52 +36,31 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final foreground = titleColor ?? colors.foreground;
+    final titleStyle = TypographyTokens.sectionHeaderTitle(foreground);
+    final subtitleStyle = TypographyTokens.sectionHeaderSubtitle(
+      colors.mutedForeground,
+    );
+    final titleBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: titleStyle),
+        if (subtitle != null) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Text(subtitle!, style: subtitleStyle),
+        ],
+      ],
+    );
     return Padding(
       padding: padding,
       child: trailing != null
           ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TypographyTokens.sectionHeaderTitle(foreground),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: AppSpacing.s4),
-                        Text(
-                          subtitle!,
-                          style: TypographyTokens.sectionHeaderSubtitle(
-                            colors.mutedForeground,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                Expanded(child: titleBlock),
                 trailing!,
               ],
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TypographyTokens.sectionHeaderTitle(foreground),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    subtitle!,
-                    style: TypographyTokens.sectionHeaderSubtitle(
-                      colors.mutedForeground,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+          : titleBlock,
     );
   }
 }

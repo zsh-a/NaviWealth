@@ -24,8 +24,8 @@ class _HeroAmountCard extends StatelessWidget {
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
     final tint = _tintForKind(classification.kind, colors, semantic);
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s20),
+    return SoftCard.hero(
+      padding: AppPageRhythm.heroPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -64,7 +64,7 @@ class _HeroAmountCard extends StatelessWidget {
               amount: headline.units,
               unit: headline.unit,
               formatters: formatters,
-              style: TypographyTokens.numericDisplay.copyWith(height: 1.05),
+              style: TypographyTokens.displayLarge.copyWith(height: 1.05),
             ),
           const SizedBox(height: AppSpacing.s12),
           Text(title, style: context.titleLabelStyle.copyWith(height: 1.22)),

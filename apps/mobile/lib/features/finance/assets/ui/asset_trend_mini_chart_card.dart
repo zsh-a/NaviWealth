@@ -22,7 +22,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final marketKey = assetDetailHistoryKey(asset);
     if (marketKey == null) {
-      return SoftCard(
+      return SoftCard.raised(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
@@ -43,7 +43,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
     final historyAsync = ref.watch(assetPriceHistoryProvider(marketKey));
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
 
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(

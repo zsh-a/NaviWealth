@@ -61,7 +61,7 @@ class _AlertList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.s12),
-        SoftCard(
+        SoftCard.raised(
           child: Column(
             children: [
               for (var i = 0; i < alerts.length; i++) ...[

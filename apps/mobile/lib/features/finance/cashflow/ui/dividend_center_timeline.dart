@@ -22,7 +22,7 @@ class _TimelineSectionState extends ConsumerState<_TimelineSection> {
         ? widget.snapshot.months
         : widget.snapshot.months.take(_initialMonthCount);
     final canToggle = widget.snapshot.months.length > _initialMonthCount;
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

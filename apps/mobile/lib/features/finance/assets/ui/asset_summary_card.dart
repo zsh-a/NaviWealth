@@ -27,67 +27,63 @@ class AssetSummaryCard extends ConsumerWidget {
         latest == null || previous == null || previous.close.sign == 0
         ? null
         : ((latest.close - previous.close) / previous.close).toDouble() * 100;
-    return SoftCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return SoftCard.hero(
+      padding: AppPageRhythm.heroPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  asset.symbol,
+                  style: context.displayTitleStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              AppBadge(
+                label: asset.market ?? l10n.assetDetailUnknown,
+                size: AppBadgeSize.compact,
+              ),
+              const SizedBox(width: AppSpacing.s6),
+              AppBadge(label: asset.currency, size: AppBadgeSize.compact),
+            ],
+          ),
+          if (asset.name != null) ...[
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              asset.name!,
+              style: context.bodyCaptionStyle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.s16),
+          Text(l10n.assetDetailLastClose, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s4),
+          if (history?.isLoading == true && latest == null)
+            const SkeletonBox(width: 160, height: 30, radius: 6)
+          else
             Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: Text(
-                    asset.symbol,
-                    style: context.displayTitleStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: AnimatedMoneyText(
+                    amount: latest?.close.toDouble(),
+                    currencyCode: asset.currency,
+                    fractionDigits: assetDetailPriceFractionDigits(asset.type),
+                    style: TypographyTokens.numericTitleStrong,
                   ),
                 ),
-                AppBadge(
-                  label: asset.market ?? l10n.assetDetailUnknown,
-                  size: AppBadgeSize.compact,
-                ),
-                const SizedBox(width: AppSpacing.s6),
-                AppBadge(label: asset.currency, size: AppBadgeSize.compact),
+                DeltaChip(value: changePercent, fractionDigits: 2),
               ],
             ),
-            if (asset.name != null) ...[
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                asset.name!,
-                style: context.bodyCaptionStyle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: AppSpacing.s16),
-            Text(l10n.assetDetailLastClose, style: context.captionStyle),
-            const SizedBox(height: AppSpacing.s4),
-            if (history?.isLoading == true && latest == null)
-              const SkeletonBox(width: 160, height: 30, radius: 6)
-            else
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: AnimatedMoneyText(
-                      amount: latest?.close.toDouble(),
-                      currencyCode: asset.currency,
-                      fractionDigits: assetDetailPriceFractionDigits(
-                        asset.type,
-                      ),
-                      style: TypographyTokens.numericTitleStrong,
-                    ),
-                  ),
-                  DeltaChip(value: changePercent, fractionDigits: 2),
-                ],
-              ),
-            if (history?.value?.isStale == true) ...[
-              const SizedBox(height: AppSpacing.s6),
-              Text(l10n.assetDetailQuoteStale, style: context.captionStyle),
-            ],
+          if (history?.value?.isStale == true) ...[
+            const SizedBox(height: AppSpacing.s6),
+            Text(l10n.assetDetailQuoteStale, style: context.captionStyle),
           ],
-        ),
+        ],
       ),
     );
   }

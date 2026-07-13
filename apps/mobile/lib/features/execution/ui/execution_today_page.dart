@@ -103,7 +103,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
               selectedFilter: _filter,
               onFilterChanged: (filter) => setState(() => _filter = filter),
             ),
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppPageRhythm.section),
             if (visibleActions.isEmpty)
               ExecutionStateView(
                 icon: _filter == ExecutionTodayFilter.focus
@@ -129,7 +129,6 @@ class _TodayListState extends ConsumerState<_TodayList> {
                 count: visibleActions.length,
                 icon: executionTodayFilterIcon(_filter),
               ),
-              const SizedBox(height: AppSpacing.s8),
               for (final action in visibleActions) ...[
                 ExecutionActionCardController(
                   action: action,
@@ -155,7 +154,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
                   doneProgressNote: l10n.executionProgressDoneDefault,
                   droppedProgressNote: l10n.executionProgressDroppedDefault,
                 ),
-                const SizedBox(height: AppSpacing.s8),
+                const SizedBox(height: AppPageRhythm.row),
               ],
             ],
           ],

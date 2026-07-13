@@ -11,7 +11,7 @@ class _OpportunityCard extends StatelessWidget {
     final colors = context.theme.colors;
     final metrics = opportunity.metrics;
     final contract = opportunity.contract;
-    return SoftCard(
+    return SoftCard.flat(
       onPress: () => showOpportunityDetailSheet(context, opportunity),
       borderRadius: AppRadius.lg,
       child: Padding(
@@ -139,7 +139,7 @@ class _ScanEmptyResultCard extends StatelessWidget {
     final body = universeEmpty
         ? l10n.incomePlannerRefreshUniverseEmpty
         : l10n.incomePlannerOpportunitiesAllRejected;
-    return SoftCard(
+    return SoftCard.flat(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(

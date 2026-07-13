@@ -39,7 +39,7 @@ class _PortfolioGroupDetail extends StatelessWidget {
       key: const ValueKey<String>('portfolio-group-detail'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard(
+        SoftCard.raised(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s14),
             child: Row(

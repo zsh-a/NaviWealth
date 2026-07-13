@@ -41,7 +41,12 @@ void main() {
         );
         expect(
           theme.colors.muted,
-          isDark ? ColorPalette.navyGlass : ColorPalette.surfaceOverlay,
+          isDark
+              ? Color.alphaBlend(
+                  ColorPalette.navy50.withValues(alpha: AppOpacity.whisper),
+                  ColorPalette.navyGlass,
+                )
+              : ColorPalette.surfaceOverlay,
         );
         for (final typeface in <FTypeface>[
           theme.typography.display,

@@ -22,7 +22,7 @@ class BenchmarkComparisonCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final resultAsync = ref.watch(benchmarkComparisonResultProvider);
 
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(

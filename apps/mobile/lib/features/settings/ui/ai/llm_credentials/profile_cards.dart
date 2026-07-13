@@ -13,7 +13,7 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
       _hostOf(p),
       if (p.model != null && p.model!.isNotEmpty) p.model!,
     ].join(' \u00b7 ');
-    final card = SoftCard(
+    final card = SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
         AppSpacing.s12,
@@ -88,7 +88,7 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
 
   Widget _unsupportedCard(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
         AppSpacing.s14,

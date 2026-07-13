@@ -580,7 +580,7 @@ class _NoAccountsHint extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final semantic = SemanticColors.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s14,
         AppSpacing.s14,

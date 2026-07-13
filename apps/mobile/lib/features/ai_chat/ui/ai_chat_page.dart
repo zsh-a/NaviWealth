@@ -392,7 +392,7 @@ class _SuggestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.raised(
       child: FTappable(
         onPress: onTap,
         child: Padding(

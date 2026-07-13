@@ -110,7 +110,7 @@ mixin _AiLlmCredentialsRuntimeMixin on _AiLlmCredentialsPageStateBase {
     final proposal = _runtimeResult == null
         ? null
         : agentRuntimeTerminalReadyProposal(_runtimeResult!.step);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
         AppSpacing.s14,

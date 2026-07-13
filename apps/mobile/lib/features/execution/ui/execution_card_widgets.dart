@@ -40,28 +40,27 @@ class ExecutionSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Row(
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
-          const SizedBox(width: AppSpacing.s6),
-        ],
-        Expanded(
-          child: Text(
-            title,
-            style: context.captionLabelStyle.copyWith(
-              color: colors.mutedForeground,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    return SectionHeader(
+      title: title,
+      padding: const EdgeInsets.only(
+        left: AppSpacing.s4,
+        top: AppSpacing.s4,
+        bottom: AppSpacing.s10,
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
+            const SizedBox(width: AppSpacing.s6),
+          ],
+          AppBadge(
+            label: count.toString(),
+            size: AppBadgeSize.compact,
+            minWidth: AppSpacing.s24,
           ),
-        ),
-        AppBadge(
-          label: count.toString(),
-          size: AppBadgeSize.compact,
-          minWidth: AppSpacing.s24,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

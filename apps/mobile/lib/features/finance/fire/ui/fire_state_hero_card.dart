@@ -75,8 +75,7 @@ class _HeroBody extends ConsumerWidget {
     );
     final safetyLabel = _safetyLabel(l10n, state.safetyLevel);
 
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s20),
+    return SoftCard.hero(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -86,10 +85,7 @@ class _HeroBody extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.fireOsHeroTitle,
-                      style: context.theme.typography.body.md,
-                    ),
+                    Text(l10n.fireOsHeroTitle, style: context.mutedLabelStyle),
                     const SizedBox(height: AppSpacing.s4),
                     Text(l10n.fireOsHeroSubtitle, style: context.captionStyle),
                   ],
@@ -103,12 +99,12 @@ class _HeroBody extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppPageRhythm.module),
           _MetricsGrid(state: state, formatters: formatters, l10n: l10n),
-          const SizedBox(height: AppSpacing.s12),
+          const SizedBox(height: AppPageRhythm.module),
           _SuggestedActions(state: state, formatters: formatters, l10n: l10n),
           if (onExplain != null) ...[
-            const SizedBox(height: AppSpacing.s12),
+            const SizedBox(height: AppPageRhythm.row),
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: FButton(
@@ -361,7 +357,7 @@ class _HeroSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,7 +382,7 @@ class _HeroErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [

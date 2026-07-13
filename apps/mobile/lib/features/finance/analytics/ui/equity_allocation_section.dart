@@ -116,7 +116,7 @@ class EquityAllocationContent extends ConsumerWidget {
             compact: true,
           ),
         if (view.unclassifiedCount > 0) const SizedBox(height: AppSpacing.s12),
-        SoftCard(
+        SoftCard.raised(
           child: Column(
             children: [
               for (final bucket in view.buckets)

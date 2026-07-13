@@ -34,7 +34,7 @@ class ExecutionCommitmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

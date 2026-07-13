@@ -125,7 +125,7 @@ class _MonthHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +171,7 @@ class _BudgetTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final money = Money(row.amount, row.currency);
     final remaining = status?.remaining;
-    return SoftCard(
+    return SoftCard.flat(
       child: FTappable(
         onPress: onEdit,
         child: Padding(

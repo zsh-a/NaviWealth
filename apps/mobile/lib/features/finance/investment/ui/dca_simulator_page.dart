@@ -179,7 +179,7 @@ class _DcaControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Form(
         key: formKey,
@@ -324,7 +324,7 @@ class _DcaResults extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard(
+        SoftCard.flat(
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

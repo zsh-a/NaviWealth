@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/color_palette.dart';
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 
@@ -25,7 +26,13 @@ FThemeData buildAppForuiTheme({
     mutedForeground: isDark ? ColorPalette.navy300 : ColorPalette.navy500,
     card: isDark ? ColorPalette.navyGlass : ColorPalette.surface,
     border: isDark ? ColorPalette.navy800 : ColorPalette.surfaceHairline,
-    muted: isDark ? ColorPalette.navyGlass : ColorPalette.surfaceOverlay,
+    // Muted fills stay cooler than pure slate so SoftCard modules lift cleanly.
+    muted: isDark
+        ? Color.alphaBlend(
+            ColorPalette.navy50.withValues(alpha: AppOpacity.whisper),
+            ColorPalette.navyGlass,
+          )
+        : ColorPalette.surfaceOverlay,
   );
   final inheritedTypography = FTypography.inherit(colors: colors, touch: touch);
   final typography = FTypography(

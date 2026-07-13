@@ -129,7 +129,7 @@ class _LogTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-      child: SoftCard(
+      child: SoftCard.flat(
         padding: const EdgeInsets.all(AppSpacing.s8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -63,12 +63,10 @@ class _PassiveIncomeContent extends ConsumerWidget {
         ? AccentColors.series
         : colors.destructive;
 
-    return SoftCard(
+    return SoftCard.raised(
       onPress: () => context.push(FinanceRoutes.cashflowDividends),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.lg,
+      padding: AppPageRhythm.cardPadding,
       borderless: true,
-      level: SoftCardLevel.raised,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 140),
         child: Column(
@@ -86,7 +84,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
                       code: metrics.totalTtm.currency,
                     )
                   : l10n.homeCashFlowEmptyValue,
-              style: context.strongHeadlineStyle,
+              style: TypographyTokens.numericTitleStrong,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

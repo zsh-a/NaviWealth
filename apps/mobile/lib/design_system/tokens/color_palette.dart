@@ -56,13 +56,13 @@ class ColorPalette {
   static const Color neutral1000 = Color(0xFF000000);
 
   // ── Light surfaces ──────────────────────────────────────────────────────
-  // Four deliberate elevation roles. Components should use these instead of
-  // inventing near-identical cool neutrals for every surface type.
-  static const Color surfaceBackground = Color(0xFFF7FAFA);
+  // Cool canvas + pure white modules. SoftCard differentiates levels with
+  // shadow / hero wash rather than stacking near-identical greys.
+  static const Color surfaceBackground = Color(0xFFF3F6F7);
   static const Color surface = neutral0;
-  static const Color surfaceRaised = Color(0xFFF1F5F5);
-  static const Color surfaceOverlay = Color(0xFFEAF4F5);
-  static const Color surfaceHairline = Color(0xFFDCE7E9);
+  static const Color surfaceRaised = neutral0;
+  static const Color surfaceOverlay = Color(0xFFEEF6F7);
+  static const Color surfaceHairline = Color(0xFFD5E0E2);
 
   // ── Profit / gain (emerald) ─────────────────────────────────────────────
   // Migrated from legacy "standard green" #16A34A to Tailwind emerald
@@ -112,6 +112,8 @@ class ColorPalette {
 
   // ── Overlay / scrim ─────────────────────────────────────────────────────
   static const Color shadowMedium = Color(0x33000000);
+  static const Color shadowDarkRaised = Color(0x40000000);
+  static const Color shadowDarkHero = Color(0x66000000);
   static const Color scrimLight = Color(0x66002A38);
   static const Color scrimDark = Color(0x99002A38);
   static const Color shadowNavy04 = Color(0x0A002A38);

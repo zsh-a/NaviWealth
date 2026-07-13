@@ -433,7 +433,7 @@ class _SharedDataCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -552,7 +552,7 @@ class _GlobalResetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -626,7 +626,7 @@ class _DomainDataCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
 
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

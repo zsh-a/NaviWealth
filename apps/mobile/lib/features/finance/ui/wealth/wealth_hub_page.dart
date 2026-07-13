@@ -156,10 +156,8 @@ class _NetWorthHero extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final colors = context.theme.colors;
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s20),
-      borderRadius: AppRadius.lg,
-      level: SoftCardLevel.hero,
+    return SoftCard.hero(
+      padding: AppPageRhythm.heroPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -191,9 +189,9 @@ class _NetWorthHero extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s10),
+          const SizedBox(height: AppSpacing.s12),
           MediaQuery.withClampedTextScaling(
-            maxScaleFactor: 1.3,
+            maxScaleFactor: 1.25,
             child: Semantics(
               label:
                   '${l10n.homeNetWorthTitle} '
@@ -204,7 +202,7 @@ class _NetWorthHero extends ConsumerWidget {
                 child: AnimatedMoneyText(
                   amount: netWorth.toDouble(),
                   currencyCode: baseCurrency,
-                  style: TypographyTokens.numericDisplay,
+                  style: TypographyTokens.displayLarge,
                   showSign: netWorth.toDouble() < 0,
                 ),
               ),
@@ -299,7 +297,7 @@ class _WealthDestinations extends StatelessWidget {
         path: FinanceRoutes.wealthLiabilities,
       ),
     ];
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
         child: Column(

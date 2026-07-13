@@ -4,22 +4,20 @@ part of '_widgets.dart';
 ///
 /// Use [KnowledgeSection.item] for dense list rows and
 /// [KnowledgeSection.group] for section / summary cards — the named
-/// constructors encode the s12 / s16 padding rule documented above.
-/// The raw constructor exists for the rare case where a custom
-/// padding really is needed.
+/// constructors encode the dense / raised padding rule.
 class KnowledgeSection extends StatelessWidget {
   const KnowledgeSection({
     super.key,
     this.title,
     this.titleStyle,
     required this.children,
-    this.padding = const EdgeInsets.all(AppSpacing.s16),
+    this.padding = AppPageRhythm.cardPadding,
     this.trailing,
     this.onPress,
+    this.level = SoftCardLevel.raised,
   });
 
-  /// Dense list-item card: s12 padding, no header by convention
-  /// (callers usually inline their own row layout).
+  /// Dense list-item card: flat, borderless, s12 padding.
   const KnowledgeSection.item({
     Key? key,
     String? title,
@@ -30,35 +28,37 @@ class KnowledgeSection extends StatelessWidget {
          key: key,
          title: title,
          children: children,
-         padding: const EdgeInsets.all(AppSpacing.s12),
+         padding: AppPageRhythm.densePadding,
          trailing: trailing,
          onPress: onPress,
+         level: SoftCardLevel.flat,
        );
 
-  /// Grouped section card: s16 padding, expects a title.
+  /// Grouped section card: raised module, expects a title.
   const KnowledgeSection.group({
     Key? key,
     required String title,
     required List<Widget> children,
     Widget? trailing,
     VoidCallback? onPress,
+    SoftCardLevel level = SoftCardLevel.raised,
   }) : this(
          key: key,
          title: title,
          children: children,
-         padding: const EdgeInsets.all(AppSpacing.s16),
+         padding: AppPageRhythm.cardPadding,
          trailing: trailing,
          onPress: onPress,
+         level: level,
        );
 
   final String? title;
   final TextStyle? titleStyle;
   final List<Widget> children;
   final EdgeInsets padding;
-
-  /// Optional trailing widget in the title row (e.g. a status badge).
   final Widget? trailing;
   final VoidCallback? onPress;
+  final SoftCardLevel level;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +68,8 @@ class KnowledgeSection extends StatelessWidget {
       padding: padding,
       trailing: trailing,
       onPress: onPress,
+      level: level,
+      borderless: level == SoftCardLevel.flat,
       children: children,
     );
   }
@@ -84,13 +86,13 @@ class KnowledgePromptSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      borderRadius: AppRadius.sm,
+    return SoftCard.raised(
+      borderless: true,
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s10,
-        AppSpacing.s6,
-        AppSpacing.s6,
-        AppSpacing.s6,
+        AppSpacing.s12,
+        AppSpacing.s8,
+        AppSpacing.s8,
+        AppSpacing.s8,
       ),
       child: child,
     );
@@ -98,10 +100,6 @@ class KnowledgePromptSurface extends StatelessWidget {
 }
 
 /// Pill badge for status labels (Decision lifecycle, Experiment state, …).
-///
-/// Replaces the two byte-identical `_StatusBadge` / `_Badge` definitions
-/// that lived in `knowledge_library_page.dart` and
-/// `knowledge_decision_detail_page.dart`.
 class KnowledgeStatusLabel extends StatelessWidget {
   const KnowledgeStatusLabel({super.key, required this.label});
   final String label;
@@ -113,10 +111,6 @@ class KnowledgeStatusLabel extends StatelessWidget {
 }
 
 /// Shared detail-page hero for KnowledgeOS objects.
-///
-/// Keeps object identity consistent across Decision and non-Decision
-/// detail pages: type label, type icon, title, status, and last update
-/// timestamp are always in the same place.
 class KnowledgeObjectHeader extends StatelessWidget {
   const KnowledgeObjectHeader({
     super.key,
@@ -138,8 +132,10 @@ class KnowledgeObjectHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return KnowledgeSection.group(
+    return KnowledgeSection(
       title: typeLabel,
+      level: SoftCardLevel.hero,
+      padding: AppPageRhythm.heroPadding,
       trailing: status == null ? null : KnowledgeStatusLabel(label: status!),
       children: [
         Row(
@@ -160,11 +156,11 @@ class KnowledgeObjectHeader extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: context.strongTitleStyle,
+                    style: context.displayTitleStyle,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSpacing.s4),
+                  const SizedBox(height: AppSpacing.s6),
                   Text(
                     l10n.knowledgeDetailUpdatedAt(
                       knowledgeDate(context, updatedAt, long: true),

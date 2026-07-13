@@ -60,7 +60,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                       children: [
                         const HomeGreetingHeader(),
                         _NetWorthHeader(snapshot: snapshot),
-                        const SizedBox(height: AppSpacing.s12),
+                        const SizedBox(height: AppPageRhythm.module),
                         HomeQuickActions(
                           mode: snapshot.isEmpty
                               ? HomeQuickActionMode.onboarding
@@ -72,7 +72,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         CashflowCalendarCard(),
-                        SizedBox(height: AppSpacing.s20),
+                        SizedBox(height: AppPageRhythm.section),
                         ActivityTimelinePreview(),
                       ],
                     ),
@@ -80,6 +80,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         FinanceAgentResultsPanel(showPlaceholderStates: false),
+                        SizedBox(height: AppPageRhythm.section),
                         PassiveIncomeCard(),
                       ],
                     ),
@@ -93,18 +94,18 @@ class _DashboardBodyContent extends ConsumerWidget {
                       children: [
                         const HomeGreetingHeader(),
                         _NetWorthHeader(snapshot: snapshot),
-                        const SizedBox(height: AppSpacing.s12),
+                        const SizedBox(height: AppPageRhythm.module),
                         HomeQuickActions(
                           mode: snapshot.isEmpty
                               ? HomeQuickActionMode.onboarding
                               : HomeQuickActionMode.active,
                         ),
-                        const SizedBox(height: AppSpacing.s12),
+                        const SizedBox(height: AppPageRhythm.section),
                         const FinanceAgentResultsPanel(
                           showPlaceholderStates: false,
                         ),
                         const CashflowCalendarCard(),
-                        const SizedBox(height: AppSpacing.s20),
+                        const SizedBox(height: AppPageRhythm.section),
                         const ActivityTimelinePreview(),
                       ],
                     ),

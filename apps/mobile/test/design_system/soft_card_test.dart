@@ -59,7 +59,7 @@ void main() {
     expect(_decoration(tester).border, isNotNull);
   });
 
-  testWidgets('dark raised cards use tonal elevation without shadow', (
+  testWidgets('dark raised cards combine tonal lift with soft shadow', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -68,7 +68,28 @@ void main() {
       ),
     );
 
-    expect(_decoration(tester).boxShadow, isNull);
+    expect(_decoration(tester).boxShadow, isNotNull);
+    expect(_decoration(tester).boxShadow, isNotEmpty);
     expect(_decoration(tester).border, isNotNull);
+  });
+
+  testWidgets('hero cards resolve a larger corner radius by default', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(const SoftCard(level: SoftCardLevel.hero, child: Text('hero'))),
+    );
+
+    final radius = _decoration(tester).borderRadius as BorderRadius?;
+    expect(radius?.topLeft.x, AppRadius.xl);
+  });
+
+  testWidgets('hero cards use a brand-wash gradient', (tester) async {
+    await tester.pumpWidget(
+      _wrap(const SoftCard(level: SoftCardLevel.hero, child: Text('hero'))),
+    );
+
+    expect(_decoration(tester).gradient, isNotNull);
+    expect(_decoration(tester).boxShadow, isNotEmpty);
   });
 }

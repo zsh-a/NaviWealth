@@ -11,7 +11,7 @@ class AppIconTile extends StatelessWidget {
     super.key,
     required this.icon,
     required this.color,
-    this.size = 30,
+    this.size = 28,
     this.iconSize = AppIconSizes.sm,
     this.radius = AppRadius.sm,
     this.backgroundOpacity = AppOpacity.subtle,

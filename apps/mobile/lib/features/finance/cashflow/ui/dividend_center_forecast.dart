@@ -8,7 +8,7 @@ class _ForecastCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final forecast = ref.watch(dividendForecast12mProvider);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [

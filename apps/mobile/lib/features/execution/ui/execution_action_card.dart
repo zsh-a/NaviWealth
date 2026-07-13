@@ -46,9 +46,8 @@ class ExecutionActionCard extends StatelessWidget {
         action.status == ExecutionActionStatus.todo ||
         action.status == ExecutionActionStatus.doing;
     final canDone = action.isOpen;
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s14),
-      level: SoftCardLevel.raised,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -317,7 +317,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
             ),
             const SizedBox(height: AppSpacing.s8),
           ],
-          SoftCard(
+          SoftCard.raised(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.s4),
               child: Row(

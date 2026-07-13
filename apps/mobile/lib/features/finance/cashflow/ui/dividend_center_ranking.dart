@@ -10,7 +10,7 @@ class _RankingSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final rows = snapshot.ranking.take(8).toList();
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

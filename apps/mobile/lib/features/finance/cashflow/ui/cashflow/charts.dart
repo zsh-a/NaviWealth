@@ -25,7 +25,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
       showGrid: true,
       locale: locale,
     );
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -154,7 +154,7 @@ class _CategoryPanelState extends State<_CategoryPanel> {
           ),
         )
         .toList();
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

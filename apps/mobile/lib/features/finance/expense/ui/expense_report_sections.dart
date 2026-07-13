@@ -168,7 +168,7 @@ class ExpenseCategoryListCard extends StatelessWidget {
     if (report.byCategory.isEmpty) {
       return const SizedBox.shrink();
     }
-    return SoftCard(
+    return SoftCard.flat(
       borderless: true,
       tinted: false,
       child: Padding(

@@ -18,14 +18,10 @@ bool useCompactDensity(TargetPlatform platform, bool isWeb) {
   };
 }
 
-/// Minimal Material [ThemeData] that mirrors the active forui slate palette
-/// so any residual Material widget in the tree (charts, etc.) renders in
-/// step with forui visuals.
+/// Material [ThemeData] aligned with [buildAppForuiTheme].
 ///
-/// Forui owns every component visual via `FTheme(FThemes.slate.*)`. This
-/// `ThemeData` exists purely to keep `Theme.of(context).colorScheme` /
-/// `textTheme` answering with slate-aligned values for the long tail of
-/// Material call sites still being migrated.
+/// Forui owns component visuals. This theme keeps Material charts, overlays,
+/// and residual widgets on the same cool-canvas + cyan brand language.
 class AppTheme {
   const AppTheme._();
 
@@ -38,13 +34,8 @@ class AppTheme {
   static ThemeData _build(Brightness brightness, bool compact) {
     final isDark = brightness == Brightness.dark;
     final f = isDark ? FColors.slateDark : FColors.slateLight;
-    // Override Slate's slate-grey primary with the cyan brand accent so the
-    // Material side of the tree (residual MaterialButton / Switch / etc.)
-    // reads the same brand interaction color as the Forui side. See
-    // buildAppForuiTheme for the matching Forui palette overrides.
     final accent = AccentColors.primary(brightness);
     final onAccent = AccentColors.onPrimary(brightness);
-    // Keep residual Material surfaces aligned with buildAppForuiTheme.
     final pageBackground = isDark
         ? ColorPalette.navy950
         : ColorPalette.surfaceBackground;
@@ -62,23 +53,29 @@ class AppTheme {
       error: f.destructive,
       onError: f.destructiveForeground,
       surface: pageBackground,
-      onSurface: f.foreground,
+      onSurface: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
       surfaceContainerLowest: pageBackground,
-      surfaceContainerLow: f.card,
-      surfaceContainer: f.muted,
+      surfaceContainerLow: isDark
+          ? ColorPalette.navyGlass
+          : ColorPalette.surface,
+      surfaceContainer: isDark
+          ? ColorPalette.navyGlass
+          : ColorPalette.surfaceOverlay,
       surfaceContainerHigh: f.muted,
       surfaceContainerHighest: f.secondary,
       onSurfaceVariant: mutedForeground,
-      outline: f.border,
-      outlineVariant: f.border,
-      inverseSurface: f.foreground,
-      onInverseSurface: f.background,
+      outline: isDark ? ColorPalette.navy800 : ColorPalette.surfaceHairline,
+      outlineVariant: isDark
+          ? ColorPalette.navy800
+          : ColorPalette.surfaceHairline,
+      inverseSurface: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
+      onInverseSurface: pageBackground,
       shadow: ColorPalette.shadowMedium,
       scrim: f.barrier,
     );
     final textTheme = TypographyTokens.textTheme().apply(
-      bodyColor: f.foreground,
-      displayColor: f.foreground,
+      bodyColor: scheme.onSurface,
+      displayColor: scheme.onSurface,
     );
     return ThemeData(
       useMaterial3: true,

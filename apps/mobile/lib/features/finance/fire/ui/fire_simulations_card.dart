@@ -41,7 +41,7 @@ class _FireSimulationsCardState extends ConsumerState<FireSimulationsCard> {
         objectType: 'fire_plan',
         objectLabel: l10n.fireOsSimulationsTitle,
       ),
-      child: SoftCard(
+      child: SoftCard.raised(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: stateAsync.when(
           loading: () => const SizedBox.shrink(),

@@ -31,7 +31,7 @@ class FireStressTestsCard extends ConsumerWidget {
         source: 'fire_stress_card',
         objectLabel: l10n.fireOsStressTitle,
       ),
-      child: SoftCard(
+      child: SoftCard.raised(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

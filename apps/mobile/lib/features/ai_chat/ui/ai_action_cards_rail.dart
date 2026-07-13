@@ -105,7 +105,7 @@ class _ActionCard extends ConsumerWidget {
           );
     return SizedBox(
       width: AppControlWidths.aiActionCard,
-      child: SoftCard(
+      child: SoftCard.raised(
         onPress: onPress,
         padding: const EdgeInsets.all(AppSpacing.s14),
         child: Column(

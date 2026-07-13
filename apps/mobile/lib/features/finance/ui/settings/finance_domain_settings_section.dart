@@ -28,7 +28,7 @@ class FinanceDomainSettingsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
         children: [

@@ -391,7 +391,7 @@ class _WealthBucketDetail extends StatelessWidget {
       key: const ValueKey<String>('wealth-perspective-detail'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard(
+        SoftCard.raised(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s14),
             child: Row(

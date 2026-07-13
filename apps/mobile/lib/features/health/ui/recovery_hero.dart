@@ -7,9 +7,8 @@ class _RecoveryHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recoverySignalProvider);
     final colors = context.theme.colors;
-    return SoftCard(
-      level: SoftCardLevel.hero,
-      padding: const EdgeInsets.all(AppSpacing.s16),
+    return SoftCard.hero(
+      padding: AppPageRhythm.heroPadding,
       child: async.when(
         loading: () => const SizedBox(
           height: AppControlHeights.compactLoadingState,
@@ -35,7 +34,7 @@ class _RecoveryHero extends ConsumerWidget {
                   AppIconTile(
                     icon: RecoveryVerdict.icon(verdict),
                     color: color,
-                    size: 40,
+                    size: 36,
                     iconSize: AppIconSizes.md,
                     backgroundOpacity: AppOpacity.medium,
                     foregroundOpacity: 1,
@@ -49,41 +48,33 @@ class _RecoveryHero extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: Text(
-                      RecoveryVerdict.label(verdict, l10n),
-                      style: context.strongHeadlineStyle.copyWith(color: color),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (score != null) ...[
-                    const SizedBox(width: AppSpacing.s8),
+                  if (score != null)
                     Text(
                       scoreText,
-                      style: context.theme.typography.body.sm.copyWith(
-                        color: color.withValues(alpha: AppOpacity.strong),
+                      style: TypographyTokens.numericTitle.copyWith(
+                        color: color,
                       ),
                     ),
-                  ],
                 ],
               ),
-              const SizedBox(height: AppSpacing.s4),
+              const SizedBox(height: AppSpacing.s16),
+              Text(
+                RecoveryVerdict.label(verdict, l10n),
+                style: TypographyTokens.displaySmall.copyWith(
+                  color: color,
+                  height: 1.1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.s8),
               Text(
                 RecoveryVerdict.suggestion(verdict, l10n),
                 style: context.bodyCaptionStyle,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: AppSpacing.s12),
+              const SizedBox(height: AppSpacing.s16),
               const _RecoverySparkline(),
             ],
           );

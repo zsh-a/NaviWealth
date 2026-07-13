@@ -657,7 +657,7 @@ class _WorkspaceBody extends StatelessWidget {
                     : ListView(
                         padding: const EdgeInsets.all(AppSpacing.s24),
                         children: [
-                          SoftCard(
+                          SoftCard.raised(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSpacing.s16,
@@ -737,7 +737,7 @@ class _WorkspaceBody extends StatelessWidget {
                           ? AppSpacing.s12
                           : AppSpacing.s8,
                     ),
-                    child: SoftCard(
+                    child: SoftCard.raised(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.s12,
@@ -847,7 +847,7 @@ class _ExecutionProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(

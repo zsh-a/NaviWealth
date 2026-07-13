@@ -54,7 +54,7 @@ class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
           source: 'fire_buckets_card',
           objectLabel: l10n.fireOsBucketsTitle,
         ),
-        child: SoftCard(
+        child: SoftCard.raised(
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,7 +362,7 @@ class _BucketsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

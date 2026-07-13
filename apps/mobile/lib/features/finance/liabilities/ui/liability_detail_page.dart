@@ -111,7 +111,7 @@ class _LiabilityDetailBody extends ConsumerWidget {
           ),
           data: (schedule) {
             if (schedule.isEmpty) {
-              return SoftCard(
+              return SoftCard.raised(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.s16),
                   child: Text(l10n.liabilityRevolvingNoSchedule),
@@ -136,7 +136,7 @@ class _LiabilityHeaderCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
@@ -177,7 +177,7 @@ class _LiabilitySummaryCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
@@ -260,7 +260,7 @@ class _AmortizationTable extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    return SoftCard(
+    return SoftCard.raised(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -36,7 +36,7 @@ class EventTimelineSection extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.s8),
         eventsAsync.when(
-          loading: () => const SoftCard(
+          loading: () => const SoftCard.flat(
             padding: EdgeInsets.all(AppSpacing.s16),
             child: SkeletonBox(height: AppSpacing.s40, radius: AppRadius.sm),
           ),
@@ -50,7 +50,7 @@ class EventTimelineSection extends ConsumerWidget {
             },
           ),
           data: (events) => events.isEmpty
-              ? SoftCard(
+              ? SoftCard.raised(
                   padding: const EdgeInsets.all(AppSpacing.s16),
                   child: Text(
                     l10n.investmentEventTimelineEmpty,
@@ -83,7 +83,7 @@ class _EventRow extends StatelessWidget {
     final dateText = DateFormat.yMMMd(
       Localizations.localeOf(context).toString(),
     ).format(event.scheduledFor);
-    return SoftCard(
+    return SoftCard.raised(
       child: FTile(
         prefix: Container(
           width: 36,

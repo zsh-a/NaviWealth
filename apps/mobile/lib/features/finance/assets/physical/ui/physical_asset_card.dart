@@ -16,7 +16,7 @@ class PhysicalAssetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       onPress: () => context.goNamed(
         FinanceRouteNames.wealthPhysicalDetail,
         pathParameters: {'id': asset.id},

@@ -32,8 +32,8 @@ class HomeSection extends StatelessWidget {
           title: title,
           padding: const EdgeInsets.only(
             left: AppSpacing.s4,
-            top: AppSpacing.s4,
-            bottom: AppSpacing.s8,
+            top: AppSpacing.s8,
+            bottom: AppSpacing.s10,
           ),
           trailing: actionLabel != null && onAction != null
               ? FTappable(
@@ -73,12 +73,10 @@ class HomeSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.raised(
       onPress: onPress,
       padding: padding,
-      borderRadius: AppRadius.lg,
       borderless: true,
-      level: SoftCardLevel.raised,
       child: child,
     );
   }

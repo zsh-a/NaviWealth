@@ -290,7 +290,7 @@ class ExpenseSelectionToolbar extends StatelessWidget {
         AppSpacing.s16,
         0,
       ),
-      child: SoftCard(
+      child: SoftCard.flat(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s12,
           vertical: AppSpacing.s10,

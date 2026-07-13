@@ -140,7 +140,7 @@ class _DraftCard extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: onFocus,
-      child: SoftCard(
+      child: SoftCard.raised(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s14,
           vertical: AppSpacing.s12,

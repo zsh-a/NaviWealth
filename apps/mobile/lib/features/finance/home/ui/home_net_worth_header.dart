@@ -16,10 +16,14 @@ class _NetWorthHeader extends ConsumerWidget {
     final privacyLabel = amountsHidden
         ? l10n.financePrivacyShowAmountsTooltip
         : l10n.financePrivacyHideAmountsTooltip;
-    return SoftCard(
+    return SoftCard.hero(
       onPress: () => context.go(FinanceRoutes.wealth),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      level: SoftCardLevel.hero,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s20,
+        AppSpacing.s20,
+        AppSpacing.s16,
+        AppSpacing.s20,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -51,13 +55,12 @@ class _NetWorthHeader extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s6),
-          // Cap dynamic-text scaling on the 32dp hero number so users on
-          // 200% system font size don't blow the card out of its row.
-          // FittedBox handles long currency strings (¥123,456,789.00)
-          // by scaling glyphs down to fit the card's content rect.
+          const SizedBox(height: AppSpacing.s10),
+          // Outfit displayLarge is the page marquee. Cap dynamic-text scaling
+          // so 200% system fonts do not blow the card; FittedBox handles long
+          // currency strings by scaling glyphs into the content rect.
           MediaQuery.withClampedTextScaling(
-            maxScaleFactor: 1.3,
+            maxScaleFactor: 1.25,
             child: Semantics(
               label: amountsHidden
                   ? '${l10n.homeNetWorthTitle} ${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}'
@@ -68,18 +71,18 @@ class _NetWorthHeader extends ConsumerWidget {
                 child: AnimatedMoneyText(
                   amount: value,
                   currencyCode: snapshot.baseCurrency,
-                  style: TypographyTokens.numericDisplay,
+                  style: TypographyTokens.displayLarge,
                   showSign: value != null && value < 0,
                 ),
               ),
             ),
           ),
           if (hasData) ...[
-            const SizedBox(height: AppSpacing.s8),
+            const SizedBox(height: AppSpacing.s12),
             _TodayDeltaMetric(metrics: metricsAsync),
           ],
           if (!hasData) ...[
-            const SizedBox(height: AppSpacing.s6),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
               style: context.captionStyle,

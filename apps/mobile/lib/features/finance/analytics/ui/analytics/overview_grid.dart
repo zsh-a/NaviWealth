@@ -133,7 +133,7 @@ class _OverviewMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

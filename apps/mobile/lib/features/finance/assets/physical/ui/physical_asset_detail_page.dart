@@ -96,7 +96,7 @@ class _DetailBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
-        SoftCard(
+        SoftCard.raised(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s20),
             child: Column(
@@ -144,7 +144,7 @@ class _DetailBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s12),
         _FactsCard(asset: asset, formatters: formatters),
         const SizedBox(height: AppSpacing.s12),
-        SoftCard(
+        SoftCard.raised(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s16),
             child: Column(
@@ -279,7 +279,7 @@ class _FactsCard extends StatelessWidget {
           asset.linkedLiabilityId!.isNotEmpty)
         (l10n.physicalAssetFieldLinkedLiability, asset.linkedLiabilityId!),
     ];
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(

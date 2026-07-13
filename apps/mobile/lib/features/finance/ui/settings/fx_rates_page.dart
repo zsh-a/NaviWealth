@@ -123,7 +123,7 @@ class _RateList extends ConsumerWidget {
             Haptics.destructive();
             return true;
           },
-          child: SoftCard(
+          child: SoftCard.raised(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.s14,
               vertical: AppSpacing.s12,

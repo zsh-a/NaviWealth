@@ -267,7 +267,7 @@ class _KpiTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.raised(
       onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(

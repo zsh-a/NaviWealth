@@ -154,9 +154,10 @@ class _DomainHeaderTitle extends StatelessWidget {
       title,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: context.strongHeadlineStyle.copyWith(
+      // Editorial tab title — calm weight, not a shouting headline.
+      style: context.displayTitleStyle.copyWith(
         color: colors.foreground,
-        height: 1.15,
+        height: 1.1,
       ),
     );
   }

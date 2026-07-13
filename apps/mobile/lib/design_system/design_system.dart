@@ -57,7 +57,6 @@ export 'widgets/app_task_scaffold.dart';
 export 'widgets/app_toast.dart';
 export 'widgets/back_header_action.dart';
 export 'widgets/back_navigation.dart';
-export 'widgets/dashboard_card_header.dart';
 export 'widgets/delta_chip.dart';
 export 'widgets/delta_text.dart';
 export 'widgets/domain_ai_prompt_bar.dart';

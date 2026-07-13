@@ -28,7 +28,7 @@ class _MetricCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _MetricCardHeader(
+            AppMetricHeader(
               icon: icon,
               title: label,
               color: accent,
@@ -39,47 +39,6 @@ class _MetricCard extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _MetricCardHeader extends StatelessWidget {
-  const _MetricCardHeader({
-    required this.icon,
-    required this.title,
-    required this.color,
-    required this.showChevron,
-  });
-
-  final IconData icon;
-  final String title;
-  final Color color;
-  final bool showChevron;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Row(
-      children: [
-        AppIconTile(icon: icon, color: color),
-        const SizedBox(width: AppSpacing.s8),
-        Expanded(
-          child: Text(
-            title,
-            style: context.mutedLabelStyle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (showChevron)
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.h18,
-            color: colors.mutedForeground.withValues(
-              alpha: AppOpacity.disabled,
-            ),
-          ),
-      ],
     );
   }
 }

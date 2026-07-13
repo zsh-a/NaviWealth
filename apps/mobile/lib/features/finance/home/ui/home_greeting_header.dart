@@ -23,9 +23,9 @@ class HomeGreetingHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s20,
-        AppSpacing.s6,
+        AppSpacing.s8,
         AppSpacing.s20,
-        AppSpacing.s10,
+        AppSpacing.s16,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,7 +37,7 @@ class HomeGreetingHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   greeting,
-                  style: context.titleLabelStyle.copyWith(height: 1.1),
+                  style: context.displayTitleStyle.copyWith(height: 1.05),
                 ),
               ),
               // Today has no `FHeader`, so the editorial greeting row is
@@ -48,7 +48,7 @@ class HomeGreetingHeader extends StatelessWidget {
               const ShellActionRow(),
             ],
           ),
-          const SizedBox(height: AppSpacing.s4),
+          const SizedBox(height: AppSpacing.s6),
           Text(l10n.homeTodayBriefSubtitle, style: context.captionStyle),
         ],
       ),

@@ -17,7 +17,7 @@ class _CaptureToggle extends ConsumerWidget {
         AppSpacing.s16,
         AppSpacing.s4,
       ),
-      child: SoftCard(
+      child: SoftCard.flat(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s16,
           vertical: AppSpacing.s12,
@@ -101,7 +101,7 @@ class _AggregateHeader extends StatelessWidget {
         AppSpacing.s16,
         AppSpacing.s8,
       ),
-      child: SoftCard(
+      child: SoftCard.raised(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s16,
           vertical: AppSpacing.s14,

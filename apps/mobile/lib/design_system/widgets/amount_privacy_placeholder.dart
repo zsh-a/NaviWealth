@@ -67,7 +67,7 @@ class AmountPrivacyPlaceholder extends StatelessWidget {
   }
 
   TextStyle get _defaultStyle => switch (density) {
-    AmountPrivacyPlaceholderDensity.display => TypographyTokens.numericDisplay,
+    AmountPrivacyPlaceholderDensity.display => TypographyTokens.displayLarge,
     AmountPrivacyPlaceholderDensity.title =>
       TypographyTokens.numericTitleStrong,
     AmountPrivacyPlaceholderDensity.body => TypographyTokens.numericBody,

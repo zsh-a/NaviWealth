@@ -34,7 +34,7 @@ class DecisionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

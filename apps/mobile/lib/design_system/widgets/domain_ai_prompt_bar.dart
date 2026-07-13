@@ -38,9 +38,11 @@ class DomainAiPromptBar extends StatelessWidget {
       children: [
         SoftCard(
           onPress: onPress,
+          level: SoftCardLevel.raised,
+          borderless: true,
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s12,
+            horizontal: AppSpacing.s14,
+            vertical: AppSpacing.s14,
           ),
           child: Row(
             children: [

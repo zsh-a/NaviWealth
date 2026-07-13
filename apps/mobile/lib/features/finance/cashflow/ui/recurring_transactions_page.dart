@@ -181,7 +181,7 @@ class _RecurringRow extends ConsumerWidget {
       title = l10n.recurringTemplateCorrupt;
     }
 
-    return SoftCard(
+    return SoftCard.raised(
       onPress: () => showRecurringTransactionForm(context, ref, existing: rule),
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(

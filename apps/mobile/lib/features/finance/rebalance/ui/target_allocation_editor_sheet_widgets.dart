@@ -125,7 +125,7 @@ class _AllocationRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
 
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s12),
         child: Column(

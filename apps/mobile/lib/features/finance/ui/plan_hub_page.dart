@@ -59,9 +59,8 @@ class _FireSummaryCard extends ConsumerWidget {
     final viewAsync = ref.watch(fireDashboardViewProvider);
 
     return viewAsync.when(
-      loading: () => SoftCard(
-        padding: const EdgeInsets.all(AppSpacing.s20),
-        level: SoftCardLevel.hero,
+      loading: () => SoftCard.hero(
+        padding: AppPageRhythm.heroPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -98,16 +97,15 @@ class _FireSummaryCard extends ConsumerWidget {
   }
 
   Widget _emptyHero(BuildContext context, AppLocalizations l10n) {
-    return SoftCard(
+    return SoftCard.hero(
       onPress: () => context.push(FinanceRoutes.planFire),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      level: SoftCardLevel.hero,
+      padding: AppPageRhythm.heroPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.planFireSectionTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
-          Text(l10n.planHeroEmpty, style: context.theme.typography.body.md),
+          Text(l10n.planHeroEmpty, style: context.rowTitleStyle),
           const SizedBox(height: AppSpacing.s14),
           Row(
             children: [
@@ -137,7 +135,7 @@ class _FireSummaryCard extends ConsumerWidget {
     AppLocalizations l10n,
     Object error,
   ) {
-    return SoftCard(
+    return SoftCard.raised(
       padding: EdgeInsets.zero,
       borderRadius: AppRadius.lg,
       borderless: true,
@@ -161,26 +159,25 @@ class _FireSummaryCard extends ConsumerWidget {
         ? null
         : (monthsToTarget / 12).toStringAsFixed(monthsToTarget < 24 ? 1 : 0);
     final progressPct = (progress * 100).clamp(0, 100).toStringAsFixed(0);
-    return SoftCard(
+    return SoftCard.hero(
       onPress: () => context.push(FinanceRoutes.planFire),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      level: SoftCardLevel.hero,
+      padding: AppPageRhythm.heroPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.planFireSectionTitle, style: context.mutedLabelStyle),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: AppSpacing.s10),
           if (years != null)
             Text(
               l10n.planHeroYearsToFire(years),
-              style: TypographyTokens.numericDisplay,
+              style: TypographyTokens.displayLarge,
             )
           else
             Text(
               '${l10n.planHeroProgressLabel} $progressPct%',
-              style: TypographyTokens.numericTitle,
+              style: TypographyTokens.displayLarge,
             ),
-          const SizedBox(height: AppSpacing.s12),
+          const SizedBox(height: AppPageRhythm.module),
           FDeterminateProgress(value: progress),
           const SizedBox(height: AppSpacing.s8),
           Text(

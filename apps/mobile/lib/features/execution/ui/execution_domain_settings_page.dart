@@ -27,7 +27,7 @@ class ExecutionDomainSettingsPage extends ConsumerWidget {
       childPad: false,
       child: SettingsPageFrame(
         children: [
-          SoftCard(
+          SoftCard.raised(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(
               children: [

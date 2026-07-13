@@ -362,7 +362,7 @@ class _DisclaimerCardState extends State<_DisclaimerCard> {
     if (_dismissed) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

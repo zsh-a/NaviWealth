@@ -27,7 +27,7 @@ class HealthDomainSettingsPage extends ConsumerWidget {
       childPad: false,
       child: SettingsPageFrame(
         children: <Widget>[
-          SoftCard(
+          SoftCard.raised(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(
               children: <Widget>[

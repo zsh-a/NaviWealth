@@ -122,7 +122,7 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
   }) {
     final l10n = AppLocalizations.of(context);
     final hasStoredKey = existing?.hasKey ?? false;
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
         AppSpacing.s14,

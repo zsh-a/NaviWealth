@@ -11,7 +11,7 @@ The Flutter side mirrors a subset of the JSON in `apps/mobile/lib/design_system/
 
 | Group | JSON path | Flutter file |
 |-------|-----------|--------------|
-| Brand / Neutral / Accent | `color.{brand,neutral,accent}.*` | `lib/design_system/tokens/color_palette.dart` |
+| Brand (cyan) / Neutral / Accent | `color.{brand,neutral,accent}.*` | `lib/design_system/tokens/color_palette.dart` (`cyanBrand*`) |
 | Semantic | `color.semantic.*` | `lib/design_system/theme/semantic_colors.dart` |
 | Market (up / down / colorblind) | `color.market.*` | `lib/design_system/theme/market_colors.dart` (+ `accent_colors.dart`, `market_color_mode.dart`) |
 | Typography | `typography.*` | `lib/design_system/tokens/typography_tokens.dart` (Inter primary, Outfit reserved for Display 2XL) |

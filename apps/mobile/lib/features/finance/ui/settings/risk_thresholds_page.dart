@@ -33,7 +33,7 @@ class RiskThresholdsPage extends ConsumerWidget {
         children: [
           SettingsHintText(l10n.settingsRiskThresholdsHint),
           const SizedBox(height: AppSpacing.s12),
-          const SoftCard(
+          const SoftCard.raised(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: RiskThresholdSettings(),
           ),

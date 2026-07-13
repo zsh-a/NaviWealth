@@ -172,11 +172,14 @@ class TypographyTokens {
   // are no longer the only carriers of `tabularFigures`; they remain a
   // semantic alias so call sites that explicitly want "this is a number"
   // can keep reading.
+  //
+  // Secondary marquee (Wealth sub-metrics, plan secondary). Page-level
+  // hero numbers should use [displayLarge] (Outfit 40) instead.
   static final TextStyle numericDisplay = _t(
     32,
-    height: 1.15,
+    height: 1.12,
     weight: FontWeight.w700,
-    letterSpacing: -0.25,
+    letterSpacing: -0.4,
   );
   static final TextStyle numericTitle = _t(
     20,

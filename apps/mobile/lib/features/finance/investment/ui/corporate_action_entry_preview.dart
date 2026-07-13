@@ -9,7 +9,7 @@ class _PreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dividend = preview.cashDividend;
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

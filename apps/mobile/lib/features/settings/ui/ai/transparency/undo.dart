@@ -40,7 +40,7 @@ class _UndoSection extends ConsumerWidget {
             ),
           ),
           if (live.isEmpty)
-            SoftCard(
+            SoftCard.raised(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.s16,
                 vertical: AppSpacing.s14,
@@ -51,7 +51,7 @@ class _UndoSection extends ConsumerWidget {
               ),
             )
           else
-            SoftCard(
+            SoftCard.raised(
               padding: EdgeInsets.zero,
               child: Column(
                 children: <Widget>[

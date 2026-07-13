@@ -7,7 +7,7 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SoftCard.raised(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Text(
@@ -28,7 +28,7 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.flat(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(

@@ -9,7 +9,7 @@ class _AiInsightCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

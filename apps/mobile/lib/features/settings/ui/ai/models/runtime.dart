@@ -9,7 +9,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: diagnostics.when(
         loading: () => Row(
@@ -239,7 +239,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final semantic = SemanticColors.of(context);
     final colors = context.theme.colors;
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: resolution.when(
         loading: () => Row(
@@ -363,7 +363,7 @@ class _Hint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Text(
         l10n.settingsAiModelsHint,

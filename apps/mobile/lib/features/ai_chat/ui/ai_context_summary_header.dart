@@ -30,7 +30,7 @@ class AiContextSummaryHeader extends ConsumerWidget {
         AppSpacing.s16,
         AppSpacing.s4,
       ),
-      child: SoftCard(
+      child: SoftCard.flat(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.s16,
           AppSpacing.s14,

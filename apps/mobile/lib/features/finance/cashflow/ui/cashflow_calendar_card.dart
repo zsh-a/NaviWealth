@@ -53,12 +53,10 @@ class _CashflowCalendarContent extends ConsumerWidget {
         ? AccentColors.series
         : SemanticColors.of(context).warning;
 
-    return SoftCard(
+    return SoftCard.raised(
       onPress: () => context.push(FinanceRoutes.cashflow),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.lg,
+      padding: AppPageRhythm.cardPadding,
       borderless: true,
-      level: SoftCardLevel.raised,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 140),
         child: Column(
@@ -76,7 +74,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
                       code: metrics.net.currency,
                     )
                   : l10n.homeCashFlowEmptyValue,
-              style: context.strongHeadlineStyle.copyWith(
+              style: TypographyTokens.numericTitleStrong.copyWith(
                 color: metrics.net.amount < Decimal.zero
                     ? colors.destructive
                     : colors.foreground,

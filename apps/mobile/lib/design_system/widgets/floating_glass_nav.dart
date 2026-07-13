@@ -72,9 +72,9 @@ class FloatingGlassNavBar extends StatelessWidget {
     final glassColor = isDark
         ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.emphasis)
         : ColorPalette.neutral0.withValues(alpha: AppOpacity.nearOpaque);
-    final borderColor = colors.border.withValues(
-      alpha: isDark ? AppOpacity.emphasis : AppOpacity.strong,
-    );
+    final borderColor = isDark
+        ? colors.border.withValues(alpha: AppOpacity.emphasis)
+        : ColorPalette.navySoftBorder.withValues(alpha: AppOpacity.strong);
 
     return RepaintBoundary(
       child: Container(
@@ -170,13 +170,15 @@ class _NavTabButton extends StatelessWidget {
             vertical: AppSpacing.s4,
           ),
           decoration: BoxDecoration(
+            // Quiet selected state: whisper fill, not a loud brand pill.
             color: selected
-                ? colors.primary.withValues(alpha: AppOpacity.subtle)
+                ? colors.primary.withValues(alpha: AppOpacity.faint)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
                 width: _kIconSlotSize,
@@ -199,7 +201,7 @@ class _NavTabButton extends StatelessWidget {
                     (selected
                             ? TypographyTokens.labelSmall
                             : TypographyTokens.labelSmallMedium)
-                        .copyWith(color: labelColor, height: 1.2),
+                        .copyWith(color: labelColor, height: 1.15),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

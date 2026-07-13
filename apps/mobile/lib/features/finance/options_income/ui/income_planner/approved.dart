@@ -6,7 +6,7 @@ class _ApprovedEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
@@ -52,7 +52,7 @@ class _ApprovedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.flat(
       onPress: () => showApprovedUnderlyingSheet(context, existing: item),
       borderRadius: AppRadius.lg,
       child: Padding(

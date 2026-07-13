@@ -221,7 +221,7 @@ class _AgentSettingsOverview extends StatelessWidget {
               row.preference.notificationsEnabled,
         )
         .length;
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s14),
       child: Row(
         children: [
@@ -320,7 +320,7 @@ class _AgentSettingsDomainSectionView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s6),
-        SoftCard(
+        SoftCard.flat(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
           child: Column(
             children: [
@@ -771,7 +771,7 @@ class _AgentSettingsDetailSheetState
           ],
         ),
         const SizedBox(height: AppSpacing.s16),
-        SoftCard(
+        SoftCard.flat(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
           child: Column(
             children: [

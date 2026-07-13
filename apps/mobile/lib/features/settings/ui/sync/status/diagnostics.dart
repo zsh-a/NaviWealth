@@ -18,7 +18,7 @@ class _DiagnosticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
+    return SoftCard.raised(
       child: Column(
         children: [
           _Row(label: l10n.syncStatusDetailState, value: event.status.name),
@@ -77,7 +77,7 @@ class _LocalCountsCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     if (counts == null) {
-      return const SoftCard(
+      return const SoftCard.raised(
         padding: EdgeInsets.all(AppSpacing.s12),
         child: Center(child: FCircularProgress()),
       );
@@ -114,7 +114,7 @@ class _LocalCountsCard extends StatelessWidget {
       );
     }
 
-    return SoftCard(
+    return SoftCard.flat(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

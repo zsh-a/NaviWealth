@@ -253,7 +253,7 @@ class _SummaryCard extends StatelessWidget {
     final avgDecimal = (report.total.amount / divisor).toDecimal(
       scaleOnInfinitePrecision: 2,
     );
-    return SoftCard(
+    return SoftCard.flat(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(

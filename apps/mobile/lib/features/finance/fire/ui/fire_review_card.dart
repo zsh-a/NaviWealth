@@ -41,7 +41,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
     );
     final liveAsync = ref.watch(fireLiveReviewProvider(_kind));
 
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

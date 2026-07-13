@@ -155,7 +155,7 @@ class _AiLlmCredentialsPageState extends _AiLlmCredentialsPageStateBase
       _intro(context),
       const SizedBox(height: AppSpacing.s12),
       if (profiles.isEmpty && _editingId == null)
-        SoftCard(
+        SoftCard.flat(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s16,
             vertical: AppSpacing.s20,

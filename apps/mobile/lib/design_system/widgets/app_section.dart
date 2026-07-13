@@ -5,16 +5,20 @@ import '../tokens/text_style_presets.dart';
 import 'soft_card.dart';
 
 /// Canonical section surface with optional title and trailing control.
+///
+/// - [AppSection.item] — dense nested rows (flat)
+/// - [AppSection.group] — titled dashboard modules (raised)
 class AppSection extends StatelessWidget {
   const AppSection({
     super.key,
     this.title,
     this.titleStyle,
     required this.children,
-    this.padding = const EdgeInsets.all(AppSpacing.s16),
+    this.padding = AppPageRhythm.cardPadding,
     this.trailing,
     this.onPress,
     this.level = SoftCardLevel.flat,
+    this.borderless = false,
   });
 
   const AppSection.item({
@@ -27,9 +31,11 @@ class AppSection extends StatelessWidget {
          key: key,
          title: title,
          children: children,
-         padding: const EdgeInsets.all(AppSpacing.s12),
+         padding: AppPageRhythm.densePadding,
          trailing: trailing,
          onPress: onPress,
+         level: SoftCardLevel.flat,
+         borderless: true,
        );
 
   const AppSection.group({
@@ -38,12 +44,12 @@ class AppSection extends StatelessWidget {
     required List<Widget> children,
     Widget? trailing,
     VoidCallback? onPress,
-    SoftCardLevel level = SoftCardLevel.flat,
+    SoftCardLevel level = SoftCardLevel.raised,
   }) : this(
          key: key,
          title: title,
          children: children,
-         padding: const EdgeInsets.all(AppSpacing.s16),
+         padding: AppPageRhythm.cardPadding,
          trailing: trailing,
          onPress: onPress,
          level: level,
@@ -56,6 +62,7 @@ class AppSection extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onPress;
   final SoftCardLevel level;
+  final bool borderless;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +71,7 @@ class AppSection extends StatelessWidget {
       onPress: onPress,
       padding: padding,
       level: level,
+      borderless: borderless,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -85,7 +93,7 @@ class AppSection extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: AppSpacing.s8),
+            const SizedBox(height: AppSpacing.s10),
           ],
           ...children,
         ],

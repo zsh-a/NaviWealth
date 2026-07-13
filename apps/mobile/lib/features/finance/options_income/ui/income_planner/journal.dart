@@ -52,7 +52,7 @@ class _TradeJournalSection extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.s4,
                         ),
-                        child: SoftCard(
+                        child: SoftCard.flat(
                           onPress: () => showTradeJournalSheet(
                             context,
                             existingId: entry.id,

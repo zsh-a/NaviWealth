@@ -15,7 +15,7 @@ class _LedgerBreakdownCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final totals = _computeUnitTotals(postings);
-    return SoftCard(
+    return SoftCard.raised(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s16,
         vertical: AppSpacing.s12,
