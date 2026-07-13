@@ -92,7 +92,8 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
         '训练',
         '休息',
       ],
-      run: (BuildContext ctx) => ctx.go(HealthRoutes.plan),
+      // Plan merged into Today hero guidance.
+      run: (BuildContext ctx) => ctx.go(HealthRoutes.today),
     ),
   ];
 }

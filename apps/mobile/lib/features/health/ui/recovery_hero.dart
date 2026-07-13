@@ -7,6 +7,7 @@ class _RecoveryHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recoverySignalProvider);
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return SoftCard.hero(
       padding: AppPageRhythm.heroPadding,
       child: async.when(
@@ -15,7 +16,7 @@ class _RecoveryHero extends ConsumerWidget {
           child: Center(child: FCircularProgress()),
         ),
         error: (e, _) => Text(
-          AppLocalizations.of(context).healthSyncFailed,
+          l10n.healthSyncFailed,
           style: context.captionStyle.copyWith(color: colors.destructive),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -23,9 +24,15 @@ class _RecoveryHero extends ConsumerWidget {
         data: (out) {
           final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
           final score = out?['score'];
-          final l10n = AppLocalizations.of(context);
           final scoreText = score == null ? '—' : '$score';
           final color = RecoveryVerdict.color(verdict, colors);
+          final actions = healthPlanActionsForVerdict(verdict, l10n);
+          final enabled =
+              ref
+                  .watch(core_auth.domainOptInsProvider)
+                  .value
+                  ?.contains(DomainScope.health) ??
+              false;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -74,8 +81,59 @@ class _RecoveryHero extends ConsumerWidget {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (!enabled) ...[
+                const SizedBox(height: AppSpacing.s12),
+                Text(
+                  l10n.healthPlanEnableHint,
+                  style: context.captionStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              const SizedBox(height: AppSpacing.s16),
+              Text(
+                l10n.healthPlanTodayActions,
+                style: context.microCaptionStyle,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              for (var i = 0; i < actions.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.s8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppIconTile(
+                      icon: actions[i].icon,
+                      color: colors.primary,
+                      size: 28,
+                      iconSize: AppIconSizes.sm,
+                      radius: AppRadius.sm,
+                      backgroundOpacity: AppOpacity.light,
+                      foregroundOpacity: 1,
+                    ),
+                    const SizedBox(width: AppSpacing.s10),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.s4),
+                        child: Text(
+                          actions[i].text,
+                          style: context.theme.typography.body.sm,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: AppSpacing.s16),
               const _RecoverySparkline(),
+              const SizedBox(height: AppSpacing.s8),
+              Text(
+                l10n.healthPlanDisclaimer,
+                style: context.microCaptionStyle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           );
         },
@@ -84,6 +142,7 @@ class _RecoveryHero extends ConsumerWidget {
   }
 }
 
+/// Only surfaces when there is a real alert or in-flight run — no empty loaders.
 class _RecoveryAlertPanel extends ConsumerWidget {
   const _RecoveryAlertPanel();
 
@@ -96,31 +155,23 @@ class _RecoveryAlertPanel extends ConsumerWidget {
       health_agent_providers.latestRecoveryAlertRunProvider,
     );
     final l10n = AppLocalizations.of(context);
+
+    // Quiet while still resolving — do not paint loading shells on Today.
     if (artifactAsync.isLoading && !artifactAsync.hasValue) {
-      return Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.s8),
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.loaderCircle,
-          title: l10n.commonLoading,
-          message: l10n.agentResultLoadingBody,
-          loading: true,
-        ),
-      );
+      return const SizedBox.shrink();
     }
     if (artifactAsync.hasError && !artifactAsync.hasValue) {
-      return Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.s8),
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.triangleAlert,
-          title: l10n.commonError,
-          message: userSafeErrorMessage(context, artifactAsync.error!),
-          error: true,
-          onRetry: () => ref.invalidate(
-            health_agent_providers.latestRecoveryAlertArtifactProvider,
-          ),
+      return AgentResultPanelStateCard(
+        icon: FLucideIcons.triangleAlert,
+        title: l10n.commonError,
+        message: userSafeErrorMessage(context, artifactAsync.error!),
+        error: true,
+        onRetry: () => ref.invalidate(
+          health_agent_providers.latestRecoveryAlertArtifactProvider,
         ),
       );
     }
+
     final artifact = artifactAsync.value;
     final run = runAsync.value;
     if (artifact != null &&
@@ -129,67 +180,34 @@ class _RecoveryAlertPanel extends ConsumerWidget {
           run,
           artifact,
         )) {
-      return Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.s8),
-        child: AgentRunStatusCard(
-          record: run,
-          metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
-          onRetry: () => _retryRecoveryAlert(ref),
-        ),
+      return AgentRunStatusCard(
+        record: run,
+        metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
+        onRetry: () => _retryRecoveryAlert(ref),
       );
     }
     if (artifact == null) {
-      return runAsync.when(
-        loading: () => Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.s8),
-          child: AgentResultPanelStateCard(
-            icon: FLucideIcons.loaderCircle,
-            title: l10n.commonLoading,
-            message: l10n.agentResultLoadingBody,
-            loading: true,
-          ),
-        ),
-        error: (error, _) => Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.s8),
-          child: AgentResultPanelStateCard(
-            icon: FLucideIcons.triangleAlert,
-            title: l10n.commonError,
-            message: userSafeErrorMessage(context, error),
-            error: true,
-            onRetry: () => ref.invalidate(
-              health_agent_providers.latestRecoveryAlertRunProvider,
-            ),
-          ),
-        ),
-        data: (run) {
-          if (run == null) return const SizedBox.shrink();
-          return Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s8),
-            child: AgentRunStatusCard(
-              record: run,
-              metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
-              onRetry: () => _retryRecoveryAlert(ref),
-            ),
-          );
-        },
+      final runOnly = runAsync.value;
+      if (runOnly == null) return const SizedBox.shrink();
+      return AgentRunStatusCard(
+        record: runOnly,
+        metaLabel: l10n.healthBriefingUpdated(_ago(l10n, runOnly.startedAt)),
+        onRetry: () => _retryRecoveryAlert(ref),
       );
     }
     final metaLabel = l10n.healthBriefingUpdated(
       _ago(l10n, artifact.createdAt),
     );
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s8),
-      child: AgentResultCard(
+    return AgentResultCard(
+      artifact: artifact,
+      metaLabel: metaLabel,
+      layout: AgentResultCardLayout.summary,
+      onOpen: () => showAgentArtifactSheet(
+        context: context,
         artifact: artifact,
-        metaLabel: metaLabel,
-        layout: AgentResultCardLayout.summary,
-        onOpen: () => showAgentArtifactSheet(
-          context: context,
-          artifact: artifact,
-          subtitle: metaLabel,
-          onVisibilityChanged: () => ref.invalidate(
-            health_agent_providers.latestRecoveryAlertArtifactProvider,
-          ),
+        subtitle: metaLabel,
+        onVisibilityChanged: () => ref.invalidate(
+          health_agent_providers.latestRecoveryAlertArtifactProvider,
         ),
       ),
     );
@@ -201,6 +219,7 @@ Future<void> _retryRecoveryAlert(WidgetRef ref) async {
   await controller.runOnceById(kRecoveryAlertAgentId);
   ref.invalidate(health_agent_providers.latestRecoveryAlertArtifactProvider);
   ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
+  ref.invalidate(health_agent_providers.latestHealthReviewAgentResultsProvider);
 }
 
 /// 7-day HRV sparkline shown beneath the recovery card.

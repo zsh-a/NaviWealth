@@ -36,11 +36,7 @@ final DomainPack kHealthPack = DomainPack(
   shellSpecBuilder: healthDomainShell,
   shellRouteBuilder: healthShellRoute,
   deferredPreloader: preloadHealthDeferredRoutesForTest,
-  tabPaths: [
-    AppRoutes.healthToday,
-    AppRoutes.healthTrend,
-    AppRoutes.healthPlan,
-  ],
+  tabPaths: [AppRoutes.healthToday, AppRoutes.healthTrend],
   agentBuilder: _healthAgents,
   agentPresentationSpecs: const [
     AgentPresentationSpec(

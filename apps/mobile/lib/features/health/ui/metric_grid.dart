@@ -36,10 +36,17 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
       return model == null ? null : select(model);
     }
 
+    // Recovery-first order: sleep → HRV → RHR → steps, then the rest.
     final cards = <Widget>[
       _SleepCard(
         async: metric((m) => m.sleep),
         trend: trend((m) => m.sleepTrend),
+      ),
+      _HrvCard(async: metric((m) => m.hrv), trend: trend((m) => m.hrvTrend)),
+      _RhrCard(async: metric((m) => m.rhr), trend: trend((m) => m.rhrTrend)),
+      _StepsCard(
+        async: metric((m) => m.steps),
+        trend: trend((m) => m.stepsTrend),
       ),
       _BodyBatteryCard(
         async: metric((m) => m.bodyBattery),
@@ -49,15 +56,9 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
         async: metric((m) => m.stress),
         trend: trend((m) => m.stressTrend),
       ),
-      _HrvCard(async: metric((m) => m.hrv), trend: trend((m) => m.hrvTrend)),
       _HeartRateCard(
         async: metric((m) => m.heartRate),
         trend: trend((m) => m.heartRateTrend),
-      ),
-      _RhrCard(async: metric((m) => m.rhr), trend: trend((m) => m.rhrTrend)),
-      _StepsCard(
-        async: metric((m) => m.steps),
-        trend: trend((m) => m.stepsTrend),
       ),
       _WorkoutCard(async: metric((m) => m.workout)),
       _ActiveEnergyCard(

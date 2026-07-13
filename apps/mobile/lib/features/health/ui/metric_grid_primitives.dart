@@ -145,6 +145,7 @@ class _ValueDash extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,9 +156,13 @@ class _ValueDash extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s2),
+        Text(l10n.healthNoData, style: context.captionStyle),
+        const SizedBox(height: AppSpacing.s2),
         Text(
-          AppLocalizations.of(context).healthNoData,
-          style: context.captionStyle,
+          l10n.healthNoDataSyncHint,
+          style: context.microCaptionStyle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

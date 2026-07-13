@@ -16613,19 +16613,19 @@ abstract class AppLocalizations {
   /// HealthOS Today tab title
   ///
   /// In en, this message translates to:
-  /// **'Today · HealthOS'**
+  /// **'Today'**
   String get healthTodayTitle;
 
   /// No description provided for @healthTrendTitle.
   ///
   /// In en, this message translates to:
-  /// **'Trends · HealthOS'**
+  /// **'Trends'**
   String get healthTrendTitle;
 
   /// No description provided for @healthPlanTitle.
   ///
   /// In en, this message translates to:
-  /// **'Plan · HealthOS'**
+  /// **'Plan'**
   String get healthPlanTitle;
 
   /// No description provided for @healthTabToday.
@@ -16645,6 +16645,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plan'**
   String get healthTabPlan;
+
+  /// Collapsible Health Today sources section title
+  ///
+  /// In en, this message translates to:
+  /// **'Data sources'**
+  String get healthSourcesTitle;
+
+  /// Collapsible Health Today sources section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'HealthKit / Health Connect and Garmin'**
+  String get healthSourcesSubtitle;
+
+  /// Hint under empty metric values on Health Today
+  ///
+  /// In en, this message translates to:
+  /// **'Open Sources below to sync or connect a device'**
+  String get healthNoDataSyncHint;
 
   /// No description provided for @healthCommandToday.
   ///

@@ -280,7 +280,6 @@ List<File> _domainTabRootFiles() {
     'lib/features/finance/ui/plan_hub_page.dart',
     'lib/features/health/ui/health_today_page.dart',
     'lib/features/health/ui/health_trend_page.dart',
-    'lib/features/health/ui/health_plan_page.dart',
     'lib/features/knowledge/ui/knowledge_inbox_page.dart',
     'lib/features/knowledge/ui/knowledge_library_page.dart',
     'lib/features/knowledge/ui/knowledge_review_page.dart',

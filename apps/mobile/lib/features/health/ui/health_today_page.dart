@@ -44,6 +44,7 @@ import 'garmin_sync_status_card.dart';
 import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
 import 'health_trend_page.dart' show healthTrendPath;
+import 'plan_actions.dart';
 import 'recovery_verdict.dart';
 
 part 'briefing_panel.dart';
@@ -102,16 +103,15 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           await ref.read(healthTodaySnapshotProvider.future);
         },
         greeting: const SizedBox.shrink(),
+        // Hero = recovery verdict + same-day actions (ex-Plan).
         stage: const FadeSlideIn(child: _RecoveryHero()),
         modules: const [
+          // Signal first: alerts only when real; briefing promoted.
           _RecoveryAlertPanel(),
+          _BriefingPanel(),
           _MetricGrid(),
         ],
-        secondary: const [
-          _DataSourcePanel(),
-          _WeeklySummaryPanel(),
-          _BriefingPanel(),
-        ],
+        secondary: const [_SourcesSection(), _WeeklySummaryPanel()],
       ),
     );
   }
@@ -154,6 +154,69 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
         },
       );
     });
+  }
+}
+
+/// Collapsed by default — data plumbing is secondary to today's story.
+class _SourcesSection extends StatefulWidget {
+  const _SourcesSection();
+
+  @override
+  State<_SourcesSection> createState() => _SourcesSectionState();
+}
+
+class _SourcesSectionState extends State<_SourcesSection> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SoftCard.raised(
+          borderless: true,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s14,
+            vertical: AppSpacing.s12,
+          ),
+          onPress: () {
+            AppInteraction.signal(AppInteractionIntent.reveal);
+            setState(() => _open = !_open);
+          },
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.healthSourcesTitle, style: context.rowTitleStyle),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      l10n.healthSourcesSubtitle,
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                _open ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                size: AppIconSizes.md,
+                color: colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+        AnimatedSizeFade(
+          visible: _open,
+          child: const Padding(
+            padding: EdgeInsets.only(top: AppSpacing.s8),
+            child: _DataSourcePanel(),
+          ),
+        ),
+      ],
+    );
   }
 }
 

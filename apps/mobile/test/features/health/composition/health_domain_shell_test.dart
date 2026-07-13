@@ -19,17 +19,15 @@ void main() {
       expect(spec.label, 'HealthOS');
     });
 
-    test('exposes Today / Trend / Plan tabs in IA order', () {
+    test('exposes Today / Trends tabs in IA order', () {
       final spec = healthDomainShell(l10n);
       expect(spec.tabs.map((t) => t.label).toList(), [
         'Today',
         'Trends',
-        'Plan',
       ]);
       expect(spec.tabs.map((t) => t.routePath).toList(), [
         AppRoutes.healthToday,
         AppRoutes.healthTrend,
-        AppRoutes.healthPlan,
       ]);
     });
 

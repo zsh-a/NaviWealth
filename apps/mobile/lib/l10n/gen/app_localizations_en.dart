@@ -9715,13 +9715,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonOk => 'OK';
 
   @override
-  String get healthTodayTitle => 'Today · HealthOS';
+  String get healthTodayTitle => 'Today';
 
   @override
-  String get healthTrendTitle => 'Trends · HealthOS';
+  String get healthTrendTitle => 'Trends';
 
   @override
-  String get healthPlanTitle => 'Plan · HealthOS';
+  String get healthPlanTitle => 'Plan';
 
   @override
   String get healthTabToday => 'Today';
@@ -9731,6 +9731,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthTabPlan => 'Plan';
+
+  @override
+  String get healthSourcesTitle => 'Data sources';
+
+  @override
+  String get healthSourcesSubtitle => 'HealthKit / Health Connect and Garmin';
+
+  @override
+  String get healthNoDataSyncHint =>
+      'Open Sources below to sync or connect a device';
 
   @override
   String get healthCommandToday => 'Health · Today';

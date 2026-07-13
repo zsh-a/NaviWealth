@@ -9271,13 +9271,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonOk => '好的';
 
   @override
-  String get healthTodayTitle => '今日 · HealthOS';
+  String get healthTodayTitle => '今日';
 
   @override
-  String get healthTrendTitle => '趋势 · HealthOS';
+  String get healthTrendTitle => '趋势';
 
   @override
-  String get healthPlanTitle => '计划 · HealthOS';
+  String get healthPlanTitle => '计划';
 
   @override
   String get healthTabToday => '今日';
@@ -9287,6 +9287,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthTabPlan => '计划';
+
+  @override
+  String get healthSourcesTitle => '数据源';
+
+  @override
+  String get healthSourcesSubtitle => 'HealthKit / Health Connect 与 Garmin';
+
+  @override
+  String get healthNoDataSyncHint => '展开下方「数据源」进行同步或连接设备';
 
   @override
   String get healthCommandToday => '健康 · 今日';

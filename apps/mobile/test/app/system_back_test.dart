@@ -130,7 +130,6 @@ void main() {
       AppRoutes.plan,
       AppRoutes.healthToday,
       AppRoutes.healthTrend,
-      AppRoutes.healthPlan,
       AppRoutes.knowledgeInbox,
       AppRoutes.knowledgeLibrary,
       AppRoutes.knowledgeReview,
