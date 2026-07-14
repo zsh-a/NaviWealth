@@ -35,6 +35,14 @@ void main() {
       category: AccountSide.asset,
       sync: _sync,
     ),
+    'assets:broker': Account(
+      id: 'assets:broker',
+      type: AccountCategory.broker,
+      name: 'Broker',
+      currency: 'CNY',
+      category: AccountSide.asset,
+      sync: _sync,
+    ),
     'income:salary': Account(
       id: 'income:salary',
       type: AccountCategory.bank,
@@ -51,12 +59,7 @@ void main() {
     required List<Posting> postings,
   }) {
     return JournalEntryWithPostings(
-      entry: JournalEntry(
-        id: id,
-        date: date,
-        narration: id,
-        sync: _sync,
-      ),
+      entry: JournalEntry(id: id, date: date, narration: id, sync: _sync),
       postings: postings,
     );
   }
@@ -101,10 +104,7 @@ void main() {
       ),
     ];
 
-    final groups = groupActivityEntriesByDay(
-      entries,
-      accountsById: accounts,
-    );
+    final groups = groupActivityEntriesByDay(entries, accountsById: accounts);
     expect(groups, hasLength(2));
     expect(groups.first.day, DateTime(2026, 5, 11));
     expect(groups.first.entries, hasLength(2));
@@ -112,5 +112,30 @@ void main() {
     expect(groups.first.incomeTotal, Decimal.parse('100'));
     expect(groups.last.day, DateTime(2026, 5, 10));
     expect(groups.last.expenseTotal, Decimal.parse('10'));
+  });
+
+  test('headline prefers the account-currency leg over security quantity', () {
+    final postings = [
+      Posting(
+        id: 'stock',
+        journalEntryId: 'trade',
+        position: 0,
+        accountId: 'assets:broker',
+        units: Decimal.parse('1000.12345678'),
+        unit: 'cn_stock:600519',
+        sync: _sync,
+      ),
+      Posting(
+        id: 'cash',
+        journalEntryId: 'trade',
+        position: 1,
+        accountId: 'assets:wallet',
+        units: Decimal.parse('-50.12345678901234'),
+        unit: 'CNY',
+        sync: _sync,
+      ),
+    ];
+
+    expect(activityHeadlinePosting(postings, accounts)?.id, 'cash');
   });
 }

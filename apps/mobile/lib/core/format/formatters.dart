@@ -87,13 +87,13 @@ class AppFormatters {
     return formatter.format(amount.toDouble());
   }
 
-  /// Formats a ledger amount with a stable sign, grouping, unit display and
-  /// trimmed trailing zeros.
+  /// Formats a ledger amount with a stable sign, grouping, and unit display.
   ///
-  /// Fiat units render with the locale currency symbol (`+$1,234.5`), while
-  /// commodities and securities render the grouped quantity plus an asset code
-  /// (`-0.25 BTC`, `+10 AAPL`). Security ids of the form `market:symbol`
-  /// display only the symbol.
+  /// Fiat units use the currency's standard maximum fraction digits and trim
+  /// trailing zeros (`+$1,234.5`). Commodities and securities preserve their
+  /// meaningful quantity precision and append the asset code (`-0.25 BTC`,
+  /// `+10 AAPL`). Security ids of the form `market:symbol` display only the
+  /// symbol.
   String signedMoney(
     Decimal amount, {
     required String unit,
@@ -138,18 +138,15 @@ class AppFormatters {
   }
 
   String _formatUnitAmount(Decimal amount, {required String unit}) {
-    final scale = _trimmedFractionDigits(amount);
     if (_isKnownFiatCode(unit)) {
-      final formatter =
-          NumberFormat.simpleCurrency(
-              locale: _localeName,
-              name: unit.toUpperCase(),
-            )
-            ..minimumFractionDigits = 0
-            ..maximumFractionDigits = scale;
+      final formatter = NumberFormat.simpleCurrency(
+        locale: _localeName,
+        name: unit.toUpperCase(),
+      )..minimumFractionDigits = 0;
       return formatter.format(amount.toDouble());
     }
 
+    final scale = _trimmedFractionDigits(amount);
     final formatter = NumberFormat.decimalPattern(_localeName)
       ..minimumFractionDigits = 0
       ..maximumFractionDigits = scale;

@@ -115,6 +115,11 @@ Posting? activityHeadlinePosting(
   List<Posting> postings,
   Map<String, Account> accounts,
 ) {
+  // A trade mixes security quantity and cash in the same entry, so their raw
+  // magnitudes are not comparable. Prefer a leg denominated in its account's
+  // currency; fall back to the prior asset/liability heuristic for other JEs.
+  Posting? monetaryHeadline;
+  Decimal? monetaryBest;
   Posting? headline;
   Decimal? best;
   Posting? fallback;
@@ -131,12 +136,17 @@ Posting? activityHeadlinePosting(
         account.category != AccountSide.liability) {
       continue;
     }
+    if (p.unit.toUpperCase() == account.currency.toUpperCase() &&
+        (monetaryBest == null || magnitude > monetaryBest)) {
+      monetaryBest = magnitude;
+      monetaryHeadline = p;
+    }
     if (best == null || magnitude > best) {
       best = magnitude;
       headline = p;
     }
   }
-  return headline ?? fallback;
+  return monetaryHeadline ?? headline ?? fallback;
 }
 
 /// Lightweight in/out totals across a loaded page (for the summary strip).

@@ -83,6 +83,14 @@ void main() {
       expect(f.signedMoney(_d('-1000.00'), unit: 'CNY'), '-¥1,000');
     });
 
+    test('limits fiat to the currency standard fraction digits', () {
+      expect(
+        f.signedMoney(_d('-1234.567890123456'), unit: 'USD'),
+        r'-$1,234.57',
+      );
+      expect(f.signedMoney(_d('-1234.9'), unit: 'JPY'), '-¥1,235');
+    });
+
     test('formats zero without a sign', () {
       expect(f.signedMoney(_d('0.0000'), unit: 'USD'), r'$0');
     });

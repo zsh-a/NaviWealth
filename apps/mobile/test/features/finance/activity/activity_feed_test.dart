@@ -46,6 +46,7 @@ Posting _posting({
   required String journalEntryId,
   required String accountId,
   required String units,
+  String unit = 'CNY',
   int position = 0,
 }) {
   return Posting(
@@ -54,7 +55,7 @@ Posting _posting({
     position: position,
     accountId: accountId,
     units: Decimal.parse(units),
-    unit: 'CNY',
+    unit: unit,
     sync: _sync,
   );
 }
@@ -186,6 +187,49 @@ void main() {
     expect(find.textContaining('Blue Bottle'), findsOneWidget);
     expect(find.text('-¥32'), findsOneWidget);
     expect(find.byType(AppGroupedSurface), findsOneWidget);
+  });
+
+  testWidgets('trade row shows a currency-rounded cash headline', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    final accounts = [
+      _account(
+        id: 'assets:broker',
+        name: 'Broker',
+        category: AccountSide.asset,
+      ),
+      _account(id: 'assets:cash', name: 'Cash', category: AccountSide.asset),
+    ];
+    final today = DateTime.now();
+    final entry = _entry(
+      id: 'je-buy',
+      date: DateTime(today.year, today.month, today.day, 10, 5),
+      narration: 'Buy 1000.12345678 600519',
+      postings: [
+        _posting(
+          id: 'p-stock',
+          journalEntryId: 'je-buy',
+          accountId: 'assets:broker',
+          units: '1000.12345678',
+          unit: 'cn_stock:600519',
+        ),
+        _posting(
+          id: 'p-cash',
+          journalEntryId: 'je-buy',
+          accountId: 'assets:cash',
+          units: '-50.12345678901234',
+          position: 1,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_wrap(entries: [entry], accounts: accounts));
+    await tester.pumpAndSettle();
+
+    expect(find.text('-¥50.12'), findsOneWidget);
+    expect(find.textContaining('50.123456'), findsNothing);
+    expect(find.textContaining('1000.12345678 600519'), findsOneWidget);
   });
 
   testWidgets('shows load-more footer when another page exists', (
