@@ -32,8 +32,13 @@ class _LibraryList extends ConsumerWidget {
         final l10n = AppLocalizations.of(context);
         return repoAsync.when(
           loading: () => const KnowledgeLoadingState(),
-          error: (e, _) => KnowledgeErrorState(
-            title: l10n.knowledgeLibraryLoadFailed('$e'),
+          error: (e, stackTrace) => KnowledgeErrorState(
+            title: userSafeErrorMessage(
+              context,
+              e,
+              stackTrace: stackTrace,
+              operation: 'load knowledge library',
+            ),
             onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
           ),
           data: (repo) => switch (segment) {

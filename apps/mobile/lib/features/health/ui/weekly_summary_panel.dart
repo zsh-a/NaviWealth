@@ -1,5 +1,7 @@
 part of 'health_today_page.dart';
 
+/// Weekly summary — signal only. Loading shells and empty weeks stay off
+/// the Today surface so secondary depth does not compete with recovery.
 class _WeeklySummaryPanel extends ConsumerWidget {
   const _WeeklySummaryPanel();
 
@@ -12,29 +14,39 @@ class _WeeklySummaryPanel extends ConsumerWidget {
       health_agent_providers.latestWeeklySummaryRunProvider,
     );
     final async = ref.watch(weeklySummaryProvider);
-    return artifactAsync.when(
-      loading: () => const _WeeklySummarySkeleton(),
-      error: (error, _) => _WeeklySummaryFallback(
-        async: async,
-        runAsync: runAsync,
-        agentLoadError: error,
-      ),
-      data: (artifact) {
-        if (artifact != null) {
-          return _WeeklySummaryArtifactCard(
-            artifact: artifact,
-            run: runAsync.value,
-            onVisibilityChanged: () {
-              ref.invalidate(
-                health_agent_providers.latestHealthReviewAgentResultsProvider,
-              );
-            },
-            onRetry: () => _retryWeekly(ref),
+
+    // Quiet while still resolving — no skeleton on Today.
+    if (artifactAsync.isLoading && !artifactAsync.hasValue) {
+      return const SizedBox.shrink();
+    }
+
+    if (artifactAsync.hasError && !artifactAsync.hasValue) {
+      return AgentResultPanelStateCard(
+        icon: FLucideIcons.triangleAlert,
+        title: AppLocalizations.of(context).commonError,
+        message: userSafeErrorMessage(context, artifactAsync.error!),
+        error: true,
+        onRetry: () => ref.invalidate(
+          health_agent_providers.latestWeeklySummaryArtifactProvider,
+        ),
+      );
+    }
+
+    final artifact = artifactAsync.value;
+    if (artifact != null) {
+      return _WeeklySummaryArtifactCard(
+        artifact: artifact,
+        run: runAsync.value,
+        onVisibilityChanged: () {
+          ref.invalidate(
+            health_agent_providers.latestHealthReviewAgentResultsProvider,
           );
-        }
-        return _WeeklySummaryFallback(async: async, runAsync: runAsync);
-      },
-    );
+        },
+        onRetry: () => _retryWeekly(ref),
+      );
+    }
+
+    return _WeeklySummaryFallback(async: async, runAsync: runAsync);
   }
 }
 
@@ -85,12 +97,10 @@ class _WeeklySummaryFallback extends ConsumerWidget {
   const _WeeklySummaryFallback({
     required this.async,
     required this.runAsync,
-    this.agentLoadError,
   });
 
   final AsyncValue<WeeklySummary?> async;
   final AsyncValue<AgentRunRecord?> runAsync;
-  final Object? agentLoadError;
 
   Future<void> _retry(WidgetRef ref) async {
     final controller = await ref.read(agentRunControllerProvider.future);
@@ -103,60 +113,23 @@ class _WeeklySummaryFallback extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final agentLoadError = this.agentLoadError;
-    if (agentLoadError != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AgentResultPanelStateCard(
-            icon: FLucideIcons.triangleAlert,
-            title: l10n.commonError,
-            message: userSafeErrorMessage(context, agentLoadError),
-            error: true,
-            onRetry: () => ref.invalidate(
-              health_agent_providers.latestHealthReviewAgentResultsProvider,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          _WeeklySummaryMetricsCard(async: async),
-        ],
-      );
-    }
+
+    // Never paint a loading shell for the weekly agent on Today.
     if (runAsync.isLoading && !runAsync.hasValue) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AgentResultPanelStateCard(
-            icon: FLucideIcons.loaderCircle,
-            title: l10n.commonLoading,
-            message: l10n.agentResultLoadingBody,
-            loading: true,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          _WeeklySummaryMetricsCard(async: async),
-        ],
-      );
+      return _WeeklySummaryMetricsCard(async: async);
     }
     if (runAsync.hasError && !runAsync.hasValue) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AgentResultPanelStateCard(
-            icon: FLucideIcons.triangleAlert,
-            title: l10n.commonError,
-            message: userSafeErrorMessage(context, runAsync.error!),
-            error: true,
-            onRetry: () => ref.invalidate(
-              health_agent_providers.latestHealthReviewAgentResultsProvider,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          _WeeklySummaryMetricsCard(async: async),
-        ],
+      return AgentResultPanelStateCard(
+        icon: FLucideIcons.triangleAlert,
+        title: l10n.commonError,
+        message: userSafeErrorMessage(context, runAsync.error!),
+        error: true,
+        onRetry: () => ref.invalidate(
+          health_agent_providers.latestHealthReviewAgentResultsProvider,
+        ),
       );
     }
     final run = runAsync.value;
-    // Only surface run chrome when generating or failed — not a bare "ready".
     final showRun =
         run != null &&
         (run.status == AgentRunLifecycleStatus.running ||
@@ -187,51 +160,53 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return async.when(
-      loading: () => const _WeeklySummarySkeleton(),
+      // Quiet while metrics resolve — empty weeks stay off Today.
+      loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
       data: (summary) {
-        final stats = summary == null
-            ? const <_WeeklyStat>[]
-            : [
-                _WeeklyStat(
-                  icon: FLucideIcons.footprints,
-                  value: Fmt.number(summary.totalSteps.round()),
-                  label: l10n.healthStepsMetricLabel,
-                  color: HealthMetricColors.steps,
-                ),
-                if (summary.avgSleepHours > 0)
-                  _WeeklyStat(
-                    icon: FLucideIcons.moon,
-                    value: '${_round(summary.avgSleepHours)}h',
-                    label: l10n.healthSleepMetricLabel,
-                    color: HealthMetricColors.sleep,
-                  ),
-                if (summary.workoutCount > 0)
-                  _WeeklyStat(
-                    icon: FLucideIcons.dumbbell,
-                    value: _formatWeeklyWorkoutValue(
-                      l10n,
-                      summary.totalWorkoutMinutes,
-                      summary.workoutCount,
-                    ),
-                    label: l10n.healthWorkoutMetricLabel,
-                    color: HealthMetricColors.workout,
-                  ),
-                if (summary.avgHrv > 0)
-                  _WeeklyStat(
-                    icon: FLucideIcons.heartPulse,
-                    value: '${summary.avgHrv.round()}ms',
-                    label: l10n.healthHrvMetricLabel,
-                    color: HealthMetricColors.hrv,
-                  ),
-                if (summary.avgRhr > 0)
-                  _WeeklyStat(
-                    icon: FLucideIcons.heart,
-                    value: '${summary.avgRhr.round()}bpm',
-                    label: l10n.healthRhrMetricLabel,
-                    color: HealthMetricColors.rhr,
-                  ),
-              ];
+        if (summary == null) return const SizedBox.shrink();
+        final stats = <_WeeklyStat>[
+          if (summary.totalSteps > 0)
+            _WeeklyStat(
+              icon: FLucideIcons.footprints,
+              value: Fmt.number(summary.totalSteps.round()),
+              label: l10n.healthStepsMetricLabel,
+              color: HealthMetricColors.steps,
+            ),
+          if (summary.avgSleepHours > 0)
+            _WeeklyStat(
+              icon: FLucideIcons.moon,
+              value: '${_round(summary.avgSleepHours)}h',
+              label: l10n.healthSleepMetricLabel,
+              color: HealthMetricColors.sleep,
+            ),
+          if (summary.workoutCount > 0)
+            _WeeklyStat(
+              icon: FLucideIcons.dumbbell,
+              value: _formatWeeklyWorkoutValue(
+                l10n,
+                summary.totalWorkoutMinutes,
+                summary.workoutCount,
+              ),
+              label: l10n.healthWorkoutMetricLabel,
+              color: HealthMetricColors.workout,
+            ),
+          if (summary.avgHrv > 0)
+            _WeeklyStat(
+              icon: FLucideIcons.heartPulse,
+              value: '${summary.avgHrv.round()}ms',
+              label: l10n.healthHrvMetricLabel,
+              color: HealthMetricColors.hrv,
+            ),
+          if (summary.avgRhr > 0)
+            _WeeklyStat(
+              icon: FLucideIcons.heart,
+              value: '${summary.avgRhr.round()}bpm',
+              label: l10n.healthRhrMetricLabel,
+              color: HealthMetricColors.rhr,
+            ),
+        ];
+        if (stats.isEmpty) return const SizedBox.shrink();
         return SoftCard(
           level: SoftCardLevel.raised,
           borderless: true,
@@ -250,25 +225,19 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.s12),
-              if (stats.isEmpty)
-                _InlineEmptyState(
-                  icon: FLucideIcons.activity,
-                  message: l10n.healthWeeklySummaryEmpty,
-                )
-              else
-                Wrap(
-                  spacing: AppSpacing.s8,
-                  runSpacing: AppSpacing.s8,
-                  children: [
-                    for (final stat in stats)
-                      AppInfoChip(
-                        icon: stat.icon,
-                        value: stat.value,
-                        label: stat.label,
-                        color: stat.color,
-                      ),
-                  ],
-                ),
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  for (final stat in stats)
+                    AppInfoChip(
+                      icon: stat.icon,
+                      value: stat.value,
+                      label: stat.label,
+                      color: stat.color,
+                    ),
+                ],
+              ),
             ],
           ),
         );
@@ -286,40 +255,6 @@ String _formatWeeklyWorkoutValue(
       ? l10n.healthWorkoutDurationHoursMinutes(minutes ~/ 60, minutes % 60)
       : l10n.healthWorkoutDurationMinutes(minutes);
   return l10n.healthWeeklyWorkoutValue(count, duration);
-}
-
-class _WeeklySummarySkeleton extends StatelessWidget {
-  const _WeeklySummarySkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SkeletonCard(
-      padding: EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              SkeletonBox(width: 32, height: 32, radius: AppRadius.sm),
-              SizedBox(width: AppSpacing.s8),
-              Expanded(child: SkeletonBox(width: 140, height: 14)),
-              SkeletonBox(width: 32, height: 18, radius: AppRadius.full),
-            ],
-          ),
-          SizedBox(height: AppSpacing.s12),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: [
-              SkeletonBox(width: 104, height: 42, radius: AppRadius.sm),
-              SkeletonBox(width: 104, height: 42, radius: AppRadius.sm),
-              SkeletonBox(width: 104, height: 42, radius: AppRadius.sm),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _WeeklyStat {

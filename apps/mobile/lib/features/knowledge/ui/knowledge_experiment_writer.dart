@@ -218,8 +218,13 @@ class _AssumptionTargetPicker extends ConsumerWidget {
           loading: () => const KnowledgeLoadingState(
             density: KnowledgeStateDensity.section,
           ),
-          error: (e, _) => KnowledgeErrorState(
-            title: AppLocalizations.of(context).knowledgeLoadFailed('$e'),
+          error: (e, stackTrace) => KnowledgeErrorState(
+            title: userSafeErrorMessage(
+              context,
+              e,
+              stackTrace: stackTrace,
+              operation: 'load knowledge assumptions',
+            ),
             onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
             density: KnowledgeStateDensity.section,
           ),

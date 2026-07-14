@@ -215,9 +215,14 @@ class _NotesList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return notesAsync.when(
       loading: () => const KnowledgeLoadingState(),
-      error: (e, _) => KnowledgeErrorState(
+      error: (e, stackTrace) => KnowledgeErrorState(
         title: AppLocalizations.of(context).knowledgeInboxLoadFailedTitle,
-        message: '$e',
+        message: userSafeErrorMessage(
+          context,
+          e,
+          stackTrace: stackTrace,
+          operation: 'load knowledge inbox',
+        ),
         onRetry: () => ref.invalidate(knowledgeInboxNotesProvider),
       ),
       data: (notes) {

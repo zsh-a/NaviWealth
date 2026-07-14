@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
+import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
@@ -172,15 +173,9 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
       execution_agent_providers.latestExecutionReviewResultsProvider,
     );
     final l10n = AppLocalizations.of(context);
+    // Quiet while loading — no status shells on Review.
     if (resultsAsync.isLoading && !resultsAsync.hasValue) {
-      return _ExecutionReviewAgentPanelFrame(
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.loaderCircle,
-          title: l10n.commonLoading,
-          message: l10n.agentResultLoadingBody,
-          loading: true,
-        ),
-      );
+      return const SizedBox.shrink();
     }
     if (resultsAsync.hasError && !resultsAsync.hasValue) {
       return _ExecutionReviewAgentPanelFrame(
@@ -199,7 +194,13 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
     final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
     final artifact = artifacts.isEmpty ? null : artifacts.first;
     final run = bundle?.latestRun;
-    if (artifact == null && run == null) return const SizedBox.shrink();
+    // Ready runs with no artifact stay silent.
+    if (artifact == null &&
+        (run == null ||
+            (run.status != AgentRunLifecycleStatus.running &&
+                run.status != AgentRunLifecycleStatus.failed))) {
+      return const SizedBox.shrink();
+    }
     final metaTime = artifact?.createdAt ?? run!.startedAt;
     return _ExecutionReviewAgentPanelFrame(
       child: AgentResultSurface(

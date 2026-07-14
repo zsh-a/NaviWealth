@@ -22,6 +22,7 @@ class ExecutionTodayPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.executionTodayTitle,
+      directActionBudget: 1,
       actions: [
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
@@ -157,12 +158,14 @@ class _TodayListState extends ConsumerState<_TodayList> {
                 Text(l10n.executionTodayTitle, style: context.mutedLabelStyle),
                 const SizedBox(height: AppSpacing.s8),
                 Text(
-                  l10n.executionOverviewFocus,
+                  '${snapshot.todayCount}',
                   style: TypographyTokens.displaySmall,
                 ),
                 const SizedBox(height: AppSpacing.s6),
                 Text(
-                  '${snapshot.todayCount} · ${l10n.executionOverviewBlocked} ${snapshot.blockedCount}',
+                  snapshot.blockedCount > 0
+                      ? '${l10n.executionOverviewFocus} · ${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
+                      : l10n.executionOverviewFocus,
                   style: context.captionStyle,
                 ),
               ],
@@ -172,10 +175,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
             ExecutionOverviewStrip(
               snapshot: snapshot,
               selectedFilter: _filter,
-              onFilterChanged: (filter) {
-                AppInteraction.signal(AppInteractionIntent.select);
-                setState(() => _filter = filter);
-              },
+              onFilterChanged: (filter) => setState(() => _filter = filter),
             ),
           ],
           secondary: actionModules,

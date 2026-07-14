@@ -21,8 +21,9 @@ class ExecutionProgressCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final color = _progressColor(context, entry.kind);
     final semantic = SemanticColors.of(context);
-    return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s14),
+    return SoftCard.flat(
+      borderless: true,
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

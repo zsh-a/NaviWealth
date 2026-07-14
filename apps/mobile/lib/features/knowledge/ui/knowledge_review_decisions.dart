@@ -9,28 +9,21 @@ class _DueReviewsCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) {
-          return KnowledgeSection.group(
-            title: l10n.knowledgeReviewDecisionsTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          );
-        }
+        if (!ownerSnap.hasData) return const SizedBox.shrink();
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => KnowledgeSection.group(
-            title: l10n.knowledgeReviewDecisionsTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          ),
-          error: (e, _) => KnowledgeSection.group(
+          loading: () => const SizedBox.shrink(),
+          error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeReviewDecisionsTitle,
             children: [
               KnowledgeErrorState(
-                title: l10n.knowledgeReviewLoadFailed('$e'),
+                title: userSafeErrorMessage(
+                  context,
+                  e,
+                  stackTrace: stackTrace,
+                  operation: 'load decision reviews',
+                ),
                 onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
                 density: KnowledgeStateDensity.section,
               ),
@@ -61,7 +54,9 @@ class _DueReviewsCard extends ConsumerWidget {
                     ],
                   );
                 }
+                if (!snap.hasData) return const SizedBox.shrink();
                 final list = snap.data ?? const [];
+                if (list.isEmpty) return const SizedBox.shrink();
                 final ordered = _orderedReviewItems<KnowledgeDecision>(
                   items: list,
                   order:
@@ -76,50 +71,40 @@ class _DueReviewsCard extends ConsumerWidget {
                     .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewDecisionsTitle,
-                  trailing: list.isEmpty
-                      ? null
-                      : _ReviewBulkActionButton(
-                          label: l10n.knowledgeReviewMarkAllDecisionsReviewed,
-                          icon: FLucideIcons.calendarCheck,
-                          onPress: () => _markDecisionsReviewed(
-                            context: context,
-                            ref: ref,
-                            decisions: list,
-                          ),
-                        ),
+                  trailing: _ReviewBulkActionButton(
+                    label: l10n.knowledgeReviewMarkAllDecisionsReviewed,
+                    icon: FLucideIcons.calendarCheck,
+                    onPress: () => _markDecisionsReviewed(
+                      context: context,
+                      ref: ref,
+                      decisions: list,
+                    ),
+                  ),
                   children: [
-                    if (list.isEmpty)
-                      KnowledgeEmptyState(
-                        icon: FLucideIcons.calendar,
-                        title: l10n.knowledgeReviewDecisionsEmpty,
-                        density: KnowledgeStateDensity.section,
-                      )
-                    else ...[
-                      _ReviewCountHint(
-                        visibleCount: visible.length,
-                        totalCount: list.length,
+                    _ReviewCountHint(
+                      visibleCount: visible.length,
+                      totalCount: list.length,
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    _ReviewSelectableList<KnowledgeDecision>(
+                      items: visible,
+                      idOf: (d) => d.id,
+                      itemBuilder: (d) => _DueDecisionRow(decision: d),
+                      actionLabel:
+                          l10n.knowledgeReviewMarkSelectedDecisionsReviewed,
+                      icon: FLucideIcons.calendarCheck,
+                      onBulkAction: (selected) => _markDecisionsReviewed(
+                        context: context,
+                        ref: ref,
+                        decisions: selected,
                       ),
-                      const SizedBox(height: AppSpacing.s8),
-                      _ReviewSelectableList<KnowledgeDecision>(
-                        items: visible,
-                        idOf: (d) => d.id,
-                        itemBuilder: (d) => _DueDecisionRow(decision: d),
-                        actionLabel:
-                            l10n.knowledgeReviewMarkSelectedDecisionsReviewed,
-                        icon: FLucideIcons.calendarCheck,
-                        onBulkAction: (selected) => _markDecisionsReviewed(
-                          context: context,
-                          ref: ref,
-                          decisions: selected,
-                        ),
-                        orderPrefsKey: _kReviewDecisionOrderPrefsKey,
-                        onOrderChanged: (ids) => _persistReviewOrder(
-                          ref: ref,
-                          prefsKey: _kReviewDecisionOrderPrefsKey,
-                          visibleIds: ids,
-                        ),
+                      orderPrefsKey: _kReviewDecisionOrderPrefsKey,
+                      onOrderChanged: (ids) => _persistReviewOrder(
+                        ref: ref,
+                        prefsKey: _kReviewDecisionOrderPrefsKey,
+                        visibleIds: ids,
                       ),
-                    ],
+                    ),
                   ],
                 );
               },

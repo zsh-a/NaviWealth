@@ -219,15 +219,9 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
       knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
     );
     final l10n = AppLocalizations.of(context);
+    // Quiet while loading — no status shells on Review.
     if (resultsAsync.isLoading && !resultsAsync.hasValue) {
-      return _KnowledgeAgentPanelFrame(
-        child: AgentResultPanelStateCard(
-          icon: FLucideIcons.loaderCircle,
-          title: l10n.commonLoading,
-          message: l10n.agentResultLoadingBody,
-          loading: true,
-        ),
-      );
+      return const SizedBox.shrink();
     }
     if (resultsAsync.hasError && !resultsAsync.hasValue) {
       return _KnowledgeAgentPanelFrame(

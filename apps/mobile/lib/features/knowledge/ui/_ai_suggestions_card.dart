@@ -45,28 +45,21 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(knowledgeOwnerUserIdProvider.future),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) {
-          return KnowledgeSection.group(
-            title: l10n.knowledgeAiSuggestionsTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          );
-        }
+        if (!ownerSnap.hasData) return const SizedBox.shrink();
         final owner = ownerSnap.data!;
         final triageAsync = ref.watch(inboxTriageRepositoryProvider);
         return triageAsync.when(
-          loading: () => KnowledgeSection.group(
-            title: l10n.knowledgeAiSuggestionsTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          ),
-          error: (e, _) => KnowledgeSection.group(
+          loading: () => const SizedBox.shrink(),
+          error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeAiSuggestionsTitle,
             children: [
               KnowledgeErrorState(
-                title: l10n.knowledgeLoadFailed('$e'),
+                title: userSafeErrorMessage(
+                  context,
+                  e,
+                  stackTrace: stackTrace,
+                  operation: 'load knowledge AI suggestions',
+                ),
                 onRetry: () => ref.invalidate(inboxTriageRepositoryProvider),
                 density: KnowledgeStateDensity.section,
               ),
@@ -96,18 +89,8 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
               final list = (snap.data ?? const <InboxTriageRecord>[])
                   .where((record) => record.pending.isNotEmpty)
                   .toList(growable: false);
-              if (list.isEmpty) {
-                return KnowledgeSection.group(
-                  title: l10n.knowledgeAiSuggestionsTitle,
-                  children: [
-                    KnowledgeEmptyState(
-                      icon: FLucideIcons.sparkles,
-                      title: l10n.knowledgeAiSuggestionsEmpty,
-                      density: KnowledgeStateDensity.section,
-                    ),
-                  ],
-                );
-              }
+              // Signal only — empty triage does not occupy Review chrome.
+              if (list.isEmpty) return const SizedBox.shrink();
               final pendingCount = _pendingCount(list);
               return KnowledgeSection.group(
                 title: l10n.knowledgeAiSuggestionsTitle,

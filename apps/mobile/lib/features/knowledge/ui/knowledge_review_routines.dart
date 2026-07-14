@@ -9,28 +9,21 @@ class _DueRoutinesCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) {
-          return KnowledgeSection.group(
-            title: l10n.knowledgeReviewRoutinesTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          );
-        }
+        if (!ownerSnap.hasData) return const SizedBox.shrink();
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => KnowledgeSection.group(
-            title: l10n.knowledgeReviewRoutinesTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          ),
-          error: (e, _) => KnowledgeSection.group(
+          loading: () => const SizedBox.shrink(),
+          error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeReviewRoutinesTitle,
             children: [
               KnowledgeErrorState(
-                title: l10n.knowledgeReviewLoadFailed('$e'),
+                title: userSafeErrorMessage(
+                  context,
+                  e,
+                  stackTrace: stackTrace,
+                  operation: 'load routine reviews',
+                ),
                 onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
                 density: KnowledgeStateDensity.section,
               ),
@@ -56,10 +49,13 @@ class _DueRoutinesCard extends ConsumerWidget {
                     ],
                   );
                 }
+                // Quiet until the stream emits; empty due list hides the card.
+                if (!snap.hasData) return const SizedBox.shrink();
                 final now = DateTime.now();
                 final due = (snap.data ?? const <KnowledgeRoutine>[])
                     .where((r) => shouldShowRoutineInReview(r, now))
                     .toList(growable: false);
+                if (due.isEmpty) return const SizedBox.shrink();
                 final ordered = _orderedReviewItems<KnowledgeRoutine>(
                   items: due,
                   order:
@@ -74,49 +70,39 @@ class _DueRoutinesCard extends ConsumerWidget {
                     .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewRoutinesTitle,
-                  trailing: due.isEmpty
-                      ? null
-                      : _ReviewBulkActionButton(
-                          label: l10n.knowledgeReviewMarkAllDone,
-                          icon: FLucideIcons.checkCheck,
-                          onPress: () => _markRoutinesDone(
-                            context: context,
-                            ref: ref,
-                            routines: due,
-                          ),
-                        ),
+                  trailing: _ReviewBulkActionButton(
+                    label: l10n.knowledgeReviewMarkAllDone,
+                    icon: FLucideIcons.checkCheck,
+                    onPress: () => _markRoutinesDone(
+                      context: context,
+                      ref: ref,
+                      routines: due,
+                    ),
+                  ),
                   children: [
-                    if (due.isEmpty)
-                      KnowledgeEmptyState(
-                        icon: FLucideIcons.repeat,
-                        title: l10n.knowledgeReviewRoutinesEmpty,
-                        density: KnowledgeStateDensity.section,
-                      )
-                    else ...[
-                      _ReviewCountHint(
-                        visibleCount: visible.length,
-                        totalCount: due.length,
+                    _ReviewCountHint(
+                      visibleCount: visible.length,
+                      totalCount: due.length,
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    _ReviewSelectableList<KnowledgeRoutine>(
+                      items: visible,
+                      idOf: (r) => r.id,
+                      itemBuilder: (r) => _DueRoutineRow(routine: r),
+                      actionLabel: l10n.knowledgeReviewMarkSelectedDone,
+                      icon: FLucideIcons.checkCheck,
+                      onBulkAction: (selected) => _markRoutinesDone(
+                        context: context,
+                        ref: ref,
+                        routines: selected,
                       ),
-                      const SizedBox(height: AppSpacing.s8),
-                      _ReviewSelectableList<KnowledgeRoutine>(
-                        items: visible,
-                        idOf: (r) => r.id,
-                        itemBuilder: (r) => _DueRoutineRow(routine: r),
-                        actionLabel: l10n.knowledgeReviewMarkSelectedDone,
-                        icon: FLucideIcons.checkCheck,
-                        onBulkAction: (selected) => _markRoutinesDone(
-                          context: context,
-                          ref: ref,
-                          routines: selected,
-                        ),
-                        orderPrefsKey: _kReviewRoutineOrderPrefsKey,
-                        onOrderChanged: (ids) => _persistReviewOrder(
-                          ref: ref,
-                          prefsKey: _kReviewRoutineOrderPrefsKey,
-                          visibleIds: ids,
-                        ),
+                      orderPrefsKey: _kReviewRoutineOrderPrefsKey,
+                      onOrderChanged: (ids) => _persistReviewOrder(
+                        ref: ref,
+                        prefsKey: _kReviewRoutineOrderPrefsKey,
+                        visibleIds: ids,
                       ),
-                    ],
+                    ),
                   ],
                 );
               },

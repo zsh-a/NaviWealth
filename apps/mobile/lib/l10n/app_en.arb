@@ -5995,6 +5995,10 @@
   "executionCommitmentDescriptionHint": "Optional scope, why it matters, or target outcome",
   "executionOverviewFocus": "Focus",
   "executionOverviewBacklog": "Backlog",
+  "executionOverviewOpen": "Open",
+  "@executionOverviewOpen": {
+    "description": "Execution Today lens: all open actions"
+  },
   "executionOverviewBlocked": "Blocked",
   "executionOverviewHigh": "High",
   "executionOverviewDue": "Due",

@@ -10880,6 +10880,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionOverviewBacklog => '待排期';
 
   @override
+  String get executionOverviewOpen => '全部';
+
+  @override
   String get executionOverviewBlocked => '阻塞';
 
   @override

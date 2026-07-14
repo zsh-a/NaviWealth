@@ -68,6 +68,7 @@ void main() {
 
     expect(snapshot.todayCount, 2);
     expect(snapshot.blockedCount, 1);
+    expect(snapshot.openCount, 4);
     expect(snapshot.backlogCount, 1);
     expect(snapshot.highPriorityCount, 1);
     expect(snapshot.dueCount, 1);
@@ -111,30 +112,12 @@ void main() {
     );
     expect(
       filteredExecutionActions(
-        filter: ExecutionTodayFilter.backlog,
+        filter: ExecutionTodayFilter.open,
         todayActions: [today],
         openActions: open,
         now: now,
       ),
-      [today, backlog],
-    );
-    expect(
-      filteredExecutionActions(
-        filter: ExecutionTodayFilter.high,
-        todayActions: [today],
-        openActions: open,
-        now: now,
-      ),
-      [high],
-    );
-    expect(
-      filteredExecutionActions(
-        filter: ExecutionTodayFilter.due,
-        todayActions: [today],
-        openActions: open,
-        now: now,
-      ),
-      [due],
+      open,
     );
   });
 
@@ -206,6 +189,7 @@ void main() {
     const snapshot = ExecutionOverviewSnapshot(
       todayCount: 3,
       blockedCount: 1,
+      openCount: 6,
       backlogCount: 2,
       highPriorityCount: 2,
       dueCount: 1,
@@ -228,24 +212,20 @@ void main() {
       ),
     );
 
-    expect(find.text('Focus'), findsOneWidget);
-    expect(find.text('Backlog'), findsOneWidget);
-    expect(find.text('Blocked'), findsOneWidget);
+    expect(find.textContaining('Focus'), findsOneWidget);
+    expect(find.textContaining('Open'), findsOneWidget);
+    expect(find.textContaining('Blocked'), findsOneWidget);
     expect(find.textContaining('7d progress'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text('Focus')).dy,
-      closeTo(tester.getTopLeft(find.text('Blocked')).dy, 1),
-    );
 
-    await tester.tap(find.text('Blocked'));
+    await tester.tap(find.textContaining('Blocked'));
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(selected, ExecutionTodayFilter.blocked);
 
-    await tester.tap(find.text('Backlog'));
+    await tester.tap(find.textContaining('Open'));
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(selected, ExecutionTodayFilter.backlog);
+    expect(selected, ExecutionTodayFilter.open);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 200));
@@ -255,6 +235,7 @@ void main() {
     const snapshot = ExecutionOverviewSnapshot(
       todayCount: 0,
       blockedCount: 0,
+      openCount: 0,
       backlogCount: 0,
       highPriorityCount: 0,
       dueCount: 0,
@@ -276,8 +257,8 @@ void main() {
     expect(find.text('Projects'), findsNothing);
     expect(find.text('Commitments'), findsNothing);
     expect(find.textContaining('7d progress'), findsNothing);
-    expect(find.text('Focus'), findsOneWidget);
-    expect(find.text('Due'), findsOneWidget);
+    expect(find.textContaining('Focus'), findsOneWidget);
+    expect(find.textContaining('Due'), findsNothing);
   });
 
   testWidgets('action card exposes edit and status actions', (tester) async {

@@ -27,12 +27,14 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.executionCommitmentsTitle,
+      // One primary create; project/commitment land in overflow.
+      directActionBudget: 1,
       actions: [
         ShellHeaderActionSpec(
-          icon: FLucideIcons.folder,
-          label: l10n.executionCreateProjectTitle,
-          onPress: () => showExecutionProjectSheet(context: context),
-          order: 20,
+          icon: FLucideIcons.plus,
+          label: l10n.executionCreateActionTitle,
+          onPress: () => showExecutionActionSheet(context: context),
+          order: 0,
         ),
         ShellHeaderActionSpec(
           icon: FLucideIcons.target,
@@ -41,9 +43,10 @@ class ExecutionCommitmentsPage extends ConsumerWidget {
           order: 10,
         ),
         ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.executionCreateActionTitle,
-          onPress: () => showExecutionActionSheet(context: context),
+          icon: FLucideIcons.folder,
+          label: l10n.executionCreateProjectTitle,
+          onPress: () => showExecutionProjectSheet(context: context),
+          order: 20,
         ),
       ],
       child: RefreshIndicator(

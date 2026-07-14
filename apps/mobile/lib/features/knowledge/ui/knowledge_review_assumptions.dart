@@ -60,28 +60,21 @@ class _StaleAssumptionsCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) {
-          return KnowledgeSection.group(
-            title: l10n.knowledgeReviewAssumptionsTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          );
-        }
+        if (!ownerSnap.hasData) return const SizedBox.shrink();
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => KnowledgeSection.group(
-            title: l10n.knowledgeReviewAssumptionsTitle,
-            children: const [
-              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
-            ],
-          ),
-          error: (e, _) => KnowledgeSection.group(
+          loading: () => const SizedBox.shrink(),
+          error: (e, stackTrace) => KnowledgeSection.group(
             title: l10n.knowledgeReviewAssumptionsTitle,
             children: [
               KnowledgeErrorState(
-                title: l10n.knowledgeReviewLoadFailed('$e'),
+                title: userSafeErrorMessage(
+                  context,
+                  e,
+                  stackTrace: stackTrace,
+                  operation: 'load assumption reviews',
+                ),
                 onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
                 density: KnowledgeStateDensity.section,
               ),
@@ -109,6 +102,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     ],
                   );
                 }
+                if (!snap.hasData) return const SizedBox.shrink();
                 final all = snap.data ?? const [];
                 final now = DateTime.now().toUtc();
                 final stale = all
@@ -116,6 +110,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                       (a) => a.daysSinceVerify(now) >= kAssumptionStaleDays,
                     )
                     .toList();
+                if (stale.isEmpty) return const SizedBox.shrink();
                 final ordered = _orderedReviewItems<KnowledgeAssumption>(
                   items: stale,
                   order:
@@ -130,53 +125,41 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewAssumptionsTitle,
-                  trailing: stale.isEmpty
-                      ? null
-                      : _ReviewBulkActionButton(
-                          label: l10n.knowledgeReviewVerifyAllAssumptions,
-                          icon: FLucideIcons.badgeCheck,
-                          onPress: () => _verifyAssumptions(
-                            context: context,
-                            ref: ref,
-                            assumptions: stale,
-                          ),
-                        ),
+                  trailing: _ReviewBulkActionButton(
+                    label: l10n.knowledgeReviewVerifyAllAssumptions,
+                    icon: FLucideIcons.badgeCheck,
+                    onPress: () => _verifyAssumptions(
+                      context: context,
+                      ref: ref,
+                      assumptions: stale,
+                    ),
+                  ),
                   children: [
-                    if (stale.isEmpty)
-                      KnowledgeEmptyState(
-                        icon: FLucideIcons.badgeCheck,
-                        title: l10n.knowledgeReviewAssumptionsEmpty(
-                          kAssumptionStaleDays,
-                        ),
-                        density: KnowledgeStateDensity.section,
-                      )
-                    else ...[
-                      _ReviewCountHint(
-                        visibleCount: visible.length,
-                        totalCount: stale.length,
+                    _ReviewCountHint(
+                      visibleCount: visible.length,
+                      totalCount: stale.length,
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    _ReviewSelectableList<KnowledgeAssumption>(
+                      items: visible,
+                      idOf: (a) => a.id,
+                      itemBuilder: (a) =>
+                          _StaleAssumptionRow(assumption: a, now: now),
+                      actionLabel:
+                          l10n.knowledgeReviewVerifySelectedAssumptions,
+                      icon: FLucideIcons.badgeCheck,
+                      onBulkAction: (selected) => _verifyAssumptions(
+                        context: context,
+                        ref: ref,
+                        assumptions: selected,
                       ),
-                      const SizedBox(height: AppSpacing.s8),
-                      _ReviewSelectableList<KnowledgeAssumption>(
-                        items: visible,
-                        idOf: (a) => a.id,
-                        itemBuilder: (a) =>
-                            _StaleAssumptionRow(assumption: a, now: now),
-                        actionLabel:
-                            l10n.knowledgeReviewVerifySelectedAssumptions,
-                        icon: FLucideIcons.badgeCheck,
-                        onBulkAction: (selected) => _verifyAssumptions(
-                          context: context,
-                          ref: ref,
-                          assumptions: selected,
-                        ),
-                        orderPrefsKey: _kReviewAssumptionOrderPrefsKey,
-                        onOrderChanged: (ids) => _persistReviewOrder(
-                          ref: ref,
-                          prefsKey: _kReviewAssumptionOrderPrefsKey,
-                          visibleIds: ids,
-                        ),
+                      orderPrefsKey: _kReviewAssumptionOrderPrefsKey,
+                      onOrderChanged: (ids) => _persistReviewOrder(
+                        ref: ref,
+                        prefsKey: _kReviewAssumptionOrderPrefsKey,
+                        visibleIds: ids,
                       ),
-                    ],
+                    ),
                   ],
                 );
               },

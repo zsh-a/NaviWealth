@@ -9,7 +9,7 @@ class _BriefingPanel extends ConsumerStatefulWidget {
 
 class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
   bool _running = false;
-  String? _errorMessage;
+  Object? _errorMessage;
 
   Future<void> _run() async {
     if (_running) return;
@@ -28,7 +28,7 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
         health_agent_providers.latestMorningBriefingArtifactProvider,
       );
     } on Object catch (e) {
-      setState(() => _errorMessage = e.toString());
+      setState(() => _errorMessage = e);
     } finally {
       if (mounted) setState(() => _running = false);
     }
@@ -43,38 +43,64 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
       health_agent_providers.latestMorningBriefingProvider,
     );
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+
+    // Quiet while loading — no skeleton on the signal surface.
+    if ((artifactAsync.isLoading && !artifactAsync.hasValue) ||
+        (artifactAsync.value == null &&
+            memoryAsync.isLoading &&
+            !memoryAsync.hasValue &&
+            !_running)) {
+      return const SizedBox.shrink();
+    }
+
+    Widget body;
+    if (artifactAsync.hasError && !artifactAsync.hasValue) {
+      body = AgentResultPanelStateCard(
+        icon: FLucideIcons.triangleAlert,
+        title: l10n.commonError,
+        message: userSafeErrorMessage(context, artifactAsync.error!),
+        error: true,
+        onRetry: _run,
+      );
+    } else {
+      final artifact = artifactAsync.value;
+      if (artifact != null) {
+        body = _BriefingArtifactCard(
+          artifact: artifact,
+          running: _running,
+          onRun: _run,
+          onVisibilityChanged: () {
+            ref.invalidate(
+              health_agent_providers.latestMorningBriefingArtifactProvider,
+            );
+          },
+        );
+      } else if (memoryAsync.hasError && !memoryAsync.hasValue) {
+        body = AgentResultPanelStateCard(
+          icon: FLucideIcons.triangleAlert,
+          title: l10n.commonError,
+          message: userSafeErrorMessage(context, memoryAsync.error!),
+          error: true,
+          onRetry: _run,
+        );
+      } else {
+        // Empty: compact generate CTA only — no large empty shell.
+        final record = memoryAsync.value;
+        body = record == null
+            ? _BriefingEmpty(running: _running, onRun: _run)
+            : _BriefingCard(record: record, running: _running, onRun: _run);
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        artifactAsync.when(
-          loading: () => const _BriefingSkeleton(),
-          error: (e, _) => _BriefingError(message: '$e'),
-          data: (artifact) {
-            if (artifact != null) {
-              return _BriefingArtifactCard(
-                artifact: artifact,
-                running: _running,
-                onRun: _run,
-                onVisibilityChanged: () {
-                  ref.invalidate(
-                    health_agent_providers
-                        .latestMorningBriefingArtifactProvider,
-                  );
-                },
-              );
-            }
-            return memoryAsync.when(
-              loading: () => const _BriefingSkeleton(),
-              error: (e, _) => _BriefingError(message: '$e'),
-              data: (record) =>
-                  _BriefingCard(record: record, running: _running, onRun: _run),
-            );
-          },
-        ),
+        body,
         if (_errorMessage != null) ...[
           const SizedBox(height: AppSpacing.s8),
           Text(
-            _errorMessage!,
+            userSafeErrorMessage(context, _errorMessage!),
             style: context.captionStyle.copyWith(color: colors.destructive),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
@@ -209,6 +235,7 @@ class _BriefingCard extends StatelessWidget {
   }
 }
 
+/// Compact generate affordance — no marketing empty shell on Today.
 class _BriefingEmpty extends StatelessWidget {
   const _BriefingEmpty({required this.running, required this.onRun});
 
@@ -218,83 +245,41 @@ class _BriefingEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return SoftCard(
-      level: SoftCardLevel.raised,
+      level: SoftCardLevel.flat,
       borderless: true,
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
+      child: Row(
         children: [
-          _HealthPanelHeader(
-            icon: FLucideIcons.sunset,
-            title: l10n.healthBriefingTitle,
-            subtitle: l10n.healthBriefingEmpty,
-            color: colors.mutedForeground,
+          Icon(
+            FLucideIcons.sparkles,
+            size: AppIconSizes.sm,
+            color: context.theme.colors.primary,
           ),
-          const SizedBox(height: AppSpacing.s12),
-          _InlineEmptyState(
-            icon: FLucideIcons.sparkles,
-            message: l10n.healthBriefingEmptyHint,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AppQuietButton(
-              label: running
-                  ? l10n.healthBriefingGenerating
-                  : l10n.healthBriefingGenerate,
-              onPress: running ? null : onRun,
-              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-              busy: running,
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Text(
+              l10n.healthBriefingEmpty,
+              style: context.bodyCaptionStyle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BriefingSkeleton extends StatelessWidget {
-  const _BriefingSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SkeletonCard(
-      padding: EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              SkeletonBox(width: 32, height: 32, radius: AppRadius.sm),
-              SizedBox(width: AppSpacing.s8),
-              SkeletonBox(width: 120, height: 14, radius: AppRadius.sm),
-            ],
+          const SizedBox(width: AppSpacing.s8),
+          AppQuietButton(
+            label: running
+                ? l10n.healthBriefingGenerating
+                : l10n.healthBriefingGenerate,
+            onPress: running ? null : onRun,
+            busy: running,
           ),
-          SizedBox(height: AppSpacing.s12),
-          SkeletonBox(width: double.infinity, height: 14),
-          SizedBox(height: AppSpacing.s8),
-          SkeletonBox(width: 200, height: 14),
-          SizedBox(height: AppSpacing.s8),
-          SkeletonBox(width: 80, height: 10),
         ],
       ),
     );
   }
 }
 
-class _BriefingError extends StatelessWidget {
-  const _BriefingError({required this.message});
 
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppStatusBanner(
-      kind: AppStatusKind.error,
-      message: AppLocalizations.of(context).healthBriefingLoadFailed(message),
-      icon: FLucideIcons.circleAlert,
-    );
-  }
-}

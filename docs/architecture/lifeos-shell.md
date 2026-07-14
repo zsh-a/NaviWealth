@@ -59,7 +59,7 @@ features/<domain>/
 | Domain | Scope | Shell tabs | Tools | Agents |
 |---|---|---|---|---|
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | none |
-| HealthOS | `health` | Today, Trend, Plan | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
+| HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
 | KnowledgeOS | `knowledge` | Inbox, Library, Review | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage, Routine Due |
 | ExecutionOS | `execution` | Today, Commitments, Review | `kExecutionDeviceTools` | Review |
 

@@ -19582,6 +19582,12 @@ abstract class AppLocalizations {
   /// **'Backlog'**
   String get executionOverviewBacklog;
 
+  /// Execution Today lens: all open actions
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get executionOverviewOpen;
+
   /// No description provided for @executionOverviewBlocked.
   ///
   /// In en, this message translates to:

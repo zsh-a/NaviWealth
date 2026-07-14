@@ -434,37 +434,4 @@ class _HealthPanelHeader extends StatelessWidget {
   }
 }
 
-class _InlineEmptyState extends StatelessWidget {
-  const _InlineEmptyState({required this.icon, required this.message});
 
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
-          children: [
-            Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: Text(
-                message,
-                style: context.captionStyle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

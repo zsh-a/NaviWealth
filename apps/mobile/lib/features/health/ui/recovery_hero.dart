@@ -1,10 +1,18 @@
 part of 'health_today_page.dart';
 
-class _RecoveryHero extends ConsumerWidget {
+class _RecoveryHero extends ConsumerStatefulWidget {
   const _RecoveryHero();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RecoveryHero> createState() => _RecoveryHeroState();
+}
+
+class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
+  static const int _visibleActionCount = 2;
+  bool _showAllActions = false;
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(recoverySignalProvider);
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
@@ -27,6 +35,10 @@ class _RecoveryHero extends ConsumerWidget {
           final scoreText = score == null ? '—' : '$score';
           final color = RecoveryVerdict.color(verdict, colors);
           final actions = healthPlanActionsForVerdict(verdict, l10n);
+          final visibleActions = _showAllActions
+              ? actions
+              : actions.take(_visibleActionCount).toList(growable: false);
+          final hasMore = actions.length > _visibleActionCount;
           final enabled =
               ref
                   .watch(core_auth.domainOptInsProvider)
@@ -90,40 +102,60 @@ class _RecoveryHero extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-              const SizedBox(height: AppSpacing.s16),
-              Text(
-                l10n.healthPlanTodayActions,
-                style: context.microCaptionStyle,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              for (var i = 0; i < actions.length; i++) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.s8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppIconTile(
-                      icon: actions[i].icon,
-                      color: colors.primary,
-                      size: 28,
-                      iconSize: AppIconSizes.sm,
-                      radius: AppRadius.sm,
-                      backgroundOpacity: AppOpacity.light,
-                      foregroundOpacity: 1,
-                    ),
-                    const SizedBox(width: AppSpacing.s10),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.s4),
-                        child: Text(
-                          actions[i].text,
-                          style: context.theme.typography.body.sm,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+              if (actions.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.s16),
+                Text(
+                  l10n.healthPlanTodayActions,
+                  style: context.microCaptionStyle,
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                for (var i = 0; i < visibleActions.length; i++) ...[
+                  if (i > 0) const SizedBox(height: AppSpacing.s8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppIconTile(
+                        icon: visibleActions[i].icon,
+                        color: colors.primary,
+                        size: 28,
+                        iconSize: AppIconSizes.sm,
+                        radius: AppRadius.sm,
+                        backgroundOpacity: AppOpacity.light,
+                        foregroundOpacity: 1,
+                      ),
+                      const SizedBox(width: AppSpacing.s10),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.s4),
+                          child: Text(
+                            visibleActions[i].text,
+                            style: context.theme.typography.body.sm,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ],
+                if (hasMore) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppQuietButton(
+                    label: _showAllActions
+                        ? l10n.healthShowKeyMetrics
+                        : l10n.healthShowAllMetrics,
+                    onPress: () {
+                      AppInteraction.signal(AppInteractionIntent.reveal);
+                      setState(() => _showAllActions = !_showAllActions);
+                    },
+                    expanded: true,
+                    prefix: Icon(
+                      _showAllActions
+                          ? FLucideIcons.chevronUp
+                          : FLucideIcons.chevronDown,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ],
               const SizedBox(height: AppSpacing.s16),
               const _RecoverySparkline(),

@@ -88,7 +88,8 @@ String executionProgressKindLabel(
   };
 }
 
-enum ExecutionTodayFilter { focus, backlog, blocked, high, due }
+/// Today lens: focus (today's set), blocked, or all open work.
+enum ExecutionTodayFilter { focus, blocked, open }
 
 String executionTodayFilterLabel(
   AppLocalizations l10n,
@@ -96,20 +97,16 @@ String executionTodayFilterLabel(
 ) {
   return switch (filter) {
     ExecutionTodayFilter.focus => l10n.executionOverviewFocus,
-    ExecutionTodayFilter.backlog => l10n.executionOverviewBacklog,
     ExecutionTodayFilter.blocked => l10n.executionOverviewBlocked,
-    ExecutionTodayFilter.high => l10n.executionOverviewHigh,
-    ExecutionTodayFilter.due => l10n.executionOverviewDue,
+    ExecutionTodayFilter.open => l10n.executionOverviewOpen,
   };
 }
 
 IconData executionTodayFilterIcon(ExecutionTodayFilter filter) {
   return switch (filter) {
     ExecutionTodayFilter.focus => FLucideIcons.sun,
-    ExecutionTodayFilter.backlog => FLucideIcons.inbox,
     ExecutionTodayFilter.blocked => FLucideIcons.octagonAlert,
-    ExecutionTodayFilter.high => FLucideIcons.flag,
-    ExecutionTodayFilter.due => FLucideIcons.calendarClock,
+    ExecutionTodayFilter.open => FLucideIcons.inbox,
   };
 }
 
@@ -119,21 +116,16 @@ List<ExecutionAction> filteredExecutionActions({
   required List<ExecutionAction> openActions,
   required DateTime now,
 }) {
-  final open = openActions.where((action) => action.isOpen);
+  final open = openActions
+      .where((action) => action.isOpen)
+      .toList(growable: false);
   return switch (filter) {
     ExecutionTodayFilter.focus => todayActions,
-    ExecutionTodayFilter.backlog =>
-      open.where((action) => action.isBacklog).toList(growable: false),
     ExecutionTodayFilter.blocked =>
       open
           .where((action) => action.status == ExecutionActionStatus.blocked)
           .toList(growable: false),
-    ExecutionTodayFilter.high =>
-      open
-          .where((action) => action.priority == ExecutionPriority.high)
-          .toList(growable: false),
-    ExecutionTodayFilter.due =>
-      open.where((action) => action.isDue(now)).toList(growable: false),
+    ExecutionTodayFilter.open => open,
   };
 }
 

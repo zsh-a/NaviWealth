@@ -341,63 +341,16 @@ class _LibraryTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    return SizedBox(
-      height: AppControlHeights.compactChipRail,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _LibrarySegment.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s6),
-        itemBuilder: (context, i) {
-          final segment = _LibrarySegment.values[i];
-          final active = segment == selected;
-          return FTappable(
-            onPress: () => onChanged(segment),
-            child: AnimatedContainer(
-              duration: AppMotionPolicy.duration(context, Motion.fast),
-              curve: Motion.standardDecelerate,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s10,
-                vertical: AppSpacing.s6,
-              ),
-              decoration: BoxDecoration(
-                color: active
-                    ? colors.primary.withValues(alpha: AppOpacity.subtle)
-                    : colors.background,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: active
-                      ? colors.primary.withValues(alpha: AppOpacity.light)
-                      : colors.border,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _segmentIcon(segment),
-                    size: AppIconSizes.xs,
-                    color: active ? colors.primary : colors.mutedForeground,
-                  ),
-                  const SizedBox(width: AppSpacing.s4),
-                  Text(
-                    _segmentLabel(l10n, segment),
-                    style: active
-                        ? context.captionLabelStyle.copyWith(
-                            color: colors.primary,
-                          )
-                        : context.captionMediumStyle.copyWith(
-                            color: colors.mutedForeground,
-                          ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+    return SegmentedRow<_LibrarySegment>(
+      options: _LibrarySegment.values,
+      value: selected,
+      labelOf: (segment) => _segmentLabel(l10n, segment),
+      iconOf: _segmentIcon,
+      onChanged: (segment) {
+        AppInteraction.signal(AppInteractionIntent.select);
+        onChanged(segment);
+      },
+      minSegmentWidth: 72,
     );
   }
 }

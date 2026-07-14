@@ -3398,6 +3398,10 @@
   "executionCommitmentDescriptionHint": "可选范围、原因或目标结果",
   "executionOverviewFocus": "焦点",
   "executionOverviewBacklog": "待排期",
+  "executionOverviewOpen": "全部",
+  "@executionOverviewOpen": {
+    "description": "Execution Today lens: all open actions"
+  },
   "executionOverviewBlocked": "阻塞",
   "executionOverviewHigh": "高优先",
   "executionOverviewDue": "到期",

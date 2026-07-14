@@ -11401,6 +11401,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionOverviewBacklog => 'Backlog';
 
   @override
+  String get executionOverviewOpen => 'Open';
+
+  @override
   String get executionOverviewBlocked => 'Blocked';
 
   @override

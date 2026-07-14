@@ -353,6 +353,7 @@ class ExecutionOverviewSnapshot {
   const ExecutionOverviewSnapshot({
     required this.todayCount,
     required this.blockedCount,
+    required this.openCount,
     required this.backlogCount,
     required this.highPriorityCount,
     required this.dueCount,
@@ -363,6 +364,7 @@ class ExecutionOverviewSnapshot {
 
   final int todayCount;
   final int blockedCount;
+  final int openCount;
   final int backlogCount;
   final int highPriorityCount;
   final int dueCount;
@@ -385,6 +387,7 @@ class ExecutionOverviewSnapshot {
       blockedCount: open
           .where((action) => action.status == ExecutionActionStatus.blocked)
           .length,
+      openCount: open.length,
       backlogCount: open.where((action) => action.isBacklog).length,
       highPriorityCount: open
           .where((action) => action.priority == ExecutionPriority.high)

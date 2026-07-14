@@ -107,8 +107,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Execution Review'), findsWidgets);
-    expect(find.text('Failed'), findsOneWidget);
+    // Result-first: failed run overlays the prior artifact with error text.
     expect(find.text('Runtime unavailable'), findsOneWidget);
+    expect(find.text('3 actions need attention'), findsOneWidget);
     expect(find.text('Today focus'), findsNothing);
   });
 }
