@@ -73,6 +73,7 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
       ],
       childPad: false,
       child: state.when(
+        skipLoadingOnReload: true,
         loading: () => const _PortfolioHubSkeleton(),
         error: (error, stackTrace) => AppEmptyState.error(
           title: userSafeErrorMessage(

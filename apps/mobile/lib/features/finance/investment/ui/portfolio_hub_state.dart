@@ -13,24 +13,40 @@ class PortfolioHubNotifier
     final today = DateTime.utc(now.year, now.month, now.day);
     final yearStart = DateTime.utc(today.year, 1, 1);
 
-    final holdings = await ref.watch(holdingsSnapshotProvider.future);
-    final assets = await ref.watch(allAssetsStreamProvider.future);
-    final accounts = await ref.watch(accountsStreamProvider.future);
+    // Subscribe to the complete graph before the first async gap. Several of
+    // these auto-disposed providers share upstream Drift streams (holdings,
+    // dividend center, and dividend forecast). Adding the subscriptions one
+    // at a time after each await lets a dependency emission restart this
+    // build while later subscriptions are still missing. Those providers are
+    // then disposed and remounted, whose initial stream values restart the
+    // cycle and make the page alternate between loading and data forever.
+    final holdingsFuture = ref.watch(holdingsSnapshotProvider.future);
+    final assetsFuture = ref.watch(allAssetsStreamProvider.future);
+    final accountsFuture = ref.watch(accountsStreamProvider.future);
     final baseCurrency = ref.watch(holdingBaseCurrencyProvider);
-    final holdingService = await ref.watch(holdingServiceProvider.future);
-    final returnService = await ref.watch(
+    final holdingServiceFuture = ref.watch(holdingServiceProvider.future);
+    final returnServiceFuture = ref.watch(
       portfolioReturnServiceProvider.future,
     );
-    final lots = await holdingService.lotsAt(now);
-    final returns = await returnService.compute(from: yearStart, to: today);
-    final realized = await ref.watch(realizedPnlProvider.future);
-    final dividendForecast = await ref.watch(
+    final realizedFuture = ref.watch(realizedPnlProvider.future);
+    final dividendForecastFuture = ref.watch(
       dividendForecast12mProvider.future,
     );
-    final dividendCenter = await ref.watch(
+    final dividendCenterFuture = ref.watch(
       dividendCenterSnapshotProvider.future,
     );
     final corporateActions = ref.watch(dividendForecastDeclaredActionsProvider);
+
+    final holdings = await holdingsFuture;
+    final assets = await assetsFuture;
+    final accounts = await accountsFuture;
+    final holdingService = await holdingServiceFuture;
+    final returnService = await returnServiceFuture;
+    final lots = await holdingService.lotsAt(now);
+    final returns = await returnService.compute(from: yearStart, to: today);
+    final realized = await realizedFuture;
+    final dividendForecast = await dividendForecastFuture;
+    final dividendCenter = await dividendCenterFuture;
 
     final assetById = {for (final asset in assets) asset.id: asset};
     final accountById = {for (final account in accounts) account.id: account};
