@@ -49,12 +49,14 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
 
   final _amountFocus = FocusNode();
   final _noteFocus = FocusNode();
+  final _advancedFocus = FocusNode(debugLabel: 'expense-advanced');
 
   /// The expense account id (from the `accounts` table where category=expense).
   String? _expenseAccountId;
   String? _fromAccountId;
   String? _currency;
   late DateTime _date;
+  bool _advancedExpanded = false;
   bool _busy = false;
   JournalEntryWithPostings? _initial;
   bool _paymentAccountsHydrated = false;
@@ -186,6 +188,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       _fromAccountId = fromAccountId;
       _currency = currency;
       _date = existing.entry.date;
+      // Surface optional fields when the record already carries them.
+      _advancedExpanded = existing.entry.narration.trim().isNotEmpty;
     });
     _hydratePaymentAccounts(ref.read(accountsStreamProvider).value ?? const []);
     _hydrateCategories(ref.read(allAccountsStreamProvider).value ?? const []);
@@ -316,6 +320,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     _noteController.dispose();
     _amountFocus.dispose();
     _noteFocus.dispose();
+    _advancedFocus.dispose();
     super.dispose();
   }
 
@@ -426,7 +431,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         controller: _amountController,
                         currencyCode: _currency,
                         focusNode: _amountFocus,
-                        onFieldSubmitted: (_) => _noteFocus.requestFocus(),
+                        onFieldSubmitted: (_) => _amountFocus.unfocus(),
                       ),
                       const SizedBox(height: AppSpacing.s8),
                       allAccountsAsync.when(
@@ -547,24 +552,54 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         error: (e, _) => Text(userSafeErrorMessage(context, e)),
                       ),
                       const SizedBox(height: AppSpacing.s12),
-                      DateField(
-                        label: l10n.expenseFormDateLabel,
-                        initialValue: _date,
-                        required: true,
-                        includeTime: true,
-                        onChanged: (v) {
-                          if (v != null) {
-                            setState(() {
-                              _date = v;
-                              dirty.markDirty();
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.s12),
-                      NoteField(
-                        controller: _noteController,
-                        focusNode: _noteFocus,
+                      FAccordion(
+                        control: FAccordionControl.lifted(
+                          expanded: (_) => _advancedExpanded,
+                          onChange: (_, expanded) =>
+                              setState(() => _advancedExpanded = expanded),
+                        ),
+                        children: [
+                          FAccordionItem(
+                            key: const Key('expense-advanced-disclosure'),
+                            focusNode: _advancedFocus,
+                            title: Semantics(
+                              expanded: _advancedExpanded,
+                              child: Text(l10n.expenseFormAdvancedTitle),
+                            ),
+                            child: Offstage(
+                              offstage: !_advancedExpanded,
+                              child: ExcludeFocus(
+                                excluding: !_advancedExpanded,
+                                child: ExcludeSemantics(
+                                  excluding: !_advancedExpanded,
+                                  child: Column(
+                                    children: [
+                                      DateField(
+                                        label: l10n.expenseFormDateLabel,
+                                        initialValue: _date,
+                                        required: true,
+                                        includeTime: true,
+                                        onChanged: (v) {
+                                          if (v != null) {
+                                            setState(() {
+                                              _date = v;
+                                              dirty.markDirty();
+                                            });
+                                          }
+                                        },
+                                      ),
+                                      const SizedBox(height: AppSpacing.s12),
+                                      NoteField(
+                                        controller: _noteController,
+                                        focusNode: _noteFocus,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

@@ -74,20 +74,16 @@ class _DashboardBodyContent extends ConsumerWidget {
                           primary: const Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              CashflowCalendarCard(),
+                              FinanceAgentResultsPanel(
+                                showPlaceholderStates: false,
+                              ),
                               SizedBox(height: AppPageRhythm.section),
                               ActivityTimelinePreview(),
                             ],
                           ),
                           secondary: const Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              FinanceAgentResultsPanel(
-                                showPlaceholderStates: false,
-                              ),
-                              SizedBox(height: AppPageRhythm.section),
-                              PassiveIncomeCard(),
-                            ],
+                            children: [CashflowCalendarCard()],
                           ),
                         ),
                       ],
@@ -108,9 +104,11 @@ class _DashboardBodyContent extends ConsumerWidget {
                     const FinanceAgentResultsPanel(
                       showPlaceholderStates: false,
                     ),
-                    const CashflowCalendarCard(),
+                    const ActivityTimelinePreview(),
                   ],
-                  secondary: const [ActivityTimelinePreview()],
+                  // Cash-flow detail lives on its own page; Activity is
+                  // the daily signal on Today.
+                  secondary: const [CashflowCalendarCard()],
                 ),
         );
       },
@@ -243,5 +241,5 @@ String _financeAgentMetaLabel(
   DateTime at,
 ) {
   final formatters = context.formatters(ref);
-  return 'FinanceOS · ${formatters.date(at.toLocal())}';
+  return formatters.date(at.toLocal());
 }

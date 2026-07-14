@@ -55,20 +55,29 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
       title: l10n.portfolioHubTitle,
       actions: [
         FHeaderAction(
-          icon: FTooltip(
-            tipBuilder: (_, _) => Text(l10n.wealthWatchlistSectionTitle),
-            child: const Icon(FLucideIcons.bellRing),
-          ),
-          semanticsLabel: l10n.wealthWatchlistSectionTitle,
-          onPress: () => context.push(FinanceRoutes.wealthWatchlist),
-        ),
-        FHeaderAction(
           icon: const Icon(FLucideIcons.plus),
           onPress: () => context.push(FinanceRoutes.tradeEntry),
         ),
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.refreshCw),
-          onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
+        AppAdaptiveActionMenu(
+          title: l10n.shellMoreActions,
+          actions: [
+            AppAdaptiveAction(
+              icon: FLucideIcons.bellRing,
+              title: l10n.wealthWatchlistSectionTitle,
+              onPress: () => context.push(FinanceRoutes.wealthWatchlist),
+            ),
+            AppAdaptiveAction(
+              icon: FLucideIcons.refreshCw,
+              title: l10n.commonRefresh,
+              onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
+            ),
+          ],
+          triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
+            semanticsLabel: l10n.shellMoreActions,
+            icon: const Icon(FLucideIcons.ellipsis),
+            focusNode: focusNode,
+            onPress: openMenu,
+          ),
         ),
       ],
       childPad: false,
@@ -240,40 +249,18 @@ class _PortfolioSectionSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final labels = {
-      _PortfolioSection.positions: l10n.portfolioHubSectionPositions,
-      _PortfolioSection.allocation: l10n.portfolioHubSectionAllocation,
-      _PortfolioSection.insights: l10n.portfolioHubSectionInsights,
-    };
-    final icons = {
-      _PortfolioSection.positions: FLucideIcons.list,
-      _PortfolioSection.allocation: FLucideIcons.chartPie,
-      _PortfolioSection.insights: FLucideIcons.sparkles,
-    };
-    return Container(
-      decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(
-          alpha: AppOpacity.disabled,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.s2),
-      child: Row(
-        children: [
-          for (final section in _PortfolioSection.values)
-            Expanded(
-              child: _ViewChip(
-                label: labels[section]!,
-                icon: icons[section]!,
-                selected: section == value,
-                onTap: () {
-                  Haptics.selection();
-                  onChanged(section);
-                },
-              ),
-            ),
-        ],
-      ),
+    return SegmentedRow<_PortfolioSection>(
+      options: _PortfolioSection.values,
+      value: value,
+      labelOf: (section) => switch (section) {
+        _PortfolioSection.positions => l10n.portfolioHubSectionPositions,
+        _PortfolioSection.allocation => l10n.portfolioHubSectionAllocation,
+        _PortfolioSection.insights => l10n.portfolioHubSectionInsights,
+      },
+      onChanged: (next) {
+        Haptics.selection();
+        onChanged(next);
+      },
     );
   }
 }
@@ -309,56 +296,59 @@ class _PortfolioSummary extends StatelessWidget {
     final pnlPercent = data.costBasisInBase.sign <= 0
         ? null
         : (data.unrealizedPnlInBase / data.costBasisInBase).toDouble() * 100;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.portfolioHubMarketValueLabel.toUpperCase(),
-          style: context.microCaptionStyle,
-        ),
-        const SizedBox(height: AppSpacing.s4),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: AnimatedMoneyText(
-                amount: data.marketValueInBase.toDouble(),
-                currencyCode: data.baseCurrency,
-                style: TypographyTokens.numericTitleStrong,
+    return SoftCard.hero(
+      padding: AppPageRhythm.heroPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.portfolioHubMarketValueLabel,
+            style: context.mutedLabelStyle,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: AnimatedMoneyText(
+                  amount: data.marketValueInBase.toDouble(),
+                  currencyCode: data.baseCurrency,
+                  style: TypographyTokens.displaySmall,
+                ),
               ),
-            ),
-            DeltaChip(value: pnlPercent, fractionDigits: 2),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s14),
-        Row(
-          children: [
-            Expanded(
-              child: _SummaryMetric.money(
-                label: l10n.portfolioHubCostBasisLabel,
-                amount: data.costBasisInBase.toDouble(),
-                currency: data.baseCurrency,
+              DeltaChip(value: pnlPercent, fractionDigits: 2),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s14),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryMetric.money(
+                  label: l10n.portfolioHubCostBasisLabel,
+                  amount: data.costBasisInBase.toDouble(),
+                  currency: data.baseCurrency,
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: _SummaryMetric(
-                label: l10n.portfolioHubYtdXirrLabel,
-                value: xirr == null ? '—' : _formatRatio(context, xirr),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: _SummaryMetric.money(
+                  label: l10n.portfolioHubAbsoluteReturnLabel,
+                  amount: data.unrealizedPnlInBase.toDouble(),
+                  currency: data.baseCurrency,
+                  showSign: true,
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: _SummaryMetric.money(
-                label: l10n.portfolioHubAbsoluteReturnLabel,
-                amount: data.unrealizedPnlInBase.toDouble(),
-                currency: data.baseCurrency,
-                showSign: true,
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: _SummaryMetric(
+                  label: l10n.portfolioHubYtdXirrLabel,
+                  value: xirr == null ? '—' : _formatRatio(context, xirr),
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

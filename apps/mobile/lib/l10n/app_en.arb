@@ -1227,6 +1227,8 @@
   "langChinese": "中文",
 
   "commonRetry": "Retry",
+  "commonRefresh": "Refresh",
+  "@commonRefresh": { "description": "Generic refresh/reload action label" },
   "commonCancel": "Cancel",
   "commonDone": "Done",
   "commonConfirm": "Confirm",
@@ -2394,6 +2396,10 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "expenseFormDateLabel": "Date & time",
+  "expenseFormAdvancedTitle": "Date & note",
+  "@expenseFormAdvancedTitle": {
+    "description": "Expense form: disclosure for optional date and note fields"
+  },
   "expenseFormDeleteDialogTitle": "Delete expense",
   "expenseFormDeleteDialogBody": "Delete this expense? This change syncs to your other devices.",
   "expenseFormNoAccountsTitle": "Create an account first",

@@ -661,6 +661,8 @@
   "langChinese": "中文",
 
   "commonRetry": "重试",
+  "commonRefresh": "刷新",
+  "@commonRefresh": { "description": "Generic refresh/reload action label" },
   "commonCancel": "取消",
   "commonDone": "完成",
   "commonConfirm": "确认",
@@ -1335,6 +1337,10 @@
   },
   "expenseFormAccountsLoadError": "账户加载失败：{error}",
   "expenseFormDateLabel": "日期时间",
+  "expenseFormAdvancedTitle": "日期与备注",
+  "@expenseFormAdvancedTitle": {
+    "description": "Expense form: disclosure for optional date and note fields"
+  },
   "expenseFormDeleteDialogTitle": "删除支出",
   "expenseFormDeleteDialogBody": "确认删除此支出？该操作可同步给其他设备。",
   "expenseFormNoAccountsTitle": "先创建一个账户",

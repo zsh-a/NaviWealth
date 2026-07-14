@@ -105,12 +105,9 @@ void main() {
     expect(find.text(l10n.commonSafeErrorMessage), findsOneWidget);
     expect(find.text('Bad state: fire failed'), findsNothing);
     expect(find.text(l10n.commonRetry), findsOneWidget);
-    expect(find.text(l10n.planStrategyToolsSectionTitle), findsOneWidget);
   });
 
-  testWidgets('renders empty FIRE summary and core plan actions', (
-    tester,
-  ) async {
+  testWidgets('renders empty FIRE summary and next-step tiles', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     await tester.pumpWidget(_wrap(_view(FireGoal.unset())));
@@ -123,7 +120,8 @@ void main() {
     expect(find.text(l10n.planFireSectionTitle), findsOneWidget);
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
-    expect(find.text(l10n.planStrategyToolsSectionTitle), findsOneWidget);
+    // Strategy tools stay collapsed until expanded.
+    expect(find.text(l10n.planDcaSectionTitle), findsNothing);
   });
 
   testWidgets('renders configured FIRE progress in the hero card', (
@@ -163,43 +161,20 @@ void main() {
     expect(find.text('Strategies'), findsOneWidget);
   });
 
-  testWidgets('plan action rows navigate to their feature routes', (
+  testWidgets('expands more tools and navigates to feature routes', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    Future<void> expectRoute({
-      required String label,
-      required String destinationText,
-    }) async {
-      await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
-      await tester.pump();
+    await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
+    await tester.pump();
 
-      final row = find.text(label);
-      await tester.ensureVisible(row);
-      await tester.pump();
-      await tester.tap(row);
-      await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.planStrategyToolsSectionTitle));
+    await tester.pumpAndSettle();
 
-      expect(find.text(destinationText), findsOneWidget);
-    }
-
-    await expectRoute(
-      label: l10n.planRebalanceSectionTitle,
-      destinationText: 'rebalance-route',
-    );
-    await expectRoute(
-      label: l10n.planDcaSectionTitle,
-      destinationText: 'dca-route',
-    );
-    await expectRoute(
-      label: l10n.planWheelSectionTitle,
-      destinationText: 'wheel-route',
-    );
-    await expectRoute(
-      label: l10n.planIncomeSectionTitle,
-      destinationText: 'income-route',
-    );
+    await tester.tap(find.text(l10n.planDcaSectionTitle));
+    await tester.pumpAndSettle();
+    expect(find.text('dca-route'), findsOneWidget);
   });
 
   testWidgets('budget action navigates to budget route', (tester) async {
@@ -212,6 +187,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('budget-route'), findsOneWidget);
+  });
+
+  testWidgets('rebalance action navigates to rebalance route', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
+    await tester.pump();
+
+    await tester.tap(find.text(l10n.planRebalanceSectionTitle));
+    await tester.pumpAndSettle();
+
+    expect(find.text('rebalance-route'), findsOneWidget);
   });
 
   testWidgets('FIRE hero call-to-action navigates to FIRE route', (

@@ -13,9 +13,7 @@ import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/ui/cashflow_calendar_card.dart';
-import 'package:naviwealth/features/finance/cashflow/ui/passive_income_card.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
-import 'package:naviwealth/features/finance/home/domain/dashboard_trend_builder.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../domain/dashboard_models.dart';
@@ -32,10 +30,9 @@ final _financeAmountsHiddenProvider = StateProvider<bool>((ref) => false);
 
 /// FinanceOS Today brief.
 ///
-/// Today owns only current context and immediate actions: a compact net-worth
-/// pulse, relevant agent finding, upcoming cash-flow events, and recent
-/// activity. Allocation and long-range trends live on Wealth so the primary
-/// tabs do not repeat the same analytical dashboard.
+/// Today owns current context and immediate actions: net-worth pulse (no
+/// full trend chart), one agent signal, recent activity, and a compact
+/// cash-flow card. Trends and allocation live on Wealth.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 

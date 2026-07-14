@@ -3938,6 +3938,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get commonRetry;
 
+  /// Generic refresh/reload action label
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get commonRefresh;
+
   /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:
@@ -7673,6 +7679,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Date & time'**
   String get expenseFormDateLabel;
+
+  /// Expense form: disclosure for optional date and note fields
+  ///
+  /// In en, this message translates to:
+  /// **'Date & note'**
+  String get expenseFormAdvancedTitle;
 
   /// No description provided for @expenseFormDeleteDialogTitle.
   ///

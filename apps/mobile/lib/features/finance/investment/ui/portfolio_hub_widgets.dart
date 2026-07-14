@@ -13,99 +13,23 @@ class PortfolioHubViewSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final labels = {
-      PortfolioHubView.account: l10n.portfolioHubViewAccount,
-      PortfolioHubView.currency: l10n.portfolioHubViewCurrency,
-      PortfolioHubView.assetClass: l10n.portfolioHubViewAssetClass,
-    };
-    final icons = {
-      PortfolioHubView.account: FLucideIcons.wallet,
-      PortfolioHubView.currency: FLucideIcons.banknote,
-      PortfolioHubView.assetClass: FLucideIcons.layoutGrid,
-    };
-
-    return Container(
-      decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(
-          alpha: AppOpacity.disabled,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.s2),
-      child: Row(
-        children: [
-          for (final view in PortfolioHubView.values)
-            Expanded(
-              child: _ViewChip(
-                label: labels[view]!,
-                icon: icons[view]!,
-                selected: value == view,
-                onTap: () {
-                  Haptics.selection();
-                  onChanged(view);
-                },
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ViewChip extends StatelessWidget {
-  const _ViewChip({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected
-        ? context.theme.colors.primary
-        : context.theme.colors.mutedForeground;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: AppMotionPolicy.duration(context, Motion.medium),
-        curve: Motion.emphasizedDecelerate,
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.s8,
-          horizontal: AppSpacing.s4,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? context.theme.colors.background
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: AppIconSizes.h18, color: color),
-            const SizedBox(width: AppSpacing.s6),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    (selected
-                            ? context.captionStrongStyle
-                            : context.captionMediumStyle)
-                        .copyWith(color: color),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return SegmentedRow<PortfolioHubView>(
+      options: PortfolioHubView.values,
+      value: value,
+      labelOf: (view) => switch (view) {
+        PortfolioHubView.account => l10n.portfolioHubViewAccount,
+        PortfolioHubView.currency => l10n.portfolioHubViewCurrency,
+        PortfolioHubView.assetClass => l10n.portfolioHubViewAssetClass,
+      },
+      iconOf: (view) => switch (view) {
+        PortfolioHubView.account => FLucideIcons.wallet,
+        PortfolioHubView.currency => FLucideIcons.banknote,
+        PortfolioHubView.assetClass => FLucideIcons.layoutGrid,
+      },
+      onChanged: (next) {
+        Haptics.selection();
+        onChanged(next);
+      },
     );
   }
 }

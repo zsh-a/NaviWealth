@@ -13,30 +13,11 @@ class _NetWorthHeader extends ConsumerWidget {
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
     final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
-    final range = ref.watch(dashboardTimeRangeProvider);
-    final trendAsync = ref.watch(dashboardTrendProvider(range));
     final privacyLabel = amountsHidden
         ? l10n.financePrivacyShowAmountsTooltip
         : l10n.financePrivacyHideAmountsTooltip;
 
-    final trendPoints = trendAsync.value?.latestCompleteSegment ?? const [];
-    final chartSeries = trendPoints.length >= 2
-        ? [
-            ChartSeries(
-              name: l10n.homeNetWorthTitle,
-              intent: SeriesIntent.primary,
-              points: [
-                for (final p in trendPoints)
-                  ChartPoint(
-                    x: p.asOf.millisecondsSinceEpoch.toDouble(),
-                    y: p.netWorth.amount.toDouble(),
-                    meta: p,
-                  ),
-              ],
-            ),
-          ]
-        : const <ChartSeries>[];
-
+    // Number + day delta only — full trend chart lives on Wealth.
     return SoftCard.hero(
       onPress: AppInteraction.wrap(
         () => context.go(FinanceRoutes.wealth),
@@ -75,78 +56,34 @@ class _NetWorthHeader extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s10),
-          if (chartSeries.isNotEmpty)
-            StageChart(
-              series: chartSeries,
-              height: AppChartHeights.standard,
-              semanticLabel: l10n.homeNetWorthTitle,
-              valueBuilder: (context, active) {
-                final amount = active?.y ?? value;
-                return MediaQuery.withClampedTextScaling(
-                  maxScaleFactor: 1.25,
-                  child: Semantics(
-                    label: amountsHidden
-                        ? '${l10n.homeNetWorthTitle} ${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}'
-                        : '${l10n.homeNetWorthTitle} ${formatters.currency(snapshot.netWorth.amount, code: snapshot.baseCurrency)}',
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: AlignmentDirectional.centerStart,
-                      child: AnimatedMoneyText(
-                        amount: amount,
-                        currencyCode: snapshot.baseCurrency,
-                        style: TypographyTokens.displayLarge,
-                        showSign: amount != null && amount < 0,
-                      ),
-                    ),
-                  ),
-                );
-              },
-              labelBuilder: (context, active) {
-                if (active?.meta is! TrendPoint) {
-                  return hasData
-                      ? _TodayDeltaMetric(metrics: metricsAsync)
-                      : Text(
-                          l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
-                          style: context.captionStyle,
-                        );
-                }
-                final point = active!.meta! as TrendPoint;
-                return Text(
-                  formatters.date(point.asOf.toLocal()),
-                  style: context.captionStyle,
-                );
-              },
-            )
-          else ...[
-            MediaQuery.withClampedTextScaling(
-              maxScaleFactor: 1.25,
-              child: Semantics(
-                label: amountsHidden
-                    ? '${l10n.homeNetWorthTitle} ${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}'
-                    : '${l10n.homeNetWorthTitle} ${formatters.currency(snapshot.netWorth.amount, code: snapshot.baseCurrency)}',
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: AnimatedMoneyText(
-                    amount: value,
-                    currencyCode: snapshot.baseCurrency,
-                    style: TypographyTokens.displayLarge,
-                    showSign: value != null && value < 0,
-                  ),
+          MediaQuery.withClampedTextScaling(
+            maxScaleFactor: 1.25,
+            child: Semantics(
+              label: amountsHidden
+                  ? '${l10n.homeNetWorthTitle} ${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}'
+                  : '${l10n.homeNetWorthTitle} ${formatters.currency(snapshot.netWorth.amount, code: snapshot.baseCurrency)}',
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: AnimatedMoneyText(
+                  amount: value,
+                  currencyCode: snapshot.baseCurrency,
+                  style: TypographyTokens.displayLarge,
+                  showSign: value != null && value < 0,
                 ),
               ),
             ),
-            if (hasData) ...[
-              const SizedBox(height: AppSpacing.s12),
-              _TodayDeltaMetric(metrics: metricsAsync),
-            ],
-            if (!hasData) ...[
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
-                style: context.captionStyle,
-              ),
-            ],
+          ),
+          if (hasData) ...[
+            const SizedBox(height: AppSpacing.s12),
+            _TodayDeltaMetric(metrics: metricsAsync),
+          ],
+          if (!hasData) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
+              style: context.captionStyle,
+            ),
           ],
         ],
       ),

@@ -265,6 +265,7 @@ class _NetWorthBreakdownMetric extends StatelessWidget {
   }
 }
 
+/// Compact 2×2 destination grid — no settings-style list rows.
 class _WealthDestinations extends StatelessWidget {
   const _WealthDestinations();
 
@@ -273,97 +274,73 @@ class _WealthDestinations extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final sections = <_WealthSectionSpec>[
       _WealthSectionSpec(
-        icon: FLucideIcons.slidersHorizontal,
+        icon: FLucideIcons.walletCards,
         title: l10n.wealthAccountsSectionTitle,
-        subtitle: l10n.wealthAccountsSectionSubtitle,
         path: FinanceRoutes.wealthAccounts,
       ),
       _WealthSectionSpec(
         icon: FLucideIcons.chartLine,
         title: l10n.wealthHoldingsSectionTitle,
-        subtitle: l10n.wealthHoldingsSectionSubtitle,
         path: FinanceRoutes.wealthPortfolio,
       ),
       _WealthSectionSpec(
         icon: FLucideIcons.circleDollarSign,
         title: l10n.dividendCenterTitle,
-        subtitle: l10n.wealthDividendSectionSubtitle,
         path: FinanceRoutes.cashflowDividends,
       ),
       _WealthSectionSpec(
         icon: FLucideIcons.landmark,
         title: l10n.wealthLiabilitiesSectionTitle,
-        subtitle: l10n.wealthLiabilitiesSectionSubtitle,
         path: FinanceRoutes.wealthLiabilities,
       ),
     ];
-    return SoftCard.raised(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-        child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = AppSpacing.s10;
+        final tileW = (constraints.maxWidth - gap) / 2;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
           children: [
-            for (var index = 0; index < sections.length; index++) ...[
-              _WealthDestinationRow(spec: sections[index]),
-              if (index < sections.length - 1) const FDivider(),
-            ],
+            for (final spec in sections)
+              SizedBox(
+                width: tileW,
+                child: _WealthDestinationTile(spec: spec),
+              ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-class _WealthDestinationRow extends StatelessWidget {
-  const _WealthDestinationRow({required this.spec});
+class _WealthDestinationTile extends StatelessWidget {
+  const _WealthDestinationTile({required this.spec});
 
   final _WealthSectionSpec spec;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return SoftCard.raised(
+      borderless: true,
       onPress: () => context.push(spec.path),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
-        child: Row(
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: AppOpacity.subtle),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: SizedBox.square(
-                dimension: AppSpacing.s40,
-                child: Icon(
-                  spec.icon,
-                  size: AppIconSizes.sm,
-                  color: colors.primary,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(spec.title, style: context.labelStyle),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    spec.subtitle,
-                    style: context.captionStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.sm,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s16,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(spec.icon, size: AppIconSizes.lg, color: colors.primary),
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            spec.title,
+            style: context.labelStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -373,12 +350,10 @@ class _WealthSectionSpec {
   const _WealthSectionSpec({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.path,
   });
 
   final IconData icon;
   final String title;
-  final String subtitle;
   final String path;
 }

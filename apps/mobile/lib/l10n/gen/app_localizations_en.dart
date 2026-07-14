@@ -2202,6 +2202,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonRetry => 'Retry';
 
   @override
+  String get commonRefresh => 'Refresh';
+
+  @override
   String get commonCancel => 'Cancel';
 
   @override
@@ -4429,6 +4432,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseFormDateLabel => 'Date & time';
+
+  @override
+  String get expenseFormAdvancedTitle => 'Date & note';
 
   @override
   String get expenseFormDeleteDialogTitle => 'Delete expense';

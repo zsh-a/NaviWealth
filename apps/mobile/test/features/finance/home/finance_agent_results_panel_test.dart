@@ -115,7 +115,8 @@ void main() {
       tester.widget<AgentResultCard>(find.byType(AgentResultCard)).layout,
       AgentResultCardLayout.summary,
     );
-    expect(find.textContaining('FinanceOS'), findsOneWidget);
+    // Result-first surface: no domain chrome ("FinanceOS") on the home card.
+    expect(find.textContaining('FinanceOS'), findsNothing);
     expect(find.text('No agent results yet'), findsNothing);
   });
 

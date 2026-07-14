@@ -2124,6 +2124,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonRetry => '重试';
 
   @override
+  String get commonRefresh => '刷新';
+
+  @override
   String get commonCancel => '取消';
 
   @override
@@ -4240,6 +4243,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseFormDateLabel => '日期时间';
+
+  @override
+  String get expenseFormAdvancedTitle => '日期与备注';
 
   @override
   String get expenseFormDeleteDialogTitle => '删除支出';
