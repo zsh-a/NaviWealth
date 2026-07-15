@@ -249,6 +249,10 @@ void main() {
     expect(find.byType(AgentCompactResultRow), findsOneWidget);
     expect(find.text('Morning Briefing'), findsOneWidget);
     expect(find.text('Recovery Alert'), findsOneWidget);
+    final primaryRect = tester.getRect(find.byType(AgentResultCard));
+    final secondaryRect = tester.getRect(find.byType(AgentCompactResultRow));
+    expect(secondaryRect.top, lessThan(primaryRect.bottom));
+    expect(secondaryRect.left, greaterThan(primaryRect.left));
   });
 
   testWidgets('a single agent result does not add stack decoration', (

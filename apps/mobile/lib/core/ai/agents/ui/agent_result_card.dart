@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -276,6 +277,7 @@ class AgentResultsSection extends StatelessWidget {
               artifact: artifact,
               run: entry.runOverlay,
               metaLabel: metaLabelBuilder(artifact.createdAt),
+              stacked: true,
               onOpen: () => onOpen(artifact),
             )
           else if (entry.runOverlay case final run?)
@@ -297,70 +299,103 @@ class _AgentResultStack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return _AgentResultStackLayout(
       key: const ValueKey<String>('agent-result-stack'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _AgentResultStackLayers(count: secondary.length > 1 ? 2 : 1),
-        primary,
-        for (var index = 0; index < secondary.length; index++) ...[
-          const SizedBox(height: AppSpacing.s4),
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: index == 0 ? AppSpacing.s4 : AppSpacing.s8,
-            ),
-            child: secondary[index],
-          ),
-        ],
-      ],
+      children: [primary, ...secondary],
     );
   }
 }
 
-/// Two quiet backplates make the multi-result state readable before the user
-/// scans labels. They sit behind the primary card and never intercept input.
-class _AgentResultStackLayers extends StatelessWidget {
-  const _AgentResultStackLayers({required this.count});
-
-  final int count;
+class _AgentResultStackLayout extends MultiChildRenderObjectWidget {
+  const _AgentResultStackLayout({super.key, required super.children});
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return SizedBox(
-      height: count == 1 ? AppSpacing.s6 : AppSpacing.s10,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          for (var index = 0; index < count; index++)
-            Positioned(
-              left: AppSpacing.s8 + (count - index - 1) * AppSpacing.s4,
-              right: AppSpacing.s8 + (count - index - 1) * AppSpacing.s4,
-              top: index * AppSpacing.s4,
-              bottom: -AppRadius.lg,
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Color.alphaBlend(
-                      colors.muted.withValues(alpha: AppOpacity.subtle),
-                      colors.card,
-                    ),
-                    border: Border.all(
-                      color: colors.border.withValues(
-                        alpha: AppOpacity.highlight,
-                      ),
-                    ),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(AppRadius.lg),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderAgentResultStack();
+}
+
+class _AgentResultStackParentData extends ContainerBoxParentData<RenderBox> {}
+
+/// Measures every result at its natural height, then places the following card
+/// over the previous card's lower edge. A render layout keeps the overlap exact
+/// without fixed card heights or unused space below the deck.
+class _RenderAgentResultStack extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _AgentResultStackParentData>,
+        RenderBoxContainerDefaultsMixin<
+          RenderBox,
+          _AgentResultStackParentData
+        > {
+  static const double _overlap = AppSpacing.s12;
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _AgentResultStackParentData) {
+      child.parentData = _AgentResultStackParentData();
+    }
   }
+
+  @override
+  void performLayout() {
+    final width = constraints.maxWidth.isFinite
+        ? constraints.maxWidth
+        : constraints.minWidth;
+    var child = firstChild;
+    var index = 0;
+    var y = 0.0;
+    while (child != null) {
+      final inset = _horizontalInset(index);
+      final availableWidth = (width - inset * 2).clamp(0.0, width).toDouble();
+      child.layout(
+        BoxConstraints(minWidth: availableWidth, maxWidth: availableWidth),
+        parentUsesSize: true,
+      );
+      if (index > 0) y -= _overlap;
+      final childParentData = child.parentData! as _AgentResultStackParentData;
+      childParentData.offset = Offset(inset, y);
+      y += child.size.height;
+      child = childParentData.nextSibling;
+      index++;
+    }
+    size = constraints.constrain(Size(width, y));
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    final width = constraints.maxWidth.isFinite
+        ? constraints.maxWidth
+        : constraints.minWidth;
+    var child = firstChild;
+    var index = 0;
+    var height = 0.0;
+    while (child != null) {
+      final inset = _horizontalInset(index);
+      final availableWidth = (width - inset * 2).clamp(0.0, width).toDouble();
+      final childSize = child.getDryLayout(
+        BoxConstraints(minWidth: availableWidth, maxWidth: availableWidth),
+      );
+      if (index > 0) height -= _overlap;
+      height += childSize.height;
+      final childParentData = child.parentData! as _AgentResultStackParentData;
+      child = childParentData.nextSibling;
+      index++;
+    }
+    return constraints.constrain(Size(width, height));
+  }
+
+  double _horizontalInset(int index) {
+    if (index == 0) return 0;
+    return index == 1 ? AppSpacing.s6 : AppSpacing.s12;
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    defaultPaint(context, offset);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      defaultHitTestChildren(result, position: position);
 }
 
 /// Slim banner so running/failed does not replace the previous result body.
@@ -526,12 +561,14 @@ class AgentCompactResultRow extends StatelessWidget {
     required this.artifact,
     required this.metaLabel,
     this.run,
+    this.stacked = false,
     this.onOpen,
   });
 
   final AgentArtifact artifact;
   final String metaLabel;
   final AgentRunRecord? run;
+  final bool stacked;
   final VoidCallback? onOpen;
 
   @override
@@ -547,7 +584,7 @@ class AgentCompactResultRow extends StatelessWidget {
         ? run
         : null;
     return SoftCard(
-      level: SoftCardLevel.flat,
+      level: stacked ? SoftCardLevel.raised : SoftCardLevel.flat,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s12,
         vertical: AppSpacing.s10,
