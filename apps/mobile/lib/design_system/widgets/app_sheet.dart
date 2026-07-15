@@ -514,6 +514,18 @@ class AppSheetSurface extends StatelessWidget {
     final hairline = colors.foreground.withValues(
       alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
     );
+    final mediaQuery = MediaQuery.of(context);
+
+    // Domain shells use MediaQuery.padding.bottom to reserve space for their
+    // floating dock. A modal sheet launched from that subtree must not treat
+    // the synthetic dock inset as a device safe area, otherwise it renders a
+    // large empty band below its footer. viewPadding is the window-owned inset
+    // and remains correct independently of shell chrome and the keyboard.
+    final sheetMediaQuery = mediaQuery.copyWith(
+      padding: mediaQuery.padding.copyWith(
+        bottom: mediaQuery.viewPadding.bottom,
+      ),
+    );
 
     final decorated = DecoratedBox(
       key: const ValueKey<String>('app-sheet.surface'),
@@ -525,7 +537,10 @@ class AppSheetSurface extends StatelessWidget {
               top: BorderSide(color: hairline, width: AppStroke.hairline),
             ),
       ),
-      child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
+      child: MediaQuery(
+        data: sheetMediaQuery,
+        child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
+      ),
     );
 
     return _AppSheetSurfaceScope(
