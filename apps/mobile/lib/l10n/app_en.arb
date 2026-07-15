@@ -3869,6 +3869,7 @@
   "knowledgeAiSuggestionPayloadTitle": "Suggested fields",
   "knowledgeAiSuggestionSnoozeOneDay": "Remind tomorrow",
   "knowledgeAiSuggestionSnoozedToast": "Suggestion will return tomorrow.",
+  "knowledgeAiSuggestionAppliedToast": "Suggestion applied to the note.",
   "knowledgeAiSuggestionFeedbackLabel": "Was this suggestion useful?",
   "knowledgeAiSuggestionFeedbackGood": "Useful",
   "knowledgeAiSuggestionFeedbackBad": "Not useful",

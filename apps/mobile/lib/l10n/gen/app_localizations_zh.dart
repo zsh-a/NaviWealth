@@ -6849,6 +6849,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAiSuggestionSnoozedToast => '这条建议会在明天重新出现。';
 
   @override
+  String get knowledgeAiSuggestionAppliedToast => '建议已应用到笔记。';
+
+  @override
   String get knowledgeAiSuggestionFeedbackLabel => '这条建议有帮助吗？';
 
   @override

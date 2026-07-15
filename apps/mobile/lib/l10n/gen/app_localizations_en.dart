@@ -7186,6 +7186,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Suggestion will return tomorrow.';
 
   @override
+  String get knowledgeAiSuggestionAppliedToast =>
+      'Suggestion applied to the note.';
+
+  @override
   String get knowledgeAiSuggestionFeedbackLabel =>
       'Was this suggestion useful?';
 

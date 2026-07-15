@@ -31,7 +31,9 @@ class KnowledgeInboxProposalApplier {
     required InboxProposal proposal,
   }) async {
     final current = await repo.findNote(ownerUserId: ownerUserId, id: note.id);
-    if (current == null) return;
+    if (current == null) {
+      throw StateError('note ${note.id} no longer exists');
+    }
 
     final tagSet = current.tags.toSet();
     String? projectTag = current.projectTag;
@@ -39,27 +41,43 @@ class KnowledgeInboxProposalApplier {
     switch (proposal.kind) {
       case InboxProposalKind.classification:
         final kind = proposal.payload['kind'] as String?;
-        if (kind == null || kind.isEmpty) return;
-        tagSet.add('kind:$kind');
+        if (kind == null || kind.trim().isEmpty) {
+          throw StateError('classification proposal is missing kind');
+        }
+        tagSet.add('kind:${kind.trim()}');
       case InboxProposalKind.tags:
         final raw = proposal.payload['tags'];
+        var hasTag = false;
         if (raw is List) {
           for (final t in raw.whereType<String>()) {
             final lower = t.trim().toLowerCase();
-            if (lower.isNotEmpty) tagSet.add(lower);
+            if (lower.isNotEmpty) {
+              tagSet.add(lower);
+              hasTag = true;
+            }
           }
         }
         final pt = proposal.payload['project_tag'];
         if (pt is String && pt.trim().isNotEmpty) {
           projectTag = pt.trim();
         }
+        if (!hasTag && projectTag == current.projectTag) {
+          throw StateError('tags proposal has no applicable values');
+        }
       case InboxProposalKind.linkToDecision:
         final raw = proposal.payload['related_decision_ids'];
+        var hasDecision = false;
         if (raw is List) {
           for (final id in raw.whereType<String>()) {
             final trimmed = id.trim();
-            if (trimmed.isNotEmpty) tagSet.add('decision:$trimmed');
+            if (trimmed.isNotEmpty) {
+              tagSet.add('decision:$trimmed');
+              hasDecision = true;
+            }
           }
+        }
+        if (!hasDecision) {
+          throw StateError('decision-link proposal has no decision ids');
         }
     }
 

@@ -12262,6 +12262,12 @@ abstract class AppLocalizations {
   /// **'Suggestion will return tomorrow.'**
   String get knowledgeAiSuggestionSnoozedToast;
 
+  /// No description provided for @knowledgeAiSuggestionAppliedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestion applied to the note.'**
+  String get knowledgeAiSuggestionAppliedToast;
+
   /// No description provided for @knowledgeAiSuggestionFeedbackLabel.
   ///
   /// In en, this message translates to:

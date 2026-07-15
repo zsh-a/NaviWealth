@@ -159,7 +159,6 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     if (_loading) {
       return const KnowledgeLoadingState(
@@ -184,41 +183,23 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
         density: KnowledgeStateDensity.section,
       );
     }
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s8),
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+    return KnowledgeSection.item(
+      title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+      trailing: AppBadge(
+        label: l10n.knowledgeAiSuggestionCount(pending.length),
+        size: AppBadgeSize.compact,
+        tone: AppBadgeTone.neutral,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-                  style: context.labelStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              AppBadge(
-                label: l10n.knowledgeAiSuggestionCount(pending.length),
-                size: AppBadgeSize.compact,
-                tone: AppBadgeTone.neutral,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          for (final p in pending)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-              child: _ProposalRow(note: note, proposal: p),
-            ),
+      children: [
+        for (var index = 0; index < pending.length; index++) ...[
+          if (index > 0) ...[
+            const SizedBox(height: AppSpacing.s10),
+            const AppDivider(horizontalPadding: AppSpacing.s0),
+            const SizedBox(height: AppSpacing.s10),
+          ],
+          _ProposalRow(note: note, proposal: pending[index]),
         ],
-      ),
+      ],
     );
   }
 }
@@ -251,6 +232,23 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
         status: InboxProposalStatus.accepted,
       );
       ref.read(aiSuggestionsRefreshProvider.notifier).state++;
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          AppLocalizations.of(context).knowledgeAiSuggestionAppliedToast,
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(
+            context,
+          ).knowledgeCaptureApplyFailed(userSafeErrorMessage(context, error)),
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -320,13 +318,12 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppBadge(
               label: _proposalKindLabel(l10n, widget.proposal.kind),
@@ -337,68 +334,53 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
             Expanded(
               child: Text(
                 widget.proposal.summaryZh,
-                style: context.bodyCaptionStyle,
-                maxLines: 3,
+                style: context.theme.typography.body.sm.copyWith(height: 1.4),
+                maxLines: _expanded ? 8 : 3,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: AppSpacing.s8),
-            FTooltip(
-              tipBuilder: (_, _) => Text(
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s10),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s6,
+          children: [
+            FButton(
+              variant: FButtonVariant.primary,
+              size: FButtonSizeVariant.sm,
+              onPress: _busy ? null : _accept,
+              prefix: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
+              child: Text(l10n.knowledgeAiSuggestionAccept),
+            ),
+            FButton(
+              variant: FButtonVariant.outline,
+              size: FButtonSizeVariant.sm,
+              onPress: _busy ? null : _dismiss,
+              prefix: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
+              child: Text(l10n.knowledgeAiSuggestionDismiss),
+            ),
+            FButton(
+              variant: FButtonVariant.ghost,
+              size: FButtonSizeVariant.sm,
+              onPress: _busy ? null : _snooze,
+              prefix: const Icon(FLucideIcons.clock, size: AppIconSizes.xs),
+              child: Text(l10n.knowledgeAiSuggestionSnoozeOneDay),
+            ),
+            FButton(
+              variant: FButtonVariant.ghost,
+              size: FButtonSizeVariant.sm,
+              onPress: _busy
+                  ? null
+                  : () => setState(() => _expanded = !_expanded),
+              prefix: Icon(
+                _expanded ? FLucideIcons.chevronUp : FLucideIcons.list,
+                size: AppIconSizes.xs,
+              ),
+              child: Text(
                 _expanded
                     ? l10n.knowledgeAiSuggestionHideDetails
                     : l10n.knowledgeAiSuggestionDetails,
-              ),
-              child: FButton.icon(
-                variant: FButtonVariant.ghost,
-                onPress: _busy
-                    ? null
-                    : () => setState(() => _expanded = !_expanded),
-                child: Icon(
-                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.list,
-                  size: AppIconSizes.xs,
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s2),
-            FTooltip(
-              tipBuilder: (_, _) =>
-                  Text(l10n.knowledgeAiSuggestionSnoozeOneDay),
-              child: FButton.icon(
-                variant: FButtonVariant.ghost,
-                onPress: _busy ? null : _snooze,
-                child: Icon(
-                  FLucideIcons.clock,
-                  size: AppIconSizes.xs,
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s2),
-            FTooltip(
-              tipBuilder: (_, _) => Text(l10n.knowledgeAiSuggestionAccept),
-              child: FButton.icon(
-                variant: FButtonVariant.ghost,
-                onPress: _busy ? null : _accept,
-                child: Icon(
-                  FLucideIcons.check,
-                  size: AppIconSizes.xs,
-                  color: colors.primary,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s2),
-            FTooltip(
-              tipBuilder: (_, _) => Text(l10n.knowledgeAiSuggestionDismiss),
-              child: FButton.icon(
-                variant: FButtonVariant.ghost,
-                onPress: _busy ? null : _dismiss,
-                child: Icon(
-                  FLucideIcons.x,
-                  size: AppIconSizes.xs,
-                  color: colors.mutedForeground,
-                ),
               ),
             ),
           ],
