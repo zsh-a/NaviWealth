@@ -46,6 +46,9 @@ Widget _wrapWithRouter(GoRouter router) {
 }
 
 AgentArtifact _artifact({
+  String id = 'artifact-1',
+  String agentId = 'agent-1',
+  String title = 'Morning Briefing',
   List<AgentEvidenceRef> evidence = const [
     AgentEvidenceRef(
       type: 'metric',
@@ -61,13 +64,13 @@ AgentArtifact _artifact({
   ],
 }) {
   return AgentArtifact(
-    id: 'artifact-1',
+    id: id,
     ownerUserId: 'user-1',
-    agentId: 'agent-1',
+    agentId: agentId,
     domain: 'health',
     kind: AgentArtifactKind.briefing,
     severity: AgentArtifactSeverity.attention,
-    title: 'Morning Briefing',
+    title: title,
     summary: 'Sleep debt is elevated; keep the first block light.',
     metrics: const [
       AgentMetric(label: 'Sleep', value: '6h 12m', context: 'Target 8h'),
@@ -214,6 +217,61 @@ void main() {
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(opened, isTrue);
+  });
+
+  testWidgets('multiple agent results render as one layered stack', (
+    tester,
+  ) async {
+    final first = _artifact();
+    final second = _artifact(
+      id: 'artifact-2',
+      agentId: 'agent-2',
+      title: 'Recovery Alert',
+    );
+    await tester.pumpWidget(
+      _wrap(
+        AgentResultsSection(
+          bundle: AgentResultBundle(
+            artifacts: <AgentArtifact>[first, second],
+            latestRuns: const <AgentRunRecord>[],
+          ),
+          metaLabelBuilder: (_) => 'Updated just now',
+          onOpen: (_) {},
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey<String>('agent-result-stack')),
+      findsOneWidget,
+    );
+    expect(find.byType(AgentResultCard), findsOneWidget);
+    expect(find.byType(AgentCompactResultRow), findsOneWidget);
+    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Recovery Alert'), findsOneWidget);
+  });
+
+  testWidgets('a single agent result does not add stack decoration', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        AgentResultsSection(
+          bundle: AgentResultBundle(
+            artifacts: <AgentArtifact>[_artifact()],
+            latestRuns: const <AgentRunRecord>[],
+          ),
+          metaLabelBuilder: (_) => 'Updated just now',
+          onOpen: (_) {},
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey<String>('agent-result-stack')),
+      findsNothing,
+    );
+    expect(find.byType(AgentResultCard), findsOneWidget);
   });
 
   testWidgets('detail body progressively reveals insight and evidence detail', (

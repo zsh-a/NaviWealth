@@ -220,10 +220,11 @@ typedef AgentResultRetryCallback = FutureOr<void> Function(String agentId);
 
 /// Canonical multi-agent result composition for domain surfaces.
 ///
-/// The highest-priority result gets the readable card; remaining results stay
-/// discoverable as compact rows. Pairing, severity ordering, and run overlays
-/// come from [agent_providers.AgentResultBundle] rather than being rebuilt by
-/// each domain page.
+/// The highest-priority result gets the readable card. When multiple agents
+/// have visible results, the remaining entries form a compact card stack so
+/// the relationship is immediately visible without giving every result equal
+/// visual weight. Pairing, severity ordering, and run overlays come from
+/// [agent_providers.AgentResultBundle] rather than being rebuilt by each page.
 class AgentResultsSection extends StatelessWidget {
   const AgentResultsSection({
     super.key,
@@ -251,26 +252,25 @@ class AgentResultsSection extends StatelessWidget {
     final primary = entries.first;
     final primaryArtifact = primary.artifact;
     final primaryRun = primary.runOverlay;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AgentResultSurface(
-          artifact: primaryArtifact,
-          run: primaryRun,
-          metaLabel: metaLabelBuilder(
-            primaryArtifact?.createdAt ?? primary.referenceTime,
-          ),
-          layout: AgentResultCardLayout.summary,
-          summaryMaxLines: summaryMaxLines,
-          onOpen: primaryArtifact == null
-              ? null
-              : () => onOpen(primaryArtifact),
-          onRetry: primaryRun == null || onRetry == null
-              ? null
-              : () => onRetry!(primary.agentId),
-        ),
-        for (final entry in entries.skip(1)) ...[
-          const SizedBox(height: AppSpacing.s8),
+    final primaryWidget = AgentResultSurface(
+      artifact: primaryArtifact,
+      run: primaryRun,
+      metaLabel: metaLabelBuilder(
+        primaryArtifact?.createdAt ?? primary.referenceTime,
+      ),
+      layout: AgentResultCardLayout.summary,
+      summaryMaxLines: summaryMaxLines,
+      onOpen: primaryArtifact == null ? null : () => onOpen(primaryArtifact),
+      onRetry: primaryRun == null || onRetry == null
+          ? null
+          : () => onRetry!(primary.agentId),
+    );
+    if (entries.length == 1) return primaryWidget;
+
+    return _AgentResultStack(
+      primary: primaryWidget,
+      secondary: [
+        for (final entry in entries.skip(1))
           if (entry.artifact case final artifact?)
             AgentCompactResultRow(
               artifact: artifact,
@@ -284,8 +284,81 @@ class AgentResultsSection extends StatelessWidget {
               metaLabel: metaLabelBuilder(entry.referenceTime),
               onRetry: onRetry == null ? null : () => onRetry!(entry.agentId),
             ),
+      ],
+    );
+  }
+}
+
+class _AgentResultStack extends StatelessWidget {
+  const _AgentResultStack({required this.primary, required this.secondary});
+
+  final Widget primary;
+  final List<Widget> secondary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: const ValueKey<String>('agent-result-stack'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AgentResultStackLayers(count: secondary.length > 1 ? 2 : 1),
+        primary,
+        for (var index = 0; index < secondary.length; index++) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: index == 0 ? AppSpacing.s4 : AppSpacing.s8,
+            ),
+            child: secondary[index],
+          ),
         ],
       ],
+    );
+  }
+}
+
+/// Two quiet backplates make the multi-result state readable before the user
+/// scans labels. They sit behind the primary card and never intercept input.
+class _AgentResultStackLayers extends StatelessWidget {
+  const _AgentResultStackLayers({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return SizedBox(
+      height: count == 1 ? AppSpacing.s6 : AppSpacing.s10,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var index = 0; index < count; index++)
+            Positioned(
+              left: AppSpacing.s8 + (count - index - 1) * AppSpacing.s4,
+              right: AppSpacing.s8 + (count - index - 1) * AppSpacing.s4,
+              top: index * AppSpacing.s4,
+              bottom: -AppRadius.lg,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Color.alphaBlend(
+                      colors.muted.withValues(alpha: AppOpacity.subtle),
+                      colors.card,
+                    ),
+                    border: Border.all(
+                      color: colors.border.withValues(
+                        alpha: AppOpacity.highlight,
+                      ),
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(AppRadius.lg),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
