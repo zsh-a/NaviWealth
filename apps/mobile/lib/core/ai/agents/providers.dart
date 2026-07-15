@@ -148,9 +148,10 @@ class AgentResultEntry {
 
   DateTime get referenceTime {
     final artifactTime = artifact?.createdAt;
-    final overlay = runOverlay;
-    final runTime = overlay == null ? null : _runReferenceTime(overlay);
+    final value = run;
+    final runTime = value == null ? null : _runReferenceTime(value);
     if (artifactTime == null) return runTime!;
+    if (runOverlay == null) return artifactTime;
     if (runTime == null || artifactTime.isAfter(runTime)) return artifactTime;
     return runTime;
   }

@@ -92,4 +92,32 @@ void main() {
       'recent-info',
     ]);
   });
+
+  test('filters terminal runs without artifacts after sorting safely', () {
+    final bundle = AgentResultBundle(
+      artifacts: <AgentArtifact>[
+        artifact(
+          'visible',
+          AgentArtifactSeverity.info,
+          DateTime.utc(2026, 1, 1),
+        ),
+      ],
+      latestRuns: <AgentRunRecord>[
+        run(
+          'ready-without-artifact',
+          AgentRunLifecycleStatus.ready,
+          DateTime.utc(2026, 1, 2),
+        ),
+        run(
+          'no-finding-without-artifact',
+          AgentRunLifecycleStatus.noFinding,
+          DateTime.utc(2026, 1, 3),
+        ),
+      ],
+    );
+
+    expect(bundle.visibleEntries.map((entry) => entry.agentId), <String>[
+      'visible',
+    ]);
+  });
 }
