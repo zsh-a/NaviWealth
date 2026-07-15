@@ -26,24 +26,19 @@ void main() {
     }
   });
 
-  test('rust runtime MVP doc tracks snapshot-only execution contracts', () {
+  test('current rust runtime doc tracks snapshot execution contracts', () {
     final root = _repoRoot();
     final text = File(
-      '${root.path}/docs/architecture/rust-agent-runtime-mvp.md',
+      '${root.path}/docs/architecture/agent-runtime-current.md',
     ).readAsStringSync();
 
-    expect(text, contains('The only embedded execution contract'));
-    expect(text, contains('requires the snapshot execution'));
-    expect(text, contains('Native FRB snapshot continuations validate'));
-    expect(text, isNot(contains('agentRuntimeStartRunStep')));
-    expect(text, isNot(contains('agentRuntimeContinueRunStep')));
-    expect(text, isNot(contains('compatibility fallback')));
     for (final marker in <String>[
-      'effect_id',
-      'catalog-bound tool names',
-      'typed continuation state',
-      'historical effect results',
-      'JSON-RPC effect response envelopes',
+      'agent_runtime_tool_host.dart',
+      'embedded checkpoints',
+      'snapshot_version: 1',
+      'effect_recorded',
+      'host effects',
+      'JSON-RPC',
     ]) {
       expect(text, contains(marker), reason: marker);
     }

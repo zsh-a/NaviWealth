@@ -2,8 +2,7 @@
 
 This is the current implementation map for agents working on the Rust agent
 runtime. Use this document for code navigation and maintenance decisions.
-`rust-agent-runtime-design.md` is the long-term design direction; this document
-describes what exists now.
+It is the single source of truth for the runtime that exists now.
 
 NaviWealth consumes the standalone runtime through the
 `third_party/agent-runtime` Git submodule, pinned to
@@ -203,9 +202,9 @@ TUI uses persistent natural input by default. Plain text runs the shared
   slash commands may execute through `AgentRunner`, but must still use shared
   JSON contracts rather than ad-hoc behavior.
 
-## Current Design Drift
+## Current Limitations
 
-These are intentional or pending differences from the long-term design:
+These are the current implementation limits:
 
 - No standalone `agent-tools` crate exists yet. Tool traits live in
   `agent-core`; CLI and Flutter host adapters own concrete tool hosts.
@@ -235,5 +234,4 @@ These are intentional or pending differences from the long-term design:
   `FrbChatRunner` only maps events and dispatches production Dart tools from
   DomainPack/Riverpod host code.
 
-When code and older handoff notes disagree, use this document, the MVP status
-doc, and current tests as authority.
+Use this document and current tests as authority.

@@ -6,7 +6,6 @@ Read these before changing architecture or cross-domain code:
 
 - `docs/architecture/lifeos-architecture-northstar.md`: boundaries and non-goals.
 - `docs/architecture/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
-- `docs/decisions/lifeos-decision-2026-05-24.md`: ADR that started Phase D and selected HealthOS as the second domain.
 - Roadmaps and domain SSOTs as needed: `docs/index.md`,
   `docs/roadmap/roadmap-lifeos.md`, `docs/roadmap/roadmap-finance.md`,
   `docs/domains/healthos-domain.md`, `docs/domains/knowledgeos-domain.md`,
@@ -47,7 +46,7 @@ apps/mobile/lib/
     lifeos/             DomainPack registry seam
     persistence/        Drift adapter and shared tables
     shell/              multi-domain IA primitives
-    sync/               sync v2 row-state client and sync envelope types
+    sync/               sync v3 row-state client, accepted acks, domain generations
   design_system/        tokens, themes, charts, reusable widgets
   features/
     finance/            Finance composition, tools, data root, domain values, and slices
@@ -253,14 +252,12 @@ Project lint gates:
 |---|---|
 | `docs/architecture/lifeos-architecture-northstar.md` | Architecture boundaries and non-goals |
 | `docs/architecture/lifeos-shell.md` | Cross-domain shell SSOT |
-| `docs/decisions/lifeos-decision-2026-05-24.md` | Phase D ADR |
 | `docs/domains/healthos-domain.md` | HealthOS scope, data, AI tools, agents |
 | `docs/domains/knowledgeos-domain.md` | KnowledgeOS scope, data, AI tools, agents |
 | `docs/domains/executionos-domain.md` | ExecutionOS scope, actions, commitments, progress |
 | `docs/ai/ai-architecture.md` | Device AI runtime design |
 | `docs/ai/ai-protocol.md` | AI event/tool protocol |
-| `docs/sync/sync-v2.md` | Active sync protocol |
-| `docs/archive/sync-protocol.md` | Historical v1 protocol only |
+| `docs/sync/sync-v3.md` | Active sync protocol |
 | `docs/domains/options-income.md` | Options income engine |
 | `docs/domains/market-data-providers.md` | Market data providers |
 | `docs/development/local-development.md` | Local setup |

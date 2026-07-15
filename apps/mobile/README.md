@@ -37,7 +37,7 @@ lib/
 │   ├── auth/              JWT / session / 域启用（DomainScope）
 │   ├── persistence/       Drift adapter 和共享表（含 health / knowledge / execution 表声明）
 │   ├── shell/             多域 IA 原语（DomainShell spec）
-│   ├── sync/              Sync v2 行状态客户端和同步信封类型
+│   ├── sync/              Sync v3 行状态客户端、accepted ack 与域 generation
 │   ├── lifeos/            DomainPack 注册契约
 │   ├── background/        后台任务调度
 │   ├── notifications/     通知通道

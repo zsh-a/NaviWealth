@@ -1,4 +1,4 @@
-// Multi-device sync E2E suite (sync v2, row-state).
+// Multi-device sync E2E suite (sync v3, row-state).
 //
 // These tests wire a v2 `SyncEngine` per `device_id` against a shared
 // in-memory backend (`FakeSyncApiClient`) and run the production

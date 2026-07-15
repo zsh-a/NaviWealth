@@ -5,7 +5,7 @@
 -- Keep this list in sync with the active CREATE TABLE statements in
 -- apps/backend/migrations/*.sql.
 
--- Sync v2 row-state store.
+-- Sync v3 row-state store.
 DELETE FROM sync_rows;
 DELETE FROM sqlite_sequence WHERE name = 'sync_rows';
 

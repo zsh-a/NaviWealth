@@ -4,7 +4,7 @@
 -- Keep this list in sync with active CREATE TABLE statements in
 -- apps/backend/migrations/*.sql.
 
--- Current sync v2 schema.
+-- Current sync v3 schema.
 DROP TABLE IF EXISTS sync_rows;
 
 -- Current AI/read-model tables.

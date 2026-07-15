@@ -10,8 +10,8 @@ This documentation uses a docs-as-code structure:
 - Architecture documents define boundaries and extension seams.
 - Domain SSOTs define business behavior owned by each domain.
 - Reference documents describe active wire protocols and runtime contracts.
-- Roadmaps describe current sequencing only; historical plans live in
-  `archive/`.
+- Roadmaps describe current sequencing only. Superseded plans and protocols
+  are removed instead of retained as compatibility documentation.
 - `AGENTS.md` / `CLAUDE.md` is the compact AI-agent operating guide.
 - `llms.txt` is the LLM-friendly public entry point.
 
@@ -22,7 +22,7 @@ This documentation uses a docs-as-code structure:
 | Change architecture or cross-domain code | [Architecture Northstar](architecture/lifeos-architecture-northstar.md), [LifeOS Shell](architecture/lifeos-shell.md) |
 | Add or modify a domain | [LifeOS Shell](architecture/lifeos-shell.md), then the owning domain SSOT |
 | Work on device AI | [Device AI Architecture](ai/ai-architecture.md), [Runtime Event Contract](ai/ai-protocol.md) |
-| Work on Rust agent runtime | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md), [Rust Agent Runtime MVP](architecture/rust-agent-runtime-mvp.md), [Rust Agent Runtime Design](architecture/rust-agent-runtime-design.md) |
+| Work on Rust agent runtime | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md) |
 | Work on sync | [Sync v3 Protocol](sync/sync-v3.md), [Protocol Test Catalogue](sync/sync-protocol-tests.md) |
 | Add business diagnostics | [Structured Logging](development/logging.md) |
 | Run or test locally | [Local Development](development/local-development.md), [Testing Strategy](development/testing-strategy.md) |
@@ -67,9 +67,8 @@ apps/backend/src/
   hlc.rs                Hybrid Logical Clock
 ```
 
-## Archive Policy
+## Maintenance Policy
 
-`docs/archive/` keeps historical plans, audits, and superseded protocols for
-traceability. Archive documents are not current product or engineering
-authority. When archive content conflicts with active docs or code, use the
-active docs and current code.
+Documents describe the current product and implementation only. When a
+protocol, migration plan, audit, or handoff note is superseded, update its
+active SSOT and remove the obsolete document and navigation entry.

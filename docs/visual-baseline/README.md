@@ -16,7 +16,6 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 |------|------|----------|
 | Home (dashboard) | `apps/mobile/test/golden/home_page_golden_test.dart` | dark / colorblind |
 | Asset detail (skeleton) | `apps/mobile/test/golden/asset_detail_page_golden_test.dart` | dark / colorblind |
-| Analytics (empty) | `apps/mobile/test/golden/analytics_page_golden_test.dart` | dark / colorblind |
 | FIRE (unconfigured) | `apps/mobile/test/golden/fire_page_golden_test.dart` | dark / colorblind |
 | AI Chat (login required) | `apps/mobile/test/golden/ai_chat_page_golden_test.dart` | dark / colorblind |
 | Settings | `apps/mobile/test/golden/settings_page_golden_test.dart` | dark / colorblind |
@@ -33,8 +32,8 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 | AI visual primitives / renderers | `apps/mobile/test/golden/ai_surfaces_golden_test.dart` | component-scoped light surfaces |
 | Task flows (Ingest, forms, Undo, Rebalance) | `apps/mobile/test/golden/task_flow_responsive_golden_test.dart` | dark responsive N / W / T matrix |
 
-18 test files produce **63 PNG baselines** under
-`apps/mobile/test/golden/goldens/`: the 49-PNG page/component matrix (including
+17 test files produce **61 PNG baselines** under
+`apps/mobile/test/golden/goldens/`: the 47-PNG page/component matrix (including
 the compact action sheet) plus a 14-PNG dark responsive task-flow matrix. Light-mode page variants were
 dropped — see *Variant choice* below — but AI primitive/component goldens keep
 their own minimal light surfaces to isolate the visual language from app

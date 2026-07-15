@@ -28,8 +28,8 @@ Domain business behavior belongs in the domain SSOT:
 app/
   bootstrap.dart                 Provider overrides and shell composition
   domain_packs.dart              Production domain inventory
-  router_builder.dart            Outer dock shell plus domain routes
-  app_dock_shell.dart            Multi-domain chrome
+  routing/router_builder.dart    Outer dock shell plus domain routes
+  shell/app_dock_shell.dart      Multi-domain chrome
   domain_bootstrap.dart          Domain indexer/background startup
 
 core/
@@ -268,7 +268,7 @@ Behavior:
 - Fingerprint changes drop stale vectors and allow reindexing.
 - Web does not load the native embedder.
 
-## Sync V2
+## Sync V3
 
 Location:
 

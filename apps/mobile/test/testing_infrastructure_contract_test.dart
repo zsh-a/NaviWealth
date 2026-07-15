@@ -304,9 +304,7 @@ void main() {
       expect(text, contains("'other-asset': (type: 'asset'"));
       expect(
         text,
-        contains(
-          'migrates v31 agent tables through trace and visibility additions',
-        ),
+        contains('migrates v31 agent tables through presentation additions'),
       );
       expect(text, contains('SELECT summary, artifact_id, trace_id'));
       expect(text, contains('SELECT trace_id, dismissed_at, snoozed_until'));
@@ -436,36 +434,21 @@ void main() {
           .toSet();
       final responsivePresent = pngNames.intersection(responsivePngs);
 
-      expect(goldenFiles, hasLength(18));
+      expect(goldenFiles, hasLength(17));
       expect(responsivePresent, equals(responsivePngs));
-      expect(pngFiles, hasLength(63));
+      expect(pngFiles, hasLength(61));
 
       final repoRoot = appRoot.parent.parent;
       final docs = File('${repoRoot.path}/docs/visual-baseline/README.md');
       expect(docs.existsSync(), isTrue);
       final text = docs.readAsStringSync();
-      expect(text, contains('18 test files'));
-      expect(text, contains('63 PNG baselines'));
+      expect(text, contains('17 test files'));
+      expect(text, contains('61 PNG baselines'));
       expect(text, contains('sync_status_page_golden_test.dart'));
       expect(text, contains('task_flow_responsive_golden_test.dart'));
       for (final filename in responsivePngs) {
         expect(text, contains(filename));
       }
-    });
-
-    test('Phase 1 roadmap testing status matches current contracts', () {
-      final repoRoot = appRoot.parent.parent;
-      final roadmap = File(
-        '${repoRoot.path}/docs/archive/roadmaps/roadmap-phase1.md',
-      );
-
-      expect(roadmap.existsSync(), isTrue);
-      final text = roadmap.readAsStringSync();
-      expect(text, contains('| P1-H 测试覆盖空白补齐 | ✅ 完成 |'));
-      expect(text, contains('Phase 1 实现项已收口'));
-      expect(text, contains('发布级 gate'));
-      expect(text, contains('[x] 5 个 E2E sync 用例稳定通过'));
-      expect(text, isNot(contains('仅剩 P1-H')));
     });
 
     test('testing strategy documents current flow and E2E coverage', () {
@@ -482,125 +465,6 @@ void main() {
       expect(text, contains('There is no known-failing allowlist'));
       expect(text, isNot(contains('Task #1 is implemented as the seed')));
       expect(text, isNot(contains('only sync_e2e_test.dart')));
-    });
-
-    test('roadmap activity feed status matches current implementation', () {
-      final repoRoot = appRoot.parent.parent;
-      final roadmap = File('${repoRoot.path}/docs/archive/roadmaps/roadmap.md');
-      final phase1 = File(
-        '${repoRoot.path}/docs/archive/roadmaps/roadmap-phase1.md',
-      );
-      final activityRepositoryTest = File(
-        '${appRoot.path}/test/features/finance/data/repositories/journal_entry_repository_test.dart',
-      );
-
-      expect(roadmap.existsSync(), isTrue);
-      expect(phase1.existsSync(), isTrue);
-      expect(activityRepositoryTest.existsSync(), isTrue);
-      final roadmapText = roadmap.readAsStringSync();
-      final phase1Text = phase1.readAsStringSync();
-      final activityRepositoryTestText = activityRepositoryTest
-          .readAsStringSync();
-
-      for (final text in [roadmapText, phase1Text]) {
-        expect(
-          text,
-          isNot(contains('lib/features/finance/activity/data/` 是空目录')),
-        );
-        expect(text, isNot(contains('缺 data/repository 层')));
-      }
-      expect(roadmapText, contains('ActivityFeedQuery'));
-      expect(roadmapText, contains('activityFeedProvider'));
-      expect(roadmapText, contains('keyset pagination'));
-      expect(roadmapText, isNot(contains('Activity Feed 缺 data 层')));
-      expect(phase1Text, contains('activity_feed_query.dart'));
-      expect(phase1Text, contains('activity_feed_provider.dart'));
-      expect(phase1Text, contains('page-size 递增'));
-      expect(
-        activityRepositoryTestText,
-        contains('empty source reports no additional pages'),
-      );
-      expect(
-        activityRepositoryTestText,
-        contains('SQL filters with no matches report no additional pages'),
-      );
-    });
-
-    test(
-      'roadmap IA status does not reference retired feature placeholders',
-      () {
-        final repoRoot = appRoot.parent.parent;
-        final roadmap = File(
-          '${repoRoot.path}/docs/archive/roadmaps/roadmap.md',
-        );
-
-        expect(roadmap.existsSync(), isTrue);
-        final text = roadmap.readAsStringSync();
-        expect(
-          text,
-          contains('历史 `features/me/`、`features/more/`、`features/portfolio/`'),
-        );
-        expect(text, contains('features/finance/ui/wealth/'));
-        expect(text, contains('Plan hub'));
-        expect(text, isNot(contains('当前目录为空')));
-        expect(text, isNot(contains('作为 `assets/` 的薄包装存在')));
-      },
-    );
-
-    test('roadmaps keep AI planning on device-only architecture', () {
-      final repoRoot = appRoot.parent.parent;
-      final roadmap = File('${repoRoot.path}/docs/archive/roadmaps/roadmap.md');
-      final phase1 = File(
-        '${repoRoot.path}/docs/archive/roadmaps/roadmap-phase1.md',
-      );
-      final midterm = File(
-        '${repoRoot.path}/docs/archive/roadmaps/roadmap-midterm-execution.md',
-      );
-      final next = File(
-        '${repoRoot.path}/docs/archive/roadmaps/roadmap-next.md',
-      );
-      final backendAiDir = Directory('${repoRoot.path}/apps/backend/src/ai');
-      final holdingsTool = File(
-        '${appRoot.path}/lib/features/finance/investment/ai_tools/get_holdings_tool.dart',
-      );
-
-      expect(roadmap.existsSync(), isTrue);
-      expect(phase1.existsSync(), isTrue);
-      expect(midterm.existsSync(), isTrue);
-      expect(next.existsSync(), isTrue);
-      expect(backendAiDir.existsSync(), isFalse);
-      expect(holdingsTool.existsSync(), isTrue);
-
-      final roadmapText = roadmap.readAsStringSync();
-      final phase1Text = phase1.readAsStringSync();
-      final midtermText = midterm.readAsStringSync();
-      final nextText = next.readAsStringSync();
-      final combinedText = '$roadmapText\n$phase1Text\n$midtermText\n$nextText';
-
-      for (final staleReference in <String>[
-        'apps/backend/src/ai/tools.rs',
-        'apps/backend/src/ai/proposals.rs',
-        'apps/backend/src/ai/anthropic.rs',
-        'apps/backend/src/ai/guardrails.rs',
-        'apps/backend/src/ai/sse.rs',
-        '向 `/ai/chat`',
-        'SSE 流',
-        'layer4_cloud_vision',
-        'cloud_ingest_client',
-      ]) {
-        expect(
-          combinedText,
-          isNot(contains(staleReference)),
-          reason: 'roadmaps should not plan against deleted AI relay code',
-        );
-      }
-
-      expect(combinedText, contains('device-only'));
-      expect(combinedText, contains('GetHoldingsTool'));
-      expect(combinedText, contains('deviceToolsProvider'));
-      expect(combinedText, contains('ProposalEnvelope'));
-      expect(combinedText, contains('proposalApplierProvider'));
-      expect(combinedText, contains('vision_ingest_client'));
     });
 
     test('device Vision ingest does not produce cloud-relay trace labels', () {
@@ -741,11 +605,7 @@ void main() {
 
       expect(architecture.existsSync(), isTrue);
       final text = architecture.readAsStringSync();
-      final ingestSection = _sectionBetween(
-        text,
-        '#### 5.10.x Layer 4 录入管道',
-        '## 6. 模块映射',
-      );
+      final ingestSection = _sectionBetween(text, '## 6. 当前代码地图', '## 7. 发布检查');
 
       expect(ingestSection, contains('VisionIngestClient'));
       expect(ingestSection, contains('UnavailableVisionIngestClient'));
@@ -768,12 +628,10 @@ void main() {
         final runtimeSection = _sectionBetween(
           text,
           '## 2. Runtime',
-          '## 3. Local Skills / Tools / Memory',
+          '## 3. 工具、写入与 Trace',
         );
 
         expect(runtimeSection, contains('FrbChatRunner'));
-        expect(runtimeSection, contains('旧 direct-Dart streaming'));
-        expect(runtimeSection, contains('已从 Flutter `lib/` 删除'));
         expect(runtimeSection, isNot(contains('DeviceAgentLoop')));
         expect(runtimeSection, isNot(contains('LlmStreamEvent')));
         expect(runtimeSection, isNot(contains('AnthropicClient')));

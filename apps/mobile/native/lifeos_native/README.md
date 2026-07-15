@@ -312,7 +312,7 @@ paths. No model required — these exercise the FFI plumbing.)
 Reasons to expand this crate (per `lifeos-shell.md` §10):
 
 1. **Sync E2EE** — `age` or `libsodium-sys-stable`. Triggered when
-   sync v2 has been stable ≥ 1 month (still pending).
+   Sync v3 has met the release stability gate.
 2. **ANN** — `usearch-rs` or `hnsw_rs`. Triggered when Memory Layer
    crosses ~50k entries.
 

@@ -92,8 +92,8 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         ],
       ),
       ...agentRuntimeProviderOverrides(),
-      // Feed the access token to the SyncEngine so /sync/push and
-      // /sync/pull go out authed once a session is active. The fetcher
+      // Feed the access token to the SyncEngine so /sync requests are
+      // authenticated once a session is active. The fetcher
       // closes over Riverpod's container, so token rotation is picked up
       // on every request without re-creating the SyncEngine.
       syncAuthTokenProvider.overrideWith(

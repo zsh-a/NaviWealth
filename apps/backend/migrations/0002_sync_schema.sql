@@ -1,4 +1,4 @@
--- 0002_sync_schema.sql — sync v2 (row-state). See docs/sync-v2.md.
+-- 0002_sync_schema.sql — base row-state storage. See docs/sync/sync-v3.md.
 --
 -- v2 syncs the current state of each row, not an OpLog stream. The server is
 -- schema-agnostic: one table stores every syncable business row as an opaque

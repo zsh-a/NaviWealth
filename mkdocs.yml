@@ -27,6 +27,7 @@ nav:
   - Architecture:
       - Northstar: architecture/lifeos-architecture-northstar.md
       - LifeOS Shell: architecture/lifeos-shell.md
+      - Agent Runtime: architecture/agent-runtime-current.md
   - Domains:
       - HealthOS: domains/healthos-domain.md
       - KnowledgeOS: domains/knowledgeos-domain.md
@@ -38,7 +39,7 @@ nav:
       - Device AI Architecture: ai/ai-architecture.md
       - Runtime Event Contract: ai/ai-protocol.md
   - Sync:
-      - Sync v2 Protocol: sync/sync-v2.md
+      - Sync v3 Protocol: sync/sync-v3.md
       - Protocol Test Catalogue: sync/sync-protocol-tests.md
       - Manual E2E Checklist: sync/sync-e2e-manual.md
       - Monitoring: sync/sync-monitoring.md
@@ -53,19 +54,3 @@ nav:
       - LifeOS Roadmap: roadmap/roadmap-lifeos.md
       - FinanceOS Roadmap: roadmap/roadmap-finance.md
       - Agent Experience Plan: roadmap/agent-experience-plan.md
-  - Decisions:
-      - Phase D ADR: decisions/lifeos-decision-2026-05-24.md
-  - Archive:
-      - Archive Index: archive/README.md
-      - Sync v1 Protocol: archive/sync-protocol.md
-      - Historical Roadmaps:
-          - 2026-05 Roadmap: archive/roadmaps/roadmap.md
-          - Compatibility Roadmap: archive/roadmaps/roadmap-next.md
-          - Phase 1 Plan: archive/roadmaps/roadmap-phase1.md
-          - Midterm Execution Plan: archive/roadmaps/roadmap-midterm-execution.md
-          - FIRE OS Plan: archive/roadmaps/roadmap-fire-os.md
-      - Audits:
-          - AI Boundary Audit: archive/audits/ai-boundary-audit.md
-          - Implementation Audit: archive/audits/implementation-audit-2026-05-31.md
-      - Plans:
-          - Figma UI Refactor Plan: archive/plans/lifeos-figma-ui-refactor-plan.md

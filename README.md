@@ -60,7 +60,7 @@ naviwealth/
 |---|---|
 | 前端 | Flutter + Riverpod + go_router + Forui |
 | 数据 | Drift (SQLite) + freezed + json_serializable |
-| 同步 | Sync v2 行状态 LWW + Hybrid Logical Clock |
+| 同步 | Sync v3 行状态 LWW + accepted ack + 域 generation |
 | 后端 | Cloudflare Workers (Rust, workers-rs) + D1 |
 | AI | 设备端 agent loop（Anthropic / OpenAI 兼容），用户自带 key |
 | 嵌入 | Rust EmbeddingGemma-300M ONNX INT8 via flutter_rust_bridge |
@@ -126,7 +126,8 @@ GitHub Actions（`Settings → Secrets and variables → Actions`）：
 - `app/` 是组合根，可导入多域来组装路由、工具、Agent
 - AI 仅设备端运行，无后端 AI 中继，无云端回落
 - Web 构建排除 AI 运行时和 Health 平台集成
-- Sync v2 行状态 LWW，后端保持 schema-agnostic
+- Sync v3 行状态 LWW，后端保持 schema-agnostic；accepted ack 精确确认写入，
+  域 generation 防止永久删除后的离线旧数据复活
 
 架构文档索引：
 
@@ -134,12 +135,11 @@ GitHub Actions（`Settings → Secrets and variables → Actions`）：
 |---|---|
 | [`docs/architecture/lifeos-architecture-northstar.md`](docs/architecture/lifeos-architecture-northstar.md) | 架构边界与非目标 |
 | [`docs/architecture/lifeos-shell.md`](docs/architecture/lifeos-shell.md) | 跨域 Shell SSOT |
-| [`docs/decisions/lifeos-decision-2026-05-24.md`](docs/decisions/lifeos-decision-2026-05-24.md) | Phase D ADR |
 | [`docs/domains/healthos-domain.md`](docs/domains/healthos-domain.md) | HealthOS 域行为 |
 | [`docs/domains/knowledgeos-domain.md`](docs/domains/knowledgeos-domain.md) | KnowledgeOS 域行为 |
 | [`docs/domains/executionos-domain.md`](docs/domains/executionos-domain.md) | ExecutionOS 域行为 |
 | [`docs/ai/ai-architecture.md`](docs/ai/ai-architecture.md) | 设备端 AI 运行时设计 |
-| [`docs/sync/sync-v2.md`](docs/sync/sync-v2.md) | 同步协议 v2 |
+| [`docs/sync/sync-v3.md`](docs/sync/sync-v3.md) | 当前同步协议 |
 | [`docs/roadmap/roadmap-lifeos.md`](docs/roadmap/roadmap-lifeos.md) | 跨域路线图 |
 
 ---

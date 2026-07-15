@@ -87,7 +87,7 @@ void main() {
         reader: () => _session('tok'),
         onUnauthorized: () => false,
       );
-      await dio.get<dynamic>('/sync/pull');
+      await dio.get<dynamic>('/sync');
       expect(adapter.calls.single.headers['Authorization'], 'Bearer tok');
     });
 
@@ -123,7 +123,7 @@ void main() {
           },
         );
 
-        final res = await dio.get<dynamic>('/sync/pull');
+        final res = await dio.get<dynamic>('/sync');
         expect(res.statusCode, 200);
         expect(refreshes, 1);
         expect(adapter.calls, hasLength(2));
@@ -145,7 +145,7 @@ void main() {
       );
 
       await expectLater(
-        dio.get<dynamic>('/sync/pull'),
+        dio.get<dynamic>('/sync'),
         throwsA(isA<DioException>()),
       );
       expect(refreshes, 1);
@@ -208,7 +208,7 @@ void main() {
         );
 
         await expectLater(
-          dio.get<dynamic>('/sync/pull'),
+          dio.get<dynamic>('/sync'),
           throwsA(isA<DioException>()),
         );
         expect(refreshes, 1);

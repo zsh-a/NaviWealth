@@ -2,9 +2,9 @@
 
 Status: **Active** (2026-07-12).
 
-v3 keeps the v2 row-state/LWW model and adds per-domain reset generations so
-an OS can be permanently erased across every device without an offline device
-resurrecting stale rows.
+The protocol uses row-state/LWW sync, explicit accepted acknowledgements, and
+per-domain reset generations so an OS can be permanently erased across every
+device without an offline device resurrecting stale rows.
 
 ## Row model
 
@@ -84,8 +84,17 @@ CREATE TABLE sync_domain_generations (
 );
 ```
 
-Generation zero is implicit until the first reset. There is no v2 wire
-compatibility; v3 clients and servers must be deployed together.
+Generation zero is implicit until the first reset. Clients and servers must
+both use protocol version 3.
+
+## Client registry
+
+`apps/mobile/lib/core/sync/sync_table_registry.dart` is the client SSOT for
+syncable tables. Each `SyncTableRegistration` declares its row-family prefix,
+primary key, owner scope, backfill behavior, payload codec, and row applier.
+Local table names remain unprefixed; `fin:`、`health:`、`know:` and `exec:` are
+added and stripped only at the sync boundary. Local-only and derived tables
+must not enter this registry.
 
 ## Data-management behavior
 
