@@ -30,7 +30,7 @@ const _shellSpec = DomainShellSpec(
   ],
 );
 
-GoRouter _router() => GoRouter(
+GoRouter _router({Widget one = const Center(child: Text('one'))}) => GoRouter(
   initialLocation: '/one',
   routes: <RouteBase>[
     StatefulShellRoute.indexedStack(
@@ -39,10 +39,7 @@ GoRouter _router() => GoRouter(
       branches: <StatefulShellBranch>[
         StatefulShellBranch(
           routes: <RouteBase>[
-            GoRoute(
-              path: '/one',
-              builder: (context, state) => const Center(child: Text('one')),
-            ),
+            GoRoute(path: '/one', builder: (context, state) => one),
           ],
         ),
         StatefulShellBranch(
@@ -59,6 +56,8 @@ GoRouter _router() => GoRouter(
 );
 
 void main() {
+  tearDown(() => appSheetOverlayDepthListenable.value = 0);
+
   testWidgets('switching branches keeps the navigation shell mounted once', (
     tester,
   ) async {
@@ -96,5 +95,54 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.text('two'), findsOneWidget);
+  });
+
+  testWidgets('opening a sheet keeps routed content layout stable', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    var probeBuilds = 0;
+    double? bottomPadding;
+    final router = _router(
+      one: Builder(
+        builder: (context) {
+          probeBuilds++;
+          bottomPadding = MediaQuery.paddingOf(context).bottom;
+          return const Center(child: Text('one'));
+        },
+      ),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          builder: (context, child) => FTheme(
+            data: FThemes.slate.light.desktop,
+            child: child ?? const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final buildsBeforeSheet = probeBuilds;
+    final paddingBeforeSheet = bottomPadding;
+    expect(paddingBeforeSheet, isNotNull);
+    expect(paddingBeforeSheet, greaterThan(0));
+
+    appSheetOverlayDepthListenable.value = 1;
+    await tester.pump();
+
+    expect(probeBuilds, buildsBeforeSheet);
+    expect(bottomPadding, paddingBeforeSheet);
   });
 }

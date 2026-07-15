@@ -184,35 +184,37 @@ class _MobileLayout extends ConsumerWidget {
         final path = _activePath(router);
         final onTabRoot = tabs.any((tab) => tab.routePath == path);
 
+        // Keep the routed page's viewport stable while overlays open. The
+        // sheet only needs to hide the floating dock; changing MediaQuery
+        // padding here would relayout the entire page during the sheet's
+        // entrance animation (particularly expensive for chart dashboards).
+        final dockHeight = onTabRoot ? _dockTotalHeight(safeAreaBottom) : 0.0;
+        final content = Positioned.fill(
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: MediaQuery.of(
+                context,
+              ).padding.copyWith(bottom: dockHeight),
+            ),
+            child: child,
+          ),
+        );
+
         return ValueListenableBuilder<int>(
           valueListenable: appSheetOverlayDepthListenable,
-          builder: (context, sheetDepth, _) {
+          child: content,
+          builder: (context, sheetDepth, content) {
             final sheetOpen = sheetDepth > 0;
             final showNav = onTabRoot && !sheetOpen;
-
-            // The total height the floating dock occupies.  When the nav
-            // is hidden this is 0 so content uses the full viewport.
-            final dockHeight = showNav ? _dockTotalHeight(safeAreaBottom) : 0.0;
-
-            // Content always fills the viewport. Bottom padding is
-            // injected via MediaQuery so scrollable pages can scroll
-            // their last item above the floating nav bar.
-            final content = MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                padding: MediaQuery.of(
-                  context,
-                ).padding.copyWith(bottom: dockHeight),
-              ),
-              child: child,
-            );
 
             return FScaffold(
               childPad: false,
               resizeToAvoidBottomInset: false,
               child: Stack(
                 children: [
-                  // Content — always full viewport, never shrinks.
-                  Positioned.fill(child: content),
+                  // Passed through ValueListenableBuilder.child so opening a
+                  // sheet cannot rebuild or relayout the routed page.
+                  content!,
                   // Floating dock — layered above content.
                   Positioned(
                     left: 0,
