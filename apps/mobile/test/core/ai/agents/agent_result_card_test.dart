@@ -283,6 +283,44 @@ void main() {
     expect(find.byType(AgentResultCard), findsOneWidget);
   });
 
+  testWidgets('a short stack drag follows the finger and eases back', (
+    tester,
+  ) async {
+    final first = _artifact();
+    final second = _artifact(
+      id: 'artifact-2',
+      agentId: 'agent-2',
+      title: 'Recovery Alert',
+    );
+    await tester.pumpWidget(
+      _wrap(
+        AgentResultsSection(
+          bundle: AgentResultBundle(
+            artifacts: <AgentArtifact>[first, second],
+            latestRuns: const <AgentRunRecord>[],
+          ),
+          metaLabelBuilder: (_) => 'Updated just now',
+          onOpen: (_) {},
+        ),
+      ),
+    );
+
+    final card = find.byType(AgentResultCard);
+    final initialLeft = tester.getTopLeft(card).dx;
+    final gesture = await tester.startGesture(tester.getCenter(card));
+    await gesture.moveBy(const Offset(-20, 0));
+    await gesture.moveBy(const Offset(-24, 0));
+    await tester.pump();
+    expect(tester.getTopLeft(card).dx, lessThan(initialLeft));
+
+    await tester.pump(const Duration(milliseconds: 200));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(card).dx, closeTo(initialLeft, 0.5));
+    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Recovery Alert'), findsNothing);
+  });
+
   testWidgets('detail body progressively reveals insight and evidence detail', (
     tester,
   ) async {

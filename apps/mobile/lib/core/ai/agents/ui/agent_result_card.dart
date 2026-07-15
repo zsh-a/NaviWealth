@@ -290,22 +290,42 @@ class _SwipeableAgentResultStack extends StatefulWidget {
       _SwipeableAgentResultStackState();
 }
 
-class _SwipeableAgentResultStackState
-    extends State<_SwipeableAgentResultStack> {
+class _SwipeableAgentResultStackState extends State<_SwipeableAgentResultStack>
+    with SingleTickerProviderStateMixin {
   static const double _switchThreshold = 48;
   static const double _velocityThreshold = 450;
   static const double _maxDragOffset = 96;
 
   late String _activeAgentId = widget.entries.first.agentId;
+  late final AnimationController _motionController;
   double _dragOffset = 0;
-  bool _dragging = false;
-  int _lastStep = 1;
+  bool _settling = false;
 
   int get _activeIndex {
     final index = widget.entries.indexWhere(
       (entry) => entry.agentId == _activeAgentId,
     );
     return index < 0 ? 0 : index;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _motionController = AnimationController.unbounded(vsync: this)
+      ..addListener(_handleMotionTick);
+  }
+
+  void _handleMotionTick() {
+    if (!mounted) return;
+    setState(() => _dragOffset = _motionController.value);
+  }
+
+  @override
+  void dispose() {
+    _motionController
+      ..removeListener(_handleMotionTick)
+      ..dispose();
+    super.dispose();
   }
 
   @override
@@ -317,16 +337,21 @@ class _SwipeableAgentResultStackState
       (entry) => entry.agentId == _activeAgentId,
     );
     if (leadingChanged || !activeStillExists) {
+      _motionController.stop();
       _activeAgentId = widget.entries.first.agentId;
       _dragOffset = 0;
+      _motionController.value = 0;
+      _settling = false;
     }
   }
 
   void _onDragStart(DragStartDetails details) {
-    setState(() => _dragging = true);
+    if (_settling) return;
+    _motionController.stop();
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
+    if (_settling) return;
     setState(() {
       _dragOffset = (_dragOffset + details.delta.dx)
           .clamp(-_maxDragOffset, _maxDragOffset)
@@ -335,104 +360,163 @@ class _SwipeableAgentResultStackState
   }
 
   void _onDragEnd(DragEndDetails details) {
+    if (_settling) return;
     final velocity = details.primaryVelocity ?? 0;
     final shouldSwitch =
         _dragOffset.abs() >= _switchThreshold ||
         velocity.abs() >= _velocityThreshold;
     if (!shouldSwitch) {
-      setState(() {
-        _dragging = false;
-        _dragOffset = 0;
-      });
+      unawaited(_animateBack());
       return;
     }
     final direction = _dragOffset != 0 ? _dragOffset.sign : velocity.sign;
-    _move(direction < 0 ? 1 : -1);
+    unawaited(
+      _switchCard(step: direction < 0 ? 1 : -1, exitDirection: direction),
+    );
   }
 
   void _onDragCancel() {
-    setState(() {
-      _dragging = false;
-      _dragOffset = 0;
-    });
+    if (_settling) return;
+    unawaited(_animateBack());
   }
 
-  void _move(int step) {
+  Future<void> _animateBack() async {
+    setState(() => _settling = true);
+    final duration = AppMotionPolicy.duration(context, Motion.medium);
+    final completed = await _animateOffset(
+      0,
+      duration: duration,
+      curve: Motion.standardDecelerate,
+    );
+    if (mounted && completed) setState(() => _settling = false);
+  }
+
+  Future<void> _switchCard({
+    required int step,
+    required double exitDirection,
+  }) async {
+    setState(() => _settling = true);
+    final renderBox = context.findRenderObject();
+    final measuredWidth = renderBox is RenderBox ? renderBox.size.width : 0.0;
+    final fallbackWidth = MediaQuery.sizeOf(context).width;
+    final deckWidth = measuredWidth > 0 ? measuredWidth : fallbackWidth;
+    final exitTarget = exitDirection * deckWidth * 0.92;
+    final exited = await _animateOffset(
+      exitTarget,
+      duration: AppMotionPolicy.duration(context, Motion.fast),
+      curve: Motion.standardAccelerate,
+    );
+    if (!mounted || !exited) return;
+
     final nextIndex = (_activeIndex + step) % widget.entries.length;
+    final incomingOffset = -exitDirection * AppSpacing.s48;
     setState(() {
-      _lastStep = step;
       _activeAgentId = widget.entries[nextIndex].agentId;
-      _dragging = false;
-      _dragOffset = 0;
+      _dragOffset = incomingOffset;
     });
+    _motionController.value = incomingOffset;
+    final entered = await _animateOffset(
+      0,
+      duration: AppMotionPolicy.duration(context, Motion.medium),
+      curve: Motion.standardDecelerate,
+    );
+    if (mounted && entered) setState(() => _settling = false);
+  }
+
+  Future<bool> _animateOffset(
+    double target, {
+    required Duration duration,
+    required Curve curve,
+  }) async {
+    if (duration == Duration.zero) {
+      _motionController.value = target;
+      return true;
+    }
+    _motionController.value = _dragOffset;
+    try {
+      await _motionController
+          .animateTo(target, duration: duration, curve: curve)
+          .orCancel;
+      return true;
+    } on TickerCanceled {
+      // A new data snapshot or disposal superseded this motion.
+      return false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final duration = AppMotionPolicy.duration(context, Motion.fast);
     final active = widget.entries[_activeIndex];
-    return Stack(
-      key: const ValueKey<String>('agent-result-stack'),
-      children: [
-        const Positioned.fill(
-          left: AppSpacing.s12,
-          right: AppSpacing.s12,
-          top: AppSpacing.s16,
-          bottom: 0,
-          child: _AgentResultBackplate(level: 2),
-        ),
-        const Positioned.fill(
-          left: AppSpacing.s6,
-          right: AppSpacing.s6,
-          top: AppSpacing.s8,
-          bottom: AppSpacing.s8,
-          child: _AgentResultBackplate(level: 1),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.s16),
-          child: GestureDetector(
-            key: const ValueKey<String>('agent-result-front-card'),
-            behavior: HitTestBehavior.translucent,
-            onHorizontalDragStart: _onDragStart,
-            onHorizontalDragUpdate: _onDragUpdate,
-            onHorizontalDragEnd: _onDragEnd,
-            onHorizontalDragCancel: _onDragCancel,
-            child: AnimatedContainer(
-              duration: _dragging ? Duration.zero : duration,
-              curve: Motion.standardDecelerate,
-              transform: Matrix4.translationValues(_dragOffset, 0, 0),
-              child: AnimatedSwitcher(
-                duration: duration,
-                switchInCurve: Motion.standardDecelerate,
-                switchOutCurve: Motion.standardAccelerate,
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: Offset(_lastStep * 0.04, 0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final revealProgress = (_dragOffset.abs() / _maxDragOffset)
+            .clamp(0.0, 1.0)
+            .toDouble();
+        final exitProgress = (_dragOffset.abs() / (width * 0.92))
+            .clamp(0.0, 1.0)
+            .toDouble();
+        final rotation = width == 0 ? 0.0 : (_dragOffset / width) * 0.035;
+        final opacity = (1 - exitProgress * exitProgress)
+            .clamp(0.0, 1.0)
+            .toDouble();
+        double lerp(double from, double to) =>
+            from + (to - from) * revealProgress;
+
+        return Stack(
+          key: const ValueKey<String>('agent-result-stack'),
+          children: [
+            Positioned.fill(
+              left: lerp(AppSpacing.s12, AppSpacing.s6),
+              right: lerp(AppSpacing.s12, AppSpacing.s6),
+              top: lerp(AppSpacing.s16, AppSpacing.s8),
+              bottom: lerp(0, AppSpacing.s8),
+              child: const _AgentResultBackplate(level: 2),
+            ),
+            Positioned.fill(
+              left: lerp(AppSpacing.s6, 0),
+              right: lerp(AppSpacing.s6, 0),
+              top: lerp(AppSpacing.s8, 0),
+              bottom: lerp(AppSpacing.s8, AppSpacing.s16),
+              child: const _AgentResultBackplate(level: 1),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+              child: GestureDetector(
+                key: const ValueKey<String>('agent-result-front-card'),
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragStart: _onDragStart,
+                onHorizontalDragUpdate: _onDragUpdate,
+                onHorizontalDragEnd: _onDragEnd,
+                onHorizontalDragCancel: _onDragCancel,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.translationValues(_dragOffset, 0, 0)
+                      ..rotateZ(rotation),
+                    child: KeyedSubtree(
+                      key: ValueKey<String>(active.agentId),
+                      child: widget.entryBuilder(active),
+                    ),
                   ),
-                ),
-                child: KeyedSubtree(
-                  key: ValueKey<String>(active.agentId),
-                  child: widget.entryBuilder(active),
                 ),
               ),
             ),
-          ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: AppSpacing.s4,
-          child: _AgentResultPageIndicator(
-            count: widget.entries.length,
-            activeIndex: _activeIndex,
-          ),
-        ),
-      ],
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: AppSpacing.s4,
+              child: _AgentResultPageIndicator(
+                count: widget.entries.length,
+                activeIndex: _activeIndex,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
