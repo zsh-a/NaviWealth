@@ -10,6 +10,8 @@
 /// `app_dock_shell.dart` — vertical space isn't at a premium there.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -36,37 +38,38 @@ Future<void> showDomainSwitcherSheet(
       activePath == LifeRoutes.home ||
       activePath.startsWith('${LifeRoutes.home}/');
   final l10n = AppLocalizations.of(context);
+  final router = GoRouter.of(context);
   await showAppSheet<void>(
     context: context,
     title: l10n.shellSwitchDomainTitle,
     scrollable: false,
     builder: (sheetContext) {
+      void selectTarget(String target, {required bool selected}) {
+        if (selected) {
+          Navigator.of(sheetContext).pop();
+          return;
+        }
+        AppInteraction.signal(AppInteractionIntent.navigate);
+        unawaited(closeSheetThen(sheetContext, () => router.go(target)));
+      }
+
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _LifeRow(
             selected: onLife,
-            onTap: () {
-              Navigator.of(sheetContext).pop();
-              if (!onLife) {
-                AppInteraction.signal(AppInteractionIntent.navigate);
-                GoRouter.of(context).go(LifeRoutes.home);
-              }
-            },
+            onTap: () => selectTarget(LifeRoutes.home, selected: onLife),
           ),
           for (final spec in specs)
             _DomainRow(
               spec: spec,
               selected: !onLife && spec.scope == active.scope,
               onTap: () {
-                Navigator.of(sheetContext).pop();
-                if (onLife || spec.scope != active.scope) {
-                  final target = spec.tabs.isNotEmpty
-                      ? spec.tabs.first.routePath
-                      : LifeRoutes.home;
-                  AppInteraction.signal(AppInteractionIntent.navigate);
-                  GoRouter.of(context).go(target);
-                }
+                final selected = !onLife && spec.scope == active.scope;
+                final target = spec.tabs.isNotEmpty
+                    ? spec.tabs.first.routePath
+                    : LifeRoutes.home;
+                selectTarget(target, selected: selected);
               },
             ),
         ],

@@ -231,9 +231,16 @@ void main() {
       expect(find.text('FinanceOS'), findsOneWidget);
       expect(find.text('HealthOS'), findsOneWidget);
 
-      // Tapping HealthOS in the sheet navigates to /health.
+      // Tapping HealthOS closes the sheet first. Route construction must not
+      // overlap the reverse sheet animation.
       await tester.tap(find.text('HealthOS'));
       await tester.pump();
+      expect(_currentPath(container), AppRoutes.activity);
+
+      await tester.pump(const Duration(milliseconds: 219));
+      expect(_currentPath(container), AppRoutes.activity);
+
+      await tester.pump(const Duration(milliseconds: 1));
       await tester.pump(const Duration(milliseconds: 400));
       expect(_currentPath(container), AppRoutes.healthToday);
       expect(find.byType(HealthTodayPage), findsOneWidget);

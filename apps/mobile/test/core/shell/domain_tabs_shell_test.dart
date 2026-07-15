@@ -83,6 +83,25 @@ void main() {
         ),
       ),
     );
+
+    final shellTransition = find.byKey(
+      const ValueKey<String>('domain-shell.content-transition'),
+    );
+    expect(shellTransition, findsOneWidget);
+    expect(
+      tester.widget<FadeTransition>(shellTransition).opacity.value,
+      0,
+      reason: 'The destination lays out before its entrance animation starts.',
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 110));
+    final midOpacity = tester
+        .widget<FadeTransition>(shellTransition)
+        .opacity
+        .value;
+    expect(midOpacity, greaterThan(0));
+    expect(midOpacity, lessThan(1));
     await tester.pumpAndSettle();
 
     expect(find.text('one'), findsOneWidget);

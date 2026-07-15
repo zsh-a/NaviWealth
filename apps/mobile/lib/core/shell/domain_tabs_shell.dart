@@ -47,6 +47,8 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  bool _initialEntranceHandled = false;
 
   @override
   void initState() {
@@ -56,13 +58,33 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
       parent: _controller,
       curve: Motion.emphasizedDecelerate,
     );
-    _controller.value = 1.0;
+    _slide = Tween<Offset>(
+      begin: const Offset(0, AppSpacing.s6),
+      end: Offset.zero,
+    ).animate(_fade);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _controller.duration = AppMotionPolicy.duration(context, Motion.medium);
+    final motionEnabled = AppMotionPolicy.isEnabled(
+      context,
+      role: AppMotionRole.transition,
+    );
+    if (!motionEnabled) {
+      _initialEntranceHandled = true;
+      _controller.value = 1;
+      return;
+    }
+    if (_initialEntranceHandled) return;
+    _initialEntranceHandled = true;
+    _controller.value = 0;
+    // Let the destination shell complete its first layout before animating.
+    // This keeps cold provider setup out of the visible transition frames.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _controller.forward();
+    });
   }
 
   @override
@@ -94,7 +116,16 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
     // StatefulNavigationShell owns a GlobalKey and must stay mounted exactly
     // once. Animate its presentation in place instead of cross-fading two
     // keyed snapshots, which would retain the same shell in both subtrees.
-    final animatedChild = FadeTransition(opacity: _fade, child: widget.shell);
+    final animatedChild = FadeTransition(
+      key: const ValueKey<String>('domain-shell.content-transition'),
+      opacity: _fade,
+      child: AnimatedBuilder(
+        animation: _slide,
+        builder: (context, child) =>
+            Transform.translate(offset: _slide.value, child: child),
+        child: widget.shell,
+      ),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
