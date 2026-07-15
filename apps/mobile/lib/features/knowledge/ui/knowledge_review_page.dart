@@ -10,9 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_access.dart';
-import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/format/formatters.dart';
@@ -238,22 +237,37 @@ class _KnowledgeReviewAgentResultPanel extends ConsumerWidget {
     }
 
     final bundle = resultsAsync.value;
-    final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
-    final run = bundle?.latestRun;
-    if (artifacts.isEmpty && run == null) return const SizedBox.shrink();
-    if (artifacts.isEmpty) {
-      // First generation / failed only — not a bare ready shell.
-      if (run!.status != AgentRunLifecycleStatus.running &&
-          run.status != AgentRunLifecycleStatus.failed) {
-        return const SizedBox.shrink();
-      }
-      return _KnowledgeReviewAgentRunStatusCard(record: run);
+    if (bundle == null || bundle.visibleEntries.isEmpty) {
+      return const SizedBox.shrink();
     }
-    return _KnowledgeReviewAgentResultList(
-      artifacts: artifacts,
-      overlayRun: run,
+    return AgentResultsSection(
+      bundle: bundle,
+      metaLabelBuilder: (at) => _knowledgeAgentArtifactUpdated(l10n, at),
+      onOpen: (artifact) {
+        final metaLabel = _knowledgeAgentArtifactUpdated(
+          l10n,
+          artifact.createdAt,
+        );
+        showAgentArtifactSheet(
+          context: context,
+          artifact: artifact,
+          subtitle: metaLabel,
+          onVisibilityChanged: () => ref.invalidate(
+            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
+          ),
+        );
+      },
+      onRetry: (agentId) => _retryKnowledgeAgent(ref, agentId),
     );
   }
+}
+
+Future<void> _retryKnowledgeAgent(WidgetRef ref, String agentId) async {
+  final controller = await ref.read(agentRunControllerProvider.future);
+  await controller.runOnceById(agentId);
+  ref.invalidate(
+    knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
+  );
 }
 
 class _KnowledgeAgentPanelFrame extends StatelessWidget {
@@ -266,113 +280,6 @@ class _KnowledgeAgentPanelFrame extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [child],
-    );
-  }
-}
-
-class _KnowledgeReviewAgentResultList extends StatelessWidget {
-  const _KnowledgeReviewAgentResultList({
-    required this.artifacts,
-    this.overlayRun,
-  });
-
-  final List<AgentArtifact> artifacts;
-  final AgentRunRecord? overlayRun;
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = artifacts.first;
-    final secondary = artifacts.skip(1).toList(growable: false);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _KnowledgeReviewAgentResultCard(
-          artifact: primary,
-          overlayRun: overlayRun,
-        ),
-        if (secondary.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s8),
-          for (var i = 0; i < secondary.length; i++) ...[
-            _KnowledgeReviewAgentResultRow(artifact: secondary[i]),
-            if (i != secondary.length - 1)
-              const SizedBox(height: AppSpacing.s6),
-          ],
-        ],
-      ],
-    );
-  }
-}
-
-class _KnowledgeReviewAgentRunStatusCard extends StatelessWidget {
-  const _KnowledgeReviewAgentRunStatusCard({required this.record});
-
-  final AgentRunRecord record;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final reference = record.finishedAt ?? record.startedAt;
-    return AgentRunStatusCard(
-      record: record,
-      metaLabel: _knowledgeAgentArtifactUpdated(l10n, reference),
-    );
-  }
-}
-
-class _KnowledgeReviewAgentResultCard extends ConsumerWidget {
-  const _KnowledgeReviewAgentResultCard({
-    required this.artifact,
-    this.overlayRun,
-  });
-
-  final AgentArtifact artifact;
-  final AgentRunRecord? overlayRun;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
-    return AgentResultSurface(
-      artifact: artifact,
-      run: overlayRun,
-      metaLabel: metaLabel,
-      layout: AgentResultCardLayout.summary,
-      onOpen: () => showAgentArtifactSheet(
-        context: context,
-        artifact: artifact,
-        subtitle: metaLabel,
-        onVisibilityChanged: () {
-          ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _KnowledgeReviewAgentResultRow extends ConsumerWidget {
-  const _KnowledgeReviewAgentResultRow({required this.artifact});
-
-  final AgentArtifact artifact;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final metaLabel = _knowledgeAgentArtifactUpdated(l10n, artifact.createdAt);
-    return AgentCompactResultRow(
-      artifact: artifact,
-      metaLabel: metaLabel,
-      onOpen: () => showAgentArtifactSheet(
-        context: context,
-        artifact: artifact,
-        subtitle: metaLabel,
-        onVisibilityChanged: () {
-          ref.invalidate(
-            knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-          );
-        },
-      ),
     );
   }
 }

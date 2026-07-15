@@ -7,6 +7,7 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
@@ -21,6 +22,7 @@ import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/finance_route_paths.dart';
 import '../expense/data/expense_anomaly_insight_provider.dart';
 
 const String kCashflowAnomalyReviewAgentId = 'cashflow_anomaly_review';
@@ -244,23 +246,43 @@ class CashflowAnomalyAnalysis {
       severity: severity,
       title: l10n.financeAgentCashflowTitle,
       summary: summary(l10n),
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.financeAgentCashflowInsightProjectionTitle,
+          value: Fmt.signedPercent(anomaly.deltaRatio, decimalDigits: 0),
+          severity: severity,
+        ),
+      ],
       insights: <AgentInsight>[
         AgentInsight(
+          id: 'projection_delta',
           title: l10n.financeAgentCashflowInsightProjectionTitle,
           body: l10n.financeAgentCashflowInsightProjectionBody(
             direction(l10n),
             Fmt.signedPercent(anomaly.deltaRatio, decimalDigits: 0),
           ),
           severity: severity,
+          details: <AgentMetric>[
+            AgentMetric(
+              label: l10n.financeAgentCashflowInsightProjectionTitle,
+              value: Fmt.signedPercent(anomaly.deltaRatio, decimalDigits: 0),
+              severity: severity,
+            ),
+          ],
+          evidenceIds: <String>[upload.id],
+          route: FinanceRoutes.cashflow,
           payload: toPayload(),
         ),
         AgentInsight(
+          id: 'detector_source',
           title: l10n.financeAgentCashflowInsightDetectorTitle,
           body: l10n.financeAgentCashflowInsightDetectorBody,
+          evidenceIds: <String>[upload.id],
           payload: <String, Object?>{
             'source': 'expenseAnomalyInsightProvider',
             'read_model': 'anomaly_flags',
           },
+          route: FinanceRoutes.cashflow,
         ),
       ],
       evidence: <AgentEvidenceRef>[
@@ -268,6 +290,8 @@ class CashflowAnomalyAnalysis {
           type: 'anomaly_flag',
           id: upload.id,
           label: l10n.financeAgentCashflowEvidenceLabel,
+          description: l10n.financeAgentCashflowInsightDetectorBody,
+          route: FinanceRoutes.cashflow,
           payload: upload.payload,
         ),
       ],
@@ -278,8 +302,13 @@ class CashflowAnomalyAnalysis {
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: FinanceRoutes.cashflow,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.financeAgentCashflowEvidenceLabel,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

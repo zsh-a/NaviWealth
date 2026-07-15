@@ -101,16 +101,16 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.text('Cashflow Anomaly Review'), findsOneWidget);
+    expect(find.text('Spending moved sharply above baseline.'), findsOneWidget);
     expect(find.text('Weekly Wealth Review'), findsOneWidget);
     expect(
       find.text('Net worth moved 2.4% with cashflow pressure.'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.text('Net worth'), findsNothing);
-    expect(find.text('Cashflow Anomaly Review'), findsNothing);
-    expect(find.text('Spending moved sharply above baseline.'), findsNothing);
     expect(find.byType(AgentResultCard), findsOneWidget);
-    expect(find.byType(AgentCompactResultRow), findsNothing);
+    expect(find.byType(AgentCompactResultRow), findsOneWidget);
     expect(
       tester.widget<AgentResultCard>(find.byType(AgentResultCard)).layout,
       AgentResultCardLayout.summary,

@@ -23,6 +23,7 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
@@ -34,6 +35,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/inbox_triage_classifier.dart' show InboxTriageClassifier;
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
@@ -195,8 +197,15 @@ class InboxTriageAgent implements Agent {
       severity: AgentArtifactSeverity.info,
       title: l10n.knowledgeAgentInboxArtifactTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.knowledgeAgentInboxInsightSuggestionsTitle,
+          value: emittedProposals.toString(),
+        ),
+      ],
       insights: <AgentInsight>[
         AgentInsight(
+          id: 'suggestions',
           title: l10n.knowledgeAgentInboxInsightSuggestionsTitle,
           body: l10n.knowledgeAgentInboxInsightSuggestionsBody(
             emittedProposals,
@@ -204,6 +213,8 @@ class InboxTriageAgent implements Agent {
             items.length,
             items.length == 1 ? '' : 's',
           ),
+          evidenceIds: <String>[for (final item in items) item.note.id],
+          route: KnowledgeRoutes.review,
           payload: <String, Object?>{
             'scanned_notes': scannedNotes,
             'emitted_proposals': emittedProposals,
@@ -212,6 +223,7 @@ class InboxTriageAgent implements Agent {
         ),
         for (final entry in byKind.entries)
           AgentInsight(
+            id: 'kind:${entry.key.wire}',
             title: _proposalKindLabel(l10n, entry.key),
             body: l10n.knowledgeAgentInboxSuggestionKindBody(
               entry.value,
@@ -219,6 +231,7 @@ class InboxTriageAgent implements Agent {
                   ? l10n.knowledgeAgentInboxProposalSuggestionSingular
                   : l10n.knowledgeAgentInboxProposalSuggestionPlural,
             ),
+            route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'proposal_kind': entry.key.wire,
               'count': entry.value,
@@ -233,6 +246,7 @@ class InboxTriageAgent implements Agent {
             label: item.note.title.isEmpty
                 ? l10n.knowledgeAgentInboxUntitledNote
                 : item.note.title,
+            route: KnowledgeRoutes.object('note', item.note.id),
             payload: <String, Object?>{
               'proposal_count': item.proposals.length,
               'proposal_kinds': item.proposals
@@ -248,8 +262,13 @@ class InboxTriageAgent implements Agent {
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: KnowledgeRoutes.review,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.knowledgeAgentInboxArtifactTitle,
+      ),
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 7)),

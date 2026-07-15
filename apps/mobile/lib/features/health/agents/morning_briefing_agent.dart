@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
@@ -35,6 +36,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/health_route_paths.dart';
 import '../data/morning_briefing_preferences.dart';
 import 'briefing_synthesizer.dart';
 import 'health_notifications.dart';
@@ -271,24 +273,43 @@ class MorningBriefingAgent implements Agent {
           : AgentArtifactSeverity.info,
       title: l10n.healthAgentMorningTitle,
       summary: output.summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.healthAgentMorningInsightSleepTitle,
+          value: healthEvents.length.toString(),
+          context: l10n.healthAgentMorningTitle,
+          severity: shortSleep ? AgentArtifactSeverity.attention : null,
+        ),
+        if (financeEvents.isNotEmpty)
+          AgentMetric(
+            label: l10n.healthAgentMorningInsightFinanceTitle,
+            value: financeEvents.length.toString(),
+          ),
+      ],
       insights: <AgentInsight>[
         if (output.sleepLine != null)
           AgentInsight(
+            id: 'sleep',
             title: l10n.healthAgentMorningInsightSleepTitle,
             body: output.sleepLine!,
             severity: shortSleep
                 ? AgentArtifactSeverity.attention
                 : AgentArtifactSeverity.info,
+            route: HealthRoutes.trend,
           ),
         if (output.hrvLine != null)
           AgentInsight(
+            id: 'hrv',
             title: l10n.healthAgentMorningInsightHrvTitle,
             body: output.hrvLine!,
+            route: HealthRoutes.trend,
           ),
         if (output.financeLine != null)
           AgentInsight(
+            id: 'finance',
             title: l10n.healthAgentMorningInsightFinanceTitle,
             body: output.financeLine!,
+            route: HealthRoutes.today,
           ),
       ],
       evidence: <AgentEvidenceRef>[
@@ -297,6 +318,7 @@ class MorningBriefingAgent implements Agent {
             type: 'health_event',
             id: event.id,
             label: event.summary,
+            route: HealthRoutes.trend,
             payload: <String, Object?>{
               'event_type': event.type,
               'source': event.source,
@@ -307,6 +329,7 @@ class MorningBriefingAgent implements Agent {
             type: 'finance_event',
             id: event.id,
             label: event.summary,
+            route: HealthRoutes.today,
             payload: <String, Object?>{
               'event_type': event.type,
               'source': event.source,
@@ -320,8 +343,14 @@ class MorningBriefingAgent implements Agent {
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: HealthRoutes.today,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.healthAgentMorningTitle,
+        modelAssisted: output.traceId != null,
+      ),
       memoryId: memoryId,
       traceId: output.traceId,
       createdAt: createdAt.toUtc(),

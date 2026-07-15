@@ -10,6 +10,7 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
@@ -20,6 +21,7 @@ import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dar
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
@@ -156,15 +158,31 @@ class ReviewAgent implements Agent {
           : AgentArtifactSeverity.info,
       title: l10n.knowledgeAgentReviewArtifactTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.knowledgeAgentReviewInsightDecisionsTitle,
+          value: due.length.toString(),
+        ),
+        AgentMetric(
+          label: l10n.knowledgeAgentReviewInsightAssumptionsTitle,
+          value: staleAssumptions.length.toString(),
+          severity: hasStaleAssumptions
+              ? AgentArtifactSeverity.attention
+              : null,
+        ),
+      ],
       insights: <AgentInsight>[
         if (due.isNotEmpty)
           AgentInsight(
+            id: 'due_decisions',
             title: l10n.knowledgeAgentReviewInsightDecisionsTitle,
             body: l10n.knowledgeAgentReviewInsightDecisionsBody(
               due.length,
               due.length == 1 ? '' : 's',
             ),
             severity: AgentArtifactSeverity.info,
+            evidenceIds: <String>[for (final item in due) item.id],
+            route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': due.length,
               'first_id': due.first.id,
@@ -172,6 +190,7 @@ class ReviewAgent implements Agent {
           ),
         if (staleAssumptions.isNotEmpty)
           AgentInsight(
+            id: 'stale_assumptions',
             title: l10n.knowledgeAgentReviewInsightAssumptionsTitle,
             body: l10n.knowledgeAgentReviewInsightAssumptionsBody(
               staleAssumptions.length,
@@ -179,6 +198,8 @@ class ReviewAgent implements Agent {
               kAssumptionStaleDays,
             ),
             severity: AgentArtifactSeverity.attention,
+            evidenceIds: <String>[for (final item in staleAssumptions) item.id],
+            route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': staleAssumptions.length,
               'threshold_days': kAssumptionStaleDays,
@@ -192,6 +213,7 @@ class ReviewAgent implements Agent {
             type: 'knowledge_decision',
             id: decision.id,
             label: decision.question,
+            route: KnowledgeRoutes.decision(decision.id),
             payload: const <String, Object?>{'reason': 'review_due'},
           ),
         for (final assumption in staleAssumptions)
@@ -199,6 +221,7 @@ class ReviewAgent implements Agent {
             type: 'knowledge_assumption',
             id: assumption.id,
             label: assumption.statement,
+            route: KnowledgeRoutes.object('assumption', assumption.id),
             payload: const <String, Object?>{'reason': 'stale_assumption'},
           ),
       ],
@@ -209,8 +232,13 @@ class ReviewAgent implements Agent {
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: artifactId,
+          route: KnowledgeRoutes.review,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.knowledgeAgentReviewArtifactTitle,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: finished.toUtc(),

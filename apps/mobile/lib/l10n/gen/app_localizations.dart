@@ -11196,6 +11196,54 @@ abstract class AppLocalizations {
   /// **'Couldn\'t update this result: {error}'**
   String agentResultVisibilityActionFailed(String error);
 
+  /// No description provided for @agentResultLocalMethodTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How this result was produced'**
+  String get agentResultLocalMethodTitle;
+
+  /// No description provided for @agentResultLocalMethodDeterministicBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated from local domain records using deterministic rules.'**
+  String get agentResultLocalMethodDeterministicBody;
+
+  /// No description provided for @agentResultLocalMethodAssistedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesized on device from local domain records; the supporting metrics remain source-derived.'**
+  String get agentResultLocalMethodAssistedBody;
+
+  /// No description provided for @agentResultLocalMethodSourceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Data source'**
+  String get agentResultLocalMethodSourceLabel;
+
+  /// No description provided for @agentResultLocalMethodRuntimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Runtime'**
+  String get agentResultLocalMethodRuntimeLabel;
+
+  /// No description provided for @agentResultLocalMethodRuntimeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'On device'**
+  String get agentResultLocalMethodRuntimeValue;
+
+  /// No description provided for @agentResultMetricCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get agentResultMetricCurrent;
+
+  /// No description provided for @agentResultMetricBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline'**
+  String get agentResultMetricBaseline;
+
   /// Fallback action description when an agent result action has no metadata.
   ///
   /// In en, this message translates to:

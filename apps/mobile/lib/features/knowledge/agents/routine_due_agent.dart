@@ -14,6 +14,7 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
@@ -25,6 +26,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
@@ -205,15 +207,29 @@ class RoutineDueAgent implements Agent {
           : AgentArtifactSeverity.info,
       title: l10n.knowledgeAgentRoutineArtifactTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.knowledgeAgentRoutineInsightOverdueTitle,
+          value: overdue.length.toString(),
+          severity: overdue.isNotEmpty ? AgentArtifactSeverity.attention : null,
+        ),
+        AgentMetric(
+          label: l10n.knowledgeAgentRoutineInsightUpcomingTitle,
+          value: upcoming.length.toString(),
+        ),
+      ],
       insights: <AgentInsight>[
         if (overdue.isNotEmpty)
           AgentInsight(
+            id: 'overdue_routines',
             title: l10n.knowledgeAgentRoutineInsightOverdueTitle,
             body: l10n.knowledgeAgentRoutineInsightOverdueBody(
               overdue.length,
               overdue.length == 1 ? '' : 's',
             ),
             severity: AgentArtifactSeverity.attention,
+            evidenceIds: <String>[for (final item in overdue) item.id],
+            route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': overdue.length,
               'first_id': overdue.first.id,
@@ -221,12 +237,15 @@ class RoutineDueAgent implements Agent {
           ),
         if (upcoming.isNotEmpty)
           AgentInsight(
+            id: 'upcoming_routines',
             title: l10n.knowledgeAgentRoutineInsightUpcomingTitle,
             body: l10n.knowledgeAgentRoutineInsightUpcomingBody(
               upcoming.length,
               upcoming.length == 1 ? '' : 's',
               kRoutineDueLookahead.inDays,
             ),
+            evidenceIds: <String>[for (final item in upcoming) item.id],
+            route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': upcoming.length,
               'lookahead_days': kRoutineDueLookahead.inDays,
@@ -240,6 +259,7 @@ class RoutineDueAgent implements Agent {
             type: 'knowledge_routine',
             id: routine.id,
             label: routine.statement,
+            route: KnowledgeRoutes.object('routine', routine.id),
             payload: <String, Object?>{
               'reason': 'overdue',
               'days_until_due': routine.daysUntilDue(now),
@@ -251,6 +271,7 @@ class RoutineDueAgent implements Agent {
             type: 'knowledge_routine',
             id: routine.id,
             label: routine.statement,
+            route: KnowledgeRoutes.object('routine', routine.id),
             payload: <String, Object?>{
               'reason': 'upcoming',
               'days_until_due': routine.daysUntilDue(now),
@@ -265,8 +286,13 @@ class RoutineDueAgent implements Agent {
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: KnowledgeRoutes.review,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.knowledgeAgentRoutineArtifactTitle,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

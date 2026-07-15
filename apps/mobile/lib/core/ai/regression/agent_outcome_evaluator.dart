@@ -7,6 +7,7 @@ library;
 
 import '../agents/agent.dart';
 import '../agents/agent_artifact.dart';
+import '../agents/agent_artifact_presentation.dart';
 import '../agents/agent_intents.dart';
 import 'agent_outcome_corpus.dart';
 
@@ -88,6 +89,10 @@ List<AgentOutcomeEvaluationFailure> evaluateAgentOutcomeCase({
       regressionCase.expectedSeverity,
       artifact.severity,
     );
+  }
+
+  for (final issue in agentArtifactPresentationIssues(artifact)) {
+    add('artifact.presentation.$issue', 'present', 'missing');
   }
 
   final insightTitles = {

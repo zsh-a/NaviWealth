@@ -214,6 +214,82 @@ class AgentResultSurface extends StatelessWidget {
   }
 }
 
+typedef AgentResultMetaLabelBuilder = String Function(DateTime at);
+typedef AgentResultOpenCallback = void Function(AgentArtifact artifact);
+typedef AgentResultRetryCallback = FutureOr<void> Function(String agentId);
+
+/// Canonical multi-agent result composition for domain surfaces.
+///
+/// The highest-priority result gets the readable card; remaining results stay
+/// discoverable as compact rows. Pairing, severity ordering, and run overlays
+/// come from [agent_providers.AgentResultBundle] rather than being rebuilt by
+/// each domain page.
+class AgentResultsSection extends StatelessWidget {
+  const AgentResultsSection({
+    super.key,
+    required this.bundle,
+    required this.metaLabelBuilder,
+    required this.onOpen,
+    this.onRetry,
+    this.maxResults = 5,
+    this.summaryMaxLines,
+  });
+
+  final agent_providers.AgentResultBundle bundle;
+  final AgentResultMetaLabelBuilder metaLabelBuilder;
+  final AgentResultOpenCallback onOpen;
+  final AgentResultRetryCallback? onRetry;
+  final int maxResults;
+  final int? summaryMaxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = bundle.visibleEntries
+        .take(maxResults)
+        .toList(growable: false);
+    if (entries.isEmpty) return const SizedBox.shrink();
+    final primary = entries.first;
+    final primaryArtifact = primary.artifact;
+    final primaryRun = primary.runOverlay;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AgentResultSurface(
+          artifact: primaryArtifact,
+          run: primaryRun,
+          metaLabel: metaLabelBuilder(
+            primaryArtifact?.createdAt ?? primary.referenceTime,
+          ),
+          layout: AgentResultCardLayout.summary,
+          summaryMaxLines: summaryMaxLines,
+          onOpen: primaryArtifact == null
+              ? null
+              : () => onOpen(primaryArtifact),
+          onRetry: primaryRun == null || onRetry == null
+              ? null
+              : () => onRetry!(primary.agentId),
+        ),
+        for (final entry in entries.skip(1)) ...[
+          const SizedBox(height: AppSpacing.s8),
+          if (entry.artifact case final artifact?)
+            AgentCompactResultRow(
+              artifact: artifact,
+              run: entry.runOverlay,
+              metaLabel: metaLabelBuilder(artifact.createdAt),
+              onOpen: () => onOpen(artifact),
+            )
+          else if (entry.runOverlay case final run?)
+            AgentRunStatusCard(
+              record: run,
+              metaLabel: metaLabelBuilder(entry.referenceTime),
+              onRetry: onRetry == null ? null : () => onRetry!(entry.agentId),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Slim banner so running/failed does not replace the previous result body.
 class _RunStatusBanner extends StatefulWidget {
   const _RunStatusBanner({required this.record, this.onRetry});
@@ -376,17 +452,27 @@ class AgentCompactResultRow extends StatelessWidget {
     super.key,
     required this.artifact,
     required this.metaLabel,
+    this.run,
     this.onOpen,
   });
 
   final AgentArtifact artifact;
   final String metaLabel;
+  final AgentRunRecord? run;
   final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accent = _accentColor(context, artifact.severity);
+    final liveRun =
+        run != null &&
+            agent_providers.AgentResultBundle.shouldPrioritizeRun(
+              run!,
+              artifact,
+            )
+        ? run
+        : null;
     return SoftCard(
       level: SoftCardLevel.flat,
       padding: const EdgeInsets.symmetric(
@@ -427,9 +513,14 @@ class AgentCompactResultRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.s8),
           AppBadge(
-            label: _badgeLabel(l10n, artifact),
+            label: liveRun == null
+                ? _badgeLabel(l10n, artifact)
+                : _statusLabel(l10n, liveRun.status),
             size: AppBadgeSize.compact,
-            tone: _badgeTone(artifact.severity),
+            tone: liveRun == null
+                ? _badgeTone(artifact.severity)
+                : _badgeToneForRun(liveRun.status),
+            icon: liveRun == null ? null : _iconForRunStatus(liveRun.status),
           ),
           const SizedBox(width: AppSpacing.s6),
           Icon(

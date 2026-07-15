@@ -3540,6 +3540,14 @@
   "agentResultDismissAction": "Dismiss",
   "@agentResultDismissAction": { "description": "Button label that dismisses an agent result." },
   "agentResultVisibilityActionFailed": "Couldn't update this result: {error}",
+  "agentResultLocalMethodTitle": "How this result was produced",
+  "agentResultLocalMethodDeterministicBody": "Calculated from local domain records using deterministic rules.",
+  "agentResultLocalMethodAssistedBody": "Synthesized on device from local domain records; the supporting metrics remain source-derived.",
+  "agentResultLocalMethodSourceLabel": "Data source",
+  "agentResultLocalMethodRuntimeLabel": "Runtime",
+  "agentResultLocalMethodRuntimeValue": "On device",
+  "agentResultMetricCurrent": "Current",
+  "agentResultMetricBaseline": "Baseline",
   "@agentResultVisibilityActionFailed": {
     "description": "Toast shown when snoozing or dismissing an agent result fails.",
     "placeholders": { "error": { "type": "String", "example": "database locked" } }

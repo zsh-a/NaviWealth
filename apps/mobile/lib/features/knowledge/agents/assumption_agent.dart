@@ -10,6 +10,7 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
@@ -20,6 +21,7 @@ import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dar
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
@@ -149,8 +151,16 @@ class AssumptionAgent implements Agent {
       severity: AgentArtifactSeverity.attention,
       title: l10n.knowledgeAgentAssumptionArtifactTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.knowledgeAgentAssumptionInsightTitle,
+          value: stale.length.toString(),
+          severity: AgentArtifactSeverity.attention,
+        ),
+      ],
       insights: <AgentInsight>[
         AgentInsight(
+          id: 'stale_assumptions',
           title: l10n.knowledgeAgentAssumptionInsightTitle,
           body: l10n.knowledgeAgentAssumptionInsightBody(
             stale.length,
@@ -158,6 +168,8 @@ class AssumptionAgent implements Agent {
             kAssumptionStaleDays,
           ),
           severity: AgentArtifactSeverity.attention,
+          evidenceIds: <String>[for (final item in stale) item.id],
+          route: KnowledgeRoutes.review,
           payload: <String, Object?>{
             'count': stale.length,
             'threshold_days': kAssumptionStaleDays,
@@ -171,6 +183,7 @@ class AssumptionAgent implements Agent {
             type: 'knowledge_assumption',
             id: assumption.id,
             label: assumption.statement,
+            route: KnowledgeRoutes.object('assumption', assumption.id),
             payload: <String, Object?>{
               'reason': 'stale_assumption',
               'days_since_verify': assumption.daysSinceVerify,
@@ -184,8 +197,13 @@ class AssumptionAgent implements Agent {
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: KnowledgeRoutes.review,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.knowledgeAgentAssumptionArtifactTitle,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

@@ -215,4 +215,3 @@ class FrbAgentRuntimeNativeApi implements AgentRuntimeHostNativeApi {
     );
   }
 }
-

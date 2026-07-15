@@ -6556,6 +6556,32 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get agentResultLocalMethodTitle => 'How this result was produced';
+
+  @override
+  String get agentResultLocalMethodDeterministicBody =>
+      'Calculated from local domain records using deterministic rules.';
+
+  @override
+  String get agentResultLocalMethodAssistedBody =>
+      'Synthesized on device from local domain records; the supporting metrics remain source-derived.';
+
+  @override
+  String get agentResultLocalMethodSourceLabel => 'Data source';
+
+  @override
+  String get agentResultLocalMethodRuntimeLabel => 'Runtime';
+
+  @override
+  String get agentResultLocalMethodRuntimeValue => 'On device';
+
+  @override
+  String get agentResultMetricCurrent => 'Current';
+
+  @override
+  String get agentResultMetricBaseline => 'Baseline';
+
+  @override
   String get agentResultActionFallbackBody =>
       'Open this action from the agent result.';
 

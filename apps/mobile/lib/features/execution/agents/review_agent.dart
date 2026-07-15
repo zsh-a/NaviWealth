@@ -8,6 +8,7 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
@@ -19,6 +20,7 @@ import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dar
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/execution_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 
@@ -221,8 +223,29 @@ class ExecutionReviewAgent implements Agent {
           : AgentArtifactSeverity.info,
       title: l10n.executionAgentReviewTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.executionAgentReviewInsightTodayTitle,
+          value: todayActions.length.toString(),
+        ),
+        AgentMetric(
+          label: l10n.executionAgentReviewInsightBlockedTitle,
+          value: blockedActions.length.toString(),
+          severity: blockedActions.isNotEmpty
+              ? AgentArtifactSeverity.warning
+              : null,
+        ),
+        AgentMetric(
+          label: l10n.executionAgentReviewInsightDueTitle,
+          value: dueActions.length.toString(),
+          severity: dueActions.isNotEmpty
+              ? AgentArtifactSeverity.attention
+              : null,
+        ),
+      ],
       insights: <AgentInsight>[
         AgentInsight(
+          id: 'today_focus',
           title: l10n.executionAgentReviewInsightTodayTitle,
           body: l10n.executionAgentReviewInsightTodayBody(
             todayActions.length,
@@ -231,6 +254,8 @@ class ExecutionReviewAgent implements Agent {
           severity: todayActions.isEmpty
               ? AgentArtifactSeverity.info
               : AgentArtifactSeverity.attention,
+          evidenceIds: <String>[for (final item in todayActions) item.id],
+          route: ExecutionRoutes.today,
           payload: <String, Object?>{
             'today_action_count': todayActions.length,
             'open_action_count': openActions.length,
@@ -238,11 +263,16 @@ class ExecutionReviewAgent implements Agent {
         ),
         if (blockedActions.isNotEmpty)
           AgentInsight(
+            id: 'blocked_actions',
             title: l10n.executionAgentReviewInsightBlockedTitle,
             body: l10n.executionAgentReviewInsightBlockedBody(
               blockedActions.length,
             ),
             severity: AgentArtifactSeverity.warning,
+            evidenceIds: <String>[for (final item in blockedActions) item.id],
+            route: blockedActions.isEmpty
+                ? ExecutionRoutes.review
+                : ExecutionRoutes.action(blockedActions.first.id),
             payload: <String, Object?>{
               'blocked_action_count': blockedActions.length,
               'blocked_action_ids': blockedActions
@@ -253,9 +283,14 @@ class ExecutionReviewAgent implements Agent {
           ),
         if (dueActions.isNotEmpty)
           AgentInsight(
+            id: 'due_actions',
             title: l10n.executionAgentReviewInsightDueTitle,
             body: l10n.executionAgentReviewInsightDueBody(dueActions.length),
             severity: AgentArtifactSeverity.attention,
+            evidenceIds: <String>[for (final item in dueActions) item.id],
+            route: dueActions.isEmpty
+                ? ExecutionRoutes.review
+                : ExecutionRoutes.action(dueActions.first.id),
             payload: <String, Object?>{
               'due_action_count': dueActions.length,
               'due_action_ids': dueActions
@@ -265,12 +300,14 @@ class ExecutionReviewAgent implements Agent {
             },
           ),
         AgentInsight(
+          id: 'weekly_progress',
           title: l10n.executionAgentReviewInsightProgressTitle,
           body: l10n.executionAgentReviewInsightProgressBody(
             weeklyProgress.length,
             projects.length,
             commitments.length,
           ),
+          route: ExecutionRoutes.review,
           payload: <String, Object?>{
             'weekly_progress_count': weeklyProgress.length,
             'active_project_count': projects.length,
@@ -284,15 +321,24 @@ class ExecutionReviewAgent implements Agent {
             type: 'execution_action',
             id: action.id,
             label: action.title,
+            route: ExecutionRoutes.action(action.id),
             payload: <String, Object?>{
               'status': action.status.wire,
               'priority': action.priority.wire,
             },
           ),
         for (final project in projects.take(5))
-          AgentEvidenceRef(type: 'execution_project', id: project.id),
+          AgentEvidenceRef(
+            type: 'execution_project',
+            id: project.id,
+            route: ExecutionRoutes.commitments,
+          ),
         for (final commitment in commitments.take(5))
-          AgentEvidenceRef(type: 'execution_commitment', id: commitment.id),
+          AgentEvidenceRef(
+            type: 'execution_commitment',
+            id: commitment.id,
+            route: ExecutionRoutes.commitment(commitment.id),
+          ),
       ],
       actions: <AgentAction>[
         AgentAction(
@@ -301,8 +347,13 @@ class ExecutionReviewAgent implements Agent {
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: ExecutionRoutes.review,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.executionAgentReviewTitle,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

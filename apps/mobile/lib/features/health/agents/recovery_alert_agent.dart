@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
@@ -22,6 +23,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/health_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
 import 'health_notifications.dart';
@@ -219,22 +221,49 @@ class RecoveryAlertAgent implements Agent {
       severity: severity,
       title: l10n.healthAgentRecoveryTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.healthAgentRecoveryInsightDeclineTitle,
+          value: '-${_round(alert.declinePct)}%',
+          context: l10n.healthAgentRecoveryInsightDeclineBody(
+            alert.consecutiveDays,
+            _round(alert.declinePct),
+          ),
+          severity: severity,
+        ),
+      ],
       insights: <AgentInsight>[
         AgentInsight(
+          id: 'hrv_decline',
           title: l10n.healthAgentRecoveryInsightDeclineTitle,
           body: l10n.healthAgentRecoveryInsightDeclineBody(
             alert.consecutiveDays,
             _round(alert.declinePct),
           ),
           severity: severity,
+          details: <AgentMetric>[
+            AgentMetric(
+              label: l10n.agentResultMetricCurrent,
+              value: '${_round(alert.avgRecentMs)} ms',
+              severity: severity,
+            ),
+            AgentMetric(
+              label: l10n.agentResultMetricBaseline,
+              value: '${_round(alert.avgBaselineMs)} ms',
+            ),
+          ],
+          evidenceIds: <String>['$source:$id'],
+          route: HealthRoutes.trend,
           payload: <String, Object?>{
             'decline_pct': _round(alert.declinePct),
             'consecutive_days': alert.consecutiveDays,
           },
         ),
         AgentInsight(
+          id: 'suggested_adjustment',
           title: l10n.healthAgentRecoveryInsightAdjustmentTitle,
           body: l10n.healthAgentRecoveryInsightAdjustmentBody,
+          route: HealthRoutes.today,
         ),
       ],
       evidence: <AgentEvidenceRef>[
@@ -242,6 +271,11 @@ class RecoveryAlertAgent implements Agent {
           type: 'health_metric_trend',
           id: '$source:$id',
           label: l10n.healthAgentRecoveryEvidenceLabel,
+          description: l10n.healthAgentRecoveryInsightDeclineBody(
+            alert.consecutiveDays,
+            _round(alert.declinePct),
+          ),
+          route: HealthRoutes.trend,
           payload: <String, Object?>{
             'baseline_avg_ms': _round(alert.avgBaselineMs),
             'recent_avg_ms': _round(alert.avgRecentMs),
@@ -258,8 +292,13 @@ class RecoveryAlertAgent implements Agent {
           intent: kHealthExplainRecoveryAlertIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: HealthRoutes.today,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.healthAgentRecoveryEvidenceLabel,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

@@ -70,6 +70,37 @@ class AgentResultBundle {
   final List<AgentArtifact> artifacts;
   final List<AgentRunRecord> latestRuns;
 
+  /// One result lane per agent. Artifacts and run state are paired by
+  /// [AgentResultEntry.agentId] before presentation so a run can never decorate another
+  /// agent's result.
+  List<AgentResultEntry> get entries {
+    final artifactsByAgent = <String, AgentArtifact>{
+      for (final artifact in artifacts) artifact.agentId: artifact,
+    };
+    final runsByAgent = <String, AgentRunRecord>{
+      for (final run in latestRuns) run.agentId: run,
+    };
+    final agentIds = <String>{...artifactsByAgent.keys, ...runsByAgent.keys};
+    final values = <AgentResultEntry>[
+      for (final agentId in agentIds)
+        AgentResultEntry(
+          agentId: agentId,
+          artifact: artifactsByAgent[agentId],
+          run: runsByAgent[agentId],
+        ),
+    ]..sort(_compareAgentResultEntries);
+    return values;
+  }
+
+  List<AgentResultEntry> get visibleEntries => entries
+      .where(
+        (entry) =>
+            entry.artifact != null ||
+            entry.run?.status == AgentRunLifecycleStatus.running ||
+            entry.run?.status == AgentRunLifecycleStatus.failed,
+      )
+      .toList(growable: false);
+
   AgentArtifact? get latestArtifact =>
       artifacts.isEmpty ? null : artifacts.first;
 
@@ -95,7 +126,33 @@ class AgentResultBundle {
   static bool shouldPrioritizeRun(AgentRunRecord run, AgentArtifact? artifact) {
     if (!_runCanInterruptArtifacts(run.status)) return false;
     if (artifact == null) return true;
+    if (run.agentId != artifact.agentId) return false;
     return _runReferenceTime(run).isAfter(artifact.createdAt);
+  }
+}
+
+class AgentResultEntry {
+  const AgentResultEntry({required this.agentId, this.artifact, this.run});
+
+  final String agentId;
+  final AgentArtifact? artifact;
+  final AgentRunRecord? run;
+
+  AgentRunRecord? get runOverlay {
+    final value = run;
+    return value != null &&
+            AgentResultBundle.shouldPrioritizeRun(value, artifact)
+        ? value
+        : null;
+  }
+
+  DateTime get referenceTime {
+    final artifactTime = artifact?.createdAt;
+    final overlay = runOverlay;
+    final runTime = overlay == null ? null : _runReferenceTime(overlay);
+    if (artifactTime == null) return runTime!;
+    if (runTime == null || artifactTime.isAfter(runTime)) return artifactTime;
+    return runTime;
   }
 }
 
@@ -142,3 +199,24 @@ bool _runCanInterruptArtifacts(AgentRunLifecycleStatus status) {
   return status == AgentRunLifecycleStatus.running ||
       status == AgentRunLifecycleStatus.failed;
 }
+
+int _compareAgentResultEntries(AgentResultEntry a, AgentResultEntry b) {
+  final byPriority = _entryPriority(b).compareTo(_entryPriority(a));
+  if (byPriority != 0) return byPriority;
+  return b.referenceTime.compareTo(a.referenceTime);
+}
+
+int _entryPriority(AgentResultEntry entry) {
+  final run = entry.runOverlay;
+  if (run?.status == AgentRunLifecycleStatus.failed) return 40;
+  final severity = entry.artifact?.severity;
+  if (severity != null) return _severityRank(severity) * 10;
+  if (run?.status == AgentRunLifecycleStatus.running) return 5;
+  return 0;
+}
+
+int _severityRank(AgentArtifactSeverity severity) => switch (severity) {
+  AgentArtifactSeverity.warning => 3,
+  AgentArtifactSeverity.attention => 2,
+  AgentArtifactSeverity.info => 1,
+};

@@ -6257,6 +6257,30 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get agentResultLocalMethodTitle => '结果生成方式';
+
+  @override
+  String get agentResultLocalMethodDeterministicBody => '基于本地领域数据，通过确定性规则计算。';
+
+  @override
+  String get agentResultLocalMethodAssistedBody => '在设备端结合本地领域数据生成，关键指标仍来自源数据。';
+
+  @override
+  String get agentResultLocalMethodSourceLabel => '数据来源';
+
+  @override
+  String get agentResultLocalMethodRuntimeLabel => '运行位置';
+
+  @override
+  String get agentResultLocalMethodRuntimeValue => '当前设备';
+
+  @override
+  String get agentResultMetricCurrent => '当前值';
+
+  @override
+  String get agentResultMetricBaseline => '基线';
+
+  @override
   String get agentResultActionFallbackBody => '从这份 Agent 结果执行该操作。';
 
   @override

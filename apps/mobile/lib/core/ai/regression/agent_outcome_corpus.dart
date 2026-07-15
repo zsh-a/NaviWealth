@@ -82,6 +82,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'finance_holding'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kFinanceReviewWealthIntent},
+    expectedActionRoutes: <String>{'/wealth'},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.weekly_wealth_review.no_llm_profile_fallback',
@@ -95,6 +96,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'finance_holding'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kFinanceReviewWealthIntent},
+    expectedActionRoutes: <String>{'/wealth'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
@@ -112,6 +114,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'anomaly_flag'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionRoutes: <String>{'/activity/cashflow'},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.cashflow_anomaly_review.no_llm_profile_fallback',
@@ -128,6 +131,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'anomaly_flag'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionRoutes: <String>{'/activity/cashflow'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
@@ -194,6 +198,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionRoutes: <String>{'/plan/income'},
   ),
   AgentOutcomeRegressionCase(
     id: 'finance.options_income_risk_review.no_llm_profile_fallback',
@@ -214,6 +219,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     },
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionRoutes: <String>{'/plan/income'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
   AgentOutcomeRegressionCase(
@@ -228,6 +234,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'health_event', 'finance_event'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionRoutes: <String>{'/health'},
   ),
   AgentOutcomeRegressionCase(
     id: 'health.recovery_alert.ready',
@@ -241,6 +248,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'health_metric_trend'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kHealthExplainRecoveryAlertIntent},
+    expectedActionRoutes: <String>{'/health'},
   ),
   AgentOutcomeRegressionCase(
     id: 'health.weekly_summary.no_finding',
@@ -266,6 +274,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'health_week'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionRoutes: <String>{'/health/trend'},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.assumption.ready',
@@ -279,6 +288,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'knowledge_assumption'},
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
+    expectedActionRoutes: <String>{'/knowledge/review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.inbox_triage.ready',
@@ -292,6 +302,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'knowledge_note'},
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
+    expectedActionRoutes: <String>{'/knowledge/review'},
     expectedProposalKinds: <String>{'classification'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
   ),
@@ -307,6 +318,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'knowledge_decision'},
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
+    expectedActionRoutes: <String>{'/knowledge/review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.contradiction.prompt_injection_guard',
@@ -331,6 +343,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
+    expectedActionRoutes: <String>{'/knowledge/review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.review.tool_failure_fallback',
@@ -347,6 +360,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     },
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
+    expectedActionRoutes: <String>{'/knowledge/review'},
     tags: <String>{kAgentOutcomeToolFailureTag},
   ),
   AgentOutcomeRegressionCase(
@@ -365,6 +379,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'execution_action'},
     expectedActionKinds: <String>{'review'},
     expectedActionIntents: <String>{kAgentExplainResultIntent},
+    expectedActionRoutes: <String>{'/execution/review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'execution.review.budget_exhausted',
@@ -386,6 +401,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'knowledge_routine'},
     expectedActionKinds: <String>{'open_object'},
     expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
+    expectedActionRoutes: <String>{'/knowledge/review'},
   ),
   AgentOutcomeRegressionCase(
     id: 'knowledge.routine_due.domain_opt_out',

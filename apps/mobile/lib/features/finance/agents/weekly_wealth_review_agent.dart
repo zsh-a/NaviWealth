@@ -12,6 +12,7 @@ import 'package:decimal/decimal.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
@@ -27,6 +28,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/read_models/dashboard_providers.dart';
+import '../composition/finance_route_paths.dart';
 import '../domain/fx/money.dart';
 import '../home/domain/dashboard_models.dart';
 
@@ -294,8 +296,34 @@ class WealthReviewAnalysis {
       severity: severity,
       title: l10n.financeAgentWeeklyWealthTitle,
       summary: summary(l10n),
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.financeAgentWeeklyWealthInsightNetWorthTitle,
+          value: _money(snapshot.netWorth, l10n),
+        ),
+        if (top != null)
+          AgentMetric(
+            label: l10n.financeAgentWeeklyWealthInsightLargestAllocationTitle,
+            value: Fmt.signedPercent(
+              topAllocationRatio,
+              decimalDigits: 0,
+            ).replaceFirst('+', ''),
+            context: _categoryLabel(l10n, top.category),
+            severity: topAllocationRatio >= 0.7
+                ? AgentArtifactSeverity.attention
+                : null,
+          ),
+        AgentMetric(
+          label: l10n.financeAgentWeeklyWealthInsightPriceFreshnessTitle,
+          value: snapshot.staleHoldingCount.toString(),
+          severity: snapshot.staleHoldingCount > 0
+              ? AgentArtifactSeverity.attention
+              : null,
+        ),
+      ],
       insights: <AgentInsight>[
         AgentInsight(
+          id: 'net_worth',
           title: l10n.financeAgentWeeklyWealthInsightNetWorthTitle,
           body: l10n.financeAgentWeeklyWealthInsightNetWorthBody(
             _money(snapshot.netWorth, l10n),
@@ -307,9 +335,11 @@ class WealthReviewAnalysis {
             'total_assets': snapshot.totalAssets.amount.toString(),
             'total_liabilities': snapshot.totalLiabilities.amount.toString(),
           },
+          route: FinanceRoutes.wealth,
         ),
         if (top != null)
           AgentInsight(
+            id: 'largest_allocation',
             title: l10n.financeAgentWeeklyWealthInsightLargestAllocationTitle,
             body: l10n.financeAgentWeeklyWealthInsightLargestAllocationBody(
               _categoryLabel(l10n, top.category),
@@ -327,9 +357,11 @@ class WealthReviewAnalysis {
               'amount': top.totalInBase.amount.toString(),
               'ratio': topAllocationRatio,
             },
+            route: FinanceRoutes.wealthPortfolio,
           ),
         if (snapshot.staleHoldingCount > 0)
           AgentInsight(
+            id: 'price_freshness',
             title: l10n.financeAgentWeeklyWealthInsightPriceFreshnessTitle,
             body: l10n.financeAgentWeeklyWealthInsightPriceFreshnessBody(
               snapshot.staleHoldingCount,
@@ -338,9 +370,11 @@ class WealthReviewAnalysis {
             payload: <String, Object?>{
               'stale_holding_count': snapshot.staleHoldingCount,
             },
+            route: FinanceRoutes.wealthPortfolio,
           ),
         if (snapshot.currencyMismatches.isNotEmpty)
           AgentInsight(
+            id: 'fx_coverage',
             title: l10n.financeAgentWeeklyWealthInsightFxCoverageTitle,
             body: l10n.financeAgentWeeklyWealthInsightFxCoverageBody(
               snapshot.currencyMismatches.length,
@@ -349,6 +383,7 @@ class WealthReviewAnalysis {
             payload: <String, Object?>{
               'currency_mismatch_count': snapshot.currencyMismatches.length,
             },
+            route: FinanceRoutes.wealth,
           ),
       ],
       evidence: <AgentEvidenceRef>[
@@ -357,6 +392,7 @@ class WealthReviewAnalysis {
             type: 'finance_holding',
             id: item.id,
             label: item.name,
+            route: FinanceRoutes.wealthAsset(item.id),
             payload: <String, Object?>{
               'value_in_base': item.valueInBase.amount.toString(),
               'base_currency': item.valueInBase.currency,
@@ -369,6 +405,7 @@ class WealthReviewAnalysis {
             type: 'currency_mismatch',
             id: mismatch.id,
             label: mismatch.currency,
+            route: FinanceRoutes.wealth,
           ),
       ],
       actions: <AgentAction>[
@@ -378,8 +415,13 @@ class WealthReviewAnalysis {
           intent: kFinanceReviewWealthIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: FinanceRoutes.wealth,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.financeAgentWeeklyWealthTitle,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

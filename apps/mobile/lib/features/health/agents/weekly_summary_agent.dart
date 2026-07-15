@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
@@ -19,6 +20,7 @@ import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dar
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/health_route_paths.dart';
 import '../data/providers.dart';
 import '../data/recovery_scorer.dart';
 import '../domain/health_metric.dart';
@@ -198,15 +200,35 @@ class WeeklySummaryAgent implements Agent {
       severity: severity,
       title: l10n.healthAgentWeeklyTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        if (snapshot.recoveryScore != null)
+          AgentMetric(
+            label: l10n.healthAgentWeeklyInsightRecoveryTitle,
+            value: '${snapshot.recoveryScore}/100',
+            severity: severity == AgentArtifactSeverity.info ? null : severity,
+          ),
+        if (snapshot.avgSleepHours != null)
+          AgentMetric(
+            label: l10n.healthAgentWeeklyInsightSleepTitle,
+            value: '${_round(snapshot.avgSleepHours!)}h',
+          ),
+        if (snapshot.totalSteps > 0)
+          AgentMetric(
+            label: l10n.healthAgentWeeklyInsightActivityTitle,
+            value: _formatSteps(snapshot.totalSteps),
+          ),
+      ],
       insights: <AgentInsight>[
         if (snapshot.recoveryScore != null)
           AgentInsight(
+            id: 'recovery',
             title: l10n.healthAgentWeeklyInsightRecoveryTitle,
             body: l10n.healthAgentWeeklyInsightRecoveryBody(
               snapshot.recoveryScore!,
               _verdictSuffix(l10n, snapshot.recoveryVerdict),
             ),
             severity: severity == AgentArtifactSeverity.info ? null : severity,
+            route: HealthRoutes.trend,
             payload: <String, Object?>{
               'score': snapshot.recoveryScore,
               'verdict': snapshot.recoveryVerdict,
@@ -214,29 +236,35 @@ class WeeklySummaryAgent implements Agent {
           ),
         if (snapshot.avgSleepHours != null)
           AgentInsight(
+            id: 'sleep',
             title: l10n.healthAgentWeeklyInsightSleepTitle,
             body: l10n.healthAgentWeeklyInsightSleepBody(
               _round(snapshot.avgSleepHours!),
             ),
+            route: HealthRoutes.trend,
             payload: <String, Object?>{
               'avg_sleep_hours': _round(snapshot.avgSleepHours!),
             },
           ),
         if (snapshot.totalSteps > 0)
           AgentInsight(
+            id: 'activity',
             title: l10n.healthAgentWeeklyInsightActivityTitle,
             body: l10n.healthAgentWeeklyInsightActivityBody(
               _formatSteps(snapshot.totalSteps),
             ),
+            route: HealthRoutes.trend,
             payload: <String, Object?>{'total_steps': snapshot.totalSteps},
           ),
         if (snapshot.workoutCount > 0)
           AgentInsight(
+            id: 'workouts',
             title: l10n.healthAgentWeeklyInsightWorkoutsTitle,
             body: l10n.healthAgentWeeklyInsightWorkoutsBody(
               snapshot.workoutCount,
               _round(snapshot.workoutMinutes),
             ),
+            route: HealthRoutes.trend,
             payload: <String, Object?>{
               'workout_count': snapshot.workoutCount,
               'workout_minutes': _round(snapshot.workoutMinutes),
@@ -248,6 +276,7 @@ class WeeklySummaryAgent implements Agent {
           type: 'health_week',
           id: id,
           label: l10n.healthAgentWeeklyEvidenceLabel,
+          route: HealthRoutes.trend,
           payload: <String, Object?>{
             'recovery_score': snapshot.recoveryScore,
             'recovery_verdict': snapshot.recoveryVerdict,
@@ -267,8 +296,13 @@ class WeeklySummaryAgent implements Agent {
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: HealthRoutes.trend,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.healthAgentWeeklyEvidenceLabel,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

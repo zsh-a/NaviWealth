@@ -157,11 +157,7 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
     }
 
     final bundle = resultsAsync.value;
-    final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
-    final primary = artifacts.isEmpty ? null : artifacts.first;
-    final run = bundle?.latestRun;
-
-    if (primary == null && run == null) {
+    if (bundle == null || bundle.visibleEntries.isEmpty) {
       if (!showPlaceholderStates) return const SizedBox.shrink();
       return _FinanceAgentPanelFrame(
         child: AgentResultPanelStateCard(
@@ -172,32 +168,19 @@ class FinanceAgentResultsPanel extends ConsumerWidget {
       );
     }
 
-    final metaTime = primary?.createdAt ?? run!.startedAt;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AgentResultSurface(
-          artifact: primary,
-          run: run,
-          metaLabel: _financeAgentMetaLabel(context, ref, metaTime),
-          layout: AgentResultCardLayout.summary,
-          onOpen: primary == null
-              ? null
-              : () => _openFinanceAgentArtifact(context, ref, primary),
-          onRetry: run == null
-              ? null
-              : () async {
-                  final controller = await ref.read(
-                    agentRunControllerProvider.future,
-                  );
-                  await controller.runOnceById(run.agentId);
-                  ref.invalidate(
-                    finance_agent_providers.latestFinanceAgentResultsProvider,
-                  );
-                },
-        ),
-        const SizedBox(height: AppSpacing.s20),
-      ],
+    return _FinanceAgentPanelFrame(
+      child: AgentResultsSection(
+        bundle: bundle,
+        metaLabelBuilder: (at) => _financeAgentMetaLabel(context, ref, at),
+        onOpen: (artifact) => _openFinanceAgentArtifact(context, ref, artifact),
+        onRetry: (agentId) async {
+          final controller = await ref.read(agentRunControllerProvider.future);
+          await controller.runOnceById(agentId);
+          ref.invalidate(
+            finance_agent_providers.latestFinanceAgentResultsProvider,
+          );
+        },
+      ),
     );
   }
 

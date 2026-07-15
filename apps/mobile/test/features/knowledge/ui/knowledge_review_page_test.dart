@@ -124,6 +124,7 @@ void main() {
                     _artifact(),
                     _artifact(
                       id: 'knowledge-routine-1',
+                      agentId: 'knowledge_routine_due',
                       title: 'Routine Due',
                       summary: 'A weekly review routine is due.',
                       createdAt: DateTime.utc(2026, 7, 4, 9),
@@ -226,6 +227,7 @@ Widget _wrap(Widget child, {required List<Override> overrides}) {
 
 AgentArtifact _artifact({
   String id = 'knowledge-review-1',
+  String agentId = kKnowledgeReviewAgentId,
   String title = 'Knowledge Review',
   String summary = 'Review due decisions and assumptions.',
   DateTime? createdAt,
@@ -233,7 +235,7 @@ AgentArtifact _artifact({
   return AgentArtifact(
     id: id,
     ownerUserId: 'user-1',
-    agentId: kKnowledgeReviewAgentId,
+    agentId: agentId,
     domain: 'knowledge',
     kind: AgentArtifactKind.review,
     severity: AgentArtifactSeverity.attention,

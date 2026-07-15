@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
-import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
@@ -191,35 +189,22 @@ class _ExecutionReviewAgentPanel extends ConsumerWidget {
       );
     }
     final bundle = resultsAsync.value;
-    final artifacts = bundle?.artifacts ?? const <AgentArtifact>[];
-    final artifact = artifacts.isEmpty ? null : artifacts.first;
-    final run = bundle?.latestRun;
-    // Ready runs with no artifact stay silent.
-    if (artifact == null &&
-        (run == null ||
-            (run.status != AgentRunLifecycleStatus.running &&
-                run.status != AgentRunLifecycleStatus.failed))) {
+    if (bundle == null || bundle.visibleEntries.isEmpty) {
       return const SizedBox.shrink();
     }
-    final metaTime = artifact?.createdAt ?? run!.startedAt;
     return _ExecutionReviewAgentPanelFrame(
-      child: AgentResultSurface(
-        artifact: artifact,
-        run: run,
-        metaLabel: _executionAgentMetaLabel(context, metaTime),
-        layout: AgentResultCardLayout.summary,
-        onOpen: artifact == null
-            ? null
-            : () => showAgentArtifactSheet(
-                context: context,
-                artifact: artifact,
-                subtitle: _executionAgentMetaLabel(context, artifact.createdAt),
-                onVisibilityChanged: () => ref.invalidate(
-                  execution_agent_providers
-                      .latestExecutionReviewResultsProvider,
-                ),
-              ),
-        onRetry: () => _retryExecutionReview(ref),
+      child: AgentResultsSection(
+        bundle: bundle,
+        metaLabelBuilder: (at) => _executionAgentMetaLabel(context, at),
+        onOpen: (artifact) => showAgentArtifactSheet(
+          context: context,
+          artifact: artifact,
+          subtitle: _executionAgentMetaLabel(context, artifact.createdAt),
+          onVisibilityChanged: () => ref.invalidate(
+            execution_agent_providers.latestExecutionReviewResultsProvider,
+          ),
+        ),
+        onRetry: (_) => _retryExecutionReview(ref),
       ),
     );
   }

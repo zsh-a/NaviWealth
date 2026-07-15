@@ -28,6 +28,7 @@ library;
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
@@ -41,6 +42,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/sync/hlc.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/contradiction_judge.dart';
 import '../data/knowledge_object_memory_indexers.dart'
     show kKnowledgeDecisionMemorySource, kKnowledgeNoteMemorySource;
@@ -264,15 +266,32 @@ class ContradictionAgent implements Agent {
       severity: AgentArtifactSeverity.warning,
       title: l10n.knowledgeAgentContradictionArtifactTitle,
       summary: summary,
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.knowledgeAgentContradictionInsightInvalidatedTitle,
+          value: structural.length.toString(),
+          severity: structural.isEmpty ? null : AgentArtifactSeverity.warning,
+        ),
+        AgentMetric(
+          label: l10n.knowledgeAgentContradictionInsightPrincipleTitle,
+          value: principle.length.toString(),
+          severity: principle.isEmpty ? null : AgentArtifactSeverity.attention,
+        ),
+      ],
       insights: <AgentInsight>[
         if (structural.isNotEmpty)
           AgentInsight(
+            id: 'invalidated_assumptions',
             title: l10n.knowledgeAgentContradictionInsightInvalidatedTitle,
             body: l10n.knowledgeAgentContradictionInsightInvalidatedBody(
               structural.length,
               structural.length == 1 ? '' : 's',
             ),
             severity: AgentArtifactSeverity.warning,
+            evidenceIds: <String>[
+              for (final item in structural) item.decisionId,
+            ],
+            route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': structural.length,
               'first_decision_id': structural.first.decisionId,
@@ -280,12 +299,17 @@ class ContradictionAgent implements Agent {
           ),
         if (principle.isNotEmpty)
           AgentInsight(
+            id: 'principle_drift',
             title: l10n.knowledgeAgentContradictionInsightPrincipleTitle,
             body: l10n.knowledgeAgentContradictionInsightPrincipleBody(
               principle.length,
               principle.length == 1 ? '' : 's',
             ),
             severity: AgentArtifactSeverity.attention,
+            evidenceIds: <String>[
+              for (final item in principle) item.decisionId,
+            ],
+            route: KnowledgeRoutes.review,
             payload: <String, Object?>{
               'count': principle.length,
               'first_reference_id': principle.first.referenceId,
@@ -298,6 +322,7 @@ class ContradictionAgent implements Agent {
             type: 'knowledge_decision',
             id: issue.decisionId,
             label: issue.decisionQuestion,
+            route: KnowledgeRoutes.decision(issue.decisionId),
             payload: <String, Object?>{
               'kind': issue.kind,
               'reference_id': issue.referenceId,
@@ -312,8 +337,14 @@ class ContradictionAgent implements Agent {
           intent: kKnowledgeReviewDueItemsIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: KnowledgeRoutes.review,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.knowledgeAgentContradictionArtifactTitle,
+        modelAssisted: traceId != null,
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),

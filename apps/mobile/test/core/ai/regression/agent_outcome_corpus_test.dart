@@ -234,8 +234,7 @@ void main() {
       for (final c in agentOutcomeRegressionCorpus.where(
         (c) => c.expectedStatus == AgentOutcomeRegressionStatus.ready,
       )) {
-        final opensRoute = c.expectedActionKinds.contains('open_route');
-        expect(c.expectedActionRoutes.isNotEmpty, opensRoute, reason: c.id);
+        expect(c.expectedActionRoutes, isNotEmpty, reason: c.id);
         for (final route in c.expectedActionRoutes) {
           expect(route, startsWith('/'), reason: c.id);
         }
@@ -297,11 +296,8 @@ void main() {
             isTrue,
             reason: c.id,
           );
-          expect(
-            c.expectedActionRoutes.every((route) => route.startsWith('/plan/')),
-            isTrue,
-            reason: c.id,
-          );
+          expect(c.expectedActionRoutes.every((route) => route.startsWith('/')),
+              isTrue, reason: c.id);
           expect(c.expectedProposalKinds, isEmpty, reason: c.id);
         }
       },

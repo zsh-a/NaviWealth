@@ -282,4 +282,3 @@ class _BriefingEmpty extends StatelessWidget {
   }
 }
 
-

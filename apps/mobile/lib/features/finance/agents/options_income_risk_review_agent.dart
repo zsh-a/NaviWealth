@@ -8,6 +8,7 @@ import 'package:decimal/decimal.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
+import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
@@ -22,6 +23,7 @@ import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/finance_route_paths.dart';
 import '../options_income/data/options_opportunity_cache_repository.dart';
 import '../options_income/data/providers.dart';
 import '../options_income/domain/option_contract.dart';
@@ -484,15 +486,30 @@ class OptionsIncomeRiskAnalysis {
       severity: severity,
       title: l10n.financeAgentOptionsTitle,
       summary: summary(l10n),
+      metrics: <AgentMetric>[
+        AgentMetric(
+          label: l10n.financeAgentOptionsInsightScanSnapshotTitle,
+          value: snapshot.opportunities.length.toString(),
+          context: _riskMixLabel(l10n, snapshot.opportunities),
+        ),
+        AgentMetric(
+          label: l10n.financeAgentOptionsAction,
+          value: issues.length.toString(),
+          severity: severity,
+        ),
+      ],
       insights: <AgentInsight>[
         for (final issue in issues.take(5))
           AgentInsight(
+            id: issue.key,
             title: issue.title,
             body: issue.body,
             severity: issue.severity,
+            route: FinanceRoutes.planIncome,
             payload: issue.payload,
           ),
         AgentInsight(
+          id: 'scan_snapshot',
           title: l10n.financeAgentOptionsInsightScanSnapshotTitle,
           body: l10n.financeAgentOptionsInsightScanSnapshotBody(
             snapshot.opportunities.length,
@@ -502,6 +519,7 @@ class OptionsIncomeRiskAnalysis {
             'scan_id': scanId,
             'risk_counts': _riskCounts(snapshot.opportunities),
           },
+          route: FinanceRoutes.planIncome,
         ),
       ],
       evidence: <AgentEvidenceRef>[
@@ -509,6 +527,11 @@ class OptionsIncomeRiskAnalysis {
           type: 'options_income_scan',
           id: scanId,
           label: l10n.financeAgentOptionsEvidenceScanLabel(scanId),
+          description: l10n.financeAgentOptionsInsightScanSnapshotBody(
+            snapshot.opportunities.length,
+            _riskMixLabel(l10n, snapshot.opportunities),
+          ),
+          route: FinanceRoutes.planIncome,
           payload: <String, Object?>{
             'scan_id': scanId,
             'scanned_at':
@@ -524,6 +547,7 @@ class OptionsIncomeRiskAnalysis {
             type: 'options_opportunity',
             id: opportunity.contract.optionSymbol,
             label: _label(opportunity),
+            route: FinanceRoutes.planIncome,
             payload: _opportunityPayload(opportunity),
           ),
       ],
@@ -534,8 +558,13 @@ class OptionsIncomeRiskAnalysis {
           intent: kAgentExplainResultIntent,
           objectType: kAgentArtifactObjectType,
           objectId: id,
+          route: FinanceRoutes.planIncome,
         ),
       ],
+      methodology: localAgentMethodology(
+        l10n,
+        sourceLabel: l10n.financeAgentOptionsEvidenceScanLabel(scanId),
+      ),
       memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
