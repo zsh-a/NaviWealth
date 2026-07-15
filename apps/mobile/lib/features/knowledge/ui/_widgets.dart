@@ -25,6 +25,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
+import '../../../core/ai/visual/ai_typography.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -33,6 +34,7 @@ export '../domain/knowledge_text.dart';
 
 part 'knowledge_create_widgets.dart';
 part 'knowledge_editor_widgets.dart';
+part 'knowledge_markdown.dart';
 part 'knowledge_motion_widgets.dart';
 part 'knowledge_section_widgets.dart';
 part 'knowledge_state_widgets.dart';

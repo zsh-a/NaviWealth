@@ -95,7 +95,7 @@ List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: l10n.knowledgeDetailBodyTitle,
-        children: [AiMarkdown(text: n.bodyMd)],
+        children: [KnowledgeMarkdown(text: n.bodyMd)],
       ),
     ],
     if (n.sourceUrl != null && n.sourceUrl!.isNotEmpty) ...[
@@ -141,7 +141,7 @@ List<Widget> _conceptSections(
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailSummaryTitle,
-        children: [AiMarkdown(text: c.summaryMd)],
+        children: [KnowledgeMarkdown(text: c.summaryMd)],
       ),
     ],
     if (relatedConcepts.isNotEmpty) ...[
@@ -233,7 +233,7 @@ List<Widget> _experimentSections(
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailMethodTitle,
-        children: [AiMarkdown(text: e.methodMd)],
+        children: [KnowledgeMarkdown(text: e.methodMd)],
       ),
     ],
     if (e.metrics.isNotEmpty) ...[
@@ -247,14 +247,14 @@ List<Widget> _experimentSections(
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailResultTitle,
-        children: [AiMarkdown(text: e.resultMd!)],
+        children: [KnowledgeMarkdown(text: e.resultMd!)],
       ),
     ],
     if (e.conclusionMd != null && e.conclusionMd!.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailConclusionTitle,
-        children: [AiMarkdown(text: e.conclusionMd!)],
+        children: [KnowledgeMarkdown(text: e.conclusionMd!)],
       ),
     ],
   ];
@@ -293,7 +293,7 @@ List<Widget> _principleSections(
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
-        children: [AiMarkdown(text: p.rationaleMd)],
+        children: [KnowledgeMarkdown(text: p.rationaleMd)],
       ),
     ],
     if (referencingDecisions.isNotEmpty) ...[

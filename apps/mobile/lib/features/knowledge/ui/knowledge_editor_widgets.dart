@@ -3,8 +3,8 @@ part of '_widgets.dart';
 /// Edit/Preview toggle for a Markdown text field.
 ///
 /// Use anywhere a user authors free-form markdown that the rest of the
-/// app will render via [AiMarkdown] — the toggle lets them check the
-/// rendered output before submitting. Currently driving the Note body,
+/// app will render via [KnowledgeMarkdown] — the toggle lets them check
+/// the rendered output before submitting. Currently driving the Note body,
 /// Decision rationale, Principle rationale, Concept summary and
 /// Experiment method fields; that's the entire markdown-write surface
 /// in KnowledgeOS.
@@ -70,20 +70,21 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
             maxLines: widget.maxLines,
           )
         else
-          Container(
-            constraints: const BoxConstraints(minHeight: 96),
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            decoration: BoxDecoration(
-              color: colors.muted,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: colors.border),
+          // Match detail reading skin (no muted "disabled field" fill).
+          SoftCard.flat(
+            borderless: true,
+            padding: const EdgeInsets.all(AppSpacing.s14),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 96),
+              child: widget.controller.text.trim().isEmpty
+                  ? Text(
+                      l10n.knowledgeMarkdownPreviewEmpty,
+                      style: context.bodyCaptionStyle.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    )
+                  : KnowledgeMarkdown(text: widget.controller.text),
             ),
-            child: widget.controller.text.trim().isEmpty
-                ? Text(
-                    l10n.knowledgeMarkdownPreviewEmpty,
-                    style: context.bodyCaptionStyle,
-                  )
-                : AiMarkdown(text: widget.controller.text),
           ),
       ],
     );

@@ -29,6 +29,14 @@ class AiType {
     color: AiTone.onSurface(c),
   );
 
+  /// Knowledge / long-form reading (notes, rationale, method) — calmer than
+  /// chat density so detail pages feel like documents, not bubbles.
+  static TextStyle readingBody(BuildContext c) =>
+      TypographyTokens.bodyLarge.copyWith(
+        height: 1.62,
+        color: AiTone.onSurface(c),
+      );
+
   /// Strong body text for selected rows and AI-surface section labels.
   static TextStyle bodyStrong(BuildContext c) => strong(body(c));
 
@@ -59,16 +67,21 @@ class AiType {
 
   /// Markdown heading style derived from the active AI body style so custom
   /// base styles keep their scale relationship.
+  ///
+  /// Reading bodies (~16sp) get a clearer ladder than chat (~13sp).
   static TextStyle heading(BuildContext c, TextStyle base, int level) {
     final baseSize = base.fontSize ?? 13;
+    final reading = baseSize >= 15;
     final fontSize = switch (level) {
-      1 => baseSize + 3,
-      2 => baseSize + 2,
-      _ => baseSize + 1,
+      1 => reading ? baseSize + 6 : baseSize + 3,
+      2 => reading ? baseSize + 4 : baseSize + 2,
+      _ => reading ? baseSize + 2 : baseSize + 1,
     };
-    return strong(
-      base,
-    ).copyWith(fontSize: fontSize, height: 1.35, color: AiTone.onSurface(c));
+    return strong(base).copyWith(
+      fontSize: fontSize,
+      height: reading ? 1.3 : 1.35,
+      color: AiTone.onSurface(c),
+    );
   }
 
   /// Table header style for markdown tables.

@@ -13,7 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
@@ -247,7 +246,7 @@ class _BodyState extends ConsumerState<_Body> {
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
             title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
-            children: [AiMarkdown(text: d.rationaleMd)],
+            children: [KnowledgeMarkdown(text: d.rationaleMd)],
           ),
         ],
         if (_principles.isNotEmpty) ...[
@@ -304,7 +303,7 @@ class _BodyState extends ConsumerState<_Body> {
             title: AppLocalizations.of(
               context,
             ).knowledgeDetailActualOutcomeTitle,
-            children: [AiMarkdown(text: d.actualOutcomeMd!)],
+            children: [KnowledgeMarkdown(text: d.actualOutcomeMd!)],
           ),
         ],
         if (d.contextSnapshot != null) ...[
