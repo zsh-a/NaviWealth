@@ -219,7 +219,7 @@ void main() {
     expect(opened, isTrue);
   });
 
-  testWidgets('multiple agent results render as one layered stack', (
+  testWidgets('multiple agent results swipe through one layered stack', (
     tester,
   ) async {
     final first = _artifact();
@@ -246,13 +246,18 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(AgentResultCard), findsOneWidget);
-    expect(find.byType(AgentCompactResultRow), findsOneWidget);
+    expect(find.byType(AgentCompactResultRow), findsNothing);
     expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Recovery Alert'), findsNothing);
+
+    await tester.drag(
+      find.byKey(const ValueKey<String>('agent-result-front-card')),
+      const Offset(-240, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Morning Briefing'), findsNothing);
     expect(find.text('Recovery Alert'), findsOneWidget);
-    final primaryRect = tester.getRect(find.byType(AgentResultCard));
-    final secondaryRect = tester.getRect(find.byType(AgentCompactResultRow));
-    expect(secondaryRect.top, lessThan(primaryRect.bottom));
-    expect(secondaryRect.left, greaterThan(primaryRect.left));
   });
 
   testWidgets('a single agent result does not add stack decoration', (

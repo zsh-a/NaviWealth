@@ -103,14 +103,18 @@ void main() {
 
     expect(find.text('Cashflow Anomaly Review'), findsOneWidget);
     expect(find.text('Spending moved sharply above baseline.'), findsOneWidget);
-    expect(find.text('Weekly Wealth Review'), findsOneWidget);
+    expect(find.text('Weekly Wealth Review'), findsNothing);
     expect(
       find.text('Net worth moved 2.4% with cashflow pressure.'),
       findsNothing,
     );
     expect(find.text('Net worth'), findsNothing);
     expect(find.byType(AgentResultCard), findsOneWidget);
-    expect(find.byType(AgentCompactResultRow), findsOneWidget);
+    expect(find.byType(AgentCompactResultRow), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('agent-result-stack')),
+      findsOneWidget,
+    );
     expect(
       tester.widget<AgentResultCard>(find.byType(AgentResultCard)).layout,
       AgentResultCardLayout.summary,

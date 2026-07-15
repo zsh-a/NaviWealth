@@ -147,10 +147,14 @@ void main() {
 
     expect(find.text('Knowledge Review'), findsOneWidget);
     expect(find.text('Review due decisions and assumptions.'), findsOneWidget);
-    expect(find.text('Routine Due'), findsOneWidget);
+    expect(find.text('Routine Due'), findsNothing);
     expect(find.text('A weekly review routine is due.'), findsNothing);
     expect(find.byType(AgentResultCard), findsOneWidget);
-    expect(find.byType(AgentCompactResultRow), findsOneWidget);
+    expect(find.byType(AgentCompactResultRow), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('agent-result-stack')),
+      findsOneWidget,
+    );
     expect(find.text('Decisions due'), findsNothing);
     expect(
       tester.widget<AgentResultCard>(find.byType(AgentResultCard)).layout,

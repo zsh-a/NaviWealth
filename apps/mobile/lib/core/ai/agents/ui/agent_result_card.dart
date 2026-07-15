@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -221,11 +220,10 @@ typedef AgentResultRetryCallback = FutureOr<void> Function(String agentId);
 
 /// Canonical multi-agent result composition for domain surfaces.
 ///
-/// The highest-priority result gets the readable card. When multiple agents
-/// have visible results, the remaining entries form a compact card stack so
-/// the relationship is immediately visible without giving every result equal
-/// visual weight. Pairing, severity ordering, and run overlays come from
-/// [agent_providers.AgentResultBundle] rather than being rebuilt by each page.
+/// The highest-priority result starts at the front. When multiple agents have
+/// visible results, users swipe the front card horizontally to cycle through
+/// one full result at a time. Pairing, severity ordering, and run overlays come
+/// from [agent_providers.AgentResultBundle] rather than each domain page.
 class AgentResultsSection extends StatelessWidget {
   const AgentResultsSection({
     super.key,
@@ -250,152 +248,254 @@ class AgentResultsSection extends StatelessWidget {
         .take(maxResults)
         .toList(growable: false);
     if (entries.isEmpty) return const SizedBox.shrink();
-    final primary = entries.first;
-    final primaryArtifact = primary.artifact;
-    final primaryRun = primary.runOverlay;
-    final primaryWidget = AgentResultSurface(
-      artifact: primaryArtifact,
-      run: primaryRun,
-      metaLabel: metaLabelBuilder(
-        primaryArtifact?.createdAt ?? primary.referenceTime,
-      ),
-      layout: AgentResultCardLayout.summary,
-      summaryMaxLines: summaryMaxLines,
-      onOpen: primaryArtifact == null ? null : () => onOpen(primaryArtifact),
-      onRetry: primaryRun == null || onRetry == null
-          ? null
-          : () => onRetry!(primary.agentId),
-    );
-    if (entries.length == 1) return primaryWidget;
+    Widget buildEntry(agent_providers.AgentResultEntry entry) {
+      final artifact = entry.artifact;
+      final run = entry.runOverlay;
+      return AgentResultSurface(
+        artifact: artifact,
+        run: run,
+        metaLabel: metaLabelBuilder(artifact?.createdAt ?? entry.referenceTime),
+        layout: AgentResultCardLayout.summary,
+        summaryMaxLines: summaryMaxLines,
+        onOpen: artifact == null ? null : () => onOpen(artifact),
+        onRetry: run == null || onRetry == null
+            ? null
+            : () => onRetry!(entry.agentId),
+      );
+    }
 
-    return _AgentResultStack(
-      primary: primaryWidget,
-      secondary: [
-        for (final entry in entries.skip(1))
-          if (entry.artifact case final artifact?)
-            AgentCompactResultRow(
-              artifact: artifact,
-              run: entry.runOverlay,
-              metaLabel: metaLabelBuilder(artifact.createdAt),
-              stacked: true,
-              onOpen: () => onOpen(artifact),
-            )
-          else if (entry.runOverlay case final run?)
-            AgentRunStatusCard(
-              record: run,
-              metaLabel: metaLabelBuilder(entry.referenceTime),
-              onRetry: onRetry == null ? null : () => onRetry!(entry.agentId),
+    if (entries.length == 1) return buildEntry(entries.first);
+
+    return _SwipeableAgentResultStack(
+      entries: entries,
+      entryBuilder: buildEntry,
+    );
+  }
+}
+
+typedef _AgentResultEntryBuilder =
+    Widget Function(agent_providers.AgentResultEntry entry);
+
+class _SwipeableAgentResultStack extends StatefulWidget {
+  const _SwipeableAgentResultStack({
+    required this.entries,
+    required this.entryBuilder,
+  });
+
+  final List<agent_providers.AgentResultEntry> entries;
+  final _AgentResultEntryBuilder entryBuilder;
+
+  @override
+  State<_SwipeableAgentResultStack> createState() =>
+      _SwipeableAgentResultStackState();
+}
+
+class _SwipeableAgentResultStackState
+    extends State<_SwipeableAgentResultStack> {
+  static const double _switchThreshold = 48;
+  static const double _velocityThreshold = 450;
+  static const double _maxDragOffset = 96;
+
+  late String _activeAgentId = widget.entries.first.agentId;
+  double _dragOffset = 0;
+  bool _dragging = false;
+  int _lastStep = 1;
+
+  int get _activeIndex {
+    final index = widget.entries.indexWhere(
+      (entry) => entry.agentId == _activeAgentId,
+    );
+    return index < 0 ? 0 : index;
+  }
+
+  @override
+  void didUpdateWidget(covariant _SwipeableAgentResultStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final leadingChanged =
+        oldWidget.entries.first.agentId != widget.entries.first.agentId;
+    final activeStillExists = widget.entries.any(
+      (entry) => entry.agentId == _activeAgentId,
+    );
+    if (leadingChanged || !activeStillExists) {
+      _activeAgentId = widget.entries.first.agentId;
+      _dragOffset = 0;
+    }
+  }
+
+  void _onDragStart(DragStartDetails details) {
+    setState(() => _dragging = true);
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset = (_dragOffset + details.delta.dx)
+          .clamp(-_maxDragOffset, _maxDragOffset)
+          .toDouble();
+    });
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    final shouldSwitch =
+        _dragOffset.abs() >= _switchThreshold ||
+        velocity.abs() >= _velocityThreshold;
+    if (!shouldSwitch) {
+      setState(() {
+        _dragging = false;
+        _dragOffset = 0;
+      });
+      return;
+    }
+    final direction = _dragOffset != 0 ? _dragOffset.sign : velocity.sign;
+    _move(direction < 0 ? 1 : -1);
+  }
+
+  void _onDragCancel() {
+    setState(() {
+      _dragging = false;
+      _dragOffset = 0;
+    });
+  }
+
+  void _move(int step) {
+    final nextIndex = (_activeIndex + step) % widget.entries.length;
+    setState(() {
+      _lastStep = step;
+      _activeAgentId = widget.entries[nextIndex].agentId;
+      _dragging = false;
+      _dragOffset = 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = AppMotionPolicy.duration(context, Motion.fast);
+    final active = widget.entries[_activeIndex];
+    return Stack(
+      key: const ValueKey<String>('agent-result-stack'),
+      children: [
+        const Positioned.fill(
+          left: AppSpacing.s12,
+          right: AppSpacing.s12,
+          top: AppSpacing.s16,
+          bottom: 0,
+          child: _AgentResultBackplate(level: 2),
+        ),
+        const Positioned.fill(
+          left: AppSpacing.s6,
+          right: AppSpacing.s6,
+          top: AppSpacing.s8,
+          bottom: AppSpacing.s8,
+          child: _AgentResultBackplate(level: 1),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+          child: GestureDetector(
+            key: const ValueKey<String>('agent-result-front-card'),
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragStart: _onDragStart,
+            onHorizontalDragUpdate: _onDragUpdate,
+            onHorizontalDragEnd: _onDragEnd,
+            onHorizontalDragCancel: _onDragCancel,
+            child: AnimatedContainer(
+              duration: _dragging ? Duration.zero : duration,
+              curve: Motion.standardDecelerate,
+              transform: Matrix4.translationValues(_dragOffset, 0, 0),
+              child: AnimatedSwitcher(
+                duration: duration,
+                switchInCurve: Motion.standardDecelerate,
+                switchOutCurve: Motion.standardAccelerate,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: Offset(_lastStep * 0.04, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                ),
+                child: KeyedSubtree(
+                  key: ValueKey<String>(active.agentId),
+                  child: widget.entryBuilder(active),
+                ),
+              ),
             ),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: AppSpacing.s4,
+          child: _AgentResultPageIndicator(
+            count: widget.entries.length,
+            activeIndex: _activeIndex,
+          ),
+        ),
       ],
     );
   }
 }
 
-class _AgentResultStack extends StatelessWidget {
-  const _AgentResultStack({required this.primary, required this.secondary});
+class _AgentResultBackplate extends StatelessWidget {
+  const _AgentResultBackplate({required this.level});
 
-  final Widget primary;
-  final List<Widget> secondary;
+  final int level;
 
   @override
   Widget build(BuildContext context) {
-    return _AgentResultStackLayout(
-      key: const ValueKey<String>('agent-result-stack'),
-      children: [primary, ...secondary],
+    final colors = context.theme.colors;
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            colors.muted.withValues(
+              alpha: level == 1 ? AppOpacity.subtle : AppOpacity.faint,
+            ),
+            colors.card,
+          ),
+          border: Border.all(
+            color: colors.border.withValues(alpha: AppOpacity.highlight),
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+      ),
     );
   }
 }
 
-class _AgentResultStackLayout extends MultiChildRenderObjectWidget {
-  const _AgentResultStackLayout({super.key, required super.children});
+class _AgentResultPageIndicator extends StatelessWidget {
+  const _AgentResultPageIndicator({
+    required this.count,
+    required this.activeIndex,
+  });
+
+  final int count;
+  final int activeIndex;
 
   @override
-  RenderObject createRenderObject(BuildContext context) =>
-      _RenderAgentResultStack();
-}
-
-class _AgentResultStackParentData extends ContainerBoxParentData<RenderBox> {}
-
-/// Measures every result at its natural height, then places the following card
-/// over the previous card's lower edge. A render layout keeps the overlap exact
-/// without fixed card heights or unused space below the deck.
-class _RenderAgentResultStack extends RenderBox
-    with
-        ContainerRenderObjectMixin<RenderBox, _AgentResultStackParentData>,
-        RenderBoxContainerDefaultsMixin<
-          RenderBox,
-          _AgentResultStackParentData
-        > {
-  static const double _overlap = AppSpacing.s12;
-
-  @override
-  void setupParentData(RenderBox child) {
-    if (child.parentData is! _AgentResultStackParentData) {
-      child.parentData = _AgentResultStackParentData();
-    }
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final duration = AppMotionPolicy.duration(context, Motion.fast);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var index = 0; index < count; index++) ...[
+          AnimatedContainer(
+            duration: duration,
+            curve: Motion.standardDecelerate,
+            width: index == activeIndex ? AppSpacing.s12 : AppSpacing.s4,
+            height: AppSpacing.s4,
+            decoration: BoxDecoration(
+              color: index == activeIndex ? colors.primary : colors.border,
+              borderRadius: BorderRadius.circular(AppRadius.full),
+            ),
+          ),
+          if (index != count - 1) const SizedBox(width: AppSpacing.s4),
+        ],
+      ],
+    );
   }
-
-  @override
-  void performLayout() {
-    final width = constraints.maxWidth.isFinite
-        ? constraints.maxWidth
-        : constraints.minWidth;
-    var child = firstChild;
-    var index = 0;
-    var y = 0.0;
-    while (child != null) {
-      final inset = _horizontalInset(index);
-      final availableWidth = (width - inset * 2).clamp(0.0, width).toDouble();
-      child.layout(
-        BoxConstraints(minWidth: availableWidth, maxWidth: availableWidth),
-        parentUsesSize: true,
-      );
-      if (index > 0) y -= _overlap;
-      final childParentData = child.parentData! as _AgentResultStackParentData;
-      childParentData.offset = Offset(inset, y);
-      y += child.size.height;
-      child = childParentData.nextSibling;
-      index++;
-    }
-    size = constraints.constrain(Size(width, y));
-  }
-
-  @override
-  Size computeDryLayout(BoxConstraints constraints) {
-    final width = constraints.maxWidth.isFinite
-        ? constraints.maxWidth
-        : constraints.minWidth;
-    var child = firstChild;
-    var index = 0;
-    var height = 0.0;
-    while (child != null) {
-      final inset = _horizontalInset(index);
-      final availableWidth = (width - inset * 2).clamp(0.0, width).toDouble();
-      final childSize = child.getDryLayout(
-        BoxConstraints(minWidth: availableWidth, maxWidth: availableWidth),
-      );
-      if (index > 0) height -= _overlap;
-      height += childSize.height;
-      final childParentData = child.parentData! as _AgentResultStackParentData;
-      child = childParentData.nextSibling;
-      index++;
-    }
-    return constraints.constrain(Size(width, height));
-  }
-
-  double _horizontalInset(int index) {
-    if (index == 0) return 0;
-    return index == 1 ? AppSpacing.s6 : AppSpacing.s12;
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    defaultPaint(context, offset);
-  }
-
-  @override
-  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
-      defaultHitTestChildren(result, position: position);
 }
 
 /// Slim banner so running/failed does not replace the previous result body.
@@ -561,14 +661,12 @@ class AgentCompactResultRow extends StatelessWidget {
     required this.artifact,
     required this.metaLabel,
     this.run,
-    this.stacked = false,
     this.onOpen,
   });
 
   final AgentArtifact artifact;
   final String metaLabel;
   final AgentRunRecord? run;
-  final bool stacked;
   final VoidCallback? onOpen;
 
   @override
@@ -584,7 +682,7 @@ class AgentCompactResultRow extends StatelessWidget {
         ? run
         : null;
     return SoftCard(
-      level: stacked ? SoftCardLevel.raised : SoftCardLevel.flat,
+      level: SoftCardLevel.flat,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s12,
         vertical: AppSpacing.s10,
