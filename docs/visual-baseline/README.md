@@ -6,6 +6,22 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 2. **Figma mock baseline** — three-breakpoint mocks, kept in sync with the Dart `design_tokens/tokens.json`.
 3. **Cross-end walkthrough** — manual verification of "Golden Path", with screenshots archived under `walkthrough/`.
 
+README product screenshots are a separate curated output. They render
+production widgets with deterministic marketing fixtures and are stored under
+`docs/assets/readme/generated/`; they are not copied from regression goldens.
+
+```bash
+cd apps/mobile
+./tool/update-readme-screenshots.sh           # verify committed screenshots
+./tool/update-readme-screenshots.sh --update  # regenerate them
+```
+
+`docs/assets/readme/manifest.json` pins each image's dimensions, locale,
+theme, and description. Pull requests render a review artifact and warn on
+visual drift without blocking unrelated UI work. After UI changes land on
+`main`, `.github/workflows/readme-screenshots.yml` opens or refreshes a dedicated
+screenshot PR when the canonical Linux-rendered assets change.
+
 ---
 
 ## 1. Golden screenshot regression

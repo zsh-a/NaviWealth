@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "flutter_version": "3.44.5",
+  "generator": "apps/mobile/test/readme_screenshots/readme_screenshot_test.dart",
+  "screenshots": [
+    {
+      "id": "wealth-overview",
+      "path": "generated/wealth-overview.png",
+      "width": 780,
+      "height": 1688,
+      "locale": "zh",
+      "theme": "dark",
+      "expected_visible_text": ["净资产", "¥137,899.80"],
+      "description": "FinanceOS wealth overview with net worth, assets, liabilities, and trend."
+    },
+    {
+      "id": "fire-insight",
+      "path": "generated/fire-insight.png",
+      "width": 780,
+      "height": 880,
+      "locale": "zh",
+      "theme": "dark",
+      "expected_visible_text": ["自由状态", "谨慎"],
+      "description": "FIRE safety status, withdrawal rate, cash buffer, and suggested actions."
+    },
+    {
+      "id": "smart-ingest",
+      "path": "generated/smart-ingest.png",
+      "width": 1280,
+      "height": 900,
+      "locale": "zh",
+      "theme": "dark",
+      "expected_visible_text": ["录入待确认", "Morning coffee"],
+      "description": "Desktop review workspace for deterministic transaction ingest."
+    }
+  ]
+}

@@ -94,6 +94,7 @@ dev_dependencies:
     sdk: flutter
   freezed: ^3.2.5
   golden_toolkit: ^0.15.0
+  image: ^4.8.0
   integration_test:
     sdk: flutter
   json_serializable: ^6.14.0

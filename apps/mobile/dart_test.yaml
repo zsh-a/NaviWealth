@@ -16,6 +16,8 @@ tags:
     timeout: 2x
   responsive-golden:
     timeout: 2x
+  readme-screenshot:
+    timeout: 2x
   flow:
     timeout: 2x
   integration:
