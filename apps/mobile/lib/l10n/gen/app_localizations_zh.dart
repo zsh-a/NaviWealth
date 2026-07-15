@@ -2154,6 +2154,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonClose => '关闭';
 
   @override
+  String commonRevealMore(int count) {
+    return '更多 · $count';
+  }
+
+  @override
+  String get commonRevealLess => '收起';
+
+  @override
   String get commonLoading => '加载中…';
 
   @override
@@ -9662,6 +9670,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthShowKeyMetrics => '只看关键指标';
+
+  @override
+  String healthMoreMetrics(int count) {
+    return '更多 · $count';
+  }
+
+  @override
+  String get healthCollapseMetrics => '收起';
+
+  @override
+  String get healthMorePlanActions => '更多建议';
+
+  @override
+  String get healthCollapsePlanActions => '收起';
 
   @override
   String get healthPlanTodayActions => '今日建议';

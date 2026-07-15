@@ -1238,6 +1238,15 @@
   "commonDelete": "Delete",
   "commonDeleted": "Deleted",
   "commonClose": "Close",
+  "commonRevealMore": "More · {count}",
+  "@commonRevealMore": {
+    "description": "Centered list reveal control: show N more items",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "commonRevealLess": "Show less",
+  "@commonRevealLess": {
+    "description": "Centered list reveal control: collapse expanded items"
+  },
   "commonLoading": "Loading…",
   "commonError": "Something went wrong",
   "commonSafeErrorMessage": "We couldn't complete that. Please try again.",
@@ -5575,6 +5584,23 @@
   "healthNoData": "No data yet",
   "healthShowAllMetrics": "Show all metrics",
   "healthShowKeyMetrics": "Show key metrics",
+  "healthMoreMetrics": "More · {count}",
+  "@healthMoreMetrics": {
+    "description": "Health Today: reveal compact secondary metrics",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "healthCollapseMetrics": "Show less",
+  "@healthCollapseMetrics": {
+    "description": "Health Today: collapse secondary metrics"
+  },
+  "healthMorePlanActions": "More actions",
+  "@healthMorePlanActions": {
+    "description": "Health recovery hero: expand plan action list"
+  },
+  "healthCollapsePlanActions": "Show less",
+  "@healthCollapsePlanActions": {
+    "description": "Health recovery hero: collapse plan action list"
+  },
   "healthPlanTodayActions": "Today's actions",
   "healthPlanHighIntensity": "Schedule high-intensity training or deep-focus work.",
   "healthPlanKeepSleep": "Keep normal sleep window; avoid overdrawing.",

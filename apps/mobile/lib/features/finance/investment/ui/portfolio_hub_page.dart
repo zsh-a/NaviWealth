@@ -133,10 +133,12 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
     final l10n = AppLocalizations.of(context);
     final data = widget.data;
     final groups = data.groupsFor(widget.view, l10n);
-    final visibleHoldings =
-        (_showAllPositions ? data.holdings : data.holdings.take(6)).toList(
-          growable: false,
-        );
+    const previewCount = 6;
+    final holdings = data.holdings;
+    final previewHoldings = holdings.take(previewCount).toList(growable: false);
+    final overflowHoldings = holdings.length > previewCount
+        ? holdings.skip(previewCount).toList(growable: false)
+        : const <PortfolioHoldingRow>[];
 
     return AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.page,
@@ -157,39 +159,57 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
-                if (data.holdings.isEmpty)
+                if (holdings.isEmpty)
                   _EmptyState(message: l10n.portfolioHubEmpty)
-                else
+                else ...[
                   AppGroupedSurface(
                     padding: EdgeInsets.zero,
                     child: Column(
                       children: [
-                        for (var i = 0; i < visibleHoldings.length; i++) ...[
-                          _HoldingRow(holding: visibleHoldings[i]),
-                          if (i != visibleHoldings.length - 1)
+                        for (var i = 0; i < previewHoldings.length; i++) ...[
+                          _HoldingRow(holding: previewHoldings[i]),
+                          if (i != previewHoldings.length - 1 ||
+                              (overflowHoldings.isNotEmpty && _showAllPositions))
                             const AppGroupedDivider(
                               indent: AppSpacing.s12,
                               endIndent: AppSpacing.s12,
                             ),
                         ],
+                        if (overflowHoldings.isNotEmpty)
+                          AnimatedSizeFade(
+                            visible: _showAllPositions,
+                            alignment: Alignment.topCenter,
+                            child: Column(
+                              children: [
+                                for (var i = 0;
+                                    i < overflowHoldings.length;
+                                    i++) ...[
+                                  _HoldingRow(holding: overflowHoldings[i]),
+                                  if (i != overflowHoldings.length - 1)
+                                    const AppGroupedDivider(
+                                      indent: AppSpacing.s12,
+                                      endIndent: AppSpacing.s12,
+                                    ),
+                                ],
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                if (data.holdings.length > 6) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  AppQuietButton(
-                    label: _showAllPositions
-                        ? l10n.portfolioHubShowFewerPositions
-                        : l10n.portfolioHubShowAllPositions,
-                    onPress: () =>
-                        setState(() => _showAllPositions = !_showAllPositions),
-                    expanded: true,
-                    prefix: Icon(
-                      _showAllPositions
-                          ? FLucideIcons.chevronUp
-                          : FLucideIcons.chevronDown,
+                  if (overflowHoldings.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s8),
+                    AppRevealControl(
+                      expanded: _showAllPositions,
+                      collapsedLabel: l10n.commonRevealMore(
+                        overflowHoldings.length,
+                      ),
+                      expandedLabel: l10n.commonRevealLess,
+                      onToggle: () => setState(
+                        () => _showAllPositions = !_showAllPositions,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ],
             ),

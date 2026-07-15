@@ -17,7 +17,6 @@ class _MetadataSectionState extends State<_MetadataSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final needsCollapse = widget.children.length > _kMetadataCollapseThreshold;
     final visibleChildren = needsCollapse && !_expanded
         ? widget.children.take(_kMetadataCollapseThreshold).toList()
@@ -32,22 +31,13 @@ class _MetadataSectionState extends State<_MetadataSection> {
         ),
         if (needsCollapse) ...[
           const SizedBox(height: AppSpacing.s4),
-          Center(
-            child: FTappable(
-              onPress: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s4),
-                child: AnimatedRotation(
-                  duration: AppMotionPolicy.duration(context, Motion.fast),
-                  turns: _expanded ? 0.5 : 0,
-                  child: Icon(
-                    FLucideIcons.chevronDown,
-                    size: AppIconSizes.sm,
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ),
+          AppRevealControl(
+            expanded: _expanded,
+            collapsedLabel: l10n.commonRevealMore(
+              widget.children.length - _kMetadataCollapseThreshold,
             ),
+            expandedLabel: l10n.commonRevealLess,
+            onToggle: () => setState(() => _expanded = !_expanded),
           ),
         ],
       ],

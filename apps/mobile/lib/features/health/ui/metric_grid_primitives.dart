@@ -194,15 +194,6 @@ double _secondsToHours(double value, String unit) => switch (unit) {
 
 double _round(double v) => (v * 100).round() / 100.0;
 
-Map<String, dynamic> _parseJsonMap(String? json) {
-  if (json == null || json.isEmpty) return const {};
-  try {
-    return jsonDecode(json) as Map<String, dynamic>;
-  } catch (_) {
-    return const {};
-  }
-}
-
 String _utcDayKey(DateTime t) => AppFormatters.utcDayKey(t);
 
 String _formatSteps(double v) => Fmt.number(v.round());

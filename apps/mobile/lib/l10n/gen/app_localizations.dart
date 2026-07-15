@@ -3998,6 +3998,18 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get commonClose;
 
+  /// Centered list reveal control: show N more items
+  ///
+  /// In en, this message translates to:
+  /// **'More · {count}'**
+  String commonRevealMore(int count);
+
+  /// Centered list reveal control: collapse expanded items
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get commonRevealLess;
+
   /// No description provided for @commonLoading.
   ///
   /// In en, this message translates to:
@@ -17359,6 +17371,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show key metrics'**
   String get healthShowKeyMetrics;
+
+  /// Health Today: reveal compact secondary metrics
+  ///
+  /// In en, this message translates to:
+  /// **'More · {count}'**
+  String healthMoreMetrics(int count);
+
+  /// Health Today: collapse secondary metrics
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get healthCollapseMetrics;
+
+  /// Health recovery hero: expand plan action list
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get healthMorePlanActions;
+
+  /// Health recovery hero: collapse plan action list
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get healthCollapsePlanActions;
 
   /// No description provided for @healthPlanTodayActions.
   ///

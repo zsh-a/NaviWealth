@@ -2232,6 +2232,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClose => 'Close';
 
   @override
+  String commonRevealMore(int count) {
+    return 'More · $count';
+  }
+
+  @override
+  String get commonRevealLess => 'Show less';
+
+  @override
   String get commonLoading => 'Loading…';
 
   @override
@@ -10120,6 +10128,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthShowKeyMetrics => 'Show key metrics';
+
+  @override
+  String healthMoreMetrics(int count) {
+    return 'More · $count';
+  }
+
+  @override
+  String get healthCollapseMetrics => 'Show less';
+
+  @override
+  String get healthMorePlanActions => 'More actions';
+
+  @override
+  String get healthCollapsePlanActions => 'Show less';
 
   @override
   String get healthPlanTodayActions => 'Today\'s actions';

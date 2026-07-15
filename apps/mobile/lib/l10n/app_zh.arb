@@ -672,6 +672,15 @@
   "commonDelete": "删除",
   "commonDeleted": "已删除",
   "commonClose": "关闭",
+  "commonRevealMore": "更多 · {count}",
+  "@commonRevealMore": {
+    "description": "Centered list reveal control: show N more items",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "commonRevealLess": "收起",
+  "@commonRevealLess": {
+    "description": "Centered list reveal control: collapse expanded items"
+  },
   "commonLoading": "加载中…",
   "commonError": "出错了",
   "commonSafeErrorMessage": "暂时无法完成，请稍后重试。",
@@ -3015,6 +3024,23 @@
   "healthNoData": "暂无数据",
   "healthShowAllMetrics": "显示全部指标",
   "healthShowKeyMetrics": "只看关键指标",
+  "healthMoreMetrics": "更多 · {count}",
+  "@healthMoreMetrics": {
+    "description": "Health Today: reveal compact secondary metrics",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "healthCollapseMetrics": "收起",
+  "@healthCollapseMetrics": {
+    "description": "Health Today: collapse secondary metrics"
+  },
+  "healthMorePlanActions": "更多建议",
+  "@healthMorePlanActions": {
+    "description": "Health recovery hero: expand plan action list"
+  },
+  "healthCollapsePlanActions": "收起",
+  "@healthCollapsePlanActions": {
+    "description": "Health recovery hero: collapse plan action list"
+  },
   "healthPlanTodayActions": "今日建议",
   "healthPlanHighIntensity": "可安排高强度训练或关键深度工作。",
   "healthPlanKeepSleep": "保持正常睡眠窗口，避免过度透支。",

@@ -1,5 +1,8 @@
 part of 'health_today_page.dart';
 
+// Primary metric cards (dense hero tiles on Today). Secondary metrics render
+// as compact rows in metric_grid.dart — full secondary SoftCards are gone.
+
 class _SleepCard extends StatelessWidget {
   const _SleepCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
@@ -242,8 +245,8 @@ class _HrvCard extends StatelessWidget {
   }
 }
 
-class _HeartRateCard extends StatelessWidget {
-  const _HeartRateCard({required this.async, this.trend});
+class _RhrCard extends StatelessWidget {
+  const _RhrCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
   final MetricTrend? trend;
 
@@ -251,62 +254,19 @@ class _HeartRateCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return _MetricCard(
-      icon: FLucideIcons.heartPulse,
-      label: l10n.healthHeartRateMetricLabel,
-      trendKind: HealthMetricKind.heartRateDaily,
-      accent: HealthMetricColors.heartRate,
+      icon: FLucideIcons.heart,
+      trendKind: HealthMetricKind.rhrDaily,
+      label: l10n.healthRhrMetricLabel,
+      accent: HealthMetricColors.rhr,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
         data: (m) {
           if (m == null) return const _ValueDash();
           return _ValueBig(
-            value: '${_round(m.value)}',
-            unit: m.unit,
+            value: '${m.value.round()}',
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
-            metric: m,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _WorkoutCard extends StatelessWidget {
-  const _WorkoutCard({required this.async});
-  final AsyncValue<HealthMetric?> async;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _MetricCard(
-      icon: FLucideIcons.dumbbell,
-      label: l10n.healthWorkoutMetricLabel,
-      trendKind: HealthMetricKind.workoutSession,
-      accent: HealthMetricColors.workout,
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (m) {
-          if (m == null) return const _ValueDash();
-          final minutes = (m.value / 60).round();
-          final payload = _parseJsonMap(m.payloadJson);
-          final distMeters = (payload['totalDistanceMeters'] as num?)
-              ?.toDouble();
-          final cal = (payload['totalEnergyKcal'] as num?)?.toDouble();
-          final parts = <String>[];
-          if (distMeters != null && distMeters > 0) {
-            parts.add('${_round(distMeters / 1000)}km');
-          }
-          if (cal != null && cal > 0) {
-            parts.add('${cal.round()}kcal');
-          }
-          final detail = parts.isEmpty ? '' : '${parts.join(' · ')} · ';
-          return _ValueBig(
-            value: '$minutes',
-            unit: 'm',
-            sub: '$detail${_ago(l10n, m.capturedAt)}',
             metric: m,
           );
         },
@@ -346,188 +306,6 @@ class _StepsCard extends ConsumerWidget {
             value: _formatSteps(m.value),
             sub: sub,
             trend: trend,
-            metric: m,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ActiveEnergyCard extends StatelessWidget {
-  const _ActiveEnergyCard({required this.async, this.trend});
-  final AsyncValue<HealthMetric?> async;
-  final MetricTrend? trend;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _MetricCard(
-      icon: FLucideIcons.flame,
-      label: l10n.healthEnergyMetricLabel,
-      trendKind: HealthMetricKind.activeEnergyDaily,
-      accent: HealthMetricColors.totalEnergy,
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (m) {
-          if (m == null) return const _ValueDash();
-          return _ValueBig(
-            value: '${m.value.round()}',
-            unit: 'kcal',
-            sub: _ago(l10n, m.capturedAt),
-            trend: trend,
-            metric: m,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _BodyBatteryCard extends StatelessWidget {
-  const _BodyBatteryCard({required this.async, this.trend});
-  final AsyncValue<HealthMetric?> async;
-  final MetricTrend? trend;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _MetricCard(
-      icon: FLucideIcons.battery,
-      label: l10n.healthBodyBatteryMetricLabel,
-      trendKind: HealthMetricKind.bodyBatteryDaily,
-      accent: HealthMetricColors.bodyBattery,
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (m) {
-          if (m == null) return const _ValueDash();
-          final payload = _parseJsonMap(m.payloadJson);
-          final charged = (payload['charged'] as num?)?.toInt() ?? 0;
-          final drained = (payload['drained'] as num?)?.toInt() ?? 0;
-          final net = charged - drained;
-          final netStr = net >= 0 ? '+$net' : '$net';
-          return _ValueBig(
-            value: '${m.value.round()}',
-            sub: '$netStr · ${_ago(l10n, m.capturedAt)}',
-            trend: trend,
-            metric: m,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _StressCard extends StatelessWidget {
-  const _StressCard({required this.async, this.trend});
-  final AsyncValue<HealthMetric?> async;
-  final MetricTrend? trend;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _MetricCard(
-      icon: FLucideIcons.brain,
-      trendKind: HealthMetricKind.stressDaily,
-      label: l10n.healthStressMetricLabel,
-      accent: HealthMetricColors.stress,
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (m) {
-          if (m == null) return const _ValueDash();
-          return _ValueBig(
-            value: '${m.value.round()}',
-            sub: _ago(l10n, m.capturedAt),
-            metric: m,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _RhrCard extends StatelessWidget {
-  const _RhrCard({required this.async, this.trend});
-  final AsyncValue<HealthMetric?> async;
-  final MetricTrend? trend;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _MetricCard(
-      icon: FLucideIcons.heart,
-      trendKind: HealthMetricKind.rhrDaily,
-      label: l10n.healthRhrMetricLabel,
-      accent: HealthMetricColors.rhr,
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (m) {
-          if (m == null) return const _ValueDash();
-          return _ValueBig(
-            value: '${m.value.round()}',
-            sub: _ago(l10n, m.capturedAt),
-            trend: trend,
-            metric: m,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _TrainingLoadCard extends StatelessWidget {
-  const _TrainingLoadCard({required this.async});
-  final AsyncValue<HealthMetric?> async;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _MetricCard(
-      icon: FLucideIcons.flame,
-      label: l10n.healthTrainingLoadMetricLabel,
-      trendKind: HealthMetricKind.trainingLoadDaily,
-      accent: HealthMetricColors.trainingLoad,
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (m) {
-          if (m == null) return const _ValueDash();
-          return _ValueBig(
-            value: '${_round(m.value)}',
-            sub: _ago(l10n, m.capturedAt),
-            metric: m,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _Spo2Card extends StatelessWidget {
-  const _Spo2Card({required this.async});
-  final AsyncValue<HealthMetric?> async;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _MetricCard(
-      icon: FLucideIcons.wind,
-      trendKind: HealthMetricKind.spo2Daily,
-      label: l10n.healthSpo2MetricLabel,
-      accent: HealthMetricColors.spo2,
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (m) {
-          if (m == null) return const _ValueDash();
-          return _ValueBig(
-            value: '${_round(m.value)}',
-            unit: '%',
-            sub: _ago(l10n, m.capturedAt),
             metric: m,
           );
         },

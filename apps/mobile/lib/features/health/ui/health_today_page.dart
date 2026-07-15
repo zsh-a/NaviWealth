@@ -171,42 +171,14 @@ class _SourcesSectionState extends State<_SourcesSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard.raised(
-          borderless: true,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s14,
-            vertical: AppSpacing.s12,
-          ),
-          onPress: () {
-            AppInteraction.signal(AppInteractionIntent.reveal);
-            setState(() => _open = !_open);
-          },
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.healthSourcesTitle, style: context.rowTitleStyle),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      l10n.healthSourcesSubtitle,
-                      style: context.captionStyle,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                _open ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
-                size: AppIconSizes.md,
-                color: colors.mutedForeground,
-              ),
-            ],
-          ),
+        AppDisclosureHeader(
+          title: l10n.healthSourcesTitle,
+          subtitle: l10n.healthSourcesSubtitle,
+          expanded: _open,
+          onToggle: () => setState(() => _open = !_open),
         ),
         AnimatedSizeFade(
           visible: _open,

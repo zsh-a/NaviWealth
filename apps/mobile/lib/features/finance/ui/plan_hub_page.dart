@@ -262,7 +262,6 @@ class _PlanMoreToolsState extends State<_PlanMoreTools> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final tools = <_PlanTileSpec>[
       _PlanTileSpec(
         icon: FLucideIcons.calendarClock,
@@ -285,31 +284,10 @@ class _PlanMoreToolsState extends State<_PlanMoreTools> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SoftCard.raised(
-          borderless: true,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s14,
-            vertical: AppSpacing.s12,
-          ),
-          onPress: () {
-            AppInteraction.signal(AppInteractionIntent.reveal);
-            setState(() => _open = !_open);
-          },
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.planStrategyToolsSectionTitle,
-                  style: context.rowTitleStyle,
-                ),
-              ),
-              Icon(
-                _open ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
-                size: AppIconSizes.md,
-                color: colors.mutedForeground,
-              ),
-            ],
-          ),
+        AppDisclosureHeader(
+          title: l10n.planStrategyToolsSectionTitle,
+          expanded: _open,
+          onToggle: () => setState(() => _open = !_open),
         ),
         AnimatedSizeFade(
           visible: _open,
