@@ -20,6 +20,8 @@
 </p>
 
 <p align="center">
+  <a href="https://naviwealth.pages.dev">在线体验 Web Demo</a>
+  ·
   <a href="https://github.com/zsh-a/NaviWealth/releases/latest">下载最新版</a>
   ·
   <a href="#快速开始">本地运行</a>
@@ -97,6 +99,12 @@ NaviWealth Backend
 - 外部副作用不会由模型自动执行。
 
 ## 平台支持
+
+<p>
+  <a href="https://naviwealth.pages.dev"><strong>打开 Web Demo →</strong></a>
+</p>
+
+Web Demo 可直接体验核心数据、FinanceOS 和跨端界面；受浏览器安全边界限制，不提供设备端 AI 与 Health 平台集成。
 
 | 平台 | 核心数据 | 云同步 | 设备端 AI | Health 集成 |
 |---|:---:|:---:|:---:|:---:|
