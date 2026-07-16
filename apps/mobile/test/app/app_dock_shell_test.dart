@@ -204,7 +204,13 @@ void main() {
         );
         expect(_currentPath(container), AppRoutes.healthToday);
         expect(find.byType(HealthTodayPage), findsOneWidget);
-        expect(find.text(l10n.healthTodayTitle), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(HealthTodayPage),
+            matching: find.text(l10n.healthTodayTitle),
+          ),
+          findsOneWidget,
+        );
         expect(find.text('FinanceOS'), findsNothing);
         expect(find.byType(DomainSwitcherChip), findsOneWidget);
       },

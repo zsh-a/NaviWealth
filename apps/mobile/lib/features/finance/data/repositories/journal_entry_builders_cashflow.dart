@@ -94,6 +94,43 @@ JournalEntryBuild _buildExpenseJournalEntry({
   );
 }
 
+JournalEntryBuild _buildIncomeJournalEntry({
+  required DateTime date,
+  required String toAccountId,
+  required String incomeAccountId,
+  required Decimal amount,
+  required String currency,
+  String? payee,
+  String? narration,
+  DateTime? settledOn,
+  List<String> tagIds = const <String>[],
+}) {
+  _assertPositive(amount, 'amount');
+  return JournalEntryBuild(
+    entry: JournalEntryDraft(
+      date: date,
+      settledOn: settledOn,
+      narration: narration ?? 'Income',
+      payee: payee,
+      tagIds: tagIds,
+    ),
+    postings: <PostingDraft>[
+      PostingDraft(
+        position: 0,
+        accountId: toAccountId,
+        units: amount,
+        unit: currency,
+      ),
+      PostingDraft(
+        position: 1,
+        accountId: incomeAccountId,
+        units: -amount,
+        unit: currency,
+      ),
+    ],
+  );
+}
+
 JournalEntryBuild _buildDividendJournalEntry({
   required DateTime date,
   required String cashAccountId,

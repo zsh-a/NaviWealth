@@ -20,40 +20,7 @@ void main() {
           artifactId: 'artifact-1',
           traceId: 'trace-1',
         ),
-        artifact: AgentArtifact(
-          id: 'artifact-1',
-          ownerUserId: 'u',
-          agentId: 'cashflow_anomaly_review',
-          domain: 'finance',
-          kind: AgentArtifactKind.alert,
-          severity: AgentArtifactSeverity.warning,
-          title: 'Cashflow Anomaly Review',
-          summary: 'Projected monthly spending is elevated.',
-          insights: const <AgentInsight>[
-            AgentInsight(
-              title: 'Monthly spending projection',
-              body: 'Current month spending is projected higher.',
-            ),
-            AgentInsight(
-              title: 'Detector source',
-              body: 'On-device anomaly detector.',
-            ),
-          ],
-          evidence: const <AgentEvidenceRef>[
-            AgentEvidenceRef(type: 'anomaly_flag', id: 'flag-1'),
-          ],
-          actions: const <AgentAction>[
-            AgentAction(
-              kind: 'review',
-              label: 'Ask',
-              intent: 'agent.explainResult',
-              objectType: kAgentArtifactObjectType,
-              objectId: 'artifact-1',
-            ),
-          ],
-          traceId: 'trace-1',
-          createdAt: DateTime.utc(2026, 7, 5),
-        ),
+        artifact: _matchingCashflowArtifact(traceId: 'trace-1'),
       );
 
       expect(failures, isEmpty);
@@ -88,9 +55,24 @@ void main() {
         severity: AgentArtifactSeverity.info,
         title: 'Route result',
         summary: 'Open the related plan.',
+        metrics: const <AgentMetric>[
+          AgentMetric(label: 'Status', value: 'Ready'),
+        ],
+        insights: <AgentInsight>[
+          AgentInsight(
+            id: 'route-result',
+            title: 'Related plan',
+            body: 'Open the related plan.',
+            route: route,
+          ),
+        ],
         actions: <AgentAction>[
           AgentAction(kind: 'open_route', label: 'Open plan', route: route),
         ],
+        methodology: const AgentMethodology(
+          title: 'Method',
+          body: 'Deterministic test fixture.',
+        ),
         createdAt: DateTime.utc(2026, 7, 5),
       );
 
@@ -165,40 +147,7 @@ void main() {
           artifactId: 'artifact-1',
           traceId: 'trace-1',
         ),
-        artifact: AgentArtifact(
-          id: 'artifact-1',
-          ownerUserId: 'u',
-          agentId: 'cashflow_anomaly_review',
-          domain: 'finance',
-          kind: AgentArtifactKind.alert,
-          severity: AgentArtifactSeverity.warning,
-          title: 'Cashflow Anomaly Review',
-          summary: 'Projected monthly spending is elevated.',
-          insights: const <AgentInsight>[
-            AgentInsight(
-              title: 'Monthly spending projection',
-              body: 'Current month spending is projected higher.',
-            ),
-            AgentInsight(
-              title: 'Detector source',
-              body: 'On-device anomaly detector.',
-            ),
-          ],
-          evidence: const <AgentEvidenceRef>[
-            AgentEvidenceRef(type: 'anomaly_flag', id: 'flag-1'),
-          ],
-          actions: const <AgentAction>[
-            AgentAction(
-              kind: 'review',
-              label: 'Ask',
-              intent: 'agent.explainResult',
-              objectType: kAgentArtifactObjectType,
-              objectId: 'artifact-1',
-            ),
-          ],
-          traceId: 'trace-1',
-          createdAt: DateTime.utc(2026, 7, 5),
-        ),
+        artifact: _matchingCashflowArtifact(traceId: 'trace-1'),
         proposalKinds: const <String>{'journal_entry'},
       );
 
@@ -424,28 +373,44 @@ AgentArtifact _matchingCashflowArtifact({
     severity: AgentArtifactSeverity.warning,
     title: 'Cashflow Anomaly Review',
     summary: 'Projected monthly spending is elevated.',
+    metrics: const <AgentMetric>[
+      AgentMetric(label: 'Projected spend', value: 'Elevated'),
+    ],
     insights: const <AgentInsight>[
       AgentInsight(
+        id: 'monthly-spending-projection',
         title: 'Monthly spending projection',
         body: 'Current month spending is projected higher.',
+        route: '/activity/cashflow',
       ),
       AgentInsight(
+        id: 'detector-source',
         title: 'Detector source',
         body: 'On-device anomaly detector.',
+        route: '/activity/cashflow',
       ),
     ],
     evidence: const <AgentEvidenceRef>[
-      AgentEvidenceRef(type: 'anomaly_flag', id: 'flag-1'),
+      AgentEvidenceRef(
+        type: 'anomaly_flag',
+        id: 'flag-1',
+        route: '/activity/cashflow',
+      ),
     ],
     actions: <AgentAction>[
       AgentAction(
         kind: 'review',
         label: 'Ask',
+        route: '/activity/cashflow',
         intent: 'agent.explainResult',
         objectType: actionObjectType,
         objectId: actionObjectId,
       ),
     ],
+    methodology: const AgentMethodology(
+      title: 'Method',
+      body: 'Deterministic anomaly fixture.',
+    ),
     traceId: traceId,
     createdAt: DateTime.utc(2026, 7, 5),
   );

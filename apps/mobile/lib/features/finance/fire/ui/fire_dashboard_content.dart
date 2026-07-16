@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import '../data/fire_providers.dart';
 import '../domain/fire_projection.dart';
 import 'fire_goal_form.dart';
 import 'fire_scenarios_chart.dart';
@@ -44,6 +46,8 @@ class FireConfiguredBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FireStateHeroCard(view: view),
+        const SizedBox(height: AppSpacing.s12),
+        const _FireBudgetPosture(),
         const SizedBox(height: AppPageRhythm.section),
         _ProjectionCard(view: view),
       ],
@@ -67,6 +71,87 @@ class FireConfiguredBody extends ConsumerWidget {
               depth,
             ],
           ],
+        );
+      },
+    );
+  }
+}
+
+class _FireBudgetPosture extends ConsumerWidget {
+  const _FireBudgetPosture();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final signalAsync = ref.watch(fireBudgetSignalProvider);
+    return signalAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (signal) {
+        final l10n = AppLocalizations.of(context);
+        final semantic = SemanticColors.of(context);
+        final (icon, color, title, detail) = switch (signal) {
+          BudgetSignal.noData => (
+            FLucideIcons.walletCards,
+            context.theme.colors.mutedForeground,
+            l10n.fireBudgetNoDataTitle,
+            l10n.fireBudgetNoDataDetail,
+          ),
+          BudgetSignal.comfortable => (
+            FLucideIcons.circleCheck,
+            semantic.success,
+            l10n.fireBudgetComfortableTitle,
+            l10n.fireBudgetComfortableDetail,
+          ),
+          BudgetSignal.strained => (
+            FLucideIcons.gauge,
+            semantic.warning,
+            l10n.fireBudgetStrainedTitle,
+            l10n.fireBudgetStrainedDetail,
+          ),
+          BudgetSignal.overBudget => (
+            FLucideIcons.triangleAlert,
+            semantic.danger,
+            l10n.fireBudgetOverTitle,
+            l10n.fireBudgetOverDetail,
+          ),
+        };
+        return Semantics(
+          key: const ValueKey('fire-budget-posture'),
+          container: true,
+          label: '$title. $detail',
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s10,
+            ),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: AppOpacity.whisper),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: color.withValues(alpha: AppOpacity.disabled),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, size: AppIconSizes.sm, color: color),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: context.labelStyle.copyWith(color: color),
+                      ),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(detail, style: context.captionStyle),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

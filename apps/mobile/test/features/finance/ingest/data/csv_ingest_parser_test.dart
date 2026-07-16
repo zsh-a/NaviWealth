@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/csv_ingest_parser.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_parse_diagnostics.dart';
 
 void main() {
   group('parseCsvLedger', () {
@@ -59,6 +61,31 @@ void main() {
       expect(rows.single.description, 'Valid');
     });
 
+    test('diagnostics account for every candidate row without raw text', () {
+      final report = parseCsvLedgerReport(
+        'date,description,amount,收入金额,收/支,状态\n'
+        'not-a-date,Garbage,10,,,成功\n'
+        '2026-05-10,Valid,-1.00,,,成功\n'
+        '2026-05-11,Salary,,100.00,收入,成功\n'
+        '2026-05-12,Refund,5.00,,支出,已退款\n'
+        '2026-05-13,No amount,,,,成功\n',
+      );
+
+      expect(report.candidateRowCount, 5);
+      expect(report.acceptedRowCount, 2);
+      expect(report.skippedRowCount, 3);
+      expect(report.accountsForEveryCandidate, isTrue);
+      expect(report.issues.map((issue) => issue.code), [
+        IngestParseIssueCode.invalidDate,
+        IngestParseIssueCode.ignoredStatus,
+        IngestParseIssueCode.invalidAmount,
+      ]);
+      expect(report.issues.map((issue) => issue.lineNumber), [2, 5, 6]);
+      expect(report.rows.last.kind, IngestTransactionKind.income);
+      expect(report.rows.last.amountMinor, 10000);
+      expect(report.rows.last.categoryHint, 'salary');
+    });
+
     test('parses US m/d/y and 2-digit years', () {
       final rows = parseCsvLedger('05/10/26,Diner,-12.00');
       expect(rows.single.occurredAt, DateTime.utc(2026, 5, 10));
@@ -97,11 +124,58 @@ void main() {
         '2026年05月11日,快捷支付,招商超市,66.80,,CNY\n'
         '2026年05月12日,工资,公司,,10000.00,CNY\n',
       );
-      expect(rows, hasLength(1));
-      expect(rows.single.description, '招商超市 · 快捷支付');
-      expect(rows.single.amountMinor, -6680);
-      expect(rows.single.occurredAt, DateTime.utc(2026, 5, 11));
+      expect(rows, hasLength(2));
+      expect(rows.first.description, '招商超市 · 快捷支付');
+      expect(rows.first.amountMinor, -6680);
+      expect(rows.first.occurredAt, DateTime.utc(2026, 5, 11));
+      expect(rows.last.kind, IngestTransactionKind.income);
+      expect(rows.last.amountMinor, 1000000);
+      expect(rows.last.categoryHint, 'salary');
     });
+
+    test('imports explicit salary income but keeps refunds out', () {
+      final report = parseCsvLedgerReport(
+        '日期,描述,金额,收/支\n'
+        '2026-05-10,Monthly salary,12345.67,收入\n'
+        '2026-05-11,订单退款,25.00,收入\n',
+      );
+
+      expect(report.rows, hasLength(1));
+      expect(report.rows.single.kind, IngestTransactionKind.income);
+      expect(report.rows.single.amountMinor, 1234567);
+      expect(report.rows.single.categoryHint, 'salary');
+      expect(
+        report.issues.single.code,
+        IngestParseIssueCode.unsupportedDirection,
+      );
+      expect(report.accountsForEveryCandidate, isTrue);
+    });
+
+    test(
+      'old draft JSON defaults to expense and new JSON preserves income',
+      () {
+        final old = ParsedTransaction.fromJson(<String, Object?>{
+          'description': 'Legacy',
+          'amount_minor': -100,
+          'currency': 'CNY',
+          'occurred_at': '2026-05-10T00:00:00.000Z',
+        });
+        expect(old.kind, IngestTransactionKind.expense);
+
+        final income = ParsedTransaction(
+          description: 'Interest',
+          amountMinor: 250,
+          currency: 'CNY',
+          occurredAt: DateTime.utc(2026, 5, 10),
+          kind: IngestTransactionKind.income,
+          categoryHint: 'interest',
+        );
+        expect(
+          ParsedTransaction.fromJson(income.toJson()).kind,
+          IngestTransactionKind.income,
+        );
+      },
+    );
 
     test('empty input yields no rows', () {
       expect(parseCsvLedger(''), isEmpty);

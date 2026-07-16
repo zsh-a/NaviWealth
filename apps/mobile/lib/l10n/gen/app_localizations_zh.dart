@@ -2954,6 +2954,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireProjectionTitle => '多场景模拟';
 
   @override
+  String get fireBudgetNoDataTitle => '暂无预算信号';
+
+  @override
+  String get fireBudgetNoDataDetail => '设置月度预算后，可将当前支出压力联动到 FIRE 计划。';
+
+  @override
+  String get fireBudgetComfortableTitle => '预算支持当前计划';
+
+  @override
+  String get fireBudgetComfortableDetail => '本月支出仍处于舒适区间。';
+
+  @override
+  String get fireBudgetStrainedTitle => '预算压力正在上升';
+
+  @override
+  String get fireBudgetStrainedDetail => '支出已接近月度上限，请优先守住计划结余。';
+
+  @override
+  String get fireBudgetOverTitle => '本月预算已超支';
+
+  @override
+  String get fireBudgetOverDetail => '当前支出压力可能降低 FIRE 计划所依赖的月度结余。';
+
+  @override
   String get fireProjectionSubtitle => '各收益场景下的净资产路径；虚线为通胀调整后的目标。';
 
   @override
@@ -4796,6 +4820,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatProposalKindExpense => '支出';
 
   @override
+  String get aiChatProposalKindIncome => '收入';
+
+  @override
   String get aiChatProposalKindLiabilityPayment => '还款';
 
   @override
@@ -4891,6 +4918,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatProposalBatchConfirmAll => '全部确认';
+
+  @override
+  String aiChatProposalBatchProgress(int completed, int total) {
+    return '正在处理第 $completed/$total 项';
+  }
+
+  @override
+  String get aiChatProposalBatchRecover => '撤销已写入项';
+
+  @override
+  String aiChatProposalBatchRecoveryNeeded(int count) {
+    return '仍有 $count 项已写入，撤销完成前不会重新执行批次';
+  }
+
+  @override
+  String get aiChatProposalBatchRolledBack => '已撤销本批次中写入的项目，可以安全重试。';
 
   @override
   String aiChatProposalBatchResultAllOk(int count) {
@@ -8335,7 +8378,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get ingestExpenseAccountLabel => '支出账户';
+  String get ingestExpenseAccountLabel => '账单账户';
 
   @override
   String ingestConfirmAllFresh(int count) {
@@ -8343,7 +8386,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get ingestSelectAccountFirst => '请先选择支出账户';
+  String get ingestSelectAccountFirst => '请先选择账单账户';
 
   @override
   String get ingestServiceNotReady => '服务尚未就绪';
@@ -8477,6 +8520,16 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String ingestParseSummary(int total, int fresh, int dup) {
     return '解析 $total 笔（新增 $fresh · 疑似重复 $dup）';
+  }
+
+  @override
+  String ingestParseSummaryWithSkipped(
+    int total,
+    int fresh,
+    int dup,
+    int skipped,
+  ) {
+    return '解析 $total 笔（新增 $fresh · 疑似重复 $dup · 跳过 $skipped）';
   }
 
   @override
@@ -12208,4 +12261,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeAgentInboxAction => '查看 Inbox 建议';
+
+  @override
+  String get ingestKindExpense => '支出';
+
+  @override
+  String get ingestKindIncome => '收入';
 }

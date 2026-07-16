@@ -7,6 +7,7 @@
 library;
 
 import '../domain/ingest_models.dart';
+import '../domain/ingest_parse_diagnostics.dart';
 import 'bank_ingest_parser.dart';
 import 'broker_ingest_parser.dart';
 import 'csv_ingest_parser.dart';
@@ -59,49 +60,86 @@ List<ParsedTransaction> parseStatementLedger(
   String raw, {
   StatementProvider provider = StatementProvider.auto,
   String defaultCurrency = 'CNY',
+}) => parseStatementLedgerReport(
+  raw,
+  provider: provider,
+  defaultCurrency: defaultCurrency,
+).rows;
+
+class StatementParseReport {
+  const StatementParseReport({required this.provider, required this.ledger});
+
+  final StatementProvider provider;
+  final ParsedLedgerReport<ParsedTransaction> ledger;
+
+  List<ParsedTransaction> get rows => ledger.rows;
+}
+
+StatementParseReport parseStatementLedgerReport(
+  String raw, {
+  StatementProvider provider = StatementProvider.auto,
+  String defaultCurrency = 'CNY',
 }) {
   final effective = provider == StatementProvider.auto
       ? detectStatementProvider(raw)
       : provider;
-  return switch (effective) {
-    StatementProvider.auto || StatementProvider.generic => parseCsvLedger(
+  final ledger = switch (effective) {
+    StatementProvider.auto || StatementProvider.generic => parseCsvLedgerReport(
       raw,
       defaultCurrency: defaultCurrency,
     ),
-    StatementProvider.alipay => _parseAlipayLedger(
+    StatementProvider.alipay => _parseAlipayLedgerReport(
       raw,
       defaultCurrency: defaultCurrency,
     ),
-    StatementProvider.wechatPay => parseCsvLedger(
+    StatementProvider.wechatPay => parseCsvLedgerReport(
       raw,
       defaultCurrency: defaultCurrency,
     ),
-    StatementProvider.bank => parseBankCashLedger(
-      raw,
-      defaultCurrency: defaultCurrency,
+    StatementProvider.bank => _legacyReport(
+      parseBankCashLedger(raw, defaultCurrency: defaultCurrency),
     ),
-    StatementProvider.broker => parseBrokerCashLedger(
-      raw,
-      defaultCurrency: defaultCurrency == 'CNY' ? 'USD' : defaultCurrency,
+    StatementProvider.broker => _legacyReport(
+      parseBrokerCashLedger(
+        raw,
+        defaultCurrency: defaultCurrency == 'CNY' ? 'USD' : defaultCurrency,
+      ),
     ),
   };
+  return StatementParseReport(provider: effective, ledger: ledger);
 }
 
-List<ParsedTransaction> _parseAlipayLedger(
+ParsedLedgerReport<ParsedTransaction> _parseAlipayLedgerReport(
   String raw, {
   required String defaultCurrency,
 }) {
-  return parseCsvLedger(
-        _preferAlipayPaidAt(raw),
-        defaultCurrency: defaultCurrency,
-      )
-      .map((row) {
-        final categoryHint = _alipayCategoryHint(row.description);
-        return categoryHint == null
-            ? row
-            : row.copyWith(categoryHint: categoryHint);
-      })
-      .toList(growable: false);
+  final report = parseCsvLedgerReport(
+    _preferAlipayPaidAt(raw),
+    defaultCurrency: defaultCurrency,
+  );
+  return ParsedLedgerReport(
+    rows: [
+      for (final row in report.rows)
+        if (_alipayCategoryHint(row.description) case final categoryHint?)
+          row.copyWith(categoryHint: categoryHint)
+        else
+          row,
+    ],
+    issues: report.issues,
+    candidateRowCount: report.candidateRowCount,
+    diagnosticsComplete: report.diagnosticsComplete,
+  );
+}
+
+ParsedLedgerReport<ParsedTransaction> _legacyReport(
+  List<ParsedTransaction> rows,
+) {
+  return ParsedLedgerReport(
+    rows: rows,
+    issues: const <IngestParseIssue>[],
+    candidateRowCount: rows.length,
+    diagnosticsComplete: false,
+  );
 }
 
 /// Only map Alipay categories that have an unambiguous equivalent in the

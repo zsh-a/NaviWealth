@@ -105,7 +105,7 @@ class _HeroBody extends ConsumerWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.full),
             child: SizedBox(
-              height: 6,
+              height: AppSpacing.s6,
               child: Stack(
                 children: [
                   ColoredBox(

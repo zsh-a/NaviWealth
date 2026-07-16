@@ -13,30 +13,38 @@ library;
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
-import '../../features/life/composition/life_route_paths.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'domain_shell.dart';
+
+/// App-composed route for the cross-domain home surface.
+///
+/// Core does not own a LifeOS route. The app composition root overrides this
+/// with its registered home path; isolated domain-shell tests can leave it
+/// null and still switch directly between domain roots.
+final domainSwitcherHomePathProvider = Provider<String?>((ref) => null);
 
 /// Show the domain-picker sheet. No-op if fewer than 2 domains are
 /// registered (single-domain installs never need the picker).
 ///
-/// Always offers the Life hub first when multi-domain is active (Phase B).
+/// Offers the app-composed home surface first when [homePath] is present.
 Future<void> showDomainSwitcherSheet(
   BuildContext context,
   List<DomainShellSpec> specs,
+  String? homePath,
 ) async {
   if (specs.length < 2) return;
   final activePath = GoRouter.of(
     context,
   ).routeInformationProvider.value.uri.path;
   final active = activeSpecForPath(specs, activePath);
-  final onLife =
-      activePath == LifeRoutes.home ||
-      activePath.startsWith('${LifeRoutes.home}/');
+  final onHome =
+      homePath != null &&
+      (activePath == homePath || activePath.startsWith('$homePath/'));
   final l10n = AppLocalizations.of(context);
   final router = GoRouter.of(context);
   await showAppSheet<void>(
@@ -56,19 +64,21 @@ Future<void> showDomainSwitcherSheet(
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _LifeRow(
-            selected: onLife,
-            onTap: () => selectTarget(LifeRoutes.home, selected: onLife),
-          ),
+          if (homePath != null)
+            _LifeRow(
+              selected: onHome,
+              onTap: () => selectTarget(homePath, selected: onHome),
+            ),
           for (final spec in specs)
             _DomainRow(
               spec: spec,
-              selected: !onLife && spec.scope == active.scope,
+              selected: !onHome && spec.scope == active.scope,
               onTap: () {
-                final selected = !onLife && spec.scope == active.scope;
+                final selected = !onHome && spec.scope == active.scope;
+                if (spec.tabs.isEmpty && homePath == null) return;
                 final target = spec.tabs.isNotEmpty
                     ? spec.tabs.first.routePath
-                    : LifeRoutes.home;
+                    : homePath!;
                 selectTarget(target, selected: selected);
               },
             ),

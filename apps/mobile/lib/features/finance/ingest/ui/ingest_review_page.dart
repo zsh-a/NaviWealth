@@ -1046,14 +1046,23 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       } else if (result.total == 0) {
         AppMessenger.show(context, ToastKind.info, l10n.ingestNoTransactions);
       } else {
+        final hasAuditedSkips =
+            result.parseDiagnosticsComplete && result.skippedCount > 0;
         AppMessenger.show(
           context,
-          ToastKind.success,
-          l10n.ingestParseSummary(
-            result.total,
-            result.newCount,
-            result.duplicateCount,
-          ),
+          hasAuditedSkips ? ToastKind.warning : ToastKind.success,
+          hasAuditedSkips
+              ? l10n.ingestParseSummaryWithSkipped(
+                  result.total,
+                  result.newCount,
+                  result.duplicateCount,
+                  result.skippedCount,
+                )
+              : l10n.ingestParseSummary(
+                  result.total,
+                  result.newCount,
+                  result.duplicateCount,
+                ),
         );
       }
     } catch (_) {

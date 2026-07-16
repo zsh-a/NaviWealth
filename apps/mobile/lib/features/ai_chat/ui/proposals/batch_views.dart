@@ -19,6 +19,13 @@ class _BatchProposalView extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final registry = ref.watch(proposalKindRegistryProvider);
     final isApplying = applyState.status == ProposalApplyStatus.applying;
+    final progress = BatchProposalProgress.fromState(
+      applyState,
+      total: plan.children.length,
+    );
+    final needsRecovery =
+        applyState.status == ProposalApplyStatus.errored &&
+        progress.requiresRecovery;
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s8),
       decoration: BoxDecoration(
@@ -39,7 +46,12 @@ class _BatchProposalView extends ConsumerWidget {
               ),
               const SizedBox(width: AppSpacing.s8),
               Text(
-                l10n.aiChatProposalBatchPending(plan.children.length),
+                isApplying
+                    ? l10n.aiChatProposalBatchProgress(
+                        progress.completed,
+                        progress.total,
+                      )
+                    : l10n.aiChatProposalBatchPending(plan.children.length),
                 style: context.captionStyle,
               ),
             ],
@@ -50,7 +62,11 @@ class _BatchProposalView extends ConsumerWidget {
             style: context.rowTitleStyle.copyWith(color: colors.foreground),
           ),
           const SizedBox(height: AppSpacing.s8),
-          _BatchChildrenList(plan: plan, registry: registry),
+          _BatchChildrenList(
+            plan: plan,
+            registry: registry,
+            applyState: applyState,
+          ),
           if (plan.warnings.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s10),
             _WarningCallout(warnings: plan.warnings),
@@ -63,6 +79,25 @@ class _BatchProposalView extends ConsumerWidget {
               style: context.captionStyle.copyWith(
                 color: context.theme.colors.destructive,
               ),
+            ),
+          ],
+          if (needsRecovery) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              l10n.aiChatProposalBatchRecoveryNeeded(
+                progress.remainingChildren.length,
+              ),
+              style: context.captionStyle.copyWith(
+                color: context.theme.colors.destructive,
+              ),
+            ),
+          ] else if (applyState.status == ProposalApplyStatus.errored &&
+              progress.rollbackComplete &&
+              progress.completed > 0) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              l10n.aiChatProposalBatchRolledBack,
+              style: context.captionStyle,
             ),
           ],
           const SizedBox(height: AppSpacing.s12),
@@ -79,12 +114,14 @@ class _BatchProposalView extends ConsumerWidget {
                 child: Text(
                   isApplying
                       ? l10n.aiChatProposalApplying
+                      : needsRecovery
+                      ? l10n.aiChatProposalBatchRecover
                       : l10n.aiChatProposalBatchConfirmAll,
                 ),
               ),
               FButton(
                 variant: FButtonVariant.outline,
-                onPress: isApplying ? null : onCancel,
+                onPress: isApplying || needsRecovery ? null : onCancel,
                 prefix: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
                 child: Text(l10n.commonCancel),
               ),
@@ -97,14 +134,23 @@ class _BatchProposalView extends ConsumerWidget {
 }
 
 class _BatchChildrenList extends StatelessWidget {
-  const _BatchChildrenList({required this.plan, required this.registry});
+  const _BatchChildrenList({
+    required this.plan,
+    required this.registry,
+    required this.applyState,
+  });
 
   final BatchProposalPlan plan;
   final List<ProposalKindMeta> registry;
+  final ProposalApplyState applyState;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final progress = BatchProposalProgress.fromState(
+      applyState,
+      total: plan.children.length,
+    );
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s8,
@@ -132,7 +178,15 @@ class _BatchChildrenList extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${i + 1}.', style: context.microCaptionStyle),
+                  SizedBox(
+                    width: AppIconSizes.h18,
+                    height: AppIconSizes.h18,
+                    child: _BatchChildStatus(
+                      index: i,
+                      applyState: applyState,
+                      progress: progress,
+                    ),
+                  ),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
@@ -148,6 +202,66 @@ class _BatchChildrenList extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _BatchChildStatus extends StatelessWidget {
+  const _BatchChildStatus({
+    required this.index,
+    required this.applyState,
+    required this.progress,
+  });
+
+  final int index;
+  final ProposalApplyState applyState;
+  final BatchProposalProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    if (applyState.status == ProposalApplyStatus.applying) {
+      if (progress.recovering && index < progress.completed) {
+        return const Padding(
+          padding: EdgeInsets.all(AppSpacing.s2),
+          child: CircularProgressIndicator(strokeWidth: AppStroke.medium),
+        );
+      }
+      if (index < progress.completed) {
+        return Icon(
+          FLucideIcons.check,
+          size: AppIconSizes.xs,
+          color: context.theme.colors.primary,
+        );
+      }
+      if (index == progress.completed && !progress.recovering) {
+        return const Padding(
+          padding: EdgeInsets.all(AppSpacing.s2),
+          child: CircularProgressIndicator(strokeWidth: AppStroke.medium),
+        );
+      }
+    }
+    if (applyState.status == ProposalApplyStatus.errored) {
+      if (index == progress.failedIndex) {
+        return Icon(
+          FLucideIcons.circleX,
+          size: AppIconSizes.xs,
+          color: context.theme.colors.destructive,
+        );
+      }
+      if (index < progress.completed) {
+        return Icon(
+          progress.rollbackComplete
+              ? FLucideIcons.undo2
+              : FLucideIcons.triangleAlert,
+          size: AppIconSizes.xs,
+          color: progress.rollbackComplete
+              ? context.theme.colors.mutedForeground
+              : context.theme.colors.destructive,
+        );
+      }
+    }
+    return Center(
+      child: Text('${index + 1}.', style: context.microCaptionStyle),
     );
   }
 }

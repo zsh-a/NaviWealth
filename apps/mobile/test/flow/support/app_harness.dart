@@ -19,6 +19,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/app/share_intents/share_intent_service.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
@@ -96,7 +97,7 @@ class FlowDataHarness {
     return FlowDataHarness(
       db: makeTestDatabase(),
       outbox: InMemoryOutboxStore(),
-      stamper: makeStubStamper(),
+      stamper: makeStubStamper(userId: kLocalOnlyUserId),
     );
   }
 
@@ -149,6 +150,12 @@ Future<void> bootApp(
         // routes, active-domain aggregators, and domain-owned provider
         // seams stay in sync.
         ...lifeOsDomainCompositionOverrides(),
+        // Task flows exercise FinanceOS jobs. Production now opens on the
+        // cross-domain Life hub, so pin the test router to Finance Today
+        // instead of making every Page Object depend on the hub UI.
+        appRouterProvider.overrideWith(
+          (ref) => buildAppRouter(ref, initialLocation: '/'),
+        ),
         // Data layer → deterministic streams. Seeded from [FlowSeed] so a
         // Task can assert on rendered balances without touching Drift.
         manualAssetsStreamProvider.overrideWith(

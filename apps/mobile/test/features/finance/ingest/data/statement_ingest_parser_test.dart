@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/statement_ingest_parser.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_parse_diagnostics.dart';
 
 void main() {
   group('statement provider detection', () {
@@ -38,6 +42,25 @@ void main() {
   });
 
   group('parseStatementLedger', () {
+    test('file corpus reports every Alipay row outcome', () {
+      final raw = File(
+        'test/fixtures/finance/ingest/alipay_representative.csv',
+      ).readAsStringSync();
+      final report = parseStatementLedgerReport(raw);
+
+      expect(report.provider, StatementProvider.alipay);
+      expect(report.rows, hasLength(2));
+      expect(report.ledger.candidateRowCount, 5);
+      expect(report.ledger.accountsForEveryCandidate, isTrue);
+      expect(report.ledger.issues.map((issue) => issue.code), [
+        IngestParseIssueCode.unsupportedDirection,
+        IngestParseIssueCode.unsupportedDirection,
+        IngestParseIssueCode.ignoredStatus,
+      ]);
+      expect(report.rows[0].categoryHint, 'dining');
+      expect(report.rows[1].categoryHint, 'groceries');
+    });
+
     test('Alipay uses payment time rather than creation time', () {
       final rows = parseStatementLedger(
         '#支付宝交易记录明细查询\n'
@@ -92,17 +115,20 @@ void main() {
       expect(rows.single.amountMinor, -1800);
     });
 
-    test('bank exports keep debit rows and drop credit rows', () {
+    test('bank exports produce typed debit and salary-credit rows', () {
       final rows = parseStatementLedger(
         '交易日期,交易摘要,对方户名,借方金额,贷方金额,币种\n'
         '2026-05-11,快捷支付,招商超市,66.80,,CNY\n'
         '2026-05-12,工资,公司,,10000.00,CNY\n',
       );
 
-      expect(rows, hasLength(1));
-      expect(rows.single.description, '招商超市 · 快捷支付');
-      expect(rows.single.amountMinor, -6680);
-      expect(rows.single.categoryHint, 'groceries');
+      expect(rows, hasLength(2));
+      expect(rows.first.description, '招商超市 · 快捷支付');
+      expect(rows.first.amountMinor, -6680);
+      expect(rows.first.categoryHint, 'groceries');
+      expect(rows.last.kind, IngestTransactionKind.income);
+      expect(rows.last.amountMinor, 1000000);
+      expect(rows.last.categoryHint, 'salary');
     });
 
     test('bank provider supports amount plus debit-credit marker', () {

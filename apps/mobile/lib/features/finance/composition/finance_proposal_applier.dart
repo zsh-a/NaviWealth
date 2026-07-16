@@ -126,6 +126,7 @@ class FinanceProposalApplier implements ProposalApplier {
       final state = switch (plan.kind) {
         'trade' => await tradeApplier.applyTrade(plan, at),
         'expense' => await coreApplier.applyExpense(plan, at),
+        'income' => await coreApplier.applyIncome(plan, at),
         'liability_payment' => await coreApplier.applyLiabilityPayment(
           plan,
           at,

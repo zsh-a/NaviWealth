@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/shell/app_dock_shell.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
@@ -18,6 +19,7 @@ import 'package:naviwealth/features/finance/domain/models/liability.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
+import 'package:naviwealth/features/life/ui/life_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/persistence/test_database.dart';
@@ -95,11 +97,10 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    // Home page localized nav label — "Today" in en-US (renamed from
-    // "Overview" under the IA contract). Test environment falls back to
-    // the first supported locale (en).
-    expect(find.text('Today'), findsWidgets);
-    expect(find.byType(FloatingGlassNavBar), findsOneWidget);
+    // Production now boots into the cross-domain Life hub. The test
+    // environment falls back to the first supported locale (en).
+    expect(find.byType(LifePage), findsOneWidget);
+    expect(find.byType(AppDockShell), findsOneWidget);
   });
 }
 

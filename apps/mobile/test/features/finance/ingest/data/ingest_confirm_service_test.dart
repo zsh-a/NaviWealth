@@ -10,6 +10,7 @@ IngestDraft _draft({
   String id = 'd1',
   String? categoryHint,
   int amountMinor = -3850,
+  IngestTransactionKind kind = IngestTransactionKind.expense,
   DraftStatus status = DraftStatus.pending,
   DedupVerdict verdict = DedupVerdict.newTxn,
 }) => IngestDraft(
@@ -22,6 +23,7 @@ IngestDraft _draft({
     amountMinor: amountMinor,
     currency: 'CNY',
     occurredAt: DateTime.utc(2026, 5, 10),
+    kind: kind,
     categoryHint: categoryHint,
   ),
   verdict: verdict,
@@ -155,6 +157,37 @@ void main() {
         ),
         Decimal.parse('100.00'),
       );
+    });
+  });
+
+  group('IngestConfirmService.incomePlanFor', () {
+    test('maps an income draft to the destination account and category', () {
+      final draft = _draft(
+        categoryHint: 'salary',
+        amountMinor: 500000,
+        kind: IngestTransactionKind.income,
+      );
+      final plan = IngestConfirmService.planFor(draft, accountId: 'acct-bank');
+
+      expect(plan.kind, 'income');
+      expect(plan.payload['account_id'], 'acct-bank');
+      expect(plan.payload['category'], 'salary');
+      expect(
+        Decimal.parse(plan.payload['amount']! as String),
+        Decimal.parse('5000.00'),
+      );
+    });
+
+    test('sanitizes unknown income category hints to other', () {
+      final plan = IngestConfirmService.incomePlanFor(
+        _draft(
+          categoryHint: 'bonus',
+          amountMinor: 100,
+          kind: IngestTransactionKind.income,
+        ),
+        toAccountId: 'acct-bank',
+      );
+      expect(plan.payload['category'], 'other');
     });
   });
 

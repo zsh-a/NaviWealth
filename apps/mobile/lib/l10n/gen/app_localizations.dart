@@ -5394,6 +5394,54 @@ abstract class AppLocalizations {
   /// **'Projection'**
   String get fireProjectionTitle;
 
+  /// No description provided for @fireBudgetNoDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget signal not available'**
+  String get fireBudgetNoDataTitle;
+
+  /// No description provided for @fireBudgetNoDataDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a monthly budget to connect current spending pressure to this FIRE plan.'**
+  String get fireBudgetNoDataDetail;
+
+  /// No description provided for @fireBudgetComfortableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget supports the plan'**
+  String get fireBudgetComfortableTitle;
+
+  /// No description provided for @fireBudgetComfortableDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'This month’s spending is within the comfortable range.'**
+  String get fireBudgetComfortableDetail;
+
+  /// No description provided for @fireBudgetStrainedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget pressure is rising'**
+  String get fireBudgetStrainedTitle;
+
+  /// No description provided for @fireBudgetStrainedDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending is near the monthly limit; protect the planned surplus.'**
+  String get fireBudgetStrainedDetail;
+
+  /// No description provided for @fireBudgetOverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly budget exceeded'**
+  String get fireBudgetOverTitle;
+
+  /// No description provided for @fireBudgetOverDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Current spending pressure may reduce the surplus assumed by this FIRE plan.'**
+  String get fireBudgetOverDetail;
+
   /// No description provided for @fireProjectionSubtitle.
   ///
   /// In en, this message translates to:
@@ -8622,6 +8670,12 @@ abstract class AppLocalizations {
   /// **'Expense'**
   String get aiChatProposalKindExpense;
 
+  /// No description provided for @aiChatProposalKindIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get aiChatProposalKindIncome;
+
   /// No description provided for @aiChatProposalKindLiabilityPayment.
   ///
   /// In en, this message translates to:
@@ -8771,6 +8825,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm all'**
   String get aiChatProposalBatchConfirmAll;
+
+  /// No description provided for @aiChatProposalBatchProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying {completed} of {total}'**
+  String aiChatProposalBatchProgress(int completed, int total);
+
+  /// No description provided for @aiChatProposalBatchRecover.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo applied items'**
+  String get aiChatProposalBatchRecover;
+
+  /// No description provided for @aiChatProposalBatchRecoveryNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 applied item still needs to be undone before retrying} other{{count} applied items still need to be undone before retrying}}'**
+  String aiChatProposalBatchRecoveryNeeded(int count);
+
+  /// No description provided for @aiChatProposalBatchRolledBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied items were undone. The batch is safe to retry.'**
+  String get aiChatProposalBatchRolledBack;
 
   /// Snackbar shown after the user taps 'Confirm all' and every item applied cleanly.
   ///
@@ -14915,10 +14993,10 @@ abstract class AppLocalizations {
   /// **'Failed to load the queue: {error}'**
   String ingestQueueLoadError(String error);
 
-  /// Ingest review: paying-account selector label
+  /// Ingest review: source account for expenses or destination account for income
   ///
   /// In en, this message translates to:
-  /// **'Paid from'**
+  /// **'Account'**
   String get ingestExpenseAccountLabel;
 
   /// Ingest review: batch-confirm button (new drafts only)
@@ -14930,7 +15008,7 @@ abstract class AppLocalizations {
   /// Ingest review: no account chosen warning
   ///
   /// In en, this message translates to:
-  /// **'Pick a paying account first'**
+  /// **'Pick a statement account first'**
   String get ingestSelectAccountFirst;
 
   /// Ingest review: confirm service unavailable
@@ -15166,6 +15244,17 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parsed {total} · {fresh} new · {dup} possible dup'**
   String ingestParseSummary(int total, int fresh, int dup);
+
+  /// Ingest review: parse summary when deterministic row diagnostics report skipped input rows
+  ///
+  /// In en, this message translates to:
+  /// **'Parsed {total} · {fresh} new · {dup} possible dup · {skipped} skipped'**
+  String ingestParseSummaryWithSkipped(
+    int total,
+    int fresh,
+    int dup,
+    int skipped,
+  );
 
   /// Ingest review: in-page title while an import is being parsed
   ///
@@ -21746,6 +21835,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Review inbox suggestions'**
   String get knowledgeAgentInboxAction;
+
+  /// No description provided for @ingestKindExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get ingestKindExpense;
+
+  /// No description provided for @ingestKindIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get ingestKindIncome;
 }
 
 class _AppLocalizationsDelegate

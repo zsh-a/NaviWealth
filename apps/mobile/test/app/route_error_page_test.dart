@@ -12,7 +12,8 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 GoRouter _router({String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
-    errorBuilder: (context, state) => RouteErrorPage(state: state),
+    errorBuilder: (context, state) =>
+        RouteErrorPage(state: state, homePath: '/'),
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (_, _) => const Text('home')),
     ],

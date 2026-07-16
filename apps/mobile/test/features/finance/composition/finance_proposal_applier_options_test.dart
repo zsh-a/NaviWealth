@@ -162,6 +162,44 @@ void main() {
     expect(await db.select(db.journalEntries).get(), isEmpty);
   });
 
+  test(
+    'income creates a balanced entry against seeded salary income',
+    () async {
+      final state = await applier.apply(
+        plan('income', {
+          'account_id': 'checking',
+          'amount': '12000.50',
+          'currency': 'CNY',
+          'date': '2026-05-31T00:00:00Z',
+          'category': 'salary',
+          'note': 'May salary',
+        }),
+      );
+
+      final stored = await journalEntryRepo.getById(state.appliedEntityId!);
+      expect(stored, isNotNull);
+      expect(stored!.entry.narration, 'May salary');
+      expect(stored.postings.map((posting) => posting.accountId), [
+        'checking',
+        AccountRepository.systemAccountIdForPath(
+          'income:salary',
+          ownerUserId: 'u-test',
+        ),
+      ]);
+      expect(stored.postings.map((posting) => posting.units), [
+        Decimal.parse('12000.50'),
+        Decimal.parse('-12000.50'),
+      ]);
+      expect(
+        stored.postings.fold(
+          Decimal.zero,
+          (total, posting) => total + posting.units,
+        ),
+        Decimal.zero,
+      );
+    },
+  );
+
   test('account_create persists an account and undo tombstones it', () async {
     final state = await applier.apply(
       plan('account_create', {

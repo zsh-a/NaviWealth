@@ -187,6 +187,14 @@ class _DraftCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _DraftMetaChip(
+                  icon: p.kind == IngestTransactionKind.income
+                      ? FLucideIcons.trendingUp
+                      : FLucideIcons.trendingDown,
+                  label: p.kind == IngestTransactionKind.income
+                      ? l10n.ingestKindIncome
+                      : l10n.ingestKindExpense,
+                ),
+                _DraftMetaChip(
                   icon: FLucideIcons.calendar,
                   label: _ymd(p.occurredAt),
                 ),

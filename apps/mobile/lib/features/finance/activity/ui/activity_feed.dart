@@ -394,8 +394,8 @@ class _FeedFooter extends StatelessWidget {
         child: canLoadMore
             ? (loading
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: AppIconSizes.md,
+                      height: AppIconSizes.md,
                       child: FCircularProgress(),
                     )
                   : FButton(

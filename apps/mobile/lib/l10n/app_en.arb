@@ -1756,6 +1756,14 @@
   },
 
   "fireProjectionTitle": "Projection",
+  "fireBudgetNoDataTitle": "Budget signal not available",
+  "fireBudgetNoDataDetail": "Set a monthly budget to connect current spending pressure to this FIRE plan.",
+  "fireBudgetComfortableTitle": "Budget supports the plan",
+  "fireBudgetComfortableDetail": "This month’s spending is within the comfortable range.",
+  "fireBudgetStrainedTitle": "Budget pressure is rising",
+  "fireBudgetStrainedDetail": "Spending is near the monthly limit; protect the planned surplus.",
+  "fireBudgetOverTitle": "Monthly budget exceeded",
+  "fireBudgetOverDetail": "Current spending pressure may reduce the surplus assumed by this FIRE plan.",
   "fireProjectionSubtitle": "Net worth path under each return scenario; dashed line is the inflation-adjusted target.",
   "fireProjectionTargetLineLegend": "Target (inflation-adjusted)",
 
@@ -2687,6 +2695,7 @@
 
   "aiChatProposalKindTrade": "Trade",
   "aiChatProposalKindExpense": "Expense",
+  "aiChatProposalKindIncome": "Income",
   "aiChatProposalKindLiabilityPayment": "Repayment",
   "aiChatProposalKindAccountCreate": "New account",
   "aiChatProposalKindAssetValuation": "Valuation update",
@@ -2746,6 +2755,19 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "aiChatProposalBatchConfirmAll": "Confirm all",
+  "aiChatProposalBatchProgress": "Applying {completed} of {total}",
+  "@aiChatProposalBatchProgress": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "aiChatProposalBatchRecover": "Undo applied items",
+  "aiChatProposalBatchRecoveryNeeded": "{count, plural, =1{1 applied item still needs to be undone before retrying} other{{count} applied items still need to be undone before retrying}}",
+  "@aiChatProposalBatchRecoveryNeeded": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiChatProposalBatchRolledBack": "Applied items were undone. The batch is safe to retry.",
   "aiChatProposalBatchResultAllOk": "{count, plural, =1{Applied 1 item} other{Applied {count} items}}",
   "@aiChatProposalBatchResultAllOk": {
     "description": "Snackbar shown after the user taps 'Confirm all' and every item applied cleanly.",
@@ -4762,14 +4784,14 @@
     "description": "Ingest review: drafts stream error",
     "placeholders": { "error": { "type": "String" } }
   },
-  "ingestExpenseAccountLabel": "Paid from",
-  "@ingestExpenseAccountLabel": { "description": "Ingest review: paying-account selector label" },
+  "ingestExpenseAccountLabel": "Account",
+  "@ingestExpenseAccountLabel": { "description": "Ingest review: source account for expenses or destination account for income" },
   "ingestConfirmAllFresh": "Confirm all · new only ({count})",
   "@ingestConfirmAllFresh": {
     "description": "Ingest review: batch-confirm button (new drafts only)",
     "placeholders": { "count": { "type": "int" } }
   },
-  "ingestSelectAccountFirst": "Pick a paying account first",
+  "ingestSelectAccountFirst": "Pick a statement account first",
   "@ingestSelectAccountFirst": { "description": "Ingest review: no account chosen warning" },
   "ingestServiceNotReady": "Service not ready yet",
   "@ingestServiceNotReady": { "description": "Ingest review: confirm service unavailable" },
@@ -4872,6 +4894,11 @@
   "@ingestParseSummary": {
     "description": "Ingest review: parse result summary toast",
     "placeholders": { "total": { "type": "int" }, "fresh": { "type": "int" }, "dup": { "type": "int" } }
+  },
+  "ingestParseSummaryWithSkipped": "Parsed {total} · {fresh} new · {dup} possible dup · {skipped} skipped",
+  "@ingestParseSummaryWithSkipped": {
+    "description": "Ingest review: parse summary when deterministic row diagnostics report skipped input rows",
+    "placeholders": { "total": { "type": "int" }, "fresh": { "type": "int" }, "dup": { "type": "int" }, "skipped": { "type": "int" } }
   },
   "ingestProcessingTitle": "Parsing import",
   "@ingestProcessingTitle": { "description": "Ingest review: in-page title while an import is being parsed" },
@@ -6378,5 +6405,7 @@
   "knowledgeAgentInboxProposalDecisionLinks": "Decision links",
   "knowledgeAgentInboxProposalSuggestionSingular": "suggestion",
   "knowledgeAgentInboxProposalSuggestionPlural": "suggestions",
-  "knowledgeAgentInboxAction": "Review inbox suggestions"
+  "knowledgeAgentInboxAction": "Review inbox suggestions",
+  "ingestKindExpense": "Expense",
+  "ingestKindIncome": "Income"
 }

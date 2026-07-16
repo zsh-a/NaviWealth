@@ -290,6 +290,7 @@ void main() {
         'propose_concept_link',
         'propose_expense',
         'propose_fire_plan_update',
+        'propose_income',
         'propose_liability_payment',
         'propose_merge',
         'propose_options_journal_entry',

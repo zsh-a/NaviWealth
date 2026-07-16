@@ -187,6 +187,7 @@ class _MobileLayout extends ConsumerWidget {
     // shortcut; the discoverable entry is now the header domain chip.
     final specs = ref.watch(activeDomainShellsProvider);
     final hasSwitcher = specs.length >= 2;
+    final switcherHomePath = ref.watch(domainSwitcherHomePathProvider);
     final assistantAction = ref.watch(domainTabsAssistantActionProvider);
     final l10n = AppLocalizations.of(context);
 
@@ -271,6 +272,7 @@ class _MobileLayout extends ConsumerWidget {
                                         ? () => showDomainSwitcherSheet(
                                             context,
                                             specs,
+                                            switcherHomePath,
                                           )
                                         : null,
                                     child: FloatingGlassNavBar(

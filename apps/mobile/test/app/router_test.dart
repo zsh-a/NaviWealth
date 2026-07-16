@@ -28,6 +28,7 @@ import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/desktop_sidebar.dart';
 import 'package:naviwealth/core/shell/route_error_page.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_chat_page.dart';
 import 'package:naviwealth/features/auth/ui/devices_page.dart';
@@ -83,6 +84,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
+import '../features/finance/data/repositories/_stub_stamper.dart';
 import '../features/finance/rebalance/data/rebalance_execution_test_fixtures.dart';
 
 class _OfflineBenchmarkSource implements BenchmarkHistorySource {
@@ -141,6 +143,7 @@ Future<ProviderContainer> _pumpAt(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
+      mutationStamperProvider.overrideWith((_) async => makeStubStamper()),
       // Match production bootstrap: the DomainPack inventory, router
       // shells, active-domain aggregators, and domain-owned provider
       // seams all come from the same composition bundle.
@@ -427,6 +430,7 @@ void main() {
     ) async {
       await _pumpAt(tester, initialLocation: AppRoutes.cashflowDividends);
       expect(find.byType(DividendCenterPage), findsOneWidget);
+      await _drainTimers(tester);
     });
 
     testWidgets('/activity/entry/:id resolves without route extra', (
