@@ -2183,7 +2183,7 @@ abstract class AppLocalizations {
   /// Subtitle under the Life hub greeting
   ///
   /// In en, this message translates to:
-  /// **'Your cross-domain Life brief'**
+  /// **'Signals across your workspaces'**
   String get lifeBriefSubtitle;
 
   /// Hero card eyebrow on the Life hub
@@ -2191,6 +2191,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'LifeOS'**
   String get lifeStageTitle;
+
+  /// Life hero metric label when high-priority signals exist
+  ///
+  /// In en, this message translates to:
+  /// **'Need attention'**
+  String get lifeHeroMetricAttention;
+
+  /// Life hero metric label when only normal signals exist
+  ///
+  /// In en, this message translates to:
+  /// **'Signals'**
+  String get lifeHeroMetricSignals;
+
+  /// Life hero metric label when calm
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get lifeHeroMetricClear;
 
   /// Life hero when no signals
   ///
@@ -2216,6 +2234,24 @@ abstract class AppLocalizations {
   /// **'{count} workspaces · signals only, not a second ledger'**
   String lifeHeroBody(int count);
 
+  /// Collapsed sticky residual when high-priority signals exist
+  ///
+  /// In en, this message translates to:
+  /// **'{count} attention'**
+  String lifeStickyAttention(int count);
+
+  /// Collapsed sticky residual for normal signals
+  ///
+  /// In en, this message translates to:
+  /// **'{count} signals'**
+  String lifeStickySignals(int count);
+
+  /// Collapsed sticky residual when calm
+  ///
+  /// In en, this message translates to:
+  /// **'All clear'**
+  String get lifeStickyCalm;
+
   /// Section title for domain workspace chips
   ///
   /// In en, this message translates to:
@@ -2228,11 +2264,35 @@ abstract class AppLocalizations {
   /// **'Attention'**
   String get lifeTimelineTitle;
 
+  /// High-priority signal group title on Life hub
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get lifeTimelinePriorityTitle;
+
+  /// Empty attention list title
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet day'**
+  String get lifeTimelineEmptyTitle;
+
   /// Empty state for the life signal list
   ///
   /// In en, this message translates to:
-  /// **'No cross-domain signals right now. Domain workspaces stay one tap away.'**
+  /// **'No cross-domain signals. Open a workspace when you need to dig in.'**
   String get lifeTimelineEmpty;
+
+  /// Expand collapsed attention list
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String lifeTimelineShowMore(int count);
+
+  /// Collapse expanded attention list
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get lifeTimelineShowLess;
 
   /// Domain chip on life timeline
   ///

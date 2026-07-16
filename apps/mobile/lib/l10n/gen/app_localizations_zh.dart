@@ -1159,10 +1159,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTodayBriefSubtitle => '这是你今天的财务简报';
 
   @override
-  String get lifeBriefSubtitle => '跨域 Life 今日简报';
+  String get lifeBriefSubtitle => '跨域信号与工作区入口';
 
   @override
   String get lifeStageTitle => 'LifeOS';
+
+  @override
+  String get lifeHeroMetricAttention => '需关注';
+
+  @override
+  String get lifeHeroMetricSignals => '信号';
+
+  @override
+  String get lifeHeroMetricClear => '平稳';
 
   @override
   String get lifeHeroHeadlineCalm => '各域状态平稳';
@@ -1183,13 +1192,40 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String lifeStickyAttention(int count) {
+    return '$count 需关注';
+  }
+
+  @override
+  String lifeStickySignals(int count) {
+    return '$count 信号';
+  }
+
+  @override
+  String get lifeStickyCalm => '各域平稳';
+
+  @override
   String get lifeWorkbenchTitle => '工作区';
 
   @override
   String get lifeTimelineTitle => '关注';
 
   @override
-  String get lifeTimelineEmpty => '暂无跨域信号。工作区仍可一键进入。';
+  String get lifeTimelinePriorityTitle => '优先';
+
+  @override
+  String get lifeTimelineEmptyTitle => '今天很安静';
+
+  @override
+  String get lifeTimelineEmpty => '暂无跨域信号。需要时再进工作区深挖。';
+
+  @override
+  String lifeTimelineShowMore(int count) {
+    return '还有 $count 条';
+  }
+
+  @override
+  String get lifeTimelineShowLess => '收起';
 
   @override
   String get lifeDomainFinance => '财务';

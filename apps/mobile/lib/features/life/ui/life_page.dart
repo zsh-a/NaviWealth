@@ -16,6 +16,9 @@ import 'package:naviwealth/features/life/domain/life_event.dart';
 import 'package:naviwealth/features/life/ui/life_event_l10n.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+/// Max attention rows when the list is collapsed.
+const int _kAttentionCollapsedCap = 5;
+
 class LifePage extends ConsumerWidget {
   const LifePage({super.key});
 
@@ -42,74 +45,41 @@ class LifePage extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    l10n.lifeStageTitle,
+                    hero.localizedMetricLabel(l10n),
                     style: context.mutedLabelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Flexible(
-                  child: Text(
-                    hero.localizedHeadline(l10n),
-                    style: context.labelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                  ),
+                Text(
+                  hero.localizedSticky(l10n),
+                  style: TypographyTokens.numericTitleStrong,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
           modules: [
-            if (packs.isNotEmpty) _WorkspaceChips(packs: packs, l10n: l10n),
+            if (packs.isNotEmpty)
+              _WorkspaceChips(packs: packs, l10n: l10n, summary: hero),
           ],
           secondary: [
-            if (events.isEmpty)
-              SoftCard.raised(
-                padding: AppPageRhythm.cardPadding,
-                borderless: true,
-                child: AppEmptyState(
-                  icon: FLucideIcons.sparkles,
-                  title: l10n.lifeTimelineTitle,
-                  message: l10n.lifeTimelineEmpty,
-                  compact: true,
-                  iconSize: AppIconSizes.lg,
-                ),
-              )
-            else ...[
-              SectionHeader(
-                title: l10n.lifeTimelineTitle,
-                padding: const EdgeInsets.only(
-                  left: AppSpacing.s4,
-                  bottom: AppPageRhythm.row,
-                ),
-              ),
-              LifeTimeline(
-                items: [
-                  for (final e in events)
-                    LifeTimelineItem(
-                      id: e.id,
-                      at: e.at,
-                      title: e.localizedTitle(l10n),
-                      subtitle: e.localizedSubtitle(l10n),
-                      icon: _iconFor(e),
-                      accent: _accentFor(context, e),
-                      domainLabel: _domainLabel(l10n, e.domain),
-                      onOpen: e.routePath == null
-                          ? null
-                          : () => context.go(e.routePath!),
-                    ),
-                ],
-                timeLabel: (at) => formatters.time(at),
-              ),
-            ],
+            _AttentionSection(
+              events: events,
+              l10n: l10n,
+              timeLabel: (at) => formatters.time(at),
+              iconFor: _iconFor,
+              accentFor: (e) => _accentFor(context, e),
+              domainLabel: (scope) => _domainLabel(l10n, scope),
+            ),
           ],
         ),
       ),
     );
   }
 
-  IconData _iconFor(LifeEvent e) => switch (e.template) {
+  static IconData _iconFor(LifeEvent e) => switch (e.template) {
     LifeEventTemplate.financeDaySummary => FLucideIcons.receipt,
     LifeEventTemplate.recoveryAlert => FLucideIcons.heartPulse,
     LifeEventTemplate.executionBlocked => FLucideIcons.octagonAlert,
@@ -118,7 +88,7 @@ class LifePage extends ConsumerWidget {
     LifeEventTemplate.agentResult => FLucideIcons.sparkles,
   };
 
-  Color _accentFor(BuildContext context, LifeEvent e) {
+  static Color _accentFor(BuildContext context, LifeEvent e) {
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
     if (e.priority == LifeSignalPriority.high) {
@@ -136,7 +106,7 @@ class LifePage extends ConsumerWidget {
     };
   }
 
-  String _domainLabel(AppLocalizations l10n, DomainScope scope) =>
+  static String _domainLabel(AppLocalizations l10n, DomainScope scope) =>
       switch (scope) {
         DomainScope.finance => l10n.lifeDomainFinance,
         DomainScope.health => l10n.lifeDomainHealth,
@@ -190,6 +160,7 @@ class _LifeGreeting extends StatelessWidget {
   }
 }
 
+/// Stage: conclusion copy + primary metric number (Health/Execution pattern).
 class _LifeHero extends StatelessWidget {
   const _LifeHero({required this.l10n, required this.summary});
 
@@ -198,35 +169,70 @@ class _LifeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    final metricColor = summary.hasAttention
+        ? semantic.warning
+        : summary.isCalm
+        ? colors.mutedForeground
+        : colors.primary;
+
     return SoftCard.hero(
       padding: AppPageRhythm.heroPadding,
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.lifeStageTitle, style: context.mutedLabelStyle),
-          const SizedBox(height: AppPageRhythm.row),
-          Text(
-            summary.localizedHeadline(l10n),
-            style: TypographyTokens.displaySmall,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  summary.localizedMetricLabel(l10n),
+                  style: context.mutedLabelStyle,
+                ),
+                const SizedBox(height: AppPageRhythm.row),
+                Text(
+                  summary.localizedHeadline(l10n),
+                  style: TypographyTokens.displaySmall.copyWith(height: 1.15),
+                ),
+                const SizedBox(height: AppPageRhythm.row),
+                Text(
+                  summary.localizedBody(l10n),
+                  style: context.bodyCaptionStyle,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppPageRhythm.row),
-          Text(summary.localizedBody(l10n), style: context.bodyCaptionStyle),
+          const SizedBox(width: AppSpacing.s12),
+          Text(
+            '${summary.primaryMetric}',
+            style: TypographyTokens.displayLarge.copyWith(
+              color: metricColor,
+              height: 1,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-/// Compact horizontal domain chips — replaces the large workbench card wall.
+/// Compact horizontal domain chips with per-domain signal badges.
 class _WorkspaceChips extends StatelessWidget {
-  const _WorkspaceChips({required this.packs, required this.l10n});
+  const _WorkspaceChips({
+    required this.packs,
+    required this.l10n,
+    required this.summary,
+  });
 
   final List<DomainPack> packs;
   final AppLocalizations l10n;
+  final LifeHeroSummary summary;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -243,7 +249,14 @@ class _WorkspaceChips extends StatelessWidget {
             children: [
               for (var i = 0; i < packs.length; i++) ...[
                 if (i > 0) const SizedBox(width: AppPageRhythm.row),
-                _DomainChip(pack: packs[i], l10n: l10n, colors: colors),
+                _DomainChip(
+                  pack: packs[i],
+                  l10n: l10n,
+                  colors: colors,
+                  semantic: semantic,
+                  signalCount: summary.signalsFor(packs[i].scope),
+                  highCount: summary.highFor(packs[i].scope),
+                ),
               ],
             ],
           ),
@@ -258,11 +271,17 @@ class _DomainChip extends StatelessWidget {
     required this.pack,
     required this.l10n,
     required this.colors,
+    required this.semantic,
+    required this.signalCount,
+    required this.highCount,
   });
 
   final DomainPack pack;
   final AppLocalizations l10n;
   final FColors colors;
+  final SemanticColors semantic;
+  final int signalCount;
+  final int highCount;
 
   @override
   Widget build(BuildContext context) {
@@ -272,8 +291,15 @@ class _DomainChip extends StatelessWidget {
     final spec = pack.shellSpecBuilder?.call(l10n);
     final label = spec?.label ?? pack.scope.wire;
     final icon = spec?.icon ?? FLucideIcons.layers;
+    final accent = highCount > 0
+        ? switch (pack.scope) {
+            DomainScope.health => colors.destructive,
+            DomainScope.execution => semantic.warning,
+            DomainScope.knowledge => semantic.info,
+            DomainScope.finance => colors.primary,
+          }
+        : colors.primary;
 
-    // SoftCard owns select haptics; navigation is a plain side-effect.
     return SoftCard.raised(
       borderless: true,
       padding: AppPageRhythm.densePadding,
@@ -283,7 +309,7 @@ class _DomainChip extends StatelessWidget {
         children: [
           AppIconTile(
             icon: icon,
-            color: colors.primary,
+            color: accent,
             size: 28,
             iconSize: AppIconSizes.sm,
             radius: AppRadius.sm,
@@ -292,8 +318,161 @@ class _DomainChip extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.s8),
           Text(label, style: context.labelStyle),
+          if (signalCount > 0) ...[
+            const SizedBox(width: AppSpacing.s8),
+            AppBadge(
+              label: '$signalCount',
+              size: AppBadgeSize.compact,
+              tone: highCount > 0 ? AppBadgeTone.warning : AppBadgeTone.accent,
+              minWidth: 22,
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// Attention stream: high-priority first, then the rest, with expand/collapse.
+class _AttentionSection extends StatefulWidget {
+  const _AttentionSection({
+    required this.events,
+    required this.l10n,
+    required this.timeLabel,
+    required this.iconFor,
+    required this.accentFor,
+    required this.domainLabel,
+  });
+
+  final List<LifeEvent> events;
+  final AppLocalizations l10n;
+  final String Function(DateTime at) timeLabel;
+  final IconData Function(LifeEvent e) iconFor;
+  final Color Function(LifeEvent e) accentFor;
+  final String Function(DomainScope scope) domainLabel;
+
+  @override
+  State<_AttentionSection> createState() => _AttentionSectionState();
+}
+
+class _AttentionSectionState extends State<_AttentionSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final events = widget.events;
+    final l10n = widget.l10n;
+
+    if (events.isEmpty) {
+      return SoftCard.raised(
+        padding: AppPageRhythm.cardPadding,
+        borderless: true,
+        child: AppEmptyState(
+          icon: FLucideIcons.sparkles,
+          title: l10n.lifeTimelineEmptyTitle,
+          message: l10n.lifeTimelineEmpty,
+          compact: true,
+          iconSize: AppIconSizes.lg,
+        ),
+      );
+    }
+
+    final high = events
+        .where((e) => e.priority == LifeSignalPriority.high)
+        .toList(growable: false);
+    final normal = events
+        .where((e) => e.priority != LifeSignalPriority.high)
+        .toList(growable: false);
+
+    // High-priority is never truncated. Cap only applies to the normal tier.
+    final shownHigh = high;
+    final List<LifeEvent> shownNormal;
+    if (_expanded) {
+      shownNormal = normal;
+    } else {
+      final remaining = (_kAttentionCollapsedCap - high.length).clamp(
+        0,
+        normal.length,
+      );
+      shownNormal = remaining == 0
+          ? const <LifeEvent>[]
+          : normal.take(remaining).toList(growable: false);
+    }
+    final hiddenCount =
+        events.length - shownHigh.length - shownNormal.length;
+    final showToggle = events.length > _kAttentionCollapsedCap;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (shownHigh.isNotEmpty) ...[
+          SectionHeader(
+            title: l10n.lifeTimelinePriorityTitle,
+            padding: const EdgeInsets.only(
+              left: AppSpacing.s4,
+              bottom: AppPageRhythm.row,
+            ),
+          ),
+          LifeTimeline(
+            items: [
+              for (final e in shownHigh)
+                LifeTimelineItem(
+                  id: e.id,
+                  at: e.at,
+                  title: e.localizedTitle(l10n),
+                  subtitle: e.localizedSubtitle(l10n),
+                  icon: widget.iconFor(e),
+                  accent: widget.accentFor(e),
+                  domainLabel: widget.domainLabel(e.domain),
+                  onOpen: e.routePath == null
+                      ? null
+                      : () => context.go(e.routePath!),
+                ),
+            ],
+            timeLabel: widget.timeLabel,
+          ),
+          if (shownNormal.isNotEmpty)
+            const SizedBox(height: AppPageRhythm.section),
+        ],
+        if (shownNormal.isNotEmpty) ...[
+          SectionHeader(
+            title: l10n.lifeTimelineTitle,
+            padding: const EdgeInsets.only(
+              left: AppSpacing.s4,
+              bottom: AppPageRhythm.row,
+            ),
+          ),
+          LifeTimeline(
+            items: [
+              for (final e in shownNormal)
+                LifeTimelineItem(
+                  id: e.id,
+                  at: e.at,
+                  title: e.localizedTitle(l10n),
+                  subtitle: e.localizedSubtitle(l10n),
+                  icon: widget.iconFor(e),
+                  accent: widget.accentFor(e),
+                  domainLabel: widget.domainLabel(e.domain),
+                  onOpen: e.routePath == null
+                      ? null
+                      : () => context.go(e.routePath!),
+                ),
+            ],
+            timeLabel: widget.timeLabel,
+          ),
+        ],
+        if (showToggle) ...[
+          const SizedBox(height: AppPageRhythm.row),
+          AppRevealControl(
+            expanded: _expanded,
+            collapsedLabel: l10n.lifeTimelineShowMore(
+              hiddenCount > 0 ? hiddenCount : 1,
+            ),
+            expandedLabel: l10n.lifeTimelineShowLess,
+            onToggle: () => setState(() => _expanded = !_expanded),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -172,10 +172,20 @@ final lifeHeroSummaryProvider = Provider<LifeHeroSummary>((ref) {
   final high = signals
       .where((e) => e.priority == LifeSignalPriority.high)
       .length;
+  final byDomain = <DomainScope, int>{};
+  final highByDomain = <DomainScope, int>{};
+  for (final e in signals) {
+    byDomain[e.domain] = (byDomain[e.domain] ?? 0) + 1;
+    if (e.priority == LifeSignalPriority.high) {
+      highByDomain[e.domain] = (highByDomain[e.domain] ?? 0) + 1;
+    }
+  }
   return LifeHeroSummary(
     domainCount: packs.length,
     signalCount: signals.length,
     highPriorityCount: high,
+    signalCountByDomain: Map.unmodifiable(byDomain),
+    highCountByDomain: Map.unmodifiable(highByDomain),
   );
 });
 
@@ -185,11 +195,27 @@ class LifeHeroSummary {
     required this.domainCount,
     required this.signalCount,
     required this.highPriorityCount,
+    this.signalCountByDomain = const {},
+    this.highCountByDomain = const {},
   });
 
   final int domainCount;
   final int signalCount;
   final int highPriorityCount;
+  final Map<DomainScope, int> signalCountByDomain;
+  final Map<DomainScope, int> highCountByDomain;
+
+  /// Stage number: high-priority count when any, else total signals.
+  int get primaryMetric =>
+      highPriorityCount > 0 ? highPriorityCount : signalCount;
+
+  bool get hasAttention => highPriorityCount > 0;
+
+  bool get isCalm => signalCount == 0;
+
+  int signalsFor(DomainScope scope) => signalCountByDomain[scope] ?? 0;
+
+  int highFor(DomainScope scope) => highCountByDomain[scope] ?? 0;
 }
 
 /// Active domains for the Life workbench chips.

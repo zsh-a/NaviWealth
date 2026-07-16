@@ -1196,10 +1196,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTodayBriefSubtitle => 'Your financial brief for today';
 
   @override
-  String get lifeBriefSubtitle => 'Your cross-domain Life brief';
+  String get lifeBriefSubtitle => 'Signals across your workspaces';
 
   @override
   String get lifeStageTitle => 'LifeOS';
+
+  @override
+  String get lifeHeroMetricAttention => 'Need attention';
+
+  @override
+  String get lifeHeroMetricSignals => 'Signals';
+
+  @override
+  String get lifeHeroMetricClear => 'Clear';
 
   @override
   String get lifeHeroHeadlineCalm => 'All clear across domains';
@@ -1220,14 +1229,41 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String lifeStickyAttention(int count) {
+    return '$count attention';
+  }
+
+  @override
+  String lifeStickySignals(int count) {
+    return '$count signals';
+  }
+
+  @override
+  String get lifeStickyCalm => 'All clear';
+
+  @override
   String get lifeWorkbenchTitle => 'Workspaces';
 
   @override
   String get lifeTimelineTitle => 'Attention';
 
   @override
+  String get lifeTimelinePriorityTitle => 'Priority';
+
+  @override
+  String get lifeTimelineEmptyTitle => 'Quiet day';
+
+  @override
   String get lifeTimelineEmpty =>
-      'No cross-domain signals right now. Domain workspaces stay one tap away.';
+      'No cross-domain signals. Open a workspace when you need to dig in.';
+
+  @override
+  String lifeTimelineShowMore(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String get lifeTimelineShowLess => 'Show less';
 
   @override
   String get lifeDomainFinance => 'Finance';

@@ -60,4 +60,16 @@ extension LifeHeroSummaryL10n on LifeHeroSummary {
   String localizedBody(AppLocalizations l10n) {
     return l10n.lifeHeroBody(domainCount);
   }
+
+  String localizedMetricLabel(AppLocalizations l10n) {
+    if (hasAttention) return l10n.lifeHeroMetricAttention;
+    if (signalCount > 0) return l10n.lifeHeroMetricSignals;
+    return l10n.lifeHeroMetricClear;
+  }
+
+  String localizedSticky(AppLocalizations l10n) {
+    if (hasAttention) return l10n.lifeStickyAttention(highPriorityCount);
+    if (signalCount > 0) return l10n.lifeStickySignals(signalCount);
+    return l10n.lifeStickyCalm;
+  }
 }
