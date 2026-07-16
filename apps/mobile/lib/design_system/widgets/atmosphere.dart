@@ -116,22 +116,24 @@ class AppAtmosphere extends StatelessWidget {
         ),
       };
     }
+    // Light wash is a cool canvas tint, not a second card layer — keep
+    // readable contrast for white SoftCards while still feeling "premium".
     return switch (period) {
       AtmospherePeriod.morning => (
-        ColorPalette.cyanBrand50.withValues(alpha: AppOpacity.strong),
-        ColorPalette.surfaceOverlay.withValues(alpha: AppOpacity.disabled),
+        ColorPalette.cyanBrand100.withValues(alpha: AppOpacity.disabled),
+        ColorPalette.surfaceOverlay.withValues(alpha: AppOpacity.medium),
       ),
       AtmospherePeriod.day => (
-        ColorPalette.surfaceOverlay.withValues(alpha: AppOpacity.prominent),
-        primary.withValues(alpha: AppOpacity.whisper),
+        ColorPalette.cyanBrand50.withValues(alpha: AppOpacity.highlight),
+        ColorPalette.surfaceOverlay.withValues(alpha: AppOpacity.light),
       ),
       AtmospherePeriod.evening => (
         ColorPalette.amber50.withValues(alpha: AppOpacity.strong),
         ColorPalette.surfaceOverlay.withValues(alpha: AppOpacity.medium),
       ),
       AtmospherePeriod.night => (
-        ColorPalette.navy100.withValues(alpha: AppOpacity.disabled),
-        ColorPalette.surfaceOverlay.withValues(alpha: AppOpacity.subtle),
+        ColorPalette.navy100.withValues(alpha: AppOpacity.medium),
+        ColorPalette.surfaceOverlay.withValues(alpha: AppOpacity.light),
       ),
     };
   }

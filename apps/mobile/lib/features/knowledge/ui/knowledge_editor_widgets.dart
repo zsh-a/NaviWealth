@@ -166,13 +166,8 @@ class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
         ],
       ],
     );
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border),
-      ),
+    return SoftCard.flat(
+      padding: AppPageRhythm.densePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,

@@ -21,53 +21,39 @@ class KnowledgeCreateTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: !highlighted,
       onPress: onPress,
-      child: AnimatedContainer(
-        duration: AppMotionPolicy.duration(context, Motion.fast),
-        curve: Motion.standardDecelerate,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s16,
-        ),
-        decoration: BoxDecoration(
-          color: highlighted
-              ? colors.primary.withValues(alpha: AppOpacity.subtle)
-              : colors.muted,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: highlighted
-                ? colors.primary.withValues(alpha: AppOpacity.light)
-                : colors.border,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIconTile(
+            icon: icon,
+            color: colors.primary,
+            size: AppSpacing.s40,
+            iconSize: AppIconSizes.md,
+            radius: AppRadius.sm,
+            backgroundOpacity: highlighted
+                ? AppOpacity.light
+                : AppOpacity.subtle,
+            foregroundOpacity: 1,
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: AppSpacing.s40,
-              height: AppSpacing.s40,
-              decoration: BoxDecoration(
-                color: highlighted
-                    ? colors.primary.withValues(alpha: AppOpacity.light)
-                    : colors.primary.withValues(alpha: AppOpacity.subtle),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: AppIconSizes.md, color: colors.primary),
+          const SizedBox(height: AppPageRhythm.row),
+          Text(
+            label,
+            style: context.captionLabelStyle.copyWith(
+              color: highlighted ? colors.primary : null,
             ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              label,
-              style: context.captionLabelStyle.copyWith(
-                color: highlighted ? colors.primary : null,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

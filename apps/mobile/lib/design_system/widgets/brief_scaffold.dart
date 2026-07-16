@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/dimens_tokens.dart';
+import 'app_collapsing_stage.dart';
 import 'atmosphere.dart';
 import 'staggered_column.dart';
 
@@ -28,6 +29,8 @@ class BriefScaffold extends StatelessWidget {
     this.atmosphere = true,
     this.stagger = true,
     this.onRefresh,
+    this.stickyBuilder,
+    this.stickyPadding,
   });
 
   /// Top identity row (greeting + chrome).
@@ -51,6 +54,12 @@ class BriefScaffold extends StatelessWidget {
   final bool stagger;
 
   final Future<void> Function()? onRefresh;
+
+  /// Optional sticky residual after [stage] collapses (scroll progress 0–1).
+  final Widget Function(BuildContext context, double progress)? stickyBuilder;
+
+  /// Inset for [stickyBuilder] overlay. Defaults to horizontal content pad.
+  final EdgeInsetsGeometry? stickyPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +101,23 @@ class BriefScaffold extends StatelessWidget {
 
     if (onRefresh != null) {
       body = RefreshIndicator(onRefresh: onRefresh!, child: body);
+    }
+
+    final sticky = stickyBuilder;
+    if (sticky != null) {
+      final resolvedStickyPad =
+          stickyPadding ??
+          EdgeInsets.fromLTRB(
+            contentPadding.resolve(Directionality.of(context)).left,
+            AppSpacing.s4,
+            contentPadding.resolve(Directionality.of(context)).right,
+            0,
+          );
+      body = AppCollapsingScrollHost(
+        padding: resolvedStickyPad,
+        stickyBuilder: sticky,
+        body: body,
+      );
     }
 
     if (!atmosphere) return body;

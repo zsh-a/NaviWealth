@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'app_interaction.dart';
 
 /// Canonical floating primary action shared by every LifeOS domain.
 ///
@@ -48,6 +49,7 @@ class _AppFloatingActionSurfaceState extends State<AppFloatingActionSurface> {
           onTapDown: (_) => setState(() => _pressed = true),
           onTapUp: (_) {
             setState(() => _pressed = false);
+            AppInteraction.signal(AppInteractionIntent.commit);
             widget.onPress();
           },
           onTapCancel: () => setState(() => _pressed = false),

@@ -30,6 +30,29 @@ void main() {
     expect(text.data, contains('\$'));
   });
 
+  testWidgets('MoneyText compact keeps CJK unit on one baseline', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: const [Locale('zh', 'CN')],
+        locale: const Locale('zh', 'CN'),
+        home: const Scaffold(
+          body: Center(
+            child: MoneyText(
+              amount: 138899.8,
+              currencyCode: 'CNY',
+              compact: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('¥13.9万'), findsOneWidget);
+  });
+
   testWidgets('MoneyText shows placeholder when amount is null', (
     tester,
   ) async {

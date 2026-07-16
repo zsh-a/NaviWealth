@@ -122,16 +122,14 @@ class _HomeQuickAction extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: AppMotionPolicy.duration(context, Motion.fast),
-                width: AppSpacing.s28,
-                height: AppSpacing.s28,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: AppOpacity.faint),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+              AppIconTile(
+                icon: icon,
+                color: colors.primary,
+                size: AppSpacing.s28,
+                iconSize: AppIconSizes.sm,
+                radius: AppRadius.sm,
+                backgroundOpacity: AppOpacity.faint,
+                foregroundOpacity: 1,
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(

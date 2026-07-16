@@ -346,43 +346,41 @@ class _LinkedActionStatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: colors.border),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
-          children: [
-            Icon(
-              FLucideIcons.listChecks,
-              size: AppIconSizes.sm,
-              color: colors.mutedForeground,
-            ),
-            const SizedBox(width: AppSpacing.s10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.executionProgressSyncActionStatus,
-                    style: context.labelStyle,
+    return SoftCard.flat(
+      padding: AppPageRhythm.densePadding,
+      child: Row(
+        children: [
+          AppIconTile(
+            icon: FLucideIcons.listChecks,
+            color: colors.mutedForeground,
+            size: 28,
+            iconSize: AppIconSizes.sm,
+            radius: AppRadius.sm,
+            backgroundOpacity: AppOpacity.subtle,
+            foregroundOpacity: 1,
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.executionProgressSyncActionStatus,
+                  style: context.labelStyle,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  l10n.executionProgressSyncActionStatusBody(
+                    executionStatusLabel(l10n, status),
                   ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    l10n.executionProgressSyncActionStatusBody(
-                      executionStatusLabel(l10n, status),
-                    ),
-                    style: context.captionStyle,
-                  ),
-                ],
-              ),
+                  style: context.captionStyle,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s12),
-            FSwitch(value: value, onChange: enabled ? onChanged : null),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          FSwitch(value: value, onChange: enabled ? onChanged : null),
+        ],
       ),
     );
   }

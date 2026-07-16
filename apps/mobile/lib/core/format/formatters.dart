@@ -78,13 +78,54 @@ class AppFormatters {
   }
 
   /// Compact currency for dashboards: `¥1.2万`, `$1.2K`.
+  ///
+  /// Uses a deterministic inline algorithm so CJK unit suffixes never render
+  /// as a separate vertical glyph (ICU compact currency can look broken with
+  /// Inter/Outfit tabular figures).
   String compactCurrency(Decimal amount, {String? code}) {
     final currencyCode = code ?? baseCurrency;
-    final formatter = NumberFormat.compactSimpleCurrency(
-      locale: _localeName,
-      name: currencyCode,
-    );
-    return formatter.format(amount.toDouble());
+    final value = amount.toDouble();
+    if (!value.isFinite) {
+      return currency(amount, code: currencyCode);
+    }
+    final abs = value.abs();
+    final sign = value < 0 ? '-' : '';
+    final glyph = currencyGlyph(currencyCode);
+    final zh = locale.languageCode.toLowerCase() == 'zh';
+
+    if (zh) {
+      if (abs >= 1e8) {
+        return '$sign$glyph${_compactNumber(abs / 1e8)}亿';
+      }
+      if (abs >= 1e4) {
+        return '$sign$glyph${_compactNumber(abs / 1e4)}万';
+      }
+      return currency(amount, code: currencyCode);
+    }
+
+    if (abs >= 1e9) {
+      return '$sign$glyph${_compactNumber(abs / 1e9)}B';
+    }
+    if (abs >= 1e6) {
+      return '$sign$glyph${_compactNumber(abs / 1e6)}M';
+    }
+    if (abs >= 1e3) {
+      return '$sign$glyph${_compactNumber(abs / 1e3)}K';
+    }
+    return currency(amount, code: currencyCode);
+  }
+
+  /// Compact body used by [compactCurrency] — trims trailing zeros.
+  static String _compactNumber(double n) {
+    if (n >= 100) return n.toStringAsFixed(0);
+    if (n >= 10) {
+      final one = n.toStringAsFixed(1);
+      return one.endsWith('.0') ? one.substring(0, one.length - 2) : one;
+    }
+    final two = n.toStringAsFixed(2);
+    if (two.endsWith('00')) return two.substring(0, two.length - 3);
+    if (two.endsWith('0')) return two.substring(0, two.length - 1);
+    return two;
   }
 
   /// Formats a ledger amount with a stable sign, grouping, and unit display.

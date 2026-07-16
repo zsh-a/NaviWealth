@@ -13,7 +13,6 @@ class _ConceptGraphPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final shown = relatedConcepts.take(8).toList(growable: false);
     final hiddenCount = relatedConcepts.length - shown.length;
     return LayoutBuilder(
@@ -36,15 +35,9 @@ class _ConceptGraphPanel extends StatelessWidget {
         );
         return Semantics(
           container: true,
-          child: DecoratedBox(
+          child: SoftCard.flat(
             key: const ValueKey('knowledge-concept-graph'),
-            decoration: BoxDecoration(
-              color: colors.muted.withValues(alpha: AppOpacity.whisper),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: colors.border.withValues(alpha: AppOpacity.subtle),
-              ),
-            ),
+            padding: EdgeInsets.zero,
             child: SizedBox(
               height: height,
               child: Stack(
@@ -159,27 +152,20 @@ class _ConceptNodeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final foreground = active ? colors.primaryForeground : colors.foreground;
-    final background = active ? KnowledgeTypeColors.concept : colors.background;
-    Widget child = DecoratedBox(
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: active
-              ? KnowledgeTypeColors.concept
-              : colors.border.withValues(alpha: AppOpacity.muted),
-        ),
-      ),
+    final foreground = active ? colors.primary : colors.foreground;
+    Widget child = SoftCard(
+      level: active ? SoftCardLevel.raised : SoftCardLevel.flat,
+      borderless: !active,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: context.captionStyle.copyWith(color: foreground),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: context.captionStyle.copyWith(
+            color: foreground,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),

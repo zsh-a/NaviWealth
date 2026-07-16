@@ -428,18 +428,12 @@ class _ProposalDetailsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final entries = proposal.payload.entries
         .where((entry) => entry.value != null)
         .toList(growable: false);
-    return Container(
+    return SoftCard.flat(
       padding: const EdgeInsets.all(AppSpacing.s8),
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

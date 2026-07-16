@@ -46,7 +46,7 @@ class FireConfiguredBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FireStateHeroCard(view: view),
-        const SizedBox(height: AppSpacing.s12),
+        const SizedBox(height: AppPageRhythm.module),
         const _FireBudgetPosture(),
         const SizedBox(height: AppPageRhythm.section),
         _ProjectionCard(view: view),
@@ -59,9 +59,9 @@ class FireConfiguredBody extends ConsumerWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
-          padding: isWide
-              ? const EdgeInsets.all(AppSpacing.s24)
-              : const EdgeInsets.all(AppSpacing.s16),
+          padding: EdgeInsets.all(
+            isWide ? AppSpacing.s24 : AppSpacing.s16,
+          ),
           children: [
             if (isWide)
               ResponsiveTwoColumn(left: primary, right: depth)

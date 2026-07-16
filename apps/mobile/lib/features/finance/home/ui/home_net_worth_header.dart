@@ -18,74 +18,77 @@ class _NetWorthHeader extends ConsumerWidget {
         : l10n.financePrivacyHideAmountsTooltip;
 
     // Number + day delta only — full trend chart lives on Wealth.
-    return SoftCard.hero(
-      onPress: AppInteraction.wrap(
-        () => context.go(FinanceRoutes.wealth),
-        intent: AppInteractionIntent.navigate,
-      ),
-      padding: AppPageRhythm.heroPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.homeNetWorthTitle,
-                  style: context.mutedLabelStyle,
+    // Scroll-linked collapse keeps the Today stage from dominating long feeds.
+    return AppCollapsingStage(
+      child: SoftCard.hero(
+        // SoftCard owns select haptics; keep navigation as plain side-effect.
+        onPress: () => context.go(FinanceRoutes.wealth),
+        padding: AppPageRhythm.heroPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.homeNetWorthTitle,
+                    style: context.mutedLabelStyle,
+                  ),
                 ),
-              ),
-              Semantics(
-                button: true,
-                label: privacyLabel,
-                child: FTooltip(
-                  tipBuilder: (_, _) => Text(privacyLabel),
-                  child: FButton.icon(
-                    variant: FButtonVariant.ghost,
-                    onPress: () {
-                      ref.read(_financeAmountsHiddenProvider.notifier).state =
-                          !amountsHidden;
-                    },
-                    child: Icon(
-                      amountsHidden ? FLucideIcons.eyeClosed : FLucideIcons.eye,
-                      size: AppIconSizes.md,
+                Semantics(
+                  button: true,
+                  label: privacyLabel,
+                  child: FTooltip(
+                    tipBuilder: (_, _) => Text(privacyLabel),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () {
+                        ref.read(_financeAmountsHiddenProvider.notifier).state =
+                            !amountsHidden;
+                      },
+                      child: Icon(
+                        amountsHidden
+                            ? FLucideIcons.eyeClosed
+                            : FLucideIcons.eye,
+                        size: AppIconSizes.md,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          MediaQuery.withClampedTextScaling(
-            maxScaleFactor: 1.25,
-            child: Semantics(
-              label: amountsHidden
-                  ? '${l10n.homeNetWorthTitle} ${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}'
-                  : '${l10n.homeNetWorthTitle} ${formatters.currency(snapshot.netWorth.amount, code: snapshot.baseCurrency)}',
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: AnimatedMoneyText(
-                  amount: value,
-                  currencyCode: snapshot.baseCurrency,
-                  style: TypographyTokens.displayLarge,
-                  showSign: value != null && value < 0,
+              ],
+            ),
+            const SizedBox(height: AppPageRhythm.row),
+            MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.25,
+              child: Semantics(
+                label: amountsHidden
+                    ? '${l10n.homeNetWorthTitle} ${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}'
+                    : '${l10n.homeNetWorthTitle} ${formatters.currency(snapshot.netWorth.amount, code: snapshot.baseCurrency)}',
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: AnimatedMoneyText(
+                    amount: value,
+                    currencyCode: snapshot.baseCurrency,
+                    style: TypographyTokens.displayLarge,
+                    showSign: value != null && value < 0,
+                  ),
                 ),
               ),
             ),
-          ),
-          if (hasData) ...[
-            const SizedBox(height: AppSpacing.s12),
-            _TodayDeltaMetric(metrics: metricsAsync),
+            if (hasData) ...[
+              const SizedBox(height: AppPageRhythm.row),
+              _TodayDeltaMetric(metrics: metricsAsync),
+            ],
+            if (!hasData) ...[
+              const SizedBox(height: AppPageRhythm.row),
+              Text(
+                l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
+                style: context.captionStyle,
+              ),
+            ],
           ],
-          if (!hasData) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
-              style: context.captionStyle,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

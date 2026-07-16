@@ -141,42 +141,44 @@ class _HeroBody extends ConsumerWidget {
             style: context.captionStyle,
           ),
           const SizedBox(height: AppPageRhythm.module),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  label: l10n.fireOsHeroWithdrawalRateLabel,
-                  value: state.withdrawalRate.isFinite
-                      ? l10n.fireOsHeroWithdrawalRateValue(
-                          (state.withdrawalRate * 100).toStringAsFixed(2),
-                          (state.plan.safeWithdrawalRate * 100).toStringAsFixed(
-                            1,
-                          ),
-                        )
-                      : l10n.fireOsHeroWithdrawalRateInfinite,
-                ),
+          // Flat partitions inside the hero — never nested SoftCards.
+          AppMetricCluster(
+            items: [
+              AppMetricItem(
+                label: l10n.fireOsHeroWithdrawalRateLabel,
+                value: state.withdrawalRate.isFinite
+                    ? l10n.fireOsHeroWithdrawalRateValue(
+                        (state.withdrawalRate * 100).toStringAsFixed(2),
+                        (state.plan.safeWithdrawalRate * 100).toStringAsFixed(1),
+                      )
+                    : l10n.fireOsHeroWithdrawalRateInfinite,
               ),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: _MetricTile(
-                  label: l10n.fireOsHeroCashBucketLabel,
-                  value: state.cashBucketMonths.isFinite
-                      ? l10n.fireOsHeroCashBucketValue(
-                          state.cashBucketMonths.toStringAsFixed(1),
-                          state.plan.targetCashBucketMonths,
-                        )
-                      : l10n.fireOsHeroCashBucketInfinite,
-                ),
+              AppMetricItem(
+                label: l10n.fireOsHeroCashBucketLabel,
+                value: state.cashBucketMonths.isFinite
+                    ? l10n.fireOsHeroCashBucketValue(
+                        state.cashBucketMonths.toStringAsFixed(1),
+                        state.plan.targetCashBucketMonths,
+                      )
+                    : l10n.fireOsHeroCashBucketInfinite,
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s10),
-          _MetricTile(
-            label: l10n.fireSafeWithdrawalMonthly,
-            value: formatters.currency(
-              DecimalX.fromDouble(swrMonthly),
-              code: view.baseCurrency,
-            ),
+          const SizedBox(height: AppPageRhythm.row),
+          const AppDivider(horizontalPadding: 0),
+          const SizedBox(height: AppPageRhythm.row),
+          AppMetricCluster(
+            axis: Axis.vertical,
+            items: [
+              AppMetricItem(
+                label: l10n.fireSafeWithdrawalMonthly,
+                value: formatters.currency(
+                  DecimalX.fromDouble(swrMonthly),
+                  code: view.baseCurrency,
+                ),
+                maxLines: 1,
+              ),
+            ],
           ),
           if (state.suggestedActions.isNotEmpty) ...[
             const SizedBox(height: AppPageRhythm.module),
@@ -267,39 +269,6 @@ class _NextAction extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.muted),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: context.captionStyle),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            value,
-            style: context.labelStyle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
     );
   }
 }

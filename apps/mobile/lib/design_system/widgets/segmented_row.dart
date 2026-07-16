@@ -5,6 +5,7 @@ import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_interaction.dart';
 
 /// Shared Forui-based segmented control with a quiet single-surface chrome.
 ///
@@ -135,10 +136,10 @@ class SegmentedRow<T> extends StatelessWidget {
       button: true,
       selected: selected,
       label: semanticLabel,
-      onTap: () => onChanged(option),
+      onTap: () => _select(option),
       excludeSemantics: true,
       child: FTappable(
-        onPress: () => onChanged(option),
+        onPress: () => _select(option),
         child: AnimatedContainer(
           duration: duration,
           curve: Motion.standard,
@@ -166,5 +167,11 @@ class SegmentedRow<T> extends StatelessWidget {
             constraints: BoxConstraints(minWidth: minSegmentWidth),
             child: segment,
           );
+  }
+
+  void _select(T option) {
+    if (option == value) return;
+    AppInteraction.signal(AppInteractionIntent.select);
+    onChanged(option);
   }
 }

@@ -19,7 +19,14 @@ void main() {
 
     test('compactCurrency uses Chinese 万 grouping for large amounts', () {
       final result = f.compactCurrency(_d('15000'));
-      expect(result.contains('万'), isTrue);
+      expect(result, '¥1.5万');
+    });
+
+    test('compactCurrency keeps medium amounts full and inline', () {
+      final result = f.compactCurrency(_d('138899.80'));
+      // Above 1 万 → compact; unit suffix stays on the same baseline.
+      expect(result, '¥13.9万');
+      expect(result.contains('\n'), isFalse);
     });
 
     test('percent renders ratio as percentage with default 2 decimals', () {
@@ -55,7 +62,7 @@ void main() {
 
     test('compactCurrency uses K/M for large amounts', () {
       final result = f.compactCurrency(_d('12000'), code: 'USD');
-      expect(result, contains('K'));
+      expect(result, r'$12K');
     });
   });
 

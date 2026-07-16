@@ -149,28 +149,65 @@ class _TodayListState extends ConsumerState<_TodayList> {
           padding: shellTabContentPadding(context),
           onRefresh: _refresh,
           greeting: const SizedBox.shrink(),
-          stage: SoftCard.hero(
-            padding: AppPageRhythm.heroPadding,
-            borderless: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.executionTodayTitle, style: context.mutedLabelStyle),
-                const SizedBox(height: AppSpacing.s8),
-                Text(
-                  '${snapshot.todayCount}',
-                  style: TypographyTokens.displaySmall,
-                ),
-                const SizedBox(height: AppSpacing.s6),
-                Text(
-                  snapshot.blockedCount > 0
-                      ? '${l10n.executionOverviewFocus} · ${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
-                      : l10n.executionOverviewFocus,
-                  style: context.captionStyle,
-                ),
-              ],
+          stage: AppCollapsingStage(
+            child: SoftCard.hero(
+              padding: AppPageRhythm.heroPadding,
+              borderless: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.executionTodayTitle,
+                    style: context.mutedLabelStyle,
+                  ),
+                  const SizedBox(height: AppPageRhythm.row),
+                  Text(
+                    '${snapshot.todayCount}',
+                    style: TypographyTokens.displaySmall,
+                  ),
+                  const SizedBox(height: AppSpacing.s6),
+                  Text(
+                    snapshot.blockedCount > 0
+                        ? '${l10n.executionOverviewFocus} · ${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
+                        : l10n.executionOverviewFocus,
+                    style: context.captionStyle,
+                  ),
+                ],
+              ),
             ),
           ),
+          stickyBuilder: (context, progress) {
+            final subtitle = snapshot.blockedCount > 0
+                ? '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
+                : l10n.executionOverviewFocus;
+            return AppCollapsedSummaryBar(
+              progress: progress,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.executionOverviewFocus,
+                      style: context.mutedLabelStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    '${snapshot.todayCount}',
+                    style: TypographyTokens.numericTitleStrong,
+                  ),
+                  if (snapshot.blockedCount > 0) ...[
+                    const SizedBox(width: AppSpacing.s8),
+                    AppBadge(
+                      label: subtitle,
+                      size: AppBadgeSize.compact,
+                      tone: AppBadgeTone.warning,
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
           modules: [
             ExecutionOverviewStrip(
               snapshot: snapshot,

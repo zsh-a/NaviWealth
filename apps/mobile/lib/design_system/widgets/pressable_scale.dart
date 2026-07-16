@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/haptics/haptics.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
+import 'app_interaction.dart';
 
 /// A lightweight tap-feedback wrapper that scales its child down on press.
 ///
@@ -11,8 +11,8 @@ import '../tokens/motion_tokens.dart';
 /// is 120ms ([Motion.fast]) with [Motion.standardDecelerate] so it
 /// feels immediate and settles quickly.
 ///
-/// Pair with [Haptics.primaryPress] by default — set `haptic: false`
-/// for secondary or non-primary interactions.
+/// Haptics go through [AppInteraction] so the emotional grammar stays shared
+/// with SoftCard / FAB / filters. Set [haptic] false for purely visual press.
 ///
 /// ```dart
 /// PressableScale(
@@ -26,14 +26,18 @@ class PressableScale extends StatefulWidget {
     required this.child,
     this.onTap,
     this.haptic = true,
+    this.intent = AppInteractionIntent.select,
     this.scaleFactor = 0.97,
   });
 
   final Widget child;
   final VoidCallback? onTap;
 
-  /// Whether to fire [Haptics.primaryPress] on tap-down.
+  /// Whether to fire semantic haptics on tap-down.
   final bool haptic;
+
+  /// Semantic intent when [haptic] is true.
+  final AppInteractionIntent intent;
 
   /// The scale factor applied when pressed. 0.97 gives a subtle
   /// "press in" feel without being distracting.
@@ -52,7 +56,7 @@ class _PressableScaleState extends State<PressableScale> {
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) {
         setState(() => _pressed = true);
-        if (widget.haptic) Haptics.primaryPress();
+        if (widget.haptic) AppInteraction.signal(widget.intent);
       },
       onTapCancel: () => setState(() => _pressed = false),
       onTapUp: (_) {

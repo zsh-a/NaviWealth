@@ -8,6 +8,7 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import 'app_interaction.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 const double _kDestinationHeight = 52;
@@ -160,7 +161,12 @@ class _NavTabButton extends StatelessWidget {
       selected: selected,
       label: tab.label,
       child: FTappable(
-        onPress: onTap,
+        onPress: () {
+          if (!selected) {
+            AppInteraction.signal(AppInteractionIntent.navigate);
+          }
+          onTap();
+        },
         child: AnimatedContainer(
           duration: AppMotionPolicy.duration(context, Motion.fast),
           curve: Motion.standardDecelerate,

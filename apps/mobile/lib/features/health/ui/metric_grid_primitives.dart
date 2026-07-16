@@ -19,25 +19,22 @@ class _MetricCard extends ConsumerWidget {
     return SoftCard(
       level: SoftCardLevel.raised,
       borderless: true,
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: AppPageRhythm.cardPadding,
       onPress: trendKind == null
           ? null
           : () => context.go(healthTrendPath(metricKind: trendKind)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 140),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppMetricHeader(
-              icon: icon,
-              title: label,
-              color: accent,
-              showChevron: trendKind != null,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            child,
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppMetricHeader(
+            icon: icon,
+            title: label,
+            color: accent,
+            showChevron: trendKind != null,
+          ),
+          const SizedBox(height: AppPageRhythm.row),
+          child,
+        ],
       ),
     );
   }

@@ -292,34 +292,10 @@ class _CaptureKindChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTappable(
+    return AppFilterChip(
+      label: label,
+      active: selected,
       onPress: onTap,
-      child: AnimatedContainer(
-        duration: AppMotionPolicy.duration(context, Motion.fast),
-        curve: Motion.standardDecelerate,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s10,
-          vertical: AppSpacing.s6,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? colors.primary.withValues(alpha: AppOpacity.subtle)
-              : colors.muted,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(
-            color: selected
-                ? colors.primary.withValues(alpha: AppOpacity.prominent)
-                : colors.border.withValues(alpha: AppOpacity.muted),
-          ),
-        ),
-        child: Text(
-          label,
-          style: context.captionLabelStyle.copyWith(
-            color: selected ? colors.primary : colors.foreground,
-          ),
-        ),
-      ),
     );
   }
 }
@@ -465,12 +441,9 @@ class _DiffRow extends StatelessWidget {
         Text(label, style: context.captionStyle),
         const SizedBox(height: AppSpacing.s4),
         // Original — muted, stricken
-        Container(
+        SoftCard.flat(
+          borderless: true,
           padding: const EdgeInsets.all(AppSpacing.s8),
-          decoration: BoxDecoration(
-            color: colors.muted,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
           child: Text(
             knowledgeExcerpt(before),
             style: context.bodyCaptionStyle.copyWith(
@@ -489,16 +462,10 @@ class _DiffRow extends StatelessWidget {
           color: colors.primary,
         ),
         const SizedBox(height: AppSpacing.s4),
-        // Improved — primary tint
-        Container(
+        // Improved — primary tint via SoftCard (hero wash kept off for density)
+        SoftCard.raised(
+          borderless: false,
           padding: const EdgeInsets.all(AppSpacing.s8),
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(
-              color: colors.primary.withValues(alpha: AppOpacity.light),
-            ),
-          ),
           child: Text(
             knowledgeExcerpt(after),
             style: typography.body.sm.copyWith(color: colors.foreground),

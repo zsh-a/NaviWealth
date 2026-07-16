@@ -196,6 +196,7 @@ class _AiAssistantBar extends ConsumerWidget {
                   size: AppSpacing.s40,
                   iconSize: AppIconSizes.sm,
                   iconColor: colors.primary,
+                  surface: AppIconButtonSurface.softPrimary,
                 ),
               ),
             ),

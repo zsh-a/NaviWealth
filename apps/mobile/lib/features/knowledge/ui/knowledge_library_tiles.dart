@@ -46,20 +46,16 @@ Widget _buildLibraryTile(
             title: title,
             query: query,
             leading: typeIcon != null
-                ? Container(
-                    width: 28,
-                    height: 28,
-                    margin: const EdgeInsets.only(right: AppSpacing.s8),
-                    decoration: BoxDecoration(
-                      color: (typeColor ?? colors.primary).withValues(
-                        alpha: AppOpacity.subtle,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Icon(
-                      typeIcon,
-                      size: AppIconSizes.xs,
+                ? Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.s8),
+                    child: AppIconTile(
+                      icon: typeIcon,
                       color: typeColor ?? colors.primary,
+                      size: 28,
+                      iconSize: AppIconSizes.xs,
+                      radius: AppRadius.sm,
+                      backgroundOpacity: AppOpacity.subtle,
+                      foregroundOpacity: 1,
                     ),
                   )
                 : null,

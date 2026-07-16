@@ -105,6 +105,8 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
         greeting: const SizedBox.shrink(),
         // Hero = recovery verdict + same-day actions (ex-Plan).
         stage: const FadeSlideIn(child: _RecoveryHero()),
+        stickyBuilder: (context, progress) =>
+            _HealthRecoveryStickyBar(progress: progress),
         modules: const [
           // Signal first: alerts only when real; briefing promoted.
           _RecoveryAlertPanel(),
@@ -154,6 +156,63 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
         },
       );
     });
+  }
+}
+
+/// Sticky residual for the recovery stage — icon + verdict + score.
+class _HealthRecoveryStickyBar extends ConsumerWidget {
+  const _HealthRecoveryStickyBar({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final recovery = ref.watch(recoverySignalProvider);
+
+    final (verdict, scoreText) = recovery.maybeWhen(
+      data: (out) {
+        final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
+        final score = out?['score'];
+        return (verdict, score == null ? null : '$score');
+      },
+      orElse: () => ('insufficient_data', null),
+    );
+    final accent = RecoveryVerdict.color(verdict, colors);
+
+    return AppCollapsedSummaryBar(
+      progress: progress,
+      child: Row(
+        children: [
+          AppIconTile(
+            icon: RecoveryVerdict.icon(verdict),
+            color: accent,
+            size: 28,
+            iconSize: AppIconSizes.sm,
+            radius: AppRadius.sm,
+            backgroundOpacity: AppOpacity.subtle,
+            foregroundOpacity: 1,
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Text(
+              RecoveryVerdict.label(verdict, l10n),
+              style: context.labelStyle.copyWith(color: accent),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (scoreText != null)
+            Text(
+              scoreText,
+              style: TypographyTokens.numericTitleStrong.copyWith(
+                color: accent,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 

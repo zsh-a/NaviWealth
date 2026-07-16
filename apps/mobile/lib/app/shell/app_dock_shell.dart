@@ -228,23 +228,13 @@ class _AskAiDockButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return AppIconButton(
+    return AppIconButton.softPrimaryRing(
       icon: FLucideIcons.sparkles,
       tooltip: AppLocalizations.of(context).commandPaletteOpenAi,
       onPress: onPress,
       size: AppSpacing.s48,
       iconSize: AppIconSizes.mlg,
-      iconColor: colors.primary,
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(
-          color: colors.primary.withValues(alpha: AppOpacity.muted),
-          width: AppStroke.hairline,
-        ),
-      ),
     );
   }
 }
@@ -276,32 +266,20 @@ class _LifeDockIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final fill = selected
-        ? colors.primary.withValues(alpha: AppOpacity.subtle)
-        : Colors.transparent;
-    return FTooltip(
-      tipBuilder: (_, _) => Text(l10n.lifeNavLabel),
-      child: FTappable(
-        onPress: onTap,
-        child: Container(
-          width: AppSpacing.s40,
-          height: AppSpacing.s40,
-          margin: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s4,
-          ),
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            selected ? FLucideIcons.house : FLucideIcons.house,
-            color: iconColor,
-            size: AppIconSizes.mlg,
-          ),
-        ),
+    return AppIconButton(
+      icon: FLucideIcons.house,
+      tooltip: l10n.lifeNavLabel,
+      onPress: onTap,
+      size: AppSpacing.s40,
+      iconSize: AppIconSizes.mlg,
+      iconColor: selected ? colors.primary : colors.mutedForeground,
+      surface: selected
+          ? AppIconButtonSurface.softSelected
+          : AppIconButtonSurface.plain,
+      borderRadius: AppRadius.md,
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
       ),
     );
   }
@@ -321,32 +299,19 @@ class _DockIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final fill = selected
-        ? colors.primary.withValues(alpha: AppOpacity.subtle)
-        : Colors.transparent;
-    return FTooltip(
-      tipBuilder: (_, _) => Text(spec.label),
-      child: FTappable(
-        onPress: onTap,
-        child: Container(
-          width: AppSpacing.s40,
-          height: AppSpacing.s40,
-          margin: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s4,
-          ),
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            selected ? spec.selectedIcon : spec.icon,
-            color: iconColor,
-            size: AppIconSizes.mlg,
-          ),
-        ),
+    return AppIconButton(
+      icon: selected ? spec.selectedIcon : spec.icon,
+      tooltip: spec.label,
+      onPress: onTap,
+      size: AppSpacing.s40,
+      iconSize: AppIconSizes.mlg,
+      iconColor: selected ? colors.primary : colors.mutedForeground,
+      surface: selected
+          ? AppIconButtonSurface.softSelected
+          : AppIconButtonSurface.plain,
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
       ),
     );
   }

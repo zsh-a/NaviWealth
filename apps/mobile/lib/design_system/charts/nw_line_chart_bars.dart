@@ -82,6 +82,8 @@ extension _NwLineChartBars on _NwLineChartState {
   }
 
   double _defaultFillTopAlpha(BuildContext context) {
-    return context.theme.colors.brightness == Brightness.dark ? 0.18 : 0.12;
+    // Slightly richer area fill so premium trends read as "stage charts"
+    // rather than bare polylines — still restrained on light canvas.
+    return context.theme.colors.brightness == Brightness.dark ? 0.22 : 0.16;
   }
 }

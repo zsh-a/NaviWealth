@@ -147,51 +147,42 @@ class _SearchAssistChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
+    return SoftCard.flat(
       onPress: onPress,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.background,
-          border: Border.all(color: colors.border),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.s8,
-            right: onDelete != null ? AppSpacing.s4 : AppSpacing.s8,
-            top: AppSpacing.s4,
-            bottom: AppSpacing.s4,
+      padding: EdgeInsets.only(
+        left: AppSpacing.s8,
+        right: onDelete != null ? AppSpacing.s4 : AppSpacing.s8,
+        top: AppSpacing.s4,
+        bottom: AppSpacing.s4,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 112),
+            child: Text(
+              value,
+              style: context.captionLabelStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 112),
-                child: Text(
-                  value,
-                  style: context.captionLabelStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          if (onDelete != null) ...[
+            const SizedBox(width: AppSpacing.s2),
+            GestureDetector(
+              onTap: onDelete,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s2),
+                child: Icon(
+                  FLucideIcons.x,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
                 ),
               ),
-              if (onDelete != null) ...[
-                const SizedBox(width: AppSpacing.s2),
-                GestureDetector(
-                  onTap: onDelete,
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.s2),
-                    child: Icon(
-                      FLucideIcons.x,
-                      size: AppIconSizes.xs,
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+            ),
+          ],
+        ],
       ),
     );
   }

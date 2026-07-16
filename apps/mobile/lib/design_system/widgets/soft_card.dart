@@ -5,6 +5,7 @@ import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'app_interaction.dart';
 
 enum SoftCardLevel { flat, raised, hero }
 
@@ -147,7 +148,10 @@ class _SoftCardState extends State<SoftCard> {
           onTapDown: (_) => _pressed.value = true,
           onTapUp: (_) => _pressed.value = false,
           onTapCancel: () => _pressed.value = false,
-          onTap: widget.onPress,
+          onTap: AppInteraction.wrap(
+            widget.onPress,
+            intent: AppInteractionIntent.select,
+          ),
           child: ValueListenableBuilder<bool>(
             valueListenable: _hovered,
             builder: (context, hovered, _) => ValueListenableBuilder<bool>(
@@ -222,19 +226,21 @@ class _SoftCardState extends State<SoftCard> {
     final borderAlpha = widget.borderless
         ? AppOpacity.transparent
         : switch (widget.level) {
+            // Light flat stays borderless for dense inset rows; dark flat gets
+            // a whisper edge so rows don't dissolve into the navy canvas.
             SoftCardLevel.flat =>
               isDark ? AppOpacity.whisper : AppOpacity.transparent,
             SoftCardLevel.raised =>
-              isDark ? AppOpacity.medium : AppOpacity.faint,
+              isDark ? AppOpacity.medium : AppOpacity.light,
             SoftCardLevel.hero =>
-              isDark ? AppOpacity.disabled : AppOpacity.subtle,
+              isDark ? AppOpacity.disabled : AppOpacity.medium,
           };
 
     final borderColor = borderAlpha == AppOpacity.transparent
         ? Colors.transparent
         : (isDark
               ? colors.border.withValues(alpha: borderAlpha)
-              : ColorPalette.navySoftBorder.withValues(alpha: borderAlpha));
+              : ColorPalette.surfaceHairline.withValues(alpha: borderAlpha));
 
     final gradient = widget.level == SoftCardLevel.hero && widget.tinted
         ? _heroGradient(primary: colors.primary, isDark: isDark, base: fill)
@@ -258,8 +264,13 @@ class _SoftCardState extends State<SoftCard> {
     required bool isDark,
   }) {
     if (!isDark) {
-      // Cool page canvas + pure white modules = modern fintech depth.
-      return ColorPalette.surface;
+      // Cool canvas (#F3F6F7) + white modules. Flat dissolves; raised/hero
+      // lift with shadow + hairline rather than stacking greys.
+      return switch (widget.level) {
+        SoftCardLevel.flat => ColorPalette.surface,
+        SoftCardLevel.raised => ColorPalette.surface,
+        SoftCardLevel.hero => ColorPalette.surface,
+      };
     }
     return switch (widget.level) {
       SoftCardLevel.flat => card,
@@ -279,14 +290,16 @@ class _SoftCardState extends State<SoftCard> {
     required bool isDark,
     required Color base,
   }) {
+    // Light mode: slightly stronger cyan wash so hero cards don't read as
+    // plain white slabs against the cool canvas.
     final wash = isDark
         ? primary.withValues(alpha: AppOpacity.light)
-        : primary.withValues(alpha: AppOpacity.faint);
+        : primary.withValues(alpha: AppOpacity.subtle);
     return LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [Color.alphaBlend(wash, base), base],
-      stops: const [0, 0.55],
+      stops: const [0, 0.62],
     );
   }
 

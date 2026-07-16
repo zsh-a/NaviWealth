@@ -81,6 +81,7 @@ class _WealthHubBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     return RefreshIndicator(
@@ -93,46 +94,75 @@ class _WealthHubBody extends ConsumerWidget {
           ref.read(dashboardTrendProvider(range).future),
         ]);
       },
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          hPad,
-          AppSpacing.s8,
-          hPad,
-          kTabBarOffset + MediaQuery.paddingOf(context).bottom,
-        ),
-        children: [
-          _NetWorthHero(
-            baseCurrency: baseCurrency,
-            netWorth: netWorth,
-            totalAssets: totalAssets,
-            totalLiabilities: totalLiabilities,
-          ),
-          if (totalAssets != Decimal.zero ||
-              totalLiabilities != Decimal.zero) ...[
-            const SizedBox(height: AppSpacing.s16),
-            const WealthTrendSection(),
-          ],
-          const SizedBox(height: AppSpacing.s12),
-          const _WealthDestinations(),
-          if (totalAssets == Decimal.zero &&
-              totalLiabilities == Decimal.zero) ...[
-            const SizedBox(height: AppSpacing.s16),
-            AppEmptyState(
-              icon: FLucideIcons.landmark,
-              title: AppLocalizations.of(context).wealthEmptyTitle,
-              message: AppLocalizations.of(context).wealthEmptyBody,
-              action: FButton(
-                onPress: () => context.push(FinanceRoutes.wealthAccountNew),
-                prefix: const Icon(FLucideIcons.plus),
-                child: Text(AppLocalizations.of(context).wealthEmptyAction),
-              ),
+      child: AppAtmosphere(
+        child: AppCollapsingScrollHost(
+          padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s4, hPad, 0),
+          stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
+            progress: progress,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.homeNetWorthTitle,
+                    style: context.mutedLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                MoneyText(
+                  amount: netWorth.toDouble(),
+                  currencyCode: baseCurrency,
+                  compact: true,
+                  style: TypographyTokens.numericTitleStrong,
+                ),
+              ],
             ),
-          ] else ...[
-            const SizedBox(height: AppSpacing.s20),
-            const WealthPerspectiveSection(),
-          ],
-        ],
+          ),
+          body: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(
+              hPad,
+              AppSpacing.s8,
+              hPad,
+              kTabBarOffset + MediaQuery.paddingOf(context).bottom,
+            ),
+            children: [
+              AppCollapsingStage(
+                child: _NetWorthHero(
+                  baseCurrency: baseCurrency,
+                  netWorth: netWorth,
+                  totalAssets: totalAssets,
+                  totalLiabilities: totalLiabilities,
+                ),
+              ),
+              if (totalAssets != Decimal.zero ||
+                  totalLiabilities != Decimal.zero) ...[
+                const SizedBox(height: AppPageRhythm.module),
+                const WealthTrendSection(),
+              ],
+              const SizedBox(height: AppPageRhythm.module),
+              const _WealthDestinations(),
+              if (totalAssets == Decimal.zero &&
+                  totalLiabilities == Decimal.zero) ...[
+                const SizedBox(height: AppPageRhythm.module),
+                AppEmptyState(
+                  icon: FLucideIcons.landmark,
+                  title: l10n.wealthEmptyTitle,
+                  message: l10n.wealthEmptyBody,
+                  action: FButton(
+                    onPress: () =>
+                        context.push(FinanceRoutes.wealthAccountNew),
+                    prefix: const Icon(FLucideIcons.plus),
+                    child: Text(l10n.wealthEmptyAction),
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: AppPageRhythm.section),
+                const WealthPerspectiveSection(),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -155,7 +185,6 @@ class _NetWorthHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final colors = context.theme.colors;
     return SoftCard.hero(
       padding: AppPageRhythm.heroPadding,
       child: Column(
@@ -169,27 +198,14 @@ class _NetWorthHero extends ConsumerWidget {
                   style: context.mutedLabelStyle,
                 ),
               ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: AppOpacity.subtle),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s10,
-                    vertical: AppSpacing.s4,
-                  ),
-                  child: Text(
-                    baseCurrency,
-                    style: context.microLabelStyle.copyWith(
-                      color: colors.primary,
-                    ),
-                  ),
-                ),
+              AppBadge(
+                label: baseCurrency,
+                size: AppBadgeSize.compact,
+                tone: AppBadgeTone.accent,
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
+          const SizedBox(height: AppPageRhythm.row),
           MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.25,
             child: Semantics(
@@ -208,59 +224,27 @@ class _NetWorthHero extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.s20),
-          Row(
-            children: [
-              Expanded(
-                child: _NetWorthBreakdownMetric(
-                  label: l10n.dashboardNetWorthAssetsLabel,
-                  value: formatters.currency(totalAssets, code: baseCurrency),
-                ),
+          const SizedBox(height: AppPageRhythm.module),
+          AppMetricCluster(
+            dense: true,
+            items: [
+              AppMetricItem(
+                label: l10n.dashboardNetWorthAssetsLabel,
+                value: formatters.currency(totalAssets, code: baseCurrency),
+                maxLines: 1,
               ),
-              Container(
-                width: AppSpacing.hairline,
-                height: AppSpacing.s40,
-                color: colors.border.withValues(alpha: AppOpacity.highlight),
-              ),
-              const SizedBox(width: AppSpacing.s16),
-              Expanded(
-                child: _NetWorthBreakdownMetric(
-                  label: l10n.dashboardNetWorthLiabilitiesLabel,
-                  value: formatters.currency(
-                    totalLiabilities,
-                    code: baseCurrency,
-                  ),
+              AppMetricItem(
+                label: l10n.dashboardNetWorthLiabilitiesLabel,
+                value: formatters.currency(
+                  totalLiabilities,
+                  code: baseCurrency,
                 ),
+                maxLines: 1,
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-}
-
-class _NetWorthBreakdownMetric extends StatelessWidget {
-  const _NetWorthBreakdownMetric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label, style: context.captionStyle),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          value,
-          style: TypographyTokens.numericBodyStrong,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 }
@@ -296,7 +280,7 @@ class _WealthDestinations extends StatelessWidget {
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
-        const gap = AppSpacing.s10;
+        const gap = AppPageRhythm.row;
         final tileW = (constraints.maxWidth - gap) / 2;
         return Wrap(
           spacing: gap,
@@ -325,15 +309,12 @@ class _WealthDestinationTile extends StatelessWidget {
     return SoftCard.raised(
       borderless: true,
       onPress: () => context.push(spec.path),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s16,
-      ),
+      padding: AppPageRhythm.densePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(spec.icon, size: AppIconSizes.lg, color: colors.primary),
-          const SizedBox(height: AppSpacing.s12),
+          const SizedBox(height: AppPageRhythm.row),
           Text(
             spec.title,
             style: context.labelStyle,

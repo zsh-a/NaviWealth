@@ -216,6 +216,9 @@ class AppBlur {
 
   /// Floating glass nav bar blur.
   static const double nav = 12;
+
+  /// Collapsed hero sticky residual (lighter than nav — sits under headers).
+  static const double sticky = 14;
 }
 
 /// Canonical shadow sets keyed by surface role.

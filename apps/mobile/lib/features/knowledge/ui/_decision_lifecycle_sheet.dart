@@ -181,43 +181,10 @@ class _DecisionLifecycleSheetState
                   itemBuilder: (context, i) {
                     final s = DecisionStatus.values[i];
                     final active = s == _status;
-                    final colors = context.theme.colors;
-                    return FTappable(
+                    return AppFilterChip(
+                      label: decisionStatusLabel(context, s),
+                      active: active,
                       onPress: () => setState(() => _status = s),
-                      child: AnimatedContainer(
-                        duration: AppMotionPolicy.duration(context, Motion.fast),
-                        curve: Motion.standardDecelerate,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s8,
-                          vertical: AppSpacing.s4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: active
-                              ? colors.primary.withValues(
-                                  alpha: AppOpacity.subtle,
-                                )
-                              : null,
-                          borderRadius: BorderRadius.circular(AppRadius.full),
-                          border: Border.all(
-                            color: active
-                                ? colors.primary.withValues(
-                                    alpha: AppOpacity.light,
-                                  )
-                                : colors.border,
-                          ),
-                        ),
-                        child: Text(
-                          decisionStatusLabel(context, s),
-                          style: active
-                              ? context.captionLabelStyle.copyWith(
-                                  color: colors.primary,
-                                )
-                              : context.captionStyle.copyWith(
-                                  color: colors.mutedForeground,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                        ),
-                      ),
                     );
                   },
                 ),

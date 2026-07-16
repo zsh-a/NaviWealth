@@ -28,15 +28,12 @@ class _OptionEditorTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-      child: Container(
+      child: SoftCard(
+        level: SoftCardLevel.flat,
+        borderless: !selected,
         padding: const EdgeInsets.all(AppSpacing.s8),
-        decoration: BoxDecoration(
-          border: Border.all(color: selected ? colors.primary : colors.border),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

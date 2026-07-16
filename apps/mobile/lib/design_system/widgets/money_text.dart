@@ -192,11 +192,35 @@ class MoneyText extends StatelessWidget {
         locale ?? Localizations.maybeLocaleOf(context)?.toString() ?? '';
     final value = amount!;
 
+    // Compact money must stay on a single baseline (e.g. `¥13.8万`, `$12.3K`).
+    // Route through [AppFormatters] so CJK unit suffixes never split off as a
+    // vertical glyph under Inter/Outfit tabular figures.
+    if (compact) {
+      final parts = loc.split(RegExp('[-_]'));
+      final formatters = AppFormatters(
+        locale: Locale(
+          parts.isEmpty || parts.first.isEmpty ? 'en' : parts.first,
+          parts.length > 1 ? parts[1] : null,
+        ),
+        baseCurrency: currencyCode,
+      );
+      final formatted = formatters.compactCurrency(
+        Decimal.parse(value.toString()),
+        code: currencyCode,
+      );
+      // compactCurrency already includes sign for negatives; only force + when
+      // the caller asks for an explicit positive sign.
+      if (showSign && value > 0 && !formatted.startsWith('+')) {
+        return '+$formatted';
+      }
+      return formatted;
+    }
+
     final formatter = _cachedFormat(
       locale: loc,
       currencyCode: currencyCode,
       symbolStyle: symbolStyle,
-      compact: compact,
+      compact: false,
       fractionDigits: fractionDigits,
       symbol: symbol,
     );

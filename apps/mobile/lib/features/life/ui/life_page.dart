@@ -33,7 +33,33 @@ class LifePage extends ConsumerWidget {
         bottom: false,
         child: BriefScaffold(
           greeting: _LifeGreeting(l10n: l10n),
-          stage: _LifeHero(l10n: l10n, summary: hero),
+          stage: AppCollapsingStage(
+            child: _LifeHero(l10n: l10n, summary: hero),
+          ),
+          stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
+            progress: progress,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.lifeStageTitle,
+                    style: context.mutedLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    hero.localizedHeadline(l10n),
+                    style: context.labelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                  ),
+                ),
+              ],
+            ),
+          ),
           modules: [
             if (packs.isNotEmpty) _WorkspaceChips(packs: packs, l10n: l10n),
           ],
@@ -42,9 +68,12 @@ class LifePage extends ConsumerWidget {
               SoftCard.raised(
                 padding: AppPageRhythm.cardPadding,
                 borderless: true,
-                child: Text(
-                  l10n.lifeTimelineEmpty,
-                  style: context.bodyCaptionStyle,
+                child: AppEmptyState(
+                  icon: FLucideIcons.sparkles,
+                  title: l10n.lifeTimelineTitle,
+                  message: l10n.lifeTimelineEmpty,
+                  compact: true,
+                  iconSize: AppIconSizes.lg,
                 ),
               )
             else ...[
@@ -52,7 +81,7 @@ class LifePage extends ConsumerWidget {
                 title: l10n.lifeTimelineTitle,
                 padding: const EdgeInsets.only(
                   left: AppSpacing.s4,
-                  bottom: AppSpacing.s8,
+                  bottom: AppPageRhythm.row,
                 ),
               ),
               LifeTimeline(
@@ -68,12 +97,7 @@ class LifePage extends ConsumerWidget {
                       domainLabel: _domainLabel(l10n, e.domain),
                       onOpen: e.routePath == null
                           ? null
-                          : () {
-                              AppInteraction.signal(
-                                AppInteractionIntent.navigate,
-                              );
-                              context.go(e.routePath!);
-                            },
+                          : () => context.go(e.routePath!),
                     ),
                 ],
                 timeLabel: (at) => formatters.time(at),
@@ -180,12 +204,12 @@ class _LifeHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.lifeStageTitle, style: context.mutedLabelStyle),
-          const SizedBox(height: AppSpacing.s10),
+          const SizedBox(height: AppPageRhythm.row),
           Text(
             summary.localizedHeadline(l10n),
             style: TypographyTokens.displaySmall,
           ),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: AppPageRhythm.row),
           Text(summary.localizedBody(l10n), style: context.bodyCaptionStyle),
         ],
       ),
@@ -210,7 +234,7 @@ class _WorkspaceChips extends StatelessWidget {
           title: l10n.lifeWorkbenchTitle,
           padding: const EdgeInsets.only(
             left: AppSpacing.s4,
-            bottom: AppSpacing.s8,
+            bottom: AppPageRhythm.row,
           ),
         ),
         SingleChildScrollView(
@@ -218,7 +242,7 @@ class _WorkspaceChips extends StatelessWidget {
           child: Row(
             children: [
               for (var i = 0; i < packs.length; i++) ...[
-                if (i > 0) const SizedBox(width: AppSpacing.s8),
+                if (i > 0) const SizedBox(width: AppPageRhythm.row),
                 _DomainChip(pack: packs[i], l10n: l10n, colors: colors),
               ],
             ],
@@ -249,20 +273,23 @@ class _DomainChip extends StatelessWidget {
     final label = spec?.label ?? pack.scope.wire;
     final icon = spec?.icon ?? FLucideIcons.layers;
 
+    // SoftCard owns select haptics; navigation is a plain side-effect.
     return SoftCard.raised(
       borderless: true,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s12,
-        vertical: AppSpacing.s10,
-      ),
-      onPress: AppInteraction.wrap(
-        () => context.go(path),
-        intent: AppInteractionIntent.navigate,
-      ),
+      padding: AppPageRhythm.densePadding,
+      onPress: () => context.go(path),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+          AppIconTile(
+            icon: icon,
+            color: colors.primary,
+            size: 28,
+            iconSize: AppIconSizes.sm,
+            radius: AppRadius.sm,
+            backgroundOpacity: AppOpacity.subtle,
+            foregroundOpacity: 1,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Text(label, style: context.labelStyle),
         ],

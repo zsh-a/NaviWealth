@@ -282,22 +282,11 @@ class _ReviewIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return AppIconButton(
+    return AppIconButton.softPrimaryTile(
       icon: icon,
       tooltip: tooltip,
       onPress: () => onPress(),
       busy: busy,
-      size: 32,
-      iconSize: AppIconSizes.xs,
-      iconColor: colors.primary,
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: colors.primary.withValues(alpha: AppOpacity.light),
-        ),
-      ),
     );
   }
 }

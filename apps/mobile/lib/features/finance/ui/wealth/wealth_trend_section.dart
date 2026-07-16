@@ -29,11 +29,9 @@ class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
     final trendAsync = ref.watch(dashboardTrendProvider(range));
     final baseCurrency = ref.watch(dashboardBaseCurrencyProvider);
 
-    return SoftCard(
+    return SoftCard.raised(
       key: const ValueKey('wealth-trend-section'),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      borderRadius: AppRadius.lg,
-      level: SoftCardLevel.raised,
+      padding: AppPageRhythm.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -42,10 +40,14 @@ class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
               Expanded(
                 child: Text(l10n.wealthTrendTitle, style: context.labelStyle),
               ),
-              AppBadge(label: baseCurrency, size: AppBadgeSize.compact),
+              AppBadge(
+                label: baseCurrency,
+                size: AppBadgeSize.compact,
+                tone: AppBadgeTone.accent,
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
+          const SizedBox(height: AppPageRhythm.row),
           SegmentedRow<_WealthTrendMetric>(
             options: _WealthTrendMetric.values,
             value: _metric,
@@ -53,22 +55,23 @@ class _WealthTrendSectionState extends ConsumerState<WealthTrendSection> {
             labelOf: (metric) => metric.label(l10n),
             onChanged: (metric) => setState(() => _metric = metric),
           ),
-          const SizedBox(height: AppSpacing.s16),
-          AnimatedSwitcher(
-            duration: Motion.fast,
-            child: trendAsync.when(
-              loading: () => const _WealthTrendSkeleton(),
-              error: (_, _) => _WealthTrendError(
-                onRetry: () => ref.invalidate(dashboardTrendProvider(range)),
+          const SizedBox(height: AppPageRhythm.module),
+          ContentCrossFade(
+            child: KeyedSubtree(
+              key: ValueKey(
+                'wealth-trend-${_metric.name}-${range.preset.name}',
               ),
-              data: (trend) => _WealthTrendBody(
-                key: ValueKey('wealth-trend-${_metric.name}'),
-                trend: trend,
-                metric: _metric,
+              child: trendAsync.when(
+                loading: () => const _WealthTrendSkeleton(),
+                error: (_, _) => _WealthTrendError(
+                  onRetry: () => ref.invalidate(dashboardTrendProvider(range)),
+                ),
+                data: (trend) =>
+                    _WealthTrendBody(trend: trend, metric: _metric),
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppPageRhythm.module),
           const _WealthTrendRangeSelector(),
         ],
       ),
@@ -99,11 +102,7 @@ extension on _WealthTrendMetric {
 }
 
 class _WealthTrendBody extends StatelessWidget {
-  const _WealthTrendBody({
-    super.key,
-    required this.trend,
-    required this.metric,
-  });
+  const _WealthTrendBody({required this.trend, required this.metric});
 
   final DashboardTrend trend;
   final _WealthTrendMetric metric;
@@ -158,7 +157,7 @@ class _WealthTrendBody extends StatelessWidget {
               : SeriesEmphasis.solid,
           // Soft fill only on reliable solid runs — estimated stays airy.
           fillOpacity: segment.isComplete && !allFlat
-              ? AppOpacity.subtle
+              ? AppOpacity.light
               : AppOpacity.transparent,
           strokeWidth: segment.isEstimated ? AppStroke.thin : AppStroke.medium,
         ),
@@ -213,7 +212,8 @@ class _WealthTrendBody extends StatelessWidget {
             filled: !estimatedOnly && !allFlat,
             interpolation: ChartInterpolation.linear,
             showDots: false,
-            heroDots: false,
+            // End-cap only — resting density stays clean; scrub uses crosshair.
+            heroDots: !estimatedOnly && !allFlat,
             showYAxis: false,
             showTouchXAxisLabel: true,
             minimal: allFlat,
@@ -266,6 +266,8 @@ class _WealthTrendSummary extends StatelessWidget {
         : delta!.toDouble() / baselineDouble.abs();
     final hidden = AmountPrivacyScope.isHiddenOf(context);
 
+    // Keep current + change on one baseline row; compact money stays inline
+    // (`¥13.8万`) via MoneyText → AppFormatters.compactCurrency.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -281,11 +283,11 @@ class _WealthTrendSummary extends StatelessWidget {
           ),
         ),
         Container(
-          width: AppSpacing.hairline,
+          width: AppStroke.hairline,
           height: AppSpacing.s48,
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
           color: colors.border.withValues(alpha: AppOpacity.highlight),
         ),
-        const SizedBox(width: AppSpacing.s16),
         Expanded(
           child: _TrendMetricValue(
             label: l10n.dashboardTrendMetricChange,

@@ -16,149 +16,151 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
     final async = ref.watch(recoverySignalProvider);
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    return SoftCard.hero(
-      padding: AppPageRhythm.heroPadding,
-      child: async.when(
-        loading: () => const SizedBox(
-          height: AppControlHeights.compactLoadingState,
-          child: Center(child: FCircularProgress()),
-        ),
-        error: (e, _) => Text(
-          l10n.healthSyncFailed,
-          style: context.captionStyle.copyWith(color: colors.destructive),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        data: (out) {
-          final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
-          final score = out?['score'];
-          final scoreText = score == null ? '—' : '$score';
-          final color = RecoveryVerdict.color(verdict, colors);
-          final actions = healthPlanActionsForVerdict(verdict, l10n);
-          final primaryActions = actions
-              .take(_visibleActionCount)
-              .toList(growable: false);
-          final overflowActions = actions.length > _visibleActionCount
-              ? actions.skip(_visibleActionCount).toList(growable: false)
-              : const <HealthPlanAction>[];
-          final hasMore = overflowActions.isNotEmpty;
-          final enabled =
-              ref
-                  .watch(core_auth.domainOptInsProvider)
-                  .value
-                  ?.contains(DomainScope.health) ??
-              false;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  AppIconTile(
-                    icon: RecoveryVerdict.icon(verdict),
-                    color: color,
-                    size: 36,
-                    iconSize: AppIconSizes.md,
-                    backgroundOpacity: AppOpacity.medium,
-                    foregroundOpacity: 1,
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: Text(
-                      l10n.healthRecoveryTitle,
-                      style: context.mutedLabelStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+    return AppCollapsingStage(
+      child: SoftCard.hero(
+        padding: AppPageRhythm.heroPadding,
+        child: async.when(
+          loading: () => const SizedBox(
+            height: AppControlHeights.compactLoadingState,
+            child: Center(child: FCircularProgress()),
+          ),
+          error: (e, _) => Text(
+            l10n.healthSyncFailed,
+            style: context.captionStyle.copyWith(color: colors.destructive),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          data: (out) {
+            final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
+            final score = out?['score'];
+            final scoreText = score == null ? '—' : '$score';
+            final color = RecoveryVerdict.color(verdict, colors);
+            final actions = healthPlanActionsForVerdict(verdict, l10n);
+            final primaryActions = actions
+                .take(_visibleActionCount)
+                .toList(growable: false);
+            final overflowActions = actions.length > _visibleActionCount
+                ? actions.skip(_visibleActionCount).toList(growable: false)
+                : const <HealthPlanAction>[];
+            final hasMore = overflowActions.isNotEmpty;
+            final enabled =
+                ref
+                    .watch(core_auth.domainOptInsProvider)
+                    .value
+                    ?.contains(DomainScope.health) ??
+                false;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AppIconTile(
+                      icon: RecoveryVerdict.icon(verdict),
+                      color: color,
+                      size: 36,
+                      iconSize: AppIconSizes.md,
+                      backgroundOpacity: AppOpacity.medium,
+                      foregroundOpacity: 1,
                     ),
-                  ),
-                  if (score != null)
-                    Text(
-                      scoreText,
-                      style: TypographyTokens.numericTitle.copyWith(
-                        color: color,
+                    const SizedBox(width: AppSpacing.s12),
+                    Expanded(
+                      child: Text(
+                        l10n.healthRecoveryTitle,
+                        style: context.mutedLabelStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              Text(
-                RecoveryVerdict.label(verdict, l10n),
-                style: TypographyTokens.displaySmall.copyWith(
-                  color: color,
-                  height: 1.1,
+                    if (score != null)
+                      Text(
+                        scoreText,
+                        style: TypographyTokens.numericTitle.copyWith(
+                          color: color,
+                        ),
+                      ),
+                  ],
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                RecoveryVerdict.suggestion(verdict, l10n),
-                style: context.bodyCaptionStyle,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (!enabled) ...[
-                const SizedBox(height: AppSpacing.s12),
+                const SizedBox(height: AppSpacing.s16),
                 Text(
-                  l10n.healthPlanEnableHint,
-                  style: context.captionStyle,
+                  RecoveryVerdict.label(verdict, l10n),
+                  style: TypographyTokens.displaySmall.copyWith(
+                    color: color,
+                    height: 1.1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  RecoveryVerdict.suggestion(verdict, l10n),
+                  style: context.bodyCaptionStyle,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (!enabled) ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  Text(
+                    l10n.healthPlanEnableHint,
+                    style: context.captionStyle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (actions.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.s16),
+                  Text(
+                    l10n.healthPlanTodayActions,
+                    style: context.microCaptionStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  for (var i = 0; i < primaryActions.length; i++) ...[
+                    if (i > 0) const SizedBox(height: AppSpacing.s8),
+                    _PlanActionRow(
+                      action: primaryActions[i],
+                      color: colors.primary,
+                    ),
+                  ],
+                  if (hasMore) ...[
+                    AnimatedSizeFade(
+                      visible: _showAllActions,
+                      alignment: Alignment.topCenter,
+                      child: Column(
+                        children: [
+                          for (final action in overflowActions) ...[
+                            const SizedBox(height: AppSpacing.s8),
+                            _PlanActionRow(
+                              action: action,
+                              color: colors.primary,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    AppRevealControl(
+                      expanded: _showAllActions,
+                      collapsedLabel: l10n.commonRevealMore(
+                        overflowActions.length,
+                      ),
+                      expandedLabel: l10n.commonRevealLess,
+                      onToggle: () =>
+                          setState(() => _showAllActions = !_showAllActions),
+                    ),
+                  ],
+                ],
+                const SizedBox(height: AppSpacing.s16),
+                const _RecoverySparkline(),
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  l10n.healthPlanDisclaimer,
+                  style: context.microCaptionStyle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-              if (actions.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s16),
-                Text(
-                  l10n.healthPlanTodayActions,
-                  style: context.microCaptionStyle,
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                for (var i = 0; i < primaryActions.length; i++) ...[
-                  if (i > 0) const SizedBox(height: AppSpacing.s8),
-                  _PlanActionRow(
-                    action: primaryActions[i],
-                    color: colors.primary,
-                  ),
-                ],
-                if (hasMore) ...[
-                  AnimatedSizeFade(
-                    visible: _showAllActions,
-                    alignment: Alignment.topCenter,
-                    child: Column(
-                      children: [
-                        for (final action in overflowActions) ...[
-                          const SizedBox(height: AppSpacing.s8),
-                          _PlanActionRow(
-                            action: action,
-                            color: colors.primary,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  AppRevealControl(
-                    expanded: _showAllActions,
-                    collapsedLabel: l10n.commonRevealMore(
-                      overflowActions.length,
-                    ),
-                    expandedLabel: l10n.commonRevealLess,
-                    onToggle: () =>
-                        setState(() => _showAllActions = !_showAllActions),
-                  ),
-                ],
-              ],
-              const SizedBox(height: AppSpacing.s16),
-              const _RecoverySparkline(),
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                l10n.healthPlanDisclaimer,
-                style: context.microCaptionStyle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

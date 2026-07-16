@@ -44,49 +44,83 @@ class _DashboardBodyContent extends ConsumerWidget {
           await ref.read(dashboardSnapshotProvider.future);
         }
 
+        Widget stickyNetWorth(BuildContext context, double progress) {
+          final l10n = AppLocalizations.of(context);
+          return AppCollapsedSummaryBar(
+            progress: progress,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.homeNetWorthTitle,
+                    style: context.mutedLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                MoneyText(
+                  amount: snapshot.netWorth.amount.toDouble(),
+                  currencyCode: snapshot.baseCurrency,
+                  compact: true,
+                  style: TypographyTokens.numericTitleStrong,
+                ),
+              ],
+            ),
+          );
+        }
+
         return AmountPrivacyScope(
           hidden: amountsHidden,
           child: useCockpit
               ? RefreshIndicator(
                   onRefresh: onRefresh,
                   child: AppAtmosphere(
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      children: [
-                        AdaptiveContentFrame(
-                          maxWidth: AdaptiveMaxWidth.dashboard,
-                          layout: AdaptiveFrameLayout.cockpit,
-                          padding: padding.copyWith(top: 0),
-                          header: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const HomeGreetingHeader(),
-                              _NetWorthHeader(snapshot: snapshot),
-                              const SizedBox(height: AppPageRhythm.module),
-                              HomeQuickActions(
-                                mode: snapshot.isEmpty
-                                    ? HomeQuickActionMode.onboarding
-                                    : HomeQuickActionMode.active,
-                              ),
-                            ],
+                    child: AppCollapsingScrollHost(
+                      padding: EdgeInsets.fromLTRB(
+                        padding.left,
+                        AppSpacing.s4,
+                        padding.right,
+                        0,
+                      ),
+                      stickyBuilder: stickyNetWorth,
+                      body: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        children: [
+                          AdaptiveContentFrame(
+                            maxWidth: AdaptiveMaxWidth.dashboard,
+                            layout: AdaptiveFrameLayout.cockpit,
+                            padding: padding.copyWith(top: 0),
+                            header: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const HomeGreetingHeader(),
+                                _NetWorthHeader(snapshot: snapshot),
+                                const SizedBox(height: AppPageRhythm.module),
+                                HomeQuickActions(
+                                  mode: snapshot.isEmpty
+                                      ? HomeQuickActionMode.onboarding
+                                      : HomeQuickActionMode.active,
+                                ),
+                              ],
+                            ),
+                            primary: const Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                FinanceAgentResultsPanel(
+                                  showPlaceholderStates: false,
+                                ),
+                                SizedBox(height: AppPageRhythm.section),
+                                ActivityTimelinePreview(),
+                              ],
+                            ),
+                            secondary: const Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [CashflowCalendarCard()],
+                            ),
                           ),
-                          primary: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              FinanceAgentResultsPanel(
-                                showPlaceholderStates: false,
-                              ),
-                              SizedBox(height: AppPageRhythm.section),
-                              ActivityTimelinePreview(),
-                            ],
-                          ),
-                          secondary: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [CashflowCalendarCard()],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 )
@@ -95,6 +129,7 @@ class _DashboardBodyContent extends ConsumerWidget {
                   onRefresh: onRefresh,
                   greeting: const HomeGreetingHeader(),
                   stage: _NetWorthHeader(snapshot: snapshot),
+                  stickyBuilder: stickyNetWorth,
                   modules: [
                     HomeQuickActions(
                       mode: snapshot.isEmpty

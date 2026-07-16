@@ -379,20 +379,20 @@ class _RelatedKnowledgeLink extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (icon != null) ...[
-              Container(
-                width: AppIconSizes.lg,
-                height: AppIconSizes.lg,
-                margin: const EdgeInsets.only(
+              Padding(
+                padding: const EdgeInsets.only(
                   right: AppSpacing.s8,
                   top: AppSpacing.s2,
                 ),
-                decoration: BoxDecoration(
-                  color: (iconColor ?? colors.primary).withValues(
-                    alpha: AppOpacity.subtle,
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: AppIconTile(
+                  icon: icon!,
+                  color: iconColor ?? colors.primary,
+                  size: AppIconSizes.lg,
+                  iconSize: 13,
+                  radius: AppRadius.sm,
+                  backgroundOpacity: AppOpacity.subtle,
+                  foregroundOpacity: 1,
                 ),
-                child: Icon(icon, size: 13, color: iconColor ?? colors.primary),
               ),
             ],
             Expanded(

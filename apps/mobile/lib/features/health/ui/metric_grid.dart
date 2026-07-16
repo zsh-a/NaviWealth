@@ -39,25 +39,65 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
       return model == null ? null : select(model);
     }
 
-    // Recovery-first primary quartet.
-    final primary = <Widget>[
-      _SleepCard(
-        async: metric((m) => m.sleep),
-        trend: trend((m) => m.sleepTrend),
-      ),
-      _HrvCard(async: metric((m) => m.hrv), trend: trend((m) => m.hrvTrend)),
-      _RhrCard(async: metric((m) => m.rhr), trend: trend((m) => m.rhrTrend)),
-      _StepsCard(
-        async: metric((m) => m.steps),
-        trend: trend((m) => m.stepsTrend),
-      ),
-    ];
-
     final secondaryRows = _secondaryRows(
       l10n: l10n,
       model: metrics.value,
       isLoading: metrics.isLoading && !metrics.hasValue,
     );
+
+    // Collapse the 2×2 empty-card grid into one quiet surface when nothing
+    // has been synced yet — empty SoftCards burn vertical space without signal.
+    final model = metrics.value;
+    final isLoading = metrics.isLoading && !metrics.hasValue;
+    final primaryHasData =
+        model != null &&
+        (model.sleep != null ||
+            model.hrv != null ||
+            model.rhr != null ||
+            model.steps != null);
+    final showEmptyCluster = !isLoading && metrics.hasValue && !primaryHasData;
+
+    if (showEmptyCluster) {
+      return SoftCard.raised(
+        borderless: true,
+        padding: AppPageRhythm.cardPadding,
+        child: AppEmptyState(
+          icon: FLucideIcons.activity,
+          title: l10n.healthNoData,
+          message: l10n.healthNoDataSyncHint,
+          compact: true,
+          iconSize: AppIconSizes.lg,
+        ),
+      );
+    }
+
+    // Recovery-first primary quartet — only render cells that load or have data.
+    final primary = <Widget>[
+      if (isLoading || model?.sleep != null)
+        _SleepCard(
+          async: metric((m) => m.sleep),
+          trend: trend((m) => m.sleepTrend),
+        ),
+      if (isLoading || model?.hrv != null)
+        _HrvCard(async: metric((m) => m.hrv), trend: trend((m) => m.hrvTrend)),
+      if (isLoading || model?.rhr != null)
+        _RhrCard(async: metric((m) => m.rhr), trend: trend((m) => m.rhrTrend)),
+      if (isLoading || model?.steps != null)
+        _StepsCard(
+          async: metric((m) => m.steps),
+          trend: trend((m) => m.stepsTrend),
+        ),
+    ];
+
+    // While loading with no cards yet, keep a compact skeleton grid.
+    final displayPrimary = primary.isEmpty && isLoading
+        ? <Widget>[
+            _SleepCard(async: metric((m) => m.sleep)),
+            _HrvCard(async: metric((m) => m.hrv)),
+            _RhrCard(async: metric((m) => m.rhr)),
+            _StepsCard(async: metric((m) => m.steps)),
+          ]
+        : primary;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -67,7 +107,7 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
             : maxWidth < 360
             ? 1
             : 2;
-        const gap = AppSpacing.s8;
+        const gap = AppPageRhythm.row;
         final computedCardWidth = maxWidth.isFinite
             ? (maxWidth - gap * (columns - 1)) / columns
             : 220.0;
@@ -76,16 +116,17 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                for (final card in primary)
-                  SizedBox(width: cardWidth, child: card),
-              ],
-            ),
+            if (displayPrimary.isNotEmpty)
+              Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  for (final card in displayPrimary)
+                    SizedBox(width: cardWidth, child: card),
+                ],
+              ),
             if (secondaryRows.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.s10),
+              const SizedBox(height: AppPageRhythm.module),
               AppRevealControl(
                 expanded: _expanded,
                 collapsedLabel: l10n.commonRevealMore(secondaryRows.length),
@@ -96,7 +137,7 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
                 visible: _expanded,
                 alignment: Alignment.topCenter,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.s10),
+                  padding: const EdgeInsets.only(top: AppPageRhythm.row),
                   child: AppGroupedSurface(
                     padding: EdgeInsets.zero,
                     child: Column(

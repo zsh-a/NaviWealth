@@ -72,17 +72,14 @@ class ExecutionOverviewStrip extends StatelessWidget {
               '${l10n.executionOverviewOpen} ${snapshot.openCount}',
           },
           iconOf: executionTodayFilterIcon,
-          onChanged: (filter) {
-            AppInteraction.signal(AppInteractionIntent.select);
-            onFilterChanged(filter);
-          },
+          onChanged: onFilterChanged,
           minSegmentWidth: 88,
         ),
         if (meta.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s10),
+          const SizedBox(height: AppPageRhythm.row),
           Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
+            spacing: AppPageRhythm.row,
+            runSpacing: AppPageRhythm.row,
             children: [
               for (final item in meta) _ExecutionOverviewMetaChip(data: item),
             ],
@@ -114,31 +111,14 @@ class _ExecutionOverviewMetaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Semantics(
       label: '${data.label}: ${data.value}',
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s10,
-          vertical: AppSpacing.s6,
-        ),
-        decoration: BoxDecoration(
-          color: colors.muted.withValues(alpha: AppOpacity.medium),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(data.icon, size: AppIconSizes.xs, color: data.color),
-            const SizedBox(width: AppSpacing.s6),
-            Text(
-              '${data.label} ${data.value}',
-              style: context.captionMediumStyle.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-          ],
-        ),
+      child: AppBadge(
+        icon: data.icon,
+        label: '${data.label} ${data.value}',
+        size: AppBadgeSize.compact,
+        foregroundColor: data.color,
+        containerColor: data.color.withValues(alpha: AppOpacity.light),
       ),
     );
   }

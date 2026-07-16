@@ -395,17 +395,10 @@ class _LifecycleQuickButtons extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppIconButton(
+        AppIconButton.softPrimary(
           icon: primaryIcon,
           tooltip: primaryTooltip,
           onPress: primaryAction,
-          size: 32,
-          iconSize: AppIconSizes.xs,
-          iconColor: colors.primary,
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.full),
-          ),
         ),
         const SizedBox(width: AppSpacing.s2),
         AppAdaptiveActionMenu(
@@ -450,6 +443,7 @@ class _LifecycleQuickButtons extends StatelessWidget {
               size: 32,
               iconSize: AppIconSizes.xs,
               iconColor: colors.mutedForeground,
+              surface: AppIconButtonSurface.softMuted,
             ),
           ),
         ),

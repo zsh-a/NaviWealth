@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_icon_tile.dart';
 import 'app_interaction.dart';
 import 'soft_card.dart';
 
@@ -51,12 +52,13 @@ class LifeTimeline extends StatelessWidget {
     final colors = context.theme.colors;
     return SoftCard.raised(
       padding: AppPageRhythm.cardPadding,
+      borderless: true,
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                padding: const EdgeInsets.symmetric(vertical: AppPageRhythm.row),
                 child: Row(
                   children: [
                     const SizedBox(width: AppSpacing.s14),
@@ -93,15 +95,14 @@ class _LifeTimelineRow extends StatelessWidget {
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 30,
-          height: 30,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: item.accent.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Icon(item.icon, size: AppIconSizes.sm, color: item.accent),
+        AppIconTile(
+          icon: item.icon,
+          color: item.accent,
+          size: 30,
+          iconSize: AppIconSizes.sm,
+          radius: AppRadius.sm,
+          backgroundOpacity: AppOpacity.subtle,
+          foregroundOpacity: 1,
         ),
         const SizedBox(width: AppSpacing.s12),
         Expanded(
