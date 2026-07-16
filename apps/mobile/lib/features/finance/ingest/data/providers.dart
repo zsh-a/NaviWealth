@@ -8,9 +8,11 @@ library;
 
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/ai/composition/proposal_applier.dart';
@@ -310,10 +312,15 @@ class IngestController {
         .toList(growable: false);
     final repository = await _ref.read(journalEntryRepositoryProvider.future);
     final expenses = await repository.watchExpenses().first;
-    final ledger = expenses
-        .where((expense) => expense.sync.ownerUserId == ownerUserId)
-        .map(expenseToTransactionInput)
-        .toList(growable: false);
+    final entries = await repository.watchAllWithPostings().first;
+    final ledger = <TransactionInput>[
+      ...expenses
+          .where((expense) => expense.sync.ownerUserId == ownerUserId)
+          .map(expenseToTransactionInput),
+      for (final entry in entries)
+        if (entry.entry.sync.ownerUserId == ownerUserId)
+          ?_incomeTransactionInput(entry),
+    ];
     if (reviewDrafts.isEmpty) return ledger;
     return <TransactionInput>[
       ...ledger,
@@ -329,6 +336,29 @@ class IngestController {
           ),
     ];
   }
+}
+
+TransactionInput? _incomeTransactionInput(JournalEntryWithPostings entry) {
+  for (final posting in entry.postings) {
+    if (!posting.accountId.toLowerCase().contains(':income:') ||
+        posting.units >= Decimal.zero) {
+      continue;
+    }
+    final minor = (-posting.units * Decimal.fromInt(100))
+        .round()
+        .toBigInt()
+        .toString();
+    return TransactionInput(
+      id: entry.entry.id,
+      description: entry.entry.payee ?? entry.entry.narration,
+      amountMinor: minor,
+      currency: posting.unit,
+      occurredAt: entry.entry.date,
+      accountId: posting.accountId,
+      categoryId: posting.accountId,
+    );
+  }
+  return null;
 }
 
 final class _CapturedIngestContext {

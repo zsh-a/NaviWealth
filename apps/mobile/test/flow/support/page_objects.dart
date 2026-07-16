@@ -236,7 +236,18 @@ class ExpenseFormObject {
   }
 
   Future<void> enterNote(String note) async {
-    final field = find.widgetWithText(FTextFormField, 'Notes');
+    var field = find.widgetWithText(FTextFormField, 'Notes');
+    if (field.evaluate().isEmpty) {
+      final disclosure = find.text('Date & note');
+      expect(
+        disclosure,
+        findsOneWidget,
+        reason: 'expense advanced-fields disclosure missing',
+      );
+      await tester.tap(disclosure);
+      await settle(tester);
+      field = find.widgetWithText(FTextFormField, 'Notes');
+    }
     expect(field, findsOneWidget);
     await tester.ensureVisible(field);
     await settle(tester);
@@ -331,12 +342,25 @@ class IngestReviewPageObject {
     expect(find.text('Nothing to confirm'), findsOneWidget);
   }
 
-  Future<void> pasteStatement(String text) async {
+  Future<void> pasteStatement(
+    String text, {
+    String completionText = 'Confirm all',
+  }) async {
     var paste = find.text('Paste text');
     if (paste.evaluate().isEmpty) {
       final addSource = find.bySemanticsLabel('Add source');
       expect(addSource, findsOneWidget, reason: 'capture source menu missing');
-      await tester.tap(addSource);
+      Finder tappableSource = addSource.hitTestable();
+      for (var i = 0; i < 100 && tappableSource.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        tappableSource = addSource.hitTestable();
+      }
+      expect(
+        tappableSource,
+        findsOneWidget,
+        reason: 'capture source menu stayed obscured',
+      );
+      await tester.tap(tappableSource);
       await settle(tester);
       paste = find.text('Paste text');
     }
@@ -351,7 +375,7 @@ class IngestReviewPageObject {
     final parse = find.text('Parse');
     expect(parse, findsWidgets, reason: 'parse action missing');
     await tester.tap(parse.last);
-    await settleUntil(tester, find.textContaining('Confirm all'));
+    await settleUntil(tester, find.textContaining(completionText));
   }
 
   void expectDraftVisible(String description) {
@@ -364,6 +388,28 @@ class IngestReviewPageObject {
 
   void expectConfirmAllCount(int count) {
     expect(find.text('Confirm all · new only ($count)'), findsOneWidget);
+  }
+
+  Future<void> confirmAllFresh(int count) async {
+    final confirm = find.text('Confirm all · new only ($count)');
+    expect(confirm, findsOneWidget, reason: 'confirm-all action missing');
+    await tester.ensureVisible(confirm);
+    await tester.tap(confirm);
+    await settleUntil(tester, find.text('Nothing to confirm'));
+    expect(
+      find.text('Nothing to confirm'),
+      findsOneWidget,
+      reason: 'confirmed drafts did not leave the review queue',
+    );
+  }
+
+  void expectDuplicateCount(int count) {
+    expect(find.text('Duplicate'), findsNWidgets(count));
+    expect(
+      find.textContaining('Confirm all · new only'),
+      findsNothing,
+      reason: 'exact duplicates must not be batch-confirmable',
+    );
   }
 
   Future<void> skipDraft(String description) async {
@@ -545,7 +591,18 @@ class PlanPageObject {
   }
 
   Future<void> openIncomeStrategy() async {
-    final action = find.text('Income strategy');
+    var action = find.text('Income strategy');
+    if (action.evaluate().isEmpty) {
+      final strategies = find.text('Strategies');
+      expect(
+        strategies,
+        findsOneWidget,
+        reason: 'strategy tools disclosure missing',
+      );
+      await tester.tap(strategies);
+      await settle(tester);
+      action = find.text('Income strategy');
+    }
     expect(action, findsWidgets, reason: 'income strategy action missing');
     await tester.ensureVisible(action.first);
     await settle(tester);
@@ -672,7 +729,7 @@ class PortfolioAnalysisPageObject {
 
   void expectEmptyAnalysis() {
     expect(find.text('Portfolio'), findsWidgets);
-    expect(find.text('MARKET VALUE'), findsOneWidget);
+    expect(find.text('Market value'), findsOneWidget);
     expect(find.text('Allocation'), findsOneWidget);
     expect(find.text('Positions'), findsWidgets);
     expect(find.text('No investment holdings yet.'), findsWidgets);

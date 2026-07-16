@@ -16,6 +16,7 @@ import 'accounts/ai_tools/read_account_window_tool.dart';
 import 'cashflow/ai_tools/get_cashflow_buckets_tool.dart';
 import 'cashflow/ai_tools/get_refund_links_tool.dart';
 import 'cashflow/ai_tools/get_transfer_links_tool.dart';
+import 'cashflow/ai_tools/propose_income_tool.dart';
 import 'expense/ai_tools/get_anomaly_flags_tool.dart';
 import 'expense/ai_tools/get_recurring_patterns_tool.dart';
 import 'expense/ai_tools/get_subscription_changes_tool.dart';
@@ -60,6 +61,7 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
   _financeTool.read(const GetCashflowBucketsTool()),
   _financeTool.read(const GetRefundLinksTool()),
   _financeTool.read(const GetTransferLinksTool()),
+  _financeTool.propose(const ProposeIncomeTool()),
   // Expense
   _financeTool.read(const GetAnomalyFlagsTool(), risk: RiskLevel.suggest),
   _financeTool.read(const GetRecurringPatternsTool()),
@@ -145,10 +147,11 @@ const String kFinanceSystemPromptBlock =
     '- 录入财务数据时调用 propose_* 工具，工具返回「待确认计划」，由前端确认页落库：\n'
     '  • propose_trade（证券、加密买卖 / 转入转出）\n'
     '  • propose_expense（日常消费 / 支出）\n'
+    '  • propose_income（工资 / 股息 / 利息 / 其它现金收入）\n'
     '  • propose_liability_payment（房贷 / 信用卡 / 消费贷还款）\n'
     '  • propose_account_create（新建账户）\n'
     '  • propose_asset_valuation（房产 / 车 / 存款等手工估值资产更新）\n'
     '  • propose_fire_plan_update（FIRE 计划调整）\n'
     '  • propose_options_journal_entry / propose_options_profile_update（期权 wheel 流水与策略画像）\n'
-    '- 记录支出时，若用户没有指定支付账户，先调用 list_payment_accounts 看候选；只有工具返回空时才提示「没有可用支付账户，是否新建」。\n'
+    '- 记录支出或收入时，若用户没有指定账户，先调用 list_payment_accounts 看候选；只有工具返回空时才提示「没有可用账户，是否新建」。\n'
     '- 期权 / 投资类问题优先用 get_holdings / get_asset_allocation / get_investment_performance，不要凭印象推断仓位与收益。';

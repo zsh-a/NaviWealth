@@ -7,6 +7,8 @@
 /// confirms, at which point the normal repository write path takes over.
 library;
 
+import 'ingest_parse_diagnostics.dart';
+
 /// Where a batch of raw input came from. Only [csv] / [pasteText] are
 /// handled by deterministic parsers in S5a; the image / pdf / email kinds
 /// require the provider-Vision path (S5b/S5c/S5d) and are rejected when the
@@ -84,15 +86,32 @@ class IngestSource {
   final String? originLabel;
 }
 
-/// One parsed transaction. [amountMinor] is signed minor units following
-/// the same outflow-is-negative convention as `expenseToTransactionInput`
-/// (S5a only ever produces expenses, so the value is negative).
+/// Economic direction of one parsed statement row.
+///
+/// This discriminator is persisted with drafts so the review and confirm
+/// steps never have to infer intent again from the amount sign. Drafts
+/// written before income ingest existed decode as [expense].
+enum IngestTransactionKind { expense, income }
+
+extension IngestTransactionKindX on IngestTransactionKind {
+  String get wire => name;
+
+  static IngestTransactionKind parse(String? value) =>
+      IngestTransactionKind.values.firstWhere(
+        (kind) => kind.name == value,
+        orElse: () => IngestTransactionKind.expense,
+      );
+}
+
+/// One parsed transaction. [amountMinor] is signed minor units: expenses
+/// are negative and income is positive.
 class ParsedTransaction {
   const ParsedTransaction({
     required this.description,
     required this.amountMinor,
     required this.currency,
     required this.occurredAt,
+    this.kind = IngestTransactionKind.expense,
     this.categoryHint,
     this.confidence = 1.0,
   });
@@ -101,24 +120,30 @@ class ParsedTransaction {
   final int amountMinor;
   final String currency;
   final DateTime occurredAt;
+  final IngestTransactionKind kind;
   final String? categoryHint;
   final double confidence;
 
-  ParsedTransaction copyWith({String? categoryHint, double? confidence}) =>
-      ParsedTransaction(
-        description: description,
-        amountMinor: amountMinor,
-        currency: currency,
-        occurredAt: occurredAt,
-        categoryHint: categoryHint ?? this.categoryHint,
-        confidence: confidence ?? this.confidence,
-      );
+  ParsedTransaction copyWith({
+    IngestTransactionKind? kind,
+    String? categoryHint,
+    double? confidence,
+  }) => ParsedTransaction(
+    description: description,
+    amountMinor: amountMinor,
+    currency: currency,
+    occurredAt: occurredAt,
+    kind: kind ?? this.kind,
+    categoryHint: categoryHint ?? this.categoryHint,
+    confidence: confidence ?? this.confidence,
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
     'description': description,
     'amount_minor': amountMinor,
     'currency': currency,
     'occurred_at': occurredAt.toUtc().toIso8601String(),
+    'kind': kind.wire,
     if (categoryHint != null) 'category_hint': categoryHint,
     'confidence': confidence,
   };
@@ -131,6 +156,7 @@ class ParsedTransaction {
       occurredAt:
           DateTime.tryParse((json['occurred_at'] as String?) ?? '')?.toUtc() ??
           DateTime.now().toUtc(),
+      kind: IngestTransactionKindX.parse(json['kind'] as String?),
       categoryHint: json['category_hint'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 1.0,
     );
@@ -188,9 +214,18 @@ class IngestDraft {
 
 /// Summary returned after a pipeline run, for the trace + a toast.
 class IngestResult {
-  const IngestResult({required this.drafts, this.rejectedReason});
+  const IngestResult({
+    required this.drafts,
+    this.rejectedReason,
+    this.parseIssues = const <IngestParseIssue>[],
+    this.parseCandidateRowCount = 0,
+    this.parseDiagnosticsComplete = false,
+  });
 
   final List<IngestDraft> drafts;
+  final List<IngestParseIssue> parseIssues;
+  final int parseCandidateRowCount;
+  final bool parseDiagnosticsComplete;
 
   /// Set when the source kind could not be parsed on-device (e.g. an
   /// image in S5a). The pipeline never silently drops input.
@@ -200,5 +235,9 @@ class IngestResult {
   int get newCount =>
       drafts.where((d) => d.verdict == DedupVerdict.newTxn).length;
   int get duplicateCount => total - newCount;
+  int get skippedCount => parseIssues.length;
+  bool get accountsForEveryParseCandidate =>
+      parseDiagnosticsComplete &&
+      total + skippedCount == parseCandidateRowCount;
   bool get isRejected => rejectedReason != null;
 }

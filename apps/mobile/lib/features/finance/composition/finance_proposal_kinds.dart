@@ -33,6 +33,14 @@ const List<ProposalKindMeta> kFinanceProposalKinds = [
     previewRows: _expenseRows,
   ),
   ProposalKindMeta(
+    kind: 'income',
+    icon: FLucideIcons.badgeDollarSign,
+    label: _incomeLabel,
+    toolName: 'propose_income',
+    editableFields: _expenseFields,
+    previewRows: _expenseRows,
+  ),
+  ProposalKindMeta(
     kind: 'liability_payment',
     icon: FLucideIcons.banknote,
     label: _liabilityPaymentLabel,
@@ -92,6 +100,7 @@ Set<String> get kFinanceProposalAppliedKinds =>
 
 String _tradeLabel(AppLocalizations l) => l.aiChatProposalKindTrade;
 String _expenseLabel(AppLocalizations l) => l.aiChatProposalKindExpense;
+String _incomeLabel(AppLocalizations l) => l.aiChatProposalKindIncome;
 String _liabilityPaymentLabel(AppLocalizations l) =>
     l.aiChatProposalKindLiabilityPayment;
 String _accountCreateLabel(AppLocalizations l) =>

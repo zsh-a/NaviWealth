@@ -947,6 +947,14 @@
   "fireCountdownDaysAprox": "约 {days} 天",
 
   "fireProjectionTitle": "多场景模拟",
+  "fireBudgetNoDataTitle": "暂无预算信号",
+  "fireBudgetNoDataDetail": "设置月度预算后，可将当前支出压力联动到 FIRE 计划。",
+  "fireBudgetComfortableTitle": "预算支持当前计划",
+  "fireBudgetComfortableDetail": "本月支出仍处于舒适区间。",
+  "fireBudgetStrainedTitle": "预算压力正在上升",
+  "fireBudgetStrainedDetail": "支出已接近月度上限，请优先守住计划结余。",
+  "fireBudgetOverTitle": "本月预算已超支",
+  "fireBudgetOverDetail": "当前支出压力可能降低 FIRE 计划所依赖的月度结余。",
   "fireProjectionSubtitle": "各收益场景下的净资产路径；虚线为通胀调整后的目标。",
   "fireProjectionTargetLineLegend": "目标（通胀调整）",
 
@@ -1510,6 +1518,7 @@
 
   "aiChatProposalKindTrade": "交易",
   "aiChatProposalKindExpense": "支出",
+  "aiChatProposalKindIncome": "收入",
   "aiChatProposalKindLiabilityPayment": "还款",
   "aiChatProposalKindAccountCreate": "新账户",
   "aiChatProposalKindAssetValuation": "估值更新",
@@ -1536,6 +1545,10 @@
   "aiChatProposalUndoCountdown": "撤销 ({seconds}s)",
   "aiChatProposalBatchPending": "本轮共有 {count} 项待确认",
   "aiChatProposalBatchConfirmAll": "全部确认",
+  "aiChatProposalBatchProgress": "正在处理第 {completed}/{total} 项",
+  "aiChatProposalBatchRecover": "撤销已写入项",
+  "aiChatProposalBatchRecoveryNeeded": "仍有 {count} 项已写入，撤销完成前不会重新执行批次",
+  "aiChatProposalBatchRolledBack": "已撤销本批次中写入的项目，可以安全重试。",
   "aiChatProposalBatchResultAllOk": "{count, plural, other{已记录 {count} 项}}",
   "aiChatProposalBatchResultMixed": "已记录 {applied} 项 · {failed} 项失败",
   "aiChatProposalBatchResultAllFailed": "{count, plural, other{{count} 项全部失败}}",
@@ -2611,9 +2624,9 @@
   "ingestReviewTitle": "录入待确认",
   "ingestAccountsLoadError": "账户加载失败：{error}",
   "ingestQueueLoadError": "待确认队列加载失败：{error}",
-  "ingestExpenseAccountLabel": "支出账户",
+  "ingestExpenseAccountLabel": "账单账户",
   "ingestConfirmAllFresh": "全部确认 · 仅新增（{count}）",
-  "ingestSelectAccountFirst": "请先选择支出账户",
+  "ingestSelectAccountFirst": "请先选择账单账户",
   "ingestServiceNotReady": "服务尚未就绪",
   "ingestRecorded": "已记录",
   "ingestRecordedN": "已记录 {count} 笔",
@@ -2653,6 +2666,7 @@
   "ingestSharedParseFailed": "共享导入被意外中断。",
   "ingestNoTransactions": "未解析出可识别的交易",
   "ingestParseSummary": "解析 {total} 笔（新增 {fresh} · 疑似重复 {dup}）",
+  "ingestParseSummaryWithSkipped": "解析 {total} 笔（新增 {fresh} · 疑似重复 {dup} · 跳过 {skipped}）",
   "ingestProcessingTitle": "正在解析导入内容",
   "ingestProcessingBody": "正在读取 {source}，提取支出并与本地流水、待确认导入去重。",
   "ingestRecordingTitle": "正在入账",
@@ -3779,5 +3793,7 @@
   "knowledgeAgentInboxProposalDecisionLinks": "关联决策",
   "knowledgeAgentInboxProposalSuggestionSingular": "建议",
   "knowledgeAgentInboxProposalSuggestionPlural": "建议",
-  "knowledgeAgentInboxAction": "查看 Inbox 建议"
+  "knowledgeAgentInboxAction": "查看 Inbox 建议",
+  "ingestKindExpense": "支出",
+  "ingestKindIncome": "收入"
 }

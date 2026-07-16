@@ -3,8 +3,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_kind.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 
@@ -38,6 +40,16 @@ final fireLiveAnnualReturnProvider = Provider<double?>((ref) => null);
 final fireCalculatorProvider = Provider<FireCalculator>(
   (ref) => const FireCalculator(),
 );
+
+/// Current-month budget posture exposed to the FIRE surface through a
+/// one-way read-model seam. FIRE never reaches into the Budget repository.
+final fireBudgetSignalProvider = Provider<AsyncValue<BudgetSignal>>((ref) {
+  final now = ref.watch(fireNowProvider);
+  final periodMonth =
+      '${now.year.toString().padLeft(4, '0')}-'
+      '${now.month.toString().padLeft(2, '0')}';
+  return ref.watch(monthlyBudgetSignalProvider(periodMonth));
+});
 
 /// The fully-built FIRE dashboard view. Recomputes when the goal,
 /// dashboard snapshot (current net worth), or live XIRR rate changes.

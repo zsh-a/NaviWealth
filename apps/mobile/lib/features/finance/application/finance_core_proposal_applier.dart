@@ -66,6 +66,45 @@ class FinanceCoreProposalApplier {
     );
   }
 
+  Future<ProposalApplyState> applyIncome(
+    ReadyProposalPlan plan,
+    DateTime at,
+  ) async {
+    final toAccountId = _requireString(plan, 'account_id');
+    final amount = _requireDecimal(plan, 'amount');
+    final currency = plan.get('currency') ?? 'CNY';
+    final date = _parseDate(plan.get('date')) ?? DateTime.now();
+    final note = plan.get('note');
+    final category = plan.get('category') ?? 'other';
+    if (!const {'salary', 'dividend', 'interest', 'other'}.contains(category)) {
+      throw ProposalApplyException('Unknown income category: $category');
+    }
+    final ownerUserId = await currentUserId();
+    final incomeAccountId = AccountRepository.systemAccountIdForPath(
+      'income:$category',
+      ownerUserId: ownerUserId,
+    );
+    final build = JournalEntryBuilders.income(
+      date: date,
+      toAccountId: toAccountId,
+      incomeAccountId: incomeAccountId,
+      amount: amount,
+      currency: currency,
+      narration: note ?? plan.summaryZh,
+    );
+    final stored = await journalEntryRepo.create(
+      entry: build.entry,
+      postings: build.postings,
+    );
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: stored.entry.id,
+      appliedTable: 'journal_entries',
+      appliedAt: at,
+      shortLabel: 'Recorded ${plan.summaryZh}',
+    );
+  }
+
   Future<ProposalApplyState> applyLiabilityPayment(
     ReadyProposalPlan plan,
     DateTime at,

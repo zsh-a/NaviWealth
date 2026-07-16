@@ -19,10 +19,12 @@ import '../../core/shell/shell_chrome.dart';
 import '../../core/shortcuts/shortcut_intents.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../routing/route_paths.dart';
 
 List<Override> appShellChromeOverrides() {
   return [
     shellChromeBuildersProvider.overrideWith((ref) => appShellChromeBuilders),
+    domainSwitcherHomePathProvider.overrideWithValue(AppRoutes.life),
   ];
 }
 
@@ -81,6 +83,7 @@ class DomainSwitcherChip extends ConsumerWidget {
     }
     final specs = ref.watch(activeDomainShellsProvider);
     if (specs.length < 2) return const SizedBox.shrink();
+    final homePath = ref.watch(domainSwitcherHomePathProvider);
 
     final path = GoRouter.of(context).routeInformationProvider.value.uri.path;
     final active = activeSpecForPath(specs, path);
@@ -92,7 +95,7 @@ class DomainSwitcherChip extends ConsumerWidget {
       label: active.label,
       button: true,
       child: FTappable(
-        onPress: () => showDomainSwitcherSheet(context, specs),
+        onPress: () => showDomainSwitcherSheet(context, specs, homePath),
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s12,

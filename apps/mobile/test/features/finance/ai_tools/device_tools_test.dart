@@ -27,6 +27,7 @@ import 'package:naviwealth/features/finance/ai_tools/shared/scoped/scoped_window
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_cashflow_buckets_tool.dart';
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_refund_links_tool.dart';
 import 'package:naviwealth/features/finance/cashflow/ai_tools/get_transfer_links_tool.dart';
+import 'package:naviwealth/features/finance/cashflow/ai_tools/propose_income_tool.dart';
 import 'package:naviwealth/features/finance/cashflow/domain/cash_flow_ledger_entry.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart'
     show JournalEntryWithPostings;
@@ -925,6 +926,36 @@ void main() {
       expect((plan['payload'] as Map)['category'], 'dining');
       expect(plan['summary_zh'], '记一笔餐饮支出 12.5 CNY');
       expect(isRfc3339('2026-05-16'), isFalse); // tool would bad_request
+    });
+  });
+
+  group('ProposeIncomeTool.invoke — validation before account read', () {
+    Future<Object?> run(Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => const ProposeIncomeTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('missing or non-positive amount is rejected', () async {
+      expect(((await run(const {})) as Map)['code'], 'bad_request');
+      expect(
+        ((await run(const {'amount': 0})) as Map)['error'],
+        contains('amount must be > 0'),
+      );
+    });
+
+    test('unsupported category asks for a closed-set choice', () async {
+      final result =
+          await run(const {'amount': 10, 'category': 'bonus'}) as Map;
+      expect(result['status'], 'needs_clarification');
+      expect(result['ambiguous_field'], 'category');
+      expect((result['candidates'] as List), hasLength(4));
     });
   });
 

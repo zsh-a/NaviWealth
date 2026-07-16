@@ -120,7 +120,7 @@ void main() {
       'lib/features/finance/home/ui/home_dashboard_body.dart',
     ).readAsStringSync();
     expect(ambientPanel, contains('class FinanceAgentResultsPanel'));
-    expect(ambientPanel, contains('AgentResultSurface('));
+    expect(ambientPanel, contains('AgentResultsSection('));
 
     final agentArtifactRail = File(
       'lib/features/finance/home/composition/finance_chat_rail_provider.dart',

@@ -160,13 +160,10 @@ void main() {
     });
 
     test('mobile descriptor catalog carries active device tools', () {
-      // 5 shell (query_memory, build_context, ask_user, agent result reads) +
-      // 35 FinanceOS + 7 HealthOS + 19 KnowledgeOS + 8 ExecutionOS = 74.
-      // `ask_user` is the structured decision-point tool
-      // (Claude-Code-style interactive choices). Each
-      // LifeOS domain co-locates its descriptors with its tool barrel; the
-      // union here is derived from the production DomainPack registrations.
-      expect(productionToolDescriptors.values, hasLength(74));
+      // The union is derived from production DomainPack registrations.
+      // Keep the exact count pinned so adding or removing a device tool is
+      // an intentional contract change.
+      expect(productionToolDescriptors.values, hasLength(72));
       expect(
         productionToolDescriptors['propose_options_profile_update']?.sideEffect,
         SideEffect.deviceLocalWrite,
@@ -177,6 +174,10 @@ void main() {
       );
       expect(
         productionToolDescriptors['propose_expense']?.sideEffect,
+        SideEffect.deviceLocalWrite,
+      );
+      expect(
+        productionToolDescriptors['propose_income']?.sideEffect,
         SideEffect.deviceLocalWrite,
       );
       expect(productionToolDescriptors['get_journal_entries'], isNull);

@@ -279,6 +279,33 @@ class JournalEntryBuilders {
     tagIds: tagIds,
   );
 
+  // ---------- Income ----------
+
+  /// Generic cash income. The destination asset/cash account increases and
+  /// the selected seeded `income:*` counter-account receives the balancing
+  /// credit.
+  static JournalEntryBuild income({
+    required DateTime date,
+    required String toAccountId,
+    required String incomeAccountId,
+    required Decimal amount,
+    required String currency,
+    String? payee,
+    String? narration,
+    DateTime? settledOn,
+    List<String> tagIds = const <String>[],
+  }) => _buildIncomeJournalEntry(
+    date: date,
+    toAccountId: toAccountId,
+    incomeAccountId: incomeAccountId,
+    amount: amount,
+    currency: currency,
+    payee: payee,
+    narration: narration,
+    settledOn: settledOn,
+    tagIds: tagIds,
+  );
+
   // ---------- Dividend ----------
 
   /// Cash dividend received. Optional withholding tax leg lands on

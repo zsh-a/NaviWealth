@@ -3,9 +3,8 @@
 /// The generic CSV parser handles simple `date,description,amount` exports.
 /// Bank statements often split money into debit/credit columns or use a
 /// signed `amount` plus a separate debit/credit marker. This parser covers
-/// those common shapes while preserving the current ingest contract: only
-/// expense outflows become drafts. Income, refunds, and transfer-like credit
-/// rows are skipped until ingest has typed income/transfer destinations.
+/// those common shapes as typed expense/income drafts. Refunds and
+/// transfer-like credits remain excluded until reconciliation can link them.
 library;
 
 import '../domain/ingest_models.dart';
@@ -36,7 +35,7 @@ List<ParsedTransaction> parseBankCashLedger(
   for (var i = header.index + 1; i < lines.length; i++) {
     final line = lines[i];
     if (isIngestPreambleLine(line)) continue;
-    final row = _rowToBankExpense(
+    final row = _rowToBankTransaction(
       splitIngestRow(line, delimiter),
       mapping,
       defaultCurrency,

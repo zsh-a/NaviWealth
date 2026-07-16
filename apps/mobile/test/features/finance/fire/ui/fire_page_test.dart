@@ -9,6 +9,7 @@ import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/finance/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -77,6 +78,7 @@ Future<Widget> _wrap({
   List<Asset> manualAssets = const [],
   FireGoal? goal,
   Decimal? currentNetWorth,
+  BudgetSignal budgetSignal = BudgetSignal.noData,
 }) async {
   final resolvedGoal = goal ?? FireGoal.unset();
   final nw = currentNetWorth ?? Decimal.zero;
@@ -89,6 +91,9 @@ Future<Widget> _wrap({
       fireStateProvider.overrideWith(
         (ref) =>
             AsyncValue.data(_stubFireState(resolvedGoal, currentNetWorth: nw)),
+      ),
+      fireBudgetSignalProvider.overrideWith(
+        (ref) => AsyncValue.data(budgetSignal),
       ),
       manualAssetsStreamProvider.overrideWith(
         (ref) => Stream.value(manualAssets),
@@ -170,6 +175,37 @@ void main() {
       expect(find.byIcon(FLucideIcons.pencil), findsOneWidget);
     },
   );
+
+  for (final (signal, expectedTitle) in const [
+    (BudgetSignal.noData, 'Budget signal not available'),
+    (BudgetSignal.comfortable, 'Budget supports the plan'),
+    (BudgetSignal.strained, 'Budget pressure is rising'),
+    (BudgetSignal.overBudget, 'Monthly budget exceeded'),
+  ]) {
+    testWidgets('renders ${signal.name} budget posture on configured FIRE', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(
+          prefs: prefs,
+          goal: FireGoal(
+            targetAmount: Decimal.parse('1000000'),
+            monthlyExpenses: Decimal.parse('4000'),
+            monthlySurplus: Decimal.parse('5000'),
+            inflationRate: 0.03,
+          ),
+          currentNetWorth: Decimal.parse('250000'),
+          budgetSignal: signal,
+        ),
+      );
+      await _pumpFrames(tester);
+
+      expect(find.byKey(const ValueKey('fire-budget-posture')), findsOneWidget);
+      expect(find.text(expectedTitle), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('saves a goal entered in the goal sheet', (tester) async {
     final prefs = await SharedPreferences.getInstance();

@@ -552,6 +552,23 @@ void main() {
     });
   });
 
+  group('JournalEntryBuilders.income', () {
+    test('two-leg income increases cash and credits income', () {
+      final build = JournalEntryBuilders.income(
+        date: DateTime.utc(2026, 4, 30),
+        toAccountId: 'a-bank',
+        incomeAccountId: 'a-salary',
+        amount: Decimal.parse('8000'),
+        currency: 'CNY',
+        payee: 'Employer',
+      );
+      expect(_checkBalance(build, baseCurrency: 'CNY').isBalanced, isTrue);
+      expect(build.entry.payee, 'Employer');
+      expect(build.postings[0].units, Decimal.parse('8000'));
+      expect(build.postings[1].units, Decimal.parse('-8000'));
+    });
+  });
+
   group('JournalEntryBuilders.dividend', () {
     test('cash + income two-leg balances', () {
       final build = JournalEntryBuilders.dividend(

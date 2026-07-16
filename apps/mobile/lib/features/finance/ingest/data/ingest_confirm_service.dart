@@ -1,6 +1,6 @@
 /// §5.10.10 / S5a step ⑦ — confirmation.
 ///
-/// A confirmed draft is turned into a `ProposalKind.expense`
+/// A confirmed draft is turned into an expense or income
 /// [ReadyProposalPlan] and pushed through the **existing**
 /// [ProposalApplier]. That is the whole point: ingest reuses the one
 /// audited write path (repository → Drift → OpLog → AiTouch) instead of
@@ -193,9 +193,10 @@ class IngestConfirmService {
   /// 100-row confirmation from 100 outer commits to four.
   static const int confirmationChunkSize = 25;
 
-  /// Apply [draft] as an expense paid from [fromAccountId]. Returns the
-  /// applied state. Failures before invocation release the reservation;
-  /// failures after invocation starts require explicit manual recovery.
+  /// Apply [draft] against the selected statement account. For expenses it
+  /// is the paying account; for income it is the destination account.
+  /// Failures before invocation release the reservation; failures after
+  /// invocation starts require explicit manual recovery.
   Future<ConfirmedIngestItem> confirm(
     IngestDraft draft, {
     required String fromAccountId,
@@ -206,7 +207,7 @@ class IngestConfirmService {
         'Select an account before recording this entry.',
       );
     }
-    final plan = expensePlanFor(draft, fromAccountId: fromAccountId);
+    final plan = planFor(draft, accountId: fromAccountId);
     final token = _uuid.v4();
     late int revision;
     try {
@@ -669,6 +670,46 @@ class IngestConfirmService {
       },
     );
   }
+
+  static ReadyProposalPlan incomePlanFor(
+    IngestDraft draft, {
+    required String toAccountId,
+  }) {
+    final amount = _minorToDecimalString(draft.parsed.amountMinor.abs());
+    final category = switch (draft.parsed.categoryHint) {
+      'salary' || 'dividend' || 'interest' => draft.parsed.categoryHint!,
+      _ => 'other',
+    };
+    return ReadyProposalPlan(
+      proposalId: draft.draftId,
+      kind: 'income',
+      summaryZh:
+          '记录收入 ${_shortDesc(draft.parsed.description)} '
+          '${draft.parsed.currency} $amount',
+      payload: <String, Object?>{
+        'account_id': toAccountId,
+        'amount': amount,
+        'currency': draft.parsed.currency,
+        'date': draft.parsed.occurredAt.toUtc().toIso8601String(),
+        'note': draft.parsed.description,
+        'category': category,
+      },
+    );
+  }
+
+  static ReadyProposalPlan planFor(
+    IngestDraft draft, {
+    required String accountId,
+  }) => switch (draft.parsed.kind) {
+    IngestTransactionKind.expense => expensePlanFor(
+      draft,
+      fromAccountId: accountId,
+    ),
+    IngestTransactionKind.income => incomePlanFor(
+      draft,
+      toAccountId: accountId,
+    ),
+  };
 
   static String _minorToDecimalString(int absMinor) {
     final whole = absMinor ~/ 100;

@@ -1,21 +1,26 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/bank_ingest_parser.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
 
 void main() {
   group('parseBankCashLedger', () {
-    test('parses Chinese debit/credit split columns and skips credit rows', () {
+    test('parses Chinese debit and salary credit rows', () {
       final rows = parseBankCashLedger(
         '交易日期,交易摘要,对方户名,借方金额,贷方金额,币种\n'
         '2026-05-11,快捷支付,招商超市,66.80,,CNY\n'
         '2026-05-12,工资,公司,,10000.00,CNY\n',
       );
 
-      expect(rows, hasLength(1));
-      expect(rows.single.description, '招商超市 · 快捷支付');
-      expect(rows.single.amountMinor, -6680);
-      expect(rows.single.currency, 'CNY');
-      expect(rows.single.occurredAt, DateTime.utc(2026, 5, 11));
-      expect(rows.single.categoryHint, 'groceries');
+      expect(rows, hasLength(2));
+      expect(rows.first.description, '招商超市 · 快捷支付');
+      expect(rows.first.amountMinor, -6680);
+      expect(rows.first.currency, 'CNY');
+      expect(rows.first.occurredAt, DateTime.utc(2026, 5, 11));
+      expect(rows.first.categoryHint, 'groceries');
+      expect(rows.last.description, '公司 · 工资');
+      expect(rows.last.amountMinor, 1000000);
+      expect(rows.last.kind, IngestTransactionKind.income);
+      expect(rows.last.categoryHint, 'salary');
     });
 
     test('parses amount plus 借贷标志 exports', () {
@@ -31,7 +36,7 @@ void main() {
       expect(rows.single.categoryHint, 'transport');
     });
 
-    test('parses English debit/credit bank exports', () {
+    test('parses English debit and payroll credit rows', () {
       final rows = parseBankCashLedger(
         'Posting Date,Details,Debit,Credit,Currency\n'
         '05/15/2026,"Amazon Marketplace","1,234.56",,USD\n'
@@ -39,11 +44,15 @@ void main() {
         defaultCurrency: 'USD',
       );
 
-      expect(rows, hasLength(1));
-      expect(rows.single.description, 'Amazon Marketplace');
-      expect(rows.single.amountMinor, -123456);
-      expect(rows.single.currency, 'USD');
-      expect(rows.single.categoryHint, 'shopping');
+      expect(rows, hasLength(2));
+      expect(rows.first.description, 'Amazon Marketplace');
+      expect(rows.first.amountMinor, -123456);
+      expect(rows.first.currency, 'USD');
+      expect(rows.first.categoryHint, 'shopping');
+      expect(rows.last.description, 'Payroll');
+      expect(rows.last.amountMinor, 500000);
+      expect(rows.last.kind, IngestTransactionKind.income);
+      expect(rows.last.categoryHint, 'salary');
     });
 
     test('skips failed, cancelled, and refund rows', () {

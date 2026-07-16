@@ -1,6 +1,6 @@
 part of 'bank_ingest_parser.dart';
 
-ParsedTransaction? _rowToBankExpense(
+ParsedTransaction? _rowToBankTransaction(
   List<String> cells,
   Map<int, _BankCol> mapping,
   String defaultCurrency,
@@ -23,14 +23,6 @@ ParsedTransaction? _rowToBankExpense(
   final credit = parseIngestAmountMinor(cell(_BankCol.credit));
   final amount = parseIngestAmountMinor(cell(_BankCol.amount));
   final direction = cell(_BankCol.direction);
-  final minor = _resolveExpenseMinor(
-    amount: amount,
-    debit: debit,
-    credit: credit,
-    direction: direction,
-  );
-  if (minor == null || minor == 0) return null;
-
   final payee = cell(_BankCol.payee);
   final desc = cell(_BankCol.description);
   final type = cell(_BankCol.type);
@@ -44,21 +36,44 @@ ParsedTransaction? _rowToBankExpense(
   final description = descriptionParts.isEmpty
       ? 'Bank transaction'
       : descriptionParts.join(' · ');
+  final normalizedDescription = normalizeIngestText(description);
+  final isRefund =
+      normalizedDescription.contains('退款') ||
+      normalizedDescription.contains('refund');
+  final isTransfer =
+      normalizedDescription.contains('转账') ||
+      normalizedDescription.contains('transfer');
+  final resolved = _resolveBankTransactionAmount(
+    amount: amount,
+    debit: debit,
+    credit: credit,
+    direction: direction,
+  );
+  if (resolved == null || resolved.$2 == 0) return null;
+  final (kind, minor) = resolved;
+  if (kind == IngestTransactionKind.income && (isRefund || isTransfer)) {
+    return null;
+  }
 
   final currency = (cell(_BankCol.currency) ?? defaultCurrency)
       .toUpperCase()
       .trim();
   return ParsedTransaction(
     description: description,
-    amountMinor: -minor.abs(),
+    amountMinor: kind == IngestTransactionKind.income
+        ? minor.abs()
+        : -minor.abs(),
     currency: currency.isEmpty ? defaultCurrency : currency,
     occurredAt: date,
-    categoryHint: _categoryHint(description),
+    kind: kind,
+    categoryHint: kind == IngestTransactionKind.income
+        ? _incomeCategoryHint(description)
+        : _categoryHint(description),
     confidence: 0.9,
   );
 }
 
-int? _resolveExpenseMinor({
+(IngestTransactionKind, int)? _resolveBankTransactionAmount({
   required int? amount,
   required int? debit,
   required int? credit,
@@ -66,18 +81,28 @@ int? _resolveExpenseMinor({
 }) {
   final dir = normalizeIngestText(direction ?? '');
   if (dir.isNotEmpty) {
-    if (_isCreditDirection(dir)) return null;
-    if (_isDebitDirection(dir)) return (amount ?? debit)?.abs();
+    if (_isCreditDirection(dir)) {
+      final resolved = (amount ?? credit)?.abs();
+      return resolved == null ? null : (IngestTransactionKind.income, resolved);
+    }
+    if (_isDebitDirection(dir)) {
+      final resolved = (amount ?? debit)?.abs();
+      return resolved == null
+          ? null
+          : (IngestTransactionKind.expense, resolved);
+    }
   }
-  if (debit != null && debit != 0) return debit.abs();
+  if (debit != null && debit != 0) {
+    return (IngestTransactionKind.expense, debit.abs());
+  }
   if (credit != null && credit != 0 && (amount == null || amount == 0)) {
-    return null;
+    return (IngestTransactionKind.income, credit.abs());
   }
   if (amount == null || amount == 0) return null;
   if (credit != null && credit.abs() == amount.abs() && amount > 0) {
-    return null;
+    return (IngestTransactionKind.income, amount.abs());
   }
-  return amount.abs();
+  return (IngestTransactionKind.expense, amount.abs());
 }
 
 bool _isDebitDirection(String dir) {
@@ -154,4 +179,22 @@ String? _categoryHint(String description) {
     return 'shopping';
   }
   return null;
+}
+
+String _incomeCategoryHint(String description) {
+  final normalized = normalizeIngestText(description);
+  if (normalized.contains('工资') ||
+      normalized.contains('salary') ||
+      normalized.contains('payroll')) {
+    return 'salary';
+  }
+  if (normalized.contains('利息') || normalized.contains('interest')) {
+    return 'interest';
+  }
+  if (normalized.contains('股息') ||
+      normalized.contains('分红') ||
+      normalized.contains('dividend')) {
+    return 'dividend';
+  }
+  return 'other';
 }

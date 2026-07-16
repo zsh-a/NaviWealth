@@ -94,6 +94,9 @@ void main() {
     expect(result.drafts[0].dedupTargetEntryId, 'existing-paper');
     expect(result.drafts[1].parsed.categoryHint, 'dining');
     expect(result.drafts[1].verdict, DedupVerdict.newTxn);
+    expect(result.parseCandidateRowCount, 3);
+    expect(result.skippedCount, 1);
+    expect(result.accountsForEveryParseCandidate, isTrue);
   });
 
   test('non-device-parsable sources are rejected, never silently dropped', () {

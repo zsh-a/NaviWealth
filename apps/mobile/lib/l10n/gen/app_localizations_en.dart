@@ -3075,6 +3075,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fireProjectionTitle => 'Projection';
 
   @override
+  String get fireBudgetNoDataTitle => 'Budget signal not available';
+
+  @override
+  String get fireBudgetNoDataDetail =>
+      'Set a monthly budget to connect current spending pressure to this FIRE plan.';
+
+  @override
+  String get fireBudgetComfortableTitle => 'Budget supports the plan';
+
+  @override
+  String get fireBudgetComfortableDetail =>
+      'This month’s spending is within the comfortable range.';
+
+  @override
+  String get fireBudgetStrainedTitle => 'Budget pressure is rising';
+
+  @override
+  String get fireBudgetStrainedDetail =>
+      'Spending is near the monthly limit; protect the planned surplus.';
+
+  @override
+  String get fireBudgetOverTitle => 'Monthly budget exceeded';
+
+  @override
+  String get fireBudgetOverDetail =>
+      'Current spending pressure may reduce the surplus assumed by this FIRE plan.';
+
+  @override
   String get fireProjectionSubtitle =>
       'Net worth path under each return scenario; dashed line is the inflation-adjusted target.';
 
@@ -5051,6 +5079,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatProposalKindExpense => 'Expense';
 
   @override
+  String get aiChatProposalKindIncome => 'Income';
+
+  @override
   String get aiChatProposalKindLiabilityPayment => 'Repayment';
 
   @override
@@ -5147,6 +5178,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatProposalBatchConfirmAll => 'Confirm all';
+
+  @override
+  String aiChatProposalBatchProgress(int completed, int total) {
+    return 'Applying $completed of $total';
+  }
+
+  @override
+  String get aiChatProposalBatchRecover => 'Undo applied items';
+
+  @override
+  String aiChatProposalBatchRecoveryNeeded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count applied items still need to be undone before retrying',
+      one: '1 applied item still needs to be undone before retrying',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiChatProposalBatchRolledBack =>
+      'Applied items were undone. The batch is safe to retry.';
 
   @override
   String aiChatProposalBatchResultAllOk(int count) {
@@ -8748,7 +8802,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get ingestExpenseAccountLabel => 'Paid from';
+  String get ingestExpenseAccountLabel => 'Account';
 
   @override
   String ingestConfirmAllFresh(int count) {
@@ -8756,7 +8810,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get ingestSelectAccountFirst => 'Pick a paying account first';
+  String get ingestSelectAccountFirst => 'Pick a statement account first';
 
   @override
   String get ingestServiceNotReady => 'Service not ready yet';
@@ -8899,6 +8953,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String ingestParseSummary(int total, int fresh, int dup) {
     return 'Parsed $total · $fresh new · $dup possible dup';
+  }
+
+  @override
+  String ingestParseSummaryWithSkipped(
+    int total,
+    int fresh,
+    int dup,
+    int skipped,
+  ) {
+    return 'Parsed $total · $fresh new · $dup possible dup · $skipped skipped';
   }
 
   @override
@@ -12776,4 +12840,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeAgentInboxAction => 'Review inbox suggestions';
+
+  @override
+  String get ingestKindExpense => 'Expense';
+
+  @override
+  String get ingestKindIncome => 'Income';
 }

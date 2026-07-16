@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../ai_tools/local_skills/local_skills.dart';
 import '../domain/ingest_models.dart';
+import '../domain/ingest_parse_diagnostics.dart';
 import 'ingest_dedup.dart';
 import 'statement_ingest_parser.dart';
 
@@ -79,10 +80,17 @@ final class IngestPlanningAnalysis {
   IngestPlanningAnalysis({
     required List<AnalyzedIngestRow> rows,
     this.rejectedReason,
-  }) : rows = List.unmodifiable(rows);
+    List<IngestParseIssue> parseIssues = const <IngestParseIssue>[],
+    this.parseCandidateRowCount = 0,
+    this.parseDiagnosticsComplete = false,
+  }) : rows = List.unmodifiable(rows),
+       parseIssues = List.unmodifiable(parseIssues);
 
   final List<AnalyzedIngestRow> rows;
   final String? rejectedReason;
+  final List<IngestParseIssue> parseIssues;
+  final int parseCandidateRowCount;
+  final bool parseDiagnosticsComplete;
 
   bool get isRejected => rejectedReason != null;
 }
@@ -91,6 +99,9 @@ final class IngestPlanningAnalysis {
 /// Its object graph is sendable through the background executor seam.
 IngestPlanningAnalysis analyzeIngestPlanning(IngestPlanningRequest request) {
   final List<ParsedTransaction> parsed;
+  final List<IngestParseIssue> parseIssues;
+  final int parseCandidateRowCount;
+  final bool parseDiagnosticsComplete;
   switch (request.payload) {
     case DeviceIngestPlanningPayload payload:
       if (!payload.kind.isDeviceParsable) {
@@ -100,12 +111,19 @@ IngestPlanningAnalysis analyzeIngestPlanning(IngestPlanningRequest request) {
               '「${payload.kind.name}」来源需模型 Vision 解析，S5a 仅支持 CSV / 粘贴文本',
         );
       }
-      parsed = parseStatementLedger(
+      final report = parseStatementLedgerReport(
         payload.raw,
         defaultCurrency: payload.defaultCurrency,
       );
+      parsed = report.rows;
+      parseIssues = report.ledger.issues;
+      parseCandidateRowCount = report.ledger.candidateRowCount;
+      parseDiagnosticsComplete = report.ledger.diagnosticsComplete;
     case PreParsedIngestPlanningPayload payload:
       parsed = payload.rows;
+      parseIssues = const <IngestParseIssue>[];
+      parseCandidateRowCount = parsed.length;
+      parseDiagnosticsComplete = false;
   }
 
   final index = IngestDedupIndex<PlanningDedupTarget>();
@@ -115,7 +133,8 @@ IngestPlanningAnalysis analyzeIngestPlanning(IngestPlanningRequest request) {
 
   final rows = <AnalyzedIngestRow>[];
   for (final row in parsed) {
-    final classification = row.categoryHint == null
+    final classification =
+        row.kind == IngestTransactionKind.expense && row.categoryHint == null
         ? classifyTransaction(
             TransactionInput(
               id: 'ingest-probe',
@@ -150,7 +169,12 @@ IngestPlanningAnalysis analyzeIngestPlanning(IngestPlanningRequest request) {
       BatchRowTarget(rowIndex),
     );
   }
-  return IngestPlanningAnalysis(rows: rows);
+  return IngestPlanningAnalysis(
+    rows: rows,
+    parseIssues: parseIssues,
+    parseCandidateRowCount: parseCandidateRowCount,
+    parseDiagnosticsComplete: parseDiagnosticsComplete,
+  );
 }
 
 class IngestPipeline {
@@ -226,6 +250,9 @@ class IngestPipeline {
       return IngestResult(
         drafts: const <IngestDraft>[],
         rejectedReason: analysis.rejectedReason,
+        parseIssues: analysis.parseIssues,
+        parseCandidateRowCount: analysis.parseCandidateRowCount,
+        parseDiagnosticsComplete: analysis.parseDiagnosticsComplete,
       );
     }
     final now = _clock();
@@ -263,6 +290,11 @@ class IngestPipeline {
       );
       draftIds.add(draftId);
     }
-    return IngestResult(drafts: drafts);
+    return IngestResult(
+      drafts: drafts,
+      parseIssues: analysis.parseIssues,
+      parseCandidateRowCount: analysis.parseCandidateRowCount,
+      parseDiagnosticsComplete: analysis.parseDiagnosticsComplete,
+    );
   }
 }

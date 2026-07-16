@@ -7,6 +7,7 @@
 library;
 
 import '../domain/ingest_models.dart';
+import '../domain/ingest_parse_diagnostics.dart';
 import 'delimited_ingest_scalars.dart';
 
 /// Header tokens (lower-cased, CJK included) that map a column to a role.
@@ -114,13 +115,24 @@ enum _Col {
 List<ParsedTransaction> parseCsvLedger(
   String raw, {
   String defaultCurrency = 'CNY',
+}) => parseCsvLedgerReport(raw, defaultCurrency: defaultCurrency).rows;
+
+ParsedLedgerReport<ParsedTransaction> parseCsvLedgerReport(
+  String raw, {
+  String defaultCurrency = 'CNY',
 }) {
-  final lines = raw
-      .split(RegExp(r'\r\n|\r|\n'))
-      .map((l) => l.trim())
-      .where((l) => l.isNotEmpty)
-      .toList(growable: false);
-  if (lines.isEmpty) return const <ParsedTransaction>[];
+  final sourceLines = <({int number, String text})>[
+    for (final (index, rawLine) in raw.split(RegExp(r'\r\n|\r|\n')).indexed)
+      if (rawLine.trim().isNotEmpty) (number: index + 1, text: rawLine.trim()),
+  ];
+  if (sourceLines.isEmpty) {
+    return ParsedLedgerReport(
+      rows: const <ParsedTransaction>[],
+      issues: const <IngestParseIssue>[],
+      candidateRowCount: 0,
+    );
+  }
+  final lines = sourceLines.map((line) => line.text).toList(growable: false);
 
   final delimiter = detectIngestDelimiter(lines);
   final header = _findHeader(lines, delimiter);
@@ -138,14 +150,30 @@ List<ParsedTransaction> parseCsvLedger(
       };
 
   final out = <ParsedTransaction>[];
+  final issues = <IngestParseIssue>[];
+  var candidateRowCount = 0;
   for (var i = dataStart; i < lines.length; i++) {
     final line = lines[i];
     if (isIngestPreambleLine(line)) continue;
+    candidateRowCount++;
     final cells = splitIngestRow(line, delimiter);
-    final txn = _rowToTransaction(cells, effective, defaultCurrency);
-    if (txn != null) out.add(txn);
+    final outcome = _rowToTransaction(cells, effective, defaultCurrency);
+    if (outcome.transaction case final transaction?) {
+      out.add(transaction);
+    } else {
+      issues.add(
+        IngestParseIssue(
+          lineNumber: sourceLines[i].number,
+          code: outcome.issue ?? IngestParseIssueCode.malformedRow,
+        ),
+      );
+    }
   }
-  return out;
+  return ParsedLedgerReport(
+    rows: out,
+    issues: issues,
+    candidateRowCount: candidateRowCount,
+  );
 }
 
 ({int index, List<String> cells})? _findHeader(
@@ -176,7 +204,8 @@ Map<int, _Col>? _headerMapping(List<String> cells) {
   return null;
 }
 
-ParsedTransaction? _rowToTransaction(
+({ParsedTransaction? transaction, IngestParseIssueCode? issue})
+_rowToTransaction(
   List<String> cells,
   Map<int, _Col> mapping,
   String defaultCurrency,
@@ -192,22 +221,18 @@ ParsedTransaction? _rowToTransaction(
   }
 
   final date = parseIngestDate(cell(_Col.date));
-  if (date == null) return null;
+  if (date == null) {
+    return (transaction: null, issue: IngestParseIssueCode.invalidDate);
+  }
 
-  if (_shouldSkipByStatus(cell(_Col.status))) return null;
+  if (_shouldSkipByStatus(cell(_Col.status))) {
+    return (transaction: null, issue: IngestParseIssueCode.ignoredStatus);
+  }
 
   final direction = cell(_Col.direction);
   final explicitExpense = parseIngestAmountMinor(cell(_Col.expenseAmount));
   final explicitIncome = parseIngestAmountMinor(cell(_Col.incomeAmount));
   final genericAmount = parseIngestAmountMinor(cell(_Col.amount));
-  final minor = _resolveExpenseMinor(
-    amount: genericAmount,
-    expenseAmount: explicitExpense,
-    incomeAmount: explicitIncome,
-    direction: direction,
-  );
-  if (minor == null || minor == 0) return null;
-
   final payee = cell(_Col.payee);
   final desc = cell(_Col.description);
   final type = cell(_Col.type);
@@ -219,19 +244,93 @@ ParsedTransaction? _rowToTransaction(
     payment,
   ].where((s) => s != null && s.isNotEmpty).cast<String>().toSet();
   final description = descriptionParts.join(' · ');
+  final unsupported = _unsupportedDirectionIssue(
+    amount: genericAmount,
+    expenseAmount: explicitExpense,
+    incomeAmount: explicitIncome,
+    direction: direction,
+    description: description,
+  );
+  if (unsupported != null) {
+    return (transaction: null, issue: unsupported);
+  }
+  final resolved = _resolveTransactionAmount(
+    amount: genericAmount,
+    expenseAmount: explicitExpense,
+    incomeAmount: explicitIncome,
+    direction: direction,
+  );
+  if (resolved == null) {
+    return (transaction: null, issue: IngestParseIssueCode.invalidAmount);
+  }
+  final (kind, minor) = resolved;
+  if (minor == 0) {
+    return (transaction: null, issue: IngestParseIssueCode.zeroAmount);
+  }
 
   final currency = (cell(_Col.currency) ?? defaultCurrency)
       .toUpperCase()
       .trim();
 
-  return ParsedTransaction(
-    // S5a only produces expenses; normalise to the negative-outflow
-    // convention regardless of how the bank signed the column.
-    description: description.isEmpty ? '未命名交易' : description,
-    amountMinor: -minor.abs(),
-    currency: currency.isEmpty ? defaultCurrency : currency,
-    occurredAt: date,
+  return (
+    transaction: ParsedTransaction(
+      description: description.isEmpty ? '未命名交易' : description,
+      amountMinor: kind == IngestTransactionKind.income
+          ? minor.abs()
+          : -minor.abs(),
+      currency: currency.isEmpty ? defaultCurrency : currency,
+      occurredAt: date,
+      kind: kind,
+      categoryHint: kind == IngestTransactionKind.income
+          ? _incomeCategoryHint(description)
+          : null,
+    ),
+    issue: null,
   );
+}
+
+IngestParseIssueCode? _unsupportedDirectionIssue({
+  required int? amount,
+  required int? expenseAmount,
+  required int? incomeAmount,
+  required String? direction,
+  required String description,
+}) {
+  final dir = direction?.replaceAll(RegExp(r'\s+'), '');
+  final normalizedDescription = description.toLowerCase();
+  final isRefund =
+      normalizedDescription.contains('退款') ||
+      normalizedDescription.contains('refund');
+  final isTransfer =
+      normalizedDescription.contains('转账') ||
+      normalizedDescription.contains('transfer');
+  final isUnsupportedIncome = isRefund || isTransfer;
+  if (dir != null && dir.isNotEmpty) {
+    if (dir.contains('收入') || dir == '收') {
+      return isUnsupportedIncome
+          ? IngestParseIssueCode.unsupportedDirection
+          : null;
+    }
+    if (dir.contains('不计') || dir.contains('其他') || dir.contains('退款')) {
+      return IngestParseIssueCode.unsupportedDirection;
+    }
+  }
+  if ((expenseAmount == null || expenseAmount == 0) &&
+      incomeAmount != null &&
+      incomeAmount != 0) {
+    return isUnsupportedIncome
+        ? IngestParseIssueCode.unsupportedDirection
+        : null;
+  }
+  if (amount != null &&
+      amount > 0 &&
+      incomeAmount != null &&
+      incomeAmount.abs() == amount) {
+    return isUnsupportedIncome
+        ? IngestParseIssueCode.unsupportedDirection
+        : null;
+  }
+  return null;
 }
 
 bool _shouldSkipByStatus(String? status) {
@@ -246,7 +345,7 @@ bool _shouldSkipByStatus(String? status) {
       s.contains('退款成功');
 }
 
-int? _resolveExpenseMinor({
+(IngestTransactionKind, int)? _resolveTransactionAmount({
   required int? amount,
   required int? expenseAmount,
   required int? incomeAmount,
@@ -254,22 +353,48 @@ int? _resolveExpenseMinor({
 }) {
   final dir = direction?.replaceAll(RegExp(r'\s+'), '');
   if (dir != null && dir.isNotEmpty) {
-    if (dir.contains('收入') || dir == '收') return null;
+    if (dir.contains('收入') || dir == '收') {
+      final resolved = amount?.abs() ?? incomeAmount?.abs();
+      return resolved == null ? null : (IngestTransactionKind.income, resolved);
+    }
     if (dir.contains('不计') || dir.contains('其他')) return null;
     if (dir.contains('退款')) return null;
     if (dir.contains('支出') || dir == '支') {
-      return amount?.abs() ?? expenseAmount?.abs();
+      final resolved = amount?.abs() ?? expenseAmount?.abs();
+      return resolved == null
+          ? null
+          : (IngestTransactionKind.expense, resolved);
     }
   }
-  if (expenseAmount != null && expenseAmount != 0) return expenseAmount.abs();
+  if (expenseAmount != null && expenseAmount != 0) {
+    return (IngestTransactionKind.expense, expenseAmount.abs());
+  }
   if ((amount == null || amount == 0) &&
       incomeAmount != null &&
       incomeAmount != 0) {
-    return null;
+    return (IngestTransactionKind.income, incomeAmount.abs());
   }
   if (amount == null) return null;
   if (amount > 0 && incomeAmount != null && incomeAmount.abs() == amount) {
-    return null;
+    return (IngestTransactionKind.income, amount);
   }
-  return amount.abs();
+  // Statements without a direction column historically treated a positive
+  // generic amount as an expense. Preserve that contract.
+  return (IngestTransactionKind.expense, amount.abs());
+}
+
+String _incomeCategoryHint(String description) {
+  final normalized = description.toLowerCase();
+  if (normalized.contains('工资') || normalized.contains('salary')) {
+    return 'salary';
+  }
+  if (normalized.contains('利息') || normalized.contains('interest')) {
+    return 'interest';
+  }
+  if (normalized.contains('股息') ||
+      normalized.contains('分红') ||
+      normalized.contains('dividend')) {
+    return 'dividend';
+  }
+  return 'other';
 }

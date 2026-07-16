@@ -16,6 +16,7 @@ import '../../../../core/ai/write/providers.dart';
 import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../application/batch_proposal_apply_coordinator.dart';
 import '../../data/chat_repository.dart';
 import '../../data/providers.dart';
 import '../../domain/chat_models.dart';
@@ -142,10 +143,19 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       case ProposalApplyStatus.pending:
       case ProposalApplyStatus.errored:
       case ProposalApplyStatus.applying:
+        final progress = BatchProposalProgress.fromState(
+          state,
+          total: plan.children.length,
+        );
+        final needsRecovery =
+            state.status == ProposalApplyStatus.errored &&
+            progress.requiresRecovery;
         return _BatchProposalView(
           plan: plan,
           applyState: state,
-          onConfirm: () => _onConfirmBatch(plan),
+          onConfirm: needsRecovery
+              ? () => _onRecoverBatch(plan)
+              : () => _onConfirmBatch(plan),
           onCancel: _onCancel,
         );
     }
@@ -217,68 +227,86 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     Haptics.primaryPress();
     final repo = await ref.read(chatRepositoryProvider.future);
     final stack = ref.read(undoStackProvider);
-    await _persistWithRepo(
-      repo,
-      _applyState.copyWith(status: ProposalApplyStatus.applying),
-    );
-    final appliedChildren = <ProposalApplyState>[];
     try {
       final applier = await ref.read(proposalApplierProvider.future);
-      for (final child in plan.children) {
-        final childState = await applier.apply(child);
-        if (childState.status != ProposalApplyStatus.applied) {
-          throw ProposalApplyException(
-            childState.errorMessage ?? 'batch child did not apply',
-          );
-        }
-        appliedChildren.add(childState);
-      }
-      final appliedAt = DateTime.now().toUtc();
-      final childrenJson = [
-        for (final childState in appliedChildren) childState.toJson(),
-      ];
-      String? undoToken;
-      Map<String, Object?> undoData = <String, Object?>{
-        'proposal_id': plan.proposalId,
-        'child_count': appliedChildren.length,
-      };
-      if (stack != null) {
-        undoToken = 'batch_undo:${plan.proposalId}:${_uuid.v4()}';
-        await stack.put(
-          buildBatchProposalUndoEntry(
-            token: undoToken,
-            proposalId: plan.proposalId,
-            summaryZh: plan.summaryZh,
-            chatSessionId: widget.sessionId,
-            chatMessageId: widget.message.id,
-            chatToolInvocationId: widget.invocation.id,
-            children: appliedChildren,
-            createdAt: appliedAt,
-            expiresAt: appliedAt.add(_undoWindow),
-          ),
-        );
-      } else {
-        undoData = <String, Object?>{'children': childrenJson};
-      }
-      await _persistWithRepo(
-        repo,
-        ProposalApplyState(
-          status: ProposalApplyStatus.applied,
-          appliedTable: kBatchProposalAppliedTable,
-          appliedAt: appliedAt,
-          undoData: undoData,
-          undoToken: undoToken,
-          shortLabel: plan.summaryZh,
-        ),
+      final coordinator = BatchProposalApplyCoordinator(
+        applier: applier,
+        persist: (state) => _persistWithRepo(repo, state),
       );
+      final result = await coordinator.execute(
+        plan,
+        finalize: (appliedChildren, appliedAt) async {
+          final childrenJson = [
+            for (final childState in appliedChildren) childState.toJson(),
+          ];
+          String? undoToken;
+          Map<String, Object?> undoData = <String, Object?>{
+            'proposal_id': plan.proposalId,
+            'child_count': appliedChildren.length,
+          };
+          if (stack != null) {
+            undoToken = 'batch_undo:${plan.proposalId}:${_uuid.v4()}';
+            await stack.put(
+              buildBatchProposalUndoEntry(
+                token: undoToken,
+                proposalId: plan.proposalId,
+                summaryZh: plan.summaryZh,
+                chatSessionId: widget.sessionId,
+                chatMessageId: widget.message.id,
+                chatToolInvocationId: widget.invocation.id,
+                children: appliedChildren,
+                createdAt: appliedAt,
+                expiresAt: appliedAt.add(_undoWindow),
+              ),
+            );
+          } else {
+            undoData = <String, Object?>{'children': childrenJson};
+          }
+          return ProposalApplyState(
+            status: ProposalApplyStatus.applied,
+            appliedTable: kBatchProposalAppliedTable,
+            appliedAt: appliedAt,
+            undoData: undoData,
+            undoToken: undoToken,
+            shortLabel: plan.summaryZh,
+          );
+        },
+      );
+      if (result.status == ProposalApplyStatus.errored) Haptics.error();
     } on Object catch (e) {
-      await _undoAppliedBatchChildren(appliedChildren);
       Haptics.error();
       await _persistWithRepo(
         repo,
-        _applyState.copyWith(
+        ProposalApplyState(
           status: ProposalApplyStatus.errored,
-          errorMessage: e is ProposalApplyException ? e.message : e.toString(),
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onRecoverBatch(BatchProposalPlan plan) async {
+    Haptics.primaryPress();
+    final repo = await ref.read(chatRepositoryProvider.future);
+    try {
+      final applier = await ref.read(proposalApplierProvider.future);
+      final result = await BatchProposalApplyCoordinator(
+        applier: applier,
+        persist: (state) => _persistWithRepo(repo, state),
+      ).recover(_applyState, total: plan.children.length);
+      final progress = BatchProposalProgress.fromState(
+        result,
+        total: plan.children.length,
+      );
+      if (progress.requiresRecovery) Haptics.error();
+    } on Object catch (e) {
+      Haptics.error();
+      await _persistWithRepo(
+        repo,
+        ProposalApplyState(
+          status: ProposalApplyStatus.errored,
+          errorMessage: e.toString(),
+          undoData: _applyState.undoData,
         ),
       );
     }
@@ -330,20 +358,6 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     );
     if (result == null || !mounted) return;
     setState(() => _overrides = result);
-  }
-
-  Future<void> _undoAppliedBatchChildren(
-    List<ProposalApplyState> children,
-  ) async {
-    if (children.isEmpty) return;
-    try {
-      final applier = await ref.read(proposalApplierProvider.future);
-      for (final childState in children.reversed) {
-        await applier.undo(childState);
-      }
-    } catch (_) {
-      // The apply failure is the user-visible error; rollback is best effort.
-    }
   }
 
   Future<void> _undoBatchState(
