@@ -35,32 +35,47 @@
 
 NaviWealth 从 FinanceOS 出发，但不止于记账。它把分散的生活数据组织成可以理解、追踪和行动的个人系统：数据优先保存在设备上，AI 出现在当前任务中，所有重要写入都由用户确认。
 
-<table>
+<p align="center">
+  <a href="https://naviwealth.pages.dev">
+    <img src="docs/assets/readme/generated/smart-ingest.png" alt="NaviWealth 桌面端智能录入确认工作区" width="960">
+  </a>
+</p>
+
+<p align="center">
+  <sub>SMART INGEST · DESKTOP</sub><br>
+  <strong>从原始信息到可确认的结构化记录</strong><br>
+  <sub>文件、粘贴与截图只生成候选项；每一笔记录都由你确认后写入。</sub>
+</p>
+
+<table width="100%">
   <tr>
-    <td width="50%" align="center" valign="top">
-      <img src="docs/assets/readme/generated/wealth-overview.png" alt="NaviWealth 资产总览，展示净资产、资产负债和一年趋势" width="390">
-      <br><br><strong>统一财富视图</strong><br>
-      <sub>净资产、账户、持仓与趋势集中呈现。</sub>
+    <td width="40%" align="center" valign="top">
+      <img src="docs/assets/readme/generated/wealth-overview.png" alt="NaviWealth 资产总览，展示净资产、资产负债和一年趋势" width="100%">
+      <br><sub>WEALTH OVERVIEW</sub><br>
+      <strong>统一财富视图</strong><br>
+      <sub>净资产、资产负债与趋势集中呈现。</sub>
     </td>
-    <td width="50%" align="center" valign="top">
-      <img src="docs/assets/readme/generated/fire-insight.png" alt="NaviWealth FIRE 状态，展示提取率、现金桶和下一步建议" width="390">
-      <br><br><strong>面向行动的 FIRE 洞察</strong><br>
-      <sub>解释安全提取率、现金缓冲和下一步动作。</sub>
+    <td width="60%" align="center" valign="top">
+      <img src="docs/assets/readme/generated/fire-insight.png" alt="NaviWealth FIRE 状态，展示提取率、现金桶和下一步建议" width="100%">
+      <br><sub>FIRE INSIGHT</sub><br>
+      <strong>把长期目标变成下一步行动</strong><br>
+      <sub>解释安全提取率、现金缓冲和当前最重要的动作。</sub>
     </td>
   </tr>
 </table>
 
 <p align="center">
-  <img src="docs/assets/readme/generated/smart-ingest.png" alt="NaviWealth 桌面端智能录入确认工作区" width="960">
+  <img src="docs/assets/readme/generated/lifeos-domains.png" alt="NaviWealth LifeOS 三域工作台，展示 HealthOS 恢复信号、KnowledgeOS AI 知识入口与 ExecutionOS 今日行动" width="960">
 </p>
 
 <p align="center">
-  <strong>智能录入，确认后再写入</strong><br>
-  <sub>从文件、粘贴与截图中提取候选记录；确认前不进入正式账本。</sub>
+  <sub>ONE LIFE · CONNECTED CONTEXT</sub><br>
+  <strong>健康、知识与行动，不再是彼此孤立的数据</strong><br>
+  <sub>恢复信号进入晨间简报，知识沉淀保留决策背景，承诺最终落到今天可以完成的行动。</sub>
 </p>
 
 <p align="center">
-  <sub>以上效果图由生产 Widget 和固定演示数据自动生成，会随 UI 持续更新。</sub>
+  <sub>以上界面由生产 Widget 和固定演示数据自动生成，会随产品持续更新。</sub>
 </p>
 
 ## 为什么是 NaviWealth

@@ -10,28 +10,43 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../golden/_golden_setup.dart';
 
-enum ReadmeScreenshotProfile { mobile, featureCard, desktop }
+enum ReadmeScreenshotProfile {
+  mobileShowcase,
+  featureCard,
+  desktopShowcase,
+  domainShowcase,
+}
 
 extension ReadmeScreenshotProfileData on ReadmeScreenshotProfile {
   Size get logicalSize => switch (this) {
-    ReadmeScreenshotProfile.mobile => const Size(390, 844),
+    ReadmeScreenshotProfile.mobileShowcase => const Size(390, 760),
     ReadmeScreenshotProfile.featureCard => const Size(390, 440),
-    ReadmeScreenshotProfile.desktop => const Size(1280, 900),
+    ReadmeScreenshotProfile.desktopShowcase => const Size(1280, 560),
+    ReadmeScreenshotProfile.domainShowcase => const Size(1280, 760),
   };
 
   double get devicePixelRatio => switch (this) {
-    ReadmeScreenshotProfile.mobile || ReadmeScreenshotProfile.featureCard => 2,
-    ReadmeScreenshotProfile.desktop => 1,
+    ReadmeScreenshotProfile.mobileShowcase ||
+    ReadmeScreenshotProfile.featureCard => 2,
+    ReadmeScreenshotProfile.desktopShowcase ||
+    ReadmeScreenshotProfile.domainShowcase => 1,
   };
 
   TargetPlatform get platform => switch (this) {
-    ReadmeScreenshotProfile.mobile ||
+    ReadmeScreenshotProfile.mobileShowcase ||
     ReadmeScreenshotProfile.featureCard => TargetPlatform.iOS,
-    ReadmeScreenshotProfile.desktop => TargetPlatform.linux,
+    ReadmeScreenshotProfile.desktopShowcase ||
+    ReadmeScreenshotProfile.domainShowcase => TargetPlatform.linux,
   };
 
-  bool get touch => this != ReadmeScreenshotProfile.desktop;
-  bool get compact => this == ReadmeScreenshotProfile.desktop;
+  bool get touch => switch (this) {
+    ReadmeScreenshotProfile.mobileShowcase ||
+    ReadmeScreenshotProfile.featureCard => true,
+    ReadmeScreenshotProfile.desktopShowcase ||
+    ReadmeScreenshotProfile.domainShowcase => false,
+  };
+
+  bool get compact => !touch;
 }
 
 Future<void> pumpReadmeScreenshot(

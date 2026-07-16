@@ -4,10 +4,20 @@
   "generator": "apps/mobile/test/readme_screenshots/readme_screenshot_test.dart",
   "screenshots": [
     {
+      "id": "lifeos-domains",
+      "path": "generated/lifeos-domains.png",
+      "width": 1280,
+      "height": 760,
+      "locale": "zh",
+      "theme": "dark",
+      "expected_visible_text": ["今日恢复", "将深度工作留给上午", "焦点"],
+      "description": "HealthOS recovery and briefing, KnowledgeOS AI inbox, and ExecutionOS daily focus in one LifeOS workspace."
+    },
+    {
       "id": "wealth-overview",
       "path": "generated/wealth-overview.png",
       "width": 780,
-      "height": 1688,
+      "height": 1520,
       "locale": "zh",
       "theme": "dark",
       "expected_visible_text": ["净资产", "¥137,899.80"],
@@ -27,7 +37,7 @@
       "id": "smart-ingest",
       "path": "generated/smart-ingest.png",
       "width": 1280,
-      "height": 900,
+      "height": 560,
       "locale": "zh",
       "theme": "dark",
       "expected_visible_text": ["录入待确认", "Morning coffee"],
