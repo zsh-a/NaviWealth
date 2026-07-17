@@ -164,12 +164,25 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+      - name: Build release app bundle
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: flutter build appbundle --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+      - name: Verify Android native payload and 16 KiB compatibility
+        run: |
+          ../../tool/check-android-native-libs.sh build/app/outputs/flutter-apk/app-release.apk
+          ../../tool/check-android-native-libs.sh build/app/outputs/bundle/release/app-release.aab
       - name: Build release web PWA
         run: flutter build web --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - name: Normalize APK filename
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
             "build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.apk"
+          mv build/app/outputs/bundle/release/app-release.aab \
+            "build/app/outputs/bundle/release/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.aab"
       - name: Generate release notes
         working-directory: ${{ github.workspace }}
         env:
@@ -214,6 +227,7 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             apps/mobile/build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.apk
+            apps/mobile/build/app/outputs/bundle/release/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.aab
 
   backend-build:
     name: backend build

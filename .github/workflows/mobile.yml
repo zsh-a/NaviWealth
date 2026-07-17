@@ -35,6 +35,7 @@ on:
       - 'tool/money-display-to-string-allowlist.txt'
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
+      - 'tool/check-android-native-libs.sh'
       - 'tool/embed-onnxruntime-macos.sh'
   pull_request:
     paths:
@@ -69,6 +70,7 @@ on:
       - 'tool/money-display-to-string-allowlist.txt'
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
+      - 'tool/check-android-native-libs.sh'
       - 'tool/embed-onnxruntime-macos.sh'
 
 concurrency:
@@ -295,6 +297,50 @@ jobs:
             apps/mobile/test/golden/goldens/**
           if-no-files-found: ignore
           retention-days: 7
+
+  build-android:
+    name: build Android arm64 AAB
+    runs-on: ubuntu-latest
+    needs: analyze-and-test
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/mobile/native/lifeos_native
+      - name: Cache ONNX Runtime artifacts
+        uses: actions/cache@v6
+        with:
+          path: .cache/onnxruntime
+          key: onnxruntime-${{ runner.os }}-1.24.2
+      - run: flutter pub get
+      - name: Build release app bundle
+        run: >
+          flutter build appbundle
+          --release
+          --target-platform android-arm64
+          --dart-define=API_BASE_URL=http://127.0.0.1:8787
+          --dart-define=GIT_SHA=${{ github.sha }}
+      - name: Verify arm64 native payload and 16 KiB compatibility
+        run: ../../tool/check-android-native-libs.sh build/app/outputs/bundle/release/app-release.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-arm64-aab
+          path: apps/mobile/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 7
+          if-no-files-found: error
 
   build-web:
     name: build web

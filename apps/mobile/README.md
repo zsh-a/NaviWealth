@@ -11,7 +11,15 @@ flutter test
 flutter analyze --fatal-infos
 flutter build web --release
 flutter build apk --debug
+flutter build appbundle --release --target-platform android-arm64
 flutter build ios --debug --no-codesign  # macOS only
+```
+
+Android release 产物必须通过 native payload 与 16 KiB page-size 检查：
+
+```bash
+../../tool/check-android-native-libs.sh build/app/outputs/bundle/release/app-release.aab
+../../tool/check-android-native-libs.sh build/app/outputs/flutter-apk/app-release.apk
 ```
 
 仅 Web 端需要的一次性资源准备：
@@ -166,7 +174,8 @@ wrangler pages deploy --branch main
 
 1. `analyze + test (coverage)` — `dart format --set-exit-if-changed`、`flutter analyze --fatal-infos`、`flutter test --coverage --exclude-tags=golden`、Codecov 上传
 2. `golden regression (mobile)` — `flutter test test/golden --tags=golden`，PR 上 byte-diff 失败
-3. `build web` — `flutter build web --release`
+3. `build Android arm64 AAB` — release cross-compile、native payload 完整性与 16 KiB ELF 对齐检查
+4. `build web` — `flutter build web --release`
 
 架构 lint gates（CI 和本地均可运行）：
 
